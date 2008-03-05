@@ -1,4 +1,15 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*
+ * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 /**********************************************************************
  * Copyright (C) 2000-2004 by Etnus, LLC.
  * Copyright (C) 1999 by Etnus, Inc.
@@ -46,11 +57,6 @@
  * Oct 27 1997 JHC: Created by exploding db_message_state_mpich.cxx
  */
 
-/**
- * Right now there is no MPI2 support
- */
-#define FOR_MPI2  0
-
 /* 
    The following was added by William Gropp to improve the portability 
    to systems with non-ANSI C compilers 
@@ -69,8 +75,8 @@
 #endif  /* defined(HAVE_STDLIB_H) */
 
 #include "ompi/mca/pml/base/pml_base_request.h"
-#include "mpi_interface.h"
-#include "ompi_dll_defs.h"
+#include "msgq_interface.h"
+#include "ompi_msgq_dll_defs.h"
 
 /* 
    End of inclusion
@@ -116,13 +122,9 @@
 #endif  /* VERBOSE */
 
 /**********************************************************************/
-/* Set up the basic callbacks into the debugger, also work out 
- * one crucial piece of info about the machine we're running on.
- */
-static const mqs_basic_callbacks *mqs_basic_entrypoints;
-static int host_is_big_endian;
-/* Temporary workaround for making Totalview to load these symbols in the library
- * when this is compiled with the Sun Studio C compiler */
+/* Set up the basic callbacks into the debugger */
+/* Temporary workaround for making Totalview to load these symbols in
+ * the library when this is compiled with the Sun Studio C compiler */
 #if defined(__SUNPRO_C)
 bool opal_uses_threads;
 bool opal_mutex_check_locks;
@@ -132,38 +134,9 @@ int opal_progress_spin_count;
 
 void mqs_setup_basic_callbacks (const mqs_basic_callbacks * cb)
 {
-  int t = 1;
-
-  host_is_big_endian    = (*(char *)&t) != 1;
-  mqs_basic_entrypoints = cb;
+    mqs_basic_entrypoints = cb;
 } /* mqs_setup_callbacks */
 
-/**********************************************************************/
-/* Macros to make it transparent that we're calling the TV functions
- * through function pointers.
- */
-#define mqs_malloc           (mqs_basic_entrypoints->mqs_malloc_fp)
-#define mqs_free             (mqs_basic_entrypoints->mqs_free_fp)
-#define mqs_prints           (mqs_basic_entrypoints->mqs_dprints_fp)
-#define mqs_put_image_info   (mqs_basic_entrypoints->mqs_put_image_info_fp)
-#define mqs_get_image_info   (mqs_basic_entrypoints->mqs_get_image_info_fp)
-#define mqs_put_process_info (mqs_basic_entrypoints->mqs_put_process_info_fp)
-#define mqs_get_process_info (mqs_basic_entrypoints->mqs_get_process_info_fp)
-
-/* These macros *RELY* on the function already having set up the conventional
- * local variables i_info or p_info.
- */
-#define mqs_find_type        (i_info->image_callbacks->mqs_find_type_fp)
-#define mqs_field_offset     (i_info->image_callbacks->mqs_field_offset_fp)
-#define mqs_sizeof           (i_info->image_callbacks->mqs_sizeof_fp)
-#define mqs_get_type_sizes   (i_info->image_callbacks->mqs_get_type_sizes_fp)
-#define mqs_find_function    (i_info->image_callbacks->mqs_find_function_fp)
-#define mqs_find_symbol      (i_info->image_callbacks->mqs_find_symbol_fp)
-
-#define mqs_get_image        (p_info->process_callbacks->mqs_get_image_fp)
-#define mqs_get_global_rank  (p_info->process_callbacks->mqs_get_global_rank_fp)
-#define mqs_fetch_data       (p_info->process_callbacks->mqs_fetch_data_fp)
-#define mqs_target_to_host   (p_info->process_callbacks->mqs_target_to_host_fp)
 
 /**********************************************************************/
 /* Version handling functions.
@@ -188,128 +161,6 @@ int mqs_dll_taddr_width (void)
 } /* mqs_dll_taddr_width */
 
 /**********************************************************************/
-/* Additional error codes and error string conversion.
- */
-enum {
-    err_silent_failure  = mqs_first_user_code,
-
-    err_no_current_communicator,
-    err_bad_request,
-    err_no_store,
-
-    err_failed_qhdr,
-    err_unexpected,
-    err_posted,
-
-    err_failed_queue,
-    err_first,
-
-    err_context_id,
-    err_tag,
-    err_tagmask,
-    err_lsrc,
-    err_srcmask,
-    err_next,
-    err_ptr,
-
-    err_missing_type,
-    err_missing_symbol,
-
-    err_db_shandle,
-    err_db_comm,
-    err_db_target,
-    err_db_tag,
-    err_db_data,
-    err_db_byte_length,
-    err_db_next,
-
-    err_failed_rhandle,
-    err_is_complete,
-    err_buf,
-    err_len,
-    err_s,
-
-    err_failed_status,
-    err_count,
-    err_MPI_SOURCE,
-    err_MPI_TAG,
-
-    err_failed_commlist,
-    err_sequence_number,
-    err_comm_first,
-
-    err_failed_communicator,
-    err_lrank_to_grank,
-    err_send_context,
-    err_recv_context,
-    err_comm_next,
-    err_comm_name,
-
-    err_all_communicators,
-    err_mpid_sends,
-    err_mpid_recvs,
-    err_group_corrupt
-};
-
-/***********************************************************************
- * Functions to access the image memory. They are specialized based    *
- * on the type we want to access and the debugged process architecture *
- ***********************************************************************/
-static mqs_taddr_t fetch_pointer (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int isize = p_info->sizes.pointer_size;
-    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
-    mqs_taddr_t res = 0;
-
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
-                            isize);
-
-    return res;
-} /* fetch_pointer */
-
-/***********************************************************************/
-static mqs_tword_t fetch_int (mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int isize = p_info->sizes.int_size;
-    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
-    mqs_tword_t res = 0;
-
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer)) {
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
-                            isize);
-    }
-    return res;
-} /* fetch_int */
-
-/***********************************************************************/
-static mqs_tword_t fetch_bool(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int isize = p_info->sizes.bool_size;
-    mqs_tword_t res = 0;
-
-    mqs_fetch_data (proc, addr, isize, &res);
-    return (0 == res ? 0 : 1);
-} /* fetch_bool */
-
-/***********************************************************************/
-static mqs_taddr_t fetch_size_t(mqs_process * proc, mqs_taddr_t addr, mpi_process_info *p_info)
-{
-    int isize = p_info->sizes.size_t_size;
-    char buffer[8];                  /* ASSUME the type fits in 8 bytes */
-    mqs_taddr_t res = 0;
-
-    if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
-                            isize);
-  
-    return res;
-} /* fetch_size_t */
-
-/**********************************************************************/
 /* Functions to handle translation groups.
  * We have a list of these on the process info, so that we can
  * share the group between multiple communicators.
@@ -331,18 +182,19 @@ static group_t * find_or_create_group( mqs_process *proc,
                                        mqs_taddr_t table )
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
     mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
-    communicator_t *comm     = p_info->communicator_list;
+    communicator_t *comm     = extra->communicator_list;
     int *tr;
     char *trbuffer;
     int i, np;
     group_t *group;
     mqs_taddr_t value;
 
-    np = fetch_int( proc,
-                    table + i_info->ompi_group_t.offset.grp_proc_count,
-                    p_info );
+    np = ompi_fetch_int( proc,
+                         table + i_info->ompi_group_t.offset.grp_proc_count,
+                         p_info );
     if( np < 0 ) {
         DEBUG(VERBOSE_COMM, ("Get a size for the communicator = %d\n", np));
         return NULL;  /* Makes no sense ! */
@@ -384,15 +236,15 @@ static group_t * find_or_create_group( mqs_process *proc,
      * structure. By comparing this pointers to the MPI_COMM_WORLD group
      * we can figure out the global rank in the MPI_COMM_WORLD of the process.
      */
-     if( NULL == p_info->world_proc_array ) {
-         p_info->world_proc_array = mqs_malloc( np * sizeof(mqs_taddr_t) );
+     if( NULL == extra->world_proc_array ) {
+         extra->world_proc_array = mqs_malloc( np * sizeof(mqs_taddr_t) );
          for( i = 0; i < np; i++ ) {
              mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
                                  &value, p_info->sizes.pointer_size );
-             p_info->world_proc_array[i] = value;
+             extra->world_proc_array[i] = value;
              group->local_to_global[i] = i;
          }
-         p_info->world_proc_array_entries = np;
+         extra->world_proc_array_entries = np;
      } else {
          int j;
 
@@ -400,8 +252,8 @@ static group_t * find_or_create_group( mqs_process *proc,
              mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
                                  &value, p_info->sizes.pointer_size );
              /* get the global rank this MPI process */
-             for( j = 0; j < p_info->world_proc_array_entries; j++ ) {
-                 if( value == p_info->world_proc_array[j] ) {
+             for( j = 0; j < extra->world_proc_array_entries; j++ ) {
+                 if( value == extra->world_proc_array[j] ) {
                      group->local_to_global[i] = j;
                      break;
                  }
@@ -441,6 +293,7 @@ int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *icb)
 
     memset ((void *)i_info, 0, sizeof (mpi_image_info));
     i_info->image_callbacks = icb;		/* Before we do *ANYTHING* */
+    i_info->extra = NULL;
 
     mqs_put_image_info (image, (mqs_image_info *)i_info);
   
@@ -456,7 +309,8 @@ int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *icb)
 int mqs_image_has_queues (mqs_image *image, char **message)
 {
     mpi_image_info * i_info = (mpi_image_info *)mqs_get_image_info (image);
-    char* missing_in_action;
+
+    i_info->extra = NULL;
 
     /* Default failure message ! */
     *message = "The symbols and types in the Open MPI library used by TotalView\n"
@@ -465,239 +319,23 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         "No message queue display is possible.\n"
         "This is probably an Open MPI version or configuration problem.";
 
-    /* Force in the file containing our breakpoint function, to ensure that 
-     * types have been read from there before we try to look them up.
+    /* Force in the file containing our breakpoint function, to ensure
+     * that types have been read from there before we try to look them
+     * up.
      */
     mqs_find_function (image, "MPIR_Breakpoint", mqs_lang_c, NULL);
 
-    /* Are we supposed to ignore this ? (e.g. it's really an HPF runtime using the
-     * Open MPI process acquisition, but not wanting queue display) 
+    /* Are we supposed to ignore this ? (e.g. it's really an HPF
+     * runtime using the Open MPI process acquisition, but not wanting
+     * queue display)
      */
     if (mqs_find_symbol (image, "MPIR_Ignore_queues", NULL) == mqs_ok) {
         *message = NULL;				/* Fail silently */
         return err_silent_failure;
     }
 
-    /**
-     * Open MPI use a bunch of lists in order to keep track of the internal
-     * objects. We have to make sure we're able to find all of them in the image
-     * and compute their ofset in order to be able to parse them later.
-     * We need to find the opal_list_item_t, the opal_list_t, the ompi_free_list_item_t,
-     * and the ompi_free_list_t.
-     *
-     * Once we have these offsets, we should make sure that we have access to all
-     * requests lists and types. We're looking here only at the basic type for the
-     * requests as they hold all the information we need to export to the debugger.
-     */
-    {
-        mqs_type* qh_type = mqs_find_type( image, "opal_list_item_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "opal_list_item_t";
-            goto type_missing;
-        }
-        i_info->opal_list_item_t.size = mqs_sizeof(qh_type);
-        i_info->opal_list_item_t.offset.opal_list_next = mqs_field_offset(qh_type, "opal_list_next");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "opal_list_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "opal_list_t";
-            goto type_missing;
-        }
-        i_info->opal_list_t.size = mqs_sizeof(qh_type);
-        i_info->opal_list_t.offset.opal_list_sentinel = mqs_field_offset(qh_type, "opal_list_sentinel");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_item_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_free_list_item_t";
-            goto type_missing;
-        }
-        /* This is just an overloaded opal_list_item_t */
-        i_info->ompi_free_list_item_t.size = mqs_sizeof(qh_type);
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_free_list_t";
-            goto type_missing;
-        }
-        i_info->ompi_free_list_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_free_list_t.offset.fl_elem_class = mqs_field_offset(qh_type, "fl_elem_class");
-        i_info->ompi_free_list_t.offset.fl_mpool = mqs_field_offset(qh_type, "fl_mpool");
-        i_info->ompi_free_list_t.offset.fl_elem_size = mqs_field_offset(qh_type, "fl_elem_size");
-        i_info->ompi_free_list_t.offset.fl_alignment = mqs_field_offset(qh_type, "fl_alignment");
-        i_info->ompi_free_list_t.offset.fl_allocations = mqs_field_offset(qh_type, "fl_allocations");
-        i_info->ompi_free_list_t.offset.fl_max_to_alloc = mqs_field_offset(qh_type, "fl_max_to_alloc");
-        i_info->ompi_free_list_t.offset.fl_num_per_alloc = mqs_field_offset(qh_type, "fl_num_per_alloc");
-        i_info->ompi_free_list_t.offset.fl_num_allocated = mqs_field_offset(qh_type, "fl_num_allocated");
-    }
-    /**
-     * Now let's look for all types required for reading the requests.
-     */
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_request_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_request_t";
-            goto type_missing;
-        }
-        i_info->ompi_request_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
-        i_info->ompi_request_t.offset.req_status = mqs_field_offset(qh_type, "req_status");
-        i_info->ompi_request_t.offset.req_complete = mqs_field_offset(qh_type, "req_complete");
-        i_info->ompi_request_t.offset.req_state = mqs_field_offset(qh_type, "req_state");
-        i_info->ompi_request_t.offset.req_f_to_c_index = mqs_field_offset(qh_type, "req_f_to_c_index");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_request_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "mca_pml_base_request_t";
-            goto type_missing;
-        }
-        i_info->mca_pml_base_request_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_base_request_t.offset.req_addr = mqs_field_offset(qh_type, "req_addr");
-        i_info->mca_pml_base_request_t.offset.req_count = mqs_field_offset(qh_type, "req_count");
-        i_info->mca_pml_base_request_t.offset.req_peer = mqs_field_offset(qh_type, "req_peer");
-        i_info->mca_pml_base_request_t.offset.req_tag = mqs_field_offset(qh_type, "req_tag");
-        i_info->mca_pml_base_request_t.offset.req_comm = mqs_field_offset(qh_type, "req_comm");
-        i_info->mca_pml_base_request_t.offset.req_datatype = mqs_field_offset(qh_type, "req_datatype");
-        i_info->mca_pml_base_request_t.offset.req_proc = mqs_field_offset(qh_type, "req_proc");
-        i_info->mca_pml_base_request_t.offset.req_sequence = mqs_field_offset(qh_type, "req_sequence");
-        i_info->mca_pml_base_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
-        i_info->mca_pml_base_request_t.offset.req_pml_complete = mqs_field_offset(qh_type, "req_pml_complete");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_send_request_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "mca_pml_base_send_request_t";
-            goto type_missing;
-        }
-        i_info->mca_pml_base_send_request_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_base_send_request_t.offset.req_addr = mqs_field_offset(qh_type, "req_addr");
-        i_info->mca_pml_base_send_request_t.offset.req_bytes_packed = mqs_field_offset(qh_type, "req_bytes_packed");
-        i_info->mca_pml_base_send_request_t.offset.req_send_mode = mqs_field_offset(qh_type, "req_send_mode");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_recv_request_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "mca_pml_base_recv_request_t";
-            goto type_missing;
-        }
-        i_info->mca_pml_base_recv_request_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed = mqs_field_offset(qh_type, "req_bytes_packed");
-    }
-    /**
-     * Gather information about the received fragments and theirs headers.
-     */
-#if 0  /* Disabled until I find a better way */
-    {
-        mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_common_hdr_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "mca_pml_ob1_common_hdr_t";
-            goto type_missing;
-        }
-        i_info->mca_pml_ob1_common_hdr_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_ob1_common_hdr_t.offset.hdr_type = mqs_field_offset(qh_type, "hdr_type");
-        i_info->mca_pml_ob1_common_hdr_t.offset.hdr_flags = mqs_field_offset(qh_type, "hdr_flags");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_match_hdr_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "mca_pml_ob1_match_hdr_t";
-            goto type_missing;
-        }
-        i_info->mca_pml_ob1_match_hdr_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_common = mqs_field_offset(qh_type, "hdr_common");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_ctx    = mqs_field_offset(qh_type, "hdr_ctx");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_src    = mqs_field_offset(qh_type, "hdr_src");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_tag    = mqs_field_offset(qh_type, "hdr_tag");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_seq    = mqs_field_offset(qh_type, "hdr_seq");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_recv_frag_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "mca_pml_ob1_recv_frag_t";
-            goto type_missing;
-        }
-        i_info->mca_pml_ob1_recv_frag_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_ob1_recv_frag_t.offset.hdr = mqs_field_offset(qh_type, "hdr");
-        i_info->mca_pml_ob1_recv_frag_t.offset.request = mqs_field_offset(qh_type, "request");
-    }
-#endif
-    /**
-     * And now let's look at the communicator and group structures.
-     */
-    {
-        mqs_type* qh_type = mqs_find_type( image, "opal_pointer_array_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "opal_pointer_array_t";
-            goto type_missing;
-        }
-        i_info->opal_pointer_array_t.size = mqs_sizeof(qh_type);
-        i_info->opal_pointer_array_t.offset.lowest_free = mqs_field_offset(qh_type, "lowest_free");
-        i_info->opal_pointer_array_t.offset.number_free = mqs_field_offset(qh_type, "number_free");
-        i_info->opal_pointer_array_t.offset.size = mqs_field_offset(qh_type, "size");
-        i_info->opal_pointer_array_t.offset.addr = mqs_field_offset(qh_type, "addr");
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_communicator_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_communicator_t";
-            goto type_missing;
-        }
-        i_info->ompi_communicator_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_communicator_t.offset.c_name = mqs_field_offset(qh_type, "c_name");
-        i_info->ompi_communicator_t.offset.c_contextid = mqs_field_offset(qh_type, "c_contextid");
-        i_info->ompi_communicator_t.offset.c_my_rank = mqs_field_offset(qh_type, "c_my_rank" );
-        i_info->ompi_communicator_t.offset.c_local_group = mqs_field_offset(qh_type, "c_local_group" );
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_group_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_group_t";
-            goto type_missing;
-        }
-        i_info->ompi_group_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_group_t.offset.grp_proc_count = mqs_field_offset(qh_type, "grp_proc_count");
-        i_info->ompi_group_t.offset.grp_my_rank = mqs_field_offset(qh_type, "grp_my_rank");
-        i_info->ompi_group_t.offset.grp_flags = mqs_field_offset(qh_type, "grp_flags" );
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_status_public_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_status_public_t";
-            goto type_missing;
-        }
-        i_info->ompi_status_public_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_status_public_t.offset.MPI_SOURCE = mqs_field_offset(qh_type, "MPI_SOURCE");
-        i_info->ompi_status_public_t.offset.MPI_TAG = mqs_field_offset(qh_type, "MPI_TAG");
-        i_info->ompi_status_public_t.offset.MPI_ERROR = mqs_field_offset(qh_type, "MPI_ERROR" );
-        i_info->ompi_status_public_t.offset._count = mqs_field_offset(qh_type, "_count" );
-        i_info->ompi_status_public_t.offset._cancelled = mqs_field_offset(qh_type, "_cancelled" );
-    }
-    {
-        mqs_type* qh_type = mqs_find_type( image, "ompi_datatype_t", mqs_lang_c );
-        if( !qh_type ) {
-            missing_in_action = "ompi_datatype_t";
-            goto type_missing;
-        }
-        i_info->ompi_datatype_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_datatype_t.offset.size = mqs_field_offset(qh_type, "size");
-        i_info->ompi_datatype_t.offset.name = mqs_field_offset(qh_type, "name");
-    }
-
-    /* All the types are here. Let's succesfully return. */
-    return mqs_ok;
-
- type_missing:
-    /**
-     * One of the required types is missing in the image. We are unable to extract
-     * the information we need from the pointers. We did our best but here
-     * we're at our limit. Give up!
-     */
-    *message = missing_in_action;
-    printf( "The following type is missing %s\n", missing_in_action );
-    return err_missing_type;
+    /* Fill in the type information */
+    return ompi_fill_in_type_info(image, message);
 } /* mqs_image_has_queues */
 
 /***********************************************************************
@@ -714,62 +352,67 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
     if (p_info) {
         mqs_image        *image;
         mpi_image_info   *i_info;
+        mpi_process_info_extra *extra;
 
         p_info->process_callbacks = pcb;
+
+        p_info->extra = mqs_malloc(sizeof(mpi_process_info_extra));
+        extra = (mpi_process_info_extra*) p_info->extra;
 
         /* Now we can get the rest of the info ! */
         image  = mqs_get_image (process);
         i_info   = (mpi_image_info *)mqs_get_image_info (image);
 
         /* We have no communicators yet */
-        p_info->communicator_list = NULL;
+        extra->communicator_list = NULL;
         /* Enforce the generation of the communicators list */
-        p_info->comm_lowest_free  = 0;
-        p_info->comm_number_free  = 0;
+        extra->comm_lowest_free  = 0;
+        extra->comm_number_free  = 0;
         /* By default we don't show our internal requests*/
-        p_info->show_internal_requests = 0;
+        extra->show_internal_requests = 0;
 
-        p_info->world_proc_array_entries = 0;
-        p_info->world_proc_array = NULL;
+        extra->world_proc_array_entries = 0;
+        extra->world_proc_array = NULL;
 
         mqs_get_type_sizes (process, &p_info->sizes);
-        /**
-         * Before going any further make sure we know exactly how the Open MPI
-         * library was compiled. This means we know the size of each of the basic
-         * types as stored in the MPIR_debug_typedefs_sizeof array.
+        /*
+         * Before going any further make sure we know exactly how the
+         * Open MPI library was compiled. This means we know the size
+         * of each of the basic types as stored in the
+         * MPIR_debug_typedefs_sizeof array.
          */
         {
             mqs_taddr_t typedefs_sizeof;
 
             if(mqs_find_symbol (image, "MPIR_debug_typedefs_sizeof", &typedefs_sizeof) != mqs_ok)
                return err_no_store;
-               p_info->sizes.short_size = fetch_int( process, /* sizeof (short) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.short_size = ompi_fetch_int( process, /* sizeof (short) */
+                                                          typedefs_sizeof,
+                                                          p_info );
                typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.int_size = fetch_int( process, /* sizeof (int) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.int_size = ompi_fetch_int( process, /* sizeof (int) */
+                                                        typedefs_sizeof,
+                                                        p_info );
                typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.long_size = fetch_int( process, /* sizeof (long) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.long_size = ompi_fetch_int( process, /* sizeof (long) */
+                                                         typedefs_sizeof,
+                                                         p_info );
                typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.long_long_size = fetch_int( process, /* sizeof (long long) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.long_long_size = ompi_fetch_int( process, /* sizeof (long long) */
+                                                              typedefs_sizeof,
+                                                              p_info );
                typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.pointer_size = fetch_int( process, /* sizeof (void *) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.pointer_size = ompi_fetch_int( process, /* sizeof (void *) */
+                                                            typedefs_sizeof,
+                                                            p_info );
                typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.bool_size = fetch_int( process, /* sizeof (bool) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.bool_size = ompi_fetch_int( process, /* sizeof (bool) */
+                                                         typedefs_sizeof,
+                                                         p_info );
                typedefs_sizeof += p_info->sizes.int_size;
-               p_info->sizes.size_t_size = fetch_int( process, /* sizeof (size_t) */
-                                                     typedefs_sizeof,
-                                                     p_info );
+               p_info->sizes.size_t_size = ompi_fetch_int( process, /* sizeof (size_t) */
+                                                           typedefs_sizeof,
+                                                           p_info );
                DEBUG( VERBOSE_GENERAL, 
                       ("sizes short = %d int = %d long = %d long long = %d "
                        "void* = %d bool = %d size_t = %d\n",
@@ -792,19 +435,20 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
 int mqs_process_has_queues (mqs_process *proc, char **msg)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
     mqs_image * image        = mqs_get_image (proc);
     mpi_image_info   *i_info = (mpi_image_info *)mqs_get_image_info (image);
 
     /* Don't bother with a pop up here, it's unlikely to be helpful */
     *msg = 0;
     DEBUG(VERBOSE_GENERAL,("checking the status of the OMPI dll\n"));
-    if (mqs_find_symbol (image, "ompi_mpi_communicators", &p_info->commlist_base) != mqs_ok)
+    if (mqs_find_symbol (image, "ompi_mpi_communicators", &extra->commlist_base) != mqs_ok)
         return err_all_communicators;
   
-    if (mqs_find_symbol (image, "mca_pml_base_send_requests", &p_info->send_queue_base) != mqs_ok)
+    if (mqs_find_symbol (image, "mca_pml_base_send_requests", &extra->send_queue_base) != mqs_ok)
         return err_mpid_sends;
   
-    if (mqs_find_symbol (image, "mca_pml_base_recv_requests", &p_info->recv_queue_base) != mqs_ok)
+    if (mqs_find_symbol (image, "mca_pml_base_recv_requests", &extra->recv_queue_base) != mqs_ok)
         return err_mpid_recvs;
     DEBUG(VERBOSE_GENERAL,("process_has_queues returned success\n"));
     return mqs_ok;
@@ -817,25 +461,26 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
 static int communicators_changed (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     mqs_tword_t number_free;         /* the number of available positions in
                                       * the communicator array. */
     mqs_tword_t lowest_free;         /* the lowest free communicator */
 
-    lowest_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.lowest_free,
-                             p_info );
-    number_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.number_free,
-                             p_info );
-    if( (lowest_free != p_info->comm_lowest_free) ||
-        (number_free != p_info->comm_number_free) ) {
+    lowest_free = ompi_fetch_int( proc,
+                                  extra->commlist_base + i_info->opal_pointer_array_t.offset.lowest_free,
+                                  p_info );
+    number_free = ompi_fetch_int( proc,
+                                  extra->commlist_base + i_info->opal_pointer_array_t.offset.number_free,
+                                  p_info );
+    if( (lowest_free != extra->comm_lowest_free) ||
+        (number_free != extra->comm_number_free) ) {
         DEBUG(VERBOSE_COMM, ("Recreate the communicator list\n"
                              "    lowest_free [current] %d != [stored] %d\n"
                              "    number_free [current] %d != [stored] %d\n",
-                             (int)lowest_free, (int)p_info->comm_lowest_free,
-                             (int)number_free, (int)p_info->comm_number_free) );
+                             (int)lowest_free, (int)extra->comm_lowest_free,
+                             (int)number_free, (int)extra->comm_number_free) );
         return 1;
     }
     DEBUG(VERBOSE_COMM, ("Communicator list not modified\n") );
@@ -851,7 +496,8 @@ static int communicators_changed (mqs_process *proc)
 static communicator_t * find_communicator( mpi_process_info *p_info,
                                            int recv_ctx )
 {
-    communicator_t * comm = p_info->communicator_list;
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
+    communicator_t * comm = extra->communicator_list;
 
     for( ; comm; comm = comm->next ) {
         if( comm->comm_info.unique_id == (mqs_taddr_t)recv_ctx )
@@ -878,6 +524,7 @@ static int compare_comms (const void *a, const void *b)
 static int rebuild_communicator_list (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
     mqs_image * image        = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     communicator_t **commp, *old;
@@ -895,17 +542,17 @@ static int rebuild_communicator_list (mqs_process *proc)
      * Start by getting the number of registered communicators in the
      * global communicator array.
      */
-    comm_size = fetch_int( proc,
-                           p_info->commlist_base + i_info->opal_pointer_array_t.offset.size,
-                           p_info );
-    lowest_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.lowest_free,
-                             p_info );
-    number_free = fetch_int( proc,
-                             p_info->commlist_base + i_info->opal_pointer_array_t.offset.number_free,
-                             p_info );
-    p_info->comm_lowest_free = lowest_free;
-    p_info->comm_number_free = number_free;
+    comm_size = ompi_fetch_int( proc,
+                                extra->commlist_base + i_info->opal_pointer_array_t.offset.size,
+                                p_info );
+    lowest_free = ompi_fetch_int( proc,
+                                  extra->commlist_base + i_info->opal_pointer_array_t.offset.lowest_free,
+                                  p_info );
+    number_free = ompi_fetch_int( proc,
+                                  extra->commlist_base + i_info->opal_pointer_array_t.offset.number_free,
+                                  p_info );
+    extra->comm_lowest_free = lowest_free;
+    extra->comm_number_free = number_free;
 
     DEBUG(VERBOSE_COMM,("Number of coms %d lowest_free %d number_free %d\n",
                         (int)comm_size, (int)lowest_free, (int)number_free));
@@ -916,23 +563,23 @@ static int rebuild_communicator_list (mqs_process *proc)
      * We can use the fact that MPI_COMM_WORLD is at index 0 to force the
      * creation of the world_proc_array.
      */
-    p_info->world_proc_array_entries = 0;
-    mqs_free( p_info->world_proc_array );
-    p_info->world_proc_array = NULL;
+    extra->world_proc_array_entries = 0;
+    mqs_free( extra->world_proc_array );
+    extra->world_proc_array = NULL;
 
     /* Now get the pointer to the array of pointers to communicators */
     comm_addr_base =
-        fetch_pointer( proc,
-                       p_info->commlist_base + i_info->opal_pointer_array_t.offset.addr,
-                       p_info );
+        ompi_fetch_pointer( proc,
+                            extra->commlist_base + i_info->opal_pointer_array_t.offset.addr,
+                            p_info );
     DEBUG(VERBOSE_COMM,("Array of communicators starting at 0x%llx (sizeof(mqs_taddr_t*) = %d)\n",
                         (long long)comm_addr_base, (int)sizeof(mqs_taddr_t)));
     for( i = 0; (commcount < (comm_size - number_free)) && (i < comm_size); i++ ) {
         /* Get the communicator pointer */
         comm_ptr = 
-            fetch_pointer( proc,
-                           comm_addr_base + i * p_info->sizes.pointer_size,
-                           p_info );
+            ompi_fetch_pointer( proc,
+                                comm_addr_base + i * p_info->sizes.pointer_size,
+                                p_info );
         DEBUG(VERBOSE_GENERAL,("Fetch communicator pointer 0x%llx\n", (long long)comm_ptr));
         if( 0 == comm_ptr ) continue;
         commcount++;
@@ -940,12 +587,12 @@ static int rebuild_communicator_list (mqs_process *proc)
         DEBUG(VERBOSE_GENERAL, ("Retrieve context_id from 0x%llx and local_rank from 0x%llx\n",
                                 (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_contextid),
                                 (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank)));
-        context_id = fetch_int( proc,
-                                comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
-                                p_info );
-        local_rank = fetch_int( proc,
-                                comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank,
-                                p_info );
+        context_id = ompi_fetch_int( proc,
+                                     comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
+                                     p_info );
+        local_rank = ompi_fetch_int( proc,
+                                     comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank,
+                                     p_info );
 
         /* Do we already have this communicator ? */
         old = find_communicator(p_info, context_id);
@@ -954,8 +601,8 @@ static int rebuild_communicator_list (mqs_process *proc)
 
             old = (communicator_t *)mqs_malloc (sizeof (communicator_t));
             /* Save the results */
-            old->next                 = p_info->communicator_list;
-            p_info->communicator_list = old;
+            old->next                 = extra->communicator_list;
+            extra->communicator_list = old;
             old->comm_ptr             = comm_ptr;
             old->comm_info.unique_id  = context_id;
             old->comm_info.local_rank = local_rank;
@@ -964,8 +611,8 @@ static int rebuild_communicator_list (mqs_process *proc)
                                 (long)old, context_id, local_rank));
             /* Now get the information about the group */
             group_base =
-                fetch_pointer( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_local_group,
-                               p_info );
+                ompi_fetch_pointer( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_local_group,
+                                    p_info );
             old->group = find_or_create_group( proc, group_base );
         }
         mqs_fetch_data( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_name,
@@ -984,7 +631,7 @@ static int rebuild_communicator_list (mqs_process *proc)
     /* Now iterate over the list tidying up any communicators which
      * no longer exist, and cleaning the flags on any which do.
      */
-    commp = &p_info->communicator_list;
+    commp = &extra->communicator_list;
     commcount = 0;
     for (; *commp; ) {
         communicator_t *comm = *commp;
@@ -1008,7 +655,7 @@ static int rebuild_communicator_list (mqs_process *proc)
         /* Sort the list so that it is displayed in some semi-sane order. */
         communicator_t ** comm_array =
             (communicator_t **) mqs_malloc(commcount * sizeof (communicator_t *));
-        communicator_t *comm = p_info->communicator_list;
+        communicator_t *comm = extra->communicator_list;
 
         for (i=0; i<commcount; i++, comm=comm->next)
             comm_array [i] = comm;
@@ -1017,11 +664,11 @@ static int rebuild_communicator_list (mqs_process *proc)
         qsort (comm_array, commcount, sizeof (communicator_t *), compare_comms);
 
         /* Rebuild the list */
-        p_info->communicator_list = NULL;
+        extra->communicator_list = NULL;
         for (i=0; i<commcount; i++) {
             comm = comm_array[i];
-            comm->next = p_info->communicator_list;
-            p_info->communicator_list = comm;
+            comm->next = extra->communicator_list;
+            extra->communicator_list = comm;
         }
 
         mqs_free (comm_array);
@@ -1048,16 +695,17 @@ int mqs_update_communicator_list (mqs_process *proc)
 int mqs_setup_communicator_iterator (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
 
     /* Start at the front of the list again */
-    p_info->current_communicator = p_info->communicator_list;
+    extra->current_communicator = extra->communicator_list;
     /* Reset the operation iterator too */
-    p_info->next_msg.free_list            = 0;
-    p_info->next_msg.current_item         = 0;
-    p_info->next_msg.opal_list_t_pos.list = 0;
+    extra->next_msg.free_list            = 0;
+    extra->next_msg.current_item         = 0;
+    extra->next_msg.opal_list_t_pos.list = 0;
 
     DEBUG(VERBOSE_COMM,("mqs_setup_communicator_iterator called\n"));
-    return p_info->current_communicator == NULL ? mqs_end_of_list : mqs_ok;
+    return extra->current_communicator == NULL ? mqs_end_of_list : mqs_ok;
 } /* mqs_setup_communicator_iterator */
 
 /***********************************************************************
@@ -1066,9 +714,10 @@ int mqs_setup_communicator_iterator (mqs_process *proc)
 int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
 
-    if (p_info->current_communicator) {
-        *comm = p_info->current_communicator->comm_info;
+    if (extra->current_communicator) {
+        *comm = extra->current_communicator->comm_info;
         DEBUG(VERBOSE_COMM,("mqs_get_communicator %d local_rank %d name %s\n",
                             comm->unique_id, (int)comm->local_rank,
                             comm->name));
@@ -1084,7 +733,8 @@ int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
 int mqs_get_comm_group (mqs_process *proc, int *group_members)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
-    communicator_t     *comm   = p_info->current_communicator;
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
+    communicator_t     *comm   = extra->current_communicator;
 
     if (comm && comm->group) {
         group_t * g = comm->group;
@@ -1104,9 +754,10 @@ int mqs_get_comm_group (mqs_process *proc, int *group_members)
 int mqs_next_communicator (mqs_process *proc)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
 
-    p_info->current_communicator = p_info->current_communicator->next;
-    return (p_info->current_communicator != NULL) ? mqs_ok : mqs_end_of_list;
+    extra->current_communicator = extra->current_communicator->next;
+    return (extra->current_communicator != NULL) ? mqs_ok : mqs_end_of_list;
 } /* mqs_next_communicator */
 
 /**
@@ -1121,8 +772,8 @@ static int opal_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
     position->list = list;
     position->sentinel = position->list + i_info->opal_list_t.offset.opal_list_sentinel;
     position->current_item =
-        fetch_pointer( proc, position->sentinel + i_info->opal_list_item_t.offset.opal_list_next,
-                       p_info );
+        ompi_fetch_pointer( proc, position->sentinel + i_info->opal_list_item_t.offset.opal_list_next,
+                            p_info );
     if( position->current_item == position->sentinel )
         position->current_item = 0;
     DEBUG(VERBOSE_LISTS,("opal_list_t_init_parser list = 0x%llx, sentinel = 0x%llx, "
@@ -1142,9 +793,9 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
         return mqs_end_of_list;
 
     position->current_item =
-        fetch_pointer( proc,
-                       position->current_item + i_info->opal_list_item_t.offset.opal_list_next,
-                       p_info );
+        ompi_fetch_pointer( proc,
+                            position->current_item + i_info->opal_list_item_t.offset.opal_list_next,
+                            p_info );
     if( position->current_item == position->sentinel )
         position->current_item = 0;
     return mqs_ok;
@@ -1183,23 +834,23 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
     position->free_list = free_list;
 
     position->fl_elem_size =
-        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
-                      p_info );
+        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
+                           p_info );
     position->fl_alignment =
-        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
-                      p_info );
+        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
+                           p_info );
     position->fl_elem_class =
-        fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
-                      p_info );
+        ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
+                            p_info );
     position->fl_mpool =
-        fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
-                       p_info );
+        ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
+                            p_info );
     position->fl_num_per_alloc =
-        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
-                      p_info );
+        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
+                           p_info );
     position->fl_num_allocated =
-        fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
-                      p_info );
+        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
+                           p_info );
 
     if( 0 == position->fl_mpool ) {
         position->header_space = position->fl_elem_size;
@@ -1366,21 +1017,22 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
     mqs_taddr_t current_item;
     mqs_tword_t req_complete, req_pml_complete, req_valid, req_type;
     mqs_taddr_t req_buffer, req_comm;
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
 
     /* If we get a PML request with an internal tag we will jump back here */
   rescan_requests:
     while( 1 ) {
         ompi_free_list_t_next_item( proc, p_info,
-                                    &p_info->next_msg, &current_item );
+                                    &extra->next_msg, &current_item );
         if( 0 == current_item ) {
             DEBUG(VERBOSE_REQ,("no more items in the %s request queue\n",
                                look_for_user_buffer ? "receive" : "send" ));
             return mqs_end_of_list;
         }
-        req_valid = fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_state, p_info );
+        req_valid = ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_state, p_info );
         if( OMPI_REQUEST_INVALID == req_valid ) continue;
-        req_comm = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_comm, p_info );
-        if( p_info->current_communicator->comm_ptr == req_comm ) break;
+        req_comm = ompi_fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_comm, p_info );
+        if( extra->current_communicator->comm_ptr == req_comm ) break;
         DEBUG(VERBOSE_REQ,("unmatched request (0x%llx) req_comm = %llx current_com = %llx\n",
                            (long long)current_item, (long long)req_comm,
                            (long long)p_info->current_communicator->comm_ptr));
@@ -1389,7 +1041,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
     res->extra_text[0][0] = 0; res->extra_text[1][0] = 0; res->extra_text[2][0] = 0;
     res->extra_text[3][0] = 0; res->extra_text[4][0] = 0;
 
-    req_type = fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_type, p_info );
+    req_type = ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_type, p_info );
     if( OMPI_REQUEST_PML == req_type ) {
         mqs_taddr_t ompi_datatype;
         char data_name[64];
@@ -1399,47 +1051,47 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
          * request the internal requests information then move along.
          */
         res->desired_tag =
-            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_tag, p_info );
+            ompi_fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_tag, p_info );
         if( MPI_ANY_TAG == (int)res->desired_tag ) {
             res->tag_wild = TRUE;
         } else {
             /* Don't allow negative tags to show up */
-            if( ((int)res->desired_tag < 0) && (0 == p_info->show_internal_requests) )
+            if( ((int)res->desired_tag < 0) && (0 == extra->show_internal_requests) )
                 goto rescan_requests;
             res->tag_wild = FALSE;
         }
 
         req_type =
-            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_type,
-                       p_info);
+            ompi_fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_type,
+                            p_info);
         req_complete =
-            fetch_bool( proc,
-                        current_item + i_info->ompi_request_t.offset.req_complete,
-                        p_info );
+            ompi_fetch_bool( proc,
+                             current_item + i_info->ompi_request_t.offset.req_complete,
+                             p_info );
         req_pml_complete =
-            fetch_bool( proc,
-                        current_item + i_info->mca_pml_base_request_t.offset.req_pml_complete,
-                        p_info );
+            ompi_fetch_bool( proc,
+                             current_item + i_info->mca_pml_base_request_t.offset.req_pml_complete,
+                             p_info );
         res->status = (0 == req_complete ? mqs_st_pending : mqs_st_complete);
 
-        res->desired_local_rank  = fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
-        res->desired_global_rank = translate( p_info->current_communicator->group,
+        res->desired_local_rank  = ompi_fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
+        res->desired_global_rank = translate( extra->current_communicator->group,
                                               res->desired_local_rank );
         
-        res->buffer = fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_addr,
+        res->buffer = ompi_fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_addr,
                                      p_info );
         /* Set this to true if it's a buffered request */
         res->system_buffer = FALSE;
             
         /* The pointer to the request datatype */
         ompi_datatype =
-            fetch_pointer( proc,
-                           current_item + i_info->mca_pml_base_request_t.offset.req_datatype, p_info );
+            ompi_fetch_pointer( proc,
+                                current_item + i_info->mca_pml_base_request_t.offset.req_datatype, p_info );
         /* Retrieve the count as specified by the user */
         res->desired_length =
-            fetch_size_t( proc,
-                          ompi_datatype + i_info->ompi_datatype_t.offset.size,
-                          p_info );
+            ompi_fetch_size_t( proc,
+                               ompi_datatype + i_info->ompi_datatype_t.offset.size,
+                               p_info );
         /* Be user friendly, show the datatype name */
         mqs_fetch_data( proc, ompi_datatype + i_info->ompi_datatype_t.offset.name,
                         64, data_name );
@@ -1449,20 +1101,20 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         }
         /* And now compute the real length as specified by the user */
         res->desired_length *=
-            fetch_size_t( proc,
-                          current_item + i_info->mca_pml_base_request_t.offset.req_count,
-                          p_info );
+            ompi_fetch_size_t( proc,
+                               current_item + i_info->mca_pml_base_request_t.offset.req_count,
+                               p_info );
 
         if( MCA_PML_REQUEST_SEND == req_type ) {
             snprintf( (char *)res->extra_text[0], 64, "Send: 0x%llx", (long long)current_item );
             req_buffer =
-                fetch_pointer( proc,
-                               current_item + i_info->mca_pml_base_send_request_t.offset.req_addr,
-                               p_info );
+                ompi_fetch_pointer( proc,
+                                    current_item + i_info->mca_pml_base_send_request_t.offset.req_addr,
+                                    p_info );
             res->system_buffer = ( req_buffer == res->buffer ? FALSE : TRUE );
             res->actual_length =
-                fetch_size_t( proc,
-                              current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
+                ompi_fetch_size_t( proc,
+                                   current_item + i_info->mca_pml_base_send_request_t.offset.req_bytes_packed, p_info );
             res->actual_tag         = res->desired_tag;
             res->actual_local_rank  = res->desired_local_rank;
             res->actual_global_rank = res->actual_local_rank;
@@ -1474,18 +1126,18 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
              * is matched.
              */
             res->actual_tag =
-                fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
-                           i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
+                ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                                i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
             if( MPI_ANY_TAG != (int)res->actual_tag ) {
                 res->status = mqs_st_matched;
                 res->desired_length =
-                    fetch_size_t( proc,
-                                  current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed,
-                                  p_info );
+                    ompi_fetch_size_t( proc,
+                                       current_item + i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed,
+                                       p_info );
                 res->actual_local_rank =
-                    fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
-                               i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
-                res->actual_global_rank = translate( p_info->current_communicator->group,
+                    ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                                    i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
+                res->actual_global_rank = translate( extra->current_communicator->group,
                                                   res->actual_local_rank );
             }
         } else {
@@ -1497,19 +1149,19 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
 
         /* If the length we're looking for is the count ... */
         /*res->desired_length      =
-            fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_count, p_info );*/
+          ompi_fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_count, p_info );*/
         
         if( (mqs_st_pending < res->status) && (MCA_PML_REQUEST_SEND != req_type) ) {  /* The real data from the status */
             res->actual_length       =
-                fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
-                           i_info->ompi_status_public_t.offset._count, p_info );
+                ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                                i_info->ompi_status_public_t.offset._count, p_info );
             res->actual_tag          =
-                fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
-                           i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
+                ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                                i_info->ompi_status_public_t.offset.MPI_TAG, p_info );
             res->actual_local_rank   =
-                fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
-                           i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
-            res->actual_global_rank  = translate( p_info->current_communicator->group,
+                ompi_fetch_int( proc, current_item + i_info->ompi_request_t.offset.req_status +
+                                i_info->ompi_status_public_t.offset.MPI_SOURCE, p_info );
+            res->actual_global_rank  = translate( extra->current_communicator->group,
                                                   res->actual_local_rank );
         }
         dump_request( current_item, res );
@@ -1523,18 +1175,19 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
 int mqs_setup_operation_iterator (mqs_process *proc, int op)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
 
-    p_info->what = (mqs_op_class)op;
+    extra->what = (mqs_op_class)op;
 
     switch (op) {
     case mqs_pending_sends:
         DEBUG(VERBOSE_REQ,("setup the send queue iterator\n"));
-        ompi_free_list_t_init_parser( proc, p_info, &p_info->next_msg, p_info->send_queue_base );
+        ompi_free_list_t_init_parser( proc, p_info, &extra->next_msg, extra->send_queue_base );
         return mqs_ok;
 
     case mqs_pending_receives:
         DEBUG(VERBOSE_REQ,("setup the receive queue iterator\n"));
-        ompi_free_list_t_init_parser( proc, p_info, &p_info->next_msg, p_info->recv_queue_base );
+        ompi_free_list_t_init_parser( proc, p_info, &extra->next_msg, extra->recv_queue_base );
         return mqs_ok;
 
     case mqs_unexpected_messages:  /* TODO */
@@ -1554,8 +1207,9 @@ int mqs_setup_operation_iterator (mqs_process *proc, int op)
 int mqs_next_operation (mqs_process *proc, mqs_pending_operation *op)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
 
-    switch (p_info->what) {
+    switch (extra->what) {
     case mqs_pending_receives:
         DEBUG(VERBOSE_REQ,("digging for the receive queue\n"));
         return fetch_request( proc, p_info, op, TRUE );
@@ -1575,8 +1229,9 @@ int mqs_next_operation (mqs_process *proc, mqs_pending_operation *op)
 void mqs_destroy_process_info (mqs_process_info *mp_info)
 {
     mpi_process_info *p_info = (mpi_process_info *)mp_info;
+    mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
     /* Need to handle the communicators and groups too */
-    communicator_t *comm = p_info->communicator_list;
+    communicator_t *comm = extra->communicator_list;
 
     while (comm) {
         communicator_t *next = comm->next;
@@ -1586,6 +1241,9 @@ void mqs_destroy_process_info (mqs_process_info *mp_info)
         mqs_free (comm);
       
         comm = next;
+    }
+    if (NULL != extra) {
+        mqs_free(extra);
     }
     mqs_free (p_info);
 } /* mqs_destroy_process_info */

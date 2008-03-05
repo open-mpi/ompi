@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -93,36 +94,17 @@ int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm)
 
 int mca_topo_unity_module_init (struct ompi_communicator_t *comm)
 {
-   /* This function is used to initialize the module on the communicator. We
-    * need to hang the data off of the communicator. For this we still use the
-    * same data structure which was defined in topo.h, mca_topo_comm_1_0_0_t. 
-    * There are no additional things which we need. If some other module needs
-    * to hang additional data, then it has to have this structure as the first
-    * member and then extend. This is a must rule */
+    /* Nothing to do -- the setup is done in communicator/comm.c
+       (setup the comm->c_topo_comm data) */
 
-   struct mca_topo_base_comm_1_0_0_t *topo_data;
-
-   /* allocate the data */
-
-   comm->c_topo_comm = NULL;
-   topo_data = (mca_topo_base_comm_1_0_0_t*)malloc(sizeof(struct mca_topo_base_comm_1_0_0_t));
-   if (NULL == topo_data) {
-       return OMPI_ERROR;
-   }
-
-   comm->c_topo_comm = topo_data;
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
    
 int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm) 
 {
-    /* All we need to do for now is to remove the allocated data */
- 
-    if (NULL != comm->c_topo_comm) {
-        free (comm->c_topo_comm);
-        comm->c_topo = NULL;
-    }
+    /* Nothing to do -- the teardown is done in
+       communicator/comm_init.c (free the comm->c_topo_comm data) */
 
     return OMPI_SUCCESS;
 }

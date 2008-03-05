@@ -103,11 +103,6 @@ int ompi_mpi_abort(struct ompi_communicator_t* comm,
                    int errcode, bool kill_remote_of_intercomm);
 
 /**
- * Wait for a TotalView-like debugger if asked.
- */
-void ompi_mpi_wait_for_totalview(void);
-
-/**
  * Do a preconnect of MPI connections (i.e., force connections to
  * be made if they will be made).
  */

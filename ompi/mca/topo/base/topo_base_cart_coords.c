@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,8 +58,7 @@ int mca_topo_base_cart_coords (MPI_Comm comm,
     for (i = 0; 
         (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i < maxdims); 
         ++i, ++d) {
-
-        dim = (*d > 0) ? *d : -(*d);
+        dim = *d;
         remprocs /= dim;
         *coords++ = rank / remprocs;
         rank %= remprocs;

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +18,11 @@
  */
 
 #include "ompi_config.h"
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/topo/topo.h"
@@ -40,25 +46,14 @@ int mca_topo_base_cart_get (MPI_Comm comm,
                         int maxdims,
                         int *dims,
                         int *periods,
-                        int *coords){
-    int i;
-    int *d;
-    int *c;
+                        int *coords)
+{
+    int m = (maxdims <= comm->c_topo_comm->mtc_ndims_or_nnodes) ?
+        maxdims : comm->c_topo_comm->mtc_ndims_or_nnodes;
 
-    d = comm->c_topo_comm->mtc_dims_or_index;
-    c = comm->c_topo_comm->mtc_coords;
-
-    for (i = 0; (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i < maxdims); ++i) {
-         
-        if (*d > 0) {
-            *dims++ = *d++;
-            *periods++ = 0;
-        } else {
-           *dims++ = -(*d++);
-           *periods++ = 1;
-        }
-        *coords++ = *c++;
-    }
+    memcpy(dims, comm->c_topo_comm->mtc_dims_or_index, m * sizeof(int));
+    memcpy(periods, comm->c_topo_comm->mtc_periods_or_edges, m * sizeof(int));
+    memcpy(coords, comm->c_topo_comm->mtc_coords, m * sizeof(int));
 
     return MPI_SUCCESS;
 }

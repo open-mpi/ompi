@@ -1,0 +1,663 @@
+1. George questions the need for the mpidbg_process_t structure (and
+   the mapping that it provides to MPI_COMM_WORLD).  What does Allinea
+   think of this?
+
+2. 3 Aug 2007: Random notes:
+   - I kept the prefix MPIDBG/mpidbg (vs. converting to mqs to be the
+     same as the message queue functionality) to allow this
+     functionality to be in a different DLL/plugin than the message
+     queue DLL/plugin.
+   - I therefore also kept our own MPIDBG return codes (the existing
+     mqs_* return codes are not sufficient).
+
+3. Some additional open issues throughout the text and header file are
+   marked with "JMS".
+
+4. 30 Aug 2007: Added questions about uninitialized / already-freed
+   handles.
+
+***************************************************************************
+
+Premise
+=======
+
+Debuggers can display the value of intrinsic datatypes (e.g., int,
+double, etc.).  Even composite struct instances can be displayed.  A
+logical extension to this concept is that the debugger should be able
+to show information about MPI opaque handles in a running application
+(and possibly cache such values for playback when the application is
+not running, such as during corefile analysis).  Similar in spirit to
+the API for obtaining the message passing queues, a simple API can be
+used between the debugger and the MPI application to obtain
+information about specific MPI handle instances.
+
+***************************************************************************
+
+Background
+==========
+
+MPI defines several types of opaque handles that are used in
+applications (e.g., MPI_Comm, MPI_Request, etc.).  The opaque handles
+are references to underlying MPI objects that are private to the MPI
+implementation.  These objects contain a wealth of information that
+can be valuable to display in a debugging context.
+
+Implementations typically have a different underlying type and then
+typedef the MPI-specified name to the underlying type.  For example,
+Open MPI has the following in mpi.h:
+
+    typedef struct ompi_communicator_t *MPI_Comm;
+
+The MPI-specified type is "MPI_Comm"; the OMPI-specific type is
+"struct ompi_communicator_t *".  The debugger cannot simply deduce the
+"real" types of MPI handles by looking at the types of well-known
+global variables (such as MPI_COMM_WORLD) because these names may be
+preprocessor macros in mpi.h; the real name of the symbol may be
+implementation-dependent and not easy to guess.
+
+Hence, if "MPI_*" types are unable to be found by the debugger within
+the application image, the MPI implementation will need to provide a
+list of the actual types to the debugger when the MPI handle
+interpretation functionality is initialized.  Once the debugger knows
+the types of MPI handles, it can provide context-sensitive information
+when displaying the values of variables within the application image.
+
+Some MPI implementations use integers for handles in C.  Such
+implementations are strongly encouraged to use "typedef" for creating
+handle types in mpi.h (vs. using #define), such as:
+
+    typedef int MPI_Comm;
+    typedef int MPI_Datatype;
+    /* etc. */
+
+So that the debugger can identify a variable as an MPI_Comm (vs. an
+int) and therefore know that it is an MPI communicator.
+
+In Fortran, however, all MPI handles are defined by the MPI standard
+to be of type INTEGER.  As such, there is no way for the debugger to
+automatically know that a given INTEGER variable is an MPI handle, nor
+which kind of MPI handle.  It is therefore up to the debugger's UI to
+allow users to designate specific INTEGER variables as a given MPI
+handle type.
+
+MPI handles can be "freed" by the application, but this actually only
+marks the underlying MPI object for freeing; the object itself may not
+be freed until all corresponding handles and pending actions have
+completed.  Additionally, for debugging purposes, an MPI
+implementation can choose to *never* free MPI objects (in order to
+show that they were marked as freed and/or actually freed).
+
+***************************************************************************
+
+Assumptions
+===========
+
+Some terminology:
+ - host: machine and process on which debugging process is executing.
+ - debugger: machine and debugging UI, where the debugger is running.
+   The two machines may be distinct from a hardware point of view,
+   they may have differing endinanness, word-size, etc.
+
+MPI typically denotes function names in all capitol letters (MPI_INIT)
+as a language-neutral form.  The Fortran binding for the function is
+dependent upon the compiler; the C binding for the function
+capitolizes the "MPI" and the first letter of the next token (e.g.,
+"MPI_Init").  This text will use the language-neutral names for all
+MPI function names.
+
+The debugger will access the handle-interpretation functionality by
+loading a plugin provided by the MPI implementation into its process
+space.  The plugin will contain "query" functions that the debugger
+can invoke to obtain information about various MPI handle types.  The
+query functions generally return the additional information or "not
+found" kinds of errors.
+
+The MPI-implementation-provided plugin shares many of the same
+characteristics as the Etnus MPI message queue plugin design, but is
+loaded slightly differently.  The plugin will use the mqs_* functions
+defined by the Etnus message queue access interface to read the
+process image to obtain MPI object information that is then passed
+back to the debugger.
+
+The plugin's query functions should not be called before MPI_INIT has
+completed nor after MPI_FINALIZE has started.  MPI handles are only
+meaningful between the time that MPI_INIT completes and MPI_FINALIZE
+starts, anyway.
+
+When MPI handles are marked for freeing by the MPI implementation,
+there should be some notice from the debugger that the underlying
+objects should not *actually* be freed, but rather orphaned.  The
+debugger can track these objects and keep a reference count of
+how many handles are still referring to the underlying objects.  When
+the reference count goes to 0, the debugger can call a function in the
+application telling the MPI implementation that the object is safe to
+be freed.
+
+In this way, valuable debugging information is still available to the
+user if they have stale MPI handles because the underlying object will
+still be available in memory (marked as "stale"); but MPI object
+memory usage is not cumulative.
+
+The debugger may not be able to provide any additional information in
+Fortran applications because all MPI handles are of type INTEGER (and
+there's no way to tell that any given integer is an MPI communicator
+handle, for example) unless the debugger provides some way in the UI
+to indicate that a given INTEGER variable is a specific type of MPI
+handle.
+
+Note that the following pattern is valid in MPI:
+
+  MPI_Request a, b;
+  MPI_Isend(..., &a);
+  b = a;
+  MPI_Request_free(&a);
+
+After executing MPI_REQUEST_FREE, the handle "a" has been set to
+MPI_REQUEST_NULL, but the handle "b" still points to the [potentially
+ongoing] request.  "b" would therefore report that it has been marked
+for freeing by the application, but would not report that it was
+completed / marked for freeing by the MPI implementation until the
+corresponding ISEND actually completes.
+
+The query functions will return newly-allocated structs of information
+to the debugger (allocated via mqs_malloc).  The debugger will be
+responsible for freeing this memory.  Arrays/lists of information
+contained in the structs must be individually freed if they are not
+NULL (i.e., they will each be allocated via mqs_malloc).
+
+Finally, note that not all of this needs to be supported by the
+debugger at once.  Interpretation of some of the more common handle
+types can be implemented first (e.g., communicators and requests),
+followed by more types over time.
+
+***************************************************************************
+
+MPI handle types
+================
+
+Communicator
+============
+
+C: MPI_Comm
+C++: MPI::Comm, MPI::Intracomm, MPI::Intercomm, MPI::Cartcomm,
+     MPI::Graphcomm
+
+A communicator is an ordered set of MPI processes and a unique
+communication context.  There are 3 predefined communicators
+(MPI_COMM_WORLD, MPI_COMM_SELF, MPI_COMM_PARENT), and applications can
+create their own communicators.  There are two types of communicators:
+
+1. Intracommunicator: contains one group of processes.
+   Intracommunicators may optionally have a topology:
+   - Cartesian: a dense, N-dimensional Cartesian topology
+   - Graph: an arbitrary unweighted, undirected, connected graph
+
+2. Intercommunicator: contains a local group and a remote group of
+   processes.
+
+--> Information available from communicators:
+
+  - String name of length MPI_MAX_OBJECT_NAME
+  - Flag indicating whether it's a predefined communicator or not
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - This process' unique ID within the communicator ("rank", from 0-(N-1))
+  - This process' unique ID in the entire MPI universe
+  - Number of peer processes in the communicator
+  - Type of communicator: inter or intra
+    - If Inter, the number and list of peer processes in the communicator
+    - If intra, whether the communicator has a graph or cartesian
+      topology
+    - If have a Cartesian toplogy (mutually exclusive with having a
+      graph topology), the topology information:
+      - "ndims", "dims", periods" arguments from the corresponding
+        call to MPI_CART_CREATE, describing the Cartesian topology.
+    - If have a graph topology (mutually exclusive with having a
+      cartesian topology):
+      - "index" and "edges" arguments from the corresponding call to
+        MPI_GRAPH_CREATE, describing the nodes and edges in the graph
+        topology
+  - Cross reference to the underlying MPI group(s)
+  - Cross reference to the underlying MPI error handler
+
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - A list of MPI "attributes" that are attached to the communicator
+  - A list of any MPI requests currently associated with the
+    communicator (e.g., ongoing or completed but not released
+    communicator requests, or, in multi-threaded scenarios, ongoing
+    communicator operations potentially from other threads)
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - A list of MPI windows using this communicator
+  - A list of MPI files using this communicator
+
+--> Suggested data types
+    See mpihandles_interface.h
+
+--> Suggested API functions
+    See mpihandles_interface.h
+
+---------------------------------------------------------------------------
+
+Datatype
+========
+
+C: MPI_Datatype
+C++: MPI::Datatype
+
+MPI datatypes are used to express the size and shape of user-defind
+messages.  For example, a user can define an MPI datatype that
+describes a C structure, and can then use that MPI datatype to send
+and receive instances (or arrays) of that struct.  There are many
+predefined datatypes, and applications can create their own datatypes.
+
+--> Information available from datatypes:
+
+  - String name
+  - Flag indicating whether it's a predefined datatype or not
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - A type map of the overall datatype, composed of *only* intrinsic MPI
+    datatypes (MPI_INT, MPI_DOUBLE, etc.) that can be rendered by the
+    debugger into a form similar to MPI-1:3.12
+  - What function was used to create the datatype:
+    - <MPI_TYPE_>CREATE_DARRAY, CREATE_F90_COMPLEX,
+      CREATE_F90_INTEGER, CREATE_F90_REAL, CREATE_HINDEXED,
+      CREATE_HVACTOR, CREATE_INDEXED_BLOCK, CREATE_RESIZED,
+      CREATE_STRUCT, CREATE_SUBARRAY
+      --> JMS: Do we need to differentiate between the MPI-1 and MPI-2
+          functions?  Probably worthwhile, if for nothing other than
+          completeness (e.g., don't confuse the user saying that a
+          datatype was created by MPI_TYPE_CREATE_STRUCT when it was
+          creally created with MPI_TYPE_STRUCT, even though they're
+          effectively equivalent).
+    - <MPI_>TYPE_HINDEXED, TYPE_INDEXED, TYPE_HVECTOR, TYPE_VECTOR,
+      TYPE_STRUCT, TYPE_CONTIGUOUS, 
+
+  JMS: with the type map provided by MPI, a debugger can show "holes"
+       in a datatype (potentially indicating missed optimizations by
+       the application).  Very cool/useful!
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - Ongoing communication actions involving the datatype
+    (point-to-point, collective, one-sided)
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - Whether the datatype has been "committed" or not
+  - A list of datatypes used to create this datatype (JMS: may
+    require caching by the debugger!!)
+
+--> Suggested data types
+
+    ***TO BE FILLED IN***
+
+--> Suggested API functions
+
+    ***TO BE FILLED IN***
+
+---------------------------------------------------------------------------
+
+Error handler
+=============
+
+C: MPI_Errhandler
+C++: MPI::Errhandler
+
+MPI allows applications to define their own error handlers.  The
+default error handler is to abort the MPI job.  Error handlers can be
+attached to communicators, files, and windows.  There are 3 predefined
+error handlers (MPI_ERRORS_ARE_FATAL, MPI_ERRORS_RETURN,
+MPI::ERRORS_THROW_EXCEPTIONS), and applications can create their own
+error handlers.
+
+--> Information available from error handlers:
+
+  - Flag indicating whether it's a predefined error handler or not
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - Type of errorhandler: communicator, file, window
+  - If user-defined (i.e., not predefined), the function pointer for
+    the user function that MPI will invoke upon error
+  - Whether the callback function is in Fortran or C/C++
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - String name for predefined handles
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - List of communicators/files/windows that this error handler is
+    currently attached to
+
+--> Suggested data types
+    See mpihandles_interface.h
+
+--> Suggested API functions
+    See mpihandles_interface.h
+
+---------------------------------------------------------------------------
+
+File
+====
+
+C: MPI_File
+C++: MPI::File
+
+MPI has the concept of parallel IO, where a group of processes
+collectively open, read/write, and close files.  An MPI_File handle
+represents both an ordered set of processes and a file to which they
+are accessing.  There is one pre-defined file: MPI_FILE_NULL;
+applications can open their own files.
+
+--> Information available from files:
+
+  - String file name (or "MPI_FILE_NULL")
+  - Flag indicating whether it's a predefined file or not
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - Communicator that the file was opened with
+  - Info key=value pairs that the file was opened with
+  - Mode that the file was opened with
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - Whether the handle has been marked for freeing (closing) by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - A list of any MPI requests currently associated with the file
+    (e.g., ongoing or completed but not released file requests, or, in
+    multi-threaded scenarios, ongoing file operations potentially from
+    other threads)
+
+--> Suggested data types
+
+    ***TO BE FILLED IN***
+
+--> Suggested API functions
+
+    ***TO BE FILLED IN***
+
+---------------------------------------------------------------------------
+
+Group
+=====
+
+C: MPI_Group
+C++: MPI::Group
+
+An unordered set of processes.  There are predefined and user-defined
+groups.  Every communicator contains exactly 1 or 2 groups (depending
+on the type of communicator).  There are 2 predefined groups
+(MPI_GROUP_NULL and MPI_GROUP_EMPTY); applications can create their
+own groups.
+
+--> Information available from groups:
+
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - This process' unique ID in this group
+  - List of peer processes in this group
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - String name for predefined handles
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - A list of MPI communicators using this group
+
+--> Suggested data types
+
+    ***TO BE FILLED IN***
+
+--> Suggested API functions
+
+    ***TO BE FILLED IN***
+
+---------------------------------------------------------------------------
+
+Info
+====
+
+C: MPI_Info
+C++: MPI::Info
+
+A set of key=value pairs (the key and value are separate strings) that
+can be used to pass "hints" to MPI.  There are no predefined info
+handles; applications can create their own info handles.
+
+--> Information available from info:
+
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - Number of key=value pairs on the info
+  - List of key=value pairs (each key and value is an individual
+    string)
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - A list of places where the info object is currently being used
+
+--> Suggested data types
+
+    ***TO BE FILLED IN***
+
+--> Suggested API functions
+
+    ***TO BE FILLED IN***
+
+---------------------------------------------------------------------------
+
+Request
+=======
+
+C: MPI_Request
+C++:: MPI::Request, MPI::Grequest, MPI::Prequest
+
+A pointer to an ongoing or completed-but-not-yet-released action.
+There are three types of requests:
+
+  - Point-to-point communication: non-blocking sends, receives
+  - File actions: non-blocking reads, writes
+  - Generalized actions: Users can define their own asynchronous actions
+    that can be subject to MPI completion semantics
+
+There is one predefined request (MPI_REQUEST_NULL); applications can
+create their own requests.
+
+--> Information available from requests:
+
+  - Flag indicating whether it's a predefined request or not
+  - Flag indicating whether the request is persistent or not
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - Type of the request: pt2pt, file, generalized
+  - Function that created this request:
+    - Pt2pt: <MPI_>ISEND, IBSEND, ISSEND, IRSEND, IRECV, SEND_INIT,
+             BSEND_INIT, SSEND_INIT, RSEND_INIT, RECV_INIT
+    - File: <MPI_FILE_>IREAD, IREAD_AT, IREAD_SHARED, IWRITE,
+            IWRITE_AT, IWRITE_SHARED
+  - Whether the request has been marked "complete" or not
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - String name for predefined handles
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - Peer process(es) invovled with the request (if available)
+  - If pt2pt, communicator associated with the request
+  - If file, file associated with the request
+  - If pt2pt or file, whether the data transfer has started yet
+  - If pt2pt or file, whether the data transfer has completed yet
+
+--> Suggested data types
+    See mpihandles_interface.h
+
+--> Suggested API functions
+    See mpihandles_interface.h
+
+---------------------------------------------------------------------------
+
+Operation
+=========
+
+C: MPI_Op
+C++:: MPI::Op
+
+A reduction operator used in MPI collective and one-sided operations
+(e.g., sum, multiply, etc.).  There are several predefined operators;
+applications can also create their own operators.
+
+--> Information available from operators:
+
+  - Flag indicating whether it's a predefined operator or not
+  - C handle (if available)
+  - Fortran integer index for this handle (if available)
+  - If user-defined, the function pointer for the user function that
+    MPI will invoke
+  - Whether the callback function is in Fortran or C/C++
+  - Whether the operator is commutative or not
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - String name for predefined handles
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - List of ongoing collective / one-sided communications associated
+    with this operator
+
+--> Suggested data types
+
+    ***TO BE FILLED IN***
+
+--> Suggested API functions
+
+    ***TO BE FILLED IN***
+
+---------------------------------------------------------------------------
+
+Status
+======
+
+C: MPI_Status
+C++: MPI::Status
+
+A user-accessible struct that contains information about a completed
+communication.  The MPI status is a little different from other MPI
+handles in that it is the object itselt; not a handle to an underlying
+MPI status.  For example, if a point-to-point communication was
+started with a wildcard receive, the status will contain information
+about the peer to whom the communication completed.  There are no
+predefined statuses.
+
+--> Information available from status:
+
+  - Public member MPI_SOURCE: source of the communication
+  - Public member MPI_TAG: tag of the communication
+  - Public member MPI_ERROR: error status of the communication
+  - Number of bytes in the communication
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - Number of data elements in the communication
+
+--> Suggested data types
+    See mpihandles_interface.h
+
+--> Suggested API functions
+    See mpihandles_interface.h
+
+---------------------------------------------------------------------------
+
+Window
+======
+
+C: MPI_Win
+C++: MPI::Win
+
+An ordered set of processes, each defining their own "window" of
+memory for one-sided operations.
+
+--> Information available from windows:
+
+  - Communicator that the window was created with
+  - Base address, length, and displacement units of the window *in this
+    process*
+  - Info key=value pairs that the file was opened with
+
+
+--> Extra/bonus information that the MPI may be able to provide:
+
+  - Whether the handle has been marked for freeing by the
+    application or not
+  - Whether the underlying object has been "freed" by the MPI
+    implementation (i.e., made inactive, and would have actually been
+    freed if not running under a debugger)
+  - Whether LOCK has been called on this window without a
+    corresponding UNLOCK yet
+  - Whether START has been called on this window without a
+    corresponding COMPLETE yet
+  - Whether POST has been called on this window without a
+    corresopnding TEST/WAIT yet
+  - What the last synchronization call was on the window: FENCE,
+    LOCK/UNLOCK, START/COMPLETE, POST/TEST/WAIT
+
+--> Suggested data types
+
+    ***TO BE FILLED IN***
+
+--> Suggested API functions
+
+    ***TO BE FILLED IN***
+
+---------------------------------------------------------------------------
+
+Address integer
+===============
+
+C: MPI_Aint
+C++: MPI::Aint
+
+This is an MPI-specific type, but is always an integer value that is
+large enough to hold addresses.  It is typically an 32 or 64 bits
+long.  Hence, the debugger should be able to directly display this
+value.
+
+---------------------------------------------------------------------------
+
+Offset
+======
+
+C: MPI_Offset
+C++: MPI::Offset
+
+This is a MPI-specific type, but is always an integer value that is
+large enough to hold file offsets.  It is typically an 32 or 64 bits
+long.  Hence, the debugger should be able to directly display this
+value.

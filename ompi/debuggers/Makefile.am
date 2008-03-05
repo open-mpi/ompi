@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,7 +18,7 @@
 #
 
 noinst_LTLIBRARIES = libdebuggers.la
-inst_LTLIBRARIES = libompitv.la
+pkglib_LTLIBRARIES = libompi_dbg_msgq.la
 
 # This is not quite in the Automake spirit, but we have to do it.
 # Since the totalview portion of the library must be built with -g, we
@@ -30,18 +31,25 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
 # Source code files
 
-headers = debuggers.h mpi_interface.h ompi_dll_defs.h
-
-instdir = $(libdir)/openmpi
+headers = \
+        debuggers.h \
+        ompi_common_dll_defs.h \
+        msgq_interface.h ompi_msgq_dll_defs.h
 
 libdebuggers_la_SOURCES = \
         $(headers) \
-        ompi_totalview.c
-libdebuggers_la_CFLAGS = -DOMPI_TV_DLL=\"$(instdir)/libompitv.so\"
+        ompi_debuggers.c
+libdebuggers_la_CPPFLAGS = \
+        -DOMPI_MSGQ_DLL=\"$(pkglibdir)/libompi_dbg_msgq.so\" \
+        -DOMPI_MSGQ_DLL_PREFIX=\"libompi_dbg_msgq\" \
+        -DOMPI_MPIHANDLES_DLL_PREFIX=\"libompi_dbg_mpihandles\"
 
-libompitv_la_SOURCES = ompi_dll.c
-libompitv_la_CFLAGS = -g
-libompitv_la_LDFLAGS = -module -avoid-version
+common = ompi_common_dll_defs.h ompi_common_dll.c
+
+# MPI message queue DLL
+libompi_dbg_msgq_la_SOURCES = ompi_msgq_dll.c ompi_msgq_dll_defs.h $(common)
+libompi_dbg_msgq_la_CFLAGS = -g
+libompi_dbg_msgq_la_LDFLAGS = -module -avoid-version
 
 # Conditionally install the header files
 

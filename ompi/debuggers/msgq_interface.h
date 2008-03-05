@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 /* $Header: /home/tv/src/mpi/src/mpi_interface.h,v 1.13 2003/03/12 14:03:42 jcownie Exp $ */
 /* $Locker:  $ */
 
@@ -107,6 +119,9 @@
 #define _MPI_INTERFACE_INCLUDED
 
 #include <stdio.h>				/* For FILENAME_MAX */
+
+/* No MPI2 support yet */
+#define FOR_MPI2 0
 
 #ifdef	__cplusplus
 extern "C" {
@@ -254,6 +269,68 @@ enum
 enum mqs_status 
 {
   mqs_st_pending, mqs_st_matched, mqs_st_complete
+};
+
+/* Additional error codes and error string conversion. */
+enum {
+    err_silent_failure  = mqs_first_user_code,
+
+    err_no_current_communicator,
+    err_bad_request,
+    err_no_store,
+
+    err_failed_qhdr,
+    err_unexpected,
+    err_posted,
+
+    err_failed_queue,
+    err_first,
+
+    err_context_id,
+    err_tag,
+    err_tagmask,
+    err_lsrc,
+    err_srcmask,
+    err_next,
+    err_ptr,
+
+    err_missing_type,
+    err_missing_symbol,
+
+    err_db_shandle,
+    err_db_comm,
+    err_db_target,
+    err_db_tag,
+    err_db_data,
+    err_db_byte_length,
+    err_db_next,
+
+    err_failed_rhandle,
+    err_is_complete,
+    err_buf,
+    err_len,
+    err_s,
+
+    err_failed_status,
+    err_count,
+    err_MPI_SOURCE,
+    err_MPI_TAG,
+
+    err_failed_commlist,
+    err_sequence_number,
+    err_comm_first,
+
+    err_failed_communicator,
+    err_lrank_to_grank,
+    err_send_context,
+    err_recv_context,
+    err_comm_next,
+    err_comm_name,
+
+    err_all_communicators,
+    err_mpid_sends,
+    err_mpid_recvs,
+    err_group_corrupt
 };
 
 /* A structure to represent a communicator */

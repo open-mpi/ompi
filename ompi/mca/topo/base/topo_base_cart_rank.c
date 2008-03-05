@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +47,7 @@ int mca_topo_base_cart_rank (MPI_Comm comm,
    int i;
    int *d;
    int *c;
+   int *p;
 
    /*
     * Loop over coordinates computing the rank.
@@ -55,13 +57,14 @@ int mca_topo_base_cart_rank (MPI_Comm comm,
 
     i = comm->c_topo_comm->mtc_ndims_or_nnodes - 1;
     d = comm->c_topo_comm->mtc_dims_or_index + i;
+    p = comm->c_topo_comm->mtc_periods_or_edges + i;
     c = coords + i;
 
-   for (; i >= 0; --i, --c, --d) {
-       dim = (*d > 0) ? *d : -(*d);
+   for (; i >= 0; --i, --c, --d, --p) {
+       dim = *d;
        ord = *c;
         if ((ord < 0) || (ord >= dim)) {
-          if (*d > 0) {
+          if (*p) {
              return MPI_ERR_ARG;
           }
           ord %= dim;

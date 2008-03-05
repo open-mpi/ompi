@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,16 +28,13 @@
 
 #include "ompi_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-    /**
-     * Wait for a TotalView-like debugger if asked.
-     */
-    OMPI_DECLSPEC void ompi_wait_for_totalview(void);
+BEGIN_C_DECLS
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+    /**
+     * Wait for a debugger if asked.
+     */
+    OMPI_DECLSPEC void ompi_wait_for_debugger(void);
+
+END_C_DECLS
 
 #endif /* OMPI_DEBUGGERS_H */

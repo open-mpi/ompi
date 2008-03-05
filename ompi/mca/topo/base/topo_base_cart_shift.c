@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,7 +53,7 @@ int mca_topo_base_cart_shift (MPI_Comm comm,
     int srcord;
     int destord;
     int i;
-    int *p;
+    int *d, *q;
 
    /*
     * Handle the trivial case.
@@ -67,14 +68,11 @@ int mca_topo_base_cart_shift (MPI_Comm comm,
     * Compute the rank factor and ordinate.
     */
     factor = ompi_comm_size(comm);
-    p = comm->c_topo_comm->mtc_dims_or_index;
-    for (i = 0; (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i <= direction); ++i, ++p) {
-        if ((thisdirection = *p) > 0) {
-            thisperiod = 0;
-        } else {
-          thisperiod = 1;
-          thisdirection = -thisdirection;
-        }
+    d = comm->c_topo_comm->mtc_dims_or_index;
+    q = comm->c_topo_comm->mtc_periods_or_edges;
+    for (i = 0; (i < comm->c_topo_comm->mtc_ndims_or_nnodes) && (i <= direction); ++i, ++d, ++q) {
+        thisdirection = *d;
+        thisperiod = *q;
 
         ord %= factor;
         factor /= thisdirection;
