@@ -369,7 +369,7 @@ int orterun(int argc, char *argv[])
         create_app(), but let's just double check... */
         opal_show_help("help-orterun.txt", "orterun:nothing-to-do",
                        true, orterun_basename);
-        exit(1);
+        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
     /* save the environment for launch purposes */
@@ -523,7 +523,7 @@ int orterun(int argc, char *argv[])
     if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, job_completed))) {
         opal_show_help("help-orterun.txt", "orterun:event-def-failed", true,
                        orterun_basename, ORTE_ERROR_NAME(rc));
-        orte_exit_status = -1;
+        orte_exit_status = ORTE_ERROR_DEFAULT_EXIT_CODE;
         goto DONE;
     }
     
@@ -554,7 +554,9 @@ static void job_completed(int trigpipe, short event, void *arg)
     orte_job_state_t exit_state;
     
     /* close the trigger pipe so it cannot be called again */
-    close(trigpipe);
+    if (0 <= trigpipe) {
+        close(trigpipe);
+    }
     
     exit_state = jdata->state;
 
@@ -640,7 +642,9 @@ static void terminated(int trigpipe, short event, void *arg)
     orte_vpid_t i;
     
     /* close the trigger pipe so it cannot be called again */
-    close(trigpipe);
+    if (0 <= trigpipe) {
+        close(trigpipe);
+    }
     
     /* Remove the TERM and INT signal handlers */
     opal_signal_del(&term_handler);
@@ -838,8 +842,10 @@ static void dump_aborted_procs(void)
 
 static void timeout_callback(int fd, short ign, void *arg)
 {
-    /* just call wakeup */
-    orte_wakeup(1);
+    /* just call terminated so we don't loop back into
+     * trying to kill things
+     */
+    terminated(-1, 0, NULL);
 }
 
 static void abort_exit_callback(int fd, short ign, void *arg)
