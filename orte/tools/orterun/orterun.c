@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -1556,10 +1556,10 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
     }
 
-    /* Did the user request a specific path? */
-
+    /* If the user specified --path, store it in the user's app
+       environment via the OMPI_exec_path variable. */
     if (NULL != orterun_globals.path) {
-        asprintf(&value, "PATH=%s", orterun_globals.path);
+        asprintf(&value, "OMPI_exec_path=%s", orterun_globals.path);
         opal_argv_append_nosize(&app->env, value);
         free(value);
     }

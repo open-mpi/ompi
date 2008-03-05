@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -114,13 +115,9 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
     return ORTE_SUCCESS;
 }
 
-int orte_util_check_context_app(orte_app_context_t *context)
+int orte_util_check_context_app(orte_app_context_t *context, char **env)
 {
     char *tmp;
-    char hostname[MAXHOSTNAMELEN];
-    
-    /* Use hostname in a few messages below */
-    gethostname(hostname, sizeof(hostname));
     
     /* If the app is a naked filename, we need to do a path search for
         it.  orterun will send in whatever the user specified (e.g.,
@@ -147,7 +144,7 @@ int orte_util_check_context_app(orte_app_context_t *context)
         /* If this is a naked executable -- no relative or absolute
         pathname -- then search the PATH for it */
         free(tmp);
-        tmp = opal_path_findv(context->argv[0], X_OK, environ, context->cwd);
+        tmp = opal_path_findv(context->argv[0], X_OK, env, context->cwd);
         if (NULL == tmp) {
             return ORTE_ERR_EXE_NOT_FOUND;
         }
