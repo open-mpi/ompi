@@ -238,7 +238,8 @@ int RFG_Regions_getFilteredRegions( RFG_Regions* regions,
 }
 
 int RFG_Regions_stackPush( RFG_Regions* regions,
-			   const uint32_t rid, RFG_RegionInfo** r_rinf )
+			   const uint32_t rid, const uint8_t decr,
+			   RFG_RegionInfo** r_rinf )
 {
   if( !regions || !regions->stack ) return 0;
 
@@ -258,9 +259,9 @@ int RFG_Regions_stackPush( RFG_Regions* regions,
     }
   }
 
-  /* decrement call limit of region */
+  /* decrement call limit of region, if desired */
 
-  if( (*r_rinf)->callLimitCD > 0 ) 
+  if( decr && (*r_rinf)->callLimitCD > 0 ) 
     (*r_rinf)->callLimitCD--;
 
   /* push pointer new call stack entry to top of the call stack */

@@ -63,7 +63,7 @@ int vt_mpitrace = 1;
 /* changed with every MPI_TRACE_ON/MPI_TRACE_OFF */
 int vt_mpi_trace_is_on = 1;
 
-#define IS_MPI_TRACE_ON ( vt_mpi_trace_is_on && VT_IS_TRACE_ON() )
+#define IS_MPI_TRACE_ON ( vt_mpi_trace_is_on )
 #define MPI_TRACE_OFF() \
   VT_MEMHOOKS_OFF(); \
   vt_mpi_trace_is_on = 0;
@@ -84,7 +84,7 @@ int MPI_Init( int *argc, char ***argv )
 
   /* first event?
      -> initialize VT and enter dummy function 'user' */
-  if ( !VT_IS_ALIVE )
+  if ( !vt_is_alive )
     {
       vt_open();
       time = vt_pform_wtime();
@@ -185,7 +185,7 @@ int MPI_Finalize()
     }
 
   /* exit dummy function 'user', if necessary */
-  if (VT_IS_TRACE_ON() && vt_enter_user_called)
+  if (vt_enter_user_called)
     {
       time = vt_pform_wtime();
       vt_exit_user(&time);
@@ -1857,16 +1857,16 @@ int MPI_Allreduce ( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_ALLREDUCE]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
 
       PMPI_Type_size(datatype, &sz);
       PMPI_Comm_size(comm, &N);
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_ALLREDUCE],
@@ -1894,13 +1894,13 @@ int MPI_Barrier( MPI_Comm comm )
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_BARRIER]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Barrier(comm);
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_BARRIER],
@@ -1932,9 +1932,9 @@ int MPI_Bcast( void* buf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_BCAST]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
       result = PMPI_Bcast(buf, count, datatype, root, comm);
 
       PMPI_Type_size(datatype, &sz);
@@ -1944,7 +1944,7 @@ int MPI_Bcast( void* buf,
       else
         N = 0;
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime, vt_mpi_regid[VT__MPI_BCAST],
 		      VT_RANK_TO_PE(root, comm), VT_COMM_ID(comm),
@@ -1979,9 +1979,9 @@ int MPI_Gather(void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_GATHER]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Gather(sendbuf, sendcount, sendtype,
 			   recvbuf, recvcount, recvtype,
@@ -1996,7 +1996,7 @@ int MPI_Gather(void* sendbuf,
         N = rsz = 0;
       }
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_GATHER],
@@ -2033,9 +2033,9 @@ int MPI_Reduce( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_REDUCE]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
 
@@ -2043,7 +2043,7 @@ int MPI_Reduce( void* sendbuf,
       PMPI_Comm_rank(comm, &me);
       isroot = ( me == root );
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_REDUCE],
@@ -2080,9 +2080,9 @@ int MPI_Gatherv( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_GATHERV]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Gatherv(sendbuf, sendcount, sendtype,
 			    recvbuf, recvcounts, displs, recvtype,
@@ -2099,7 +2099,7 @@ int MPI_Gatherv( void* sendbuf,
         for(i = 0; i<N; i++) recvcount += recvcounts[i];
       }
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_GATHERV],
@@ -2136,9 +2136,9 @@ int MPI_Allgather( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_ALLGATHER]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Allgather(sendbuf, sendcount, sendtype,
 			      recvbuf, recvcount, recvtype,
@@ -2148,7 +2148,7 @@ int MPI_Allgather( void* sendbuf,
       PMPI_Type_size(sendtype, &sendsz);
       PMPI_Comm_size(comm, &N);
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_ALLGATHER],
@@ -2186,9 +2186,9 @@ int MPI_Allgatherv( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_ALLGATHERV]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Allgatherv(sendbuf, sendcount, sendtype,
 			       recvbuf, recvcounts, displs, recvtype,
@@ -2200,7 +2200,7 @@ int MPI_Allgatherv( void* sendbuf,
       recvcount = 0;
       for(i = 0; i<N; i++) recvcount += recvcounts[i];
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_ALLGATHERV],
@@ -2237,9 +2237,9 @@ int MPI_Alltoall( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_ALLTOALL]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Alltoall(sendbuf, sendcount, sendtype,
 			     recvbuf, recvcount, recvtype,
@@ -2249,7 +2249,7 @@ int MPI_Alltoall( void* sendbuf,
       PMPI_Type_size(sendtype, &sendsz);
       PMPI_Comm_size(comm, &N);
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_ALLTOALL],
@@ -2288,9 +2288,9 @@ int MPI_Alltoallv( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_ALLTOALLV]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Alltoallv(sendbuf, sendcounts,
                               sdispls, sendtype,
@@ -2307,7 +2307,7 @@ int MPI_Alltoallv( void* sendbuf,
 	  sendcount += sendcounts[i];
 	}
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_ALLTOALLV],
@@ -2345,9 +2345,9 @@ int MPI_Scan( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_SCAN]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Scan( sendbuf, recvbuf, count, datatype, op, comm );
 
@@ -2355,7 +2355,7 @@ int MPI_Scan( void* sendbuf,
       PMPI_Comm_rank(comm, &me);
       PMPI_Comm_size(comm, &N);
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_SCAN],
@@ -2392,9 +2392,9 @@ int MPI_Scatter( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_SCATTER]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Scatter(sendbuf, sendcount, sendtype,
 			   recvbuf, recvcount, recvtype,
@@ -2409,7 +2409,7 @@ int MPI_Scatter( void* sendbuf,
         N = sendsz = 0;
       }
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_SCATTER],
@@ -2449,9 +2449,9 @@ int MPI_Scatterv( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_SCATTERV]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype,
 			     recvbuf, recvcount, recvtype,
@@ -2466,7 +2466,7 @@ int MPI_Scatterv( void* sendbuf,
         for(i = 0; i<N; i++) sendcount += sendcounts[i];
       }
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_SCATTERV],
@@ -2502,9 +2502,9 @@ int MPI_Reduce_scatter( void* sendbuf,
 
       time = vt_pform_wtime();
       vt_enter(&time, vt_mpi_regid[VT__MPI_REDUCE_SCATTER]);
-      VT_TRACE_OFF(); /* disable tracing
-			 :TODO: that's only a hack to avoid unsorted
-			 timestamps in trace buffer */
+      vt_trace_off(0); /* disable tracing
+			  :TODO: that's only a hack to avoid unsorted
+			  timestamps in trace buffer */
 
       result = PMPI_Reduce_scatter(sendbuf, recvbuf, recvcounts,
 	                           datatype, op, comm);
@@ -2513,7 +2513,7 @@ int MPI_Reduce_scatter( void* sendbuf,
       PMPI_Comm_size(comm, &N);
       for(i = 0; i<N; i++) count += recvcounts[i];
 
-      VT_TRACE_ON(); /* enable tracing */
+      vt_trace_on(); /* enable tracing */
       etime = vt_pform_wtime();
       vt_mpi_collexit(&time, &etime,
 		      vt_mpi_regid[VT__MPI_REDUCE_SCATTER],

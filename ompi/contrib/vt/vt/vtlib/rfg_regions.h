@@ -57,7 +57,8 @@ int RFG_Regions_getFilteredRegions( RFG_Regions* regions,
 
 /* function that should be called if a region enter event invoked */
 int RFG_Regions_stackPush( RFG_Regions* regions,
-			   const uint32_t rid, RFG_RegionInfo** r_rinf );
+			   const uint32_t rid, const uint8_t decr,
+			   RFG_RegionInfo** r_rinf );
 
 /* function that should be called if a region leave event invoked */
 int RFG_Regions_stackPop( RFG_Regions* regions,

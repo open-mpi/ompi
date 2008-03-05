@@ -155,7 +155,7 @@
 	- if available, PAPI cycle counter can be used as timer
 	  (see config.h after configure)
 	- recording of events will be stopped if the maximum number of
-	  buffer flushs (env. VT_MAX_FLUSHES) was reached
+	  buffer flushes (env. VT_MAX_FLUSHES) was reached
 	- added support for LIBC's I/O tracing
 	- improved autoconf's m4 scripts for cross buildings
 	- default settings for the compiler wrappers will be stored
@@ -194,6 +194,11 @@
 	  'strdup()'
 	- removed variadic macros (they were introduced in C99)
 	- fixed potential race condition by using OpenMP + LIBC's I/O tracing
+	- fixed potential missing definition records by using OpenMP and the
+	  maximum number of buffer flushes was reached
+	- fixed a bug in the compiler wrappers: added check for SUN's OpenMP
+	  compiler flag (-xopenmp)
+	- cleanup call stack when maximum number of flushes was reached
 	- fixed a bug for determining the timer-resolution for ITC
 	- added check if we can link '-lz' in order to pass either '-lotf -lz'
 	  or just '-lotf' as OTF link option

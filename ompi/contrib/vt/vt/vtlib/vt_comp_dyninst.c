@@ -29,12 +29,7 @@
 #include "vt_strdup.h"
 #include "vt_trc.h"
 #if defined (VT_OMPI) || defined (VT_OMP)
-# include "opari_omp.h"
-# define VT_MY_THREAD   omp_get_thread_num() 
-# define VT_NUM_THREADS omp_get_max_threads() 
-#else
-# define VT_MY_THREAD   0
-# define VT_NUM_THREADS 1 
+#  include <omp.h>
 #endif
 
 static int dyn_init = 1;       /* is initialization needed? */
@@ -108,29 +103,9 @@ static HashNode *register_region(long addr, char* func, char* file, int lno) {
   return nhn;
 }
 
-static long *stk_level;
-static int extra_exits = 0;
-
-void VT_Dyn_finalize(void);
 void VT_Dyn_start(void* addr, char* name, char* fname, int lno);
 void VT_Dyn_end(void* addr);
 void VT_Dyn_attach(void);
-
-void VT_Dyn_finalize()
-{
-  int mt = VT_MY_THREAD;
-  uint64_t time;
-
-  VT_MEMHOOKS_OFF();
-
-  extra_exits = stk_level[mt];
-  while(stk_level[mt] > 0) {
-    stk_level[mt]--;
-    time = vt_pform_wtime();
-    vt_exit(&time);
-  }
-  vt_close();
-}
 
 /*
  * This function is called at the entry of each function
@@ -139,24 +114,18 @@ void VT_Dyn_finalize()
 void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
 {
   HashNode *hn;
-  int mt = VT_MY_THREAD;
   uint64_t time;
 
   /* -- ignore events if VT is initializing -- */
-  if( !dyn_init && !VT_IS_ALIVE ) return;
+  if( !dyn_init && !vt_is_alive ) return;
 
   /* -- if not yet initialized, initialize VampirTrace -- */
   if ( dyn_init ) {
     VT_MEMHOOKS_OFF();
     dyn_init = 0;
-    stk_level = (long*)calloc(VT_NUM_THREADS, sizeof(long));
     vt_open();
-    vt_comp_finalize = &VT_Dyn_finalize;
     VT_MEMHOOKS_ON();
   }
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -183,7 +152,6 @@ void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
 
   /* -- write enter record -- */
   vt_enter(&time, hn->vtid);
-  stk_level[mt]++;
 
   VT_MEMHOOKS_ON();
 }
@@ -194,17 +162,12 @@ void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
 
 void VT_Dyn_end(void* addr)
 {
-  int mt = VT_MY_THREAD;
   uint64_t time;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
   vt_exit(&time);
-  stk_level[mt]--;
 
   VT_MEMHOOKS_ON();
 }

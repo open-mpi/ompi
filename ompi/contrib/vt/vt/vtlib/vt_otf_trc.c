@@ -425,7 +425,7 @@ void vt_close()
 
   /* finalize compiler adapter */
   if (vt_comp_finalize)
-     vt_comp_finalize();
+    vt_comp_finalize();
 
   /* close trace files */
   for (i = 0; i < (int)VTThrd_get_num_thrds(); i++)
@@ -540,23 +540,37 @@ void vt_trace_on()
 {
   vt_check_thrd_id(VT_MY_THREAD);
 
-  if ( VT_IS_ALIVE )
-    VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) = 1;
+  if ( vt_is_alive && VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) == 0 )
+    VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) = 1;  
 }
 
-void vt_trace_off()
+void vt_trace_off(uint8_t permanent)
 {
   vt_check_thrd_id(VT_MY_THREAD);
 
-  if ( VT_IS_ALIVE )
-    VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) = 0;
+  if ( vt_is_alive && VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) != -1 )
+  {
+    if ( permanent )
+    {
+      uint64_t time;
+      while(VTTHRD_STACK_LEVEL(thrdv[VT_MY_THREAD]) > 0) {
+	time = vt_pform_wtime();
+	vt_exit(&time);
+      }
+      VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) = -1;
+    }
+    else
+    {
+      VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) = 0;
+    }
+  }
 }
 
 uint8_t vt_is_trace_on()
 {
   vt_check_thrd_id(VT_MY_THREAD);
 
-  return ( VT_IS_ALIVE ) ? VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) : 0;
+  return ( vt_is_alive ) ? VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) : 0;
 }
 
 #if (defined (VT_MPI) || defined (VT_OMPI))
@@ -589,24 +603,17 @@ void vt_mpi_init()
 #if DISABLE_CLOCK_SYNC == 0
     {
       uint64_t time;
-      uint8_t mark_sync = VT_IS_TRACE_ON() ? 1 : 0;
 
       /* mark begin of clock synchronization */
-      if (mark_sync)
-      {
-	time = vt_pform_wtime();
-	vt_enter(&time, vt_trc_regid[VT__SYNC]);
-      }
+      time = vt_pform_wtime();
+      vt_enter(&time, vt_trc_regid[VT__SYNC]);
 
       /* measure offset */
       my_offset[0] = vt_offset(&my_ltime[0], MPI_COMM_WORLD);
 
       /* mark end of clock synchronization */
-      if (mark_sync)
-      {
-	time = vt_pform_wtime();
-	vt_exit(&time);
-      }
+      time = vt_pform_wtime();
+      vt_exit(&time);
     }
 #endif
   }
@@ -630,24 +637,17 @@ void vt_mpi_finalize()
 #if DISABLE_CLOCK_SYNC == 0
     {
       uint64_t time;
-      uint8_t mark_sync = VT_IS_TRACE_ON() ? 1 : 0;
 
       /* mark begin of clock synchronization */
-      if (mark_sync)
-      {
-	time = vt_pform_wtime();
-	vt_enter(&time, vt_trc_regid[VT__SYNC]);
-      }
+      time = vt_pform_wtime();
+      vt_enter(&time, vt_trc_regid[VT__SYNC]);
 
       /* measure offset */
       my_offset[1] = vt_offset(&my_ltime[1], MPI_COMM_WORLD);
 
       /* mark end of clock synchronization */
-      if (mark_sync)
-      {
-	time = vt_pform_wtime();
-	vt_exit(&time);
-      }
+      time = vt_pform_wtime();
+      vt_exit(&time);
     }
 #endif
   }
@@ -698,7 +698,7 @@ void vt_check_thrd_id(uint32_t tid)
 {
 #if (defined (VT_OMPI) || defined (VT_OMP))
 
-  if( !VT_IS_ALIVE ) return;
+  if( !vt_is_alive ) return;
 
   if( VTThrd_get_num_thrds() < (tid+1) )
     {
@@ -1193,23 +1193,27 @@ void vt_def_mpi_comm(uint32_t cid,
 /* -- Region -- */
 
 void vt_enter(uint64_t* time, uint32_t rid) {
-   
-  uint8_t trace = 1;
+  int8_t trace;
 
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) == -1) return;
+
+  VTTHRD_STACK_PUSH(thrdv[VT_MY_THREAD]);
+  trace = VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]);
 
 #if (defined (RFG))
   {
     RFG_RegionInfo* rinf;
 
     if( !RFG_Regions_stackPush(VTTHRD_RFGREGIONS(thrdv[VT_MY_THREAD]),
-                               rid, &rinf) )
+                               rid, trace, &rinf) )
     {
 #     if (defined (VT_OMPI) || defined (VT_OMP))
       RFG_RegionInfo* rinf_master =
 	 RFG_Regions_get(VTTHRD_RFGREGIONS(thrdv[0]), rid);
-      if(rinf_master == NULL)
-        vt_error();
+      if (rinf_master == NULL)
+	vt_error();
 
       rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(thrdv[VT_MY_THREAD]),
                              rinf_master->regionName, rid);
@@ -1220,8 +1224,8 @@ void vt_enter(uint64_t* time, uint32_t rid) {
       /* initialize call limit count down */
       rinf->callLimitCD = rinf->callLimit;
 
-      if( !RFG_Regions_stackPush(VTTHRD_RFGREGIONS(thrdv[VT_MY_THREAD]),
-                                 rid, &rinf) )
+      if (!RFG_Regions_stackPush(VTTHRD_RFGREGIONS(thrdv[VT_MY_THREAD]),
+                                 rid, trace, &rinf))
         vt_error();
 #     else
       vt_error();
@@ -1233,7 +1237,7 @@ void vt_enter(uint64_t* time, uint32_t rid) {
   }
 #endif
 
-  if ( trace )
+  if (trace)
   {
 #   if defined(VT_METR)
       if ( num_metrics > 0 )
@@ -1267,7 +1271,14 @@ void vt_enter(uint64_t* time, uint32_t rid) {
 }
 
 void vt_exit(uint64_t* time) {
+  uint8_t trace;
+
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) == -1) return;
+
+  VTTHRD_STACK_POP(thrdv[VT_MY_THREAD]);
+  trace = VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]);
 
 #if (defined (RFG))
   {
@@ -1281,38 +1292,41 @@ void vt_exit(uint64_t* time) {
     }
 
     if(climitbyenter == 0)
-      return;
+      trace = 0;
   }
 #endif
 
-#if defined(VT_METR)
-  if ( num_metrics > 0 )
-    {
-      vt_metric_read(VTTHRD_METV(thrdv[VT_MY_THREAD]),
-		     VTTHRD_VALV(thrdv[VT_MY_THREAD]));
+  if ( trace )
+  {
+#   if defined(VT_METR)
+      if ( num_metrics > 0 )
+      {
+	vt_metric_read(VTTHRD_METV(thrdv[VT_MY_THREAD]),
+		       VTTHRD_VALV(thrdv[VT_MY_THREAD]));
 
-      VTGen_write_LEAVE(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
-			time,
-			0,
-			0,
-			num_metrics,
-			VTTHRD_VALV(thrdv[VT_MY_THREAD]));
-    }
-  else
-    {
+	VTGen_write_LEAVE(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
+			  time,
+			  0,
+			  0,
+			  num_metrics,
+			  VTTHRD_VALV(thrdv[VT_MY_THREAD]));
+      }
+      else
+      {
+	VTGen_write_LEAVE(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
+			  time,
+			  0,
+			  0,
+			  0, NULL);
+      }
+#   else
       VTGen_write_LEAVE(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 			time,
 			0,
 			0,
 			0, NULL);
-    }
-#else
-  VTGen_write_LEAVE(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
-		    time,
-		    0,
-		    0,
-		    0, NULL);
-#endif
+#   endif
+  }
 }
 
 /* -- File I/O -- */
@@ -1320,6 +1334,7 @@ void vt_exit(uint64_t* time) {
 void vt_ioexit(uint64_t* time, uint64_t* etime, uint32_t fid, uint64_t hid, uint32_t op, uint64_t bytes) {
   vt_check_thrd_id(VT_MY_THREAD);
 
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
 
   VTGen_write_FILE_OPERATION(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 			     time,
@@ -1340,6 +1355,8 @@ void vt_ioexit(uint64_t* time, uint64_t* etime, uint32_t fid, uint64_t hid, uint
 void vt_mem_alloc(uint64_t* time, uint64_t bytes) {
   vt_check_thrd_id(VT_MY_THREAD);
 
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
   VTTHRD_MEM_APP_ALLOC(thrdv[VT_MY_THREAD]) += bytes;
 
   VTGen_write_COUNTER(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
@@ -1350,6 +1367,8 @@ void vt_mem_alloc(uint64_t* time, uint64_t bytes) {
 
 void vt_mem_free(uint64_t* time, uint64_t bytes) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
 
   if( bytes <= VTTHRD_MEM_APP_ALLOC(thrdv[VT_MY_THREAD]) )
     VTTHRD_MEM_APP_ALLOC(thrdv[VT_MY_THREAD]) -= bytes;
@@ -1366,9 +1385,10 @@ void vt_mem_free(uint64_t* time, uint64_t bytes) {
 
 /* -- Counter -- */
 
-void vt_count(uint64_t* time, uint32_t cid, uint64_t cval)
-{
+void vt_count(uint64_t* time, uint32_t cid, uint64_t cval) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
 
   VTGen_write_COUNTER(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 		      time,
@@ -1378,9 +1398,10 @@ void vt_count(uint64_t* time, uint32_t cid, uint64_t cval)
 
 /* -- Comment -- */
 
-void vt_comment(uint64_t* time, const char* comment)
-{
+void vt_comment(uint64_t* time, const char* comment) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
 
   VTGen_write_COMMENT(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 		      time,
@@ -1391,6 +1412,8 @@ void vt_comment(uint64_t* time, const char* comment)
 
 void vt_mpi_send(uint64_t* time, uint32_t dpid, uint32_t cid, uint32_t tag, uint32_t sent) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
 
   VTGen_write_SEND_MSG(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 		       time,
@@ -1404,6 +1427,8 @@ void vt_mpi_send(uint64_t* time, uint32_t dpid, uint32_t cid, uint32_t tag, uint
 void vt_mpi_recv(uint64_t* time, uint32_t spid, uint32_t cid, uint32_t tag, uint32_t recvd) {
   vt_check_thrd_id(VT_MY_THREAD);
 
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
   VTGen_write_RECV_MSG(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 		       time,
 		       spid+1,
@@ -1413,13 +1438,11 @@ void vt_mpi_recv(uint64_t* time, uint32_t spid, uint32_t cid, uint32_t tag, uint
 		       0);
 }
 
-#undef SYNC_BUF_FLUSH
 void vt_mpi_collexit(uint64_t* time, uint64_t* etime, uint32_t rid, uint32_t rpid, uint32_t cid, uint32_t sent, uint32_t recvd) {
-#if (defined (SYNC_BUF_FLUSH)) && ((defined (VT_MPI) || defined (VT_OMPI)))
-  static uint8_t max_flushes_reached = 0;
-#endif
   vt_check_thrd_id(VT_MY_THREAD);
    
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
   VTGen_write_COLLECTIVE_OPERATION(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 				   time,
 				   etime,
@@ -1431,40 +1454,15 @@ void vt_mpi_collexit(uint64_t* time, uint64_t* etime, uint32_t rid, uint32_t rpi
 				   0);
 
   vt_exit(etime);
-
-#if (defined (SYNC_BUF_FLUSH)) && ((defined (VT_MPI) || defined (VT_OMPI)))
-  /* comm == MPI_COMM_WORLD ? */
-  if (!max_flushes_reached && cid == 0)
-  {
-    /* get buffer fill level in percent */
-    int buf_level =
-      VTGen_get_buf_level(VTTHRD_GEN(thrdv[VT_MY_THREAD]));
-    int max_level = 0;
-
-    /* get max buffer fill level */
-    PMPI_Allreduce(&buf_level, &max_level, 1,
-		   MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-    /* max number of buffer flushes reached ? */
-    if (max_level == -1)
-    {
-      max_flushes_reached = 1;
-    }
-    /* max buffer fill level >= 90% ? */
-    else if (max_level >= 90)
-    {
-      /* flush buffer */
-      VTGen_flush(VTTHRD_GEN(thrdv[VT_MY_THREAD]), 1, 1,
-		  *etime, time);
-    }
-  }
-#endif
 }
 
 /* -- OpenMP -- */
 
 void vt_omp_fork(uint64_t* time) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
 #if (defined (VT_OMPI) || defined (VT_OMP))
   if (!omp_in_parallel())
     VTGen_write_OMP_FORK(VTTHRD_GEN(thrdv[VT_MY_THREAD]), time);
@@ -1473,6 +1471,9 @@ void vt_omp_fork(uint64_t* time) {
 
 void vt_omp_join(uint64_t* time) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
 #if (defined (VT_OMPI) || defined (VT_OMP))
   if (!omp_in_parallel())
     VTGen_write_OMP_JOIN(VTTHRD_GEN(thrdv[VT_MY_THREAD]), time);
@@ -1496,6 +1497,8 @@ void vt_omp_rlock(uint64_t* time, uint32_t lkid) {
 void vt_omp_collenter(uint64_t* time, uint32_t rid) {
   vt_check_thrd_id(VT_MY_THREAD);
 
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
   vt_enter(time, rid);
 
   /* store timestamp of beginning for vt_omp_collexit() to
@@ -1508,6 +1511,8 @@ void vt_omp_collexit(uint64_t* etime) {
   uint64_t time;
 
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
 
   cid = vt_def_omp_comm();
   time = VTTHRD_OMP_COLLOP_STIME(thrdv[VT_MY_THREAD]);
@@ -1551,15 +1556,26 @@ void vt_omp_parallel_end(void)
 /* -- VampirTrace Internal -- */
 
 void vt_enter_user(uint64_t* time) {
+  vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
   vt_enter(time, vt_trc_regid[VT__USER]);
 }
 
 void vt_exit_user(uint64_t* time) {
+  vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
   vt_exit(time);
 }
 
 void vt_enter_stat(uint64_t* time) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
 #if defined(VT_METR)
   if ( num_metrics > 0 )
     {
@@ -1586,6 +1602,9 @@ void vt_enter_stat(uint64_t* time) {
 
 void vt_exit_stat(uint64_t* time) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
 #if defined(VT_METR)
   if ( num_metrics > 0 )
     {
@@ -1612,6 +1631,9 @@ void vt_exit_stat(uint64_t* time) {
 
 void vt_enter_flush(uint64_t* time) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
 #if defined(VT_METR)
   if ( num_metrics > 0 )
     {
@@ -1638,6 +1660,9 @@ void vt_enter_flush(uint64_t* time) {
 
 void vt_exit_flush(uint64_t* time) {
   vt_check_thrd_id(VT_MY_THREAD);
+
+  if (VTTHRD_IS_TRACE_ON(thrdv[VT_MY_THREAD]) < 1) return;
+
 #if defined(VT_METR)
   if ( num_metrics > 0 )
     {

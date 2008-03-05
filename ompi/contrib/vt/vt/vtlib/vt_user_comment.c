@@ -30,12 +30,9 @@ static int vt_init = 1;        /* is initialization needed? */
     VT_MEMHOOKS_ON(); \
   }
 
-void VT_User_comment_def__(char* comment)
+void VT_User_comment_def__(const char* comment)
 {
   VT_INIT;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -44,14 +41,11 @@ void VT_User_comment_def__(char* comment)
   VT_MEMHOOKS_ON();
 }
 
-void VT_User_comment__(char* comment)
+void VT_User_comment__(const char* comment)
 {
   uint64_t time;
 
   VT_INIT;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -65,10 +59,10 @@ void VT_User_comment__(char* comment)
  * Fortran version
  */
 
-void VT_User_comment_def___f(char* comment, int cl);
-void VT_User_comment___f(char* comment, int cl);
+void VT_User_comment_def___f(const char* comment, int cl);
+void VT_User_comment___f(const char* comment, int cl);
 
-void VT_User_comment_def___f(char* comment, int cl)
+void VT_User_comment_def___f(const char* comment, int cl)
 {
   int comlen;
   char fcombuf[4096];
@@ -81,10 +75,10 @@ void VT_User_comment_def___f(char* comment, int cl)
   VT_User_comment_def__(fcombuf);
 } VT_GENERATE_F77_BINDINGS(vt_user_comment_def__, VT_USER_COMMENT_DEF__,
 			   VT_User_comment_def___f,
-			   (char* comment, int cl),
+			   (const char* comment, int cl),
 			   (comment, cl))
 
-void VT_User_comment___f(char* comment, int cl)
+void VT_User_comment___f(const char* comment, int cl)
 {
   int comlen;
   char fcombuf[4096];
@@ -97,5 +91,5 @@ void VT_User_comment___f(char* comment, int cl)
   VT_User_comment__(fcombuf);
 } VT_GENERATE_F77_BINDINGS(vt_user_comment__, VT_USER_COMMENT__,
 			   VT_User_comment___f,
-			   (char* comment, int cl),
+			   (const char* comment, int cl),
 			   (comment, cl))

@@ -16,14 +16,8 @@
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
-
 #if (defined (VT_OMPI) || defined (VT_OMP))
-#include <omp.h>
-#define VT_MY_THREAD   omp_get_thread_num() 
-#define VT_NUM_THREADS omp_get_max_threads() 
-#else
-#define VT_MY_THREAD   0
-#define VT_NUM_THREADS 1 
+#  include <omp.h>
 #endif
 
 extern void* vftr_getname(void);
@@ -44,8 +38,6 @@ typedef struct HN {
 #define HASH_MAX 1021
 
 static int necsx_init = 1;       /* is initialization needed? */
-
-static long *stk_level;          /* stack level */
 
 static HashNode* htab[HASH_MAX];
 
@@ -106,7 +98,6 @@ void _ftrace_stop2_(void);
  */
 
 void _ftrace_enter2_() {
-  int mt = VT_MY_THREAD;
   char *func = (char *)vftr_getname();
   int len = vftr_getname_len();
   uint32_t rid;
@@ -116,13 +107,9 @@ void _ftrace_enter2_() {
   if ( necsx_init ) {
     VT_MEMHOOKS_OFF();
     necsx_init = 0;
-    stk_level = (long*)calloc(VT_NUM_THREADS, sizeof(long));
     vt_open();
     VT_MEMHOOKS_ON();
   }
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   /* -- ignore NEC OMP runtime functions -- */
   if ( strchr(func, '$') != NULL ) return;
@@ -152,7 +139,6 @@ void _ftrace_enter2_() {
 
   /* -- write enter record -- */
   vt_enter(&time, rid);
-  stk_level[mt]++;
 
   VT_MEMHOOKS_ON();
 }
@@ -163,12 +149,8 @@ void _ftrace_enter2_() {
  */
 
 void _ftrace_exit2_() {
-  int mt = VT_MY_THREAD;
   char *func;
   uint64_t time;
-
-  /* -- return, if tracing is disabled? -- */
-  if ( !VT_IS_TRACE_ON() ) return;
 
   VT_MEMHOOKS_OFF();
 
@@ -184,7 +166,6 @@ void _ftrace_exit2_() {
   /* -- write exit record -- */
   time = vt_pform_wtime();
   vt_exit(&time);
-  stk_level[mt]--;
 
   VT_MEMHOOKS_ON();
 }
@@ -195,15 +176,6 @@ void _ftrace_exit2_() {
  */
 
 void _ftrace_stop2_() {
-  uint64_t time;
-
-  VT_MEMHOOKS_OFF();
-
-  while(stk_level[VT_MY_THREAD] > 0) {
-    stk_level[VT_MY_THREAD]--;
-    time = vt_pform_wtime();
-    vt_exit(&time);
-  }
   vt_close();
 }
 

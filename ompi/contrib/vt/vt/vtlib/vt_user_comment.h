@@ -21,8 +21,8 @@
 
 #if (defined(VTRACE)) && !(defined(VTRACE_NO_COMMENT))
 
-  EXTERN void VT_User_comment_def__(char* comment);
-  EXTERN void VT_User_comment__(char* comment);
+  EXTERN void VT_User_comment_def__(const char* comment);
+  EXTERN void VT_User_comment__(const char* comment);
 
   #define VT_COMMENT_DEF(c) VT_User_comment_def__(c)
   #define VT_COMMENT(c) VT_User_comment__(c)

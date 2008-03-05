@@ -7,11 +7,11 @@
 
 
 +++ BlueGene/L (Research Centre Juelich)
-./configure --with-otf-extra-opts="--with-zlib --with-zlib-dir=<zlib-dir>" --build=powerpc64-unknown-linux-gnu --host=none-ibm-linux CC=blrts_xlc CFLAGS=-O2 CXX=blrts_xlC CXXFLAGS=-O2 F77=blrts_xlf90 FC=blrts_xlf90 CXX_FOR_BUILD=xlC_r MPICC=mpixlc --with-otf-lib="-lotf -L<zlibdir> -lz" --with-mpi-dir=/bgl/BlueLight/ppcfloor/bglsys --with-mpi-lib=-lmpich.rts --with-pmpi-lib=-lmpich.rts --with-fmpi-lib=-lfmpich.rts --disable-iotrace --with-papi-dir=/usr/local/papi/papi-3.5.0 --with-papi-lib="-lpapi.rts -lbgl_perfctr.rts"
+./configure --with-otf-extra-opts="--with-zlib --with-zlib-dir=<zlib-dir>" --build=powerpc64-unknown-linux-gnu --host=powerpc64-ibm-linux CC=blrts_xlc CFLAGS=-O2 CXX=blrts_xlC CXXFLAGS=-O2 F77=blrts_xlf90 FC=blrts_xlf90 CXX_FOR_BUILD=xlC_r MPICC=mpicc.ibm-8.0 --with-otf-lib="-lotf -L<zlibdir> -lz" --with-mpi-dir=/bgl/BlueLight/ppcfloor/bglsys --with-mpi-lib=-lmpich.rts --with-pmpi-lib=-lmpich.rts --with-fmpi-lib=-lfmpich.rts --disable-iotrace --with-papi-dir=/usr/local/papi/papi-3.5.0 --with-papi-lib="-lpapi.rts -lbgl_perfctr.rts"
 
 
 +++ BlueGene/L (University of Edinburgh)
-./configure CC=blrts_xlc CFLAGS="-O2 -g" CXX=blrts_xlC CXXFLAGS="-O2 -g" F77=blrts_xlf90 FC=blrts_xlf90 CXX_FOR_BUILD=xlC_r MPICC=mpixlc --build=powerpc64-unknown-linux-gnu --host=none-ibm-linux --with-otf-lib=-lotf --with-mpi-dir=/bgl/BlueLight/ppcfloor/bglsys --with-mpi-lib=-lmpich.rts --with-pmpi-lib=-lmpich.rts --with-fmpi-lib=-lfmpich.rts
+./configure CC=blrts_xlc CFLAGS="-O2 -g" CXX=blrts_xlC CXXFLAGS="-O2 -g" F77=blrts_xlf90 FC=blrts_xlf90 CXX_FOR_BUILD=xlC_r MPICC=mpixlc --build=powerpc64-unknown-linux-gnu --host=powerpc64-ibm-linux --with-otf-lib=-lotf --with-mpi-dir=/bgl/BlueLight/ppcfloor/bglsys --with-mpi-lib=-lmpich.rts --with-pmpi-lib=-lmpich.rts --with-fmpi-lib=-lfmpich.rts
 
 
 +++ NEC SX-8 (High Performance Computing Center Stuttgart)
