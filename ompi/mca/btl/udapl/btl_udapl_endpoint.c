@@ -195,7 +195,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                         char* major;
                         char* minor;
 
-                        dat_strerror(rc, (const char**)&major,
+                        dat_strerror(dat_rc, (const char**)&major,
                             (const char**)&minor);
                         BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
                             major, minor));
@@ -228,7 +228,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                     char* major;
                     char* minor;
 
-                    dat_strerror(rc, (const char**)&major,
+                    dat_strerror(dat_rc, (const char**)&major,
                         (const char**)&minor);
                     BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
                         major, minor));
@@ -309,7 +309,7 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
         btl->udapl_evd_conn,
         NULL,
         &dummy_ep);
-    if (rc != DAT_SUCCESS) {
+    if (DAT_SUCCESS != rc) {
         char* major;
         char* minor;
 
@@ -325,7 +325,7 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
     rc = dat_ep_query(dummy_ep,
         DAT_EP_FIELD_ALL,
         ep_param);
-    if (rc != DAT_SUCCESS) {
+    if (DAT_SUCCESS != rc) {
         char* major;
         char* minor;
 
@@ -419,7 +419,7 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
     
     /* close the dummy endpoint */
     rc = dat_ep_free(dummy_ep);
-    if (rc != DAT_SUCCESS) {
+    if (DAT_SUCCESS != rc) {
         char* major;
         char* minor;
 
