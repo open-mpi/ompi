@@ -419,7 +419,7 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         len_slots_m = 0;
     orte_node_t *node;
     orte_std_cntr_t i;
-    char *nid=NULL;
+    char *nid;
 
     /*
      * Caculate segment lengths
@@ -439,7 +439,9 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
             (int)strlen(node->name) > len_name)
             len_name = (int) strlen(node->name);
         
+        /* setup the printed nodeid - do -not- free this! */
         nid = ORTE_NODEID_PRINT(node->nodeid);
+
         if ((int)strlen(nid) > len_id)
             len_id = (int)strlen(nid);
         
@@ -479,7 +481,7 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         node = nodes[i];
         
         printf("%*s | ", len_name,    node->name);
-        printf("%*s | ", len_id,      ORTE_NODEID_PRINT(node->nodeid));
+        printf("%*s | ", len_id,      nid);
         printf("%*x | ", len_arch,    node->arch);
         printf("%*s | ", len_state,   pretty_node_state(node->state));
         printf("%*d | ", len_slots,   (uint)node->slots);
@@ -487,7 +489,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         printf("%*d | ", len_slots_i, (uint)node->slots_inuse);
         printf("\n");
         
-        free(nid);
     }
     
     return ORTE_SUCCESS;
