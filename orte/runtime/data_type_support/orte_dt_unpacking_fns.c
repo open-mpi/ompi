@@ -192,8 +192,14 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             }
         }
         
-        /* ignore the local_spawn flag - it never is sent */
-        
+        /* unpack control flags */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer,
+                            (&(jobs[i]->controls)), &n, OPAL_UINT16))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+                
         /* unpack the total slots allocated to the job */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer,

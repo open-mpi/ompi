@@ -479,6 +479,7 @@ static int spawn(int count, char **array_of_commands,
 
     orte_job_t *jdata;
     orte_app_context_t *app;
+    bool local_spawn, non_mpi;
     
     /* parse the info object */
     /* check potentially for:
@@ -628,8 +629,18 @@ static int spawn(int count, char **array_of_commands,
              * the specified app is to be launched by the local orted as a
              * "slave" process, typically to support an attached co-processor
              */
-            ompi_info_get_bool(array_of_info[i], "ompi_local_slave", &jdata->local_spawn, &flag);
-
+            ompi_info_get_bool(array_of_info[i], "ompi_local_slave", &local_spawn, &flag);
+            if ( local_spawn ) {
+                jdata->controls |= ORTE_JOB_CONTROL_LOCAL_SPAWN;
+            }
+         
+            /* see if this is a non-mpi job - if so, then set the flag so ORTE
+             * knows what to do
+             */
+            ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
+            if (non_mpi) {
+                jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+            }
         }
 
         /* default value: If the user did not tell us where to look for the

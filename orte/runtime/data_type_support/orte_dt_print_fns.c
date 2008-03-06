@@ -204,9 +204,9 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tLocal spawn: %s\tState: %0x\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tState: %0x\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid),
-             (long)src->num_apps, src->local_spawn ? "True" : "False",
+             (long)src->num_apps, src->controls,
              src->state, src->abort ? "True" : "False");
 
     asprintf(&pfx, "%s\t", pfx2);
