@@ -990,6 +990,17 @@ OMPI_MCA
 AC_CACHE_SAVE
 
 ##################################
+# visibility
+##################################
+
+# check the visbility stuff at the end to avoid problem with
+# the previous tests that are not necessarily prepeare for
+# the visibility feature.
+ompi_show_title "Symbol Visibility Feature"
+
+OMPI_CHECK_VISIBILITY
+
+##################################
 # Contributed software
 ##################################
 
@@ -1122,18 +1133,6 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $OMPI_ENABLE_DLOPEN_SUPPORT,
 
 AC_DEFINE_UNQUOTED(OPAL_HAVE_LTDL_ADVISE, $OPAL_HAVE_LTDL_ADVISE,
     [Whether libltdl appears to have the lt_dladvise interface])
-
-##################################
-# visibility
-##################################
-
-# check the visbility stuff at the end to avoid problem with 
-# the previous tests that are not necessarily prepeare for 
-# the visibility feature.
-ompi_show_title "Symbol Visibility Feature"
-
-OMPI_CHECK_VISIBILITY
-
 
 ############################################################################
 # final compiler config
