@@ -57,7 +57,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
-
+#include "opal/sys/atomic.h"
 #if OPAL_ENABLE_FT == 1
 #include "opal/runtime/opal_cr.h"
 #endif
@@ -112,7 +112,7 @@ static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_event_t *orterun_event, *orteds_exit_event;
 static char *ompi_server=NULL;
-static bool terminating=false;
+static opal_atomic_lock_t terminating;
 
 /*
  * Globals
@@ -312,6 +312,9 @@ int orterun(int argc, char *argv[])
     int rc;
     opal_cmd_line_t cmd_line;
 
+    /* initialize the terminating lock */
+    opal_atomic_init(&terminating, OPAL_ATOMIC_UNLOCKED);
+    
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
     orterun_basename = opal_basename(argv[0]);
@@ -639,11 +642,10 @@ static void terminated(int trigpipe, short event, void *arg)
     orte_vpid_t i;
     
     /* flag that we are here to avoid doing it twice */
-    if (terminating) {
+    if (!opal_atomic_trylock(&terminating)) { /* returns 1 if already locked */
         return;
     }
-    terminating = true;
-    
+
     /* close the trigger pipe so it cannot be called again */
     if (0 <= trigpipe) {
         close(trigpipe);
