@@ -115,8 +115,7 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     /* check exact matches */
     rc = opal_hash_table_get_value_uint64(&orte_routed_tree_module.peer_list,
                                           orte_util_hash_name(target), (void**)&ret);
-    if (ORTE_SUCCESS == rc && 
-        OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
+    if (ORTE_SUCCESS == rc) {
         /* got a good result - return it */
         goto found;
     }
@@ -124,8 +123,7 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     /* didn't find an exact match - check to see if a route for this job was defined */
     rc = opal_hash_table_get_value_uint32(&orte_routed_tree_module.vpid_wildcard_list,
                                           target->jobid, (void**)&ret);
-    if (ORTE_SUCCESS == rc &&
-        OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
+    if (ORTE_SUCCESS == rc) {
         /* got a good result - return it */
         goto found;
     }

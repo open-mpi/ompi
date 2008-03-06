@@ -224,8 +224,7 @@ orte_routed_unity_get_route(orte_process_name_t *target)
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         rc = opal_hash_table_get_value_uint64(&peer_list, orte_util_hash_name(target),
                                               (void**)&ret);
-        if (ORTE_SUCCESS != rc &&
-            OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
+        if (ORTE_SUCCESS == rc) {
             /* got a good result - return it */
             goto found;
         }
@@ -234,8 +233,7 @@ orte_routed_unity_get_route(orte_process_name_t *target)
         lookup.vpid = ORTE_VPID_WILDCARD;
         rc = opal_hash_table_get_value_uint64(&peer_list, orte_util_hash_name(&lookup),
                                               (void**)&ret);
-        if (ORTE_SUCCESS == rc &&
-            OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ret, ORTE_NAME_INVALID)) {
+        if (ORTE_SUCCESS == rc) {
             /* got a good result - return it */
             goto found;
         }
