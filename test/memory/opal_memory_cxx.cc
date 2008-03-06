@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +45,10 @@ main(int argc, char *argv[])
 {
     int retval;
 
-    opal_init();
+    if (OPAL_SUCCESS != opal_init()) {
+        printf("opal failed to init; test failure\n");
+        exit(1);
+    }
 
     if (0 == ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MALLOC_SUPPORT) &
               opal_mem_hooks_support_level())) {

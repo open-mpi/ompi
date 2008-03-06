@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/runtime/opal.h"
+#include "opal/constants.h"
 
 static FILE *error_out=NULL;
 
@@ -161,10 +163,16 @@ static void test_static(void)
 
 int main(int argc, char **argv)
 {
+    int rc;
 
-    opal_init();
-    /* local variables */
     test_init("opal_hash_table_t");
+
+    rc = opal_init();
+    test_verify_int(OPAL_SUCCESS, rc);
+    if (OPAL_SUCCESS != rc) {
+        test_finalize();
+        exit(1);
+    }
 
 #ifdef STANDALONE
     error_out = stderr;
