@@ -37,13 +37,12 @@ int orterun(int argc, char *argv[]);
 /**
  * Global struct for catching orterun command line options.
  */
-struct globals_t {
+struct orterun_globals_t {
     bool help;
     bool version;
     bool verbose;
     bool quiet;
     bool exit;
-    bool no_wait_for_job_completion;
     bool by_node;
     bool by_slot;
     bool do_not_launch;
@@ -62,19 +61,10 @@ struct globals_t {
 };
 
 /**
- * Struct holding values gleaned from the orterun command line
+ * Struct holding values gleaned from the orterun command line -
+ * needed by debugger init
  */
-ORTE_DECLSPEC extern struct globals_t orterun_globals;
-
-/**
- * Whether orterun_globals has been initialized yet or not
- */
-ORTE_DECLSPEC extern bool globals_init;
-
-/**
- * Struct holding list of allowable command line parameters
- */
-ORTE_DECLSPEC extern opal_cmd_line_init_t cmd_line_init[];
+ORTE_DECLSPEC extern struct orterun_globals_t orterun_globals;
 
 END_C_DECLS
 
