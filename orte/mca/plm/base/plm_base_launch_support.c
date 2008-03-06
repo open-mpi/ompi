@@ -143,7 +143,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     }
     OBJ_RELEASE(buffer);
     
-    /* wait for all the apps to report launched */
+    /* wait for all the daemons to report apps launched */
     if (ORTE_SUCCESS != (rc = orte_plm_base_report_launched(job))) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:launch failed for job %s on error %s",
@@ -286,7 +286,7 @@ CLEANUP:
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch %s for daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orted_failed_launch ? "completed" : "failed",
+                         orted_failed_launch ? "failed" : "completed",
                          ORTE_NAME_PRINT(sender)));
 
     if (orted_failed_launch) {
