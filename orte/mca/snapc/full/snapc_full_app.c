@@ -94,7 +94,7 @@ int app_coord_init() {
     asprintf(&app_comm_pipe_r, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
     asprintf(&app_comm_pipe_w, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
 
-    OPAL_OUTPUT_VERBOSE((15, opal_cr_output,
+    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "app) Named Pipes (%s) (%s)", 
                          app_comm_pipe_r, app_comm_pipe_w));
 
@@ -144,6 +144,9 @@ int app_coord_finalize() {
 static void snapc_full_app_signal_handler (int signo)
 {
     if( opal_cr_entry_point_signal != signo ) {
+        OPAL_OUTPUT_VERBOSE((1, mca_snapc_full_component.super.output_handle,
+                             "App) signal_handler: Received unknown signal %d",
+                             signo));
         /* Not our signal */
         return;
     }
