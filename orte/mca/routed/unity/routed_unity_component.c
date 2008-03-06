@@ -33,7 +33,6 @@
 #include "routed_unity.h"
 
 static orte_routed_module_t* routed_unity_init(int* priority);
-static bool recv_issued=false;
 static opal_condition_t cond;
 static opal_mutex_t lock;
 static opal_hash_table_t peer_list;
@@ -84,21 +83,8 @@ routed_unity_init(int* priority)
     return &orte_routed_unity_module;
 }
 
-static void orte_routed_unity_recv(int status, orte_process_name_t* sender,
-                                   opal_buffer_t* buffer, orte_rml_tag_t tag,
-                                   void* cbdata)
-{
-    int rc;
-    
-    if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(buffer))) {
-        ORTE_ERROR_LOG(rc);
-    }
-}
-
 int orte_routed_unity_module_init(void)
 {
-    int rc;
-    
     /* setup the global condition and lock */
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
@@ -106,15 +92,6 @@ int orte_routed_unity_module_init(void)
     OBJ_CONSTRUCT(&peer_list, opal_hash_table_t);
     opal_hash_table_init(&peer_list, 128);
 
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_UPDATE_ROUTES,
-                                                      ORTE_RML_PERSISTENT,
-                                                      orte_routed_unity_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    recv_issued = true;
     return ORTE_SUCCESS;
 }
 
@@ -125,41 +102,38 @@ orte_routed_unity_finalize(void)
     uint64_t key;
     void * value, *node, *next_node;
     
-    if (recv_issued) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTES))) {
+    /* if I am the HNP, I need to stop the comm recv */
+    if (orte_process_info.hnp) {
+        orte_routed_base_comm_stop();
+    }
+    
+    /* if I am an application process (but NOT a tool), indicate that I am
+     * truly finalizing prior to departure
+     */
+    if (!orte_process_info.hnp &&
+        !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        recv_issued = false;
-
-        /* if I am an application process (but NOT a tool), indicate that I am
-         * truly finalizing prior to departure
-         */
-        if (!orte_process_info.hnp &&
-            !orte_process_info.daemon &&
-            !orte_process_info.tool) {
-            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        /* don't destruct the routes until *after* we send the
-         * sync as the oob will be asking us how to route
-         * the message!
-         */
-        rc = opal_hash_table_get_first_key_uint64(&peer_list, &key, &value, &node);
-        while(OPAL_SUCCESS == rc) {
-            if(NULL != value) {
-                free(value);
-            }
-            rc = opal_hash_table_get_next_key_uint64(&peer_list, &key, &value, node, &next_node);
-            node = next_node;
-        }
-        OBJ_DESTRUCT(&peer_list);
-        /* cleanup the global condition */
-        OBJ_DESTRUCT(&cond);
-        OBJ_DESTRUCT(&lock);
     }
+    /* don't destruct the routes until *after* we send the
+     * sync as the oob will be asking us how to route
+     * the message!
+     */
+    rc = opal_hash_table_get_first_key_uint64(&peer_list, &key, &value, &node);
+    while(OPAL_SUCCESS == rc) {
+        if(NULL != value) {
+            free(value);
+        }
+        rc = opal_hash_table_get_next_key_uint64(&peer_list, &key, &value, node, &next_node);
+        node = next_node;
+    }
+    OBJ_DESTRUCT(&peer_list);
+    /* cleanup the global condition */
+    OBJ_DESTRUCT(&cond);
+    OBJ_DESTRUCT(&lock);
     
     return ORTE_SUCCESS;
 }
@@ -192,7 +166,7 @@ orte_routed_unity_update_route(orte_process_name_t *target,
         route_copy = malloc(sizeof(orte_process_name_t));
         *route_copy = *route;
         /* if we are routing everything for this target through one place, 
-         * then the target vpid is ORTE_NS_VPID_WILDCARD. So no need for
+         * then the target vpid is ORTE_VPID_WILDCARD. So no need for
          * special cases, just add it 
          */
         rc = opal_hash_table_set_value_uint64(&peer_list, orte_util_hash_name(target), 

@@ -374,98 +374,37 @@ CLEANUP:
     return rc;    
 }
 
-static int xcast_direct(orte_jobid_t job,
-                        opal_buffer_t *buffer,
-                        orte_rml_tag_t tag)
-{
-    int rc;
-    orte_process_name_t peer;
-    orte_vpid_t i;
-    opal_buffer_t *buf=NULL, *bfr=buffer;
+static int relay_via_hnp(orte_jobid_t job,
+                         opal_buffer_t *buffer,
+                         orte_rml_tag_t tag) {
+    opal_buffer_t *buf;
     orte_daemon_cmd_flag_t command;
     orte_grpcomm_mode_t mode;
-    orte_rml_tag_t target=tag;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast_direct",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    int rc;
     
-    /* if I am applicaton proc and this is going to some job other
-     * than my own, then we have to send it via the daemons as the proc would have
-     * no way of knowing how many procs are in the other job.
-     */
-    if (ORTE_PROC_MY_NAME->jobid != job &&
-        !orte_process_info.hnp && !orte_process_info.daemon) {
-        /* since we have to pack some additional info into the buffer
-         * for this case, we create a new buffer into to contain all the
-         * info needed plus the payload
-         */
-        buf = OBJ_NEW(opal_buffer_t);
-        /* I have to send this to the HNP for handling as I have no idea
-         * how many recipients there are! start by telling the HNP to relay
-         */
-        command = ORTE_DAEMON_PROCESS_AND_RELAY_CMD;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        /* default to the LINEAR mode since this is equivalent to
-         * DIRECT for daemons
-         */
-        mode = ORTE_GRPCOMM_LINEAR;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &mode, 1, ORTE_GRPCOMM_MODE))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        /* if the target isn't the daemon tag, then we have to add the proper
-         * command so the daemon's know what to do
-         */
-        if (ORTE_RML_TAG_DAEMON != tag) {
-            command = ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &job, 1, ORTE_JOBID))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &tag, 1, ORTE_RML_TAG))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
-        }
-        /* copy the payload into the new buffer - this is non-destructive, so our
-         * caller is still responsible for releasing any memory in the buffer they
-         * gave to us
-         */
-        if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, buffer))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_DAEMON, 0))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        rc = ORTE_SUCCESS;
+    /* since we have to pack some additional info into the buffer
+    * for this case, we create a new buffer into to contain all the
+    * info needed plus the payload
+    */
+    buf = OBJ_NEW(opal_buffer_t);
+    /* start by telling the HNP to relay */
+    command = ORTE_DAEMON_PROCESS_AND_RELAY_CMD;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-    
-    /* if I am a daemon or the HNP and this is going to the daemon job to
-     * someplace other than the daemon cmd processor, then I need to add
-     * a command to the buffer so the recipient daemons know what to do
+    /* default to the LINEAR mode since this is equivalent to
+     * DIRECT for daemons
      */
-    if ((orte_process_info.hnp || orte_process_info.daemon) &&
-        ORTE_PROC_MY_NAME->jobid == job &&
-        ORTE_RML_TAG_DAEMON != tag) {
-        /* since we have to pack some additional info into the buffer
-         * for this case, we create a new buffer into to contain all the
-         * info needed plus the payload
-         */
-        buf = OBJ_NEW(opal_buffer_t);
-        /* if the target isn't the daemon tag, then we have to add the proper
-         * command so the daemon's know what to do
-         */
+    mode = ORTE_GRPCOMM_LINEAR;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &mode, 1, ORTE_GRPCOMM_MODE))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    /* if the target isn't the daemon tag, then we have to add the proper
+     * command so the daemon's know what to do
+     */
+    if (ORTE_RML_TAG_DAEMON != tag) {
         command = ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
             ORTE_ERROR_LOG(rc);
@@ -479,27 +418,205 @@ static int xcast_direct(orte_jobid_t job,
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-        /* copy the payload into the new buffer - this is non-destructive, so our
-         * caller is still responsible for releasing any memory in the buffer they
-         * gave to us
+    }
+    /* copy the payload into the new buffer - this is non-destructive, so our
+     * caller is still responsible for releasing any memory in the buffer they
+     * gave to us
+     */
+    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, buffer))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_DAEMON, 0))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    rc = ORTE_SUCCESS;
+
+CLEANUP:
+    OBJ_RELEASE(buf);
+    return rc;
+}
+
+static int xcast_direct(orte_jobid_t job,
+                        opal_buffer_t *buffer,
+                        orte_rml_tag_t tag)
+{
+    int rc;
+    orte_process_name_t peer;
+    orte_vpid_t i, num_targets;
+    opal_buffer_t *buf=NULL, *bfr=buffer;
+    orte_daemon_cmd_flag_t command;
+    orte_rml_tag_t target=tag;
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s xcast_direct",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* if I am applicaton proc */
+    if (!orte_process_info.hnp &&
+        !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        /* if this is going to some job other
+         * than my own, then we have to send it via the HNP as I have
+         * no way of knowing how many procs are in the other job.
          */
-        if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, buffer))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
+        if (ORTE_PROC_MY_NAME->jobid != job) {
+            if (ORTE_SUCCESS != (rc = relay_via_hnp(job, buffer, tag))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
         }
-        /* point to correct buffer to be sent */
-        bfr = buf;
-        /* send this to the daemon tag so it gets processed correctly */
-        target = ORTE_RML_TAG_DAEMON;
+        /* if it is my jobid, then we can just send this ourselves -
+         * set the target tag
+         */
+        target = tag;
+        /* set number of procs to the #procs in our job */
+        num_targets = orte_process_info.num_procs;
+        /* point to the right buffer */
+        bfr = buffer;
+        /* go to send it */
+        goto SEND;
+    }
+    
+    /* if I am a daemon */
+    if (orte_process_info.daemon) {
+        /* if this is going to another job, then I have to relay
+         * it through the HNP as I have no idea how many procs
+         * are in that job
+         */
+        if (ORTE_PROC_MY_NAME->jobid != job) {
+            if (ORTE_SUCCESS != (rc = relay_via_hnp(job, buffer, tag))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+        }
+        /* if this is going to the daemon job to
+         * someplace other than the daemon cmd processor, then I need to add
+         * a command to the buffer so the recipient daemons know what to do
+         */
+        if (ORTE_RML_TAG_DAEMON != tag) {
+            /* setup a buffer to handle the additional info */
+            buf = OBJ_NEW(opal_buffer_t);
+            /* add the proper command so the daemon's know what to do */
+            command = ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &job, 1, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &tag, 1, ORTE_RML_TAG))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            /* copy the payload into the new buffer - this is non-destructive, so our
+             * caller is still responsible for releasing any memory in the buffer they
+             * gave to us
+             */
+            if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, buffer))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            /* point to correct buffer to be sent */
+            bfr = buf;
+            /* send this to the daemon tag so it gets processed correctly */
+            target = ORTE_RML_TAG_DAEMON;
+            /* set the number of targets to be the number of daemons */
+            num_targets = orte_process_info.num_procs;
+            /* send it */
+            goto SEND;
+        }
     }
 
+    /* if I am the HNP */
+    if (orte_process_info.hnp) {
+        orte_job_t *jdata;
+        
+        /* if this is going to the daemon job */
+        if (ORTE_PROC_MY_NAME->jobid == job) {
+            /* if this is going someplace other than the daemon cmd
+             * processor, then I need to add a command to the buffer
+             * so the recipient daemons know what to do
+             */
+            if (ORTE_RML_TAG_DAEMON != tag) {
+                /* since we have to pack some additional info into the buffer
+                 * for this case, we create a new buffer to contain all the
+                 * info needed plus the payload
+                 */
+                buf = OBJ_NEW(opal_buffer_t);
+                /* if the target isn't the daemon tag, then we have to add the proper
+                 * command so the daemon's know what to do
+                 */
+                command = ORTE_DAEMON_MESSAGE_LOCAL_PROCS;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &job, 1, ORTE_JOBID))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &tag, 1, ORTE_RML_TAG))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                /* copy the payload into the new buffer - this is non-destructive, so our
+                 * caller is still responsible for releasing any memory in the buffer they
+                 * gave to us
+                 */
+                if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(buf, buffer))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                /* point to correct buffer to be sent */
+                bfr = buf;
+                /* send this to the daemon tag so it gets processed correctly */
+                target = ORTE_RML_TAG_DAEMON;
+                /* set the number of targets to be the number of daemons */
+                num_targets = orte_process_info.num_procs;
+                /* send it */
+                goto SEND;
+            } else {
+                /* if already going to the daemon tag, then just point to
+                 * the right places and send it
+                 */
+                bfr = buffer;
+                target = tag;
+                num_targets = orte_process_info.num_procs;
+                goto SEND;
+            }
+        }
+        /* if this is going to any other job,
+         * then I need to know the number of procs in that job so I can
+         * send it
+         */
+        if (NULL == (jdata = orte_get_job_data_object(job))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
+            goto CLEANUP;
+        }
+        /* set the number of targets */
+        num_targets = jdata->num_procs;
+        /* set the tag */
+        target = tag;
+        /* point to correct buffer to be sent */
+        bfr = buffer;
+        /* send it */
+        goto SEND;
+    }
+    
+
+SEND:
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s xcast_direct: buffer size %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)buffer->bytes_used));
-    
+
    peer.jobid = job;
-    for(i=0; i<orte_process_info.num_procs; i++) {
+    for(i=0; i<num_targets; i++) {
         peer.vpid = i;
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                              "%s xcast_direct: %s => %s",

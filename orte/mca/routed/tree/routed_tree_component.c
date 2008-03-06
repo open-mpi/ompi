@@ -24,7 +24,6 @@
 #include "routed_tree.h"
 
 static orte_routed_module_t* routed_tree_init(int* priority);
-static bool selected=false;
 
 /**
  * component definition
@@ -89,7 +88,6 @@ orte_routed_tree_module_init(void)
     OBJ_CONSTRUCT(&orte_routed_tree_module.cond, opal_condition_t);
     OBJ_CONSTRUCT(&orte_routed_tree_module.lock, opal_mutex_t);
 
-    selected = true;
     return ORTE_SUCCESS;
 }
 
@@ -100,38 +98,42 @@ orte_routed_tree_finalize(void)
     uint64_t key;
     void * value, *node, *next_node;
 
-    if (selected) {
-        /* if I am an application process, indicate that I am
-         * truly finalizing prior to departure
-         */
-        if (!orte_process_info.hnp &&
-            !orte_process_info.daemon &&
-            !orte_process_info.tool) {
-            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+    /* if I am an application process, indicate that I am
+     * truly finalizing prior to departure
+     */
+    if (!orte_process_info.hnp &&
+        !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
-        /* don't destruct the routes until *after* we send the
-         * sync as the oob will be asking us how to route
-         * the message!
-         */
-        rc = opal_hash_table_get_first_key_uint64(&orte_routed_tree_module.peer_list,
-                                                  &key, &value, &node);
-        while(OPAL_SUCCESS == rc) {
-            if(NULL != value) {
-                free(value);
-            }
-            rc = opal_hash_table_get_next_key_uint64(&orte_routed_tree_module.peer_list,
-                                                     &key, &value, node, &next_node);
-            node = next_node;
-        }
-        OBJ_DESTRUCT(&orte_routed_tree_module.peer_list);
-        OBJ_DESTRUCT(&orte_routed_tree_module.vpid_wildcard_list);
-        /* destruct the global condition and lock */
-        OBJ_DESTRUCT(&orte_routed_tree_module.cond);
-        OBJ_DESTRUCT(&orte_routed_tree_module.lock);
     }
+    
+    /* if I am the HNP, I need to stop the comm recv */
+    if (orte_process_info.hnp) {
+        orte_routed_base_comm_stop();
+    }
+    
+    /* don't destruct the routes until *after* we send the
+     * sync as the oob will be asking us how to route
+     * the message!
+     */
+    rc = opal_hash_table_get_first_key_uint64(&orte_routed_tree_module.peer_list,
+                                              &key, &value, &node);
+    while(OPAL_SUCCESS == rc) {
+        if(NULL != value) {
+            free(value);
+        }
+        rc = opal_hash_table_get_next_key_uint64(&orte_routed_tree_module.peer_list,
+                                                 &key, &value, node, &next_node);
+        node = next_node;
+    }
+    OBJ_DESTRUCT(&orte_routed_tree_module.peer_list);
+    OBJ_DESTRUCT(&orte_routed_tree_module.vpid_wildcard_list);
+    /* destruct the global condition and lock */
+    OBJ_DESTRUCT(&orte_routed_tree_module.cond);
+    OBJ_DESTRUCT(&orte_routed_tree_module.lock);
     
     return ORTE_SUCCESS;
 }
