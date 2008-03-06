@@ -272,6 +272,10 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
              */
             orte_routed_tree_module.wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
             orte_routed_tree_module.wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
+            
+            /* set our lifeline to the the HNP - we will abort if that connection is lost */
+            orte_process_info.lifeline = ORTE_PROC_MY_HNP;
+            
             /* daemons will send their contact info back to the HNP as
              * part of the message confirming they are read to go. HNP's
              * load their contact info during orte_init
@@ -309,6 +313,7 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            /* the HNP has no lifeline, so leave that field the default NULL */
         } else {
             /* if this is for my own jobid, then I am getting an update of RML info
              * for the daemons - so update our contact info and routes
@@ -413,6 +418,9 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         /* setup the route to all other procs to flow through the daemon */
         orte_routed_tree_module.wildcard_route.jobid = ORTE_PROC_MY_DAEMON->jobid;
         orte_routed_tree_module.wildcard_route.vpid = ORTE_PROC_MY_DAEMON->vpid;
+        
+        /* set our lifeline to the local daemon - we will abort if this connection is lost */
+        orte_process_info.lifeline = ORTE_PROC_MY_DAEMON;
         
         /* register ourselves -this sends a message to the daemon (warming up that connection)
          * and sends our contact info to the HNP when all local procs have reported

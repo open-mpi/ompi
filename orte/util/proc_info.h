@@ -50,6 +50,7 @@ struct orte_proc_info_t {
     char *my_daemon_uri;                /**< Contact info to local daemon */
     orte_process_name_t my_hnp;         /**< Name of my hnp */
     char *my_hnp_uri;                   /**< Contact info for my hnp */
+    orte_process_name_t *lifeline;      /**< Name of the contact I cannot live without */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
     orte_std_cntr_t universe_size;      /**< the size of the universe we are in */

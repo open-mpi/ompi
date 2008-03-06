@@ -42,6 +42,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_daemon_uri =        */   NULL,
     /*  .my_hnp =               */   {0, 0},
     /*  .my_hnp_uri =           */   NULL,
+    /*  .lifeline =             */   NULL,
     /*  .hnp_pid =              */    0,
     /*  ,app_num =              */   -1,
     /*  ,universe_size =        */   -1,

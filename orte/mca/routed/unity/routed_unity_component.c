@@ -389,6 +389,10 @@ int orte_routed_unity_init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             /* we don't have to update the route as the unity component is
             * always "direct"
             */
+            
+            /* set our lifeline as the HNP - we will abort if that connection fails */
+            orte_process_info.lifeline = ORTE_PROC_MY_HNP;
+            
             return ORTE_SUCCESS;
         }
         
@@ -432,6 +436,7 @@ int orte_routed_unity_init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             }
         }
         
+        /* I do not have a lifeline, so leave it as the default NULL */
         return ORTE_SUCCESS;
     }
     
@@ -538,6 +543,11 @@ int orte_routed_unity_init_routes(orte_jobid_t job, opal_buffer_t *ndata)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            
+            /* declare the HNP as our "lifeline" - this means that we will automatically
+             * abort if we lose that connection
+             */
+            orte_process_info.lifeline = ORTE_PROC_MY_HNP;
             
             /* we don't have to update the route as the unity component is
             * always "direct"
