@@ -671,6 +671,14 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     if( MPI_SUCCESS != ret ) {
         goto CLEANUP;
     }
+
+    /* initialize recursive doubling tree */
+    ret=setup_recursive_doubling_tree_node(group_size, ompi_comm_rank(comm),
+            &(sm_module->recursive_doubling_tree));
+    if( MPI_SUCCESS != ret ) {
+        goto CLEANUP;
+    }
+    
     /* initialize local counters */
     sm_module->sm2_allocated_buffer_index=-1;
     sm_module->sm2_freed_buffer_index=-1;

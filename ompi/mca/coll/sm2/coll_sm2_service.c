@@ -205,3 +205,103 @@ Error:
     return OMPI_ERROR;
 }
 
+
+/* setup recursive doubleing tree node */
+
+int setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
+        pair_exchange_node_t *exchange_node)
+{
+    /* local variables */
+    int i,tmp,cnt,result,tree_order,n_extra_nodes;
+    int n_exchanges;
+
+    /* figure out number of levels in the tree */
+
+    n_exchanges=0;
+    result=num_nodes;
+    tree_order=2;
+    /* cnt - number of ranks in given level */
+    cnt=1;
+    while( num_nodes > cnt ) {
+        cnt*=tree_order; 
+        n_exchanges++;
+    };  
+
+    /* figure out the largest power of 2 that is less than or equal to
+     * num_nodes */
+    if( cnt > num_nodes) {
+        cnt/=tree_order;
+        n_exchanges--;
+    }
+
+    /* set node characteristics - node that is not within the largest
+     *  power of 2 will just send it's data to node that will participate
+     *  in the recursive doubling, and get the result back at the end.
+     */
+    if( node_rank+1 > cnt ) {
+        exchange_node->node_type=EXTRA_NODE;
+    } else {
+        exchange_node->node_type=EXCHANGE_NODE;
+    }
+
+    /* set the initial and final data exchanges - those that are not
+     *   part of the recursive doubling.
+     */
+    n_extra_nodes=num_nodes-cnt;
+
+    if ( EXCHANGE_NODE == exchange_node->node_type ) {
+    
+        if( node_rank < n_extra_nodes ) {
+            exchange_node->n_extra_sources=1;
+            exchange_node->rank_extra_source=cnt+node_rank;
+        } else {
+            exchange_node->n_extra_sources=0;
+            exchange_node->rank_extra_source=-1;
+        }
+
+    } else {
+            exchange_node->n_extra_sources=1;
+            exchange_node->rank_extra_source=node_rank-cnt;
+    }
+
+    /* set the exchange pattern */
+    if( EXCHANGE_NODE == exchange_node->node_type ) {
+
+        exchange_node->n_exchanges=n_exchanges;
+        exchange_node->rank_exchanges=(int *) malloc
+            (n_exchanges*sizeof(int));
+        if( NULL == exchange_node->rank_exchanges ) {
+            goto Error;
+        }
+        
+        /* fill in exchange partners */
+        result=1;
+        tmp=node_rank;
+        for( i=0 ; i < n_exchanges ; i++ ) {
+            if(tmp & 1 ) {
+                exchange_node->rank_exchanges[i]=
+                    node_rank-result;
+            } else {
+                exchange_node->rank_exchanges[i]=
+                    node_rank+result;
+            }
+            result*=2;
+            tmp/=2;
+        }
+
+    } else {
+
+        exchange_node->n_exchanges=0;
+        exchange_node->rank_exchanges=NULL;
+
+    }
+
+    /* successful return */
+    return OMPI_SUCCESS;
+
+Error:
+
+    /* error return */
+    return OMPI_ERROR;
+}
+

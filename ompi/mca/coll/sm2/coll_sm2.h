@@ -143,6 +143,36 @@ BEGIN_C_DECLS
     typedef struct tree_node_t tree_node_t;
 
     /*
+     * Pair-wise data exchange
+     */
+    /* enum for node type */
+    enum{
+        EXCHANGE_NODE,
+        EXTRA_NODE
+    };
+
+    struct pair_exchange_node_t {
+
+        /* number of nodes this node will exchange data with */
+        int n_exchanges;
+
+        /* ranks of nodes involved in data exchnge */
+        int *rank_exchanges;
+
+        /* number of extra sources of data - outside largest power of 2 in
+         *  this group */
+        int n_extra_sources;
+        
+        /* rank of the extra source */
+        int rank_extra_source;
+
+        /* node type */
+        int node_type;
+
+    };
+    typedef struct pair_exchange_node_t pair_exchange_node_t;
+
+    /*
      * Barrier request objects
      */
 
@@ -282,6 +312,9 @@ BEGIN_C_DECLS
         /* multinumial fan-out read tree */
         tree_node_t *fanout_read_tree;
 
+        /* recursive-doubling tree node */
+        pair_exchange_node_t recursive_doubling_tree;
+
         /* collective tag */
         long long collective_tag;
 
@@ -318,6 +351,10 @@ BEGIN_C_DECLS
      */
     int setup_multinomial_tree(int tree_order, int num_nodes,
                     tree_node_t *tree_nodes);
+
+    /* setup recursive doubleing tree node */
+    int setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
+            pair_exchange_node_t *tree_node);
 
     /* non-blocking barrier - init function */
     int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
