@@ -1031,7 +1031,7 @@ CFLAGS="$CFLAGS_save"
 
 ############################################################################
 # Libtool: part two
-# (after C compiler setup)
+# (after C compiler setup = no compiler/linker tests after this)
 ############################################################################
 
 ompi_show_subtitle "Libtool configuration"
