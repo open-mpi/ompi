@@ -84,8 +84,6 @@ typedef struct {
     char *hostfile;
     /* Hostfile for adding hosts to an existing allocation */
     char *add_hostfile;
-    /** Length of the map_data array, not including the final NULL entry */
-    orte_std_cntr_t num_map;
     /** argv of hosts passed in to -host */
     char ** dash_host;
     /** Prefix directory for this app (or NULL if no override necessary) */

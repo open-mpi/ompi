@@ -217,7 +217,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      * by -host across all app_contexts
      */
     for (i=0; i < jdata->num_apps; i++) {
-        if (0 < apps[i]->num_map) {
+        if (NULL != apps[i]->dash_host) {
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
                                                     &override_oversubscribed,
                                                     apps[i]->dash_host))) {
