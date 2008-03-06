@@ -298,7 +298,6 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
         (*dest)->add_hostfile = strdup(src->add_hostfile);
     }
     
-    (*dest)->num_map = src->num_map;
     (*dest)->preload_binary = src->preload_binary;
     
     if( NULL != src->preload_files)
