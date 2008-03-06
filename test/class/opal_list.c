@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 #include "support.h"
 #include "opal/class/opal_list.h"
 #include "opal/runtime/opal.h"
+#include "opal/constants.h"
 
 /*
  * Data type used for testing
@@ -42,11 +44,16 @@ int main(int argc, char **argv)
     /* local variables */
     opal_list_t list, x;
     size_t indx,i,list_size, tmp_size_1, tmp_size_2,size_elements;
-    int error_cnt;
+    int error_cnt, rc;
     test_data_t *elements, *ele;
     opal_list_item_t *item;
 
-    opal_init();
+    rc = opal_init();
+    test_verify_int(OPAL_SUCCESS, rc);
+    if (OPAL_SUCCESS != rc) {
+        test_finalize();
+        exit(1);
+    }
 
     test_init("opal_list_t");
 

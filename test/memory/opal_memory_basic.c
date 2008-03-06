@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -108,7 +109,10 @@ main(int argc, char *argv[])
     int ret;
     int support;
 
-    opal_init();
+    if (OPAL_SUCCESS != opal_init()) {
+        printf("opal failed to init; test failure\n");
+        exit(1);
+    }
 
     /* this printf needs to be here for the test to work! */
     printf("running malloc hooks test\n");
