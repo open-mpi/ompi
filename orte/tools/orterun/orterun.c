@@ -112,14 +112,15 @@ static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_event_t *orterun_event, *orteds_exit_event;
 static char *ompi_server=NULL;
+static bool terminating=false;
 
 /*
  * Globals
  */
-struct globals_t orterun_globals;
-bool globals_init = false;
+struct orterun_globals_t orterun_globals;
+static bool globals_init = false;
 
-opal_cmd_line_init_t cmd_line_init[] = {
+static opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
     { NULL, NULL, NULL, 'h', NULL, "help", 0,
       &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
@@ -183,13 +184,6 @@ opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a cartography file" },
 
-    /* Don't wait for the process to finish before exiting */
-#if 0
-    { NULL, NULL, NULL, '\0', "nw", "nw", 0,
-      &orterun_globals.no_wait_for_job_completion, OPAL_CMD_LINE_TYPE_BOOL,
-      "Launch the processes and do not wait for their completion (i.e., let orterun complete as soon a successful launch occurs)" },
-#endif
-    
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
     { NULL, NULL, NULL, 'x', NULL, NULL, 1,
@@ -643,6 +637,12 @@ static void terminated(int trigpipe, short event, void *arg)
     orte_job_t *daemons;
     orte_proc_t **procs;
     orte_vpid_t i;
+    
+    /* flag that we are here to avoid doing it twice */
+    if (terminating) {
+        return;
+    }
+    terminating = true;
     
     /* close the trigger pipe so it cannot be called again */
     if (0 <= trigpipe) {

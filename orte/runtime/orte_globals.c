@@ -147,8 +147,8 @@ int orte_register_params(void)
     orte_max_timeout = 1000000.0 * value;  /* convert to usec */
 
     mca_base_param_reg_int_name("orte", "timeout_step",
-                                "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 10 usec/proc)",
-                                false, false, 10, &orte_timeout_usec_per_proc);
+                                "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 100 usec/proc)",
+                                false, false, 100, &orte_timeout_usec_per_proc);
     
     /* default hostfile */
     mca_base_param_reg_string_name("default", "hostfile",
