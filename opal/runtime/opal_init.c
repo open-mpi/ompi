@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -254,7 +254,7 @@ opal_init_util(void)
     return OPAL_SUCCESS;
 
  return_error:
-    opal_show_help( "help-opal-runtime",
+    opal_show_help( "help-opal-runtime.txt",
                     "opal_init:startup:internal-failure", true,
                     error, ret );
     return ret;
@@ -383,7 +383,7 @@ opal_init(void)
     return OPAL_SUCCESS;
 
  return_error:
-    opal_show_help( "help-opal-runtime",
+    opal_show_help( "help-opal-runtime.txt",
                     "opal_init:startup:internal-failure", true,
                     error, ret );
     return ret;
