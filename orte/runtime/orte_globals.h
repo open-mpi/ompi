@@ -159,6 +159,10 @@ typedef struct {
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
+/* define a set of flags to control the launch of a job */
+#define ORTE_JOB_CONTROL_LOCAL_SPAWN    (uint16_t) 0x01
+#define ORTE_JOB_CONTROL_NON_ORTE_JOB   (uint16_t) 0x02
+
 typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
@@ -168,8 +172,10 @@ typedef struct {
     opal_pointer_array_t *apps;
     /* number of app_contexts in the array */
     orte_std_cntr_t num_apps;
-    /* whether or not this job is locally spawned */
-    bool local_spawn;
+    /* flags to control the launch of this job - see above
+     * for description of supported flags
+     */
+    uint16_t controls;
     /* total slots allocated to this job */
     orte_std_cntr_t total_slots_alloc;
     /* number of procs in this job */

@@ -36,6 +36,8 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -100,10 +102,11 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
     orte_plm_cmd_flag_t command;
+    orte_rml_cmd_flag_t cmd;
     orte_std_cntr_t count;
     orte_jobid_t job;
     orte_job_t *jdata;
-    opal_buffer_t answer;
+    opal_buffer_t answer, xchg;
     orte_vpid_t vpid;
     orte_proc_t **procs;
     orte_proc_state_t state;
@@ -132,19 +135,42 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 goto ANSWER_LAUNCH;
             }
                 
-                /* launch it */
-                if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+            /* launch it */
+            if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+                ORTE_ERROR_LOG(rc);
+                goto ANSWER_LAUNCH;
+            }
+            job = jdata->jobid;
+            
+            /* if the child is an ORTE job, wait for the procs to report they are alive */
+            if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {
+                ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
+                /* pack the update command */
+                OBJ_CONSTRUCT(&xchg, opal_buffer_t);
+                cmd = ORTE_RML_UPDATE_CMD;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&xchg, &cmd, 1, ORTE_RML_CMD))) {
                     ORTE_ERROR_LOG(rc);
                     goto ANSWER_LAUNCH;
                 }
-                job = jdata->jobid;
+                /* get the contact data of the child job */
+                if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(job, &xchg))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&xchg);
+                    goto ANSWER_LAUNCH;
+                }
+                /* send it to the parents */
+                if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(mev->sender.jobid, &xchg, ORTE_RML_TAG_RML_INFO_UPDATE))) {
+                    ORTE_ERROR_LOG(rc);
+                }
+                OBJ_DESTRUCT(&xchg);
+            }
             
+        ANSWER_LAUNCH:
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job %s launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job)));
             
-        ANSWER_LAUNCH:
             /* pack the jobid to be returned */
             if (ORTE_SUCCESS != (ret = opal_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);

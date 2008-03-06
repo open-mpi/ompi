@@ -107,65 +107,6 @@ int orte_dt_copy_job(orte_job_t **dest, orte_job_t *src, opal_data_type_t type)
     (*dest) = src;
     OBJ_RETAIN(src);
     
-#if 0
-    orte_std_cntr_t i;
-    int rc;
-    
-    /* create the new object */
-    *dest = OBJ_NEW(orte_job_t);
-    if (NULL == *dest) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* copy data into it */
-    (*dest)->jobid = src->jobid;
-    
-    if (0 < src->num_apps) {
-        (*dest)->apps = (orte_app_context_t**)malloc(src->num_apps * sizeof(orte_app_context_t*));
-        if (NULL == (*dest)->apps) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        for (i=0; i < src->num_apps; i++) {
-            if (ORTE_SUCCESS != (rc = opal_dss.copy((void*)&((*dest)->apps[i]), src->apps[i], ORTE_APP_CONTEXT))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        (*dest)->num_apps = src->num_apps;
-    }
-    
-    (*dest)->total_slots_alloc = src->total_slots_alloc;
-    
-    (*dest)->num_procs = src->num_procs;
-    for (i=0; i < src->procs->size; i++) {
-        if (NULL != src->procs->addr[i]) {
-            /* need to use pointer_array_set_item here */
-            (*dest)->procs->addr[i] = src->procs->addr[i];
-            OBJ_RETAIN(src->procs->addr[i]);  /* keep the instance count correct */
-        }
-    }
-    
-    (*dest)->map = src->map;
-    OBJ_RETAIN(src->map); /* keep the instance count correct */
-    
-    (*dest)->bookmark = src->bookmark;
-    (*dest)->oversubscribe_override = src->oversubscribe_override;
-    (*dest)->state = src->state;
-    
-    (*dest)->num_terminated = src->num_terminated;
-    (*dest)->abort = src->abort;
-#if OPAL_ENABLE_FT == 1
-    (*dest)->ckpt_state = src->ckpt_state;
-    if (NULL != src->ckpt_snapshot_ref) {
-        (*dest)->ckpt_snapshot_ref = strdup(src->ckpt_snapshot_ref);
-    }
-    if (NULL != src->ckpt_snapshot_loc) {
-        (*dest)->ckpt_snapshot_loc = strdup(src->ckpt_snapshot_loc);
-    }
-#endif
-#endif
     return ORTE_SUCCESS;
 }
 
@@ -176,49 +117,6 @@ int orte_dt_copy_node(orte_node_t **dest, orte_node_t *src, opal_data_type_t typ
 {
     (*dest) = src;
     OBJ_RETAIN(src);
-#if 0
-    orte_std_cntr_t i;
-    
-    /* create the new object */
-    *dest = OBJ_NEW(orte_node_t);
-    if (NULL == *dest) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    
-    /* copy data into it */
-    if (NULL != src->name) {
-        (*dest)->name = strdup(src->name);
-    }
-    (*dest)->nodeid = src->nodeid;
-    
-    (*dest)->index = src->index;
-    if (NULL != src->daemon) {
-        (*dest)->daemon = src->daemon;
-        OBJ_RETAIN(src->daemon);  /* keep the instance count correct */
-    }
-    (*dest)->launch_id = src->launch_id;
-    
-    (*dest)->num_procs = src->num_procs;
-    for (i=0; i < src->procs->size; i++) {
-        if (NULL != src->procs->addr[i]) {
-            (*dest)->procs->addr[i] = src->procs->addr[i];
-            OBJ_RETAIN(src->procs->addr[i]);  /* keep the instance count correct */
-        }
-    }
-
-    (*dest)->oversubscribed = src->oversubscribed;
-    (*dest)->arch = src->arch;
-    (*dest)->state = src->state;
-    (*dest)->slots = src->slots;
-    (*dest)->slots_inuse = src->slots_inuse;
-    (*dest)->slots_alloc = src->slots_alloc;
-    (*dest)->slots_max = src->slots_max;
-    if (NULL != src->username) {
-        (*dest)->username = strdup(src->username);
-    }
-    (*dest)->oversubscribe_override = src->oversubscribe_override;
-#endif
     return ORTE_SUCCESS;
 }
 
@@ -229,39 +127,6 @@ int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t typ
 {
     (*dest) = src;
     OBJ_RETAIN(src);
-#if 0
-    /* create the new object */
-    *dest = OBJ_NEW(orte_proc_t);
-    if (NULL == *dest) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    
-    /* copy data into it */
-    (*dest)->name = src->name;
-    (*dest)->pid = src->pid;
-    (*dest)->local_rank = src->local_rank;
-    (*dest)->state = src->state;
-    (*dest)->app_idx = src->app_idx;
-    if (NULL != src->slot_list) {
-        (*dest)->slot_list = strdup(src->slot_list);
-    }
-    
-    if (NULL != src->node) {
-        (*dest)->node = src->node;
-        OBJ_RETAIN(src->node); /* keep the instance count correct */
-    }
-
-#if OPAL_ENABLE_FT == 1
-    (*dest)->ckpt_state = src->ckpt_state;
-    if (NULL != src->ckpt_snapshot_ref) {
-        (*dest)->ckpt_snapshot_ref = strdup(src->ckpt_snapshot_ref);
-    }
-    if (NULL != src->ckpt_snapshot_loc) {
-        (*dest)->ckpt_snapshot_loc = strdup(src->ckpt_snapshot_loc);
-    }
-#endif
-#endif
     return ORTE_SUCCESS;
 }
 
@@ -270,6 +135,9 @@ int orte_dt_copy_proc(orte_proc_t **dest, orte_proc_t *src, opal_data_type_t typ
  */
 int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, opal_data_type_t type)
 {
+    (*dest) = src;
+    OBJ_RETAIN(src);
+#if 0
     /* create the new object */
     *dest = OBJ_NEW(orte_app_context_t);
     if (NULL == *dest) {
@@ -314,7 +182,7 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     if (NULL != src->prefix_dir) {
         (*dest)->prefix_dir = strdup(src->prefix_dir);
     }
-    
+#endif    
     return ORTE_SUCCESS;
 }
 
