@@ -1123,6 +1123,10 @@ static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
             asprintf(&(vpid_snapshot->comm_pipe_r), "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
         }
 
+        OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+                             "Local) Signal process (%d)\n",
+                             (int) vpid_snapshot->super.process_pid));
+
         /*
          * Signal the application
          */
