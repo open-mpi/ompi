@@ -96,8 +96,8 @@ static orte_ras_base_module_t *ras_alps_init(int* priority)
 
     if (NULL != getenv("BATCH_PARTITION_ID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        opal_output(orte_ras_base.ras_output,
-                    "ras:alps: available for selection");
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "ras:alps: available for selection"));
         return &orte_ras_alps_module;
     }
 

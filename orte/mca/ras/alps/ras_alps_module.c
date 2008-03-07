@@ -101,11 +101,11 @@ cleanup:
     /* All done */
 
     if (ORTE_SUCCESS == ret) {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:alps:allocate: success");
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "ras:alps:allocate: success"));
     } else {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:alps:allocate: failure (base_allocate_nodes=%d)", ret);
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "ras:alps:allocate: failure (base_allocate_nodes=%d)", ret));
     }
     return ret;
 }
@@ -140,8 +140,8 @@ int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
     }
     
     while (NULL != (hostname = ras_alps_getline(fp))) {
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:base:read_nodename: got hostname %s", hostname);
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "ras:alps:read_nodename: got hostname %s", hostname));
         
         /* if this matches the prior nodename, then just add
          * to the slot count
@@ -155,8 +155,8 @@ int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
         }
         
         /* must be a new name, so add a new item to the list */
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:base:read_nodename: not found -- added to list");
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                             "ras:alps:read_nodename: not found -- added to list"));
         node = OBJ_NEW(orte_node_t);
         node->name = hostname;
         node->launch_id = nodeid;
@@ -177,8 +177,8 @@ int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
  */
 static int orte_ras_alps_finalize(void)
 {
-    opal_output(orte_ras_base.ras_output, 
-                "ras:alps:finalize: success (nothing to do)");
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "ras:alps:finalize: success (nothing to do)"));
     return ORTE_SUCCESS;
 }
 
