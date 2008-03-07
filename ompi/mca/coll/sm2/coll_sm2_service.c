@@ -233,6 +233,7 @@ int setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
         cnt/=tree_order;
         n_exchanges--;
     }
+    exchange_node->log_2=n_exchanges;
 
     /* set node characteristics - node that is not within the largest
      *  power of 2 will just send it's data to node that will participate
