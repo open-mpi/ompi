@@ -27,6 +27,12 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "plm_ccp.h"
 
+/* Import the Windows CCP API. */
+#import "ccpapi.tlb" named_guids no_namespace raw_interfaces_only   \
+    rename("SetEnvironmentVariable","SetEnvVar")                    \
+    rename("GetJob", "GetSingleJob")                                \
+    rename("AddJob", "AddSingleJob")
+
 
 /*
  * Public string showing the plm ompi_ccp component version number
@@ -128,12 +134,30 @@ static int plm_ccp_close(void)
 static orte_plm_base_module_t *plm_ccp_init(int *priority)
 {
     int rc;
-    
+    ICluster* pCluster = NULL;
+    HRESULT hr = S_OK;
+
+    /* CCP is not thread safe. Use the apartment model. */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    /* Try to create the Cluster object. */
+    hr = CoCreateInstance( __uuidof(Cluster),
+                           NULL,
+                           CLSCTX_INPROC_SERVER,
+                           __uuidof(ICluster),
+                           reinterpret_cast<void **> (&pCluster) );
+    if (FAILED(hr)) {
+        /* We are not Windows clusters, don't select us.*/
+        return NULL;
+    }
+
     /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.hnp) {
         return NULL;
     }
 
+    /* We are Windows clusters and this is HNP. */
+    pCluster->Release();
     *priority = mca_plm_ccp_component.priority;
     return &orte_plm_ccp_module;
 }

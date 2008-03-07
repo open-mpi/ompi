@@ -22,6 +22,13 @@
 #include "ras_ccp.h"
 
 
+/* Import the Windows CCP API. */
+#import "ccpapi.tlb" named_guids no_namespace raw_interfaces_only   \
+    rename("SetEnvironmentVariable","SetEnvVar")                    \
+    rename("GetJob", "GetSingleJob")                                \
+    rename("AddJob", "AddSingleJob")
+
+
 /*
  * Local variables
  */
@@ -83,11 +90,31 @@ static int ras_ccp_open(void)
 
 static orte_ras_base_module_t *ras_ccp_init(int* priority)
 {
-    /* if we are not an HNP, then we must not be selected */
+    int rc;
+    ICluster* pCluster = NULL;
+    HRESULT hr = S_OK;
+
+    /* CCP is not thread safe. Use the apartment model. */
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    /* Try to create the Cluster object. */
+    hr = CoCreateInstance( __uuidof(Cluster),
+                           NULL,
+                           CLSCTX_INPROC_SERVER,
+                           __uuidof(ICluster),
+                           reinterpret_cast<void **> (&pCluster) );
+    if (FAILED(hr)) {
+        /* We are not Windows clusters, don't select us.*/
+        return NULL;
+    }
+
+    /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.hnp) {
         return NULL;
     }
-    
+
+    /* We are Windows clusters and this is HNP. */
+    pCluster->Release();  
     *priority = mca_ras_ccp_component.priority;
     return &orte_ras_ccp_module;
 }
