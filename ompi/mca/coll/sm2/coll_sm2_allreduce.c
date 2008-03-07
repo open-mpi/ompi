@@ -359,7 +359,6 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         extra_ctl_pointer;
     mca_coll_sm2_module_t *sm_module;
 
-
     sm_module=(mca_coll_sm2_module_t *) module;
 
     /* get size of data needed - same layout as user data, so that
@@ -454,8 +453,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     ctl_size;
                     
                 /* wait until remote data is read */
-                while(! 
-                        ( extra_ctl_pointer->flag == tag ) ) {
+                while( extra_ctl_pointer->flag < tag ) {
                     opal_progress();
                 }
     
@@ -519,12 +517,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             }
 
             /* reduce data into my write buffer */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    (char *)my_write_pointer,
-                    (char *)partner_read_pointer);
-            if( 0 != rc ) {
-                return OMPI_ERROR;
-            }
+            /* apply collective operation */
+            ompi_op_reduce(op,(void *)partner_read_pointer,
+                    (void *)my_write_pointer, count_this_stripe,dtype);
             
             /* signal that I am done reading my peer's data */
             tag++;
