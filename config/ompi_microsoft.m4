@@ -111,17 +111,6 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
         AC_DEFINE([pid_t], [intptr_t], [Windows pid_t type is a pointer])
         AC_DEFINE_UNQUOTED([SIZEOF_PID_T], $ac_cv_sizeof_int,
                            [and here is it's size])
-        AC_CHECK_TYPES([socklen_t], [AC_DEFINE([HAVE_SOCKLEN_T], [1],
-                                               [Whether we have socklen_t or not])],
-                       [AC_DEFINE(socklen_t, unsigned int,
-                                  [Define to unsigned int if you dont have it])],
-                       [#include <winsock2.h>
-                        #include <ws2tcpip.h>])
-
-        AC_CHECK_TYPES([struct sockaddr_in], [], [],
-                       [AC_INCLUDES_DEFAULT
-                        #include <winsock2.h>
-                        #include <ws2tcpip.h>])
 
         LDFLAGS="$SAVE_LDFLAGS"
 fi
