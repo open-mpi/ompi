@@ -94,18 +94,21 @@ int app_coord_init() {
     asprintf(&app_comm_pipe_r, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
     asprintf(&app_comm_pipe_w, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
 
-    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
-                         "app) Named Pipes (%s) (%s)", 
-                         app_comm_pipe_r, app_comm_pipe_w));
-
     /*
      * Setup a signal handler to catch and start the proper thread
      * to handle the checkpoint
      */
     if( SIG_ERR == signal(opal_cr_entry_point_signal, snapc_full_app_signal_handler) ) {
+        opal_output(mca_snapc_full_component.super.output_handle,
+                    "App) init: Error: Failed to register signal %d\n",
+                    opal_cr_entry_point_signal);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
+
+    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+                         "app) Named Pipes (%s) (%s), Signal (%d)", 
+                         app_comm_pipe_r, app_comm_pipe_w, opal_cr_entry_point_signal));
 
  cleanup:
     if( NULL != tmp_pid) {

@@ -1124,13 +1124,19 @@ static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
         }
 
         OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
-                             "Local) Signal process (%d)\n",
-                             (int) vpid_snapshot->super.process_pid));
+                             "Local) Signal process (%d) with signal %d\n",
+                             (int) vpid_snapshot->super.process_pid,
+                             opal_cr_entry_point_signal));
 
         /*
          * Signal the application
          */
         if( 0 != (ret = kill(vpid_snapshot->super.process_pid, opal_cr_entry_point_signal) ) ) {
+            opal_output(mca_snapc_full_component.super.output_handle,
+                        "local) Error: Failed to signal process %d with signal %d. %d\n", 
+                        (int) vpid_snapshot->super.process_pid,
+                        opal_cr_entry_point_signal,
+                        ret);
             exit_status = ret;
             goto cleanup;
         }
@@ -1239,6 +1245,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_
                                      vpid_snapshot->comm_pipe_r, ret, s_time, max_wait_time));
             }
             usleep(usleep_time);
+            opal_event_loop(OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
@@ -1249,6 +1256,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_
                                      vpid_snapshot->comm_pipe_w, ret, s_time, max_wait_time));
             }
             usleep(usleep_time);
+            opal_event_loop(OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else {
