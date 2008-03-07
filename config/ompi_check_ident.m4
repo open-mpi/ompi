@@ -26,21 +26,28 @@ AC_DEFUN([OMPI_CHECK_IDENT], [
     ompi_static_const_char_happy=0
     _OMPI_CHECK_IDENT(
         [$1], [$2], [$3],
-        [[#]pragma ident],
+        [[#]pragma ident], [],
         [ompi_pragma_ident_happy=1
          ompi_message="[#]pragma ident"],
         _OMPI_CHECK_IDENT(
             [$1], [$2], [$3],
-            [[#]ident],
+            [[#]ident], [],
             [ompi_ident_happy=1
              ompi_message="[#]ident"],
-            [ompi_static_const_char_happy=1
-             ompi_message="static const char[[]]"]))
+            _OMPI_CHECK_IDENT(
+                [$1], [$2], [$3],
+                [[#]pragma comment(exestr, ], [)],
+                [ompi_pragma_comment_happy=1
+                 ompi_message="[#]pragma comment"],
+                [ompi_static_const_char_happy=1
+                 ompi_message="static const char[[]]"])))
 
     AC_DEFINE_UNQUOTED([OMPI_$1_USE_PRAGMA_IDENT],
         [$ompi_pragma_ident_happy], [Use #pragma ident strings for $4 files])
     AC_DEFINE_UNQUOTED([OMPI_$1_USE_IDENT],
         [$ompi_ident_happy], [Use #ident strings for $4 files])
+    AC_DEFINE_UNQUOTED([OMPI_$1_USE_PRAGMA_COMMENT],
+        [$ompi_pragma_comment_happy], [Use #pragma comment for $4 files])
     AC_DEFINE_UNQUOTED([OMPI_$1_USE_CONST_CHAR_IDENT],
         [$ompi_static_const_char_happy], [Use static const char[] strings for $4 files])
 
@@ -50,7 +57,7 @@ AC_DEFUN([OMPI_CHECK_IDENT], [
 ])
 
 # _OMPI_CHECK_IDENT(compiler-env, compiler-flags,
-# file-suffix, header, action-if-success, action-if-fail)
+# file-suffix, header_prefix, header_suffix, action-if-success, action-if-fail)
 # Try to compile a source file containing a #-style ident,
 # and determine whether the ident was inserted into the
 # resulting object file
@@ -61,7 +68,7 @@ AC_DEFUN([_OMPI_CHECK_IDENT], [
 
     ompi_ident="string_not_coincidentally_inserted_by_the_compiler"
     cat > conftest.$3 <<EOF
-$4 "$ompi_ident"
+$4 "$ompi_ident" $5
 int main(int argc, char** argv);
 int main(int argc, char** argv) { return 0; }
 EOF
@@ -72,17 +79,19 @@ EOF
     # resulting object file.  If the ident is found in "strings" or
     # the grep succeeds, rule that we have this flavor of ident.
 
-    OMPI_LOG_COMMAND([$ompi_compiler $ompi_flags -c conftest.$3 -o conftest],
-                     [ompi_output="`strings -a conftest | grep $ompi_ident`"
-                      grep $ompi_ident conftest 2>&1 1>/dev/null
-                      ompi_status=$?
-                      AS_IF([test "$ompi_output" != "" -o "$ompi_status" = "0"],
-                            [$5],
-                            [$6])],
-                     [OMPI_LOG_MSG([the failed program was:])
-                      OMPI_LOG_FILE([conftest.$3])
-                      $6])
+    OMPI_LOG_COMMAND([$ompi_compiler $ompi_flags -c conftest.$3 -o conftest.${OBJEXT}],
+                     [AS_IF([test -f conftest.${OBJEXT}],
+                            [ompi_output="`strings -a conftest.${OBJEXT} | grep $ompi_ident`"
+                             grep $ompi_ident conftest.${OBJEXT} 2>&1 1>/dev/null
+                             ompi_status=$?
+                             AS_IF([test "$ompi_output" != "" -o "$ompi_status" = "0"],
+                                   [$6],
+                                   [$7])],
+                            [OMPI_LOG_MSG([the failed program was:])
+                             OMPI_LOG_FILE([conftest.$3])
+                             $7]
+                            [$7])])
 
     unset ompi_compiler ompi_flags ompi_output ompi_status
-    rm -rf conftest.* conftest
+    rm -rf conftest.* conftest${EXEEXT}
 ])dnl
