@@ -169,6 +169,9 @@ BEGIN_C_DECLS
         /* number of tags needed per stripe */
         int n_tags;
 
+        /* log 2 of largest full power of 2 for this node set */
+        int log_2;
+
         /* node type */
         int node_type;
 
