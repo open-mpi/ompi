@@ -166,6 +166,9 @@ BEGIN_C_DECLS
         /* rank of the extra source */
         int rank_extra_source;
 
+        /* number of tags needed per stripe */
+        int n_tags;
+
         /* node type */
         int node_type;
 

@@ -296,6 +296,11 @@ int setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
 
     }
 
+    /* set the number of tags needed per stripe - this must be the
+     *   same across all procs in the communicator.
+     */
+    exchange_node->n_tags=2*n_exchanges+1;
+
     /* successful return */
     return OMPI_SUCCESS;
 

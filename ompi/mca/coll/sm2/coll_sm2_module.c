@@ -438,8 +438,8 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
     /* set the pointer to the request that needs to be completed first */
     module->current_request_index=0;
 
-    /* set collective tag */
-    module->collective_tag=0;
+    /* set starting collective tag */
+    module->collective_tag=1;
 
     /* return - successful */
     return OMPI_SUCCESS;
