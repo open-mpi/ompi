@@ -330,6 +330,9 @@ int opal_cr_init(void )
 
 #if OPAL_ENABLE_FT_THREAD == 1
     if( !opal_cr_is_tool && opal_cr_thread_use_if_avail) {
+        opal_output_verbose(10, opal_cr_output,
+                            "opal_cr: init: starting the thread\n");
+
         opal_set_using_threads(true);
         /*
          * Start the thread
@@ -347,6 +350,10 @@ int opal_cr_init(void )
         opal_thread_start(&opal_cr_thread);
 
     } /* End opal_cr_is_tool = true */
+    else {
+        opal_output_verbose(10, opal_cr_output,
+                            "opal_cr: init: *Not* Using C/R thread\n");
+    }
 #endif /* OPAL_ENABLE_FT_THREAD == 1 */
 
  cleanup:
