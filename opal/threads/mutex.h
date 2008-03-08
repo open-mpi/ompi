@@ -26,7 +26,11 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDBOOL_H
+/*
+ * Circumentvent problems in C++ compilers.
+ * For C++, we should not need the file, anyhow.
+ */
+#if defined(HAVE_STDBOOL_H) && !(defined(c_plusplus) || defined(__cplusplus))
 #include <stdbool.h>
 #endif
 
