@@ -67,7 +67,12 @@
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
 #endif
-#ifdef HAVE_STDBOOL_H
+
+/*
+ * For C++, we should not need the file, anyhow.
+ * Circumentvent problems in C++ compilers.
+ */
+#if defined(HAVE_STDBOOL_H) && !(defined(c_plusplus) || defined(__cplusplus))
 #include <stdbool.h>
 #endif
 
