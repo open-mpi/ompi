@@ -24,7 +24,7 @@
 typedef uint64_t opal_timer_t;
 
 /* frequency in mhz */
-extern opal_timer_t opal_timer_darwin_freq;
+OPAL_DECLSPEC extern opal_timer_t opal_timer_darwin_freq;
 
 
 static inline opal_timer_t
