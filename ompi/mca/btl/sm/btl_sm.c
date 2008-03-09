@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -104,7 +104,7 @@ mca_btl_sm_t mca_btl_sm = {
         mca_btl_sm_free,
         mca_btl_sm_prepare_src,
         NULL,
-        mca_btl_sm_send, 
+        mca_btl_sm_send,
         NULL,  /* put */
         NULL,  /* get */
         mca_btl_base_dump,
@@ -129,9 +129,9 @@ mca_btl_sm_module_resource_t mca_btl_sm_module_resource;
 #define OFFSET2ADDR(OFFSET, BASE) ((ptrdiff_t)(OFFSET) + (char*)(BASE))
 
 int mca_btl_sm_add_procs(
-    struct mca_btl_base_module_t* btl, 
-    size_t nprocs, 
-    struct ompi_proc_t **procs, 
+    struct mca_btl_base_module_t* btl,
+    size_t nprocs,
+    struct ompi_proc_t **procs,
     struct mca_btl_base_endpoint_t **peers,
     ompi_bitmap_t* reachability)
 {
@@ -205,7 +205,7 @@ int mca_btl_sm_add_procs(
 
         OBJ_CONSTRUCT(&peer->pending_sends, opal_list_t);
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-        sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir, 
+        sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
                 (unsigned long)procs[proc]->proc_name.vpid);
         peer->fifo_fd = open(path, O_WRONLY);
         if(peer->fifo_fd < 0) {
@@ -295,8 +295,8 @@ int mca_btl_sm_add_procs(
     /* Allocate Shared Memory BTL process coordination
      * data structure.  This will reside in shared memory */
 
-    /* 
-     * Create backing file - only first time through 
+    /*
+     * Create backing file - only first time through
      */
     if ( !mca_btl_sm.btl_inited ) {
         /* set file name */
@@ -312,7 +312,7 @@ int mca_btl_sm_add_procs(
         size = sizeof(mca_btl_sm_module_resource_t);
         if(NULL==(mca_btl_sm_component.mmap_file=mca_common_sm_mmap_init(size,
                         mca_btl_sm_component.sm_resource_ctl_file,
-                        sizeof(mca_btl_sm_module_resource_t), 0))) 
+                        sizeof(mca_btl_sm_module_resource_t), 0)))
         {
             opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
@@ -330,7 +330,7 @@ int mca_btl_sm_add_procs(
          * make this array growable, but then one would need to uses mutexes
          * for any access to these queues to ensure data consistancy when
          * the array is grown */
-   
+
         if(0 == mca_btl_sm_component.my_smp_rank ) {
             /* allocate ompi_fifo_t strucutes for each fifo of the queue
              * pairs - one per pair of local processes */
@@ -412,18 +412,18 @@ int mca_btl_sm_add_procs(
              *  flags are set */
             opal_atomic_mb();
         }
-   
+
         /* Note:  Need to make sure that proc 0 initializes control
          * structures before any of the other procs can progress */
-        if( 0 != mca_btl_sm_component.my_smp_rank ) 
+        if( 0 != mca_btl_sm_component.my_smp_rank )
         {
             /* spin unitl local proc 0 initializes the segment */
             while(!mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
                 opal_atomic_rmb();
-                opal_progress(); 
+                opal_progress();
             }
         }
-                
+
         /* set the base of the shared memory segment, and flag
          * indicating that it is set */
         tmp_ptr=(volatile char **)
@@ -647,9 +647,9 @@ CLEANUP:
 }
 
 int mca_btl_sm_del_procs(
-    struct mca_btl_base_module_t* btl, 
+    struct mca_btl_base_module_t* btl,
     size_t nprocs,
-    struct ompi_proc_t **procs, 
+    struct ompi_proc_t **procs,
     struct mca_btl_base_endpoint_t **peers)
 {
     return OMPI_SUCCESS;
@@ -675,7 +675,7 @@ int mca_btl_sm_finalize(struct mca_btl_base_module_t* btl)
 }
 
 
-/* 
+/*
  * Register callback function for error handling..
  */
 int mca_btl_sm_register_error_cb(
@@ -730,7 +730,7 @@ extern int mca_btl_sm_free(
 {
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
     MCA_BTL_SM_FRAG_RETURN(frag);
-    
+
     return OMPI_SUCCESS;
 }
 
@@ -763,7 +763,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
 
     if(reserve + max_data > frag->size) {
         max_data = frag->size - reserve;
-    } 
+    }
     iov.iov_len = max_data;
     iov.iov_base =
         (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.seg_addr.pval)) +
@@ -780,7 +780,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     return &frag->base;
 }
 
- 
+
 /**
  * Initiate a send to the peer.
  *
@@ -804,9 +804,9 @@ int mca_btl_sm_send(
 
     frag->endpoint = endpoint;
 
-    /* 
+    /*
      * post the descriptor in the queue - post with the relative
-     * address 
+     * address
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
             endpoint->peer_smp_rank, frag->hdr, false, rc);
