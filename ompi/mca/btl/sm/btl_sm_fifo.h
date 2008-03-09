@@ -24,6 +24,6 @@ do {                                                                        \
     }                                                                       \
     if(opal_using_threads())                                                \
         opal_atomic_unlock(fifo->head_lock);                                \
-} while(0) 
+} while(0)
 
 #endif

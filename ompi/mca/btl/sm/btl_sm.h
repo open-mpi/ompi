@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -43,7 +43,7 @@
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h" 
+#include "ompi/mca/btl/base/base.h"
 
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
@@ -91,7 +91,7 @@ struct mca_btl_sm_component_t {
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     opal_mutex_t sm_lock;
-    char* sm_resource_ctl_file;        /**< name of shared memory file used 
+    char* sm_resource_ctl_file;        /**< name of shared memory file used
                                             to coordinate resource usage */
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_btl_sm_module_resource_t *sm_ctl_header;  /* control header in
@@ -153,14 +153,14 @@ extern int mca_btl_sm_component_close(void);
 
 /**
  * SM module initialization.
- * 
+ *
  * @param num_btls (OUT)                  Number of BTLs returned in BTL array.
  * @param enable_progress_threads (IN)    Flag indicating whether BTL is allowed to have progress threads
  * @param enable_mpi_threads (IN)         Flag indicating whether BTL must support multilple simultaneous invocations from different threads
  *
  */
 extern mca_btl_base_module_t** mca_btl_sm_component_init(
-    int *num_btls, 
+    int *num_btls,
     bool enable_progress_threads,
     bool enable_mpi_threads
 );
@@ -196,7 +196,7 @@ int mca_btl_sm_register_error_cb(
 
 /**
  * Cleanup any resources held by the BTL.
- * 
+ *
  * @param btl  BTL instance.
  * @return     OMPI_SUCCESS or error status on failure.
  */
@@ -212,12 +212,12 @@ extern int mca_btl_sm_finalize(
  * Called for message that is send from process with the virtual
  * address of the shared memory segment being different than that of
  * the receiver.
- * 
+ *
  * @param btl (IN)
- * @param proc (IN)  
+ * @param proc (IN)
  * @param peer (OUT)
  * @return     OMPI_SUCCESS or error status on failure.
- * 
+ *
  */
 
 extern int mca_btl_sm_add_procs(
@@ -314,7 +314,7 @@ int mca_btl_sm_ft_event(int state);
 void mca_btl_sm_component_event_thread(opal_object_t*);
 #endif
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define MCA_BTL_SM_SIGNAL_PEER(peer) \
 { \
     unsigned char cmd = DATA; \

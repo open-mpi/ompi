@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -60,7 +60,7 @@
 
 
 /*
- * Shared Memory (SM) component instance. 
+ * Shared Memory (SM) component instance.
  */
 
 mca_btl_sm_component_t mca_btl_sm_component = {
@@ -85,7 +85,7 @@ mca_btl_sm_component_t mca_btl_sm_component = {
             MCA_BASE_METADATA_PARAM_NONE
         },
 
-        mca_btl_sm_component_init,  
+        mca_btl_sm_component_init,
         mca_btl_sm_component_progress,
     }  /* end super */
 };
@@ -96,7 +96,7 @@ mca_btl_sm_component_t mca_btl_sm_component = {
  */
 
 static inline char* mca_btl_sm_param_register_string(
-    const char* param_name, 
+    const char* param_name,
     const char* default_value)
 {
     char *param_value;
@@ -104,9 +104,9 @@ static inline char* mca_btl_sm_param_register_string(
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
-                                                                                                                            
+
 static inline int mca_btl_sm_param_register_int(
-    const char* param_name, 
+    const char* param_name,
     int default_value)
 {
     int id = mca_base_param_register_int("btl","sm",param_name,NULL,default_value);
@@ -171,7 +171,7 @@ int mca_btl_sm_component_open(void)
     mca_btl_sm.super.btl_bandwidth = 900;
     mca_btl_sm.super.btl_latency = 100;
 
-    mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version, 
+    mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
             &mca_btl_sm.super);
     mca_btl_sm_component.max_frag_size = mca_btl_sm.super.btl_max_send_size;
     mca_btl_sm_component.eager_limit = mca_btl_sm.super.btl_eager_limit;
@@ -213,7 +213,7 @@ int mca_btl_sm_component_close(void)
                     errno);
             goto CLEANUP;
         }
-    
+
         /* unlink file, so that it will be deleted when all references
          * to it are gone - no error checking, since we want all procs
          * to call this, so that in an abnormal termination scenario,
@@ -227,7 +227,7 @@ int mca_btl_sm_component_close(void)
     if(mca_btl_sm_component.sm_fifo_fd > 0) {
         /* write a done message down the pipe */
         unsigned char cmd = DONE;
-        if( write(mca_btl_sm_component.sm_fifo_fd,&cmd,sizeof(cmd)) != 
+        if( write(mca_btl_sm_component.sm_fifo_fd,&cmd,sizeof(cmd)) !=
                 sizeof(cmd)){
             opal_output(0, "mca_btl_sm_component_close: write fifo failed: errno=%d\n",
                     errno);
@@ -249,7 +249,7 @@ CLEANUP:
  *  SM component initialization
  */
 mca_btl_base_module_t** mca_btl_sm_component_init(
-    int *num_btls, 
+    int *num_btls,
     bool enable_progress_threads,
     bool enable_mpi_threads)
 {
@@ -263,7 +263,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
-    sprintf( mca_btl_sm_component.sm_fifo_path, 
+    sprintf( mca_btl_sm_component.sm_fifo_path,
              "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
              (unsigned long)ORTE_PROC_MY_NAME->vpid );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
@@ -320,7 +320,7 @@ void mca_btl_sm_component_event_thread(opal_object_t* thread)
         if( DONE == cmd ){
             /* return when done message received */
             return;
-        } 
+        }
         mca_btl_sm_component_progress();
     }
 }
