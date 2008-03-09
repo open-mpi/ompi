@@ -238,7 +238,7 @@ int mca_btl_sm_add_procs(
            goto CLEANUP;
         }
         mca_btl_sm_component.sm_mpool_base =
-            mca_btl_sm_component.sm_mpool->mpool_base((mca_mpool_base_module_t*)mca_btl_sm_component.sm_mpool_base);
+            mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool);
     }
 
     /* make sure that my_smp_rank has been defined */
