@@ -22,8 +22,9 @@ else
 check_PROGRAMS =
 endif
 
-TESTS = \
-	$(check_PROGRAMS)
+# JMS to be re-added when #1232 is fixed
+#TESTS = $(check_PROGRAMS)
+TESTS = 
 
 mpi_peruse_SOURCES = mpi_peruse.c
 mpi_peruse_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)

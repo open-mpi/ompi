@@ -27,8 +27,9 @@ check_PROGRAMS = \
 	opal_pointer_array \
 	ompi_rb_tree
 
-TESTS = \
-	$(check_PROGRAMS)
+# The tests are built, but since they're not actively maintained, they
+# are not run during "make check".
+TESTS =
 
 ompi_bitmap_SOURCES = ompi_bitmap.c 
 ompi_bitmap_LDADD = \
