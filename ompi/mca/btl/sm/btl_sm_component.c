@@ -284,7 +284,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 
     /* allocate the Shared Memory BTL */
     *num_btls = 1;
-    btls = (mca_btl_base_module_t**)malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
+    btls = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*));
     if (NULL == btls) {
         return NULL;
     }
