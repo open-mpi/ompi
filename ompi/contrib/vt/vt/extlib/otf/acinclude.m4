@@ -188,10 +188,6 @@ AC_DEFUN([WITH_DEBUG],
             [debug=$withval],
             [debug=""])
 
-    AC_CACHE_CHECK([debug],
-        [debug],
-        [debug=])
-
     if test "$debug" = yes; then
      AC_DEFINE(OTF_DEBUG)
     fi
@@ -206,10 +202,6 @@ AC_DEFUN([WITH_VERBOSE],
         AC_HELP_STRING([--with-verbose],[additonal verbose output]),
             [verbose=$withval],
             [verbose=""])
-
-    AC_CACHE_CHECK([verbose],
-        [verbose],
-        [verbose=])
 
     if test "$verbose" = yes; then
      AC_DEFINE(OTF_VERBOSE)
