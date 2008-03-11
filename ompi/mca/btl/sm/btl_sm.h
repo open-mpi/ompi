@@ -91,8 +91,6 @@ struct mca_btl_sm_component_t {
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     opal_mutex_t sm_lock;
-    char* sm_resource_ctl_file;        /**< name of shared memory file used
-                                            to coordinate resource usage */
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_btl_sm_module_resource_t *sm_ctl_header;  /* control header in
                                                      shared memory */
@@ -106,13 +104,7 @@ struct mca_btl_sm_component_t {
     int cb_max_num;           /**< max number of circular buffers for each peer */
     ptrdiff_t *sm_offset;    /**< offset to be applied to shared memory
                               addresses, per local process value */
-    int *sm_proc_connect;    /* scratch array used by the 0'th btl to
-                              * set indicate sm connectivty.  Used by
-                              * the 1'st btl */
     int32_t num_smp_procs;  /**< current number of smp procs on this host */
-    int *list_smp_procs;     /* procs with same (index 0) and
-                                different (index 1) base shared memory virtual
-                                address as this process */
     int32_t my_smp_rank;    /**< My SMP process rank.  Used for accessing
 			      *   SMP specfic data structures. */
     ompi_free_list_t sm_frags1;    /**< free list of sm first */
