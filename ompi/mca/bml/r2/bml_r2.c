@@ -671,6 +671,9 @@ int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
     double total_bandwidth = 0;
     size_t b;
 
+    if(NULL == ep)
+        return OMPI_SUCCESS;
+
     /* remove btl from eager list */
     mca_bml_base_btl_array_remove(&ep->btl_eager, btl);
     
