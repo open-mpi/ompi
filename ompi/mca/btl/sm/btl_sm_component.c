@@ -371,18 +371,20 @@ static int process_pending_send(struct mca_btl_base_endpoint_t *ep)
 int mca_btl_sm_component_progress(void)
 {
     /* local variables */
-    unsigned int peer_smp_rank ;
     mca_btl_sm_frag_t *frag;
     mca_btl_sm_frag_t Frag;
     ompi_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
-    int proc;
+    int peer_smp_rank;
     int rc = 0;
 
     /* poll each fifo */
-    for(proc = 0; proc < mca_btl_sm_component.num_smp_procs - 1; proc++) {
-        peer_smp_rank = mca_btl_sm_component.list_smp_procs[proc];
+    for(peer_smp_rank = 0; peer_smp_rank < mca_btl_sm_component.num_smp_procs;
+        peer_smp_rank++) {
+        if(peer_smp_rank == mca_btl_sm_component.my_smp_rank)
+            continue;
+
         fifo = &(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
 
         /* if fifo is not yet setup - continue - not data has been sent*/
