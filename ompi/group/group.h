@@ -230,7 +230,7 @@ int ompi_group_free (ompi_group_t **group);
 /**
  * Functions to handle process pointers for sparse group formats
  */
-ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank);
+OMPI_DECLSPEC ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank);
 
 int ompi_group_translate_ranks_sporadic ( ompi_group_t *group1, 
                                  int n_ranks, int *ranks1,
