@@ -336,15 +336,8 @@ opal_init(void)
     }
 
     /* setup the carto framework */
-    if (OPAL_SUCCESS != (ret = opal_carto_base_open())) {
-        error = "opal_carto_base_open";
-        goto return_error;
-    }
-    
-    if (OPAL_SUCCESS != (ret = opal_carto_base_select())) {
-        error = "opal_carto_base_select";
-        goto return_error;
-    }
+    opal_carto_base_open();
+    opal_carto_base_select();
     
     /*
      * Need to start the event and progress engines if noone else is.
