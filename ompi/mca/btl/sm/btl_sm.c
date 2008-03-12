@@ -130,7 +130,7 @@ static int init_fifos(ompi_fifo_t *f, int n)
 
     return OMPI_SUCCESS;
 }
-#include <sys/mman.h>
+
 static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 {
     size_t size, length, length_payload;
