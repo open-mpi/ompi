@@ -195,7 +195,7 @@ int event_base_loopexit(struct event_base *, struct timeval *);
 #define opal_evtimer_set(ev, cb, arg)	opal_event_set(ev, -1, 0, cb, arg)
 #define opal_evtimer_del(ev)		opal_event_del(ev)
 #define opal_evtimer_pending(ev, tv)	opal_event_pending(ev, OPAL_EV_TIMEOUT, tv)
-#define opal_evtimer_initialized(ev)	(ev)->ev_flags & OPAL_EVLIST_INIT)
+#define opal_evtimer_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT)
 
 #define opal_timeout_add(ev, tv)		opal_event_add(ev, tv)
 #define opal_timeout_set(ev, cb, arg)	opal_event_set(ev, -1, 0, cb, arg)
