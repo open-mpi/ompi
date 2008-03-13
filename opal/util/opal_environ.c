@@ -217,3 +217,27 @@ int opal_unsetenv(const char *name, char ***env)
     return (found) ? OPAL_SUCCESS : OPAL_ERR_NOT_FOUND;
 }
 
+const char* opal_tmp_directory( void )
+{
+    const char* str;
+
+    if( NULL == (str = getenv("TMPDIR")) )
+        if( NULL == (str = getenv("TEMP")) )
+            if( NULL == (str = getenv("TMP")) )
+                if( NULL == (str = opal_home_directory()) )
+                    str = ".";
+    return str;
+}
+
+const char* opal_home_directory( void )
+{
+    char* home = getenv("HOME");
+
+#if defined(__WINDOWS__)
+    if( NULL == home )
+        home = getenv("USERPROFILE");
+#endif  /* defined(__WINDOWS__) */
+
+    return home;
+}
+
