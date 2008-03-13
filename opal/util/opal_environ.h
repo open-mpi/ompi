@@ -123,6 +123,12 @@ OPAL_DECLSPEC int opal_setenv(const char *name, const char *value,
  */
 OPAL_DECLSPEC int opal_unsetenv(const char *name, char ***env) __opal_attribute_nonnull__(1);
 
+/* A consistent way to retrieve the home and tmp directory on all supported
+ * platforms.
+ */
+OPAL_DECLSPEC const char* opal_home_directory( void );
+OPAL_DECLSPEC const char* opal_tmp_directory( void );
+
 /* Some care is needed with environ on OS X when dealing with shared
    libraries.  Handle that care here... */
 #if !defined(__WINDOWS__)
