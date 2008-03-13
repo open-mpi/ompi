@@ -1,11 +1,19 @@
 #!/bin/bash 
-
-VER="trunk"
-PLATFORM=ornl/cray_xt_cnl_romio
-
 # change the following for install path, note 
 # that VER is appended to the path.
+VER="trunk"
 SW_INSTALL_ROOT=/tmp/work/gshipman/ompi/install
+
+PLATFORM=ornl/cray_xt_cnl_romio
+
+ORTED_MAKEFILE=orte/tools/orted/Makefile
+
+if test -z "`grep "orted_LDFLAGS =.*-all-static" ${ORTED_MAKEFILE}`"; then 
+    echo "WARNING: patching ${ORTED_MAKEFILE} to build it static" 
+    sed -i 's/orted_LDFLAGS =/orted_LDFLAGS = -all-static/g' ${ORTED_MAKEFILE}
+fi
+
+
 
 ./configure \
  NM=/usr/bin/nm \
