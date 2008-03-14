@@ -134,6 +134,7 @@ GlobDefsCmp( Definitions::DefRec_Base_struct * a,
       // ... sort to this order:
       // Nodes
       // MPI_COMM_WORLD
+      // MPI_COMM_SELFs
       // remaining MPI communicators
       // OpenMP Thread Teams
       // Rest
@@ -165,17 +166,31 @@ GlobDefsCmp( Definitions::DefRec_Base_struct * a,
       {
 	 return false;
       }
-      // p1 == TYPE_MPI_COMM && p2 != TYPE_MPI_COMM
+      // p1 == TYPE_MPI_COMM_SELF && p2 != TYPE_MPI_COMM_SELF
       else if( 
-	 p1->type == Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM
-	 && p2->type != Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM )
+	 p1->type == Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF
+	 && p2->type != Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF )
       {
 	 return true;
       }
-      // p1 != TYPE_MPI_COMM && p2 == TYPE_MPI_COMM
+      // p1 != TYPE_MPI_COMM_SELF && p2 == TYPE_MPI_COMM_SELF
       else if(
-	 p1->type != Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM
-	 && p2->type == Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM )
+	 p1->type != Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF
+	 && p2->type == Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF )
+      {
+	 return false;
+      }
+      // p1 == TYPE_MPI_COMM_USER && p2 != TYPE_MPI_COMM_USER
+      else if( 
+	 p1->type == Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER
+	 && p2->type != Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER )
+      {
+	 return true;
+      }
+      // p1 != TYPE_MPI_COMM_USER && p2 == TYPE_MPI_COMM_USER
+      else if(
+	 p1->type != Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER
+	 && p2->type == Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER )
       {
 	 return false;
       }
@@ -195,13 +210,8 @@ GlobDefsCmp( Definitions::DefRec_Base_struct * a,
       }
       else
       {	 
-	 // sort by names if not equal; otherwise sort by token
-	 //
-	 int cmprc = p1->name.compare( p2->name );
-      	 if( cmprc == 0 )
-	    return p1->deftoken < p2->deftoken;
-	 else
-	    return cmprc < 0 ? true : false;
+	 // sort by token, if process group types are equal
+	 return p1->deftoken < p2->deftoken;
       }
    }
    // both record types are Definitions::DEF_REC_TYPE__DefinitionComment ? ...
@@ -510,6 +520,7 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
    bool error = false;
 
    uint32_t omp_comm_idx = 0;
+   uint32_t mpi_comm_self_idx = 0;
 
    for( uint32_t i = 0; i < p_vecLocDefs->size(); i++ )
    {
@@ -593,9 +604,9 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 	       addProc2NodeGroup( p_loc_def_entry->name.substr(9),
 				  p_loc_def_entry->members[0] );
 	    }
-	    // MPI communicator (except MPI_COMM_WORLD)?
+	    // MPI communicator (except MPI_COMM_WORLD and MPI_COMM_SELF)
 	    else if( p_loc_def_entry->type ==
-		     DefRec_DefProcessGroup_struct::TYPE_MPI_COMM )
+		     DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER )
 	    {
 	       addMPIComm( p_loc_def_entry->loccpuid,
 			   p_loc_def_entry->deftoken,
@@ -625,12 +636,28 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 			p_loc_def_entry->members );
 
 		  char new_name[256];
-		  if( p_loc_def_entry->name.compare( "__OMP_TEAM__" ) == 0 )
+		  if( p_loc_def_entry->type ==
+		      DefRec_DefProcessGroup_struct::TYPE_OMP_TEAM )
+		  {
 		     snprintf( new_name, sizeof( new_name ),
 			       "OMP Thread Team %d", omp_comm_idx++ );
+		  }
+		  else if( p_loc_def_entry->type ==
+			   DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_WORLD )
+		  {
+		     strcpy( new_name, "MPI_COMM_WORLD" );
+		  }
+		  else if( p_loc_def_entry->type ==
+			   DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF )
+		  {
+		     snprintf( new_name, sizeof( new_name ),
+			       "MPI_COMM_SELF %d", mpi_comm_self_idx++ );
+		  }
 		  else
+		  {
 		     strncpy( new_name, p_loc_def_entry->name.c_str(),
 			      sizeof( new_name ) );
+		  }
 		  
 		  // add new definition to vector of global definitions
 		  p_vecGlobDefs->push_back( new DefRec_DefProcessGroup_struct(
@@ -1598,7 +1625,7 @@ Definitions::addMPIComms2Global( std::vector<DefRec_Base_struct*> *
       p_vecGlobDefs->push_back( new DefRec_DefProcessGroup_struct(
 				0,
 				global_token,
-				DefRec_DefProcessGroup_struct::TYPE_MPI_COMM,
+				DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER,
 				comm_name,
 				vec_members ) );
 

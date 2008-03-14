@@ -31,8 +31,8 @@ public:
 
    // definition record types
    //
-   typedef enum { DEF_REC_TYPE__DefinitionComment,
-		  DEF_REC_TYPE__DefCreator,
+   typedef enum { DEF_REC_TYPE__DefCreator,
+		  DEF_REC_TYPE__DefinitionComment,
 		  DEF_REC_TYPE__DefTimerResolution,
 		  DEF_REC_TYPE__DefProcess,
 		  DEF_REC_TYPE__DefProcessGroup,
@@ -126,8 +126,8 @@ public:
    //
    struct DefRec_DefProcessGroup_struct : DefRec_Base_struct
    {
-      typedef enum { TYPE_NODE, TYPE_MPI_COMM_WORLD,
-		     TYPE_MPI_COMM, TYPE_OMP_TEAM, TYPE_OTHER }
+      typedef enum { TYPE_NODE, TYPE_MPI_COMM_WORLD, TYPE_MPI_COMM_SELF,
+		     TYPE_MPI_COMM_USER, TYPE_OMP_TEAM, TYPE_OTHER }
       ProcessGroupTypeT;
 
       DefRec_DefProcessGroup_struct()

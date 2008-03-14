@@ -17,3 +17,7 @@
 +++ NEC SX-8 (High Performance Computing Center Stuttgart)
 ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90 AR=sxar MPICC=sxmpicc CXX_FOR_BUILD=c++ RANLIB="sxar st" OMPFLAG=-Popenmp --build=ia64-unknown-linux-gnu --host=sx8-nec-superux15.1 --with-otf-lib=-lotf
 
+
++++ Sun Fire E6900 (RWTH Aachen)
+./configure CC=cc CXX=CC F77=f90 F90=f90 CFLAGS="-xtarget=ultra4 -fast -xarch=v9a" CXXFLAGS="-xtarget=ultra4 -fast -xarch=v9a" FCFLAGS="-xtarget=ultra4 -fast -xarch=v9a" FFLAGS="-xtarget=ultra4 -fast -xarch=v9a" --with-mpi-lib=-lmpi_mt --with-pmpi-lib=-lmpi_mt --enable-fmpi-lib
+

@@ -65,7 +65,7 @@ struct VTComm
   uint32_t          cid;
 };
 
-static int currcid = 1;
+static int currcid = 2; /* 0/1 reserved for MPI_COMM_WORLD/MPI_COMM_SELF */
 static int last_comm = 0;
 static int* ranks;
 static struct VTComm comms[VT_MAX_COMM];
