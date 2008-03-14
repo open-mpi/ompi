@@ -89,6 +89,7 @@ struct mca_btl_elan_module_t {
     mca_btl_base_module_t  super;             /**< base BTL interface */
     int                    expect_tport_recv;
     int                    elan_vp;
+    int                    elan_position;     /**< position of this elan interface */
     ELAN_BASE*             base;
     ELAN_TPORT*            tport;
     ELAN_QUEUE*            global_queue;      /**< The global queue */
