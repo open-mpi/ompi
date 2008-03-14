@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -10,13 +10,14 @@
 # $HEADER$
 #
 
-TESTS = ddt_test checksum position
+TESTS = checksum position
 
 check_PROGRAMS = $(TESTS) to_self ddt_pack
 
-ddt_test_SOURCES = ddt_test.c
-ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
+# This test currently not built because of #1242.
+#ddt_test_SOURCES = ddt_test.c
+#ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+#ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
 
 ddt_pack_SOURCES = ddt_pack.c
 ddt_pack_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
