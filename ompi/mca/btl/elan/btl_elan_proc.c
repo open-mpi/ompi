@@ -28,7 +28,7 @@ OBJ_CLASS_INSTANCE(mca_btl_elan_proc_t,
 void mca_btl_elan_proc_construct(mca_btl_elan_proc_t* proc)
 {
     proc->proc_ompi = 0;
-    proc->proc_addr_count = 0;
+    proc->proc_rail_count = 0;
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
@@ -111,14 +111,14 @@ mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc)
     module_proc->proc_guid = ompi_proc->proc_name;
     rc = ompi_modex_recv( &mca_btl_elan_component.super.btl_version,
                           ompi_proc,
-                          (void**)&module_proc->elan_vp_array,
+                          (void**)&module_proc->position_id_array,
                           &size );
     if(rc != OMPI_SUCCESS) {
         BTL_ERROR(("mca_base_modex_recv: failed with return value=%d", rc));
         OBJ_RELEASE(module_proc);
         return NULL;
     }
-    module_proc->proc_addr_count = size / sizeof(unsigned int);;
+    module_proc->proc_rail_count = size / sizeof(unsigned int);;
     /* XXX: Right now, there can be only 1 peer associated
      * with a proc. Needs a little bit change in 
      * mca_btl_elan_proc_t to allow on demand increasing of
@@ -126,7 +126,7 @@ mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc)
      */
 
     module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc((1+module_proc->proc_addr_count )* sizeof(mca_btl_base_endpoint_t*));
+        malloc((1+module_proc->proc_rail_count )* sizeof(mca_btl_base_endpoint_t*));
     if(NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
@@ -144,12 +144,11 @@ int mca_btl_elan_proc_insert( mca_btl_elan_proc_t* module_proc,
                               mca_btl_base_endpoint_t* module_endpoint )
 {
     /* insert into endpoint array */
-    size_t i;
-    module_endpoint->endpoint_proc = module_proc;
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
-    for( i = 0; i < module_proc->proc_addr_count; i++ ) {
-        module_endpoint->elan_vp = module_proc->elan_vp_array[i];
-        return OMPI_SUCCESS;
-    }
+
+    module_endpoint->endpoint_proc = module_proc;
+    module_endpoint->elan_vp = module_proc->proc_ompi->proc_name.vpid;
+
     return OMPI_SUCCESS;
 }
+
