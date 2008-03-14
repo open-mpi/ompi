@@ -33,7 +33,7 @@ fi
  --disable-mpi-f90\
  --without-tm \
  --with-platform=./contrib/platform/${PLATFORM} \
-  --with-io-romio-flags="--disable-aio build_alias=x86_64-unknown-linux-gnu \
+  --with-io-romio-flags="build_alias=x86_64-unknown-linux-gnu \
   host_alias=x86_64-cray-linux-gnu \
   --enable-ltdl-convenience --no-recursion" \
   --with-alps=yes \
