@@ -54,7 +54,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                                    ompi_bitmap_t* reachable )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*)btl;
-    int i, rc;
+    int i, j, rc;
     char* filename;
     FILE* file;
     ELAN_BASE* base;
@@ -90,7 +90,10 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
             OBJ_RELEASE(elan_proc);
             continue;
         }
-        fprintf( file, "%s %d\n", ompi_proc->proc_hostname, elan_proc->elan_vp_array[0] );
+        for( j = 0; j < (int)elan_proc->proc_rail_count; j++ ) {
+            fprintf( file, "%s %d\n", ompi_proc->proc_hostname,
+                     elan_proc->position_id_array[j] );
+        }
         ompi_bitmap_set_bit(reachable, i);
         peers[i] = elan_endpoint;
     }

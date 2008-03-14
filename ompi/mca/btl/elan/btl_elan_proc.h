@@ -35,9 +35,9 @@ struct mca_btl_elan_proc_t {
     orte_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
 	
-    unsigned int 	*elan_vp_array;
+    unsigned int 	*position_id_array;
 
-    size_t proc_addr_count;                  
+    size_t proc_rail_count;                  
     /**< number of addresses published by endpoint */
 
     struct mca_btl_base_endpoint_t **proc_endpoints; 
