@@ -38,7 +38,10 @@
 
 #include "opal/util/os_path.h"
 #include "opal/util/opal_environ.h"
-#include "ompi/communicator/communicator.h" 
+#include "ompi/communicator/communicator.h"
+
+#define ELAN_MAX_BTL  10
+
 mca_btl_elan_component_t mca_btl_elan_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -163,36 +166,15 @@ mca_btl_elan_component_init( int *num_btl_modules,
 {
 
     mca_btl_base_module_t** btls;
-    size_t i , count, vpid;
 
     *num_btl_modules = 0;
+
+    /* There is no support for a progress thread yet. */
     if (enable_progress_threads) { 
         ompi_modex_send(&mca_btl_elan_component.super.btl_version, NULL, 0);
         return NULL;
     }
 
-    /* Retrieve the position of the node in the elan network */
-    {
-        FILE* position;
-        char file_line[255];
-        int my_elan_position;
-
-        position = fopen("/proc/qsnet/elan3/device0/position","r");
-        if( NULL == position ) {
-            position = fopen("/proc/qsnet/elan4/device0/position","r");
-            if( NULL == position ) {
-                opal_output( 0, "Unable to retrieve the node position on the elan network" );
-                return NULL;
-            }
-        }
-        if( 0 == fscanf( position, "%s%i", file_line, &my_elan_position ) ) {
-            opal_output( 0, "Unable to read the network position" );
-            return NULL;
-        }
-        fclose(position);
-        vpid = my_elan_position;
-    }
-   
     OBJ_CONSTRUCT (&mca_btl_elan_component.elan_lock, opal_mutex_t);
     OBJ_CONSTRUCT (&mca_btl_elan_component.elan_frag_eager, ompi_free_list_t);
     OBJ_CONSTRUCT (&mca_btl_elan_component.elan_frag_max, ompi_free_list_t);
@@ -228,29 +210,53 @@ mca_btl_elan_component_init( int *num_btl_modules,
                              mca_btl_elan_component.elan_free_list_inc,
                              NULL ); /* use default allocator */
     
-    vpid = ORTE_PROC_MY_NAME->vpid;
-   
-    ompi_modex_send( &mca_btl_elan_component.super.btl_version, &vpid,
-                     sizeof(vpid));
-
-    mca_btl_elan_component.elan_num_btls = 1;
-    mca_btl_elan_component.elan_btls = malloc( mca_btl_elan_component.elan_num_btls *
+    mca_btl_elan_component.elan_num_btls = ELAN_MAX_BTL;  /* no more than that */
+    mca_btl_elan_component.elan_btls = calloc( mca_btl_elan_component.elan_num_btls,
                                                sizeof(mca_btl_base_module_t*) );
-    for( i = count = 0; i < mca_btl_elan_component.elan_num_btls; i++ ) {
-        mca_btl_elan_module_t* btl =  malloc (sizeof (mca_btl_elan_module_t));	
-        if(NULL == btl)
-            continue;
-        memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );
-        OBJ_CONSTRUCT( &btl->elan_lock, opal_mutex_t );
-        OBJ_CONSTRUCT( &btl->send_list, opal_list_t );
-        OBJ_CONSTRUCT( &btl->rdma_list, opal_list_t );
-        OBJ_CONSTRUCT( &btl->recv_list, opal_list_t );
+    /* Retrieve the positions of the node in the elan network */
+    {
+        FILE* position;
+        char filename[255], file_line[255];
+        int index, count = 0, positions[ELAN_MAX_BTL];
+        mca_btl_elan_module_t* btl;
 
-        btl->expect_tport_recv = 1;
+        for( index = 0; index < ELAN_MAX_BTL; index++ ) {
+            snprintf( filename, 255, "/proc/qsnet/elan3/device%d/position", index );
+            position = fopen( filename, "r" );
+            if( NULL == position ) {
+                snprintf( filename, 255, "/proc/qsnet/elan4/device%d/position", index );
+                position = fopen( filename, "r" );
+                if( NULL == position ) {
+                    continue;
+                }
+            }
+            if( 0 == fscanf( position, "%s%i", file_line, &positions[count] ) ) {
+                opal_output( 0, "Unable to read the network position" );
+                continue;
+            }
+            fclose(position);
+            btl =  (mca_btl_elan_module_t*)malloc (sizeof (mca_btl_elan_module_t));	
+            if(NULL == btl) {
+                opal_output( 0, "No enough memory to allocate the Elan internal structures" );
+                return NULL;
+            }
+            memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );
+            OBJ_CONSTRUCT( &btl->elan_lock, opal_mutex_t );
+            OBJ_CONSTRUCT( &btl->send_list, opal_list_t );
+            OBJ_CONSTRUCT( &btl->rdma_list, opal_list_t );
+            OBJ_CONSTRUCT( &btl->recv_list, opal_list_t );
 
-        mca_btl_elan_component.elan_btls[count++] = btl;
+            btl->expect_tport_recv = 1;
+            btl->elan_position = positions[count];
+
+            mca_btl_elan_component.elan_btls[count++] = btl;
+        }
+        mca_btl_elan_component.elan_num_btls = count;
+        /* Publish the network positions for the current node */
+        ompi_modex_send( &mca_btl_elan_component.super.btl_version, positions,
+                         count * sizeof(int));
     }
-    mca_btl_elan_component.elan_num_btls = count ;
+
     btls = (mca_btl_base_module_t**)malloc( mca_btl_elan_component.elan_num_btls *
                                             sizeof(mca_btl_base_module_t*) );
     if( NULL == btls ) {

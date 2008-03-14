@@ -55,19 +55,46 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*)btl;
     int i, rc;
-    FILE* file;
     char* filename;
+    FILE* file;
     ELAN_BASE* base;
-
-    /* Create the mapid file in the temporary storage */
+    
     filename = opal_os_path( false, orte_process_info.proc_session_dir, "ELAN_ID", NULL );
     file = fopen( filename, "w" );
-    for( i = 0; i < (int)nprocs; i++ ) {
-        struct ompi_proc_t* ompi_proc = ompi_procs[i];
-        fprintf( file, "%s %d\n", ompi_proc->proc_hostname, i );
-    }
-    fclose( file );
+    fprintf( file, "%s %d\n", ompi_proc_local_proc->proc_hostname, elan_btl->elan_position );
 
+    for(i = 0; i < (int)nprocs; i++) {
+        struct ompi_proc_t* ompi_proc = ompi_procs[i];
+        mca_btl_elan_proc_t* elan_proc;
+        mca_btl_base_endpoint_t* elan_endpoint;
+ 
+        /* Don't use Elan for local communications */
+        if( ompi_proc_local_proc == ompi_proc )
+            continue;
+ 
+        if(NULL == (elan_proc = mca_btl_elan_proc_create(ompi_proc))) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        elan_endpoint = OBJ_NEW(mca_btl_elan_endpoint_t);
+        if(NULL == elan_endpoint) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        elan_endpoint->endpoint_btl = elan_btl;
+ 
+        OPAL_THREAD_LOCK(&elan_proc->proc_lock);
+        rc = mca_btl_elan_proc_insert(elan_proc, elan_endpoint);
+        OPAL_THREAD_UNLOCK(&elan_proc->proc_lock);
+ 
+        if( OMPI_SUCCESS != rc ) {
+            OBJ_RELEASE(elan_endpoint);
+            OBJ_RELEASE(elan_proc);
+            continue;
+        }
+        fprintf( file, "%s %d\n", ompi_proc->proc_hostname, elan_proc->elan_vp_array[0] );
+        ompi_bitmap_set_bit(reachable, i);
+        peers[i] = elan_endpoint;
+    }
+    fclose(file);
     /* Set the environment before firing up the Elan library */
     opal_setenv( "LIBELAN_MACHINES_FILE", filename, true, &environ );
     opal_setenv( "MPIRUN_ELANIDMAP_FILE", mca_btl_elan_component.elanidmap_file,
@@ -125,37 +152,6 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                           ELAN_RAIL_ALL,                       /* int rail */
                           (ELAN_TPORT_SHM_DISABLE |
                            ELAN_TPORT_USERCOPY_DISABLE) );     /* ELAN_FLAGS flags */
-
-    for(i = 0; i < (int)nprocs; i++) {
-        struct ompi_proc_t* ompi_proc = ompi_procs[i];
-        mca_btl_elan_proc_t* elan_proc;
-        mca_btl_base_endpoint_t* elan_endpoint;
-
-        /* Don't use Elan for local communications */
-        if( ompi_proc_local_proc == ompi_proc )
-            continue;
-
-        if(NULL == (elan_proc = mca_btl_elan_proc_create(ompi_proc))) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        elan_endpoint = OBJ_NEW(mca_btl_elan_endpoint_t);
-        if(NULL == elan_endpoint) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        elan_endpoint->endpoint_btl = elan_btl;
-
-        OPAL_THREAD_LOCK(&elan_proc->proc_lock);
-        rc = mca_btl_elan_proc_insert(elan_proc, elan_endpoint);
-        OPAL_THREAD_UNLOCK(&elan_proc->proc_lock);
-
-        if( OMPI_SUCCESS != rc ) {
-            OBJ_RELEASE(elan_endpoint);
-            OBJ_RELEASE(elan_proc);
-            continue;
-        }
-        ompi_bitmap_set_bit(reachable, i);
-        peers[i] = elan_endpoint;
-    }
 
     for( i = 0; i < mca_btl_elan_component.elan_max_posted_recv; i++ ) {
         mca_btl_elan_frag_t* frag;
