@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <mpi.h>
 
 static MPI_Status *my_status_array = 0;
@@ -75,8 +76,9 @@ int vt_mpi_trace_is_on = 1;
 
 int MPI_Init( int *argc, char ***argv )
 {
-  int returnVal, numprocs, i;
+  int returnVal, numprocs, me, i;
   unsigned char* grpv;
+  uint32_t grpc;
   uint64_t time;
   
   /* shall I trace MPI events? */
@@ -105,12 +107,21 @@ int MPI_Init( int *argc, char ***argv )
       vt_mpi_init();
 
       PMPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+      PMPI_Comm_rank(MPI_COMM_WORLD, &me);
+
+      grpc = numprocs / 8 + (numprocs % 8 ? 1 : 0);
 
       /* define communicator for MPI_COMM_WORLD */
-      grpv = (unsigned char*)calloc(numprocs / 8 + (numprocs % 8 ? 1 : 0), sizeof(unsigned char));
+      grpv = (unsigned char*)calloc(grpc, sizeof(unsigned char));
       for (i = 0; i < numprocs; i++)
 	grpv[i / 8] |= (1 << (i % 8));
-      vt_def_mpi_comm(0, numprocs / 8 + (numprocs % 8 ? 1 : 0), grpv);
+      vt_def_mpi_comm(0, grpc, grpv);
+
+      memset(grpv, 0, grpc);
+
+      /* define communicator for MPI_COMM_SELF */
+      grpv[me / 8] |= (1 << (me % 8));
+      vt_def_mpi_comm(1, grpc, grpv);
 
       free(grpv);
 
@@ -130,12 +141,21 @@ int MPI_Init( int *argc, char ***argv )
       vt_mpi_init();
 
       PMPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+      PMPI_Comm_rank(MPI_COMM_WORLD, &me);
+
+      grpc = numprocs / 8 + (numprocs % 8 ? 1 : 0);
 
       /* define communicator for MPI_COMM_WORLD */
-      grpv = (unsigned char*)calloc(numprocs / 8 + (numprocs % 8 ? 1 : 0), sizeof(unsigned char));
+      grpv = (unsigned char*)calloc(grpc, sizeof(unsigned char));
       for (i = 0; i < numprocs; i++)
 	grpv[i / 8] |= (1 << (i % 8));
-      vt_def_mpi_comm(0, numprocs / 8 + (numprocs % 8 ? 1 : 0), grpv);
+      vt_def_mpi_comm(0, grpc, grpv);
+
+      memset(grpv, 0, grpc);
+
+      /* define communicator for MPI_COMM_SELF */
+      grpv[me / 8] |= (1 << (me % 8));
+      vt_def_mpi_comm(1, grpc, grpv);
 
       free(grpv);
 

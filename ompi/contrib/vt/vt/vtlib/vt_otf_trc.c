@@ -1152,13 +1152,14 @@ uint32_t vt_def_counter(const char* cname,
 }
 
 void vt_def_mpi_comm(uint32_t cid,
-		      uint32_t grpc,
-		      uint8_t grpv[])
+		     uint32_t grpc,
+		     uint8_t grpv[])
 {
   int i;
 
   uint32_t  cgrpc;
   uint32_t* cgrpv;
+  char      cname[20];
 
   vt_check_thrd_id(VT_MY_THREAD);
 
@@ -1178,10 +1179,15 @@ void vt_def_mpi_comm(uint32_t cid,
     if(grpv[i] & 0x80) cgrpv[cgrpc++] = (i * 8) + 8;
   }
 
+  if(cid == 0)
+    strcpy(cname, "__MPI_COMM_WORLD__");
+  else if(cid == 1)
+    strcpy(cname, "__MPI_COMM_SELF__");
+  else
+    strcpy(cname, "__MPI_COMM_USER__");
+
   VTGen_write_DEF_PROCESS_GROUP(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
-				 cid+1,
-				 cid == 0 ? "MPI_COMM_WORLD" : "__MPI_COMM__",
-				 cgrpc, cgrpv);
+				cid+1, cname, cgrpc, cgrpv);
 }
 
 /*

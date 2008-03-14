@@ -307,11 +307,12 @@ AC_DEFUN([ACVT_CONF_SUBTITLE],
 
 AC_DEFUN([ACVT_CONF_EXPAND_VARS],
 [
-	$2=$1
-	var=`echo $$2 | sed s/^.*\$\{// | sed s/\}.*$//`
-	while test x"$var" != x"$$2"; do
-		$2=`echo $$2 | sed s:\$\{$var\}:${!var}:g`
-		var=`echo $$2 | sed s/^.*\$\{// | sed s/\}.*$//`
+	var=$1
+
+	while :
+	do
+		$2=`eval echo $var`
+		AS_IF([test $$2 == $var], [break], [var=$$2])
 	done
 ])
 

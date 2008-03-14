@@ -80,10 +80,12 @@ Handle_DefProcessGroup( std::vector<Definitions::DefRec_Base_struct*>*
 
    if( strncmp( name, "__NODE__", 8 ) == 0 )
       type = Definitions::DefRec_DefProcessGroup_struct::TYPE_NODE;
-   else if( strcmp( name, "__MPI_COMM__" ) == 0 )
-      type = Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM;
-   else if( strcmp( name, "MPI_COMM_WORLD" ) == 0 )
+   else if( strcmp( name, "__MPI_COMM_USER__" ) == 0 )
+      type = Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_USER;
+   else if( strcmp( name, "__MPI_COMM_WORLD__" ) == 0 )
       type = Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_WORLD;
+   else if( strcmp( name, "__MPI_COMM_SELF__" ) == 0 )
+      type = Definitions::DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF;
    else if( strcmp( name, "__OMP_TEAM__" ) == 0 )
       type = Definitions::DefRec_DefProcessGroup_struct::TYPE_OMP_TEAM;
    else
