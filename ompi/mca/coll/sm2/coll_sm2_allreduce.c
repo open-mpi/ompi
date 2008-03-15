@@ -52,6 +52,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * parent_ctl_pointer;
     mca_coll_sm2_module_t *sm_module;
     tree_node_t *my_reduction_node, *my_fanout_read_tree;
+    sm_work_buffer_t *sm_buffer_desc;
 
 
     sm_module=(mca_coll_sm2_module_t *) module;
@@ -98,7 +99,9 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     /* get a pointer to the shared-memory working buffer */
     /* NOTE: starting with a rather synchronous approach */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
-        sm_buffer=alloc_sm2_shared_buffer(sm_module);
+    
+        sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+        sm_buffer=sm_buffer_desc->base_segment_address;
         if( NULL == sm_buffer) {
             rc=OMPI_ERR_OUT_OF_RESOURCE;
             goto Error;
@@ -350,6 +353,7 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     int my_rank,count_processed,count_this_stripe;
     size_t message_extent,dt_extent,ctl_size,len_data_buffer;
     long long tag, base_tag;
+    sm_work_buffer_t *sm_buffer_desc;
     volatile char * sm_buffer;
     volatile char * my_tmp_data_buffer[2];
     volatile char * my_write_pointer;
@@ -412,7 +416,8 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             /* debug */
             t0=opal_sys_timer_get_cycles();
             /* end debug */
-        sm_buffer=alloc_sm2_shared_buffer(sm_module);
+        sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+        sm_buffer=sm_buffer_desc->base_segment_address;
         if( NULL == sm_buffer) {
             rc=OMPI_ERR_OUT_OF_RESOURCE;
             goto Error;
@@ -558,9 +563,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
            
                {
                    int ii,n_ints;
-                   int *my_read=(int *)my_read_pointer;
-                   int *my_write=(int *)my_write_pointer;
-                   int *exchange_read=(int *)partner_read_pointer;
+                   int * restrict my_read=(int *)my_read_pointer;
+                   int * restrict my_write=(int *)my_write_pointer;
+                   int * restrict exchange_read=(int *)partner_read_pointer;
                    n_ints=count_this_stripe;
                    for(ii=0 ; ii < n_ints ; ii++ ) {
                        my_write[ii]=my_read[ii]+exchange_read[ii];

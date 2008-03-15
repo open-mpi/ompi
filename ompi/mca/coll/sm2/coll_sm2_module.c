@@ -459,7 +459,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     /* local variables */
     mca_coll_sm2_module_t *sm_module;
-    int group_size,ret;
+    int i,j,group_size,ret;
     size_t alignment,size;
     ssize_t size_tot_per_proc_per_seg;
     size_t tot_size_per_bank,size_tot_per_segment;
@@ -542,7 +542,25 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         mca_coll_sm2_component.sm2_num_mem_banks;
     sm_module->sm2_module_num_regions_per_bank=
         mca_coll_sm2_component.sm2_num_regions_per_bank;
+    sm_module->sm2_module_num_buffers=
+        mca_coll_sm2_component.sm2_num_regions_per_bank *
+        mca_coll_sm2_component.sm2_num_mem_banks;
 
+
+    /* allocate the array of memory descriptors used to describe the
+     *   shared memory buffers.  This structure resides in process
+     *   private memory, but describes the shared memory.
+     */
+    sm_module->sm_buffer_descriptor=(sm_work_buffer_t *)malloc(
+            sizeof(sm_work_buffer_t)*sm_module->sm2_module_num_buffers);
+    if( NULL == sm_module->sm_buffer_descriptor ) {
+        goto CLEANUP;
+    }
+
+    /*
+     *  Now figure out how much memory to allocate for use as
+     *  working memory for the shared memory collectives.
+     */
     /* 
      * get control region size 
      */ 
@@ -610,11 +628,6 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     /* total memory management required */
     mem_management_total=mem_management_per_proc * group_size;
-
-    /* set the total number of working buffers */
-    sm_module->sm2_module_num_buffers=
-        mca_coll_sm2_component.sm2_num_regions_per_bank *
-        mca_coll_sm2_component.sm2_num_mem_banks;
 
     /* total size of backing file - this assumes the mmap allocation
      *   occurs on page boundaries, and that all segments are paged
@@ -694,7 +707,36 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         sm_module->sm2_first_buffer_index_next_bank=0;
     }
 
-    /* set pointers */
+    /* setup shared memory memory descriptors */
+    for( i=0 ; i < sm_module->sm2_module_num_buffers ; i++ ) {
+
+        char *base_buffer;
+        volatile mca_coll_sm2_nb_request_process_shared_mem_t *ctl_ptr;
+
+        /* set the base address for this working buffer */
+        base_buffer= sm_module->collective_buffer_region+
+            i*sm_module->segment_size;
+        sm_module->sm_buffer_descriptor[i].base_segment_address=base_buffer;
+
+        /* allocate array to keep data on each segment in the buffer.
+         *   One segment per process in the group.
+         */
+        sm_module->sm_buffer_descriptor[i].proc_memory=
+            (sm_memory_region_desc_t *)malloc(sizeof(sm_memory_region_desc_t)*
+                                            group_size);
+        if( NULL == sm_module->sm_buffer_descriptor[i].proc_memory ) {
+            goto CLEANUP;
+        }
+        for(j=0 ; j < group_size ; j++ ) {
+            ctl_ptr=(volatile mca_coll_sm2_nb_request_process_shared_mem_t *)
+                base_buffer+j* sm_module->segement_size_per_process;
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region=
+                ctl_ptr;
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].data_segment=
+                (char *)ctl_ptr+sm_module->ctl_memory_per_proc_per_segment;
+        }
+
+    }
 
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
@@ -714,6 +756,17 @@ CLEANUP:
     if( NULL != sm_module->reduction_tree ) {
         free(sm_module->coll_sm2_file_name);
         sm_module->coll_sm2_file_name=NULL;
+    }
+
+    if( NULL != sm_module->sm_buffer_descriptor ) {
+        for(i=0 ; i < group_size ; i++ ) {
+            if(NULL != sm_module->sm_buffer_descriptor[i].proc_memory) {
+                free(sm_module->sm_buffer_descriptor[i].proc_memory);
+                sm_module->sm_buffer_descriptor[i].proc_memory=NULL;
+            }
+        }
+        free(sm_module->sm_buffer_descriptor);
+        sm_module->sm_buffer_descriptor=NULL;
     }
 
     OBJ_RELEASE(sm_module);
@@ -742,7 +795,7 @@ sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 }
 
 /* allocate working buffer */
-char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
+sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
     int rc,buffer_index, memory_bank_index;
@@ -836,11 +889,7 @@ char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
     buffer_index=module->sm2_allocated_buffer_index;
 
-    /* get base address of return buffer */
-    return_buffer=module->collective_buffer_region+
-        buffer_index*module->segment_size;
-
-    return return_buffer;
+    return &(module->sm_buffer_descriptor[buffer_index]);
 
 }
 
