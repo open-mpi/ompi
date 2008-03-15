@@ -44,8 +44,8 @@ BEGIN_C_DECLS
 /*
  * Memory Management
  * - All memory allocation will be done on a per-communictor basis
- * - The two banks of memory will be used
- * - Each bank of memory will have M buffers
+ * - At least two banks of memory will be used
+ * - Each bank of memory will have M buffers (or segments)
  * - These buffers will be used in a cirucular buffer order
  * - Each buffer will be contigous in virtual memory, and will have page-aligned
  *     regions belonging to each process in the communicator
@@ -210,6 +210,34 @@ BEGIN_C_DECLS
     /* forward declartion */
     struct mca_coll_sm2_module_t;
 
+    /*
+     * shared memory region descriptor
+     */
+    struct sm_memory_region_desc_t {
+
+        /* pointer to control structures */
+        volatile mca_coll_sm2_nb_request_process_shared_mem_t *control_region;
+
+        /* pointer to data segment, and lower half of data segment */
+        volatile char *data_segment;
+
+    };
+    typedef struct sm_memory_region_desc_t sm_memory_region_desc_t;
+
+    /*
+     * Shared memory buffer management strcucture
+     */
+    struct sm_work_buffer_t {
+        /* pointer to segment base */
+        volatile char * base_segment_address;
+
+        /* description of how the memory segment is mapped on
+         *   a per process basis
+         */
+        sm_memory_region_desc_t *proc_memory;
+    };
+    typedef struct sm_work_buffer_t sm_work_buffer_t;
+
     /* process private barrier request object */
     struct mca_coll_sm2_nb_request_process_private_mem_t {
         struct ompi_request_t super;
@@ -250,6 +278,12 @@ BEGIN_C_DECLS
 
         /* Pointer to the collective buffers */
         char *collective_buffer_region;
+
+        /* description of allocated temp buffers - one struct per
+         * buffer.  Each buffer has space "owned" by each process
+         * in the group.
+         */
+        sm_work_buffer_t *sm_buffer_descriptor;
 
         /* size of memory region, per process, for memory bank management */
         size_t sm2_size_management_region_per_proc;
@@ -373,7 +407,7 @@ BEGIN_C_DECLS
             struct mca_coll_base_module_1_1_0_t *module);
 
     /* allocate working buffer */
-    char *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module);
+    sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module);
 
     /* free working buffer - it is assumed that buffers are released in
      * the order they are allocated.  We can assume this because each
