@@ -361,10 +361,6 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     volatile char * extra_rank_write_data_pointer;
     volatile char * extra_rank_read_data_pointer;
     volatile char * partner_read_pointer;
-    volatile char * partner_write_pointer;
-    char *my_base_temp_pointer;
-    volatile char * partner_base_temp_pointer;
-    volatile char * extra_rank_base_temp_pointer; 
     mca_coll_sm2_nb_request_process_shared_mem_t *my_ctl_pointer;
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * 
         partner_ctl_pointer;
@@ -437,17 +433,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         base_tag=sm_module->collective_tag;
         sm_module->collective_tag+=my_exchange_node->n_tags;
 
-        /* get base address to "my" memory segment */
-        my_base_temp_pointer=(char *)
-            ((char *)sm_buffer+sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->segement_size_per_process);
-        /* offset to data segment */
-        my_ctl_pointer=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            my_base_temp_pointer;
-        /* my partner will read my data, as I am reducing it's data into
-         * my buffer
-         */
-        my_write_pointer=my_base_temp_pointer+ctl_size;
+        /* get pointers to my work buffers */
+        my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+        my_write_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
         my_read_pointer=my_write_pointer+len_data_buffer;
         my_tmp_data_buffer[0]=my_write_pointer;
         my_tmp_data_buffer[1]=my_read_pointer;
@@ -475,15 +463,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             if ( EXCHANGE_NODE == my_exchange_node->node_type ) {
 
                 extra_rank=my_exchange_node->rank_extra_source;
-                extra_rank_base_temp_pointer=(char *)
-                    ((char *)sm_buffer+extra_rank*
-                     sm_module->segement_size_per_process);
-           
                 extra_ctl_pointer=
-                    ( mca_coll_sm2_nb_request_process_shared_mem_t * volatile)
-                    extra_rank_base_temp_pointer;
-                extra_rank_write_data_pointer=extra_rank_base_temp_pointer+
-                    ctl_size;
+                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+                extra_rank_write_data_pointer=
+                    sm_buffer_desc->proc_memory[extra_rank].data_segment;
                     
                 /* wait until remote data is read */
                 while( extra_ctl_pointer->flag < tag ) {
@@ -531,14 +514,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
 
             /* is the remote data read */
             pair_rank=my_exchange_node->rank_exchanges[exchange];
-            partner_base_temp_pointer=(char *)
-                ((char *)sm_buffer+pair_rank*
-                 sm_module->segement_size_per_process);
-       
             partner_ctl_pointer=
-                ( mca_coll_sm2_nb_request_process_shared_mem_t * volatile)
-                partner_base_temp_pointer;
-            partner_read_pointer=(char *)partner_ctl_pointer+ctl_size;
+                sm_buffer_desc->proc_memory[pair_rank].control_region;
+            partner_read_pointer=
+                sm_buffer_desc->proc_memory[pair_rank].data_segment;
             if( 1 == index_read ) {
                 partner_read_pointer+=len_data_buffer;
             }
@@ -603,16 +582,11 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             if ( EXTRA_NODE == my_exchange_node->node_type ) {
 
                 extra_rank=my_exchange_node->rank_extra_source;
-                extra_rank_base_temp_pointer=(char *)
-                    ((char *)sm_buffer+extra_rank*
-                     sm_module->segement_size_per_process);
-           
                 extra_ctl_pointer=
-                    ( mca_coll_sm2_nb_request_process_shared_mem_t * volatile)
-                    extra_rank_base_temp_pointer;
+                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+                extra_rank_read_data_pointer=
+                    sm_buffer_desc->proc_memory[extra_rank].data_segment;
                 index_read=(my_exchange_node->log_2&1);
-                extra_rank_read_data_pointer=extra_rank_base_temp_pointer+
-                    ctl_size;
                 if( index_read ) {
                     extra_rank_read_data_pointer+=len_data_buffer;
                 }

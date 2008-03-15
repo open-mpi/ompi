@@ -729,7 +729,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         }
         for(j=0 ; j < group_size ; j++ ) {
             ctl_ptr=(volatile mca_coll_sm2_nb_request_process_shared_mem_t *)
-                base_buffer+j* sm_module->segement_size_per_process;
+                (base_buffer+j* sm_module->segement_size_per_process);
             sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region=
                 ctl_ptr;
             sm_module->sm_buffer_descriptor[i].proc_memory[j].data_segment=
@@ -799,7 +799,6 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
     int rc,buffer_index, memory_bank_index;
-    char *return_buffer;
     mca_coll_sm2_nb_request_process_private_mem_t *request;
 
     /* check to see if need to progress the current nb-barrier, which
