@@ -435,36 +435,36 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
 
         /* get pointers to my work buffers */
         my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
-        my_write_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
-        my_read_pointer=my_write_pointer+len_data_buffer;
-        my_tmp_data_buffer[0]=my_write_pointer;
-        my_tmp_data_buffer[1]=my_read_pointer;
-        /* debug */
-        t2=opal_sys_timer_get_cycles();
-        timers[0]+=(t2-t1);
-        /* end debug */
+            my_write_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
+            my_read_pointer=my_write_pointer+len_data_buffer;
+            my_tmp_data_buffer[0]=my_write_pointer;
+            my_tmp_data_buffer[1]=my_read_pointer;
+            /* debug */
+            t2=opal_sys_timer_get_cycles();
+            timers[0]+=(t2-t1);
+            /* end debug */
 
-        /* copy data into the write buffer */
-        rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                (char *)my_write_pointer,
-                (char *)((char *)sbuf+dt_extent*count_processed));
-        if( 0 != rc ) {
-            return OMPI_ERROR;
-        }
-        /* debug */
-        t3=opal_sys_timer_get_cycles();
-        timers[1]+=(t3-t2);
-        /* end debug */
-        
-        /* copy data in from the "extra" source, if need be */
-        tag=base_tag;
-        if(0 < my_exchange_node->n_extra_sources)  {
+            /* copy data into the write buffer */
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)my_write_pointer,
+                    (char *)((char *)sbuf+dt_extent*count_processed));
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+            /* debug */
+            t3=opal_sys_timer_get_cycles();
+            timers[1]+=(t3-t2);
+            /* end debug */
+            
+            /* copy data in from the "extra" source, if need be */
+            tag=base_tag;
+            if(0 < my_exchange_node->n_extra_sources)  {
 
-            if ( EXCHANGE_NODE == my_exchange_node->node_type ) {
+                if ( EXCHANGE_NODE == my_exchange_node->node_type ) {
 
-                extra_rank=my_exchange_node->rank_extra_source;
-                extra_ctl_pointer=
-                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+                    extra_rank=my_exchange_node->rank_extra_source;
+                    extra_ctl_pointer=
+                        sm_buffer_desc->proc_memory[extra_rank].control_region;
                 extra_rank_write_data_pointer=
                     sm_buffer_desc->proc_memory[extra_rank].data_segment;
                     

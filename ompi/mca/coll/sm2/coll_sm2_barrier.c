@@ -76,7 +76,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
     /* get pointer to nb-barrier structure */
     index=request->sm_index;
     sm_barrier_region=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-        request->barrier_base_address[index];
+        (request->barrier_base_address[index]);
 
     /* set barrier tag - no atomicity needed as only only one outstanding
      *   collective per communicator exists
@@ -95,7 +95,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=tag;
         /* don't need memory barrier here, as we are not setting any other sm
          * data for someone else to read
@@ -112,7 +112,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
             sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
                 ((char *)sm_barrier_region+
                 sm_module->sm_buffer_mgmt_barrier_tree.parent_rank*
-                sm_module->segement_size_per_process);
+                sm_module->sm2_size_management_region_per_proc);
             if( sm_address->flag != -tag ) {
                 /* if parent has not checked in - set parameters for async
                  *   completion, incomplet barrier flag, and bail
@@ -139,7 +139,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
             sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
                 ((char *)sm_barrier_region+
                 sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child] *
-                sm_module->segement_size_per_process);
+                sm_module->sm2_size_management_region_per_proc);
             if(sm_address->flag == tag ) {
                 /* child arrived */
                 cnt++;
@@ -162,7 +162,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=tag;
         /* don't need memory barrier here, as we are not setting any other sm
          * data for someone else to read
@@ -178,7 +178,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
             sm_module->sm_buffer_mgmt_barrier_tree.parent_rank*
-            sm_module->segement_size_per_process);
+            sm_module->sm2_size_management_region_per_proc);
         if( sm_address->flag != -tag ) {
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
@@ -190,7 +190,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank *
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=-tag;
     
         /*
@@ -212,7 +212,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
             sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
                 ((char *)sm_barrier_region+
                 sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child] *
-                sm_module->segement_size_per_process);
+                sm_module->sm2_size_management_region_per_proc);
             if(sm_address->flag == tag ) {
                 /* child arrived */
                 cnt++;
@@ -235,7 +235,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=-tag;
     
         /*
@@ -297,7 +297,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
             sm_module->sm_buffer_mgmt_barrier_tree.parent_rank*
-            sm_module->segement_size_per_process);
+            sm_module->sm2_size_management_region_per_proc);
         if( sm_address->flag != -tag ) {
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
@@ -330,7 +330,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
                 ((char *)sm_barrier_region+
                 sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child] *
-                sm_module->segement_size_per_process);
+                sm_module->sm2_size_management_region_per_proc);
             if(sm_address->flag == tag ) {
                 /* child arrived */
                 cnt++;
@@ -353,7 +353,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank *
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=tag;
         /* don't need memory barrier here, as we are not setting any other sm
          * data for someone else to read
@@ -370,7 +370,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
             sm_module->sm_buffer_mgmt_barrier_tree.parent_rank*
-            sm_module->segement_size_per_process);
+            sm_module->sm2_size_management_region_per_proc);
         if( sm_address->flag != -tag ) {
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
@@ -382,7 +382,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank *
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=-tag;
     
         /*
@@ -408,7 +408,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
                 ((char *)sm_barrier_region+
                 sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child] *
-                sm_module->segement_size_per_process);
+                sm_module->sm2_size_management_region_per_proc);
             if(sm_address->flag == tag ) {
                 /* child arrived */
                 cnt++;
@@ -431,7 +431,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
         sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
             ((char *)sm_barrier_region+
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank *
-             sm_module->segement_size_per_process);
+             sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=-tag;
 
         /*
