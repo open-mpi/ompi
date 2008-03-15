@@ -424,9 +424,9 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
         for( j =0 ; j < 2 ; j++ ) {
             module->barrier_request[i].barrier_base_address[j]=
                 (mca_coll_sm2_nb_request_process_shared_mem_t *)
-                (module->shared_memory_region + j*
-                 module->sm2_size_management_region_per_proc *
-                 module->sm_buffer_mgmt_barrier_tree.tree_size);
+                (module->shared_memory_region + 
+                 /* there are 2 barrier structs per bank */
+                 (2*i+j)*CACHE_LINE_SIZE);
         }
     }
 
@@ -434,6 +434,7 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
     module->collective_buffer_region=module->shared_memory_region+
         module->sm2_size_management_region_per_proc*
         module->sm_buffer_mgmt_barrier_tree.tree_size;
+
 
     /* set the pointer to the request that needs to be completed first */
     module->current_request_index=0;
@@ -470,6 +471,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     size_t mem_management_total;
     size_t size_sm2_backing_file;
     size_t len;
+    size_t size_buff_ctl_per_proc,size_data_buff_per_proc;
 
     /*
      * This is activated only for intra-communicators
@@ -557,6 +559,8 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto CLEANUP;
     }
 
+#if 0  /* data buffers and management buffers are allocated in a single
+        * contigous region */
     /*
      *  Now figure out how much memory to allocate for use as
      *  working memory for the shared memory collectives.
@@ -607,8 +611,67 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     /* compute total memory in the memory banks */
     tot_size_mem_banks=tot_size_per_bank*mca_coll_sm2_component.sm2_num_mem_banks;
+    sm_module->data_memory_per_proc_per_segment=size_tot_per_proc_per_seg-
+        ctl_memory_per_proc_per_segment;
 
-    /* compute the amount of memory needed for the anynchromous barriers used to
+#endif
+
+    /* management structures are allocated is a one segment, and data buffers
+     * in a separate segment
+     */
+    /*
+     *  Now figure out how much memory to allocate for use as
+     *  working memory for the shared memory collectives.
+     */
+    /* 
+     * get control region size 
+     */ 
+    /* just enough place for two flags per process */
+    ctl_memory_per_proc_per_segment=2*sizeof(long long);
+    if( mca_coll_sm2_component.sm2_ctl_size_per_proc > ctl_memory_per_proc_per_segment )
+        ctl_memory_per_proc_per_segment=mca_coll_sm2_component.sm2_ctl_size_per_proc;
+   
+    /* pad this up to the alignment needed by the data segment, as the
+     * that data segment will directly follow the control segment in
+     * memory.
+     */
+    alignment=mca_coll_sm2_component.sm2_data_alignment;
+    ctl_memory_per_proc_per_segment=
+        (alignment + ctl_memory_per_proc_per_segment -1) / alignment;
+    ctl_memory_per_proc_per_segment*=alignment;
+    mca_coll_sm2_component.sm2_ctl_size_allocated=ctl_memory_per_proc_per_segment;
+    sm_module->ctl_memory_per_proc_per_segment=ctl_memory_per_proc_per_segment;
+
+    /* get data region size - allocation happens on a page granularity, with
+     * a minimum of a page allocated per proc, so adjust to this
+     */
+    size=mca_coll_sm2_component.sm2_data_seg_size;
+    if( size < getpagesize() )
+        size=getpagesize();
+    if( size > mca_coll_sm2_component.sm2_max_data_seg_size )
+        size=mca_coll_sm2_component.sm2_max_data_seg_size;
+    size= ( size + getpagesize() - 1)/getpagesize();
+    size*=getpagesize();
+    sm_module->segment_size=size*group_size;
+    size_data_buff_per_proc=size;
+
+    /* compute size of management region - per proc */
+     size_buff_ctl_per_proc=
+         ctl_memory_per_proc_per_segment*sm_module->sm2_module_num_buffers;
+    size_buff_ctl_per_proc= ( size_buff_ctl_per_proc + getpagesize() - 1)/
+        getpagesize();
+    size_buff_ctl_per_proc*=getpagesize();
+
+    tot_size_mem_banks=
+        /* size of buffer conrol region */
+        size_buff_ctl_per_proc*group_size+
+        /* size of data buffers */
+        size*sm_module->sm2_module_num_buffers*group_size;
+    sm_module->data_memory_per_proc_per_segment=size;
+
+
+    /* 
+     * compute the amount of memory needed for the anynchromous barriers used to
      *   manage the memory resources.
      */
     /* for each bank, 2 sets of barrier buffers */
@@ -706,6 +769,9 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         sm_module->sm2_first_buffer_index_next_bank=0;
     }
 
+#if 0  
+    /* buffers and control region are contiguous */
+
     /* setup shared memory memory descriptors */
     for( i=0 ; i < sm_module->sm2_module_num_buffers ; i++ ) {
 
@@ -733,6 +799,47 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
                 ctl_ptr;
             sm_module->sm_buffer_descriptor[i].proc_memory[j].data_segment=
                 (char *)ctl_ptr+sm_module->ctl_memory_per_proc_per_segment;
+        }
+
+    }
+#endif
+    /* setup shared memory memory descriptors */
+    for( i=0 ; i < sm_module->sm2_module_num_buffers ; i++ ) {
+
+        char *base_buffer;
+        volatile mca_coll_sm2_nb_request_process_shared_mem_t *ctl_ptr;
+
+        /* set the base address for this working buffer */
+        base_buffer= sm_module->collective_buffer_region+
+            /* offset past control data structures */
+            size_buff_ctl_per_proc*group_size +
+            i*sm_module->segment_size;
+        sm_module->sm_buffer_descriptor[i].base_segment_address=base_buffer;
+
+        /* allocate array to keep data on each segment in the buffer.
+         *   One segment per process in the group.
+         */
+        sm_module->sm_buffer_descriptor[i].proc_memory=
+            (sm_memory_region_desc_t *)malloc(sizeof(sm_memory_region_desc_t)*
+                                            group_size);
+        if( NULL == sm_module->sm_buffer_descriptor[i].proc_memory ) {
+            goto CLEANUP;
+        }
+        for(j=0 ; j < group_size ; j++ ) {
+            ctl_ptr=(volatile mca_coll_sm2_nb_request_process_shared_mem_t *)
+                (base_buffer+j* sm_module->segement_size_per_process);
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region=
+                (volatile mca_coll_sm2_nb_request_process_shared_mem_t *)
+                /* offset to temp space */
+                (sm_module->collective_buffer_region+
+                /* offset to the per-proc control region */
+                size_buff_ctl_per_proc*j+
+                /* offset to control structure for the i'th buffer */
+                ctl_memory_per_proc_per_segment*i);
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].data_segment=
+                (char *)base_buffer+
+                /* offset to data segment for the j'th proc */
+                j*size_data_buff_per_proc;
         }
 
     }
