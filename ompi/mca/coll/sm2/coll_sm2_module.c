@@ -568,7 +568,6 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     ctl_memory_per_proc_per_segment=2*sizeof(long long);
     if( mca_coll_sm2_component.sm2_ctl_size_per_proc > ctl_memory_per_proc_per_segment )
         ctl_memory_per_proc_per_segment=mca_coll_sm2_component.sm2_ctl_size_per_proc;
-    ctl_memory_per_proc_per_segment=ctl_memory_per_proc_per_segment * group_size ;
    
     /* pad this up to the alignment needed by the data segment, as the
      * that data segment will directly follow the control segment in
