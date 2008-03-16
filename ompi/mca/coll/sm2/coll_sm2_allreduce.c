@@ -413,11 +413,17 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     /* debug */
     t1=opal_sys_timer_get_cycles();
     /* end debug */
+            /* debug */
+            timers[0]+=(t1-t0);
+            /* end debug */
 
     /* get a pointer to the shared-memory working buffer */
     /* NOTE: starting with a rather synchronous approach */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
         /* get number of elements to process in this stripe */
+        /* debug */
+        t2=opal_sys_timer_get_cycles();
+        /* end debug */
         count_this_stripe=n_dts_per_buffer;
         if( count_processed + count_this_stripe > count )
             count_this_stripe=count-count_processed;
@@ -435,10 +441,6 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             my_read_pointer=my_write_pointer+len_data_buffer;
             my_tmp_data_buffer[0]=my_write_pointer;
             my_tmp_data_buffer[1]=my_read_pointer;
-            /* debug */
-            t2=opal_sys_timer_get_cycles();
-            timers[0]+=(t2-t1);
-            /* end debug */
 
             /* copy data into the write buffer */
             rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
