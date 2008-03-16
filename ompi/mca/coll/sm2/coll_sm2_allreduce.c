@@ -406,21 +406,17 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
 
     count_processed=0;
 
+    /* debug */
+    t0=opal_sys_timer_get_cycles();
+    /* end debug */
+    sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+    /* debug */
+    t1=opal_sys_timer_get_cycles();
+    /* end debug */
+
     /* get a pointer to the shared-memory working buffer */
     /* NOTE: starting with a rather synchronous approach */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
-            /* debug */
-            t0=opal_sys_timer_get_cycles();
-            /* end debug */
-        sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
-        sm_buffer=sm_buffer_desc->base_segment_address;
-        if( NULL == sm_buffer) {
-            rc=OMPI_ERR_OUT_OF_RESOURCE;
-            goto Error;
-        }
-            /* debug */
-            t1=opal_sys_timer_get_cycles();
-            /* end debug */
         /* get number of elements to process in this stripe */
         count_this_stripe=n_dts_per_buffer;
         if( count_processed + count_this_stripe > count )
@@ -605,6 +601,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     return OMPI_ERROR;
                 }
 
+                /* signal that I am done */
+                my_ctl_pointer->flag=tag;
+
             } else {
         
                 tag=base_tag+my_exchange_node->n_tags-1;
@@ -619,6 +618,18 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                  */
                 my_ctl_pointer->flag=tag;
 
+                /* wait until child is done to move on - this buffer will
+                 *   be reused for the next stripe, so don't want to move
+                 *   on too quick.
+                 */
+                extra_rank=my_exchange_node->rank_extra_source;
+                extra_ctl_pointer=
+                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+
+                /* wait until remote data is read */
+                while( extra_ctl_pointer->flag < tag  ) {
+                    opal_progress();
+                }
             }
         }
 
@@ -632,24 +643,29 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         if( 0 != rc ) {
             return OMPI_ERROR;
         }
-            /* debug */
-            t9=opal_sys_timer_get_cycles();
-        timers[5]+=(t9-t8);
-            /* end debug */
-
-        /* "free" the shared-memory working buffer */
-        rc=free_sm2_shared_buffer(sm_module);
-        if( OMPI_SUCCESS != rc ) {
-            goto Error;
-        }
-            /* debug */
-            t10=opal_sys_timer_get_cycles();
-        timers[6]+=(t10-t9);
-            /* end debug */
     
         /* update the count of elements processed */
         count_processed+=count_this_stripe;
     }
+
+
+    /* debug */
+
+    t9=opal_sys_timer_get_cycles();
+    timers[5]+=(t9-t8);
+    /* end debug */
+
+
+    /* "free" the shared-memory working buffer */
+    rc=free_sm2_shared_buffer(sm_module);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
+
+    /* debug */
+    t10=opal_sys_timer_get_cycles();
+    timers[6]+=(t10-t9);
+    /* end debug */
 
     /* return */
     return rc;
@@ -734,15 +750,25 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     /* get a pointer to the shared-memory working buffer */
     /* NOTE: starting with a rather synchronous approach */
 
+   
+    /* debug */
+    t0=opal_sys_timer_get_cycles();
+    /* end debug */
+
     /* use the same set of buffers for a single reduction */
     sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+
+    /* get pointers to my work buffers */
+    my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+    my_write_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
+    my_read_pointer=my_write_pointer+len_data_buffer;
+    my_tmp_data_buffer[0]=my_write_pointer;
+    my_tmp_data_buffer[1]=my_read_pointer;
+
+    /* debug */
+    t1=opal_sys_timer_get_cycles();
+    /* end debug */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
-            /* debug */
-            t0=opal_sys_timer_get_cycles();
-            /* end debug */
-            /* debug */
-            t1=opal_sys_timer_get_cycles();
-            /* end debug */
         /* get number of elements to process in this stripe */
         count_this_stripe=n_dts_per_buffer;
         if( count_processed + count_this_stripe > count )
@@ -755,12 +781,6 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         base_tag=sm_module->collective_tag;
         sm_module->collective_tag+=my_exchange_node->n_tags;
 
-        /* get pointers to my work buffers */
-        my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
-        my_write_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
-        my_read_pointer=my_write_pointer+len_data_buffer;
-        my_tmp_data_buffer[0]=my_write_pointer;
-        my_tmp_data_buffer[1]=my_read_pointer;
         /* debug */
         t2=opal_sys_timer_get_cycles();
         timers[0]+=(t2-t1);
@@ -823,7 +843,6 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
 
         /* loop over data exchanges */
         for(exchange=0 ; exchange < my_exchange_node->n_exchanges ; exchange++) {
-
             /* debug */
             t4=opal_sys_timer_get_cycles();
             /* end debug */
@@ -927,6 +946,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     return OMPI_ERROR;
                 }
 
+                /* signal that I am done */
+                my_ctl_pointer->flag=tag;
+
+
             } else {
         
                 tag=base_tag+my_exchange_node->n_tags-1;
@@ -940,6 +963,18 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                  * Signal parent that data is ready
                  */
                 my_ctl_pointer->flag=tag;
+
+                /* wait until child is done to move on - this buffer will
+                 *   be reused for the next stripe, so don't want to move
+                 *   on too quick.
+                 */
+                extra_rank=my_exchange_node->rank_extra_source;
+                extra_ctl_pointer=
+                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+                /* wait until remote data is read */
+                while(! ( extra_ctl_pointer->flag < tag ) ) {
+                    opal_progress();
+                }
 
             }
         }
