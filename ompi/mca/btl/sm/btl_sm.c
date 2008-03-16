@@ -77,9 +77,6 @@ mca_btl_sm_t mca_btl_sm = {
     }
 };
 
-/* track information needed to synchronise a Shared Memory BTL module */
-mca_btl_sm_module_resource_t mca_btl_sm_module_resource;
-
 /*
  * calculate offset of an address from the beginning of a shared memory segment
  */
@@ -135,9 +132,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 {
     size_t size, length, length_payload;
     char *sm_ctl_file;
-    mca_btl_sm_module_resource_t *sm_ctl_hdr;
-    ompi_fifo_t * volatile *rel_fifosp;
-    volatile char **rel_ptr;
     ompi_fifo_t *my_fifos;
 
     /* lookup shared memory pool */
@@ -178,9 +172,12 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
-    size = sizeof(mca_btl_sm_module_resource_t);
-    if(NULL == (mca_btl_sm_component.mmap_file =
-                mca_common_sm_mmap_init(size, sm_ctl_file, size, 0))) {
+    size = sizeof(mca_common_sm_file_header_t) +
+        n * (sizeof(ompi_fifo_t*) + sizeof(char *)) + CACHE_LINE_SIZE;
+    if(!(mca_btl_sm_component.mmap_file =
+         mca_common_sm_mmap_init(size, sm_ctl_file,
+                                 sizeof(mca_common_sm_file_header_t),
+                                 CACHE_LINE_SIZE))) {
         opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
@@ -191,72 +188,37 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     free(sm_ctl_file);
 
     /* set the pointer to the shared memory control structure */
-    sm_ctl_hdr = (mca_btl_sm_module_resource_t *)
-        mca_btl_sm_component.mmap_file->map_seg;
-    mca_btl_sm_component.sm_ctl_header = sm_ctl_hdr;
+    mca_btl_sm_component.sm_ctl_header =
+        (mca_common_sm_file_header_t*)mca_btl_sm_component.mmap_file->map_seg;
 
-    /* Allocate a fixed size pointer array for the 2-D Shared memory queues.
-     * Excess slots will be allocated for future growth.  One could
-     * make this array growable, but then one would need to uses mutexes
-     * for any access to these queues to ensure data consistancy when
-     * the array is grown */
+
+    /* check to make sure number of local procs is within the
+     * specified limits */
+    if(mca_btl_sm_component.sm_max_procs > 0 &&
+       mca_btl_sm_component.num_smp_procs + n >
+       mca_btl_sm_component.sm_max_procs) {
+        return OMPI_ERROR;
+    }
+
+    mca_btl_sm_component.shm_fifo = mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
+
+    /* Sync with other local procs. (Do we have to?) */
     if(0 == mca_btl_sm_component.my_smp_rank) {
-        /* allocate ompi_fifo_t strucutes for each fifo of the queue
-         * pairs - one per pair of local processes */
-        /* check to make sure number of local procs is within the
-         * specified limits */
-        if(mca_btl_sm_component.sm_max_procs > 0 &&
-           mca_btl_sm_component.num_smp_procs + n >
-           mca_btl_sm_component.sm_max_procs) {
-            return OMPI_ERROR;
-        }
-
-        /* allocate array of ompi_fifo_t* elements -
-         * offset relative to base segement is stored, so that
-         * this can be used by other procs */
-        sm_ctl_hdr->fifo =
-            (volatile ompi_fifo_t**)mpool_calloc(n, sizeof(ompi_fifo_t*));
-        if(NULL == sm_ctl_hdr->fifo)
-            return OMPI_ERR_OUT_OF_RESOURCE;
-
-        /*  allocate and initialize the array to hold the virtual address
-         *  of the shared memory base */
-        sm_ctl_hdr->segment_header.base_shared_mem_segment =
-            (volatile char **)mpool_calloc(n, sizeof(char *));
-        if(NULL == sm_ctl_hdr->segment_header.base_shared_mem_segment)
-            return OMPI_ERR_OUT_OF_RESOURCE;
-
-        /* set the addresses to be a relative, so that
-         * they can be used by other procs */
-        sm_ctl_hdr->fifo = (volatile ompi_fifo_t **)
-            ADDR2OFFSET(sm_ctl_hdr->fifo, mca_btl_sm_component.sm_mpool_base);
-
-        sm_ctl_hdr->segment_header.base_shared_mem_segment = (volatile char **)
-            ADDR2OFFSET(sm_ctl_hdr->segment_header.base_shared_mem_segment,
-                        mca_btl_sm_component.sm_mpool_base);
-
-        /* allow other procs to use this shared memory map */
         mca_btl_sm_component.mmap_file->map_seg->seg_inited = true;
 
         /* memory barrier to ensure this flag is set before other
          *  flags are set */
-        opal_atomic_mb();
+        opal_atomic_wmb();
     } else {
-        /* Note:  Need to make sure that proc 0 initializes control
-         * structures before any of the other procs can progress.
-         * Spin unitl local proc 0 initializes the segment */
         while(!mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
             opal_atomic_rmb();
             opal_progress();
         }
     }
 
-    /* set the base of the shared memory segment, and flag
-     * indicating that it is set */
-    rel_ptr = (volatile char **)
-        OFFSET2ADDR(sm_ctl_hdr->segment_header.base_shared_mem_segment,
-                    mca_btl_sm_component.sm_mpool_base);
-    rel_ptr[mca_btl_sm_component.my_smp_rank] =
+    /* set the base of the shared memory segment */
+    mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank] =
         (char*)mca_btl_sm_component.sm_mpool_base;
 
     /*
@@ -272,9 +234,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     if(init_fifos(my_fifos, n) != OMPI_SUCCESS)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
-    rel_fifosp = (ompi_fifo_t * volatile *)
-        OFFSET2ADDR(sm_ctl_hdr->fifo, mca_btl_sm_component.sm_mpool_base);
-    rel_fifosp[mca_btl_sm_component.my_smp_rank] = my_fifos;
+    mca_btl_sm_component.shm_fifo[mca_btl_sm_component.my_smp_rank] = my_fifos;
 
     opal_atomic_wmb();
 
@@ -389,10 +349,8 @@ int mca_btl_sm_add_procs(
         my_smp_rank = mca_btl_sm_component.my_smp_rank;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *sm_btl;
-    ompi_fifo_t * volatile *fifo_tmp;
-    volatile char **tmp_ptr;
     bool have_connected_peer = false;
-    mca_btl_sm_module_resource_t *sm_ctl_hdr;
+    char **bases;
     /* initializion */
 
     sm_btl = (mca_btl_sm_t *)btl;
@@ -463,12 +421,7 @@ int mca_btl_sm_add_procs(
         peers[proc]->my_smp_rank = my_smp_rank;
     }
 
-    sm_ctl_hdr = mca_btl_sm_component.sm_ctl_header;
-    fifo_tmp = (ompi_fifo_t * volatile *)
-        OFFSET2ADDR(sm_ctl_hdr->fifo, mca_btl_sm_component.sm_mpool_base);
-    tmp_ptr = (volatile char **)
-        OFFSET2ADDR(sm_ctl_hdr->segment_header.base_shared_mem_segment,
-                    mca_btl_sm_component.sm_mpool_base);
+    bases = mca_btl_sm_component.shm_bases;
 
     for(j = mca_btl_sm_component.num_smp_procs;
         j < mca_btl_sm_component.num_smp_procs + n_local_procs; j++) {
@@ -478,18 +431,18 @@ int mca_btl_sm_add_procs(
             continue;
 
         /* spin until this element is allocated */
-        while(NULL == fifo_tmp[j]) {
+        while(NULL == mca_btl_sm_component.shm_fifo[j]) {
             opal_atomic_rmb();
             opal_progress();
         }
 
         /* Calculate the difference as (my_base - their_base) */
-        diff = ADDR2OFFSET(tmp_ptr[my_smp_rank], tmp_ptr[j]);
+        diff = ADDR2OFFSET(bases[my_smp_rank], bases[j]);
         mca_btl_sm_component.sm_offset[j] = diff;
 
         /* store local address of remote fifos */
         mca_btl_sm_component.fifo[j] =
-            (ompi_fifo_t*)OFFSET2ADDR(diff, fifo_tmp[j]);
+            (ompi_fifo_t*)OFFSET2ADDR(diff, mca_btl_sm_component.shm_fifo[j]);
 
         /* don't forget to update the head_lock if allocated because this
          * address is also in the remote process */

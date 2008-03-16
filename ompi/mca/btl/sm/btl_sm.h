@@ -55,20 +55,6 @@ extern "C" {
 /*
  * Shared Memory resource managment
  */
-struct mca_btl_sm_module_resource_t {
-    /* base control structures */
-    mca_common_sm_file_header_t segment_header;
-
-    /* fifo queues - offsets relative to the base of the share memory
-     * segment will be stored here */
-    volatile ompi_fifo_t **fifo;
-};
-typedef struct mca_btl_sm_module_resource_t mca_btl_sm_module_resource_t;
-extern mca_btl_sm_module_resource_t mca_btl_sm_module_resource;
-
-#define SM_CONNECTED 1
-#define SM_CONNECTED_SAME_BASE_ADDR  2
-#define SM_CONNECTED_DIFFERENT_BASE_ADDR  3
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define DATA (char)0
@@ -92,8 +78,10 @@ struct mca_btl_sm_component_t {
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     opal_mutex_t sm_lock;
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
-    mca_btl_sm_module_resource_t *sm_ctl_header;  /* control header in
-                                                     shared memory */
+    mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
+                                                    shared memory */
+    ompi_fifo_t **shm_fifo; /**< pointer to fifo 2D array in shared memory */
+    char **shm_bases;       /**< pointer to base pointers in shared memory */
     ompi_fifo_t **fifo;    /**< cached copy of the pointer to the 2D
                              fifo array.  The address in the shared
                              memory segment sm_ctl_header is a relative,
