@@ -44,10 +44,6 @@ struct mca_common_sm_file_header_t {
 
     /* total size of the segment */
     size_t seg_size;
-
-    /* array of pointers to the base of the shared memory address - one per
-     * local process */
-    volatile char **base_shared_mem_segment;
 };
 typedef struct mca_common_sm_file_header_t mca_common_sm_file_header_t;
 
