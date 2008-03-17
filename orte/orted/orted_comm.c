@@ -283,6 +283,7 @@ static int process_commands(orte_process_name_t* sender,
     char *contact_info;
     opal_buffer_t *answer;
     orte_rml_cmd_flag_t rml_cmd;
+    orte_job_t *jdata;
 
     /* unpack the command */
     n = 1;
@@ -428,7 +429,7 @@ static int process_commands(orte_process_name_t* sender,
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
             if (orte_process_info.hnp) {
-                /* if we are mpirun, do nothing - we will
+                /* if we are the HNP, do nothing - we will
                  * exit at our own sweet time
                  */
                 return ORTE_SUCCESS;
@@ -449,6 +450,60 @@ static int process_commands(orte_process_name_t* sender,
             return ORTE_SUCCESS;
             break;
 
+            /****    HALT VM COMMAND    ****/
+        case ORTE_DAEMON_HALT_VM_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received halt vm",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* trigger our appropriate exit procedure
+             * NOTE: this event will fire -after- any zero-time events
+             * so any pending relays -do- get sent first
+             */
+            orte_wakeup(0);
+            return ORTE_SUCCESS;
+            break;
+            
+            /****    SPAWN JOB COMMAND    ****/
+        case ORTE_DAEMON_SPAWN_JOB_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received spawn job",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            answer = OBJ_NEW(opal_buffer_t);
+            job = ORTE_JOBID_INVALID;
+            /* can only process this if we are the HNP */
+            if (orte_process_info.hnp) {
+                /* unpack the job data */
+                n = 1;
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &jdata, &n, ORTE_JOB))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto ANSWER_LAUNCH;
+                }
+                    
+                /* launch it */
+                if (ORTE_SUCCESS != (ret = orte_plm.spawn(jdata))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto ANSWER_LAUNCH;
+                }
+                job = jdata->jobid;
+            }
+    ANSWER_LAUNCH:
+            /* pack the jobid to be returned */
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &job, 1, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(answer);
+                goto CLEANUP;
+            }
+            /* return response */
+            if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
+                                            send_callback, NULL)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                ret = ORTE_ERR_COMM_FAILURE;
+            }
+            return ORTE_SUCCESS;
+            break;
+            
             /****     CONTACT QUERY COMMAND    ****/
         case ORTE_DAEMON_CONTACT_QUERY_CMD:
             if (orte_debug_daemons_flag) {
@@ -477,7 +532,6 @@ static int process_commands(orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 ret = ORTE_ERR_COMM_FAILURE;
             }
-            OBJ_RELEASE(answer);
             break;
             
             /****     REPORT_JOB_INFO_CMD COMMAND    ****/

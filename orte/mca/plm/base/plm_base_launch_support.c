@@ -212,7 +212,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
         /* set the flag indicating that a daemon failed so we use the proper
          * methods for attempting to shutdown the rest of the system
          */
-        orte_daemon_died = true;
+        orte_abnormal_term_ordered = true;
         
     }
     
@@ -767,17 +767,9 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
                              ORTE_NAME_PRINT(&(jdata->aborted_proc->name))));
-        /* if we are not already responding to an abort or an abnormal
-         * termination, report this to the errmgr
-         */
-        if (!orte_abnormal_term_ordered && !orte_abort_in_progress) {
-            orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
-        } else {
-            /* otherwise, we need to check to see if the jobs are completed
-             * so that we can continue to close down the job
-             */
-           goto CHECK_ALL_JOBS;
-        }
+        /* report this to the errmgr - it will protect us from multiple calls */
+        orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
+        goto CHECK_ALL_JOBS;
     } else if (ORTE_JOB_STATE_ABORTED == jdata->state ||
                ORTE_JOB_STATE_ABORTED_BY_SIG == jdata->state) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -785,17 +777,9 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
                              ORTE_NAME_PRINT(&(jdata->aborted_proc->name))));
-        /* if we are not already responding to an abort or an abnormal
-         * termination, report this to the errmgr
-         */
-        if (!orte_abnormal_term_ordered && !orte_abort_in_progress) {
-            orte_errmgr.proc_aborted(&(jdata->aborted_proc->name), jdata->aborted_proc->exit_code);
-        } else {
-            /* otherwise, we need to check to see if the jobs are completed
-             * so that we can continue to close down the job
-             */
-           goto CHECK_ALL_JOBS;
-        }
+        /* report this to the errmgr */
+        orte_errmgr.proc_aborted(&(jdata->aborted_proc->name), jdata->aborted_proc->exit_code);
+        goto CHECK_ALL_JOBS;
     } else if (jdata->num_terminated >= jdata->num_procs) {
         /* this job has terminated - now we need to check to see if ALL
          * the other jobs have also completed and wakeup if that is true
@@ -805,6 +789,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                              "%s plm:base:check_job_completed declared job %s normally terminated - checking all jobs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
+
 CHECK_ALL_JOBS:
         /* if the job that is being checked is the HNP, then we are
          * trying to terminate the orteds. In that situation, we

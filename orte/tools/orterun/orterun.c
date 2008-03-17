@@ -85,6 +85,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_data_server.h"
+#include "orte/runtime/orte_locks.h"
 
 /* ensure I can behave like a daemon */
 #include "orte/orted/orted.h"
@@ -112,7 +113,6 @@ static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_event_t *orterun_event, *orteds_exit_event;
 static char *ompi_server=NULL;
-static opal_atomic_lock_t terminating;
 
 /*
  * Globals
@@ -312,9 +312,6 @@ int orterun(int argc, char *argv[])
     int rc;
     opal_cmd_line_t cmd_line;
 
-    /* initialize the terminating lock */
-    opal_atomic_init(&terminating, OPAL_ATOMIC_UNLOCKED);
-    
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
     orterun_basename = opal_basename(argv[0]);
@@ -553,7 +550,12 @@ static void job_completed(int trigpipe, short event, void *arg)
     int rc;
     orte_job_state_t exit_state;
     
-    /* close the trigger pipe so it cannot be called again */
+    /* flag that we are here to avoid doing it twice */
+    if (!opal_atomic_trylock(&orte_job_complete_lock)) { /* returns 1 if already locked */
+        return;
+    }
+
+    /* close the trigger pipe */
     if (0 <= trigpipe) {
         close(trigpipe);
     }
@@ -642,7 +644,7 @@ static void terminated(int trigpipe, short event, void *arg)
     orte_vpid_t i;
     
     /* flag that we are here to avoid doing it twice */
-    if (!opal_atomic_trylock(&terminating)) { /* returns 1 if already locked */
+    if (!opal_atomic_trylock(&orte_terminate_lock)) { /* returns 1 if already locked */
         return;
     }
 
@@ -858,11 +860,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
     int ret;
     opal_event_t *event;
 
-    if (orte_abort_in_progress) {
-        /* we are already aborting - just leave it alone */
-        return;
-    }
-    
     if (!orterun_globals.quiet){
         fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
     }
@@ -890,9 +887,13 @@ static void abort_exit_callback(int fd, short ign, void *arg)
          */
         ORTE_DETECT_TIMEOUT(&event, jdata->num_procs,
                             orte_timeout_usec_per_proc,
-                            orte_max_timeout,
+                            orte_max_timeout, 
                             timeout_callback);
-        
+
+        /* terminate the job - this will wake us up and
+         * call the "terminated" function so we clean up
+         * and exit
+         */
         ret = orte_plm.terminate_job(ORTE_JOBID_WILDCARD);
         if (ORTE_SUCCESS != ret) {
             /* If we failed the terminate_job() above, then we
@@ -925,10 +926,11 @@ static void abort_exit_callback(int fd, short ign, void *arg)
  */
 static void abort_signal_callback(int fd, short flags, void *arg)
 {
-    /* if we have already ordered this once, or we are already
-     * aborting the job, don't keep doing it to avoid race conditions
+    /* if we have already ordered this once, don't keep
+     * doing it to avoid race conditions
      */
-    if (orte_abnormal_term_ordered || orte_abort_in_progress) {
+    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
+        fprintf(stderr, "%s: abort is already in progress...\n\n", orterun_basename);
         return;
     }
 

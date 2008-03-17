@@ -37,6 +37,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/orted/orted.h"
 
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -145,12 +146,22 @@ int orte_plm_base_orted_exit(void)
         ORTE_DETECT_TIMEOUT(&ev, orte_process_info.num_procs,
                             orte_timeout_usec_per_proc,
                             orte_max_timeout, failed_send);
+        /* if I am the HNP, I need to get this message too, but just set things
+         * up so the cmd processor gets called.
+         * We don't want to message ourselves as this can create circular logic
+         * in the RML. Instead, this macro will set a zero-time event which will
+         * cause the buffer to be processed by the cmd processor - probably will
+         * fire right away, but that's okay
+         * The macro makes a copy of the buffer, so it's okay to release it here
+         */
+        if (orte_process_info.hnp) {
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+        }
         
         /* now send the command one daemon at a time using a non-blocking
          * send - let the callback function keep track of how many
          * complete - it will delete the event if they all do.
-         * Start with vpid=1 since the HNP is always 0 and
-         * it will exit on its own
+         * Start with vpid=1 as the HNP gets it another way
          */
         done_reporting = false;
         num_reported = 0;
@@ -238,22 +249,34 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
                             orte_timeout_usec_per_proc,
                             orte_max_timeout, failed_send);
        
+        /* if I am the HNP, I need to get this message too, but just set things
+         * up so the cmd processor gets called.
+         * We don't want to message ourselves as this can create circular logic
+         * in the RML. Instead, this macro will set a zero-time event which will
+         * cause the buffer to be processed by the cmd processor - probably will
+         * fire right away, but that's okay
+         * The macro makes a copy of the buffer, so it's okay to release it here
+         */
+        if (orte_process_info.hnp) {
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+        }
+        
         /* now send the command one daemon at a time using a non-blocking
          * send - let the callback function keep track of how many
          * complete - it will delete the event if they all do.
-         * Start with vpid=0 so we get it too
+         * Start with vpid=1 as the HNP gets it another way
          */
         done_reporting = false;
         num_reported = 0;
-        num_being_sent = orte_process_info.num_procs;
+        num_being_sent = orte_process_info.num_procs-1;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
-        for(v=0; v < orte_process_info.num_procs; v++) {
+        for(v=1; v < orte_process_info.num_procs; v++) {
             peer.vpid = v;
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
-                                    send_callback, 0);
+                                send_callback, 0);
         }
         /* wait for completion or timeout */
         while (!done_reporting) {

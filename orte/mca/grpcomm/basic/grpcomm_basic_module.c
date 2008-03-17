@@ -93,7 +93,7 @@ static int xcast(orte_jobid_t job,
                          (long)orte_grpcomm_basic.xcast_linear_xover,
                          (long)orte_grpcomm_basic.xcast_binomial_xover));
 
-    if (orte_process_info.num_procs < 2 || orte_daemon_died) {
+    if (orte_process_info.num_procs < 2 || orte_abnormal_term_ordered) {
         /* if there is only one proc in the system, then we must
          * use the direct mode - there is no other option. Note that
          * since the HNP is the one that typically does xcast sends,

@@ -45,6 +45,7 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_locks.h"
 
 #include "orte/runtime/orte_cr.h"
 
@@ -74,6 +75,12 @@ int orte_init(char flags)
     /* register handler for errnum -> string conversion */
     opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
 
+    /* setup the locks */
+    if (ORTE_SUCCESS != (ret = orte_locks_init())) {
+        error = "orte_locks_init";
+        goto error;
+    }
+    
     /* Register all MCA Params */
     if (ORTE_SUCCESS != (ret = orte_register_params())) {
         error = "orte_register_params";

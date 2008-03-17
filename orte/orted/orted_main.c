@@ -60,6 +60,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/runtime/orte_locks.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -566,6 +567,11 @@ static void shutdown_callback(int fd, short flags, void *arg)
     orte_plm_cmd_flag_t cmd = ORTE_PLM_UPDATE_PROC_STATE;
     int ret;
     
+    /* protect against multiple calls */
+    if (!opal_atomic_trylock(&orted_exit_lock)) { /* returns 1 if already locked */
+        return;
+    }
+
     if (NULL != arg) {
         /* it's the singleton pipe...  remove that handler */
         opal_event_del(&pipe_handler);

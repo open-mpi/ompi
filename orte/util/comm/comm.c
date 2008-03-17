@@ -570,3 +570,38 @@ CLEANUP:
     return ret;
 }
 
+int orte_util_comm_halt_vm(const orte_process_name_t *hnp)
+{
+    opal_buffer_t buf;
+    orte_daemon_cmd_flag_t command;
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+                         "%s util_comm_halt_vm: ordering HNP %s terminate",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(hnp)));
+    
+    /* setup the buffer */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    
+    /* tell the HNP to die */
+    command = ORTE_DAEMON_HALT_VM_CMD;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* send the order */
+    if (0 > (rc = orte_rml.send_buffer((orte_process_name_t*)hnp, &buf, ORTE_RML_TAG_DAEMON, 0))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    OBJ_DESTRUCT(&buf);
+    
+    /* don't bother waiting around */
+CLEANUP:
+    OBJ_DESTRUCT(&buf);
+    
+    return rc;
+}
+
