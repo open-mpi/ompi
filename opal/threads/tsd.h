@@ -1,6 +1,7 @@
 /* 
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -11,6 +12,8 @@
 
 #ifndef OPAL_THREADS_TSD_H
 #define OPAL_THREADS_TSD_H
+
+#include "opal_config.h"
 
 #if OMPI_HAVE_POSIX_THREADS
 #include <pthread.h>
@@ -70,8 +73,8 @@ typedef void* opal_tsd_key_t;
  *                       create another thread specific data key
  * @retval ENOMEM        Insufficient memory exists to create the key
  */
-int opal_tsd_key_create(opal_tsd_key_t *key, 
-                        opal_tsd_destructor_t destructor);
+OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key, 
+                                      opal_tsd_destructor_t destructor);
 
 
 /**
@@ -91,7 +94,7 @@ int opal_tsd_key_create(opal_tsd_key_t *key,
  * @retval OPAL_SUCCESS Success
  * @retval EINVAL       Invalid key
  */
-int opal_tsd_key_delete(opal_tsd_key_t key);
+OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
 
 
 /**
@@ -112,7 +115,7 @@ int opal_tsd_key_delete(opal_tsd_key_t key);
  *                      value with the key
  * @retval EINVAL       Invalid key
  */
-int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
+OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
 
 
 /**
@@ -131,7 +134,7 @@ int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
  *                      value with the key
  * @retval EINVAL       Invalid key
  */
-int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
+OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
 #elif OMPI_HAVE_POSIX_THREADS
 
@@ -236,14 +239,14 @@ opal_tsd_getspecific(opal_tsd_key_t key, void **valuep)
 
 typedef int opal_tsd_key_t;
 
-int opal_tsd_key_create(opal_tsd_key_t *key, 
-                        opal_tsd_destructor_t destructor);
+OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key, 
+                                      opal_tsd_destructor_t destructor);
 
-int opal_tsd_key_delete(opal_tsd_key_t key);
+OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
 
-int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
+OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
 
-int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
+OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
 #endif
 
