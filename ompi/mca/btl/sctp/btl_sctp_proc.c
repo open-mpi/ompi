@@ -203,7 +203,16 @@ int mca_btl_sctp_proc_insert(
         if(endpoint_addr->addr_inuse != 0) {
             continue;
         }
-        if(net1 == net2) {
+        /* in the 1-to-many code, we sctp_bindx all addresses to one
+         *  association, and only represent this multi-NIC endpoint
+         *  internally as one BTL. this is within mca_btl_sctp_create.
+         *  this is done so that SCTP itself handles multi-path scenarios
+         *  since the transport has multihoming.  as a result, we simply
+         *  have to pick one of the addresses in the association (it doesn't
+         *  matter to the API which is chosen); we pick the one which bind
+         *  is called (NOT sctp_bindx) even if it is a private IP...
+         */
+        if(net1 == net2 || 0 == mca_btl_sctp_component.sctp_if_11) {
             btl_endpoint->endpoint_addr = endpoint_addr;
             break;
         } else if(btl_endpoint->endpoint_addr != 0) {

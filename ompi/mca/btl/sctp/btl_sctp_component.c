@@ -239,8 +239,11 @@ int mca_btl_sctp_component_open(void)
     /* use a single one-to-many socket by default except in Solaris (see
      *  the configure.m4 file)
      */
-    mca_btl_sctp_component.sctp_if_11 =
-        mca_btl_sctp_param_register_int ("if_11", OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET);
+    mca_base_param_reg_int(&mca_btl_sctp_component.super.btl_version,
+                           "if_11", "If 0, have one SCTP BTL module and let SCTP do multilink scheduling. If non-zero, have an SCTP BTL module per link and let the PML do the scheduling.",
+                           false, false,
+                           OMPI_MCA_BTL_SCTP_USE_ONE_TO_ONE_SOCKET,
+                           &mca_btl_sctp_component.sctp_if_11);
 
     /* have lower exclusivity than tcp */
     mca_btl_sctp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
