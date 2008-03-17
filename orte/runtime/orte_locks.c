@@ -20,31 +20,34 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include "opal/util/output.h"
-#include "opal/threads/condition.h"
-#include "opal/runtime/opal_progress.h"
-
-#include "orte/runtime/orte_globals.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_locks.h"
 
-#include "orte/runtime/orte_wakeup.h"
+/* for everyone */
+opal_atomic_lock_t orte_finalize_lock;
 
-int orte_wakeup(int exit_status)
+/* for orteds */
+opal_atomic_lock_t orted_exit_lock;
+
+/* for HNPs */
+opal_atomic_lock_t orte_wakeup_lock;
+opal_atomic_lock_t orte_job_complete_lock;
+opal_atomic_lock_t orte_terminate_lock;
+opal_atomic_lock_t orte_abort_inprogress_lock;
+
+
+int orte_locks_init(void)
 {
-    /* set the exit status and trigger the
-     * exit procedure
-     */
-    if (!opal_atomic_trylock(&orte_wakeup_lock)) { /* returns 1 if already locked */
-        return ORTE_SUCCESS;
-    }
+    /* for everyone */
+    opal_atomic_init(&orte_finalize_lock, OPAL_ATOMIC_UNLOCKED);
 
-    orte_exit_status = exit_status;
-    orte_trigger_event(orte_exit);
+    /* for orteds */
+    opal_atomic_init(&orted_exit_lock, OPAL_ATOMIC_UNLOCKED);
+
+    /* for HNPs */
+    opal_atomic_init(&orte_wakeup_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_init(&orte_job_complete_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_init(&orte_terminate_lock, OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_init(&orte_abort_inprogress_lock, OPAL_ATOMIC_UNLOCKED);
+
     return ORTE_SUCCESS;
 }

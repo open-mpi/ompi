@@ -24,6 +24,7 @@ dist_pkgdata_DATA += runtime/help-orte-runtime.txt
 headers += \
 	runtime/orte_wait.h \
 	runtime/orte_wakeup.h \
+	runtime/orte_locks.h \
         runtime/runtime.h \
         runtime/orte_globals.h \
         runtime/orte_globals_class_instances.h \
@@ -44,5 +45,6 @@ libopen_rte_la_SOURCES += \
         runtime/data_type_support/orte_dt_unpacking_fns.c \
         runtime/orte_wait.c \
         runtime/orte_wakeup.c \
+        runtime/orte_locks.c \
         runtime/orte_cr.c \
         runtime/orte_data_server.c

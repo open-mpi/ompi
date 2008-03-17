@@ -13,6 +13,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 int main(int argc, char* argv[])
 {
@@ -40,7 +41,7 @@ int main(int argc, char* argv[])
         if ((ORTE_PROC_MY_NAME->vpid == 3 || 
              (orte_process_info.num_procs <= 3 && ORTE_PROC_MY_NAME->vpid == 0))
             && i == 9995) {
-            orte_abort(1, true);
+            orte_errmgr.abort(1, NULL);
         }
     }
 

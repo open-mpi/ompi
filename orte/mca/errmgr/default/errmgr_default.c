@@ -30,6 +30,7 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wakeup.h"
+#include "orte/runtime/orte_locks.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -52,7 +53,7 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
     OPAL_TRACE(1);
     
     /* if we are already in progress, then ignore this call */
-    if (orte_abort_in_progress) {
+    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: abort in progress, ignoring proc %s aborted with status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -65,9 +66,6 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
                          "%s errmgr:default: proc %s aborting with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(name), exit_code));
-    
-    /* flag that we are aborting */
-    orte_abort_in_progress = true;
     
     /* indicate that all jobs other than the one containing this
      * proc have been orted to abort - this is necessary to avoid
@@ -114,24 +112,20 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
     OPAL_TRACE(1);
     
     /* if we are already in progress, then ignore this call */
-    if (orte_abort_in_progress) {
+    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: abort in progress, ignoring incomplete start on job %s with status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job), exit_code));
-        
         return;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                          "%s errmgr:default: job %s reported incomplete start with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), exit_code));
 
-    /* flag that we are aborting */
-    orte_abort_in_progress = true;
-    
-    /* tell the plm to terminate all job */
+    /* tell the plm to terminate all jobs */
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_job(ORTE_JOBID_WILDCARD))) {
         ORTE_ERROR_LOG(rc);
     }

@@ -291,15 +291,12 @@ ORTE_DECLSPEC extern bool orted_spin_flag;
 
 ORTE_DECLSPEC extern int orte_debug_output;
 
-ORTE_DECLSPEC extern bool orte_daemon_died;
-
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern int orte_exit, orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
-ORTE_DECLSPEC extern bool orte_abort_in_progress;
-ORTE_DECLSPEC extern bool orte_wakeup_ordered;
+
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;
 

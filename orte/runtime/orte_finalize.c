@@ -27,6 +27,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_locks.h"
 
 /**
  * Leave ORTE.
@@ -42,6 +43,11 @@ int orte_finalize(void)
         return ORTE_SUCCESS;
     }
     
+    /* protect against multiple calls */
+    if (!opal_atomic_trylock(&orte_finalize_lock)) { /* returns 1 if already locked */
+        return ORTE_SUCCESS;
+    }
+
     /* call the finalize function for this environment */
     orte_ess.finalize();
     

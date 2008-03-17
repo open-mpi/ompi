@@ -59,5 +59,7 @@ ORTE_DECLSPEC int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_
 
 ORTE_DECLSPEC int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t job);
 
+ORTE_DECLSPEC int orte_util_comm_halt_vm(const orte_process_name_t *hnp);
+
 END_C_DECLS
 #endif
