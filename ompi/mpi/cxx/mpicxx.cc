@@ -52,7 +52,7 @@ int mpi_errno = MPI_SUCCESS;
 #endif
 
 
-const void* BOTTOM = (void*) MPI_BOTTOM;
+void* const BOTTOM = (void*) MPI_BOTTOM;
 const void* IN_PLACE = (void*) MPI_IN_PLACE;
 
 // return  codes
