@@ -141,8 +141,8 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
      if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
         cq_size = mca_btl_openib_component.ib_cq_size[cq];
 
-    if(cq_size > (uint32_t)hca->ib_dev_attr.max_cq)
-        cq_size = hca->ib_dev_attr.max_cq;
+    if(cq_size > (uint32_t)hca->ib_dev_attr.max_cqe)
+        cq_size = hca->ib_dev_attr.max_cqe;
 
     if(NULL == hca->ib_cq[cq]) {
         hca->ib_cq[cq] = ibv_create_cq_compat(hca->ib_dev_context, cq_size,
