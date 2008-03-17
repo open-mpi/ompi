@@ -54,7 +54,7 @@ OMPI_DECLSPEC extern const int ERR_WIN;
 
 
 // assorted constants
-OMPI_DECLSPEC extern const void* BOTTOM;
+OMPI_DECLSPEC extern void* const BOTTOM;
 OMPI_DECLSPEC extern const void* IN_PLACE;
 OMPI_DECLSPEC extern const int PROC_NULL;
 OMPI_DECLSPEC extern const int ANY_SOURCE;
