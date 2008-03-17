@@ -520,6 +520,7 @@ static int spawn(int count, char **array_of_commands,
         }
         /* add the app to the job data */
         opal_pointer_array_add(jdata->apps, app);
+        app->idx = i;
         jdata->num_apps++;
         
         /* copy over the name of the executable */
