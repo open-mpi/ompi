@@ -200,7 +200,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERROR;
     }
 
-    mca_btl_sm_component.shm_fifo = mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_fifo = (ompi_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
 
     /* Sync with other local procs. (Do we have to?) */
