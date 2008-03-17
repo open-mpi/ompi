@@ -73,7 +73,7 @@ static int xcast(orte_jobid_t job,
     struct timeval start, stop;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast sent to job %s tag %ld",
+                         "%s grpcomm:xcast sent to job %s tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), (long)tag));
     
@@ -87,7 +87,7 @@ static int xcast(orte_jobid_t job,
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast: num_procs %ld linear xover: %ld binomial xover: %ld",
+                         "%s grpcomm:xcast: num_procs %ld linear xover: %ld binomial xover: %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)orte_process_info.num_procs,
                          (long)orte_grpcomm_basic.xcast_linear_xover,
@@ -132,7 +132,7 @@ DONE:
     
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        opal_output(0, "%s xcast: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+        opal_output(0, "%s grpcomm:xcast: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
     }
@@ -149,7 +149,7 @@ static int xcast_binomial_tree(orte_jobid_t job,
     opal_buffer_t *buf;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast_binomial",
+                         "%s grpcomm:entering xcast_binomial",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* binomial xcast can only go through the daemons as app procs are
@@ -208,7 +208,7 @@ static int xcast_binomial_tree(orte_jobid_t job,
     }
         
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s xcast_binomial: buffer size %ld",
+                         "%s grpcomm:xcast_binomial: buffer size %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)buf->bytes_used));
     
@@ -216,8 +216,8 @@ static int xcast_binomial_tree(orte_jobid_t job,
      * will ensure everyone else gets it!
      */
     
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast_binomial: sending %s => %s",
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s grpcomm:xcast_binomial: sending %s => %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
@@ -242,6 +242,10 @@ static int xcast_binomial_tree(orte_jobid_t job,
 CLEANUP:  
     OBJ_RELEASE(buf);
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm:xcast_binomial: completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     return rc;
 }
 
@@ -257,7 +261,7 @@ static int xcast_linear(orte_jobid_t job,
     orte_grpcomm_mode_t mode;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast_linear",
+                         "%s grpcomm:entering xcast_linear",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* since we have to pack some additional info into the buffer to be
@@ -323,7 +327,7 @@ static int xcast_linear(orte_jobid_t job,
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s xcast_linear: buffer size %ld",
+                         "%s grpcomm:xcast_linear: buffer size %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)buf->bytes_used));
     
@@ -351,7 +355,7 @@ static int xcast_linear(orte_jobid_t job,
     for (i=0; i < range; i++) {            
         dummy.vpid = i;
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                             "%s xcast_linear: %s => %s",
+                             "%s grpcomm:xcast_linear: %s => %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&dummy)));
@@ -371,6 +375,11 @@ static int xcast_linear(orte_jobid_t job,
 CLEANUP:
     /* release the buffer */
     OBJ_RELEASE(buf);
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm:xcast_linear: completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     return rc;    
 }
 
@@ -381,6 +390,10 @@ static int relay_via_hnp(orte_jobid_t job,
     orte_daemon_cmd_flag_t command;
     orte_grpcomm_mode_t mode;
     int rc;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: relaying buffer to HNP",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* since we have to pack some additional info into the buffer
     * for this case, we create a new buffer into to contain all the
@@ -435,6 +448,11 @@ static int relay_via_hnp(orte_jobid_t job,
 
 CLEANUP:
     OBJ_RELEASE(buf);
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: buffer relayed to HNP",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     return rc;
 }
 
@@ -450,7 +468,7 @@ static int xcast_direct(orte_jobid_t job,
     orte_rml_tag_t target=tag;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s xcast_direct",
+                         "%s grpcomm: entering xcast_direct",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if I am applicaton proc */
@@ -650,6 +668,11 @@ CLEANUP:
     if (NULL != buf) {
         OBJ_RELEASE(buf);
     }
+
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: xcast_direct completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     return rc;
 }
 
@@ -659,6 +682,10 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     int rc;
     orte_vpid_t i;
     opal_buffer_t tmpbuf;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: entering allgather",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* everything happens within my jobid */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -743,6 +770,10 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     /* don't need the received buffer - we already have what we need */
     OBJ_DESTRUCT(&tmpbuf);
     
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: allgather completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     return ORTE_SUCCESS;
 }
 
@@ -754,6 +785,10 @@ static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t
     opal_buffer_t tmpbuf;
     int rc;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: entering allgather_list",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* the first entry on the list is the "root" that collects
      * all the data - everyone else just sends and gets back
      * the results
@@ -762,6 +797,10 @@ static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t
     
     if (OPAL_EQUAL != opal_dss.compare(&root->name, ORTE_PROC_MY_NAME, ORTE_NAME)) {
         /* everyone but root sends data */
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "%s allgather_list: sending my data to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&root->name)));
         if (0 > (rc = orte_rml.send_buffer(&root->name, sbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -771,6 +810,9 @@ static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                             "%s allgather_list: received result",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return ORTE_SUCCESS;
     }
     
@@ -806,6 +848,10 @@ static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t
         OBJ_DESTRUCT(&tmpbuf);
     }
     
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s allgather_list: received all data",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* broadcast the results */
     for (item = opal_list_get_first(names);
          item != opal_list_get_end(names);
@@ -824,6 +870,10 @@ static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t
         }
     }
     
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: allgather_list completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     return ORTE_SUCCESS;
 }
 
@@ -834,6 +884,10 @@ static int barrier(void)
     orte_vpid_t i;
     opal_buffer_t buf;
     int rc;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: entering barrier",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* everything happens within the same jobid */
     name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -911,6 +965,10 @@ static int barrier(void)
                          "%s barrier release received",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     OBJ_DESTRUCT(&buf);
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: barrier completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return ORTE_SUCCESS;
 }
@@ -1303,6 +1361,10 @@ static int modex(opal_list_t *procs)
     modex_attr_data_t *attr_data;
     int rc;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: modex entered",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* setup the buffer that will actually be sent */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
@@ -1331,6 +1393,10 @@ static int modex(opal_list_t *procs)
     }
     OPAL_THREAD_UNLOCK(&orte_grpcomm_basic.mutex);
     
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s modex: executing allgather",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* exchange the buffer with the list of peers (if provided) or all my peers */
     if (NULL == procs) {
         if (ORTE_SUCCESS != (rc = allgather(&buf, &rbuf))) {
@@ -1344,6 +1410,10 @@ static int modex(opal_list_t *procs)
         }
     }
     
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s modex: processing modex info",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* process the results */
     /* extract the number of procs that put data in the buffer */
     cnt=1;
@@ -1442,6 +1512,10 @@ static int modex(opal_list_t *procs)
 cleanup:
     OBJ_DESTRUCT(&buf);
     OBJ_DESTRUCT(&rbuf);
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                         "%s grpcomm: modex completed",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return rc;
 }
