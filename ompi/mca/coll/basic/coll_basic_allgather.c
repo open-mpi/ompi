@@ -192,12 +192,13 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
      */
     if (rank != root) {
         /* post the recv */
-        err = MCA_PML_CALL(recv(rbuf, size * rcount, rdtype, 0,
+        err = MCA_PML_CALL(recv(rbuf, rsize * rcount, rdtype, 0,
                                 MCA_COLL_BASE_TAG_ALLGATHER, comm,
                                 MPI_STATUS_IGNORE));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
+
     } else {
         /* Send the data to every other process in the remote group
          * except to rank zero. which has it already. */
@@ -209,6 +210,7 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
             if (OMPI_SUCCESS != err) {
                 goto exit;
             }
+
         }
 
         err = ompi_request_wait_all(rsize - 1, reqs, MPI_STATUSES_IGNORE);
