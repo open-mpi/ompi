@@ -40,7 +40,7 @@ EXTERN uint32_t vt_comm_id(MPI_Comm comm);
 EXTERN int     vt_rank_to_pe(int rank, MPI_Comm comm);
 
 /* MPI communicator |-> VampirTrace communicator id */
-#define VT_COMM_ID(c) (((c)==MPI_COMM_WORLD) ? 0 : vt_comm_id(c))
+#define VT_COMM_ID(c) (((c)==MPI_COMM_WORLD) ? 0 : ((c)==MPI_COMM_SELF) ? 1 : vt_comm_id(c))
 
 /* Rank with respect to arbitrary communicator |-> global rank */
 #define VT_RANK_TO_PE(r,c) (((c)==MPI_COMM_WORLD) ? r : vt_rank_to_pe(r,c))
