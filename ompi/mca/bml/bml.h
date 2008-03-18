@@ -548,11 +548,6 @@ typedef int (*mca_bml_base_module_register_fn_t)(
                                                  mca_btl_base_module_recv_cb_fn_t cbfunc,
                                                  void* cbdata
                                                  );
-
-
-
-
-
 /**
  * Register a callback function that is called of error.
  *
