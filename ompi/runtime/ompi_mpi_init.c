@@ -805,7 +805,7 @@ static int socket_to_cpu_set(char **socket_list, int socket_cnt)
                     return ORTE_ERROR;
                 }
                 if (rmaps_rank_file_debug) {
-                    opal_output(0,"rank %d runon cpu #%d (any socket)",(long)ORTE_PROC_MY_NAME->vpid, processor_id);
+                    opal_output(0,"rank %ld runon cpu #%d (any socket)",(long)ORTE_PROC_MY_NAME->vpid, processor_id);
                 }
             }
             continue;
@@ -826,7 +826,7 @@ static int socket_to_cpu_set(char **socket_list, int socket_cnt)
                     return ORTE_ERROR;
                 }
                 if (rmaps_rank_file_debug) {
-                    opal_output(0,"rank %d runs on cpu #%d", (long)ORTE_PROC_MY_NAME->vpid, processor_id);
+                    opal_output(0,"rank %ld runs on cpu #%d", (long)ORTE_PROC_MY_NAME->vpid, processor_id);
                 }
                 break;
             case 2:
@@ -844,7 +844,7 @@ static int socket_to_cpu_set(char **socket_list, int socket_cnt)
                         return ORTE_ERROR;
                     }
                     if (rmaps_rank_file_debug) {
-                        opal_output(0,"rank %d runs on cpu #%d (%d-%d)",
+                        opal_output(0,"rank %ld runs on cpu #%d (%d-%d)",
                                     (long)ORTE_PROC_MY_NAME->vpid, processor_id, lower_range, upper_range);
                     }
                 }
@@ -868,7 +868,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
         int range_cnt;
         int lower_range, upper_range;
         int socket, core, processor_id ;
-        int max_socket_num, max_core_num, max_processor_id;
+        int max_socket_num, max_core_num;
         int num_sockets, num_cores;
         opal_paffinity_base_cpu_set_t cpumask;
         
@@ -904,7 +904,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                     return ORTE_ERROR;
                 }
                 if (rmaps_rank_file_debug) {
-                    opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                    opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                 (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                }
             }
@@ -930,7 +930,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                         return ORTE_ERROR;
                     }
                     if (rmaps_rank_file_debug) {
-                        opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                        opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                 (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                     }
                     break;
@@ -954,7 +954,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                             return ORTE_ERROR;
                         }
                         if (rmaps_rank_file_debug) {
-                            opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                            opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                         (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                         }
                     }
@@ -995,7 +995,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                                 return ORTE_ERROR;
                             }
                             if (rmaps_rank_file_debug) {
-                                opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                                opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                             (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);                                    
                             }
                             break;
@@ -1019,7 +1019,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                                     return ORTE_ERROR;
                                 }
                                 if (rmaps_rank_file_debug) {
-                                    opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",           
+                                    opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",           
                                                 (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                                 } 
                             }
@@ -1046,7 +1046,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                                 return ORTE_ERROR;
                             }
                             if (rmaps_rank_file_debug) {
-                                opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                                opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                             (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                             }
                         }
@@ -1072,7 +1072,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                                     return ORTE_ERROR;
                                 }
                                 if (rmaps_rank_file_debug) {
-                                    opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                                    opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                                 (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                                 }
                                 break;
@@ -1096,7 +1096,7 @@ static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_
                                         return ORTE_ERROR;
                                     }
                                     if (rmaps_rank_file_debug) {
-                                        opal_output(0,"rank %d runs on pair %d:%d (cpu #%d)",
+                                        opal_output(0,"rank %ld runs on pair %d:%d (cpu #%d)",
                                                     (long)ORTE_PROC_MY_NAME->vpid, socket, core, processor_id);
                                     }
                                 }
