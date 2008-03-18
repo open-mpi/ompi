@@ -80,11 +80,9 @@ int mca_bml_r2_component_close(void)
 }
 
 
-mca_bml_base_module_t* mca_bml_r2_component_init( 
-                                                 int* priority, 
-                                                 bool enable_progress_threads,
-                                                 bool enable_mpi_threads
-                                                 )
+mca_bml_base_module_t* mca_bml_r2_component_init( int* priority, 
+                                                  bool enable_progress_threads,
+                                                  bool enable_mpi_threads )
 {
     /* initialize BTLs */
     
