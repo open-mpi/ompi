@@ -40,8 +40,7 @@ typedef enum {
     MCA_BTL_TCP_CONNECT_ACK,
     MCA_BTL_TCP_CLOSED,
     MCA_BTL_TCP_FAILED,
-    MCA_BTL_TCP_CONNECTED,
-    MCA_BTL_TCP_SHUTDOWN
+    MCA_BTL_TCP_CONNECTED
 } mca_btl_tcp_state_t;
 
 /**
