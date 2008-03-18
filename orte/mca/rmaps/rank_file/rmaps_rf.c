@@ -37,6 +37,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
+#include "opal/util/if.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -49,8 +50,6 @@
 
 static int orte_rmaps_rank_file_parse(const char *, int);
 static char *rankfile_parse_string_or_int(void);
-static int rankfile_parse_int(void);
-static char *rankfile_parse_string(void);
 char *rank_file_path = NULL;
 static const char *cur_rankfile_name = NULL;
 bool  rank_file_done;
@@ -147,7 +146,7 @@ static int map_app_by_node(
     int rc = ORTE_SUCCESS;
     opal_list_item_t *next;
     orte_node_t *node;
-    orte_std_cntr_t i, num_slots_to_take, num_alloc = 0;
+    orte_std_cntr_t num_alloc = 0;
 
     OPAL_TRACE(2);
     
@@ -546,58 +545,22 @@ orte_rmaps_base_module_t orte_rmaps_rank_file_module = {
 };
 
 
-static void rankfile_parse_error(int token)
-{
-    switch (token) {
-    case ORTE_RANKFILE_STRING:
-        opal_show_help("help-orte-rmaps-rf.txt", "parse_error_string",
-                       true,
-                       cur_rankfile_name,
-                       rank_file_line,
-                       token,
-                       rank_file_value.sval);
-        break;
-    case ORTE_RANKFILE_IPV4:
-    case ORTE_RANKFILE_IPV6:
-    case ORTE_RANKFILE_INT:
-        opal_show_help("help-orte-rmaps-rf.txt", "parse_error_int",
-                       true,
-                       cur_rankfile_name,
-                       rank_file_line,
-                       token,
-                       rank_file_value.sval);
-        break;
-     default:
-        opal_show_help("help-orte-rmaps-rf.txt", "parse_error",
-                       true,
-                       cur_rankfile_name,
-                       rank_file_line,
-                       rank_file_value.sval);
-        break;
-    }
-}
-
-
-
 static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
 {
    int token;
    int rc = ORTE_SUCCESS;
-   cur_rankfile_name = rankfile;
-   int l;
    int line_number = 1;
    int cnt;
-   char* tmp;
    char* node_name = NULL;
    char* username = NULL; 
    char** argv;
-   orte_node_t* node;
    char buff[64];
    char* value;
    int ival;
 
    OPAL_THREAD_LOCK(&rankfile_mutex);
 
+   cur_rankfile_name = rankfile;
    rank_file_done = false;
    rank_file_in = fopen(rankfile, "r");
 
@@ -695,30 +658,5 @@ static char *rankfile_parse_string_or_int(void)
 
   }
 
-}
-
-static int rankfile_parse_int(void)
-{
-    if (ORTE_RANKFILE_EQUAL != rank_file_lex())
-        return -1;
-    if (ORTE_RANKFILE_INT != rank_file_lex())
-        return -1;
-    return rank_file_value.ival;
-}
-
-/**
- * Return the string following an = (option to a keyword)
- */
-static char *rankfile_parse_string(void)
-{
-    int rc;
-    if (ORTE_RANKFILE_EQUAL != rank_file_lex()){
-        return NULL;
-    }
-    rc = rank_file_lex();
-    if (ORTE_RANKFILE_STRING != rc){
-        return NULL;
-    }
-    return strdup(rank_file_value.sval);
 }
 
