@@ -755,11 +755,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     ompi_mpi_initialized = true;
 
-    if (orte_debug_flag) {
-        opal_output(0, "%s ompi_mpi_init completed",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    }
-
     /* Do we need to wait for a debugger? */
     ompi_wait_for_debugger();
 
