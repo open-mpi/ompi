@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -59,12 +59,14 @@ static opal_output_stream_t malloc_stream;
  */
 void opal_malloc_init(void)
 {
+#if OMPI_ENABLE_DEBUG
     OBJ_CONSTRUCT(&malloc_stream, opal_output_stream_t);
     malloc_stream.lds_is_debugging = true;
     malloc_stream.lds_verbose_level = 5;
     malloc_stream.lds_prefix = "malloc debug: ";
     malloc_stream.lds_want_stderr = true;
     opal_malloc_output = opal_output_open(&malloc_stream);
+#endif  /* OMPI_ENABLE_DEBUG */
 }
 
 
@@ -73,11 +75,11 @@ void opal_malloc_init(void)
  */
 void opal_malloc_finalize(void)
 {
-  if (-1 != opal_malloc_output) {
-    opal_output_close(opal_malloc_output);
-    opal_malloc_output = -1;
-    OBJ_DESTRUCT(&malloc_stream);
-  }
+    if (-1 != opal_malloc_output) {
+        opal_output_close(opal_malloc_output);
+        opal_malloc_output = -1;
+        OBJ_DESTRUCT(&malloc_stream);
+    }
 }
 
 
@@ -87,21 +89,26 @@ void opal_malloc_finalize(void)
 void *opal_malloc(size_t size, const char *file, int line)
 {
     void *addr;
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 1) {
         if (size <= 0) {
-          opal_output(opal_malloc_output, "Request for %ld bytes (%s, %d)", 
-                     (long) size, file, line);
+            opal_output(opal_malloc_output, "Request for %ld bytes (%s, %d)", 
+                        (long) size, file, line);
         }
     }
+#endif /* OMPI_ENABLE_DEBUG */
+
     addr = malloc(size);
+
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 0) {
         if (NULL == addr) {
             opal_output(opal_malloc_output, 
-                       "Request for %ld bytes failed (%s, %d)",
-                       (long) size, file, line);
+                        "Request for %ld bytes failed (%s, %d)",
+                        (long) size, file, line);
         }
     }
-
+#endif  /* OMPI_ENABLE_DEBUG */
     return addr;
 }
 
@@ -112,22 +119,25 @@ void *opal_malloc(size_t size, const char *file, int line)
 void *opal_calloc(size_t nmembers, size_t size, const char *file, int line)
 {
     void *addr;
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 1) {
         if (size <= 0) {
-          opal_output(opal_malloc_output,
-                     "Request for %ld zeroed elements of size %ld (%s, %d)", 
-                     (long) nmembers, (long) size, file, line);
+            opal_output(opal_malloc_output,
+                        "Request for %ld zeroed elements of size %ld (%s, %d)", 
+                        (long) nmembers, (long) size, file, line);
         }
     }
+#endif  /* OMPI_ENABLE_DEBUG */
     addr = calloc(nmembers, size);
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 0) {
         if (NULL == addr) {
             opal_output(opal_malloc_output, 
-                       "Request for %ld zeroed elements of size %ld failed (%s, %d)",
-                       (long) nmembers, (long) size, file, line);
+                        "Request for %ld zeroed elements of size %ld failed (%s, %d)",
+                        (long) nmembers, (long) size, file, line);
         }
     }
-
+#endif  /* OMPI_ENABLE_DEBUG */
     return addr;
 }
 
@@ -138,28 +148,30 @@ void *opal_calloc(size_t nmembers, size_t size, const char *file, int line)
 void *opal_realloc(void *ptr, size_t size, const char *file, int line)
 {
     void *addr;
-
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 1) {
         if (size <= 0) {
-          if (NULL == ptr) {
-            opal_output(opal_malloc_output, 
-                       "Realloc NULL for %ld bytes (%s, %d)", 
-                       (long) size, file, line);
-          } else {
-            opal_output(opal_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
-                       ptr, (long) size, file, line);
-          }
+            if (NULL == ptr) {
+                opal_output(opal_malloc_output, 
+                            "Realloc NULL for %ld bytes (%s, %d)", 
+                            (long) size, file, line);
+            } else {
+                opal_output(opal_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
+                            ptr, (long) size, file, line);
+            }
         }
     }
+#endif  /* OMPI_ENABLE_DEBUG */
     addr = realloc(ptr, size);
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 0) {
         if (NULL == addr) {
             opal_output(opal_malloc_output, 
-                       "Realloc %p for %ld bytes failed (%s, %d)",
-                       ptr, (long) size, file, line);
+                        "Realloc %p for %ld bytes failed (%s, %d)",
+                        ptr, (long) size, file, line);
         }
     }
-
+#endif  /* OMPI_ENABLE_DEBUG */
     return addr;
 }
 
@@ -169,11 +181,18 @@ void *opal_realloc(void *ptr, size_t size, const char *file, int line)
  */
 void opal_free(void *addr, const char *file, int line)
 {
+#if OMPI_ENABLE_DEBUG
     if (opal_malloc_debug_level > 1 && NULL == addr) {
-      opal_output(opal_malloc_output, "Invalid free (%s, %d)", file, line);
-    } else {
-      free(addr);
+        opal_output(opal_malloc_output, "Invalid free (%s, %d)", file, line);
+        return;
     }
+#endif  /* OMPI_ENABLE_DEBUG */
+    free(addr);
 }
 
-
+void opal_malloc_debug(int level)
+{
+#if OMPI_ENABLE_DEBUG
+    opal_malloc_debug_level = level;
+#endif  /* OMPI_ENABLE_DEBUG */
+}
