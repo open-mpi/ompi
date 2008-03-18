@@ -340,9 +340,6 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
                                    size,
                                    flags
                                    );
-    if( OPAL_LIKELY((*des) != NULL) ) { 
-        (*des)->des_context = (void*) bml_btl;
-    }
 }
 
 static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl, 
@@ -363,9 +360,6 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
                                    size,
                                    flags
                                    );
-    if( OPAL_LIKELY((*des) != NULL) ) { 
-        (*des)->des_context = (void*) bml_btl;  
-    }
 }
 
 /*
