@@ -17,8 +17,6 @@
 r2_sources  = \
 	bml_r2.c \
 	bml_r2.h \
-	bml_r2_btl.c \
-	bml_r2_btl.h \
 	bml_r2_component.c \
 	bml_r2_ft.c \
 	bml_r2_ft.h
