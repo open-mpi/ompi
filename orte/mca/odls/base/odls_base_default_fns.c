@@ -65,209 +65,6 @@
 
 #include "orte/mca/odls/base/odls_private.h"
 
-/**
- *  This function receives a slot string ant translate it to
- *  cpu_set (long bitmap) using the PLPA module.
- *  currently this function is doing nothig because PLPA is not
- *  part of the oprn MPI project.
- */
-
-static int socket_to_cpu_set(char **socket_list, int socket_cnt, orte_odls_child_t *child)
-{
-    int i, j;
-    char **range;
-    int range_cnt;
-    int lower_range, upper_range, socket_num;
-    
-    for (i=0; i < socket_cnt; i++) {
-        if (0 == strcmp("*", socket_list[i])) {
-            /* use PLPA to construct the child->cpu_set */
-            opal_output(orte_odls_globals.output,"rank %d can run on any socket", child->name->vpid);
-            continue;
-        }
-        range = opal_argv_split(socket_list[i], '-');
-        range_cnt = opal_argv_count(range);
-        switch (range_cnt) {
-            case 1:
-                socket_num = atoi(range[0]);
-                /* use PLPA to construct the child->cpu_set */
-                opal_output(orte_odls_globals.output,"rank %d runs on socket #%d", child->name->vpid, socket_num); 
-                break;
-            case 2:
-                lower_range = atoi(range[0]);
-                upper_range = atoi(range[1]);
-                for (j=lower_range; j<= upper_range; j++) {
-                    socket_num = j;
-                    /* use PLPA to construct the child->cpu_set */
-                    opal_output(orte_odls_globals.output,"rank %d runs on socket #%d", child->name->vpid, socket_num); 
-                }
-                    break;
-            default:
-                opal_argv_free(range);
-                ORTE_ERROR_LOG(ORTE_ERROR);
-                return ORTE_ERROR;
-        }
-        opal_argv_free(range);
-    }
-    return ORTE_SUCCESS;
-}
-
-static int socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_cnt, orte_odls_child_t *child)
-{
-    int i, j;
-    char **socket_core;
-    int socket_core_cnt;
-    char **range;
-    int range_cnt;
-    int lower_range, upper_range;
-    int socket, core;
-    
-    socket_core = opal_argv_split (socket_core_list[0], ':');
-    socket_core_cnt = opal_argv_count(socket_core);
-    
-    socket = atoi(socket_core[0]);
-    if (0 == strcmp("*",socket_core[1])) {
-        /* use PLPA to construct the child->cpu_set */
-        opal_output(orte_odls_globals.output,"rank %d runs on socket #%d any core", child->name->vpid, socket);
-    }
-    else {
-        range = opal_argv_split(socket_core[1], '-');
-        range_cnt = opal_argv_count(range);
-        switch (range_cnt) {
-            case 1:
-                core = atoi(range[0]);
-                /* use PLPA to construct the child->cpu_set */
-                opal_output(orte_odls_globals.output,"rank %d runs on socket #%d core #%d", child->name->vpid, socket, core);
-                break;
-            case 2:
-                lower_range = atoi(range[0]);
-                upper_range = atoi(range[1]);
-                for (j=lower_range; j<= upper_range; j++) {
-                    core = j;
-                    /* use PLPA to construct the child->cpu_set */
-                    opal_output(orte_odls_globals.output,"rank %d runs on socket #%d core #%d", child->name->vpid, socket, core);
-                }
-                    break;
-            default:
-                opal_argv_free(range);
-                opal_argv_free(socket_core);
-                ORTE_ERROR_LOG(ORTE_ERROR);
-                return ORTE_ERROR;
-        }
-        opal_argv_free(range);
-        opal_argv_free(socket_core);
-    }
-    for (i=1; i < socket_core_list_cnt; i++) {
-        socket_core = opal_argv_split (socket_core_list[i], ':');
-        socket_core_cnt = opal_argv_count(socket_core);
-        switch (socket_core_cnt) {
-            case 1:
-                range = opal_argv_split(socket_core[0], '-');
-                range_cnt = opal_argv_count(range);
-                switch (range_cnt) {
-                    case 1:
-                        core = atoi(range[0]);
-                        /* use PLPA to construct the child->cpu_set */
-                        opal_output(orte_odls_globals.output,"and on core #%d", core);
-                        break;
-                    case 2:
-                        lower_range = atoi(range[0]);
-                        upper_range = atoi(range[1]);
-                        for (j=lower_range; j<= upper_range; j++) {
-                            core = j;
-                            /* use PLPA to construct the child->cpu_set */
-                            opal_output(orte_odls_globals.output,"and on core #%d", core);
-                        }
-                            break;
-                    default:
-                        opal_argv_free(range);
-                        opal_argv_free(socket_core);
-                        ORTE_ERROR_LOG(ORTE_ERROR);
-                        return ORTE_ERROR;
-                }
-                    opal_argv_free(range);
-                break;
-            case 2:
-                socket = atoi(socket_core[0]);
-                if (0 == strcmp("*",socket_core[1])) {
-                    /* use PLPA to construct the child->cpu_set */
-                    opal_output(orte_odls_globals.output,"and on socket #%d any core", socket);
-                }
-                    else {
-                        range = opal_argv_split(socket_core[1], '-');
-                        range_cnt = opal_argv_count(range);
-                        switch (range_cnt) {
-                            case 1:
-                                core = atoi(range[0]);
-                                /* use PLPA to construct the child->cpu_set */
-                                opal_output(orte_odls_globals.output,"and on socket #%d core #%d", socket, core);
-                                break;
-                            case 2:
-                                lower_range = atoi(range[0]);
-                                upper_range = atoi(range[1]);
-                                for (j=lower_range; j<= upper_range; j++) {
-                                    core = j;
-                                    /* use PLPA to construct the child->cpu_set */
-                                    opal_output(orte_odls_globals.output,"and on socket #%d core #%d", socket, core);
-                                }
-                                    break;
-                            default:
-                                opal_argv_free(range);
-                                opal_argv_free(socket_core);
-                                ORTE_ERROR_LOG(ORTE_ERROR);
-                                return ORTE_ERROR;
-                        }
-                        opal_argv_free(range);
-                    }
-                    break;
-            default: 
-                opal_argv_free(socket_core);
-                ORTE_ERROR_LOG(ORTE_ERROR);
-                return ORTE_ERROR;
-        }
-        opal_argv_free(socket_core);
-    }
-    return ORTE_SUCCESS;
-}
-
-static int slot_list_to_cpu_set(char *slot_str, orte_odls_child_t *child)
-{
-    char **item;
-    char **socket_core;
-    int item_cnt, socket_core_cnt;
-    int rc;
-    
-    item = opal_argv_split (slot_str, ',');
-    item_cnt = opal_argv_count (item);
-    
-    socket_core = opal_argv_split (item[0], ':');
-    socket_core_cnt = opal_argv_count(socket_core);
-    opal_argv_free(socket_core);
-    
-    switch (socket_core_cnt) {
-        case 1:
-            if (ORTE_SUCCESS != (rc = socket_to_cpu_set(item, item_cnt, child))) {
-                opal_argv_free(item);
-                ORTE_ERROR_LOG(rc);
-                return ORTE_ERROR;
-            }
-            break;
-        case 2:
-            if (ORTE_SUCCESS != (rc = socket_core_to_cpu_set(item, item_cnt, child))) {
-                opal_argv_free(item);
-                ORTE_ERROR_LOG(rc);
-                return ORTE_ERROR;
-            }
-            break;
-        default:
-            opal_argv_free(item);
-            return ORTE_ERROR;
-    }
-    opal_argv_free(item);
-    return ORTE_SUCCESS;
-}
-
-
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -580,11 +377,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                 child->app_idx = app_idx;  /* save the index into the app_context objects */
                 child->local_rank = local_rank;  /* save the local_rank */
                 if (NULL != slot_str) {
-                    if (ORTE_SUCCESS != (rc = slot_list_to_cpu_set(slot_str, child))){
-                        ORTE_ERROR_LOG(rc);
-                        free(slot_str);
-                        return rc;
-                    }
+                    child->slot_list = strdup(slot_str);
                     free(slot_str);
                 }
                 /* protect operation on the global list of children */
@@ -1128,7 +921,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
-        
         if (want_processor) {
             param = mca_base_param_environ_variable("mpi", NULL,
                                                     "paffinity_processor");
@@ -1142,7 +934,12 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_unsetenv(param, &app->env);
             free(param);
         }
-        
+
+        if ( NULL != child->slot_list ) {
+           opal_setenv("slot_list", child->slot_list, true, &app->env);
+        }else{
+           opal_unsetenv("slot_list", &app->env);
+        }
         /* must unlock prior to fork to keep things clean in the
          * event library
          */

@@ -101,6 +101,11 @@ OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
 OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
 
 /**
+ * If this value is true, we can check process binding to CPU 
+ */
+OMPI_DECLSPEC extern bool rmaps_rank_file_debug;
+
+/**
  * Whether we should keep the string hostnames of all the MPI
  * process peers around or not (eats up a good bit of memory).
  */

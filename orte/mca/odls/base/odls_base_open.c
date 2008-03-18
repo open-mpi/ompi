@@ -67,12 +67,14 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->exit_code = 0;
     ptr->cpu_set = 0xffffffff;
     ptr->rml_uri = NULL;
+    ptr->slot_list = NULL;
 
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {
     if (NULL != ptr->name) free(ptr->name);
     if (NULL != ptr->rml_uri) free(ptr->rml_uri);
+    if (NULL != ptr->slot_list) free(ptr->slot_list);
 }
 OBJ_CLASS_INSTANCE(orte_odls_child_t,
                    opal_list_item_t,

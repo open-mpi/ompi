@@ -201,6 +201,7 @@ static void orte_node_construct(orte_node_t* node)
     node->slots_alloc = 0;
     node->slots_max = 0;
     node->username = NULL;
+    node->slot_list = NULL;
 }
 
 static void orte_node_destruct(orte_node_t* node)

@@ -156,6 +156,7 @@ typedef struct {
     orte_std_cntr_t slots_max;
     /** Username on this node, if specified */
     char *username;
+    char *slot_list;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
