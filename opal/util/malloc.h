@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -132,9 +132,6 @@ OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int l
    */
 OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line) __opal_attribute_nonnull__(1);
 
-OPAL_DECLSPEC extern int opal_malloc_debug_level;
-OPAL_DECLSPEC extern int opal_malloc_output;
-
 /**
  * Used to set the debug level for malloc debug.
  *
@@ -142,10 +139,8 @@ OPAL_DECLSPEC extern int opal_malloc_output;
  *
  * This value defaults to the OPAL_MALLOC_DEBUG_LEVEL.
  */
-static inline void opal_malloc_debug(int level)
-{
-  opal_malloc_debug_level = level;
-}
+OPAL_DECLSPEC void opal_malloc_debug(int level);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
