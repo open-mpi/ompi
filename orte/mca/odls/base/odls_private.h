@@ -61,6 +61,7 @@ typedef struct orte_odls_child_t {
     orte_exit_code_t exit_code;  /* process exit code */
     unsigned long cpu_set;
     char *rml_uri;               /* contact info for this child */
+    char *slot_list;             /* list of slots for this child */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 

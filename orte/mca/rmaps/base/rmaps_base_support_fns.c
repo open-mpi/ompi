@@ -299,6 +299,11 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     proc->name.vpid = vpid;
     proc->app_idx = app_idx;
     OBJ_RETAIN(current_node);  /* maintain accounting on object */
+    
+    if ( NULL != current_node->slot_list) {
+        proc->slot_list = strdup(current_node->slot_list);
+    }
+    current_node->slot_list = NULL;
     proc->node = current_node;
     if (NULL != current_node->name) {
         proc->nodename = strdup(current_node->name);

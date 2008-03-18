@@ -49,6 +49,7 @@ bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
 bool ompi_mpi_paffinity_alone = false;
+bool rmaps_rank_file_debug = false;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
@@ -152,12 +153,28 @@ int ompi_mpi_register_params(void)
                                 false, false, 
                                 (int) ompi_mpi_paffinity_alone, &value);
     ompi_mpi_paffinity_alone = OPAL_INT_TO_BOOL(value);
-
+    
+    if ( ompi_mpi_paffinity_alone ){
+        char *rank_file_path;
+        mca_base_param_reg_string_name("rmaps","rank_file_path", 
+                                        "The path to the rank mapping file",
+                                        false, false, NULL, &rank_file_path);
+        if (NULL != rank_file_path) {
+            opal_output(0, "WARNING: Rankfile component can't be set with paffinity_alone, paffinity_alone set to 0");
+            ompi_mpi_paffinity_alone = 0;
+        }
+    }
     mca_base_param_reg_int_name("mpi", "paffinity_processor",
                                 "If set, pin this process to the processor number indicated by the value",
                                 true, false, 
                                 -1, NULL);
 
+   mca_base_param_reg_int_name("rmaps", "rank_file_debug",
+                       "If nonzero, prints binding to processors ",
+                        false, false,
+                        (int) rmaps_rank_file_debug, &value);
+   rmaps_rank_file_debug = OPAL_INT_TO_BOOL(value);
+   
     /* Do we want to save hostnames for debugging messages?  This can
        eat quite a bit of memory... */
 
