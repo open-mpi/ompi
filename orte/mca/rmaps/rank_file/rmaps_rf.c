@@ -52,7 +52,6 @@ static int orte_rmaps_rank_file_parse(const char *, int);
 static char *rankfile_parse_string_or_int(void);
 char *rank_file_path = NULL;
 static const char *cur_rankfile_name = NULL;
-bool  rank_file_done;
 static opal_mutex_t rankfile_mutex;
 
 /*

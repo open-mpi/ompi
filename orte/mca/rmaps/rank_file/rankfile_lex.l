@@ -51,7 +51,6 @@ int rank_file_wrap(void)
  */
 int rank_file_line=1;
 rank_file_value_t rank_file_value;
-bool rank_file_done = false;
 
 %}
 
