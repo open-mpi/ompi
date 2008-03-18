@@ -74,17 +74,6 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     }
     pid = getpid();
 
-    /* Corner case: if we're being called as a result of the
-       OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
-       MPI_INIT or after MPI_FINALIZE), then just abort nothing MPI or
-       ORTE has been setup yet. */
-
-    if (!ompi_mpi_initialized || ompi_mpi_finalized) {
-        if (orte_initialized) {
-            orte_errmgr.abort(errcode, NULL);
-        }
-    }
-
     /* Should we print a stack trace? */
 
     if (ompi_mpi_abort_print_stack) {
@@ -125,12 +114,13 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         }
     }
 
-    /* If ORTE isn't setup yet, then don't even try killing everyone.
-       Sorry, Charlie... */
+    /* If ORTE isn't setup yet/any more, then don't even try killing
+       everyone.  Sorry, Charlie... */
 
     if (!orte_initialized) {
-        fprintf(stderr, "[%s:%d] Abort before MPI_INIT completed successfully; not able to guarantee that all other processes were killed!\n",
-                host, (int) pid);
+        fprintf(stderr, "[%s:%d] Abort %s completed successfully; not able to guarantee that all other processes were killed!\n",
+                host, (int) pid, ompi_mpi_finalized ? 
+                "after MPI_FINALIZE" : "before MPI_INIT");
         exit(errcode);
     }
 
