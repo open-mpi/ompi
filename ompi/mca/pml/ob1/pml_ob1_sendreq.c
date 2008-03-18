@@ -235,10 +235,7 @@ mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     send_request_pml_complete_check(sendreq);
-#if 0
-    /* release resources */
-    btl->btl_free(btl,des);
-#endif
+
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
@@ -605,9 +602,8 @@ int mca_pml_ob1_send_request_start_rdma(
                 (sizeof(mca_btl_base_segment_t) * (src->des_src_cnt-1)),
                 MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if( OPAL_UNLIKELY(NULL == des) ) {
-            ompi_convertor_set_position(
-                    &sendreq->req_send.req_base.req_convertor,
-                    &old_position);
+            ompi_convertor_set_position( &sendreq->req_send.req_base.req_convertor,
+                                         &old_position );
             mca_bml_base_free(bml_btl, src);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

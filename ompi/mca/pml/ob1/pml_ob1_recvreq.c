@@ -479,7 +479,7 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
             recvreq->req_recv.req_bytes_packed = bytes_received;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
             /*
-             *  Make user buffer accessable(defined) before unpacking.
+             *  Make user buffer accessible (defined) before unpacking.
              */
             MEMCHECKER(
                 memchecker_call(&opal_memchecker_base_mem_defined,
