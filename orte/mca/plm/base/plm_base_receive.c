@@ -219,9 +219,9 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                     }
                     
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                         "%s plm:base:receive got update_proc_state for vpid %lu state %lu exit_code %d",
+                                         "%s plm:base:receive got update_proc_state for vpid %lu state %x exit_code %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         (unsigned long)vpid, (unsigned long)state, (int)exit_code));
+                                         (unsigned long)vpid, (unsigned int)state, (int)exit_code));
                     
                     /* update the termination counter IFF the state is changing to something
                      * indicating terminated
@@ -233,6 +233,10 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                     /* update the data */
                     procs[vpid]->state = state;
                     procs[vpid]->exit_code = exit_code;
+                    
+                    /* update orte's exit status if it is non-zero */
+                    ORTE_UPDATE_EXIT_STATUS(exit_code);
+                    
                 }
                 count = 1;
             }
@@ -261,7 +265,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     
     /* see if an error occurred - if so, wakeup so we can exit */
     if (ORTE_SUCCESS != rc) {
-        orte_wakeup(1);
+        orte_wakeup();
     }
 }
 

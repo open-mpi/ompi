@@ -410,7 +410,7 @@ cleanup:
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
         jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
-		orte_wakeup(1);
+		orte_wakeup();
     }
     
     return rc;
@@ -495,7 +495,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
     if (NULL == (jdata = orte_get_job_data_object(active_job))) {
         /* bad jobid */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        orte_wakeup(status);
+        orte_wakeup();
         return;
     }
 
@@ -522,7 +522,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
         jdata->state = ORTE_JOB_STATE_TERMINATED;
     }
 	
-    orte_wakeup(status);
+    orte_wakeup();
 }
 
 

@@ -169,6 +169,7 @@ opal_output(0, "checking job completion");
     procs = (orte_proc_t**)active_jdata->procs->addr;
     for (v=0; v < active_jdata->num_procs; v++) {
         procs[v]->exit_code = exit_codes[v];
+        ORTE_UPDATE_EXIT_STATUS(exit_codes[v]);
         opal_output(0, "rank %d ecode %d", (int)v, exit_codes[v]);
         if (WIFEXITED(exit_codes[v])) {
             if (procs[v]->state < ORTE_PROC_STATE_TERMINATED) {
@@ -194,7 +195,7 @@ cleanup:
     /* check for completion */
     if (active_jdata->num_terminated >= active_jdata->num_procs) {
         active_jdata->state = ORTE_JOB_STATE_TERMINATED;
-        orte_wakeup(0);
+        orte_wakeup();
     } else if (active_jdata->state == ORTE_JOB_STATE_ABORTED &&
                !orte_abnormal_term_ordered && !orte_abort_in_progress) {
         orte_errmgr.proc_aborted(&(active_jdata->aborted_proc->name),

@@ -446,7 +446,7 @@ static int process_commands(orte_process_name_t* sender,
              * NOTE: this event will fire -after- any zero-time events
              * so any pending relays -do- get sent first
              */
-            orte_wakeup(0);
+            orte_wakeup();
             return ORTE_SUCCESS;
             break;
 
@@ -460,7 +460,7 @@ static int process_commands(orte_process_name_t* sender,
              * NOTE: this event will fire -after- any zero-time events
              * so any pending relays -do- get sent first
              */
-            orte_wakeup(0);
+            orte_wakeup();
             return ORTE_SUCCESS;
             break;
             

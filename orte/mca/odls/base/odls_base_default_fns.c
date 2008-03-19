@@ -1521,7 +1521,7 @@ GOTCHILD:
                  * is considered an abnormal termination and treated accordingly
                  */
                 aborted = true;
-                child->state = ORTE_PROC_STATE_ABORTED;
+                child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "%s odls:wait_local_proc child process %s terminated normally "

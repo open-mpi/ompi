@@ -229,8 +229,9 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
     jdata->state = state;
     
 WAKEUP:
-    /* wakeup so orterun can exit */
-    orte_wakeup(status);
+    /* set orterun's exit code and wakeup so it can exit */
+    ORTE_UPDATE_EXIT_STATUS(status);
+    orte_wakeup();
 }
 
 
@@ -737,6 +738,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     /* point to the lowest rank to cause the problem */
                     jdata->aborted_proc = procs[i];
                     jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
                 }
                 break;
             } else if (ORTE_PROC_STATE_ABORTED == procs[i]->state) {
@@ -745,6 +747,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     /* point to the lowest rank to cause the problem */
                     jdata->aborted_proc = procs[i];
                     jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
                 }
                 break;
             } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == procs[i]->state) {
@@ -753,9 +756,28 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     /* point to the lowest rank to cause the problem */
                     jdata->aborted_proc = procs[i];
                     jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
+                }
+                break;
+            } else if (ORTE_PROC_STATE_TERM_WO_SYNC == procs[i]->state) {
+                jdata->state = ORTE_JOB_STATE_ABORTED_WO_SYNC;
+                if (!jdata->abort) {
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = procs[i];
+                    jdata->abort = true;
+                    ORTE_UPDATE_EXIT_STATUS(procs[i]->exit_code);
+                    /* now treat a special case - if the proc exit'd without a required
+                     * sync, it may have done so with a zero exit code. We want to ensure
+                     * that the user realizes there was an error, so in this -one- case,
+                     * we overwrite the process' exit code with a '1'
+                     */
+                    if (ORTE_PROC_STATE_TERM_WO_SYNC == procs[i]->state) {
+                        ORTE_UPDATE_EXIT_STATUS(1);
+                    }
                 }
                 break;
             }
+            
         }
     }
 
@@ -771,12 +793,14 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
         orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
         goto CHECK_ALL_JOBS;
     } else if (ORTE_JOB_STATE_ABORTED == jdata->state ||
-               ORTE_JOB_STATE_ABORTED_BY_SIG == jdata->state) {
+               ORTE_JOB_STATE_ABORTED_BY_SIG == jdata->state ||
+               ORTE_JOB_STATE_ABORTED_WO_SYNC == jdata->state) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                             "%s plm:base:check_job_completed declared job %s aborted by proc %s",
+                             "%s plm:base:check_job_completed declared job %s aborted by proc %s with code %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
-                             ORTE_NAME_PRINT(&(jdata->aborted_proc->name))));
+                             ORTE_NAME_PRINT(&(jdata->aborted_proc->name)),
+                             jdata->aborted_proc->exit_code));
         /* report this to the errmgr */
         orte_errmgr.proc_aborted(&(jdata->aborted_proc->name), jdata->aborted_proc->exit_code);
         goto CHECK_ALL_JOBS;
@@ -849,7 +873,7 @@ CHECK_ALL_JOBS:
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed all jobs terminated - waking up",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        orte_wakeup(0);
+        orte_wakeup();
     }
     
 }
