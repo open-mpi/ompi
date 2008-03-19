@@ -805,18 +805,28 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                  ORTE_ERROR_NAME(rc)));
             
             /* do not ERROR_LOG this failure - it will be reported
-             * elsewhere. The launch is going to fail - find at least one child
-             * in this job and mark it as failed-to-start
+             * elsewhere. The launch is going to fail. Since we could have
+             * multiple app_contexts, we need to ensure that we flag only
+             * the correct one that caused this operation to fail. We then have
+             * to flag all the other procs from the app_context as having "not failed"
+             * so we can report things out correctly
              */
+            /* cycle through children to find those for this jobid */
             for (item = opal_list_get_first(&orte_odls_globals.children);
                  item != opal_list_get_end(&orte_odls_globals.children);
                  item = opal_list_get_next(item)) {
                 child = (orte_odls_child_t*)item;
                 if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-                    child->exit_code = rc;
-                    goto CLEANUP;
+                    if (i == child->app_idx) {
+                        child->exit_code = rc;
+                    } else {
+                        child->state = ORTE_PROC_STATE_UNDEF;
+                        child->exit_code = 0;
+                    }
                 }
             }
+            /* okay, now tell the HNP we couldn't do it */
+            goto CLEANUP;
         }
     }
     
