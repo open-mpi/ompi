@@ -93,6 +93,18 @@ node %s calling "abort". This may have caused other processes
 in the application to be terminated by signals sent by %s
 (as reported here).
 #
+[orterun:proc-exit-no-sync]
+%s has exited due to process rank %lu with PID %lu on
+node %s exiting without calling "finalize". This may
+have caused other processes in the application to be
+terminated by signals sent by %s (as reported here).
+#
+[orterun:proc-exit-no-sync-unknown]
+%s has exited due to a process exiting without calling "finalize",
+but has no info as to the process that caused that situation. This
+may have caused other processes in the application to be
+terminated by signals sent by %s (as reported here).
+#
 [orterun:proc-aborted]
 %s noticed that process rank %lu with PID %lu on node %s exited on signal %d.
 #

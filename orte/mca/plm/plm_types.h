@@ -59,6 +59,7 @@ typedef uint16_t orte_proc_state_t;
 #define ORTE_PROC_STATE_ABORTED             0x0100  /* process aborted */
 #define ORTE_PROC_STATE_FAILED_TO_START     0x0200  /* process failed to start */
 #define ORTE_PROC_STATE_ABORTED_BY_SIG      0x0400  /* process aborted by signal */
+#define ORTE_PROC_STATE_TERM_WO_SYNC        0x0800  /* process exit'd w/o required sync */
 
 /*
  * Job state codes
@@ -82,9 +83,10 @@ typedef uint16_t orte_job_state_t;
 #define ORTE_JOB_STATE_ABORTED              0x0100  /* at least one process aborted, causing job to abort */
 #define ORTE_JOB_STATE_FAILED_TO_START      0x0200  /* at least one process failed to start */
 #define ORTE_JOB_STATE_ABORTED_BY_SIG       0x0400  /* job was killed by a signal */
+#define ORTE_JOB_STATE_ABORTED_WO_SYNC      0x0800  /* job was aborted because proc exit'd w/o required sync */
 
 /* the processes in this job have been ordered to "die", but may not have completed it yet. Don't order it again */
-#define ORTE_JOB_STATE_ABORT_ORDERED        0x0800  
+#define ORTE_JOB_STATE_ABORT_ORDERED        0x8000  
 
 /**
 * Node State, corresponding to the ORTE_NODE_STATE_* #defines,

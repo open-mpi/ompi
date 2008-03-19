@@ -35,7 +35,7 @@
 
 #include "orte/runtime/orte_wakeup.h"
 
-int orte_wakeup(int exit_status)
+int orte_wakeup(void)
 {
     /* set the exit status and trigger the
      * exit procedure
@@ -44,7 +44,6 @@ int orte_wakeup(int exit_status)
         return ORTE_SUCCESS;
     }
 
-    orte_exit_status = exit_status;
     orte_trigger_event(orte_exit);
     return ORTE_SUCCESS;
 }

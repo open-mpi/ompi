@@ -511,7 +511,7 @@ int orterun(int argc, char *argv[])
 #endif  /* __WINDOWS__ */
     orte_totalview_init_before_spawn();
 
-    /* setup an event we can wait for to tell
+    /* setup an event we can wait for that will tell
      * us to terminate - both normal and abnormal
      * termination will call us here. Use the
      * same exit fd as the daemon does so that orted_comm
@@ -520,7 +520,7 @@ int orterun(int argc, char *argv[])
     if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, job_completed))) {
         opal_show_help("help-orterun.txt", "orterun:event-def-failed", true,
                        orterun_basename, ORTE_ERROR_NAME(rc));
-        orte_exit_status = ORTE_ERROR_DEFAULT_EXIT_CODE;
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         goto DONE;
     }
     
@@ -583,7 +583,8 @@ static void job_completed(int trigpipe, short event, void *arg)
     /* Make sure we propagate the exit code */
     if (WIFEXITED(orte_exit_status)) {
         orte_exit_status = WEXITSTATUS(orte_exit_status);
-    }  else if (ORTE_JOB_STATE_FAILED_TO_START == exit_state) {
+    }  else if (ORTE_JOB_STATE_FAILED_TO_START == exit_state ||
+                ORTE_JOB_STATE_ABORTED_WO_SYNC == exit_state) {
         /* ensure we don't treat this like a signal */
     } else {
         /* If a process was killed by a signal, then make the
@@ -836,6 +837,15 @@ static void dump_aborted_procs(void)
                     }
 #endif
                 }
+            } else if (ORTE_JOB_STATE_ABORTED_WO_SYNC == job->state) { /* proc exited w/o finalize */
+                if (NULL == proc) {
+                    opal_show_help("help-orterun.txt", "orterun:proc-exit-no-sync-unknown", true,
+                                   orterun_basename, orterun_basename);
+                } else {
+                    opal_show_help("help-orterun.txt", "orterun:proc-exit-no-sync", true,
+                                   orterun_basename, (unsigned long)proc->name.vpid, (unsigned long)proc->pid,
+                                   proc->node->name, orterun_basename);
+                }
             }
             return;
         }
@@ -899,7 +909,8 @@ static void abort_exit_callback(int fd, short ign, void *arg)
             /* If we failed the terminate_job() above, then we
              * need to explicitly wake ourselves up to exit
              */
-            orte_wakeup(ret);
+            ORTE_UPDATE_EXIT_STATUS(ret);
+            orte_wakeup();
         }
     } else {
         /* if the jobid is invalid, then we didn't get to
@@ -916,7 +927,8 @@ static void abort_exit_callback(int fd, short ign, void *arg)
         
         orte_finalize();
         free(orterun_basename);
-        exit(1);
+        ORTE_UPDATE_EXIT_STATUS(1);
+        exit(orte_exit_status);
     }
 }
 
