@@ -585,7 +585,10 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
              * get stuck in the orte_wait_kill when receiving messages in the 
              * tcp OOB. */
             OPAL_THREAD_UNLOCK(&peer->peer_lock);
-            orte_errmgr.abort(1, "OOB: Connection to lifeline lost");
+            opal_output(0, "%s OOB: Connection to lifeline %s lost",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_LIFELINE));
+            orte_errmgr.abort(1, NULL);
         }
     }
 
