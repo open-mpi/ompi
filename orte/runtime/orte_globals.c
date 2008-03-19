@@ -75,7 +75,6 @@ static bool params_set = false;
 int orte_register_params(void)
 {
     int value;
-    bool orte_debug_flag;
     int orte_debug_verbosity;
     
     if (params_set) {
