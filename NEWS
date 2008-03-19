@@ -95,6 +95,12 @@ Trunk (not on release branches yet)
 1.2.6 (not released yet)
 -----
 
+- Fix a bug in the inter-allgather for asymetric inter-communicators.
+  Thanks to Martin Audet fro the bug report. See ticket #1247.
+- Fix a bug in the openib BTL when setting the CQ depth.  Thanks
+  to Jon Mason for the bug report and fix.  See ticket #1245.
+- On Mac OS X Leopard, the execinfo component will be used for
+  backtraces, making for a more durable solution.  See ticket #1246.
 - Added vendor IDs for some QLogic DDR openib HCAs. See ticket #1227.
 - Updated the URL to get the latest config.guess and config.sub files.
   Thanks to Ralf Wildenhues for the bug report. See ticket #1226.
