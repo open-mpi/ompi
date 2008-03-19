@@ -29,6 +29,8 @@ version 1.0.
 1.2.6
 -----
 
+- Fix a bug in the openib BTL when setting the CQ depth.  Thanks
+  to Jon Mason for the bug report and fix.  See ticket #1245.
 - On Mac OS X Leopard, the execinfo component will be used for
   backtraces, making for a more durable solution.  See ticket #1246.
 - Added vendor IDs for some QLogic DDR openib HCAs. See ticket #1227.
