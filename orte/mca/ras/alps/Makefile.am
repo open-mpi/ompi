@@ -19,7 +19,8 @@
 
 AM_CPPFLAGS = $(ras_alps_CPPFLAGS)
 
-dist_pkgdata_DATA = help-ras-alps.txt
+dist_pkgdata_DATA = help-ras-alps.txt \
+		  ras-alps-command.sh
 
 sources = \
         ras_alps.h \
