@@ -29,6 +29,8 @@ version 1.0.
 1.2.6
 -----
 
+- On Mac OS X Leopard, the execinfo component will be used for
+  backtraces, making for a more durable solution.  See ticket #1246.
 - Added vendor IDs for some QLogic DDR openib HCAs. See ticket #1227.
 - Updated the URL to get the latest config.guess and config.sub files.
   Thanks to Ralf Wildenhues for the bug report. See ticket #1226.
