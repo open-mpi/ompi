@@ -24,8 +24,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -40,7 +42,7 @@
 static int orte_ras_alps_allocate(opal_list_t *nodes);
 static int orte_ras_alps_finalize(void);
 int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename);
-
+static char *ras_alps_getline(FILE *fp);
 
 
 
@@ -61,10 +63,10 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
 {
     int ret;
     char *alps_batch_id;
-    
-    char *alps_node_cmd_str = "apstat -a `apstat -r | grep $BATCH_PARTITION_ID  | awk '{print $2}'` " 
-        " -r   -v | egrep  \"(nid [0-9]+)\" -o | awk '{print $2}' > ./ompi_ras_alps_node_file";
-            
+    FILE *fp;
+    char *alps_node_cmd_str;
+    char *str;
+    char *node_file; 
     
     alps_batch_id = getenv("BATCH_PARTITION_ID");
     if (NULL == alps_batch_id) {
@@ -73,13 +75,41 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
         return ORTE_ERR_NOT_FOUND;
     }
 
+    node_file = opal_os_path(false, orte_process_info.job_session_dir,
+                             "orte_ras_alps_node_file.txt", NULL); 
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "ras:alps:allocate: node_file in %s", node_file));
+    
+    asprintf(&str, "%s/ras-alps-command.sh",
+             opal_install_dirs.pkgdatadir
+             );
+    if (NULL == str) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    fp = fopen(str, "r");
+    if (NULL == fp) {
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    
+    asprintf(&alps_node_cmd_str, "%s > %s", 
+             ras_alps_getline(fp), 
+             node_file
+             );
+
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                         "ras:alps:allocate: got command string %s", alps_node_cmd_str));
+    
+
     if(system(alps_node_cmd_str)) { 
         opal_output(0, "Error in orte_ras_alps_allocate: system call returned an error, for reference I tried to run: %s", 
                     alps_node_cmd_str);
         return ORTE_ERROR;
     }
     
-    if (ORTE_SUCCESS != (ret = orte_ras_alps_read_nodename_file(nodes, "./ompi_ras_alps_node_file"))) {
+    if (ORTE_SUCCESS != (ret = orte_ras_alps_read_nodename_file(nodes, node_file))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
