@@ -74,6 +74,9 @@
 extern "C" {
 #endif
 
+/* If you update this list, you probably also want to update
+   opal/mca/timer/linux/configure.m4.  Or not. */
+
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */ 
 #elif OMPI_ASSEMBLY_ARCH == OMPI_AMD64

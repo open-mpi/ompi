@@ -101,3 +101,11 @@ START_FUNC(opal_atomic_cmpset_rel_64)
 	retl
 	movre   %o2, 1, %o0
 END_FUNC(opal_atomic_cmpset_rel_64)
+
+
+START_FUNC(opal_sys_timer_get_cyclces)
+        save    %sp,-176,%sp
+        rd      %tick,%o0
+        ret     ! Result =  %i0
+        restore %o0,0,%o0
+END_FUNC(opal_sys_timer_get_cycles)

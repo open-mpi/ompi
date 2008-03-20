@@ -46,7 +46,10 @@ AC_DEFUN([MCA_timer_linux_CONFIG],[
                  [timer_linux_happy="no"])])
 
    case "${host}" in
-   alpha*)
+   i?86-*|x86_64*|ia64-*|powerpc-*|powerpc64-*|sparc*-*)
+        timer_linux_happy="yes"
+        ;;
+   *)
         timer_linux_happy="no"
         ;;
    esac
