@@ -576,11 +576,10 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_state);
     }
 
-    /* if we lose the connection to the lifeline - abort */
-    if (NULL != ORTE_PROC_MY_LIFELINE &&
+    /* if we lose the connection to the lifeline and we are NOT already in finalize - abort */
+    if (!orte_finalizing &&
+        NULL != ORTE_PROC_MY_LIFELINE &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->peer_name, ORTE_PROC_MY_LIFELINE)) {
-        /* If we are not already inside orte_finalize, then call abort */
-        if (!orte_finalizing) {
             /* Should free the peer lock before we abort so we don't 
              * get stuck in the orte_wait_kill when receiving messages in the 
              * tcp OOB. */
@@ -589,7 +588,6 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(ORTE_PROC_MY_LIFELINE));
             orte_errmgr.abort(1, NULL);
-        }
     }
 
     mca_oob_tcp_peer_shutdown(peer);

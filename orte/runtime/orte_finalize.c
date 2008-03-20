@@ -44,9 +44,12 @@ int orte_finalize(void)
     }
     
     /* protect against multiple calls */
-    if (!opal_atomic_trylock(&orte_finalize_lock)) { /* returns 1 if already locked */
+    if (!opal_atomic_trylock(&orte_finalize_lock)) {
         return ORTE_SUCCESS;
     }
+    
+    /* set the flag indicating we are finalizing */
+    orte_finalizing = true;
 
     /* call the finalize function for this environment */
     orte_ess.finalize();
