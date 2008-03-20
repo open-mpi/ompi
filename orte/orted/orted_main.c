@@ -561,10 +561,6 @@ int orte_daemon(int argc, char *argv[])
 
 static void shutdown_callback(int fd, short flags, void *arg)
 {
-    opal_buffer_t ack;
-    orte_proc_state_t state=ORTE_PROC_STATE_TERMINATED;
-    orte_exit_code_t exit_code=0;
-    orte_plm_cmd_flag_t cmd = ORTE_PLM_UPDATE_PROC_STATE;
     int ret;
     
     /* protect against multiple calls */
@@ -590,22 +586,6 @@ static void shutdown_callback(int fd, short flags, void *arg)
      * on the HNP as this may be redundant
      */
     orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
-    
-    /* if we are not the HNP, send a state update so
-     * the HNP knows we are "gone"
-     */
-    if (!orte_process_info.hnp) {
-        OBJ_CONSTRUCT(&ack, opal_buffer_t);
-        opal_dss.pack(&ack, &cmd, 1, ORTE_PLM_CMD);
-        opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID);        
-        opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID);        
-        opal_dss.pack(&ack, &state, 1, ORTE_PROC_STATE);        
-        opal_dss.pack(&ack, &exit_code, 1, ORTE_EXIT_CODE);
-        orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
-        OBJ_DESTRUCT(&ack);
-        /* progress the OOB to ensure the message gets out */
-        opal_progress();
-    }
     
    /* Finalize and clean up ourselves */
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
