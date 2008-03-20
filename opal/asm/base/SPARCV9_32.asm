@@ -159,3 +159,13 @@ LSYM(21)
 	ret
 	restore
 END_FUNC(opal_atomic_cmpset_rel_64)
+
+
+START_FUNC(opal_sys_timer_get_cycles)
+        save    %sp,-96,%sp
+        rd      %tick,%o0
+        srlx    %o0,32,%o1
+        or      %g0,%o1,%i0
+        ret     ! Result =  %i0
+        restore %o0,0,%o1
+END_FUNC(opal_sys_timer_get_cycles)
