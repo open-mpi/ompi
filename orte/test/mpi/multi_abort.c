@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
     printf("Hello, World, I am %d of %d\n", rank, size);
 
-    if (0 != rank) MPI_Abort(MPI_COMM_WORLD, 2);
+    if (0 != rank) MPI_Abort(MPI_COMM_WORLD, rank);
 
     MPI_Finalize();
     return 0;
