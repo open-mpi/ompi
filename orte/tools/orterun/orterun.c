@@ -580,19 +580,6 @@ static void job_completed(int trigpipe, short event, void *arg)
                    num_killed, ((num_killed > 1) ? "es" : ""), orterun_basename);
         }
     }
-    /* Make sure we propagate the exit code */
-    if (WIFEXITED(orte_exit_status)) {
-        orte_exit_status = WEXITSTATUS(orte_exit_status);
-    }  else if (ORTE_JOB_STATE_FAILED_TO_START == exit_state ||
-                ORTE_JOB_STATE_ABORTED_WO_SYNC == exit_state) {
-        /* ensure we don't treat this like a signal */
-    } else {
-        /* If a process was killed by a signal, then make the
-         * exit code of orterun be "signo + 128" so that "prog"
-         * and "orterun prog" will both set the same status
-         * value for the shell */
-        orte_exit_status = WTERMSIG(orte_exit_status) + 128;
-    }
     
     /* the job is complete - now setup an event that will
      * trigger when the orteds are gone and tell the orteds that it is

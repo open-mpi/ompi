@@ -1436,9 +1436,6 @@ GOTCHILD:
         goto MOVEON;
     }
 
-    /* save the exit code */
-    child->exit_code = status;
-
     /* If this child was the (vpid==0), we hooked it up to orterun's
        STDIN SOURCE earlier (do not change this without also changing
        odsl_default_fork_local_proc()).  So we have to tell the SOURCE
@@ -1481,6 +1478,9 @@ GOTCHILD:
 
     /* determine the state of this process */
     if(WIFEXITED(status)) {
+        /* set the exit status appropriately */
+        child->exit_code = WEXITSTATUS(status);
+        
         /* even though the process exited "normally", it is quite
          * possible that this happened via an orte_abort call - in
          * which case, we need to indicate this was an "abnormal"
@@ -1556,6 +1556,13 @@ GOTCHILD:
          * abnormal, so indicate that condition
          */
         child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;
+        /* If a process was killed by a signal, then make the
+         * exit code of orterun be "signo + 128" so that "prog"
+         * and "orterun prog" will both set the same status
+         * value for the shell
+         */
+        child->exit_code = WTERMSIG(status) + 128;
+                
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:wait_local_proc child process %s terminated with signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
