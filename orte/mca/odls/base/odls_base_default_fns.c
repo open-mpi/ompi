@@ -1558,8 +1558,12 @@ GOTCHILD:
         child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;
         /* If a process was killed by a signal, then make the
          * exit code of orterun be "signo + 128" so that "prog"
-         * and "orterun prog" will both set the same status
-         * value for the shell
+         * and "orterun prog" will both yield the same exit code.
+         *
+         * This is actually what the shell does for you when
+         * a process dies by signal, so this makes orterun treat
+         * the termination code to exit status translation the
+         * same way
          */
         child->exit_code = WTERMSIG(status) + 128;
                 
