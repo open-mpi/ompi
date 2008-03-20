@@ -257,8 +257,9 @@ int orte_ess_base_orted_finalize(void)
     orte_grpcomm_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
-    
-    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+        
+    /* cleanup any lingering session directories */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
     /* clean out the global structures */
     orte_sys_info_finalize();

@@ -603,12 +603,11 @@ static void shutdown_callback(int fd, short flags, void *arg)
         opal_dss.pack(&ack, &exit_code, 1, ORTE_EXIT_CODE);
         orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
         OBJ_DESTRUCT(&ack);
+        /* progress the OOB to ensure the message gets out */
+        opal_progress();
     }
     
-    /* cleanup any lingering session directories */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* Finalize and clean up ourselves */
+   /* Finalize and clean up ourselves */
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         ORTE_ERROR_LOG(ret);
     }
