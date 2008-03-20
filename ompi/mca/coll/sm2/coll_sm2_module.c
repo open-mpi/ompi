@@ -115,16 +115,19 @@ static bool have_local_peers(ompi_group_t *group, size_t size)
  * Create mmaped shared file
  */
 
-static int allocate_shared_file(size_t size, char *file_name, 
+static int allocate_shared_file(size_t size, char **file_name, 
         struct ompi_communicator_t *comm, char **sm_backing_file)
 {
     int fd = -1;
     int group_size,my_rank;
+    int unique_comm_id;
+    size_t len;
+    char *f_name;
 
     bool i_create_shared_file=false;
     ssize_t p;
     int rc=0, sm_file_inited=0;
-    struct iovec iov[2]; 
+    struct iovec iov[3]; 
     int sm_file_created;
     ompi_proc_t **comm_proc_list;
 
@@ -141,11 +144,27 @@ static int allocate_shared_file(size_t size, char *file_name,
 
     /* open the backing file. */
     if( i_create_shared_file ) {
+        /* 
+         * set file name 
+         */
+
+        /* generate id that will be different for non-overlapping
+         *   communicators.
+         */
+        unique_comm_id=(int)getpid();
+        len=asprintf(&f_name,
+                "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
+                orte_system_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
+        if( 0 > len ) {
+            return OMPI_ERROR;
+        }
+        *file_name=f_name;
+
         /* process initializing the file */
-        fd = open(file_name, O_CREAT|O_RDWR, 0600);
+        fd = open(*file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
             opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
-                        file_name, errno);
+                        *file_name, errno);
             goto file_opened;
         }
         /* map the file and initialize segment state */
@@ -180,7 +199,9 @@ static int allocate_shared_file(size_t size, char *file_name,
             iov[0].iov_len=sizeof(sm_file_created);
             iov[1].iov_base=&sm_file_inited;
             iov[1].iov_len=sizeof(sm_file_inited);
-            rc=orte_rml.send(&(comm_proc_list[p]->proc_name),iov,2,
+            iov[2].iov_base=&unique_comm_id;
+            iov[2].iov_len=sizeof(unique_comm_id);
+            rc=orte_rml.send(&(comm_proc_list[p]->proc_name),iov,3,
                 OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
             if( rc < 0 ) {
                 opal_output(0,
@@ -200,7 +221,9 @@ static int allocate_shared_file(size_t size, char *file_name,
         iov[0].iov_len=sizeof(sm_file_created);
         iov[1].iov_base=&sm_file_inited;
         iov[1].iov_len=sizeof(sm_file_inited);
-        rc=orte_rml.recv(&(comm_proc_list[0]->proc_name),iov,2,
+        iov[2].iov_base=&unique_comm_id;
+        iov[2].iov_len=sizeof(unique_comm_id);
+        rc=orte_rml.recv(&(comm_proc_list[0]->proc_name),iov,3,
               OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
             opal_output(0, "allocate_shared_file: orte_rml.recv failed from %ld with errno=%d\n",            
@@ -211,12 +234,22 @@ static int allocate_shared_file(size_t size, char *file_name,
         if( 0 == sm_file_inited ) {
             goto return_error;
         }
+        /* set file name - we need the unique id for non-overlapping
+         *   communicators, that could have the same communicator id
+         */
+        len=asprintf(&f_name,
+                "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
+                orte_system_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
+        if( 0 > len ) {
+            return OMPI_ERROR;
+        }
+        *file_name=f_name;
 
         /* open backing file */
-        fd = open(file_name, O_RDWR, 0600);
+        fd = open(*file_name, O_RDWR, 0600);
             if (fd < 0) {
             opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
-                        file_name, errno);
+                        *file_name, errno);
             goto return_error;
         }
 
@@ -462,15 +495,12 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     mca_coll_sm2_module_t *sm_module;
     int i,j,group_size,ret;
     size_t alignment,size;
-    ssize_t size_tot_per_proc_per_seg;
-    size_t tot_size_per_bank,size_tot_per_segment;
     size_t tot_size_mem_banks;
     size_t ctl_memory_per_proc_per_segment;
     size_t mem_management_per_proc_per_block;
     size_t mem_management_per_proc;
     size_t mem_management_total;
     size_t size_sm2_backing_file;
-    size_t len;
     size_t size_buff_ctl_per_proc,size_data_buff_per_proc;
 
     /*
@@ -699,16 +729,18 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->size_sm2_backing_file=size_sm2_backing_file;
 
     /* set file name */
+    /*
     len=asprintf(&(sm_module->coll_sm2_file_name),
-            "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d",orte_process_info.job_session_dir,
+            "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d\0",orte_process_info.job_session_dir,
             orte_system_info.nodename,ompi_comm_get_cid(comm));
     if( 0 > len ) {
         goto CLEANUP;
     }
+    */
 
     /* allocate backing file */
     ret=allocate_shared_file(size_sm2_backing_file,
-            sm_module->coll_sm2_file_name, comm,
+            &(sm_module->coll_sm2_file_name), comm,
             &(sm_module->shared_memory_region));
     if( MPI_SUCCESS != ret ) {
         goto CLEANUP;

@@ -15,11 +15,11 @@
 #include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
-/* debug */
+/* debug 
 #include "opal/sys/timer.h"
 
 extern uint64_t timers[7];
-/* end debug */
+ end debug */
 
 
 
@@ -54,7 +54,6 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     tree_node_t *my_reduction_node, *my_fanout_read_tree;
     sm_work_buffer_t *sm_buffer_desc;
 
-
     sm_module=(mca_coll_sm2_module_t *) module;
 
     /* get unique tag for this collective - assume only one collective
@@ -66,7 +65,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_size(dtype, &dt_extent);
+    rc=ompi_ddt_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -367,16 +366,16 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * 
         extra_ctl_pointer;
     mca_coll_sm2_module_t *sm_module;
-    /* debug */
+    /* debug 
     opal_timer_t t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10;
-    /* end debug */
+     end debug */
 
     sm_module=(mca_coll_sm2_module_t *) module;
 
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
      */
-    rc=ompi_ddt_type_size(dtype, &dt_extent);
+    rc=ompi_ddt_type_extent(dtype, &dt_extent);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
@@ -406,24 +405,22 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
 
     count_processed=0;
 
-    /* debug */
+    /* debug 
     t0=opal_sys_timer_get_cycles();
-    /* end debug */
+     end debug */
     sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
-    /* debug */
+    /* debug 
     t1=opal_sys_timer_get_cycles();
-    /* end debug */
-            /* debug */
             timers[0]+=(t1-t0);
-            /* end debug */
+             end debug */
 
     /* get a pointer to the shared-memory working buffer */
     /* NOTE: starting with a rather synchronous approach */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
         /* get number of elements to process in this stripe */
-        /* debug */
+        /* debug 
         t2=opal_sys_timer_get_cycles();
-        /* end debug */
+         end debug */
         count_this_stripe=n_dts_per_buffer;
         if( count_processed + count_this_stripe > count )
             count_this_stripe=count-count_processed;
@@ -449,10 +446,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             if( 0 != rc ) {
                 return OMPI_ERROR;
             }
-            /* debug */
+            /* debug 
             t3=opal_sys_timer_get_cycles();
             timers[1]+=(t3-t2);
-            /* end debug */
+             end debug */
             
             /* copy data in from the "extra" source, if need be */
             tag=base_tag;
@@ -500,9 +497,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         /* loop over data exchanges */
         for(exchange=0 ; exchange < my_exchange_node->n_exchanges ; exchange++) {
 
-            /* debug */
+            /* debug 
             t4=opal_sys_timer_get_cycles();
-            /* end debug */
+             end debug */
 
             index_read=(exchange&1);
             index_write=((exchange+1)&1);
@@ -524,10 +521,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             while(  partner_ctl_pointer->flag < tag  ) {
                 opal_progress();
             }
-            /* debug */
+            /* debug 
             t5=opal_sys_timer_get_cycles();
         timers[2]+=(t5-t4);
-            /* end debug */
+             end debug */
 
             /* reduce data into my write buffer */
             /* apply collective operation */
@@ -538,6 +535,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                 
             /* test */
            
+        ompi_3buff_op_reduce(op,my_read_pointer,partner_read_pointer,
+                my_write_pointer,count_this_stripe,dtype);
+        /*
                {
                    int ii,n_ints;
                    int * restrict my_read=(int *)my_read_pointer;
@@ -549,10 +549,11 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                    }
 
                }
-            /* debug */
+               */
+            /* debug 
             t6=opal_sys_timer_get_cycles();
         timers[3]+=(t6-t5);
-            /* end debug */
+             end debug */
 
             /* end test */
             
@@ -566,10 +567,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             while(  partner_ctl_pointer->flag < tag  ) {
                 opal_progress();
             }
-            /* debug */
+            /* debug 
             t7=opal_sys_timer_get_cycles();
         timers[4]+=(t7-t6);
-            /* end debug */
+             end debug */
 
         }
 
@@ -635,9 +636,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             }
         }
 
-            /* debug */
+            /* debug 
             t8=opal_sys_timer_get_cycles();
-            /* end debug */
+             end debug */
         /* copy data into the destination buffer */
         rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)((char *)rbuf+dt_extent*count_processed),
@@ -651,11 +652,11 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     }
 
 
-    /* debug */
+    /* debug 
 
     t9=opal_sys_timer_get_cycles();
     timers[5]+=(t9-t8);
-    /* end debug */
+     end debug */
 
 
     /* "free" the shared-memory working buffer */
@@ -664,10 +665,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         goto Error;
     }
 
-    /* debug */
+    /* debug 
     t10=opal_sys_timer_get_cycles();
     timers[6]+=(t10-t9);
-    /* end debug */
+     end debug */
 
     /* return */
     return rc;
@@ -710,9 +711,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * 
         extra_ctl_pointer;
     mca_coll_sm2_module_t *sm_module;
-    /* debug */
+    /* debug 
     opal_timer_t t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10;
-    /* end debug */
+     end debug */
 
     sm_module=(mca_coll_sm2_module_t *) module;
 
@@ -753,9 +754,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     /* NOTE: starting with a rather synchronous approach */
 
    
-    /* debug */
+    /* debug 
     t0=opal_sys_timer_get_cycles();
-    /* end debug */
+     end debug */
 
     /* use the same set of buffers for a single reduction */
     sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
@@ -767,9 +768,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     my_tmp_data_buffer[0]=my_write_pointer;
     my_tmp_data_buffer[1]=my_read_pointer;
 
-    /* debug */
+    /* debug 
     t1=opal_sys_timer_get_cycles();
-    /* end debug */
+     end debug */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
         /* get number of elements to process in this stripe */
         count_this_stripe=n_dts_per_buffer;
@@ -783,10 +784,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         base_tag=sm_module->collective_tag;
         sm_module->collective_tag+=my_exchange_node->n_tags;
 
-        /* debug */
+        /* debug 
         t2=opal_sys_timer_get_cycles();
         timers[0]+=(t2-t1);
-        /* end debug */
+         end debug */
 
         /* copy data into the write buffer */
         rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
@@ -795,10 +796,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         if( 0 != rc ) {
             return OMPI_ERROR;
         }
-        /* debug */
+        /* debug 
         t3=opal_sys_timer_get_cycles();
         timers[1]+=(t3-t2);
-        /* end debug */
+         end debug */
         
         /* copy data in from the "extra" source, if need be */
         tag=base_tag;
@@ -845,9 +846,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
 
         /* loop over data exchanges */
         for(exchange=0 ; exchange < my_exchange_node->n_exchanges ; exchange++) {
-            /* debug */
+            /* debug 
             t4=opal_sys_timer_get_cycles();
-            /* end debug */
+             end debug */
 
             index_read=(exchange&1);
             index_write=((exchange+1)&1);
@@ -869,10 +870,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             while(  partner_ctl_pointer->flag < tag  ) {
                 opal_progress();
             }
-            /* debug */
+            /* debug 
             t5=opal_sys_timer_get_cycles();
         timers[2]+=(t5-t4);
-            /* end debug */
+             end debug */
 
             /* reduce data into my write buffer */
             /* apply collective operation */
@@ -894,10 +895,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                    }
 
                }
-            /* debug */
+            /* debug 
             t6=opal_sys_timer_get_cycles();
         timers[3]+=(t6-t5);
-            /* end debug */
+             end debug */
 
             /* end test */
             
@@ -911,10 +912,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             while(  partner_ctl_pointer->flag < tag  ) {
                 opal_progress();
             }
-            /* debug */
+            /* debug 
             t7=opal_sys_timer_get_cycles();
         timers[4]+=(t7-t6);
-            /* end debug */
+             end debug */
 
         }
 
@@ -981,9 +982,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
             }
         }
 
-            /* debug */
+            /* debug 
             t8=opal_sys_timer_get_cycles();
-            /* end debug */
+             end debug */
         /* copy data into the destination buffer */
         rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
                 (char *)((char *)rbuf+dt_extent*count_processed),
@@ -991,16 +992,16 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
         if( 0 != rc ) {
             return OMPI_ERROR;
         }
-            /* debug */
+            /* debug 
             t9=opal_sys_timer_get_cycles();
         timers[5]+=(t9-t8);
-            /* end debug */
+             end debug */
 
         /* "free" the shared-memory working buffer */
-            /* debug */
+            /* debug 
             t10=opal_sys_timer_get_cycles();
         timers[6]+=(t10-t9);
-            /* end debug */
+             end debug */
     
         /* update the count of elements processed */
         count_processed+=count_this_stripe;
