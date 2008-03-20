@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -331,27 +332,33 @@ mca_btl_portals_component_progress(void)
             frag = ev.md.user_ptr;
             btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
             num_progressed++;
-
+            
             switch (ev.type) {
             case PTL_EVENT_GET_START:
                 /* generated on source (target) when a get from memory starts */
-                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_GET_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
-
+                
                 break;
-
+                
             case PTL_EVENT_GET_END:
                 /* generated on source (target) when a get from memory ends */
-                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_GET_END for 0x%lx, %d",
-                                     (unsigned long) frag, (int) ev.hdr_data));
-
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                     "PTL_EVENT_GET_END for 0x%lx, %d, flags %d",
+                                     (unsigned long) frag, (int) ev.hdr_data, 
+                                     frag->base.des_flags));
+                
+                if( btl_ownership ) {
+                    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                         "in PTL_EVENT_GET_END received a frag with btl_ownership!"));
+                    mca_btl_portals_free(&mca_btl_portals_module.super,
+                                         &frag->base);
+                }
                 break;
-
             case PTL_EVENT_PUT_START:
                 /* generated on destination (target) when a put into memory starts */
-                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
 
@@ -372,7 +379,7 @@ mca_btl_portals_component_progress(void)
 
             case PTL_EVENT_PUT_END: 
                 /* generated on destination (target) when a put into memory ends */
-                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_END for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
 
@@ -421,31 +428,33 @@ mca_btl_portals_component_progress(void)
                     mca_btl_portals_return_block_part(&mca_btl_portals_module, block);
                 }
                 break;
-
+                
             case PTL_EVENT_REPLY_START:
                 /* generated on destination (origin) when a get starts
                    returning data */
-
-                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_REPLY_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
-
+                
                 break;
-
+                
             case PTL_EVENT_REPLY_END:
                 /* generated on destination (origin) when a get is
                    done returning data */
-
+                
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_REPLY_END for 0x%lx",
                                      (unsigned long) frag));
-
+                
                 /* let the PML know we're done */
                 frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                       frag->endpoint,
                                       &frag->base,
                                       OMPI_SUCCESS);
                 if( btl_ownership ) {
+                    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                        "in PTL_EVENT_REPLY_END received a frag with btl_ownership!"));
                     mca_btl_portals_free(&mca_btl_portals_module.super,
                                          &frag->base);
                 }
@@ -456,7 +465,7 @@ mca_btl_portals_component_progress(void)
                 /* generated on source (origin) when put starts sending */
 
 #if OMPI_ENABLE_DEBUG
-                OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
+                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
 

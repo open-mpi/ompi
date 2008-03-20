@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 static void
 mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag) 
 { 
+    frag->base.des_flags = 0;
     frag->base.des_dst = 0;
     frag->base.des_dst_cnt = 0;
     frag->base.des_src = frag->segments;

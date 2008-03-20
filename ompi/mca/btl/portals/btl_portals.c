@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -362,10 +363,10 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
         /* either a put or get.  figure out which later */
         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                             "rdma src posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64,
+                             "rdma src posted for frag 0x%lx, callback 0x%lx, bits %"PRIu64", flags say %d" ,
                              (unsigned long) frag, 
                              (unsigned long) frag->base.des_cbfunc,
-                             frag->segments[0].seg_key.key64));
+                             frag->segments[0].seg_key.key64, flags));
 
         /* create a match entry */
         ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
@@ -457,10 +458,11 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->base.des_flags = flags;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64,
+                         "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64 " flags %d",
                          (unsigned long) frag,
                          (unsigned long) frag->base.des_cbfunc,
-                         frag->segments[0].seg_key.key64));
+                         frag->segments[0].seg_key.key64,
+                         flags));
 
     /* create a match entry */
     ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
@@ -511,12 +513,22 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     int ret;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                            "in mca_btl_portals_finalize"));
 
+    /* sanity check */
+    assert(mca_btl_portals_module.portals_outstanding_ops  >= 0);
+    
     /* finalize all communication */
     while (mca_btl_portals_module.portals_outstanding_ops > 0) {
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                            "portals_outstanding_ops: %d", 
+                            mca_btl_portals_module.portals_outstanding_ops));
+        
         mca_btl_portals_component_progress();
     }
-
+    
+    
     if (mca_btl_portals_module.portals_num_procs != 0) {
         int i;
 
@@ -546,7 +558,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_eager);
     OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_max);
     OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_user);
-
+    
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
 
