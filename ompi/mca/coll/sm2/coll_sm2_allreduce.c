@@ -52,11 +52,6 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
 
     sm_module=(mca_coll_sm2_module_t *) module;
 
-    /* get unique tag for this collective - assume only one collective
-     *  per communicator at a given time, so no locking needed
-     *  for atomic update of the tag */
-    tag=sm_module->collective_tag;
-    sm_module->collective_tag++;
 
     /* get size of data needed - same layout as user data, so that
      *   we can apply the reudction routines directly on these buffers
@@ -95,6 +90,12 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     /* NOTE: starting with a rather synchronous approach */
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
     
+        /* get unique tag for this stripe - assume only one collective
+         *  per communicator at a given time, so no locking needed
+         *  for atomic update of the tag */
+        tag=sm_module->collective_tag;
+        sm_module->collective_tag++;
+
         sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
 
         /* get number of elements to process in this stripe */
