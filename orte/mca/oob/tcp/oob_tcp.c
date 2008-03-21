@@ -1051,18 +1051,29 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
         mca_oob_tcp_device_t *dev;
 
         opal_ifindextoname(i, name, sizeof(name));
+
         if (mca_oob_tcp_component.tcp_include != NULL &&
             strstr(mca_oob_tcp_component.tcp_include,name) == NULL) {
+            OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+                                 "%s oob:tcp:init rejecting interface %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
             continue;
         }
         if (mca_oob_tcp_component.tcp_exclude != NULL &&
             strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
+            OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+                                 "%s oob:tcp:init rejecting interface %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
             continue;
         }
 
         dev = OBJ_NEW(mca_oob_tcp_device_t);
         dev->if_index = i;
 
+        OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+                             "%s oob:tcp:init setting up interface %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
+        
         opal_ifindextoaddr(i, (struct sockaddr*) &dev->if_addr, sizeof(struct sockaddr_storage));
         if(opal_net_islocalhost((struct sockaddr*) &dev->if_addr)) {
             dev->if_local = true;
