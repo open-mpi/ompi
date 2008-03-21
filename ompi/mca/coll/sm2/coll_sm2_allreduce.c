@@ -40,13 +40,9 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     int my_fanout_parent;
     size_t message_extent,dt_extent,ctl_size,len_data_buffer;
     long long tag;
-    volatile char * sm_buffer;
     volatile char * my_data_pointer;
     volatile char * child_data_pointer;
     volatile char * parent_data_pointer;
-    char *my_base_temp_pointer;
-    volatile char * child_base_temp_pointer;
-    volatile char * parent_base_temp_pointer; 
     mca_coll_sm2_nb_request_process_shared_mem_t *my_ctl_pointer;
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * child_ctl_pointer;
     volatile mca_coll_sm2_nb_request_process_shared_mem_t * parent_ctl_pointer;
@@ -100,24 +96,15 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
     
         sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
-        sm_buffer=sm_buffer_desc->base_segment_address;
-        if( NULL == sm_buffer) {
-            rc=OMPI_ERR_OUT_OF_RESOURCE;
-            goto Error;
-        }
+
         /* get number of elements to process in this stripe */
         count_this_stripe=n_dts_per_buffer;
         if( count_processed + count_this_stripe > count )
             count_this_stripe=count-count_processed;
 
-        /* get base address to "my" memory segment */
-        my_base_temp_pointer=(char *)
-            ((char *)sm_buffer+sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->segement_size_per_process);
         /* offset to data segment */
-        my_data_pointer=my_base_temp_pointer+ctl_size;
-        my_ctl_pointer=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            my_base_temp_pointer;
+        my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+        my_data_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
 
         /***************************
          * Fan into root phase
@@ -141,15 +128,10 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
             for( child=0 ; child < n_children ; child++ ) {
                 child_rank=my_reduction_node->children_ranks[child];
     
-                /* get base address of child process */
-                child_base_temp_pointer=(char *)
-                    ((char *)sm_buffer+child_rank*
-                     sm_module->segement_size_per_process);
-       
-                child_data_pointer=child_base_temp_pointer+ctl_size;
                 child_ctl_pointer=
-                    ( mca_coll_sm2_nb_request_process_shared_mem_t * volatile)
-                    child_base_temp_pointer;
+                    sm_buffer_desc->proc_memory[child_rank].control_region;
+                child_data_pointer=
+                    sm_buffer_desc->proc_memory[child_rank].data_segment;
     
                 /* wait until child flag is set */
                 while(! 
@@ -235,20 +217,11 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     
         } else if( LEAF_NODE == my_fanout_read_tree->my_node_type ) {
     
-            parent_base_temp_pointer=(char *)
-                ((char *)sm_buffer+my_fanout_parent*
-                 sm_module->segement_size_per_process);
-   
-            parent_data_pointer=(volatile char *)
-                ((char *)parent_base_temp_pointer+ctl_size);
-            parent_ctl_pointer=(volatile 
-                    mca_coll_sm2_nb_request_process_shared_mem_t *)
-                parent_base_temp_pointer;
+            parent_data_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].data_segment;
+            parent_ctl_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
 
-            child_ctl_pointer=
-                (volatile  mca_coll_sm2_nb_request_process_shared_mem_t *)
-                parent_data_pointer;
-       
             /*
              * wait on Parent to signal that data is ready
              */
@@ -269,20 +242,12 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
     
         } else {
             /* interior nodes */
-            parent_base_temp_pointer=(char *)
-                ((char *)sm_buffer+my_fanout_parent*
-                 sm_module->segement_size_per_process);
    
-            parent_data_pointer=(volatile char *)
-                ((char *)parent_base_temp_pointer+ctl_size);
-            parent_ctl_pointer=(volatile 
-                    mca_coll_sm2_nb_request_process_shared_mem_t *)
-                parent_base_temp_pointer;
+            parent_data_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].data_segment;
+            parent_ctl_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
 
-            child_ctl_pointer=
-                (volatile  mca_coll_sm2_nb_request_process_shared_mem_t *)
-                parent_data_pointer;
-       
             /*
              * wait on Parent to signal that data is ready
              */
@@ -350,10 +315,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
     int index_read,index_write;
     pair_exchange_node_t *my_exchange_node;
     int my_rank,count_processed,count_this_stripe;
-    size_t message_extent,dt_extent,ctl_size,len_data_buffer;
+    size_t message_extent,ctl_size,len_data_buffer;
+    ptrdiff_t dt_extent;
     long long tag, base_tag;
     sm_work_buffer_t *sm_buffer_desc;
-    volatile char * sm_buffer;
     volatile char * my_tmp_data_buffer[2];
     volatile char * my_write_pointer;
     volatile char * my_read_pointer;
@@ -1031,6 +996,7 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
     /* local variables */
     int rc;
 
+#if 0 /* just for some testing */    
     if( 0 != (op->o_flags & OMPI_OP_FLAGS_COMMUTE)) {
         /* Commutative Operation */
         rc= mca_coll_sm2_allreduce_intra_recursive_doubling(sbuf, rbuf, count,
@@ -1039,13 +1005,16 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
             goto Error;
         }
     } else {
+#endif /* testing */
         /* Non-Commutative Operation */
         rc= mca_coll_sm2_allreduce_intra_fanin_fanout(sbuf, rbuf, count,
                 dtype, op, comm, module);
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }
+#if 0 /* just for some testing */
     }
+#endif
 
 
     return OMPI_SUCCESS;
