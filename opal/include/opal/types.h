@@ -38,42 +38,6 @@
 #include "opal/util/output.h"
 #endif
 
-#ifndef __WINDOWS__
-/*
- *  Increase FD_SETSIZE
- */
-
-#ifndef OMPI_FD_SETSIZE
-#define OMPI_FD_SETSIZE          4096
-#endif
-
-#if !defined(NFDBITS) && defined(__NFDBITS)
-/* Linux doesn't expose NFDBITS if -ansi unless there is another #define
- * so use the internal version
- */
-#define NFDBITS __NFDBITS
-#endif
-
-struct ompi_fd_set_t {
-    int i;
-    uint32_t fds_bits[OMPI_FD_SETSIZE / NFDBITS];
-};
-typedef struct ompi_fd_set_t ompi_fd_set_t;
-
-#define OMPI_FD_ZERO(fds)     FD_ZERO((fd_set*)(fds))
-#define OMPI_FD_SET(fd,fds)   FD_SET((fd),(fd_set*)(fds))
-#define OMPI_FD_CLR(fd,fds)   FD_CLR((fd),(fd_set*)(fds))
-#define OMPI_FD_ISSET(fd,fds) FD_ISSET((fd),(fd_set*)(fds))
-
-#else /* if we are on windows */
-typedef fd_set ompi_fd_set_t;
-#define OMPI_FD_ZERO(fds)     FD_ZERO((fds))
-#define OMPI_FD_SET(fd,fds)   FD_SET((fd),(fds))
-#define OMPI_FD_CLR(fd,fds)   FD_CLR((fd),(fds))
-#define OMPI_FD_ISSET(fd,fds) FD_ISSET((fd),(fds))
-
-#endif /* wIN32 */
-    
 
 /*
  * portable assignment of pointer to int
