@@ -280,7 +280,7 @@ extern "C" {
  * 3 buffer prototypes (two input and one output)
  */
 #define OMPI_OP_PROTO_3BUF  \
-  (restrict void *in1, restrict void *in2, restrict void *out, \
+  (void * restrict in1, void * restrict in2, void * restrict out, \
    int *count, MPI_Datatype *dtype)
 
 /* C integer */
