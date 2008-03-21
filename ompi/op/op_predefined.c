@@ -680,8 +680,8 @@ LOC_FUNC(minloc, long_double_int, <)
  *    routines, needed for some optimizations.
  */
 #define OP_FUNC_3BUF(name, type_name, type, op) \
-  void ompi_mpi_op_three_buff_##name##_##type_name(restrict void *in1, \
-          restrict void *in2, restrict void *out, int *count,            \
+  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1, \
+          void * restrict in2, void * restrict out, int *count,            \
                                         MPI_Datatype *dtype)             \
   {                                                                      \
     int i;                                                               \
@@ -694,8 +694,8 @@ LOC_FUNC(minloc, long_double_int, <)
   }
 
 #define COMPLEX_OP_FUNC_SUM_3BUF(type_name, type) \
-  void ompi_mpi_op_sum_three_buff_##type_name(restrict void *in1,             \
-          restrict void * in2, restrict void *out, int *count,           \
+  void ompi_mpi_op_sum_three_buff_##type_name(void * restrict in1,             \
+          void * restrict in2, void * restrict out, int *count,           \
                                    MPI_Datatype *dtype)                  \
   {                                                                      \
     int i;                                                               \
@@ -709,8 +709,8 @@ LOC_FUNC(minloc, long_double_int, <)
   }
 
 #define COMPLEX_OP_FUNC_PROD_3BUF(type_name, type) \
-  void ompi_mpi_op_prod_three_buff_##type_name(restrict void *in1,             \
-          restrict void *in2, restrict void *out, int *count,            \
+  void ompi_mpi_op_prod_three_buff_##type_name(void * restrict in1,      \
+          void * restrict in2, void * restrict out, int *count,          \
                                    MPI_Datatype *dtype)                  \
   {                                                                      \
     int i;                                                               \
@@ -734,8 +734,8 @@ LOC_FUNC(minloc, long_double_int, <)
  * This macro is for (out = op(in1, in2))
  */
 #define FUNC_FUNC_3BUF(name, type_name, type) \
-  void ompi_mpi_op_three_buff_##name##_##type_name(restrict void *in1, \
-          restrict void *in2, restrict void *out, int *count,            \
+  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1, \
+          void * restrict in2, void * restrict out, int *count,          \
                                         MPI_Datatype *dtype)             \
   {                                                                      \
     int i;                                                               \
@@ -766,9 +766,9 @@ LOC_FUNC(minloc, long_double_int, <)
 */
 
 #define LOC_FUNC_3BUF(name, type_name, op) \
-  void ompi_mpi_op_three_buff_##name##_##type_name(restrict void *in1,  \
-          restrict void *in2, restrict void *out, int *count,         \
-                                        MPI_Datatype *dtype)          \
+  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1,  \
+          void * restrict in2, void * restrict out, int *count,          \
+                                        MPI_Datatype *dtype)             \
   { \
     int i; \
     ompi_op_predefined_##type_name##_t *a1 = (ompi_op_predefined_##type_name##_t*) in1; \
