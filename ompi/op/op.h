@@ -197,8 +197,8 @@ typedef void (ompi_op_c_handler_fn_t)(void *, void *, int *, MPI_Datatype *);
 /*
  *  Three buffer ( two input and one output) function prototype
  */
-typedef void (ompi_op_3buff_c_handler_fn_t)(volatile void *, volatile void *, 
-        volatile void *, int *, MPI_Datatype *);
+typedef void (ompi_op_3buff_c_handler_fn_t)(void * restrict , void * restrict, 
+        void * restrict, int *, MPI_Datatype *);
 
 
 /**
@@ -209,8 +209,8 @@ typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
 /*
  * Three buffer (2 input one output) function prototype
  */
-typedef void (ompi_op_3buff_fortran_handler_fn_t)(volatile void *, 
-        volatile void *, volatile void *, MPI_Fint *, MPI_Fint *);
+typedef void (ompi_op_3buff_fortran_handler_fn_t)(void * restrict, 
+        void * restrict , void * restrict , MPI_Fint *, MPI_Fint *);
 
 
 /**
@@ -226,8 +226,8 @@ typedef void (ompi_op_cxx_handler_fn_t)(void *, void *, int *,
 /*
  * Three buffer (two input, one output) function prototype
  */
-typedef void (ompi_op_3buff_cxx_handler_fn_t)(volatile void *, volatile void *,
-        volatile void *, int *, MPI_Datatype *, MPI_User_function *op);
+typedef void (ompi_op_3buff_cxx_handler_fn_t)(void * restrict, void * restrict,
+        void * restrict, int *, MPI_Datatype *, MPI_User_function *op);
 
 
 /*
