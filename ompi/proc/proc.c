@@ -244,6 +244,7 @@ ompi_proc_get_info(void)
             /* Free the buffer for the next proc */
             OBJ_RELEASE(buf);
         } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+            nodeid = ORTE_NODEID_INVALID;
             arch = ompi_proc_local_proc->proc_arch;
             hostname = strdup("");
             ret = ORTE_SUCCESS;
@@ -268,7 +269,8 @@ ompi_proc_get_info(void)
             goto out;
 #endif
         } 
-        if (ompi_proc_local_proc->proc_nodeid == proc->proc_nodeid) {
+        if ((ompi_proc_local_proc->proc_nodeid == proc->proc_nodeid) &&
+            (proc->proc_nodeid != ORTE_NODEID_INVALID)) {
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
         }
 
