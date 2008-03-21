@@ -702,7 +702,7 @@ LOC_FUNC(minloc, long_double_int, <)
     type *a1 = (type *) in1;                                             \
     type *a2 = (type *) in2;                                             \
     type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i, ++b, ++a) {                             \
+    for (i = 0; i < *count; ++i, ++b, ++a1, ++a2) {                      \
       b->real = a1->real + a2->real;                                     \
       b->imag = a1->imag + a2->imag;                                     \
     }                                                                    \
@@ -717,11 +717,9 @@ LOC_FUNC(minloc, long_double_int, <)
     type *a1 = (type *) in1;                                             \
     type *a2 = (type *) in2;                                             \
     type *b = (type *) out;                                              \
-    type *a1 = (type *) in1;                                             \
-    for (i = 0; i < *count; ++i, ++b, ++a) {                             \
+    for (i = 0; i < *count; ++i, ++b, ++a1, ++a2) {                      \
       *b->real = a1->real * a2->real - a1->imag * a2->imag;              \
       *b->imag = a1->imag * a2->real + a1->real * a2->imag;              \
-      *b = temp;                                                         \
     }                                                                    \
   }
 
