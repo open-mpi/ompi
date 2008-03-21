@@ -25,8 +25,7 @@ bin_PROGRAMS = ompi-server
 endif
 
 libs = \
-        $(top_builddir)/ompi/libmpi.la \
-		$(top_builddir)/opal/libopen-pal.la
+        $(top_builddir)/ompi/libmpi.la
 
 ompi_server_SOURCES = \
         ompi-server.c 
