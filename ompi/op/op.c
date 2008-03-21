@@ -71,14 +71,8 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #define C_INTEGER_LONG_LONG(name) \
   { ompi_mpi_op_##name##_long_long_int },  /* OMPI_OP_TYPE_LONG_LONG_INT */ \
   { ompi_mpi_op_##name##_unsigned_long_long } /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
-#define C_INTEGER_LONG_LONG_3BUFF(name) \
-  { ompi_mpi_op_three_buff_##name##_long_long_int },  /* OMPI_OP_TYPE_LONG_LONG_INT */ \
-  { ompi_mpi_op_three_buff_##name##_unsigned_long_long } /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
 #else
 #define C_INTEGER_LONG_LONG(name) \
-  { NULL }, /* OMPI_OP_TYPE_LONG_LONG_INT */ \
-  { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
-#define C_INTEGER_LONG_LONG_3BUFF(name) \
   { NULL }, /* OMPI_OP_TYPE_LONG_LONG_INT */ \
   { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
 #endif
@@ -93,30 +87,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   { ompi_mpi_op_##name##_unsigned },       /* OMPI_OP_TYPE_UNSIGNED */ \
   { ompi_mpi_op_##name##_unsigned_long },  /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
   C_INTEGER_LONG_LONG(name)
-#define C_INTEGER_3BUFF(name) \
-  { ompi_mpi_op_three_buff_##name##_unsigned_char },  /* OMPI_OP_TYPE_UNSIGNED_CHAR */ \
-  { ompi_mpi_op_three_buff_##name##_signed_char },    /* OMPI_OP_TYPE_SIGNED_CHAR */ \
-  { ompi_mpi_op_three_buff_##name##_int },            /* OMPI_OP_TYPE_INT */ \
-  { ompi_mpi_op_three_buff_##name##_long },           /* OMPI_OP_TYPE_LONG */ \
-  { ompi_mpi_op_three_buff_##name##_short },          /* OMPI_OP_TYPE_SHORT */ \
-  { ompi_mpi_op_three_buff_##name##_unsigned_short }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
-  { ompi_mpi_op_three_buff_##name##_unsigned },       /* OMPI_OP_TYPE_UNSIGNED */ \
-  { ompi_mpi_op_three_buff_##name##_unsigned_long },  /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
-  C_INTEGER_LONG_LONG_3BUFF(name)
-
 #define C_INTEGER_NULL \
-  { NULL }, /* OMPI_OP_TYPE_UNSIGNED_CHAR */ \
-  { NULL }, /* OMPI_OP_TYPE_SIGNED_CHAR */ \
-  { NULL }, /* OMPI_OP_TYPE_INT */ \
-  { NULL }, /* OMPI_OP_TYPE_LONG */ \
-  { NULL }, /* OMPI_OP_TYPE_SHORT */ \
-  { NULL }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
-  { NULL }, /* OMPI_OP_TYPE_UNSIGNED */ \
-  { NULL }, /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
-  { NULL }, /* OMPI_OP_TYPE_LONG_LONG_INT */ \
-  { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
-
-#define C_INTEGER_NULL_3BUFF \
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED_CHAR */ \
   { NULL }, /* OMPI_OP_TYPE_SIGNED_CHAR */ \
   { NULL }, /* OMPI_OP_TYPE_INT */ \
@@ -132,45 +103,33 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #if OMPI_HAVE_FORTRAN_INTEGER
 #define FORTRAN_INTEGER_PLAIN(name) { ompi_mpi_op_##name##_fortran_integer }
-#define FORTRAN_INTEGER_PLAIN_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_integer }
 #else
 #define FORTRAN_INTEGER_PLAIN(name) { NULL }
-#define FORTRAN_INTEGER_PLAIN_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #define FORTRAN_INTEGER1(name) { ompi_mpi_op_##name##_fortran_integer1 }
-#define FORTRAN_INTEGER1_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_integer1 }
 #else
 #define FORTRAN_INTEGER1(name) { NULL }
-#define FORTRAN_INTEGER1_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
 #define FORTRAN_INTEGER2(name) { ompi_mpi_op_##name##_fortran_integer2 }
-#define FORTRAN_INTEGER2_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_integer2 }
 #else
 #define FORTRAN_INTEGER2(name) { NULL }
-#define FORTRAN_INTEGER2_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
 #define FORTRAN_INTEGER4(name) { ompi_mpi_op_##name##_fortran_integer4 }
-#define FORTRAN_INTEGER4_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_integer4 }
 #else
 #define FORTRAN_INTEGER4(name) { NULL }
-#define FORTRAN_INTEGER4_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
 #define FORTRAN_INTEGER8(name) { ompi_mpi_op_##name##_fortran_integer8 }
-#define FORTRAN_INTEGER8_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_integer8 }
 #else
 #define FORTRAN_INTEGER8(name) { NULL }
-#define FORTRAN_INTEGER8_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
 #define FORTRAN_INTEGER16(name) { ompi_mpi_op_##name##_fortran_integer16 }
-#define FORTRAN_INTEGER16_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_integer16 }
 #else
 #define FORTRAN_INTEGER16(name) { NULL }
-#define FORTRAN_INTEGER16_3BUFF(name) { NULL }
 #endif
 #define FORTRAN_INTEGER(name) \
   FORTRAN_INTEGER_PLAIN(name),      /* OMPI_OP_TYPE_INTEGER */ \
@@ -179,24 +138,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   FORTRAN_INTEGER4(name),           /* OMPI_OP_TYPE_INTEGER4 */ \
   FORTRAN_INTEGER8(name),           /* OMPI_OP_TYPE_INTEGER8 */ \
   FORTRAN_INTEGER16(name)           /* OMPI_OP_TYPE_INTEGER16 */
-
-#define FORTRAN_INTEGER_3BUFF(name) \
-  FORTRAN_INTEGER_PLAIN_3BUFF(name),      /* OMPI_OP_TYPE_INTEGER */ \
-  FORTRAN_INTEGER1_3BUFF(name),           /* OMPI_OP_TYPE_INTEGER1 */ \
-  FORTRAN_INTEGER2_3BUFF(name),           /* OMPI_OP_TYPE_INTEGER2 */ \
-  FORTRAN_INTEGER4_3BUFF(name),           /* OMPI_OP_TYPE_INTEGER4 */ \
-  FORTRAN_INTEGER8_3BUFF(name),           /* OMPI_OP_TYPE_INTEGER8 */ \
-  FORTRAN_INTEGER16_3BUFF(name)           /* OMPI_OP_TYPE_INTEGER16 */
-
 #define FORTRAN_INTEGER_NULL \
-  { NULL },  /* OMPI_OP_TYPE_INTEGER */ \
-  { NULL },  /* OMPI_OP_TYPE_INTEGER1 */ \
-  { NULL },  /* OMPI_OP_TYPE_INTEGER2 */ \
-  { NULL },  /* OMPI_OP_TYPE_INTEGER4 */ \
-  { NULL },  /* OMPI_OP_TYPE_INTEGER8 */ \
-  { NULL }  /* OMPI_OP_TYPE_INTEGER16 */
-
-#define FORTRAN_INTEGER_NULL_3BUFF \
   { NULL },  /* OMPI_OP_TYPE_INTEGER */ \
   { NULL },  /* OMPI_OP_TYPE_INTEGER1 */ \
   { NULL },  /* OMPI_OP_TYPE_INTEGER2 */ \
@@ -208,38 +150,28 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #if OMPI_HAVE_FORTRAN_REAL
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) { ompi_mpi_op_##name##_fortran_real }
-#define FLOATING_POINT_FORTRAN_REAL_PLAIN_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_real }
 #else
 #define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) { NULL }
-#define FLOATING_POINT_FORTRAN_REAL_PLAIN_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL2
 #define FLOATING_POINT_FORTRAN_REAL2(name) { ompi_mpi_op_##name##_fortran_real2 }
-#define FLOATING_POINT_FORTRAN_REAL2_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_real2 }
 #else
 #define FLOATING_POINT_FORTRAN_REAL2(name) { NULL }
-#define FLOATING_POINT_FORTRAN_REAL2_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 #define FLOATING_POINT_FORTRAN_REAL4(name) { ompi_mpi_op_##name##_fortran_real4 }
-#define FLOATING_POINT_FORTRAN_REAL4_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_real4 }
 #else
 #define FLOATING_POINT_FORTRAN_REAL4(name) { NULL }
-#define FLOATING_POINT_FORTRAN_REAL4_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
 #define FLOATING_POINT_FORTRAN_REAL8(name) { ompi_mpi_op_##name##_fortran_real8 }
-#define FLOATING_POINT_FORTRAN_REAL8_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_real8 }
 #else
 #define FLOATING_POINT_FORTRAN_REAL8(name) { NULL }
-#define FLOATING_POINT_FORTRAN_REAL8_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
 #define FLOATING_POINT_FORTRAN_REAL16(name) { ompi_mpi_op_##name##_fortran_real16 }
-#define FLOATING_POINT_FORTRAN_REAL16_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_real16 }
 #else
 #define FLOATING_POINT_FORTRAN_REAL16(name) { NULL }
-#define FLOATING_POINT_FORTRAN_REAL16_3BUFF(name) { NULL }
 #endif
 
 #define FLOATING_POINT_FORTRAN_REAL(name) \
@@ -249,23 +181,13 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   FLOATING_POINT_FORTRAN_REAL8(name),           /* OMPI_OP_TYPE_REAL8 */ \
   FLOATING_POINT_FORTRAN_REAL16(name)           /* OMPI_OP_TYPE_REAL16 */
 
-#define FLOATING_POINT_FORTRAN_REAL_3BUFF(name) \
-  FLOATING_POINT_FORTRAN_REAL_PLAIN_3BUFF(name),      /* OMPI_OP_TYPE_REAL */ \
-  FLOATING_POINT_FORTRAN_REAL2_3BUFF(name),           /* OMPI_OP_TYPE_REAL2 */ \
-  FLOATING_POINT_FORTRAN_REAL4_3BUFF(name),           /* OMPI_OP_TYPE_REAL4 */ \
-  FLOATING_POINT_FORTRAN_REAL8_3BUFF(name),           /* OMPI_OP_TYPE_REAL8 */ \
-  FLOATING_POINT_FORTRAN_REAL16_3BUFF(name)           /* OMPI_OP_TYPE_REAL16 */
-
 /** Fortran double precision ********************************************/
 
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 #define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name) \
     { ompi_mpi_op_##name##_fortran_double_precision }
-#define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION_3BUFF(name) \
-    { ompi_mpi_op_three_buff_##name##_fortran_double_precision }
 #else
 #define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name) { NULL }
-#define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION_3BUFF(name) { NULL }
 #endif
 
 /** Floating point, including all the Fortran reals *********************/
@@ -276,26 +198,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   FLOATING_POINT_FORTRAN_REAL(name),                 /* OMPI_OP_TYPE_REAL */ \
   FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name),     /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
   { ompi_mpi_op_##name##_long_double }               /* OMPI_OP_TYPE_LONG_DOUBLE */
-
-#define FLOATING_POINT_3BUFF(name) \
-  { ompi_mpi_op_three_buff_##name##_float },                    /* OMPI_OP_TYPE_FLOAT */\
-  { ompi_mpi_op_three_buff_##name##_double },                   /* OMPI_OP_TYPE_DOUBLE */\
-  FLOATING_POINT_FORTRAN_REAL_3BUFF(name),                 /* OMPI_OP_TYPE_REAL */ \
-  FLOATING_POINT_FORTRAN_DOUBLE_PRECISION_3BUFF(name),     /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
-  { ompi_mpi_op_three_buff_##name##_long_double }               /* OMPI_OP_TYPE_LONG_DOUBLE */
-
 #define FLOATING_POINT_NULL \
-  { NULL }, /* OMPI_OP_TYPE_FLOAT */ \
-  { NULL }, /* OMPI_OP_TYPE_DOUBLE */ \
-  { NULL }, /* OMPI_OP_TYPE_REAL */ \
-  { NULL }, /* OMPI_OP_TYPE_REAL2 */ \
-  { NULL }, /* OMPI_OP_TYPE_REAL4 */ \
-  { NULL }, /* OMPI_OP_TYPE_REAL8 */ \
-  { NULL }, /* OMPI_OP_TYPE_REAL16 */ \
-  { NULL }, /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
-  { NULL }  /* OMPI_OP_TYPE_LONG_DOUBLE */
-
-#define FLOATING_POINT_NULL_3BUFF \
   { NULL }, /* OMPI_OP_TYPE_FLOAT */ \
   { NULL }, /* OMPI_OP_TYPE_DOUBLE */ \
   { NULL }, /* OMPI_OP_TYPE_REAL */ \
@@ -311,24 +214,14 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #if OMPI_HAVE_FORTRAN_LOGICAL
 #define FORTRAN_LOGICAL(name) \
   { ompi_mpi_op_##name##_fortran_logical }  /* OMPI_OP_TYPE_LOGICAL */
-#define FORTRAN_LOGICAL_3BUFF(name) \
-  { ompi_mpi_op_three_buff_##name##_fortran_logical }  /* OMPI_OP_TYPE_LOGICAL */
 #else
 #define FORTRAN_LOGICAL(name) { NULL }
-#define FORTRAN_LOGICAL_3BUFF(name) { NULL }
 #endif
 #define LOGICAL(name) \
   FORTRAN_LOGICAL(name), \
   { ompi_mpi_op_##name##_bool }  /* OMPI_OP_TYPE_BOOL */
-#define LOGICAL_3BUFF(name) \
-  FORTRAN_LOGICAL_3BUFF(name), \
-  { ompi_mpi_op_three_buff_##name##_bool }  /* OMPI_OP_TYPE_BOOL */
 
 #define LOGICAL_NULL \
-  { NULL },  /* OMPI_OP_TYPE_LOGICAL */ \
-  { NULL }   /* OMPI_OP_TYPE_BOOL */
-
-#define LOGICAL_NULL_3BUFF \
   { NULL },  /* OMPI_OP_TYPE_LOGICAL */ \
   { NULL }   /* OMPI_OP_TYPE_BOOL */
 
@@ -336,38 +229,28 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 #define COMPLEX_PLAIN(name) { ompi_mpi_op_##name##_fortran_complex }
-#define COMPLEX_PLAIN_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_complex }
 #else
 #define COMPLEX_PLAIN(name) { NULL }
-#define COMPLEX_PLAIN_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_HAVE_FORTRAN_COMPLEX
 #define COMPLEX_DOUBLE(name) { ompi_mpi_op_##name##_fortran_double_complex }
-#define COMPLEX_DOUBLE_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_double_complex }
 #else
 #define COMPLEX_DOUBLE(name) { NULL }
-#define COMPLEX_DOUBLE_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 #define COMPLEX8(name) { ompi_mpi_op_##name##_fortran_complex8 }
-#define COMPLEX8_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_complex8 }
 #else
 #define COMPLEX8(name) { NULL }
-#define COMPLEX8_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 #define COMPLEX16(name) { ompi_mpi_op_##name##_fortran_complex16 }
-#define COMPLEX16_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_complex16 }
 #else
 #define COMPLEX16(name) { NULL }
-#define COMPLEX16_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 #define COMPLEX32(name) { ompi_mpi_op_##name##_fortran_complex32 }
-#define COMPLEX32_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_complex32 }
 #else
 #define COMPLEX32(name) { NULL }
-#define COMPLEX32_3BUFF(name) { NULL }
 #endif
 
 #define COMPLEX(name) \
@@ -376,22 +259,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   COMPLEX8(name),       /* OMPI_OP_TYPE_COMPLEX8 */ \
   COMPLEX16(name),      /* OMPI_OP_TYPE_COMPLEX16 */ \
   COMPLEX32(name)       /* OMPI_OP_TYPE_COMPLEX32 */
-
-#define COMPLEX_3BUFF(name) \
-  COMPLEX_PLAIN_3BUFF(name),  /* OMPI_OP_TYPE_COMPLEX */ \
-  COMPLEX_DOUBLE_3BUFF(name), /* OMPI_OP_TYPE_DOUBLE_COMPLEX */ \
-  COMPLEX8_3BUFF(name),       /* OMPI_OP_TYPE_COMPLEX8 */ \
-  COMPLEX16_3BUFF(name),      /* OMPI_OP_TYPE_COMPLEX16 */ \
-  COMPLEX32_3BUFF(name)       /* OMPI_OP_TYPE_COMPLEX32 */
-
 #define COMPLEX_NULL \
-  { NULL },  /* OMPI_OP_TYPE_COMPLEX */ \
-  { NULL },  /* OMPI_OP_TYPE_DOUBLE_COMPLEX */ \
-  { NULL },  /* OMPI_OP_TYPE_COMPLEX8 */ \
-  { NULL },  /* OMPI_OP_TYPE_COMPLEX16 */ \
-  { NULL }   /* OMPI_OP_TYPE_COMPLEX32 */
-
-#define COMPLEX_NULL_3BUFF \
   { NULL },  /* OMPI_OP_TYPE_COMPLEX */ \
   { NULL },  /* OMPI_OP_TYPE_DOUBLE_COMPLEX */ \
   { NULL },  /* OMPI_OP_TYPE_COMPLEX8 */ \
@@ -402,13 +270,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #define BYTE(name) \
   { ompi_mpi_op_##name##_byte }  /* OMPI_OP_TYPE_BYTE */
-#define BYTE_3BUFF(name) \
-  { ompi_mpi_op_three_buff_##name##_byte }  /* OMPI_OP_TYPE_BYTE */
-
 #define BYTE_NULL \
-  { NULL }  /* OMPI_OP_TYPE_BYTE */
-
-#define BYTE_NULL_3BUFF \
   { NULL }  /* OMPI_OP_TYPE_BYTE */
 
 /** Fortran complex *****************************************************/
@@ -416,24 +278,18 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #if OMPI_HAVE_FORTRAN_REAL
 #define TWOLOC_FORTRAN_2REAL(name) { ompi_mpi_op_##name##_2real }
-#define TWOLOC_FORTRAN_2REAL_3BUFF(name) { ompi_mpi_op_three_buff_##name##_2real }
 #else
 #define TWOLOC_FORTRAN_2REAL(name) { NULL }
-#define TWOLOC_FORTRAN_2REAL_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name) { ompi_mpi_op_##name##_2double_precision }
-#define TWOLOC_FORTRAN_2DOUBLE_PRECISION_3BUFF(name) { ompi_mpi_op_three_buff_##name##_2double_precision }
 #else
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name) { NULL }
-#define TWOLOC_FORTRAN_2DOUBLE_PRECISION_3BUFF(name) { NULL }
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER
 #define TWOLOC_FORTRAN_2INTEGER(name) { ompi_mpi_op_##name##_2integer }
-#define TWOLOC_FORTRAN_2INTEGER_3BUFF(name) { ompi_mpi_op_three_buff_##name##_2integer }
 #else
 #define TWOLOC_FORTRAN_2INTEGER(name) { NULL }
-#define TWOLOC_FORTRAN_2INTEGER_3BUFF(name) { NULL }
 #endif
 
 /** All "2" types *******************************************************/
@@ -448,30 +304,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   { ompi_mpi_op_##name##_2int },              /* OMPI_OP_TYPE_2INT */ \
   { ompi_mpi_op_##name##_short_int },         /* OMPI_OP_TYPE_SHORT_INT */ \
   { ompi_mpi_op_##name##_long_double_int }    /* OMPI_OP_TYPE_LONG_DOUBLE_INT */
-
-#define TWOLOC_3BUFF(name) \
-  TWOLOC_FORTRAN_2REAL_3BUFF(name),                 /* OMPI_OP_TYPE_2REAL */ \
-  TWOLOC_FORTRAN_2DOUBLE_PRECISION_3BUFF(name),     /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
-  TWOLOC_FORTRAN_2INTEGER_3BUFF(name),              /* OMPI_OP_TYPE_2INTEGER */ \
-  { ompi_mpi_op_three_buff_##name##_float_int },         /* OMPI_OP_TYPE_FLOAT_INT */ \
-  { ompi_mpi_op_three_buff_##name##_double_int },        /* OMPI_OP_TYPE_DOUBLE_INT */ \
-  { ompi_mpi_op_three_buff_##name##_long_int },          /* OMPI_OP_TYPE_LONG_INT */ \
-  { ompi_mpi_op_three_buff_##name##_2int },              /* OMPI_OP_TYPE_2INT */ \
-  { ompi_mpi_op_three_buff_##name##_short_int },         /* OMPI_OP_TYPE_SHORT_INT */ \
-  { ompi_mpi_op_three_buff_##name##_long_double_int }    /* OMPI_OP_TYPE_LONG_DOUBLE_INT */
-
 #define TWOLOC_NULL \
-  { NULL }, /* OMPI_OP_TYPE_2REAL */\
-  { NULL }, /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
-  { NULL }, /* OMPI_OP_TYPE_2INTEGER */ \
-  { NULL }, /* OMPI_OP_TYPE_FLOAT_INT */ \
-  { NULL }, /* OMPI_OP_TYPE_DOUBLE_INT */ \
-  { NULL }, /* OMPI_OP_TYPE_LONG_INT */ \
-  { NULL }, /* OMPI_OP_TYPE_2INT */ \
-  { NULL }, /* OMPI_OP_TYPE_SHORT_INT */ \
-  { NULL }  /* OMPI_OP_TYPE_LONG_DOUBLE_INT */
-
-#define TWOLOC_NULL_3BUFF \
   { NULL }, /* OMPI_OP_TYPE_2REAL */\
   { NULL }, /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
   { NULL }, /* OMPI_OP_TYPE_2INTEGER */ \
@@ -505,14 +338,7 @@ ompi_op_t ompi_mpi_op_null = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_NULL_3BUFF,
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -532,14 +358,7 @@ ompi_op_t ompi_mpi_op_max = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(max),
-      FORTRAN_INTEGER_3BUFF(max),
-      FLOATING_POINT_3BUFF(max),
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -558,14 +377,7 @@ ompi_op_t ompi_mpi_op_min = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(min),
-      FORTRAN_INTEGER_3BUFF(min),
-      FLOATING_POINT_3BUFF(min),
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -584,14 +396,7 @@ ompi_op_t ompi_mpi_op_sum = {
       COMPLEX(sum),
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(sum),
-      FORTRAN_INTEGER_3BUFF(sum),
-      FLOATING_POINT_3BUFF(sum),
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_3BUFF(sum),
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -610,14 +415,7 @@ ompi_op_t ompi_mpi_op_prod = {
       COMPLEX(prod),
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(prod),
-      FORTRAN_INTEGER_3BUFF(prod),
-      FLOATING_POINT_3BUFF(prod),
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_3BUFF(prod),
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -636,14 +434,7 @@ ompi_op_t ompi_mpi_op_land = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(land),
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_3BUFF(land),
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -662,14 +453,7 @@ ompi_op_t ompi_mpi_op_band = {
       COMPLEX_NULL,
       BYTE(band),
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(band),
-      FORTRAN_INTEGER_3BUFF(band),
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_3BUFF(band),
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -688,14 +472,7 @@ ompi_op_t ompi_mpi_op_lor = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(lor),
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_3BUFF(lor),
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -714,14 +491,7 @@ ompi_op_t ompi_mpi_op_bor = {
       COMPLEX_NULL,
       BYTE(bor),
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(bor),
-      FORTRAN_INTEGER_3BUFF(bor),
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_3BUFF(bor),
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -740,14 +510,7 @@ ompi_op_t ompi_mpi_op_lxor = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(lxor),
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_3BUFF(lxor),
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -766,14 +529,7 @@ ompi_op_t ompi_mpi_op_bxor = {
       COMPLEX_NULL,
       BYTE(bxor),
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_3BUFF(bxor),
-      FORTRAN_INTEGER_3BUFF(bxor),
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_3BUFF(bxor),
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 
@@ -792,14 +548,7 @@ ompi_op_t ompi_mpi_op_maxloc = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC(maxloc) },
-    -1,
-    { C_INTEGER_NULL_3BUFF,
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_3BUFF(maxloc) }
+    -1
 };
 
 
@@ -818,14 +567,7 @@ ompi_op_t ompi_mpi_op_minloc = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC(minloc) },
-    -1,
-    { C_INTEGER_NULL_3BUFF,
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_3BUFF(minloc) }
+    -1
 };
 
 /*
@@ -847,14 +589,7 @@ ompi_op_t ompi_mpi_op_replace = {
       COMPLEX_NULL,
       BYTE_NULL,
       TWOLOC_NULL },
-    -1,
-    { C_INTEGER_NULL_3BUFF,
-      FORTRAN_INTEGER_NULL_3BUFF,
-      FLOATING_POINT_NULL_3BUFF,
-      LOGICAL_NULL_3BUFF,
-      COMPLEX_NULL_3BUFF,
-      BYTE_NULL_3BUFF,
-      TWOLOC_NULL_3BUFF }
+    -1
 };
 
 /*
