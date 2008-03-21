@@ -192,6 +192,11 @@ ompi_proc_get_info(void)
         size_t datalen;
         orte_vpid_t nodeid;
 
+        /* Don't reset the information determined about the current
+           process during the init step.  Saves time and problems if
+           modex is unimplemented */
+        if (ompi_proc_local() == proc) continue;
+
         if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_JOBID,
                                                  &ompi_proc_local_proc->proc_name,
                                                  &proc->proc_name)) {
