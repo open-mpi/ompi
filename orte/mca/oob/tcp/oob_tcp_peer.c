@@ -297,6 +297,11 @@ mca_oob_tcp_peer_create_socket(mca_oob_tcp_peer_t* peer,
         peer->peer_state = (mca_oob_tcp_state_t) state;
     }
 
+    OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+                         "%s oob:tcp:peer creating socket to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&(peer->peer_name))));
+    
     peer->peer_sd = socket(af_family, SOCK_STREAM, 0);
     peer->peer_current_af = af_family;
 
