@@ -230,7 +230,7 @@ $ompi_cv_asm_endproc ${sym}gsym_test_func
              if AC_TRY_EVAL(ompi_compile) ; then
                 # save the warnings
                  cat conftest.cmpl >&AC_FD_CC
-                 ompi_link="$CC $CFLAGS conftest_c.$OBJEXT conftest.$OBJEXT -o conftest  $LDFLAGS > conftest.link 2>&1"
+                 ompi_link="$CC $CFLAGS conftest_c.$OBJEXT conftest.$OBJEXT -o conftest  $LDFLAGS $LIBS > conftest.link 2>&1"
                  if AC_TRY_EVAL(ompi_link) ; then
                      # save the warnings
                      cat conftest.link >&AC_FD_CC
