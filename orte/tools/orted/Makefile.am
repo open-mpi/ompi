@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,27 +21,9 @@ if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orted
 
-endif
+dist_man_MANS = orted.1
 
-libs = \
-        $(top_builddir)/orte/libopen-rte.la
+endif # OMPI_INSTALL_BINARIES
 
-man_MANS = orted.1
-
-EXTRA_DIST = $(man_MANS)
-
-orted_SOURCES = \
-        orted.c 
-
-orted_LDADD = $(libs)
-orted_LDFLAGS =
-orted_DEPENDENCIES = $(libs)
-
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/tools/orted
-else
-ortedir = $(includedir)
-endif
+orted_SOURCES = orted.c 
+orted_LDADD = $(top_builddir)/orte/libopen-rte.la

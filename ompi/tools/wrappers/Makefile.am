@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,26 +17,20 @@
 # $HEADER$
 #
 
-EXTRA_DIST = \
+if OMPI_INSTALL_BINARIES
+
+dist_man_MANS = \
 	mpicc.1 \
 	mpic++.1 \
 	mpicxx.1 \
 	mpif77.1 \
 	mpif90.1
 
-dist_pkgdata_DATA = mpicc-wrapper-data.txt \
+dist_pkgdata_DATA = \
+        mpicc-wrapper-data.txt \
 	mpic++-wrapper-data.txt \
 	mpif77-wrapper-data.txt \
 	mpif90-wrapper-data.txt
-
-if OMPI_INSTALL_BINARIES
-
-man_MANS = \
-	mpicc.1 \
-	mpic++.1 \
-	mpicxx.1 \
-	mpif77.1 \
-	mpif90.1
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"

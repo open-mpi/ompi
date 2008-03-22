@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,12 +19,11 @@
 
 if OMPI_INSTALL_BINARIES
 
-dist_pkgdata_DATA = 
-
-man_MANS =  mpirun.1 \
-			mpiexec.1 \
-			ompi-ps.1 \
-			ompi-clean.1
+dist_man_MANS =\
+        mpirun.1 \
+        mpiexec.1 \
+        ompi-ps.1 \
+        ompi-clean.1
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
@@ -36,6 +36,8 @@ uninstall-local:
 		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT)
+
+endif # OMPI_INSTALL_BINARIES
 
 mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1
 	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpirun.1
@@ -51,5 +53,3 @@ ompi-clean.1: $(top_srcdir)/orte/tools/orte-clean/orte-clean.1
 
 distclean-local:
 	rm -f mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1
-
-endif # OMPI_INSTALL_BINARIES

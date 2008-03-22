@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,48 +19,24 @@
 
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
-EXTRA_DIST = \
-	generic_wrapper.1 \
-	opal_wrapper.1 \
-	opalcc.1 \
-	opalc++.1
-
-man_MANS = opal_wrapper.1
+EXTRA_DIST = generic_wrapper.1
 
 if OMPI_INSTALL_BINARIES
 
-# install even if we don't want the headers / opalcc, as we need it
-# for the MPI layer
-opal_wrapper_SOURCES = \
-	opal_wrapper.c
-
-opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal.la
-opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopen-pal.la
-
 bin_PROGRAMS = opal_wrapper
 
-dist_pkgdata_DATA = \
-        help-opal-wrapper.txt
+dist_man_MANS = opal_wrapper.1
 
-endif # OMPI_INSTALL_BINARIES
+dist_pkgdata_DATA = help-opal-wrapper.txt
 
+# Only install the following for developer-level installs
 if WANT_INSTALL_HEADERS
 
 nodist_pkgdata_DATA = \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
 
-# Whether or not --enable-binaries was given to configure (useful for
-# multi-lib installations).  If this was not given, we do not build /
-# install the applications / man pages
-
-if OMPI_INSTALL_BINARIES
-
-# List all man pages that will be installed
-
-man_MANS += \
-	opalcc.1 \
-	opalc++.1
+dist_man_MANS += opalcc.1 opalc++.1
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
@@ -70,9 +46,12 @@ uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/opalc++$(EXEEXT)
 
-endif # OPAL_INSTALL_BINARIES
-
 endif # WANT_INSTALL_HEADERS
+
+endif # OMPI_INSTALL_BINARIES
+
+opal_wrapper_SOURCES = opal_wrapper.c
+opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal.la
 
 maintainer-clean-local:
 	rm -f opalcc.1 opalc++.1
