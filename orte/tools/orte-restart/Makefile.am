@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -16,23 +17,13 @@
 # $HEADER$
 #
 
-nodist_pkgdata_DATA = 
-dist_pkgdata_DATA = \
-	help-orte-restart.txt
-
-orte_restart_SOURCES = \
-	orte-restart.c
-
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-restart
 
-# Manual pages
-man_MANS = orte-restart.1 ompi-restart.1
-EXTRA_DIST = orte-restart.1
+dist_man_MANS = orte-restart.1 ompi-restart.1
 
-orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la
-orte_restart_DEPENDENCIES = $(top_builddir)/orte/libopen-rte.la
+dist_pkgdata_DATA = help-orte-restart.txt
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f ompi-restart$(EXEEXT); $(LN_S) orte-restart$(EXEEXT) ompi-restart$(EXEEXT))
@@ -40,9 +31,13 @@ install-exec-hook:
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ompi-restart$(EXEEXT)
 
+endif # OMPI_INSTALL_BINARIES
+
+orte_restart_SOURCES = orte-restart.c
+orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la
+
 ompi-restart.1: $(top_srcdir)/orte/tools/orte-restart/orte-restart.1
 	cp -f $(top_srcdir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
 
 distclean-local:
 	rm -f ompi-restart.1
-endif

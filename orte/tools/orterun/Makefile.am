@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,9 +26,15 @@
 
 CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
-libs = \
-        $(top_builddir)/opal/libopen-pal.la 	\
-        $(top_builddir)/orte/libopen-rte.la
+if OMPI_INSTALL_BINARIES
+
+bin_PROGRAMS = orterun
+
+dist_man_MANS = orterun.1
+
+dist_pkgdata_DATA = help-orterun.txt
+
+endif # OMPI_INSTALL_BINARIES
 
 orterun_SOURCES = \
         main.c \
@@ -35,19 +42,4 @@ orterun_SOURCES = \
         orterun.h \
         totalview.c \
         totalview.h 
-
-orterun_LDADD = $(libs) 
-orterun_DEPENDENCIES = $(libs)
-
-if OMPI_INSTALL_BINARIES
-
-bin_PROGRAMS = orterun
-
-dist_pkgdata_DATA = help-orterun.txt
-
-# AM 1.9.6 seems to have a bug in it's dependencies for install-man if
-#dist_ and nodist_ are used, so explicitly add to EXTRA_DIST...
-man_MANS = orterun.1
-EXTRA_DIST = orterun.1
-
-endif
+orterun_LDADD = $(top_builddir)/orte/libopen-rte.la

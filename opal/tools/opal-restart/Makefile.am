@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -16,19 +17,16 @@
 # $HEADER$
 #
 
-nodist_pkgdata_DATA = 
-dist_pkgdata_DATA = \
-	help-opal-restart.txt
+if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = opal-restart
 
-opal_restart_SOURCES = \
-	opal-restart.c
+dist_man_MANS = opal-restart.1
 
-# Manual pages
-man_MANS = opal-restart.1
-EXTRA_DIST = opal-restart.1
+dist_pkgdata_DATA = help-opal-restart.txt
 
+endif # OMPI_INSTALL_BINARIES
+
+opal_restart_SOURCES = opal-restart.c
 opal_restart_LDADD = $(top_builddir)/opal/libopen-pal.la
-opal_restart_DEPENDENCIES = $(top_builddir)/opal/libopen-pal.la
 

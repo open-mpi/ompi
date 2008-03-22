@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,20 +19,13 @@
 
 if OMPI_INSTALL_BINARIES
 
-nodist_pkgdata_DATA = 
-dist_pkgdata_DATA = \
-	help-orte-ps.txt
-
 bin_PROGRAMS = orte-ps
 
-orte_ps_SOURCES = \
-	orte-ps.c
+dist_man_MANS = orte-ps.1
 
-# Manual pages
-man_MANS = orte-ps.1
-EXTRA_DIST = orte-ps.1
-
-orte_ps_LDADD = $(top_builddir)/orte/libopen-rte.la
-orte_ps_DEPENDENCIES = $(top_builddir)/orte/libopen-rte.la
+dist_pkgdata_DATA = help-orte-ps.txt
 
 endif # OMPI_INSTALL_BINARIES
+
+orte_ps_SOURCES = orte-ps.c
+orte_ps_LDADD = $(top_builddir)/orte/libopen-rte.la

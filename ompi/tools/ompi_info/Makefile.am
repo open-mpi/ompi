@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -39,15 +40,13 @@ AM_CPPFLAGS = \
 
 if OMPI_INSTALL_BINARIES
 
-dist_pkgdata_DATA = help-ompi_info.txt
-
 bin_PROGRAMS = ompi_info
 
-endif
+dist_pkgdata_DATA = help-ompi_info.txt
 
-libs = \
-        $(top_builddir)/ompi/libmpi.la \
-		$(top_builddir)/opal/libopen-pal.la
+dist_man_MANS = ompi_info.1
+
+endif
 
 ompi_info_SOURCES = \
         components.cc \
@@ -56,14 +55,7 @@ ompi_info_SOURCES = \
         output.cc \
         param.cc \
         version.cc 
-ompi_info_LDADD = $(libs)
-ompi_info_LDFLAGS = 
-ompi_info_DEPENDENCIES = $(libs)
-
-# AM 1.9.6 seems to have a bug in its dependencies for install-man if
-# dist_ and nodist_ are used, so explicitly add to EXTRA_DIST...
-man_MANS = ompi_info.1
-EXTRA_DIST = $(man_MANS)
+ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)

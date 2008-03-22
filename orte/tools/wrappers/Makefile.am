@@ -9,17 +9,13 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
-EXTRA_DIST = \
-	ortecc.1 \
-	ortec++.1
 
 if WANT_INSTALL_HEADERS
 
@@ -29,7 +25,7 @@ nodist_pkgdata_DATA = \
 
 if OMPI_INSTALL_BINARIES
 
-man_MANS = \
+dist_man_MANS = \
 	ortecc.1 \
 	ortec++.1
 

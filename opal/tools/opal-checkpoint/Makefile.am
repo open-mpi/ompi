@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -16,19 +17,16 @@
 # $HEADER$
 #
 
-nodist_pkgdata_DATA = 
-dist_pkgdata_DATA = \
-	help-opal-checkpoint.txt
+if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = opal-checkpoint
 
-opal_checkpoint_SOURCES = \
-	opal-checkpoint.c
+dist_man_MANS = opal-checkpoint.1
 
-# Manual pages
-man_MANS = opal-checkpoint.1
-EXTRA_DIST = opal-checkpoint.1
+dist_pkgdata_DATA = help-opal-checkpoint.txt
 
+endif # OMPI_INSTALL_BINARIES
+
+opal_checkpoint_SOURCES = opal-checkpoint.c
 opal_checkpoint_LDADD = $(top_builddir)/opal/libopen-pal.la
-opal_checkpoint_DEPENDENCIES = $(top_builddir)/opal/libopen-pal.la
 
