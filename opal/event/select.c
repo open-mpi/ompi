@@ -28,7 +28,6 @@
  */
 #include "opal_config.h"
 #include "opal/util/output.h"
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -41,10 +40,7 @@
 #include <sys/select.h>
 #endif
 #include <sys/queue.h>
-#include <sys/tree.h>
-#ifndef __WINDOWS__
 #include <signal.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,14 +54,12 @@
 
 #include "event.h"
 #include "event-internal.h"
-#if OPAL_EVENT_USE_SIGNALS
 #include "evsignal.h"
-#endif
 #include "log.h"
-
 #include "opal/threads/mutex.h"
 
 extern opal_mutex_t opal_event_lock;
+
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
@@ -74,11 +68,12 @@ extern opal_mutex_t opal_event_lock;
 #if OPAL_EVENT_USE_SIGNALS
 extern volatile sig_atomic_t opal_evsignal_caught;
 #endif
-
 #ifdef __WINDOWS__
 #define NFDBITS 32
 int fd_mask;
 #endif
+
+
 
 struct selectop {
 	int event_fds;		/* Highest fd in fd set */
@@ -87,51 +82,45 @@ struct selectop {
 	fd_set *event_writeset_in;
 	fd_set *event_readset_out;
 	fd_set *event_writeset_out;
-	struct opal_event **event_r_by_fd;
-	struct opal_event **event_w_by_fd;
-#if OPAL_EVENT_USE_SIGNALS
-	sigset_t evsigmask;
-#endif
+	struct event **event_r_by_fd;
+	struct event **event_w_by_fd;
 };
 
-static void *select_init	(void);
-static int select_add		(void *, struct opal_event *);
-static int select_del		(void *, struct opal_event *);
-static int select_recalc	(struct event_base *, void *, int);
+static void *select_init	(struct event_base *);
+static int select_add		(void *, struct event *);
+static int select_del		(void *, struct event *);
 static int select_dispatch	(struct event_base *, void *, struct timeval *);
+static void select_dealloc     (struct event_base *, void *);
 
-const struct opal_eventop opal_selectops = {
+const struct eventop selectops = {
 	"select",
 	select_init,
 	select_add,
 	select_del,
-#ifdef WIN32
-    NULL,
-#else
-	select_recalc,
-#endif
-	select_dispatch
+	select_dispatch,
+	select_dealloc,
+	0
 };
 
 static int select_resize(struct selectop *sop, int fdsz);
 
 static void *
-select_init(void)
+select_init(struct event_base *base)
 {
 	struct selectop *sop;
 
-	/* Disable kqueue when this environment variable is set */
+	/* Disable select when this environment variable is set */
 	if (getenv("EVENT_NOSELECT"))
 		return (NULL);
+
 	if (!(sop = calloc(1, sizeof(struct selectop))))
 		return (NULL);
 
-        select_resize(sop, howmany(32 + 1, NFDBITS)*sizeof(fd_mask));
+	select_resize(sop, howmany(32 + 1, NFDBITS)*sizeof(fd_mask));
 
 #if OPAL_EVENT_USE_SIGNALS
-	opal_evsignal_init(&sop->evsigmask);
+	evsignal_init(base);
 #endif
-
 	return (sop);
 }
 
@@ -140,17 +129,17 @@ static void
 check_selectop(struct selectop *sop)
 {
 	int i;
-	for (i=0;i<=sop->event_fds;++i) {
+	for (i = 0; i <= sop->event_fds; ++i) {
 		if (FD_ISSET(i, sop->event_readset_in)) {
 			assert(sop->event_r_by_fd[i]);
-			assert(sop->event_r_by_fd[i]->ev_events & EV_READ);
+			assert(sop->event_r_by_fd[i]->ev_events & OPAL_EV_READ);
 			assert(sop->event_r_by_fd[i]->ev_fd == i);
 		} else {
 			assert(! sop->event_r_by_fd[i]);
 		}
 		if (FD_ISSET(i, sop->event_writeset_in)) {
 			assert(sop->event_w_by_fd[i]);
-			assert(sop->event_w_by_fd[i]->ev_events & EV_WRITE);
+			assert(sop->event_w_by_fd[i]->ev_events & OPAL_EV_WRITE);
 			assert(sop->event_w_by_fd[i]->ev_fd == i);
 		} else {
 			assert(! sop->event_w_by_fd[i]);
@@ -159,27 +148,8 @@ check_selectop(struct selectop *sop)
 
 }
 #else
-#define check_selectop(sop)
+#define check_selectop(sop) do { (void) sop; } while (0)
 #endif
-
-/*
- * Called with the highest fd that we know about.  If it is 0, completely
- * recalculate everything.
- */
-
-static int 
-select_recalc(struct event_base *base, void *arg, int max)
-{
-	struct selectop *sop = arg;
-
-	check_selectop(sop);
-
-#if OPAL_EVENT_USE_SIGNALS
-	return (opal_evsignal_recalc(&sop->evsigmask));
-#else
-	return (0);
-#endif
-}
 
 static int
 select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
@@ -194,73 +164,40 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	memcpy(sop->event_writeset_out, sop->event_writeset_in,
 	       sop->event_fdsz);
 
-#if OPAL_EVENT_USE_SIGNALS
-	if (opal_evsignal_deliver(&sop->evsigmask) == -1)
-		return (-1);
-#endif
-
         /* we should release the lock if we're going to enter the
            kernel in a multi-threaded application.  However, if we're
            single threaded, there's really no advantage to releasing
            the lock and it just takes up time we could spend doing
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
-	    res = select(sop->event_fds + 1, sop->event_readset_out,
-	                 sop->event_writeset_out, NULL, tv);
-        OPAL_THREAD_LOCK(&opal_event_lock);
+	
+	res = select(sop->event_fds + 1, sop->event_readset_out,
+	    sop->event_writeset_out, NULL, tv);
 
-        check_selectop(sop);
-#if OPAL_EVENT_USE_SIGNALS
-	if (opal_evsignal_recalc(&sop->evsigmask) == -1)
-		return (-1);
-#endif
+        OPAL_THREAD_LOCK(&opal_event_lock);
+        
+	check_selectop(sop);
 
 	if (res == -1) {
-#if 0
-            if (errno == EBADF) {
-                /* poll each of the file descriptors individually to determine  
-                 * which is bad 
-                 */
-                for (ev = TAILQ_FIRST(&base->eventqueue); ev != NULL; ev = next) {
-                    next = TAILQ_NEXT(ev, ev_next);
-
-                    tv->tv_sec = 0;
-                    tv->tv_usec = 0;
-	                memset(sop->event_readset, 0, sop->event_fdsz);
-	                memset(sop->event_writeset, 0, sop->event_fdsz);
-                    if (ev->ev_events & OPAL_EV_WRITE)
-                        FD_SET(ev->ev_fd, sop->event_writeset);
-                    if (ev->ev_events & OPAL_EV_READ)
-                        FD_SET(ev->ev_fd, sop->event_readset);
-	                res = select(sop->event_fds + 1, sop->event_readset, 
-                                 sop->event_writeset, NULL, tv);
-                    if(res < 0) {
-                        opal_output(0, "bad file descriptor: %d\n", ev->ev_fd);
-                        opal_event_del_i(ev);
-                    }
-                }
-            }
-#endif
 		if (errno != EINTR) {
-                    opal_output(0, "select failed with errno=%d\n", errno);
+			event_warn("select");
 			return (-1);
 		}
-
 #if OPAL_EVENT_USE_SIGNALS
-		opal_evsignal_process();
+		evsignal_process(base);
 #endif
 		return (0);
-	} 
 #if OPAL_EVENT_USE_SIGNALS
-	else if (opal_evsignal_caught)
-		opal_evsignal_process();
+	} else if (base->sig.evsignal_caught) {
+		evsignal_process(base);
 #endif
+	}
 
 	event_debug(("%s: select reports %d", __func__, res));
 
 	check_selectop(sop);
 	for (i = 0; i <= sop->event_fds; ++i) {
-		struct opal_event *r_ev = NULL, *w_ev = NULL;
+		struct event *r_ev = NULL, *w_ev = NULL;
 		res = 0;
 		if (FD_ISSET(i, sop->event_readset_out)) {
 			r_ev = sop->event_r_by_fd[i];
@@ -271,20 +208,17 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			res |= OPAL_EV_WRITE;
 		}
 		if (r_ev && (res & r_ev->ev_events)) {
-			if (!(r_ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del_i(r_ev);
-			opal_event_active_i(r_ev, res & r_ev->ev_events, 1);
+			event_active(r_ev, res & r_ev->ev_events, 1);
 		}
 		if (w_ev && w_ev != r_ev && (res & w_ev->ev_events)) {
-			if (!(w_ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del_i(w_ev);
-			opal_event_active_i(w_ev, res & w_ev->ev_events, 1);
+			event_active(w_ev, res & w_ev->ev_events, 1);
 		}
 	}
 	check_selectop(sop);
 
 	return (0);
 }
+
 
 static int
 select_resize(struct selectop *sop, int fdsz)
@@ -295,8 +229,8 @@ select_resize(struct selectop *sop, int fdsz)
 	fd_set *writeset_in = NULL;
 	fd_set *readset_out = NULL;
 	fd_set *writeset_out = NULL;
-	struct opal_event **r_by_fd = NULL;
-	struct opal_event **w_by_fd = NULL;
+	struct event **r_by_fd = NULL;
+	struct event **w_by_fd = NULL;
 
 	n_events = (fdsz/sizeof(fd_mask)) * NFDBITS;
 	n_events_old = (sop->event_fdsz/sizeof(fd_mask)) * NFDBITS;
@@ -344,16 +278,15 @@ select_resize(struct selectop *sop, int fdsz)
 	return (-1);
 }
 
+
 static int
-select_add(void *arg, struct opal_event *ev)
+select_add(void *arg, struct event *ev)
 {
 	struct selectop *sop = arg;
-
 #if OPAL_EVENT_USE_SIGNALS
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_add(&sop->evsigmask, ev));
+		return (evsignal_add(ev));
 #endif
-
 	check_selectop(sop);
 	/*
 	 * Keep track of the highest fd, so that we can calculate the size
@@ -362,7 +295,7 @@ select_add(void *arg, struct opal_event *ev)
 	if (sop->event_fds < ev->ev_fd) {
 		int fdsz = sop->event_fdsz;
 
-		if (fdsz < (int) sizeof(fd_mask))
+		if (fdsz < (int)sizeof(fd_mask))
 			fdsz = sizeof(fd_mask);
 
 		while (fdsz <
@@ -397,16 +330,15 @@ select_add(void *arg, struct opal_event *ev)
  */
 
 static int
-select_del(void *arg, struct opal_event *ev)
+select_del(void *arg, struct event *ev)
 {
 	struct selectop *sop = arg;
 
 	check_selectop(sop);
 #if OPAL_EVENT_USE_SIGNALS
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_del(&sop->evsigmask, ev));
+		return (evsignal_del(ev));
 #endif
-
 	if (sop->event_fds < ev->ev_fd) {
 		check_selectop(sop);
 		return (0);
@@ -426,3 +358,25 @@ select_del(void *arg, struct opal_event *ev)
 	return (0);
 }
 
+static void
+select_dealloc(struct event_base *base, void *arg)
+{
+	struct selectop *sop = arg;
+
+	evsignal_dealloc(base);
+	if (sop->event_readset_in)
+		free(sop->event_readset_in);
+	if (sop->event_writeset_in)
+		free(sop->event_writeset_in);
+	if (sop->event_readset_out)
+		free(sop->event_readset_out);
+	if (sop->event_writeset_out)
+		free(sop->event_writeset_out);
+	if (sop->event_r_by_fd)
+		free(sop->event_r_by_fd);
+	if (sop->event_w_by_fd)
+		free(sop->event_w_by_fd);
+
+	memset(sop, 0, sizeof(struct selectop));
+	free(sop);
+}

@@ -2,14 +2,17 @@
  * Compile with:
  * cc -I/usr/local/include -o time-test time-test.c -L/usr/local/lib -levent
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifdef HAVE_SYS_TYPES_H
+
+#ifdef WIN32
+#include <winsock2.h>
+#endif
 #include <sys/types.h>
-#endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -17,17 +20,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <errno.h>
 
 #include <event.h>
+#include <evutil.h>
 
 int test_okay = 1;
 int called = 0;
 
-void
+static void
 read_cb(int fd, short event, void *arg)
 {
 	char buf[256];
@@ -40,21 +42,25 @@ read_cb(int fd, short event, void *arg)
 
 	if (len) {
 		if (!called)
-			opal_event_add(arg, NULL);
+			event_add(arg, NULL);
 	} else if (called == 1)
 		test_okay = 0;
 
 	called++;
 }
 
+#ifndef SHUT_WR
+#define SHUT_WR 1
+#endif
+
 int
 main (int argc, char **argv)
 {
-	struct opal_event ev;
-	char *test = "test string";
+	struct event ev;
+	const char *test = "test string";
 	int pair[2];
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
+	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		return (1);
 
 	
@@ -62,14 +68,14 @@ main (int argc, char **argv)
 	shutdown(pair[0], SHUT_WR);
 
 	/* Initalize the event library */
-	opal_event_init();
+	event_init();
 
 	/* Initalize one event */
-	opal_event_set(&ev, pair[1], OPAL_EV_READ, read_cb, &ev);
+	event_set(&ev, pair[1], EV_READ, read_cb, &ev);
 
-	opal_event_add(&ev, NULL);
+	event_add(&ev, NULL);
 
-	opal_event_dispatch();
+	event_dispatch();
 
 	return (test_okay);
 }

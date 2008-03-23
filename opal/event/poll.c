@@ -37,7 +37,6 @@
 #include <sys/_time.h>
 #endif
 #include <sys/queue.h>
-#include <sys/tree.h>
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif
@@ -66,72 +65,50 @@
 extern volatile sig_atomic_t opal_evsignal_caught;
 extern opal_mutex_t opal_event_lock;
 
-extern volatile sig_atomic_t evsignal_caught;
 
 struct pollop {
 	int event_count;		/* Highest number alloc */
 	int nfds;                       /* Size of event_* */
 	int fd_count;                   /* Size of idxplus1_by_fd */
 	struct pollfd *event_set;
-	struct opal_event **event_r_back;
-	struct opal_event **event_w_back;
+	struct event **event_r_back;
+	struct event **event_w_back;
 	int *idxplus1_by_fd; /* Index into event_set by fd; we add 1 so
 			      * that 0 (which is easy to memset) can mean
 			      * "no entry." */
-#if OPAL_EVENT_USE_SIGNALS
-	sigset_t evsigmask;
-#endif
 };
 
-void *poll_init	(void);
-int poll_add		(void *, struct opal_event *);
-int poll_del		(void *, struct opal_event *);
-int poll_recalc		(struct event_base *, void *, int);
-int poll_dispatch	(struct event_base *, void *, struct timeval *);
+static void *poll_init	(struct event_base *);
+static int poll_add		(void *, struct event *);
+static int poll_del		(void *, struct event *);
+static int poll_dispatch	(struct event_base *, void *, struct timeval *);
+static void poll_dealloc	(struct event_base *, void *);
 
-struct opal_eventop opal_pollops = {
+const struct eventop pollops = {
 	"poll",
 	poll_init,
 	poll_add,
 	poll_del,
-	poll_recalc,
-	poll_dispatch
+	poll_dispatch,
+	poll_dealloc,
+    0
 };
 
-void *
-poll_init(void)
+static void *
+poll_init(struct event_base *base)
 {
 	struct pollop *pollop;
 
-	/* Disable kqueue when this environment variable is set */
+	/* Disable poll when this environment variable is set */
 	if (getenv("EVENT_NOPOLL"))
 		return (NULL);
 
-        if (!(pollop = calloc(1, sizeof(struct pollop))))
+	if (!(pollop = calloc(1, sizeof(struct pollop))))
 		return (NULL);
-
 #if OPAL_EVENT_USE_SIGNALS
-	opal_evsignal_init(&pollop->evsigmask);
+	evsignal_init(base);
 #endif
-
 	return (pollop);
-}
-
-/*
- * Called with the highest fd that we know about.  If it is 0, completely
- * recalculate everything.
- */
-
-int
-poll_recalc(struct event_base *base, void *arg, int max)
-{
-#if OPAL_EVENT_USE_SIGNALS
-	struct pollop *pop = arg;
-
-	return (opal_evsignal_recalc(&pop->evsigmask));
-#else
-        return 0;
-#endif
 }
 
 #ifdef CHECK_INVARIANTS
@@ -139,7 +116,7 @@ static void
 poll_check_ok(struct pollop *pop)
 {
 	int i, idx;
-	struct opal_event *ev;
+	struct event *ev;
 
 	for (i = 0; i < pop->fd_count; ++i) {
 		idx = pop->idxplus1_by_fd[i]-1;
@@ -168,49 +145,44 @@ poll_check_ok(struct pollop *pop)
 #define poll_check_ok(pop)
 #endif
 
-int
+static int
 poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
-	int res, i, sec, nfds;
+	int res, i, msec = -1, nfds;
 	struct pollop *pop = arg;
 
-#if OPAL_EVENT_USE_SIGNALS
-	if (opal_evsignal_deliver(&pop->evsigmask) == -1)
-		return (-1);
-#endif
-
 	poll_check_ok(pop);
-	sec = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
+
+	if (tv != NULL)
+		msec = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
+
 	nfds = pop->nfds;
+        
         /* we should release the lock if we're going to enter the
            kernel in a multi-threaded application.  However, if we're
            single threaded, there's really no advantage to releasing
            the lock and it just takes up time we could spend doing
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
-	res = poll(pop->event_set, nfds, sec);
-        OPAL_THREAD_LOCK(&opal_event_lock);
 
-#if OPAL_EVENT_USE_SIGNALS
-	if (opal_evsignal_recalc(&pop->evsigmask) == -1)
-		return (-1);
-#endif
+        res = poll(pop->event_set, nfds, msec);
+
+        OPAL_THREAD_LOCK(&opal_event_lock);
 
 	if (res == -1) {
 		if (errno != EINTR) {
                         event_warn("poll");
 			return (-1);
 		}
-
 #if OPAL_EVENT_USE_SIGNALS
-		opal_evsignal_process();
+		evsignal_process(base);
 #endif
 		return (0);
-	}
+	} else if (base->sig.evsignal_caught) {
 #if OPAL_EVENT_USE_SIGNALS
-        else if (opal_evsignal_caught)
-		opal_evsignal_process();
+		evsignal_process(base);
 #endif
+	}
 
 	event_debug(("%s: poll reports %d", __func__, res));
 
@@ -218,8 +190,8 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		return (0);
 
 	for (i = 0; i < nfds; i++) {
-                int what = pop->event_set[i].revents;
-		struct opal_event *r_ev = NULL, *w_ev = NULL;
+		int what = pop->event_set[i].revents;
+		struct event *r_ev = NULL, *w_ev = NULL;
 		if (!what)
 			continue;
 
@@ -240,22 +212,18 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			continue;
 
 		if (r_ev && (res & r_ev->ev_events)) {
-			if (!(r_ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del_i(r_ev);
-			opal_event_active_i(r_ev, res & r_ev->ev_events, 1);
+			event_active(r_ev, res & r_ev->ev_events, 1);
 		}
 		if (w_ev && w_ev != r_ev && (res & w_ev->ev_events)) {
-			if (!(w_ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del_i(w_ev);
-			opal_event_active_i(w_ev, res & w_ev->ev_events, 1);
+			event_active(w_ev, res & w_ev->ev_events, 1);
 		}
 	}
 
 	return (0);
 }
 
-int
-poll_add(void *arg, struct opal_event *ev)
+static int
+poll_add(void *arg, struct event *ev)
 {
 	struct pollop *pop = arg;
 	struct pollfd *pfd = NULL;
@@ -263,36 +231,55 @@ poll_add(void *arg, struct opal_event *ev)
 
 #if OPAL_EVENT_USE_SIGNALS
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_add(&pop->evsigmask, ev));
+		return (evsignal_add(ev));
 #endif
 	if (!(ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE)))
 		return (0);
 
 	poll_check_ok(pop);
 	if (pop->nfds + 1 >= pop->event_count) {
+		struct pollfd *tmp_event_set;
+		struct event **tmp_event_r_back;
+		struct event **tmp_event_w_back;
+		int tmp_event_count;
+
 		if (pop->event_count < 32)
-			pop->event_count = 32;
+			tmp_event_count = 32;
 		else
-			pop->event_count *= 2;
+			tmp_event_count = pop->event_count * 2;
 
 		/* We need more file descriptors */
-		pop->event_set = realloc(pop->event_set,
-				 pop->event_count * sizeof(struct pollfd));
-		if (pop->event_set == NULL) {
+		tmp_event_set = realloc(pop->event_set,
+				 tmp_event_count * sizeof(struct pollfd));
+		if (tmp_event_set == NULL) {
 			event_warn("realloc");
 			return (-1);
 		}
-		pop->event_r_back = realloc(pop->event_r_back,
-			    pop->event_count * sizeof(struct opal_event *));
-		pop->event_w_back = realloc(pop->event_w_back,
-			    pop->event_count * sizeof(struct opal_event *));
-		if (pop->event_r_back == NULL ||
-		    pop->event_w_back == NULL) {
+		pop->event_set = tmp_event_set;
+
+		tmp_event_r_back = realloc(pop->event_r_back,
+			    tmp_event_count * sizeof(struct event *));
+		if (tmp_event_r_back == NULL) {
+			/* event_set overallocated; that's okay. */
 			event_warn("realloc");
 			return (-1);
 		}
+		pop->event_r_back = tmp_event_r_back;
+
+		tmp_event_w_back = realloc(pop->event_w_back,
+			    tmp_event_count * sizeof(struct event *));
+		if (tmp_event_w_back == NULL) {
+			/* event_set and event_r_back overallocated; that's
+			 * okay. */
+			event_warn("realloc");
+			return (-1);
+		}
+		pop->event_w_back = tmp_event_w_back;
+
+		pop->event_count = tmp_event_count;
 	}
 	if (ev->ev_fd >= pop->fd_count) {
+		int *tmp_idxplus1_by_fd;
 		int new_count;
 		if (pop->fd_count < 32)
 			new_count = 32;
@@ -300,12 +287,13 @@ poll_add(void *arg, struct opal_event *ev)
 			new_count = pop->fd_count * 2;
 		while (new_count <= ev->ev_fd)
 			new_count *= 2;
-		pop->idxplus1_by_fd =
-			realloc(pop->idxplus1_by_fd, new_count*sizeof(int));
-		if (pop->idxplus1_by_fd == NULL) {
+		tmp_idxplus1_by_fd =
+			realloc(pop->idxplus1_by_fd, new_count * sizeof(int));
+		if (tmp_idxplus1_by_fd == NULL) {
 			event_warn("realloc");
 			return (-1);
 		}
+		pop->idxplus1_by_fd = tmp_idxplus1_by_fd;
 		memset(pop->idxplus1_by_fd + pop->fd_count,
 		       0, sizeof(int)*(new_count - pop->fd_count));
 		pop->fd_count = new_count;
@@ -341,18 +329,16 @@ poll_add(void *arg, struct opal_event *ev)
  * Nothing to be done here.
  */
 
-int
-poll_del(void *arg, struct opal_event *ev)
+static int
+poll_del(void *arg, struct event *ev)
 {
 	struct pollop *pop = arg;
 	struct pollfd *pfd = NULL;
 	int i;
-
 #if OPAL_EVENT_USE_SIGNALS
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_del(&pop->evsigmask, ev));
+		return (evsignal_del(ev));
 #endif
-
 	if (!(ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE)))
 		return (0);
 
@@ -394,4 +380,23 @@ poll_del(void *arg, struct opal_event *ev)
 
 	poll_check_ok(pop);
 	return (0);
+}
+
+static void
+poll_dealloc(struct event_base *base, void *arg)
+{
+	struct pollop *pop = arg;
+
+	evsignal_dealloc(base);
+	if (pop->event_set)
+		free(pop->event_set);
+	if (pop->event_r_back)
+		free(pop->event_r_back);
+	if (pop->event_w_back)
+		free(pop->event_w_back);
+	if (pop->idxplus1_by_fd)
+		free(pop->idxplus1_by_fd);
+
+	memset(pop, 0, sizeof(struct pollop));
+	free(pop);
 }

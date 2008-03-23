@@ -26,8 +26,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opal_config.h"
 
+#include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -50,18 +50,23 @@
 #include <inttypes.h>
 #endif
 
-#if defined(HAVE_INTTYPES_H) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
-#define INTPTR(x)	(intptr_t)x
+/* Some platforms apparently define the udata field of struct kevent as
+ * intptr_t, whereas others define it as void*.  There doesn't seem to be an
+ * easy way to tell them apart via autoconf, so we need to use OS macros. */
+#if defined(HAVE_INTTYPES_H) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__darwin__) && !defined(__APPLE__)
+#define PTR_TO_UDATA(x)	((intptr_t)(x))
 #else
-#define INTPTR(x)	x
+#define PTR_TO_UDATA(x)	(x)
 #endif
 
 #include "event.h"
+#include "event-internal.h"
 #include "log.h"
-
 #include "opal/threads/mutex.h"
 
 extern opal_mutex_t opal_event_lock;
+
+
 
 #define EVLIST_X_KQINKERNEL	0x1000
 
@@ -75,87 +80,150 @@ struct kqop {
 	int kq;
 };
 
-static void *kq_init	(void);
-static int kq_add	(void *, struct opal_event *);
-static int kq_del	(void *, struct opal_event *);
-static int kq_recalc	(struct event_base *, void *, int);
+static void *kq_init	(struct event_base *);
+static int kq_add	(void *, struct event *);
+static int kq_del	(void *, struct event *);
 static int kq_dispatch	(struct event_base *, void *, struct timeval *);
 static int kq_insert	(struct kqop *, struct kevent *);
+static void kq_dealloc (struct event_base *, void *);
 
-const struct opal_eventop opal_kqops = {
+const struct eventop kqops = {
 	"kqueue",
 	kq_init,
 	kq_add,
 	kq_del,
-	kq_recalc,
-	kq_dispatch
+	kq_dispatch,
+	kq_dealloc,
+	1 /* need reinit */
 };
 
 static void *
-kq_init(void)
+kq_init(struct event_base *base)
 {
-	int kq;
-	struct kqop *kqueueop;
+    int kq;
+    struct kqop *kqueueop;
 
-	/* Disable kqueue when this environment variable is set */
-	if (getenv("EVENT_NOKQUEUE"))
-		return (NULL);
+    /* Disable kqueue when this environment variable is set */
+    if (getenv("EVENT_NOKQUEUE"))
+        return (NULL);
 
-	if (!(kqueueop = calloc(1, sizeof(struct kqop))))
-		return (NULL);
+    if (!(kqueueop = calloc(1, sizeof(struct kqop))))
+        return (NULL);
 
-	/* Initalize the kernel queue */
+    /* Initalize the kernel queue */
 	
-	if ((kq = kqueue()) == -1) {
-		event_warn("kqueue");
-		free (kqueueop);
-		return (NULL);
-	}
+    if ((kq = kqueue()) == -1) {
+        event_warn("kqueue");
+        free (kqueueop);
+        return (NULL);
+    }
 
-	kqueueop->kq = kq;
+    kqueueop->kq = kq;
 
-	/* Initalize fields */
-	kqueueop->changes = malloc(NEVENT * sizeof(struct kevent));
-	if (kqueueop->changes == NULL) {
-		free (kqueueop);
-		return (NULL);
-	}
-	kqueueop->events = malloc(NEVENT * sizeof(struct kevent));
-	if (kqueueop->events == NULL) {
-		free (kqueueop->changes);
-		free (kqueueop);
-		return (NULL);
-	}
-	kqueueop->nevents = NEVENT;
+    /* Initalize fields */
+    kqueueop->changes = malloc(NEVENT * sizeof(struct kevent));
+    if (kqueueop->changes == NULL) {
+        free (kqueueop);
+        return (NULL);
+    }
+    kqueueop->events = malloc(NEVENT * sizeof(struct kevent));
+    if (kqueueop->events == NULL) {
+        free (kqueueop->changes);
+        free (kqueueop);
+        return (NULL);
+    }
+    kqueueop->nevents = NEVENT;
 
-	/* Check for Mac OS X kqueue bug. */
-	kqueueop->changes[0].ident = -1;
-	kqueueop->changes[0].filter = EVFILT_READ;
-	kqueueop->changes[0].flags = EV_ADD;
-	/* 
-	 * If kqueue works, then kevent will succeed, and it will
-	 * stick an error in events[0].  If kqueue is broken, then
-	 * kevent will fail.
-	 */
+    /* Check for Mac OS X kqueue bug. */
+    kqueueop->changes[0].ident = -1;
+    kqueueop->changes[0].filter = EVFILT_READ;
+    kqueueop->changes[0].flags = EV_ADD;
+    /* 
+     * If kqueue works, then kevent will succeed, and it will
+     * stick an error in events[0].  If kqueue is broken, then
+     * kevent will fail.
+     */
+    if (kevent(kq,
+               kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
+        kqueueop->events[0].ident != -1 ||
+        kqueueop->events[0].flags != EV_ERROR) {
+        event_warn("%s: detected broken kqueue; not using.", __func__);
+        free(kqueueop->changes);
+        free(kqueueop->events);
+        free(kqueueop);
+        close(kq);
+        return (NULL);
+    }
+    /* Check if the kqueue can support pty */
+    {
+        int master, slave;
+        char name[1024];
+
+        if( 0 > openpty( &master, &slave, name, NULL, NULL ) ) {
+            event_warn("%s: unable to call openpty: error %d (%s)\n",
+                       __func__, errno, strerror(errno) );
+            free(kqueueop->changes);
+            free(kqueueop->events);
+            free(kqueueop);
+            close(kq);
+            return NULL;
+        }
+        kqueueop->changes[0].ident = master;
+        kqueueop->changes[0].filter = EVFILT_READ;
+        kqueueop->changes[0].flags = EV_ADD;
 	if (kevent(kq,
-		kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-	    kqueueop->events[0].ident != (unsigned int) -1 ||
+                   kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
+	    kqueueop->events[0].ident != master ||
 	    kqueueop->events[0].flags != EV_ERROR) {
-		event_warn("%s: detected broken kqueue; not using.", __func__);
-		free(kqueueop->changes);
-		free(kqueueop->events);
-		free(kqueueop);
-		close(kq);
-		return (NULL);
+            event_warn("%s: detected broken kqueue (failed add); not using error %d (%s)\n",
+                       __func__, errno, strerror(errno));
+            free(kqueueop->changes);
+            free(kqueueop->events);
+            free(kqueueop);
+            close(kq);
+            close(master);
+            close(slave);
+            return (NULL);
 	}
+        kqueueop->changes[0].ident = master;
+        kqueueop->changes[0].filter = EVFILT_READ;
+        kqueueop->changes[0].flags = EV_DELETE;
+	if (kevent(kq,
+                   kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
+	    kqueueop->events[0].ident != master ||
+	    kqueueop->events[0].flags != EV_ERROR) {
+            event_warn("%s: detected broken kqueue (failed delete); not using error %d (%s)",
+                       __func__, errno, strerror(errno));
+            free(kqueueop->changes);
+            free(kqueueop->events);
+            free(kqueueop);
+            close(kq);
+            close(master);
+            close(slave);
+            return (NULL);
+	}
+        kqueueop->changes[0].ident = master;
+        kqueueop->changes[0].filter = EVFILT_READ;
+        kqueueop->changes[0].flags = EV_DELETE;
+	if (kevent(kq,
+                   kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
+	    kqueueop->events[0].ident != master ||
+	    kqueueop->events[0].flags != EV_ERROR) {
+            event_warn("%s: detected broken kqueue (failed delete); not using error %d (%s)",
+                       __func__, errno, strerror(errno));
+            free(kqueueop->changes);
+            free(kqueueop->events);
+            free(kqueueop);
+            close(kq);
+            close(master);
+            close(slave);
+            return (NULL);
+	}
+        close(master);
+        close(slave);
+    }
 
-	return (kqueueop);
-}
-
-static int
-kq_recalc(struct event_base *base, void *arg, int max)
-{
-	return (0);
+    return (kqueueop);
 }
 
 static int
@@ -215,23 +283,26 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 	struct kqop *kqop = arg;
 	struct kevent *changes = kqop->changes;
 	struct kevent *events = kqop->events;
-	struct opal_event *ev;
-	struct timespec ts;
+	struct event *ev;
+	struct timespec ts, *ts_p = NULL;
 	int i, res;
 
-	TIMEVAL_TO_TIMESPEC(tv, &ts);
-
+	if (tv != NULL) {
+		TIMEVAL_TO_TIMESPEC(tv, &ts);
+		ts_p = &ts;
+	}
         /* we should release the lock if we're going to enter the
            kernel in a multi-threaded application.  However, if we're
            single threaded, there's really no advantage to releasing
            the lock and it just takes up time we could spend doing
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
-        res = kevent(kqop->kq, changes, kqop->nchanges,
-                     events, kqop->nevents, &ts);
+        
+	res = kevent(kqop->kq, changes, kqop->nchanges,
+	    events, kqop->nevents, ts_p);
         OPAL_THREAD_LOCK(&opal_event_lock);
 
-	kqop->nchanges = 0;
+        kqop->nchanges = 0;
 	if (res == -1) {
 		if (errno != EINTR) {
                         event_warn("kevent");
@@ -264,27 +335,29 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			    events[i].data == ENOENT)
 				continue;
 			errno = events[i].data;
+                        event_warn( "kevent failed with error code %d (%s)\n",
+                                    errno, strerror(errno) );
 			return (-1);
 		}
 
-		ev = (struct opal_event *)events[i].udata;
+		ev = (struct event *)events[i].udata;
 
 		if (events[i].filter == EVFILT_READ) {
-			which |= OPAL_EV_READ;
+			which |= EV_READ;
 		} else if (events[i].filter == EVFILT_WRITE) {
-			which |= OPAL_EV_WRITE;
+			which |= EV_WRITE;
 		} else if (events[i].filter == EVFILT_SIGNAL) {
-			which |= OPAL_EV_SIGNAL;
+			which |= EV_SIGNAL;
 		}
 
 		if (!which)
 			continue;
 
-		if (!(ev->ev_events & OPAL_EV_PERSIST))
-			opal_event_del_i(ev);
+		if (!(ev->ev_events & EV_PERSIST))
+			ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 
-		opal_event_active_i(ev, which,
-		    ev->ev_events & OPAL_EV_SIGNAL ? events[i].data : 1);
+		event_active(ev, which,
+		    ev->ev_events & EV_SIGNAL ? events[i].data : 1);
 	}
 
 	return (0);
@@ -292,33 +365,37 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
 
 static int
-kq_add(void *arg, struct opal_event *ev)
+kq_add(void *arg, struct event *ev)
 {
 	struct kqop *kqop = arg;
 	struct kevent kev;
 
-	if (ev->ev_events & OPAL_EV_SIGNAL) {
+	if (ev->ev_events & EV_SIGNAL) {
 		int nsignal = OPAL_EVENT_SIGNAL(ev);
+                struct timespec timeout = { 0, 0 };
 
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = nsignal;
 		kev.filter = EVFILT_SIGNAL;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & OPAL_EV_PERSIST))
+		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = (void *) INTPTR(ev);
-		
-		if (kq_insert(kqop, &kev) == -1)
-			return (-1);
+		kev.udata = PTR_TO_UDATA(ev);
 
-		if (signal(nsignal, kq_sighandler) == SIG_ERR)
+		/* Be ready for the signal if it is sent any time between
+		 * now and the next call to kq_dispatch. */
+                if (kevent(kqop->kq, &kev, 1, NULL, 0, &timeout) == -1)
+                	return (-1);
+
+		if (_evsignal_set_handler(ev->ev_base, nsignal,
+					  kq_sighandler) == -1)
 			return (-1);
 
 		ev->ev_flags |= EVLIST_X_KQINKERNEL;
 		return (0);
 	}
 
-	if (ev->ev_events & OPAL_EV_READ) {
+	if (ev->ev_events & EV_READ) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
@@ -327,9 +404,9 @@ kq_add(void *arg, struct opal_event *ev)
 		kev.fflags = NOTE_EOF;
 #endif
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & OPAL_EV_PERSIST))
+		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = (void *) INTPTR(ev);
+		kev.udata = PTR_TO_UDATA(ev);
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
@@ -337,14 +414,14 @@ kq_add(void *arg, struct opal_event *ev)
 		ev->ev_flags |= EVLIST_X_KQINKERNEL;
 	}
 
-	if (ev->ev_events & OPAL_EV_WRITE) {
+	if (ev->ev_events & EV_WRITE) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & OPAL_EV_PERSIST))
+		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
-		kev.udata = (void *) INTPTR(ev);
+		kev.udata = PTR_TO_UDATA(ev);
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
@@ -356,7 +433,7 @@ kq_add(void *arg, struct opal_event *ev)
 }
 
 static int
-kq_del(void *arg, struct opal_event *ev)
+kq_del(void *arg, struct event *ev)
 {
 	struct kqop *kqop = arg;
 	struct kevent kev;
@@ -364,25 +441,25 @@ kq_del(void *arg, struct opal_event *ev)
 	if (!(ev->ev_flags & EVLIST_X_KQINKERNEL))
 		return (0);
 
-	if (ev->ev_events & OPAL_EV_SIGNAL) {
+	if (ev->ev_events & EV_SIGNAL) {
 		int nsignal = OPAL_EVENT_SIGNAL(ev);
 
  		memset(&kev, 0, sizeof(kev));
-		kev.ident = (int)signal;
+		kev.ident = nsignal;
 		kev.filter = EVFILT_SIGNAL;
 		kev.flags = EV_DELETE;
 		
 		if (kq_insert(kqop, &kev) == -1)
 			return (-1);
 
-		if (signal(nsignal, SIG_DFL) == SIG_ERR)
+		if (_evsignal_restore_handler(ev->ev_base, nsignal) == -1)
 			return (-1);
 
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 		return (0);
 	}
 
-	if (ev->ev_events & OPAL_EV_READ) {
+	if (ev->ev_events & EV_READ) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
@@ -394,7 +471,7 @@ kq_del(void *arg, struct opal_event *ev)
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 	}
 
-	if (ev->ev_events & OPAL_EV_WRITE) {
+	if (ev->ev_events & EV_WRITE) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;
@@ -407,4 +484,19 @@ kq_del(void *arg, struct opal_event *ev)
 	}
 
 	return (0);
+}
+
+static void
+kq_dealloc(struct event_base *base, void *arg)
+{
+	struct kqop *kqop = arg;
+
+	if (kqop->changes)
+		free(kqop->changes);
+	if (kqop->events)
+		free(kqop->events);
+	if (kqop->kq)
+		close(kqop->kq);
+	memset(kqop, 0, sizeof(struct kqop));
+	free(kqop);
 }

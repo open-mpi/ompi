@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,7 +30,7 @@ AM_CPPFLAGS = \
 SUBDIRS = compat
 
 EXTRA_DIST = event.h event-internal.h evsignal.h event.3 \
-	kqueue.c epoll_sub.c epoll.c select.c rtsig.c poll.c signal.c \
+	kqueue.c epoll_sub.c epoll.c select.c poll.c signal.c \
 	devpoll.c log.h\
 	WIN32-Code/config.h WIN32-Code/misc.c \
 	WIN32-Code/misc.h  WIN32-Code/win32.c
@@ -56,9 +57,9 @@ noinst_LTLIBRARIES = libevent.la
 objects = $(OMPI_LIBEVENT_SOURCES:.c=.lo)
 
 # OMPI: Changed to libevent_la_*
-headers = event.h event_rename.h
+headers = event.h event_rename.h evutil.h min_heap.h
 
-libevent_la_SOURCES = event.c buffer.c evbuffer.c log.c $(headers)
+libevent_la_SOURCES = event.c log.c evutil.c $(headers)
 libevent_la_LIBADD = $(objects)
 libevent_la_DEPENDENCIES = $(objects)
 

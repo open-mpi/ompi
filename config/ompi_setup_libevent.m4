@@ -305,6 +305,15 @@ main()
 	fi
 fi
 
+haveeventports=no
+AC_CHECK_FUNCS(port_create, [haveeventports=yes], )
+if test "x$haveeventports" = "xyes" ; then
+    AC_DEFINE(HAVE_EVENT_PORTS, 1,
+        [Define if your system supports event ports])
+    sources="evport.c $sources"
+    needsignal=yes
+fi
+
 if test "x$needsignal" = "xyes" ; then
     # OMPI: don't use AC_LIBOBJ
     sources="signal.c $sources"

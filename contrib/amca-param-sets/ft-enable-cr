@@ -36,3 +36,8 @@ snapc=full
 #
 pml_wrapper=crcpw
 crcp=coord
+
+#
+# Temporary fix to force the event engine to use poll to behave well with BLCR
+#
+opal_event_include=poll
