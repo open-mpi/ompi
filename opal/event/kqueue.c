@@ -148,7 +148,7 @@ kq_init(struct event_base *base)
      */
     if (kevent(kq,
                kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-        kqueueop->events[0].ident != -1 ||
+        (int)kqueueop->events[0].ident != -1 ||
         kqueueop->events[0].flags != EV_ERROR) {
         event_warn("%s: detected broken kqueue; not using.", __func__);
         free(kqueueop->changes);
@@ -176,7 +176,7 @@ kq_init(struct event_base *base)
         kqueueop->changes[0].flags = EV_ADD;
 	if (kevent(kq,
                    kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-	    kqueueop->events[0].ident != master ||
+	    (int)kqueueop->events[0].ident != master ||
 	    kqueueop->events[0].flags != EV_ERROR) {
             event_warn("%s: detected broken kqueue (failed add); not using error %d (%s)\n",
                        __func__, errno, strerror(errno));
@@ -193,7 +193,7 @@ kq_init(struct event_base *base)
         kqueueop->changes[0].flags = EV_DELETE;
 	if (kevent(kq,
                    kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-	    kqueueop->events[0].ident != master ||
+	    (int)kqueueop->events[0].ident != master ||
 	    kqueueop->events[0].flags != EV_ERROR) {
             event_warn("%s: detected broken kqueue (failed delete); not using error %d (%s)",
                        __func__, errno, strerror(errno));
@@ -210,7 +210,7 @@ kq_init(struct event_base *base)
         kqueueop->changes[0].flags = EV_DELETE;
 	if (kevent(kq,
                    kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-	    kqueueop->events[0].ident != master ||
+	    (int)kqueueop->events[0].ident != master ||
 	    kqueueop->events[0].flags != EV_ERROR) {
             event_warn("%s: detected broken kqueue (failed delete); not using error %d (%s)",
                        __func__, errno, strerror(errno));
