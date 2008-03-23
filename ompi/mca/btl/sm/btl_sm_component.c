@@ -43,7 +43,6 @@
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 

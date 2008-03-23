@@ -30,7 +30,6 @@ headers += \
 	util/pre_condition_transports.h \
         util/proc_info.h \
         util/session_dir.h \
-        util/sys_info.h \
         util/hnp_contact.h \
         util/hostfile/hostfile.h \
         util/hostfile/hostfile_lex.h \
@@ -44,7 +43,6 @@ libopen_rte_la_SOURCES += \
 	util/pre_condition_transports.c \
         util/proc_info.c \
         util/session_dir.c \
-        util/sys_info.c \
         util/hnp_contact.c \
         util/hostfile/hostfile_lex.l \
         util/hostfile/hostfile.c \

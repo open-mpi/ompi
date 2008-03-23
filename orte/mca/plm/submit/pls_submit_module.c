@@ -61,7 +61,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
 
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 
@@ -651,7 +651,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
              * match, check using ifislocal().
              */
             if (!mca_plm_submit_component.force_submit &&
-                (0 == strcmp(nodes[nnode]->name, orte_system_info.nodename) ||
+                (0 == strcmp(nodes[nnode]->name, orte_process_info.nodename) ||
                  opal_ifislocal(nodes[nnode]->name))) {
                 if (mca_plm_submit_component.debug) {
                     opal_output(0, "plm:submit: %s is a LOCAL node\n",

@@ -104,15 +104,11 @@ BEGIN_C_DECLS
  *                placed. A value of "NULL" indicates that the user
  *                specified no location - hence, the function explores
  *                a range of "standard" locations.
-* @param user Name of the user to whom the universe belongs. This will
- *                be used to build the name of the
- *                "openmpi-sessions-[user]@[host]:[batch]" branch of
- *                the directory tree.
  * @param hostid Name of the host on which the session directory is
  *                being built. Used to build the name of the
  *                "openmpi-sessions-[user]@[host]:[batch]" branch of
  *                the directory tree. NULL indicates that the nodename
- *                found in orte_system_info is to be used.
+ *                found in orte_process_info is to be used.
  * @param batchid Batch job name, used in batch scheduling
  *                systems. NULL indicates that the default of "0" is
  *                to be used.
@@ -129,7 +125,7 @@ BEGIN_C_DECLS
  * @retval OMPI_ERROR The directory cannot be found (if create is
  *                "false") or created (if create is "true").
  */
-ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *hostid, 
+ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *hostid, 
                      char *batchid, char *job, char *vpid);
 
 /*
@@ -139,7 +135,7 @@ ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *
 ORTE_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
                                             char **prfx,
                                             char **frontend,
-                                            char *usr, char *hostid,
+                                            char *hostid,
                                             char *batchid, 
                                             char *job, char *proc);
 

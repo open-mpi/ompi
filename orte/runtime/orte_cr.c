@@ -50,7 +50,6 @@
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/runtime.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -340,9 +339,9 @@ static int orte_cr_coord_post_restart(void) {
         orte_process_info.sock_stderr = NULL;
     }
 
-    if( NULL != orte_system_info.nodename ) {
-        free(orte_system_info.nodename);
-        orte_system_info.nodename = NULL;
+    if( NULL != orte_process_info.nodename ) {
+        free(orte_process_info.nodename);
+        orte_process_info.nodename = NULL;
     }
 
     if( NULL != orte_process_info.my_hnp_uri ) {
@@ -358,11 +357,6 @@ static int orte_cr_coord_post_restart(void) {
     /*
      * Refresh System information
      */ 
-    orte_system_info.init = false;
-    if( ORTE_SUCCESS != (ret = orte_sys_info()) ) {
-        exit_status = ret;
-    }
-
     if( ORTE_SUCCESS != (ret = orte_proc_info()) ) {
         exit_status = ret;
     }

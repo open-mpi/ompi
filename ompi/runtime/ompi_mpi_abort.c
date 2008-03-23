@@ -38,7 +38,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/sys_info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -67,7 +66,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        gethostname. */
 
     if (orte_initialized) {
-        host = orte_system_info.nodename;
+        host = orte_process_info.nodename;
     } else {
         gethostname(hostname, sizeof(hostname));
         host = hostname;

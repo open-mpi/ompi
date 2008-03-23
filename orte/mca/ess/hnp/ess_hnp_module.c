@@ -56,7 +56,6 @@
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 
@@ -238,15 +237,14 @@ static int rte_init(char flags)
     }
 
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                         "%s setting up session dir with\n\ttmpdir: %s\n\tuser %s\n\thost %s\n\tjobid %s\n\tprocid %s",
+                         "%s setting up session dir with\n\ttmpdir: %s\n\thost %s\n\tjobid %s\n\tprocid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_system_info.user, orte_system_info.nodename, jobid_str, procid_str));
+                         orte_process_info.nodename, jobid_str, procid_str));
 
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                 orte_process_info.tmpdir_base,
-                                orte_system_info.user,
-                                orte_system_info.nodename, NULL,
+                                orte_process_info.nodename, NULL,
                                 jobid_str, procid_str))) {
         if (jobid_str != NULL) free(jobid_str);
         if (procid_str != NULL) free(procid_str);
@@ -296,7 +294,7 @@ static int rte_init(char flags)
    
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_system_info.nodename);
+    node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_add(orte_node_pool, node);
     
     /* create and store a proc object for us */
@@ -441,7 +439,6 @@ static int rte_finalize(void)
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     
     /* clean out the global structures */
-    orte_sys_info_finalize();
     orte_proc_info_finalize();
     
     return ORTE_SUCCESS;    
@@ -476,7 +473,6 @@ static void rte_abort(int status, bool report)
     /* - Clean out the global structures 
      * (not really necessary, but good practice)
      */
-    orte_sys_info_finalize();
     orte_proc_info_finalize();
     
     /* Now abort */

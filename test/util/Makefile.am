@@ -24,7 +24,6 @@ check_PROGRAMS = \
 	opal_if \
 	opal_os_path \
 	opal_timer \
-	orte_sys_info \
 	opal_os_create_dirpath \
 	orte_session_dir \
 	opal_argv \

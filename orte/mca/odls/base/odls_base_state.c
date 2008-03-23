@@ -34,7 +34,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 

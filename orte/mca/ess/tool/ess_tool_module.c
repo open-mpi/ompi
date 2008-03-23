@@ -37,7 +37,6 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/runtime/orte_cr.h"
 
 #include "orte/mca/ess/ess.h"
@@ -134,7 +133,6 @@ static void rte_abort(int status, bool report)
     /* - Clean out the global structures 
      * (not really necessary, but good practice)
      */
-    orte_sys_info_finalize();
     orte_proc_info_finalize();
     
     /* Now abort */

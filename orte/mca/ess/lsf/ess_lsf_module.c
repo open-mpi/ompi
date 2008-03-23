@@ -38,7 +38,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/sys_info.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"

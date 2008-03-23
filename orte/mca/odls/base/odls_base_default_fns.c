@@ -52,7 +52,7 @@
 #include "orte/util/context_fns.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -598,7 +598,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     
     /* use same nodename as the starting daemon (us) */
     param = mca_base_param_environ_variable("orte", "base", "nodename");
-    opal_setenv(param, orte_system_info.nodename, true, environ_copy);
+    opal_setenv(param, orte_process_info.nodename, true, environ_copy);
     free(param);
     
     /* push data into environment - don't push any single proc
@@ -1791,7 +1791,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
         if (0 != (err = kill_local(child->pid, SIGTERM))) {
             opal_show_help("help-odls-default.txt",
                            "odls-default:could-not-send-kill",
-                           true, orte_system_info.nodename, child->pid, err);
+                           true, orte_process_info.nodename, child->pid, err);
             /* check the proc state - ensure it is in one of the termination
              * states so that we properly wakeup
              */
@@ -1817,7 +1817,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
                 opal_show_help("help-odls-default.txt",
                                "odls-default:could-not-kill",
-                               true, orte_system_info.nodename, child->pid);
+                               true, orte_process_info.nodename, child->pid);
             }
         }
         child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;  /* we may have sent it, but that's what happened */

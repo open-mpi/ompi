@@ -35,7 +35,6 @@
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 
 /*
@@ -154,7 +153,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         unique_comm_id=(int)getpid();
         len=asprintf(&f_name,
                 "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
-                orte_system_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
+                orte_process_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
         if( 0 > len ) {
             return OMPI_ERROR;
         }
@@ -239,7 +238,7 @@ static int allocate_shared_file(size_t size, char **file_name,
          */
         len=asprintf(&f_name,
                 "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
-                orte_system_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
+                orte_process_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
         if( 0 > len ) {
             return OMPI_ERROR;
         }
@@ -732,7 +731,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /*
     len=asprintf(&(sm_module->coll_sm2_file_name),
             "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d\0",orte_process_info.job_session_dir,
-            orte_system_info.nodename,ompi_comm_get_cid(comm));
+            orte_process_info.nodename,ompi_comm_get_cid(comm));
     if( 0 > len ) {
         goto CLEANUP;
     }

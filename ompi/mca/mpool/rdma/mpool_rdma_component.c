@@ -26,7 +26,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "mpool_rdma.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "ompi/runtime/params.h"
 #include <unistd.h>
 #ifdef HAVE_MALLOC_H

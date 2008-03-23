@@ -41,7 +41,6 @@
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -98,8 +97,7 @@ int orte_ess_base_tool_setup(void)
     if (ORTE_SUCCESS != (ret = orte_session_dir_get_name(NULL,
                                    &orte_process_info.tmpdir_base,
                                    &orte_process_info.top_session_dir,
-                                   orte_system_info.user,
-                                   orte_system_info.nodename, NULL,
+                                   orte_process_info.nodename, NULL,
                                    NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "define session dir names";
@@ -145,10 +143,6 @@ int orte_ess_base_tool_finalize(void)
     orte_rml_base_close();
     
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-    
-    /* clean out the global structures */
-    orte_sys_info_finalize();
-    orte_proc_info_finalize();
     
     return ORTE_SUCCESS;    
 }

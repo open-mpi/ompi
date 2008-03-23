@@ -32,7 +32,6 @@
 #include "mpool_sm.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "ompi/proc/proc.h"
 
 /*
@@ -250,7 +249,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     /* create initial shared memory mapping */
     len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
                     orte_process_info.job_session_dir,
-                    orte_system_info.nodename );
+                    orte_process_info.nodename );
     if ( 0 > len ) {
         return NULL;
     }

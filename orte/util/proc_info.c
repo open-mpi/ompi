@@ -20,6 +20,7 @@
 #include "orte/constants.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -49,6 +50,8 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .num_procs =            */   1,
     /*  .local_rank =           */   ORTE_VPID_INVALID,
     /*  .num_local_procs =      */   0,
+    /*  .nodeid =               */   ORTE_NODEID_INVALID,
+    /*  .nodename =             */   NULL,
     /*  .pid =                  */   0,
     /*  .singleton =            */   false,
     /*  .daemon =               */   false,
@@ -63,6 +66,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .sock_stderr =          */   NULL
 };
 
+#define ORTE_MAX_HOSTNAME_SIZE  512
 
 int orte_proc_info(void)
 {
@@ -70,7 +74,7 @@ int orte_proc_info(void)
     int tmp;
     char *uri, *ptr;
     size_t len, i;
-    
+    char hostname[ORTE_MAX_HOSTNAME_SIZE];
     mca_base_param_reg_string_name("orte", "hnp_uri",
                                    "HNP contact info",
                                    true, false, NULL,  &uri);
@@ -126,6 +130,19 @@ int orte_proc_info(void)
     /* get the process id */
     orte_process_info.pid = getpid();
 
+    /* get the nodeid */
+    mca_base_param_reg_int_name("orte", "nodeid",
+                                "ORTE ID for this node",
+                                false, false, ORTE_NODEID_INVALID, &tmp);
+    orte_process_info.nodeid = (orte_nodeid_t)tmp;
+
+    /* get the nodename */
+    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    /* overwrite with value if in environment */
+    mca_base_param_reg_string_name("orte", "base_nodename",
+                                   "Name of this node, as provided in environment",
+                                   false, false, hostname,  &(orte_process_info.nodename));
+    
     return ORTE_SUCCESS;
 }
 
@@ -150,8 +167,14 @@ int orte_proc_info_finalize(void)
     if (NULL != orte_process_info.proc_session_dir) {
         free(orte_process_info.proc_session_dir);
         orte_process_info.proc_session_dir = NULL;
+
     }
     
+    if (NULL != orte_process_info.nodename) {
+        free(orte_process_info.nodename);
+        orte_process_info.nodename = NULL;
+    }
+
     if (NULL != orte_process_info.sock_stdin) {
         free(orte_process_info.sock_stdin);
         orte_process_info.sock_stdin = NULL;

@@ -69,7 +69,6 @@
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 

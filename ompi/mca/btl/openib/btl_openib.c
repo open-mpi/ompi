@@ -43,7 +43,7 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/runtime/params.h"
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -109,13 +109,13 @@ static void show_init_error(const char *file, int line,
         }
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
-                       true, orte_system_info.nodename,
+                       true, orte_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, orte_system_info.nodename,
+                       true, orte_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
 }

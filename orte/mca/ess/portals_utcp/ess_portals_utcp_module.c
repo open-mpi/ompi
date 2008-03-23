@@ -27,7 +27,6 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ess/ess.h"
@@ -113,12 +112,11 @@ static int rte_init(char flags)
                          "%s setting up session dir with\n\ttmpdir: %s\n\tuser %s\n\thost %s\n\tjobid %s\n\tprocid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_system_info.user, orte_system_info.nodename, jobid_str, vpid_string));
+                         orte_process_info.nodename, jobid_str, vpid_string));
     
     if (ORTE_SUCCESS != (rc = orte_session_dir(true,
                                                 orte_process_info.tmpdir_base,
-                                                orte_system_info.user,
-                                                orte_system_info.nodename, NULL,
+                                                orte_process_info.nodename, NULL,
                                                 jobid_str, vpid_string))) {
         if (jobid_str != NULL) free(jobid_str);
         if (vpid_string != NULL) free(vpid_string);
@@ -150,7 +148,6 @@ static int rte_finalize(void)
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     
     /* clean out the global structures */
-    orte_sys_info_finalize();
     orte_proc_info_finalize();
     
     return ORTE_SUCCESS;

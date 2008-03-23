@@ -45,7 +45,6 @@
 #include "opal/mca/crs/base/base.h"
 #include "opal/runtime/opal_cr.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"

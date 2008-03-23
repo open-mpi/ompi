@@ -253,14 +253,14 @@ static int mca_btl_udapl_proc_address_match(
         /* current uDAPL BTL only supports IPv4 */
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "IPv4 only",
-            true, orte_system_info.nodename));
+            true, orte_process_info.nodename));
         return OMPI_ERROR;
     }
 
     if (MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX == *peer_addr_idx) {
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "no network match",
-            true, btl_addr_string, orte_system_info.nodename,
+            true, btl_addr_string, orte_process_info.nodename,
             peer_proc->proc_ompi->proc_hostname));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }    

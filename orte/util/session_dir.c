@@ -41,13 +41,15 @@
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif  /* HAVE_PWD_H */
 
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 
@@ -112,7 +114,7 @@ int
 orte_session_dir_get_name(char **fulldirpath,
                           char **return_prefix,  /* This will come back as the valid tmp dir */
                           char **return_frontend,
-                          char *usr, char *hostid,
+                          char *hostid,
                           char *batchid, 
                           char *job, char *proc) {
     char *hostname  = NULL, 
@@ -123,27 +125,41 @@ orte_session_dir_get_name(char **fulldirpath,
         *frontend = NULL;
     bool prefix_provided = false;
     int exit_status = ORTE_SUCCESS;
+#ifndef __WINDOWS__
+    int uid;
+	struct passwd *pwdent;
+#else
+#define INFO_BUF_SIZE 256
+    TCHAR info_buf[INFO_BUF_SIZE];
+    DWORD info_buf_length = INFO_BUF_SIZE;
+#endif
     
     /* Ensure that system info is set */
-    orte_sys_info();
+    orte_proc_info();
 
-    /*
-     * set the 'user' value
-     */
-    if( NULL != usr) { /* User specified version */
-        user = strdup(usr);
-    }
-    else {             /* check if it is set elsewhere */
-        if( NULL != orte_system_info.user)
-            user = strdup(orte_system_info.user);
-        else {
-            /* Couldn't find it, so fail */
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            exit_status = ORTE_ERR_BAD_PARAM;
-            goto cleanup;
+     /* get the name of the user */
+#ifndef __WINDOWS__
+    uid = getuid();
+#ifdef HAVE_GETPWUID
+    pwdent = getpwuid(uid);
+#else
+    pwdent = NULL;
+#endif
+    if (NULL != pwdent) {
+        user = strdup(pwdent->pw_name);
+    } else {
+        if (0 > asprintf(&user, "%d", uid)) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }
-
+#else 
+    if (!GetUserName(info_buf, &info_buf_length)) {
+        user = strdup("unknown");
+    } else {
+        user = strdup(info_buf);
+    }
+#endif
+    
     /*
      * set the 'hostname'
      */
@@ -151,8 +167,8 @@ orte_session_dir_get_name(char **fulldirpath,
         hostname = strdup(hostid);
     }
     else {            /* check if it is set elsewhere */
-        if( NULL != orte_system_info.nodename)
-            hostname = strdup(orte_system_info.nodename);
+        if( NULL != orte_process_info.nodename)
+            hostname = strdup(orte_process_info.nodename);
         else {
             /* Couldn't find it, so fail */
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -292,7 +308,7 @@ orte_session_dir_get_name(char **fulldirpath,
  * Construct the session directory and create it if necessary
  */
 int orte_session_dir(bool create, 
-                     char *prefix, char *usr, char *hostid,
+                     char *prefix, char *hostid,
                      char *batchid, char *job, char *proc)
 {
     char *fulldirpath = NULL,
@@ -324,7 +340,7 @@ int orte_session_dir(bool create,
     if( ORTE_SUCCESS != ( rtn = orte_session_dir_get_name(&fulldirpath, 
                                                           &prefix,
                                                           &frontend,
-                                                          usr, hostid, 
+                                                          hostid, 
                                                           batchid, job,
                                                           proc) ) ) {
         return_code = rtn;
