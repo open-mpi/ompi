@@ -27,7 +27,6 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/grpcomm/base/base.h"
 
@@ -74,7 +73,7 @@ static int rte_init(char flags)
                     cnos_get_rank(), nprocs);
         return ORTE_ERR_FATAL;
     }
-    orte_system_info.nodeid = map[cnos_get_rank()].nid;
+    orte_process_info.nodeid = map[cnos_get_rank()].nid;
 
     /* MPI_Init needs the grpcomm framework, so we have to init it */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_open())) {
@@ -97,7 +96,6 @@ static int rte_finalize(void)
     orte_grpcomm_base_close();
     
     /* clean out the global structures */
-    orte_sys_info_finalize();
     orte_proc_info_finalize();
     
     return ORTE_SUCCESS;

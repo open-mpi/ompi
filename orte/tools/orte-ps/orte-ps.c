@@ -68,7 +68,6 @@
 
 #include "opal/dss/dss.h"
 #include "orte/runtime/runtime.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"

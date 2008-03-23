@@ -63,7 +63,6 @@
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 
@@ -293,8 +292,7 @@ static int rte_ft_event(int state)
 
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                                     orte_process_info.tmpdir_base,
-                                                    orte_system_info.user,
-                                                    orte_system_info.nodename,
+                                                    orte_process_info.nodename,
                                                     NULL, /* Batch ID -- Not used */
                                                     jobid_str,
                                                     procid_str))) {

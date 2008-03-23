@@ -57,6 +57,8 @@ struct orte_proc_info_t {
     orte_vpid_t num_procs;              /**< number of processes in this job */
     orte_vpid_t local_rank;             /**< local rank on this node */
     orte_std_cntr_t num_local_procs;    /**< total number of procs on this node */
+    orte_nodeid_t nodeid;               /**< numerical id for this node */
+    char *nodename;                     /**< string name for this node */
     pid_t pid;                          /**< Local process ID for this process */
     bool singleton;                     /**< I am a singleton */
     bool daemon;                        /**< Indicate whether or not I am a daemon */

@@ -56,7 +56,6 @@
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -151,7 +150,7 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       "Direct the orted to separate from the current session"},
     
     { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
-      &orte_system_info.nodename, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_process_info.nodename, OPAL_CMD_LINE_TYPE_STRING,
       "Node name as specified by host/resource description." },
 
     { "tmpdir", "base", NULL, '\0', NULL, "tmpdir", 1,
@@ -412,7 +411,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* define a log file name in the session directory */
         sprintf(log_file, "output-orted-%s-%s.log",
-                jobidstring, orte_system_info.nodename);
+                jobidstring, orte_process_info.nodename);
         log_path = opal_os_path(false,
                                 orte_process_info.tmpdir_base,
                                 orte_process_info.top_session_dir,
@@ -440,7 +439,7 @@ int orte_daemon(int argc, char *argv[])
     if (orte_debug_daemons_flag) {
         fprintf(stderr, "Daemon %s checking in as pid %ld on host %s\n",
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)orte_process_info.pid,
-                orte_system_info.nodename);
+                orte_process_info.nodename);
     }
 
     /* We actually do *not* want the orted to voluntarily yield() the

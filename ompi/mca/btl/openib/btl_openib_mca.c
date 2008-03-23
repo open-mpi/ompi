@@ -152,7 +152,7 @@ int btl_openib_register_mca_params(void)
     if (0 != ival) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
-                       orte_system_info.nodename);
+                       orte_process_info.nodename);
         return OMPI_ERROR;
     }
 #endif
@@ -177,7 +177,7 @@ int btl_openib_register_mca_params(void)
     if (0 != ival) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
-                       orte_system_info.nodename);
+                       orte_process_info.nodename);
         return OMPI_ERROR;
     }
 #endif
@@ -424,7 +424,7 @@ int btl_openib_register_mca_params(void)
                   64, &ival, REGINT_GE_ZERO));
     if(ival <= 1 || (ival & (ival - 1))) {
         opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
-                true, ival, orte_system_info.nodename, 64);
+                true, ival, orte_process_info.nodename, 64);
         mca_btl_openib_component.buffer_alignment = 64;
     } else {
         mca_btl_openib_component.buffer_alignment = (uint32_t) ival;
@@ -537,7 +537,7 @@ static int mca_btl_openib_mca_setup_qps(void)
     if (0 == opal_argv_count(queues)) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "no qps in receive_queues", true,
-                       orte_system_info.nodename, str);
+                       orte_process_info.nodename, str);
         return OMPI_ERROR;
     }
 
@@ -553,13 +553,13 @@ static int mca_btl_openib_mca_setup_qps(void)
             num_xrc_qps++;
 #else
             opal_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
-                    orte_system_info.nodename, str);
+                    orte_process_info.nodename, str);
             goto error;
 #endif
         } else {
             opal_show_help("help-mpi-btl-openib.txt",
                            "invalid qp type in receive_queues", true,
-                           orte_system_info.nodename, str, queues[qp]);
+                           orte_process_info.nodename, str, queues[qp]);
             goto error;
         }
         qp++;
@@ -567,14 +567,14 @@ static int mca_btl_openib_mca_setup_qps(void)
     /* Current XRC implementation can't used with other QP types - PP and SRQ */
     if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
         opal_show_help("help-mpi-btl-openib.txt", "XRC with PP or SRQ", true,
-                orte_system_info.nodename, str);
+                orte_process_info.nodename, str);
         goto error;
     }
 
     /* Current XRC implementation can't used with btls_per_lid > 1 */
     if (num_xrc_qps > 0 && mca_btl_openib_component.btls_per_lid > 1) {
         opal_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID", true,
-                orte_system_info.nodename, str, num_xrc_qps);
+                orte_process_info.nodename, str, num_xrc_qps);
         goto error;
     }
     mca_btl_openib_component.num_pp_qps = num_pp_qps;
@@ -599,7 +599,7 @@ static int mca_btl_openib_mca_setup_qps(void)
             if (count < 3 || count > 6) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "invalid pp qp specification", true,
-                               orte_system_info.nodename, queues[qp]);
+                               orte_process_info.nodename, queues[qp]);
                 goto error;
             }
             mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
@@ -627,7 +627,7 @@ static int mca_btl_openib_mca_setup_qps(void)
             if(count < 3 || count > 5) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "invalid srq specification", true,
-                               orte_system_info.nodename, queues[qp]);
+                               orte_process_info.nodename, queues[qp]);
                 goto error;
             }
             mca_btl_openib_component.qp_infos[qp].type = (params[0][0] =='X') ?
@@ -649,7 +649,7 @@ static int mca_btl_openib_mca_setup_qps(void)
 
         if (rd_num <= rd_low) {
             opal_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
-                    true, orte_system_info.nodename, queues[qp]);
+                    true, orte_process_info.nodename, queues[qp]);
             goto error;
         }
         mca_btl_openib_component.qp_infos[qp].rd_num = rd_num;
@@ -672,14 +672,14 @@ static int mca_btl_openib_mca_setup_qps(void)
     if (max_qp_size < max_size_needed) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too small", true,
-                       orte_system_info.nodename, max_qp_size,
+                       orte_process_info.nodename, max_qp_size,
                        max_size_needed);
         ret = OMPI_ERROR;
         goto error;
     } else if (max_qp_size > max_size_needed) {
         opal_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too big", true,
-                       orte_system_info.nodename, max_qp_size,
+                       orte_process_info.nodename, max_qp_size,
                        max_size_needed);
         opal_output(0, "The biggest QP size is bigger than maximum send size. "
                 "This is not optimal configuration as memory will be waisted.\n");
@@ -688,7 +688,7 @@ static int mca_btl_openib_mca_setup_qps(void)
     if (mca_btl_openib_component.ib_free_list_max > 0 &&
         min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
         opal_show_help("help-mpi-btl-openib.txt", "freelist too small", true,
-                       orte_system_info.nodename,
+                       orte_process_info.nodename,
                        mca_btl_openib_component.ib_free_list_max,
                        min_freelist_size);
         goto error;

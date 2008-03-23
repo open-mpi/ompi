@@ -46,7 +46,6 @@
 #include "common_sm_mmap.h"
 #include "opal/util/basename.h"
 #include "opal/util/output.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/base.h"

@@ -26,7 +26,7 @@
 #include "btl_base_error.h"
 #include "opal/util/show_help.h"
 
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -66,7 +66,7 @@ void mca_btl_base_error_no_nics(const char* transport,
         asprintf(&procid, "%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
         opal_show_help("help-mpi-btl-base.txt", "btl:no-nics",
-                       true, procid, transport, orte_system_info.nodename,
+                       true, procid, transport, orte_process_info.nodename,
                        nic_name);
         free(procid);
     }

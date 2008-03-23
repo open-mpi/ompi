@@ -426,7 +426,7 @@ static int mca_btl_udapl_modify_ia_list(DAT_COUNT *num_info_entries,
         char *str = opal_argv_join(mca_btl_udapl_component.if_list, ',');
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "nonexistent entry",
-            true, orte_system_info.nodename,
+            true, orte_process_info.nodename,
             ((NULL != mca_btl_udapl_component.if_include) ? 
             "in" : "ex"), str));
         free(str);

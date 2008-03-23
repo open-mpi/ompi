@@ -55,7 +55,7 @@ struct ompi_proc_t {
     /** this process' name */
     orte_process_name_t             proc_name;
     /** "nodeid" on which the proc resides - equiv to vpid of local daemon */
-    orte_vpid_t                     proc_nodeid;
+    orte_nodeid_t                   proc_nodeid;
     /** PML specific proc data */
     struct mca_pml_base_endpoint_t* proc_pml;
     /** BML specific proc data */

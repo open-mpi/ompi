@@ -27,7 +27,6 @@
 #include <stdio.h>
 
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -39,7 +38,7 @@ extern int mca_btl_base_out(const char*, ...);
 #define BTL_OUTPUT(args)                                     \
 do {                                                         \
     mca_btl_base_out("[%s]%s[%s:%d:%s] ",         \
-            orte_system_info.nodename,                       \
+            orte_process_info.nodename,                       \
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_out args;                                   \
@@ -50,7 +49,7 @@ do {                                                         \
 #define BTL_ERROR(args)                                      \
 do {                                                         \
     mca_btl_base_err("[%s]%s[%s:%d:%s] ",         \
-            orte_system_info.nodename,                       \
+            orte_process_info.nodename,                       \
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_err args;                                   \
@@ -62,7 +61,7 @@ do {                                                             \
     mca_btl_base_err("%s[%s:%d:%s] from %s ",         \
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  \
                      __FILE__, __LINE__, __func__,               \
-                     orte_system_info.nodename);                 \
+                     orte_process_info.nodename);                 \
     if(proc && proc->proc_hostname) {                            \
         mca_btl_base_err("to: %s ", proc->proc_hostname);        \
     }                                                            \
@@ -76,7 +75,7 @@ do {                                                             \
 do {                                                         \
    if(mca_btl_base_verbose > 0) {                            \
         mca_btl_base_err("[%s]%s[%s:%d:%s] ",                \
-                orte_system_info.nodename,                   \
+                orte_process_info.nodename,                   \
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \

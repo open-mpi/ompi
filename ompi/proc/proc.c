@@ -25,7 +25,6 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 
-#include "orte/util/sys_info.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
@@ -123,16 +122,16 @@ int ompi_proc_init(void)
     rc = ompi_arch_compute_local_id(&ui32);
     if (OMPI_SUCCESS != rc) return rc;
 
-    ompi_proc_local_proc->proc_nodeid = orte_system_info.nodeid;
+    ompi_proc_local_proc->proc_nodeid = orte_process_info.nodeid;
     ompi_proc_local_proc->proc_arch = ui32;
     if (ompi_mpi_keep_peer_hostnames) {
         if (ompi_mpi_keep_fqdn_hostnames) {
             /* use the entire FQDN name */
-            ompi_proc_local_proc->proc_hostname = strdup(orte_system_info.nodename);
+            ompi_proc_local_proc->proc_hostname = strdup(orte_process_info.nodename);
         } else {
             /* use the unqualified name */
             char *tmp, *ptr;
-            tmp = strdup(orte_system_info.nodename);
+            tmp = strdup(orte_process_info.nodename);
             if (NULL != (ptr = strchr(tmp, '.'))) {
                 *ptr = '\0';
             }
@@ -190,7 +189,7 @@ ompi_proc_get_info(void)
         char *hostname;
         void *data;
         size_t datalen;
-        orte_vpid_t nodeid;
+        orte_nodeid_t nodeid;
 
         /* Don't reset the information determined about the current
            process during the init step.  Saves time and problems if
@@ -224,7 +223,7 @@ ompi_proc_get_info(void)
             if (ret != ORTE_SUCCESS)
                 goto out;
 
-            ret = opal_dss.unpack(buf, &nodeid, &count, ORTE_VPID);
+            ret = opal_dss.unpack(buf, &nodeid, &count, ORTE_NODEID);
             if (ret != ORTE_SUCCESS) {
                 ORTE_ERROR_LOG(ret);
                 goto out;
@@ -262,7 +261,7 @@ ompi_proc_get_info(void)
 #else
             opal_show_help("help-mpi-runtime",
                            "heterogeneous-support-unavailable",
-                           true, orte_system_info.nodename, 
+                           true, orte_process_info.nodename, 
                            hostname == NULL ? "<hostname unavailable>" :
                            hostname);
             ret = OMPI_ERR_NOT_SUPPORTED;
@@ -457,7 +456,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
-        rc = opal_dss.pack(buf, &(proclist[i]->proc_nodeid), 1, ORTE_VPID);
+        rc = opal_dss.pack(buf, &(proclist[i]->proc_nodeid), 1, ORTE_NODEID);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -509,14 +508,14 @@ ompi_proc_unpack(opal_buffer_t* buf,
         char *new_hostname;
         bool isnew = false;
         int rc;
-        orte_vpid_t new_nodeid;
+        orte_nodeid_t new_nodeid;
 
         rc = opal_dss.unpack(buf, &new_name, &count, ORTE_NAME);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = opal_dss.unpack(buf, &new_nodeid, &count, ORTE_VPID);
+        rc = opal_dss.unpack(buf, &new_nodeid, &count, ORTE_NODEID);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -547,7 +546,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #else
                 opal_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
-                               true, orte_system_info.nodename, 
+                               true, orte_process_info.nodename, 
                                new_hostname == NULL ? "<hostname unavailable>" :
                                    new_hostname);
                 return OMPI_ERR_NOT_SUPPORTED;
@@ -604,16 +603,16 @@ int ompi_proc_refresh(void) {
         return rc;
     }
 
-    ompi_proc_local_proc->proc_nodeid = orte_system_info.nodeid;
+    ompi_proc_local_proc->proc_nodeid = orte_process_info.nodeid;
     ompi_proc_local_proc->proc_arch = ui32;
     if (ompi_mpi_keep_peer_hostnames) {
         if (ompi_mpi_keep_fqdn_hostnames) {
             /* use the entire FQDN name */
-            ompi_proc_local_proc->proc_hostname = strdup(orte_system_info.nodename);
+            ompi_proc_local_proc->proc_hostname = strdup(orte_process_info.nodename);
         } else {
             /* use the unqualified name */
             char *tmp, *ptr;
-            tmp = strdup(orte_system_info.nodename);
+            tmp = strdup(orte_process_info.nodename);
             if (NULL != (ptr = strchr(tmp, '.'))) {
                 *ptr = '\0';
             }

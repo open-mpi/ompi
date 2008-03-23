@@ -33,7 +33,6 @@
 #include "opal/util/if.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/printf.h"
-#include "orte/util/sys_info.h"
 #include "ompi/class/ompi_fifo.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/pml/pml.h"
@@ -167,7 +166,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* set file name */
     if(asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
                 orte_process_info.job_session_dir,
-                orte_system_info.nodename) < 0)
+                orte_process_info.nodename) < 0)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* Pass in a data segment alignment of 0 to get no data

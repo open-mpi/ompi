@@ -57,6 +57,9 @@ int orte_finalize(void)
     /* close the ess itself */
     orte_ess_base_close();
     
+    /* cleanup the process info */
+    orte_proc_info_finalize();
+    
     /* finalize the opal utilities */
     opal_finalize();
     

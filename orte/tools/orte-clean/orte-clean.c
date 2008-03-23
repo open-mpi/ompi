@@ -49,6 +49,9 @@
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
 #include <signal.h>
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif  /* HAVE_PWD_H */
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
@@ -59,7 +62,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"
@@ -257,7 +259,10 @@ void kill_procs(void) {
     int procpid;
     FILE *psfile;
     char *inputline, *tmpline;
-
+    char *this_user;
+    int uid;
+	struct passwd *pwdent;
+    
     /*
      * This is the command that is used to get the information about
      * all the processes that are running.  The output looks like the
@@ -288,6 +293,21 @@ void kill_procs(void) {
      */
     ortedpid = getppid();
 
+	/* get the name of the user */
+    uid = getuid();
+#ifdef HAVE_GETPWUID
+    pwdent = getpwuid(uid);
+#else
+    pwdent = NULL;
+#endif
+    if (NULL != pwdent) {
+        this_user = strdup(pwdent->pw_name);
+    } else {
+        if (0 > asprintf(&this_user, "%d", uid)) {
+            return;
+        }
+    }
+    
     /*
      * There is a race condition here.  The problem is that we are looking
      * for any processes named orted.  However, one may erroneously find more
@@ -309,6 +329,7 @@ void kill_procs(void) {
      * USER.
      */
     if (NULL == (inputline = orte_getline(psfile))) {
+        free(this_user);
         return;
     } 
     free(inputline);  /* dump the header line */
@@ -323,7 +344,7 @@ void kill_procs(void) {
         user++;  /* increment to point to the beginning of the user name */
         
         /* if we are not the user, dump this input */
-        if (0 != strcmp(user, orte_system_info.user)) {
+        if (0 != strcmp(user, this_user)) {
             /* not us */
             free(inputline);
             continue;
@@ -407,6 +428,7 @@ void kill_procs(void) {
         free(inputline);
         free(tmpline);
     }
+    free(this_user);
     return;
 }
 #endif  /* !defined(__WINDOWS__) */

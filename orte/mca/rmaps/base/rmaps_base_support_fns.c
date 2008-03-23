@@ -31,7 +31,7 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -139,7 +139,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              * names to be our node name, so we don't need
              * to keep checking for that condition
              */
-            if (0 == strcmp(node->name, orte_system_info.nodename)) {
+            if (0 == strcmp(node->name, orte_process_info.nodename)) {
                 opal_list_remove_item(allocated_nodes, item);
                 OBJ_RELEASE(item);  /* "un-retain" it */
                 break;

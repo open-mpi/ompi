@@ -54,7 +54,6 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/odls.h"

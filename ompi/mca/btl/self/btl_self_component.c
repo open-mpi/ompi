@@ -32,7 +32,6 @@
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/base/mca_base_param.h"

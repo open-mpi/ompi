@@ -39,7 +39,7 @@
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
 
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"
@@ -181,7 +181,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
                 /* Nodename has been allocated, that is for sure */
                 free (node_name);
-                node_name = strdup(orte_system_info.nodename);
+                node_name = strdup(orte_process_info.nodename);
             }
             
             /* Do we need to make a new node object?  First check to see
@@ -202,7 +202,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
             /* Nodename has been allocated, that is for sure */
             free (node_name);
-            node_name = strdup(orte_system_info.nodename);
+            node_name = strdup(orte_process_info.nodename);
         }
 
         /* Do we need to make a new node object?  First check to see
@@ -498,7 +498,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
              * we have to check for localhost and local interfaces
              */
             if (0 == strcmp(node_from_file->name, node_from_list->name) ||
-                (0 == strcmp(node_from_list->name, orte_system_info.nodename) &&
+                (0 == strcmp(node_from_list->name, orte_process_info.nodename) &&
                  (0 == strcmp(node_from_file->name, "localhost") || 
                   opal_ifislocal(node_from_file->name)))) {
                 node_found = true;

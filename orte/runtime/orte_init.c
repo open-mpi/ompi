@@ -40,7 +40,6 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -87,13 +86,7 @@ int orte_init(char flags)
         goto error;
     }
 
-    /* Ensure the system_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
-        error = "orte_sys_info";
-        goto error;
-    }
-
-    /* Ensure the process info structure is instantiated and initialized */
+   /* Ensure the process info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
         error = "orte_proc_info";
         goto error;

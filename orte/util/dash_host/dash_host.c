@@ -29,7 +29,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "dash_host.h"
@@ -78,7 +77,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
              item = opal_list_get_next(item)) {
             node = (orte_node_t*) item;
             if (0 == strcmp(node->name, mapped_nodes[i]) ||
-               (0 == strcmp(node->name, orte_system_info.nodename) &&
+               (0 == strcmp(node->name, orte_process_info.nodename) &&
                (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
                 ++node->slots;
                 break;
@@ -98,7 +97,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 /* it is local, so use the local nodename to avoid
                  * later confusion
                  */
-                node->name = strdup(orte_system_info.nodename);
+                node->name = strdup(orte_process_info.nodename);
             } else {
                 /* not local - use the given name */
                 node->name = strdup(mapped_nodes[i]);
@@ -192,7 +191,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
             *    is a local interface as found by opal_ifislocal
             */
             if (0 == strcmp(node->name, mapped_nodes[i]) ||
-               (0 == strcmp(node->name, orte_system_info.nodename) &&
+               (0 == strcmp(node->name, orte_process_info.nodename) &&
                (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
                 found = true;  /* found it - leave it alone */
                 j++;

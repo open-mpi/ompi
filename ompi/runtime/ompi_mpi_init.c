@@ -41,7 +41,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/event/event.h"
 
-#include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -597,7 +596,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (ompi_mpi_show_mca_params) {
        ompi_show_all_mca_params(ompi_mpi_comm_world.c_my_rank, 
                                 nprocs, 
-                                orte_system_info.nodename);
+                                orte_process_info.nodename);
     }
 
     /* wait for everyone to reach this point */

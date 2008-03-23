@@ -225,7 +225,7 @@ typedef struct mca_btl_udapl_reg_t mca_btl_udapl_reg_t;
 do {                                                                \
     if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
         mca_btl_base_out("[%s]%s[%s:%d:%s] ",                       \
-            orte_system_info.nodename,                              \
+            orte_process_info.nodename,                              \
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                     \
             __FILE__, __LINE__, __func__);                          \
         mca_btl_base_out args;                                      \

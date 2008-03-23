@@ -35,7 +35,6 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -176,15 +175,15 @@ static int slurm_set_name(void)
                          "ess:slurm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* fix up the system info nodename to match exactly what slurm returned */
-    if (NULL != orte_system_info.nodename) {
-        free(orte_system_info.nodename);
+    if (NULL != orte_process_info.nodename) {
+        free(orte_process_info.nodename);
     }
-    orte_system_info.nodename = get_slurm_nodename(slurm_nodeid);
+    orte_process_info.nodename = get_slurm_nodename(slurm_nodeid);
 
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:slurm set nodename to %s",
-                         orte_system_info.nodename));
+                         orte_process_info.nodename));
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {

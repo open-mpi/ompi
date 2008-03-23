@@ -45,7 +45,7 @@
 #include "opal/mca/paffinity/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/sys_info.h"
+#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
@@ -389,7 +389,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
         opal_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
-                true, orte_system_info.nodename);
+                true, orte_process_info.nodename);
     }
 
     lmc = (1 << ib_port_attr->lmc);
@@ -935,7 +935,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 "XRC on device without XRC support", true,
                 mca_btl_openib_component.num_xrc_qps,
                 ibv_get_device_name(ib_dev),
-                orte_system_info.nodename);
+                orte_process_info.nodename);
         ret = OMPI_SUCCESS;
         goto error;
     }
@@ -957,7 +957,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         if (mca_btl_openib_component.warn_no_hca_params_found) {
             opal_show_help("help-mpi-btl-openib.txt",
                            "no hca params found", true,
-                           orte_system_info.nodename,
+                           orte_process_info.nodename,
                            hca->ib_dev_attr.vendor_id,
                            hca->ib_dev_attr.vendor_part_id);
         }
@@ -1396,7 +1396,7 @@ btl_openib_component_init(int *num_btl_modules,
             if (mca_btl_openib_component.want_fork_support > 0) {
                 opal_show_help("help-mpi-btl-openib.txt",
                                "ibv_fork_init fail", true,
-                               orte_system_info.nodename);
+                               orte_process_info.nodename);
                 goto no_btls;
             }
         }
@@ -1459,7 +1459,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(ret != OMPI_SUCCESS) {
         opal_show_help("help-mpi-btl-openib.txt",
-                "error in hca init", true, orte_system_info.nodename);
+                "error in hca init", true, orte_process_info.nodename);
     }
 
     free(dev_sorted);
@@ -1473,7 +1473,7 @@ btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_component.warn_nonexistent_if) {
         char *str = opal_argv_join(mca_btl_openib_component.if_list, ',');
         opal_show_help("help-mpi-btl-openib.txt", "nonexistent port",
-                       true, orte_system_info.nodename,
+                       true, orte_process_info.nodename,
                        ((NULL != mca_btl_openib_component.if_include) ?
                         "in" : "ex"), str);
         free(str);
@@ -1481,7 +1481,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(0 == mca_btl_openib_component.ib_num_btls) {
         opal_show_help("help-mpi-btl-openib.txt",
-                "no active ports found", true, orte_system_info.nodename);
+                "no active ports found", true, orte_process_info.nodename);
         return NULL;
     }
 

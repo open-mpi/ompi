@@ -26,7 +26,6 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -43,7 +42,7 @@ int orte_plm_base_set_hnp_name(void)
     uint32_t bias;
     
     /* hash the nodename */
-    OPAL_HASH_STR(orte_system_info.nodename, hash32);
+    OPAL_HASH_STR(orte_process_info.nodename, hash32);
     
     bias = (uint32_t)orte_process_info.pid;
     

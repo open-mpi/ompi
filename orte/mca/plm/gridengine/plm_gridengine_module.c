@@ -77,7 +77,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/sys_info.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/mca/rml/rml.h"
