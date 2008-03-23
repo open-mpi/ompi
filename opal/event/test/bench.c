@@ -16,13 +16,13 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO OPAL_EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWLAM_EVER CAUSED AND ON ANY
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, OPAL_EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
  * Mon 03/10/2003 - Modified by Davide Libenzi <davidel@xmailserver.org>
@@ -37,40 +37,35 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <sys/socket.h>
-#endif
 #include <sys/signal.h>
-#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <errno.h>
 
 #include <event.h>
+#include <evutil.h>
 
 
 static int count, writes, fired;
 static int *pipes;
 static int num_pipes, num_active, num_writes;
-static struct opal_event *events;
+static struct event *events;
 
 
 
-void
+static void
 read_cb(int fd, short which, void *arg)
 {
 	int idx = (int) arg, widx = idx + 1;
@@ -86,19 +81,19 @@ read_cb(int fd, short which, void *arg)
 	}
 }
 
-struct timeval *
+static struct timeval *
 run_once(void)
 {
 	int *cp, i, space;
 	static struct timeval ts, te;
 
 	for (cp = pipes, i = 0; i < num_pipes; i++, cp += 2) {
-		opal_event_del(&events[i]);
-		opal_event_set(&events[i], cp[0], OPAL_EV_READ | OPAL_EV_PERSIST, read_cb, (void *) i);
-		opal_event_add(&events[i], NULL);
+		event_del(&events[i]);
+		event_set(&events[i], cp[0], EV_READ | EV_PERSIST, read_cb, (void *) i);
+		event_add(&events[i], NULL);
 	}
 
-	opal_event_loop(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
+	event_loop(EVLOOP_ONCE | EVLOOP_NONBLOCK);
 
 	fired = 0;
 	space = num_pipes / num_active;
@@ -111,7 +106,7 @@ run_once(void)
 	{ int xcount = 0;
 	gettimeofday(&ts, NULL);
 	do {
-		opal_event_loop(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
+		event_loop(EVLOOP_ONCE | EVLOOP_NONBLOCK);
 		xcount++;
 	} while (count != fired);
 	gettimeofday(&te, NULL);
@@ -119,7 +114,7 @@ run_once(void)
 	if (xcount != count) fprintf(stderr, "Xcount: %d, Rcount: %d\n", xcount, count);
 	}
 
-	timersub(&te, &ts, &te);
+	evutil_timersub(&te, &ts, &te);
 
 	return (&te);
 }
@@ -127,11 +122,12 @@ run_once(void)
 int
 main (int argc, char **argv)
 {
+#ifndef WIN32
 	struct rlimit rl;
+#endif
 	int i, c;
 	struct timeval *tv;
 	int *cp;
-	extern char *optarg;
 
 	num_pipes = 100;
 	num_active = 1;
@@ -153,26 +149,28 @@ main (int argc, char **argv)
 		}
 	}
 
+#ifndef WIN32
 	rl.rlim_cur = rl.rlim_max = num_pipes * 2 + 50;
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1) {
 		perror("setrlimit");
 		exit(1);
 	}
+#endif
 
-	events = calloc(num_pipes, sizeof(struct opal_event));
+	events = calloc(num_pipes, sizeof(struct event));
 	pipes = calloc(num_pipes * 2, sizeof(int));
 	if (events == NULL || pipes == NULL) {
 		perror("malloc");
 		exit(1);
 	}
 
-	opal_event_init();
+	event_init();
 
 	for (cp = pipes, i = 0; i < num_pipes; i++, cp += 2) {
 #ifdef USE_PIPES
 		if (pipe(cp) == -1) {
 #else
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, cp) == -1) {
+		if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, cp) == -1) {
 #endif
 			perror("pipe");
 			exit(1);

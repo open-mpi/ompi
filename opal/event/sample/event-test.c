@@ -3,20 +3,16 @@
  * cc -I/usr/local/include -o event-test event-test.c -L/usr/local/lib -levent
  */
 
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include <sys/types.h>
 #include <sys/stat.h>
 #ifndef WIN32
-#ifdef HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 #else
 #include <windows.h>
 #endif
@@ -28,18 +24,18 @@
 
 #include <event.h>
 
-void
+static void
 fifo_read(int fd, short event, void *arg)
 {
 	char buf[255];
 	int len;
-	struct opal_event *ev = arg;
+	struct event *ev = arg;
 #ifdef WIN32
 	DWORD dwBytesRead;
 #endif
 
 	/* Reschedule this event */
-	opal_event_add(ev, NULL);
+	event_add(ev, NULL);
 
 	fprintf(stderr, "fifo_read called with fd: %d, event: %d, arg: %p\n",
 		fd, event, arg);
@@ -49,7 +45,7 @@ fifo_read(int fd, short event, void *arg)
 	// Check for end of file. 
 	if(len && dwBytesRead == 0) {
 		fprintf(stderr, "End Of File");
-		opal_event_del(ev);
+		event_del(ev);
 		return;
 	}
 
@@ -73,7 +69,7 @@ fifo_read(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct opal_event evfifo;
+	struct event evfifo;
 #ifdef WIN32
 	HANDLE socket;
 	// Open a file. 
@@ -90,7 +86,7 @@ main (int argc, char **argv)
 
 #else
 	struct stat st;
-	char *fifo = "event.fifo";
+	const char *fifo = "event.fifo";
 	int socket;
  
 	if (lstat (fifo, &st) == 0) {
@@ -122,19 +118,19 @@ main (int argc, char **argv)
 	fprintf(stderr, "Write data to %s\n", fifo);
 #endif
 	/* Initalize the event library */
-	opal_event_init();
+	event_init();
 
 	/* Initalize one event */
 #ifdef WIN32
-	opal_event_set(&evfifo, (int)socket, OPAL_EV_READ, fifo_read, &evfifo);
+	event_set(&evfifo, (int)socket, EV_READ, fifo_read, &evfifo);
 #else
-	opal_event_set(&evfifo, socket, OPAL_EV_READ, fifo_read, &evfifo);
+	event_set(&evfifo, socket, EV_READ, fifo_read, &evfifo);
 #endif
 
 	/* Add it to the active events, without a timeout */
-	opal_event_add(&evfifo, NULL);
+	event_add(&evfifo, NULL);
 	
-	opal_event_dispatch();
+	event_dispatch();
 #ifdef WIN32
 	CloseHandle(socket);
 #endif

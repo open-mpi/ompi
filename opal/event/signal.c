@@ -28,17 +28,22 @@
  */
 #include "opal_config.h"
 
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <winsock2.h>
+#undef WIN32_LEAN_AND_MEAN
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else
-#include <sys/_time.h>
 #endif
 #include <sys/queue.h>
-#include <sys/tree.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,45 +55,33 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <assert.h>
 
 #include "event.h"
 #include "event-internal.h"
 #include "evsignal.h"
+#include "evutil.h"
 #include "log.h"
-
 #include "opal/util/output.h"
 
+struct event_base *evsignal_base = NULL;
 
-extern struct opal_event_list opal_signalqueue;
-
-#if defined(VXWORKS)
-#define OPAL_NSIG (_NSIGS + 1)
-#else
-#define OPAL_NSIG NSIG
-#endif
-
-static sig_atomic_t opal_evsigcaught[OPAL_NSIG];
-static int opal_needrecalc;
-volatile sig_atomic_t opal_evsignal_caught = 0;
-
-void opal_evsignal_handler(int sig);
-
-static struct opal_event ev_signal;
-static int ev_signal_pair[2];
-static int ev_signal_added;
+static void evsignal_handler(int sig);
 
 /* Callback for when the signal handler write a byte to our signaling socket */
 static void
 evsignal_cb(int fd, short what, void *arg)
 {
 	static char signals[100];
-	struct opal_event *ev = arg;
+#ifdef WIN32
+	SSIZE_T n;
+#else
 	ssize_t n;
+#endif
 
-	n = read(fd, signals, sizeof(signals));
+	n = recv(fd, signals, sizeof(signals), 0);
 	if (n == -1)
 		event_err(1, "%s: read", __func__);
-	opal_event_add_i(ev, NULL);
 }
 
 #ifdef HAVE_SETFD
@@ -101,184 +94,212 @@ evsignal_cb(int fd, short what, void *arg)
 #endif
 
 void
-opal_evsignal_init(sigset_t *evsigmask)
+evsignal_init(struct event_base *base)
 {
-#ifndef WIN32
-    sigemptyset(evsigmask);
-#endif
-
 	/* 
 	 * Our signal handler is going to write to one end of the socket
 	 * pair to wake up our event loop.  The event loop then scans for
 	 * signals that got delivered.
 	 */
-#ifdef HAVE_SOCKETPAIR
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, ev_signal_pair) == -1)
+	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, base->sig.ev_signal_pair) == -1)
 		event_err(1, "%s: socketpair", __func__);
-#else
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, ev_signal_pair) == -1)
-		event_err(1, "%s: pipe", __func__);
-#endif
 
-	FD_CLOSEONEXEC(ev_signal_pair[0]);
-	FD_CLOSEONEXEC(ev_signal_pair[1]);
+	FD_CLOSEONEXEC(base->sig.ev_signal_pair[0]);
+	FD_CLOSEONEXEC(base->sig.ev_signal_pair[1]);
+	base->sig.sh_old = NULL;
+	base->sig.sh_old_max = 0;
+	base->sig.evsignal_caught = 0;
+	memset(&base->sig.evsigcaught, 0, sizeof(sig_atomic_t)*NSIG);
 
-	fcntl(ev_signal_pair[0], F_SETFL, O_NONBLOCK);
+        evutil_make_socket_nonblocking(base->sig.ev_signal_pair[0]);
 
-	opal_event_set(&ev_signal, ev_signal_pair[1], OPAL_EV_READ,
-	    evsignal_cb, &ev_signal);
-	ev_signal.ev_flags |= OPAL_EVLIST_INTERNAL;
+	event_set(&base->sig.ev_signal, base->sig.ev_signal_pair[1],
+		OPAL_EV_READ | OPAL_EV_PERSIST, evsignal_cb, &base->sig.ev_signal);
+	base->sig.ev_signal.ev_base = base;
+	base->sig.ev_signal.ev_flags |= EVLIST_INTERNAL;
 }
 
+/* Helper: set the signal handler for evsignal to handler in base, so that
+ * we can restore the original handler when we clear the current one. */
+int
+_evsignal_set_handler(struct event_base *base,
+		      int evsignal, void (*handler)(int))
+{
+#ifdef HAVE_SIGACTION
+	struct sigaction sa;
+#else
+	ev_sighandler_t sh;
+#endif
+	struct evsignal_info *sig = &base->sig;
+	void *p;
+
+	/*
+	 * resize saved signal handler array up to the highest signal number.
+	 * a dynamic array is used to keep footprint on the low side.
+	 */
+	if (evsignal >= sig->sh_old_max) {
+		event_debug(("%s: evsignal (%d) >= sh_old_max (%d), resizing",
+			    __func__, evsignal, sig->sh_old_max));
+		sig->sh_old_max = evsignal + 1;
+		p = realloc(sig->sh_old, sig->sh_old_max * sizeof *sig->sh_old);
+		if (p == NULL) {
+			event_warn("realloc");
+			return (-1);
+		}
+		sig->sh_old = p;
+	}
+
+	/* allocate space for previous handler out of dynamic array */
+	sig->sh_old[evsignal] = malloc(sizeof *sig->sh_old[evsignal]);
+	if (sig->sh_old[evsignal] == NULL) {
+		event_warn("malloc");
+		return (-1);
+	}
+
+	/* save previous handler and setup new handler */
+#ifdef HAVE_SIGACTION
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = handler;
+	sa.sa_flags |= SA_RESTART;
+	sigfillset(&sa.sa_mask);
+
+	if (sigaction(evsignal, &sa, sig->sh_old[evsignal]) == -1) {
+		event_warn("sigaction");
+		free(sig->sh_old[evsignal]);
+		return (-1);
+	}
+#else
+	if ((sh = signal(evsignal, handler)) == SIG_ERR) {
+		event_warn("signal");
+		free(sig->sh_old[evsignal]);
+		return (-1);
+	}
+	*sig->sh_old[evsignal] = sh;
+#endif
+
+	return (0);
+}
 
 int
-opal_evsignal_add(sigset_t *evsigmask, struct opal_event *ev)
+evsignal_add(struct event *ev)
 {
 	int evsignal;
+	struct event_base *base = ev->ev_base;
+	struct evsignal_info *sig = &ev->ev_base->sig;
 
 	if (ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE))
 		event_errx(1, "%s: OPAL_EV_SIGNAL incompatible use", __func__);
 	evsignal = OPAL_EVENT_SIGNAL(ev);
 
-        /* force a recalc of the events we are waiting for, otherwise
-           events aren't recalculated until the next time event_loop
-           is called.  Since that might not be for some time, that
-           gives a window where a signal handler *should* be installed
-           but actually is not. */
-        if (ev->ev_base->evsel->recalc && ev->ev_base->evsel->recalc(ev->ev_base, ev->ev_base->evbase, 0) == -1) {
-            opal_output(0, "opal_evsignal_add: opal_evsel->recalc() failed.");
-            return (-1);
-        }
+	event_debug(("%s: %p: changing signal handler", __func__, ev));
+	if (_evsignal_set_handler(base, evsignal, evsignal_handler) == -1)
+		return (-1);
 
-#ifndef WIN32
-	sigaddset(evsigmask, evsignal);
-#endif
+	/* catch signals if they happen quickly */
+	evsignal_base = base;
+
+	if (!sig->ev_signal_added) {
+		sig->ev_signal_added = 1;
+		event_add(&sig->ev_signal, NULL);
+	}
 
 	return (0);
 }
 
-int 
-opal_evsignal_restart(void)
+int
+_evsignal_restore_handler(struct event_base *base, int evsignal)
 {
-    return (0);
-}
+	int ret = 0;
+	struct evsignal_info *sig = &base->sig;
+#ifdef HAVE_SIGACTION
+	struct sigaction *sh;
+#else
+	ev_sighandler_t *sh;
+#endif
 
-/*
- * Nothing to be done here.
- */
+	/* restore previous handler */
+	sh = sig->sh_old[evsignal];
+	sig->sh_old[evsignal] = NULL;
+#ifdef HAVE_SIGACTION
+	if (sigaction(evsignal, sh, NULL) == -1) {
+		event_warn("sigaction");
+		ret = -1;
+	}
+#else
+	if (signal(evsignal, *sh) == SIG_ERR) {
+		event_warn("signal");
+		ret = -1;
+	}
+#endif
+	free(sh);
+
+	return ret;
+}
 
 int
-opal_evsignal_del(sigset_t *evsigmask, struct opal_event *ev)
+evsignal_del(struct event *ev)
 {
-#ifdef WIN32
-   return 0;
-#else
-   int evsignal, ret;
-   struct sigaction sa;
-   sigset_t set;
-   
-   evsignal = OPAL_EVENT_SIGNAL(ev);	
-
-   /* remove from the "in use" signal list */
-   sigdelset(evsigmask, evsignal);
-   opal_needrecalc = 1;
-
-   /* set back to default handler */
-   memset(&sa, 0, sizeof(sa));
-   sa.sa_handler = SIG_DFL;
-   
-   ret = sigaction(evsignal, &sa, NULL);
-
-   /* unblock signal, in case we were blocking the "in use" signals
-      when this function was called */
-   sigemptyset(&set);
-   sigaddset(&set, evsignal);
-   sigprocmask(SIG_UNBLOCK, &set, NULL);
-
-   return ret;
-#endif
+	event_debug(("%s: %p: restoring signal handler", __func__, ev));
+	return _evsignal_restore_handler(ev->ev_base, OPAL_EVENT_SIGNAL(ev));
 }
 
-void
-opal_evsignal_handler(int sig)
+static void
+evsignal_handler(int sig)
 {
 	int save_errno = errno;
 
-	opal_evsigcaught[sig]++;
-	opal_evsignal_caught = 1;
+	if(evsignal_base == NULL) {
+		event_warn(
+			"%s: received signal %d, but have no base configured",
+			__func__, sig);
+		return;
+	}
+
+	evsignal_base->sig.evsigcaught[sig]++;
+	evsignal_base->sig.evsignal_caught = 1;
+
+#ifndef HAVE_SIGACTION
+	signal(sig, evsignal_handler);
+#endif
 
 	/* Wake up our notification mechanism */
-	write(ev_signal_pair[0], "a", 1);
+	send(evsignal_base->sig.ev_signal_pair[0], "a", 1, 0);
 	errno = save_errno;
 }
 
-int
-opal_evsignal_recalc(sigset_t *evsigmask)
+void
+evsignal_process(struct event_base *base)
 {
-#ifdef WIN32
-   return 0;
-#else
-	struct sigaction sa;
-	struct opal_event *ev;
-	
-	if (!ev_signal_added) {
-		ev_signal_added = 1;
-		opal_event_add_i(&ev_signal, NULL);
+	struct event *ev;
+	sig_atomic_t ncalls;
+
+	base->sig.evsignal_caught = 0;
+	TAILQ_FOREACH(ev, &base->sig.signalqueue, ev_signal_next) {
+		ncalls = base->sig.evsigcaught[OPAL_EVENT_SIGNAL(ev)];
+		if (ncalls) {
+			if (!(ev->ev_events & OPAL_EV_PERSIST))
+				event_del(ev);
+			event_active(ev, OPAL_EV_SIGNAL, ncalls);
+			base->sig.evsigcaught[OPAL_EVENT_SIGNAL(ev)] = 0;
+		}
 	}
-
-	if (TAILQ_FIRST(&opal_signalqueue) == NULL && !opal_needrecalc)
-		return (0);
-	opal_needrecalc = 0;
-
-	if (sigprocmask(SIG_BLOCK, evsigmask, NULL) == -1)
-		return (-1);
-	
-	/* Reinstall our signal handler. */
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = opal_evsignal_handler;
-	sa.sa_mask = *evsigmask;
-#if OMPI_HAVE_SA_RESTART
-	sa.sa_flags |= SA_RESTART;
-#endif
-	
-	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
-		if (sigaction(OPAL_EVENT_SIGNAL(ev), &sa, NULL) == -1)
-			return (-1);
-	}
-	return (0);
-#endif
-}
-
-int
-opal_evsignal_deliver(sigset_t *evsigmask)
-{
-	if (TAILQ_FIRST(&opal_signalqueue) == NULL)
-		return (0);
-
-#ifdef WIN32
-   return 0;
-#else
-	return (sigprocmask(SIG_UNBLOCK, evsigmask, NULL));
-	/* XXX - pending signals handled here */
-#endif
 }
 
 void
-opal_evsignal_process(void)
+evsignal_dealloc(struct event_base *base)
 {
-	struct opal_event *ev;
-	sig_atomic_t ncalls;
-
-	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
-		ncalls = opal_evsigcaught[OPAL_EVENT_SIGNAL(ev)];
-		if (ncalls) {
-			if (!(ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del_i(ev);
-			opal_event_active_i(ev, OPAL_EV_SIGNAL, ncalls);
-		}
+	if(base->sig.ev_signal_added) {
+		event_del(&base->sig.ev_signal);
+		base->sig.ev_signal_added = 0;
 	}
+	assert(TAILQ_EMPTY(&base->sig.signalqueue));
 
-	memset(opal_evsigcaught, 0, sizeof(opal_evsigcaught));
-	opal_evsignal_caught = 0;
+	EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[0]);
+	base->sig.ev_signal_pair[0] = -1;
+	EVUTIL_CLOSESOCKET(base->sig.ev_signal_pair[1]);
+	base->sig.ev_signal_pair[1] = -1;
+	base->sig.sh_old_max = 0;
+
+	/* per index frees are handled in evsignal_del() */
+	free(base->sig.sh_old);
 }
-

@@ -25,7 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opal_config.h"
-
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
@@ -55,6 +54,7 @@
 #endif
 
 #include "event.h"
+#include "event-internal.h"
 #include "evsignal.h"
 #include "log.h"
 
@@ -67,8 +67,8 @@ extern opal_mutex_t opal_event_lock;
  * all file descriptors outself.
  */
 struct evepoll {
-	struct opal_event *evread;
-	struct opal_event *evwrite;
+	struct event *evread;
+	struct event *evwrite;
 };
 
 struct epollop {
@@ -77,22 +77,22 @@ struct epollop {
 	struct epoll_event *events;
 	int nevents;
 	int epfd;
-	sigset_t evsigmask;
 };
 
-static void *epoll_init	(void);
-static int epoll_add	(void *, struct opal_event *);
-static int epoll_del	(void *, struct opal_event *);
-static int epoll_recalc	(struct event_base *, void *, int);
+static void *epoll_init	(struct event_base *);
+static int epoll_add	(void *, struct event *);
+static int epoll_del	(void *, struct event *);
 static int epoll_dispatch	(struct event_base *, void *, struct timeval *);
+static void epoll_dealloc	(struct event_base *, void *);
 
-struct opal_eventop opal_epollops = {
+struct eventop epollops = {
 	"epoll",
 	epoll_init,
 	epoll_add,
 	epoll_del,
-	epoll_recalc,
-	epoll_dispatch
+	epoll_dispatch,
+	epoll_dealloc,
+	1 /* need reinit */
 };
 
 #ifdef HAVE_SETFD
@@ -107,7 +107,7 @@ struct opal_eventop opal_epollops = {
 #define NEVENT	32000
 
 static void *
-epoll_init(void)
+epoll_init(struct event_base *base)
 {
 	int epfd, nfiles = NEVENT;
 	struct rlimit rl;
@@ -157,8 +157,9 @@ epoll_init(void)
 	}
 	epollop->nfds = nfiles;
 
-	opal_evsignal_init(&epollop->evsigmask);
-
+#if OPAL_EVENT_USE_SIGNALS
+	evsignal_init(base);
+#endif
 	return (epollop);
 }
 
@@ -166,6 +167,7 @@ static int
 epoll_recalc(struct event_base *base, void *arg, int max)
 {
 	struct epollop *epollop = arg;
+
 	if (max > epollop->nfds) {
 		struct evepoll *fds;
 		int nfds;
@@ -185,81 +187,72 @@ epoll_recalc(struct event_base *base, void *arg, int max)
 		epollop->nfds = nfds;
 	}
 
-	return (opal_evsignal_recalc(&epollop->evsigmask));
+	return (0);
 }
 
-int
+static int
 epoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
 	struct epollop *epollop = arg;
 	struct epoll_event *events = epollop->events;
 	struct evepoll *evep;
-	int i, res, timeout;
+	int i, res, timeout = -1;
 
-	if (opal_evsignal_deliver(&epollop->evsigmask) == -1)
-		return (-1);
+	if (tv != NULL)
+		timeout = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
 
-	timeout = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
         /* we should release the lock if we're going to enter the
            kernel in a multi-threaded application.  However, if we're
            single threaded, there's really no advantage to releasing
            the lock and it just takes up time we could spend doing
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
-	res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
+        res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
         OPAL_THREAD_LOCK(&opal_event_lock);
-
-	if (opal_evsignal_recalc(&epollop->evsigmask) == -1)
-		return (-1);
-
+        
 	if (res == -1) {
 		if (errno != EINTR) {
 			event_warn("epoll_wait");
 			return (-1);
 		}
-
-		opal_evsignal_process();
+#if OPAL_EVENT_USE_SIGNALS
+		evsignal_process(base);
+#endif
 		return (0);
-	} else if (opal_evsignal_caught)
-		opal_evsignal_process();
+	} else if (base->sig.evsignal_caught) {
+#if OPAL_EVENT_USE_SIGNALS
+            evsignal_process(base);
+#endif
+	}
 
 	event_debug(("%s: epoll_wait reports %d", __func__, res));
 
 	for (i = 0; i < res; i++) {
-		int which = 0;
 		int what = events[i].events;
-		struct opal_event *evread = NULL, *evwrite = NULL;
+		struct event *evread = NULL, *evwrite = NULL;
 
 		evep = (struct evepoll *)events[i].data.ptr;
-   
-                if (what & EPOLLHUP)
-                        what |= EPOLLIN | EPOLLOUT;
-                else if (what & EPOLLERR)
-                        what |= EPOLLIN | EPOLLOUT;
 
-		if (what & EPOLLIN) {
+		if (what & (EPOLLHUP|EPOLLERR)) {
 			evread = evep->evread;
-			which |= OPAL_EV_READ;
-		}
-
-		if (what & EPOLLOUT) {
 			evwrite = evep->evwrite;
-			which |= OPAL_EV_WRITE;
+		} else {
+			if (what & EPOLLIN) {
+				evread = evep->evread;
+			}
+
+			if (what & EPOLLOUT) {
+				evwrite = evep->evwrite;
+			}
 		}
 
-		if (!which)
+		if (!(evread||evwrite))
 			continue;
 
-		if (evread != NULL && !(evread->ev_events & OPAL_EV_PERSIST))
-			opal_event_del_i(evread);
-		if (evwrite != NULL && evwrite != evread &&
-		    !(evwrite->ev_events & OPAL_EV_PERSIST))
-			opal_event_del_i(evwrite);
-
 		if (evread != NULL)
-			opal_event_active_i(evread, OPAL_EV_READ, 1);
+			event_active(evread, EV_READ, 1);
 		if (evwrite != NULL)
-			opal_event_active_i(evwrite, OPAL_EV_WRITE, 1);
+			event_active(evwrite, EV_WRITE, 1);
 	}
 
 	return (0);
@@ -267,15 +260,17 @@ epoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 
 
 static int
-epoll_add(void *arg, struct opal_event *ev)
+epoll_add(void *arg, struct event *ev)
 {
 	struct epollop *epollop = arg;
 	struct epoll_event epev = {0, {0}};
 	struct evepoll *evep;
 	int fd, op, events;
 
-	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_add(&epollop->evsigmask, ev));
+#if OPAL_EVENT_USE_SIGNALS
+	if (ev->ev_events & EV_SIGNAL)
+		return (evsignal_add(ev));
+#endif
 
 	fd = ev->ev_fd;
 	if (fd >= epollop->nfds) {
@@ -295,9 +290,9 @@ epoll_add(void *arg, struct opal_event *ev)
 		op = EPOLL_CTL_MOD;
 	}
 
-	if (ev->ev_events & OPAL_EV_READ)
+	if (ev->ev_events & EV_READ)
 		events |= EPOLLIN;
-	if (ev->ev_events & OPAL_EV_WRITE)
+	if (ev->ev_events & EV_WRITE)
 		events |= EPOLLOUT;
 
 	epev.data.ptr = evep;
@@ -306,16 +301,16 @@ epoll_add(void *arg, struct opal_event *ev)
 			return (-1);
 
 	/* Update events responsible */
-	if (ev->ev_events & OPAL_EV_READ)
+	if (ev->ev_events & EV_READ)
 		evep->evread = ev;
-	if (ev->ev_events & OPAL_EV_WRITE)
+	if (ev->ev_events & EV_WRITE)
 		evep->evwrite = ev;
 
 	return (0);
 }
 
 static int
-epoll_del(void *arg, struct opal_event *ev)
+epoll_del(void *arg, struct event *ev)
 {
 	struct epollop *epollop = arg;
 	struct epoll_event epev = {0, {0}};
@@ -323,8 +318,10 @@ epoll_del(void *arg, struct opal_event *ev)
 	int fd, events, op;
 	int needwritedelete = 1, needreaddelete = 1;
 
-	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_del(&epollop->evsigmask, ev));
+#if OPAL_EVENT_USE_SIGNALS
+	if (ev->ev_events & EV_SIGNAL)
+		return (evsignal_del(ev));
+#endif
 
 	fd = ev->ev_fd;
 	if (fd >= epollop->nfds)
@@ -334,9 +331,9 @@ epoll_del(void *arg, struct opal_event *ev)
 	op = EPOLL_CTL_DEL;
 	events = 0;
 
-	if (ev->ev_events & OPAL_EV_READ)
+	if (ev->ev_events & EV_READ)
 		events |= EPOLLIN;
-	if (ev->ev_events & OPAL_EV_WRITE)
+	if (ev->ev_events & EV_WRITE)
 		events |= EPOLLOUT;
 
 	if ((events & (EPOLLIN|EPOLLOUT)) != (EPOLLIN|EPOLLOUT)) {
@@ -363,4 +360,21 @@ epoll_del(void *arg, struct opal_event *ev)
 		return (-1);
 
 	return (0);
+}
+
+static void
+epoll_dealloc(struct event_base *base, void *arg)
+{
+	struct epollop *epollop = arg;
+
+	evsignal_dealloc(base);
+	if (epollop->fds)
+		free(epollop->fds);
+	if (epollop->events)
+		free(epollop->events);
+	if (epollop->epfd >= 0)
+		close(epollop->epfd);
+
+	memset(epollop, 0, sizeof(struct epollop));
+	free(epollop);
 }

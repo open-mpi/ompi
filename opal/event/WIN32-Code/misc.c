@@ -1,9 +1,14 @@
-#include "opal_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
 #include <sys/timeb.h>
 #include <time.h>
+
+#ifdef __GNUC__
+/*our prototypes for timeval and timezone are in here, just in case the above
+  headers don't have them*/
+#include "misc.h"
+#endif
 
 /****************************************************************************
  *
@@ -18,25 +23,26 @@
  *
  ****************************************************************************/
 
-#if 0
+#ifndef HAVE_GETTIMEOFDAY
 int gettimeofday(struct timeval *tv, struct timezone *tz) {
-  struct _timeb tb;
+	struct _timeb tb;
 
 	if(tv == NULL)
 		return -1;
 
 	_ftime(&tb);
-	tv->tv_sec = (long)tb.time;
+	tv->tv_sec = (long) tb.time;
 	tv->tv_usec = ((int) tb.millitm) * 1000;
 	return 0;
 }
 #endif
 
+#if 0
 int
 win_read(int fd, void *buf, unsigned int length)
 {
 	DWORD dwBytesRead;
-	int res = ReadFile((HANDLE)fd, buf, length, &dwBytesRead, NULL);
+	int res = ReadFile((HANDLE) fd, buf, length, &dwBytesRead, NULL);
 	if (res == 0) {
 		DWORD error = GetLastError();
 		if (error == ERROR_NO_DATA)
@@ -84,3 +90,4 @@ socketpair(int d, int type, int protocol, int *sv)
 
 	return (0);
 }
+#endif

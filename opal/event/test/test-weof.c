@@ -2,14 +2,17 @@
  * Compile with:
  * cc -I/usr/local/include -o time-test time-test.c -L/usr/local/lib -levent
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifdef HAVE_SYS_TYPES_H
+
+#ifdef WIN32
+#include <winsock2.h>
+#endif
 #include <sys/types.h>
-#endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -18,21 +21,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <errno.h>
 
 #include <event.h>
+#include <evutil.h>
 
 int pair[2];
 int test_okay = 1;
 int called = 0;
 
-void
+static void
 write_cb(int fd, short event, void *arg)
 {
-	char *test = "test string";
+	const char *test = "test string";
 	int len;
 
 	len = write(fd, test, strlen(test) + 1);
@@ -42,7 +44,7 @@ write_cb(int fd, short event, void *arg)
 
 	if (len > 0) {
 		if (!called)
-			opal_event_add(arg, NULL);
+			event_add(arg, NULL);
 		close(pair[0]);
 	} else if (called == 1)
 		test_okay = 0;
@@ -53,21 +55,25 @@ write_cb(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct opal_event ev;
+	struct event ev;
 
-	if (signal(SIGPIPE, SIG_IGN) == SIG_IGN)
+#ifndef WIN32
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		return (1);
+#endif
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
+	if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		return (1);
 
 	/* Initalize the event library */
-	opal_event_init();
+	event_init();
 
 	/* Initalize one event */
-	opal_event_set(&ev, pair[1], OPAL_EV_WRITE, write_cb, &ev);
-	opal_event_add(&ev, NULL);
-	opal_event_dispatch();
+	event_set(&ev, pair[1], EV_WRITE, write_cb, &ev);
+
+	event_add(&ev, NULL);
+
+	event_dispatch();
 
 	return (test_okay);
 }

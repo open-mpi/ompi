@@ -2,21 +2,19 @@
  * Compile with:
  * cc -I/usr/local/include -o time-test time-test.c -L/usr/local/lib -levent
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifdef HAVE_SYS_TYPES_H
+
 #include <sys/types.h>
-#endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <errno.h>
 
 #include <event.h>
@@ -25,9 +23,19 @@ int called = 0;
 
 #define NEVENT	20000
 
-struct opal_event *ev[NEVENT];
+struct event *ev[NEVENT];
 
-void
+static int
+rand_int(int n)
+{
+#ifdef WIN32
+	return (int)(rand() * n);
+#else
+	return (int)(random() % n);
+#endif
+}
+
+static void
 time_cb(int fd, short event, void *arg)
 {
 	struct timeval tv;
@@ -37,13 +45,13 @@ time_cb(int fd, short event, void *arg)
 
 	if (called < 10*NEVENT) {
 		for (i = 0; i < 10; i++) {
-			j = random() % NEVENT;
+			j = rand_int(NEVENT);
 			tv.tv_sec = 0;
-			tv.tv_usec = random() % 50000L;
+			tv.tv_usec = rand_int(50000);
 			if (tv.tv_usec % 2)
-				opal_evtimer_add(ev[j], &tv);
+				evtimer_add(ev[j], &tv);
 			else
-				opal_evtimer_del(ev[j]);
+				evtimer_del(ev[j]);
 		}
 	}
 }
@@ -55,19 +63,19 @@ main (int argc, char **argv)
 	int i;
 
 	/* Initalize the event library */
-	opal_event_init();
+	event_init();
 
 	for (i = 0; i < NEVENT; i++) {
-		ev[i] = malloc(sizeof(struct opal_event));
+		ev[i] = malloc(sizeof(struct event));
 
 		/* Initalize one event */
-		opal_evtimer_set(ev[i], time_cb, ev[i]);
+		evtimer_set(ev[i], time_cb, ev[i]);
 		tv.tv_sec = 0;
-		tv.tv_usec = random() % 50000L;
-		opal_evtimer_add(ev[i], &tv);
+		tv.tv_usec = rand_int(50000);
+		evtimer_add(ev[i], &tv);
 	}
 
-	opal_event_dispatch();
+	event_dispatch();
 
 	return (called < NEVENT);
 }

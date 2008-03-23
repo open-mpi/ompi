@@ -134,17 +134,17 @@ static int windows_module_map_to_socket_core(int processor_id, int *socket, int 
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int windows_module_get_processor_info(int *num_processors, int *max_processor_id);
+static int windows_module_get_processor_info(int *num_processors, int *max_processor_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int windows_module_get_socket_info(int *num_sockets, int *max_socket_num);        
+static int windows_module_get_socket_info(int *num_sockets, int *max_socket_num)      
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int windows_module_get_core_info(int socket, int *num_cores, int *max_core_num);  
+static int windows_module_get_core_info(int socket, int *num_cores, int *max_core_num)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }

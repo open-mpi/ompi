@@ -24,10 +24,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include "opal_config.h"
 
 #include <sys/types.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -41,20 +44,25 @@
 #include <stdarg.h>
 #endif
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
+#include "evutil.h"
 #include "event.h"
 
 /* prototypes */
 
-void bufferevent_setwatermark(struct bufferevent *, short, size_t, size_t);
+static void bufferevent_setwatermark(struct bufferevent *, short, size_t, size_t);
 static void bufferevent_read_pressure_cb(struct evbuffer *, size_t, size_t, void *);
 
 static int
-bufferevent_add(struct opal_event *ev, int timeout)
+bufferevent_add(struct event *ev, int timeout)
 {
 	struct timeval tv, *ptv = NULL;
 
 	if (timeout) {
-		timerclear(&tv);
+		evutil_timerclear(&tv);
 		tv.tv_sec = timeout;
 		ptv = &tv;
 	}
@@ -72,13 +80,13 @@ bufferevent_read_pressure_cb(struct evbuffer *buf, size_t old, size_t now,
     void *arg) {
 	struct bufferevent *bufev = arg;
 	/* 
-	 * If we are below the watermak then reschedule reading if it's
+	 * If we are below the watermark then reschedule reading if it's
 	 * still enabled.
 	 */
 	if (bufev->wm_read.high == 0 || now < bufev->wm_read.high) {
 		evbuffer_setcb(buf, NULL, NULL);
 
-		if (bufev->enabled & OPAL_EV_READ)
+		if (bufev->enabled & EV_READ)
 			bufferevent_add(&bufev->ev_read, bufev->timeout_read);
 	}
 }
@@ -88,23 +96,31 @@ bufferevent_readcb(int fd, short event, void *arg)
 {
 	struct bufferevent *bufev = arg;
 	int res = 0;
-	short what = OPAL_EVBUFFER_READ;
+	short what = EVBUFFER_READ;
 	size_t len;
+	int howmuch = -1;
 
-	if (event == OPAL_EV_TIMEOUT) {
-		what |= OPAL_EVBUFFER_TIMEOUT;
+	if (event == EV_TIMEOUT) {
+		what |= EVBUFFER_TIMEOUT;
 		goto error;
 	}
 
-	res = evbuffer_read(bufev->input, fd, -1);
+	/*
+	 * If we have a high watermark configured then we don't want to
+	 * read more data than would make us reach the watermark.
+	 */
+	if (bufev->wm_read.high != 0)
+		howmuch = bufev->wm_read.high;
+
+	res = evbuffer_read(bufev->input, fd, howmuch);
 	if (res == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			goto reschedule;
 		/* error case */
-		what |= OPAL_EVBUFFER_ERROR;
+		what |= EVBUFFER_ERROR;
 	} else if (res == 0) {
 		/* eof case */
-		what |= OPAL_EVBUFFER_EOF;
+		what |= EVBUFFER_EOF;
 	}
 
 	if (res <= 0)
@@ -113,7 +129,7 @@ bufferevent_readcb(int fd, short event, void *arg)
 	bufferevent_add(&bufev->ev_read, bufev->timeout_read);
 
 	/* See if this callbacks meets the water marks */
-	len = OPAL_EVBUFFER_LENGTH(bufev->input);
+	len = EVBUFFER_LENGTH(bufev->input);
 	if (bufev->wm_read.low != 0 && len < bufev->wm_read.low)
 		return;
 	if (bufev->wm_read.high != 0 && len > bufev->wm_read.high) {
@@ -126,7 +142,8 @@ bufferevent_readcb(int fd, short event, void *arg)
 	}
 
 	/* Invoke the user callback - must always be called last */
-	(*bufev->readcb)(bufev, bufev->cbarg);
+	if (bufev->readcb != NULL)
+		(*bufev->readcb)(bufev, bufev->cbarg);
 	return;
 
  reschedule:
@@ -142,44 +159,53 @@ bufferevent_writecb(int fd, short event, void *arg)
 {
 	struct bufferevent *bufev = arg;
 	int res = 0;
-	short what = OPAL_EVBUFFER_WRITE;
+	short what = EVBUFFER_WRITE;
 
-	if (event == OPAL_EV_TIMEOUT) {
-		what |= OPAL_EVBUFFER_TIMEOUT;
+	if (event == EV_TIMEOUT) {
+		what |= EVBUFFER_TIMEOUT;
 		goto error;
 	}
 
-	if (OPAL_EVBUFFER_LENGTH(bufev->output)) {
+	if (EVBUFFER_LENGTH(bufev->output)) {
 	    res = evbuffer_write(bufev->output, fd);
 	    if (res == -1) {
+#ifndef WIN32
+/*todo. evbuffer uses WriteFile when WIN32 is set. WIN32 system calls do not
+ *set errno. thus this error checking is not portable*/
 		    if (errno == EAGAIN ||
 			errno == EINTR ||
 			errno == EINPROGRESS)
 			    goto reschedule;
 		    /* error case */
-		    what |= OPAL_EVBUFFER_ERROR;
+		    what |= EVBUFFER_ERROR;
+
+#else
+				goto reschedule;
+#endif
+
 	    } else if (res == 0) {
 		    /* eof case */
-		    what |= OPAL_EVBUFFER_EOF;
+		    what |= EVBUFFER_EOF;
 	    }
 	    if (res <= 0)
 		    goto error;
 	}
 
-	if (OPAL_EVBUFFER_LENGTH(bufev->output) != 0)
+	if (EVBUFFER_LENGTH(bufev->output) != 0)
 		bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 
 	/*
 	 * Invoke the user callback if our buffer is drained or below the
 	 * low watermark.
 	 */
-	if (OPAL_EVBUFFER_LENGTH(bufev->output) <= bufev->wm_write.low)
+	if (bufev->writecb != NULL &&
+	    EVBUFFER_LENGTH(bufev->output) <= bufev->wm_write.low)
 		(*bufev->writecb)(bufev, bufev->cbarg);
 
 	return;
 
  reschedule:
-	if (OPAL_EVBUFFER_LENGTH(bufev->output) != 0)
+	if (EVBUFFER_LENGTH(bufev->output) != 0)
 		bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 	return;
 
@@ -193,6 +219,9 @@ bufferevent_writecb(int fd, short event, void *arg)
  * The read callback is invoked whenever we read new data.
  * The write callback is invoked whenever the output buffer is drained.
  * The error callback is invoked on a write/read error or on EOF.
+ *
+ * Both read and write callbacks maybe NULL.  The error callback is not
+ * allowed to be NULL and have to be provided always.
  */
 
 struct bufferevent *
@@ -215,8 +244,8 @@ bufferevent_new(int fd, evbuffercb readcb, evbuffercb writecb,
 		return (NULL);
 	}
 
-	opal_event_set(&bufev->ev_read, fd, OPAL_EV_READ, bufferevent_readcb, bufev);
-	opal_event_set(&bufev->ev_write, fd, OPAL_EV_WRITE, bufferevent_writecb, bufev);
+	event_set(&bufev->ev_read, fd, EV_READ, bufferevent_readcb, bufev);
+	event_set(&bufev->ev_write, fd, EV_WRITE, bufferevent_writecb, bufev);
 
 	bufev->readcb = readcb;
 	bufev->writecb = writecb;
@@ -224,7 +253,12 @@ bufferevent_new(int fd, evbuffercb readcb, evbuffercb writecb,
 
 	bufev->cbarg = cbarg;
 
-	bufev->enabled = OPAL_EV_READ | OPAL_EV_WRITE;
+	/*
+	 * Set to EV_WRITE so that using bufferevent_write is going to
+	 * trigger a callback.  Reading needs to be explicitly enabled
+	 * because otherwise no data will be available.
+	 */
+	bufev->enabled = EV_WRITE;
 
 	return (bufev);
 }
@@ -232,9 +266,9 @@ bufferevent_new(int fd, evbuffercb readcb, evbuffercb writecb,
 int
 bufferevent_priority_set(struct bufferevent *bufev, int priority)
 {
-	if (opal_event_priority_set(&bufev->ev_read, priority) == -1)
+	if (event_priority_set(&bufev->ev_read, priority) == -1)
 		return (-1);
-	if (opal_event_priority_set(&bufev->ev_write, priority) == -1)
+	if (event_priority_set(&bufev->ev_write, priority) == -1)
 		return (-1);
 
 	return (0);
@@ -245,8 +279,8 @@ bufferevent_priority_set(struct bufferevent *bufev, int priority)
 void
 bufferevent_free(struct bufferevent *bufev)
 {
-	opal_event_del(&bufev->ev_read);
-	opal_event_del(&bufev->ev_write);
+	event_del(&bufev->ev_read);
+	event_del(&bufev->ev_write);
 
 	evbuffer_free(bufev->input);
 	evbuffer_free(bufev->output);
@@ -260,7 +294,7 @@ bufferevent_free(struct bufferevent *bufev)
  */
 
 int
-bufferevent_write(struct bufferevent *bufev, void *data, size_t size)
+bufferevent_write(struct bufferevent *bufev, const void *data, size_t size)
 {
 	int res;
 
@@ -270,7 +304,7 @@ bufferevent_write(struct bufferevent *bufev, void *data, size_t size)
 		return (res);
 
 	/* If everything is okay, we need to schedule a write */
-	if (size > 0 && (bufev->enabled & OPAL_EV_WRITE))
+	if (size > 0 && (bufev->enabled & EV_WRITE))
 		bufferevent_add(&bufev->ev_write, bufev->timeout_write);
 
 	return (res);
@@ -308,11 +342,11 @@ bufferevent_read(struct bufferevent *bufev, void *data, size_t size)
 int
 bufferevent_enable(struct bufferevent *bufev, short event)
 {
-	if (event & OPAL_EV_READ) {
+	if (event & EV_READ) {
 		if (bufferevent_add(&bufev->ev_read, bufev->timeout_read) == -1)
 			return (-1);
 	}
-	if (event & OPAL_EV_WRITE) {
+	if (event & EV_WRITE) {
 		if (bufferevent_add(&bufev->ev_write, bufev->timeout_write) == -1)
 			return (-1);
 	}
@@ -324,12 +358,12 @@ bufferevent_enable(struct bufferevent *bufev, short event)
 int
 bufferevent_disable(struct bufferevent *bufev, short event)
 {
-	if (event & OPAL_EV_READ) {
-		if (opal_event_del(&bufev->ev_read) == -1)
+	if (event & EV_READ) {
+		if (event_del(&bufev->ev_read) == -1)
 			return (-1);
 	}
-	if (event & OPAL_EV_WRITE) {
-		if (opal_event_del(&bufev->ev_write) == -1)
+	if (event & EV_WRITE) {
+		if (event_del(&bufev->ev_write) == -1)
 			return (-1);
 	}
 
@@ -356,17 +390,30 @@ void
 bufferevent_setwatermark(struct bufferevent *bufev, short events,
     size_t lowmark, size_t highmark)
 {
-	if (events & OPAL_EV_READ) {
+	if (events & EV_READ) {
 		bufev->wm_read.low = lowmark;
 		bufev->wm_read.high = highmark;
 	}
 
-	if (events & OPAL_EV_WRITE) {
+	if (events & EV_WRITE) {
 		bufev->wm_write.low = lowmark;
 		bufev->wm_write.high = highmark;
 	}
 
 	/* If the watermarks changed then see if we should call read again */
 	bufferevent_read_pressure_cb(bufev->input,
-	    0, OPAL_EVBUFFER_LENGTH(bufev->input), bufev);
+	    0, EVBUFFER_LENGTH(bufev->input), bufev);
+}
+
+int
+bufferevent_base_set(struct event_base *base, struct bufferevent *bufev)
+{
+	int res;
+
+	res = event_base_set(base, &bufev->ev_read);
+	if (res == -1)
+		return (res);
+
+	res = event_base_set(base, &bufev->ev_write);
+	return (res);
 }

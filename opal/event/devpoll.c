@@ -45,6 +45,7 @@
 #include <assert.h>
 
 #include "event.h"
+#include "event-internal.h"
 #include "evsignal.h"
 #include "log.h"
 
@@ -54,12 +55,13 @@ extern opal_mutex_t opal_event_lock;
 
 extern volatile sig_atomic_t opal_evsignal_caught;
 
+
 /* due to limitations in the devpoll interface, we need to keep track of
  * all file descriptors outself.
  */
 struct evdevpoll {
-	struct opal_event *evread;
-	struct opal_event *evwrite;
+	struct event *evread;
+	struct event *evwrite;
 };
 
 struct devpollop {
@@ -68,24 +70,24 @@ struct devpollop {
 	struct pollfd *events;
 	int nevents;
 	int dpfd;
-	sigset_t evsigmask;
 	struct pollfd *changes;
 	int nchanges;
 };
 
-static void *devpoll_init	(void);
-static int devpoll_add	(void *, struct opal_event *);
-static int devpoll_del	(void *, struct opal_event *);
-static int devpoll_recalc	(struct event_base *, void *, int);
+static void *devpoll_init	(struct event_base *);
+static int devpoll_add	(void *, struct event *);
+static int devpoll_del	(void *, struct event *);
 static int devpoll_dispatch	(struct event_base *, void *, struct timeval *);
+static void devpoll_dealloc	(struct event_base *, void *);
 
-struct opal_eventop devpollops = {
+struct eventop devpollops = {
 	"devpoll",
 	devpoll_init,
 	devpoll_add,
 	devpoll_del,
-	devpoll_recalc,
-	devpoll_dispatch
+	devpoll_dispatch,
+	devpoll_dealloc,
+	1 /* need reinit */
 };
 
 #define NEVENT	32000
@@ -126,8 +128,8 @@ devpoll_queue(struct devpollop *devpollop, int fd, int events) {
 	return(0);
 }
 
-void *
-devpoll_init(void)
+static void *
+devpoll_init(struct event_base *base)
 {
 	int dpfd, nfiles = NEVENT;
 	struct rlimit rl;
@@ -180,12 +182,12 @@ devpoll_init(void)
 		return (NULL);
 	}
 
-	opal_evsignal_init(&devpollop->evsigmask);
+	evsignal_init(base);
 
 	return (devpollop);
 }
 
-int
+static int
 devpoll_recalc(struct event_base *base, void *arg, int max)
 {
 	struct devpollop *devpollop = arg;
@@ -209,30 +211,27 @@ devpoll_recalc(struct event_base *base, void *arg, int max)
 		devpollop->nfds = nfds;
 	}
 
-	return (opal_evsignal_recalc(&devpollop->evsigmask));
+	return (0);
 }
 
-int
+static int
 devpoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
 	struct devpollop *devpollop = arg;
 	struct pollfd *events = devpollop->events;
 	struct dvpoll dvp;
 	struct evdevpoll *evdp;
-	int i, res, timeout;
-
-	if (opal_evsignal_deliver(&devpollop->evsigmask) == -1)
-		return (-1);
+	int i, res, timeout = -1;
 
 	if (devpollop->nchanges)
 		devpoll_commit(devpollop);
 
-	timeout = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
+	if (tv != NULL)
+		timeout = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
 
 	dvp.dp_fds = devpollop->events;
 	dvp.dp_nfds = devpollop->nevents;
 	dvp.dp_timeout = timeout;
-
 
         /* we should release the lock if we're going to enter the
            kernel in a multi-threaded application.  However, if we're
@@ -240,11 +239,9 @@ devpoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
            the lock and it just takes up time we could spend doing
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
-	res = ioctl(devpollop->dpfd, DP_POLL, &dvp);
+        res = ioctl(devpollop->dpfd, DP_POLL, &dvp);
         OPAL_THREAD_LOCK(&opal_event_lock);
 
-	if (opal_evsignal_recalc(&devpollop->evsigmask) == -1)
-		return (-1);
 
 	if (res == -1) {
 		if (errno != EINTR) {
@@ -252,17 +249,18 @@ devpoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-		opal_evsignal_process();
+		evsignal_process(base);
 		return (0);
-	} else if (opal_evsignal_caught)
-		opal_evsignal_process();
+	} else if (base->sig.evsignal_caught) {
+		evsignal_process(base);
+	}
 
 	event_debug(("%s: devpoll_wait reports %d", __func__, res));
 
 	for (i = 0; i < res; i++) {
 		int which = 0;
 		int what = events[i].revents;
-		struct opal_event *evread = NULL, *evwrite = NULL;
+		struct event *evread = NULL, *evwrite = NULL;
 
 		assert(events[i].fd < devpollop->nfds);
 		evdp = &devpollop->fds[events[i].fd];
@@ -286,30 +284,30 @@ devpoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			continue;
 
 		if (evread != NULL && !(evread->ev_events & OPAL_EV_PERSIST))
-			opal_event_del_i(evread);
+			event_del(evread);
 		if (evwrite != NULL && evwrite != evread &&
 		    !(evwrite->ev_events & OPAL_EV_PERSIST))
-			opal_event_del_i(evwrite);
+			event_del(evwrite);
 
 		if (evread != NULL)
-			opal_event_active_i(evread, OPAL_EV_READ, 1);
+			event_active(evread, OPAL_EV_READ, 1);
 		if (evwrite != NULL)
-			opal_event_active_i(evwrite, OPAL_EV_WRITE, 1);
+			event_active(evwrite, OPAL_EV_WRITE, 1);
 	}
 
 	return (0);
 }
 
 
-int
-devpoll_add(void *arg, struct opal_event *ev)
+static int
+devpoll_add(void *arg, struct event *ev)
 {
 	struct devpollop *devpollop = arg;
 	struct evdevpoll *evdp;
 	int fd, events;
 
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_add(&devpollop->evsigmask, ev));
+		return (evsignal_add(ev));
 
 	fd = ev->ev_fd;
 	if (fd >= devpollop->nfds) {
@@ -355,8 +353,8 @@ devpoll_add(void *arg, struct opal_event *ev)
 	return (0);
 }
 
-int
-devpoll_del(void *arg, struct opal_event *ev)
+static int
+devpoll_del(void *arg, struct event *ev)
 {
 	struct devpollop *devpollop = arg;
 	struct evdevpoll *evdp;
@@ -364,7 +362,7 @@ devpoll_del(void *arg, struct opal_event *ev)
 	int needwritedelete = 1, needreaddelete = 1;
 
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return (opal_evsignal_del(&devpollop->evsigmask, ev));
+		return (evsignal_del(ev));
 
 	fd = ev->ev_fd;
 	if (fd >= devpollop->nfds)
@@ -410,4 +408,23 @@ devpoll_del(void *arg, struct opal_event *ev)
 		evdp->evwrite = NULL;
 
 	return (0);
+}
+
+static void
+devpoll_dealloc(struct event_base *base, void *arg)
+{
+	struct devpollop *devpollop = arg;
+
+	evsignal_dealloc(base);
+	if (devpollop->fds)
+		free(devpollop->fds);
+	if (devpollop->events)
+		free(devpollop->events);
+	if (devpollop->changes)
+		free(devpollop->changes);
+	if (devpollop->dpfd >= 0)
+		close(devpollop->dpfd);
+
+	memset(devpollop, 0, sizeof(struct devpollop));
+	free(devpollop);
 }

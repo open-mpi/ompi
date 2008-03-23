@@ -25,6 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opal_config.h"
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
