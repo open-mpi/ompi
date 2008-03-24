@@ -150,7 +150,7 @@ typedef struct mca_btl_openib_endpoint_qp_t {
  */
 
 struct mca_btl_base_endpoint_t {
-    opal_list_item_t            super;
+    opal_object_t            super;
 
     struct mca_btl_openib_module_t* endpoint_btl;
     /**< BTL instance that created this connection */
