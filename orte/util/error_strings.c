@@ -52,9 +52,6 @@ orte_err2str(int errnum)
     case ORTE_ERR_COMM_FAILURE:
         retval = "Communication failure";
         break;
-    case ORTE_ERR_GPR_DATA_CORRUPT:
-        retval = "GPR data corruption";
-        break;
     case ORTE_ERR_TYPE_MISMATCH:
         retval = "Type mismatch";
         break;
