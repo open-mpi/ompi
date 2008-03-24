@@ -37,6 +37,9 @@
 #endif
 
 /* API functions */
+static int init(void);
+static void finalize(void);
+
 static int xcast(orte_jobid_t job,
                  opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
@@ -62,6 +65,8 @@ static int modex(opal_list_t *procs);
 static int purge_proc_attrs(void);
 
 orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
+    init,
+    finalize,
     xcast,
     allgather,
     allgather_list,
@@ -72,6 +77,22 @@ orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     modex,
     purge_proc_attrs
 };
+
+/**
+ * Init the module
+ */
+static int init(void)
+{
+    return ORTE_SUCCESS;
+}
+
+/**
+ * Finalize module
+ */
+static void finalize(void)
+{
+    return;
+}
 
 
 /**

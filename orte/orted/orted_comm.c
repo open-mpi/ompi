@@ -108,6 +108,9 @@ static void send_relay(int fd, short event, void *data)
                          "%s orte:daemon:send_relay",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* setup a list of next recipients */
+    OBJ_CONSTRUCT(&recips, opal_list_t);
+
     /* we pass the relay_mode in the mev "tag" field. This is a bit
      * of a hack as the two sizes may not exactly match. However, since
      * the rml_tag is an int32, it is doubtful we will ever see a
@@ -115,8 +118,28 @@ static void send_relay(int fd, short event, void *data)
      */
     relay_mode = (orte_grpcomm_mode_t)tag;
     
-    /* setup a list of next recipients */
-    OBJ_CONSTRUCT(&recips, opal_list_t);
+    /* if the mode is linear and we are the HNP, don't ask for
+     * next recipients as this will generate a potentially very
+     * long list! Instead, just look over the known daemons
+     */
+    if (ORTE_GRPCOMM_LINEAR == relay_mode && orte_process_info.hnp) {
+        orte_process_name_t dummy;
+        orte_vpid_t i;
+        
+        /* send the message to each daemon as fast as we can - but
+         * not to us!
+         */
+        dummy.jobid = ORTE_PROC_MY_HNP->jobid;
+        for (i=1; i < orte_process_info.num_procs; i++) {            
+            dummy.vpid = i;
+               if (0 > (ret = orte_rml.send_buffer(&dummy, buffer, ORTE_RML_TAG_DAEMON, 0))) {
+                    ORTE_ERROR_LOG(ret);
+                    goto CLEANUP;
+            }
+        }
+        goto CLEANUP;
+    }
+    
     /* ask the active grpcomm module for the next recipients */
     if (ORTE_SUCCESS != (ret = orte_grpcomm.next_recipients(&recips, relay_mode))) {
         ORTE_ERROR_LOG(ret);

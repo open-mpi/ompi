@@ -68,8 +68,7 @@ orte_grpcomm_base_component_t mca_grpcomm_basic_component = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    orte_grpcomm_basic_init,    /* component init */
-    orte_grpcomm_basic_finalize /* component shutdown */
+    orte_grpcomm_basic_init    /* component init */
 };
 
 /*
@@ -113,7 +112,6 @@ int orte_grpcomm_basic_open(void)
     return ORTE_SUCCESS;
 }
 
-/* Close the component */
 int orte_grpcomm_basic_close(void)
 {
     return ORTE_SUCCESS;
@@ -121,34 +119,8 @@ int orte_grpcomm_basic_close(void)
 
 orte_grpcomm_base_module_t* orte_grpcomm_basic_init(int *priority)
 {
-    /* initialize globals */
-    OBJ_CONSTRUCT(&orte_grpcomm_basic.mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_grpcomm_basic.cond, opal_condition_t);
-    orte_grpcomm_basic.num_active = 0;
-    
-    OBJ_CONSTRUCT(&orte_grpcomm_basic.modex_data, opal_hash_table_t);    
-    OBJ_CONSTRUCT(&orte_grpcomm_basic.modex_buffer, opal_buffer_t);
-    orte_grpcomm_basic.modex_num_entries = 0;
-    
-    opal_hash_table_init(&orte_grpcomm_basic.modex_data, 256);
-    
     /* we are the default, so set a low priority so we can be overridden */
     *priority = 1;
     
     return &orte_grpcomm_basic_module;
-}
-
-/*
- * finalize routine
- */
-int orte_grpcomm_basic_finalize(void)
-{
-    OBJ_DESTRUCT(&orte_grpcomm_basic.mutex);
-    OBJ_DESTRUCT(&orte_grpcomm_basic.cond);
-    
-    opal_hash_table_remove_all(&orte_grpcomm_basic.modex_data);
-    OBJ_DESTRUCT(&orte_grpcomm_basic.modex_data);
-    
-    OBJ_DESTRUCT(&orte_grpcomm_basic.modex_buffer);
-    return ORTE_SUCCESS;
 }

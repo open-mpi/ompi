@@ -41,13 +41,7 @@ orte_grpcomm_base_module_t* orte_grpcomm_cnos_init(int *priority);
 
 
 /*
- * Startup / Shutdown
- */
-int orte_grpcomm_cnos_module_init(void);
-int orte_grpcomm_cnos_finalize(void);
-
-/*
- * xcast interfaces
+ * Grpcomm interfaces
  */
 
 ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_cnos_component;

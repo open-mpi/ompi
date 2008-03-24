@@ -28,6 +28,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/grpcomm/grpcomm.h"
 
@@ -52,6 +54,27 @@ ORTE_DECLSPEC extern int orte_grpcomm_base_output;
 ORTE_DECLSPEC extern bool mca_grpcomm_base_selected;
 ORTE_DECLSPEC extern opal_list_t mca_grpcomm_base_components_available;
 ORTE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
+
+
+/*
+ * Base functions
+ */
+ORTE_DECLSPEC   int orte_grpcomm_base_allgather_list(opal_list_t *names,
+                                                     opal_buffer_t *sbuf,
+                                                     opal_buffer_t *rbuf);
+ORTE_DECLSPEC   int orte_grpcomm_base_allgather(opal_buffer_t *sbuf,
+                                                opal_buffer_t *rbuf);
+ORTE_DECLSPEC   int orte_grpcomm_base_barrier(void);
+ORTE_DECLSPEC   int orte_grpcomm_base_set_proc_attr(const char *attr_name,
+                                                    const void *data,
+                                                    size_t size);
+ORTE_DECLSPEC   int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
+                                                    const char * attribute_name, void **val, 
+                                                    size_t *size);
+ORTE_DECLSPEC   int orte_grpcomm_base_modex(opal_list_t *procs);
+ORTE_DECLSPEC   int orte_grpcomm_base_purge_proc_attrs(void);
+ORTE_DECLSPEC   int orte_grpcomm_base_modex_init(void);
+ORTE_DECLSPEC   void orte_grpcomm_base_modex_finalize(void);
 
 /*
  * external API functions will be documented in the mca/grpcomm/grpcomm.h file
