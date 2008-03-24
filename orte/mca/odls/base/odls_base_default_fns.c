@@ -544,8 +544,13 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
     free(param);
     
-    /* pass the nodeid so it can identify which procs are local to it */
-    asprintf(&param2, "%ld", (long)orte_process_info.nodeid);
+    /* pass our vpid to the process as a "nodeid" so it can
+     * identify which procs are local to it
+     */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&param2, ORTE_PROC_MY_NAME->vpid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     param = mca_base_param_environ_variable("orte","nodeid",NULL);
     opal_setenv(param, param2, true, environ_copy);
     free(param);
