@@ -113,10 +113,12 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         }
     }
 
-    /* If ORTE isn't setup yet/any more, then don't even try killing
-       everyone.  Sorry, Charlie... */
+    /* If OMPI isn't setup yet/any more, then don't even try killing
+       everyone.  Ditto for ORTE (e.g., ORTE may be initialized before
+       MPI_INIT is over, but ompi_initialized will be false because
+       communicators are not setup yet). Sorry, Charlie... */
 
-    if (!orte_initialized) {
+    if (!orte_initialized || !ompi_mpi_initialized || ompi_mpi_finalized) {
         fprintf(stderr, "[%s:%d] Abort %s completed successfully; not able to guarantee that all other processes were killed!\n",
                 host, (int) pid, ompi_mpi_finalized ? 
                 "after MPI_FINALIZE" : "before MPI_INIT");
