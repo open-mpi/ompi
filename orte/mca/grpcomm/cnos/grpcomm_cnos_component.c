@@ -59,7 +59,6 @@ orte_grpcomm_base_component_t mca_grpcomm_cnos_component = {
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     orte_grpcomm_cnos_init,    /* component init */
-    orte_grpcomm_cnos_finalize /* component shutdown */
 };
 
 /*
@@ -86,10 +85,3 @@ orte_grpcomm_base_module_t* orte_grpcomm_cnos_init(int *priority)
     return &orte_grpcomm_cnos_module;
 }
 
-/*
- * finalize routine
- */
-int orte_grpcomm_cnos_finalize(void)
-{
-    return ORTE_SUCCESS;
-}

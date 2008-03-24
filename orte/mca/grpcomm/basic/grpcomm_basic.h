@@ -40,18 +40,12 @@ BEGIN_C_DECLS
 typedef struct {
     orte_vpid_t xcast_linear_xover;
     orte_vpid_t xcast_binomial_xover;
-    orte_std_cntr_t num_active;
-    opal_mutex_t mutex;
-    opal_condition_t cond;
-    opal_hash_table_t modex_data;
-    opal_buffer_t modex_buffer;
-    orte_std_cntr_t modex_num_entries;
 } orte_grpcomm_basic_globals_t;
  
 extern orte_grpcomm_basic_globals_t orte_grpcomm_basic;
 
 /*
- * Module open / close
+ * Component open / close
  */
 int orte_grpcomm_basic_open(void);
 int orte_grpcomm_basic_close(void);
@@ -59,13 +53,7 @@ orte_grpcomm_base_module_t* orte_grpcomm_basic_init(int *priority);
 
 
 /*
- * Startup / Shutdown
- */
-int orte_grpcomm_basic_module_init(void);
-int orte_grpcomm_basic_finalize(void);
-
-/*
- * xcast interfaces
+ * Grpcomm interfaces
  */
 
 ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_basic_component;

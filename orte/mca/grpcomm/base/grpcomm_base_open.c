@@ -46,7 +46,6 @@ opal_list_t mca_grpcomm_base_components_available;
 orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
 
 
-
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
