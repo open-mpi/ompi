@@ -256,15 +256,42 @@ opal_event_init(void)
 
 #if OPAL_HAVE_WORKING_EVENTOPS
 
-    /**
-     * Retrieve the upper level specified event system, if any.
+    /* Retrieve the upper level specified event system, if any.
+     * Default to select() on OS X and poll() everywhere else because
+     * various parts of OMPI / ORTE use libevent with pty's.  pty's
+     * *only* work with select on OS X (tested on Tiger and Leopard);
+     * we *know* that both select and poll works with pty's everywhere
+     * else we care about (other mechansisms such as epoll *may* work
+     * with pty's -- we have not tested comprehensively with newer
+     * versions of Linux, etc.).  So the safe thing to do is:
+     *
+     * - On OS X, default to using "select" only
+     * - Everywhere else, default to using "poll" only (because poll
+     *   is more scalable than select)
+     *
+     * An upper layer may override this setting if it knows that pty's
+     * won't be used with libevent.  For example, we currently have
+     * ompi_mpi_init() set to use "all" (to include epoll and friends)
+     * so that the TCP BTL can be a bit more scalable -- because we
+     * *know* that MPI apps don't use pty's with libevent.  
+     * Note that other tools explicitly *do* use pty's with libevent:
+     *
+     * - orted
+     * - orterun (probably only if it launches locally)
+     * - ...?
      */
     mca_base_param_reg_string_name("opal", "event_include",
-                                   "Comma-delimited list of libevent subsystems to use (kqueue, devpoll, epoll, poll, select, and rtsig)",
-                                   false, false, "all", &event_module_include);
+                                   "Comma-delimited list of libevent subsystems to use (kqueue, devpoll, epoll, poll, select, and rtsig -- depending on your platform)",
+                                   false, false, 
+#ifdef __APPLE__
+                                   "select",
+#else
+                                   "poll",
+#endif
+                                   &event_module_include);
     if (NULL == event_module_include) {
         /* Shouldn't happen, but... */
-        event_module_include = strdup("all");
+        event_module_include = strdup("select");
     }
     opal_event_module_include = opal_argv_split(event_module_include,',');
     free(event_module_include);

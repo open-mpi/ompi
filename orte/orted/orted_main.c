@@ -178,7 +178,6 @@ int orte_daemon(int argc, char *argv[])
     char log_file[PATH_MAX];
     char *jobidstring;
     char *rml_uri;
-    char *tmp1, *tmp2;
     int i;
     opal_buffer_t *buffer;
     char hostname[100];
@@ -264,36 +263,6 @@ int orte_daemon(int argc, char *argv[])
         if (1000 < i) i=0;        
     }
 
-    /* _After_ opal_init_util() (and various other bookkeeping) but
-       _before_ orte_init(), we need to set an MCA param that tells
-       the orted not to use any other libevent mechanism except
-       "select" or "poll" (per potential pty issues with scalable
-       fd-monitoring mechanisms such as epoll() and friends -- these
-       issues *may* have been fixed in later OS releases and/or newer
-       versions of libevent, but we weren't willing to do all the
-       testing to figure it out.  So force the orted to use
-       select()/poll() *only* -- there's so few fd's in the orted that
-       it really doesn't matter. 
-       
-       Note that pty's work fine with poll() on most systems, so we
-       prefer that (because it's more scalable than select()).
-       However, poll() does *not* work with ptys on OS X, so we use
-       select() there. */
-    mca_base_param_reg_string_name("opal", "event_include",
-                                   "Internal orted MCA param: tell opal_init() to use a specific mechanism in libevent",
-                                   true, true, 
-#ifdef __APPLE__
-                                   "select",
-#else
-                                   "poll",
-#endif
-                                   NULL);
-    tmp1 = mca_base_param_environ_variable("opal", NULL, "event_include");
-    asprintf(&tmp2, "%s=select", tmp1);
-    putenv(tmp2);
-    free(tmp1);
-    free(tmp2);
-    
     /* Okay, now on to serious business! */
     
     if (orted_globals.hnp) {
