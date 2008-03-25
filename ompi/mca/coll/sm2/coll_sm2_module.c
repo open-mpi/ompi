@@ -34,6 +34,7 @@
 #include "opal/util/show_help.h"
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/dpm/dpm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
 

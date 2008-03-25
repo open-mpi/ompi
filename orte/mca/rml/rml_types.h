@@ -93,9 +93,6 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_DATA_SERVER            27
 #define ORTE_RML_TAG_DATA_CLIENT            28
 
-/* support for shared memory collectives */
-#define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED 40
-
 #define ORTE_RML_TAG_MAX                   100
 
 
