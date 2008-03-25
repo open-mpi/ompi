@@ -519,6 +519,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
     srun_pid = fork();
     if (-1 == srun_pid) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
+        free(exec_argv);
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
     

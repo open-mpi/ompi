@@ -588,8 +588,8 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
                                  "%s plm:rsh:launch daemon failed to be defined on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  nodes[nnode]->name));
-            
-            return ORTE_ERR_FATAL;
+            rc = ORTE_ERR_FATAL;
+            goto cleanup;
         }
         
         /* setup node name */
