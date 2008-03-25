@@ -1231,19 +1231,22 @@ void mqs_destroy_process_info (mqs_process_info *mp_info)
     mpi_process_info *p_info = (mpi_process_info *)mp_info;
     mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
     /* Need to handle the communicators and groups too */
-    communicator_t *comm = extra->communicator_list;
+    communicator_t *comm;
 
-    while (comm) {
-        communicator_t *next = comm->next;
-
-        if( NULL != comm->group )
-            group_decref (comm->group);  /* Group is no longer referenced from here */
-        mqs_free (comm);
-      
-        comm = next;
-    }
-    if (NULL != extra) {
-        mqs_free(extra);
+    if( NULL != extra) {
+        comm = extra->communicator_list;
+        while (comm) {
+            communicator_t *next = comm->next;
+            
+            if( NULL != comm->group )
+                group_decref (comm->group);  /* Group is no longer referenced from here */
+            mqs_free (comm);
+            
+            comm = next;
+        }
+        if (NULL != extra) {
+            mqs_free(extra);
+        }
     }
     mqs_free (p_info);
 } /* mqs_destroy_process_info */
