@@ -43,7 +43,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
                      MPI_Comm comm, MPI_Comm *newcomm) 
 {
     int rank, rc;
-    int send_first=1;   /* yes, we are the active part in this game */
+    bool send_first=true;   /* yes, we are the active part in this game */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     orte_process_name_t port_proc_name;
     char *tmp_port=NULL;

@@ -39,7 +39,7 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
                     MPI_Comm comm, MPI_Comm *newcomm) 
 {
     int rank, rc;
-    int send_first=0; /*wrong, we receive first */
+    bool send_first=false; /* we receive first */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     char *tmp_port=NULL;
     orte_rml_tag_t tag;

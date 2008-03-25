@@ -43,7 +43,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
 {
     int i=0, rc=0, rank=0, flag;
     ompi_communicator_t *newcomp=NULL;
-    int send_first=0; /* they are contacting us first */
+    bool send_first=false; /* they are contacting us first */
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
     orte_rml_tag_t tag = 0;
