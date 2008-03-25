@@ -102,7 +102,6 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
     orte_plm_cmd_flag_t command;
-    orte_rml_cmd_flag_t cmd;
     orte_std_cntr_t count;
     orte_jobid_t job;
     orte_job_t *jdata;
