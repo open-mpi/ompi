@@ -260,7 +260,6 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         free(rml_uri);
         orted_failed_launch = true;
-        free(rml_uri);
         goto CLEANUP;
     }
     /* lookup and record this daemon's contact info */
