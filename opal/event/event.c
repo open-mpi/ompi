@@ -281,7 +281,7 @@ opal_event_init(void)
      * - ...?
      */
     mca_base_param_reg_string_name("opal", "event_include",
-                                   "Comma-delimited list of libevent subsystems to use (kqueue, devpoll, epoll, poll, select, and rtsig -- depending on your platform)",
+                                   "Comma-delimited list of libevent subsystems to use (kqueue, devpoll, epoll, poll, select, evport and rtsig -- depending on your platform)",
                                    false, false, 
 #ifdef __APPLE__
                                    "select",
