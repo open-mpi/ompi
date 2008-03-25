@@ -234,15 +234,37 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* see comment below about sched_yield */
     int num_processors;
 #endif
-    
-    /* Join the run-time environment - do the things that don't hit
-       the registry */
 
-    if (ORTE_SUCCESS != (ret = opal_init())) {
-        error = "ompi_mpi_init: opal_init failed";
+    /* Setup enough to check get/set MCA params */
+
+    if (ORTE_SUCCESS != (ret = opal_init_util())) {
+        error = "ompi_mpi_init: opal_init_util failed";
         goto error;
     }
 
+    /* _After_ opal_init_util() but _before_ orte_init(), we need to
+       set an MCA param that tells libevent that it's ok to use any
+       mechanism in libevent that si available on this platform (e.g.,
+       epoll and friends).  Per opal/event/event.s, we default to
+       select/poll -- but we know that MPI processes won't be using
+       pty's with the event engine, so it's ok to relax this
+       constraint and let any fd-monitoring mechanism be used. */
+    ret = mca_base_param_reg_string_name("opal", "event_include",
+                                         "Internal orted MCA param: tell opal_init() to use a specific mechanism in libevent",
+                                         false, false, "all", NULL);
+    if (ret >= 0) {
+        /* We have to explicitly "set" the MCA param value here
+           because libevent initialization will re-register the MCA
+           param and therefore override the default. Setting the value
+           here puts the desired value ("all") in different storage
+           that is not overwritten if/when the MCA param is
+           re-registered.  Note that we do *NOT* set this value as an
+           environment variable, just so that it won't be inherited by
+           any spawned processes and potentially cause unintented
+           side-effects with launching ORTE tools... */
+        mca_base_param_set_string(ret, "all");
+    }
+    
     /* check to see if we want timing information */
     param = mca_base_param_reg_int_name("ompi", "timing",
                                         "Request that critical timing loops be measured",
