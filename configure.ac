@@ -149,6 +149,11 @@ AC_SUBST(top_ompi_builddir)
 
 OMPI_CONFIGURE_OPTIONS
 
+if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
+    AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
+    AC_MSG_ERROR([Cannot continue])
+fi
+
 ############################################################################
 # Libtool: part one
 # (before C compiler setup)
