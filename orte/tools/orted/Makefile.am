@@ -25,5 +25,12 @@ dist_man_MANS = orted.1
 
 endif # OMPI_INSTALL_BINARIES
 
-orted_SOURCES = orted.c 
+orted_SOURCES = orted.c
+# the following empty orted_LDFLAGS is used 
+#  so that the orted can be compiled statically 
+#  by simply changing the value of this from 
+#  nothing to -all-static in the Makefile.in
+#  nice for systems that don't have all the shared 
+#  libraries on the computes 
+orted_LDFLAGS =
 orted_LDADD = $(top_builddir)/orte/libopen-rte.la
