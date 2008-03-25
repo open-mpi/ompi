@@ -128,7 +128,6 @@ static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name)
 
 static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exclude)
 {
-    char buff[64];
     int rc;
     orte_node_t* node;
     bool update = false;
@@ -146,9 +145,10 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         ORTE_HOSTFILE_INT == token ||
         ORTE_HOSTFILE_IPV4 == token ||
         ORTE_HOSTFILE_IPV6 == token) {
+        char buff[64];
 
         if(ORTE_HOSTFILE_INT == token) {
-            sprintf(buff,"%d", orte_util_hostfile_value.ival);
+            snprintf(buff, 64, "%d", orte_util_hostfile_value.ival);
             value = buff;
         } else {
             value = orte_util_hostfile_value.sval;
