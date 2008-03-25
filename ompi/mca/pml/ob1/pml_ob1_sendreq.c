@@ -235,7 +235,8 @@ mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
 
     send_request_pml_complete_check(sendreq);
-
+    /* free the descriptor */
+    mca_bml_base_free(bml_btl, des);
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
@@ -580,13 +581,15 @@ int mca_pml_ob1_send_request_start_rdma(
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
         /* prepare source descriptor/segment(s) */
+        /* PML owns this descriptor and will free it in */
+        /*  get_completion */
         mca_bml_base_prepare_src( bml_btl, 
                                   reg,
                                   &sendreq->req_send.req_base.req_convertor,
                                   MCA_BTL_NO_ORDER,
                                   0,
                                   &size,
-                                  MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
+                                  0,
                                   &src );
         if( OPAL_UNLIKELY(NULL == src) ) {
             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
