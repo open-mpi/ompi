@@ -106,7 +106,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     orte_std_cntr_t count;
     orte_jobid_t job;
     orte_job_t *jdata;
-    opal_buffer_t answer, xchg;
+    opal_buffer_t answer;
     orte_vpid_t vpid;
     orte_proc_t **procs;
     orte_proc_state_t state;
@@ -145,24 +145,6 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             /* if the child is an ORTE job, wait for the procs to report they are alive */
             if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {
                 ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
-                /* pack the update command */
-                OBJ_CONSTRUCT(&xchg, opal_buffer_t);
-                cmd = ORTE_RML_UPDATE_CMD;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&xchg, &cmd, 1, ORTE_RML_CMD))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto ANSWER_LAUNCH;
-                }
-                /* get the contact data of the child job */
-                if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(job, &xchg))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_DESTRUCT(&xchg);
-                    goto ANSWER_LAUNCH;
-                }
-                /* send it to the parents */
-                if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(mev->sender.jobid, &xchg, ORTE_RML_TAG_RML_INFO_UPDATE))) {
-                    ORTE_ERROR_LOG(rc);
-                }
-                OBJ_DESTRUCT(&xchg);
             }
             
         ANSWER_LAUNCH:

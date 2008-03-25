@@ -90,9 +90,10 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
     
     OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                         "%s dpm:orte:connect_accept with port %s",
+                         "%s dpm:orte:connect_accept with port %s %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(port)));
+                         ORTE_NAME_PRINT(port),
+                         send_first ? "sending first" : "recv first"));
     
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
@@ -112,6 +113,11 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                                                  sizeof (ompi_proc_t *));
             for(i=0 ; i<group->grp_proc_count ; i++)
                 proc_list[i] = ompi_group_peer_lookup(group,i);
+            
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                 "%s dpm:orte:connect_accept adding %s to proc list",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
         }
 
         if ( OMPI_COMM_JOIN_TAG != tag ) {
@@ -160,9 +166,17 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
         /* Exchange the number and the list of processes in the groups */
         if ( send_first ) {
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                 "%s dpm:orte:connect_accept sending first to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(rport)));
             rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
             rc = orte_rml.recv_buffer(rport, nrbuf, tag, 0);
         } else {
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                 "%s dpm:orte:connect_accept recving first from %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(rport)));
             rc = orte_rml.recv_buffer(rport, nrbuf, tag, 0);
             rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
         }
@@ -237,29 +251,45 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         OBJ_CONSTRUCT(&all_procs, opal_list_t);
 
         if (send_first) {
-            for (i = 0 ; i < group->grp_proc_count ; ++i) {
-                name = OBJ_NEW(orte_namelist_t);
-                name->name = ompi_group_peer_lookup(group, i)->proc_name;
-                opal_list_append(&all_procs, &name->item);
-            }
-
             for (i = 0 ; i < rsize ; ++i) {
                 name = OBJ_NEW(orte_namelist_t);
                 name->name = rprocs[i]->proc_name;
                 opal_list_append(&all_procs, &name->item);
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                     "%s dpm:orte:connect_accept send first adding %s to allgather list",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name->name)));
             }
+            for (i = 0 ; i < group->grp_proc_count ; ++i) {
+                name = OBJ_NEW(orte_namelist_t);
+                name->name = ompi_group_peer_lookup(group, i)->proc_name;
+                opal_list_append(&all_procs, &name->item);
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                     "%s dpm:orte:connect_accept send first adding %s to allgather list",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name->name)));
+            }
+
         } else {
-            for (i = 0 ; i < rsize ; ++i) {
-                name = OBJ_NEW(orte_namelist_t);
-                name->name = rprocs[i]->proc_name;
-                opal_list_append(&all_procs, &name->item);
-            }
-
             for (i = 0 ; i < group->grp_proc_count ; ++i) {
                 name = OBJ_NEW(orte_namelist_t);
                 name->name = ompi_group_peer_lookup(group, i)->proc_name;
                 opal_list_append(&all_procs, &name->item);
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                     "%s dpm:orte:connect_accept recv first adding %s to allgather list",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name->name)));
             }
+            for (i = 0 ; i < rsize ; ++i) {
+                name = OBJ_NEW(orte_namelist_t);
+                name->name = rprocs[i]->proc_name;
+                opal_list_append(&all_procs, &name->item);
+                OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                     "%s dpm:orte:connect_accept recv first adding %s to allgather list",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name->name)));
+            }
+
         }
 
         if (OMPI_SUCCESS != (rc = orte_grpcomm.modex(&all_procs))) {
