@@ -67,6 +67,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
 };
 
 #define ORTE_MAX_HOSTNAME_SIZE  512
+static bool init=false;
 
 int orte_proc_info(void)
 {
@@ -75,6 +76,12 @@ int orte_proc_info(void)
     char *uri, *ptr;
     size_t len, i;
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
+    
+    if (init) {
+        return ORTE_SUCCESS;
+    }
+    init = true;
+    
     mca_base_param_reg_string_name("orte", "hnp_uri",
                                    "HNP contact info",
                                    true, false, NULL,  &uri);
@@ -149,6 +156,10 @@ int orte_proc_info(void)
 
 int orte_proc_info_finalize(void)
 {
+    if (!init) {
+        return ORTE_SUCCESS;
+    }
+    
      if (NULL != orte_process_info.tmpdir_base) {
         free(orte_process_info.tmpdir_base);
         orte_process_info.tmpdir_base = NULL;
@@ -194,5 +205,6 @@ int orte_proc_info_finalize(void)
     orte_process_info.singleton = false;
     orte_process_info.daemon = false;
     
+    init = false;
     return ORTE_SUCCESS;
 }
