@@ -138,6 +138,9 @@
 /* poll.c */
 #define pollop opal_pollop
 
+/* evport.c */
+#define evportops opal_evportops
+
 /* event-internal.h */
 #define eventop opal_eventop
 #define event_base opal_event_base
