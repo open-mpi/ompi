@@ -63,12 +63,10 @@ opal_carto_graph_t *carto_base_common_host_graph;
 static char* opal_carto_print_node(void* node)
 {
     char *print_str;
-    char cpu_str[32];
+    char cpu_str[] = "(CPU)";
     opal_carto_base_node_t *tmp_node = (opal_carto_base_node_t *)node;
-    if (true == tmp_node->is_cpu) {
-        strcpy(cpu_str,"(CPU)");
-    }
-    else {
+
+    if (false == tmp_node->is_cpu) {
         cpu_str[0] = 0;
     }
     asprintf(&print_str,"%s %5s -%s", tmp_node->node_type, cpu_str, tmp_node->node_name);
