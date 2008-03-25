@@ -88,6 +88,6 @@ int opal_getcwd(char *buf, size_t size)
     if (strlen(pwd) > size) {
         return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
     }
-    strcpy(buf, pwd);
+    strncpy(buf, pwd, size);
     return OPAL_SUCCESS;
 }
