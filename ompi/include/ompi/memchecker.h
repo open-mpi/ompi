@@ -50,6 +50,10 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
         ompi_ddt_get_args( type, 0, &num_ints, NULL, &num_adds, NULL, 
                            &num_dtypes, NULL, &combiner );
         
+        if( (MPI_COMBINER_NAMED == combiner) || (MPI_COMBINER_CONTIGUOUS == combiner) ) {
+            return 0;  /* safety net: this case is handled few lines before in the contiguous case */
+        }
+
         array_of_ints = (int *)malloc( num_ints * sizeof(int) );
         array_of_adds = (MPI_Aint *)malloc( num_adds * sizeof(MPI_Aint) );
         array_of_dtypes = (MPI_Datatype *)malloc( num_dtypes * sizeof(MPI_Datatype) );
@@ -59,11 +63,6 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
                             &num_dtypes, array_of_dtypes, NULL );
             
         switch(combiner) {
-        case MPI_COMBINER_NAMED:
-        case MPI_COMBINER_CONTIGUOUS:
-            /* the program never runs through here! */
-            return 0;
-            break;
         case MPI_COMBINER_VECTOR:
             /* Take care of datatypes created by MPI_Type_vector().
 
