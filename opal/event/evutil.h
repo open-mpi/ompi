@@ -40,19 +40,19 @@ extern "C" {
 #endif
 
 
-#ifdef _EVENT_HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef _EVENT_HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#elif defined(_EVENT_HAVE_INTTYPES_H)
+#elif defined(HAVE_INTTYPES_H)
 #include <inttypes.h>
 #endif
-#ifdef _EVENT_HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
-#ifdef _EVENT_HAVE_UINT64_T
+#ifdef HAVE_UINT64_T
 #define ev_uint64_t uint64_t
 #define ev_int64_t int64_t
 #elif defined(WIN32)
@@ -68,7 +68,7 @@ extern "C" {
 #error "No way to define ev_uint64_t"
 #endif
 
-#ifdef _EVENT_HAVE_UINT32_T
+#ifdef HAVE_UINT32_T
 #define ev_uint32_t uint32_t
 #elif defined(WIN32)
 #define ev_uint32_t unsigned int
@@ -80,7 +80,7 @@ extern "C" {
 #error "No way to define ev_uint32_t"
 #endif
 
-#ifdef _EVENT_HAVE_UINT16_T
+#ifdef HAVE_UINT16_T
 #define ev_uint16_t uint16_t
 #elif defined(WIN32)
 #define ev_uint16_t unsigned short
@@ -92,7 +92,7 @@ extern "C" {
 #error "No way to define ev_uint16_t"
 #endif
 
-#ifdef _EVENT_HAVE_UINT8_T
+#ifdef HAVE_UINT8_T
 #define ev_uint8_t uint8_t
 #else
 #define ev_uint8_t unsigned char
@@ -120,7 +120,7 @@ OPAL_DECLSPEC int evutil_make_socket_nonblocking(int sock);
 /*
  * Manipulation functions for struct timeval
  */
-#ifdef _EVENT_HAVE_TIMERADD
+#ifdef HAVE_TIMERADD
 #define evutil_timeradd(tvp, uvp, vvp) timeradd((tvp), (uvp), (vvp))
 #define evutil_timersub(tvp, uvp, vvp) timersub((tvp), (uvp), (vvp))
 #else
@@ -142,15 +142,15 @@ OPAL_DECLSPEC int evutil_make_socket_nonblocking(int sock);
 			(vvp)->tv_usec += 1000000;						\
 		}													\
 	} while (0)
-#endif /* !_EVENT_HAVE_HAVE_TIMERADD */
+#endif /* !HAVE_HAVE_TIMERADD */
 
-#ifdef _EVENT_HAVE_TIMERCLEAR
+#ifdef HAVE_TIMERCLEAR
 #define evutil_timerclear(tvp) timerclear(tvp)
 #else
 #define	evutil_timerclear(tvp)	(tvp)->tv_sec = (tvp)->tv_usec = 0
 #endif
 
-#ifdef _EVENT_HAVE_TIMERCMP
+#ifdef HAVE_TIMERCMP
 #define evutil_timercmp(tvp, uvp, cmp) timercmp((tvp), (uvp), cmp)
 #else
 #define	evutil_timercmp(tvp, uvp, cmp)							\
@@ -159,7 +159,7 @@ OPAL_DECLSPEC int evutil_make_socket_nonblocking(int sock);
 	 ((tvp)->tv_sec cmp (uvp)->tv_sec))
 #endif
 
-#ifdef _EVENT_HAVE_TIMERISSET
+#ifdef HAVE_TIMERISSET
 #define evutil_timerisset(tvp) timerisset(tvp)
 #else
 #define	evutil_timerisset(tvp)	((tvp)->tv_sec || (tvp)->tv_usec)
