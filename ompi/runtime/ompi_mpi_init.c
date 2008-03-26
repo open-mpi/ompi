@@ -266,7 +266,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
            environment variable, just so that it won't be inherited by
            any spawned processes and potentially cause unintented
            side-effects with launching ORTE tools... */
-        if( 0 == strncmp("all", event_val, strlen("all")) ) {
+        if (0 == strcmp("all", event_val)) {
             mca_base_param_set_string(ret, "all");
         }
     }
