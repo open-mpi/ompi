@@ -77,6 +77,7 @@ int orte_grpcomm_base_barrier(void)
     orte_std_cntr_t i=0;
     opal_buffer_t buf;
     int rc;
+    struct timeval ompistart, ompistop;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: entering barrier",
@@ -123,6 +124,9 @@ int orte_grpcomm_base_barrier(void)
         return ORTE_SUCCESS;
     }
     
+    if (orte_timing) {
+        gettimeofday(&ompistart, NULL);
+    }
     
     /***   RANK = 0   ***/
     /* setup to recv the barrier messages from all peers */
@@ -139,6 +143,15 @@ int orte_grpcomm_base_barrier(void)
     
     ORTE_PROGRESSED_WAIT(barrier_failed, barrier_num_recvd, (orte_std_cntr_t)orte_process_info.num_procs-1);
         
+    if (orte_timing) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "barrier[%ld]: time to collect inbound data %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+        gettimeofday(&ompistart, NULL);
+    }
+    
     /* if the barrier failed, say so */
     if (barrier_failed) {
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
@@ -156,6 +169,14 @@ int orte_grpcomm_base_barrier(void)
     opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
     orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_BARRIER_CLIENT);
     OBJ_DESTRUCT(&buf);
+    
+    if (orte_timing) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "barrier[%ld]: time to send outbound data %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+    }
     
     /* xcast automatically ensures that the sender -always- gets a copy
      * of the message. This is required to ensure proper operation of the

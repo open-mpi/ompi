@@ -99,6 +99,7 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
     orte_process_name_t name;
     int rc;
+    struct timeval ompistart, ompistop;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: entering allgather",
@@ -158,6 +159,9 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         return ORTE_SUCCESS;
     }
     
+    if (orte_timing) {
+        gettimeofday(&ompistart, NULL);
+    }
     
     /***   RANK = 0   ***/
     /* seed the outgoing buffer with the num_procs so it can be unpacked */
@@ -199,7 +203,15 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         OBJ_RELEASE(allgather_buf);
         return rc;
     }
-    
+    if (orte_timing) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "allgather[%ld]: time to collect inbound data %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+        gettimeofday(&ompistart, NULL);
+    }
+
     /* if the allgather failed, say so */
     if (allgather_failed) {
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
@@ -223,7 +235,15 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     /* xcast the results */
     orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, rbuf, ORTE_RML_TAG_ALLGATHER_CLIENT);
-    
+
+    if (orte_timing) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "allgather[%ld]: time to send outbound data %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+    }
+
     /* xcast automatically ensures that the sender -always- gets a copy
      * of the message. This is required to ensure proper operation of the
      * launch system as the HNP -must- get a copy itself. So we have to
