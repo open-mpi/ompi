@@ -300,48 +300,11 @@ static int orte_cr_coord_post_restart(void) {
     opal_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_post_restart: orte_cr_coord_post_restart()");
 
-    /* Need to invalidate these so we can grab the new values from the environment 
-     * Don't call orte_proc_info_finalize() since we want to preserve some values
-     * such as orte_process_info.gpr_replica
+    /*
+     * Refresh System information
      */
-   if (NULL != orte_process_info.tmpdir_base) {
-        free(orte_process_info.tmpdir_base);
-        orte_process_info.tmpdir_base = NULL;
-    }
-    
-    if (NULL != orte_process_info.top_session_dir) {
-        free(orte_process_info.top_session_dir);
-        orte_process_info.top_session_dir = NULL;
-    }
- 
-    if (NULL != orte_process_info.job_session_dir) {
-        free(orte_process_info.job_session_dir);
-        orte_process_info.job_session_dir = NULL;
-    }
-    
-    if (NULL != orte_process_info.proc_session_dir) {
-        free(orte_process_info.proc_session_dir);
-        orte_process_info.proc_session_dir = NULL;
-    }
-    
-    if (NULL != orte_process_info.sock_stdin) {
-        free(orte_process_info.sock_stdin);
-        orte_process_info.sock_stdin = NULL;
-    }
-    
-    if (NULL != orte_process_info.sock_stdout) {
-        free(orte_process_info.sock_stdout);
-        orte_process_info.sock_stdout = NULL;
-    }
-    
-    if (NULL != orte_process_info.sock_stderr) {
-        free(orte_process_info.sock_stderr);
-        orte_process_info.sock_stderr = NULL;
-    }
-
-    if( NULL != orte_process_info.nodename ) {
-        free(orte_process_info.nodename);
-        orte_process_info.nodename = NULL;
+    if( ORTE_SUCCESS != (ret = orte_proc_info_finalize()) ) {
+        exit_status = ret;
     }
 
     if( NULL != orte_process_info.my_hnp_uri ) {
@@ -354,9 +317,6 @@ static int orte_cr_coord_post_restart(void) {
         orte_process_info.my_daemon_uri = NULL;
     }
 
-    /*
-     * Refresh System information
-     */ 
     if( ORTE_SUCCESS != (ret = orte_proc_info()) ) {
         exit_status = ret;
     }
