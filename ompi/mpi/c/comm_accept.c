@@ -42,7 +42,7 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
     bool send_first=false; /* we receive first */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     char *tmp_port=NULL;
-    orte_rml_tag_t tag;
+    orte_rml_tag_t tag = 0;  /* tag is set & used in get_rport only at root; silence coverity */
 
     MEMCHECKER(
         memchecker_comm(comm);

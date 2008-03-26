@@ -45,7 +45,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     ompi_communicator_t *newcomp=NULL;
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
-    orte_rml_tag_t tag;
+    orte_rml_tag_t tag = 0;  /* tag is set & used in get_rport only at root; silence coverity */
     bool non_mpi = false;
     
     MEMCHECKER(
