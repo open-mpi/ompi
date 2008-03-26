@@ -47,7 +47,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     orte_process_name_t port_proc_name;
     char *tmp_port=NULL;
-    orte_rml_tag_t tag;
+    orte_rml_tag_t tag = 0;  /* tag is set & used in get_rport only at root; silence coverity */
 
     MEMCHECKER(
         memchecker_comm(comm);
