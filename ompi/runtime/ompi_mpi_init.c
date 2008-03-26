@@ -230,6 +230,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int param, value;
     struct timeval ompistart, ompistop;
     char *slot_list = NULL;
+    char *event_val = NULL;
 #if 0
     /* see comment below about sched_yield */
     int num_processors;
@@ -244,27 +245,37 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* _After_ opal_init_util() but _before_ orte_init(), we need to
        set an MCA param that tells libevent that it's ok to use any
-       mechanism in libevent that si available on this platform (e.g.,
+       mechanism in libevent that is available on this platform (e.g.,
        epoll and friends).  Per opal/event/event.s, we default to
        select/poll -- but we know that MPI processes won't be using
        pty's with the event engine, so it's ok to relax this
        constraint and let any fd-monitoring mechanism be used. */
     ret = mca_base_param_reg_string_name("opal", "event_include",
                                          "Internal orted MCA param: tell opal_init() to use a specific mechanism in libevent",
-                                         false, false, "all", NULL);
+                                         false, false, "all", &event_val);
     if (ret >= 0) {
         /* We have to explicitly "set" the MCA param value here
            because libevent initialization will re-register the MCA
            param and therefore override the default. Setting the value
            here puts the desired value ("all") in different storage
            that is not overwritten if/when the MCA param is
-           re-registered.  Note that we do *NOT* set this value as an
+           re-registered. This is unless the user has specified a different
+           value for this MCA parameter. Make sure we check to see if the
+           default is specified before forcing "all" in case that is not what
+           the user desires. Note that we do *NOT* set this value as an
            environment variable, just so that it won't be inherited by
            any spawned processes and potentially cause unintented
            side-effects with launching ORTE tools... */
-        mca_base_param_set_string(ret, "all");
+        if( 0 == strncmp("all", event_val, strlen("all")) ) {
+            mca_base_param_set_string(ret, "all");
+        }
     }
-    
+
+    if( NULL != event_val ) {
+        free(event_val);
+        event_val = NULL;
+    }
+
     /* check to see if we want timing information */
     param = mca_base_param_reg_int_name("ompi", "timing",
                                         "Request that critical timing loops be measured",
