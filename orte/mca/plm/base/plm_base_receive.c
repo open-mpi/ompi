@@ -104,7 +104,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     orte_plm_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_jobid_t job;
-    orte_job_t *jdata;
+    orte_job_t *jdata, *parent;
     opal_buffer_t answer;
     orte_vpid_t vpid;
     orte_proc_t **procs;
@@ -133,6 +133,14 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 ORTE_ERROR_LOG(rc);
                 goto ANSWER_LAUNCH;
             }
+                
+            /* get the parent's job object */
+            if (NULL == (parent = orte_get_job_data_object(mev->sender.jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                goto ANSWER_LAUNCH;
+            }
+            /* xfer the parent's bookmark so the child starts from that place */
+            jdata->bookmark = parent->bookmark;
                 
             /* launch it */
             if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
