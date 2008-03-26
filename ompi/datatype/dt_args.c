@@ -334,11 +334,11 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
     case 1:     /* GET THE ARGUMENTS */
         if(*ci < pArgs->ci || *ca < pArgs->ca || *cd < pArgs->cd)
             return MPI_ERR_ARG;
-        if( pArgs->i != NULL )
+        if( (NULL != i) && (NULL != pArgs->i) )
             memcpy( i, pArgs->i, pArgs->ci * sizeof(int) );
-        if( pArgs->a != NULL )
+        if( (NULL != a) && (NULL != pArgs->a) )
             memcpy( a, pArgs->a, pArgs->ca * sizeof(MPI_Aint) );
-        if( pArgs->d != NULL )
+        if( (NULL != d) && (NULL != pArgs->d) )
             memcpy( d, pArgs->d, pArgs->cd * sizeof(MPI_Datatype) );
         break;
     default:
