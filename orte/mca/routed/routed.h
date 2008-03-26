@@ -135,10 +135,51 @@ typedef int (*orte_routed_module_finalize_fn_t)(void);
 typedef int (*orte_routed_module_update_route_fn_t)(orte_process_name_t *target,
                                                     orte_process_name_t *route);
 
-
+/**
+ * Get the next hop towards the target
+ *
+ * Obtain the next process on the route to the target. ORTE's routing system
+ * works one hop at-a-time, so this function doesn't return the entire path
+ * to the target - it only returns the next hop. This could be the target itself,
+ * or it could be an intermediate relay. By design, we -never- use application
+ * procs as relays, so any relay will be an orted.
+ */
 typedef orte_process_name_t (*orte_routed_module_get_route_fn_t)(orte_process_name_t *target);
 
+/**
+ * Initialize the routing table
+ *
+ * Initialize the routing table for the specified job. This can be rather complex
+ * and depends entirely upon both the selected module AND whether the function
+ * is being called by the HNP, an orted, a tool, or an application proc. To
+ * understand what is happening, you really need to look at the specific module.
+ *
+ * Regardless, at the end of the function, the routes to any other process in the
+ * specified job -must- be defined (even if it is direct)
+ */
 typedef int (*orte_routed_module_init_routes_fn_t)(orte_jobid_t job, opal_buffer_t *ndat);
+
+/**
+ * Report a route as "lost"
+ *
+ * Report that an existing connection has been lost, therefore potentially
+ * "breaking" a route in the routing table. It is critical that broken
+ * connections be reported so that the selected routing module has the
+ * option of dealing with it. This could consist of nothing more than
+ * removing that route from the routing table, or could - in the case
+ * of a "lifeline" connection - result in abort of the process.
+ */
+typedef int (*orte_routed_module_route_lost_fn_t)(const orte_process_name_t *route);
+
+/**
+ * Get wireup data for the specified job
+ *
+ * Given a jobid and a pointer to a buffer, add whatever routing data
+ * this module requires to allow inter-process messaging for the
+ * job.
+ */
+typedef int (*orte_routed_module_get_wireup_info_fn_t)(orte_jobid_t job,
+                                                       opal_buffer_t *buf);
 
 
 /* ******************************************************************** */
@@ -159,8 +200,10 @@ struct orte_routed_module_t {
     orte_routed_module_update_route_fn_t            update_route;
     orte_routed_module_get_route_fn_t               get_route;
     orte_routed_module_init_routes_fn_t             init_routes;
+    orte_routed_module_route_lost_fn_t              route_lost;
+    orte_routed_module_get_wireup_info_fn_t         get_wireup_info;
 };
-/** Convienence typedef */
+/** Convenience typedef */
 typedef struct orte_routed_module_t orte_routed_module_t;
 
 /** Interface for routed communication */

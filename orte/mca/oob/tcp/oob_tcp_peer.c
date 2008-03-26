@@ -581,20 +581,18 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_state);
     }
 
-    /* if we lose the connection to the lifeline and we are NOT already in finalize - abort */
-    if (!orte_finalizing &&
-        NULL != ORTE_PROC_MY_LIFELINE &&
-        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->peer_name, ORTE_PROC_MY_LIFELINE)) {
-            /* Should free the peer lock before we abort so we don't 
-             * get stuck in the orte_wait_kill when receiving messages in the 
-             * tcp OOB. */
-            OPAL_THREAD_UNLOCK(&peer->peer_lock);
-            opal_output(0, "%s OOB: Connection to lifeline %s lost",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_LIFELINE));
-            orte_errmgr.abort(1, NULL);
+    /* inform the routed framework that we have lost a connection so
+     * it can decide if this is important, what to do about it, etc.
+     */
+    if (ORTE_SUCCESS != orte_routed.route_lost(&peer->peer_name)) {
+        /* Should free the peer lock before we abort so we don't 
+         * get stuck in the orte_wait_kill when receiving messages in the 
+         * tcp OOB
+         */
+        OPAL_THREAD_UNLOCK(&peer->peer_lock);
+        orte_errmgr.abort(1, NULL);        
     }
-
+    
     mca_oob_tcp_peer_shutdown(peer);
 }
 
