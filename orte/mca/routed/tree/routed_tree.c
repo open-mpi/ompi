@@ -179,8 +179,8 @@ static int update_route(orte_process_name_t *target,
     /* vpid wildcard */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid == ORTE_VPID_WILDCARD) {
-        opal_hash_table_set_value_uint32(&vpid_wildcard_list,
-                                         target->jobid, route_copy);
+        rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+                                              target->jobid, route_copy);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
