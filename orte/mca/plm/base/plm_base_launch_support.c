@@ -300,8 +300,7 @@ CLEANUP:
 int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     int rc;
-    opal_buffer_t *buf;
-    orte_rml_cmd_flag_t command;
+    opal_buffer_t *wireup;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback",
@@ -332,31 +331,23 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
     /* all done launching - update the num_procs in my local structure */
     orte_process_info.num_procs = jdatorted->num_procs;
 
-    /* update everyone's contact info so all daemons
-     * can talk to each other
-     */
-    buf = OBJ_NEW(opal_buffer_t);
-    /* pack the update-RML command */
-    command = ORTE_RML_UPDATE_CMD;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_RML_CMD))) {
+    /* get wireup info for daemons per the selected routing module */
+    wireup = OBJ_NEW(opal_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
+        OBJ_RELEASE(wireup);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return rc;
+    /* if anything was inserted, send it out */
+    if (0 < wireup->bytes_used) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, wireup, ORTE_RML_TAG_RML_INFO_UPDATE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            return rc;
+        }
     }
-    /* send it */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return rc;
-    }
-    /* done with the buffer */
-    OBJ_RELEASE(buf);
-
+    OBJ_RELEASE(wireup);
+    
     return ORTE_SUCCESS;
 }
 

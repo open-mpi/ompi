@@ -30,9 +30,101 @@
 #include "orte/mca/routed/base/base.h"
 #include "routed_tree.h"
 
-int
-orte_routed_tree_update_route(orte_process_name_t *target,
-                               orte_process_name_t *route)
+static int init(void);
+static int finalize(void);
+static int update_route(orte_process_name_t *target,
+                        orte_process_name_t *route);
+static orte_process_name_t get_route(orte_process_name_t *target);
+static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
+static int route_lost(const orte_process_name_t *route);
+static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
+
+static orte_process_name_t *lifeline=NULL;
+
+orte_routed_module_t orte_routed_tree_module = {
+    init,
+    finalize,
+    update_route,
+    get_route,
+    init_routes,
+    route_lost,
+    get_wireup_info
+};
+
+/* local globals */
+static opal_hash_table_t        peer_list;
+static opal_hash_table_t        vpid_wildcard_list;
+static orte_process_name_t      wildcard_route;
+static opal_condition_t         cond;
+static opal_mutex_t             lock;
+
+
+static int init(void)
+{
+    OBJ_CONSTRUCT(&peer_list, opal_hash_table_t);
+    opal_hash_table_init(&peer_list, 128);
+    
+    OBJ_CONSTRUCT(&vpid_wildcard_list, opal_hash_table_t);
+    opal_hash_table_init(&vpid_wildcard_list, 128);
+    
+    wildcard_route.jobid = ORTE_NAME_INVALID->jobid;
+    wildcard_route.vpid = ORTE_NAME_INVALID->vpid;
+    
+    /* setup the global condition and lock */
+    OBJ_CONSTRUCT(&cond, opal_condition_t);
+    OBJ_CONSTRUCT(&lock, opal_mutex_t);
+    
+    return ORTE_SUCCESS;
+}
+
+static int finalize(void)
+{
+    int rc;
+    uint64_t key;
+    void * value, *node, *next_node;
+    
+    /* if I am an application process, indicate that I am
+        * truly finalizing prior to departure
+        */
+    if (!orte_process_info.hnp &&
+        !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /* if I am the HNP, I need to stop the comm recv */
+    if (orte_process_info.hnp) {
+        orte_routed_base_comm_stop();
+    }
+    
+    /* don't destruct the routes until *after* we send the
+        * sync as the oob will be asking us how to route
+        * the message!
+        */
+    rc = opal_hash_table_get_first_key_uint64(&peer_list,
+                                              &key, &value, &node);
+    while(OPAL_SUCCESS == rc) {
+        if(NULL != value) {
+            free(value);
+        }
+        rc = opal_hash_table_get_next_key_uint64(&peer_list,
+                                                 &key, &value, node, &next_node);
+        node = next_node;
+    }
+    OBJ_DESTRUCT(&peer_list);
+    OBJ_DESTRUCT(&vpid_wildcard_list);
+    /* destruct the global condition and lock */
+    OBJ_DESTRUCT(&cond);
+    OBJ_DESTRUCT(&lock);
+    
+    return ORTE_SUCCESS;
+}
+
+static int update_route(orte_process_name_t *target,
+                        orte_process_name_t *route)
 { 
     int rc;
     orte_process_name_t * route_copy;
@@ -76,7 +168,7 @@ orte_routed_tree_update_route(orte_process_name_t *target,
     /* exact match */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid != ORTE_VPID_WILDCARD) {
-        rc = opal_hash_table_set_value_uint64(&orte_routed_tree_module.peer_list,
+        rc = opal_hash_table_set_value_uint64(&peer_list,
                                               orte_util_hash_name(target), route_copy);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -87,7 +179,7 @@ orte_routed_tree_update_route(orte_process_name_t *target,
     /* vpid wildcard */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid == ORTE_VPID_WILDCARD) {
-        opal_hash_table_set_value_uint32(&orte_routed_tree_module.vpid_wildcard_list,
+        opal_hash_table_set_value_uint32(&vpid_wildcard_list,
                                          target->jobid, route_copy);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -100,8 +192,7 @@ orte_routed_tree_update_route(orte_process_name_t *target,
 }
 
 
-orte_process_name_t
-orte_routed_tree_get_route(orte_process_name_t *target)
+static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret;
     int rc;
@@ -113,7 +204,7 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     }
     
     /* check exact matches */
-    rc = opal_hash_table_get_value_uint64(&orte_routed_tree_module.peer_list,
+    rc = opal_hash_table_get_value_uint64(&peer_list,
                                           orte_util_hash_name(target), (void**)&ret);
     if (ORTE_SUCCESS == rc) {
         /* got a good result - return it */
@@ -121,7 +212,7 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     }
     
     /* didn't find an exact match - check to see if a route for this job was defined */
-    rc = opal_hash_table_get_value_uint32(&orte_routed_tree_module.vpid_wildcard_list,
+    rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
                                           target->jobid, (void**)&ret);
     if (ORTE_SUCCESS == rc) {
         /* got a good result - return it */
@@ -129,7 +220,7 @@ orte_routed_tree_get_route(orte_process_name_t *target)
     }
     
     /* default to wildcard route */
-    ret = &orte_routed_tree_module.wildcard_route;
+    ret = &wildcard_route;
 
  found:
 
@@ -207,7 +298,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     return ORTE_SUCCESS;
 }
 
-int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
+static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
     /* the tree module routes all proc communications through
      * the local daemon. Daemons must identify which of their
@@ -262,19 +353,18 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             /* if ndat is NULL, then this is being called during init,
              * so just seed the routing table with a path back to the HNP...
              */
-            if (ORTE_SUCCESS != (rc = orte_routed_tree_update_route(ORTE_PROC_MY_HNP,
-                                                                    ORTE_PROC_MY_HNP))) {
+            if (ORTE_SUCCESS != (rc = update_route(ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             /* set the wildcard route for anybody whose name we don't recognize
              * to be the HNP
              */
-            orte_routed_tree_module.wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
-            orte_routed_tree_module.wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
+            wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
+            wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
             
             /* set our lifeline to the the HNP - we will abort if that connection is lost */
-            orte_process_info.lifeline = ORTE_PROC_MY_HNP;
+            lifeline = ORTE_PROC_MY_HNP;
             
             /* daemons will send their contact info back to the HNP as
              * part of the message confirming they are read to go. HNP's
@@ -313,7 +403,8 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            /* the HNP has no lifeline, so leave that field the default NULL */
+            /* the HNP has no lifeline */
+            lifeline = NULL;
         } else {
             /* if this is for my own jobid, then I am getting an update of RML info
              * for the daemons - so update our contact info and routes
@@ -416,11 +507,11 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         }
         
         /* setup the route to all other procs to flow through the daemon */
-        orte_routed_tree_module.wildcard_route.jobid = ORTE_PROC_MY_DAEMON->jobid;
-        orte_routed_tree_module.wildcard_route.vpid = ORTE_PROC_MY_DAEMON->vpid;
+        wildcard_route.jobid = ORTE_PROC_MY_DAEMON->jobid;
+        wildcard_route.vpid = ORTE_PROC_MY_DAEMON->vpid;
         
         /* set our lifeline to the local daemon - we will abort if this connection is lost */
-        orte_process_info.lifeline = ORTE_PROC_MY_DAEMON;
+        lifeline = ORTE_PROC_MY_DAEMON;
         
         /* register ourselves -this sends a message to the daemon (warming up that connection)
          * and sends our contact info to the HNP when all local procs have reported
@@ -445,4 +536,46 @@ int orte_routed_tree_init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         
         return ORTE_SUCCESS;
     }
+}
+
+static int route_lost(const orte_process_name_t *route)
+{
+    /* if we lose the connection to the lifeline and we are NOT already,
+     * in finalize, tell the OOB to abort.
+     * NOTE: we cannot call abort from here as the OOB needs to first
+     * release a thread-lock - otherwise, we will hang!!
+     */
+    if (!orte_finalizing &&
+        NULL != lifeline &&
+        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
+        opal_output(0, "%s routed:tree: Connection to lifeline %s lost",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(lifeline));
+        return ORTE_ERR_FATAL;
+    }
+
+    /* we don't care about this one, so return success */
+    return ORTE_SUCCESS;
+}
+
+
+static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
+{
+    orte_rml_cmd_flag_t command;
+    int rc;
+    
+    /* pack the update-RML command */
+    command = ORTE_RML_UPDATE_CMD;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_RML_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
 }
