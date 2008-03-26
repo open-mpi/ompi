@@ -54,13 +54,14 @@ int MPI_Startall(int count, MPI_Request *requests)
             rc = MPI_ERR_REQUEST;
         } else if (count < 0) {
             rc = MPI_ERR_ARG;
-        }
-        for (i = 0; i < count; ++i) {
-            if (NULL == requests[i] ||
-                (OMPI_REQUEST_PML != requests[i]->req_type &&
-                 OMPI_REQUEST_NOOP != requests[i]->req_type)) {
-                rc = MPI_ERR_REQUEST;
-                break;
+        } else {
+            for (i = 0; i < count; ++i) {
+                if (NULL == requests[i] ||
+                    (OMPI_REQUEST_PML != requests[i]->req_type &&
+                     OMPI_REQUEST_NOOP != requests[i]->req_type)) {
+                    rc = MPI_ERR_REQUEST;
+                    break;
+                }
             }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
