@@ -209,10 +209,11 @@ static void delete_all_edges_conceded_to_vertex(opal_graph_t *graph, opal_graph_
         /**
          * for all the edges in the adjacency list
          */
-        for (edge_item = opal_list_get_first(aj_list->edges);
-             edge_item != opal_list_get_end(aj_list->edges);
-             edge_item  = opal_list_get_next(edge_item)) {
+        edge_item = opal_list_get_first(aj_list->edges);
+        while (edge_item != opal_list_get_end(aj_list->edges)) {
             edge = (opal_graph_edge_t *)edge_item;
+            edge_item  = opal_list_get_next(edge_item);
+
             /**
              * if the edge is ended in the vertex
              */
