@@ -110,7 +110,7 @@ void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t* btl,
 
             /* if the request should be delivered entirely by copy in/out
              * then throttle sends */
-            if(sendreq->req_bytes_delivered == hdr->hdr_ack.hdr_send_offset)
+            if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA)
                 sendreq->req_throttle_sends = true;
 
             mca_pml_ob1_send_request_copy_in_out(sendreq,

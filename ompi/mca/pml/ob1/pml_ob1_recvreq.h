@@ -349,10 +349,11 @@ static inline void mca_pml_ob1_recv_request_schedule(
 
 int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
         mca_bml_base_btl_t* bml_btl, uint64_t hdr_src_req, void *hdr_dst_req,
-        uint64_t hdr_rdma_offset);
+        uint64_t hdr_rdma_offset, bool nordma);
 
 static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
-        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_send_offset)
+        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_send_offset,
+        bool nordma)
 {
     size_t i;
     mca_bml_base_btl_t* bml_btl;
@@ -362,7 +363,7 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
     for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         if(mca_pml_ob1_recv_request_ack_send_btl(proc, bml_btl, hdr_src_req,
-                    hdr_dst_req, hdr_send_offset) == OMPI_SUCCESS)
+                    hdr_dst_req, hdr_send_offset, nordma) == OMPI_SUCCESS)
             return OMPI_SUCCESS;
     }
 
