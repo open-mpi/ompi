@@ -300,6 +300,432 @@ Error:
     return rc;
 }
 
+/*
+ *  fanin/fanout progress function.
+ */
+
+static
+int progress_fanin_fanout( void *sbuf, void *rbuf,
+        struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+        mca_coll_sm2_module_allreduce_pipeline_t *reduction_desc,
+        int n_poll_loops, int *completed)
+{
+    /* local variables */
+        
+    int my_rank,cnt;
+    int rc=OMPI_SUCCESS;
+    int my_fanout_parent;
+    int child_rank,n_children,child;
+    int count_processed,count_this_stripe;
+    ptrdiff_t dt_extent;
+    long long tag;
+    mca_coll_sm2_nb_request_process_shared_mem_t *my_ctl_pointer;
+    volatile mca_coll_sm2_nb_request_process_shared_mem_t * parent_ctl_pointer;
+    volatile mca_coll_sm2_nb_request_process_shared_mem_t * child_ctl_pointer;
+    volatile char * my_data_pointer;
+    volatile char * parent_data_pointer;
+    volatile char * child_data_pointer;
+    sm_work_buffer_t *sm_buffer_desc;
+    tree_node_t *my_reduction_node;
+    tree_node_t *my_fanout_read_tree;
+
+    my_fanout_parent=my_fanout_read_tree->parent_rank;
+    tag=reduction_desc->tag;
+    sm_buffer_desc=reduction_desc->shared_buffer;
+    my_rank=reduction_desc->my_rank;
+    my_reduction_node=reduction_desc->my_reduction_node;
+    my_fanout_read_tree=reduction_desc->my_fanout_read_tree;
+    /* initialize flag indicating that segment is still active in the
+     *   reduction
+     */
+    *completed=0;
+
+    my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+    my_data_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
+
+    /* figure out where to proceed */
+    if( FANOUT == reduction_desc->status) {
+        goto REDUCTION_FANOUT;
+    }
+    /*
+     * fan in
+     */
+    switch (my_reduction_node->my_node_type) {
+        case LEAF_NODE:
+            /* leaf node */
+            /* copy segment into shared buffer - later on will optimize to
+             *   eliminate extra copies.
+             */
+            count_processed=reduction_desc->count_processed;
+            count_this_stripe=reduction_desc->count_this_stripe;
+            /* error conditions already checed */
+            ompi_ddt_type_extent(dtype, &dt_extent);
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)my_data_pointer, 
+                    (char *)((char *)sbuf+dt_extent*count_processed));
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+    
+            /* set memory barriet to make sure data is in main memory before
+             *  the completion flgas are set.
+             */
+            MB();
+    
+            /*
+             * Signal parent that data is ready
+             */
+            my_ctl_pointer->flag=tag;
+
+            break;
+
+        default:
+            /* ROOT_NODE and INTERIOR_NODE */
+            /* copy segment into shared buffer - ompi_op_reduce
+             *   provids only 2 buffers, so can't add from two
+             *   into a third buffer.
+             */
+            count_processed=reduction_desc->count_processed;
+            count_this_stripe=reduction_desc->count_this_stripe;
+            /* error conditions already checed */
+            ompi_ddt_type_extent(dtype, &dt_extent);
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)my_data_pointer, 
+                    (char *)((char *)sbuf+dt_extent*count_processed));
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+
+            /*
+             * Wait on children, and apply op to their data
+             */
+            for( child=reduction_desc->n_child_loops_completed ; 
+                    child < n_children ; child++ ) {
+                child_rank=my_reduction_node->children_ranks[child];
+    
+                child_ctl_pointer=
+                    sm_buffer_desc->proc_memory[child_rank].control_region;
+                child_data_pointer=
+                    sm_buffer_desc->proc_memory[child_rank].data_segment;
+    
+                /* wait until child flag is set */
+                cnt=0;
+                while( child_ctl_pointer->flag != tag ) {
+                    opal_progress();
+                    cnt++;
+                    if( n_poll_loops == cnt ) {
+                        /* break out */
+                        reduction_desc->status=FANIN;
+                        reduction_desc->n_child_loops_completed=child;
+                        goto RETURN;
+                    }
+                }
+    
+                /* apply collective operation */
+                count_this_stripe=reduction_desc->count_this_stripe;
+                ompi_op_reduce(op,(void *)child_data_pointer,
+                        (void *)my_data_pointer, count_this_stripe,dtype);
+
+            } /* end child loop */
+    
+            /* set memory barriet to make sure data is in main memory before
+             *  the completion flgas are set.
+             */
+            MB();
+    
+            /*
+             * Signal parent that data is ready
+             */
+            my_ctl_pointer->flag=tag;
+
+    }
+
+REDUCTION_FANOUT:
+    switch (my_reduction_node->my_node_type) {
+        case LEAF_NODE:
+
+            parent_data_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].data_segment;
+            parent_ctl_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
+
+            /*
+             * wait on Parent to signal that data is ready
+             */
+            cnt=0;
+            while(parent_ctl_pointer->flag != -tag) {
+                opal_progress();
+                cnt++;
+                if( n_poll_loops == cnt ) {
+                    /* break out */
+                    reduction_desc->status=FANOUT;
+                    goto RETURN;
+                }
+            }
+
+            /* copy data to user supplied buffer */
+            count_processed=reduction_desc->count_processed;
+            count_this_stripe=reduction_desc->count_this_stripe;
+            /* error conditions already checed */
+            ompi_ddt_type_extent(dtype, &dt_extent);
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)rbuf+dt_extent*count_processed,
+                    (char *)parent_data_pointer);
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+
+            break;
+
+        case INTERIOR_NODE:
+
+            /* interior nodes */
+   
+            parent_data_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].data_segment;
+            parent_ctl_pointer=
+                sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
+
+            /*
+             * wait on Parent to signal that data is ready
+             */
+            cnt=0;
+            while(parent_ctl_pointer->flag != -tag)  {
+                opal_progress();
+                cnt++;
+                if( n_poll_loops == cnt ) {
+                    /* break out */
+                    reduction_desc->status=FANOUT;
+                    goto RETURN;
+                }
+            }
+
+            /* copy the data to my shared buffer, for access by children */
+            count_this_stripe=reduction_desc->count_this_stripe;
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)my_data_pointer,(char *)parent_data_pointer);
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+        
+            /* set memory barriet to make sure data is in main memory before
+             *  the completion flgas are set.
+             */
+            MB();
+
+            /* signal children that they may read the result data */
+            my_ctl_pointer->flag=-tag;
+
+            /* copy data to user supplied buffer */
+            count_processed=reduction_desc->count_processed;
+            count_this_stripe=reduction_desc->count_this_stripe;
+            /* error conditions already checed */
+            ompi_ddt_type_extent(dtype, &dt_extent);
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)rbuf+dt_extent*count_processed,
+                    (char *)my_data_pointer);
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+
+            break;
+
+        case ROOT_NODE:
+
+            /* I am the root - so copy  signal children, and then
+             *   start reading
+             */
+            MB();
+            my_ctl_pointer->flag=-tag;
+
+            /* copy data to user supplied buffer */
+            count_processed=reduction_desc->count_processed;
+            count_this_stripe=reduction_desc->count_this_stripe;
+            /* error conditions already checed */
+            ompi_ddt_type_extent(dtype, &dt_extent);
+            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                    (char *)((char *)rbuf+dt_extent*count_processed),
+                    (char *)my_data_pointer);
+            if( 0 != rc ) {
+                return OMPI_ERROR;
+            }
+    }
+
+    /* completed processing the data in this stripe */
+    *completed=1;
+    
+    /* mark the descriptor as available */
+    reduction_desc->status=BUFFER_AVAILABLE;
+
+    /* return */
+RETURN:
+    return OMPI_SUCCESS;
+
+}
+
+
+/**
+ * Shared memory blocking allreduce - pipeline algorithm.
+ */
+#define depth_pipeline 2
+
+static
+int mca_coll_sm2_allreduce_intra_fanin_fanout_pipeline
+    (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
+     struct ompi_op_t *op, struct ompi_communicator_t *comm,
+     struct mca_coll_base_module_1_1_0_t *module)
+{
+
+    /* local variables */
+    int i,buffer_index,stripe_number,my_rank,n_completed,completed;
+    int count_processed,count_this_stripe;
+    mca_coll_sm2_module_allreduce_pipeline_t working_buffers[depth_pipeline];
+    int rc=OMPI_SUCCESS;
+    long long tag;
+    tree_node_t *my_reduction_node, *my_fanout_read_tree;
+    mca_coll_sm2_module_t *sm_module;
+    int n_dts_per_buffer,n_data_segments;
+    size_t len_data_buffer;
+    ptrdiff_t dt_extent;
+
+    sm_module=(mca_coll_sm2_module_t *) module;
+
+    /* get size of data needed - same layout as user data, so that
+     *   we can apply the reudction routines directly on these buffers
+     */
+    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
+
+    /* lenght of control and data regions */
+    len_data_buffer=sm_module->data_memory_per_proc_per_segment;
+
+    /* number of data types copies that the scratch buffer can hold */
+    n_dts_per_buffer=((int) len_data_buffer)/dt_extent;
+    if ( 0 == n_dts_per_buffer ) {
+        rc=OMPI_ERROR;
+        goto Error;
+    }
+
+    /* compute number of stripes needed to process this collective */
+    n_data_segments=(count+n_dts_per_buffer -1 ) / n_dts_per_buffer ;
+
+    /* get my node for the reduction tree */
+    my_rank=ompi_comm_rank(comm);
+    my_reduction_node=&(sm_module->reduction_tree[my_rank]);
+    my_fanout_read_tree=&(sm_module->fanout_read_tree[my_rank]);
+    count_processed=0;
+
+    /* get the working data segments */
+    /* NOTE: need to check at communicator creation that we have enough
+     *   temporary buffes for this
+     */
+    for(i=0 ; i < depth_pipeline ; i++ ) {
+        working_buffers[i].shared_buffer=alloc_sm2_shared_buffer(sm_module);
+        working_buffers[i].status=BUFFER_AVAILABLE;
+        working_buffers[i].my_rank=my_rank;
+        working_buffers[i].my_reduction_node=my_reduction_node;
+        working_buffers[i].my_fanout_read_tree=my_fanout_read_tree;
+    }
+
+    n_completed=0;
+    buffer_index=-1;
+    /* loop over data segments */
+    for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
+
+        /* 
+         * allocate working buffer 
+         */
+
+        /* get working_buffers index - this needs to be deterministic,
+         *   as each process is getting this pointer on it's own, so all
+         *   need to point to the same data structure
+         */
+        buffer_index++;
+        /* wrap around */
+        if( buffer_index == depth_pipeline){
+            buffer_index=0;
+        }
+
+        /* wait for buffer to become available */
+        while ( working_buffers[buffer_index].status != BUFFER_AVAILABLE ) {
+            /* loop over working buffers, and progress the reduction */
+            for( i=0 ; i < depth_pipeline ; i++ ) {
+                if( working_buffers[i].status != BUFFER_AVAILABLE ){
+                    rc=progress_fanin_fanout( sbuf, rbuf, dtype, op,
+                            &(working_buffers[buffer_index]),
+                            sm_module->n_poll_loops, &completed);
+                    if( OMPI_SUCCESS != rc ) {
+                        goto Error;
+                    }
+                    /* update the number of completed segments */
+                    n_completed+=completed;
+                }
+            }
+
+            /* overall ompi progress */
+            opal_progress();
+        }
+
+        /* initialize working buffer for this stripe */
+        working_buffers[buffer_index].status=FANIN;
+        working_buffers[buffer_index].n_child_loops_completed=0;
+        count_processed=stripe_number*n_dts_per_buffer;
+        count_this_stripe=n_dts_per_buffer;
+        if( count_processed + count_this_stripe > count )
+            count_this_stripe=count-count_processed;
+        working_buffers[buffer_index].count_this_stripe=count_this_stripe;
+        working_buffers[buffer_index].count_processed=count_processed;
+        tag=sm_module->collective_tag;
+        sm_module->collective_tag++;
+        working_buffers[buffer_index].tag=tag;
+
+        /* progress this stripe */
+        rc=progress_fanin_fanout( sbuf, rbuf, dtype, op,
+                &(working_buffers[buffer_index]),
+                sm_module->n_poll_loops, &completed);
+        if( OMPI_SUCCESS != rc ) {
+            goto Error;
+        }
+        /* update the number of completed segments */
+        n_completed+=completed;
+
+    }
+
+    /* progress remaining data stripes */
+    while( n_completed <  n_data_segments ) {
+        for( i=0 ; i < depth_pipeline ; i++ ) {
+            if( working_buffers[i].status != BUFFER_AVAILABLE ){
+                rc=progress_fanin_fanout( sbuf, rbuf, dtype, op,
+                        &(working_buffers[buffer_index]),
+                        sm_module->n_poll_loops, &completed);
+                if( OMPI_SUCCESS != rc ) {
+                    goto Error;
+                }
+                /* update the number of completed segments */
+                n_completed+=completed;
+            }
+        }
+    }
+
+    /* free work buffers */
+    for(i=0 ; i < depth_pipeline ; i++ ) {
+        rc=free_sm2_shared_buffer(sm_module);
+    }
+
+    /* return */
+    return rc;
+
+Error:
+    /* free work buffers */
+    for(i=0 ; i < depth_pipeline ; i++ ) {
+        rc=free_sm2_shared_buffer(sm_module);
+    }
+    return rc;
+}
+#undef depth_pipeline
+
 
 /**
  * Shared memory blocking allreduce.

@@ -170,6 +170,12 @@ static int sm2_open(void)
     cs->order_fanout_read_tree=
         mca_coll_sm2_param_register_int("order_fanout_read_tree",4);
 
+    /* number of polling loops to allow pending resources to
+     * complete their work
+     */
+    cs->n_poll_loops=
+        mca_coll_sm2_param_register_int("n_poll_loops",4);
+
     return OMPI_SUCCESS;
 }
 
