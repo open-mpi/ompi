@@ -448,6 +448,17 @@ static int process_commands(orte_process_name_t* sender,
             OBJ_RELEASE(relay_msg);
             break;
     
+            /****    COLLECTIVE DATA COMMAND     ****/
+        case ORTE_DAEMON_COLL_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received collective data cmd",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            if (ORTE_SUCCESS != (ret = orte_odls.collect_data(sender, buffer))) {
+                ORTE_ERROR_LOG(ret);
+            }
+            break;
+            
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
             if (orte_process_info.hnp) {

@@ -537,6 +537,13 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     opal_setenv(param, orte_process_info.my_daemon_uri, true, environ_copy);
     free(param);
     
+    /* pass the #daemons to the local proc for collective ops */
+    param = mca_base_param_environ_variable("orte","num","daemons");
+    asprintf(&param2, "%ld", (long)orte_process_info.num_procs);
+    opal_setenv(param, param2, true, environ_copy);
+    free(param);
+    free(param2);
+    
     /* pass the hnp's contact info to the local proc in case it
      * needs it
      */
@@ -1864,4 +1871,140 @@ CLEANUP:
     OBJ_DESTRUCT(&alert);
     
     return rc;    
+}
+
+
+static bool all_children_participated(orte_jobid_t job)
+{
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    
+    /* the thread is locked elsewhere - don't try to do it again here */
+    
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* is this child part of the specified job? */
+        if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID)) {
+            /* if this child has *not* participated yet, return false */
+            if (!child->coll_recvd) {
+                return false;
+            }
+        }
+    }
+    
+    /* if we get here, then everyone in the job has participated  - cleanout
+     * their flags so they can do this again!
+     */
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* is this child part of the specified job? */
+        if (OPAL_EQUAL == opal_dss.compare(&child->name->jobid, &job, ORTE_JOBID)) {
+            /* clear flag */
+            child->coll_recvd = false;
+        }
+    }
+    return true;
+    
+}
+
+static opal_buffer_t *collection_bucket=NULL;
+static orte_rml_tag_t collective_target_tag;
+
+int orte_odls_base_default_collect_data(orte_process_name_t *proc,
+                                        opal_buffer_t *buf)
+{
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    int rc;
+    bool found=false;
+    orte_process_name_t collector;
+    orte_std_cntr_t n;
+    
+    /* protect operations involving the global list of children */
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+    
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* find this child */
+        if (OPAL_EQUAL == opal_dss.compare(proc, child->name, ORTE_NAME)) {
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls: collecting data from child %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            
+            found = true;
+            break;
+        }
+    }
+    
+    /* if it wasn't found on the list, then we need to add it - must have
+     * come from a singleton
+     */
+    if (!found) {
+        child = OBJ_NEW(orte_odls_child_t);
+        if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_list_append(&orte_odls_globals.children, &child->super);
+        /* we don't know any other info about the child, so just indicate it's
+         * alive
+         */
+        child->alive = true;
+    }
+    
+    /* unpack the target tag for this collective */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &collective_target_tag, &n, ORTE_RML_TAG))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* if the collection bucket isn't initialized, do so now */
+    if (NULL == collection_bucket) {
+        collection_bucket = OBJ_NEW(opal_buffer_t);
+    }
+    
+    /* store the provided data */
+    opal_dss.copy_payload(collection_bucket, buf);
+    
+    /* flag this proc as having participated */
+    child->coll_recvd = true;
+    
+    /* now check to see if everyone in this job has participated */
+    if (all_children_participated(proc->jobid)) {
+        /* once everyone participates, send the collection
+         * bucket to the rank=0 proc of this job
+         */
+        collector.jobid = proc->jobid;
+        collector.vpid = 0;
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls: sending collection bucket to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&collector)));
+        
+        /* go ahead and send it */
+        if (0 > (rc = orte_rml.send_buffer(&collector, collection_bucket, collective_target_tag, 0))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(collection_bucket);
+            goto CLEANUP;
+        }
+        OBJ_RELEASE(collection_bucket);
+    }
+    
+CLEANUP:
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+    return ORTE_SUCCESS;
 }

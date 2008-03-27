@@ -55,6 +55,9 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 19
 #define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 20
 
+/* collective-based cmds */
+#define ORTE_DAEMON_COLL_CMD                (orte_daemon_cmd_flag_t) 21
+
 END_C_DECLS
 
 #endif

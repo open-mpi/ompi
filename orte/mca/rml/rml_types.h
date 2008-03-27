@@ -93,6 +93,11 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_DATA_SERVER            27
 #define ORTE_RML_TAG_DATA_CLIENT            28
 
+/* timing related */
+#define ORTE_RML_TAG_BARRIER_TIMER          29
+#define ORTE_RML_TAG_ALLGATHER_TIMER        30
+
+
 #define ORTE_RML_TAG_MAX                   100
 
 
