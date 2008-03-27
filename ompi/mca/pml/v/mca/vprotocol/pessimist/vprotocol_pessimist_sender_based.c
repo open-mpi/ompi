@@ -137,9 +137,6 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     sb.sb_pagesize = getpagesize();
     sb.sb_cursor = sb.sb_addr = (uintptr_t) NULL;
     sb.sb_available = 0;
-#ifdef SB_USE_SELFCOMM_METHOD
-    sb.sb_comm = MPI_COMM_NULL;
-#endif
     
     sprintf(path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
                 mmapfile);
@@ -194,22 +191,22 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pCo
     int ret;
     unsigned int i;
     size_t pending_length;
-    mca_vprotocol_pessimist_send_request_t *preq;
+    mca_vprotocol_pessimist_send_request_t *ftreq;
     
-    preq = VPESSIMIST_CONV_REQ(pConvertor);
-    pConvertor->flags = preq->sb_conv_flags;
-    pConvertor->fAdvance = preq->sb_conv_advance;
+    ftreq = VPESSIMIST_CONV_REQ(pConvertor);
+    pConvertor->flags = ftreq->sb_conv_flags;
+    pConvertor->fAdvance = ftreq->sb_conv_advance;
     ret = ompi_convertor_pack(pConvertor, iov, out_size, max_data);
     V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%"PRIsize_t, *max_data);
 
     for(i = 0, pending_length = *max_data; pending_length > 0; i++) {
         assert(i < *out_size);
-        MEMCPY((void *) preq->sb_cursor, iov[i].iov_base, iov[i].iov_len);
+        MEMCPY((void *) ftreq->sb_cursor, iov[i].iov_base, iov[i].iov_len);
         pending_length -= iov[i].iov_len;
-        preq->sb_cursor += iov[i].iov_len;
+        ftreq->sb_cursor += iov[i].iov_len;
     }
-    assert(pending_length == 0);
-    
+    assert(pending_length == 0)
+
     pConvertor->flags &= ~CONVERTOR_NO_OP;
     pConvertor->fAdvance = &vprotocol_pessimist_sender_based_convertor_advance;
     return ret;

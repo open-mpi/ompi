@@ -38,9 +38,9 @@ int mca_vprotocol_pessimist_test(ompi_request_t ** rptr, int *completed,
     
     ret = mca_pml_v.host_request_fns.req_test(rptr, completed, status);
     if(completed)
-        VPROTOCOL_PESSIMIST_DELIVERY_LOG(rptr);
+        vprotocol_pessimist_delivery_log(*rptr);
     else
-        VPROTOCOL_PESSIMIST_DELIVERY_LOG(NULL);
+        vprotocol_pessimist_delivery_log(NULL);
     return ret;
 }
 
@@ -56,10 +56,13 @@ int mca_vprotocol_pessimist_test_all(size_t count, ompi_request_t ** requests,
     
     ret = mca_pml_v.host_request_fns.req_test_all(count, requests, completed, 
                                                    statuses);
+#if 0
+/* This is not correct :/ */
     if(completed)
-        VPROTOCOL_PESSIMIST_DELIVERY_LOG(requests); /* /!\ need to make sure this is correct: what if first is request_null ? */
+        vprotocol_pessimist_delivery_log(requests); /* /!\ need to make sure this is correct: what if first is request_null ? */
     else
-        VPROTOCOL_PESSIMIST_DELIVERY_LOG(NULL);
+        vprotocol_pessimist_delivery_log(NULL);
+#endif
     return ret;
 }
 
@@ -83,29 +86,28 @@ int mca_vprotocol_pessimist_test_any(size_t count, ompi_request_t ** requests,
 
     if(completed)
     {   /* Parse the result */
-#       define pml_req ((mca_pml_base_request_t *) requests[i])
         for(i = 0; i < count; i++)
         {
-            if(requests[i] == MPI_REQUEST_NULL) continue;
+            ompi_request_t *req = requests[i];
+            if(req == MPI_REQUEST_NULL) continue;
+
             /* Restore requests and store they've been delivered */
-            pml_req->req_ompi.req_free = mca_vprotocol_pessimist_request_free;
-        
+            req->req_free = mca_vprotocol_pessimist_request_free;
             if(i == (size_t) *index)
             {
-                VPROTOCOL_PESSIMIST_DELIVERY_LOG(pml_req);
-            
+                vprotocol_pessimist_delivery_log(req);
                 /* only free request without error status */
-                if(pml_req->req_ompi.req_status.MPI_ERROR == MPI_SUCCESS)
+                if(req->req_status.MPI_ERROR == MPI_SUCCESS)
                     ompi_request_free(&(requests[i]));
                 else
-                    ret = pml_req->req_ompi.req_status.MPI_ERROR;
+                    ret = req->req_status.MPI_ERROR;
             }
         }
-#       undef pml_req
     }
     else
-    {   /* No request delivered this time, log it */
-        VPROTOCOL_PESSIMIST_DELIVERY_LOG(NULL);
+    {
+        /* No request delivered this time, log it */
+        vprotocol_pessimist_delivery_log(NULL);
     }
     return ret;
 }
@@ -125,24 +127,22 @@ int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t ** requests,
     ret = mca_pml_v.host_request_fns.req_wait_any(count, requests, index, status);
     
     /* Parse the result */
-#   define pml_req ((mca_pml_base_request_t *) requests[i])
     for(i = 0; i < count; i++)
     {
-        if(requests[i] == MPI_REQUEST_NULL) continue;
-        /* Restore requests and store they've been delivered */
-        pml_req->req_ompi.req_free = mca_vprotocol_pessimist_request_free;
+        ompi_request_t *req = requests[i];
+        if(req == MPI_REQUEST_NULL) continue;
         
+        /* Restore requests and store they've been delivered */
+        req->req_free = mca_vprotocol_pessimist_request_free;
         if(i == (size_t) *index)
         {
-            VPROTOCOL_PESSIMIST_DELIVERY_LOG(pml_req);
-            
+            vprotocol_pessimist_delivery_log(req);
             /* only free request without error status */
-            if(pml_req->req_ompi.req_status.MPI_ERROR == MPI_SUCCESS)
+            if(req->req_status.MPI_ERROR == MPI_SUCCESS)
                 ompi_request_free(&(requests[i]));
             else
-                ret = pml_req->req_ompi.req_status.MPI_ERROR;
+                ret = req->req_status.MPI_ERROR;
         }
-#   undef pml_req
     }
     return ret;
 }

@@ -12,47 +12,42 @@
 #define __INCLUDE_VPROTOCOL_PESSIMIST_REQUEST_H_
 
 #include "ompi_config.h"
-#include "vprotocol_pessimist_event.h"
 #include "ompi/request/request.h"
 #include "../base/vprotocol_base_request.h"
+#include "vprotocol_pessimist_event.h"
+#include "vprotocol_pessimist_sender_based_types.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 typedef struct mca_vprotocol_pessimist_request_t {
+    opal_list_item_t list_item; /* must always be first field */
     ompi_request_free_fn_t pml_req_free;
     vprotocol_pessimist_clock_t reqid;
-    /* ompi_request_t *sb_reqs[2]; */
     mca_vprotocol_pessimist_event_t *event;
-    
-    uintptr_t sb_cursor;
-    convertor_advance_fct_t sb_conv_advance;
-    uint32_t sb_conv_flags;
+    vprotocol_pessimist_sender_based_request_t sb;
 } mca_vprotocol_pessimist_request_t;
+
 typedef mca_vprotocol_pessimist_request_t mca_vprotocol_pessimist_recv_request_t;
 typedef mca_vprotocol_pessimist_request_t mca_vprotocol_pessimist_send_request_t;
 
 OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_recv_request_t);
 OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_send_request_t);
 
-#define VPESSIMIST_REQ(req) \
-    ((mca_vprotocol_pessimist_request_t *) VPROTOCOL_REQ(req))
+#define VPESSIMIST_FTREQ(req) \
+    ((mca_vprotocol_pessimist_request_t *) VPROTOCOL_FTREQ(req))
 
-#define VPESSIMIST_RECV_REQ(req) \
-    ((mca_vprotocol_pessimist_recv_request_t *) VPROTOCOL_RECV_REQ(req))
-
-#define VPESSIMIST_SEND_REQ(req) \
-    ((mca_vprotocol_pessimist_send_request_t *) VPROTOCOL_SEND_REQ(req))
-
-#define VPESSIMIST_REQ_INIT(req) do {                                          \
-        VPESSIMIST_REQ(req)->reqid = mca_vprotocol_pessimist.clock++;          \
+#define VPESSIMIST_RECV_FTREQ(req) \
+    ((mca_vprotocol_pessimist_recv_request_t *) VPROTOCOL_RECV_FTREQ(req))
+    
+#define VPESSIMIST_SEND_FTREQ(req) \
+    ((mca_vprotocol_pessimist_send_request_t *) VPROTOCOL_SEND_FTREQ(req))
+    
+#define VPESSIMIST_FTREQ_INIT(req) do {                                         \
+        VPESSIMIST_FTREQ(req)->reqid = mca_vprotocol_pessimist.clock++;        \
 } while(0)
 
 int mca_vprotocol_pessimist_request_free(ompi_request_t **req);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* __INCLUDE_VPROTOCOL_PESSIMIST_REQUEST_H_ */
