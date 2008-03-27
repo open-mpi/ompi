@@ -103,7 +103,7 @@ START_FUNC(opal_atomic_cmpset_rel_64)
 END_FUNC(opal_atomic_cmpset_rel_64)
 
 
-START_FUNC(opal_sys_timer_get_cyclces)
+START_FUNC(opal_sys_timer_get_cycles)
         save    %sp,-176,%sp
         rd      %tick,%o0
         ret     ! Result =  %i0
