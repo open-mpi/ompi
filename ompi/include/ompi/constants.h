@@ -75,20 +75,5 @@ enum {
 
 #define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 1)
 
-#define OMPI_NAMESPACE_SEGMENT        "ompi-namespace"
-
-/*
- * OMPI-specific names for triggers and subscriptions used across processes
- */
-#define OMPI_PROC_SUBSCRIPTION          "ompi-proc-sub"
-#define OMPI_OOB_SUBSCRIPTION           "ompi-oob-sub"
-#define OMPI_MODEX_SUBSCRIPTION         "ompi-modex-sub"
-
-/*
- * OMPI-specific registry keys
- */
-#define OMPI_PROC_ARCH        "ompi-proc-arch"
-#define OMPI_MODEX_KEY        "ompi-modex"
-
 #endif /* OMPI_CONSTANTS_H */
 
