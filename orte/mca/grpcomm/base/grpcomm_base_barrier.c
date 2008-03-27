@@ -45,6 +45,7 @@
 
 static orte_std_cntr_t barrier_num_recvd;
 static bool barrier_failed;
+static bool barrier_timer;
 
 static void barrier_server_recv(int status, orte_process_name_t* sender,
                                 opal_buffer_t *buffer,
@@ -71,11 +72,19 @@ static void barrier_recv(int status, orte_process_name_t* sender,
     ++barrier_num_recvd;
 }
 
+static void barrier_timer_recv(int status, orte_process_name_t* sender,
+                               opal_buffer_t *buffer,
+                               orte_rml_tag_t tag, void *cbdata)
+{
+    barrier_timer = true;
+}
+
 int orte_grpcomm_base_barrier(void)
 {
-    orte_process_name_t name;
     orte_std_cntr_t i=0;
     opal_buffer_t buf;
+    orte_daemon_cmd_flag_t command=ORTE_DAEMON_COLL_CMD;
+    orte_rml_tag_t target_tag=ORTE_RML_TAG_BARRIER_SERVER;
     int rc;
     struct timeval ompistart, ompistop;
     
@@ -83,27 +92,35 @@ int orte_grpcomm_base_barrier(void)
                          "%s grpcomm: entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* everything happens within the same jobid */
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    /* everyone sends barrier to local daemon */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    /* tell the daemon to collect the data */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }
+    /* tell the daemon where it is eventually to be delivered */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &target_tag, 1, ORTE_RML_TAG))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }    
+    opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
+    /* send to local daemon */
+    if (0 > orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buf, ORTE_RML_TAG_DAEMON, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_DESTRUCT(&buf);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_DESTRUCT(&buf);
+
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s barrier sent",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /***   RANK != 0   ***/
     if (0 != ORTE_PROC_MY_NAME->vpid) {
-        /* All non-root send & receive near-zero-length message. */
-        name.vpid = 0;
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
-        
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                             "%s sending barrier",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        rc = orte_rml.send_buffer(&name,&buf,ORTE_RML_TAG_BARRIER_SERVER,0);
-        if (rc < 0) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        OBJ_DESTRUCT(&buf);
-        
         /* now receive the release from rank=0. Be sure to do this in
          * a manner that allows us to return without being in a recv!
          */
@@ -121,6 +138,20 @@ int orte_grpcomm_base_barrier(void)
                              "%s received barrier release",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
+        if (orte_timing) {
+            /* if we are rank=N, send a message back to indicate
+             * the xcast completed for timing purposes
+             */
+            orte_process_name_t name;
+            if (ORTE_PROC_MY_NAME->vpid == orte_process_info.num_procs-1) {
+                name.jobid = ORTE_PROC_MY_NAME->jobid;
+                name.vpid = 0;
+                OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
+                orte_rml.send_buffer(&name,&buf,ORTE_RML_TAG_BARRIER_TIMER,0);
+                OBJ_DESTRUCT(&buf);
+            }
+        }
         return ORTE_SUCCESS;
     }
     
@@ -141,8 +172,14 @@ int orte_grpcomm_base_barrier(void)
         return rc;
     }
     
-    ORTE_PROGRESSED_WAIT(barrier_failed, barrier_num_recvd, (orte_std_cntr_t)orte_process_info.num_procs-1);
+    ORTE_PROGRESSED_WAIT(barrier_failed, barrier_num_recvd, orte_process_info.num_daemons);
         
+    /* cancel the lingering recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_BARRIER_SERVER))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     if (orte_timing) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "barrier[%ld]: time to collect inbound data %ld usec",
@@ -171,8 +208,15 @@ int orte_grpcomm_base_barrier(void)
     OBJ_DESTRUCT(&buf);
     
     if (orte_timing) {
+        /* setup a receive to hear when the rank=N proc has received the barrier
+         * release - in most xcast schemes, this will always be the final recvr
+         */
+        barrier_timer = false;
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_BARRIER_TIMER,
+                                ORTE_RML_NON_PERSISTENT, barrier_timer_recv, NULL);
+        ORTE_PROGRESSED_WAIT(barrier_timer, 0, 1);
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "barrier[%ld]: time to send outbound data %ld usec",
+        opal_output(0, "barrier[%ld]: time to complete outbound xcast %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));

@@ -57,6 +57,7 @@ typedef struct orte_odls_child_t {
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
+    bool coll_recvd;             /* collective operation recvd */
     orte_proc_state_t state;     /* the state of the process */
     orte_exit_code_t exit_code;  /* process exit code */
     unsigned long cpu_set;
@@ -146,6 +147,11 @@ ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc,
  * Preload binary/files functions
  */
 ORTE_DECLSPEC int orte_odls_base_preload_files_app_context(orte_app_context_t* context);
+
+/*
+ * Collect data to support collective operations across the procs
+ */
+ORTE_DECLSPEC int orte_odls_base_default_collect_data(orte_process_name_t *proc, opal_buffer_t *buf);
 
 END_C_DECLS
 

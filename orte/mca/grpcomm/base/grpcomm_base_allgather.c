@@ -42,8 +42,16 @@
 #include "orte/mca/grpcomm/base/base.h"
 
 static bool allgather_failed;
+static bool allgather_timer;
 static orte_std_cntr_t allgather_num_recvd;
 static opal_buffer_t *allgather_buf;
+
+static void allgather_timer_recv(int status, orte_process_name_t* sender,
+                               opal_buffer_t *buffer,
+                               orte_rml_tag_t tag, void *cbdata)
+{
+    allgather_timer = true;
+}
 
 static void allgather_server_recv(int status, orte_process_name_t* sender,
                                   opal_buffer_t *buffer,
@@ -97,29 +105,46 @@ static void allgather_client_recv(int status, orte_process_name_t* sender,
 
 int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
-    orte_process_name_t name;
     int rc;
+    orte_daemon_cmd_flag_t command=ORTE_DAEMON_COLL_CMD;
     struct timeval ompistart, ompistop;
+    opal_buffer_t coll;
+    orte_rml_tag_t target_tag=ORTE_RML_TAG_ALLGATHER_SERVER;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* everything happens within my jobid */
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    /* everyone sends data to their local daemon */
+    OBJ_CONSTRUCT(&coll, opal_buffer_t);
+    /* tell the daemon to collect the data */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&coll, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&coll);
+        return rc;
+    }
+    /* tell the daemon where it is eventually to be delivered */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&coll, &target_tag, 1, ORTE_RML_TAG))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&coll);
+        return rc;
+    }    
+    /* add our data to it */
+    opal_dss.copy_payload(&coll, sbuf);
+    /* send to local daemon */
+    if (0 > orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &coll, ORTE_RML_TAG_DAEMON, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_DESTRUCT(&coll);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_DESTRUCT(&coll);
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s allgather buffer sent",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /***   RANK != 0   ***/
     if (0 != ORTE_PROC_MY_NAME->vpid) {
-        /* everyone but rank=0 sends data */
-        name.vpid = 0;
-        if (0 > orte_rml.send_buffer(&name, sbuf, ORTE_RML_TAG_ALLGATHER_SERVER, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            return ORTE_ERR_COMM_FAILURE;
-        }
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                             "%s allgather buffer sent",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
         /* setup the buffer that will recv the results */
         allgather_buf = OBJ_NEW(opal_buffer_t);
         
@@ -156,6 +181,23 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
                              "%s allgather buffer received",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
+        if (orte_timing) {
+            /* if we are rank=N, send a message back to indicate
+             * the xcast completed for timing purposes
+             */
+            opal_buffer_t buf;
+            orte_std_cntr_t i=0;
+            orte_process_name_t name;
+            
+            if (ORTE_PROC_MY_NAME->vpid == orte_process_info.num_procs-1) {
+                name.jobid = ORTE_PROC_MY_NAME->jobid;
+                name.vpid = 0;
+                OBJ_CONSTRUCT(&buf, opal_buffer_t);
+                opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
+                orte_rml.send_buffer(&name,&buf,ORTE_RML_TAG_ALLGATHER_TIMER,0);
+                OBJ_DESTRUCT(&buf);
+            }
+        }
         return ORTE_SUCCESS;
     }
     
@@ -170,11 +212,9 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         return rc;
     }
     
-    /* put my own information into the outgoing buffer */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, sbuf))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    /* my info will be included in the collected buffers as part of
+     * the daemon's collective operation
+     */
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s allgather collecting buffers",
@@ -195,7 +235,7 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         return rc;
     }
     
-    ORTE_PROGRESSED_WAIT(allgather_failed, allgather_num_recvd, (orte_std_cntr_t)orte_process_info.num_procs-1);
+    ORTE_PROGRESSED_WAIT(allgather_failed, allgather_num_recvd, orte_process_info.num_daemons);
     
     /* cancel the lingering recv */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_SERVER))) {
@@ -221,10 +261,6 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         return ORTE_ERROR;
     }
     
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s allgather xcasting collected data",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
     /* copy the received info to the caller's buffer */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, allgather_buf))) {
         ORTE_ERROR_LOG(rc);
@@ -233,12 +269,24 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     }
     OBJ_RELEASE(allgather_buf);
     
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s allgather xcasting collected data - buffer size %ld",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)rbuf->bytes_used));
+    
     /* xcast the results */
     orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, rbuf, ORTE_RML_TAG_ALLGATHER_CLIENT);
 
     if (orte_timing) {
+        /* setup a receive to hear when the rank=N proc has received the data
+         * release - in most xcast schemes, this will always be the final recvr
+         */
+        allgather_timer = false;
+        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_TIMER,
+                                ORTE_RML_NON_PERSISTENT, allgather_timer_recv, NULL);
+        ORTE_PROGRESSED_WAIT(allgather_timer, 0, 1);
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "allgather[%ld]: time to send outbound data %ld usec",
+        opal_output(0, "allgather[%ld]: time to complete outbound xcast %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));

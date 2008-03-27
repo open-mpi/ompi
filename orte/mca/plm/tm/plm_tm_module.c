@@ -390,6 +390,21 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
+    /* check for timing request - get stop time for launch completion and report */
+    if (orte_timing) {
+        if (0 != gettimeofday(&completionstop, NULL)) {
+            opal_output(0, "plm_tm: could not obtain completion stop time");
+        } else {
+            deltat = (completionstop.tv_sec - jobstart.tv_sec)*1000000 +
+            (completionstop.tv_usec - completionstop.tv_usec);
+            opal_output(0, "plm_tm: time to launch/wireup all daemons: %d usec", deltat);
+        }
+        opal_output(0, "plm_tm: Launch statistics:");
+        opal_output(0, "plm_tm: Average time to launch an orted: %f usec", avgtime);
+        opal_output(0, "plm_tm: Max time to launch an orted: %d usec at iter %d", maxtime, maxiter);
+        opal_output(0, "plm_tm: Min time to launch an orted: %d usec at iter %d", mintime, miniter);
+    }
+    
 launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -401,21 +416,6 @@ launch_apps:
     
     /* if we get here, then everything launched okay - record that fact */
     failed_launch = false;
-    
-    /* check for timing request - get stop time for launch completion and report */
-    if (orte_timing) {
-        if (0 != gettimeofday(&completionstop, NULL)) {
-            opal_output(0, "plm_tm: could not obtain completion stop time");
-        } else {
-            deltat = (launchstop.tv_sec - launchstart.tv_sec)*1000000 +
-                     (launchstop.tv_usec - launchstart.tv_usec);
-            opal_output(0, "plm_tm: launch completion required %d usec", deltat);
-        }
-        opal_output(0, "plm_tm: Launch statistics:");
-        opal_output(0, "plm_tm: Average time to launch an orted: %f usec", avgtime);
-        opal_output(0, "plm_tm: Max time to launch an orted: %d usec at iter %d", maxtime, maxiter);
-        opal_output(0, "plm_tm: Min time to launch an orted: %d usec at iter %d", mintime, miniter);
-    }
     
     
  cleanup:

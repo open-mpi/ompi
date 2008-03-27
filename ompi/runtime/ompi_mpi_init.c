@@ -293,7 +293,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of orte_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -527,7 +527,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -544,7 +544,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     
-    if (timing) {
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -648,7 +648,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
-    if (timing) {
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from stage 2 cast to complete oob wireup %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
@@ -791,7 +791,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_wait_for_debugger();
 
     /* check for timing request - get stop time and report elapsed time if so */
-    if (timing) {
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time from oob wireup to complete mpi_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,

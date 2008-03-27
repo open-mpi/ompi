@@ -115,7 +115,6 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag)
 {
     int rc = ORTE_SUCCESS;
-    struct timeval start, stop;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:xcast sent to job %s tag %ld",
@@ -127,10 +126,6 @@ static int xcast(orte_jobid_t job,
         return ORTE_SUCCESS;
     }
 
-    if (orte_timing) {
-        gettimeofday(&start, NULL);
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:xcast: num_procs %ld linear xover: %ld binomial xover: %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -175,12 +170,6 @@ static int xcast(orte_jobid_t job,
     
 DONE:
     
-    if (orte_timing) {
-        gettimeofday(&stop, NULL);
-        opal_output(0, "%s grpcomm:xcast: time %ld usec", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    (long int)((stop.tv_sec - start.tv_sec)*1000000 +
-                               (stop.tv_usec - start.tv_usec)));
-    }
     return rc;
 }
 
