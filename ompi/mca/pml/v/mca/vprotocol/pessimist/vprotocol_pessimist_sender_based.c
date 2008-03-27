@@ -137,6 +137,9 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     sb.sb_pagesize = getpagesize();
     sb.sb_cursor = sb.sb_addr = (uintptr_t) NULL;
     sb.sb_available = 0;
+#ifdef SB_USE_PROGRESS_METHOD
+    OBJ_CONSTRUCT(&sb.sb_sendreq, opal_list_t);
+#endif
     
     sprintf(path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
                 mmapfile);
