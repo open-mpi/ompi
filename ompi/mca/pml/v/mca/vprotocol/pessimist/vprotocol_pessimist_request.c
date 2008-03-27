@@ -23,24 +23,25 @@ OBJ_CLASS_INSTANCE(mca_vprotocol_pessimist_send_request_t, mca_pml_base_request_
 
 static void vprotocol_pessimist_request_construct(mca_pml_base_request_t *req)
 {
-    mca_vprotocol_pessimist_request_t *preq;
+    mca_vprotocol_pessimist_request_t *ftreq;
     
-    preq = VPESSIMIST_REQ(req);
-    V_OUTPUT_VERBOSE(250, "pessimist:\treq\tnew\treq=%p\tPreq=%p (aligned to %p)", (void *) req, (void *) preq, (void *) &preq->pml_req_free);
+    ftreq = VPESSIMIST_FTREQ(req);
+    V_OUTPUT_VERBOSE(250, "pessimist:\treq\tnew\treq=%p\tPreq=%p (aligned to %p)", (void *) req, (void *) ftreq, (void *) &ftreq->pml_req_free);
     req->req_ompi.req_status.MPI_SOURCE = -1; /* no matching made flag */
-    preq->pml_req_free = req->req_ompi.req_free;
-    preq->event = NULL;
-/*    preq->sb_reqs[0] = NULL;*/
-    assert(preq->pml_req_free == req->req_ompi.req_free); /* detection of aligment issues on different arch */
+    ftreq->pml_req_free = req->req_ompi.req_free;
+    ftreq->event = NULL;
+    ftreq->sb.bytes_progressed = 0;
+    assert(ftreq->pml_req_free == req->req_ompi.req_free); /* detection of aligment issues on different arch */
     req->req_ompi.req_free = mca_vprotocol_pessimist_request_free;
+    OBJ_CONSTRUCT(& ftreq->list_item, opal_list_item_t);
 }
 
 int mca_vprotocol_pessimist_request_free(ompi_request_t **req)
 {
-  mca_pml_base_request_t *pml_req = (mca_pml_base_request_t *) *req; 
-  V_OUTPUT_VERBOSE(50, "pessimist:\treq\tfree\t%"PRIpclock"\tpeer %d\ttag %d\tsize %"PRIsize_t, VPESSIMIST_REQ(pml_req)->reqid, pml_req->req_peer, pml_req->req_tag, pml_req->req_count); 
-  VPROTOCOL_PESSIMIST_MATCHING_LOG_FINALIZE(pml_req);
-  pml_req->req_ompi.req_status.MPI_SOURCE = -1; /* no matching made flag */
-  VPROTOCOL_PESSIMIST_SENDER_BASED_FLUSH(pml_req);
-  return VPESSIMIST_REQ(pml_req)->pml_req_free(req);
+    mca_pml_base_request_t *pmlreq = (mca_pml_base_request_t *) *req; 
+    V_OUTPUT_VERBOSE(50, "pessimist:\treq\tfree\t%"PRIpclock"\tpeer %d\ttag %d\tsize %lu", VPESSIMIST_FTREQ(pmlreq)->reqid, pmlreq->req_peer, pmlreq->req_tag, (unsigned long) pmlreq->req_count);
+    vprotocol_pessimist_matching_log_finish(*req);
+    pmlreq->req_ompi.req_status.MPI_SOURCE = -1; /* no matching made flag */
+    vprotocol_pessimist_sender_based_flush(*req);
+    return VPESSIMIST_FTREQ(pmlreq)->pml_req_free(req);
 }

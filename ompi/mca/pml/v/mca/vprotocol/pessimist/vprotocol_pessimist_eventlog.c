@@ -11,6 +11,7 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
 
+
 void vprotocol_pessimist_matching_replay(int *src) {
 #if OMPI_ENABLE_DEBUG
     vprotocol_pessimist_clock_t max = 0;
@@ -75,7 +76,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
             int i;
             for(i = 0; i < (int) n; i++)
             {
-                if(VPESSIMIST_REQ(reqs[i])->reqid == devent->reqid)
+                if(VPESSIMIST_FTREQ(reqs[i])->reqid == devent->reqid)
                 {
                     V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\t%"PRIpclock, devent->probeid, devent->reqid);
                     opal_list_remove_item(&mca_vprotocol_pessimist.replay_events,

@@ -8,41 +8,41 @@
  * $HEADER$
  */
 
-#include "vprotocol_pessimist_sender_based.h"
-
 #ifndef __INCLUDE_VPROTOCOL_PESSIMIST_H__
 #define __INCLUDE_VPROTOCOL_PESSIMIST_H__
 
 #include "ompi_config.h"
 #include "../vprotocol.h"
 #include "ompi/communicator/communicator.h"
+
 #include "vprotocol_pessimist_event.h"
+#include "vprotocol_pessimist_sender_based_types.h"
 
 BEGIN_C_DECLS
 
 typedef struct mca_vprotocol_pessimist_module_t {
-  mca_vprotocol_base_module_t super;
+    mca_vprotocol_base_module_t super;
 
-    /* event tagging clock */
-  vprotocol_pessimist_clock_t clock;
+    /* Event clock */
+    vprotocol_pessimist_clock_t clock;
 
-  /* list of events to send to Event Logger */
-  opal_list_t pending_events;
+    /* list of events to send to Event Logger */
+    opal_list_t pending_events;
 
-  /* output buffer for messages to event logger */
-  vprotocol_pessimist_mem_event_t *event_buffer;
-  size_t event_buffer_length;
-  size_t event_buffer_max_length;
+    /* output buffer for messages to event logger */
+    vprotocol_pessimist_mem_event_t *event_buffer;
+    size_t event_buffer_length;
+    size_t event_buffer_max_length;
   
-  /* space for allocating events */ 
-  ompi_free_list_t events_pool;
+    /* space for allocating events */ 
+    ompi_free_list_t events_pool;
   
-  /* Sender Based repository */
-  vprotocol_pessimist_sender_based_t sender_based;
+    /* Sender Based repository */
+    vprotocol_pessimist_sender_based_t sender_based;
     
-  /* replay mode variables */
-  bool replay;
-  opal_list_t replay_events;
+    /* replay mode variables */
+    bool replay;
+    opal_list_t replay_events;
 } mca_vprotocol_pessimist_module_t;
 
 OMPI_DECLSPEC extern mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist;
@@ -98,8 +98,10 @@ int mca_vprotocol_pessimist_probe(int src, int tag,
 END_C_DECLS
 
 #include "vprotocol_pessimist_wait.h"
-#include "vprotocol_pessimist_request.h"
 #include "vprotocol_pessimist_start.h"
+
+#include "vprotocol_pessimist_request.h"
+#include "vprotocol_pessimist_sender_based.h"
 #include "vprotocol_pessimist_eventlog.h"
 
 #endif /* __INCLUDE_VPROTOCOL_PESSIMIST_H__ */

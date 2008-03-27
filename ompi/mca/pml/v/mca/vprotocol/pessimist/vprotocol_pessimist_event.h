@@ -8,13 +8,13 @@
  * $HEADER$
  */
 
-#ifndef __INCLUDE_VPROTOCOL_PESSIMIST_EVENT_H__
-#define __INCLUDE_VPROTOCOL_PESSIMIST_EVENT_H__
-
 #include "ompi_config.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "opal_stdint.h"
+
+#ifndef __INCLUDE_VPROTOCOL_PESSIMIST_EVENT_H__
+#define __INCLUDE_VPROTOCOL_PESSIMIST_EVENT_H__
 
 BEGIN_C_DECLS
 
