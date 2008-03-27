@@ -398,8 +398,12 @@ static inline int ompi_request_complete(ompi_request_t* request)
     }
     ompi_request_completed++;
     request->req_complete = true;
-    if(ompi_request_waiting)
-        opal_condition_signal(&ompi_request_cond);
+    if(ompi_request_waiting) {
+        /* Broadcast the condition, otherwise if there is already a thread
+         * waiting on another request it can use all signals.
+         */
+        opal_condition_broadcast(&ompi_request_cond);
+    }
     return OMPI_SUCCESS;
 }
 
