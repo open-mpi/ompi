@@ -394,7 +394,8 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                         send_dst,
                         pckt->hdr.hdr_ack.hdr_src_req.lval,
                         pckt->hdr.hdr_ack.hdr_dst_req.pval,
-                        pckt->hdr.hdr_ack.hdr_send_offset);
+                        pckt->hdr.hdr_ack.hdr_send_offset,
+                        pckt->hdr.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
                     MCA_PML_OB1_ADD_ACK_TO_PENDING(pckt->proc,

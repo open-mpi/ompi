@@ -47,6 +47,7 @@
 #define MCA_PML_OB1_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
 #define MCA_PML_OB1_HDR_FLAGS_PIN     4  /* is user buffer pinned */
 #define MCA_PML_OB1_HDR_FLAGS_CONTIG  8  /* is user buffer contiguous */
+#define MCA_PML_OB1_HDR_FLAGS_NORDMA  16 /* rest will be send by copy-in-out */
 
 /**
  * Common hdr attributes - must be first element in each hdr type 
