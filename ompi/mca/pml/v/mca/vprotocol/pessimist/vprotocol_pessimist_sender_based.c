@@ -124,7 +124,7 @@ static void sb_mmap_free(void)
 
 int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size) 
 {
-    char path[PATH_MAX];
+    char *path;
 #ifdef SB_USE_CONVERTOR_METHOD
     mca_pml_base_send_request_t pml_req;
     sb.sb_conv_to_pessimist_offset = VPROTOCOL_SEND_REQ(NULL) - 
@@ -141,10 +141,11 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     OBJ_CONSTRUCT(&sb.sb_sendreq, opal_list_t);
 #endif
     
-    sprintf(path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
+    asprintf(&path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
                 mmapfile);
     if(OPAL_SUCCESS != sb_mmap_file_open(path))
         return OPAL_ERR_FILE_OPEN_FAILURE; 
+    free(path);
     return OMPI_SUCCESS;
 }
 
