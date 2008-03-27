@@ -31,7 +31,7 @@ SUBDIRS = compat
 
 EXTRA_DIST = event.h event-internal.h evsignal.h event.3 \
 	kqueue.c epoll_sub.c epoll.c select.c poll.c signal.c \
-	devpoll.c log.h\
+	devpoll.c evport.c log.h\
 	WIN32-Code/config.h WIN32-Code/misc.c \
 	WIN32-Code/misc.h  WIN32-Code/win32.c
 
