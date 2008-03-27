@@ -149,6 +149,9 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             }
             job = jdata->jobid;
             
+            /* return the favor so that any repetitive comm_spawns track each other */
+            parent->bookmark = jdata->bookmark;
+
             /* if the child is an ORTE job, wait for the procs to report they are alive */
             if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {
                 ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
