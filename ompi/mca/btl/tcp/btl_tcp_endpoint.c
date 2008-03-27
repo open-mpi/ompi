@@ -414,10 +414,10 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint
 
     /* Create the send event in a persistent manner. */
     opal_event_set( &btl_endpoint->endpoint_send_event, 
-                   btl_endpoint->endpoint_sd, 
-                   OPAL_EV_WRITE | OPAL_EV_PERSIST,
-                   mca_btl_tcp_endpoint_send_handler,
-                   btl_endpoint);
+                    btl_endpoint->endpoint_sd, 
+                    OPAL_EV_WRITE | OPAL_EV_PERSIST,
+                    mca_btl_tcp_endpoint_send_handler,
+                    btl_endpoint );
 
     if(opal_list_get_size(&btl_endpoint->endpoint_frags) > 0) {
         if(NULL == btl_endpoint->endpoint_send_frag)
@@ -640,15 +640,18 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
 {
     mca_btl_base_endpoint_t* btl_endpoint = (mca_btl_base_endpoint_t *)user;
 
+    /* Make sure we don't have a race between a thread that remove the
+     * recv event, and one event already scheduled.
+     */
     if( sd != btl_endpoint->endpoint_sd )
         return;
+
     OPAL_THREAD_LOCK(&btl_endpoint->endpoint_recv_lock);
     switch(btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK:
         {
             int rc = OMPI_ERROR;
             rc = mca_btl_tcp_endpoint_recv_connect_ack(btl_endpoint);
-            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
             if( OMPI_SUCCESS == rc ) {
                 /* we are now connected. Start sending the data */
                 OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
@@ -658,7 +661,8 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 mca_btl_tcp_endpoint_dump(btl_endpoint, "connected");
 #endif
             }
-            break;
+            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+            return;
         }
     case MCA_BTL_TCP_CONNECTED:
         {
