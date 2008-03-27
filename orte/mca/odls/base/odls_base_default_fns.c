@@ -380,6 +380,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                     child->slot_list = strdup(slot_str);
                     free(slot_str);
                 }
+                child->num_nodes = num_nodes;   /* save #nodes in launch */
                 /* protect operation on the global list of children */
                 OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
                 opal_list_append(&orte_odls_globals.children, &child->super);
@@ -423,6 +424,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
                                         orte_std_cntr_t num_local_procs,
                                         orte_vpid_t vpid_range,
                                         orte_std_cntr_t total_slots_alloc,
+                                        orte_std_cntr_t num_nodes,
                                         bool oversubscribed, char ***environ_copy)
 {
     int rc;
@@ -539,7 +541,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     
     /* pass the #daemons to the local proc for collective ops */
     param = mca_base_param_environ_variable("orte","num","daemons");
-    asprintf(&param2, "%ld", (long)orte_process_info.num_procs);
+    asprintf(&param2, "%ld", (long)num_nodes);
     opal_setenv(param, param2, true, environ_copy);
     free(param);
     free(param2);
@@ -696,7 +698,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     char *job_str, *vpid_str, *param, *value;
     opal_list_item_t *item;
     orte_app_context_t *app;
-    orte_odls_child_t *child;
+    orte_odls_child_t *child=NULL;
     int i, num_processors;
     bool want_processor, oversubscribed;
     int rc=ORTE_SUCCESS, ret;
@@ -797,12 +799,29 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
 
+    /* find a child for this job */
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        /* is this child part of the specified job? */
+        if (child->name->jobid == job) {
+            break;
+        }
+    }
+    if (NULL == child) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto unlock;
+    }
+    
     /* setup the environment for each context */
     for (i=0; i < num_apps; i++) {
         if (ORTE_SUCCESS != (rc = odls_base_default_setup_fork(apps[i],
                                                                num_local_procs,
                                                                vpid_range,
                                                                total_slots_alloc,
+                                                               child->num_nodes,
                                                                oversubscribed,
                                                                &apps[i]->env))) {
             
