@@ -566,6 +566,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     sm_module->module_comm=comm;
     sm_module->comm_size=group_size;
+    sm_module->n_poll_loops=mca_coll_sm2_component.n_poll_loops;
 
     /*
      * set memory region parameters 
