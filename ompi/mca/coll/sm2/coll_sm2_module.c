@@ -154,7 +154,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         unique_comm_id=(int)getpid();
         len=asprintf(&f_name,
                 "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
-                orte_process_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
+                orte_process_info.proc_session_dir,ompi_comm_get_cid(comm),unique_comm_id);
         if( 0 > len ) {
             return OMPI_ERROR;
         }
@@ -239,7 +239,7 @@ static int allocate_shared_file(size_t size, char **file_name,
          */
         len=asprintf(&f_name,
                 "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
-                orte_process_info.nodename,ompi_comm_get_cid(comm),unique_comm_id);
+                orte_process_info.proc_session_dir,ompi_comm_get_cid(comm),unique_comm_id);
         if( 0 > len ) {
             return OMPI_ERROR;
         }
