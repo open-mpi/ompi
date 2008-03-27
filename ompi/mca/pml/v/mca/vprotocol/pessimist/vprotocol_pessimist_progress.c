@@ -9,23 +9,21 @@
  */
 
 #include "ompi_config.h"
+#include "vprotocol_pessimist_sender_based.h"
 #include "vprotocol_pessimist.h"
+
+#ifdef SB_USE_PROGRESS_METHOD
 
 int mca_vprotocol_pessimist_progress(void)
 {
-    int ret = OMPI_ERR_NOT_IMPLEMENTED;
-#if 0    
+    int ret;
+    
+    printf("PROGRESS\n");
     /* First let the real progress take place */
     ret = mca_pml_v.host_pml.pml_progress();
-
-    for(req = opal_list_head(&mca_vprotocol_pessimist.sender_based.sendprogressreq), 
-        req != opal_list_end(&mca_vprotocol_pessimist.sender_based.sendprogressreq),
-        req = req->next) {
-        preq = VPESSIMIST_SEND_REQ(req);
-        conv = req->conv;
-        
-        
-    }
-#endif
+    /* Then progess the sender_based copies */
+    vprotocol_pessimist_sb_progress_all_reqs();
     return ret;
 }
+
+#endif
