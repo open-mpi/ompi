@@ -32,36 +32,53 @@ OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);
 
     
 /** Gives the actual address of the protocol specific part of a recv request.
- *   @param request (IN) the address of an ompi_request.
+ *   @param req (IN) the address of an ompi_request.
  *   @return address of the custom vprotocol data associated with the request.
  */
-#define VPROTOCOL_RECV_REQ(req) \
+#define VPROTOCOL_RECV_FTREQ(req) \
     (((uintptr_t) req) + mca_pml_v.host_pml_req_recv_size)
     
+/** Gives the address of the real request associated with a protocol specific
+ * send request.
+ *  @param ftreq (IN) the address of a protocol specific request.
+ *  @return address of the associated ompi_request_t.
+ */
+#define VPROTOCOL_RECV_REQ(ftreq) \
+    ((mca_pml_base_recv_request_t *) \
+        (((uintptr_t) ftreq) - mca_pml_v.host_pml_req_send_size))
+    
 /** Gives the actual address of the protocol specific part of a send request.
- *   @param request (IN) the address of an ompi_request.
+ *   @param req (IN) the address of an ompi_request.
  *   @return address of the custom vprotocol data associated with the request.
  */
-#define VPROTOCOL_SEND_REQ(req) \
+#define VPROTOCOL_SEND_FTREQ(req) \
     (((uintptr_t) req) + mca_pml_v.host_pml_req_send_size)
 
+/** Gives the address of the real request associated with a protocol specific
+ * send request.
+ *  @param ftreq (IN) the address of a protocol specific request.
+ *  @return address of the associated ompi_request_t.
+ */
+#define VPROTOCOL_SEND_REQ(ftreq) \
+    ((mca_pml_base_send_request_t *) \
+        (((uintptr_t) ftreq) - mca_pml_v.host_pml_req_send_size))
+ 
 /** Unified macro to get the actual address of the protocol specific part of 
   * an send - or - recv request.
   *  @param request (IN) the address of an ompi_request.
   *  @return address of the custom vprotocol data associated with the request.
   */
-#define VPROTOCOL_REQ(req) (                                                   \
+#define VPROTOCOL_FTREQ(req) (                                                 \
     assert((MCA_PML_REQUEST_SEND ==                                            \
                 ((mca_pml_base_request_t *) req)->req_type) ||                 \
            (MCA_PML_REQUEST_RECV ==                                            \
                 ((mca_pml_base_request_t *) req)->req_type)),                  \
     ((MCA_PML_REQUEST_SEND == ((mca_pml_base_request_t *) req)->req_type)      \
-        ? VPROTOCOL_SEND_REQ(req)                                              \
-        : VPROTOCOL_RECV_REQ(req)                                              \
+        ? VPROTOCOL_SEND_FTREQ(req)                                            \
+        : VPROTOCOL_RECV_FTREQ(req)                                            \
     )                                                                          \
 )
-
-    
+ 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
