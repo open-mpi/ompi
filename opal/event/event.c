@@ -39,8 +39,10 @@
 #endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else 
+#else
+#  ifndef HAVE_WINSOCK2_H
 #include <sys/_time.h>
+#  endif
 #endif
 #ifndef HAVE_TIMERADD
 #include <sys/_timeradd.h>
