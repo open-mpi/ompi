@@ -153,8 +153,8 @@ static int allocate_shared_file(size_t size, char **file_name,
          */
         unique_comm_id=(int)getpid();
         len=asprintf(&f_name,
-                "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
-                orte_process_info.proc_session_dir,ompi_comm_get_cid(comm),unique_comm_id);
+                "%s"OPAL_PATH_SEP"sm_coll_v2_%0d_%0d",orte_process_info.job_session_dir,
+                ompi_comm_get_cid(comm),unique_comm_id);
         if( 0 > len ) {
             return OMPI_ERROR;
         }
@@ -163,8 +163,8 @@ static int allocate_shared_file(size_t size, char **file_name,
         /* process initializing the file */
         fd = open(*file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
-            opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
-                        *file_name, errno);
+            opal_output(0,"mca_common_sm_mmap_init: open %s len %d failed with errno=%d\n",                      
+                        *file_name, len, errno);
             goto file_opened;
         }
         /* map the file and initialize segment state */
@@ -238,8 +238,8 @@ static int allocate_shared_file(size_t size, char **file_name,
          *   communicators, that could have the same communicator id
          */
         len=asprintf(&f_name,
-                "%s"OPAL_PATH_SEP"sm_coll_v2%s_%0d_%0d",orte_process_info.job_session_dir,
-                orte_process_info.proc_session_dir,ompi_comm_get_cid(comm),unique_comm_id);
+                "%s"OPAL_PATH_SEP"sm_coll_v2_%0d_%0d",orte_process_info.job_session_dir,
+                ompi_comm_get_cid(comm),unique_comm_id);
         if( 0 > len ) {
             return OMPI_ERROR;
         }
@@ -248,8 +248,8 @@ static int allocate_shared_file(size_t size, char **file_name,
         /* open backing file */
         fd = open(*file_name, O_RDWR, 0600);
             if (fd < 0) {
-            opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
-                        *file_name, errno);
+            opal_output(0,"mca_common_sm_mmap_init: open %s len %d failed with errno=%d\n",                      
+                        *file_name, len, errno);
             goto return_error;
         }
 
