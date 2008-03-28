@@ -47,7 +47,7 @@
 /* #undef HAVE_INET_NTOP */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
+/* #undef HAVE_INTTYPES_H */
 
 /* Define to 1 if you have the `kqueue' function. */
 /* #undef HAVE_KQUEUE */
@@ -228,16 +228,16 @@
 /* #undef size_t */
 
 /* Define to unsigned int if you dont have it */
-#define socklen_t unsigned int
+/* #unfine socklen_t unsigned int */
 
 /* Define to `unsigned short' if <sys/types.h> does not define. */
-#define uint16_t unsigned short
+/* #define uint16_t unsigned short */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
-#define uint32_t unsigned int
+/* #define uint32_t unsigned int */
 
 /* Define to `unsigned long long' if <sys/types.h> does not define. */
 #define uint64_t __uint64_t
 
 /* Define to `unsigned char' if <sys/types.h> does not define. */
-#define uint8_t unsigned char
+/* #define uint8_t unsigned char */
