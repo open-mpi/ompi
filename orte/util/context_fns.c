@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,15 +62,10 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
     /* Use hostname in a few messages below */
     gethostname(hostname, sizeof(hostname));
     
-    /* If the directory does not exist, or stat() otherwise fails to
-        get info about it, then set good = false. */
-    if (!(0 == stat(context->cwd, &buf) && S_ISDIR(buf.st_mode))) {
-        good = false;
-    }
-    
-    /* If the directory does exist, and we want to chdir, and the
-        chdir fails, then set good = false. */
-    if (good && want_chdir && 0 != chdir(context->cwd)) {
+    /* If we want to chdir and the chdir fails (for any reason -- such
+       as if the dir doesn't exist, it isn't a dir, we don't have
+       permissions, etc.), then set good to false. */
+    if (want_chdir && 0 != chdir(context->cwd)) {
         good = false;
     }
     
@@ -88,12 +84,9 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
         instead. */
         tmp = getenv("HOME");
         if (NULL != tmp) {
-            /* Try $HOME.  Same 2 tests as above. */
+            /* Try $HOME.  Same test as above. */
             good = true;
-            if (!(0 == stat(tmp, &buf) && S_ISDIR(buf.st_mode))) {
-                good = false;
-            }
-            if (good && want_chdir && 0 != chdir(tmp)) {
+            if (want_chdir && 0 != chdir(tmp)) {
                 good = false;
             }
             if (!good) {
