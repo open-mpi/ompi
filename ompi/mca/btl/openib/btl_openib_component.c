@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -1429,7 +1429,7 @@ btl_openib_component_init(int *num_btl_modules,
     ib_devs = ibv_get_device_list_compat(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
-        mca_btl_base_error_no_nics("OpenIB", "HCA");
+        mca_btl_base_error_no_nics("OpenFabrics (openib)", "HCA");
         goto no_btls;
     }
 
