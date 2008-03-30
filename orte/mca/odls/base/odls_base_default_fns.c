@@ -970,10 +970,10 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             free(param);
             free(value);
         } else if (want_processor) { /* setting paffinity_alone */
-            param = mca_base_param_find("opal", NULL, "paffinity_alone");
-            if ( param >=0 ) {
+            int parameter = mca_base_param_find("opal", NULL, "paffinity_alone");
+            if ( parameter >=0 ) {
                 int_value = 0;
-                mca_base_param_lookup_int(param, &int_value);
+                mca_base_param_lookup_int(parameter, &int_value);
                 if ( int_value ){
                     param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
                     asprintf(&value, "%lu", (unsigned long) proc_rank);
