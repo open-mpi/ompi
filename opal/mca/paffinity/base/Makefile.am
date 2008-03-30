@@ -23,4 +23,5 @@ libmca_paffinity_la_SOURCES += \
         base/paffinity_base_close.c \
         base/paffinity_base_select.c \
         base/paffinity_base_open.c \
-        base/paffinity_base_wrappers.c
+        base/paffinity_base_wrappers.c \
+        base/paffinity_base_service.c

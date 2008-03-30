@@ -206,7 +206,6 @@ extern "C" {
      */
     OPAL_DECLSPEC extern const opal_paffinity_base_module_1_1_0_t 
         *opal_paffinity_base_module;
-
     /**
      * Indicator as to whether the list of opened paffinity components
      * is valid or not.
@@ -218,6 +217,10 @@ extern "C" {
      * to all available paffinity components.
      */
     OPAL_DECLSPEC extern opal_list_t opal_paffinity_base_components_opened;
+    /**
+     * Assigning slot_list to proccess 
+     */
+    OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank);
 
     /**
      * Debugging output stream
