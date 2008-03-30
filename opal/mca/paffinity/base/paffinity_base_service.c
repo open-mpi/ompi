@@ -28,8 +28,6 @@
 #include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 
-static int opal_paffinity_base_slot_list_to_cpu_set(char *, long);
-
 static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_cnt, long rank)
 {
     int i;
@@ -336,7 +334,7 @@ int opal_paffinity_base_slot_list_set(long rank)
     char *slot_str = NULL;
     char **item;
     char **socket_core;
-    int item_cnt, socket_core_cnt, rc, verbose_level=0;
+    int item_cnt, socket_core_cnt, rc;
 
     rc = mca_base_param_find("opal", NULL, "paffinity_slot_list");
     if (rc >= 0) {

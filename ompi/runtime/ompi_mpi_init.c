@@ -228,7 +228,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool timing = false;
     int param, value;
     struct timeval ompistart, ompistop;
-    char *slot_list = NULL;
     char *event_val = NULL;
 #if 0
     /* see comment below about sched_yield */
