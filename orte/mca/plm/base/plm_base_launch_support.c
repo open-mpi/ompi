@@ -817,7 +817,6 @@ CHECK_ALL_JOBS:
             /* we have completed the orteds */
             int data=1;
             write(orteds_exit, &data, sizeof(int));
-            opal_progress();
             return;
         }
         /* now check special case if jdata is NULL - we want
@@ -833,7 +832,6 @@ CHECK_ALL_JOBS:
                 int data=1;
                 jdata->state = ORTE_JOB_STATE_TERMINATED;
                 write(orteds_exit, &data, sizeof(int));
-                opal_progress();
                 return;
             }
         }
