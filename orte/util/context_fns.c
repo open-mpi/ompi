@@ -57,7 +57,6 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
     bool good = true;
     char *tmp;
     char hostname[MAXHOSTNAMELEN];
-    struct stat buf;
     
     /* Use hostname in a few messages below */
     gethostname(hostname, sizeof(hostname));
