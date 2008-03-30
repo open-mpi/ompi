@@ -699,7 +699,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     opal_list_item_t *item;
     orte_app_context_t *app;
     orte_odls_child_t *child=NULL;
-    int i, num_processors;
+    int i, num_processors, int_value;
     bool want_processor, oversubscribed;
     int rc=ORTE_SUCCESS, ret;
     bool launch_failed=true;
@@ -957,25 +957,33 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
-        if (want_processor) {
-            param = mca_base_param_environ_variable("mpi", NULL,
-                                                    "paffinity_processor");
-            asprintf(&value, "%lu", (unsigned long) proc_rank);
-            opal_setenv(param, value, true, &app->env);
-            free(param);
-            free(value);
-        } else {
-            param = mca_base_param_environ_variable("mpi", NULL,
-                                                    "paffinity_processor");
+
+        {   /* unset paffinity_slot_list environment */
+            param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
             opal_unsetenv(param, &app->env);
             free(param);
         }
-
         if ( NULL != child->slot_list ) {
-           opal_setenv("slot_list", child->slot_list, true, &app->env);
-        }else{
-           opal_unsetenv("slot_list", &app->env);
+            param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
+            asprintf(&value, "%s", child->slot_list);
+            opal_setenv(param, value, true, &app->env);
+            free(param);
+            free(value);
+        } else if (want_processor) { /* setting paffinity_alone */
+            param = mca_base_param_find("opal", NULL, "paffinity_alone");
+            if ( param >=0 ) {
+                int_value = 0;
+                mca_base_param_lookup_int(param, &int_value);
+                if ( int_value ){
+                    param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
+                    asprintf(&value, "%lu", (unsigned long) proc_rank);
+                    opal_setenv(param, value, true, &app->env);
+                    free(value);
+                    free(param);
+                }
+            }
         }
+
         /* must unlock prior to fork to keep things clean in the
          * event library
          */

@@ -94,16 +94,8 @@ OMPI_DECLSPEC extern bool ompi_mpi_show_mca_params;
 OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
 
 /**
- * If this value is true, assume that this ORTE job is the only job
- * running on the nodes that have been allocated to it, and bind
- * processes to processors (starting with processor 0).
- */
-OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
-
-/**
  * If this value is true, we can check process binding to CPU 
  */
-OMPI_DECLSPEC extern bool rmaps_rank_file_debug;
 
 /**
  * Whether we should keep the string hostnames of all the MPI
@@ -164,7 +156,6 @@ OMPI_DECLSPEC extern bool ompi_use_sparse_group_storage;
  * global variables to the values obtained from the MCA system.
  */
 OMPI_DECLSPEC int ompi_mpi_register_params(void);
-
 
 /**
  * Display all MCA parameters used 
