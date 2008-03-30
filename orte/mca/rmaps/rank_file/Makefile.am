@@ -18,16 +18,16 @@
 # $HEADER$
 #
 
-AM_LFLAGS = -Prank_file_
-LEX_OUTPUT_ROOT = lex.rank_file_
-dist_pkgdata_DATA = help-orte-rmaps-rf.txt
+AM_LFLAGS = -Porte_rmaps_rank_file_
+LEX_OUTPUT_ROOT = lex.orte_rmaps_rank_file_
+dist_pkgdata_DATA = help-rmaps_rank_file.txt
 
 sources = \
-        rmaps_rf.c \
-        rmaps_rf.h \
-        rmaps_rf_component.c \
-        rankfile_lex.l \
-        rankfile_lex.h
+        rmaps_rank_file.c \
+        rmaps_rank_file.h \
+        rmaps_rank_file_component.c \
+        rmaps_rank_file_lex.l \
+        rmaps_rank_file_lex.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -37,7 +37,7 @@ if OMPI_BUILD_rmaps_rank_file_DSO
 component_noinst =
 component_install = mca_rmaps_rank_file.la
 else
-component_noinst = libmca_rmaps_rank_file.la
+component_noinst = libmca_mca_rank_file.la
 component_install =
 endif
 
@@ -46,6 +46,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_rank_file_la_SOURCES = $(sources)
 mca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_rmaps_rank_file_la_SOURCES =$(sources)
-libmca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
+#noinst_LTLIBRARIES = $(component_noinst)
+#libmca_rmaps_rank_file_la_SOURCES =$(sources)
+#libmca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
+
