@@ -69,3 +69,4 @@ typedef struct vprotocol_pessimist_sender_based_request_t
 END_C_DECLS
 
 #endif /* defined(VPROTOCOL_PESSIMIST_SENDERBASED_TYPES_H)*/
+
