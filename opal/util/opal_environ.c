@@ -30,6 +30,12 @@
 #include "opal/util/opal_environ.h"
 #include "opal/constants.h"
 
+#ifdef __WINDOWS__ 
+#define OMPI_DEFAULT_TMPDIR "C:\\TEMP" 
+#else 
+#define OMPI_DEFAULT_TMPDIR "/tmp" 
+#endif
+
 /*
  * Merge two environ-like char arrays, ensuring that there are no
  * duplicate entires
@@ -224,8 +230,7 @@ const char* opal_tmp_directory( void )
     if( NULL == (str = getenv("TMPDIR")) )
         if( NULL == (str = getenv("TEMP")) )
             if( NULL == (str = getenv("TMP")) )
-                if( NULL == (str = opal_home_directory()) )
-                    str = ".";
+                str = OMPI_DEFAULT_TMPDIR;
     return str;
 }
 
