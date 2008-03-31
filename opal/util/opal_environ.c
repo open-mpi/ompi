@@ -31,9 +31,9 @@
 #include "opal/constants.h"
 
 #ifdef __WINDOWS__ 
-#define OMPI_DEFAULT_TMPDIR "C:\\TEMP" 
+#define OPAL_DEFAULT_TMPDIR "C:\\TEMP" 
 #else 
-#define OMPI_DEFAULT_TMPDIR "/tmp" 
+#define OPAL_DEFAULT_TMPDIR "/tmp" 
 #endif
 
 /*
@@ -230,7 +230,7 @@ const char* opal_tmp_directory( void )
     if( NULL == (str = getenv("TMPDIR")) )
         if( NULL == (str = getenv("TEMP")) )
             if( NULL == (str = getenv("TMP")) )
-                str = OMPI_DEFAULT_TMPDIR;
+                str = OPAL_DEFAULT_TMPDIR;
     return str;
 }
 
