@@ -577,19 +577,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self));
 
-    /* Init coll for the comms */
-
-    if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD))) {
-        error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
-        goto error;
-    }
-
-    if (OMPI_SUCCESS != 
-        (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
-        error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
-        goto error;
-    }
 
     /*
      * Dump all MCA parameters if requested
@@ -663,6 +650,24 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_dpm_base_select() failed";
         goto error;
     }
+
+    /* Init coll for the comms. This has to be after dpm_base_select, 
+       (since dpm.mark_dyncomm is not set in the communicator creation
+       function else), but before dpm.dyncom_init, since this function
+       might require collective for the CID allocation. */
+    if (OMPI_SUCCESS !=
+        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD))) {
+        error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != 
+        (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
+        error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
+        goto error;
+    }
+
+
     
     /* Check whether we have been spawned or not.  We introduce that
        at the very end, since we need collectives, datatypes, ptls
