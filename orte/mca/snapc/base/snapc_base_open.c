@@ -23,6 +23,7 @@
 #include "opal/mca/base/base.h"
 
 #include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/snapc/snapc.h"
@@ -61,7 +62,7 @@ int orte_snapc_base_open(void)
 {
     int value = 0;
     char * str_value = NULL;
-    char * home = NULL;
+    const char * home = NULL;
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "snapc:base: open()"));
@@ -83,12 +84,7 @@ int orte_snapc_base_open(void)
                          "snapc:base: open: verbose    = %d",
                          value));
 
-    /* We may need this later */
-#if !defined(__WINDOWS__)
-    home = getenv("HOME");
-#else
-    home = getenv("USERPROFILE");
-#endif  /* !defined(__WINDOWS__) */
+    home = opal_home_directory();
 
     /* Global Snapshot directory */
     mca_base_param_reg_string_name("snapc",

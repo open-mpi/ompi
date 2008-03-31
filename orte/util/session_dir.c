@@ -49,6 +49,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
@@ -66,12 +67,6 @@ static int orte_create_dir(char *directory);
 
 static bool orte_dir_check_file(const char *root, const char *path);
 static bool orte_dir_check_file_output(const char *root, const char *path);
-
-#ifdef __WINDOWS__
-#define OMPI_DEFAULT_TMPDIR "C:\\TEMP"
-#else
-#define OMPI_DEFAULT_TMPDIR "/tmp"
-#endif
 
 #define OMPI_PRINTF_FIX_STRING(a) ((NULL == a) ? "(null)" : a)
 
@@ -262,14 +257,8 @@ orte_session_dir_get_name(char **fulldirpath,
     else if( NULL != getenv("OMPI_PREFIX_ENV") ) { /* OMPI Environment var */
         prefix = strdup(getenv("OMPI_PREFIX_ENV"));
     }
-    else if( NULL != getenv("TMPDIR") ) { /* General Environment var */
-        prefix = strdup(getenv("TMPDIR"));
-    }
-    else if( NULL != getenv("TMP") ) { /* Another general environment var */
-        prefix = strdup(getenv("TMP"));
-    }
-    else { /* ow. just use the default tmp directory */
-        prefix = strdup(OMPI_DEFAULT_TMPDIR);
+    else { /* General Environment var */
+        prefix = strdup(opal_tmp_directory());
     }
     
     /*
