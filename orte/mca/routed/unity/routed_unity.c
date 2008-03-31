@@ -283,7 +283,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
             return rc;
         }
         /* send it to the daemons via xcast */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(jdata->jobid, &buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&buf);
             return rc;
