@@ -434,11 +434,16 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s modex: received data for %ld procs",
+                         "%s modex: received %ld data bytes from %ld procs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)num_procs));
+                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), (long)num_procs));
     
-    /* process the buffer */
+    /* if the buffer doesn't have any more data, ignore it */
+    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
+        goto cleanup;
+    }
+    
+    /* otherwise, process it */
     for (i=0; i < num_procs; i++) {
         /* unpack the process name */
         cnt=1;
