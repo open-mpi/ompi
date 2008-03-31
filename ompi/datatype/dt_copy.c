@@ -150,7 +150,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     /* If we have to copy a contiguous datatype then simply
      * do a memcpy.
      */
-    if( (datatype->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
+    if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         ptrdiff_t extent = (datatype->ub - datatype->lb);
         /* Now that we know the datatype is contiguous, we should move the 2 pointers
          * source and destination to the correct displacement.
@@ -158,7 +158,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         destination += datatype->lb;
         source      += datatype->lb;
         if( (ptrdiff_t)datatype->size == extent ) {  /* all contiguous == no gaps around */
-            size_t total_length = datatype->size * count;
+            size_t total_length = iov_len_local;
             size_t memcpy_chunk = ompi_datatype_memcpy_block_size;
             while( total_length > 0 ) {
                 if( memcpy_chunk > total_length ) memcpy_chunk = total_length;
@@ -167,28 +167,27 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
                 OMPI_DDT_SAFEGUARD_POINTER( source, memcpy_chunk,
                                             (unsigned char*)source_base, datatype, count );
                 DO_DEBUG( opal_output( 0, "copy c1. memcpy( %p, %p, %lu ) => space %lu\n",
-                                       destination, source, (unsigned long)memcpy_chunk, (unsigned long)iov_len_local ); );
+                                       destination, source, (unsigned long)memcpy_chunk, (unsigned long)total_length ); );
                 MEMCPY( destination, source, memcpy_chunk );
                 destination   += memcpy_chunk;
                 source        += memcpy_chunk;
                 total_length  -= memcpy_chunk;
-                iov_len_local -= memcpy_chunk;
             }
-        } else {
-            for( pos_desc = 0; (int32_t)pos_desc < count; pos_desc++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( destination, datatype->size,
-                                            (unsigned char*)destination_base, datatype, count );
-                OMPI_DDT_SAFEGUARD_POINTER( source, datatype->size,
-                                            (unsigned char*)source_base, datatype, count );
-                DO_DEBUG( opal_output( 0, "copy c2. memcpy( %p, %p, %lu ) => space %lu\n",
-                                       destination, source, (unsigned long)datatype->size,
-                                       (unsigned long)(iov_len_local - (pos_desc * datatype->size)) ); );
-                MEMCPY( destination, source, datatype->size );
-                destination += extent;
-                source += extent;
-            }
+            return 0;  /* completed */
         }
-        return 0;
+        for( pos_desc = 0; (int32_t)pos_desc < count; pos_desc++ ) {
+            OMPI_DDT_SAFEGUARD_POINTER( destination, datatype->size,
+                                        (unsigned char*)destination_base, datatype, count );
+            OMPI_DDT_SAFEGUARD_POINTER( source, datatype->size,
+                                        (unsigned char*)source_base, datatype, count );
+            DO_DEBUG( opal_output( 0, "copy c2. memcpy( %p, %p, %lu ) => space %lu\n",
+                                   destination, source, (unsigned long)datatype->size,
+                                   (unsigned long)(iov_len_local - (pos_desc * datatype->size)) ); );
+            MEMCPY( destination, source, datatype->size );
+            destination += extent;
+            source += extent;
+        }
+        return 0;  /* completed */
     }
 
     pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 1) );
