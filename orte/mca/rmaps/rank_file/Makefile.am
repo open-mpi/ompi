@@ -37,7 +37,7 @@ if OMPI_BUILD_rmaps_rank_file_DSO
 component_noinst =
 component_install = mca_rmaps_rank_file.la
 else
-component_noinst = libmca_mca_rank_file.la
+component_noinst = libmca_rmaps_rank_file.la
 component_install =
 endif
 
@@ -46,7 +46,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_rmaps_rank_file_la_SOURCES = $(sources)
 mca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
 
-#noinst_LTLIBRARIES = $(component_noinst)
-#libmca_rmaps_rank_file_la_SOURCES =$(sources)
-#libmca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_rmaps_rank_file_la_SOURCES =$(sources)
+libmca_rmaps_rank_file_la_LDFLAGS = -module -avoid-version
 
