@@ -169,6 +169,11 @@ int orte_plm_base_orted_exit(void)
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
         for(v=1; v < orte_process_info.num_procs; v++) {
             peer.vpid = v;
+            /* check to see if this daemon is known to be "dead" */
+            if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
+                /* don't try to send this */
+                continue;
+            }
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
@@ -236,11 +241,20 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
     if (orte_abnormal_term_ordered) {
         orte_vpid_t v;
         orte_process_name_t peer;
+        orte_job_t *daemons;
+        orte_proc_t **procs;
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:kill_local_procs abnormal term ordered",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
+        /* get the job object for the daemons */
+        if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        procs = (orte_proc_t**)daemons->procs->addr;
+
         /* since we cannot know which daemons may/may not be alive,
          * setup an event so we will time out after giving the send
          * our best attempt
@@ -272,6 +286,11 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
         for(v=1; v < orte_process_info.num_procs; v++) {
             peer.vpid = v;
+            /* check to see if this daemon is known to be "dead" */
+            if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
+                /* don't try to send this */
+                continue;
+            }
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
