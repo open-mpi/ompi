@@ -354,7 +354,7 @@ static int map_app_by_slot(
 static int orte_rmaps_rf_map(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_app_context_t *app, **apps;
+    orte_app_context_t *app=NULL, **apps;
     orte_std_cntr_t i, j;
     opal_list_t node_list, procs;
     opal_list_item_t *item;
@@ -572,7 +572,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
    char** argv;
    char buff[64];
    char* value;
-   int ival;
+   int ival=-1;
 
    OPAL_THREAD_LOCK(&orte_rmaps_rank_file_mutex);
 
