@@ -46,6 +46,8 @@ extern int   orte_rmaps_rank_file_line;
 extern bool  orte_rmaps_rank_file_done;
 extern orte_rmaps_rank_file_value_t orte_rmaps_rank_file_value;
 
+int orte_rmaps_rank_file_wrap(void);
+
 /*
  * Make lex-generated files not issue compiler warnings
  */

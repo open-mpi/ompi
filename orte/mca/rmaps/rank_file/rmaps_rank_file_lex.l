@@ -29,13 +29,6 @@
 /*
  * local functions
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif  /* defined(c_plusplus) || defined(__cplusplus) */
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif  /* defined(c_plusplus) || defined(__cplusplus) */
 
 int orte_rmaps_rank_file_wrap(void)
 {
