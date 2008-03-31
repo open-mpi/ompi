@@ -217,8 +217,9 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
      */
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s allgather collecting buffers",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s allgather collecting buffers from %ld daemons",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)orte_process_info.num_daemons));
     
     /* setup the recv conditions */
     allgather_failed = false;
