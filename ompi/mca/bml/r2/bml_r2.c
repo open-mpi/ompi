@@ -449,10 +449,16 @@ int mca_bml_r2_add_procs(
         OMPI_ERR_UNREACH == ret) {
         char *local, *remote;
 
-        orte_util_convert_process_name_to_string(&local,
-                                     &(ompi_proc_local_proc->proc_name));
-        orte_util_convert_process_name_to_string(&remote,
-                                     &(unreach_proc->proc_name));
+        if (ORTE_SUCCESS != 
+            orte_util_convert_process_name_to_string(&local,
+                                                     &(ompi_proc_local_proc->proc_name))) {
+            local = strdup("Unknown");
+        }
+        if (ORTE_SUCCESS != 
+            orte_util_convert_process_name_to_string(&remote,
+                                                     &(unreach_proc->proc_name))) {
+            remote = strdup("Unknown");
+        }
 
         opal_show_help("help-mca-bml-r2",
                        "unreachable proc",
