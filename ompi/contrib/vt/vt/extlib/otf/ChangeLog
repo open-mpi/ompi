@@ -204,3 +204,7 @@
 	- install a symbolic link 'otfdecompress' which is a synonym for
 	  'otfcompress -d'
 
+1.3.10
+	- added configure option '--[enable|disable]-binaries' to control
+	  building of binaries (useful for multi-lib installations)
+

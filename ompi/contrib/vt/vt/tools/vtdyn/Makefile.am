@@ -2,7 +2,9 @@ if AMBUILDDYNATTLIB
 SUBDIRS = dynattlib
 endif
 
+if AMBUILDBINARIES
 bin_PROGRAMS = vtdyn
+endif
 
 INCLUDES = $(DYNIINCDIR)
 

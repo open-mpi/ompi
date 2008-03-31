@@ -1,7 +1,9 @@
 INCLUDES = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
 
+if AMBUILDBINARIES
 bin_PROGRAMS = \
 	otfmerge
+endif
 
 otfmerge_LDADD = $(top_builddir)/otflib/libotf.la
 if ! AMDEPZLIB

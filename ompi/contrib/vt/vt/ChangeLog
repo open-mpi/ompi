@@ -206,3 +206,8 @@
 	- renamed configure's option '--with[out]-mpi-io' to
 	  '[enable/disable]-mpi-io' for more consistent
 
+5.4.5
+	- updated version of internal OTF to 1.3.10 (see extlib/otf/ChangeLog)
+	- added configure option '--[enable|disable]-binaries' to control
+	  building of binaries (useful for multi-lib installations)
+

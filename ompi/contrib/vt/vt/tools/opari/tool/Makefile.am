@@ -1,6 +1,8 @@
 AUTOMAKE_OPTIONS = -Wno-gnu
 
+if AMBUILDBINARIES
 bin_PROGRAMS = opari
+endif
 
 include_HEADERS = \
 	../lib/opari_omp.h \

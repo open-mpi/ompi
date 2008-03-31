@@ -1,5 +1,7 @@
 AUTOMAKE_OPTIONS = -Wno-gnu
 
+if AMBUILDBINARIES
+
 if AMHAVECC
 WRAP_CC = vtcc
 else
@@ -23,6 +25,8 @@ WRAP_FC = vtf90
 else
 WRAP_FC =
 endif
+
+endif # AMBUILDBINARIES
 
 vtdata_DATA = \
 	vtcc-wrapper-data.txt \
