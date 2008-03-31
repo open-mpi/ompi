@@ -276,8 +276,11 @@ static int orte_plm_rsh_probe(orte_node_t *node,
 static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 {
     unsigned long deltat;
+    orte_proc_t *daemon=(orte_proc_t*)cbdata;
     
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) { /* if abnormal exit */
+        /* note that this daemon failed */
+        daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
         /* report that the daemon has failed so we can exit */
         orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
     }
@@ -745,6 +748,8 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         } else { /* father */
             /* indicate this daemon has been launched */
             nodes[nnode]->daemon->state = ORTE_PROC_STATE_LAUNCHED;
+            /* record the pid */
+            nodes[nnode]->daemon->pid = pid;
             
             OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
@@ -760,7 +765,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
-            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, NULL);
+            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)nodes[nnode]->daemon);
 
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (0 < opal_output_get_verbosity(orte_plm_globals.output)
