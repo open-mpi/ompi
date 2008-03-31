@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -73,6 +73,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -448,7 +449,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  orted_path));
             
-            var = getenv("HOME");
+            var = opal_home_directory();
             if (NULL != var) {
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:gridengine: changing to directory %s",

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2008 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -23,8 +23,8 @@
 #include "opal/mca/base/base.h"
 
 #include "opal/util/output.h"
-#include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
@@ -62,7 +62,6 @@ int orte_snapc_base_open(void)
 {
     int value = 0;
     char * str_value = NULL;
-    const char * home = NULL;
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "snapc:base: open()"));
@@ -84,14 +83,12 @@ int orte_snapc_base_open(void)
                          "snapc:base: open: verbose    = %d",
                          value));
 
-    home = opal_home_directory();
-
     /* Global Snapshot directory */
     mca_base_param_reg_string_name("snapc",
                                    "base_global_snapshot_dir",
                                    "The base directory to use when storing global snapshots",
                                    false, false,
-                                   home,
+                                   opal_home_directory(),
                                    &orte_snapc_base_global_snapshot_dir);
 
     OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,

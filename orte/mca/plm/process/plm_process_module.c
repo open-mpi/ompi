@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -68,6 +68,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -742,7 +743,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
                not the local node.  If the user does not start
                in $HOME on the remote nodes... well... let's
                hope they start in $HOME.  :-) */
-            var = getenv("HOME");
+            var = opal_home_directory();
             if (NULL != var) {
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:process: changing to directory %s",
