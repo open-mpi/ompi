@@ -336,7 +336,8 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
     /* copy the data out to the user */
     if ((NULL == attr_data) ||
         (attr_data->attr_data_size == 0)) {
-        opal_output(0, "grpcomm_basic_get_proc_attr: no attr avail or zero byte size");
+        OPAL_OUTPUT_VERBOSE((5, "%s grpcomm:get_proc_attr: no attr avail or zero byte size",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *val = NULL;
         *size = 0;
     } else {
