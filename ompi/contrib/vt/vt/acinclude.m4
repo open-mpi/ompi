@@ -1214,7 +1214,10 @@ dnl	check for MPI I/O support
 
 		AS_IF([test "$have_mpio" = "yes"],
 		[AC_DEFINE([HAVE_MPIO], [1], [Define to 1 if MPI supports file access.])])
-	])	
+	])
+
+
+	AS_IF([test "$mpi_error" = "yes"], [MPICC=$CC])
 
 	AS_IF([test x"$PMPILIB" = x"$MPILIB"], [PMPILIB=])
 	
@@ -1358,6 +1361,10 @@ AC_DEFUN([ACVT_OTF],
 
 		otf_conf_cmd="$otf_srcdir/configure"
 		otf_conf_args=
+		AS_IF([test x"$enable_binaries" != "xyes"],
+		[
+			otf_conf_args="$otf_conf_args --disable-binaries"
+		])
 		AS_IF([test x"$cross_compiling" = "xyes"],
 		[
 			AS_IF([test ! -z $build], [otf_conf_args="$otf_conf_args --build=$build"])

@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.4, service@vampir.eu)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.4)
+AC_INIT(VampirTrace, 5.4.5, service@vampir.eu)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.5)
 AC_CONFIG_SRCDIR(config.h.in)
 AM_CONFIG_HEADER(config.h)
 
@@ -107,6 +107,13 @@ See \`config.log' for more details.])])
 	CXX_FOR_BUILD=$CXX; CXXFLAGS_FOR_BUILD=$CXXFLAGS; CXXCPP_FOR_BUILD=$CXXCPP
 	CPPFLAGS_FOR_BUILD=$CPPFLAGS; LDFLAGS_FOR_BUILD=$LDFLAGS; LIBS_FOR_BUILD=$LIBS
 ])
+
+# Do we want to build and install binaries
+AC_ARG_ENABLE(binaries,
+	AC_HELP_STRING([--enable-binaries],
+		[build and install binaries, default: enabled]),
+	[enable_binaries="$enableval"], [enable_binaries="yes"])
+AM_CONDITIONAL(AMBUILDBINARIES, test x"$enable_binaries" = "xyes")
 
 # Check for programs
 AC_ARG_VAR(AR, [archiver command]) #AC_PROG_AR ?

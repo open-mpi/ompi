@@ -3,9 +3,9 @@
 
 
 AC_PREREQ(2.57)
-AC_INIT(OTF, 1.3.9, andreas.knuepfer@tu-dresden.de )
+AC_INIT(OTF, 1.3.10, andreas.knuepfer@tu-dresden.de )
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(OTF, 1.3.9)
+AM_INIT_AUTOMAKE(OTF, 1.3.10)
 AC_CONFIG_SRCDIR([config.h.in])
 AM_CONFIG_HEADER(config.h)
 
@@ -17,16 +17,25 @@ AC_PROG_LIBTOOL
 
 # Own stuff
 
+# Do we want to build and install binaries?
+AC_ARG_ENABLE(binaries,
+	AC_HELP_STRING([--enable-binaries],
+		[build and install binaries, default: enabled]),
+	[enable_binaries="$enableval"], [enable_binaries="yes"])
+AM_CONDITIONAL(AMBUILDBINARIES, test x"$enable_binaries" = "xyes")
+
+# Checks for VTF3.
 CHECK_VTF3
 if test x"$force_vtf3" = "xyes" -a x"$vtf3_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVEVTF3, test x"$have_vtf3" = xyes)
 
+# Checks for zlib compression.
 CHECK_ZLIB
 if test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVEZLIB, test x"$have_zlib" = xyes)
 AM_CONDITIONAL(AMDEPZLIB, test x"$have_zlib" = xyes -a x"$enable_shared" = xyes)
 
-#checking for swig and python-dev
+# Checks for swig and python-dev.
 SWIG_PYTHON
 AM_CONDITIONAL(AMHAVEPYTHONSWIG, [test "$pythonexists" = yes -a "$swigexists" = yes] )
 

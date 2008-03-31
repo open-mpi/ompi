@@ -1,7 +1,9 @@
 INCLUDES = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
 
+if AMBUILDBINARIES
 noinst_PROGRAMS = \
 	otfdump
+endif
 
 otfdump_LDADD = $(top_builddir)/otflib/libotf.la
 if ! AMDEPZLIB
