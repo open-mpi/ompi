@@ -30,6 +30,9 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
           [contrib_vt_flags="$with_contrib_vt_flags $contrib_vt_flags"],
           [contrib_vt_flags=])
 
+    AS_IF([test "$enable_binaries" = "no"],
+        [contrib_vt_flags="$contrib_vt_flags --disable-binaries"])
+
     AS_IF([test -n "$prefix" -a "$prefix" != "NONE"],
           [contrib_vt_flags="$contrib_vt_flags --prefix=$prefix"])
 
