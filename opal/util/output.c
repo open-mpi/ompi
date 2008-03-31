@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -116,7 +116,6 @@ OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
 bool opal_output_init(void)
 {
     int i;
-    char *str;
     char hostname[32];
 
     if (initialized) {
@@ -154,20 +153,9 @@ bool opal_output_init(void)
     /* Set some defaults */
 
     asprintf(&output_prefix, "output-pid%d-", getpid());
-    if (NULL != (str = getenv("TMPDIR"))) {
-        output_dir = strdup(str);
-	} else if (NULL != (str = getenv("TEMP"))) {
-        output_dir = strdup(str);
-	} else if (NULL != (str = getenv("TMP"))) {
-        output_dir = strdup(str);
-    } else if (NULL != (str = getenv("HOME"))) {
-        output_dir = strdup(str);
-    } else {
-        output_dir = strdup(".");
-    }
+    output_dir = strdup(opal_tmp_directory());
 
     /* Open the default verbose stream */
-
     verbose_stream = opal_output_open(&verbose);
     return true;
 }
@@ -192,7 +180,7 @@ int opal_output_reopen(int output_id, opal_output_stream_t * lds)
 
 
 /*
- * Enable and disable outptu streams
+ * Enable and disable output streams
  */
 bool opal_output_switch(int output_id, bool enable)
 {

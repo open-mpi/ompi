@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,6 +34,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/constants.h"
+#include "opal/util/opal_environ.h"
 
 /*
  * Public variables
@@ -54,7 +55,7 @@ static void parse_verbose(char *e, opal_output_stream_t *lds);
 int mca_base_open(void)
 {
   int param_index;
-  char *value, *home;
+  char *value;
   opal_output_stream_t lds;
   char hostname[64];
 
@@ -65,13 +66,7 @@ int mca_base_open(void)
   }
 
   /* Register some params */
-#if !defined(__WINDOWS__)
-  home = getenv("HOME");
-  asprintf(&value, "%s:%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, home);
-#else
-  home = getenv("USERPROFILE");
-  asprintf(&value, "%s;%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, home);
-#endif  /* !defined(__WINDOWS__) */
+  asprintf(&value, "%s:%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, opal_home_directory() );
 
   mca_base_param_component_path = 
     mca_base_param_reg_string_name("mca", "component_path",

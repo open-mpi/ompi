@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -60,6 +60,7 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/univ_info.h"
@@ -756,7 +757,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                     not the local node.  If the user does not start
                     in $HOME on the remote nodes... well... let's
                     hope they start in $HOME.  :-) */
-                var = getenv("HOME");
+                var = opal_home_directory();
                 if (NULL != var) {
                     if (mca_plm_submit_component.debug) {
                         opal_output(0, "plm:submit: changing to directory %s", var);
