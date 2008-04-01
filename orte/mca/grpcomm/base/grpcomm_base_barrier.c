@@ -106,7 +106,6 @@ int orte_grpcomm_base_barrier(void)
         OBJ_DESTRUCT(&buf);
         return rc;
     }    
-    opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
     /* send to local daemon */
     if (0 > orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buf, ORTE_RML_TAG_DAEMON, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
@@ -203,7 +202,6 @@ int orte_grpcomm_base_barrier(void)
     
     /* xcast the release */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    opal_dss.pack(&buf, &i, 1, ORTE_STD_CNTR); /* put something meaningless here */
     orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_BARRIER_CLIENT);
     OBJ_DESTRUCT(&buf);
     
