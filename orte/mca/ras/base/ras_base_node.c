@@ -92,6 +92,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     while (NULL != (item = opal_list_remove_first(nodes))) {
         node = (orte_node_t*)item;
         
+#if 0
         /* if we are not keeping FQDN hostnames, abbreviate
          * the nodename as required
          */
@@ -105,7 +106,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             }
             free(tmp);
         }
-        
+#endif     
         /* the HNP had to already enter its node on the array - that entry is in the
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
