@@ -639,6 +639,7 @@ FILE *fopen(const char *path, const char *mode)
 #define VT_IOWRAP_THISFUNCNAME fopen
 	FILE *ret;
 	uint64_t enter_time;
+        int tmp;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -650,8 +651,9 @@ FILE *fopen(const char *path, const char *mode)
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, path, mode);
+        tmp=(ret!=NULL) ? fileno(ret): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==NULL, fileno(ret));
+	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==NULL, tmp);
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -664,6 +666,7 @@ FILE *fopen64(const char *path, const char *mode)
 #define VT_IOWRAP_THISFUNCNAME fopen64
 	FILE *ret;
 	uint64_t enter_time;
+        int tmp;
 
 	VT_IOWRAP_INIT_IOFUNC_OPEN();
 
@@ -675,8 +678,9 @@ FILE *fopen64(const char *path, const char *mode)
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, path, mode);
+        tmp=(ret!=NULL) ? fileno(ret): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==NULL, fileno(ret));
+	VT_IOWRAP_LEAVE_IOFUNC_OPEN( ret==NULL, tmp);
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -724,7 +728,7 @@ int fclose(FILE *stream)
 
 	VT_IOWRAP_ENTER_IOFUNC();
 
-        tmp=fileno(stream);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, stream);
 
@@ -740,6 +744,7 @@ int fseek(FILE *stream, long offset, int whence)
 #define VT_IOWRAP_THISFUNCNAME fseek
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -753,8 +758,9 @@ int fseek(FILE *stream, long offset, int whence)
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, stream, offset, whence);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -766,6 +772,7 @@ int fseeko(FILE *stream, off_t offset, int whence)
 #define VT_IOWRAP_THISFUNCNAME fseeko
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -779,8 +786,9 @@ int fseeko(FILE *stream, off_t offset, int whence)
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, stream, offset, whence);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -793,6 +801,7 @@ int fseeko64(FILE *stream, off64_t offset, int whence)
 #define VT_IOWRAP_THISFUNCNAME fseeko64
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -806,8 +815,9 @@ int fseeko64(FILE *stream, off64_t offset, int whence)
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, stream, offset, whence);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -819,6 +829,8 @@ void rewind(FILE *stream)
 {
 #define VT_IOWRAP_THISFUNCNAME rewind
 	uint64_t enter_time;
+        int tmp;
+
 	VT_IOWRAP_INIT_IOFUNC();
 
 	VT_IOWRAP_CHECK_TRACING_VOID1(stream);
@@ -830,8 +842,9 @@ void rewind(FILE *stream)
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, stream);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( 0, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( 0, tmp );
 #undef VT_IOWRAP_THISFUNCNAME
 }
 
@@ -840,6 +853,7 @@ int fsetpos(FILE *stream, const fpos_t *pos) {
 #define VT_IOWRAP_THISFUNCNAME fsetpos
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -858,8 +872,9 @@ int fsetpos(FILE *stream, const fpos_t *pos) {
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, stream, pos);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -871,6 +886,7 @@ int fsetpos64(FILE *stream, const fpos64_t *pos) {
 #define VT_IOWRAP_THISFUNCNAME fsetpos64
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -889,8 +905,9 @@ int fsetpos64(FILE *stream, const fpos64_t *pos) {
 
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, stream, pos);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==-1, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -902,6 +919,7 @@ size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME fread
 	size_t ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -916,8 +934,9 @@ size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, buf, size, nmemb, stream);
         num_bytes = (ssize_t)(size*ret);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==(size_t) 0, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==(size_t) 0, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -929,6 +948,7 @@ size_t fwrite( const void *buf, size_t size, size_t nmemb, FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME fwrite
 	size_t ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -943,8 +963,9 @@ size_t fwrite( const void *buf, size_t size, size_t nmemb, FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC4(VT_IOWRAP_THISFUNCNAME, buf, size, nmemb, stream);
         num_bytes = (ssize_t)(size*ret);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==(size_t)0, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==(size_t)0, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -956,6 +977,7 @@ int fgetc(FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME fgetc
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -969,8 +991,9 @@ int fgetc(FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, stream);
         num_bytes=1;
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF , fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF , tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -986,6 +1009,7 @@ int getc(FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME getc
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -999,8 +1023,9 @@ int getc(FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, stream);
         num_bytes=1;
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF , fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF , tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -1012,6 +1037,7 @@ char *fgets(char *s, int size, FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME fgets
 	char *ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -1025,8 +1051,9 @@ char *fgets(char *s, int size, FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, s, size, stream);
         num_bytes=strlen(s);
+        tmp=(ret!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==NULL , fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==NULL , tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -1063,6 +1090,7 @@ int fputc(int c, FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME fputc
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -1076,8 +1104,9 @@ int fputc(int c, FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, c, stream);
         num_bytes=1;
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -1093,6 +1122,7 @@ int putc(int c, FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME putc
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -1106,8 +1136,9 @@ int putc(int c, FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, c, stream);
         num_bytes=1;
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -1119,6 +1150,7 @@ int fputs(const char *s, FILE *stream)
 #define VT_IOWRAP_THISFUNCNAME fputs
 	int ret;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -1132,8 +1164,9 @@ int fputs(const char *s, FILE *stream)
 	vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME) "\n");
 	ret = VT_IOWRAP_CALL_LIBFUNC2(VT_IOWRAP_THISFUNCNAME, s, stream);
 	num_bytes = (ssize_t)strlen(s);
+        tmp=(stream!=NULL) ? fileno(stream): 0;
 
-	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, fileno(stream) );
+	VT_IOWRAP_LEAVE_IOFUNC( ret==EOF, tmp );
 
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
@@ -1171,6 +1204,7 @@ int fscanf(FILE *stream, const char *format, ...)
 	int ret;
 	va_list arg;
 	uint64_t enter_time;
+        int tmp;
 
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -1186,7 +1220,9 @@ int fscanf(FILE *stream, const char *format, ...)
 		va_end (arg);
         
 		num_bytes = (ssize_t)ret;
-		VT_IOWRAP_LEAVE_IOFUNC( ret==0, fileno(stream) );
+                tmp=(stream!=NULL) ? fileno(stream): 0;
+        
+		VT_IOWRAP_LEAVE_IOFUNC( ret==0, tmp );
 	
 		return ret;
 	}
@@ -1206,6 +1242,7 @@ int fprintf(FILE *stream, const char *format, ...)
 	int ret;
 	va_list arg;
 	uint64_t enter_time;
+        int tmp;
 	
 	VT_IOWRAP_INIT_IOFUNC();
 
@@ -1221,7 +1258,8 @@ int fprintf(FILE *stream, const char *format, ...)
 		va_end (arg);
 	
 		num_bytes = (ssize_t)ret;
-		VT_IOWRAP_LEAVE_IOFUNC( ret==0, fileno(stream) );
+                tmp=(stream!=NULL) ? fileno(stream): 0;
+		VT_IOWRAP_LEAVE_IOFUNC( ret==0, tmp );
 	
 		return ret;
 	}

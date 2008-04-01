@@ -208,6 +208,8 @@
 
 5.4.5
 	- updated version of internal OTF to 1.3.10 (see extlib/otf/ChangeLog)
+	- fixed a bug for LIBC's I/O tracing: argument of 'fileno()' must be
+	  a valid file stream
 	- added configure option '--[enable|disable]-binaries' to control
 	  building of binaries (useful for multi-lib installations)
 
