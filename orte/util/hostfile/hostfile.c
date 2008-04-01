@@ -531,3 +531,55 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
 
     return ORTE_SUCCESS;
 }
+
+int orte_util_get_ordered_host_list(opal_list_t *nodes,
+                                    bool *override_oversubscribed,
+                                    char *hostfile)
+{
+    opal_list_t exclude;
+    opal_list_item_t *item, *itm;
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s hostfile: creating ordered list of hosts from hostfile %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
+    
+    OBJ_CONSTRUCT(&exclude, opal_list_t);
+    
+    /* parse the hostfile and add the contents to the list */
+    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude))) {
+        goto cleanup;
+    }
+    
+    /* remove from the list of nodes those that are in the exclude list */
+    while(NULL != (item = opal_list_remove_first(&exclude))) {
+        orte_node_t *exnode = (orte_node_t*)item;
+        /* check for matches on nodes */
+        for (itm = opal_list_get_first(nodes);
+             itm != opal_list_get_end(nodes);
+             itm = opal_list_get_next(itm)) {
+            orte_node_t *node=(orte_node_t*)itm;
+            if (0 == strcmp(exnode->name, node->name)) {
+                /* match - remove it */
+                opal_list_remove_item(nodes, itm);
+                OBJ_RELEASE(itm);
+                break;
+            }
+        }
+        OBJ_RELEASE(item);
+    }
+    
+    /* indicate that ORTE should override any oversubscribed conditions
+     * based on local hardware limits since the user (a) might not have
+     * provided us any info on the #slots for a node, and (b) the user
+     * might have been wrong! If we don't check the number of local physical
+     * processors, then we could be too aggressive on our sched_yield setting
+     * and cause performance problems.
+     */
+    *override_oversubscribed = true;
+
+cleanup:
+    OBJ_DESTRUCT(&exclude);
+    
+    return rc;
+}

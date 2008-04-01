@@ -18,28 +18,22 @@
 /**
  * @file
  *
- * Resource Discovery (Hostfile)
+ * Resource Mapping 
  */
-#ifndef ORTE_UTIL_HOSTFILE_H
-#define ORTE_UTIL_HOSTFILE_H
+#ifndef ORTE_RMAPS_SEQ_H
+#define ORTE_RMAPS_SEQ_H
 
-#include "orte_config.h"
-
-#include "opal/class/opal_list.h"
-
+#include "orte/mca/rmaps/rmaps.h"
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_util_add_hostfile_nodes(opal_list_t *nodes,
-                                               bool *override_oversubscribed,
-                                               char *hostfile);
-    
-ORTE_DECLSPEC int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
-                                                  char *hostfile);
+/**
+ * RMGR Component 
+ */
 
-ORTE_DECLSPEC int orte_util_get_ordered_host_list(opal_list_t *nodes,
-                                                  bool *override_oversubscribed,
-                                                  char *hostfile);
+ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_seq_component;
+extern orte_rmaps_base_module_t orte_rmaps_seq_module;
+
 
 END_C_DECLS
 
