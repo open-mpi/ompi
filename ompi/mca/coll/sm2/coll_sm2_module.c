@@ -543,7 +543,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_exscan     = NULL;
     sm_module->super.coll_gather     = NULL;
     sm_module->super.coll_gatherv    = NULL;
-    sm_module->super.coll_reduce     = NULL;
+    sm_module->super.coll_reduce     = mca_coll_sm2_reduce_intra;
     sm_module->super.coll_reduce_scatter = NULL;
     sm_module->super.coll_scan       = NULL;
     sm_module->super.coll_scatter    = NULL;
@@ -793,8 +793,6 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* NOTE: need to fix this if we have only one memory bank */
     sm_module->sm2_first_buffer_index_next_bank=
         sm_module->sm2_module_num_regions_per_bank;
-    sm_module->sm2_last_buffer_index_this_bank=
-         sm_module->sm2_module_num_regions_per_bank-1;
     if(sm_module->sm2_module_num_memory_banks > 1 ) {
         sm_module->sm2_first_buffer_index_next_bank=
             mca_coll_sm2_component.sm2_num_regions_per_bank;
@@ -815,6 +813,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         base_buffer= sm_module->collective_buffer_region+
             i*sm_module->segment_size;
         sm_module->sm_buffer_descriptor[i].base_segment_address=base_buffer;
+
 
         /* allocate array to keep data on each segment in the buffer.
          *   One segment per process in the group.
@@ -858,6 +857,11 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         if( NULL == sm_module->sm_buffer_descriptor[i].proc_memory ) {
             goto CLEANUP;
         }
+
+        /* set bank index */
+        sm_module->sm_buffer_descriptor[i].bank_index=
+            i/sm_module->sm2_module_num_regions_per_bank;
+
         for(j=0 ; j < group_size ; j++ ) {
             ctl_ptr=(volatile mca_coll_sm2_nb_request_process_shared_mem_t *)
                 (base_buffer+j* sm_module->segement_size_per_process);
@@ -922,6 +926,7 @@ sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 {
     /* local variables */
     char output_buffer[2*MPI_MAX_OBJECT_NAME];
+    int bank_index;
 
     memset(&output_buffer[0],0,sizeof(output_buffer));
     snprintf(output_buffer,sizeof(output_buffer),"%s (cid %d)", comm->c_name,
@@ -937,7 +942,8 @@ sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
-    int rc,buffer_index, memory_bank_index;
+    int rc,buffer_index, memory_bank_index,i_request,bank_index;
+    int request_index;
     mca_coll_sm2_nb_request_process_private_mem_t *request;
 
     /* check to see if need to progress the current nb-barrier, which
@@ -979,21 +985,22 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         module->sm2_allocated_buffer_index=0;
     }
 
-    /* do I need to complete non-blocking barrier ?  The barrier will
-     * be initiated when a process is done with the buffer */
-    if( module->sm2_allocated_buffer_index ==
-            module->sm2_first_buffer_index_next_bank) {
+    /* If this is the first buffer in the bank, see if the barrier
+     *   needs to be completed
+     */
 
-        memory_bank_index= module->sm2_allocated_buffer_index /
-            module->sm2_module_num_regions_per_bank;
+    bank_index=module->
+        sm_buffer_descriptor[module->sm2_allocated_buffer_index].bank_index;
+    if( NB_BARRIER_INACTIVE != 
+            module->barrier_request[bank_index].sm2_barrier_phase ) {
 
-        if ( NB_BARRIER_INACTIVE != 
-                module->barrier_request[memory_bank_index].sm2_barrier_phase) {
-            /* 
-             * complete non-blocking barrier, so this memory bank will
-             *   be available for use.
-             */
-            request=&(module->barrier_request[memory_bank_index]);
+        request_index=module->current_request_index;
+        /* complete barrier requests in order */
+        for(i_request=0 ; i_request< module->sm2_module_num_memory_banks ; 
+                i_request++ ) {
+
+            /* complete requests in order */
+            request=&(module->barrier_request[module->current_request_index]);
             while ( NB_BARRIER_DONE != request->sm2_barrier_phase ) {
                 rc=mca_coll_sm2_nbbarrier_intra_progress(module->module_comm,
                         request,
@@ -1001,28 +1008,31 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
                 if( OMPI_SUCCESS != rc ) {
                     return NULL;
                 }
-                /* set the reqeust to inactive, and point current_request_index
-                 *  to the request for the next memory bank
-                 */
-                /* set request to inactive */
-                request->sm2_barrier_phase=NB_BARRIER_INACTIVE;
-                /* move pointer to next request that needs to be completed */
-                module->current_request_index=memory_bank_index+1;
-                /* wrap around */
-                if( module->current_request_index == 
-                        module->sm2_module_num_memory_banks ) {
-                    module->current_request_index=0;
-                }
+                opal_progress();
             }
-    
-            /* re-set counter for next bank */
-            module->sm2_first_buffer_index_next_bank +=
-                module->sm2_module_num_regions_per_bank;
-            if( module->sm2_first_buffer_index_next_bank == 
+            
+            /* set the reqeust to inactive, and point current_request_index
+             *  to the request for the next memory bank
+             */
+             
+            /* set request to inactive */
+            request->sm2_barrier_phase=NB_BARRIER_INACTIVE;
+
+            /* move pointer to next request that needs to be completed */
+            module->current_request_index++;
+
+            /* wrap around */
+            if( module->current_request_index == 
                     module->sm2_module_num_memory_banks ) {
-                module->sm2_module_num_memory_banks=0;
+                module->current_request_index=0;
             }
+
+            /* if current bank is free - break out */
+            if( request_index == bank_index)
+                break;
+
         }
+
     }
 
     buffer_index=module->sm2_allocated_buffer_index;
@@ -1038,7 +1048,7 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
-    int rc,memory_bank_index;
+    int rc,memory_bank_index,bank_index;
     mca_coll_sm2_nb_request_process_private_mem_t *request;
 
     /* check to see if need to progress the current nb-barrier, which
@@ -1074,15 +1084,23 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
     /* get next buffer index */
     module->sm2_freed_buffer_index++;
+    /* check for wrap-around */
+    if(  module->sm2_freed_buffer_index == module->sm2_module_num_buffers ) {
+        module->sm2_freed_buffer_index=0;
+    }
+    bank_index=module->
+        sm_buffer_descriptor[module->sm2_freed_buffer_index].bank_index;
 
-    /* do I need to initiate non-blocking barrier */
+    /* do I need to initiate non-blocking barrier - do this when last
+     *   buffer in the pool is used 
+     */
+
     if( module->sm2_freed_buffer_index ==
-            module->sm2_last_buffer_index_this_bank) {
+            ( module->sm2_module_num_regions_per_bank * (bank_index+1) -1 ) 
+            ) {
 
-        /* complete non-blocking barrier */
-        memory_bank_index= module->sm2_freed_buffer_index /
-                module->sm2_module_num_regions_per_bank;
-        request=&(module->barrier_request[memory_bank_index]);
+        /* start non-blocking barrier */
+        request=&(module->barrier_request[bank_index]);
         rc=mca_coll_sm2_nbbarrier_intra(module->module_comm,
                 request,(mca_coll_base_module_1_1_0_t *)module);
         if( OMPI_SUCCESS !=rc ) {
@@ -1104,22 +1122,8 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
         }
 
-        /* need to use buffer out of next memory bank */
-        module->sm2_last_buffer_index_this_bank +=
-            module->sm2_module_num_regions_per_bank;
-
-        /* wrap around */
-        if( module->sm2_last_buffer_index_this_bank >= 
-                module->sm2_module_num_memory_banks ) {
-            module->sm2_last_buffer_index_this_bank=
-                module->sm2_module_num_regions_per_bank-1;
-        }
     }
 
-    /* check for wrap-around */
-    if(  module->sm2_freed_buffer_index == module->sm2_module_num_buffers ) {
-        module->sm2_freed_buffer_index=0;
-    }
 
     /* return */
     return OMPI_SUCCESS;
