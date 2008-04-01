@@ -130,20 +130,11 @@ static int rte_init(char flags)
         return rc;
     }
     
-    /* wireup our io */
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(ORTE_PROC_MY_NAME, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(ORTE_PROC_MY_NAME, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(ORTE_PROC_MY_NAME, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
+    /* NOTE: do not wireup our io - let the fork'd orted serve
+     * as our io handler. This prevents issues with the event
+     * library wrt pty's and stdin
+     */
+
     return ORTE_SUCCESS;
 }
 
