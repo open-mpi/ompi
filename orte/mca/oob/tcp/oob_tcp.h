@@ -227,19 +227,18 @@ struct mca_oob_tcp_component_t {
 
     opal_list_t tcp_available_devices;
 
-    opal_thread_t tcp_listen_thread;
-    opal_free_list_t tcp_pending_connections_fl;
-    opal_list_t tcp_pending_connections;
-    opal_list_t tcp_copy_out_connections;
-    opal_list_t tcp_copy_in_connections;
-    opal_list_t tcp_connections_return;
-    opal_list_t tcp_connections_return_copy;
-    opal_mutex_t tcp_pending_connections_lock;
+    opal_thread_t tcp_listen_thread;     /** handle to the listening thread */
+    opal_list_t tcp_pending_connections; /**< List of accepted connections waiting for processing */
+    opal_list_t tcp_connections_return;  /**< List of connection fragments being returned to accept thread */
+    opal_mutex_t tcp_connections_lock;   /**< Lock protecting pending_connections and connections_return */
+    int tcp_connections_pipe[2];
+    opal_event_t tcp_listen_thread_event;
 
-    opal_timer_t tcp_last_copy_time;
-    opal_timer_t tcp_copy_delta;
-    int tcp_copy_max_size;
-    int tcp_copy_spin_count;
+    int tcp_copy_max_size;                /**< Max size of the copy list before copying must commence */
+    int tcp_listen_thread_num_sockets;    /**< Number of sockets in tcp_listen_thread_sds */
+    int tcp_listen_thread_sds[2];         /**< Room for IPv4 and IPv6.  Might need to make more dynamic. */
+    struct timeval tcp_listen_thread_tv;  /**< Timeout when using listen thread */
+
     int connect_sleep;
 };
 
@@ -262,8 +261,7 @@ extern int mca_oob_tcp_output_handle;
 struct mca_oob_tcp_pending_connection_t {
     opal_free_list_item_t super;
     int fd;
-    /* Bug, FIXME: Port to IPv6 */
-    struct sockaddr_in addr;
+    struct sockaddr_storage addr;
 };
 typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
 OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
