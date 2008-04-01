@@ -49,6 +49,7 @@ bool orte_debug_daemons_flag = false;
 bool orte_debug_daemons_file_flag = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
+bool orte_keep_fqdn_hostnames = false;
 int orte_debug_output = -1;
 char **orte_launch_environ;
 char **orted_cmd_line=NULL;
@@ -155,6 +156,12 @@ int orte_register_params(void)
                                    false, false, NULL, &orte_default_hostfile);
     
     
+    /* whether or not to keep FQDN hostnames */
+    mca_base_param_reg_int_name("orte", "keep_fqdn_hostnames",
+                                "Whether or not to keep FQDN hostnames [default: no]",
+                                false, false, (int)false, &value);
+    orte_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
+
     /* All done */
     params_set = true;
     return ORTE_SUCCESS;

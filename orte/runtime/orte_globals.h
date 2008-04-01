@@ -288,6 +288,7 @@ ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern int orte_debug_output;
+ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern char **orted_cmd_line;
