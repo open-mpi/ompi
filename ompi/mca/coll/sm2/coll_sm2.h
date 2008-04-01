@@ -240,6 +240,11 @@ BEGIN_C_DECLS
          *   a per process basis
          */
         sm_memory_region_desc_t *proc_memory;
+
+        /*
+         * bank index
+         */
+        int bank_index;
     };
     typedef struct sm_work_buffer_t sm_work_buffer_t;
 
@@ -326,12 +331,6 @@ BEGIN_C_DECLS
          *   this buffer.
          */
         int sm2_first_buffer_index_next_bank;
-
-        /* index of last buffer in this memory bank - 
-         *   We start the non-blocking barrier after allocating
-         *   this buffer.
-         */
-        int sm2_last_buffer_index_this_bank;
 
         /* communicator - there is a one-to-one association between
          *  the communicator and the module
@@ -487,6 +486,15 @@ BEGIN_C_DECLS
             struct ompi_op_t *op,
             struct ompi_communicator_t *comm,
             struct mca_coll_base_module_1_1_0_t *module);
+
+    /**
+     * Shared memory blocking reduce
+     */
+    int mca_coll_sm2_reduce_intra(void *sbuf, void *rbuf, int count,
+            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+            int root, struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
 
 END_C_DECLS
 
