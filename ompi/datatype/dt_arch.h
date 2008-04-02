@@ -281,16 +281,5 @@ static inline void ompi_arch_setmask ( uint32_t *var, uint32_t mask)
     *var |= mask;
 }
 
-static inline void ompi_arch_setabit ( uint32_t* var, int32_t pos )
-{
-    assert( ((uint32_t)pos) <= (sizeof(uint32_t) * 8) );
-    ompi_arch_setmask( var, (((uint32_t)1) << (pos - 1)) );
-}
-
-static inline void ompi_arch_create_empty_id( uint32_t* id )
-{
-    *id = (OMPI_ARCH_HEADERMASK | OMPI_ARCH_UNUSEDMASK);
-}
-
 #endif  /* DATATYPE_ARCH_H_HAS_BEEN_INCLUDED */
 

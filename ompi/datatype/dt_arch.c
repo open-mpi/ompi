@@ -21,7 +21,7 @@
 
 int32_t ompi_arch_compute_local_id( uint32_t *me )
 {
-    ompi_arch_create_empty_id( me );
+    *me = (OMPI_ARCH_HEADERMASK | OMPI_ARCH_UNUSEDMASK);
 
     /* Handle the size of long (can hold a pointer) */
     if( 8 == sizeof(long) )
