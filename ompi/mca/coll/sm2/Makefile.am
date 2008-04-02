@@ -22,6 +22,7 @@ sources = \
         coll_sm2.h \
         coll_sm2_component.c  \
         coll_sm2_module.c \
+        coll_sm2_bcast.c \
         coll_sm2_reduce.c \
         coll_sm2_allreduce.c \
         coll_sm2_barrier.c \
