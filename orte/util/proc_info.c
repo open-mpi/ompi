@@ -135,7 +135,7 @@ int orte_proc_info(void)
                                 true, false, -1, &tmp);
     orte_process_info.universe_size = tmp;
 
-    mca_base_param_reg_string_name("tmpdir", "base",
+    mca_base_param_reg_string_name("orte", "tmpdir_base",
                                    "Base of the session directory tree",
                                    false, false, NULL,  &(orte_process_info.tmpdir_base));
 

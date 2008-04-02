@@ -151,7 +151,7 @@ int orte_register_params(void)
                                 false, false, 100, &orte_timeout_usec_per_proc);
     
     /* default hostfile */
-    mca_base_param_reg_string_name("default", "hostfile",
+    mca_base_param_reg_string_name("orte", "default_hostfile",
                                    "Name of the default hostfile (relative or absolute path)",
                                    false, false, NULL, &orte_default_hostfile);
     
