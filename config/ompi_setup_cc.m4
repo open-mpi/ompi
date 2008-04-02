@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -121,7 +121,14 @@ AC_DEFUN([OMPI_SETUP_CC],[
 
         # see if -Wno-long-double works...
         CFLAGS_orig="$CFLAGS"
-        CFLAGS="$CFLAGS -Wno-long-double"
+        # CFLAGS="$CFLAGS -Wno-long-double"
+        # Starting with GCC-4.4, the compiler complains about not
+        # knowing -Wno-long-double, only if -Wstrict-prototypes is set, too.
+        #
+        # Actually, this is not real fix, as GCC will pass on any -Wno- flag,
+        # have fun with the warning: -Wno-britney
+        CFLAGS="$CFLAGS -Wno-long-double -Wstrict-prototypes"
+
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
                    [ompi_cv_cc_wno_long_double],
                    [AC_TRY_COMPILE([], [], 
