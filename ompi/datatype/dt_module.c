@@ -765,6 +765,10 @@ int32_t ompi_ddt_init( void )
     MOOG(2cplex);
     MOOG(2dblcplex);
     MOOG(real2);
+    MOOG(logical1);
+    MOOG(logical2);
+    MOOG(logical4);
+    MOOG(logical8);
 
     /* Now the C types */
 

@@ -415,6 +415,7 @@
       integer MPI_DOUBLE_COMPLEX
       integer MPI_2REAL, MPI_2DOUBLE_PRECISION, MPI_2INTEGER
       integer MPI_2COMPLEX, MPI_2DOUBLE_COMPLEX
+      integer MPI_LOGICAL1, MPI_LOGICAL2, MPI_LOGICAL4, MPI_LOGICAL8
 
 !
 !     Do NOT change the order of these parameters
@@ -447,6 +448,10 @@
       parameter (MPI_2COMPLEX=26)
       parameter (MPI_2DOUBLE_COMPLEX=27)
       parameter (MPI_REAL2=28)
+      parameter (MPI_LOGICAL1=29)
+      parameter (MPI_LOGICAL2=30)
+      parameter (MPI_LOGICAL4=31)
+      parameter (MPI_LOGICAL8=32)
       
       integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
       integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR
