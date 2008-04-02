@@ -1361,9 +1361,11 @@ int mca_oob_tcp_fini(void)
         if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
             opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
         }
+#if OPAL_WANT_IPV6
         if (mca_oob_tcp_component.tcp6_listen_sd >= 0) {
             opal_event_del(&mca_oob_tcp_component.tcp6_recv_event);
         }
+#endif
     }
 
     /* close listen socket */
