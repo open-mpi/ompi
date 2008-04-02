@@ -321,8 +321,6 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
        we need an easy way for the coll base code to realize we've
        done this. */
     memset(&comm->c_coll, 0, sizeof(mca_coll_base_comm_coll_t));
-
-    return;
 }
 
 static void ompi_comm_destruct(ompi_communicator_t* comm)
