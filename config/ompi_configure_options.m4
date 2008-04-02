@@ -711,7 +711,7 @@ AC_MSG_RESULT([$with_ident_string])
 AC_MSG_CHECKING([if ConnectX XRC support should be enabled])
 AC_ARG_ENABLE([connectx-xrc],
     [AC_HELP_STRING([--enable-connectx-xrc],
-                    [Enable features required for ConnectX XRC support. If you don't have Infiniband ConnectX adapters you may disable the ConnectX XRC support. If you don't know which Infiniband adapter is installed on you cluster - leave it enabled (default: enabled)])])
+                    [Enable features required for ConnectX XRC support. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])])
 if test "$enable_connectx_xrc" = "no" ; then
      AC_MSG_RESULT([no])
      ompi_want_connectx_xrc=0
