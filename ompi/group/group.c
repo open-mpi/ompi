@@ -200,7 +200,6 @@ int ompi_group_minloc ( int list[] , int length )
 
 int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group) 
 {
-
     int method,result;
 
     method = 0;
@@ -208,6 +207,7 @@ int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_g
     if (ompi_use_sparse_group_storage) 
     {
         int len [4];
+
         len[0] = ompi_group_calc_plist    ( n ,ranks );
         len[1] = ompi_group_calc_strided  ( n ,ranks );
         len[2] = ompi_group_calc_sporadic ( n ,ranks );

@@ -100,10 +100,10 @@ mca_coll_inter_allgather_inter(void *sbuf, int scount,
 						root, comm->c_local_comm,
                                                 comm->c_local_comm->c_coll.coll_bcast_module);
     if (OMPI_SUCCESS != err) {
-            goto exit;
+        goto exit;
     }
 
-  exit:
+ exit:
     if (NULL != ptmp) {
         free(ptmp);
     }
