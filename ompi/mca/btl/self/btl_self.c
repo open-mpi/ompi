@@ -181,15 +181,15 @@ int mca_btl_self_free( struct mca_btl_base_module_t* btl,
  *
  * @param btl (IN)      BTL module
  */
-struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
+struct mca_btl_base_descriptor_t*
+mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
+                          struct mca_btl_base_endpoint_t* endpoint,
+                          mca_mpool_base_registration_t* registration,
+                          struct ompi_convertor_t* convertor,
+                          uint8_t order,
+                          size_t reserve,
+                          size_t* size,
+                          uint32_t flags )
 {
     mca_btl_self_frag_t* frag;
     struct iovec iov;
@@ -249,15 +249,15 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
 /**
  * Prepare data for receive.
  */
-struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
+struct mca_btl_base_descriptor_t*
+mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
+                          struct mca_btl_base_endpoint_t* endpoint,
+                          mca_mpool_base_registration_t* registration,
+                          struct ompi_convertor_t* convertor,
+                          uint8_t order,
+                          size_t reserve,
+                          size_t* size,
+                          uint32_t flags )
 {
     mca_btl_self_frag_t* frag;
     size_t max_data = *size;
