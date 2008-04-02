@@ -359,11 +359,10 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
-int mca_btl_tcp_send( 
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor, 
-    mca_btl_base_tag_t tag)
+int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
+                      struct mca_btl_base_endpoint_t* endpoint,
+                      struct mca_btl_base_descriptor_t* descriptor, 
+                      mca_btl_base_tag_t tag )
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
     mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)descriptor; 
@@ -400,10 +399,9 @@ int mca_btl_tcp_send(
  * @param descriptor (IN)  Description of the data to be transferred
  */
 
-int mca_btl_tcp_put( 
-    mca_btl_base_module_t* btl,
-    mca_btl_base_endpoint_t* endpoint,
-    mca_btl_base_descriptor_t* descriptor)
+int mca_btl_tcp_put( mca_btl_base_module_t* btl,
+                     mca_btl_base_endpoint_t* endpoint,
+                     mca_btl_base_descriptor_t* descriptor )
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
     mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)descriptor; 
