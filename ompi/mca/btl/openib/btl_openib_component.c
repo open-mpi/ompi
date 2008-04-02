@@ -1012,12 +1012,14 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto error;
     }
 
+#if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED) {
         if (OMPI_SUCCESS != mca_btl_openib_open_xrc_domain(hca)) {
             BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
             goto error;
         }
     }
+#endif
 
     mpool_resources.reg_data = (void*)hca;
     mpool_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
@@ -1092,26 +1094,33 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
             mca_btl_openib_component.apm_ports = 0;
         }
         ret = prepare_hca_for_use(hca);
-        if(OMPI_SUCCESS == ret)
+        if(OMPI_SUCCESS == ret) {
             return OMPI_SUCCESS;
+        }
     }
 
 error:
 #if defined(OMPI_HAVE_THREADS) && OMPI_ENABLE_PROGRESS_THREADS == 1
-    if(hca->ib_channel)
+    if (hca->ib_channel) {
         ibv_destroy_comp_channel(hca->ib_channel);
+    }
 #endif
-    if(hca->mpool)
+    if (hca->mpool) {
         mca_mpool_base_module_destroy(hca->mpool);
+    }
+#if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED) {
         if(OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(hca)) {
             BTL_ERROR(("XRC Internal error. Failed to close xrc domain"));
         }
     }
-    if(hca->ib_pd)
+#endif
+    if (hca->ib_pd) {
         ibv_dealloc_pd(hca->ib_pd);
-    if(hca->ib_dev_context)
+    }
+    if (hca->ib_dev_context) {
         ibv_close_device(hca->ib_dev_context);
+    }
     OBJ_RELEASE(hca);
     return ret;
 }
