@@ -87,125 +87,266 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     /* get my node for the reduction tree */
     my_reduction_node=&(sm_module->reduction_tree[my_node_index]);
     n_children=my_reduction_node->n_children;
-    count_processed=0;
 
-    /* get a pointer to the shared-memory working buffer */
-    /* NOTE: starting with a rather synchronous approach */
-    for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
+    if( 1 == n_data_segments ) {
+        /* single data segment */
+        
+            /* get unique tag for this stripe - assume only one collective
+             *  per communicator at a given time, so no locking needed
+             *  for atomic update of the tag */
+            tag=sm_module->collective_tag;
+            sm_module->collective_tag++;
     
-        /* get unique tag for this stripe - assume only one collective
-         *  per communicator at a given time, so no locking needed
-         *  for atomic update of the tag */
-        tag=sm_module->collective_tag;
-        sm_module->collective_tag++;
-
-        sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
-
-        /* get number of elements to process in this stripe */
-        count_this_stripe=n_dts_per_buffer;
-        if( count_processed + count_this_stripe > count )
-            count_this_stripe=count-count_processed;
-
-        /* offset to data segment */
-        my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
-        my_data_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
-
-        /***************************
-         * Fan into root phase
-         ***************************/
-
-        if( LEAF_NODE != my_reduction_node->my_node_type ) {
-            /* copy segment into shared buffer - ompi_op_reduce
-             *   provids only 2 buffers, so can't add from two
-             *   into a third buffer.
-             */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    (char *)my_data_pointer, 
-                    (char *)((char *)sbuf+dt_extent*count_processed));
-            if( 0 != rc ) {
-                return OMPI_ERROR;
-            }
-
-            /*
-             * Wait on children, and apply op to their data
-             */
-            for( child=0 ; child < n_children ; child++ ) {
-                child_rank=my_reduction_node->children_ranks[child];
-                child_rank+=process_shift;
-                /* wrap around */
-                if( comm_size <= child_rank ){
-                    child_rank-=comm_size;
-                }   
+            /* get a pointer to the shared-memory working buffer */
+            sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
     
-                child_ctl_pointer=
-                    sm_buffer_desc->proc_memory[child_rank].control_region;
-                child_data_pointer=
-                    sm_buffer_desc->proc_memory[child_rank].data_segment;
+            /* get number of elements to process in this stripe */
+            count_this_stripe=count;
     
-                /* wait until child flag is set */
-                while(child_ctl_pointer->flag != tag) {
-                    opal_progress();
-                }
+            /* offset to data segment */
+            my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+            my_data_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
     
-                /* apply collective operation */
-                ompi_op_reduce(op,(void *)child_data_pointer,
-                        (void *)my_data_pointer, count_this_stripe,dtype);
-
-            } /* end child loop */
+            /***************************
+             * Fan into root phase
+             ***************************/
     
-            /* set memory barriet to make sure data is in main memory before
-             *  the completion flgas are set.
-             */
-            MB();
-    
-            /*
-             * Signal parent that data is ready
-             */
-            my_ctl_pointer->flag=tag;
-            my_ctl_pointer->index=stripe_number;
-
-            /* copy data to destination */
             if( ROOT_NODE == my_reduction_node->my_node_type ) {
-                /* copy data to user supplied buffer */
+                /* 
+                 * copy local data from source buffer to result buffer
+                 */
                 rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                        (char *)rbuf+dt_extent*count_processed,
-                        (char *)my_data_pointer);
+                        (char *)rbuf, 
+                        (char *)sbuf);
                 if( 0 != rc ) {
                     return OMPI_ERROR;
                 }
-            }
+    
+                /*
+                 * Wait on children, and apply op to their data
+                 */
+                for( child=0 ; child < n_children ; child++ ) {
+                    child_rank=my_reduction_node->children_ranks[child];
+                    child_rank+=process_shift;
+                    /* wrap around */
+                    if( comm_size <= child_rank ){
+                        child_rank-=comm_size;
+                    }   
+        
+                    child_ctl_pointer=
+                        sm_buffer_desc->proc_memory[child_rank].control_region;
+                    child_data_pointer=
+                        sm_buffer_desc->proc_memory[child_rank].data_segment;
+        
+                    /* wait until child flag is set */
+                    while(child_ctl_pointer->flag != tag) {
+                        opal_progress();
+                    }
+        
+                    /* apply collective operation */
+                    ompi_op_reduce(op,(void *)child_data_pointer,
+                            (void *)rbuf, count_this_stripe,dtype);
+    
+                } /* end child loop */
+        
+            } else if( INTERIOR_NODE == my_reduction_node->my_node_type ) {
 
-        } else {
-            /* leaf node */
-            /* copy segment into shared buffer - later on will optimize to
-             *   eliminate extra copies.
-             */
-            rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
-                    (char *)my_data_pointer, 
-                    (char *)((char *)sbuf+dt_extent*count_processed));
-            if( 0 != rc ) {
-                return OMPI_ERROR;
+                /* copy segment into shared buffer - ompi_op_reduce
+                 *   provids only 2 buffers, so can't add from two
+                 *   into a third buffer.
+                 */
+                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                        (char *)my_data_pointer, 
+                        (char *)sbuf);
+                if( 0 != rc ) {
+                    return OMPI_ERROR;
+                }
+    
+                /*
+                 * Wait on children, and apply op to their data
+                 */
+                for( child=0 ; child < n_children ; child++ ) {
+                    child_rank=my_reduction_node->children_ranks[child];
+                    child_rank+=process_shift;
+                    /* wrap around */
+                    if( comm_size <= child_rank ){
+                        child_rank-=comm_size;
+                    }   
+        
+                    child_ctl_pointer=
+                        sm_buffer_desc->proc_memory[child_rank].control_region;
+                    child_data_pointer=
+                        sm_buffer_desc->proc_memory[child_rank].data_segment;
+        
+                    /* wait until child flag is set */
+                    while(child_ctl_pointer->flag != tag) {
+                        opal_progress();
+                    }
+        
+                    /* apply collective operation */
+                    ompi_op_reduce(op,(void *)child_data_pointer,
+                            (void *)my_data_pointer, count_this_stripe,dtype);
+    
+                } /* end child loop */
+        
+                /* set memory barriet to make sure data is in main memory before
+                 *  the completion flgas are set.
+                 */
+                MB();
+        
+                /*
+                 * Signal parent that data is ready
+                 */
+                my_ctl_pointer->flag=tag;
+    
+    
+            } else {
+                /* leaf node */
+                /* copy segment into shared buffer - later on will optimize to
+                 *   eliminate extra copies.
+                 */
+                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                        (char *)my_data_pointer, 
+                        (char *)sbuf);
+                if( 0 != rc ) {
+                    return OMPI_ERROR;
+                }
+        
+                /* set memory barriet to make sure data is in main memory before
+                 *  the completion flgas are set.
+                 */
+                MB();
+        
+                /*
+                 * Signal parent that data is ready
+                 */
+                my_ctl_pointer->flag=tag;
             }
+        
+            /* "free" the shared-memory working buffer */
+            rc=free_sm2_shared_buffer(sm_module);
+            if( OMPI_SUCCESS != rc ) {
+                goto Error;
+            }
+        
+    } else {
+        count_processed=0;
+        for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
+        
+            /* get unique tag for this stripe - assume only one collective
+             *  per communicator at a given time, so no locking needed
+             *  for atomic update of the tag */
+            tag=sm_module->collective_tag;
+            sm_module->collective_tag++;
     
-            /* set memory barriet to make sure data is in main memory before
-             *  the completion flgas are set.
-             */
-            MB();
+            /* get a pointer to the shared-memory working buffer */
+            sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
     
-            /*
-             * Signal parent that data is ready
-             */
-            my_ctl_pointer->flag=tag;
+            /* get number of elements to process in this stripe */
+            count_this_stripe=n_dts_per_buffer;
+            if( count_processed + count_this_stripe > count )
+                count_this_stripe=count-count_processed;
+    
+            /* offset to data segment */
+            my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+            my_data_pointer=sm_buffer_desc->proc_memory[my_rank].data_segment;
+    
+            /***************************
+             * Fan into root phase
+             ***************************/
+    
+            if( LEAF_NODE != my_reduction_node->my_node_type ) {
+                /* copy segment into shared buffer - ompi_op_reduce
+                 *   provids only 2 buffers, so can't add from two
+                 *   into a third buffer.
+                 */
+                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                        (char *)my_data_pointer, 
+                        (char *)((char *)sbuf+dt_extent*count_processed));
+                if( 0 != rc ) {
+                    return OMPI_ERROR;
+                }
+    
+                /*
+                 * Wait on children, and apply op to their data
+                 */
+                for( child=0 ; child < n_children ; child++ ) {
+                    child_rank=my_reduction_node->children_ranks[child];
+                    child_rank+=process_shift;
+                    /* wrap around */
+                    if( comm_size <= child_rank ){
+                        child_rank-=comm_size;
+                    }   
+        
+                    child_ctl_pointer=
+                        sm_buffer_desc->proc_memory[child_rank].control_region;
+                    child_data_pointer=
+                        sm_buffer_desc->proc_memory[child_rank].data_segment;
+        
+                    /* wait until child flag is set */
+                    while(child_ctl_pointer->flag != tag) {
+                        opal_progress();
+                    }
+        
+                    /* apply collective operation */
+                    ompi_op_reduce(op,(void *)child_data_pointer,
+                            (void *)my_data_pointer, count_this_stripe,dtype);
+    
+                } /* end child loop */
+        
+                /* set memory barriet to make sure data is in main memory before
+                 *  the completion flgas are set.
+                 */
+                MB();
+        
+                /*
+                 * Signal parent that data is ready
+                 */
+                my_ctl_pointer->flag=tag;
+    
+                /* copy data to destination */
+                if( ROOT_NODE == my_reduction_node->my_node_type ) {
+                    /* copy data to user supplied buffer */
+                    rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                            (char *)rbuf+dt_extent*count_processed,
+                            (char *)my_data_pointer);
+                    if( 0 != rc ) {
+                        return OMPI_ERROR;
+                    }
+                }
+    
+            } else {
+                /* leaf node */
+                /* copy segment into shared buffer - later on will optimize to
+                 *   eliminate extra copies.
+                 */
+                rc=ompi_ddt_copy_content_same_ddt(dtype, count_this_stripe,
+                        (char *)my_data_pointer, 
+                        (char *)((char *)sbuf+dt_extent*count_processed));
+                if( 0 != rc ) {
+                    return OMPI_ERROR;
+                }
+        
+                /* set memory barriet to make sure data is in main memory before
+                 *  the completion flgas are set.
+                 */
+                MB();
+        
+                /*
+                 * Signal parent that data is ready
+                 */
+                my_ctl_pointer->flag=tag;
+            }
+        
+            /* "free" the shared-memory working buffer */
+            rc=free_sm2_shared_buffer(sm_module);
+            if( OMPI_SUCCESS != rc ) {
+                goto Error;
+            }
+        
+            /* update the count of elements processed */
+            count_processed+=count_this_stripe;
         }
-    
-        /* "free" the shared-memory working buffer */
-        rc=free_sm2_shared_buffer(sm_module);
-        if( OMPI_SUCCESS != rc ) {
-            goto Error;
-        }
-    
-        /* update the count of elements processed */
-        count_processed+=count_this_stripe;
     }
 
     /* return */

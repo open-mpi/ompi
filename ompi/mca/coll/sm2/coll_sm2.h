@@ -495,6 +495,14 @@ BEGIN_C_DECLS
             int root, struct ompi_communicator_t *comm,
             struct mca_coll_base_module_1_1_0_t *module);
 
+    /**
+     * Shared memory blocking broadcast.
+     */
+    int mca_coll_sm2_bcast_intra(void *buf, int count,
+            struct ompi_datatype_t *dtype, int root,
+            struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
 
 END_C_DECLS
 
