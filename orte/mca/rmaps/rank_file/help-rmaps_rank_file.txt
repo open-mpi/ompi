@@ -31,20 +31,17 @@ example:  cat hosfile
     rank 3=host3 slot=0:1,1:0-2
 
 [parse_error_string]
-Open RTE detected a parse error in the rankfile:
-    %s
+Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d:
     %s
 
 [parse_error_int]
-Open RTE detected a parse error in the rankfile:
-    %s
+Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d:
     %d
 
 [parse_error]
-Open RTE detected a parse error in the rankfile:
-    %s
+Open RTE detected a parse error in the rankfile (%s)
 It occured on line number %d on token %d.
 
 [not-all-mapped-alloc]
@@ -66,13 +63,13 @@ Either request fewer slots for your application, or make more slots available
 for use.
 
 [bad-rankfile]
-Error, Invalid rank (%d) in the rankfile (%s)
+Error, invalid rank (%d) in the rankfile (%s)
 
 [bad-assign]
 Error, rank %d is already assigned to %s, check %s
 
 [bad-syntax]
-Error, invalid syntax in the rankfile
+Error, invalid syntax in the rankfile (%s)
 syntax must be the fallowing
 rank i=host_i slot=string
 ex: rank 1=host1 slot=1:0,1
