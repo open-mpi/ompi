@@ -47,6 +47,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->argv=NULL;
     app_context->env=NULL;
     app_context->cwd=NULL;
+    app_context->user_specified_cwd=false;
     app_context->hostfile=NULL;
     app_context->add_hostfile=NULL;
     app_context->dash_host = NULL;
