@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     printf("Hello, World, I am %d of %d\n", rank, size);
     
     MPI_Info_create(&info);
-    MPI_Info_set(info, "ompi_global_scope", "false");
+    MPI_Info_set(info, "ompi_global_scope", "true");
     
     if (0 == rank) {
         MPI_Open_port(MPI_INFO_NULL, port);

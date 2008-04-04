@@ -177,7 +177,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     /* uri of Open MPI server, or at least where to get it */
     { NULL, NULL, NULL, '\0', "ompi-server", "ompi-server", 1,
       &orterun_globals.ompi_server, OPAL_CMD_LINE_TYPE_STRING,
-      "Specify the URI of the Open MPI server, or the name of the file that contains that info" },
+      "Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info" },
     
     { "carto", "file", "path", '\0', "cf", "cartofile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -1396,7 +1396,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* add the ompi-server, if provided */
     if (NULL != ompi_server) {
         bool found_serv = false;
-        asprintf(&param, "OMPI_MCA_dpm_orte_server=%s", ompi_server);
+        asprintf(&param, "OMPI_MCA_pubsub_orte_server=%s", ompi_server);
         /* this shouldn't exist, but if it does... */
         for (i=0; i < opal_argv_count(app->env); i++) {
             if (0 == strcmp(param, app->env[i])) {
