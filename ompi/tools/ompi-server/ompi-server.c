@@ -85,10 +85,6 @@ opal_cmd_line_init_t ompi_server_cmd_line_opts[] = {
       &debug, OPAL_CMD_LINE_TYPE_BOOL,
         "Debug the Open MPI server" },
         
-    { "orte", "debug", NULL, '\0', NULL, "debug-devel", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Debug the OpenRTE" },
-
     { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
       &no_daemonize, OPAL_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
@@ -144,16 +140,17 @@ int main(int argc, char *argv[])
      */
     mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
     
-    /* register and process the orte params */
-    if (ORTE_SUCCESS != (ret = orte_register_params())) {
-        return ret;
+    /* if debug is set, then set orte_debug_flag so that the data server
+     * code will output
+     */
+    if (debug) {
+        putenv("OMPI_MCA_orte_debug=1");
     }
-
+        
     /* detach from controlling terminal
      * otherwise, remain attached so output can get to us
      */
-    if(orte_debug_flag == false &&
-       debug == false &&
+    if(debug == false &&
        no_daemonize == false) {
         opal_daemon_init(NULL);
     }
@@ -200,7 +197,7 @@ int main(int argc, char *argv[])
             FILE *fp;
             fp = fopen(report_uri, "w");
             if (NULL == fp) {
-                fprintf(stderr, "ompi-server: failed to open designated file -- aborting\n");
+                fprintf(stderr, "ompi-server: failed to open designated file %s -- aborting\n", report_uri);
                 orte_finalize();
                 exit(1);
             }
