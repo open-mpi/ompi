@@ -66,7 +66,7 @@ int ompi_dpm_base_dyn_finalize (void)
         max = opal_pointer_array_get_size(&ompi_mpi_communicators);
         for ( i=3; i<max; i++ ) {
             comm = (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators,i);
-            if ( OMPI_COMM_IS_DYNAMIC(comm)) {
+            if (NULL != comm &&  OMPI_COMM_IS_DYNAMIC(comm)) {
                 objs[j++]=ompi_dpm_base_disconnect_init(comm);
             }
         }
