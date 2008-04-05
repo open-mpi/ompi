@@ -468,7 +468,6 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
         module->sm2_size_management_region_per_proc*
         module->sm_buffer_mgmt_barrier_tree.tree_size;
 
-
     /* set the pointer to the request that needs to be completed first */
     module->current_request_index=0;
 
@@ -967,6 +966,7 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
             /* set request to inactive */
             module->barrier_request[module->current_request_index]. 
                 sm2_barrier_phase=NB_BARRIER_INACTIVE;
+            module->barrier_request[module->current_request_index].sm_index^=1;
             /* move pointer to next request that needs to be completed */
             module->current_request_index++;
             /* wrap around */
@@ -1017,6 +1017,9 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
              
             /* set request to inactive */
             request->sm2_barrier_phase=NB_BARRIER_INACTIVE;
+
+            /* set barrier struct to be used next time */
+            request->sm_index^=1;
 
             /* move pointer to next request that needs to be completed */
             module->current_request_index++;
@@ -1072,6 +1075,7 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
             /* set request to inactive */
             module->barrier_request[module->current_request_index]. 
                 sm2_barrier_phase=NB_BARRIER_INACTIVE;
+            module->barrier_request[module->current_request_index].sm_index^=1;
             /* move pointer to next request that needs to be completed */
             module->current_request_index++;
             /* wrap around */
@@ -1112,6 +1116,7 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         if( NB_BARRIER_DONE == request->sm2_barrier_phase ) {
             /* set request to inactive */
             request->sm2_barrier_phase=NB_BARRIER_INACTIVE;
+            request->sm_index^=1;
             /* move pointer to next request that needs to be completed */
             module->current_request_index++;
             /* wrap around */
