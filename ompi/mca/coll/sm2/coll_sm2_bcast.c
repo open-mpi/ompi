@@ -21,8 +21,6 @@
 extern uint64_t timers[7];
  end debug */
 
-
-
 /**
  * Shared memory blocking allreduce.
  */
