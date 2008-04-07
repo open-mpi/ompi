@@ -517,7 +517,7 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
     module->current_request_index=0;
 
     /* set starting collective tag */
-    module->collective_tag=1;
+    module->collective_tag=2;
 
     /* return - successful */
     return OMPI_SUCCESS;
@@ -921,6 +921,9 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
                 (char *)base_buffer+
                 /* offset to data segment for the j'th proc */
                 j*size_data_buff_per_proc;
+            /* debug */
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region->flag=1;
+            /* end debug */
         }
 
     }
