@@ -103,7 +103,10 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                  &sendreq->req_send.req_base.req_convertor);
+    );
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
