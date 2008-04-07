@@ -33,12 +33,8 @@
 #endif /* OMPI_WANT_MEMCHECKER */
 
 
-#if 0
 static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_convertor_t* pConvertor)
 {
-    if (!opal_memchecker_base_runindebugger()) {
-        return OMPI_SUCCESS;
-    }
 
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP) ) {
         /*  We have a contiguous type. */
@@ -71,7 +67,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
     
     return OMPI_SUCCESS;
 }
-#endif
+
 
 /*
  * Set the corresponding memory area of count elements of type ty
@@ -84,10 +80,6 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
     size_t j;
     MPI_Aint *array_of_adds;
     MPI_Datatype *array_of_dtypes;
-
-    if (!opal_memchecker_base_runindebugger()) {
-        return OMPI_SUCCESS;
-    }
     
     if (ompi_ddt_is_contiguous_memory_layout(type, count)) {
         f(p, count * (type->true_ub - type->true_lb));
