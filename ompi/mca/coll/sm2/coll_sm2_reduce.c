@@ -20,6 +20,10 @@
 
 extern uint64_t timers[7];
  end debug */
+/* debug */
+#include <assert.h>
+extern void debug_module(void);
+/* end debug */
 
 
 
@@ -96,6 +100,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
              *  for atomic update of the tag */
             tag=sm_module->collective_tag;
             sm_module->collective_tag++;
+            /* debug */
+            assert(tag);
+            /* end debug */
     
             /* get a pointer to the shared-memory working buffer */
             sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
@@ -138,6 +145,14 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                     child_data_pointer=
                         sm_buffer_desc->proc_memory[child_rank].data_segment;
         
+            /* debug */
+                    if( 0 == child_ctl_pointer->flag ) {
+                        fprintf(stderr,"TTT 2 count %d root %d child_rank %d \n",
+                                count,root,child_rank);
+                        debug_module();
+                    }
+/*            assert(child_ctl_pointer->flag); */
+            /* end debug */
                     /* wait until child flag is set */
                     while(child_ctl_pointer->flag != tag) {
                         opal_progress();
@@ -179,6 +194,14 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                         sm_buffer_desc->proc_memory[child_rank].data_segment;
         
                     /* wait until child flag is set */
+            /* debug */
+                    if( 0 == child_ctl_pointer->flag ) {
+                        fprintf(stderr,"TTT 3 count %d root %d child_rank \n",
+                                count,root,child_rank);
+                        debug_module();
+                    }
+/*            assert(child_ctl_pointer->flag); */
+            /* end debug */
                     while(child_ctl_pointer->flag != tag) {
                         opal_progress();
                     }
@@ -284,6 +307,14 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                         sm_buffer_desc->proc_memory[child_rank].data_segment;
         
                     /* wait until child flag is set */
+            /* debug */
+                    if( 0 == child_ctl_pointer->flag ) {
+                        fprintf(stderr,"TTT 1 count %d root %d child_rank %d \n",
+                                count,root,child_rank);
+                        debug_module();
+                    }
+/*            assert(child_ctl_pointer->flag); */
+            /* end debug */
                     while(child_ctl_pointer->flag != tag) {
                         opal_progress();
                     }
