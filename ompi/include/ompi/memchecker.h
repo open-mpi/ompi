@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -18,8 +18,11 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype_internal.h"
 #include "ompi/request/request.h"
 #include "opal/mca/memchecker/base/base.h"
+
 
 #if OMPI_WANT_MEMCHECKER
 #  define MEMCHECKER(x) do {       \
@@ -28,6 +31,46 @@
 #else
 #  define MEMCHECKER(x)
 #endif /* OMPI_WANT_MEMCHECKER */
+
+
+static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_convertor_t* pConvertor)
+{
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+    
+    if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP) ) {
+        /*  We have a contiguous type. */
+        f( (void *)pConvertor->pBaseBuf , pConvertor->local_size);
+    } else {
+        /* Now we got a noncontigous data. */
+        uint32_t         stack_disp  = 0, elem_pos = 0, i;
+        dt_stack_t*      pStack      = pConvertor->pStack;; /* pointer to the position on the stack */
+        dt_elem_desc_t*  description = pConvertor->use_desc->desc;;
+        dt_elem_desc_t*  pElem       = &(description[elem_pos]);
+        unsigned char   *source_base = pConvertor->pBaseBuf;
+            
+        if ( NULL != pConvertor->pDesc ) 
+            stack_disp = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
+    
+        for (i = 0; i < pConvertor->count; i++){
+            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+                /* now here we have a basic datatype */
+                f( (void *)source_base + pElem->elem.disp, pElem->elem.count*pElem->elem.extent );
+                elem_pos++;       /* advance to the next data */
+                pElem = &(description[elem_pos]);
+                continue;
+            }
+            elem_pos = 0;
+            pElem = &(description[elem_pos]);
+            /* starting address of next stack. */
+            source_base += stack_disp;
+        }
+    }
+    
+    return OMPI_SUCCESS;
+}
+
 
 /*
  * Set the corresponding memory area of count elements of type ty
@@ -41,6 +84,10 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
     MPI_Aint *array_of_adds;
     MPI_Datatype *array_of_dtypes;
 
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+    
     if (ompi_ddt_is_contiguous_memory_layout(type, count)) {
         f(p, count * (type->true_ub - type->true_lb));
     } else {
@@ -177,6 +224,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
 
     return OMPI_SUCCESS;
 }
+
 
 
 /*
