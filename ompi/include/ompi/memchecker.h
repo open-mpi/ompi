@@ -42,8 +42,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
     } else {
         /* Now we got a noncontigous data. */
         uint32_t         stack_disp  = 0, elem_pos = 0, i;
-        dt_stack_t*      pStack      = pConvertor->pStack;; /* pointer to the position on the stack */
-        dt_elem_desc_t*  description = pConvertor->use_desc->desc;;
+        dt_elem_desc_t*  description = pConvertor->use_desc->desc;
         dt_elem_desc_t*  pElem       = &(description[elem_pos]);
         unsigned char   *source_base = pConvertor->pBaseBuf;
             
@@ -53,7 +52,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
         for (i = 0; i < pConvertor->count; i++){
             while( pElem->elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
-                f( (void *)source_base + pElem->elem.disp, pElem->elem.count*pElem->elem.extent );
+                f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*pElem->elem.extent );
                 elem_pos++;       /* advance to the next data */
                 pElem = &(description[elem_pos]);
                 continue;
