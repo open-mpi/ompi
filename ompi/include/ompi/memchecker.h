@@ -33,12 +33,13 @@
 #endif /* OMPI_WANT_MEMCHECKER */
 
 
+#if 0
 static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_convertor_t* pConvertor)
 {
     if (!opal_memchecker_base_runindebugger()) {
         return OMPI_SUCCESS;
     }
-    
+
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP) ) {
         /*  We have a contiguous type. */
         f( (void *)pConvertor->pBaseBuf , pConvertor->local_size);
@@ -70,7 +71,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
     
     return OMPI_SUCCESS;
 }
-
+#endif
 
 /*
  * Set the corresponding memory area of count elements of type ty
