@@ -44,6 +44,51 @@
 static int sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
         struct ompi_communicator_t *comm);
 
+/* debug */
+extern int debug_print;
+extern int my_debug_rank;
+extern int my_debug_comm_size;
+extern void debug_module(void);
+static mca_coll_sm2_module_t *module_dbg;
+void debug_module(void) {
+ int i,j,k;
+ char *ptr;
+ mca_coll_sm2_nb_request_process_shared_mem_t * ctl_ptr;
+   /* control regions */
+   if ( 0 == my_debug_rank ) {
+       for( i=0 ; i < 2 ; i++ ) {
+           for( j=0 ; j < 2 ; j++ ) {
+              fprintf(stderr," bank %d index %d \n", i,j);
+                  for( k=0 ; k < my_debug_comm_size ; k++ ) {
+                      ctl_ptr=module_dbg->barrier_request[i].barrier_base_address[j];
+                      ctl_ptr=(mca_coll_sm2_nb_request_process_shared_mem_t *) (
+                          (char *)ctl_ptr+k*module_dbg->sm2_size_management_region_per_proc
+                      );
+                      fprintf(stderr," bank %d index %d flag %lld \n",
+                         i,j,ctl_ptr->flag);
+                  }
+           }
+       }
+    }
+    /* data regions */
+    fprintf(stderr," my_debug_rank %d current index %d freed index %d \n",
+         my_debug_rank,
+         module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index);
+    if( 0 == my_debug_rank ) {
+        for( i=0 ; i < module_dbg->sm2_module_num_buffers ; i++ ) {
+            for( j=0 ; j < my_debug_comm_size ; j++ ) {
+                fprintf(stderr," buffer index %d tag %lld \n",
+                   i,
+                   module_dbg->sm_buffer_descriptor[i].proc_memory[j].control_region->flag);
+            }
+        }
+    }
+
+    fflush(stderr);
+ 
+}
+/* end debug */
+
 /*
  * Local functions
  */
@@ -883,6 +928,9 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
 
+/* debug */
+module_dbg=&(sm_module->super);
+/* end debug */
 
     /* return */
     return &(sm_module->super);

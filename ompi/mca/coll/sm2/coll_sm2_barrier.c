@@ -24,6 +24,9 @@
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
 #include "coll_sm2.h"
+/* debug */
+extern int debug_print;
+/* end debug */
 
 /**
  * Shared memory barrier.
@@ -117,6 +120,15 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
                 /* if parent has not checked in - set parameters for async
                  *   completion, incomplet barrier flag, and bail
                  */
+/* debug */
+if( debug_print ) {
+fprintf(stderr," A-I  rank %d parent %d -tag %lld sm_address->flag %lld \n",
+ ompi_comm_rank(comm),
+ sm_module->sm_buffer_mgmt_barrier_tree.parent_rank,
+-tag,sm_address->flag);
+}
+/* end debug */
+                /* child not arrived, just break out */
                 request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
                 return OMPI_SUCCESS;
             }
@@ -302,6 +314,12 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
              */
+/* debug */
+if( debug_print ) {
+fprintf(stderr," I rank %d -tag %lld sm_address->flag %lld \n",
+ ompi_comm_rank(comm),-tag,sm_address->flag);
+}
+/* end debug */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
             return OMPI_SUCCESS;
         }
@@ -310,6 +328,13 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
          * set my completion flag
          */
         request->sm2_barrier_phase=NB_BARRIER_DONE;
+/* debug */
+if( debug_print ) {
+fprintf(stderr," rank %d tag %lld done \n",
+  ompi_comm_rank(comm),
+  tag);
+}
+/* end debug */
     } else if( INTERIOR_NODE == sm_module->sm_buffer_mgmt_barrier_tree.my_node_type ) {
         phase=request->sm2_barrier_phase;
         if( NB_BARRIER_FAN_OUT == phase ) {
@@ -335,6 +360,14 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
                 /* child arrived */
                 cnt++;
             } else {
+/* debug */
+if( debug_print ) {
+fprintf(stderr," II rank %d child %d tag %lld sm_address->flag %lld \n",
+ ompi_comm_rank(comm),
+ sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child],
+tag,sm_address->flag);
+}
+/* end debug */
                 /* child not arrived, just break out */
                 break;
             }
@@ -375,6 +408,14 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
              */
+/* debug */
+if( debug_print ) {
+fprintf(stderr," III rank %d parent %d -tag %lld sm_address->flag %lld \n",
+ ompi_comm_rank(comm),
+ sm_module->sm_buffer_mgmt_barrier_tree.parent_rank,
+-tag,sm_address->flag);
+}
+/* end debug */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
             return OMPI_SUCCESS;
         }
@@ -389,6 +430,13 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
          * set my completion flag
          */
         request->sm2_barrier_phase=NB_BARRIER_DONE;
+/* debug */
+if( debug_print ) {
+fprintf(stderr," rank %d tag %lld done \n",
+  ompi_comm_rank(comm),
+  tag);
+}
+/* end debug */
     } else {
         /* root node */
         phase=request->sm2_barrier_phase;
@@ -413,6 +461,14 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
                 /* child arrived */
                 cnt++;
             } else {
+/* debug */
+if( debug_print ) {
+fprintf(stderr," IV rank %d parent %d tag %lld sm_address->flag %lld \n",
+ ompi_comm_rank(comm),
+ sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child],
+ tag,sm_address->flag);
+}
+/* end debug */
                 /* child not arrived, just break out */
                 break;
             }
@@ -438,6 +494,13 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
          * set my completion flag
          */
         request->sm2_barrier_phase=NB_BARRIER_DONE;
+/* debug */
+if( debug_print ) {
+fprintf(stderr," rank %d tag %lld done \n",
+  ompi_comm_rank(comm),
+  tag);
+}
+/* end debug */
     }
     
 DONE:
