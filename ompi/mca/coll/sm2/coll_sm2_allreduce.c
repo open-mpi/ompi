@@ -1460,31 +1460,31 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
     /* local variables */
     int rc;
 
-#if 0 /* just for some testing */    
+#if 0
     if( 0 != (op->o_flags & OMPI_OP_FLAGS_COMMUTE)) {
+#endif
         /* Commutative Operation */
         rc= mca_coll_sm2_allreduce_intra_recursive_doubling(sbuf, rbuf, count,
                 dtype, op, comm, module);
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }
+#if 0
     } else {
-#endif /* testing */
         /* Non-Commutative Operation */
+#endif
+#if 0
         rc= mca_coll_sm2_allreduce_intra_fanin_fanout_pipeline(
                 sbuf, rbuf, count,dtype, op, comm, module);
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }
-#if 0
         /* Non-Commutative Operation */
         rc= mca_coll_sm2_allreduce_intra_fanin_fanout(sbuf, rbuf, count,
                 dtype, op, comm, module);
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }
-#endif
-#if 0 /* just for some testing */
     }
 #endif
 
