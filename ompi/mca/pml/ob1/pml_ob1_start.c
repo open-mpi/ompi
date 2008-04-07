@@ -107,15 +107,6 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                 return OMPI_ERR_REQUEST;
         }
 
-        /*
-         * We do not distinguish on SEND or RECV-requests.
-         */
-        MEMCHECKER (memchecker_call(&opal_memchecker_base_mem_noaccess,
-                                   pml_request->req_addr,
-                                   pml_request->req_count,
-                                   pml_request->req_datatype));
-
-
         /* start the request */
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND: 
