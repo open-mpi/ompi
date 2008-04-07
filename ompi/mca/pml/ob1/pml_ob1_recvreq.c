@@ -72,10 +72,8 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
      * Package successfully received, make user buffer accessable.
      */
     MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_defined,
-                        recvreq->req_recv.req_base.req_addr,
-                        recvreq->req_recv.req_base.req_count,
-                        recvreq->req_recv.req_base.req_datatype);
+        memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                  &recvreq->req_recv.req_base.req_convertor);
     );
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
@@ -91,10 +89,8 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
          * Receive request completed, make user buffer accessable.
          */
         MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            request->req_recv.req_base.req_addr,
-                            request->req_recv.req_base.req_count,
-                            request->req_recv.req_base.req_datatype);
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &request->req_recv.req_base.req_convertor);
         );
         return OMPI_SUCCESS;
     }
@@ -130,10 +126,8 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
      * Receive request cancelled, make user buffer accessable.
      */
     MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_defined,
-                        request->req_recv.req_base.req_addr,
-                        request->req_recv.req_base.req_count,
-                        request->req_recv.req_base.req_datatype);
+        memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                  &request->req_recv.req_base.req_convertor);
     );
     return OMPI_SUCCESS;
 }
@@ -484,10 +478,8 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
              *  Make user buffer accessible (defined) before unpacking.
              */
             MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_defined,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
+                memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                          &recvreq->req_recv.req_base.req_convertor);
             );
             MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                              segments,
@@ -500,19 +492,17 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
              *  Unpacking finished, make the user buffer unaccessable again.
              */
             MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_noaccess,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
+                memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                          &recvreq->req_recv.req_base.req_convertor);
             );
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RNDV:
 
-            bytes_received -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
-            recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
-            recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
-            recvreq->req_rdma_offset = bytes_received;
+            bytes_received                     -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
+            recvreq->req_recv.req_bytes_packed  = hdr->hdr_rndv.hdr_msg_length;
+            recvreq->req_send                   = hdr->hdr_rndv.hdr_src_req;
+            recvreq->req_rdma_offset            = bytes_received;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
             /**
@@ -521,6 +511,10 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
              * unpack.
              */
             if( 0 < bytes_received ) {
+                MEMCHECKER(
+                    memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                              &recvreq->req_recv.req_base.req_convertor);
+                );
                 MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                                  segments,
                                                  num_segments,
@@ -528,6 +522,10 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
                                                  data_offset,
                                                  bytes_received,
                                                  bytes_delivered );
+                MEMCHECKER(
+                    memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                              &recvreq->req_recv.req_base.req_convertor);
+                );
             }
             break;
 
@@ -545,10 +543,8 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
              *  Make user buffer accessable(defined) before unpacking.
              */
             MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_defined,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
+                memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                          &recvreq->req_recv.req_base.req_convertor);
             );
             MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                              segments,
@@ -561,10 +557,8 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
              *  Unpacking finished, make the user buffer unaccessable again.
              */
             MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_noaccess,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
+                memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                          &recvreq->req_recv.req_base.req_convertor);
             );
             break;
 

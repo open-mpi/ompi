@@ -436,10 +436,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
          * accessable.
          */
         MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            sendreq->req_send.req_base.req_addr,
-                            sendreq->req_send.req_base.req_count,
-                            sendreq->req_send.req_base.req_datatype);
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_send.req_base.req_convertor);
         );
         (void)ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                    &iov, &iov_count, &max_data );
@@ -447,10 +445,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
           *  Packing finished, make the user buffer unaccessable.
           */
         MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_noaccess,
-                            sendreq->req_send.req_base.req_addr,
-                            sendreq->req_send.req_base.req_count,
-                            sendreq->req_send.req_base.req_datatype);
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &sendreq->req_send.req_base.req_convertor);
         );
     }
 
@@ -580,6 +576,10 @@ int mca_pml_ob1_send_request_start_rdma(
        bml_btl->btl_flags & MCA_BTL_FLAGS_GET) {
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_send.req_base.req_convertor);
+        );
         /* prepare source descriptor/segment(s) */
         /* PML owns this descriptor and will free it in */
         /*  get_completion */
@@ -591,6 +591,10 @@ int mca_pml_ob1_send_request_start_rdma(
                                   &size,
                                   0,
                                   &src );
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &sendreq->req_send.req_base.req_convertor);
+        );
         if( OPAL_UNLIKELY(NULL == src) ) {
             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
                                         &old_position);
@@ -719,6 +723,10 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             sizeof(mca_pml_ob1_rendezvous_hdr_t),
                             MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP ); 
     } else {
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_send.req_base.req_convertor);
+        );
         mca_bml_base_prepare_src( bml_btl, 
                                   NULL,
                                   &sendreq->req_send.req_base.req_convertor,
@@ -727,6 +735,10 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                                   &size,
                                   MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                                   &des );
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &sendreq->req_send.req_base.req_convertor);
+        );
     }
 
     if( OPAL_UNLIKELY(NULL == des) ) {
@@ -918,11 +930,19 @@ cannot_pack:
         range->range_send_offset = (uint64_t)offset;
 
         data_remaining = size;
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_send.req_base.req_convertor);
+        );
         mca_bml_base_prepare_src(bml_btl, NULL,
                                  &sendreq->req_send.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER,
                                  sizeof(mca_pml_ob1_frag_hdr_t),
                                  &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP, &des);
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &sendreq->req_send.req_base.req_convertor);
+        );
 
         if( OPAL_UNLIKELY(des == NULL || size == 0) ) {
             if(des) {
