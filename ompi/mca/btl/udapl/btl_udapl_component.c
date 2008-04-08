@@ -808,10 +808,19 @@ int mca_btl_udapl_component_progress()
 
                 /* Was the DTO successful? */
                 if(DAT_DTO_SUCCESS != dto->status) {
-                    OPAL_OUTPUT((0,
-                        "btl_udapl ***** DTO error %d %d %lu %p*****\n",
-                                 dto->status, frag->type, (unsigned long)frag->size, dto->ep_handle));
-                    break;
+
+                    if (DAT_DTO_ERR_FLUSHED == dto->status) {
+
+                        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_INFORM,
+                            ("DAT_DTO_ERR_FLUSHED: probably OK if occurs during MPI_Finalize().\n"));
+                    } else {
+
+                        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
+                            ("ERROR: DAT_DTO_COMPLETION_EVENT: %d %d %lu %p.\n",
+                                dto->status, frag->type,
+                                (unsigned long)frag->size, dto->ep_handle));
+                    }
+                    return OMPI_ERROR;		    
                 }
                 endpoint = frag->endpoint;
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
