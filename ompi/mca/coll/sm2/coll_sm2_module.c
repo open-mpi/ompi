@@ -71,9 +71,10 @@ void debug_module(void) {
        }
     }
     /* data regions */
-    fprintf(stderr," my_debug_rank %d current index %d freed index %d \n",
+    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld \n",
          my_debug_rank,
-         module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index);
+         module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index,
+         module_dbg->collective_tag);
     if( 0 == my_debug_rank ) {
         for( i=0 ; i < module_dbg->sm2_module_num_buffers ; i++ ) {
             for( j=0 ; j < my_debug_comm_size ; j++ ) {
