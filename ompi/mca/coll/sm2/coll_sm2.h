@@ -270,6 +270,9 @@ BEGIN_C_DECLS
     typedef struct mca_coll_sm2_nb_request_process_private_mem_t 
         mca_coll_sm2_nb_request_process_private_mem_t;
 
+        /* debug */
+#define BARRIER_BANK_LIST_SIZE 32
+        /* end debug */
     struct mca_coll_sm2_module_t {
         /* base structure */
         mca_coll_base_module_1_1_0_t super;
@@ -369,6 +372,10 @@ BEGIN_C_DECLS
 
         /* debug flag RLG */
         int blocked_on_barrier;
+
+        long long barrier_bank_list[BARRIER_BANK_LIST_SIZE];
+        long long barrier_bank_cntr;
+        /* end debug */
 
     };
 

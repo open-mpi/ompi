@@ -50,6 +50,7 @@ extern int my_debug_rank;
 extern int my_debug_comm_size;
 extern void debug_module(void);
 static mca_coll_sm2_module_t *module_dbg;
+static int blocking_cnt=0;
 void debug_module(void) {
  int i,j,k;
  char *ptr;
@@ -71,11 +72,16 @@ void debug_module(void) {
        }
     }
     /* data regions */
-    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d \n",
+    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d blocking_cnt %d \n",
          my_debug_rank,
          module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index,
          module_dbg->collective_tag,
-         module_dbg->blocked_on_barrier);
+         module_dbg->blocked_on_barrier,blocking_cnt);
+    fprintf(stderr," my_debug_rank %d barrier_bank_cntr %lld ",
+            my_debug_rank,module_dbg->barrier_bank_cntr);
+    for( i=0 ; i < BARRIER_BANK_LIST_SIZE ; i++ )
+        fprintf(stderr,"%2d",module_dbg->barrier_bank_list[i]);
+    fprintf(stderr," \n");
     if( 0 == my_debug_rank ) {
         for( i=0 ; i < module_dbg->sm2_module_num_buffers ; i++ ) {
             for( j=0 ; j < my_debug_comm_size ; j++ ) {
@@ -520,7 +526,7 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
     module->current_request_index=0;
 
     /* set starting collective tag */
-    module->collective_tag=2;
+    module->collective_tag=1;
 
     /* return - successful */
     return OMPI_SUCCESS;
@@ -936,6 +942,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
 /* debug */
     sm_module->blocked_on_barrier=0;
+    sm_module->barrier_bank_cntr=0;
 module_dbg=&(sm_module->super);
 /* end debug */
 
@@ -1018,6 +1025,12 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         if ( NB_BARRIER_DONE == 
                 module->barrier_request[module->current_request_index].
           sm2_barrier_phase ) {
+            /* debug */
+            module->barrier_bank_list                
+                [module->barrier_bank_cntr%BARRIER_BANK_LIST_SIZE]=
+                module->current_request_index;
+            module->barrier_bank_cntr++;
+            /* debug */
             /* set request to inactive */
             module->barrier_request[module->current_request_index]. 
                 sm2_barrier_phase=NB_BARRIER_INACTIVE;
@@ -1029,6 +1042,7 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
                     module->sm2_module_num_memory_banks ) {
                 module->current_request_index=0;
             }
+
         }
     }
 
@@ -1060,6 +1074,9 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
             /* complete requests in order */
             request=&(module->barrier_request[module->current_request_index]);
+            /* debug */
+            blocking_cnt=0;
+            /* end debug */
             while ( NB_BARRIER_DONE != request->sm2_barrier_phase ) {
                 rc=mca_coll_sm2_nbbarrier_intra_progress(module->module_comm,
                         request,
@@ -1068,7 +1085,16 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
                     return NULL;
                 }
                 opal_progress();
+            /* debug */
+            blocking_cnt++;
+            /* end debug */
             }
+            /* debug */
+            module->barrier_bank_list
+                [module->barrier_bank_cntr%BARRIER_BANK_LIST_SIZE]=
+                module->current_request_index;
+            module->barrier_bank_cntr++;
+            /* debug */
             
             /* set the reqeust to inactive, and point current_request_index
              *  to the request for the next memory bank
@@ -1134,6 +1160,12 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         if ( NB_BARRIER_DONE == 
                 module->barrier_request[module->current_request_index].
           sm2_barrier_phase ) {
+            /* debug */
+            module->barrier_bank_list
+                [module->barrier_bank_cntr%BARRIER_BANK_LIST_SIZE]=
+                module->current_request_index;
+            module->barrier_bank_cntr++;
+            /* debug */
             /* set request to inactive */
             module->barrier_request[module->current_request_index]. 
                 sm2_barrier_phase=NB_BARRIER_INACTIVE;
@@ -1145,6 +1177,7 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
                     module->sm2_module_num_memory_banks ) {
                 module->current_request_index=0;
             }
+
         }
     }  /* done with progress */
 
