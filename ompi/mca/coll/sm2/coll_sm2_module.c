@@ -843,6 +843,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* initialize local counters */
     sm_module->sm2_allocated_buffer_index=-1;
     sm_module->sm2_freed_buffer_index=-1;
+
     /* NOTE: need to fix this if we have only one memory bank */
     sm_module->sm2_first_buffer_index_next_bank=
         sm_module->sm2_module_num_regions_per_bank;
@@ -930,6 +931,9 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
                 (char *)base_buffer+
                 /* offset to data segment for the j'th proc */
                 j*size_data_buff_per_proc;
+            /* initialize the control region */
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region->
+                flag=0;
             /* debug */
             sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region->flag=1;
             /* end debug */
