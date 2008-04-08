@@ -126,6 +126,7 @@ fprintf(stderr," A-I  rank %d parent %d -tag %lld sm_address->flag %lld \n",
  ompi_comm_rank(comm),
  sm_module->sm_buffer_mgmt_barrier_tree.parent_rank,
 -tag,sm_address->flag);
+fflush(stderr);
 }
 /* end debug */
                 /* child not arrived, just break out */
@@ -318,6 +319,7 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
 if( debug_print ) {
 fprintf(stderr," I rank %d -tag %lld sm_address->flag %lld \n",
  ompi_comm_rank(comm),-tag,sm_address->flag);
+fflush(stderr);
 }
 /* end debug */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
@@ -333,6 +335,7 @@ if( debug_print ) {
 fprintf(stderr," rank %d tag %lld done \n",
   ompi_comm_rank(comm),
   tag);
+fflush(stderr);
 }
 /* end debug */
     } else if( INTERIOR_NODE == sm_module->sm_buffer_mgmt_barrier_tree.my_node_type ) {
@@ -366,6 +369,7 @@ fprintf(stderr," II rank %d child %d tag %lld sm_address->flag %lld \n",
  ompi_comm_rank(comm),
  sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child],
 tag,sm_address->flag);
+fflush(stderr);
 }
 /* end debug */
                 /* child not arrived, just break out */
@@ -414,6 +418,7 @@ fprintf(stderr," III rank %d parent %d -tag %lld sm_address->flag %lld \n",
  ompi_comm_rank(comm),
  sm_module->sm_buffer_mgmt_barrier_tree.parent_rank,
 -tag,sm_address->flag);
+fflush(stderr);
 }
 /* end debug */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
@@ -435,6 +440,7 @@ if( debug_print ) {
 fprintf(stderr," rank %d tag %lld done \n",
   ompi_comm_rank(comm),
   tag);
+fflush(stderr);
 }
 /* end debug */
     } else {
@@ -467,6 +473,7 @@ fprintf(stderr," IV rank %d parent %d tag %lld sm_address->flag %lld \n",
  ompi_comm_rank(comm),
  sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child],
  tag,sm_address->flag);
+fflush(stderr);
 }
 /* end debug */
                 /* child not arrived, just break out */
@@ -499,6 +506,7 @@ if( debug_print ) {
 fprintf(stderr," rank %d tag %lld done \n",
   ompi_comm_rank(comm),
   tag);
+fflush(stderr);
 }
 /* end debug */
     }
