@@ -85,9 +85,10 @@ void debug_module(void) {
     if( 0 == my_debug_rank ) {
         for( i=0 ; i < module_dbg->sm2_module_num_buffers ; i++ ) {
             for( j=0 ; j < my_debug_comm_size ; j++ ) {
-                fprintf(stderr," buffer index %d tag %lld \n",
+                fprintf(stderr," buffer index %d tag %lld ptr %p \n",
                    i,
-                   module_dbg->sm_buffer_descriptor[i].proc_memory[j].control_region->flag);
+                   module_dbg->sm_buffer_descriptor[i].proc_memory[j].control_region->flag,
+                   module_dbg->sm_buffer_descriptor[i].proc_memory[j].control_region);
             }
         }
     }
@@ -935,7 +936,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
             sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region->
                 flag=0;
             /* debug */
-            sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region->flag=1;
+            sm_module->sm_buffer_descriptor[i].proc_memory[j].control_region->flag=0;
             /* end debug */
         }
 
@@ -947,7 +948,12 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 /* debug */
     sm_module->blocked_on_barrier=0;
     sm_module->barrier_bank_cntr=0;
+    for( i=0 ; i < BARRIER_BANK_LIST_SIZE ; i++ )
+        sm_module->barrier_bank_list[i]=0;
+    my_debug_rank=ompi_comm_rank(comm);
+    my_debug_comm_size=ompi_comm_size(comm);
 module_dbg=&(sm_module->super);
+debug_module();
 /* end debug */
 
     /* return */
