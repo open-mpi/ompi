@@ -44,7 +44,7 @@ extern int my_debug_rank;
 extern void debug_module(void);
 
 void dbg_handler(int my_signal) {
- debug_print=1;
+/* debug_print=1; */
  debug_module();
  return;
 }
