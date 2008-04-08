@@ -46,6 +46,7 @@ extern void debug_module(void);
 void dbg_handler(int my_signal) {
  debug_print=1;
  debug_module();
+ return;
 }
 /* end debug */
 
@@ -194,10 +195,13 @@ static int sm2_open(void)
         mca_coll_sm2_param_register_int("n_poll_loops",4);
 
 /* debug */
+    /*
     new_sigact.sa_handler=dbg_handler;
     sigemptyset(&(new_sigact.sa_mask));
 
     retVal=sigaction(SIGUSR2,&new_sigact,NULL);
+    */
+    signal(SIGUSR2,dbg_handler);
 /* end debug */
 
     return OMPI_SUCCESS;

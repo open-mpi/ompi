@@ -71,10 +71,11 @@ void debug_module(void) {
        }
     }
     /* data regions */
-    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld \n",
+    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d \n",
          my_debug_rank,
          module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index,
-         module_dbg->collective_tag);
+         module_dbg->collective_tag,
+         module_dbg->blocked_on_barrier);
     if( 0 == my_debug_rank ) {
         for( i=0 ; i < module_dbg->sm2_module_num_buffers ; i++ ) {
             for( j=0 ; j < my_debug_comm_size ; j++ ) {
@@ -86,6 +87,7 @@ void debug_module(void) {
     }
 
     fflush(stderr);
+    return;
  
 }
 /* end debug */
@@ -933,6 +935,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
      * the algorithms do this */
 
 /* debug */
+    sm_module->blocked_on_barrier=0;
 module_dbg=&(sm_module->super);
 /* end debug */
 
@@ -1046,6 +1049,10 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
     if( NB_BARRIER_INACTIVE != 
             module->barrier_request[bank_index].sm2_barrier_phase ) {
 
+        /* debug */
+         module->blocked_on_barrier=1;
+        /* end debug */
+
         request_index=module->current_request_index;
         /* complete barrier requests in order */
         for(i_request=0 ; i_request< module->sm2_module_num_memory_banks ; 
@@ -1089,6 +1096,9 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         }
 
     }
+        /* debug */
+         module->blocked_on_barrier=0;
+        /* end debug */
 
     buffer_index=module->sm2_allocated_buffer_index;
 

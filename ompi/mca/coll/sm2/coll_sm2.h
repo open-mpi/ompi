@@ -367,6 +367,9 @@ BEGIN_C_DECLS
         /* collective tag */
         long long collective_tag;
 
+        /* debug flag RLG */
+        int blocked_on_barrier;
+
     };
 
     typedef struct mca_coll_sm2_module_t mca_coll_sm2_module_t;
@@ -413,7 +416,7 @@ BEGIN_C_DECLS
          /*
           * tag
           */
-         int tag;
+         long long tag;
      };
      typedef struct mca_coll_sm2_module_allreduce_pipeline_t 
          mca_coll_sm2_module_allreduce_pipeline_t;
