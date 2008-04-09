@@ -49,6 +49,7 @@ extern int debug_print;
 extern int my_debug_rank;
 extern int my_debug_comm_size;
 extern void debug_module(void);
+extern int last_root;
 static mca_coll_sm2_module_t *module_dbg;
 static int blocking_cnt=0;
 void debug_module(void) {
@@ -72,11 +73,11 @@ void debug_module(void) {
        }
     }
     /* data regions */
-    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d blocking_cnt %d \n",
+    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d blocking_cnt %d last_root %d \n",
          my_debug_rank,
          module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index,
          module_dbg->collective_tag,
-         module_dbg->blocked_on_barrier,blocking_cnt);
+         module_dbg->blocked_on_barrier,blocking_cnt,last_root);
     fprintf(stderr," my_debug_rank %d barrier_bank_cntr %lld ",
             my_debug_rank,module_dbg->barrier_bank_cntr);
     for( i=0 ; i < BARRIER_BANK_LIST_SIZE ; i++ )
@@ -563,7 +564,8 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
         mca_coll_sm2_module_t *module) {
 
     /*local variables */
-    int i,j,comm_size, my_rank, tree_order, rc;
+    int i,j,k,comm_size, my_rank, tree_order, rc;
+    mca_coll_sm2_nb_request_process_shared_mem_t *sm_address;
 
     /* get order of fan-in and fan-out tree */
     tree_order=component->order_barrier_tree;
@@ -606,6 +608,14 @@ static int init_sm2_barrier(struct ompi_communicator_t *comm,
                 (module->shared_memory_region + 
                  /* there are 2 barrier structs per bank */
                  (2*i+j)*CACHE_LINE_SIZE);
+            /* initialize per-process flags */
+            for(k=0 ; k < comm_size ; k++ ) {
+                sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
+                    ((char *)
+                     (module->barrier_request[i].barrier_base_address[j])+
+                     k*module->sm2_size_management_region_per_proc);
+                sm_address->flag=0;
+            }
         }
     }
 
@@ -1096,7 +1106,6 @@ sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 {
     /* local variables */
     char output_buffer[2*MPI_MAX_OBJECT_NAME];
-    int bank_index;
 
     memset(&output_buffer[0],0,sizeof(output_buffer));
     snprintf(output_buffer,sizeof(output_buffer),"%s (cid %d)", comm->c_name,
@@ -1112,7 +1121,7 @@ sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
-    int rc,buffer_index, memory_bank_index,i_request,bank_index;
+    int rc,buffer_index, i_request,bank_index;
     int request_index;
     mca_coll_sm2_nb_request_process_private_mem_t *request;
 
@@ -1248,7 +1257,7 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 {
     /* local variables */
-    int rc,memory_bank_index,bank_index;
+    int rc,bank_index;
     mca_coll_sm2_nb_request_process_private_mem_t *request;
 
     /* check to see if need to progress the current nb-barrier, which
