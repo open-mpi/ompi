@@ -25,6 +25,7 @@ extern uint64_t timers[7];
 extern void debug_module(void);
 extern int last_root;
 extern int node_type;
+extern int free_buff_free_index;
 int last_root;
 int node_type;
 /* end debug */
@@ -116,6 +117,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     
             /* get a pointer to the shared-memory working buffer */
             sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+            /* debug */
+            free_buff_free_index=tag;
+            /* end debug */
     
             /* get number of elements to process in this stripe */
             count_this_stripe=count;

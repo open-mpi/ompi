@@ -1345,9 +1345,9 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
     }
 
-    /* debug */
+    /* debug 
     free_buff_free_index=module->sm2_freed_buffer_index;
-    /* end debug */
+     end debug */
 
     /* return */
     return OMPI_SUCCESS;
