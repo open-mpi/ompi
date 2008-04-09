@@ -62,9 +62,6 @@ ORTE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_base_selected_com
 ORTE_DECLSPEC   int orte_grpcomm_base_allgather_list(opal_list_t *names,
                                                      opal_buffer_t *sbuf,
                                                      opal_buffer_t *rbuf);
-ORTE_DECLSPEC   int orte_grpcomm_base_allgather(opal_buffer_t *sbuf,
-                                                opal_buffer_t *rbuf);
-ORTE_DECLSPEC   int orte_grpcomm_base_barrier(void);
 ORTE_DECLSPEC   int orte_grpcomm_base_set_proc_attr(const char *attr_name,
                                                     const void *data,
                                                     size_t size);

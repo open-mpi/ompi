@@ -112,6 +112,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     int rc;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
 
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch_apps for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -128,7 +129,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         return rc;
     }
 
-    /* let the local launcher provide its required data */
+    /* get the local launcher's required data */
     if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(buffer, job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -330,6 +331,10 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
     
     /* all done launching - update the num_procs in my local structure */
     orte_process_info.num_procs = jdatorted->num_procs;
+    /* update the grpcomm xcast tree(s) */
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.update_trees())) {
+        ORTE_ERROR_LOG(rc);
+    }
 
     /* get wireup info for daemons per the selected routing module */
     wireup = OBJ_NEW(opal_buffer_t);

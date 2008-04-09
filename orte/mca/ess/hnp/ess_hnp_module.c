@@ -296,6 +296,8 @@ static int rte_init(char flags)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_add(orte_node_pool, node);
+    /* record our node */
+    orte_hnpnode = node;
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);

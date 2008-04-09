@@ -50,14 +50,13 @@ BEGIN_C_DECLS
  * our children. This can subsequently be used to order termination
  * or pass signals without looking the info up again.
  */
-typedef struct orte_odls_child_t {
+typedef struct {
     opal_list_item_t super;      /* required to place this on a list */
     orte_process_name_t *name;   /* the OpenRTE name of the proc */
     orte_vpid_t local_rank;      /* local rank of the proc on this node */
     pid_t pid;                   /* local pid of the proc */
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
-    orte_std_cntr_t num_nodes;   /* #nodes involved in launching this child */
     bool coll_recvd;             /* collective operation recvd */
     orte_proc_state_t state;     /* the state of the process */
     orte_exit_code_t exit_code;  /* process exit code */
@@ -67,7 +66,16 @@ typedef struct orte_odls_child_t {
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 
-typedef struct orte_odls_globals_t {
+typedef struct {
+    opal_list_item_t super;     /* required to place this on a list */
+    orte_jobid_t jobid;         /* jobid for this job */
+    orte_rmaps_dp_t dp;         /* daemon participation for this job */
+    opal_value_array_t daemons; /* vpids of participating daemons */
+} orte_odls_job_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
+
+
+typedef struct {
     /** Verbose/debug output stream */
     int output;
     /** Time to allow process to forcibly die */
@@ -78,6 +86,8 @@ typedef struct orte_odls_globals_t {
     opal_condition_t cond;
     /* list of children for this orted */
     opal_list_t children;
+    /* list of jobs for this orted */
+    opal_list_t jobs;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;

@@ -66,7 +66,6 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         }
         /* load it with the system defaults */
         map->policy = orte_rmaps_base.policy;
-        map->no_use_local = orte_rmaps_base.no_use_local;
         map->pernode = orte_rmaps_base.pernode;
         map->npernode = orte_rmaps_base.npernode;
         map->oversubscribe = orte_rmaps_base.oversubscribe;

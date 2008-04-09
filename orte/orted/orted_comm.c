@@ -100,16 +100,13 @@ static void send_relay(int fd, short event, void *data)
     opal_buffer_t *buffer = mev->buffer;
     orte_rml_tag_t tag = mev->tag;
     orte_grpcomm_mode_t relay_mode;
-    opal_list_t recips;
+    opal_list_t *recips;
     opal_list_item_t *item;
     int ret;
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s orte:daemon:send_relay",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* setup a list of next recipients */
-    OBJ_CONSTRUCT(&recips, opal_list_t);
 
     /* we pass the relay_mode in the mev "tag" field. This is a bit
      * of a hack as the two sizes may not exactly match. However, since
@@ -118,37 +115,41 @@ static void send_relay(int fd, short event, void *data)
      */
     relay_mode = (orte_grpcomm_mode_t)tag;
     
-    /* if the mode is linear and we are the HNP, don't ask for
-     * next recipients as this will generate a potentially very
-     * long list! Instead, just look over the known daemons
-     */
-    if (ORTE_GRPCOMM_LINEAR == relay_mode && orte_process_info.hnp) {
+    if (ORTE_GRPCOMM_LINEAR == relay_mode) {
         orte_process_name_t dummy;
         orte_vpid_t i;
-        
-        /* send the message to each daemon as fast as we can - but
-         * not to us!
+
+        /* if we are NOT the HNP, do nothing */
+        if (!orte_process_info.hnp) {
+            goto CLEANUP;
+        }
+        /* if the mode is linear and we are the HNP, don't ask for
+         * next recipients as this will generate a potentially very
+         * long list! Instead, just send the message to each daemon
+         * as fast as we can - but not to us!
          */
         dummy.jobid = ORTE_PROC_MY_HNP->jobid;
         for (i=1; i < orte_process_info.num_procs; i++) {            
             dummy.vpid = i;
-               if (0 > (ret = orte_rml.send_buffer(&dummy, buffer, ORTE_RML_TAG_DAEMON, 0))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
+            if (0 > (ret = orte_rml.send_buffer(&dummy, buffer, ORTE_RML_TAG_DAEMON, 0))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
             }
         }
         goto CLEANUP;
     }
     
     /* ask the active grpcomm module for the next recipients */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.next_recipients(&recips, relay_mode))) {
-        ORTE_ERROR_LOG(ret);
+    if (NULL == (recips = orte_grpcomm.next_recipients(relay_mode))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         goto CLEANUP;
     }
-    /* send the message - if we are at the end of the chain, then there
-     * will be nothing on the list, so remove_first will return NULL
+    /* send the message - do not deconstruct the list! it doesn't belong
+     * to us
      */
-    while (NULL != (item = opal_list_remove_first(&recips))) {
+    for (item = opal_list_get_first(recips);
+         item != opal_list_get_end(recips);
+         item = opal_list_get_next(item)) {
         orte_namelist_t *target = (orte_namelist_t*)item;
         
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -160,12 +161,10 @@ static void send_relay(int fd, short event, void *data)
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
-        OBJ_RELEASE(item);
     }
     
 CLEANUP:
     /* cleanup */
-    OBJ_DESTRUCT(&recips);
     OBJ_RELEASE(mev);
 }
 

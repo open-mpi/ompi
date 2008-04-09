@@ -280,7 +280,7 @@ OBJ_CLASS_INSTANCE(orte_proc_t,
 static void orte_job_map_construct(orte_job_map_t* map)
 {
     map->policy = ORTE_RMAPS_BYSLOT;    /* default to byslot mapping as per orterun options */
-    map->no_use_local = false;
+    map->hnp_has_local_procs = false;
     map->pernode = false;
     map->npernode = 0;
     map->oversubscribe = true;  /* default to allowing oversubscribe */

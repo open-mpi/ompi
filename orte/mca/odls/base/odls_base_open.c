@@ -26,8 +26,9 @@
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
-
+#include "opal/class/opal_value_array.h"
 #include "opal/dss/dss.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"
@@ -69,7 +70,6 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->cpu_set = 0xffffffff;
     ptr->rml_uri = NULL;
     ptr->slot_list = NULL;
-
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {
@@ -81,6 +81,23 @@ OBJ_CLASS_INSTANCE(orte_odls_child_t,
                    opal_list_item_t,
                    orte_odls_child_constructor,
                    orte_odls_child_destructor);
+
+/* instance the job list object */
+static void orte_odls_job_constructor(orte_odls_job_t *ptr)
+{
+    ptr->jobid = ORTE_JOBID_INVALID;
+    ptr->dp = 0;
+    OBJ_CONSTRUCT(&ptr->daemons, opal_value_array_t);
+    opal_value_array_init(&ptr->daemons, sizeof(orte_vpid_t));
+}
+static void orte_odls_job_destructor(orte_odls_job_t *ptr)
+{
+    OBJ_DESTRUCT(&ptr->daemons);
+}
+OBJ_CLASS_INSTANCE(orte_odls_job_t,
+                   opal_list_item_t,
+                   orte_odls_job_constructor,
+                   orte_odls_job_destructor);
 
 /*
  * Framework global variables
@@ -106,7 +123,8 @@ int orte_odls_base_open(void)
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
     OBJ_CONSTRUCT(&orte_odls_globals.children, opal_list_t);
-    
+    OBJ_CONSTRUCT(&orte_odls_globals.jobs, opal_list_t);
+
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 

@@ -739,8 +739,8 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* pack the no_use_local flag */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer, &(maps[i]->no_use_local), 1, OPAL_BOOL))) {
+        /* pack the hnp_has_local_procs flag */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer, &(maps[i]->hnp_has_local_procs), 1, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

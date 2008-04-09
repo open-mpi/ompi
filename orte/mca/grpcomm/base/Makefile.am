@@ -24,5 +24,4 @@ libmca_grpcomm_la_SOURCES += \
         base/grpcomm_base_select.c \
         base/grpcomm_base_open.c \
         base/grpcomm_base_allgather.c \
-        base/grpcomm_base_barrier.c \
         base/grpcomm_base_modex.c

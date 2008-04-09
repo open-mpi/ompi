@@ -31,10 +31,27 @@
 
 BEGIN_C_DECLS
 
-#define ORTE_RMAPS_NOPOL    0x00
-#define ORTE_RMAPS_BYNODE   0x01
-#define ORTE_RMAPS_BYSLOT   0x02
-#define ORTE_RMAPS_BYUSER   0x04
+/*
+ * Define flags indicating the policy used to perform the map
+ */
+#define ORTE_RMAPS_NOPOL            0x00
+#define ORTE_RMAPS_BYNODE           0x01
+#define ORTE_RMAPS_BYSLOT           0x02
+#define ORTE_RMAPS_BYUSER           0x04
+#define ORTE_RMAPS_NO_USE_LOCAL     0x08
+
+
+/*
+ * Define a flag that indicates the level of daemon participation
+ * in a launch
+ */
+typedef uint8_t orte_rmaps_dp_t;
+#define ORTE_RMAPS_DP_T     OPAL_UINT8
+
+#define ORTE_RMAPS_ALL_DAEMONS      0x01
+#define ORTE_RMAPS_ALL_EXCEPT_HNP   0x02
+#define ORTE_RMAPS_DAEMON_SUBSET    0x04
+
 
 /*
  * Structure that represents the mapping of a job to an
@@ -44,11 +61,12 @@ struct orte_job_map_t {
     opal_object_t super;
     /* save the mapping configuration */
     uint8_t policy;
-    bool no_use_local;
+    bool hnp_has_local_procs;
     bool pernode;
     orte_std_cntr_t npernode;
     bool oversubscribe;
     bool display_map;
+    orte_rmaps_dp_t daemon_participation;
     /* *** */
     /* number of new daemons required to be launched
      * to support this job map
