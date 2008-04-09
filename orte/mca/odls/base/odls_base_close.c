@@ -38,6 +38,7 @@ int orte_odls_base_close(void)
     OBJ_DESTRUCT(&orte_odls_globals.mutex);
     OBJ_DESTRUCT(&orte_odls_globals.cond);
     OBJ_DESTRUCT(&orte_odls_globals.children);
+    OBJ_DESTRUCT(&orte_odls_globals.jobs);
 
     /* if no components are available, then punt */
     if (!orte_odls_base.components_available) {

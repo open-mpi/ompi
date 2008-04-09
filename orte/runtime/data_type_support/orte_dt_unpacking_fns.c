@@ -811,10 +811,10 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the no_use_local flag */
+        /* unpack the hnp_has_local_procs flag */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack_buffer(buffer,
-                                                         &(maps[i]->no_use_local), &n, OPAL_BOOL))) {
+                                                         &(maps[i]->hnp_has_local_procs), &n, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

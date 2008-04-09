@@ -54,6 +54,14 @@ typedef uint8_t orte_grpcomm_mode_t;
 /* linear - HNP sends direct to all daemons */
 #define ORTE_GRPCOMM_LINEAR     (orte_grpcomm_mode_t) 3
 
+/*
+ * Define collective types
+ */
+typedef uint8_t orte_grpcomm_coll_t;
+#define ORTE_GRPCOMM_COLL_T     OPAL_UINT8
+
+#define ORTE_GRPCOMM_BARRIER    0x01
+#define ORTE_GRPCOMM_ALLGATHER  0x02
 
 END_C_DECLS
 

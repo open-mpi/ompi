@@ -110,7 +110,9 @@ int orte_rmaps_base_open(void)
     mca_base_param_reg_int_name("rmaps", "base_no_schedule_local",
                                 "If false, allow scheduling MPI applications on the same node as mpirun (default).  If true, do not schedule any MPI applications on the same node as mpirun",
                                 false, false, (int)false, &value);
-    orte_rmaps_base.no_use_local = OPAL_INT_TO_BOOL(value);
+    if (value) {
+        orte_rmaps_base.policy |= ORTE_RMAPS_NO_USE_LOCAL;
+    }
 
     /* Should we oversubscribe or not? */
     /** default condition that allows oversubscription */

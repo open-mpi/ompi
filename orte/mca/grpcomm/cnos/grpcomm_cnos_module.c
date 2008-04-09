@@ -44,9 +44,9 @@ static int xcast(orte_jobid_t job,
                  opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
 
-static int orte_grpcomm_cnos_barrier(void);
+static int orte_grpcomm_cnos_barrier(orte_jobid_t jobid);
 
-static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
+static int allgather(orte_jobid_t jobid, opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
 static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
@@ -110,7 +110,7 @@ static int xcast(orte_jobid_t job,
 }
 
 static int
-orte_grpcomm_cnos_barrier(void)
+orte_grpcomm_cnos_barrier(orte_jobid_t jobid)
 {
 #if OMPI_GRPCOMM_CNOS_HAVE_BARRIER
     cnos_barrier();
@@ -119,7 +119,7 @@ orte_grpcomm_cnos_barrier(void)
     return ORTE_SUCCESS;
 }
 
-static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
+static int allgather(orte_jobid_t jobid, opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
     int rc;
     orte_std_cntr_t zero=0;

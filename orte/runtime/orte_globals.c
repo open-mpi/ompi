@@ -50,12 +50,15 @@ bool orte_debug_daemons_file_flag = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
+
 int orte_debug_output = -1;
 char **orte_launch_environ;
 char **orted_cmd_line=NULL;
 int orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
+orte_node_t *orte_hnpnode = NULL;
+
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
 char *orte_default_hostfile;

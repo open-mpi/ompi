@@ -62,7 +62,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
 ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list,
                                                    orte_std_cntr_t *total_num_slots,
                                                    orte_app_context_t *app,
-                                                   bool no_use_local);
+                                                   uint8_t policy);
 ORTE_DECLSPEC int orte_rmaps_base_get_target_procs(opal_list_t *procs);
 
 ORTE_DECLSPEC int orte_rmaps_base_update_node_usage(opal_list_t *nodes);

@@ -46,8 +46,8 @@
 #include "grpcomm_basic.h"
 
 /* set the default xovers */
-#define XCAST_LINEAR_XOVER_DEFAULT     2
-#define XCAST_BINOMIAL_XOVER_DEFAULT   16
+#define XCAST_LINEAR_XOVER_DEFAULT     0
+#define XCAST_BINOMIAL_XOVER_DEFAULT   0
 
 
 /*

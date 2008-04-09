@@ -44,7 +44,7 @@
  * Query the registry for all nodes allocated to a specified app_context
  */
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
-                                     orte_app_context_t *app, bool nolocal)
+                                     orte_app_context_t *app, uint8_t policy)
 {
     opal_list_item_t *item, *next;
     orte_node_t *node, **nodes;
@@ -130,7 +130,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     /* If the "no local" option was set, then remove the local node
         from the list */
-    if (nolocal) {
+    if (policy & ORTE_RMAPS_NO_USE_LOCAL) {
         for (item  = opal_list_get_first(allocated_nodes);
              item != opal_list_get_end(allocated_nodes);
              item  = opal_list_get_next(item) ) {
@@ -191,35 +191,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 }
 
 
-/*
- * Query the registry for all nodes allocated to a specified job
- */
-#if 0
-static int compare(opal_list_item_t **a, opal_list_item_t **b)
-{
-    orte_ras_proc_t *aa = *((orte_ras_proc_t **) a);
-    orte_ras_proc_t *bb = *((orte_ras_proc_t **) b);
-
-    return (aa->rank - bb->rank);
-}
-#endif
-
-int orte_rmaps_base_get_target_procs(opal_list_t *procs)
-{
-#if 0
-    int rc;
-    /* get the allocation for this job */
-    if(ORTE_SUCCESS != (rc = orte_ras.proc_query(procs))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    opal_list_sort(procs, compare);
-#endif
-    return ORTE_SUCCESS;
-}
-
-
-
 int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
                                     bool oversubscribed, orte_proc_t *proc)
 {
@@ -269,6 +240,10 @@ PROCESS:
     OBJ_RETAIN(proc);
     ++node->num_procs;
     
+    /* if this is the HNP, flag that the HNP has local procs */
+    if (node == orte_hnpnode) {
+        map->hnp_has_local_procs = true;
+    }
     return ORTE_SUCCESS;
 }
 
@@ -362,102 +337,6 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 }
 
 
-#if 0
-static int orte_find_unallocated_proc_in_map(orte_ras_proc_t *proc, orte_job_map_t *map, orte_proc_t **mproc)
-{
-    orte_mapped_node_t *mnode;
-    opal_list_item_t *item, *item2;
-    int i;
-
-    for (item = opal_list_get_first(&map->nodes);
-         item != opal_list_get_end(&map->nodes);
-         item = opal_list_get_next(item)) {
-        mnode = (orte_mapped_node_t*)item;
-        if (strcmp(proc->node_name, mnode->nodename)) {
-            continue;
-        }
-        for (item2 = opal_list_get_first(&mnode->procs),i=1;
-             item2 != opal_list_get_end(&mnode->procs);
-             item2 = opal_list_get_next(item2),i++) {
-            *mproc = (orte_mapped_proc_t*)item2;
-            if (NULL == (*mproc)->slot_list) {
-                return ORTE_SUCCESS;
-            }
-        }
-    }
-    return ORTE_ERROR;
-}
-#endif
-
-int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_job_map_t *map, opal_list_t *procs)
-{
-#if 0
-    opal_list_item_t *proc_item, *map_node_item, *map_proc_item;
-    orte_mapped_node_t *mnode;
-    bool *used_ranks; /* an array for string used ranks */
-    orte_std_cntr_t used_rank_index;
-    orte_std_cntr_t assigned_procs = 0;
-    orte_ras_proc_t *proc;
-    orte_mapped_proc_t *mproc;
-    int rc;
-
-    used_ranks = (bool *)calloc(map->vpid_range, sizeof(bool));
-
-    for (proc_item = opal_list_get_first(procs);
-         proc_item != opal_list_get_end(procs) && assigned_procs < app->num_procs;
-         proc_item = opal_list_get_next(proc_item)) {
-        proc = (orte_ras_proc_t *)proc_item;
-        if (proc->rank != ORTE_VPID_MAX) {
-            /* Check if this proc belong to this map */
-            if (proc->rank >= map->vpid_start && proc->rank < (map->vpid_start + map->vpid_range)) {
-                if (ORTE_SUCCESS != (rc = orte_find_unallocated_proc_in_map(proc, map, &mproc))){
-                    free (used_ranks);
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                mproc->slot_list = strdup(proc->cpu_list);
-                mproc->rank = proc->rank;
-                mproc->name.vpid = proc->rank;
-                mproc->maped_rank = true;
-                used_rank_index = proc->rank - map->vpid_start;
-                used_ranks[used_rank_index] = true;
-                assigned_procs ++;
-            }
-        }else if (NULL != proc->cpu_list) {
-            if (ORTE_SUCCESS != (rc = orte_find_unallocated_proc_in_map(proc, map, &mproc))){
-                continue; /* since there is not a specifiv rank continue searching */
-            }
-            mproc->slot_list = strdup(proc->cpu_list);
-            assigned_procs ++;
-        }
-    }
-    if(assigned_procs > 0) {
-        used_rank_index = 0;
-        for (map_node_item = opal_list_get_first(&map->nodes);
-             map_node_item != opal_list_get_end(&map->nodes);
-             map_node_item = opal_list_get_next(map_node_item)) {
-            mnode = (orte_mapped_node_t*)map_node_item;
-            for (map_proc_item = opal_list_get_first(&mnode->procs);
-                 map_proc_item != opal_list_get_end(&mnode->procs);
-                 map_proc_item = opal_list_get_next(map_proc_item)) {
-                mproc = (orte_mapped_proc_t*)map_proc_item;
-                if (mproc->maped_rank) {
-                    continue;
-                }
-                while (used_ranks[used_rank_index]){
-                    used_rank_index++;
-                }
-                mproc->rank = map->vpid_start + used_rank_index;
-                mproc->name.vpid = mproc->rank;
-                used_rank_index++;
-            }
-        }
-    }
-    free (used_ranks);
-#endif
-    return ORTE_SUCCESS;
-}
-
 int orte_rmaps_base_compute_usage(orte_job_t *jdata)
 {
     orte_std_cntr_t i, j;
@@ -516,6 +395,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     orte_proc_t *proc;
     orte_job_t *daemons;
     orte_std_cntr_t i;
+    orte_vpid_t numdaemons;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -528,6 +408,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         ORTE_ERROR_LOG(ORTE_ERR_FATAL);
         return ORTE_ERR_FATAL;
     }
+    numdaemons=0;
     
     /* go through the nodes in the map, checking each one's daemon name
      */
@@ -562,6 +443,8 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                 return rc;
             }
             ++daemons->num_procs;
+            /* count number of daemons being used */
+            ++numdaemons;
             /* point the node to the daemon */
             node->daemon = proc;
             OBJ_RETAIN(proc);  /* maintain accounting */
@@ -572,36 +455,29 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                 map->daemon_vpid_start = proc->name.vpid;
             }
         } else {
-            /* this daemon was previously defined - see if it has launched. The daemons
-             * are stored in vpid order, so just look it up
-             */
-            if (daemons->procs->size < (orte_std_cntr_t)node->daemon->name.vpid ||
-                daemons->num_procs < node->daemon->name.vpid) {
-                /* well that is bad */
-                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                return ORTE_ERR_BAD_PARAM;                    
-            }
-            proc = (orte_proc_t*)daemons->procs->addr[node->daemon->name.vpid];
-            if (NULL == proc) {
-                /* well that is bad too */
-                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                return ORTE_ERR_BAD_PARAM;
-            }
-            if (NULL != proc->rml_uri) {
-                node->daemon_launched = true;
-                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                     "%s rmaps:base:define_daemons existing daemon %s already launched",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc->name)));
-            } else {
-                node->daemon_launched = false;
-                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                     "%s rmaps:base:define_daemons existing daemon %s has not been launched",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc->name)));
-            }
+            /* this daemon was previously defined - flag it */
+            node->daemon_launched = true;
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:base:define_daemons existing daemon %s already launched",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&node->daemon->name)));
+            /* count number of daemons being used */
+            ++numdaemons;
         }
     }
 
+    /* check how many daemons we are using and set flag accordingly - this
+     * is required so that daemon-based collectives can correctly operate
+     */
+    if (numdaemons == daemons->num_procs) {
+        /* everyone is being used */
+        map->daemon_participation = ORTE_RMAPS_ALL_DAEMONS;
+    } else if (numdaemons == daemons->num_procs-1 &&
+               !map->hnp_has_local_procs) {
+        map->daemon_participation = ORTE_RMAPS_ALL_EXCEPT_HNP;
+    } else {
+        map->daemon_participation = ORTE_RMAPS_DAEMON_SUBSET;
+    }
+    
     return ORTE_SUCCESS;
 }

@@ -347,7 +347,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  map->no_use_local))) {
+                                                                  map->policy))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
@@ -423,11 +423,11 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             /** set the num_procs to equal the number of slots on these mapped nodes - if
             user has specified "-bynode", then set it to the number of nodes
             */
-            if (map->policy == ORTE_RMAPS_BYNODE) {
+            if (map->policy & ORTE_RMAPS_BYNODE) {
                 app->num_procs = num_nodes;
-            } else if (map->policy == ORTE_RMAPS_BYSLOT) {
+            } else if (map->policy & ORTE_RMAPS_BYSLOT) {
                 app->num_procs = num_slots;
-            } else if (map->policy == ORTE_RMAPS_BYUSER) {
+            } else if (map->policy & ORTE_RMAPS_BYUSER) {
                 /* we can't handle this - it should have been set when we got
                  * the map info. If it wasn't, then we can only error out
                  */

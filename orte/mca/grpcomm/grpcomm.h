@@ -39,8 +39,10 @@
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
-
+#include "opal/class/opal_value_array.h"
 #include "opal/dss/dss_types.h"
+
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls_types.h"
 
@@ -72,8 +74,21 @@ typedef int (*orte_grpcomm_base_module_allgather_list_fn_t)(opal_list_t *names,
 /* barrier function */
 typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
 
+/* daemon collective operations */
+typedef int (*orte_grpcomm_base_module_daemon_collective_fn_t)(orte_jobid_t jobid,
+                                                               orte_std_cntr_t num_local_contributors,
+                                                               orte_grpcomm_coll_t type,
+                                                               opal_buffer_t *data,
+                                                               orte_rmaps_dp_t flag,
+                                                               opal_value_array_t *participants);
+
+/* update the xcast trees - called after a change to the number of daemons
+ * in the system
+ */
+typedef int (*orte_grpcomm_base_module_update_trees_fn_t)(void);
+
 /* for collectives, return next recipients in the chain */
-typedef int (*orte_gprcomm_base_module_next_recipients_fn_t)(opal_list_t *list, orte_grpcomm_mode_t mode);
+typedef opal_list_t* (*orte_gprcomm_base_module_next_recipients_fn_t)(orte_grpcomm_mode_t mode);
 
 /** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
  *  OF HOW THIS ALL WORKS
@@ -81,12 +96,12 @@ typedef int (*orte_gprcomm_base_module_next_recipients_fn_t)(opal_list_t *list, 
 
 /* send an attribute buffer */
 typedef int (*orte_grpcomm_base_module_modex_set_proc_attr_fn_t)(const char* attr_name, 
-                                                     const void *buffer, size_t size);
+                                                                 const void *buffer, size_t size);
 
 /* get an attribute buffer */
 typedef int (*orte_grpcomm_base_module_modex_get_proc_attr_fn_t)(const orte_process_name_t name,
-                                                          const char* attr_name,
-                                                          void **buffer, size_t *size);
+                                                                 const char* attr_name,
+                                                                 void **buffer, size_t *size);
 
 /* perform a modex operation */
 typedef int (*orte_grpcomm_base_module_modex_fn_t)(opal_list_t *procs);
@@ -106,6 +121,8 @@ struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_allgather_fn_t             allgather;
     orte_grpcomm_base_module_allgather_list_fn_t        allgather_list;
     orte_grpcomm_base_module_barrier_fn_t               barrier;
+    orte_grpcomm_base_module_daemon_collective_fn_t     daemon_collective;
+    orte_grpcomm_base_module_update_trees_fn_t          update_trees;
     orte_gprcomm_base_module_next_recipients_fn_t       next_recipients;
     /* modex functions */
     orte_grpcomm_base_module_modex_set_proc_attr_fn_t   set_proc_attr;
