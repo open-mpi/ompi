@@ -94,7 +94,7 @@ OBJ_CLASS_INSTANCE(
  * Local utility functions
  */
 
-static int  mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family);
+static int  mca_oob_tcp_create_listen(int *target_sd, unsigned short *port, uint16_t af_family);
 static int  mca_oob_tcp_create_listen_thread(void);
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_accept(int incoming_sd);
@@ -498,7 +498,7 @@ static void mca_oob_tcp_accept(int incoming_sd)
  * Called by both the threaded and event based listen modes.
  */
 static int
-mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
+mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t af_family)
 {
     int flags, index, range, port=0;
     struct sockaddr_storage inaddr;
@@ -633,15 +633,10 @@ mca_oob_tcp_create_listen(int *target_sd, uint16_t af_family)
     }
 
     if (AF_INET == af_family) {
-        mca_oob_tcp_component.tcp_listen_port = ((struct sockaddr_in*) &inaddr)->sin_port;
-        mca_oob_tcp_component.tcp_listen_sd = *target_sd;
+        *target_port = ((struct sockaddr_in*) &inaddr)->sin_port;
+    } else {
+        *target_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
     }
-#if OPAL_WANT_IPV6
-    if (AF_INET6 == af_family) {
-        mca_oob_tcp_component.tcp6_listen_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
-        mca_oob_tcp_component.tcp6_listen_sd = *target_sd;
-    }
-#endif  /* OPAL_WANT_IPV6 */
 
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(*target_sd, SOMAXCONN) < 0) {
@@ -1269,25 +1264,31 @@ int mca_oob_tcp_init(void)
     /* Create an IPv4 listen socket and either register with the event
        engine or give to the listen thread */
     rc = mca_oob_tcp_create_listen(&mca_oob_tcp_component.tcp_listen_sd,
+                                   &mca_oob_tcp_component.tcp_listen_port,
                                    AF_INET);
-    if (ORTE_SUCCESS != rc && 
-        (EAFNOSUPPORT != opal_socket_errno ||
-         mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT)) {
-        opal_output(0,
-                    "mca_oob_tcp_init: unable to create IPv4 listen socket: %s\n",
-                    opal_strerror(rc));
-    }
-    if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
-        int idx = mca_oob_tcp_component.tcp_listen_thread_num_sockets++;
-        mca_oob_tcp_component.tcp_listen_thread_sds[idx] = 
-            mca_oob_tcp_component.tcp_listen_sd;
+    if (ORTE_SUCCESS != rc) {
+        /* Don't complain if just not supported unless want connect debugging */
+        if (EAFNOSUPPORT != opal_socket_errno ||
+            mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+            opal_output(0,
+                        "mca_oob_tcp_init: unable to create IPv4 listen socket: %s\n",
+                        opal_strerror(rc));
+        }
+        mca_oob_tcp_component.tcp_listen_sd = -1;
+        mca_oob_tcp_component.tcp_listen_port = 0;
     } else {
-        opal_event_set(&mca_oob_tcp_component.tcp_recv_event,
-                       mca_oob_tcp_component.tcp_listen_sd,
-                       OPAL_EV_READ|OPAL_EV_PERSIST,
-                       mca_oob_tcp_recv_handler,
-                       0);
-        opal_event_add(&mca_oob_tcp_component.tcp_recv_event, 0);
+        if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
+            int idx = mca_oob_tcp_component.tcp_listen_thread_num_sockets++;
+            mca_oob_tcp_component.tcp_listen_thread_sds[idx] = 
+                mca_oob_tcp_component.tcp_listen_sd;
+        } else {
+            opal_event_set(&mca_oob_tcp_component.tcp_recv_event,
+                           mca_oob_tcp_component.tcp_listen_sd,
+                           OPAL_EV_READ|OPAL_EV_PERSIST,
+                           mca_oob_tcp_recv_handler,
+                           0);
+            opal_event_add(&mca_oob_tcp_component.tcp_recv_event, 0);
+        }
     }
 
     /* Create an IPv6 listen socket (if IPv6 is enabled, of course)
@@ -1295,27 +1296,41 @@ int mca_oob_tcp_init(void)
        thread */
 #if OPAL_WANT_IPV6
     rc = mca_oob_tcp_create_listen(&mca_oob_tcp_component.tcp6_listen_sd,
+                                   &mca_oob_tcp_component.tcp6_listen_port,
                                    AF_INET6);
-    if (ORTE_SUCCESS != rc && 
-        (EAFNOSUPPORT != opal_socket_errno ||
-         mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT)) {
-        opal_output(0,
-                    "mca_oob_tcp_init: unable to create IPv6 listen socket: %s\n",
-                    opal_strerror(rc));
-    }
-    if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
-        int idx = mca_oob_tcp_component.tcp_listen_thread_num_sockets++;
-        mca_oob_tcp_component.tcp_listen_thread_sds[idx] = 
-            mca_oob_tcp_component.tcp6_listen_sd;
+    if (ORTE_SUCCESS != rc) {
+        /* Don't complain if just not supported unless want connect debugging */
+        if (EAFNOSUPPORT != opal_socket_errno ||
+            mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
+            opal_output(0,
+                        "mca_oob_tcp_init: unable to create IPv6 listen socket: %s\n",
+                        opal_strerror(rc));
+        }
+        mca_oob_tcp_component.tcp6_listen_sd = -1;
+        mca_oob_tcp_component.tcp6_listen_port = 0;
     } else {
-        opal_event_set(&mca_oob_tcp_component.tcp6_recv_event,
-                       mca_oob_tcp_component.tcp6_listen_sd,
-                       OPAL_EV_READ|OPAL_EV_PERSIST,
-                       mca_oob_tcp_recv_handler,
-                       0);
-        opal_event_add(&mca_oob_tcp_component.tcp6_recv_event, 0);
+        if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
+            int idx = mca_oob_tcp_component.tcp_listen_thread_num_sockets++;
+            mca_oob_tcp_component.tcp_listen_thread_sds[idx] = 
+                mca_oob_tcp_component.tcp6_listen_sd;
+        } else {
+            opal_event_set(&mca_oob_tcp_component.tcp6_recv_event,
+                           mca_oob_tcp_component.tcp6_listen_sd,
+                           OPAL_EV_READ|OPAL_EV_PERSIST,
+                           mca_oob_tcp_recv_handler,
+                           0);
+            opal_event_add(&mca_oob_tcp_component.tcp6_recv_event, 0);
+        }
     }
 #endif
+
+    if (mca_oob_tcp_component.tcp_listen_sd < 0
+#if OPAL_WANT_IPV6
+        && mca_oob_tcp_component.tcp6_listen_sd < 0
+#endif
+        ) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
 
     /* Finish up by either printing a nice message (event library) or
        initializing the listen thread (listen thread) */
