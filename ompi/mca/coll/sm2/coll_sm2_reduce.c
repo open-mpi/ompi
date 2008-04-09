@@ -24,7 +24,9 @@ extern uint64_t timers[7];
 #include <assert.h>
 extern void debug_module(void);
 extern int last_root;
+extern int node_type;
 int last_root;
+int node_type;
 /* end debug */
 
 
@@ -96,6 +98,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     /* get my node for the reduction tree */
     my_reduction_node=&(sm_module->reduction_tree[my_node_index]);
     n_children=my_reduction_node->n_children;
+    /* debug */
+    node_type=my_reduction_node->my_node_type;
+    /* end debug */
 
     if( 1 == n_data_segments ) {
         /* single data segment */
