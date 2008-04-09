@@ -50,6 +50,8 @@ extern int my_debug_rank;
 extern int my_debug_comm_size;
 extern void debug_module(void);
 extern int last_root;
+extern int node_type;
+int free_buff_free_index=-1;
 static mca_coll_sm2_module_t *module_dbg;
 static int blocking_cnt=0;
 void debug_module(void) {
@@ -73,11 +75,12 @@ void debug_module(void) {
        }
     }
     /* data regions */
-    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d blocking_cnt %d last_root %d \n",
+    fprintf(stderr," my_debug_rank %d current index %d freed index %d coll_tag %lld debug stat %d blocking_cnt %d last_root %d free_buff_free_index %lld node_type %d \n",
          my_debug_rank,
          module_dbg->sm2_allocated_buffer_index,module_dbg->sm2_freed_buffer_index,
          module_dbg->collective_tag,
-         module_dbg->blocked_on_barrier,blocking_cnt,last_root);
+         module_dbg->blocked_on_barrier,blocking_cnt,last_root,
+         free_buff_free_index,node_type);
     fprintf(stderr," my_debug_rank %d barrier_bank_cntr %lld ",
             my_debug_rank,module_dbg->barrier_bank_cntr);
     for( i=0 ; i < BARRIER_BANK_LIST_SIZE ; i++ )
@@ -1342,6 +1345,9 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
     }
 
+    /* debug */
+    free_buff_free_index=module->sm2_freed_buffer_index;
+    /* end debug */
 
     /* return */
     return OMPI_SUCCESS;
