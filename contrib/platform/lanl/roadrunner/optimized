@@ -3,7 +3,6 @@ enable_dlopen=no
 enable_pty_support=no
 with_tm=/opt/PBS
 LDFLAGS=-L/opt/PBS/lib64
-LIBS=-lz
 with_openib=/opt/ofed
 with_memory_manager=yes
 enable_mem_debug=no
