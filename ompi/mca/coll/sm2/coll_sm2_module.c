@@ -335,6 +335,97 @@ static int allocate_shared_file(size_t size, char **file_name,
 
 }
 
+static 
+int barrier( struct ompi_communicator_t *comm ,
+        tree_node_t *multinomial_tree)
+{
+    int group_size,my_rank,n_children,child,n_parents,my_fanout_parent;
+    int child_rank, dummy;
+    tree_node_t *my_node;
+    int rc=0;
+    struct iovec iov; 
+    ompi_proc_t **comm_proc_list;
+
+    /* get the list of procs */
+    comm_proc_list=comm->c_local_group->grp_proc_pointers;
+
+    group_size=ompi_comm_size(comm);
+    my_rank=ompi_comm_rank(comm);
+    my_node=&(multinomial_tree[my_rank]);
+    n_children=my_node->n_children;
+    n_parents=my_node->n_parents;
+    my_fanout_parent=my_node->parent_rank;
+
+    /* 
+     * fan in 
+     */
+    /* receive from the children */
+    for( child=0 ; child < n_children ; child++ ) {
+        child_rank=my_node->children_ranks[child];
+        iov.iov_base=&dummy;
+        iov.iov_len=sizeof(dummy);
+        rc=orte_rml.recv(&(comm_proc_list[child_rank]->proc_name),&iov,1,
+                OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
+        if( rc < 0 ) {
+            opal_output(0,
+                    "sm barrier fan-in:  orte_rml.recv failed to %lu with errno=%d\n",
+                    (unsigned long)child_rank, errno);
+            goto return_error;
+        }
+    }
+    /* send to parent */
+    if( 0 < n_parents ) {
+        iov.iov_base=&dummy;
+        iov.iov_len=sizeof(dummy);
+        rc=orte_rml.send(&(comm_proc_list[my_fanout_parent]->proc_name),&iov,1,
+                OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
+        if( rc < 0 ) {
+            opal_output(0,
+                    "sm barrier fan-in: orte_rml.send failed to %lu with errno=%d\n",
+                    (unsigned long)my_fanout_parent, errno);
+            goto return_error;
+        }
+    }
+
+    /*
+     * Fan out
+     */
+    /* receive from parent */
+    if( 0 < n_parents ) {
+        iov.iov_base=&dummy;
+        iov.iov_len=sizeof(dummy);
+        rc=orte_rml.recv(&(comm_proc_list[my_fanout_parent]->proc_name),&iov,1,
+                OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
+        if( rc < 0 ) {
+            opal_output(0,
+                    "sm barrier fan-out: orte_rml.recv failed to %lu with errno=%d\n",
+                    (unsigned long)my_fanout_parent, errno);
+            goto return_error;
+        }
+    }
+
+    /* send to children */
+    for( child=0 ; child < n_children ; child++ ) {
+        child_rank=my_node->children_ranks[child];
+        iov.iov_base=&dummy;
+        iov.iov_len=sizeof(dummy);
+        rc=orte_rml.send(&(comm_proc_list[child_rank]->proc_name),&iov,1,
+                OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
+        if( rc < 0 ) {
+            opal_output(0,
+                    "sm barrier fan-out:  orte_rml.send failed to %lu with errno=%d\n",
+                    (unsigned long)child_rank, errno);
+            goto return_error;
+        }
+    }
+
+    return OMPI_SUCCESS;
+
+  return_error:
+
+    return OMPI_ERROR;
+
+}
 /* setup an n-array tree */
 
 static int setup_nary_tree(int tree_order, int my_rank, int num_nodes,
@@ -944,6 +1035,14 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
+
+    /* make sure all procs are done with setup - need to avoid initializing
+     *  shared memory regions already in use
+     */
+    ret=barrier(comm,sm_module->reduction_tree);
+    if( MPI_SUCCESS != ret ) {
+        goto CLEANUP;
+    }
 
 /* debug */
     sm_module->blocked_on_barrier=0;
