@@ -195,7 +195,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
         }
     
         /***************************
-         * Fan into root phase
+         * Fan out from root
          ***************************/
         /*
          * Fan out from root - let the memory copies at each
