@@ -25,7 +25,7 @@ extern uint64_t timers[7];
 extern void debug_module(void);
 extern int last_root;
 extern int node_type;
-extern int free_buff_free_index;
+extern long long free_buff_free_index;
 int last_root;
 int node_type;
 /* end debug */

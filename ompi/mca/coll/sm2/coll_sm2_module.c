@@ -51,7 +51,7 @@ extern int my_debug_comm_size;
 extern void debug_module(void);
 extern int last_root;
 extern int node_type;
-int free_buff_free_index=-1;
+long long free_buff_free_index=-1;
 static mca_coll_sm2_module_t *module_dbg;
 static int blocking_cnt=0;
 void debug_module(void) {
@@ -1206,9 +1206,9 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
                     return NULL;
                 }
                 opal_progress();
-            /* debug */
+            /* debug 
             blocking_cnt++;
-            /* end debug */
+             end debug */
             }
             /* debug */
             module->barrier_bank_list
