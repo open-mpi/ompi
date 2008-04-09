@@ -23,6 +23,8 @@ extern uint64_t timers[7];
 /* debug */
 #include <assert.h>
 extern void debug_module(void);
+extern int last_root;
+int last_root;
 /* end debug */
 
 
@@ -53,6 +55,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     tree_node_t *my_reduction_node;
     sm_work_buffer_t *sm_buffer_desc;
 
+    /* debug */
+    last_root=root;
+    /* end debug */
     sm_module=(mca_coll_sm2_module_t *) module;
 
     /* compute process shift */
