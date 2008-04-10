@@ -68,6 +68,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     char *rml_uri;
     orte_process_name_t name;
     int rc;
+    orte_jobid_t jobid;
 
     /* unpack the data for each entry */
     num_procs = 0;
@@ -96,6 +97,12 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
          * since we were given the contact info
          */
         orte_routed.update_route(&name, &name);
+        /* we only get an update from a single jobid - the command
+         * that creates these doesn't cross jobid boundaries - so
+         * record it here
+         */
+        jobid = name.jobid;
+        /* track how many procs were in the message */
         ++num_procs;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
@@ -103,12 +110,13 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         return rc;
     }    
     
-    /* if we are a daemon, this update would include updated contact info
+    /* if we are a daemon and this was info about our jobid, this update would
+     * include updated contact info
      * for all daemons in the system - indicating that the number of daemons
      * changed since we were initially launched. Thus, update the num_procs
      * in our process_info struct so we can correctly route any messages
      */
-    if (orte_process_info.daemon) {
+    if (ORTE_PROC_MY_NAME->jobid == jobid && orte_process_info.daemon) {
         orte_process_info.num_procs = num_procs;
     }
     
