@@ -68,6 +68,10 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         struct mca_coll_base_module_1_1_0_t *module)
 {
 
+    /* since completion must be in-order for the sm collective buffer allocation
+     * to work correctly, no barrier completion will happen here.  The most
+     * that will be done is for the leaf processes, to signal their presence.
+     */
     /* local variables */
     int index;
     int child,cnt;
@@ -100,163 +104,22 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
              sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
              sm_module->sm2_size_management_region_per_proc);
         sm_address->flag=tag;
-        /* don't need memory barrier here, as we are not setting any other sm
-         * data for someone else to read
-         */
-    
-        /*
-         * Fan-out phase
-         */
-    
-        /*
-         * check to see if parent has checked in
-         */
-        if(sm_module->sm_buffer_mgmt_barrier_tree.n_parents > 0 ) {
-            sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-                ((char *)sm_barrier_region+
-                sm_module->sm_buffer_mgmt_barrier_tree.parent_rank*
-                sm_module->sm2_size_management_region_per_proc);
-            if( sm_address->flag != -tag ) {
-                /* if parent has not checked in - set parameters for async
-                 *   completion, incomplet barrier flag, and bail
-                 */
-/* debug */
-if( debug_print ) {
-fprintf(stderr," A-I  rank %d parent %d -tag %lld sm_address->flag %lld \n",
- ompi_comm_rank(comm),
- sm_module->sm_buffer_mgmt_barrier_tree.parent_rank,
--tag,sm_address->flag);
-fflush(stderr);
-}
-/* end debug */
-                /* child not arrived, just break out */
-                request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
-                return OMPI_SUCCESS;
-            }
-        }
-    
-        /*
-         * set my completion flag
-         */
-        request->sm2_barrier_phase=NB_BARRIER_DONE;
+        request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
     
     } else if( INTERIOR_NODE  == sm_module->sm_buffer_mgmt_barrier_tree.my_node_type ) {
         /*
          * Fan-in phase
          */
-    
-        /* check to see if children have checked in */
-        cnt=0;
-        for( child=0 ; child < sm_module->sm_buffer_mgmt_barrier_tree.n_children ; child++ ) {
-            /* compute flag address */
-            sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-                ((char *)sm_barrier_region+
-                sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child] *
-                sm_module->sm2_size_management_region_per_proc);
-            if(sm_address->flag == tag ) {
-                /* child arrived */
-                cnt++;
-            } else {
-                /* child not arrived, just break out */
-                break;
-            }
-        }
-    
-        /* if children have not checked in - set paramenters for async
-         *   completion, incomplet barrier flag, and bail
-         */
-        if( cnt != sm_module->sm_buffer_mgmt_barrier_tree.n_children ) {
-            /* set restart parameters, and exit */
-            request->sm2_barrier_phase=NB_BARRIER_FAN_IN;
-            return OMPI_SUCCESS;
-        }
-    
-        /* Set my completion flag */
-        sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            ((char *)sm_barrier_region+
-             sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->sm2_size_management_region_per_proc);
-        sm_address->flag=tag;
-        /* don't need memory barrier here, as we are not setting any other sm
-         * data for someone else to read
-         */
-    
-        /*
-         * Fan-out phase
-         */
-    
-        /*
-         * check to see if parent has checked in
-         */
-        sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            ((char *)sm_barrier_region+
-            sm_module->sm_buffer_mgmt_barrier_tree.parent_rank*
-            sm_module->sm2_size_management_region_per_proc);
-        if( sm_address->flag != -tag ) {
-            /* if parent has not checked in - set parameters for async
-             *   completion, incomplet barrier flag, and bail
-             */
-            request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
-            return OMPI_SUCCESS;
-        }
-    
-        sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            ((char *)sm_barrier_region+
-             sm_module->sm_buffer_mgmt_barrier_tree.my_rank *
-             sm_module->sm2_size_management_region_per_proc);
-        sm_address->flag=-tag;
-    
-        /*
-         * set my completion flag
-         */
-        request->sm2_barrier_phase=NB_BARRIER_DONE;
-    
+        request->sm2_barrier_phase=NB_BARRIER_FAN_IN;
 
     } else {
-        /* root node */
+    
         /*
          * Fan-in phase
          */
-    
-        /* check to see if children have checked in */
-        cnt=0;
-        for( child=0 ; child < sm_module->sm_buffer_mgmt_barrier_tree.n_children ; child++ ) {
-            /* compute flag address */
-            sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-                ((char *)sm_barrier_region+
-                sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child] *
-                sm_module->sm2_size_management_region_per_proc);
-            if(sm_address->flag == tag ) {
-                /* child arrived */
-                cnt++;
-            } else {
-                /* child not arrived, just break out */
-                break;
-            }
-        }
-    
-        /* if children have not checked in - set paramenters for async
-         *   completion, incomplet barrier flag, and bail
-         */
-        if( cnt != sm_module->sm_buffer_mgmt_barrier_tree.n_children ) {
-            /* set restart parameters, and exit */
-            request->sm2_barrier_phase=NB_BARRIER_FAN_IN;
-            return OMPI_SUCCESS;
-        }
-    
-        /* Set my fan-out flag */
-        sm_address=(mca_coll_sm2_nb_request_process_shared_mem_t *)
-            ((char *)sm_barrier_region+
-             sm_module->sm_buffer_mgmt_barrier_tree.my_rank*
-             sm_module->sm2_size_management_region_per_proc);
-        sm_address->flag=-tag;
-    
-        /*
-         * set my completion flag
-         */
-        request->sm2_barrier_phase=NB_BARRIER_DONE;
-    
+        request->sm2_barrier_phase=NB_BARRIER_FAN_IN;
     }
+
     /* return - successful completion */
     return OMPI_SUCCESS;
 }
@@ -315,13 +178,6 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
              */
-/* debug */
-if( debug_print ) {
-fprintf(stderr," I rank %d -tag %lld sm_address->flag %lld \n",
- ompi_comm_rank(comm),-tag,sm_address->flag);
-fflush(stderr);
-}
-/* end debug */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
             return OMPI_SUCCESS;
         }
@@ -330,14 +186,6 @@ fflush(stderr);
          * set my completion flag
          */
         request->sm2_barrier_phase=NB_BARRIER_DONE;
-/* debug */
-if( debug_print ) {
-fprintf(stderr," rank %d tag %lld done \n",
-  ompi_comm_rank(comm),
-  tag);
-fflush(stderr);
-}
-/* end debug */
     } else if( INTERIOR_NODE == sm_module->sm_buffer_mgmt_barrier_tree.my_node_type ) {
         phase=request->sm2_barrier_phase;
         if( NB_BARRIER_FAN_OUT == phase ) {
@@ -363,15 +211,6 @@ fflush(stderr);
                 /* child arrived */
                 cnt++;
             } else {
-/* debug */
-if( debug_print ) {
-fprintf(stderr," II rank %d child %d tag %lld sm_address->flag %lld \n",
- ompi_comm_rank(comm),
- sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child],
-tag,sm_address->flag);
-fflush(stderr);
-}
-/* end debug */
                 /* child not arrived, just break out */
                 break;
             }
@@ -412,15 +251,6 @@ fflush(stderr);
             /* if parent has not checked in - set parameters for async
              *   completion, incomplet barrier flag, and bail
              */
-/* debug */
-if( debug_print ) {
-fprintf(stderr," III rank %d parent %d -tag %lld sm_address->flag %lld \n",
- ompi_comm_rank(comm),
- sm_module->sm_buffer_mgmt_barrier_tree.parent_rank,
--tag,sm_address->flag);
-fflush(stderr);
-}
-/* end debug */
             request->sm2_barrier_phase=NB_BARRIER_FAN_OUT;
             return OMPI_SUCCESS;
         }
@@ -435,14 +265,6 @@ fflush(stderr);
          * set my completion flag
          */
         request->sm2_barrier_phase=NB_BARRIER_DONE;
-/* debug */
-if( debug_print ) {
-fprintf(stderr," rank %d tag %lld done \n",
-  ompi_comm_rank(comm),
-  tag);
-fflush(stderr);
-}
-/* end debug */
     } else {
         /* root node */
         phase=request->sm2_barrier_phase;
@@ -467,15 +289,6 @@ fflush(stderr);
                 /* child arrived */
                 cnt++;
             } else {
-/* debug */
-if( debug_print ) {
-fprintf(stderr," IV rank %d parent %d tag %lld sm_address->flag %lld \n",
- ompi_comm_rank(comm),
- sm_module->sm_buffer_mgmt_barrier_tree.children_ranks[child],
- tag,sm_address->flag);
-fflush(stderr);
-}
-/* end debug */
                 /* child not arrived, just break out */
                 break;
             }
@@ -501,14 +314,6 @@ fflush(stderr);
          * set my completion flag
          */
         request->sm2_barrier_phase=NB_BARRIER_DONE;
-/* debug */
-if( debug_print ) {
-fprintf(stderr," rank %d tag %lld done \n",
-  ompi_comm_rank(comm),
-  tag);
-fflush(stderr);
-}
-/* end debug */
     }
     
 DONE:
