@@ -48,7 +48,6 @@ struct orte_proc_info_t {
     orte_process_name_t my_name;        /**< My official process name */
     orte_process_name_t my_daemon;      /**< Name of my local daemon */
     char *my_daemon_uri;                /**< Contact info to local daemon */
-    orte_std_cntr_t num_daemons;        /**< number of active daemons */
     orte_process_name_t my_hnp;         /**< Name of my hnp */
     char *my_hnp_uri;                   /**< Contact info for my hnp */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
