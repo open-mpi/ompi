@@ -301,7 +301,6 @@ CLEANUP:
 int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     int rc;
-    opal_buffer_t *wireup;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback",
@@ -336,23 +335,6 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         ORTE_ERROR_LOG(rc);
     }
 
-    /* get wireup info for daemons per the selected routing module */
-    wireup = OBJ_NEW(opal_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(wireup);
-        return rc;
-    }
-    /* if anything was inserted, send it out */
-    if (0 < wireup->bytes_used) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, wireup, ORTE_RML_TAG_RML_INFO_UPDATE))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(wireup);
-            return rc;
-        }
-    }
-    OBJ_RELEASE(wireup);
-    
     return ORTE_SUCCESS;
 }
 
