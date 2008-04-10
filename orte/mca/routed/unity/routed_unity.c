@@ -205,7 +205,6 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     orte_std_cntr_t cnt;
     char *rml_uri;
     int rc;
-    orte_rml_cmd_flag_t command=ORTE_RML_UPDATE_CMD;
     
     /* lookup the job object */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -266,30 +265,6 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
             jdata->state = ORTE_JOB_STATE_RUNNING;
         }
         
-        /* first update the daemons so they will know how to talk to the
-         * procs - this is required for support of modex and barrier
-         */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        /* pack an update command */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_RML_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&buf);
-            return rc;
-        }
-        /* pack the RML contact info for each proc */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(jdata->jobid, &buf))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&buf);
-            return rc;
-        }
-        /* send it to the daemons via xcast */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buf, ORTE_RML_TAG_RML_INFO_UPDATE))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&buf);
-            return rc;
-        }
-        OBJ_DESTRUCT(&buf);
-
         /* now send to the procs so they release from their barrier */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         /* pack the RML contact info for each proc */
