@@ -245,6 +245,18 @@ BEGIN_C_DECLS
          * bank index
          */
         int bank_index;
+
+        /*
+         * first buffer in the bank - if the barrier corresponding to
+         *   this bank is active when trying to allocate this buffer, 
+         *   can't proceed until it complete
+         */
+        int index_first_buffer_in_bank;
+
+        /* last buffer in the bank - nb barrier is started after this
+         *   buffer is freed.
+         */
+        int index_last_buffer_in_bank;
     };
     typedef struct sm_work_buffer_t sm_work_buffer_t;
 
@@ -313,6 +325,10 @@ BEGIN_C_DECLS
         /* size, per process and segment , of data region */
         size_t data_memory_per_proc_per_segment;
 
+        /* data strucutures used to manage the memory buffers */
+        long long num_nb_barriers_started;
+        long long num_nb_barriers_completed;
+
         /* number of memory banks */
         int sm2_module_num_memory_banks;
 
@@ -327,13 +343,6 @@ BEGIN_C_DECLS
 
         /* freed allocated buffer index - local counter */
         int sm2_freed_buffer_index;
-
-        /* index of first buffer in next memory bank - need to
-         *   make sure next bank is ready for use, before we use it.
-         *   We complete the non-blocking barrier before allocating
-         *   this buffer.
-         */
-        int sm2_first_buffer_index_next_bank;
 
         /* communicator - there is a one-to-one association between
          *  the communicator and the module
