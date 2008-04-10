@@ -287,7 +287,6 @@ static inline int mca_btl_openib_endpoint_post_rr_nolock(
         cm_received = ep->qps[qp].u.pp_qp.cm_received;
 
     if((rc = post_recvs(ep, qp, num_post)) != OMPI_SUCCESS) {
-        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return rc;
     }
     OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.rd_posted, num_post);
@@ -295,7 +294,6 @@ static inline int mca_btl_openib_endpoint_post_rr_nolock(
 
     /* post buffers for credit management on credit management qp */
     if((rc = post_recvs(ep, cqp, cm_received)) != OMPI_SUCCESS) {
-        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
         return rc;
     }
     OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.cm_return, cm_received);
