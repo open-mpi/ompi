@@ -29,6 +29,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -116,8 +117,16 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
      * changed since we were initially launched. Thus, update the num_procs
      * in our process_info struct so we can correctly route any messages
      */
-    if (ORTE_PROC_MY_NAME->jobid == jobid && orte_process_info.daemon) {
+    if (ORTE_PROC_MY_NAME->jobid == jobid &&
+        orte_process_info.daemon &&
+        orte_process_info.num_procs != num_procs) {
         orte_process_info.num_procs = num_procs;
+        /* if we changed it, then we better update the trees in the
+         * grpcomm so daemon collectives work correctly
+         */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.update_trees())) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
     return ORTE_SUCCESS;
