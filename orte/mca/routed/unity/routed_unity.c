@@ -566,16 +566,8 @@ static int route_lost(const orte_process_name_t *route)
 
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 {
-    orte_rml_cmd_flag_t command;
     int rc;
     
-    /* pack the update-RML command */
-    command = ORTE_RML_UPDATE_CMD;
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_RML_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return rc;
-    }
     if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);

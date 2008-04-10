@@ -80,6 +80,46 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_std_cntr_t i;
     orte_vpid_t j;
     orte_vpid_t invalid_vpid=ORTE_VPID_INVALID;
+    opal_buffer_t *wireup;
+    opal_byte_object_t bo, *boptr;
+    int32_t numbytes;
+
+    /* get wireup info for daemons per the selected routing module */
+    wireup = OBJ_NEW(opal_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(wireup);
+        return rc;
+    }
+    /* if anything was inserted, put it in a byte object for xmission */
+    if (0 < wireup->bytes_used) {
+        opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+        /* pack the number of bytes required by payload */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numbytes, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            return rc;
+        }
+        /* pack the byte object */
+        bo.size = numbytes;
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            return rc;
+        }
+        /* release the data since it has now been copied into our buffer */
+        free(bo.bytes);
+    } else {
+        /* pack numbytes=0 so the unpack routine remains sync'd to us */
+        numbytes = 0;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numbytes, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            return rc;
+        }
+    }
+    OBJ_RELEASE(wireup);
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -238,6 +278,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     char *slot_str;
     bool node_oversubscribed;
     orte_odls_job_t *jobdat;
+    opal_buffer_t wireup;
+    opal_byte_object_t *bo;
+    int32_t numbytes;
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -257,7 +300,34 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     *node_included = false;
     *oversubscribed = false;
     *override_oversubscribed = false;
-       
+    
+    /* unpack the #bytes of daemon wireup info in the message */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &numbytes, &cnt, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* any bytes there? */
+    if (0 < numbytes) {
+        /* unpack the byte object */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* load it into a buffer */
+        OBJ_CONSTRUCT(&wireup, opal_buffer_t);
+        opal_dss.load(&wireup, bo->bytes, bo->size);
+        /* pass it for processing */
+        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, &wireup))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&wireup);
+            return rc;
+        }
+        /* done with the buffer - dump it */
+        OBJ_DESTRUCT(&wireup);
+    }
+    
     /* unpack the jobid we are to launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, job, &cnt, ORTE_JOBID))) {
