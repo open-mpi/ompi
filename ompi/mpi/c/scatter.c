@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,8 +119,8 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     /* Do we need to do anything? */
 
-    if ((0 == recvcount &&
-         (ompi_comm_rank(comm) != root ||
+    if ((0 == recvcount && MPI_ROOT != root && 
+         (ompi_comm_rank(comm) != root || 
           (ompi_comm_rank(comm) == root && MPI_IN_PLACE != recvbuf))) ||
         (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf &&
          0 == sendcount)) {
