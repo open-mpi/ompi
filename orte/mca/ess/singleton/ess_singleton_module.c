@@ -326,9 +326,6 @@ static int fork_hnp(void)
         /* likewise, since this is also the HNP, set that uri too */
         orte_process_info.my_hnp_uri = strdup(orted_uri);
         
-        /* update the #daemons in the job since there now is one! */
-        orte_process_info.num_daemons = 1;
-        
        /* indicate we are a singleton so orte_init knows what to do */
         orte_process_info.singleton = true;
         /* all done - report success */

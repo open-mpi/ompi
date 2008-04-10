@@ -69,7 +69,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     char *rml_uri;
     orte_process_name_t name;
     int rc;
-    orte_jobid_t jobid;
+    orte_jobid_t jobid=ORTE_JOBID_INVALID;
 
     /* unpack the data for each entry */
     num_procs = 0;

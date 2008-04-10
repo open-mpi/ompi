@@ -41,7 +41,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_daemon =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_daemon_uri =        */   NULL,
-    /*  .num_daemons =          */   0,
     /*  .my_hnp =               */   {0, 0},
     /*  .my_hnp_uri =           */   NULL,
     /*  .hnp_pid =              */    0,
@@ -119,11 +118,6 @@ int orte_proc_info(void)
                          "proc_info: hnp_uri %s\n\tdaemon uri %s",
                          (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
                          (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
-
-    mca_base_param_reg_int_name("orte", "num_daemons",
-                                "Number of daemons in system",
-                                true, false, -1, &tmp);
-    orte_process_info.num_daemons = tmp;
 
     mca_base_param_reg_int_name("orte", "app_num",
                                 "Index of the app_context that defines this proc",

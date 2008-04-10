@@ -520,7 +520,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
                                         orte_std_cntr_t num_local_procs,
                                         orte_vpid_t vpid_range,
                                         orte_std_cntr_t total_slots_alloc,
-                                        orte_std_cntr_t num_nodes,
                                         bool oversubscribed, char ***environ_copy)
 {
     int rc;
@@ -634,13 +633,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     param = mca_base_param_environ_variable("orte","local_daemon","uri");
     opal_setenv(param, orte_process_info.my_daemon_uri, true, environ_copy);
     free(param);
-    
-    /* pass the #daemons to the local proc for collective ops */
-    param = mca_base_param_environ_variable("orte","num","daemons");
-    asprintf(&param2, "%ld", (long)num_nodes);
-    opal_setenv(param, param2, true, environ_copy);
-    free(param);
-    free(param2);
     
     /* pass the hnp's contact info to the local proc in case it
      * needs it
@@ -801,7 +793,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     bool launch_failed=true;
     opal_buffer_t alert;
     orte_std_cntr_t proc_rank;
-    orte_std_cntr_t num_daemons;
     orte_odls_job_t *jobdat;
     
     /* protect operations involving the global list of children */
@@ -914,15 +905,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         rc = ORTE_ERR_NOT_FOUND;
         goto unlock;
     }
-    if (ORTE_RMAPS_ALL_DAEMONS == jobdat->dp) {
-        num_daemons = orte_process_info.num_procs;
-    } else if (ORTE_RMAPS_ALL_EXCEPT_HNP == jobdat->dp) {
-        num_daemons = orte_process_info.num_procs-1;
-    } else {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-        rc = ORTE_ERR_NOT_IMPLEMENTED;
-        goto unlock;
-    }
     
     /* setup the environment for each context */
     for (i=0; i < num_apps; i++) {
@@ -930,7 +912,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                                                num_local_procs,
                                                                vpid_range,
                                                                total_slots_alloc,
-                                                               num_daemons,
                                                                oversubscribed,
                                                                &apps[i]->env))) {
             
