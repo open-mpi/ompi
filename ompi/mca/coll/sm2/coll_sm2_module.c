@@ -1216,15 +1216,9 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
             return rc;
         }
         module->num_nb_barriers_started++;
-        if ( NB_BARRIER_DONE == 
-                module->barrier_request[barrier_index].sm2_barrier_phase ) {
-
-            /* set request to inactive */
-            module->barrier_request[barrier_index].sm_index^=1;
-            module->barrier_request[barrier_index].sm2_barrier_phase=
-                NB_BARRIER_INACTIVE;
-            module->num_nb_barriers_completed++;
-        }
+        /* the mca_coll_sm2_nbbarrier_intra never completes the barrier,
+         * so no need to check.  This is needed for order completion.
+         */
     }
 
 
