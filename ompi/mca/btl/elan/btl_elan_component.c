@@ -165,7 +165,7 @@ mca_btl_elan_component_init( int *num_btl_modules,
                              bool enable_mpi_threads )
 {
 
-    mca_btl_base_module_t** btls;
+    mca_btl_base_module_t** btls = NULL;
 
     *num_btl_modules = 0;
 
