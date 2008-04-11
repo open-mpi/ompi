@@ -257,15 +257,17 @@ mca_btl_elan_component_init( int *num_btl_modules,
                          count * sizeof(int));
     }
 
-    btls = (mca_btl_base_module_t**)malloc( mca_btl_elan_component.elan_num_btls *
-                                            sizeof(mca_btl_base_module_t*) );
-    if( NULL == btls ) {
-        free( mca_btl_elan_component.elan_btls );
-        mca_btl_elan_component.elan_num_btls = 0;  /* no active BTL modules */
-        return NULL;
+    if(mca_btl_elan_component.elan_num_btls) {
+        btls = (mca_btl_base_module_t**)malloc( mca_btl_elan_component.elan_num_btls *
+                                               sizeof(mca_btl_base_module_t*) );
+        if( NULL == btls ) {
+            free( mca_btl_elan_component.elan_btls );
+            mca_btl_elan_component.elan_num_btls = 0;  /* no active BTL modules */
+            return NULL;
+        }
+        memcpy( btls,  mca_btl_elan_component.elan_btls,
+               mca_btl_elan_component.elan_num_btls * sizeof(mca_btl_elan_module_t*) );
     }
-    memcpy( btls,  mca_btl_elan_component.elan_btls,
-            mca_btl_elan_component.elan_num_btls * sizeof(mca_btl_elan_module_t*) );
     *num_btl_modules = mca_btl_elan_component.elan_num_btls;
     return btls;
 }
