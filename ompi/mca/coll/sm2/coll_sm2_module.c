@@ -1022,6 +1022,12 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     }
 
+    /* allocate process private scratch space */
+    sm_module->scratch_space=(int *)malloc(sizeof(int)*group_size);
+    if( NULL == sm_module->scratch_space) {
+        goto CLEANUP;
+    }
+
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
 
@@ -1058,6 +1064,11 @@ CLEANUP:
         }
         free(sm_module->sm_buffer_descriptor);
         sm_module->sm_buffer_descriptor=NULL;
+    }
+
+    if(sm_module->scratch_space) {
+        free(sm_module->scratch_space);
+        sm_module->scratch_space=NULL;
     }
 
     OBJ_RELEASE(sm_module);

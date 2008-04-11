@@ -234,6 +234,12 @@ int setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
     }
     exchange_node->log_2=n_exchanges;
 
+    tmp=1;
+    for(i=0 ; i < n_exchanges ; i++ ) {
+        tmp*=2;
+    }
+    exchange_node->n_largest_pow_2=tmp;
+
     /* set node characteristics - node that is not within the largest
      *  power of 2 will just send it's data to node that will participate
      *  in the recursive doubling, and get the result back at the end.

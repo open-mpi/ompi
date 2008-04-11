@@ -177,6 +177,9 @@ BEGIN_C_DECLS
         /* log 2 of largest full power of 2 for this node set */
         int log_2;
 
+        /* largest power of 2 that fits in this group */
+        int n_largest_pow_2;
+
         /* node type */
         int node_type;
 
@@ -385,6 +388,9 @@ BEGIN_C_DECLS
         long long barrier_bank_list[BARRIER_BANK_LIST_SIZE];
         long long barrier_bank_cntr;
         /* end debug */
+
+        /* scratch space - one int per process */
+        int *scratch_space;
 
     };
 
