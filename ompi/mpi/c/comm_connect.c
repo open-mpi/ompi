@@ -28,6 +28,9 @@
 #include "opal/dss/dss.h"
 #include "orte/runtime/orte_globals.h"
 
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/routed/routed.h"
+
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect
 #endif
@@ -109,6 +112,25 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
             *newcomm = MPI_COMM_NULL;
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
         }
+
+        /* Make sure we can route the connect attempt to the remote side if we
+         * don't share the same HNP
+         */
+        
+        /* set the contact info into the local hash table */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(tmp_port))) {
+            free(tmp_port);
+            return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
+        }
+        /* update the route to this process - in this case, we always give it
+         * as direct since we were given the contact info. We trust the
+         * selected routed component to do the Right Thing for its own mode
+         * of operation
+         */
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&port_proc_name, &port_proc_name))) {
+            return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
+        }
+
         free (tmp_port);
     }
 
