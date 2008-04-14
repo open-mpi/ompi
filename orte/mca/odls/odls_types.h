@@ -35,7 +35,7 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_CONTACT_QUERY_CMD       (orte_daemon_cmd_flag_t) 1
 #define ORTE_DAEMON_KILL_LOCAL_PROCS        (orte_daemon_cmd_flag_t) 2
 #define ORTE_DAEMON_SIGNAL_LOCAL_PROCS      (orte_daemon_cmd_flag_t) 3
-#define ORTE_DAEMON_ADD_LOCAL_PROC          (orte_daemon_cmd_flag_t) 4
+#define ORTE_DAEMON_ADD_LOCAL_PROCS         (orte_daemon_cmd_flag_t) 4
 #define ORTE_DAEMON_ADD_AND_SPAWN           (orte_daemon_cmd_flag_t) 5
 #define ORTE_DAEMON_HEARTBEAT_CMD           (orte_daemon_cmd_flag_t) 6
 #define ORTE_DAEMON_EXIT_CMD                (orte_daemon_cmd_flag_t) 7
