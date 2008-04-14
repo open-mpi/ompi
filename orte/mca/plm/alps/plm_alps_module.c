@@ -94,6 +94,7 @@ orte_plm_base_module_t orte_plm_alps_module = {
     plm_alps_init,
     orte_plm_base_set_hnp_name,
     plm_alps_launch_job,
+    NULL,
     plm_alps_terminate_job,
     plm_alps_terminate_orteds,
     plm_alps_signal_job,

@@ -96,6 +96,7 @@ orte_plm_base_module_t orte_plm_submit_module = {
 #else
     orte_plm_submit_launch,
 #endif
+    NULL,
     orte_plm_submit_terminate_job,
     orte_plm_submit_terminate_orteds,
     orte_plm_submit_signal_job,

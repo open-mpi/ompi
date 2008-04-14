@@ -93,6 +93,7 @@ orte_plm_base_module_1_3_0_t orte_plm_lsf_module = {
     plm_lsf_init,
     orte_plm_base_set_hnp_name,
     plm_lsf_launch_job,
+    NULL,
     plm_lsf_terminate_job,
     plm_lsf_terminate_orteds,
     plm_lsf_signal_job,
