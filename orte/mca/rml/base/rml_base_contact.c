@@ -79,25 +79,28 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
                              "%s rml:base:update:contact:info got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             rml_uri));
+                             NULL == rml_uri ? "NULL" : rml_uri));
         
-        /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
-            ORTE_ERROR_LOG(rc);
+        if (NULL != rml_uri) {
+            /* set the contact info into the hash table */
+            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+                ORTE_ERROR_LOG(rc);
+                free(rml_uri);
+                return(rc);
+            }
+            /* extract the proc's name */
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                free(rml_uri);
+                return rc;
+            }
             free(rml_uri);
-            return(rc);
+            /* update the route - in this case, always set it to direct routing
+             * since we were given the contact info
+             */
+            orte_routed.update_route(&name, &name);
         }
-        /* extract the proc's name */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &name, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(rml_uri);
-            return rc;
-        }
-        free(rml_uri);
-        /* update the route - in this case, always set it to direct routing
-         * since we were given the contact info
-         */
-        orte_routed.update_route(&name, &name);
+        
         /* we only get an update from a single jobid - the command
          * that creates these doesn't cross jobid boundaries - so
          * record it here
@@ -119,7 +122,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
      */
     if (ORTE_PROC_MY_NAME->jobid == jobid &&
         orte_process_info.daemon &&
-        orte_process_info.num_procs != num_procs) {
+        orte_process_info.num_procs < num_procs) {
         orte_process_info.num_procs = num_procs;
         /* if we changed it, then we better update the trees in the
          * grpcomm so daemon collectives work correctly

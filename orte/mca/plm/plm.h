@@ -34,6 +34,8 @@
 #include "orte/types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/dss/dss_types.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -54,6 +56,11 @@ typedef int (*orte_plm_base_module_init_fn_t)(void);
  * Spawn a job
  */
 typedef int (*orte_plm_base_module_spawn_fn_t)(orte_job_t *jdata);
+
+/*
+ * Remote spawn - spawn called by a daemon to launch a process on its own
+ */
+typedef int (*orte_plm_base_module_remote_spawn_fn_t)(opal_buffer_t *launch);
 
 /*
  * Entry point to set the HNP name
@@ -90,6 +97,7 @@ struct orte_plm_base_module_1_0_0_t {
     orte_plm_base_module_init_fn_t               init;
     orte_plm_base_module_set_hnp_name_fn_t       set_hnp_name;
     orte_plm_base_module_spawn_fn_t              spawn;
+    orte_plm_base_module_remote_spawn_fn_t       remote_spawn;
     orte_plm_base_module_terminate_job_fn_t      terminate_job;
     orte_plm_base_module_terminate_orteds_fn_t   terminate_orteds;
     orte_plm_base_module_signal_job_fn_t         signal_job;

@@ -24,6 +24,9 @@
 #include "opal/util/trace.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/class/opal_pointer_array.h"
+
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
@@ -32,6 +35,9 @@
 
 int orte_odls_base_close(void)
 {
+    int i;
+    char **nodes;
+    
     OPAL_TRACE(5);
     
     /* cleanup globals */
@@ -39,6 +45,14 @@ int orte_odls_base_close(void)
     OBJ_DESTRUCT(&orte_odls_globals.cond);
     OBJ_DESTRUCT(&orte_odls_globals.children);
     OBJ_DESTRUCT(&orte_odls_globals.jobs);
+
+    nodes = (char**)orte_daemonmap.addr;
+    for (i=0; i < orte_daemonmap.size; i++) {
+        if (NULL != nodes[i]) {
+            free(nodes[i]);
+        }
+    }
+    OBJ_DESTRUCT(&orte_daemonmap);
 
     /* if no components are available, then punt */
     if (!orte_odls_base.components_available) {

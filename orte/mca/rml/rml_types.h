@@ -61,41 +61,42 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_RML_INFO_UPDATE         9
 #define ORTE_RML_TAG_ORTED_CALLBACK         10
 #define ORTE_RML_TAG_APP_LAUNCH_CALLBACK    11
+#define ORTE_RML_TAG_REPORT_REMOTE_LAUNCH   12
 
-#define ORTE_RML_TAG_CKPT                   12
+#define ORTE_RML_TAG_CKPT                   13
 
-#define ORTE_RML_TAG_RML_ROUTE              13
+#define ORTE_RML_TAG_RML_ROUTE              14
 
-#define ORTE_RML_TAG_ALLGATHER              14
-#define ORTE_RML_TAG_BARRIER                15
+#define ORTE_RML_TAG_ALLGATHER              15
+#define ORTE_RML_TAG_BARRIER                16
 
-#define ORTE_RML_TAG_INIT_ROUTES            16
-#define ORTE_RML_TAG_UPDATE_ROUTES          17
-#define ORTE_RML_TAG_SYNC                   18
+#define ORTE_RML_TAG_INIT_ROUTES            17
+#define ORTE_RML_TAG_UPDATE_ROUTES          18
+#define ORTE_RML_TAG_SYNC                   19
 
 /* For FileM Base */
-#define ORTE_RML_TAG_FILEM_BASE             19
-#define ORTE_RML_TAG_FILEM_BASE_RESP        20
+#define ORTE_RML_TAG_FILEM_BASE             20
+#define ORTE_RML_TAG_FILEM_BASE_RESP        21
 
 /* For FileM RSH Component */
-#define ORTE_RML_TAG_FILEM_RSH              21
+#define ORTE_RML_TAG_FILEM_RSH              22
 
 /* For SnapC Framework */
-#define ORTE_RML_TAG_SNAPC                  22
-#define ORTE_RML_TAG_SNAPC_FULL             23
+#define ORTE_RML_TAG_SNAPC                  23
+#define ORTE_RML_TAG_SNAPC_FULL             24
 
 /* For tools */
-#define ORTE_RML_TAG_TOOL                   24
+#define ORTE_RML_TAG_TOOL                   25
 
 /* support data store/lookup */
-#define ORTE_RML_TAG_DATA_SERVER            25
-#define ORTE_RML_TAG_DATA_CLIENT            26
+#define ORTE_RML_TAG_DATA_SERVER            26
+#define ORTE_RML_TAG_DATA_CLIENT            27
 
 /* timing related */
-#define ORTE_RML_TAG_COLLECTIVE_TIMER       27
+#define ORTE_RML_TAG_COLLECTIVE_TIMER       28
 
 /* daemon collectives */
-#define ORTE_RML_TAG_DAEMON_COLLECTIVE      28
+#define ORTE_RML_TAG_DAEMON_COLLECTIVE      29
 
 
 #define ORTE_RML_TAG_MAX                   100

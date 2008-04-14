@@ -27,6 +27,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_value_array.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -50,7 +51,6 @@
  * Instantiate globals
  */
 orte_odls_base_module_t orte_odls;
-
 
 /* instance the child list object */
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
@@ -124,6 +124,10 @@ int orte_odls_base_open(void)
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
     OBJ_CONSTRUCT(&orte_odls_globals.children, opal_list_t);
     OBJ_CONSTRUCT(&orte_odls_globals.jobs, opal_list_t);
+
+    /* initialize and setup the daemonmap */
+    OBJ_CONSTRUCT(&orte_daemonmap, opal_pointer_array_t);
+    opal_pointer_array_init(&orte_daemonmap, 8, INT32_MAX, 8);
 
     /* Open up all available components */
 

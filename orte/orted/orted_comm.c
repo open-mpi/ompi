@@ -38,6 +38,7 @@
 #include <signal.h>
 
 
+#include "opal/class/opal_pointer_array.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/mutex.h"
@@ -83,6 +84,7 @@
 static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
+
 
 
 /* local callback function for non-blocking sends */
@@ -370,6 +372,30 @@ static int process_commands(orte_process_name_t* sender,
             }
             break;
            
+            /****    ADD_AND_SPAWN   ****/
+        case ORTE_DAEMON_ADD_AND_SPAWN:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received add_and_spawn",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* launch the local processes */
+            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(buffer))) {
+                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                     "%s orted:comm:add_procs failed to launch on error %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
+            }
+            /* rewind the buffer so the plm can reuse it */
+            buffer->unpack_ptr = buffer->base_ptr;
+            /* if the PLM supports remote spawn, pass it all along */
+            if (NULL != orte_plm.remote_spawn) {
+                if (ORTE_SUCCESS != (ret = orte_plm.remote_spawn(buffer))) {
+                    ORTE_ERROR_LOG(ret);
+                }
+            } else {
+                opal_output(0, "%s remote spawn is NULL!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            break;
+
             /****    DELIVER A MESSAGE TO THE LOCAL PROCS    ****/
         case ORTE_DAEMON_MESSAGE_LOCAL_PROCS:
             if (orte_debug_daemons_flag) {

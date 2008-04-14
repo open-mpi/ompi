@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     
     orte_init(ORTE_TOOL);
         
-    num_procs = 4;
+    num_procs = 32;
     
     for (i=0; i < num_procs; i++) {
         OBJ_CONSTRUCT(&children, opal_list_t);

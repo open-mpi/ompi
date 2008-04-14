@@ -78,8 +78,6 @@ int orte_plm_base_comm_start(void)
 
 int orte_plm_base_comm_stop(void)
 {
-    int rc;
-    
     if (!recv_issued) {
         return ORTE_SUCCESS;
     }
@@ -88,12 +86,10 @@ int orte_plm_base_comm_stop(void)
                          "%s plm:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLM))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLM);
     recv_issued = false;
     
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 

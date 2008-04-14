@@ -37,6 +37,7 @@
 #include "opal/util/num_procs.h"
 #include "opal/util/sys_limits.h"
 #include "opal/util/show_help.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -66,6 +67,7 @@
 
 #include "orte/mca/odls/base/odls_private.h"
 
+
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -80,10 +82,11 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_std_cntr_t i;
     orte_vpid_t j;
     orte_vpid_t invalid_vpid=ORTE_VPID_INVALID;
+    char *nodename;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
     int32_t numbytes;
-
+    
     /* get wireup info for daemons per the selected routing module */
     wireup = OBJ_NEW(opal_buffer_t);
     if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
@@ -195,6 +198,27 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             return rc;
         }
         
+        /* if we are not keeping FQDN hostnames, abbreviate
+         * the nodename as required
+         */
+        if (!orte_keep_fqdn_hostnames) {
+            char *ptr;
+            nodename = strdup(node->name);
+            if (NULL != (ptr = strchr(nodename, '.'))) {
+                *ptr = '\0';
+            }
+        } else {
+            nodename = strdup(node->name);
+        }
+        
+        /* pack the nodename so that all daemons know where this one is located */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &nodename, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            free(nodename);
+            return rc;
+        }
+        free(nodename);
+
         /* pack the number of procs on this node */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &node->num_procs, 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
@@ -275,7 +299,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_odls_child_t *child;
     orte_std_cntr_t cnt, j, num_nodes, app_idx;
     orte_process_name_t proc, daemon;
-    char *slot_str;
+    char *slot_str, *nodename;
     bool node_oversubscribed;
     orte_odls_job_t *jobdat;
     opal_buffer_t wireup;
@@ -400,6 +424,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         return rc;
     }
 
+    /* set the size of the daemonmap to minimize realloc's */
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(&orte_daemonmap, num_nodes))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* setup the proc and daemon names */
     proc.jobid = *job;
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -413,6 +443,21 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             return rc;
         }
         
+        /* unpack the name of the node so we know where this daemon is located */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &nodename, &cnt, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* is this daemon already known to us? */
+        if (NULL == opal_pointer_array_get_item(&orte_daemonmap, daemon.vpid)) {
+            /* record it */
+            if (ORTE_SUCCESS != (opal_pointer_array_set_item(&orte_daemonmap, daemon.vpid, strdup(nodename)))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
         /* if daemon participation is sparse, add this daemon to the
          * list of those participating
          */
@@ -2148,4 +2193,3 @@ CLEANUP:
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return rc;
 }
-
