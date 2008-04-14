@@ -35,28 +35,29 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_CONTACT_QUERY_CMD       (orte_daemon_cmd_flag_t) 1
 #define ORTE_DAEMON_KILL_LOCAL_PROCS        (orte_daemon_cmd_flag_t) 2
 #define ORTE_DAEMON_SIGNAL_LOCAL_PROCS      (orte_daemon_cmd_flag_t) 3
-#define ORTE_DAEMON_ADD_LOCAL_PROCS			(orte_daemon_cmd_flag_t) 4
-#define ORTE_DAEMON_HEARTBEAT_CMD           (orte_daemon_cmd_flag_t) 5
-#define ORTE_DAEMON_EXIT_CMD                (orte_daemon_cmd_flag_t) 6
-#define ORTE_DAEMON_PROCESS_AND_RELAY_CMD   (orte_daemon_cmd_flag_t) 7
-#define ORTE_DAEMON_MESSAGE_LOCAL_PROCS     (orte_daemon_cmd_flag_t) 8
-#define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 9
-#define ORTE_DAEMON_SYNC_BY_PROC            (orte_daemon_cmd_flag_t) 10
+#define ORTE_DAEMON_ADD_LOCAL_PROC          (orte_daemon_cmd_flag_t) 4
+#define ORTE_DAEMON_ADD_AND_SPAWN           (orte_daemon_cmd_flag_t) 5
+#define ORTE_DAEMON_HEARTBEAT_CMD           (orte_daemon_cmd_flag_t) 6
+#define ORTE_DAEMON_EXIT_CMD                (orte_daemon_cmd_flag_t) 7
+#define ORTE_DAEMON_PROCESS_AND_RELAY_CMD   (orte_daemon_cmd_flag_t) 8
+#define ORTE_DAEMON_MESSAGE_LOCAL_PROCS     (orte_daemon_cmd_flag_t) 9
+#define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 10
+#define ORTE_DAEMON_SYNC_BY_PROC            (orte_daemon_cmd_flag_t) 11
 
 /* commands for use by tools */
-#define ORTE_DAEMON_REPORT_JOB_INFO_CMD     (orte_daemon_cmd_flag_t) 11
-#define ORTE_DAEMON_REPORT_NODE_INFO_CMD    (orte_daemon_cmd_flag_t) 12
-#define ORTE_DAEMON_REPORT_PROC_INFO_CMD    (orte_daemon_cmd_flag_t) 13
-#define ORTE_DAEMON_ATTACH_STDOUT_CMD       (orte_daemon_cmd_flag_t) 14
-#define ORTE_DAEMON_ATTACH_STDERR_CMD       (orte_daemon_cmd_flag_t) 15
-#define ORTE_DAEMON_DETACH_STDOUT_CMD       (orte_daemon_cmd_flag_t) 16
-#define ORTE_DAEMON_DETACH_STDERR_CMD       (orte_daemon_cmd_flag_t) 17
-#define ORTE_DAEMON_SPAWN_JOB_CMD           (orte_daemon_cmd_flag_t) 18
-#define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 19
-#define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 20
+#define ORTE_DAEMON_REPORT_JOB_INFO_CMD     (orte_daemon_cmd_flag_t) 12
+#define ORTE_DAEMON_REPORT_NODE_INFO_CMD    (orte_daemon_cmd_flag_t) 13
+#define ORTE_DAEMON_REPORT_PROC_INFO_CMD    (orte_daemon_cmd_flag_t) 14
+#define ORTE_DAEMON_ATTACH_STDOUT_CMD       (orte_daemon_cmd_flag_t) 15
+#define ORTE_DAEMON_ATTACH_STDERR_CMD       (orte_daemon_cmd_flag_t) 16
+#define ORTE_DAEMON_DETACH_STDOUT_CMD       (orte_daemon_cmd_flag_t) 17
+#define ORTE_DAEMON_DETACH_STDERR_CMD       (orte_daemon_cmd_flag_t) 18
+#define ORTE_DAEMON_SPAWN_JOB_CMD           (orte_daemon_cmd_flag_t) 19
+#define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 20
+#define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 21
 
 /* collective-based cmds */
-#define ORTE_DAEMON_COLL_CMD                (orte_daemon_cmd_flag_t) 21
+#define ORTE_DAEMON_COLL_CMD                (orte_daemon_cmd_flag_t) 22
 
 END_C_DECLS
 

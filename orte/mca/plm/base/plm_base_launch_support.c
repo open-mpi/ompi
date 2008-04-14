@@ -235,18 +235,17 @@ WAKEUP:
     orte_wakeup();
 }
 
-
-static void orted_report_launch(int status, orte_process_name_t* sender,
-                                opal_buffer_t *buffer,
-                                orte_rml_tag_t tag, void *cbdata)
+static void process_orted_launch_report(int fd, short event, void *data)
 {
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    opal_buffer_t *buffer = mev->buffer;
     char *rml_uri;
     int rc, idx;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch from daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         ORTE_NAME_PRINT(&mev->sender)));
     
     /* unpack its contact info */
     idx = 1;
@@ -264,22 +263,14 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
         goto CLEANUP;
     }
     /* lookup and record this daemon's contact info */
-    pdatorted[sender->vpid]->rml_uri = strdup(rml_uri);
+    pdatorted[mev->sender.vpid]->rml_uri = strdup(rml_uri);
     free(rml_uri);
 
     /* set the route to be direct */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_route(sender, sender))) {
+    if (ORTE_SUCCESS != (rc = orte_routed.update_route(&mev->sender, &mev->sender))) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
         goto CLEANUP;
-    }
-
-    /* reissue the recv */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
-                                 ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-        orted_failed_launch = true;
     }
 
 CLEANUP:
@@ -288,7 +279,7 @@ CLEANUP:
                          "%s plm:base:orted_report_launch %s for daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
-                         ORTE_NAME_PRINT(sender)));
+                         ORTE_NAME_PRINT(&mev->sender)));
 
     if (orted_failed_launch) {
         orte_errmgr.incomplete_start(ORTE_PROC_MY_NAME->jobid, jdatorted->aborted_proc->exit_code);
@@ -298,6 +289,33 @@ CLEANUP:
 
 }
 
+static void orted_report_launch(int status, orte_process_name_t* sender,
+                                opal_buffer_t *buffer,
+                                orte_rml_tag_t tag, void *cbdata)
+{
+    int rc;
+    
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release when processed - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_orted_launch_report);
+    
+    /* reissue the recv */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
+                                 ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        orted_failed_launch = true;
+    }
+}
+
+    
 int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     int rc;
@@ -324,6 +342,12 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
     
     ORTE_PROGRESSED_WAIT(orted_failed_launch, orted_num_callback, num_daemons);
     
+    /* cancel the lingering recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -520,6 +544,12 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
     
     ORTE_PROGRESSED_WAIT(app_launch_failed, jdata->num_launched, jdata->num_procs);
 
+    /* cancel the lingering recv */
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_APP_LAUNCH_CALLBACK))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:report_launched all apps reported",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -548,6 +578,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     int i, cnt;
     orte_job_t *jdata;
     char *rml_uri;
+    unsigned long num_procs;
     
     /* check for debug flags */
     if (orte_debug_flag) {
@@ -584,15 +615,24 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     
     /* pass the total number of daemons that will be in the system */
-    jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (orte_process_info.hnp) {
+        jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+        num_procs = jdata->num_procs;
+    } else {
+        num_procs = orte_process_info.num_procs;
+    }
     opal_argv_append(argc, argv, "-mca");
     opal_argv_append(argc, argv, "orte_ess_num_procs");
-    asprintf(&param, "%lu", (unsigned long)(jdata->num_procs));
+    asprintf(&param, "%lu", num_procs);
     opal_argv_append(argc, argv, param);
     free(param);
     
     /* pass the uri of the hnp */
-    rml_uri = orte_rml.get_contact_info();
+    if (orte_process_info.hnp) {
+        rml_uri = orte_rml.get_contact_info();
+    } else {
+        rml_uri = orte_process_info.my_hnp_uri;
+    }
     asprintf(&param, "\"%s\"", rml_uri);
     opal_argv_append(argc, argv, "--hnp-uri");
     opal_argv_append(argc, argv, param);
@@ -609,21 +649,23 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      * being sure to "purge" any that would cause problems
      * on backend nodes
      */
-    cnt = opal_argv_count(orted_cmd_line);    
-    for (i=0; i < cnt; i+=3) {
-        /* if the specified option is more than one word, we don't
-         * have a generic way of passing it as some environments ignore
-         * any quotes we add, while others don't - so we ignore any
-         * such options. In most cases, this won't be a problem as
-         * they typically only apply to things of interest to the HNP
-         */
-        if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
-            continue;
+    if (orte_process_info.hnp) {
+        cnt = opal_argv_count(orted_cmd_line);    
+        for (i=0; i < cnt; i+=3) {
+            /* if the specified option is more than one word, we don't
+             * have a generic way of passing it as some environments ignore
+             * any quotes we add, while others don't - so we ignore any
+             * such options. In most cases, this won't be a problem as
+             * they typically only apply to things of interest to the HNP
+             */
+            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                continue;
+            }
+            /* must be okay - pass it along */
+            opal_argv_append(argc, argv, orted_cmd_line[i]);
+            opal_argv_append(argc, argv, orted_cmd_line[i+1]);
+            opal_argv_append(argc, argv, orted_cmd_line[i+2]);
         }
-        /* must be okay - pass it along */
-        opal_argv_append(argc, argv, orted_cmd_line[i]);
-        opal_argv_append(argc, argv, orted_cmd_line[i+1]);
-        opal_argv_append(argc, argv, orted_cmd_line[i+2]);
     }
 
     /* 

@@ -28,6 +28,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
@@ -91,7 +92,8 @@ typedef struct {
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
-        
+
+
 /*
  * Default functions that are common to most environments - can
  * be overridden by specific environments if they need something
@@ -163,6 +165,11 @@ ORTE_DECLSPEC int orte_odls_base_preload_files_app_context(orte_app_context_t* c
  * Collect data to support collective operations across the procs
  */
 ORTE_DECLSPEC int orte_odls_base_default_collect_data(orte_process_name_t *proc, opal_buffer_t *buf);
+
+/*
+ * Retrive the daemon map
+ */
+ORTE_DECLSPEC opal_pointer_array_t* orte_odls_base_get_daemon_map(void);
 
 END_C_DECLS
 

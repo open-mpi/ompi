@@ -93,6 +93,7 @@ orte_plm_base_module_1_0_0_t orte_plm_slurm_module = {
     plm_slurm_init,
     orte_plm_base_set_hnp_name,
     plm_slurm_launch_job,
+    NULL,
     plm_slurm_terminate_job,
     plm_slurm_terminate_orteds,
     plm_slurm_signal_job,

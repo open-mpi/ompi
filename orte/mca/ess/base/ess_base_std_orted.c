@@ -62,6 +62,21 @@ int orte_ess_base_orted_setup(void)
     char *error = NULL;
     char *jobid_str, *procid_str;
 
+    /* some environments allow remote launches - e.g., ssh - so
+     * open the PLM and select something
+     */
+    if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_plm_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_plm_base_select";
+        goto error;
+    }
+
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */
@@ -263,9 +278,8 @@ int orte_ess_base_orted_finalize(void)
     orte_wait_finalize();
     orte_iof_base_close();
     
-    /* finalize selected modules so they can de-register
-     * any receives
-     */
+    /* finalize selected modules */
+    orte_plm_base_close();
     orte_errmgr_base_close();
     
     /* now can close the rml and its friendly group comm */

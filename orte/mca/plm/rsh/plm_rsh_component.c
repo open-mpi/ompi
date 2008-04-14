@@ -117,6 +117,7 @@ int orte_plm_rsh_component_open(void)
     mca_plm_rsh_component.agent_argv = NULL;
     mca_plm_rsh_component.agent_argc = 0;
     mca_plm_rsh_component.agent_path = NULL;
+    OBJ_CONSTRUCT(&mca_plm_rsh_component.children, opal_list_t);
 
     /* lookup parameters */
     mca_base_param_reg_int(c, "num_concurrent",
@@ -157,6 +158,11 @@ int orte_plm_rsh_component_open(void)
                               false, false, "ssh : rsh",
                               &mca_plm_rsh_component.agent_param);
 
+    mca_base_param_reg_int(c, "tree_spawn",
+                           "If set to 1, launch via a tree-based topology",
+                           false, false, (int)false, &tmp);
+    mca_plm_rsh_component.tree_spawn = OPAL_INT_TO_BOOL(tmp);
+    
     return ORTE_SUCCESS;
 }
 
@@ -229,6 +235,7 @@ int orte_plm_rsh_component_close(void)
     /* cleanup state */
     OBJ_DESTRUCT(&mca_plm_rsh_component.lock);
     OBJ_DESTRUCT(&mca_plm_rsh_component.cond);
+    OBJ_DESTRUCT(&mca_plm_rsh_component.children);
     if (NULL != mca_plm_rsh_component.orted) {
         free(mca_plm_rsh_component.orted);
     }
