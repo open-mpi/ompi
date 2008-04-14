@@ -89,6 +89,7 @@ orte_plm_base_module_t orte_plm_ccp_module = {
     plm_ccp_init,
     orte_plm_base_set_hnp_name,
     plm_ccp_launch_job,
+    NULL,
     plm_ccp_terminate_job,
     plm_ccp_terminate_orteds,
     plm_ccp_signal_job,

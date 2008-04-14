@@ -57,6 +57,7 @@ orte_plm_base_module_1_0_0_t orte_plm_xgrid_module = {
     orte_plm_xgrid_init,
     orte_plm_base_set_hnp_name,
     orte_plm_xgrid_spawn,
+    NULL,
     orte_plm_xgrid_terminate_job,
     orte_plm_xgrid_terminate_orteds,
     orte_plm_xgrid_signal_job,

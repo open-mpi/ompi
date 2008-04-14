@@ -95,6 +95,7 @@ orte_plm_base_module_t orte_plm_tm_module = {
     plm_tm_init,
     orte_plm_base_set_hnp_name,
     plm_tm_launch_job,
+    NULL,
     plm_tm_terminate_job,
     plm_tm_terminate_orteds,
     plm_tm_signal_job,

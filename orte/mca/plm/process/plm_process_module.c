@@ -112,6 +112,7 @@ orte_plm_base_module_t orte_plm_process_module = {
 #else
     orte_plm_process_launch,
 #endif
+    NULL,
     orte_plm_process_terminate_job,
     orte_plm_process_terminate_orteds,
     orte_plm_process_signal_job,

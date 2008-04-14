@@ -100,6 +100,7 @@ orte_plm_base_module_t orte_plm_gridengine_module = {
     plm_gridengine_init,
     orte_plm_base_set_hnp_name,
     plm_gridengine_launch_job,
+    NULL,
     plm_gridengine_terminate_job,
     plm_gridengine_terminate_orteds,
     plm_gridengine_signal_job,
