@@ -1113,7 +1113,7 @@ launch:
                                  "%s plm:rsh:launch daemon already exists on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  nodes[nnode]->name));
-            continue;
+            goto next_node;
         }
         
         /* if the node's daemon has not been defined, then we
