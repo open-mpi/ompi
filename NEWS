@@ -29,7 +29,8 @@ version 1.0.
 1.2.7 (might never be released)
 -----
 
-- Nothing new yet.
+- Fix a deadlock in inter-communicator scatter/gather operations.
+  Thanks to Martin Audet for the bug report.  See ticket #1268.
 
 
 1.2.6
