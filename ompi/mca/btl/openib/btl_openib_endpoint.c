@@ -739,8 +739,6 @@ static void mca_btl_openib_endpoint_eager_rdma_connect_cb(
     int status)
 {
     mca_btl_openib_hca_t *hca = endpoint->endpoint_btl->hca;
-    mca_btl_openib_module_t* openib_btl =
-        (mca_btl_openib_module_t*)btl;
     OPAL_THREAD_ADD32(&hca->non_eager_rdma_endpoints, -1);
     assert(hca->non_eager_rdma_endpoints >= 0);
     MCA_BTL_IB_FRAG_RETURN(descriptor);
