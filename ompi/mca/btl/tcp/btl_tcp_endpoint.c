@@ -141,7 +141,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
 #if OPAL_WANT_IPV6
     {
         char *address;
-        address = (char *) opal_sockaddr2str((struct sockaddr_in6*)&inaddr);
+        address = (char *) opal_net_get_hostname((struct sockaddr*) &inaddr);
         if (NULL != address) {
             sprintf(src, "%s", address);
         }
@@ -153,7 +153,7 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
 #if OPAL_WANT_IPV6
     {
         char *address;
-        address = (char *) opal_sockaddr2str((struct sockaddr_in6*)&inaddr);
+        address = (char *) opal_net_get_hostname ((struct sockaddr*) &inaddr);
         if (NULL != address) {
             sprintf(dst, "%s", address);
         }
