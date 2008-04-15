@@ -1,6 +1,11 @@
 with_threads=no
 enable_dlopen=no
 enable_pty_support=no
+with_tm=/opt/PBS
+with_wrapper_cflags=-I/opt/panfs/include
+LDFLAGS=-L/opt/PBS/lib64
+with_openib=/opt/ofed
+with_io_romio_flags=--with-file-system=ufs+nfs+panfs
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
@@ -10,7 +15,7 @@ with_devel_headers=yes
 enable_heterogeneous=no
 enable_picky=yes
 enable_debug=yes
-enable_shared=no
-enable_static=yes
-with_wrapper_cflags=search_paths_first
+enable_shared=yes
+enable_static=no
+with_slurm=no
 enable_contrib_no_build=libnbc,vt
