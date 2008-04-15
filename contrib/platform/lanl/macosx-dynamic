@@ -12,3 +12,4 @@ enable_picky=yes
 enable_debug=yes
 enable_shared=yes
 enable_static=no
+enable_contrib_no_build=libnbc,vt
