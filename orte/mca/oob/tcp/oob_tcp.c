@@ -368,6 +368,11 @@ int mca_oob_tcp_component_open(void)
                            false, false,
                            64*1024 - 1 - mca_oob_tcp_component.tcp6_port_min,
                            &mca_oob_tcp_component.tcp6_port_range);
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "disable_family", "Disable IPv4 (4) or IPv6 (6)",
+                           false, false,
+                           0,
+                           &mca_oob_tcp_component.disable_family);
     mca_oob_tcp_component.tcp6_listen_sd = -1;
 #endif  /* OPAL_WANT_IPV6 */
 
@@ -1462,12 +1467,14 @@ char* mca_oob_tcp_get_addr(void)
             ptr += sprintf(ptr, ";");
         }
 
-        if (dev->if_addr.ss_family == AF_INET) {
+        if (dev->if_addr.ss_family == AF_INET &&
+            4 != mca_oob_tcp_component.disable_family) {
             ptr += sprintf(ptr, "tcp://%s:%d", opal_net_get_hostname((struct sockaddr*) &dev->if_addr),
                            ntohs(mca_oob_tcp_component.tcp_listen_port));
         }
 #if OPAL_WANT_IPV6
-        if (dev->if_addr.ss_family == AF_INET6) {
+        if (dev->if_addr.ss_family == AF_INET6 &&
+            6 != mca_oob_tcp_component.disable_family) {
             ptr += sprintf(ptr, "tcp6://%s:%d", opal_net_get_hostname((struct sockaddr*) &dev->if_addr),
                            ntohs(mca_oob_tcp_component.tcp6_listen_port));
         }
