@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -30,6 +30,7 @@
 #include "ompi/datatype/datatype_prototypes.h"
 
 #include "osc_base_obj_convert.h"
+#include "ompi/memchecker.h"
 
 int
 ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
@@ -233,13 +234,21 @@ ompi_osc_base_process_op(void *outbuf,
         convertor.convertor.master = &master;
         convertor.convertor.fAdvance = ompi_unpack_general;
 
-        iov.iov_len = inbuflen;
+        iov.iov_len  = inbuflen;
         iov.iov_base = (IOVBASE_TYPE*) inbuf;
-        max_data = iov.iov_len;
+        max_data     = iov.iov_len;
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &convertor.convertor);
+        );
         ompi_convertor_unpack(&convertor.convertor, 
                               &iov,
                               &iov_count,
                               &max_data);
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &convertor.convertor);
+        );
         OBJ_DESTRUCT(&convertor);
     }
 
