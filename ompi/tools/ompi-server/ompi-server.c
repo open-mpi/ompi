@@ -89,9 +89,9 @@ opal_cmd_line_init_t ompi_server_cmd_line_opts[] = {
       &no_daemonize, OPAL_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
     
-    { NULL, NULL, NULL, '\0', NULL, "report-uri", 1,
+    { NULL, NULL, NULL, 'r', NULL, "report-uri", 1,
       &report_uri, OPAL_CMD_LINE_TYPE_STRING,
-      "Report the server's uri on stdout"},
+      "Report the server's uri on stdout [-], stderr [+], or a file [anything else]"},
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,

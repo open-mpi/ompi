@@ -64,9 +64,10 @@ static bool server_setup=false;
 
 static void setup_server(void)
 {
-    opal_buffer_t buf;
-    orte_rml_cmd_flag_t command=ORTE_RML_UPDATE_CMD;
-    int rc;
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: setting up server at URI %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == mca_pubsub_orte_component.server_uri) ? "NULL" : mca_pubsub_orte_component.server_uri));
     
     if (NULL == mca_pubsub_orte_component.server_uri) {
         /* if the contact info for the server is NULL, then there
@@ -76,23 +77,6 @@ static void setup_server(void)
         return;
     }
     
-    /* setup the route to the server using the
-     * selected routed component. This allows us
-     * to tell the local daemon how to reach the
-     * server, so we can still only have one connection
-     * open! To do this, we need to insert the server's
-     * uri into a buffer
-     */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    opal_dss.pack(&buf, &command, 1, ORTE_RML_CMD);
-    opal_dss.pack(&buf, &mca_pubsub_orte_component.server_uri, 1, OPAL_STRING);
-    if (ORTE_SUCCESS != (rc = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, &buf))) {
-        ORTE_ERROR_LOG(rc);
-        server_setup = true;
-        return;
-    }
-    OBJ_DESTRUCT(&buf);
-    
     /* extract the server's name */
     orte_rml_base_parse_uris(mca_pubsub_orte_component.server_uri, &mca_pubsub_orte_component.server, NULL);
 
@@ -101,6 +85,11 @@ static void setup_server(void)
 
     /* flag setup as completed */
     server_setup = true;
+    
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: server %s setup",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&mca_pubsub_orte_component.server)));
 }
 
 /*
@@ -127,6 +116,11 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
 
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: publishing service %s scope %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         service_name, global_scope ? "Global" : "Local"));
+    
     if (!global_scope) {
         /* if the scope is not global, then store the value on the HNP */
         info_host = ORTE_PROC_MY_HNP;
@@ -265,6 +259,11 @@ static char* lookup ( char *service_name, ompi_info_t *info )
             }
         }
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: lookup service %s scope %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         service_name, lookup[0]));
     
     /* check for error situations */
     
@@ -407,6 +406,11 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: unpublish service %s scope %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         service_name, global_scope ? "Global" : "Local"));
+    
     if (!global_scope) {
         /* if the scope is not global, then unpublish the value from the HNP */
         info_host = ORTE_PROC_MY_HNP;

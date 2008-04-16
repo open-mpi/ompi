@@ -19,5 +19,9 @@
 # This is the US/English general help file for Open MPI's data server.
 #
 [ompiserver:usage]
-Usage: %s [OPTION]...
-Start an Open MPI data server.
+Start an Open MPI data server
+
+Usage: %s [OPTIONS]
+
+%s
+

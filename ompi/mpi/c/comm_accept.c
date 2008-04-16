@@ -41,8 +41,6 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
     int rank, rc;
     bool send_first=false; /* we receive first */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    char *tmp_port=NULL;
-    orte_rml_tag_t tag = 0;  /* tag is set & used in get_rport only at root; silence coverity */
 
     MEMCHECKER(
         memchecker_comm(comm);
@@ -89,15 +87,7 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
      */
     OPAL_CR_ENTER_LIBRARY();
 
-    /*
-     * Our own port_name is not of interest here, so we pass in NULL.
-     * The two leaders will figure this out later. However, we need the tag.
-     */
-    if ( rank == root ) {
-        tmp_port = ompi_dpm.parse_port(port_name, &tag);
-        free (tmp_port);
-    }
-    rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+    rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
 
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME );
