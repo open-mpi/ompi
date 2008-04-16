@@ -52,15 +52,6 @@ extern int debug_print;
  * parent, and the leaves that have no children.  But that's the
  * general idea.
  */
-/* once this is implemented, change this to be visible */
-/*
-int mca_coll_sm2_barrier_intra(struct ompi_communicator_t *comm,
-                              struct mca_coll_base_module_1_1_0_t *module)
-{
-
-    return OMPI_SUCCESS;
-}
-*/
 
 /* non-blocking barrier - init function */
 int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
@@ -74,7 +65,6 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
      */
     /* local variables */
     int index;
-    int child,cnt;
     long long tag;
     mca_coll_sm2_module_t *sm_module;
     mca_coll_sm2_nb_request_process_shared_mem_t *sm_barrier_region;
@@ -319,4 +309,180 @@ int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
 DONE:
     /* return - successful completion */
     return OMPI_SUCCESS;
+}
+
+/**
+ * Shared memory blocking allreduce.
+ */
+static
+int mca_coll_sm2_barrier_intra_fanin_fanout(
+        struct ompi_communicator_t *comm,
+        struct mca_coll_base_module_1_1_0_t *module)
+{
+    /* local variables */
+    int rc=OMPI_SUCCESS;
+    int my_rank, child_rank, child, n_parents, n_children;
+    int my_fanin_parent;
+    int my_fanout_parent;
+    long long tag;
+    mca_coll_sm2_nb_request_process_shared_mem_t *my_ctl_pointer;
+    volatile mca_coll_sm2_nb_request_process_shared_mem_t * child_ctl_pointer;
+    volatile mca_coll_sm2_nb_request_process_shared_mem_t * parent_ctl_pointer;
+    mca_coll_sm2_module_t *sm_module;
+    tree_node_t *my_reduction_node, *my_fanout_read_tree;
+    sm_work_buffer_t *sm_buffer_desc;
+
+    sm_module=(mca_coll_sm2_module_t *) module;
+
+
+
+    /* get my node for the reduction tree */
+    my_rank=ompi_comm_rank(comm);
+    my_reduction_node=&(sm_module->reduction_tree[my_rank]);
+    my_fanout_read_tree=&(sm_module->fanout_read_tree[my_rank]);
+    n_children=my_reduction_node->n_children;
+    n_parents=my_reduction_node->n_parents;
+    my_fanin_parent=my_reduction_node->parent_rank;
+    my_fanout_parent=my_fanout_read_tree->parent_rank;
+
+    /* get unique tag for this stripe - assume only one collective
+     *  per communicator at a given time, so no locking needed
+     *  for atomic update of the tag */
+    tag=sm_module->collective_tag;
+    sm_module->collective_tag++;
+
+    sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+
+    /* offset to data segment */
+    my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+
+    /***************************
+     * Fan into root phase
+     ***************************/
+
+    if( LEAF_NODE != my_reduction_node->my_node_type ) {
+
+        /*
+         * Wait on children, and apply op to their data
+         */
+        for( child=0 ; child < n_children ; child++ ) {
+
+            child_rank=my_reduction_node->children_ranks[child];
+            child_ctl_pointer=
+                sm_buffer_desc->proc_memory[child_rank].control_region;
+
+            /* wait until child flag is set */
+            while(  child_ctl_pointer->flag != tag ) {
+                /* Note: Actually need to make progress here */
+                opal_progress();
+            }
+
+
+            /* end test */
+        } /* end child loop */
+
+        /* set memory barriet to make sure data is in main memory before
+         *  the completion flgas are set.
+         */
+        MB();
+
+        /*
+         * Signal parent that data is ready
+         */
+        my_ctl_pointer->flag=tag;
+    } else {
+        /* leaf node */
+
+        /* set memory barriet to make sure data is in main memory before
+         *  the completion flgas are set.
+         */
+        MB();
+
+        /*
+         * Signal parent that data is ready
+         */
+        my_ctl_pointer->flag=tag;
+    }
+
+    /***************************
+     * Fan out from root
+     ***************************/
+    /*
+     * Fan out from root - let the memory copies at each
+     *   stage help reduce memory contention.
+     */
+    if( ROOT_NODE == my_fanout_read_tree->my_node_type ) {
+        /* I am the root - so copy  signal children, and then
+         *   start reading
+         */
+        MB();
+        my_ctl_pointer->flag=-tag;
+
+
+    } else if( LEAF_NODE == my_fanout_read_tree->my_node_type ) {
+
+        parent_ctl_pointer=
+            sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
+
+        /*
+         * wait on Parent to signal that data is ready
+         */
+        while( parent_ctl_pointer->flag != -tag ) {
+            opal_progress();
+        }
+
+    } else {
+        /* interior nodes */
+   
+        parent_ctl_pointer=
+            sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
+
+        /*
+         * wait on Parent to signal that data is ready
+         */
+        while( parent_ctl_pointer->flag != -tag ) {
+            opal_progress();
+        }
+
+        /* set memory barriet to make sure data is in main memory before
+         *  the completion flgas are set.
+         */
+        MB();
+
+        /* signal children that they may read the result data */
+        my_ctl_pointer->flag=-tag;
+
+    }
+
+    /* "free" the shared-memory working buffer */
+    rc=free_sm2_shared_buffer(sm_module);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
+    
+    /* return */
+    return rc;
+
+Error:
+    return rc;
+}
+
+/**
+ * Shared memory blocking barrier
+ */
+int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
+                                struct mca_coll_base_module_1_1_0_t *module)
+{
+    /* local variables */
+    int rc;
+
+    rc= mca_coll_sm2_barrier_intra_fanin_fanout(comm, module);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
+
+    return OMPI_SUCCESS;
+
+Error:
+    return rc;
 }
