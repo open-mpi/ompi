@@ -68,6 +68,10 @@ inmsg_mark_complete(ompi_osc_pt2pt_module_t *module)
     }
     OPAL_THREAD_UNLOCK(&module->p2p_lock);
 
+    MEMCHECKER(
+        /* Here we need restore the initial states of memory. */
+        opal_memchecker_base_mem_defined( module->p2p_win->w_baseptr, module->p2p_win->w_size);
+    );
     if (0 == count) {
         if (need_unlock) ompi_osc_pt2pt_passive_unlock_complete(module);
         opal_condition_broadcast(&module->p2p_cond);        
@@ -235,12 +239,14 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
             iov.iov_len = max_data;
             iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) buffer->payload + written_data);
             MEMCHECKER(
-                opal_memchecker_base_mem_defined((void *)sendreq->req_origin_convertor.pBaseBuf, sendreq->req_origin_convertor.local_size);
+                memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                          &sendreq->req_origin_convertor);
             );
             ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
                                       &max_data );
             MEMCHECKER(
-                opal_memchecker_base_mem_noaccess((void *)sendreq->req_origin_convertor.pBaseBuf, sendreq->req_origin_convertor.local_size);
+                memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                          &sendreq->req_origin_convertor);
             );
             if (ret < 0) {
                 ret = OMPI_ERR_FATAL;
@@ -275,10 +281,6 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
                          "%d sending sendreq to %d",
                          ompi_comm_rank(sendreq->req_module->p2p_comm),
                          sendreq->req_target_rank));
-    /* This might not be necessary. */
-    MEMCHECKER(
-        opal_memchecker_base_mem_noaccess(buffer->payload, buffer->len);
-    );
     ret = MCA_PML_CALL(isend(buffer->payload,
                              buffer->len,
                              MPI_BYTE,
@@ -287,15 +289,17 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
                              MCA_PML_BASE_SEND_STANDARD,
                              module->p2p_comm,
                              &buffer->mpireq.request));
-    MEMCHECKER(
-        opal_memchecker_base_mem_defined(buffer->payload, buffer->len);
-    );
 
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.p2p_c_lock);
     opal_list_append(&mca_osc_pt2pt_component.p2p_c_pending_requests,
                      &buffer->mpireq.super.super);
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
-
+    /* Need to be fixed.
+     * The payload is made undefined due to the isend call.
+     */
+    MEMCHECKER(
+        opal_memchecker_base_mem_defined(buffer->payload, buffer->len);
+    );
     if (OMPI_OSC_PT2PT_GET != sendreq->req_type && 
         header->hdr_msg_length == 0) {
         ompi_osc_pt2pt_longreq_t *longreq;
@@ -334,14 +338,6 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     }
 
  done:
-    /* Finished using original window/buffer, set it accessable. */
-    MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_defined,
-                        sendreq->req_origin_convertor.pBaseBuf,
-                        sendreq->req_origin_convertor.count,
-                        sendreq->req_origin_datatype);
-    );
-
     return ret;
 }
 
@@ -439,20 +435,22 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
         uint32_t iov_count = 1;
         size_t max_data = replyreq->rep_target_bytes_packed;
 
-        iov.iov_len = max_data;
+        iov.iov_len  = max_data;
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) buffer->payload + written_data);
         /* 
          * Before copy to the target buffer, make the target part 
          * accessable.
          */
         MEMCHECKER(
-            opal_memchecker_base_mem_defined((void *)replyreq->rep_target_convertor.pBaseBuf, replyreq->rep_target_convertor.local_size);
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &replyreq->rep_target_convertor);
         );
         ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
                                   &max_data );
         /* Copy finished, make the target buffer unaccessable. */
         MEMCHECKER(
-            opal_memchecker_base_mem_noaccess((void *)replyreq->rep_target_convertor.pBaseBuf, replyreq->rep_target_convertor.local_size);
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &replyreq->rep_target_convertor);
         );
 
         if (ret < 0) {
@@ -494,6 +492,12 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
                      &buffer->mpireq.super.super);
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
+    /* Need to be fixed.
+     * The payload is made undefined due to the isend call.
+     */
+    MEMCHECKER(
+        opal_memchecker_base_mem_defined(buffer->payload, buffer->len);
+    );
     if (header->hdr_msg_length == 0) {
         ompi_osc_pt2pt_longreq_t *longreq;
         ompi_osc_pt2pt_longreq_alloc(&longreq);
@@ -591,7 +595,8 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
          * accessable.
          */
         MEMCHECKER(
-            opal_memchecker_base_mem_defined( convertor.pBaseBuf, convertor.local_size );
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &convertor);
         );
         ompi_convertor_unpack(&convertor, 
                               &iov,
@@ -599,7 +604,8 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
                               &max_data );
         /* Copy finished, make the user buffer unaccessable. */
         MEMCHECKER(
-            opal_memchecker_base_mem_noaccess( convertor.pBaseBuf, convertor.local_size );
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &convertor);
         );
         OBJ_DESTRUCT(&convertor);
         OBJ_RELEASE(datatype);
@@ -951,15 +957,16 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
         uint32_t iov_count = 1;
         size_t max_data;
 
-        iov.iov_len = header->hdr_msg_length;
+        iov.iov_len  = header->hdr_msg_length;
         iov.iov_base = (IOVBASE_TYPE*)payload;
-        max_data = iov.iov_len;
+        max_data     = iov.iov_len;
         /* 
          * Before copy to the target buffer, make the target part 
          * accessable.
          */
         MEMCHECKER(
-            opal_memchecker_base_mem_defined(sendreq->req_origin_convertor.pBaseBuf, sendreq->req_origin_convertor.local_size);
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_origin_convertor);
         );
         ompi_convertor_unpack(&sendreq->req_origin_convertor,
                               &iov,
@@ -969,7 +976,8 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
          * Copy finished, make the target buffer unaccessable.(Or just leave it accessable?)
          */
         MEMCHECKER(
-            /*opal_memchecker_base_mem_noaccess(sendreq->req_origin_convertor.pBaseBuf, sendreq->req_origin_convertor.local_size);*/
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &sendreq->req_origin_convertor);
         );
 
         OPAL_THREAD_LOCK(&module->p2p_lock);

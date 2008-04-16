@@ -28,6 +28,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/memchecker.h"
 
 typedef enum {
     OMPI_OSC_PT2PT_GET,
@@ -161,6 +162,10 @@ ompi_osc_pt2pt_sendreq_init_target(ompi_osc_pt2pt_sendreq_t *sendreq,
 static inline int
 ompi_osc_pt2pt_sendreq_free(ompi_osc_pt2pt_sendreq_t *sendreq)
 {
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                  &sendreq->req_origin_convertor);
+    );
     ompi_convertor_cleanup(&sendreq->req_origin_convertor);
 
     OBJ_RELEASE(sendreq->req_target_datatype);
