@@ -211,6 +211,7 @@ struct mca_oob_tcp_component_t {
     unsigned short     tcp6_listen_port;     /**< IPv6 listen port */
     int                tcp6_port_min;        /**< Minimum allowed port for the OOB listen socket */
     int                tcp6_port_range;      /**< Range of allowed TCP ports */
+    int                disable_family;       /**< disable AF: 0-nothing, 4-IPv4, 6-IPv6 */
 #endif  /* OPAL_WANT_IPV6 */
     opal_mutex_t       tcp_lock;             /**< lock for accessing module state */
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */

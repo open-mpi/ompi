@@ -366,6 +366,18 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
             return ORTE_ERR_UNREACH;
         }
 
+        /* we have IPv4 disabled, so obey it and don't try to connect */
+        if (AF_INET == inaddr.ss_family &&
+            4 == mca_oob_tcp_component.disable_family) {
+            continue;
+        }
+
+        /* we have IPv6 disabled, so obey it and don't try to connect */
+        if (AF_INET6 == inaddr.ss_family &&
+            6 == mca_oob_tcp_component.disable_family) {
+            continue;
+        }
+
         if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT) {
             opal_output(0, "%s-%s mca_oob_tcp_peer_try_connect: "
                         "connecting port %d to: %s:%d\n",
