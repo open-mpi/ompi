@@ -174,8 +174,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                       opal_buffer_t *buffer, orte_rml_tag_t tag,
                       void* cbdata)
 {
-    int ret;
-    
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s orted_recv_cmd: received message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -191,13 +189,6 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
      * to the message buffer for later processing
      */
     ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_daemon_cmd_processor);
-    
-    /* reissue the non-blocking receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(ret);
-    }
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s orted_recv_cmd: reissued recv",
@@ -289,6 +280,13 @@ PROCESS:
 
 CLEANUP:
     OBJ_RELEASE(mev);
+    /* reissue the non-blocking receive */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
+                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
     return;
 }    
 
@@ -417,6 +415,11 @@ static int process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
                 
+            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                 "%s orted:comm:message_local_procs delivering message to job %s tag %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(job), (int)target_tag));
+
             relay_msg = OBJ_NEW(opal_buffer_t);
             opal_dss.copy_payload(relay_msg, buffer);
             
