@@ -357,6 +357,11 @@ int mca_oob_tcp_component_open(void)
                            false, false,
                            64*1024 - 1 - mca_oob_tcp_component.tcp_port_min,
                            &mca_oob_tcp_component.tcp_port_range);
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "disable_family", "Disable IPv4 (4) or IPv6 (6)",
+                           false, false,
+                           0,
+                           &mca_oob_tcp_component.disable_family);
 #if OPAL_WANT_IPV6
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "port_min_v6", "Starting port allowed (IPv6)",
@@ -368,11 +373,6 @@ int mca_oob_tcp_component_open(void)
                            false, false,
                            64*1024 - 1 - mca_oob_tcp_component.tcp6_port_min,
                            &mca_oob_tcp_component.tcp6_port_range);
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "disable_family", "Disable IPv4 (4) or IPv6 (6)",
-                           false, false,
-                           0,
-                           &mca_oob_tcp_component.disable_family);
     mca_oob_tcp_component.tcp6_listen_sd = -1;
 #endif  /* OPAL_WANT_IPV6 */
 
