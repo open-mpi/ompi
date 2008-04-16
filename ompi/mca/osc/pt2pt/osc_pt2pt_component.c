@@ -35,7 +35,6 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
-#include "ompi/memchecker.h"
 
 static int component_open(void);
 static void component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq);
@@ -672,13 +671,6 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
         opal_output_verbose(5, ompi_osc_base_output,
                             "received one-sided packet for with unknown type");
     }
-    /* 
-     * Now, all communications have finished,  
-     * time to make user window/buffer accessable again.
-     */
-    MEMCHECKER(
-        opal_memchecker_base_mem_defined( module->p2p_win->w_baseptr, module->p2p_win->w_size );
-    );
     
     ret = MCA_PML_CALL(irecv(buffer->payload,
                              mca_osc_pt2pt_component.p2p_c_eager_size,
