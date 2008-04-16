@@ -44,8 +44,6 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     bool send_first = false; /* we wait to be contacted */
     ompi_communicator_t *newcomp=NULL;
     char port_name[MPI_MAX_PORT_NAME];
-    char *tmp_port;
-    orte_rml_tag_t tag = 0;  /* tag is set & used in get_rport only at root; silence coverity */
     bool non_mpi = false;
     
     MEMCHECKER(
@@ -91,36 +89,32 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
         }
     }
 
+    /* initialize the port name to avoid problems */
+    memset(port_name, 0, MPI_MAX_PORT_NAME);
+    
     /* See if the info key "ompi_non_mpi" was set to true */
     ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
 
     OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
-        if (non_mpi) {
-            /* no port is required since we won't be
-             * communicating with the children
-             */
-            port_name[0] = '\0';
-        } else {
+        if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
                variable to the children. */
-            ompi_dpm.open_port (port_name);
+            if (OMPI_SUCCESS != (rc = ompi_dpm.open_port (port_name, OMPI_RML_TAG_INVALID))) {
+                goto error;
+            }
         }
         if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs, 
                                                   &info, port_name))) {
             goto error;
-        }
-        if (!non_mpi) {
-            tmp_port = ompi_dpm.parse_port (port_name, &tag);
-            free(tmp_port);
         }
     }
 
     if (non_mpi) {
         newcomp = MPI_COMM_NULL;
     } else {
-        rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+        rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
     }
 
 error:

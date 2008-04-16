@@ -45,8 +45,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     ompi_communicator_t *newcomp=NULL;
     bool send_first=false; /* they are contacting us first */
     char port_name[MPI_MAX_PORT_NAME];
-    char *tmp_port;
-    orte_rml_tag_t tag = 0;
     bool non_mpi, cumulative = false;
 
     MEMCHECKER(
@@ -136,32 +134,30 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
         }
     }
 
+    /* initialize the port name to avoid problems */
+    memset(port_name, 0, MPI_MAX_PORT_NAME);
+    
     OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
-        if (non_mpi) {
-            /* RHC: should this be better? */
-            port_name[0] = '\0';
-        } else {
+        if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
                variable to the children. */
-            ompi_dpm.open_port (port_name);
+            if (OMPI_SUCCESS != (rc = ompi_dpm.open_port (port_name, OMPI_RML_TAG_INVALID))) {
+                goto error;
+            }
         }
         if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, array_of_commands,
                                                  array_of_argv, array_of_maxprocs,
                                                  array_of_info, port_name))) {
             goto error;
         }
-        if (!non_mpi) {
-            tmp_port = ompi_dpm.parse_port (port_name, &tag);
-            free(tmp_port);
-        }
     }
 
     if (non_mpi) {
         newcomp = MPI_COMM_NULL;
     } else {
-        rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, &newcomp, tag);
+        rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
     }
 
 error:

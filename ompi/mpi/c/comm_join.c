@@ -54,15 +54,12 @@ static int ompi_socket_recv (int fd, char *buf, int len );
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
 {
     int rc;
-    orte_rml_tag_t tag=OMPI_COMM_JOIN_TAG;
-    size_t size;
     uint32_t len, rlen, llen, lrlen;
     int send_first=1;
-    char *rname, *name;
+    char *rport, *rname;
 
-    ompi_proc_t **myproc=NULL;
     ompi_communicator_t *newcomp;
-    orte_process_name_t port_proc_name;
+    char port_name[MPI_MAX_PORT_NAME];
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -75,15 +72,16 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* sendrecv OOB-name (port-name) through the socket connection.
-       Need to determine somehow how to avoid a potential deadlock
-       here. */
-    myproc = ompi_proc_self (&size);
-    if (ORTE_SUCCESS != (rc = orte_util_convert_process_name_to_string (&name, &(myproc[0]->proc_name)))) {
+    /* open a port using the specified tag */
+    if (OMPI_SUCCESS != (rc = ompi_dpm.open_port(port_name, OMPI_COMM_JOIN_TAG))) {
         OPAL_CR_EXIT_LIBRARY();
         return rc;
     }
-    llen   = (uint32_t)(strlen(name)+1);
+    
+    /* sendrecv port-name through the socket connection.
+       Need to determine somehow how to avoid a potential deadlock
+       here. */
+    llen   = (uint32_t)(strlen(port_name)+1);
     len    = htonl(llen);
     
     ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
@@ -100,20 +98,14 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     /* Assumption: socket_send should not block, even if the socket 
        is not configured to be non-blocking, because the message length are
        so short. */
-    ompi_socket_send (fd, name, llen);
-    ompi_socket_recv (fd, rname, lrlen);
+    ompi_socket_send (fd, port_name, llen);
+    ompi_socket_recv (fd, rport, lrlen);
     
-    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(&port_proc_name, rname))) {
-        OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_PORT, FUNC_NAME);
-    }
-    rc = ompi_dpm.connect_accept (MPI_COMM_SELF, 0, &port_proc_name,
-                                  send_first, &newcomp, tag);
+    /* use the port we received to connect/accept */
+    rc = ompi_dpm.connect_accept (MPI_COMM_SELF, 0, rport, send_first, &newcomp);
     
     
-    free ( name );
-    free ( rname);
-    free ( myproc );
+    free ( rport );
 
     *intercomm = newcomp;
     OMPI_ERRHANDLER_RETURN (rc, MPI_COMM_SELF, rc, FUNC_NAME);

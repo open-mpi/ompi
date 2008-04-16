@@ -24,13 +24,6 @@
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
-#include "orte/util/name_fns.h"
-#include "opal/dss/dss.h"
-#include "orte/runtime/orte_globals.h"
-
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/routed/routed.h"
-
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect
 #endif
@@ -48,9 +41,6 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     int rank, rc;
     bool send_first=true;   /* yes, we are the active part in this game */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    orte_process_name_t port_proc_name;
-    char *tmp_port=NULL;
-    orte_rml_tag_t tag = 0;  /* tag is set & used in get_rport only at root; silence coverity */
 
     MEMCHECKER(
         memchecker_comm(comm);
@@ -99,43 +89,7 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* 
-     * translate the port_name string into the according process_name_t 
-     * structure. 
-     */ 
-    if ( rank == root ) { 
-        tmp_port = ompi_dpm.parse_port (port_name, &tag);
-        if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(&port_proc_name, tmp_port))) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
-        }
-        if ( OPAL_EQUAL == opal_dss.compare(&port_proc_name, ORTE_NAME_INVALID, ORTE_NAME) ) {
-            *newcomm = MPI_COMM_NULL;
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
-        }
-
-        /* Make sure we can route the connect attempt to the remote side if we
-         * don't share the same HNP
-         */
-        
-        /* set the contact info into the local hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(tmp_port))) {
-            free(tmp_port);
-            return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
-        }
-        /* update the route to this process - in this case, we always give it
-         * as direct since we were given the contact info. We trust the
-         * selected routed component to do the Right Thing for its own mode
-         * of operation
-         */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&port_proc_name, &port_proc_name))) {
-            return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
-        }
-
-        free (tmp_port);
-    }
-
-    rc = ompi_dpm.connect_accept (comm, root, &port_proc_name, send_first,
-                                   &newcomp, tag);
+    rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
     
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

@@ -52,6 +52,40 @@
 static opal_mutex_t ompi_dpm_port_mutex;
 static orte_rml_tag_t next_tag;
 
+/* API functions */
+static int init(void);
+static int connect_accept ( ompi_communicator_t *comm, int root,
+                            char *port_string, bool send_first,
+                            ompi_communicator_t **newcomm );
+static void disconnect(ompi_communicator_t *comm);
+static int spawn(int count, char **array_of_commands,
+                 char ***array_of_argv,
+                 int *array_of_maxprocs,
+                 MPI_Info *array_of_info,
+                 char *port_name);
+static int dyn_init(void);
+static int open_port(char *port_name, orte_rml_tag_t given_tag);
+static char *parse_port (char *port_name, orte_rml_tag_t *tag);
+static int close_port(char *port_name);
+static int finalize(void);
+
+/*
+ * instantiate the module
+ */
+ompi_dpm_base_module_t ompi_dpm_orte_module = {
+    init,
+    connect_accept,
+    disconnect,
+    spawn,
+    dyn_init,
+    ompi_dpm_base_dyn_finalize,
+    ompi_dpm_base_mark_dyncomm,
+    open_port,
+    parse_port,
+    close_port,
+    finalize
+};
+
 
 /*
  * Init the module
@@ -70,8 +104,8 @@ static int get_rport (orte_process_name_t *port,
 
 
 static int connect_accept ( ompi_communicator_t *comm, int root,
-                            orte_process_name_t *port, bool send_first,
-                            ompi_communicator_t **newcomm, orte_rml_tag_t tag )
+                            char *port_string, bool send_first,
+                            ompi_communicator_t **newcomm )
 {
     int size, rsize, rank, rc;
     orte_std_cntr_t num_vals;
@@ -82,7 +116,8 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
-    orte_process_name_t *rport=NULL, tmp_port_name;
+    orte_process_name_t port, *rport=NULL, tmp_port_name;
+    orte_rml_tag_t tag=ORTE_RML_TAG_INVALID;
     opal_buffer_t *nbuf=NULL, *nrbuf=NULL;
     ompi_proc_t **proc_list=NULL, **new_proc_list;
     int i,j, new_proc_len;
@@ -92,12 +127,44 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
                          "%s dpm:orte:connect_accept with port %s %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(port),
-                         send_first ? "sending first" : "recv first"));
+                         port_string, send_first ? "sending first" : "recv first"));
+    
+    /* set default error return */
+    *newcomm = MPI_COMM_NULL;
     
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
 
+    /* extract the process name from the port string, if given, and
+     * set us up to communicate with it
+     */
+    if (NULL != port_string && 0 < strlen(port_string)) {
+        char *rml_uri;
+        /* separate the string into the RML URI and tag */
+        rml_uri = parse_port(port_string, &tag);
+        /* extract the process name from the rml_uri */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &port, NULL))) {
+            free(rml_uri);
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* update the local hash table */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+            ORTE_ERROR_LOG(rc);
+            free(rml_uri);
+            return rc;
+        }
+        /* update the route as "direct" - the selected routed
+         * module will handle this appropriate to its methods
+         */
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&port, &port))) {
+            ORTE_ERROR_LOG(rc);
+            free(rml_uri);
+            return rc;
+        }
+        free(rml_uri);
+    }
+    
     /* tell the progress engine to tick the event library more
        often, to make sure that the OOB messages get sent */
     opal_progress_event_users_increment();
@@ -122,12 +189,12 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
         if ( OMPI_COMM_JOIN_TAG != tag ) {
             if(OMPI_GROUP_IS_DENSE(group)){
-                rc = get_rport(port,send_first,
+                rc = get_rport(&port,send_first,
                                group->grp_proc_pointers[rank], tag,
                                &tmp_port_name);
             }
             else {
-                rc = get_rport(port,send_first,
+                rc = get_rport(&port,send_first,
                                proc_list[rank], tag,
                                &tmp_port_name);
             }
@@ -136,7 +203,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             }
             rport = &tmp_port_name;
         } else {
-            rport = port;
+            rport = &port;
         }
 
         /* Generate the message buffer containing the number of processes and the list of
@@ -424,9 +491,9 @@ static void disconnect(ompi_communicator_t *comm)
  * point.
  *
  */
-int get_rport(orte_process_name_t *port, int send_first,
-              ompi_proc_t *proc, orte_rml_tag_t tag, 
-              orte_process_name_t *rport_name)
+static int get_rport(orte_process_name_t *port, int send_first,
+                     ompi_proc_t *proc, orte_rml_tag_t tag, 
+                     orte_process_name_t *rport_name)
 {
     int rc;
     orte_std_cntr_t num_vals;
@@ -435,9 +502,9 @@ int get_rport(orte_process_name_t *port, int send_first,
         opal_buffer_t *sbuf;
         
         OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                             "%s dpm:orte:get_rport sending to %s",
+                             "%s dpm:orte:get_rport sending to %s tag %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(port)));
+                             ORTE_NAME_PRINT(port), (int)tag));
                             
         sbuf = OBJ_NEW(opal_buffer_t);
         if (NULL == sbuf) {
@@ -461,8 +528,8 @@ int get_rport(orte_process_name_t *port, int send_first,
         opal_buffer_t *rbuf;
 
         OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                             "%s dpm:orte:get_rport waiting to recv",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             "%s dpm:orte:get_rport waiting to recv on tag %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)tag));
         
         rbuf = OBJ_NEW(opal_buffer_t);
         if (NULL == rbuf) {
@@ -720,11 +787,16 @@ static int spawn(int count, char **array_of_commands,
     return OMPI_SUCCESS;
 }
 
-static int open_port(char *port_name)
+/* optionally can provide a tag to be used - otherwise, we supply the
+ * next dynamically assigned tag
+ */
+static int open_port(char *port_name, orte_rml_tag_t given_tag)
 {
     char *rml_uri, *ptr, tag[12];
     int rc;
     
+    OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
+
     /*
      * The port_name is equal to the OOB-contact information
      * and an RML tag. The reason for adding the tag is
@@ -732,10 +804,17 @@ static int open_port(char *port_name)
      */
     
     if (NULL == (rml_uri = orte_rml.get_contact_info())) {
-        return OMPI_ERR_NOT_AVAILABLE;
+        rc = OMPI_ERR_NOT_AVAILABLE;
+        goto cleanup;
     }
     
-    sprintf(tag, "%d", (int)next_tag);
+    if (ORTE_RML_TAG_INVALID == given_tag) {
+        snprintf(tag, 12, "%d", (int)next_tag);
+        next_tag++;
+    } else {
+        /* use the given tag */
+        snprintf(tag, 12, "%d", (int)given_tag);
+    }
     
     /* if the overall port name is too long, we try to truncate the rml uri */
     rc = 0;
@@ -743,7 +822,8 @@ static int open_port(char *port_name)
         /* if we have already tried several times, punt! */
         if (4 < rc) {
             free(rml_uri);
-            return OMPI_ERROR;
+            rc = OMPI_ERROR;
+            goto cleanup;
         }
         /* find the trailing uri and truncate there */
         ptr = strrchr(rml_uri, ';');
@@ -751,19 +831,19 @@ static int open_port(char *port_name)
         ++rc;
     }
     
-    OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
-    sprintf (port_name, "%s:%s", rml_uri, tag);
-    next_tag++;
-    OPAL_THREAD_UNLOCK(&ompi_dpm_port_mutex);
+    snprintf (port_name, MPI_MAX_PORT_NAME, "%s:%s", rml_uri, tag);
     
     free ( rml_uri );
-    
-    return OMPI_SUCCESS;
+    rc = OMPI_SUCCESS;
+
+cleanup:
+    OPAL_THREAD_UNLOCK(&ompi_dpm_port_mutex);
+    return rc;
 }
 
 /* takes a port_name and separates it into the RML URI
-* and the tag
-*/
+ * and the tag
+ */
 static char *parse_port (char *port_name, orte_rml_tag_t *tag)
 {
     char *tmp_string, *ptr;
@@ -781,15 +861,15 @@ static char *parse_port (char *port_name, orte_rml_tag_t *tag)
     sscanf(ptr,"%d", (int*)tag);
     
     /* see if the length of the RML uri is too long - if so,
-        * truncate it
-        */
+     * truncate it
+     */
     if (strlen(port_name) > MPI_MAX_PORT_NAME) {
         port_name[MPI_MAX_PORT_NAME] = '\0';
     }
     
     /* copy the RML uri so we can return a malloc'd value
-        * that can later be free'd
-        */
+     * that can later be free'd
+     */
     tmp_string = strdup(port_name);
     
     return tmp_string;
@@ -802,13 +882,10 @@ static int close_port(char *port_name)
 
 static int dyn_init(void)
 {
-    char *oob_port=NULL;
     char *port_name=NULL;
     int root=0, rc;
     bool send_first = true;
-    orte_rml_tag_t tag;
     ompi_communicator_t *newcomm=NULL;
-    orte_process_name_t port_proc_name;
     ompi_group_t *group = NULL;
     ompi_errhandler_t *errhandler = NULL;
     
@@ -826,42 +903,7 @@ static int dyn_init(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          port_name));
     
-    /* split the content of the environment variable into
-    its pieces, which are RML-uri:tag */
-    oob_port = parse_port (port_name, &tag);
-    
-    /* set the contact info into the local hash table */
-    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(oob_port))) {
-        ORTE_ERROR_LOG(rc);
-        free(oob_port);
-        return(rc);
-    }
-    
-    /* process the RML uri to get the port's process name */
-    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(oob_port, &port_proc_name, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        free(oob_port);
-        return rc;
-    }
-    free(oob_port);  /* done with this */
-    
-    /* update the route to this process - in this case, we always give it
-     * as direct since we were given the contact info. We trust the
-     * selected routed component to do the Right Thing for its own mode
-     * of operation
-     */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_route(&port_proc_name, &port_proc_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                         "%s dpm:orte:dyn_init calling connect_accept to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&port_proc_name)));
-    
-    rc = connect_accept (MPI_COMM_WORLD, root, &port_proc_name,
-                         send_first, &newcomm, tag );
+    rc = connect_accept (MPI_COMM_WORLD, root, port_name, send_first, &newcomm);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
@@ -896,22 +938,5 @@ static int finalize(void)
     OBJ_DESTRUCT(&ompi_dpm_port_mutex);
     return OMPI_SUCCESS;
 }
-
-/*
- * instantiate the module
- */
-ompi_dpm_base_module_t ompi_dpm_orte_module = {
-    init,
-    connect_accept,
-    disconnect,
-    spawn,
-    dyn_init,
-    ompi_dpm_base_dyn_finalize,
-    ompi_dpm_base_mark_dyncomm,
-    open_port,
-    parse_port,
-    close_port,
-    finalize
-};
 
 

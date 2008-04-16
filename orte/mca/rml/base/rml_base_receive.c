@@ -33,6 +33,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
@@ -86,6 +87,11 @@ static void process_message(int fd, short event, void *data)
     orte_rml_cmd_flag_t command;
     orte_std_cntr_t count;
     int rc;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
+                         "%s rml:base:recv: processing message from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&mev->sender)));
     
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_RML_CMD))) {

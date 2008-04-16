@@ -77,6 +77,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
@@ -489,6 +490,16 @@ int orterun(int argc, char *argv[])
     if (ORTE_SUCCESS != (rc = orte_data_server_init())) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+    
+    /* if an uri for the ompi-server was provided, set the route */
+    if (NULL != ompi_server) {
+        opal_buffer_t buf;
+        /* setup our route to the server */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        opal_dss.pack(&buf, &ompi_server, 1, OPAL_STRING);
+        orte_rml_base_update_contact_info(&buf);
+        OBJ_DESTRUCT(&buf);        
     }
     
     /** setup callbacks for abort signals */

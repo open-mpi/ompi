@@ -91,6 +91,12 @@ orte_rml_oob_send(orte_process_name_t* peer,
     int i;
     int bytes = 0;
 
+    if (ORTE_RML_TAG_INVALID == tag) {
+        /* cannot send to an invalid tag */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     msg->msg_type = ORTE_RML_BLOCKING_SEND;
     flags |= ORTE_RML_FLAG_RECURSIVE_CALLBACK;
 
@@ -172,6 +178,12 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
     int i;
     int bytes = 0;
 
+    if (ORTE_RML_TAG_INVALID == tag) {
+        /* cannot send to an invalid tag */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     msg->msg_type = ORTE_RML_NONBLOCKING_IOV_SEND;
     msg->msg_cbfunc.iov = cbfunc;
     msg->msg_cbdata = cbdata;
@@ -240,6 +252,12 @@ orte_rml_oob_send_buffer(orte_process_name_t* peer,
     orte_std_cntr_t datalen;
     struct iovec iov[1];
 
+    if (ORTE_RML_TAG_INVALID == tag) {
+        /* cannot send to an invalid tag */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     /* first build iovec from buffer information */
     ret = opal_dss.unload(buffer, &dataptr, &datalen);
     if (ret != ORTE_SUCCESS) return ret;
@@ -268,6 +286,12 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
     orte_process_name_t next;
     int bytes = 0;
 
+    if (ORTE_RML_TAG_INVALID == tag) {
+        /* cannot send to an invalid tag */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     /* first build iovec from buffer information */
     ret = opal_dss.unload(buffer, &dataptr, &datalen);
     if (ORTE_SUCCESS != ret) {

@@ -38,6 +38,9 @@
 BEGIN_C_DECLS
 
 /* OMPI port definitions */
+/* carry over the INVALID def */
+#define OMPI_RML_TAG_INVALID                        ORTE_RML_TAG_INVALID
+/* define a starting point to avoid conflicts */
 #define OMPI_RML_TAG_BASE                           ORTE_RML_TAG_MAX
 
 #define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
@@ -65,8 +68,8 @@ typedef int (*ompi_dpm_base_module_init_fn_t)(void);
  * Connect/accept communications
  */
 typedef int (*ompi_dpm_base_module_connect_accept_fn_t)(ompi_communicator_t *comm, int root,
-                                                        orte_process_name_t *port, bool send_first,
-                                                        ompi_communicator_t **newcomm, orte_rml_tag_t tag);
+                                                        char *port, bool send_first,
+                                                        ompi_communicator_t **newcomm);
 
 /**
  * Executes internally a disconnect on all dynamic communicators
@@ -107,9 +110,11 @@ typedef int (*ompi_dpm_base_module_dyn_finalize_fn_t)(void);
 typedef void (*ompi_dpm_base_module_mark_dyncomm_fn_t)(ompi_communicator_t *comm);
 
 /*
- * Open a port to interface to a dynamically spawned job
+ * Open a port to interface to a dynamically spawned job - if the
+ * specified tag is valid, then it will be used to form the port. Otherwise,
+ * a dynamically assigned tag that is unique to this request will be provided
  */
-typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name);
+typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, orte_rml_tag_t tag);
 
 /*
  * Parse a port name to get the contact info and tag
