@@ -287,7 +287,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         kindex = opal_ifindextokindex(idx);
         index = local_kindex_to_index[kindex];
 
-        /* create entry, for this kernel index previsouly not seen */
+        /* create entry for this kernel index previously not seen */
         if(-1 == index) {
             index = num_local_interfaces++;
             local_kindex_to_index[kindex] = index;
@@ -298,6 +298,11 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
         switch(local_addr.ss_family) {
             case AF_INET:
+                /* if AF is disabled, skip it completely */
+                if (4 == mca_btl_tcp_component.tcp_disable_family) {
+                    continue;
+                }
+
                 local_interfaces[local_kindex_to_index[kindex]]->ipv4_address = 
                     malloc(sizeof(local_addr));
                 memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv4_address, 
@@ -307,6 +312,11 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                         sizeof(int));
                 break;
             case AF_INET6:
+                /* if AF is disabled, skip it completely */
+                if (6 == mca_btl_tcp_component.tcp_disable_family) {
+                    continue;
+                }
+
                 local_interfaces[local_kindex_to_index[kindex]]->ipv6_address 
                     = malloc(sizeof(local_addr));
                 memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv6_address, 
