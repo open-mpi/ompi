@@ -1399,6 +1399,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc, opal_buffer_t
     orte_std_cntr_t cnt;
     int rc;
     bool found=false;
+    orte_odls_job_t *jobdat;
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -1435,6 +1436,12 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc, opal_buffer_t
          * alive
          */
         child->alive = true;
+        /* setup jobdat object for its job so daemon collectives work */
+        jobdat = OBJ_NEW(orte_odls_job_t);
+        jobdat->jobid = proc->jobid;
+        jobdat->dp = ORTE_RMAPS_ALL_DAEMONS;
+        opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
+        
     }
     
     /* if the contact info is already set, then we are "de-registering" the child
