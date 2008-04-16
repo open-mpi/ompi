@@ -107,7 +107,7 @@ extern int opal_memchecker_base_output;
  */
 OPAL_DECLSPEC int opal_memchecker_base_runindebugger(void);
 #if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_runindebugger()
+#define opal_memchecker_base_runindebugger() 0
 #endif
 
 
@@ -124,7 +124,7 @@ OPAL_DECLSPEC int opal_memchecker_base_runindebugger(void);
  */
 OPAL_DECLSPEC int opal_memchecker_base_isaddressible(void * p, size_t len);
 #if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_isaddressible(p, len)
+#define opal_memchecker_base_isaddressible(p, len) 0
 #endif
 
 
@@ -141,7 +141,7 @@ OPAL_DECLSPEC int opal_memchecker_base_isaddressible(void * p, size_t len);
  */
 OPAL_DECLSPEC int opal_memchecker_base_isdefined(void * p, size_t len);
 #if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_isdefined(p, len)
+#define opal_memchecker_base_isdefined(p, len) 0
 #endif
 
 /**
