@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -33,6 +33,7 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/dt_arch.h"
+#include "ompi/memchecker.h"
 
 static inline int32_t
 create_send_tag(ompi_osc_rdma_module_t *module)
@@ -724,8 +725,17 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &replyreq->rep_target_convertor);
+        );
         ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
                                   &max_data );
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &replyreq->rep_target_convertor);
+        );
+
         if (ret < 0) {
             ret = OMPI_ERR_FATAL;
             goto cleanup;
@@ -812,20 +822,26 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
 
         /* initialize convertor */
-        proc = ompi_comm_peer_lookup(module->m_comm, header->hdr_origin);
+        proc         = ompi_comm_peer_lookup(module->m_comm, header->hdr_origin);
         ompi_convertor_copy_and_prepare_for_recv(proc->proc_convertor,
                                                  datatype,
                                                  header->hdr_target_count,
                                                  target,
                                                  0,
                                                  &convertor);
-        iov.iov_len = header->hdr_msg_length;
+        iov.iov_len  = header->hdr_msg_length;
         iov.iov_base = (IOVBASE_TYPE*)*inbuf;
-        max_data = iov.iov_len;
+        max_data     = iov.iov_len;
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined, &convertor);
+        );
         ompi_convertor_unpack(&convertor, 
                               &iov,
                               &iov_count,
                               &max_data );
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess, &convertor);
+        );
         OBJ_DESTRUCT(&convertor);
         OBJ_RELEASE(datatype);
         inmsg_mark_complete(module);
@@ -914,10 +930,18 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
         iov.iov_len = header->hdr_msg_length;
         iov.iov_base = (IOVBASE_TYPE*) payload;
         max_data = iov.iov_len;
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &convertor);
+        );
         ompi_convertor_unpack(&convertor, 
                               &iov,
                               &iov_count,
                               &max_data);
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &convertor);
+        );
         OBJ_DESTRUCT(&convertor);
     } else {
         /* copy the data from the temporary buffer into the user window */
@@ -993,13 +1017,19 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                                      0,
                                                      &convertor);
 
-            iov.iov_len = header->hdr_msg_length;
+            iov.iov_len  = header->hdr_msg_length;
             iov.iov_base = (IOVBASE_TYPE*)*payload;
-            max_data = iov.iov_len;
+            max_data     = iov.iov_len;
+            MEMCHECKER(
+                memchecker_convertor_call(&opal_memchecker_base_mem_defined, &convertor);
+            );
             ompi_convertor_unpack(&convertor, 
                                   &iov,
                                   &iov_count,
                                   &max_data);
+            MEMCHECKER(
+                memchecker_convertor_call(&opal_memchecker_base_mem_noaccess, &convertor);
+            );
             OBJ_DESTRUCT(&convertor);
         } else {
             void *buffer = NULL;
@@ -1034,13 +1064,19 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                                          0,
                                                          &convertor);
 
-                iov.iov_len = header->hdr_msg_length;
+                iov.iov_len  = header->hdr_msg_length;
                 iov.iov_base = (IOVBASE_TYPE*)*payload;
-                max_data = iov.iov_len;
+                max_data     = iov.iov_len;
+                MEMCHECKER(
+                    memchecker_convertor_call(&opal_memchecker_base_mem_defined, &convertor);
+                );
                 ompi_convertor_unpack(&convertor, 
                                       &iov,
                                       &iov_count,
                                       &max_data);
+                MEMCHECKER(
+                    memchecker_convertor_call(&opal_memchecker_base_mem_noaccess, &convertor);
+                );
                 OBJ_DESTRUCT(&convertor);
             } else {
                 buffer = *payload;
@@ -1174,13 +1210,21 @@ ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
         size_t max_data;
         int32_t count;
 
-        iov.iov_len = header->hdr_msg_length;
+        iov.iov_len  = header->hdr_msg_length;
         iov.iov_base = (IOVBASE_TYPE*)*payload;
-        max_data = iov.iov_len;
+        max_data     = iov.iov_len;
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_origin_convertor);
+        );
         ompi_convertor_unpack(&sendreq->req_origin_convertor,
                               &iov,
                               &iov_count,
                               &max_data );
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                      &sendreq->req_origin_convertor);
+        );
 
         count = sendreq->req_module->m_num_pending_out -= 1;
         ompi_osc_rdma_sendreq_free(sendreq);

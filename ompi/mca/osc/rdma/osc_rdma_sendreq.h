@@ -30,6 +30,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/memchecker.h"
 
 typedef enum {
     OMPI_OSC_RDMA_GET,
@@ -169,6 +170,10 @@ static inline int
 ompi_osc_rdma_sendreq_free(ompi_osc_rdma_sendreq_t *sendreq)
 {
     if (0 == (--sendreq->req_refcount)) {
+        MEMCHECKER(
+            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                      &sendreq->req_origin_convertor);
+        );
         ompi_convertor_cleanup(&sendreq->req_origin_convertor);
 
         OBJ_RELEASE(sendreq->req_target_datatype);

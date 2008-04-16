@@ -30,6 +30,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/memchecker.h"
 
 
 struct ompi_osc_rdma_replyreq_t {
@@ -128,6 +129,10 @@ ompi_osc_rdma_replyreq_init_origin(ompi_osc_rdma_replyreq_t *replyreq,
 static inline int
 ompi_osc_rdma_replyreq_free(ompi_osc_rdma_replyreq_t *replyreq)
 {
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_defined,
+                                  &replyreq->rep_target_convertor);
+    );
     ompi_convertor_cleanup(&replyreq->rep_target_convertor);
 
     OBJ_RELEASE(replyreq->rep_target_datatype);
