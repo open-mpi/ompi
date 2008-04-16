@@ -34,7 +34,13 @@
 
 
 static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_convertor_t* pConvertor)
-{
+{  
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
+    if ( 0 == pConvertor->count )
+        return OMPI_SUCCESS;
 
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP) ) {
         /*  We have a contiguous type. */
@@ -50,6 +56,11 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
             stack_disp = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
     
         for (i = 0; i < pConvertor->count; i++){
+            while ( DT_LOOP == pElem->elem.common.flags ) {
+                elem_pos++;
+                pElem = &(description[elem_pos]);
+            }
+            
             while( pElem->elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*pElem->elem.extent );
@@ -57,6 +68,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
                 pElem = &(description[elem_pos]);
                 continue;
             }
+              
             elem_pos = 0;
             pElem = &(description[elem_pos]);
             /* starting address of next stack. */
@@ -79,7 +91,11 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t co
     size_t j;
     MPI_Aint *array_of_adds;
     MPI_Datatype *array_of_dtypes;
-    
+
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
     if (ompi_ddt_is_contiguous_memory_layout(type, count)) {
         f(p, count * (type->true_ub - type->true_lb));
     } else {
