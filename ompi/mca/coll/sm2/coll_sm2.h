@@ -528,6 +528,11 @@ BEGIN_C_DECLS
             struct ompi_communicator_t *comm,
             struct mca_coll_base_module_1_1_0_t *module);
 
+    /**
+      * Shared memory blocking barrier
+      */
+    int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
 
 END_C_DECLS
 
