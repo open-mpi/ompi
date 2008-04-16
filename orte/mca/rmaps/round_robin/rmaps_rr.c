@@ -484,15 +484,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 
     return ORTE_SUCCESS;
 
-#if 0
-    if(!opal_list_is_empty(&procs)){
-        if(ORTE_SUCCESS != (rc = orte_rmaps_base_rearrange_map(app, map, &procs))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-#endif
-
 error:
     while(NULL != (item = opal_list_remove_first(&node_list))) {
         OBJ_RELEASE(item);
