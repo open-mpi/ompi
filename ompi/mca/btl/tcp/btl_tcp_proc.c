@@ -607,8 +607,8 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
              * btl_tcp_if_include/exclude on the remote end, we
              * might get a different source address.
              *
-             * If this address isn't included in btl_proc->proc_addrs,
-             * we would erroneously drop the connection
+             * If this address hasn't the right kernel index, we would
+             * erroneously drop the connection
              */
             if (remote_kernel_index != exported_address->addr_ifkindex) {
                 /* kernel_index doesn't match, so that's not a possible
