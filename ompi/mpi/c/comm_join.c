@@ -56,7 +56,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     int rc;
     uint32_t len, rlen, llen, lrlen;
     int send_first=1;
-    char *rport, *rname;
+    char *rport;
 
     ompi_communicator_t *newcomp;
     char port_name[MPI_MAX_PORT_NAME];
@@ -88,8 +88,8 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     ompi_socket_recv (fd, (char *) &rlen, sizeof(uint32_t));
 
     lrlen  = ntohl(rlen);
-    rname = (char *) malloc (lrlen);
-    if ( NULL == rname ) {
+    rport = (char *) malloc (lrlen);
+    if ( NULL == rport ) {
         *intercomm = MPI_COMM_NULL;
         OPAL_CR_EXIT_LIBRARY();
         return MPI_ERR_INTERN;
