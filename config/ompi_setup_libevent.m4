@@ -307,6 +307,8 @@ fi
 
 haveeventports=no
 AC_CHECK_FUNCS(port_create, [haveeventports=yes], )
+# JMS Per #1273, Solaris event ports are temporarily disabled.
+haveeventports=no
 if test "x$haveeventports" = "xyes" ; then
     AC_DEFINE(HAVE_EVENT_PORTS, 1,
         [Define if your system supports event ports])
