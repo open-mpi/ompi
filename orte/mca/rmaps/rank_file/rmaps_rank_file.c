@@ -115,7 +115,7 @@ static int map_app_by_user_map(
                    rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, node->slot_list);
         }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, app->idx,
-            nodes, jdata->map->oversubscribe))) {
+            nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
             * really isn't an error - we just need to break from the loop
             * since the node is fully used up. For now, just don't report
@@ -200,7 +200,7 @@ static int map_app_by_node(
             }
         }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + orte_rmaps_rank_file_num_alloc, app->idx,
-                                             nodes, jdata->map->oversubscribe))) {
+                                             nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
              * since the node is fully used up. For now, just don't report
@@ -310,7 +310,7 @@ static int map_app_by_slot(
                 }
             }
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + orte_rmaps_rank_file_num_alloc, app->idx,
-                                                 nodes, jdata->map->oversubscribe))) {
+                                                 nodes, jdata->map->oversubscribe, true))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report

@@ -47,6 +47,7 @@ bool orte_timing;
 bool orte_debug_flag = false;
 bool orte_debug_daemons_flag = false;
 bool orte_debug_daemons_file_flag = false;
+bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
@@ -126,6 +127,11 @@ int orte_register_params(void)
             opal_output_set_verbosity(orte_debug_output, 1);
         }
     }
+    
+    mca_base_param_reg_int_name("orte", "do_not_launch",
+                                "Perform all necessary operations to prepare to launch the application, but do not actually launch it",
+                                false, false, (int)false, &value);
+    orte_do_not_launch = OPAL_INT_TO_BOOL(value);
     
     mca_base_param_reg_int_name("orted", "spin",
                                 "Have any orteds spin until we can connect a debugger to them",

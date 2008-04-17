@@ -45,7 +45,6 @@ struct orterun_globals_t {
     bool exit;
     bool by_node;
     bool by_slot;
-    bool do_not_launch;
     bool debugger;
     int num_procs;
     char *env_val;

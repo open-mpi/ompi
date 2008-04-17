@@ -47,56 +47,6 @@
  */
 static opal_list_item_t *cur_node_item = NULL;
 
-
-
-
-static int map_app_by_user_map(
-    orte_app_context_t* app,
-    orte_job_t* jdata,
-    orte_vpid_t vpid_start,
-    opal_list_t* nodes,
-    opal_list_t* procs)
-{
-#if 0
-    int rc = ORTE_SUCCESS;
-    orte_ras_proc_t *proc;
-    opal_list_item_t *proc_item, *node_item;
-    orte_node_t *node;
-
-
-    for (proc_item = opal_list_get_first(procs);
-         proc_item != opal_list_get_end(procs);
-         proc_item = opal_list_get_next(proc_item)) {
-        proc = (orte_ras_proc_t *)proc_item;
-        if(proc->rank >= vpid_start && proc->rank < (vpid_start + app->num_procs)){
-            for (node_item = opal_list_get_first(nodes);
-                 node_item != opal_list_get_end(nodes);
-                 node_item = opal_list_get_next(node_item)) {
-                node = (orte_node_t *)node_item;
-                if(0 == strcmp(node->name, proc->node_name)){
-                    if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, proc->rank, app->idx,
-                                                         nodes, false))) {
-                        /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
-                         * really isn't an error - we just need to break from the loop
-                         * since the node is fully used up. For now, just don't report
-                         * an error
-                         */
-                        if (ORTE_ERR_NODE_FULLY_USED != rc) {
-                            ORTE_ERROR_LOG(rc);
-                            return rc;
-                        }
-                    }
-                    break;
-                }
-            }
-        }       
-    }
-#endif
-    return ORTE_SUCCESS;
-}
-
-
-
 /*
  * Create a default mapping for the application, scheduling round
  * robin by node.
@@ -156,7 +106,7 @@ static int map_app_by_node(
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
-                                             nodes, jdata->map->oversubscribe))) {
+                                             nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
              * since the node is fully used up. For now, just don't report
@@ -263,7 +213,7 @@ static int map_app_by_slot(
         
         for( i = 0; i < num_slots_to_take; ++i) {
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
-                                                 nodes, jdata->map->oversubscribe))) {
+                                                 nodes, jdata->map->oversubscribe, true))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report
@@ -309,7 +259,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     orte_job_map_t *map;
     orte_app_context_t *app, **apps;
     orte_std_cntr_t i;
-    opal_list_t node_list, procs;
+    opal_list_t node_list;
     opal_list_item_t *item;
     orte_node_t *node;
     orte_vpid_t vpid_start;
@@ -443,7 +393,8 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 
         /* Make assignments */
         if (map->policy == ORTE_RMAPS_BYUSER) {
-            rc = map_app_by_user_map(app, jdata, vpid_start, &node_list, &procs);         
+            rc = ORTE_ERR_NOT_IMPLEMENTED;
+            goto error;
         } else if (map->policy == ORTE_RMAPS_BYNODE) {
             rc = map_app_by_node(app, jdata, vpid_start, &node_list);
         } else {
