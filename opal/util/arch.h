@@ -16,12 +16,13 @@
  *
  * $HEADER$
  */
-#ifndef DATATYPE_ARCH_H_HAS_BEEN_INCLUDED
-#define DATATYPE_ARCH_H_HAS_BEEN_INCLUDED
+#ifndef OPAL_ARCH_H_HAS_BEEN_INCLUDED
+#define OPAL_ARCH_H_HAS_BEEN_INCLUDED
 
 #include <float.h>
 #include <assert.h>
-#include "ompi/constants.h"
+
+#include "opal/constants.h"
 
 /***************************************************
 ** This file tries to classify the most relevant
@@ -190,46 +191,46 @@
 
 /* These masks implement the specification above above */
 
-#define OMPI_ARCH_HEADERMASK      0x03000000 /* set the fields for the header */
-#define OMPI_ARCH_HEADERMASK2     0x00000003 /* other end, needed for checks */
-#define OMPI_ARCH_UNUSEDMASK      0xfc000000 /* mark the unused fields */
+#define OPAL_ARCH_HEADERMASK      0x03000000 /* set the fields for the header */
+#define OPAL_ARCH_HEADERMASK2     0x00000003 /* other end, needed for checks */
+#define OPAL_ARCH_UNUSEDMASK      0xfc000000 /* mark the unused fields */
 
 /* BYTE 1 */
-#define OMPI_ARCH_ISBIGENDIAN     0x00000008
+#define OPAL_ARCH_ISBIGENDIAN     0x00000008
 
 /* BYTE 2 */
-#define OMPI_ARCH_LONGISxx        0x0000c000  /* mask for sizeof long */
-#define OMPI_ARCH_LONGIS64        0x00001000
-#define OMPI_ARCH_LONGLONGISxx    0x00003000  /* mask for sizeof long long */
+#define OPAL_ARCH_LONGISxx        0x0000c000  /* mask for sizeof long */
+#define OPAL_ARCH_LONGIS64        0x00001000
+#define OPAL_ARCH_LONGLONGISxx    0x00003000  /* mask for sizeof long long */
 
-#define OMPI_ARCH_BOOLISxx        0x00000c00  /* mask for sizeof bool */
-#define OMPI_ARCH_BOOLIS8         0x00000000  /* bool is 8 bits */
-#define OMPI_ARCH_BOOLIS16        0x00000400  /* bool is 16 bits */
-#define OMPI_ARCH_BOOLIS32        0x00000800  /* bool is 32 bits */
+#define OPAL_ARCH_BOOLISxx        0x00000c00  /* mask for sizeof bool */
+#define OPAL_ARCH_BOOLIS8         0x00000000  /* bool is 8 bits */
+#define OPAL_ARCH_BOOLIS16        0x00000400  /* bool is 16 bits */
+#define OPAL_ARCH_BOOLIS32        0x00000800  /* bool is 32 bits */
 
-#define OMPI_ARCH_LOGICALISxx     0x00000300  /* mask for sizeof Fortran logical */
-#define OMPI_ARCH_LOGICALIS8      0x00000000  /* logical is 8 bits */
-#define OMPI_ARCH_LOGICALIS16     0x00000100  /* logical is 16 bits */
-#define OMPI_ARCH_LOGICALIS32     0x00000200  /* logical is 32 bits */
+#define OPAL_ARCH_LOGICALISxx     0x00000300  /* mask for sizeof Fortran logical */
+#define OPAL_ARCH_LOGICALIS8      0x00000000  /* logical is 8 bits */
+#define OPAL_ARCH_LOGICALIS16     0x00000100  /* logical is 16 bits */
+#define OPAL_ARCH_LOGICALIS32     0x00000200  /* logical is 32 bits */
 
 /* BYTE 3 */
-#define OMPI_ARCH_LONGDOUBLEIS96  0x00020000
-#define OMPI_ARCH_LONGDOUBLEIS128 0x00010000
+#define OPAL_ARCH_LONGDOUBLEIS96  0x00020000
+#define OPAL_ARCH_LONGDOUBLEIS128 0x00010000
 
-#define OMPI_ARCH_LDEXPSIZEIS15   0x00080000
+#define OPAL_ARCH_LDEXPSIZEIS15   0x00080000
 
-#define OMPI_ARCH_LDMANTDIGIS64   0x00400000
-#define OMPI_ARCH_LDMANTDIGIS105  0x00200000
-#define OMPI_ARCH_LDMANTDIGIS106  0x00600000
-#define OMPI_ARCH_LDMANTDIGIS107  0x00100000
-#define OMPI_ARCH_LDMANTDIGIS113  0x00500000
+#define OPAL_ARCH_LDMANTDIGIS64   0x00400000
+#define OPAL_ARCH_LDMANTDIGIS105  0x00200000
+#define OPAL_ARCH_LDMANTDIGIS106  0x00600000
+#define OPAL_ARCH_LDMANTDIGIS107  0x00100000
+#define OPAL_ARCH_LDMANTDIGIS113  0x00500000
 
-#define OMPI_ARCH_LDISINTEL       0x00800000
+#define OPAL_ARCH_LDISINTEL       0x00800000
 
-int32_t ompi_arch_compute_local_id( uint32_t *var);
+int32_t opal_arch_compute_local_id( uint32_t *var);
 
-int32_t ompi_arch_checkmask ( uint32_t *var, uint32_t mask );
-static inline int32_t ompi_arch_isbigendian ( void )
+int32_t opal_arch_checkmask ( uint32_t *var, uint32_t mask );
+static inline int32_t opal_arch_isbigendian ( void )
 {
     const uint32_t value = 0x12345678;
     const char *ptr = (char*)&value;
@@ -253,7 +254,7 @@ static inline int32_t ompi_arch_isbigendian ( void )
  * of the mantissa. If it's 1 then we have an intel representaion, if not
  * we have a sparc one. QED
  */
-static inline int32_t ompi_arch_ldisintel( void )
+static inline int32_t opal_arch_ldisintel( void )
 {
     long double ld = 2.0;
     int i, j;
@@ -261,7 +262,7 @@ static inline int32_t ompi_arch_ldisintel( void )
 
     j = LDBL_MANT_DIG / 32;
     i = (LDBL_MANT_DIG % 32) - 1;
-    if( ompi_arch_isbigendian() ) { /* big endian */
+    if( opal_arch_isbigendian() ) { /* big endian */
         j = (sizeof(long double) / sizeof(unsigned int)) - j;
         if( i < 0 ) {
             i = 31;
@@ -276,10 +277,10 @@ static inline int32_t ompi_arch_ldisintel( void )
     return (pui[j] & (1 << i) ? 1 : 0);
 }
 
-static inline void ompi_arch_setmask ( uint32_t *var, uint32_t mask)
+static inline void opal_arch_setmask ( uint32_t *var, uint32_t mask)
 {
     *var |= mask;
 }
 
-#endif  /* DATATYPE_ARCH_H_HAS_BEEN_INCLUDED */
+#endif  /* OPAL_ARCH_H_HAS_BEEN_INCLUDED */
 

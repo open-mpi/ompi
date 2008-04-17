@@ -16,76 +16,87 @@
  *
  * $HEADER$
  */
-#include "ompi_config.h"
-#include "dt_arch.h"
+#include "opal_config.h"
 
-int32_t ompi_arch_compute_local_id( uint32_t *me )
+#include "opal/util/arch.h"
+
+int32_t opal_arch_compute_local_id( uint32_t *me )
 {
-    *me = (OMPI_ARCH_HEADERMASK | OMPI_ARCH_UNUSEDMASK);
+    *me = (OPAL_ARCH_HEADERMASK | OPAL_ARCH_UNUSEDMASK);
 
     /* Handle the size of long (can hold a pointer) */
     if( 8 == sizeof(long) )
-        ompi_arch_setmask( me, OMPI_ARCH_LONGIS64 );
+        opal_arch_setmask( me, OPAL_ARCH_LONGIS64 );
 
     /* sizeof bool */
     if (1 == sizeof(bool) ) {
-        ompi_arch_setmask( me, OMPI_ARCH_BOOLIS8);
+        opal_arch_setmask( me, OPAL_ARCH_BOOLIS8);
     } else if (2 == sizeof(bool)) {
-        ompi_arch_setmask( me, OMPI_ARCH_BOOLIS16);
+        opal_arch_setmask( me, OPAL_ARCH_BOOLIS16);
     } else if (4 == sizeof(bool)) {
-        ompi_arch_setmask( me, OMPI_ARCH_BOOLIS32);
+        opal_arch_setmask( me, OPAL_ARCH_BOOLIS32);
     }
 
-    /* sizeof fortran logical */
+    /* sizeof fortran logical
+     *
+     * RHC: technically, use of the ompi_ prefix is
+     * an abstraction violation. However, this is actually
+     * an error in our configure scripts that transcends
+     * all the data types and eventually should be fixed.
+     * The guilty part is f77_check.m4. Fixing it right
+     * now is beyond a reasonable scope - this comment is
+     * placed here to explain the abstraction break and
+     * indicate that it will eventually be fixed
+     */
     if (1 == sizeof(ompi_fortran_logical_t) ) {
-        ompi_arch_setmask( me, OMPI_ARCH_LOGICALIS8);
+        opal_arch_setmask( me, OPAL_ARCH_LOGICALIS8);
     } else if (2 == sizeof(ompi_fortran_logical_t)) {
-        ompi_arch_setmask( me, OMPI_ARCH_LOGICALIS16);
+        opal_arch_setmask( me, OPAL_ARCH_LOGICALIS16);
     } else if (4 == sizeof(ompi_fortran_logical_t)) {
-        ompi_arch_setmask( me, OMPI_ARCH_LOGICALIS32);
+        opal_arch_setmask( me, OPAL_ARCH_LOGICALIS32);
     }
 
     /* Initialize the information regarding the long double */
     if( 12 == sizeof(long double) )
-        ompi_arch_setmask( me, OMPI_ARCH_LONGDOUBLEIS96 );
+        opal_arch_setmask( me, OPAL_ARCH_LONGDOUBLEIS96 );
     else if( 16 == sizeof(long double) )
-        ompi_arch_setmask( me, OMPI_ARCH_LONGDOUBLEIS128 );
+        opal_arch_setmask( me, OPAL_ARCH_LONGDOUBLEIS128 );
 
     /* Big endian or little endian ? That's the question */
-    if( ompi_arch_isbigendian() )
-        ompi_arch_setmask( me, OMPI_ARCH_ISBIGENDIAN );
+    if( opal_arch_isbigendian() )
+        opal_arch_setmask( me, OPAL_ARCH_ISBIGENDIAN );
 
     /* What's the maximum exponent ? */
     if ( LDBL_MAX_EXP == 16384 )
-        ompi_arch_setmask( me, OMPI_ARCH_LDEXPSIZEIS15 );
+        opal_arch_setmask( me, OPAL_ARCH_LDEXPSIZEIS15 );
 
     /* How about the length in bits of the mantissa */
     if ( LDBL_MANT_DIG == 64 )
-        ompi_arch_setmask( me, OMPI_ARCH_LDMANTDIGIS64 );
+        opal_arch_setmask( me, OPAL_ARCH_LDMANTDIGIS64 );
     else if ( LDBL_MANT_DIG == 105 )
-        ompi_arch_setmask( me, OMPI_ARCH_LDMANTDIGIS105 );
+        opal_arch_setmask( me, OPAL_ARCH_LDMANTDIGIS105 );
     else if ( LDBL_MANT_DIG == 106 )
-        ompi_arch_setmask( me, OMPI_ARCH_LDMANTDIGIS106 );
+        opal_arch_setmask( me, OPAL_ARCH_LDMANTDIGIS106 );
     else if ( LDBL_MANT_DIG == 107 )
-        ompi_arch_setmask( me, OMPI_ARCH_LDMANTDIGIS107 );
+        opal_arch_setmask( me, OPAL_ARCH_LDMANTDIGIS107 );
     else if ( LDBL_MANT_DIG == 113 )
-        ompi_arch_setmask( me, OMPI_ARCH_LDMANTDIGIS113 );
+        opal_arch_setmask( me, OPAL_ARCH_LDMANTDIGIS113 );
 
     /* Intel data representation or Sparc ? */
-    if( ompi_arch_ldisintel() )
-        ompi_arch_setmask( me, OMPI_ARCH_LDISINTEL );
+    if( opal_arch_ldisintel() )
+        opal_arch_setmask( me, OPAL_ARCH_LDISINTEL );
 
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
-int32_t ompi_arch_checkmask ( uint32_t *var, uint32_t mask )
+int32_t opal_arch_checkmask ( uint32_t *var, uint32_t mask )
 {
     unsigned int tmpvar = *var;
 
     /* Check whether the headers are set correctly,
        or whether this is an erroneous integer */
-    if( !((*var) & OMPI_ARCH_HEADERMASK) ) {
-        if( (*var) & OMPI_ARCH_HEADERMASK2 ) {
+    if( !((*var) & OPAL_ARCH_HEADERMASK) ) {
+        if( (*var) & OPAL_ARCH_HEADERMASK2 ) {
             char* pcDest, *pcSrc;
             /* Both ends of this integer have the wrong settings,
                maybe its just the wrong endian-representation. Try
@@ -100,7 +111,7 @@ int32_t ompi_arch_checkmask ( uint32_t *var, uint32_t mask )
             *pcDest++ = *pcSrc--;
             *pcDest++ = *pcSrc--;
 
-            if( (tmpvar & OMPI_ARCH_HEADERMASK) && (!(tmpvar & OMPI_ARCH_HEADERMASK2)) ) {
+            if( (tmpvar & OPAL_ARCH_HEADERMASK) && (!(tmpvar & OPAL_ARCH_HEADERMASK2)) ) {
                 *var = tmpvar;
             } else
                 return -1;

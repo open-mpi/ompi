@@ -23,10 +23,10 @@
 #include "osc_pt2pt_buffer.h"
 
 #include "opal/util/output.h"
+#include "opal/util/arch.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/memchecker.h"
@@ -270,7 +270,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if (sendreq->req_target_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+    if (sendreq->req_target_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
         OMPI_OSC_PT2PT_SEND_HDR_HTON(*header);
     }
@@ -472,7 +472,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if (replyreq->rep_origin_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+    if (replyreq->rep_origin_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
         OMPI_OSC_PT2PT_REPLY_HDR_HTON(*header);
     }
@@ -1078,7 +1078,7 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if (proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+    if (proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
         OMPI_OSC_PT2PT_CONTROL_HDR_HTON(*header);
     }

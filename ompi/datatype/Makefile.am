@@ -27,7 +27,6 @@ headers = \
 	datatype_unpack.h \
 	datatype_checksum.h \
 	datatype_memcpy.h \
-	dt_arch.h \
 	convertor.h \
     convertor_internal.h
 
@@ -54,7 +53,6 @@ libdatatype_la_SOURCES = \
 	dt_sndrcv.c \
 	fake_stack.c \
 	dt_args.c \
-	dt_arch.c \
 	dt_copy.c \
 	dt_external32.c \
 	dt_match_size.c \

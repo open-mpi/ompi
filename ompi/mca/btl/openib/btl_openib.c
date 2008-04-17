@@ -28,6 +28,8 @@
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "opal/util/show_help.h"
+#include "opal/util/arch.h"
+
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -38,7 +40,6 @@
 #include "btl_openib_xrc.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/datatype/dt_arch.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
@@ -1114,8 +1115,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     }
     /* post descriptor */
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if((ep->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
-            != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+    if((ep->endpoint_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN)
+            != (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
         rem_addr = opal_swap_bytes8(rem_addr);
         rkey = opal_swap_bytes4(rkey);
     }
@@ -1193,8 +1194,8 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     }
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if((ep->endpoint_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN)
-            != (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+    if((ep->endpoint_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN)
+            != (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
         rem_addr = opal_swap_bytes8(rem_addr);
         rkey = opal_swap_bytes4(rkey);
     }

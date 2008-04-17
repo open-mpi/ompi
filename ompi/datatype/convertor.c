@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include "opal/prefetch.h"
+#include "opal/util/arch.h"
 
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
@@ -34,7 +35,6 @@
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_prototypes.h"
 #include "ompi/datatype/convertor_internal.h"
-#include "ompi/datatype/dt_arch.h"
 
 extern size_t ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
@@ -123,18 +123,18 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
     }
 
     /* Find out the remote bool size */
-    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_BOOLIS8 ) ) {
+    if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_BOOLIS8 ) ) {
         remote_sizes[DT_CXX_BOOL] = 1;
-    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_BOOLIS16 ) ) {
+    } else if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_BOOLIS16 ) ) {
         remote_sizes[DT_CXX_BOOL] = 2;
-    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_BOOLIS32 ) ) {
+    } else if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_BOOLIS32 ) ) {
         remote_sizes[DT_CXX_BOOL] = 4;
     } else {
         opal_output( 0, "Unknown sizeof(bool) for the remote architecture\n" );
     }
 
     /* check the length of the long */
-    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LONGIS64 ) ) {
+    if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_LONGIS64 ) ) {
         remote_sizes[DT_LONG]               = 8;
         remote_sizes[DT_UNSIGNED_LONG]      = 8;
         remote_sizes[DT_LONG_LONG_INT]      = 8;
@@ -144,11 +144,11 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
      * unknown (if Fortran is not supported on the remote library). If this is
      * the case, just let the remote logical size to match the local size.
      */
-    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS8 ) ) {
+    if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_LOGICALIS8 ) ) {
         remote_sizes[DT_LOGIC] = 1;
-    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS16 ) ) {
+    } else if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_LOGICALIS16 ) ) {
         remote_sizes[DT_LOGIC] = 2;
-    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS32 ) ) {
+    } else if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_LOGICALIS32 ) ) {
         remote_sizes[DT_LOGIC] = 4;
     } else {
         opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
@@ -164,8 +164,8 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
         if( remote_sizes[i] != ompi_ddt_local_sizes[i] )
             master->hetero_mask |= (((uint64_t)1) << i);
     }
-    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_ISBIGENDIAN ) !=
-        ompi_arch_checkmask( &ompi_mpi_local_arch, OMPI_ARCH_ISBIGENDIAN ) ) {
+    if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_ISBIGENDIAN ) !=
+        opal_arch_checkmask( &ompi_mpi_local_arch, OPAL_ARCH_ISBIGENDIAN ) ) {
         uint64_t hetero_mask = 0;
 
         for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {

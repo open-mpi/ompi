@@ -13,9 +13,9 @@
 #include "ompi_config.h"
 
 #include "opal/util/output.h"
+#include "opal/util/arch.h"
 
 #include "opal/types.h"
-#include "ompi/datatype/dt_arch.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
@@ -47,8 +47,8 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,   
                    from, from_len, from_extent,                         \
                    to, to_length, to_extent);                           \
                                                                         \
-    if ((pConvertor->remoteArch & OMPI_ARCH_ISBIGENDIAN) !=             \
-        (ompi_mpi_local_arch & OMPI_ARCH_ISBIGENDIAN)) {                \
+    if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN) !=             \
+        (ompi_mpi_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                \
         for( i = 0; i < count; i++ ) {                                  \
             ompi_dt_swap_bytes(to, from, sizeof(TYPE));                 \
             to += to_extent;                                            \
@@ -84,8 +84,8 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
                    from, from_len, from_extent,                         \
                    to, to_length, to_extent);                           \
                                                                         \
-    if ((pConvertor->remoteArch & OMPI_ARCH_ISBIGENDIAN) !=             \
-        (ompi_mpi_local_arch & OMPI_ARCH_ISBIGENDIAN)) {                \
+    if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN) !=             \
+        (ompi_mpi_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                \
         /* source and destination are different endianness */           \
         for( i = 0; i < count; i++ ) {                                  \
             TYPE1* to_1, *from_1;                                       \
@@ -131,8 +131,8 @@ copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t 
                    from, from_len, from_extent,                         \
                    to, to_length, to_extent);                           \
                                                                         \
-    if ((pConvertor->remoteArch & OMPI_ARCH_ISBIGENDIAN) !=             \
-        (ompi_mpi_local_arch & OMPI_ARCH_ISBIGENDIAN)) {                \
+    if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN) !=             \
+        (ompi_mpi_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                \
         /* source and destination are different endianness */           \
         for( i = 0; i < count; i++ ) {                                  \
             TYPE *to_p = (TYPE*) to, *from_p = (TYPE*) from;            \
@@ -228,16 +228,16 @@ copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
     uint32_t i;
 
     /* fix up the from extent */
-    if ((pConvertor->remoteArch & OMPI_ARCH_BOOLISxx) != 
-        (ompi_mpi_local_arch & OMPI_ARCH_BOOLISxx)) {
-        switch (pConvertor->remoteArch & OMPI_ARCH_BOOLISxx) {
-        case OMPI_ARCH_BOOLIS8:
+    if ((pConvertor->remoteArch & OPAL_ARCH_BOOLISxx) != 
+        (ompi_mpi_local_arch & OPAL_ARCH_BOOLISxx)) {
+        switch (pConvertor->remoteArch & OPAL_ARCH_BOOLISxx) {
+        case OPAL_ARCH_BOOLIS8:
             from_extent = 1;
             break;
-        case OMPI_ARCH_BOOLIS16:
+        case OPAL_ARCH_BOOLIS16:
             from_extent = 2;
             break;
-        case OMPI_ARCH_BOOLIS32:
+        case OPAL_ARCH_BOOLIS32:
             from_extent = 4;
             break;
         }
@@ -248,16 +248,16 @@ copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
                    to, to_length, to_extent);
 
     if ((to_extent != sizeof(bool) || from_extent != sizeof(bool)) ||
-        ((pConvertor->remoteArch & OMPI_ARCH_BOOLISxx) != 
-         (ompi_mpi_local_arch & OMPI_ARCH_BOOLISxx))) {
-        switch (pConvertor->remoteArch & OMPI_ARCH_BOOLISxx) {
-        case OMPI_ARCH_BOOLIS8:
+        ((pConvertor->remoteArch & OPAL_ARCH_BOOLISxx) != 
+         (ompi_mpi_local_arch & OPAL_ARCH_BOOLISxx))) {
+        switch (pConvertor->remoteArch & OPAL_ARCH_BOOLISxx) {
+        case OPAL_ARCH_BOOLIS8:
             CXX_BOOL_COPY_LOOP(int8_t);
             break;
-        case OMPI_ARCH_BOOLIS16:
+        case OPAL_ARCH_BOOLIS16:
             CXX_BOOL_COPY_LOOP(int16_t);
             break;
-        case OMPI_ARCH_BOOLIS32:
+        case OPAL_ARCH_BOOLIS32:
             CXX_BOOL_COPY_LOOP(int32_t);
             break;
         }
@@ -285,16 +285,16 @@ copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
     uint32_t i;
 
     /* fix up the from extent */
-    if ((pConvertor->remoteArch & OMPI_ARCH_LOGICALISxx) != 
-        (ompi_mpi_local_arch & OMPI_ARCH_LOGICALISxx)) {
-        switch (pConvertor->remoteArch & OMPI_ARCH_LOGICALISxx) {
-        case OMPI_ARCH_LOGICALIS8:
+    if ((pConvertor->remoteArch & OPAL_ARCH_LOGICALISxx) != 
+        (ompi_mpi_local_arch & OPAL_ARCH_LOGICALISxx)) {
+        switch (pConvertor->remoteArch & OPAL_ARCH_LOGICALISxx) {
+        case OPAL_ARCH_LOGICALIS8:
             from_extent = 1;
             break;
-        case OMPI_ARCH_LOGICALIS16:
+        case OPAL_ARCH_LOGICALIS16:
             from_extent = 2;
             break;
-        case OMPI_ARCH_LOGICALIS32:
+        case OPAL_ARCH_LOGICALIS32:
             from_extent = 4;
             break;
         }
@@ -307,16 +307,16 @@ copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
 
     if ((to_extent != sizeof(ompi_fortran_logical_t) || 
          from_extent != sizeof(ompi_fortran_logical_t)) ||
-        ((pConvertor->remoteArch & OMPI_ARCH_LOGICALISxx) != 
-         (ompi_mpi_local_arch & OMPI_ARCH_LOGICALISxx))) {
-        switch (pConvertor->remoteArch & OMPI_ARCH_LOGICALISxx) {
-        case OMPI_ARCH_LOGICALIS8:
+        ((pConvertor->remoteArch & OPAL_ARCH_LOGICALISxx) != 
+         (ompi_mpi_local_arch & OPAL_ARCH_LOGICALISxx))) {
+        switch (pConvertor->remoteArch & OPAL_ARCH_LOGICALISxx) {
+        case OPAL_ARCH_LOGICALIS8:
             FORTRAN_LOGICAL_COPY_LOOP(int8_t);
             break;
-        case OMPI_ARCH_LOGICALIS16:
+        case OPAL_ARCH_LOGICALIS16:
             FORTRAN_LOGICAL_COPY_LOOP(int16_t);
             break;
-        case OMPI_ARCH_LOGICALIS32:
+        case OPAL_ARCH_LOGICALIS32:
             FORTRAN_LOGICAL_COPY_LOOP(int32_t);
             break;
         }

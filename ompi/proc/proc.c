@@ -24,6 +24,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/arch.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -33,7 +34,6 @@
 
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/datatype/dt_arch.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -119,7 +119,7 @@ int ompi_proc_init(void)
     }
 
     /* Fill in our local information */
-    rc = ompi_arch_compute_local_id(&ui32);
+    rc = opal_arch_compute_local_id(&ui32);
     if (OMPI_SUCCESS != rc) return rc;
 
     ompi_proc_local_proc->proc_nodeid = orte_process_info.nodeid;
@@ -598,7 +598,7 @@ int ompi_proc_refresh(void) {
     }
 
     /* Fill in our local information */
-    rc = ompi_arch_compute_local_id(&ui32);
+    rc = opal_arch_compute_local_id(&ui32);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }

@@ -31,7 +31,7 @@
 
 #include "opal/types.h"
 #include "ompi/proc/proc.h"
-#include "ompi/datatype/dt_arch.h"
+#include "opal/util/arch.h"
 
 #define MCA_PML_OB1_HDR_TYPE_MATCH     (MCA_BTL_TAG_PML + 1)
 #define MCA_PML_OB1_HDR_TYPE_RNDV      (MCA_BTL_TAG_PML + 2)
@@ -326,7 +326,7 @@ ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
 #else
 
-    if(!(proc->proc_arch & OMPI_ARCH_ISBIGENDIAN))
+    if(!(proc->proc_arch & OPAL_ARCH_ISBIGENDIAN))
         return;
 
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;

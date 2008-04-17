@@ -27,6 +27,7 @@ noinst_LTLIBRARIES = libopalutil.la
 # Source code files
 
 headers = \
+        arch.h \
         argv.h \
         basename.h \
         bit_ops.h \
@@ -61,6 +62,7 @@ headers = \
 
 libopalutil_la_SOURCES = \
         $(headers) \
+        arch.c \
         argv.c \
         basename.c \
         cmd_line.c \
