@@ -29,6 +29,8 @@
 
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
+#include "opal/util/arch.h"
+
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
@@ -38,7 +40,6 @@
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/datatype/dt_arch.h"
 
 static int component_open(void);
 static void component_fragment_cb(struct mca_btl_base_module_t *btl,
@@ -1075,7 +1076,7 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    if (peer_send_info->proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+    if (peer_send_info->proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
         OMPI_OSC_RDMA_RDMA_INFO_HDR_HTON(*header);
     }

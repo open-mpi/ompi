@@ -1142,8 +1142,8 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
         frag->rdma_segs[i].seg_key.key64 = hdr->hdr_segs[i].seg_key.key64;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((sendreq->req_send.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
-            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+        if ((sendreq->req_send.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
+            (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
             size += opal_swap_bytes4(frag->rdma_segs[i].seg_len);
         } else 
 #endif

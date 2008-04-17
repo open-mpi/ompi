@@ -29,7 +29,7 @@
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
-#include "ompi/datatype/dt_arch.h"
+#include "opal/util/arch.h"
 #include "ompi/memchecker.h"
 
 void mca_pml_ob1_recv_request_process_pending(void)
@@ -426,8 +426,8 @@ static void mca_pml_ob1_recv_request_rget(
     for(i = 0; i < hdr->hdr_seg_cnt; i++) {
         frag->rdma_segs[i] = hdr->hdr_segs[i];
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if ((recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) !=
-            (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+        if ((recvreq->req_recv.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
+            (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
             size += opal_swap_bytes4(hdr->hdr_segs[i].seg_len);
         } else 
 #endif

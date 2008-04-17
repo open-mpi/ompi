@@ -28,13 +28,14 @@
 #include "osc_pt2pt_buffer.h"
 
 #include "opal/threads/mutex.h"
+#include "opal/util/arch.h"
+
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/datatype/dt_arch.h"
 
 static int component_open(void);
 static void component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq);

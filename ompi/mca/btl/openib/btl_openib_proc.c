@@ -21,8 +21,9 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/arch.h"
+
 #include "ompi/runtime/ompi_module_exchange.h"
-#include "ompi/datatype/dt_arch.h"
 
 #include "btl_openib.h"
 #include "btl_openib_proc.h"
@@ -212,14 +213,14 @@ int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc,
        Network Byte Order) and expect all information received to
        be in NBO.  Since big endian machines always send and receive
        in NBO, we don't care so much about that case. */
-    if (module_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+    if (module_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         module_endpoint->nbo = true;
     }
 #endif
 
     /* only allow eager rdma if the peers agree on the size of a long */
-    if((module_proc->proc_ompi->proc_arch & OMPI_ARCH_LONGISxx) !=
-       (ompi_proc_local()->proc_arch & OMPI_ARCH_LONGISxx)) {
+    if((module_proc->proc_ompi->proc_arch & OPAL_ARCH_LONGISxx) !=
+       (ompi_proc_local()->proc_arch & OPAL_ARCH_LONGISxx)) {
         module_endpoint->use_eager_rdma = false;
     }
 

@@ -22,7 +22,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
-#include "ompi/datatype/dt_arch.h"
+#include "opal/util/arch.h"
 
 /* From the MPI standard. external32 use the following types:
  *   Type Length
@@ -68,10 +68,10 @@
  * consider the data stored in external32 as being packed.
  */
 
-uint32_t ompi_ddt_external32_arch_id = OMPI_ARCH_LDEXPSIZEIS15 | OMPI_ARCH_LDMANTDIGIS113 |
-                                       OMPI_ARCH_LONGDOUBLEIS128 | OMPI_ARCH_ISBIGENDIAN |
-                                       OMPI_ARCH_HEADERMASK | OMPI_ARCH_HEADERMASK2 |
-                                       OMPI_ARCH_BOOLIS8 | OMPI_ARCH_LOGICALIS8;
+uint32_t ompi_ddt_external32_arch_id = OPAL_ARCH_LDEXPSIZEIS15 | OPAL_ARCH_LDMANTDIGIS113 |
+                                       OPAL_ARCH_LONGDOUBLEIS128 | OPAL_ARCH_ISBIGENDIAN |
+                                       OPAL_ARCH_HEADERMASK | OPAL_ARCH_HEADERMASK2 |
+                                       OPAL_ARCH_BOOLIS8 | OPAL_ARCH_LOGICALIS8;
 
 ompi_convertor_t* ompi_mpi_external32_convertor = NULL;
 ompi_convertor_t* ompi_mpi_local_convertor = NULL;
@@ -79,7 +79,7 @@ uint32_t          ompi_mpi_local_arch = 0xFFFFFFFF;
 
 int32_t ompi_ddt_default_convertors_init( void )
 { 
-    ompi_arch_compute_local_id( &ompi_mpi_local_arch );
+    opal_arch_compute_local_id( &ompi_mpi_local_arch );
 
    /* create the extern32 convertor */
     ompi_mpi_external32_convertor = ompi_convertor_create( ompi_ddt_external32_arch_id, 0 );

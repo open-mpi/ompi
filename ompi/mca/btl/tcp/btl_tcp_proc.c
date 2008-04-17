@@ -28,7 +28,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/runtime/ompi_module_exchange.h"
-#include "ompi/datatype/dt_arch.h"
+#include "opal/util/arch.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "orte/mca/oob/tcp/oob_tcp_addr.h"
@@ -255,7 +255,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
        Network Byte Order) and expect all information received to
        be in NBO.  Since big endian machines always send and receive
        in NBO, we don't care so much about that case. */
-    if (btl_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+    if (btl_proc->proc_ompi->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
         btl_endpoint->endpoint_nbo = true;
     }
 #endif

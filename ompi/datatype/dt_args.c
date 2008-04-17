@@ -18,11 +18,12 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/constants.h"
 
 #include "mpi.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
-#include "ompi/datatype/dt_arch.h"
+#include "opal/util/arch.h"
 #include "ompi/proc/proc.h"
 
 static inline int
@@ -499,7 +500,7 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     bool need_swap = false;
 
     if( (remote_processor->proc_arch ^ ompi_proc_local()->proc_arch) &
-        OMPI_ARCH_ISBIGENDIAN ) {
+        OPAL_ARCH_ISBIGENDIAN ) {
         need_swap = true;
     }
 #endif
