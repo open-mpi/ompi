@@ -138,7 +138,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     /* extract the process name from the port string, if given, and
      * set us up to communicate with it
      */
-    if (NULL != port_string && 0 < strlen(port_string)) {
+    if (rank == root && NULL != port_string && 0 < strlen(port_string)) {
         char *rml_uri;
         /* separate the string into the RML URI and tag */
         rml_uri = parse_port(port_string, &tag);
