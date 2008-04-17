@@ -282,15 +282,39 @@ opal_event_init(void)
      * - orterun (probably only if it launches locally)
      * - ...?
      */
-    mca_base_param_reg_string_name("opal", "event_include",
-                                   "Comma-delimited list of libevent subsystems to use (kqueue, devpoll, epoll, poll, select, evport and rtsig -- depending on your platform)",
-                                   false, false, 
+    {
+        const struct eventop** _eventop = eventops;
+        char available_eventops[1024] = "none";
+        char* help_msg = NULL;
+        int position = 0;
+
+        while( NULL != (*_eventop) ) {
+            if( 0 != position ) {
+                position += snprintf( available_eventops + position,
+                                      (size_t)(1024 - position),
+                                      ", %s", (*_eventop)->name );
+            } else {
+                position += snprintf( available_eventops + position,
+                                      (size_t)(1024 - position),
+                                      "%s", (*_eventop)->name );
+            }
+            available_eventops[position] = '\0';
+            _eventop++;  /* go to the next available eventop */
+        }
+        asprintf( &help_msg, 
+                  "Comma-delimited list of libevent subsystems "
+                  "to use (%s -- available on your platform)",
+                  available_eventops );
+        mca_base_param_reg_string_name("opal", "event_include",
+                                       help_msg, false, false, 
 #ifdef __APPLE__
-                                   "select",
+                                       "select",
 #else
-                                   "poll",
+                                       "poll",
 #endif
-                                   &event_module_include);
+                                       &event_module_include);
+        free(help_msg);  /* release the help message */
+    }
     if (NULL == event_module_include) {
         /* Shouldn't happen, but... */
         event_module_include = strdup("select");
