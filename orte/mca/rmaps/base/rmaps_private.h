@@ -76,7 +76,8 @@ ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                              orte_vpid_t vpid,
                                              orte_std_cntr_t app_idx,
                                              opal_list_t *nodes,
-                                             bool oversubscribe);
+                                             bool oversubscribe,
+                                             bool remove_from_list);
 
 ORTE_DECLSPEC int orte_rmaps_base_compute_usage(orte_job_t *jdata);
 

@@ -72,6 +72,7 @@
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
 #include "opal/constants.h"
+#include "opal/mca/base/mca_base_param.h"
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN
 
@@ -117,6 +118,7 @@ typedef struct opal_if_t opal_if_t;
 
 static opal_list_t opal_if_list;
 static bool already_done = false;
+static bool do_not_resolve = false;
 
 #define DEFAULT_NUMBER_INTERFACES 10
 #define MAX_IFCONF_SIZE 10 * 1024 * 1024
@@ -159,6 +161,11 @@ static int opal_ifinit(void)
         return OPAL_SUCCESS;
     }
     already_done = true;
+
+    mca_base_param_reg_int_name("opal", "if_do_not_resolve",
+                                "If nonzero, do not attempt to resolve interfaces",
+                                false, false, (int)false, &sd);
+    do_not_resolve = OPAL_INT_TO_BOOL(sd);
 
     /* create the internet socket to test off */
 /*
@@ -934,6 +941,14 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         return rc;
     }
 
+    /* if the user asked us not to resolve interfaces, then just return */
+    if (do_not_resolve) {
+        /* return not found so ifislocal will declare
+         * the node to be non-local
+         */
+        return OPAL_ERR_NOT_FOUND;
+    }
+    
 #if OPAL_WANT_IPV6
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;

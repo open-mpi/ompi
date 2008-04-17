@@ -79,6 +79,12 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         return rc;
     }         
 
+    /* if we don't want to launch, now is the time to leave */
+    if (orte_do_not_launch) {
+        orte_finalize();
+        exit(0);
+    }
+    
     /*
      * setup I/O forwarding
      */

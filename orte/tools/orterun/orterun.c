@@ -171,9 +171,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "machinefile", "machinefile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
-    { "default", "hostfile", NULL, '\0', "default-hostfile", "default-hostfile", 1,
+    { "orte", "default", "hostfile", '\0', "default-hostfile", "default-hostfile", 1,
         NULL, OPAL_CMD_LINE_TYPE_STRING,
     "Provide a default hostfile" },
+    { "opal", "if", "do_not_resolve", '\0', "do-not-resolve", "do-not-resolve", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Do not attempt to resolve interfaces" },
     
     /* uri of Open MPI server, or at least where to get it */
     { NULL, NULL, NULL, '\0', "ompi-server", "ompi-server", 1,
@@ -266,17 +269,13 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
     
-    { "universe", NULL, NULL, '\0', NULL, "universe", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the universe name as username@hostname:universe_name for this application" },
-    
     { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
 
-    { NULL, NULL, NULL, '\0', NULL, "do-not-launch", 0,
-        &orterun_globals.do_not_launch, OPAL_CMD_LINE_TYPE_BOOL,
-        "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
+    { "orte", "do_not", "launch", '\0', NULL, "do-not-launch", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
     
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,

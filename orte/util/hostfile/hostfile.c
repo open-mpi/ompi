@@ -126,11 +126,10 @@ static orte_node_t* hostfile_lookup(opal_list_t* nodes, const char* name)
     return NULL;
 }
 
-static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exclude)
+static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exclude, bool keep_all)
 {
     int rc;
     orte_node_t* node;
-    bool update = false;
     bool got_count = false;
     bool got_max = false;
     char* value;
@@ -177,6 +176,11 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
                 node_name[i-1] = node_name[i];
             }
             node_name[len-1] = '\0';  /* truncate */
+            
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s hostfile: node %s is being excluded",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
+            
             /* convert this into something globally unique */
             if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
                 /* Nodename has been allocated, that is for sure */
@@ -205,19 +209,20 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node_name = strdup(orte_process_info.nodename);
         }
 
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                             "%s hostfile: node %s is being included - keep all is %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
+                             keep_all ? "TRUE" : "FALSE"));
+
         /* Do we need to make a new node object?  First check to see
-           if it's already in the updates list */
-        if (NULL == (node = hostfile_lookup(updates, node_name))) {
+         * if we are keeping everything or if it's already in the updates
+         * list. Because we check keep_all first, if that is set we will
+         * not do the hostfile_lookup call, and thus won't remove the
+         * pre-existing node from the updates list
+         */
+        if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
-            /* Note that we need to set update to true regardless of
-                whether the node was found on the updates list or not.
-                If it was found, we just removed it (in hostfile_lookup()),
-                so the update puts it back
-                (potentially after updating it, of course).  If it was
-                not found, then we have a new node instance that needs
-                to be added to the updates list. */
-            update = true;
         }
     } else {
         hostfile_parse_error(token);
@@ -251,7 +256,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
                 return ORTE_ERROR;
             }
             node->slots += rc;
-            update = true;
             got_count = true;
 
             /* Ensure that slots_max >= slots */
@@ -273,7 +277,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             if (rc >= node->slots) {
                 if (node->slots_max != rc) {
                     node->slots_max = rc;
-                    update = true;
                     got_max = true;
                 }
             } else {
@@ -299,18 +302,15 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
     }
 
 done:
-    if (update) {
-        if (!got_count) {
-            if (got_max) {
-                node->slots = node->slots_max;
-            } else {
-                ++node->slots;
-            }
+    if (!got_count) {
+        if (got_max) {
+            node->slots = node->slots_max;
+        } else {
+            ++node->slots;
         }
-        opal_list_append(updates, &node->super);
-    } else {
-        OBJ_RELEASE(node);
     }
+    opal_list_append(updates, &node->super);
+
     return ORTE_SUCCESS;
 }
 
@@ -319,7 +319,7 @@ done:
  * Parse the specified file into a node list.
  */
 
-static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_t* exclude)
+static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_t* exclude, bool keep_all)
 {
     int token;
     int rc = ORTE_SUCCESS;
@@ -358,7 +358,7 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_
         case ORTE_HOSTFILE_HOSTNAME:
         case ORTE_HOSTFILE_IPV4:
         case ORTE_HOSTFILE_IPV6:
-            rc = hostfile_parse_line(token, updates, exclude);
+            rc = hostfile_parse_line(token, updates, exclude, keep_all);
             if (ORTE_SUCCESS != rc) {
                 goto unlock;
             }
@@ -400,7 +400,7 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
     OBJ_CONSTRUCT(&exclude, opal_list_t);
     
     /* parse the hostfile and add the contents to the list */
-    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude))) {
+    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude, false))) {
         goto cleanup;
     }
     
@@ -457,7 +457,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     /* parse the hostfile and create local list of findings */
     OBJ_CONSTRUCT(&newnodes, opal_list_t);
     OBJ_CONSTRUCT(&exclude, opal_list_t);
-    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, &newnodes, &exclude))) {
+    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, &newnodes, &exclude, false))) {
         OBJ_DESTRUCT(&newnodes);
         return rc;
     }
@@ -533,7 +533,6 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
 }
 
 int orte_util_get_ordered_host_list(opal_list_t *nodes,
-                                    bool *override_oversubscribed,
                                     char *hostfile)
 {
     opal_list_t exclude;
@@ -546,8 +545,8 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     
     OBJ_CONSTRUCT(&exclude, opal_list_t);
     
-    /* parse the hostfile and add the contents to the list */
-    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude))) {
+    /* parse the hostfile and add the contents to the list, keeping duplicates */
+    if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, nodes, &exclude, true))) {
         goto cleanup;
     }
     
@@ -563,21 +562,14 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
                 /* match - remove it */
                 opal_list_remove_item(nodes, itm);
                 OBJ_RELEASE(itm);
-                break;
+                /* have to cycle through the entire list as we could
+                 * have duplicates
+                 */
             }
         }
         OBJ_RELEASE(item);
     }
     
-    /* indicate that ORTE should override any oversubscribed conditions
-     * based on local hardware limits since the user (a) might not have
-     * provided us any info on the #slots for a node, and (b) the user
-     * might have been wrong! If we don't check the number of local physical
-     * processors, then we could be too aggressive on our sched_yield setting
-     * and cause performance problems.
-     */
-    *override_oversubscribed = true;
-
 cleanup:
     OBJ_DESTRUCT(&exclude);
     

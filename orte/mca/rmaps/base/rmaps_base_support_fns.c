@@ -58,7 +58,10 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /* create a working list of nodes */
     nodes = (orte_node_t**)orte_node_pool->addr;
     for (i=0; i < orte_node_pool->size; i++) {
-        if (NULL != nodes[i] && nodes[i]->allocate) {
+        if (NULL == nodes[i]) {
+            break;  /* nodes are left aligned, so stop when we hit a null */
+        } 
+        if (nodes[i]->allocate) {
             /* retain a copy for our use in case the item gets
              * destructed along the way
              */
@@ -256,7 +259,8 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                orte_vpid_t vpid,
                                orte_std_cntr_t app_idx,
                                opal_list_t *nodes,
-                               bool oversubscribe)
+                               bool oversubscribe,
+                               bool remove_from_list)
 {
     orte_proc_t *proc;
     bool oversub;
@@ -324,11 +328,13 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     if ((0 != current_node->slots_max  &&
         current_node->slots_inuse >= current_node->slots_max) ||
         (!oversubscribe && current_node->slots_inuse >= current_node->slots)) {
-        opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
-        /* release it - it was retained when we started, so this
-         * just ensures the instance counter is correctly updated
-         */
-        OBJ_RELEASE(current_node);
+        if (remove_from_list) {
+            opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
+            /* release it - it was retained when we started, so this
+             * just ensures the instance counter is correctly updated
+             */
+            OBJ_RELEASE(current_node);
+        }
         /** now return the proper code so the caller knows we removed the node! */
         return ORTE_ERR_NODE_FULLY_USED;
     }
