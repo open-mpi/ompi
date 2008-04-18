@@ -179,7 +179,7 @@ main(int argc, char *argv[])
     }
 
     /******************************
-     * Create the app file to use with orterun
+     * Create the app file to use with mpirun/orterun
      ******************************/
     if( ORTE_SUCCESS != (ret = create_appfile(snapshot) ) ) {
         exit_status = ret;
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
     }
 
     /******************************
-     * Restart in this process [orterun]
+     * Restart in this process [mpirun/orterun]
      ******************************/
     if( orte_restart_globals.verbose ) {
         opal_output_verbose(10, orte_restart_globals.output,
@@ -479,7 +479,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
     int argc = 0;
     int status;
 
-    if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "orterun")) ) {
+    if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "mpirun")) ) {
         exit_status = ret;
         goto cleanup;
     }
