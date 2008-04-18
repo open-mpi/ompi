@@ -545,7 +545,7 @@ ompi_mtl_portals_send(struct mca_mtl_base_module_t* mtl,
     mca_mtl_base_endpoint_t *endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
     void *start;
     size_t length;
-    mca_mtl_request_t mtl_request;
+    ompi_mtl_portals_request_t mtl_request;
     ompi_mtl_portals_request_t *ptl_request = (ompi_mtl_portals_request_t*)&mtl_request;
 
     assert(mtl == &ompi_mtl_portals.base);
