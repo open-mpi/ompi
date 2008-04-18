@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,6 +19,8 @@
  */
 #ifndef OPAL_ARCH_H_HAS_BEEN_INCLUDED
 #define OPAL_ARCH_H_HAS_BEEN_INCLUDED
+
+#include "opal_config.h"
 
 #include <float.h>
 #include <assert.h>
@@ -227,9 +230,10 @@
 
 #define OPAL_ARCH_LDISINTEL       0x00800000
 
-int32_t opal_arch_compute_local_id( uint32_t *var);
+OPAL_DECLSPEC int32_t opal_arch_compute_local_id( uint32_t *var);
 
-int32_t opal_arch_checkmask ( uint32_t *var, uint32_t mask );
+OPAL_DECLSPEC int32_t opal_arch_checkmask ( uint32_t *var, uint32_t mask );
+
 static inline int32_t opal_arch_isbigendian ( void )
 {
     const uint32_t value = 0x12345678;
