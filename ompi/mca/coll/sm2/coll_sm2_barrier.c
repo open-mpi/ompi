@@ -314,13 +314,12 @@ DONE:
 /**
  * Shared memory blocking allreduce.
  */
-static
 int mca_coll_sm2_barrier_intra_fanin_fanout(
         struct ompi_communicator_t *comm,
         struct mca_coll_base_module_1_1_0_t *module)
 {
     /* local variables */
-    int rc=OMPI_SUCCESS;
+    int rc=OMPI_SUCCESS,bar_buff_index;
     int my_rank, child_rank, child, n_parents, n_children;
     int my_fanin_parent;
     int my_fanout_parent;
@@ -333,8 +332,6 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
     sm_work_buffer_t *sm_buffer_desc;
 
     sm_module=(mca_coll_sm2_module_t *) module;
-
-
 
     /* get my node for the reduction tree */
     my_rank=ompi_comm_rank(comm);
@@ -351,10 +348,17 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
     tag=sm_module->collective_tag;
     sm_module->collective_tag++;
 
+    /*
     sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
+    */
+    sm_module->index_blocking_barrier_memory_bank^=1;
+    bar_buff_index=sm_module->index_blocking_barrier_memory_bank;
 
-    /* offset to data segment */
-    my_ctl_pointer=sm_buffer_desc->proc_memory[my_rank].control_region;
+    my_ctl_pointer=
+        sm_module->ctl_blocking_barrier[bar_buff_index][my_rank];
+    /*
+        sm_buffer_desc->proc_memory[my_rank].control_region;
+        */
 
     /***************************
      * Fan into root phase
@@ -369,11 +373,13 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
 
             child_rank=my_reduction_node->children_ranks[child];
             child_ctl_pointer=
+                sm_module->ctl_blocking_barrier[bar_buff_index][child_rank];
+            /*
                 sm_buffer_desc->proc_memory[child_rank].control_region;
+                */
 
             /* wait until child flag is set */
             while(  child_ctl_pointer->flag != tag ) {
-                /* Note: Actually need to make progress here */
                 opal_progress();
             }
 
@@ -384,7 +390,9 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
         /* set memory barriet to make sure data is in main memory before
          *  the completion flgas are set.
          */
+        /*
         MB();
+        */
 
         /*
          * Signal parent that data is ready
@@ -396,7 +404,9 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
         /* set memory barriet to make sure data is in main memory before
          *  the completion flgas are set.
          */
+        /*
         MB();
+        */
 
         /*
          * Signal parent that data is ready
@@ -415,14 +425,19 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
         /* I am the root - so copy  signal children, and then
          *   start reading
          */
+        /*
         MB();
+        */
         my_ctl_pointer->flag=-tag;
 
 
     } else if( LEAF_NODE == my_fanout_read_tree->my_node_type ) {
 
         parent_ctl_pointer=
+            sm_module->ctl_blocking_barrier[bar_buff_index][my_fanout_parent];
+        /*
             sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
+            */
 
         /*
          * wait on Parent to signal that data is ready
@@ -435,7 +450,10 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
         /* interior nodes */
    
         parent_ctl_pointer=
+            sm_module->ctl_blocking_barrier[bar_buff_index][my_fanout_parent];
+        /*
             sm_buffer_desc->proc_memory[my_fanout_parent].control_region;
+            */
 
         /*
          * wait on Parent to signal that data is ready
@@ -447,7 +465,9 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
         /* set memory barriet to make sure data is in main memory before
          *  the completion flgas are set.
          */
+        /*
         MB();
+        */
 
         /* signal children that they may read the result data */
         my_ctl_pointer->flag=-tag;
@@ -455,10 +475,12 @@ int mca_coll_sm2_barrier_intra_fanin_fanout(
     }
 
     /* "free" the shared-memory working buffer */
+    /*
     rc=free_sm2_shared_buffer(sm_module);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
+    */
     
     /* return */
     return rc;
@@ -468,6 +490,204 @@ Error:
 }
 
 /**
+ * Shared memory blocking barrier.
+ */
+int mca_coll_sm2_barrier_intra_recursive_doubling( 
+        struct ompi_communicator_t *comm,
+        struct mca_coll_base_module_1_1_0_t *module)
+{
+    /* local variables */
+    int rc=OMPI_SUCCESS;
+    int pair_rank,exchange,extra_rank;
+    pair_exchange_node_t *my_exchange_node;
+    int my_rank,bar_buff_index;
+    long long tag, base_tag;
+    mca_coll_sm2_nb_request_process_shared_mem_t *my_ctl_pointer;
+    volatile mca_coll_sm2_nb_request_process_shared_mem_t * 
+        partner_ctl_pointer;
+    volatile mca_coll_sm2_nb_request_process_shared_mem_t * 
+        extra_ctl_pointer;
+    mca_coll_sm2_module_t *sm_module;
+    /* debug 
+    opal_timer_t t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10;
+     end debug */
+
+    sm_module=(mca_coll_sm2_module_t *) module;
+
+    /* get my node for the reduction tree */
+    my_exchange_node=&(sm_module->recursive_doubling_tree);
+    my_rank=ompi_comm_rank(comm);
+
+    /* get pointer to barrier strcuture */
+    sm_module->index_blocking_barrier_memory_bank^=1;
+    bar_buff_index=sm_module->index_blocking_barrier_memory_bank;
+
+
+        /* get unique set of tags for this stripe.
+         *  Assume only one collective
+         *  per communicator at a given time, so no locking needed
+         *  for atomic update of the tag */
+        base_tag=sm_module->collective_tag;
+        sm_module->collective_tag+=my_exchange_node->n_tags;
+
+        /* get pointers to my work buffers */
+        my_ctl_pointer=
+            sm_module->ctl_blocking_barrier[bar_buff_index][my_rank];
+        /*
+           sm_buffer_desc->proc_memory[my_rank].control_region;
+            */
+
+            /* copy data in from the "extra" source, if need be */
+            tag=base_tag;
+            if(0 < my_exchange_node->n_extra_sources)  {
+
+                if ( EXCHANGE_NODE == my_exchange_node->node_type ) {
+
+                    extra_rank=my_exchange_node->rank_extra_source;
+                    extra_ctl_pointer=
+                        sm_module->ctl_blocking_barrier[bar_buff_index][extra_rank];
+                    /*
+                        sm_buffer_desc->proc_memory[extra_rank].control_region;
+                        */
+                    
+                /* wait until remote data is read */
+                while( extra_ctl_pointer->flag < tag ) {
+                    opal_progress();
+                }
+    
+            } else {
+        
+                /*
+                MB();
+                */
+    
+                /*
+                 * Signal parent that data is ready
+                 */
+                my_ctl_pointer->flag=tag;
+
+            }
+        }
+
+            /*
+        MB();
+        */
+        /*
+         * Signal parent that data is ready
+         */
+        tag=base_tag+1;
+        my_ctl_pointer->flag=tag;
+
+        /* loop over data exchanges */
+        for(exchange=0 ; exchange < my_exchange_node->n_exchanges ; exchange++) {
+
+            /* debug 
+            t4=opal_sys_timer_get_cycles();
+             end debug */
+
+            /* is the remote data read */
+            pair_rank=my_exchange_node->rank_exchanges[exchange];
+            partner_ctl_pointer=
+                sm_module->ctl_blocking_barrier[bar_buff_index][pair_rank];
+            /*
+                sm_buffer_desc->proc_memory[pair_rank].control_region;
+                */
+                
+            /*
+            MB();
+            */
+            my_ctl_pointer->flag=tag;
+
+            /* wait until remote data is read */
+            while(  partner_ctl_pointer->flag < tag  ) {
+                opal_progress();
+            }
+
+            /* end test */
+            
+            /* signal that I am done reading my peer's data */
+            tag++;
+
+        }
+
+        /* copy data in from the "extra" source, if need be */
+        if(0 < my_exchange_node->n_extra_sources)  {
+            tag=base_tag+my_exchange_node->n_tags-1;
+
+            if ( EXTRA_NODE == my_exchange_node->node_type ) {
+
+                extra_rank=my_exchange_node->rank_extra_source;
+                extra_ctl_pointer=
+                    sm_module->ctl_blocking_barrier[bar_buff_index][extra_rank];
+                /*
+                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+                    */
+                    
+                /* wait until remote data is read */
+                while(! ( extra_ctl_pointer->flag == tag ) ) {
+                    opal_progress();
+                }
+    
+            
+                /* signal that I am done */
+                my_ctl_pointer->flag=tag;
+
+            } else {
+        
+                tag=base_tag+my_exchange_node->n_tags-1;
+                /* set memory barriet to make sure data is in main memory before
+                 *  the completion flgas are set.
+                 */
+
+                /*
+                MB();
+                */
+    
+                /*
+                 * Signal parent that data is ready
+                 */
+                my_ctl_pointer->flag=tag;
+
+                /* wait until child is done to move on - this buffer will
+                 *   be reused for the next stripe, so don't want to move
+                 *   on too quick.
+                 */
+                extra_rank=my_exchange_node->rank_extra_source;
+                extra_ctl_pointer=
+                    sm_module->ctl_blocking_barrier[bar_buff_index][extra_rank];
+                /*
+                    sm_buffer_desc->proc_memory[extra_rank].control_region;
+                    */
+
+                /* wait until remote data is read */
+                while( extra_ctl_pointer->flag < tag  ) {
+                    opal_progress();
+                }
+            }
+        }
+
+
+
+    /* debug 
+
+    t9=opal_sys_timer_get_cycles();
+    timers[5]+=(t9-t8);
+     end debug */
+
+
+    /* "free" the shared-memory working buffer */
+    rc=free_sm2_shared_buffer(sm_module);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
+
+    /* return */
+    return rc;
+
+Error:
+    return rc;
+}
+/**
  * Shared memory blocking barrier
  */
 int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
@@ -475,8 +695,11 @@ int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
 {
     /* local variables */
     int rc;
+    mca_coll_sm2_module_t *sm_module;
 
-    rc= mca_coll_sm2_barrier_intra_fanin_fanout(comm, module);
+    sm_module=(mca_coll_sm2_module_t *) module;
+
+    rc= sm_module->barrier_functions[0](comm, module);
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }

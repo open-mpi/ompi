@@ -140,7 +140,7 @@ static int sm2_open(void)
 
     /* set component priority */
     cs->sm2_priority=
-        mca_coll_sm2_param_register_int("sm2_priority",0);
+        mca_coll_sm2_param_register_int("sm2_priority",90);
 
     /* set control region size (bytes), per proc */
     cs->sm2_ctl_size_per_proc=
@@ -155,7 +155,7 @@ static int sm2_open(void)
 
     /* Min data Segment size (bytes) - per proc */
     cs->sm2_data_seg_size=
-        mca_coll_sm2_param_register_int("sm2_data_seg_size",0);
+        mca_coll_sm2_param_register_int("sm2_data_seg_size",32768);
 
     /* Max data Segment size (bytes) - per proc */
     cs->sm2_max_data_seg_size=
@@ -193,6 +193,20 @@ static int sm2_open(void)
      */
     cs->n_poll_loops=
         mca_coll_sm2_param_register_int("n_poll_loops",4);
+
+    /* Size of message for switching between short and long protocol.
+     *  This should probably be the segment size for several algorithms,
+     *  though not all.
+     */
+    cs->short_message_size=
+        mca_coll_sm2_param_register_int("short_message_size",32768);
+
+    /* collective ops to use */
+    cs->force_barrier=
+        mca_coll_sm2_param_register_int("force_barrier",(-1));
+    cs->force_reduce=
+        mca_coll_sm2_param_register_int("force_reduce",(-1));
+
 
 /* debug */
     /*

@@ -20,22 +20,10 @@
 
 extern uint64_t timers[7];
  end debug */
-/* debug 
-#include <assert.h>
-extern void debug_module(void);
-extern int last_root;
-extern int node_type;
-extern long long free_buff_free_index;
-int last_root;
-int node_type;
- end debug */
-
-
 
 /**
  * Shared memory blocking allreduce.
  */
-static
 int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
@@ -400,8 +388,7 @@ Error:
 /**
  * Shared memory blocking reduce.
  */
-static
-int mca_coll_sm2_reduce_intra_reducescatter_allgather(void *sbuf, void *rbuf, 
+int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf, 
         int count, struct ompi_datatype_t *dtype, 
         struct ompi_op_t *op, 
         int root,
@@ -492,14 +479,6 @@ int mca_coll_sm2_reduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
                 sm_module->scratch_space[i]++;
             }
         }
-        /* debug 
-        fprintf(stderr," my_rank %d element list count_this_stripe %d : ",my_rank,count_this_stripe);
-        for(i=0 ; i < comm_size ; i++ ) {
-            fprintf(stderr," %d ",sm_module->scratch_space[i]);
-        }
-        fprintf(stderr," \n");
-        fflush(stderr);
-         end debug */
 
         /* get unique set of tags for this stripe.
          *  Assume only one collective
@@ -745,6 +724,34 @@ int mca_coll_sm2_reduce_intra(void *sbuf, void *rbuf, int count,
 {
     /* local variables */
     int rc;
+    mca_coll_sm2_module_t *sm_module;
+    ptrdiff_t dt_extent;
+    size_t len_data_buffer;
+
+    sm_module=(mca_coll_sm2_module_t *) module;
+
+    /* get size of data needed - same layout as user data, so that
+     *   we can apply the reudction routines directly on these buffers
+     */
+    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
+
+    len_data_buffer=count*dt_extent;
+    
+    if( len_data_buffer <= sm_module->short_message_size) {
+        rc=sm_module->reduce_functions[SHORT_DATA_FN]
+            (sbuf, rbuf, count, dtype, op, root, comm, module);
+    }
+    else {
+        rc=sm_module->reduce_functions[LONG_DATA_FN]
+            (sbuf, rbuf, count, dtype, op, root, comm, module);
+    }
+
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
 
 #if 0
         rc= mca_coll_sm2_reduce_intra_fanin(sbuf, rbuf, count,
@@ -752,13 +759,13 @@ int mca_coll_sm2_reduce_intra(void *sbuf, void *rbuf, int count,
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }
-#endif
 
-        rc= mca_coll_sm2_reduce_intra_reducescatter_allgather(sbuf, rbuf, count,
+        rc= mca_coll_sm2_reduce_intra_reducescatter_gather(sbuf, rbuf, count,
                 dtype, op, root, comm, module);
         if( OMPI_SUCCESS != rc ) {
             goto Error;
         }
+#endif
 
     return OMPI_SUCCESS;
 
