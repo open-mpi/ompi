@@ -20,7 +20,7 @@
 
 extern uint64_t timers[7];
  end debug */
-/* debug */
+/* debug 
 #include <assert.h>
 extern void debug_module(void);
 extern int last_root;
@@ -28,7 +28,7 @@ extern int node_type;
 extern long long free_buff_free_index;
 int last_root;
 int node_type;
-/* end debug */
+ end debug */
 
 
 
@@ -58,9 +58,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     tree_node_t *my_reduction_node;
     sm_work_buffer_t *sm_buffer_desc;
 
-    /* debug */
+    /* debug 
     last_root=root;
-    /* end debug */
+     end debug */
     sm_module=(mca_coll_sm2_module_t *) module;
 
     /* compute process shift */
@@ -99,9 +99,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     /* get my node for the reduction tree */
     my_reduction_node=&(sm_module->reduction_tree[my_node_index]);
     n_children=my_reduction_node->n_children;
-    /* debug */
+    /* debug 
     node_type=my_reduction_node->my_node_type;
-    /* end debug */
+     end debug */
 
     if( 1 == n_data_segments ) {
         /* single data segment */
@@ -117,9 +117,9 @@ int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
     
             /* get a pointer to the shared-memory working buffer */
             sm_buffer_desc=alloc_sm2_shared_buffer(sm_module);
-            /* debug */
+            /* debug 
             free_buff_free_index=tag;
-            /* end debug */
+             end debug */
     
             /* get number of elements to process in this stripe */
             count_this_stripe=count;
