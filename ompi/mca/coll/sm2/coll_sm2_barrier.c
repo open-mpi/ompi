@@ -24,9 +24,9 @@
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
 #include "coll_sm2.h"
-/* debug */
+/* debug 
 extern int debug_print;
-/* end debug */
+ end debug */
 
 /**
  * Shared memory barrier.

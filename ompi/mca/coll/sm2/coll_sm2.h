@@ -304,8 +304,29 @@ BEGIN_C_DECLS
         /* Memory pointer to shared file */
         char *shared_memory_region;
 
+        /* size of memory banks control regions */
+        size_t size_mem_banks_ctl_region;
+
         /* Pointer to the collective buffers */
         char *collective_buffer_region;
+
+        /* size of collective buffer region */
+        size_t size_of_collective_buffer_region;
+
+        /* pointer to memory for blocking collectives */
+        char *sm_blocking_barrier_region;
+
+        /* size of memory for blocking collectives */
+        size_t size_of_blocking_barrier_region;
+
+        /* per proc size of memory for blocking collectives */
+        size_t per_proc_size_of_blocking_barrier_region;
+
+        /* index of blocking barrier memory region to use */
+        int index_blocking_barrier_memory_bank;
+
+        /* pointers to blocking memory control regions */
+        mca_coll_sm2_nb_request_process_shared_mem_t ***ctl_blocking_barrier;
 
         /* description of allocated temp buffers - one struct per
          * buffer.  Each buffer has space "owned" by each process

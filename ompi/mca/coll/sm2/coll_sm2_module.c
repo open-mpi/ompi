@@ -44,6 +44,7 @@
 static int sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
         struct ompi_communicator_t *comm);
 
+#if 0
 /* debug */
 extern int debug_print;
 extern int my_debug_rank;
@@ -116,6 +117,7 @@ void debug_module(void) {
  
 }
 /* end debug */
+#endif
 
 /*
  * Local functions
@@ -236,7 +238,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         /* process initializing the file */
         fd = open(*file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
-            opal_output(0,"mca_common_sm_mmap_init: open %s len %d failed with errno=%d\n",                      
+            opal_output(0,"mca_common_sm_mmap_init: open %s len %ld failed with errno=%d\n",                      
                         *file_name, len, errno);
             goto file_opened;
         }
@@ -321,7 +323,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         /* open backing file */
         fd = open(*file_name, O_RDWR, 0600);
             if (fd < 0) {
-            opal_output(0,"mca_common_sm_mmap_init: open %s len %d failed with errno=%d\n",                      
+            opal_output(0,"mca_common_sm_mmap_init: open %s len %ld failed with errno=%d\n",                      
                         *file_name, len, errno);
             goto return_error;
         }
@@ -873,6 +875,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         size_buff_ctl_per_proc*group_size+
         /* size of data buffers */
         size*sm_module->sm2_module_num_buffers*group_size;
+    sm_module->size_of_collective_buffer_region=tot_size_mem_banks;
     sm_module->data_memory_per_proc_per_segment=size;
 
 
@@ -896,12 +899,29 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     /* total memory management required */
     mem_management_total=mem_management_per_proc * group_size;
+    sm_module->size_mem_banks_ctl_region=mem_management_total;
+
+    /*
+     * Memory for blocking collectives - need two sets of memory
+     *   regions for this.
+     */
+    /* size per proc */
+    size=2*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t);
+    /* page align */
+    size=(size +
+            getpagesize() -1 ) / getpagesize();
+    size*=getpagesize();
+    sm_module->per_proc_size_of_blocking_barrier_region=size;
+    sm_module->size_of_blocking_barrier_region=size*group_size;
+
 
     /* total size of backing file - this assumes the mmap allocation
      *   occurs on page boundaries, and that all segments are paged
      *   aligned 
      */
-    size_sm2_backing_file=mem_management_total+tot_size_mem_banks;
+    size_sm2_backing_file=sm_module->size_mem_banks_ctl_region+
+        sm_module->size_of_collective_buffer_region+
+        sm_module->size_of_blocking_barrier_region;
     sm_module->size_sm2_backing_file=size_sm2_backing_file;
 
     /* set file name */
@@ -1028,6 +1048,62 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto CLEANUP;
     }
 
+    /* 
+     * setup blocking barrier data structures 
+     */
+    sm_module->sm_blocking_barrier_region=
+        sm_module->shared_memory_region+
+        sm_module->size_mem_banks_ctl_region+
+        sm_module->size_of_collective_buffer_region;
+
+    sm_module->index_blocking_barrier_memory_bank=0;
+
+    sm_module->ctl_blocking_barrier=
+        (mca_coll_sm2_nb_request_process_shared_mem_t ***)
+        malloc(2*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t **));
+    if( NULL == sm_module->ctl_blocking_barrier ) {
+        goto CLEANUP;
+    }
+    sm_module->ctl_blocking_barrier[0]=
+        (mca_coll_sm2_nb_request_process_shared_mem_t **)
+        malloc(group_size*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t *));
+    if( NULL == sm_module->ctl_blocking_barrier[0]) {
+        goto CLEANUP;
+    }
+    sm_module->ctl_blocking_barrier[1]=
+        (mca_coll_sm2_nb_request_process_shared_mem_t **)
+        malloc(group_size*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t *));
+    if( NULL == sm_module->ctl_blocking_barrier[1]) {
+        goto CLEANUP;
+    }
+
+    /* debug */
+    fprintf(stderr," sizeof(mca_coll_sm2_nb_request_process_shared_mem_t) %lx \n",
+            sizeof(mca_coll_sm2_nb_request_process_shared_mem_t));
+    fflush(stderr);
+    /* end debug */
+    for( j= 0 ; j < 2 ; j++ ) {
+        for( i=0 ; i < group_size ; i++ ) {
+            sm_module->ctl_blocking_barrier[j][i]=
+                (mca_coll_sm2_nb_request_process_shared_mem_t * ) 
+                (
+                sm_module->sm_blocking_barrier_region+
+                j*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t)+
+                i*sm_module->per_proc_size_of_blocking_barrier_region )
+                ;
+            /* debug */
+            fprintf(stderr," i %d j %d  %p base %p pp %lx\n",i,j,
+                    sm_module->ctl_blocking_barrier[j][i],
+                    sm_module->sm_blocking_barrier_region,
+                    sm_module->per_proc_size_of_blocking_barrier_region);
+            fflush(stderr);
+            /* end debug */
+            sm_module->ctl_blocking_barrier[j][i]->flag=0;
+        }
+    }
+
+
+
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
 
@@ -1071,6 +1147,21 @@ CLEANUP:
         sm_module->scratch_space=NULL;
     }
 
+    for( i= 0 ; i < group_size ; i++ ) {
+        if( NULL != sm_module->ctl_blocking_barrier[0][i] ) {
+            free( sm_module->ctl_blocking_barrier[0][i]);
+             sm_module->ctl_blocking_barrier[0][i]=NULL;
+        }
+        if( NULL != sm_module->ctl_blocking_barrier[1][i] ) {
+            free( sm_module->ctl_blocking_barrier[1][i]);
+             sm_module->ctl_blocking_barrier[1][i]=NULL;
+        }
+    }
+    if( NULL !=  sm_module->ctl_blocking_barrier ) {
+        free(sm_module->ctl_blocking_barrier);
+         sm_module->ctl_blocking_barrier=NULL;
+    }
+
     OBJ_RELEASE(sm_module);
 
     return NULL;
@@ -1110,7 +1201,7 @@ int progress_nb_barrier(mca_coll_sm2_module_t *module)
          *  to subtract 1 for the index, as the number completed is the index
          *  of the next one to complete.
          */
-        int barrier_index=(module->num_nb_barriers_completed%
+        barrier_index=(module->num_nb_barriers_completed%
                 module->sm2_module_num_memory_banks);
     
         rc=mca_coll_sm2_nbbarrier_intra_progress(module->module_comm,
@@ -1176,7 +1267,7 @@ sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         while( num_incomlete_barriers == module->sm2_module_num_memory_banks ) {
             rc=progress_nb_barrier(module);
             if( OMPI_SUCCESS != rc ) {
-                return rc;
+                return NULL;
             }
             num_incomlete_barriers=module->num_nb_barriers_started -
                 module->num_nb_barriers_completed;
