@@ -106,10 +106,31 @@ BEGIN_C_DECLS
         /** MCA parameter: order of fan-out read tree */
         int order_fanout_read_tree;
 
-        /*I MCA paramenter:  number of polling loops to run while waiting
+        /** MCA paramenter:  number of polling loops to run while waiting
          *  for children or parent to complete their work
          */
         int n_poll_loops;
+
+        /** MCA parameter:  message size cutoff for switching between 
+         *  short and long protocol
+         */
+        size_t short_message_size;
+
+        /*
+         * Parameters to control methods used
+         */
+        /** MCA parameter:  method to force a given barrier method to be used.
+         *  0 - FANIN_FAN_OUT_BARRIER_FN
+         *  1 - RECURSIVE_DOUBLING_BARRIER_FN
+         */
+        int force_barrier;
+
+        /** MCA parameter:  method to force a given reduce method to be used.
+         * 0 - FANIN_FAN_OUT_REDUCE_FN,
+         * 1 - REDUCE_SCATTER_GATHER_FN,
+         */
+        int force_reduce;
+
 
     };
 
@@ -117,6 +138,30 @@ BEGIN_C_DECLS
      * Convenience typedef
      */
     typedef struct mca_coll_sm2_component_t mca_coll_sm2_component_t;
+
+    /* 
+     * Implemented function index list 
+     */
+
+    /* barrier */
+    enum{
+        FANIN_FAN_OUT_BARRIER_FN,
+        RECURSIVE_DOUBLING_BARRIER_FN,
+        N_BARRIER_FNS
+    };
+
+    /* reduce */
+    enum{
+        FANIN_REDUCE_FN,
+        REDUCE_SCATTER_GATHER_FN,
+        N_REDUCE_FNS
+    };
+    enum{
+        SHORT_DATA_FN,
+        LONG_DATA_FN,
+        N_REDUCE_FNS_USED
+    };
+
 
     /* enum for node type */
     enum{
@@ -326,7 +371,7 @@ BEGIN_C_DECLS
         int index_blocking_barrier_memory_bank;
 
         /* pointers to blocking memory control regions */
-        mca_coll_sm2_nb_request_process_shared_mem_t ***ctl_blocking_barrier;
+        volatile mca_coll_sm2_nb_request_process_shared_mem_t ***ctl_blocking_barrier;
 
         /* description of allocated temp buffers - one struct per
          * buffer.  Each buffer has space "owned" by each process
@@ -403,15 +448,21 @@ BEGIN_C_DECLS
         /* collective tag */
         long long collective_tag;
 
-        /* debug flag RLG */
-        int blocked_on_barrier;
-
-        long long barrier_bank_list[BARRIER_BANK_LIST_SIZE];
-        long long barrier_bank_cntr;
-        /* end debug */
-
         /* scratch space - one int per process */
         int *scratch_space;
+
+        /* message size cutoff for switching between short and long
+         *   protocol
+         */
+        size_t short_message_size;
+
+        /*
+         * function table for variants of a given collective
+         *   function.
+         */
+        mca_coll_base_module_barrier_fn_t barrier_functions[N_BARRIER_FNS];
+        mca_coll_base_module_reduce_fn_t list_reduce_functions[N_REDUCE_FNS];
+        mca_coll_base_module_reduce_fn_t reduce_functions[N_REDUCE_FNS_USED];
 
     };
 
@@ -541,6 +592,16 @@ BEGIN_C_DECLS
             int root, struct ompi_communicator_t *comm,
             struct mca_coll_base_module_1_1_0_t *module);
 
+    int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf, 
+            int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+            int root, struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
+    int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
+            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+            int root, struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
     /**
      * Shared memory blocking broadcast.
      */
@@ -553,6 +614,14 @@ BEGIN_C_DECLS
       * Shared memory blocking barrier
       */
     int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
+    int mca_coll_sm2_barrier_intra_fanin_fanout( 
+            struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
+    int mca_coll_sm2_barrier_intra_recursive_doubling(
+            struct ompi_communicator_t *comm,
             struct mca_coll_base_module_1_1_0_t *module);
 
 END_C_DECLS

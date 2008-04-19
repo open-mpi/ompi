@@ -1118,7 +1118,7 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
     /* local varibles */
     int i,rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
     int pair_rank,exchange,extra_rank,n_proc_data,tmp;
-    int starting_proc,n_procs_to_read,base_block_proc,base_read_proc;
+    int starting_proc;
     int n_elements_per_proc, n_residual_elements;
     int cnt_offset,n_copy;
     pair_exchange_node_t *my_exchange_node;
@@ -1129,7 +1129,6 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
     ptrdiff_t dt_extent;
     long long tag, base_tag;
     sm_work_buffer_t *sm_buffer_desc;
-    volatile char * my_write_pointer;
     volatile char * extra_rank_write_data_pointer;
     volatile char * extra_rank_read_data_pointer;
     volatile char * partner_base_pointer;

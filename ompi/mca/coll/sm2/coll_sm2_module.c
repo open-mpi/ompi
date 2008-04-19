@@ -726,6 +726,42 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scatter    = NULL;
     sm_module->super.coll_scatterv   = NULL;
 
+    /* 
+     * set up specific function to be used 
+     */
+
+    /* barrier */
+    sm_module->barrier_functions[FANIN_FAN_OUT_BARRIER_FN]=
+        mca_coll_sm2_barrier_intra_fanin_fanout;
+    sm_module->barrier_functions[RECURSIVE_DOUBLING_BARRIER_FN]=
+        mca_coll_sm2_barrier_intra_fanin_fanout;
+    if( ( 0 <= mca_coll_sm2_component.force_barrier ) &&
+            ( N_BARRIER_FNS > mca_coll_sm2_component.force_barrier ) ) {
+        /* set user specifed function */
+        mca_coll_base_module_barrier_fn_t tmp_fn=
+            sm_module->barrier_functions[mca_coll_sm2_component.force_barrier];
+        sm_module->barrier_functions[FANIN_FAN_OUT_BARRIER_FN]=tmp_fn;
+        sm_module->barrier_functions[RECURSIVE_DOUBLING_BARRIER_FN]=tmp_fn;
+    }
+
+    /* reduce */
+    sm_module->list_reduce_functions[FANIN_REDUCE_FN]=
+        mca_coll_sm2_reduce_intra_fanin;
+    sm_module->list_reduce_functions[REDUCE_SCATTER_GATHER_FN]=
+        mca_coll_sm2_reduce_intra_reducescatter_gather;
+    sm_module->reduce_functions[SHORT_DATA_FN]=
+        sm_module->list_reduce_functions[FANIN_REDUCE_FN];
+    sm_module->reduce_functions[LONG_DATA_FN]=
+        sm_module->list_reduce_functions[REDUCE_SCATTER_GATHER_FN];
+    if( ( 0 <= mca_coll_sm2_component.force_reduce ) &&
+            ( N_REDUCE_FNS > mca_coll_sm2_component.force_reduce ) ) {
+        /* set user specifed function */
+        mca_coll_base_module_barrier_fn_t tmp_fn=
+            sm_module->reduce_functions[mca_coll_sm2_component.force_reduce];
+        sm_module->reduce_functions[SHORT_DATA_FN]=tmp_fn;
+        sm_module->reduce_functions[LONG_DATA_FN]=tmp_fn;
+    }
+
     /*
      * Some initialization
      */
@@ -1059,7 +1095,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->index_blocking_barrier_memory_bank=0;
 
     sm_module->ctl_blocking_barrier=
-        (mca_coll_sm2_nb_request_process_shared_mem_t ***)
+        (volatile mca_coll_sm2_nb_request_process_shared_mem_t ***)
         malloc(2*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t **));
     if( NULL == sm_module->ctl_blocking_barrier ) {
         goto CLEANUP;
@@ -1077,11 +1113,6 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto CLEANUP;
     }
 
-    /* debug */
-    fprintf(stderr," sizeof(mca_coll_sm2_nb_request_process_shared_mem_t) %lx \n",
-            sizeof(mca_coll_sm2_nb_request_process_shared_mem_t));
-    fflush(stderr);
-    /* end debug */
     for( j= 0 ; j < 2 ; j++ ) {
         for( i=0 ; i < group_size ; i++ ) {
             sm_module->ctl_blocking_barrier[j][i]=
@@ -1091,18 +1122,12 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
                 j*sizeof(mca_coll_sm2_nb_request_process_shared_mem_t)+
                 i*sm_module->per_proc_size_of_blocking_barrier_region )
                 ;
-            /* debug */
-            fprintf(stderr," i %d j %d  %p base %p pp %lx\n",i,j,
-                    sm_module->ctl_blocking_barrier[j][i],
-                    sm_module->sm_blocking_barrier_region,
-                    sm_module->per_proc_size_of_blocking_barrier_region);
-            fflush(stderr);
-            /* end debug */
             sm_module->ctl_blocking_barrier[j][i]->flag=0;
         }
     }
 
-
+    /* set the switch-over parameter */
+    sm_module->short_message_size=mca_coll_sm2_component.short_message_size;
 
     /* touch pages to apply memory affinity - Note: do we really need this or will
      * the algorithms do this */
