@@ -219,6 +219,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the process map just before launch"},
     
+    { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Display the allocation being used by this job"},
+
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
       &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,

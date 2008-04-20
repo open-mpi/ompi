@@ -44,7 +44,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 {
     int rc;
     opal_list_t nodes;
-    orte_node_t *node;
+    orte_node_t *node, **alloc;
     orte_std_cntr_t i;
     bool override_oversubscribed;
     orte_app_context_t **apps;
@@ -281,5 +281,18 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         return rc;
     }
     OBJ_DESTRUCT(&nodes);
+    
+    /* shall we display the results? */
+    if (orte_ras_base.display_alloc) {
+        alloc = (orte_node_t**)orte_node_pool->addr;
+        opal_output(0, "***   NODE ALLOCATION FOR JOB %s  ***", ORTE_JOBID_PRINT(jdata->jobid));
+        for (i=0; i < orte_node_pool->size; i++) {
+            if (NULL == alloc[i]) {
+                break;
+            }
+            opal_dss.dump(0, alloc[i], ORTE_NODE);
+        }
+    }
+    
     return ORTE_SUCCESS;
 }

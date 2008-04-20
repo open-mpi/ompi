@@ -40,6 +40,7 @@ typedef struct orte_ras_base_t {
     int ras_output;
     opal_list_t ras_opened;
     bool allocation_read;
+    bool display_alloc;
     orte_ras_base_module_t *active_module;
 } orte_ras_base_t;
 
