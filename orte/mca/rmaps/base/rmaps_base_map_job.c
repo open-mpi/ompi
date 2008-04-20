@@ -28,6 +28,7 @@
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -82,6 +83,7 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
     
     /* if we wanted to display the map, now is the time to do it */
     if (jdata->map->display_map) {
+        opal_output(0, "***   JOB MAP FOR JOB %s   ***", ORTE_JOBID_PRINT(jdata->jobid));
         opal_dss.dump(0, jdata->map, ORTE_JOB_MAP);
     }
     

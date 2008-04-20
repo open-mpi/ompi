@@ -63,10 +63,18 @@ orte_ras_base_t orte_ras_base;
  */
 int orte_ras_base_open(void)
 {
+    int value;
+    
     /* set default flags */
     orte_ras_base.active_module = NULL;
     orte_ras_base.allocation_read = false;
     
+    /* should we display the allocation after determining it? */
+    mca_base_param_reg_int_name("ras", "base_display_alloc",
+                                "Whether to display the allocation after it is determined",
+                                false, false, (int)false, &value);
+    orte_ras_base.display_alloc = OPAL_INT_TO_BOOL(value);
+
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
     orte_ras_base.ras_output = opal_output_open(NULL);
