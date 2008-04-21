@@ -104,7 +104,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
             return rc;
         }
         OBJ_DESTRUCT(&nodes);
-        return ORTE_SUCCESS;
+        goto DISPLAY;
     }
     
     
@@ -147,7 +147,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
-        return rc;
+        goto DISPLAY;
     }
     
     /* Individual hostfile names, if given, are included
@@ -195,7 +195,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
-        return rc;
+        goto DISPLAY;
     }
     
     
@@ -242,7 +242,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
-        return rc;
+        goto DISPLAY;
     }
     
     
@@ -281,11 +281,12 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         return rc;
     }
     OBJ_DESTRUCT(&nodes);
-    
+
+DISPLAY:
     /* shall we display the results? */
     if (orte_ras_base.display_alloc) {
         alloc = (orte_node_t**)orte_node_pool->addr;
-        opal_output(0, "***   NODE ALLOCATION FOR JOB %s  ***", ORTE_JOBID_PRINT(jdata->jobid));
+        opal_output(0, "***   ALLOCATED NODES   ***");
         for (i=0; i < orte_node_pool->size; i++) {
             if (NULL == alloc[i]) {
                 break;
@@ -294,5 +295,5 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         }
     }
     
-    return ORTE_SUCCESS;
+    return rc;
 }
