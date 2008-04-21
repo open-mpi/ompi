@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,6 +64,10 @@ struct mca_btl_portals_component_t {
     
     /* shall I use portals to send to thyself? */
     int portals_support_self;
+
+    /* do I need a portals ACK? */
+    int portals_need_ack;
+
 };
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 

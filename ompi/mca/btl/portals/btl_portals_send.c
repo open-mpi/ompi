@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,8 +63,16 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
         mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
         mca_btl_portals_module.md_send.length = 
             0 == frag->size ? frag->segments[0].seg_len : frag->size;
+#if OMPI_ENABLE_DEBUG 
         mca_btl_portals_module.md_send.options = 
             PTL_MD_EVENT_START_DISABLE;
+#else 
+        /* optimized build, we can get rid of the END event */
+        /*  if we are using portals ACK's for completion */
+        mca_btl_portals_module.md_send.options = 
+            (PTL_MD_EVENT_START_DISABLE | 
+             (mca_btl_portals_component.portals_need_ack ? PTL_MD_EVENT_END_DISABLE : 0));
+#endif
         mca_btl_portals_module.md_send.user_ptr = frag; /* keep a pointer to ourselves */
 
         /* make a free-floater */
@@ -84,11 +93,11 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                          "\tlen: %d",
                          (unsigned long) frag->segments[0].seg_addr.pval,
                          frag->segments[0].seg_len)); 
-
+    
     ret = PtlPutRegion(frag->md_h,                /* memory descriptor */
                        0,                         /* fragment offset */
                        frag->segments[0].seg_len, /* fragment length */
-                       PTL_ACK_REQ,
+                       (mca_btl_portals_component.portals_need_ack ? PTL_ACK_REQ : PTL_NO_ACK_REQ),
                        *((mca_btl_base_endpoint_t*) endpoint),
                        OMPI_BTL_PORTALS_SEND_TABLE_ID,
                        0,                         /* ac_index - not used */

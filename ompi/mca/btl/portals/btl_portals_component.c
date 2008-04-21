@@ -125,7 +125,7 @@ mca_btl_portals_component_open(void)
                            false,
                            32,
                            &(mca_btl_portals_component.portals_free_list_eager_max_num));
-
+    
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "support_self",
                            "Use portals for send to self",
@@ -133,6 +133,14 @@ mca_btl_portals_component_open(void)
                            false,
                            1, /* default to true.. */ 
                            &(mca_btl_portals_component.portals_support_self));
+
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "needs_ack",
+                           "Require a portals level ACK",
+                           false,
+                           false,
+                           1, /* default to true.. */ 
+                           &(mca_btl_portals_component.portals_need_ack));
 
     /* 
      * fill default module state 
@@ -490,7 +498,7 @@ mca_btl_portals_component_progress(void)
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_END for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
-
+                
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to end send event\n");
@@ -504,6 +512,22 @@ mca_btl_portals_component_progress(void)
                     }
                 }
 #endif
+                if(!mca_btl_portals_component.portals_need_ack) { 
+                    /* my part's done, in portals we trust! */
+                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                          frag->endpoint,
+                                          &frag->base,
+                                          OMPI_SUCCESS);
+                    if( btl_ownership ) {
+                        mca_btl_portals_free(&mca_btl_portals_module.super,
+                                             &frag->base);
+                    }
+                    if (0 != frag->size) {
+                        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops,
+                                          -1);
+                        MCA_BTL_PORTALS_PROGRESS_QUEUED_SENDS();
+                    }
+                }
                 break;
 
             case PTL_EVENT_ACK:
@@ -516,8 +540,13 @@ mca_btl_portals_component_progress(void)
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_ACK for 0x%lx",
                                      (unsigned long) frag));
-
+                
 #if OMPI_ENABLE_DEBUG
+                if(!mca_btl_portals_component.portals_need_ack) { 
+                    opal_output(mca_btl_portals_component.portals_output, 
+                                "Received PTL_EVENT_ACK but ACK's are disabled!\n");
+                    abort();
+                }
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to ack event\n");
