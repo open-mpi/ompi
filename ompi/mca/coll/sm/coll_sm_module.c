@@ -207,8 +207,8 @@ sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
     char *base = NULL;
     const int num_barrier_buffers = 2;
 
-    if (NULL == sm_module->previous_reduce ||
-        NULL == sm_module->previous_reduce_module) {
+    if (NULL == comm->c_coll.coll_reduce ||
+        NULL == comm->c_coll.coll_reduce_module) {
         return OMPI_ERROR;
     }
 
@@ -593,7 +593,6 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     opal_atomic_lock(&bshe->super.seg_lock);
     proc = ompi_group_peer_lookup(comm->c_local_group,0);
     rank0 = &(proc->proc_name);
-    free(proc);
 
     while (1) {
         opal_atomic_wmb();
