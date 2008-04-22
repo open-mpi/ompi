@@ -530,7 +530,7 @@ static int mca_btl_openib_mca_setup_qps(void)
             (uint32_t)mca_btl_openib_module.super.btl_eager_limit,
             (uint32_t)mca_btl_openib_module.super.btl_max_send_size);
     reg_string("receive_queues",
-               "Colon-delimited, coma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
+               "Colon-delimited, comma delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
                default_qps, &str, 0);
     queues = opal_argv_split(str, ':');
 
