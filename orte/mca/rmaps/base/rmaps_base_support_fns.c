@@ -359,38 +359,50 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     
     /* for each node in the map... */
     nodes = (orte_node_t**)map->nodes->addr;
-    for (i=0; i < map->nodes->size; i++) {
-        if (NULL != nodes[i]) {
-            /* cycle through the array of procs on this node, looking for
-             * the minimum vpid one and setting that local rank, until we
-             * have done so for all procs on the node
-             */
-            
-            /* init search values */
-            procs = (orte_proc_t**)nodes[i]->procs->addr;
-            local_rank = 0;
-            
-            while (local_rank < nodes[i]->num_procs) {
-                minv = ORTE_VPID_MAX;
-                /* find the minimum vpid proc */
-                for (j=0; j < nodes[i]->procs->size; j++) {
-                    if (NULL != procs[j]) {
-                        if (ORTE_VPID_INVALID != procs[j]->local_rank) {
-                            /* already done this one */
-                            continue;
-                        }
-                        if (procs[j]->name.vpid < minv) {
-                            minv = procs[j]->name.vpid;
-                            psave = procs[j];
-                        }
-                    }
+    for (i=0; i < map->num_nodes; i++) {
+        /* cycle through the array of procs IN THIS JOB on this node, looking for
+         * the minimum vpid one and setting that local rank, until we
+         * have done so for all procs on the node and/or in the job
+         */
+        
+        /* init search values */
+        procs = (orte_proc_t**)nodes[i]->procs->addr;
+        local_rank = 0;
+        
+        while (local_rank < nodes[i]->num_procs) {
+            minv = ORTE_VPID_MAX;
+            psave = NULL;
+            /* find the minimum vpid proc IN THIS JOB */
+            for (j=0; j < nodes[i]->procs->size; j++) {
+                if (NULL == procs[j]) {
+                    /* the array is left justified, so this
+                     * means we are done
+                     */
+                    break;
                 }
-                psave->local_rank = local_rank;
-                ++local_rank;
+                if (procs[j]->name.jobid != jdata->jobid) {
+                    /* not in our job */
+                    continue;
+                }
+                if (ORTE_VPID_INVALID != procs[j]->local_rank) {
+                    /* already did this one */
+                    continue;
+                }
+                if (procs[j]->name.vpid < minv) {
+                    minv = procs[j]->name.vpid;
+                    psave = procs[j];
+                }
             }
+            if (NULL == psave) {
+                /* we must have processed them all! */
+                goto DONE;
+            }
+            psave->local_rank = local_rank;
+            ++local_rank;
         }
     }
 
+DONE:
     return ORTE_SUCCESS;
 }
 
