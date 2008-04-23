@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -29,33 +29,42 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
         AC_MSG_CHECKING([checking for the valgrind include directory ])
         if test -n "$with_valgrind" -a -d "$with_valgrind/include" ; then
             CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
-          AC_MSG_RESULT([$with_valgrind/include])
+            AC_MSG_RESULT([$with_valgrind/include])
+            
+            AC_CHECK_HEADER([valgrind/valgrind.h],
+                [AC_CHECK_HEADER([valgrind/memcheck.h],
+                        [happy=yes])])
+
+            if test "x$happy" != "xyes" ; then
+                AC_MSG_WARN([*** Could not find valgrind header files, as valgrind support was requested])
+                AC_MSG_WARN([*** Cannot compile this component])
+                memchecker_valgrind_happy=0
+                want_component=0
+                should_build=2
+            else
+                AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE inside valgrind/memcheck.h])
+                
+                AC_TRY_COMPILE([#include "valgrind/memcheck.h"],
+                    [
+                        char buffer = 0xff;
+                        VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));
+                        ], valgrind_version_new=yes, valgrind_version_new=no)
+                AC_MSG_RESULT($valgrind_version_new)
+                
+                if test "x$valgrind_version_new" != "xyes" ; then
+                    AC_MSG_WARN([*** Need at least version 3.2.0, please specify using --with-valgrind])
+                    AC_MSG_WARN([*** Cannot compile this component])
+                    memchecker_valgrind_happy=0
+                    want_component=0
+                    should_build=2
+                fi
+            fi
         else
-          AC_MSG_RESULT([none needed])
+            AC_MSG_RESULT([should not compile])
+            memchecker_valgrind_happy=0
+            want_component=0
+            should_build=2
         fi
-
-        AC_CHECK_HEADER([valgrind/valgrind.h],
-            [AC_CHECK_HEADER([valgrind/memcheck.h],
-                [happy=yes])])
-
-        if test "x$happy" != "xyes" ; then
-            AC_MSG_WARN([*** Could not find valgrind header files, as valgrind support was requested])
-            AC_MSG_ERROR([*** Cannot continue])
-        fi
-
-        AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE in valgrind/memcheck.h])
-        AC_TRY_COMPILE([#include "valgrind/memcheck.h"],
-            [
-            char buffer = 0xff;
-            VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));
-            ], valgrind_version_new=yes, valgrind_version_new=no)
-        AC_MSG_RESULT($valgrind_version_new)
-
-        if test "x$valgrind_version_new" != "xyes" ; then
-            AC_MSG_WARN([*** Need at least version 3.2.0, please specify using --with-valgrind])
-            AC_MSG_ERROR([*** Cannot continue])
-        fi
-
     else
         happy=0                      # none_needed
         happy_value=0                # none_needed
