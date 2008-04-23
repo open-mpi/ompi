@@ -82,7 +82,9 @@ static int init(void)
     /* setup the global condition and lock */
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
-    
+
+    lifeline = NULL;
+
     return ORTE_SUCCESS;
 }
 
@@ -128,7 +130,9 @@ static int finalize(void)
     /* destruct the global condition and lock */
     OBJ_DESTRUCT(&cond);
     OBJ_DESTRUCT(&lock);
-    
+
+    lifeline = NULL;
+
     return ORTE_SUCCESS;
 }
 

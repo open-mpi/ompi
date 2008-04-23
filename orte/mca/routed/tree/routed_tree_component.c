@@ -48,7 +48,8 @@ orte_routed_component_t mca_routed_tree_component = {
 
       /* Next the MCA v1.0.0 component meta data */
       {
-          MCA_BASE_METADATA_PARAM_NONE
+          /* This component can be checkpointed */
+          MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
       routed_tree_init
 };
