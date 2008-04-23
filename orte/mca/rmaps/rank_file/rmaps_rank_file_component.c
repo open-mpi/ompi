@@ -77,26 +77,14 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
 static int orte_rmaps_rank_file_open(void)
 {
     int index, paffinity_alone;
-
-    mca_base_param_reg_int(&mca_rmaps_rank_file_component.super.rmaps_version, "priority",
-                           "Selection priority for Rank File RMAPS component",
-                           false, false, 1,
-                           &mca_rmaps_rank_file_component.priority);
-
+    mca_rmaps_rank_file_component.priority = 0;
+    
     mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.rmaps_version,
                               "path",
                               "The path to the rank mapping file",
                               false, false, NULL, &orte_rmaps_rank_file_path);
     if (NULL != orte_rmaps_rank_file_path) {
-        index = mca_base_param_find("rank_file",NULL,NULL); 
-        if ( OPAL_ERROR != index) {
-            mca_base_param_set_string(index,"rank_file");
-        }
-        mca_base_param_lookup_string(index, &orte_rmaps_rank_file_path);
-        /* if rankfile path is present than set higher priority to this component */
         mca_rmaps_rank_file_component.priority = 1000000;
-    } else {
-        mca_rmaps_rank_file_component.priority = 0;
     }
 
     index = mca_base_param_find("opal", NULL, "paffinity_slot_list");
@@ -106,8 +94,6 @@ static int orte_rmaps_rank_file_open(void)
                 mca_rmaps_rank_file_component.priority = 1000000;
             }
         }
-    } else {
-        mca_rmaps_rank_file_component.priority = 0;
     }
 
     index = mca_base_param_find("opal", NULL, "paffinity_alone");

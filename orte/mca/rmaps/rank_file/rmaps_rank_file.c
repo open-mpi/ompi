@@ -76,6 +76,9 @@ static int map_app_by_user_map(
     orte_std_cntr_t round_cnt;
 
     OPAL_TRACE(2);
+    if ( NULL == orte_rmaps_rank_file_path ) {
+        return ORTE_SUCCESS;
+    }
 
     while (orte_rmaps_rank_file_num_alloc < app->num_procs) {
     /** see if any nodes remain unused and available. We need to do this check
