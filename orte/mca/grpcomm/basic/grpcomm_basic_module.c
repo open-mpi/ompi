@@ -1082,8 +1082,6 @@ static void collective_recv(int status, orte_process_name_t* sender,
     int rc;
     orte_std_cntr_t contributors, cnt;
     
-    /* bump counter */
-    ++collective_num_recvd;
     /* extract the #contributors */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &contributors, &cnt, ORTE_STD_CNTR))) {
@@ -1109,6 +1107,8 @@ static void collective_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         collective_failed = true;
     }
+    /* bump counter */
+    ++collective_num_recvd;
 }
 
 
@@ -1191,7 +1191,8 @@ static int daemon_leader(orte_jobid_t jobid,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_children));
         
         /* cancel the lingering recv */
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE)) &&
+            ORTE_ERR_NOT_FOUND != rc) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(collection);
             return rc;
@@ -1352,7 +1353,8 @@ static int daemon_collective(orte_jobid_t jobid,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         /* cancel the lingering recv */
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE)) &&
+            ORTE_ERR_NOT_FOUND != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
