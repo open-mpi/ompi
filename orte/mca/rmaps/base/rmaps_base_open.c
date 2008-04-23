@@ -125,6 +125,16 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.oversubscribe = true;
     }
     
+    /* Do we want to loadbalance the job */
+    param = mca_base_param_reg_int_name("rmaps", "base_loadbalance",
+                                        "Balance total number of procs across all allocated nodes",
+                                        false, false, (int)false, &value);
+    orte_rmaps_base.loadbalance = OPAL_INT_TO_BOOL(value);
+    /* if we are doing npernode or pernode, then we cannot loadbalance */
+    if (orte_rmaps_base.pernode) {
+        orte_rmaps_base.loadbalance = false;
+    }
+    
     /* should we display the map after determining it? */
     mca_base_param_reg_int_name("rmaps", "base_display_map",
                                 "Whether to display the process map after it is computed",

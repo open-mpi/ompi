@@ -23,6 +23,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/if.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -111,7 +112,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
          */
-        if (0 == strcmp(node->name, hnp_node->name)) {
+        if (0 == strcmp(node->name, hnp_node->name) || opal_ifislocal(node->name)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert updating HNP info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -124,6 +125,9 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             hnp_node->slots_alloc = node->slots_alloc;
             hnp_node->slots_max = node->slots_max;
             hnp_node->launch_id = node->launch_id;
+            /* use the RM's name for the node */
+            free(hnp_node->name);
+            hnp_node->name = strdup(node->name);
             /* set the node to available for use */
             hnp_node->allocate = true;
             /* update the total slots in the job */

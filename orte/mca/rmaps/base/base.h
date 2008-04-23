@@ -57,10 +57,12 @@ typedef struct {
     bool pernode;
     /** number of ppn for n_per_node mode */
     int npernode;
-    /* do we not allow use of the localhost */
+    /* do not allow use of the localhost */
     bool no_use_local;
     /* display the map after it is computed */
     bool display_map;
+    /* balance load across nodes */
+    bool loadbalance;
 } orte_rmaps_base_t;
 
 /**
