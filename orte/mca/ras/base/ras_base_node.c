@@ -125,9 +125,9 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             hnp_node->slots_alloc = node->slots_alloc;
             hnp_node->slots_max = node->slots_max;
             hnp_node->launch_id = node->launch_id;
-            /* use the RM's name for the node */
-            free(hnp_node->name);
-            hnp_node->name = strdup(node->name);
+            /* use the local name for our node - don't trust what
+             * we got from an RM
+             */
             /* set the node to available for use */
             hnp_node->allocate = true;
             /* update the total slots in the job */
