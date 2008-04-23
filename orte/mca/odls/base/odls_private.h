@@ -68,8 +68,6 @@ typedef struct orte_odls_globals_t {
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
         
-ORTE_DECLSPEC int orte_odls_base_purge_environment(char ***environ);
-
 ORTE_DECLSPEC int orte_odls_base_report_spawn(opal_list_t *children);
 
 /*

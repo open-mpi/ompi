@@ -29,6 +29,8 @@ version 1.0.
 1.2.7 (might never be released)
 -----
 
+- Removed an unused function prototype that caused warnings on
+  some systems (e.g., OS X).  See ticket #1274.
 - Fix a deadlock in inter-communicator scatter/gather operations.
   Thanks to Martin Audet for the bug report.  See ticket #1268.
 
