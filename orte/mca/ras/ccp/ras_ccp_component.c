@@ -110,6 +110,7 @@ static orte_ras_base_module_t *ras_ccp_init(int* priority)
 
     /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.hnp) {
+        pCluster->Release();
         return NULL;
     }
 
