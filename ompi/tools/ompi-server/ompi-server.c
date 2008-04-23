@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
     int ret = 0;
     opal_cmd_line_t *cmd_line = NULL;
     char *rml_uri;
+    char * tmp_env_var = NULL;
 
     /* init enough of opal to process cmd lines */
     if (OPAL_SUCCESS != opal_init_util()) {
@@ -163,15 +164,22 @@ int main(int argc, char *argv[])
     opal_cr_set_enabled(false);
     
     /* Select the none component, since we don't actually use a checkpointer */
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
     /* Mark as a tool program */
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
 #endif
-    
+    tmp_env_var = NULL; /* Silence compiler warning */
+
     /* Perform the standard init, but flag that we are a tool
      * so that we only open up the communications infrastructure. No
      * session directories will be created.

@@ -62,9 +62,9 @@ int MPI_Open_port(MPI_Info info, char *port_name)
         */
     }
 
-    rc = ompi_dpm.open_port(port_name, OMPI_RML_TAG_INVALID);
-
     OPAL_CR_ENTER_LIBRARY();
+
+    rc = ompi_dpm.open_port(port_name, OMPI_RML_TAG_INVALID);
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

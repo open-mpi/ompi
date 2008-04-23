@@ -66,7 +66,8 @@ static orte_snapc_base_module_t none_module = {
     /** Finalization Function */
     orte_snapc_base_module_finalize,
     orte_snapc_base_none_setup_job,
-    orte_snapc_base_none_release_job
+    orte_snapc_base_none_release_job,
+    orte_snapc_base_none_ft_event
 };
 
 int orte_snapc_base_select(bool seed, bool app)

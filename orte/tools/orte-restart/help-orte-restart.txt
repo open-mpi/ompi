@@ -24,6 +24,16 @@ ompi-restart GLOBAL_SNAPSHOT_REF
 
 %s
 
+[usage-no-cr]
+This build of Open MPI does *not* include Checkpoint/Restart functionality.
+If you require this functionality re-configure Open MPI with the proper
+Checkpoint/Restart options.
+
+ompi-restart GLOBAL_SNAPSHOT_REF
+  Open MPI Parallel Job Restart Tool
+
+%s
+
 [invalid_filename]
 Error: The filename (%s) is invalid because either you have not provided a filename
        or provided an invalid filename.

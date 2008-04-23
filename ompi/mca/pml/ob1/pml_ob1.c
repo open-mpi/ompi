@@ -476,15 +476,11 @@ int mca_pml_ob1_ft_event( int state )
 
         /*
          * Clean out the modex information since it is invalid now.
+         *    orte_grpcomm.purge_proc_attrs();
+         * This happens at the ORTE level, so doing it again here will cause
+         * some issues with socket caching.
          */
-        opal_output_verbose(10, ompi_cr_output,
-                            "pml:ob1: ft_event(Restart): Restart Modex information");
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): purge_modex Failed %d",
-                        ret);
-            return ret;
-        }
+
 
         /*
          * Refresh the proc structure, and publish our proc info in the modex.

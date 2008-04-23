@@ -150,6 +150,7 @@ main(int argc, char *argv[])
     int child_pid;
     int prev_pid = 0;
     opal_crs_base_snapshot_t *snapshot = NULL;
+    char * tmp_env_var = NULL;
 
     /***************
      * Initialize
@@ -170,9 +171,12 @@ main(int argc, char *argv[])
     }
 
     /* Re-enable the selection of the CRS component, so we can choose the right one */
-    opal_setenv(mca_base_param_env_var("crs_base_do_not_select"),
+    tmp_env_var = mca_base_param_env_var("crs_base_do_not_select");
+    opal_setenv(tmp_env_var,
                 "0", /* turn on the selection */
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /*
      * Make sure we are using the correct checkpointer
@@ -190,9 +194,12 @@ main(int argc, char *argv[])
                         "Restart Expects checkpointer: (%s)",
                         expected_crs_comp);
     
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 expected_crs_comp,
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
     
     /* Select this component or don't continue.
      * If the selection of this component fails, then we can't 
@@ -299,6 +306,7 @@ main(int argc, char *argv[])
 static int initialize(int argc, char *argv[])
 {
     int ret, exit_status = OPAL_SUCCESS;
+    char * tmp_env_var = NULL;
 
     /*
      * Make sure to init util before parse_args
@@ -331,9 +339,12 @@ static int initialize(int argc, char *argv[])
      * Turn off the selection of the CRS component,
      * we need to do that later
      */
-    opal_setenv(mca_base_param_env_var("crs_base_do_not_select"),
+    tmp_env_var = mca_base_param_env_var("crs_base_do_not_select");
+    opal_setenv(tmp_env_var,
                 "1", /* turn off the selection */
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /*
      * Initialize the OPAL layer

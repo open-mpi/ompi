@@ -1640,6 +1640,7 @@ int mca_oob_tcp_ft_event(int state) {
 #else
 int mca_oob_tcp_ft_event(int state) {
     int  exit_status = ORTE_SUCCESS;
+    opal_list_item_t *item;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /*
@@ -1647,7 +1648,6 @@ int mca_oob_tcp_ft_event(int state) {
          */
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         opal_event_disable();
-
     }
     else if(OPAL_CRS_CONTINUE == state) {
         /*
@@ -1657,6 +1657,30 @@ int mca_oob_tcp_ft_event(int state) {
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     }
     else if(OPAL_CRS_RESTART == state) {
+        /*
+         * Clean out cached connection information
+         * Select pieces of finalize/init
+         */
+        for(item = opal_list_remove_first(&mca_oob_tcp_component.tcp_peer_list);
+            item != NULL;
+            item = opal_list_remove_first(&mca_oob_tcp_component.tcp_peer_list)) {
+            mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
+            /* JJH: Use the below command for debugging restarts with invalid sockets
+             * mca_oob_tcp_peer_dump(peer, "RESTART CLEAN")
+             */
+            MCA_OOB_TCP_PEER_RETURN(peer);
+        }
+
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
+        OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
+
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
+        OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
+
         /*
          * Resume event processing
          */

@@ -75,8 +75,6 @@ typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report);
 /**
  * Handle fault tolerance updates
  *
- * Handle fault tolerance updates
- *
  * @param[in] state Fault tolerance state update
  *
  * @retval ORTE_SUCCESS The operation completed successfully

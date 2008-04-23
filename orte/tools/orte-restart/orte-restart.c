@@ -229,6 +229,7 @@ main(int argc, char *argv[])
 
 static int initialize(int argc, char *argv[]) {
     int ret, exit_status = ORTE_SUCCESS;
+    char * tmp_env_var = NULL;
 
     /*
      * Make sure to init util before parse_args
@@ -264,9 +265,12 @@ static int initialize(int argc, char *argv[]) {
     opal_cr_set_enabled(false);
 
     /* Select the none component, since we don't actually use a checkpointer */
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /*
      * Setup any ORTE stuff we might need
@@ -277,8 +281,15 @@ static int initialize(int argc, char *argv[]) {
     }
     
     /* Unset these now that we no longer need them */
-    opal_unsetenv(mca_base_param_env_var("crs"), &environ);
-    opal_unsetenv(mca_base_param_env_var("opal_cr_is_tool"), &environ);
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_unsetenv(tmp_env_var, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_unsetenv(tmp_env_var, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
  cleanup:
     return exit_status;
@@ -300,6 +311,7 @@ static int parse_args(int argc, char *argv[])
     int i, ret, len;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
+    char * tmp_env_var = NULL;
     orte_restart_globals_t tmp = { false, /* help */
                                    NULL,  /* filename */
                                    NULL,  /* appfile */
@@ -334,13 +346,29 @@ static int parse_args(int argc, char *argv[])
         putenv(global_env[i]);
     }
     
-
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
     /**
      * Now start parsing our specific arguments
      */
+
+#if OPAL_ENABLE_FT == 0
+    /* Warn and exit if not configured with Checkpoint/Restart */
+    {
+        char *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        opal_show_help("help-orte-restart.txt", "usage-no-cr",
+                       true, args);
+        free(args);
+        return ORTE_ERROR;
+    }
+#endif
+
     if (OPAL_SUCCESS != ret || 
         orte_restart_globals.help ||
         1 >= argc) {

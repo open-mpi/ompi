@@ -107,6 +107,8 @@ static int    global_sequence_num    = 0;
 /*****************************************
  * Global Vars for Command line Arguments
  *****************************************/
+static bool listener_started = false;
+
 typedef struct {
     bool help;
     int  pid;
@@ -267,6 +269,7 @@ static int parse_args(int argc, char *argv[]) {
     int i, ret, len, exit_status = ORTE_SUCCESS ;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
+    char * tmp_env_var = NULL;
 
     /* Init structure */
     memset(&orte_checkpoint_globals, 0, sizeof(orte_checkpoint_globals_t));
@@ -301,9 +304,12 @@ static int parse_args(int argc, char *argv[]) {
         putenv(global_env[i]);
     }
 
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"), 
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /**
      * Now start parsing our specific arguments
@@ -311,6 +317,19 @@ static int parse_args(int argc, char *argv[]) {
     /* get the remaining bits */
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
 
+#if OPAL_ENABLE_FT == 0
+    /* Warn and exit if not configured with Checkpoint/Restart */
+    {
+        char *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        opal_show_help("help-orte-checkpoint.txt", "usage-no-cr",
+                       true, args);
+        free(args);
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+#endif
+    
     if (OPAL_SUCCESS != ret || 
         orte_checkpoint_globals.help ||
         (0 >= argc && ORTE_JOBID_INVALID == orte_checkpoint_globals.req_hnp)) {
@@ -322,7 +341,7 @@ static int parse_args(int argc, char *argv[]) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
-    
+
     /*
      * If the user did not supply an hnp jobid, then they must 
      *  supply the PID of MPIRUN
@@ -398,6 +417,9 @@ cleanup:
 
 static int ckpt_init(int argc, char *argv[]) {
     int exit_status = ORTE_SUCCESS, ret;
+    char * tmp_env_var = NULL;
+
+    listener_started = false;
 
     /*
      * Make sure to init util before parse_args
@@ -432,9 +454,12 @@ static int ckpt_init(int argc, char *argv[]) {
     opal_cr_set_enabled(false);
 
     /* Select the none component, since we don't actually use a checkpointer */
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
     
     /***************************
      * We need all of OPAL and the TOOLS portion of ORTE - this
@@ -488,6 +513,8 @@ static int start_listener(void)
         goto cleanup;
     }
 
+    listener_started = true;
+
  cleanup:
     return exit_status;
 }
@@ -496,12 +523,18 @@ static int stop_listener(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
+    if( !listener_started ) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+
     if (ORTE_SUCCESS != (ret = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
                                                     ORTE_RML_TAG_CKPT))) {
         exit_status = ret;
         goto cleanup;
     }
 
+    listener_started = false;
  cleanup:
     return exit_status;
 }
@@ -594,18 +627,6 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      */
     if( orte_checkpoint_globals.status ) {
         if(ORTE_SNAPC_CKPT_STATE_FINISHED != orte_checkpoint_globals.ckpt_status) {
-            pretty_print_status();
-        }
-    }
-    /*
-     * Otherwise only display it if we are going to be terminated soon
-     */
-    else {
-        /* Since ORTE kills us before we get the Finished message,
-         * print out the global snapshot handle when we start running
-         */ /* JJH */
-        if(orte_checkpoint_globals.term && 
-           ORTE_SNAPC_CKPT_STATE_RUNNING == orte_checkpoint_globals.ckpt_status ) {
             pretty_print_status();
         }
     }

@@ -85,6 +85,7 @@ static int cr_notify_response(opal_cr_ckpt_cmd_state_t resp);
 static int extract_env_vars(int prev_pid);
 static int cr_entry_point_notify_reopen_files(int *prog_read_fd, int *prog_write_fd);
 static void opal_cr_entry_point_signal_handler (int signo);
+static void opal_cr_sigpipe_debug_signal_handler (int signo);
 
 static opal_cr_coord_callback_fn_t  cur_coord_callback = NULL;
 static opal_cr_notify_callback_fn_t cur_notify_callback = NULL;
@@ -103,6 +104,8 @@ bool   opal_cr_is_tool    = false;
 int    opal_cr_checkpointing      = OPAL_CR_STATUS_NONE;
 /* Current checkpoint request channel state */
 int    opal_cr_checkpoint_request = OPAL_CR_STATUS_NONE;
+
+static bool   opal_cr_debug_sigpipe = false;
 
 #if OPAL_ENABLE_FT_THREAD == 1
 /*****************
@@ -278,6 +281,22 @@ int opal_cr_init(void )
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Checkpoint Signal: %d",
                         opal_cr_entry_point_signal);
+
+    mca_base_param_reg_int_name("opal_cr", "debug_sigpipe",
+                                "Activate a signal handler for debugging SIGPIPE Errors that can happen on restart. (Default: Disabled)",
+                                false, false,
+                                0, &val);
+    opal_cr_debug_sigpipe = OPAL_INT_TO_BOOL(val);
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: init: Debug SIGPIPE: %d (%s)",
+                        val, (opal_cr_debug_sigpipe ? "True" : "False"));
+
+    if( opal_cr_debug_sigpipe ) {
+        if( SIG_ERR == signal(SIGPIPE, opal_cr_sigpipe_debug_signal_handler) ) {
+            ;
+        }
+    }
 
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
                                    "Temporary directory to place rendezvous files for a checkpoint",
@@ -776,6 +795,27 @@ static void opal_cr_entry_point_signal_handler (int signo)
      * Signal thread to start checkpoint handshake
      */
     opal_cr_checkpoint_request   = OPAL_CR_STATUS_REQUESTED;
+}
+
+/*
+ * Used only for debugging SIGPIPE problems
+ */
+static void opal_cr_sigpipe_debug_signal_handler (int signo)
+{
+    int sleeper = 1;
+
+    if( !opal_cr_debug_sigpipe ) {
+        opal_output_verbose(10, opal_cr_output,
+                            "opal_cr: sigpipe_debug: Debug SIGPIPE Not enabled :(\n");
+        return;
+    }
+
+    opal_output_verbose(10, opal_cr_output,
+                        "opal_cr: sigpipe_debug: Debug SIGPIPE [%d]: PID (%d)\n",
+                        signo, getpid());
+    while(sleeper == 1 ) {
+        sleep(1);
+    }
 }
 
 /*

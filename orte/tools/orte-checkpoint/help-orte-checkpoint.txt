@@ -24,6 +24,16 @@ ompi-checkpoint PID_OF_MPIRUN
 
 %s
 
+[usage-no-cr]
+This build of Open MPI does *not* include Checkpoint/Restart functionality.
+If you require this functionality re-configure Open MPI with the proper
+Checkpoint/Restart options.
+
+ompi-checkpoint PID_OF_MPIRUN
+  Open MPI Checkpoint Tool
+
+%s
+
 [invalid_pid]
 Error: The PID (%d) is invalid because either you have not provided a PID 
        or provided an invalid PID.

@@ -95,12 +95,11 @@ orte_ess_base_module_t orte_ess_env_module = {
 #endif
 };
 
-
 static int rte_init(char flags)
 {
     int ret;
     char *error = NULL;
-    
+
     /* Start by getting a unique name from the enviro */
     env_set_name();
 
@@ -226,6 +225,14 @@ static int rte_ft_event(int state)
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
         /*
+         * Notify SnapC
+         */
+        if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CHECKPOINT))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
          * Notify IOF
          */
         if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_CHECKPOINT))) {
@@ -234,7 +241,15 @@ static int rte_ft_event(int state)
         }
 
         /*
-         * Notify RML & OOB
+         * Notify Routed
+         */
+        if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CHECKPOINT))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Notify RML -> OOB
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CHECKPOINT))) {
             exit_status = ret;
@@ -244,9 +259,17 @@ static int rte_ft_event(int state)
     /******** Continue Recovery ********/
     else if (OPAL_CRS_CONTINUE == state ) {
         /*
-         * Notify RML & OOB
+         * Notify RML -> OOB
          */
         if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_CONTINUE))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Notify Routed
+         */
+        if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CONTINUE))) {
             exit_status = ret;
             goto cleanup;
         }
@@ -258,16 +281,20 @@ static int rte_ft_event(int state)
             exit_status = ret;
             goto cleanup;
         }
+
+        /*
+         * Notify SnapC
+         */
+        if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_CONTINUE))) {
+            exit_status = ret;
+            goto cleanup;
+        }
     }
     /******** Restart Recovery ********/
     else if (OPAL_CRS_RESTART == state ) {
         /*
-         * Notify RML & OOB
+         * This should follow the ess init() function
          */
-        if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
-            exit_status = ret;
-            goto cleanup;
-        }
 
         /*
          * - Reset Contact information
@@ -276,11 +303,67 @@ static int rte_ft_event(int state)
             exit_status = ret;
         }
 
-        /* Session directory stuff:
-         *   orte_process_info.top_session_dir
-         *   orte_process_info.universe_session_dir
-         *   orte_process_info.job_session_dir
-         *   orte_process_info.proc_session_dir
+        /*
+         * Notify RML -> OOB
+         */
+        if( ORTE_SUCCESS != (ret = orte_rml.ft_event(OPAL_CRS_RESTART))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Restart the routed framework
+         * JJH: Lie to the finalize function so it does not try to contact the daemon.
+         */
+        orte_process_info.tool = true;
+        if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+        orte_process_info.tool = false;
+        if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Group Comm - Clean out stale data
+         */
+        orte_grpcomm.finalize();
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.init())) {
+            exit_status = ret;
+            goto cleanup;
+        }
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.purge_proc_attrs())) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Restart the PLM - Does nothing at the moment, but included for completeness
+         */
+        if (ORTE_SUCCESS != (ret = orte_plm.finalize())) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        if (ORTE_SUCCESS != (ret = orte_plm.init())) {
+            ORTE_ERROR_LOG(ret);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * RML - Enable communications
+         */
+        if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Session directory re-init
          */
         if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobid_str, ORTE_PROC_MY_NAME->jobid))) {
             exit_status = ret;
@@ -299,10 +382,13 @@ static int rte_ft_event(int state)
             exit_status = ret;
         }
 
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                         "output-", NULL, NULL);
+
         /*
-         * Re-enable communication through the RML
+         * Notify Routed
          */
-        if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
+        if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
             exit_status = ret;
             goto cleanup;
         }
@@ -316,13 +402,9 @@ static int rte_ft_event(int state)
         }
 
         /*
-         * Re-exchange the routes
+         * Notify SnapC
          */
-        if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
-        if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+        if( ORTE_SUCCESS != (ret = orte_snapc.ft_event(OPAL_CRS_RESTART))) {
             exit_status = ret;
             goto cleanup;
         }

@@ -314,6 +314,7 @@ int orterun(int argc, char *argv[])
 {
     int rc;
     opal_cmd_line_t cmd_line;
+    char * tmp_env_var = NULL;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -378,10 +379,13 @@ int orterun(int argc, char *argv[])
 #if OPAL_ENABLE_FT == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
 #endif
+    tmp_env_var = NULL; /* Silence compiler warning */
     
     /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a
