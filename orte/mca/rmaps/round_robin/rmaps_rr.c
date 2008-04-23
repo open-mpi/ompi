@@ -46,6 +46,7 @@
  * Local variable
  */
 static opal_list_item_t *cur_node_item = NULL;
+static int ppn = 0;
 
 /*
  * Create a default mapping for the application, scheduling round
@@ -228,10 +229,12 @@ static int map_app_by_slot(
             /* Update the number of procs allocated */
             ++num_alloc;
 
-            /** if all the procs have been mapped OR we have fully used up this node, then
-             * break from the loop
+            /** if all the procs have been mapped OR we have fully used up this node
+             * OR we are at our ppn and loadbalancing, then break from the loop 
              */
-            if(num_alloc == app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
+            if (num_alloc == app->num_procs ||
+                ORTE_ERR_NODE_FULLY_USED == rc ||
+                (orte_rmaps_base.loadbalance && i == ppn)) {
                 break;
             }
         }
@@ -241,7 +244,9 @@ static int map_app_by_slot(
          * node is NOT max'd out
          *
          */
-        if (i < (num_slots_to_take-1) && ORTE_ERR_NODE_FULLY_USED != rc) {
+        if (i < (num_slots_to_take-1) &&
+            ORTE_ERR_NODE_FULLY_USED != rc &&
+            i != ppn) {
             continue;
         }
         cur_node_item = next;
@@ -261,7 +266,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     orte_std_cntr_t i;
     opal_list_t node_list;
     opal_list_item_t *item;
-    orte_node_t *node;
+    orte_node_t *node, **nodes;
     orte_vpid_t vpid_start;
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
@@ -275,6 +280,39 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     
     /* start at the beginning... */
     vpid_start = 0;
+
+    /* if loadbalancing is requested, then we need to compute
+     * the #procs/node - note that this cannot be done
+     * if we are doing pernode or if #procs was not given
+     */
+    if (orte_rmaps_base.loadbalance && !map->pernode) {
+        /* compute total #procs */
+        for(i=0; i < jdata->num_apps; i++) {
+            app = apps[i];
+            if (0 == app->num_procs) {
+                /* can't do it - just move on */
+                opal_show_help("help-orte-rmaps-rr.txt",
+                               "orte-rmaps-rr:loadbalance-and-zero-np",
+                               true);
+                rc = ORTE_ERR_SILENT;
+                goto error;
+            }
+            ppn += app->num_procs;
+        }
+        /* get the total avail nodes */
+        nodes = (orte_node_t**)orte_node_pool->addr;
+        num_nodes=0;
+        for (i=0; i < orte_node_pool->size; i++) {
+            if (NULL == nodes[i]) {
+                break;  /* nodes are left aligned, so stop when we hit a null */
+            } 
+            if (nodes[i]->allocate) {
+                num_nodes++;
+            }
+        }
+        /* compute the balance */
+        ppn = ppn / num_nodes;
+    }
 
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->num_apps; i++) {
@@ -387,7 +425,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 goto error;
             }
         }
-
+        
         /** track the total number of processes we mapped */
         jdata->num_procs += app->num_procs;
 
