@@ -81,7 +81,7 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
       else {
 	ret = lcomm->c_coll.coll_reduce (rbuf, tmpbuf, count, dtype, 
 					 op, lroot, lcomm, 
-					 lcomm->c_coll.coll_reduce_module);
+					 llcomm->c_coll.coll_reduce_module);
       }
       if ( OMPI_SUCCESS != ret ) {
 	goto exit;
@@ -92,12 +92,12 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
       if ( MPI_COMM_NULL != lcomm ) { 
 	ret = llcomm->c_coll.coll_reduce (tmpbuf, rbuf, count, dtype,
 					  op, llroot, llcomm, 
-					  lcomm->c_coll.coll_reduce_module);
+					  llcomm->c_coll.coll_reduce_module);
       }
       else {
 	ret = llcomm->c_coll.coll_reduce (sbuf, rbuf, count, dtype,
 					  op, llroot, llcomm, 
-					  lcomm->c_coll.coll_reduce_module);
+					  llcomm->c_coll.coll_reduce_module);
       }
     }
 
