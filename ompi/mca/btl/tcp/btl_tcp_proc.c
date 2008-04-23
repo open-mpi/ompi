@@ -583,70 +583,30 @@ bool mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t* btl_proc, struct sockaddr* addr
     OPAL_THREAD_LOCK(&btl_proc->proc_lock);
     for( i = 0; i < btl_proc->proc_endpoint_count; i++ ) {
         mca_btl_base_endpoint_t* btl_endpoint = btl_proc->proc_endpoints[i];
-        uint16_t remote_kernel_index;
-        bool matched = false;
-        uint16_t j;
-
         /* Check all conditions before going to try to accept the connection. */
         if( btl_endpoint->endpoint_addr->addr_family != addr->sa_family ) {
             continue;
         }
 
-        /* Check for alias addresses: aliases share the same remote
-         * kernel_index, so if the addresses don't match, it can still be
-         * an alias of one we want to accept.
-         */
-        remote_kernel_index = btl_endpoint->endpoint_addr->addr_ifkindex;
-
-        for (j=0; j < btl_proc->proc_addr_count; j++) {
-            mca_btl_tcp_addr_t* exported_address = btl_proc->proc_addrs + j;
-
-#if 0
-            /* This is PITA. We never know which source address an
-             * incoming/outgoing packet will have, so even with
-             * btl_tcp_if_include/exclude on the remote end, we
-             * might get a different source address.
-             *
-             * If this address hasn't the right kernel index, we would
-             * erroneously drop the connection
-             */
-            if (remote_kernel_index != exported_address->addr_ifkindex) {
-                /* kernel_index doesn't match, so that's not a possible
-                 * alias
-                 */
+        switch (addr->sa_family) {
+        case AF_INET:
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+                        &(((struct sockaddr_in*)addr)->sin_addr),
+                        sizeof(struct in_addr) ) ) {
                 continue;
             }
-#endif
-
-            switch (addr->sa_family) {
-                case AF_INET:
-                    /* if (aliases) addresses match, accept it */
-                    if(!memcmp( &exported_address->addr_inet,
-                                &(((struct sockaddr_in*)addr)->sin_addr),
-                                sizeof(struct in_addr) ) ) {
-                        matched = true;
-                    }
-                    break;
+            break;
 #if OPAL_WANT_IPV6
-                case AF_INET6:
-                    if(IN6_ARE_ADDR_EQUAL(
-                                &exported_address->addr_inet,
-                                &(((struct sockaddr_in6*)addr)->sin6_addr))) {
-                        matched = true;
-                    }
-                    break;
-#endif
-                default:
-                    ;
+        case AF_INET6:
+            if( memcmp( &btl_endpoint->endpoint_addr->addr_inet,
+                        &(((struct sockaddr_in6*)addr)->sin6_addr),
+                        sizeof(struct in6_addr) ) ) {
+                continue;
             }
-        }
-
-        /* do we have a match for the incoming address? Read: is there a
-         * btl_endpoint with an address configured for the same remote
-         * NIC? If not, check the next btl_endpoint
-         */
-        if (false == matched) {
-            continue;
+            break;
+#endif
+        default:
+            ;
         }
 
         if(mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd)) {
