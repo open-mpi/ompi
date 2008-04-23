@@ -39,6 +39,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
 
+#if OPAL_ENABLE_FT == 1
+static int tree_ft_event(int state);
+#endif
+
 static orte_process_name_t *lifeline=NULL;
 
 orte_routed_module_t orte_routed_tree_module = {
@@ -48,7 +52,12 @@ orte_routed_module_t orte_routed_tree_module = {
     get_route,
     init_routes,
     route_lost,
-    get_wireup_info
+    get_wireup_info,
+#if OPAL_ENABLE_FT == 1
+    tree_ft_event
+#else
+    NULL
+#endif
 };
 
 /* local globals */
@@ -571,3 +580,36 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 
     return ORTE_SUCCESS;
 }
+
+#if OPAL_ENABLE_FT == 1
+static int tree_ft_event(int state)
+{
+    int ret, exit_status = ORTE_SUCCESS;
+
+    /******** Checkpoint Prep ********/
+    if(OPAL_CRS_CHECKPOINT == state) {
+    }
+    /******** Continue Recovery ********/
+    else if (OPAL_CRS_CONTINUE == state ) {
+    }
+    /******** Restart Recovery ********/
+    else if (OPAL_CRS_RESTART == state ) {
+        /*
+         * Re-exchange the routes
+         */
+        if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+    else if (OPAL_CRS_TERM == state ) {
+        /* Nothing */
+    }
+    else {
+        /* Error state = Nothing */
+    }
+
+ cleanup:
+    return exit_status;
+}
+#endif

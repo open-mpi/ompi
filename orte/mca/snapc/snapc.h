@@ -200,6 +200,17 @@ typedef int (*orte_snapc_base_setup_job_fn_t)
 typedef int (*orte_snapc_base_release_job_fn_t)
      (orte_jobid_t jobid);
 
+
+/**
+ * Handle fault tolerance updates
+ *
+ * @param[in] state Fault tolerance state update
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR   An unspecifed error occurred
+ */
+typedef int  (*orte_snapc_base_ft_event_fn_t)(int state);
+
 /**
  * Structure for SNAPC v1.0.0 components.
  */
@@ -234,6 +245,8 @@ struct orte_snapc_base_module_1_0_0_t {
     orte_snapc_base_setup_job_fn_t             setup_job;
     /** Release job */
     orte_snapc_base_release_job_fn_t           release_job;
+    /** Handle any FT Notifications */
+    orte_snapc_base_ft_event_fn_t              ft_event;
 };
 typedef struct orte_snapc_base_module_1_0_0_t orte_snapc_base_module_1_0_0_t;
 typedef struct orte_snapc_base_module_1_0_0_t orte_snapc_base_module_t;

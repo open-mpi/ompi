@@ -76,7 +76,6 @@ static int  mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, int sd, voi
 static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user);
-static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg);
 
 
 OBJ_CLASS_INSTANCE(
@@ -970,7 +969,7 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 /*
  * Routine for debugging to print the connection state and socket options
  */
-static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
+void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 {
     char src[64];
     char dst[64];

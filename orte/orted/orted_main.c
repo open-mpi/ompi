@@ -187,6 +187,7 @@ int orte_daemon(int argc, char *argv[])
     int i;
     opal_buffer_t *buffer;
     char hostname[100];
+    char *tmp_env_var = NULL;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -283,10 +284,13 @@ int orte_daemon(int argc, char *argv[])
 
 #if OPAL_ENABLE_FT == 1
     /* Mark as a tool program */
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
 #endif
+    tmp_env_var = NULL; /* Silence compiler warning */
 
     /* detach from controlling terminal
      * otherwise, remain attached so output can get to us

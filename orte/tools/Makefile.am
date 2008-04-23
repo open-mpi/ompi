@@ -25,8 +25,6 @@ SUBDIRS += \
 	tools/orterun \
 	tools/orte-clean \
 	tools/orte-ps \
-	tools/orte-checkpoint \
-	tools/orte-restart \
 	tools/wrappers
 
 DIST_SUBDIRS += \

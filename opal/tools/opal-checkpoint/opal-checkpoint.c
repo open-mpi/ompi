@@ -202,6 +202,7 @@ main(int argc, char *argv[])
 
 static int initialize(int argc, char *argv[]) {
     int ret, exit_status = OPAL_SUCCESS;
+    char * tmp_env_var = NULL;
 
     /*
      * Make sure to init util before parse_args
@@ -242,9 +243,12 @@ static int initialize(int argc, char *argv[]) {
      * Select the 'none' CRS component, 
      * since we don't actually use a checkpointer
      */
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /*
      * Initialize OPAL
@@ -272,6 +276,7 @@ static int parse_args(int argc, char *argv[]) {
     int i, ret, len;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
+    char * tmp_env_var = NULL;
 
     memset(&opal_checkpoint_globals, 0, sizeof(opal_checkpoint_globals_t));
 
@@ -299,9 +304,12 @@ static int parse_args(int argc, char *argv[]) {
         putenv(global_env[i]);
     }
 
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"), 
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /**
      * Now start parsing our specific arguments

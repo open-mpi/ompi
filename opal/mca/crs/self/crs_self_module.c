@@ -553,19 +553,31 @@ crs_self_find_function(lt_dlhandle handle, char *prefix, char *suffix){
  */
 static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **cmd)
 {
+    char * tmp_env_var = NULL;
+
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: restart_cmd(%s, ---)", snapshot->cmd_line);
 
-    opal_setenv(mca_base_param_env_var("crs"), 
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "self", 
                 true, &environ);
-    opal_setenv(mca_base_param_env_var("crs_self_do_restart"), 
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("crs_self_do_restart");
+    opal_setenv(tmp_env_var,
                 "1", 
                 true, &environ);
-    opal_setenv(mca_base_param_env_var("crs_self_prefix"), 
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("crs_self_prefix");
+    opal_setenv(tmp_env_var,
                 mca_crs_self_component.prefix, 
                 true, &environ);
-
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /* Instead of adding it to the command line, we should use the environment
      * to pass the values. This allow sthe OPAL application to be braindead 

@@ -157,6 +157,8 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer);
  */
 void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
 
+void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg);
+
 END_C_DECLS
 
 #endif /* _MCA_OOB_TCP_PEER_H */

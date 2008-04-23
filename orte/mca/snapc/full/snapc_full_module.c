@@ -47,7 +47,8 @@ static orte_snapc_base_module_t loc_module = {
     /** Finalization Function */
     orte_snapc_full_module_finalize,
     orte_snapc_full_setup_job,
-    orte_snapc_full_release_job
+    orte_snapc_full_release_job,
+    orte_snapc_base_none_ft_event
 };
 
 /*

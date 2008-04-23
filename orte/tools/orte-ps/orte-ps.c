@@ -326,6 +326,7 @@ static int parse_args(int argc, char *argv[]) {
 
 static int orte_ps_init(int argc, char *argv[]) {
     int ret;
+    char * tmp_env_var = NULL;
 
     /*
      * Make sure to init util before parse_args
@@ -361,14 +362,21 @@ static int orte_ps_init(int argc, char *argv[]) {
     opal_cr_set_enabled(false);
 
     /* Select the none component, since we don't actually use a checkpointer */
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1",
                 true, &environ);
+    free(tmp_env_var);
 #endif
-    
+    tmp_env_var = NULL; /* Silence compiler warning */
+
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/

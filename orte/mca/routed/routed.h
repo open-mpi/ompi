@@ -182,6 +182,16 @@ typedef int (*orte_routed_module_get_wireup_info_fn_t)(orte_jobid_t job,
                                                        opal_buffer_t *buf);
 
 
+/**
+ * Handle fault tolerance updates
+ *
+ * @param[in] state Fault tolerance state update
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR   An unspecifed error occurred
+ */
+typedef int  (*orte_routed_module_ft_event_fn_t)(int state);
+
 /* ******************************************************************** */
 
 
@@ -202,6 +212,8 @@ struct orte_routed_module_t {
     orte_routed_module_init_routes_fn_t             init_routes;
     orte_routed_module_route_lost_fn_t              route_lost;
     orte_routed_module_get_wireup_info_fn_t         get_wireup_info;
+    /* FT Notification */
+    orte_routed_module_ft_event_fn_t                ft_event;
 };
 /** Convenience typedef */
 typedef struct orte_routed_module_t orte_routed_module_t;

@@ -159,7 +159,7 @@ int orte_proc_info_finalize(void)
         return ORTE_SUCCESS;
     }
     
-     if (NULL != orte_process_info.tmpdir_base) {
+    if (NULL != orte_process_info.tmpdir_base) {
         free(orte_process_info.tmpdir_base);
         orte_process_info.tmpdir_base = NULL;
     }
@@ -177,7 +177,6 @@ int orte_proc_info_finalize(void)
     if (NULL != orte_process_info.proc_session_dir) {
         free(orte_process_info.proc_session_dir);
         orte_process_info.proc_session_dir = NULL;
-
     }
     
     if (NULL != orte_process_info.nodename) {
@@ -190,12 +189,12 @@ int orte_proc_info_finalize(void)
         orte_process_info.sock_stdin = NULL;
     }
     
-     if (NULL != orte_process_info.sock_stdout) {
+    if (NULL != orte_process_info.sock_stdout) {
         free(orte_process_info.sock_stdout);
         orte_process_info.sock_stdout = NULL;
     }
     
-   if (NULL != orte_process_info.sock_stderr) {
+    if (NULL != orte_process_info.sock_stderr) {
         free(orte_process_info.sock_stderr);
         orte_process_info.sock_stderr = NULL;
     }

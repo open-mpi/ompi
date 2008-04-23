@@ -113,6 +113,7 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     ORTE_DECLSPEC int orte_snapc_base_module_finalize(void);
     ORTE_DECLSPEC int orte_snapc_base_none_setup_job(orte_jobid_t jobid);
     ORTE_DECLSPEC int orte_snapc_base_none_release_job(orte_jobid_t jobid);
+    ORTE_DECLSPEC int orte_snapc_base_none_ft_event(int state);
 
     ORTE_DECLSPEC extern int  orte_snapc_base_output;
     ORTE_DECLSPEC extern opal_list_t orte_snapc_base_components_available;

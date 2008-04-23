@@ -325,14 +325,6 @@ static int orte_cr_coord_post_restart(void) {
     /*
      * Notify the ESS
      */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_open())) {
-        exit_status = ret;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_ess_base_select())) {
-        exit_status = ret;
-    }
-
     if( NULL != orte_ess.ft_event ) {
         if( ORTE_SUCCESS != (ret = orte_ess.ft_event(OPAL_CRS_RESTART))) {
             exit_status = ret;

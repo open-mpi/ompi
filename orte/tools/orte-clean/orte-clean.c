@@ -162,6 +162,7 @@ static int parse_args(int argc, char *argv[]) {
     int ret;
     opal_cmd_line_t cmd_line;
     orte_clean_globals_t tmp = { false, false };
+    char * tmp_env_var = NULL;
 
     /* Parse the command line options */
 
@@ -176,8 +177,11 @@ static int parse_args(int argc, char *argv[]) {
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
 
-    opal_setenv(mca_base_param_env_var("opal_cr_is_tool"),
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
                 "1", true, NULL);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
 
     /**
      * Now start parsing our specific arguments
@@ -199,6 +203,7 @@ static int parse_args(int argc, char *argv[]) {
 
 static int orte_clean_init(void) {
     int exit_status = ORTE_SUCCESS, ret;
+    char * tmp_env_var = NULL;
 
 #if OPAL_ENABLE_FT == 1
     /* Disable the checkpoint notification routine for this
@@ -208,10 +213,13 @@ static int orte_clean_init(void) {
     opal_cr_set_enabled(false);
     
     /* Select the none component, since we don't actually use a checkpointer */
-    opal_setenv(mca_base_param_env_var("crs"),
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
                 "none",
                 true, &environ);
+    free(tmp_env_var);
 #endif
+    tmp_env_var = NULL; /* Silence compiler warning */
 
     if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL_WITH_NAME))) {
         exit_status = ret;

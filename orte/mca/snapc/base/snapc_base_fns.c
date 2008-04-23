@@ -203,6 +203,11 @@ int orte_snapc_base_none_release_job(orte_jobid_t jobid)
     return ORTE_SUCCESS;
 }
 
+int orte_snapc_base_none_ft_event(int state)
+{
+    return ORTE_SUCCESS;
+}
+
 /********************
  * Local Functions
  ********************/
