@@ -81,7 +81,7 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
       else {
 	ret = lcomm->c_coll.coll_reduce (rbuf, tmpbuf, count, dtype, 
 					 op, lroot, lcomm, 
-					 llcomm->c_coll.coll_reduce_module);
+					 lcomm->c_coll.coll_reduce_module);
       }
       if ( OMPI_SUCCESS != ret ) {
 	goto exit;
