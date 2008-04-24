@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -465,7 +465,10 @@ int mca_pml_ob1_ft_event( int state )
     else if(OPAL_CRS_CONTINUE == state) {
         ;
     }
-    else if(OPAL_CRS_RESTART == state) {
+    else if(OPAL_CRS_RESTART_PRE == state ) {
+        /* Nothing here */
+    }
+    else if(OPAL_CRS_RESTART == state ) {
         /*
          * Get a list of processes
          */
@@ -519,7 +522,10 @@ int mca_pml_ob1_ft_event( int state )
     else if(OPAL_CRS_CONTINUE == state) {
         ;
     }
-    else if(OPAL_CRS_RESTART == state) {
+    else if(OPAL_CRS_RESTART_PRE == state ) {
+        /* Nothing here */
+    }
+    else if(OPAL_CRS_RESTART == state  ) {
         /*
          * Exchange the modex information once again.
          * BTLs will have republished their modex information.

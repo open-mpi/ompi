@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -810,9 +810,9 @@ static void opal_cr_sigpipe_debug_signal_handler (int signo)
         return;
     }
 
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: sigpipe_debug: Debug SIGPIPE [%d]: PID (%d)\n",
-                        signo, getpid());
+    opal_output(0,
+                "opal_cr: sigpipe_debug: Debug SIGPIPE [%d]: PID (%d)\n",
+                signo, getpid());
     while(sleeper == 1 ) {
         sleep(1);
     }

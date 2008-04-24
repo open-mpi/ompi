@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -40,19 +40,24 @@
 #include "bml_r2.h"
 #include "bml_r2_ft.h"
 
-int mca_bml_r2_ft_event(int state) {
+int mca_bml_r2_ft_event(int state)
+{
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     size_t btl_idx;
     int ret, p;
-    
+    int loc_state;
+
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
     }
     else if(OPAL_CRS_CONTINUE == state) {
         /* Since nothing in Checkpoint, we are fine here */
     }
-    else if(OPAL_CRS_RESTART == state) {
+    else if(OPAL_CRS_RESTART_PRE == state ) {
+        /* Nothing here */
+    }
+    else if(OPAL_CRS_RESTART == state ) {
         procs = ompi_proc_all(&num_procs);
         if(NULL == procs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -64,38 +69,53 @@ int mca_bml_r2_ft_event(int state) {
     else {
         ;
     }
-    
-    /*
-     * Call ft_event in:
-     * - BTL modules
-     * - MPool modules
-     *
-     * These should be cleaning out stale state, and memory references in 
-     * preparation for being shut down.
+
+    /* Never call the ft_event functions attached to the BTLs on the second
+     * pass of RESTART since on the first pass they were unloaded and therefore
+     * no longer exist.
      */
-    for(btl_idx = 0; btl_idx < mca_bml_r2.num_btl_modules; btl_idx++) {
-        /*
-         * Notify BTL
+    if( OPAL_CRS_RESTART != state ) {
+        /* Since we only ever call into the BTLs once during the first restart
+         * pass, just lie to them on this pass for a bit of local clarity.
          */
-        if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event) {
-            opal_output_verbose(10, ompi_cr_output,
-                                "bml:r2: ft_event: Notify the %s BTL.\n",
-                                (mca_bml_r2.btl_modules[btl_idx])->btl_component->btl_version.mca_component_name);
-            if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event(state) ) ) {
-                continue;
-            }
+        if( OPAL_CRS_RESTART_PRE == state ) {
+            loc_state = OPAL_CRS_RESTART;
+        } else {
+            loc_state = state;
         }
-        
+
         /*
-         * Notify Mpool
+         * Call ft_event in:
+         * - BTL modules
+         * - MPool modules
+         *
+         * These should be cleaning out stale state, and memory references in 
+         * preparation for being shut down.
          */
-        if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool &&
-            NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event ) {
-            opal_output_verbose(10, ompi_cr_output,
-                                "bml:r2: ft_event: Notify the %s MPool.\n",
-                                (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_component->mpool_version.mca_component_name);
-            if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event(state) ) ) {
-                continue;
+        for(btl_idx = 0; btl_idx < mca_bml_r2.num_btl_modules; btl_idx++) {
+            /*
+             * Notify BTL
+             */
+            if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event) {
+                opal_output_verbose(10, ompi_cr_output,
+                                    "bml:r2: ft_event: Notify the %s BTL.\n",
+                                    (mca_bml_r2.btl_modules[btl_idx])->btl_component->btl_version.mca_component_name);
+                if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event(loc_state) ) ) {
+                    continue;
+                }
+            }
+
+            /*
+             * Notify Mpool
+             */
+            if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool &&
+                NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event ) {
+                opal_output_verbose(10, ompi_cr_output,
+                                    "bml:r2: ft_event: Notify the %s MPool.\n",
+                                    (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_component->mpool_version.mca_component_name);
+                if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event(loc_state) ) ) {
+                    continue;
+                }
             }
         }
     }
@@ -106,8 +126,7 @@ int mca_bml_r2_ft_event(int state) {
     else if(OPAL_CRS_CONTINUE == state) {
         ;
     }
-    else if(OPAL_CRS_RESTART == state) {
-
+    else if(OPAL_CRS_RESTART_PRE == state ) {
         mca_bml_r2.num_btl_modules  = 0;
         mca_bml_r2.num_btl_progress = 0;
 
@@ -136,6 +155,8 @@ int mca_bml_r2_ft_event(int state) {
             return ret;
         }
 
+    }
+    else if(OPAL_CRS_RESTART == state  ) {
         /*
          * Re-open the BTL framework to get the full list of components.
          */
