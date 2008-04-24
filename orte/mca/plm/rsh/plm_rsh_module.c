@@ -778,6 +778,16 @@ static int remote_spawn(opal_buffer_t *launch)
     nodes = (char**)orte_daemonmap.addr;
     vpid=ORTE_PROC_MY_NAME->vpid;
     
+    /* extract the prefix from the launch buffer */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }            
+    
+    /* rewind the buffer for use by our children */
+    launch->unpack_ptr = launch->base_ptr;
+
     /* setup the launch cmd */
     launch_cmd = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(launch_cmd, launch);
@@ -785,13 +795,6 @@ static int remote_spawn(opal_buffer_t *launch)
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: remote spawn called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* extract the prefix from the launch buffer */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }            
     
     /* clear out any previous child info */
     while (NULL != (item = opal_list_remove_first(&mca_plm_rsh_component.children))) {
