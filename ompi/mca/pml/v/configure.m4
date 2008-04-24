@@ -9,6 +9,11 @@
 #
 
 AC_DEFUN([MCA_pml_v_CONFIG],[
+    # This unmatched fi allows for recursing in the vprotocols, even if 
+    # pml v is disabled by configure
+        eval
+    fi
+    
     # We are going to make recursive call in shell, nothing is impossible
     # Still, we need to be extra careful
     (
@@ -17,7 +22,7 @@ AC_DEFUN([MCA_pml_v_CONFIG],[
         srcdir=`cd $srcdir && pwd`/$project/mca/$framework
         cd "$project/mca/$framework"
         
-        MCA_CONFIGURE_FRAMEWORK($vprotocol_parent_component, vprotocol, 1)
+        MCA_CONFIGURE_FRAMEWORK($vprotocol_parent_component, vprotocol, $should_build)
 
         # Save results
         cat >$vprotocol_parent_component/mca_vprotocol_config_output <<EOF
@@ -62,5 +67,8 @@ EOF
     AC_SUBST(MCA_vprotocol_ALL_SUBDIRS)
     AC_SUBST(MCA_vprotocol_STATIC_SUBDIRS)
     AC_SUBST(MCA_vprotocol_DSO_SUBDIRS)
-
+    
+    # This unmatched if is intended to match the fi of the if we disabled
+    if test "$should_build" = "1"; then 
+        $1
 ])

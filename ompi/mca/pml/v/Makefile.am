@@ -21,6 +21,7 @@ component_install =
 endif
 
 SUBDIRS = mca/vprotocol $(MCA_vprotocol_DSO_SUBDIRS) $(MCA_vprotocol_STATIC_SUBDIRS)
+DIST_SUBDIRS = mca/vprotocol $(MCA_vprotocol_ALL_SUBDIRS)
 
 local_sources = \
         pml_v.c \
