@@ -765,6 +765,7 @@ static int remote_spawn(opal_buffer_t *launch)
     int local_exec_index;
     char **argv = NULL;
     char *param, *rml_uri;
+    char *prefix;
     int argc;
     int rc;
     bool remote_sh = false, remote_csh = false; 
@@ -772,7 +773,8 @@ static int remote_spawn(opal_buffer_t *launch)
     bool failed_launch = true;
     pid_t pid;
     int num_children;
-    
+    orte_std_cntr_t n;
+
     nodes = (char**)orte_daemonmap.addr;
     vpid=ORTE_PROC_MY_NAME->vpid;
     
@@ -783,6 +785,13 @@ static int remote_spawn(opal_buffer_t *launch)
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: remote spawn called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* extract the prefix from the launch buffer */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }            
     
     /* clear out any previous child info */
     while (NULL != (item = opal_list_remove_first(&mca_plm_rsh_component.children))) {
@@ -857,7 +866,7 @@ static int remote_spawn(opal_buffer_t *launch)
             
             /* do the ssh launch - this will exit if it fails */
             ssh_child(argc, argv, vpid,
-                      proc_vpid_index, local_exec_index, NULL, bin_base,
+                      proc_vpid_index, local_exec_index, prefix, bin_base,
                       lib_base, remote_sh, remote_csh);
             
         } else { /* father */
@@ -1060,7 +1069,13 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(launch_cmd);
             goto cleanup;
-        }        
+        }
+        /* pack the prefix since this will be needed by the next wave */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(launch_cmd, &prefix_dir, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(launch_cmd);
+            goto cleanup;
+        }
         if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(launch_cmd, active_job))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(launch_cmd);
