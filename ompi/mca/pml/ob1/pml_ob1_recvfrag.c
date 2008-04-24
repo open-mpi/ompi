@@ -302,7 +302,7 @@ static mca_pml_ob1_recv_frag_t *check_cantmatch_for_match(
             if( hdr->hdr_seq < proc->expected_sequence ) {
                 opal_output( 0, "Unbelievable situation ... we got a duplicated fragment "
                              "with seq number of %d (expected %d) from %s\n",
-                             (int)hdr->hdr_seq, (int)poc->expected_sequence,
+                             (int)hdr->hdr_seq, (int)proc->expected_sequence,
                              proc->ompi_proc->proc_hostname );
                 opal_list_remove_item(&proc->frags_cant_match, (opal_list_item_t*)frag);
                 MCA_PML_OB1_RECV_FRAG_RETURN(frag);  /* Drop it !!! */
