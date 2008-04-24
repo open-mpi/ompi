@@ -301,7 +301,7 @@ static int process_commands(orte_process_name_t* sender,
     int32_t signal;
     orte_jobid_t job;
     orte_rml_tag_t target_tag;
-    char *contact_info;
+    char *contact_info, *prefix;
     opal_buffer_t *answer;
     orte_rml_cmd_flag_t rml_cmd;
     orte_job_t *jdata;
@@ -377,6 +377,12 @@ static int process_commands(orte_process_name_t* sender,
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             /* launch the local processes */
+            /* unpack the prefix and throw it away - we don't need it here */
+            n = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &prefix, &n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }            
             if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(buffer))) {
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s orted:comm:add_procs failed to launch on error %s",
