@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -273,11 +273,12 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                opal_output(0, "%s-%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d)", 
+                opal_output(0, "%s-%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d) [sd = %d]", 
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
                     ORTE_NAME_PRINT(&(peer->peer_name)), 
                     strerror(opal_socket_errno),
-                    opal_socket_errno);
+                    opal_socket_errno,
+                    peer->peer_sd);
                 mca_oob_tcp_peer_close(peer);
                 msg->msg_rc = ORTE_ERR_CONNECTION_FAILED;
                 return true;

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -294,14 +294,25 @@ static int ompi_cr_coord_pre_ckpt(void) {
 }
 
 static int ompi_cr_coord_pre_restart(void) {
-    /*
-     * Can not really do much until ORTE is up and running,
-     * so defer action until the post_restart function.
-     */
+    int ret, exit_status = OMPI_SUCCESS;
+
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_restart: ompi_cr_coord_pre_restart()");
-    
-    return OMPI_SUCCESS;
+
+    /*
+     * Notify PML
+     *  - Will notify BML and BTL's
+     *  - The intention here is to have the PML shutdown all the old components
+     *    and handles. On the second pass (once ORTE is restarted) we can
+     *    reconnect processes.
+     */
+    if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_RESTART_PRE))) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+ cleanup:    
+    return exit_status;
 }
     
 static int ompi_cr_coord_pre_continue(void) {

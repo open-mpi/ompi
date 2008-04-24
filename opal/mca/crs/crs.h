@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -60,7 +60,8 @@ extern "C" {
  */
 enum opal_crs_state_type_t {
     OPAL_CRS_CHECKPOINT,
-    OPAL_CRS_RESTART,
+    OPAL_CRS_RESTART_PRE,
+    OPAL_CRS_RESTART, /* RESTART_POST */
     OPAL_CRS_CONTINUE,
     OPAL_CRS_TERM,
     OPAL_CRS_RUNNING,
