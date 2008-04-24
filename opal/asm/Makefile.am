@@ -21,7 +21,7 @@
 ######################################################################
 #
 # This is a bit complicated.  If there is anything in the library,
-# it will always be atomic-asm.s.  We just symlink atomic-asm.s to
+# it will always be atomic-asm.S.  We just symlink atomic-asm.S to
 # the best atomic operations available (as determined at configure
 # time)
 #
@@ -29,20 +29,20 @@
 generated/@OMPI_ASM_FILE@: base/@OMPI_ASSEMBLY_ARCH@.asm
 	$(PERL) '$(top_srcdir)/opal/asm/generate-asm.pl' '@OMPI_ASSEMBLY_ARCH@' '@OMPI_ASSEMBLY_FORMAT@' '$(top_srcdir)/opal/asm/base' '$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@'
 
-atomic-asm.s: generated/@OMPI_ASM_FILE@
-	rm -f atomic-asm.s
+atomic-asm.S: generated/@OMPI_ASM_FILE@
+	rm -f atomic-asm.S
 	@ if test -f "$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@" ; then \
-	    cmd="ln -s \"$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
+	    cmd="ln -s \"$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.S" ; \
 	    echo "$$cmd" ; \
 	    eval $$cmd ; \
 	else \
-	    cmd="ln -s \"$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
+	    cmd="ln -s \"$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.S" ; \
 	    echo "$$cmd" ; \
 	    eval $$cmd ; \
 	fi
 
 if OMPI_HAVE_ASM_FILE
-nodist_libasm_la_SOURCES = atomic-asm.s
+nodist_libasm_la_SOURCES = atomic-asm.S
 libasm_la_DEPENDENCIES = generated/@OMPI_ASM_FILE@
 else
 nodist_libasm_la_SOURCES =
@@ -72,7 +72,7 @@ EXTRA_DIST	= \
 ######################################################################
 
 clean-local:
-	rm -f atomic-asm.s
+	rm -f atomic-asm.S
 
 maintainer-clean-local:
 	rm -f generated/atomic-local.s
