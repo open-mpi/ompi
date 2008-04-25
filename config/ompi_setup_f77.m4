@@ -89,13 +89,21 @@ AS_IF([test $OMPI_WANT_F77_BINDINGS -eq 1],
   [OMPI_LANG_LINK_WITH_C([Fortran 77], [],
     [cat <<EOF
 **********************************************************************
-* It appears that your Fortran 77 compiler is unable to link against
-* object files created by your C compiler.  This generally indicates
-* either a conflict between the options specified in CFLAGS and FFLAGS
-* or a problem with the local compiler installation.  More
-* information (including exactly what command was given to the 
-* compilers and what error resulted when the commands were executed) is
-* available in the config.log file in this directory.
+It appears that your Fortran 77 compiler is unable to link against
+object files created by your C compiler.  This typically indicates
+one of a few possibilities:
+
+  - A conflict between CFLAGS and FFLAGS
+  - A problem with your compiler installation(s)
+  - Different default build options between compilers (e.g., C
+    building for 32 bit and Fortran building for 64 bit)
+  - Incompatible compilers
+
+Such problems can usually be solved by picking compatible compilers
+and/or CFLAGS and FFLAGS.  More information (including exactly what
+command was given to the compilers and what error resulted when the
+commands were executed) is available in the config.log file in this
+directory.
 **********************************************************************
 EOF
      AC_MSG_ERROR([C and Fortran 77 compilers are not link compatible.  Can not continue.])])])
