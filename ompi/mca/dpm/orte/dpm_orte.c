@@ -848,8 +848,14 @@ static char *parse_port (char *port_name, orte_rml_tag_t *tag)
 {
     char *tmp_string, *ptr;
     
+    /* copy the RML uri so we can return a malloc'd value
+     * that can later be free'd
+     */
+    tmp_string = strdup(port_name);
+    
     /* find the ':' demarking the RML tag we added to the end */
-    if (NULL == (ptr = strrchr(port_name, ':'))) {
+    if (NULL == (ptr = strrchr(tmp_string, ':'))) {
+        free(tmp_string);
         return NULL;
     }
     
@@ -863,15 +869,10 @@ static char *parse_port (char *port_name, orte_rml_tag_t *tag)
     /* see if the length of the RML uri is too long - if so,
      * truncate it
      */
-    if (strlen(port_name) > MPI_MAX_PORT_NAME) {
-        port_name[MPI_MAX_PORT_NAME] = '\0';
+    if (strlen(tmp_string) > MPI_MAX_PORT_NAME) {
+        tmp_string[MPI_MAX_PORT_NAME] = '\0';
     }
-    
-    /* copy the RML uri so we can return a malloc'd value
-     * that can later be free'd
-     */
-    tmp_string = strdup(port_name);
-    
+        
     return tmp_string;
 }
 
