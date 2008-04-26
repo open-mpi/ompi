@@ -18,3 +18,4 @@ enable_debug=yes
 enable_shared=yes
 enable_static=no
 with_slurm=no
+enable_memchecker=no

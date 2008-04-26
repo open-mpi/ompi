@@ -16,3 +16,4 @@ enable_shared=yes
 with_wrapper_cflags=-I/opt/panfs/include
 with_io_romio_flags=--with-file-system=ufs+nfs+panfs
 with_slurm=no
+enable_memchecker=no
