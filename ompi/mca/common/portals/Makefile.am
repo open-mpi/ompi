@@ -49,7 +49,9 @@ headers = \
 sources = \
         common_portals.c
 
-EXTRA_DIST = common_portals_crayxt3.c common_portals_utcp.c
+EXTRA_DIST = common_portals_crayxt3.c \
+             common_portals_utcp.c \
+             common_portals_cray_xt_modex.c
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules
