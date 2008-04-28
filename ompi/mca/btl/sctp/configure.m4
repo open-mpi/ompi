@@ -32,8 +32,9 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
 		[Search for SCTP libraries in DIR])])
     
     btl_sctp_CFLAGS="`echo $CFLAGS`"
-#only try to build this on Linux, Mac OS X, or some BSD variant    
+#only try to build this on Solaris, Linux, Mac OS X, or some BSD variant    
     ompi_sctp_try_to_build="no"
+    ompi_sctp_api_libname="sctp"
     case "$host" in
     *linux*)
 	ompi_sctp_try_to_build="yes"
@@ -43,6 +44,17 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
                [False if you can use iovec's directly with SCTP BTL])
 	;;
     *bsd*)
+	case "$host" in
+	*freebsd7*)
+	    # FreeBSD 7 has SCTP in an unpatched default kernel with
+	    #  the SCTP API contained within libc. 
+	    ompi_sctp_api_libname="c"
+	    ;;
+	*)
+	    # keep the default lib (sctp not c)
+	    ;;
+	esac
+
         # only add -DFREEBSD once to get extra sin_len field
         btl_sctp_CFLAGS="`echo $btl_sctp_CFLAGS | sed 's/-DFREEBSD//g'`"
         btl_sctp_CFLAGS="$btl_sctp_CFLAGS -DFREEBSD"
@@ -85,12 +97,9 @@ AC_DEFUN([OMPI_CHECK_SCTP],[
 	    AS_IF([test ! -z "$with_sctp_libdir" -a "$with_sctp_libdir" != "yes"],
 		[ompi_check_sctp_libdir="$with_sctp_libdir"])
 
-# TODO how to structure this if some OS's have the SCTP API calls in libc and some
-#   in libsctp ?  For now, assume libsctp and have user make softlink to libc if 
-#   libsctp does not exist...
 	    OMPI_CHECK_PACKAGE([$1],
 		[netinet/sctp.h],
-		[sctp],
+		[$ompi_sctp_api_libname],
 		[sctp_recvmsg],
 		[],
 		[$ompi_check_sctp_dir],
