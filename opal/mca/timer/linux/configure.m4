@@ -40,11 +40,6 @@ AC_DEFUN([MCA_timer_linux_CONFIG],[
                  [timer_linux_happy="yes"],
                  [timer_linux_happy="no"])])
 
-    AS_IF([test "$timer_linux_happy" = "yes"],
-          [AS_IF([test -r "/proc/cpuinfo"],
-                 [timer_linux_happy="yes"],
-                 [timer_linux_happy="no"])])
-
    case "${host}" in
    i?86-*|x86_64*|ia64-*|powerpc-*|powerpc64-*|sparc*-*)
         AS_IF([test "$timer_linux_happy" = "yes"],
