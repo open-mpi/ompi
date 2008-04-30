@@ -82,7 +82,9 @@ typedef int (*orte_odls_base_module_deliver_message_fn_t)(orte_jobid_t job, opal
 /**
  * Register to require sync before termination
  */
-typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc, opal_buffer_t *buffer);
+typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc,
+                                                       opal_buffer_t *buffer,
+                                                       bool drop_nidmap);
 
 /**
  * Collect data as part of a collective operation by the procs

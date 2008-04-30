@@ -94,9 +94,13 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
         ORTE_ERROR_LOG(rc);
     }
     
-    /* wakeup orterun so we can exit - the appropriate exit status
-     * for orterun will have been set by whomever called us
+    /* set the exit status, just in case whomever called us failed
+     * to do so - it can only be done once, so we are protected
+     * from overwriting it
      */
+    ORTE_UPDATE_EXIT_STATUS(exit_code);
+
+    /* wakeup orterun so we can exit */
     if (ORTE_SUCCESS != (rc = orte_wakeup())) {
         ORTE_ERROR_LOG(rc);
     }    
@@ -133,9 +137,13 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
         ORTE_ERROR_LOG(rc);
     }
     
-    /* wakeup orterun so we can exit - the appropriate exit status
-     * for orterun will have been set by whomever called us
+    /* set the exit status, just in case whomever called us failed
+     * to do so - it can only be done once, so we are protected
+     * from overwriting it
      */
+    ORTE_UPDATE_EXIT_STATUS(exit_code);
+    
+    /* wakeup orterun so we can exit */
     if (ORTE_SUCCESS != (rc = orte_wakeup())) {
         ORTE_ERROR_LOG(rc);
     }    

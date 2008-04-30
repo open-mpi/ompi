@@ -379,6 +379,16 @@ static int process_commands(orte_process_name_t* sender,
             }
             /* save our current buffer location */
             save_buf = buffer->unpack_ptr;
+            /* if the PLM supports remote spawn, pass it all along */
+            if (NULL != orte_plm.remote_spawn) {
+                if (ORTE_SUCCESS != (ret = orte_plm.remote_spawn(buffer))) {
+                    ORTE_ERROR_LOG(ret);
+                }
+            } else {
+                opal_output(0, "%s remote spawn is NULL!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* rewind the buffer so we can reuse it */
+            buffer->unpack_ptr = save_buf;
             /* unpack the prefix and throw it away - we don't need it here */
             n = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &prefix, &n, OPAL_STRING))) {
@@ -390,16 +400,6 @@ static int process_commands(orte_process_name_t* sender,
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s orted:comm:add_procs failed to launch on error %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
-            }
-            /* rewind the buffer so the plm can reuse it */
-            buffer->unpack_ptr = save_buf;
-            /* if the PLM supports remote spawn, pass it all along */
-            if (NULL != orte_plm.remote_spawn) {
-                if (ORTE_SUCCESS != (ret = orte_plm.remote_spawn(buffer))) {
-                    ORTE_ERROR_LOG(ret);
-                }
-            } else {
-                opal_output(0, "%s remote spawn is NULL!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             break;
 
@@ -708,11 +708,11 @@ static int process_commands(orte_process_name_t* sender,
                 /* if we are the HNP, process the request */
                 orte_std_cntr_t i, num_nodes=0;
                 orte_node_t **nodes;
-                orte_nodeid_t nid;
+                char *nid;
                 
-                /* unpack the nodeid */
+                /* unpack the nodename */
                 n = 1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &nid, &n, ORTE_NODEID))) {
+                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &nid, &n, OPAL_STRING))) {
                     ORTE_ERROR_LOG(ret);
                     goto CLEANUP;
                 }
@@ -721,12 +721,12 @@ static int process_commands(orte_process_name_t* sender,
                 answer = OBJ_NEW(opal_buffer_t);
                 
                 /* if they asked for a specific node, then just get that info */
-                if (ORTE_NODEID_WILDCARD != nid) {
+                if (NULL != nid) {
                     /* find this node */
                     nodes = (orte_node_t**)orte_node_pool->addr;
                     for (i=0; i < orte_node_pool->size; i++) {
                         if (NULL == nodes[i]) break; /* stop when we get past the end of data */
-                        if (nid == nodes[i]->nodeid) {
+                        if (0 == strcmp(nid, nodes[i]->name)) {
                             nodes = &nodes[i];
                             num_nodes = 1;
                             break;
@@ -966,7 +966,19 @@ SEND_ANSWER:
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(sender));
             }
-            if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer))) {
+            if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer, false))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+            break;
+            
+        case ORTE_DAEMON_SYNC_WANT_NIDMAP:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_recv: received sync+nidmap from local proc %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(sender));
+            }
+            if (ORTE_SUCCESS != (ret = orte_odls.require_sync(sender, buffer, true))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }

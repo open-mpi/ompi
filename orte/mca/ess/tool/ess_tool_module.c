@@ -51,6 +51,11 @@ orte_ess_base_module_t orte_ess_tool_module = {
     rte_init,
     orte_ess_base_tool_finalize,
     rte_abort,
+    NULL, /* don't need a local procs fn */
+    NULL, /* don't need a proc_get_hostname fn */
+    NULL, /* don't need a proc_get_arch fn */
+    NULL, /* don't need a proc_get_local_rank fn */
+    NULL, /* don't need a proc_get_node_rank fn */
     NULL /* ft_event */
 };
 

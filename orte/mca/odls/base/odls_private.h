@@ -61,19 +61,28 @@ typedef struct {
     bool coll_recvd;             /* collective operation recvd */
     orte_proc_state_t state;     /* the state of the process */
     orte_exit_code_t exit_code;  /* process exit code */
-    unsigned long cpu_set;
     char *rml_uri;               /* contact info for this child */
     char *slot_list;             /* list of slots for this child */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 
-typedef struct {
+/*
+ * List object to locally store job related info
+ */
+typedef struct orte_odls_job_t {
     opal_list_item_t super;     /* required to place this on a list */
-    orte_jobid_t jobid;         /* jobid for this job */
-    orte_rmaps_dp_t dp;         /* daemon participation for this job */
-    opal_value_array_t daemons; /* vpids of participating daemons */
+    orte_jobid_t jobid;         /* jobid for this data */
+    orte_app_context_t **apps;  /* app_contexts for this job */
+    orte_std_cntr_t num_apps;   /* number of app_contexts */
+    orte_std_cntr_t total_slots_alloc;
+    orte_vpid_t num_procs;
+    uint8_t num_local_procs;
+    bool hnp_has_local_procs;
+    orte_pmap_t *procmap;           /* map of procs/node, local ranks */
+    opal_byte_object_t *pmap;     /* byte object version of procmap */
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
+
 
 
 typedef struct {
@@ -87,8 +96,10 @@ typedef struct {
     opal_condition_t cond;
     /* list of children for this orted */
     opal_list_t children;
-    /* list of jobs for this orted */
+    /* list of job data for this orted */
     opal_list_t jobs;
+    /* byte object to store daemon map for later xmit to procs */
+    opal_byte_object_t *dmap;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
@@ -105,15 +116,7 @@ orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 
 ORTE_DECLSPEC int
 orte_odls_base_default_construct_child_list(opal_buffer_t *data,
-                                            orte_jobid_t *job,
-                                            orte_std_cntr_t *num_local_procs,
-                                            orte_vpid_t *vpid_range,
-                                            orte_std_cntr_t *total_slots_allocated,
-                                            bool *node_included,
-                                            bool *oversubscribed,
-                                            bool *override_oversubscribed,
-                                            orte_std_cntr_t *num_contexts,
-                                            orte_app_context_t ***app_contexts);
+                                            orte_jobid_t *job);
 
 /* define a function that will fork a local proc */
 typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
@@ -122,13 +125,6 @@ typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
 
 ORTE_DECLSPEC int
 orte_odls_base_default_launch_local(orte_jobid_t job,
-                                    orte_std_cntr_t num_apps,
-                                    orte_app_context_t **apps,
-                                    orte_std_cntr_t num_local_procs,
-                                    orte_vpid_t vpid_range,
-                                    orte_std_cntr_t total_slots_allocated,
-                                    bool oversubscribed,
-                                    bool override_oversubscribed,
                                     orte_odls_base_fork_local_proc_fn_t fork_local);
 
 ORTE_DECLSPEC int
@@ -154,7 +150,9 @@ orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
                                         orte_odls_base_kill_local_fn_t kill_local,
                                         orte_odls_base_child_died_fn_t child_died);
 
-ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc, opal_buffer_t *buf);
+ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc,
+                                                      opal_buffer_t *buffer,
+                                                      bool drop_nidmap);
 
 /*
  * Preload binary/files functions

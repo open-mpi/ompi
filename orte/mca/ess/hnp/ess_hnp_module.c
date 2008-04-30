@@ -77,6 +77,11 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     rte_init,
     rte_finalize,
     rte_abort,
+    NULL, /* don't need a proc_is_local fn */
+    NULL, /* don't need a proc_get_hostname fn */
+    NULL, /* don't need a proc_get_arch fn */
+    NULL, /* don't need a proc_get_local_rank fn */
+    NULL, /* don't need a proc_get_node_rank fn */
     NULL /* ft_event */
 };
 
@@ -295,9 +300,8 @@ static int rte_init(char flags)
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
+    node->arch = orte_process_info.arch;
     node->index = opal_pointer_array_add(orte_node_pool, node);
-    /* record our node */
-    orte_hnpnode = node;
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -308,6 +312,7 @@ static int rte_init(char flags)
     proc->state = ORTE_PROC_STATE_RUNNING;
     OBJ_RETAIN(node);  /* keep accounting straight */
     proc->node = node;
+    proc->nodename = node->name;
     opal_pointer_array_add(jdata->procs, proc);
 
     /* record that the daemon (i.e., us) is on this node 

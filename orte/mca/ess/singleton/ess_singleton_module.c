@@ -35,6 +35,7 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -65,13 +66,28 @@ static void set_handler_default(int sig)
 }
 
 static int rte_init(char flags);
+static int rte_finalize(void);
+static bool proc_is_local(orte_process_name_t *proc);
+static char* proc_get_hostname(orte_process_name_t *proc);
+static uint32_t proc_get_arch(orte_process_name_t *proc);
+static uint8_t proc_get_local_rank(orte_process_name_t *proc);
+static uint8_t proc_get_node_rank(orte_process_name_t *proc);
 
 orte_ess_base_module_t orte_ess_singleton_module = {
     rte_init,
-    orte_ess_base_app_finalize,
+    rte_finalize,
     orte_ess_base_app_abort,
+    proc_is_local,
+    proc_get_hostname,
+    proc_get_arch,
+    proc_get_local_rank,
+    proc_get_node_rank,
     NULL /* ft_event */
 };
+
+static opal_pointer_array_t nidmap;
+static orte_pmap_t *pmap;
+static orte_vpid_t nprocs;
 
 static int rte_init(char flags)
 {
@@ -118,6 +134,7 @@ static int rte_init(char flags)
     }
 
     orte_process_info.num_procs = 1;
+    
     /* since we are a singleton, then we must have a local_rank of 0
      * and only 1 local process
      */
@@ -135,7 +152,46 @@ static int rte_init(char flags)
      * library wrt pty's and stdin
      */
 
+    /* setup the nidmap arrays */
+    OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
+    opal_pointer_array_init(&nidmap, 1,
+                            INT32_MAX, 8);
+    
+    /* if one was provided, build my nidmap */
+    if (ORTE_SUCCESS != (rc = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
+                                                          &nidmap, &pmap, &nprocs))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return ORTE_SUCCESS;
+}
+
+static int rte_finalize(void)
+{
+    int ret;
+    orte_nid_t **nids;
+    int32_t i;
+    
+    /* deconstruct my nidmap arrays */
+    nids = (orte_nid_t**)nidmap.addr;
+    for (i=0; i < nidmap.size; i++) {
+        if (NULL == nids[i]) {
+            break;
+        }
+        if (NULL != nids[i]->name) {
+            free(nids[i]->name);
+        }
+    }
+    OBJ_DESTRUCT(&nidmap);
+    free(pmap);
+    
+    /* use the default procedure to finish */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;    
 }
 
 
@@ -337,4 +393,53 @@ static int fork_hnp(void)
 #endif    
     
     return ORTE_SUCCESS;
+}
+
+static bool proc_is_local(orte_process_name_t *proc)
+{
+    if (pmap[proc->vpid].node == (int32_t)ORTE_PROC_MY_DAEMON->vpid) {
+        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                             "%s ess:env: proc %s is LOCAL",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
+        return true;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s is REMOTE",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+    
+    return false;
+    
+}
+
+static char* proc_get_hostname(orte_process_name_t *proc)
+{
+    int32_t node;
+    orte_nid_t **nids;
+    
+    node = pmap[proc->vpid].node;
+    nids = (orte_nid_t**)nidmap.addr;
+    return nids[node]->name;
+}
+
+static uint32_t proc_get_arch(orte_process_name_t *proc)
+{
+    int32_t node;
+    orte_nid_t **nids;
+    
+    node = pmap[proc->vpid].node;
+    nids = (orte_nid_t**)nidmap.addr;
+    return nids[node]->arch;
+}
+
+static uint8_t proc_get_local_rank(orte_process_name_t *proc)
+{
+    return pmap[proc->vpid].local_rank;
+}
+
+static uint8_t proc_get_node_rank(orte_process_name_t *proc)
+{
+    return pmap[proc->vpid].node_rank;
 }

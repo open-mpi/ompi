@@ -53,15 +53,13 @@ ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
 #define ORTE_VPID_PRINT(n) \
     orte_util_print_vpids(n)
 
-ORTE_DECLSPEC char* orte_util_print_nodeids(const orte_nodeid_t nodeid);
-#define ORTE_NODEID_PRINT(n) \
-orte_util_print_nodeids(n)
 
 /* a macro for identifying the job family - i.e., for
  * extracting the mpirun-specific id field of the jobid
  */
 #define ORTE_JOB_FAMILY(n) \
-        (((n) >> 16) & 0x0000ffff)
+    (((n) >> 16) & 0x0000ffff)
+
 
 /* List of names for general use */
 struct orte_namelist_t {

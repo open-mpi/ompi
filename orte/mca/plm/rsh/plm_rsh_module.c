@@ -78,6 +78,7 @@
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -751,6 +752,29 @@ static void ssh_child(int argc, char **argv,
 
 static opal_buffer_t collected_uris;
 
+static int construct_daemonmap(opal_buffer_t *data)
+{
+    opal_byte_object_t *bo;
+    orte_std_cntr_t cnt;
+    int rc;
+    
+    /* extract the byte object holding the daemonmap */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* unpack the nodemap */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &orte_daemonmap))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(bo->bytes);
+    
+    return ORTE_SUCCESS;
+}
+
+
 /*
  * launch a set of daemons from a remote daemon
  */
@@ -758,7 +782,7 @@ static int remote_spawn(opal_buffer_t *launch)
 {
     opal_list_item_t *item;
     orte_vpid_t vpid;
-    char **nodes;
+    orte_nid_t **nodes;
     int node_name_index1;
     int node_name_index2;
     int proc_vpid_index;
@@ -775,26 +799,33 @@ static int remote_spawn(opal_buffer_t *launch)
     int num_children;
     orte_std_cntr_t n;
 
-    nodes = (char**)orte_daemonmap.addr;
-    vpid=ORTE_PROC_MY_NAME->vpid;
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:rsh: remote spawn called",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* extract the prefix from the launch buffer */
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &prefix, &n, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }            
+    
+    /* construct the daemonmap, if required - the decode function
+     * will know what to do
+     */
+    if (ORTE_SUCCESS != (rc = construct_daemonmap(launch))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    nodes = (orte_nid_t**)orte_daemonmap.addr;
+    vpid=ORTE_PROC_MY_NAME->vpid;
     
     /* rewind the buffer for use by our children */
     launch->unpack_ptr = launch->base_ptr;
-
+    
     /* setup the launch cmd */
     launch_cmd = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(launch_cmd, launch);
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: remote spawn called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* clear out any previous child info */
     while (NULL != (item = opal_list_remove_first(&mca_plm_rsh_component.children))) {
@@ -808,12 +839,13 @@ static int remote_spawn(opal_buffer_t *launch)
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: remote spawn - have no children!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        return ORTE_SUCCESS;
+        failed_launch = false;
+        rc = ORTE_SUCCESS;
+        goto cleanup;
     }
     
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, nodes[0], &node_name_index1, &node_name_index2,
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1, &node_name_index2,
                                            &local_exec_index, &proc_vpid_index, &lib_base, &bin_base,
                                            &remote_sh, &remote_csh))) {
         ORTE_ERROR_LOG(rc);
@@ -843,14 +875,15 @@ static int remote_spawn(opal_buffer_t *launch)
         if (NULL == nodes[vpid]) {
             opal_output(0, "%s NULL in daemonmap at position %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)vpid);
+            rc = ORTE_ERR_NOT_FOUND;
             goto cleanup;
         }
         
         free(argv[node_name_index1]);
-        argv[node_name_index1] = strdup(nodes[vpid]);
+        argv[node_name_index1] = strdup(nodes[vpid]->name);
         
         free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(nodes[vpid]);
+        argv[node_name_index2] = strdup(nodes[vpid]->name);
 
         /* fork a child to exec the rsh/ssh session */
         pid = fork();
@@ -865,7 +898,7 @@ static int remote_spawn(opal_buffer_t *launch)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: launching on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nodes[vpid]));
+                                 nodes[vpid]->name));
             
             /* do the ssh launch - this will exit if it fails */
             ssh_child(argc, argv, vpid,

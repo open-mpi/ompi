@@ -97,7 +97,7 @@ static int finalize(void)
     if (!orte_process_info.hnp &&
         !orte_process_info.daemon &&
         !orte_process_info.tool) {
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -519,7 +519,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
              * This also will cause the local orted to send our contact
              * into to the HNP once all my local peers have registered
              */
-            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+            if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

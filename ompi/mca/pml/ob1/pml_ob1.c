@@ -536,7 +536,7 @@ int mca_pml_ob1_ft_event( int state )
                         ret);
             return ret;
         }
-
+#if 0
         /*
          * Fill in remote proc information
          */
@@ -546,7 +546,7 @@ int mca_pml_ob1_ft_event( int state )
                         ret);
             return ret;
         }
-
+#endif
         /*
          * Startup the PML stack now that the modex is running again
          * Add the new procs (BTLs redo modex recv's)

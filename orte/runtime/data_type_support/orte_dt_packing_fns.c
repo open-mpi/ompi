@@ -308,13 +308,6 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* pack the nodeid */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
-                         (void*)(&(nodes[i]->nodeid)), 1, ORTE_NODEID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* do not pack the allocate flag, daemon name, or launch id */
         
         /* pack the number of procs on the node */
@@ -410,7 +403,14 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
         
         /* pack the local rank */
         if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
-                         (void*)(&(procs[i]->local_rank)), 1, ORTE_VPID))) {
+                         (void*)(&(procs[i]->local_rank)), 1, OPAL_UINT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the node rank */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer,
+                         (void*)(&(procs[i]->node_rank)), 1, OPAL_UINT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -735,12 +735,6 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
     for (i=0; i < num_vals; i++) {
         /* pack the policy used to generate it */
         if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer, &(maps[i]->policy), 1, OPAL_UINT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the hnp_has_local_procs flag */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack_buffer(buffer, &(maps[i]->hnp_has_local_procs), 1, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

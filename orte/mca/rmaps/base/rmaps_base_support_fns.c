@@ -88,17 +88,18 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /** check that anything is here */
-        if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt",
-                           "orte-rmaps-base:no-available-resources",
-                           true);
-            return ORTE_ERR_SILENT;
-        }
+    }
+    
+    /** check that anything is here */
+    if (0 == opal_list_get_size(allocated_nodes)) {
+        opal_show_help("help-orte-rmaps-base.txt",
+                       "orte-rmaps-base:no-available-resources",
+                       true);
+        return ORTE_ERR_SILENT;
     }
     
     /* did the app_context contain a hostfile? */
-    if (NULL != app && NULL != app->hostfile) {
+    if (NULL != app->hostfile) {
         /* yes - filter the node list through the file, removing
          * any nodes not found in the file
          */
@@ -107,27 +108,27 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /** check that anything is here */
-        if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, app->hostfile);
-            return ORTE_ERR_SILENT;
-        }
     }
     
-   /* now filter the list through any -host specification */
-    if (NULL != app) {
-        if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
-                                                                   app->dash_host))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /** check that anything is left! */
-        if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
-                           true, app->app, "");
-            return ORTE_ERR_SILENT;
-        }
+    /** check that anything is here */
+    if (0 == opal_list_get_size(allocated_nodes)) {
+        opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+                       true, app->app, app->hostfile);
+        return ORTE_ERR_SILENT;
+    }
+    
+    /* now filter the list through any -host specification */
+    if (ORTE_SUCCESS != (rc = orte_util_filter_dash_host_nodes(allocated_nodes,
+                                                               app->dash_host))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /** check that anything is left! */
+    if (0 == opal_list_get_size(allocated_nodes)) {
+        opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+                       true, app->app, "");
+        return ORTE_ERR_SILENT;
     }
     
     /* If the "no local" option was set, then remove the local node
@@ -242,10 +243,6 @@ PROCESS:
     OBJ_RETAIN(proc);
     ++node->num_procs;
     
-    /* if this is the HNP, flag that the HNP has local procs */
-    if (node == orte_hnpnode) {
-        map->hnp_has_local_procs = true;
-    }
     return ORTE_SUCCESS;
 }
 
@@ -283,9 +280,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     }
     current_node->slot_list = NULL;
     proc->node = current_node;
-    if (NULL != current_node->name) {
-        proc->nodename = strdup(current_node->name);
-    }
+    proc->nodename = current_node->name;
     
     /* add this proc to the job's data - we don't have to worry here
      * about keeping the array left-justified as all vpids
@@ -344,10 +339,12 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 
 int orte_rmaps_base_compute_usage(orte_job_t *jdata)
 {
-    orte_std_cntr_t i, j;
+    orte_std_cntr_t i;
+    orte_vpid_t j, k;
     orte_node_t **nodes;
-    orte_proc_t **procs, *psave = NULL;
-    orte_vpid_t minv, local_rank;
+    orte_proc_t **procs, *psave, *psave2;
+    orte_vpid_t minv, minv2;
+    uint8_t local_rank;
     orte_job_map_t *map;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -360,45 +357,47 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     /* for each node in the map... */
     nodes = (orte_node_t**)map->nodes->addr;
     for (i=0; i < map->num_nodes; i++) {
-        /* cycle through the array of procs IN THIS JOB on this node, looking for
-         * the minimum vpid one and setting that local rank, until we
-         * have done so for all procs on the node and/or in the job
+        /* cycle through the array of procs on this node, setting
+         * local and node ranks, until we
+         * have done so for all procs on nodes in this map
          */
         
         /* init search values */
         procs = (orte_proc_t**)nodes[i]->procs->addr;
         local_rank = 0;
         
-        while (local_rank < nodes[i]->num_procs) {
+        for (k=0; k < nodes[i]->num_procs; k++) {
             minv = ORTE_VPID_MAX;
+            minv2 = ORTE_VPID_MAX;
             psave = NULL;
-            /* find the minimum vpid proc IN THIS JOB */
-            for (j=0; j < nodes[i]->procs->size; j++) {
-                if (NULL == procs[j]) {
-                    /* the array is left justified, so this
-                     * means we are done
-                     */
-                    break;
-                }
-                if (procs[j]->name.jobid != jdata->jobid) {
-                    /* not in our job */
-                    continue;
-                }
-                if (ORTE_VPID_INVALID != procs[j]->local_rank) {
-                    /* already did this one */
-                    continue;
-                }
-                if (procs[j]->name.vpid < minv) {
+            psave2 = NULL;
+            /* find the minimum vpid proc */
+            for (j=0; j < nodes[i]->num_procs; j++) {
+                if (procs[j]->name.jobid == jdata->jobid &&
+                    UINT8_MAX == procs[j]->local_rank &&
+                    procs[j]->name.vpid < minv) {
                     minv = procs[j]->name.vpid;
                     psave = procs[j];
                 }
+                /* no matter what job...still have to handle node_rank */
+                if (UINT8_MAX == procs[j]->node_rank &&
+                    procs[j]->name.vpid < minv2) {
+                    minv2 = procs[j]->name.vpid;
+                    psave2 = procs[j];
+                }
             }
-            if (NULL == psave) {
+            if (NULL == psave && NULL == psave2) {
                 /* we must have processed them all! */
                 goto DONE;
             }
-            psave->local_rank = local_rank;
-            ++local_rank;
+            if (NULL != psave) {
+                psave->local_rank = local_rank;
+                ++local_rank;
+            }
+            if (NULL != psave2) {
+                psave2->node_rank = nodes[i]->next_node_rank;
+                nodes[i]->next_node_rank++;
+            }
         }
     }
 
@@ -450,6 +449,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
             }
             proc->name.vpid = daemons->num_procs;  /* take the next available vpid */
             proc->node = node;
+            proc->nodename = node->name;
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons add new daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -483,18 +483,5 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         }
     }
 
-    /* check how many daemons we are using and set flag accordingly - this
-     * is required so that daemon-based collectives can correctly operate
-     */
-    if (numdaemons == daemons->num_procs) {
-        /* everyone is being used */
-        map->daemon_participation = ORTE_RMAPS_ALL_DAEMONS;
-    } else if (numdaemons == daemons->num_procs-1 &&
-               !map->hnp_has_local_procs) {
-        map->daemon_participation = ORTE_RMAPS_ALL_EXCEPT_HNP;
-    } else {
-        map->daemon_participation = ORTE_RMAPS_DAEMON_SUBSET;
-    }
-    
     return ORTE_SUCCESS;
 }

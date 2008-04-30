@@ -100,7 +100,7 @@ static int finalize(void)
     if (!orte_process_info.hnp &&
         !orte_process_info.daemon &&
         !orte_process_info.tool) {
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -541,7 +541,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          *     is attempted until the overall ORTE system knows how to talk to everyone -
          *     otherwise, the system can just hang.
          */
-        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync())) {
+        if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(true))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -575,6 +575,13 @@ static int route_lost(const orte_process_name_t *route)
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 {
     int rc;
+    
+    /* if we are not using static ports, then we need to share the
+     * comm info - otherwise, just return
+     */
+    if (orte_static_ports) {
+        return ORTE_SUCCESS;
+    }
     
     if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
         ORTE_ERROR_LOG(rc);

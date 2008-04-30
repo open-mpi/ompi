@@ -67,7 +67,6 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
      */
     ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
     ptr->exit_code = 0;
-    ptr->cpu_set = 0xffffffff;
     ptr->rml_uri = NULL;
     ptr->slot_list = NULL;
 }
@@ -82,17 +81,39 @@ OBJ_CLASS_INSTANCE(orte_odls_child_t,
                    orte_odls_child_constructor,
                    orte_odls_child_destructor);
 
-/* instance the job list object */
 static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 {
     ptr->jobid = ORTE_JOBID_INVALID;
-    ptr->dp = 0;
-    OBJ_CONSTRUCT(&ptr->daemons, opal_value_array_t);
-    opal_value_array_init(&ptr->daemons, sizeof(orte_vpid_t));
+    ptr->apps = NULL;
+    ptr->num_apps = 0;
+    ptr->total_slots_alloc = 0;
+    ptr->num_procs = 0;
+    ptr->num_local_procs = 0;
+    ptr->hnp_has_local_procs = false;
+    ptr->procmap = NULL;
+    ptr->pmap = NULL;
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
-    OBJ_DESTRUCT(&ptr->daemons);
+    orte_std_cntr_t i;
+    
+    if (NULL != ptr->apps) {
+        for (i=0; i < ptr->num_apps; i++) {
+            OBJ_RELEASE(ptr->apps[i]);
+        }
+        if (NULL != ptr->apps) {
+            free(ptr->apps);
+        }
+    }
+    
+    if (NULL != ptr->procmap) {
+        free(ptr->procmap);
+    }
+    
+    if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
+        free(ptr->pmap->bytes);
+        free(ptr->pmap);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_odls_job_t,
                    opal_list_item_t,
@@ -124,7 +145,8 @@ int orte_odls_base_open(void)
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
     OBJ_CONSTRUCT(&orte_odls_globals.children, opal_list_t);
     OBJ_CONSTRUCT(&orte_odls_globals.jobs, opal_list_t);
-
+    orte_odls_globals.dmap = NULL;
+    
     /* initialize and setup the daemonmap */
     OBJ_CONSTRUCT(&orte_daemonmap, opal_pointer_array_t);
     opal_pointer_array_init(&orte_daemonmap, 8, INT32_MAX, 8);

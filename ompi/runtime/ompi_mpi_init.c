@@ -521,13 +521,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
-    /* Fill in remote proc information */
-    if (OMPI_SUCCESS != (ret = ompi_proc_get_info())) {
-        ORTE_ERROR_LOG(ret);
-        error = "ompi_mpi_init: ompi_proc_get_info failed";
-        goto error;
-    }
-
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
        MPI_THREAD_MULTIPLE. */

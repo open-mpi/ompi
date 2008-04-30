@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #endif
 
+#include "opal/dss/dss_types.h"
+
 BEGIN_C_DECLS
 
 /**
@@ -54,15 +56,19 @@ struct orte_proc_info_t {
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
     orte_std_cntr_t universe_size;      /**< the size of the universe we are in */
     orte_vpid_t num_procs;              /**< number of processes in this job */
-    orte_vpid_t local_rank;             /**< local rank on this node */
+    uint8_t local_rank;                 /**< local rank on this node */
+    uint8_t node_rank;                  /**< local rank on this node */
     orte_std_cntr_t num_local_procs;    /**< total number of procs on this node */
-    orte_nodeid_t nodeid;               /**< numerical id for this node */
+    char *local_procs;                  /**< comma-delimited list of local procs */
     char *nodename;                     /**< string name for this node */
+    uint32_t arch;                      /**< arch for this node */
     pid_t pid;                          /**< Local process ID for this process */
     bool singleton;                     /**< I am a singleton */
     bool daemon;                        /**< Indicate whether or not I am a daemon */
     bool hnp;                           /**< Indicate whether or not I am the HNP (orterun) */
     bool tool;                          /**< I am a tool or not */
+    bool mpi_proc;                      /**< I am an MPI process */
+    opal_buffer_t *sync_buf;            /**< buffer to store sync response */
     /* The session directory has the form
      * <prefix>/<openmpi-sessions-user>/<jobid>/<procid>, where the prefix
      * can either be provided by the user via the

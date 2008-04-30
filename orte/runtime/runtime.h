@@ -39,9 +39,9 @@
 BEGIN_C_DECLS
 
 /* some convenience definitions for code clarity */
-#define ORTE_NON_TOOL          0x00
-#define ORTE_TOOL              0x01
-#define ORTE_TOOL_WITH_NAME    0x02
+#define ORTE_NON_TOOL           0x00
+#define ORTE_TOOL               0x01
+#define ORTE_TOOL_WITH_NAME     0x02
 
     /**
      * Initialize the Open Run Time Environment

@@ -97,7 +97,7 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     return ORTE_SUCCESS;
 }
 
-int orte_util_comm_query_node_info(const orte_process_name_t *hnp, orte_nodeid_t nodeid,
+int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
                                    int *num_nodes, orte_node_t ***node_info_array)
 {
     int ret;
@@ -117,7 +117,7 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, orte_nodeid_t
         OBJ_DESTRUCT(&cmd);
         return ret;
     }
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &nodeid, 1, ORTE_NODEID))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmd, &node, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&cmd);
         return ret;

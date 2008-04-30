@@ -34,9 +34,9 @@
 #include "ompi/types.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
-
-#include "orte/types.h"
 #include "opal/dss/dss_types.h"
+
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
@@ -54,8 +54,6 @@ struct ompi_proc_t {
     opal_list_item_t                super;
     /** this process' name */
     orte_process_name_t             proc_name;
-    /** "nodeid" on which the proc resides - equiv to vpid of local daemon */
-    orte_nodeid_t                   proc_nodeid;
     /** PML specific proc data */
     struct mca_pml_base_endpoint_t* proc_pml;
     /** BML specific proc data */
@@ -66,7 +64,9 @@ struct ompi_proc_t {
     struct ompi_convertor_t*        proc_convertor;
     /** Lock protecting data inside the given ompi_proc_t */
     opal_mutex_t                    proc_lock;
-    /** Keep the hostname around for debugging purposes */
+    /** A pointer to the name of this host - data is
+     * actually stored in the RTE
+     */
     char*                           proc_hostname;
     /** flags for this proc */
     uint8_t                         proc_flags;
@@ -118,35 +118,6 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
  * @retval OMPI_ERROR   Initialization failed due to unspecified error
  */
 OMPI_DECLSPEC int ompi_proc_init(void);
-
-/**
- * Publish local process information
- *
- * Used by ompi_proc_init() and elsewhere in the code to refresh any 
- * local information not easily determined by the run-time ahead of time 
- * (architecture and hostname).
- *
- * @note While an ompi_proc_t will exist with mostly valid information
- * for each process in the MPI_COMM_WORLD at the conclusion of this
- * call, some information will not be immediately available.  This
- * includes the architecture and hostname, which will be available by
- * the conclusion of the stage gate.
- *
- * @retval OMPI_SUCESS  Information available in the modex
- * @retval OMPI_ERROR   Failure due to unspecified error
- */
-OMPI_DECLSPEC int ompi_proc_publish_info(void);
-
-/**
- * Get data exchange information from remote processes
- *
- * Get data exchanged from remote processes and populate the ompi proc
- * structures for the associated processes.
- *
- * @retval OMPI_SUCCESS Information successfully received
- * @retval OMPI_ERROR   Information update failure
- */
-OMPI_DECLSPEC int ompi_proc_get_info(void);
 
 
 /**
@@ -249,7 +220,6 @@ static inline ompi_proc_t* ompi_proc_local(void)
 */
 OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
 
-
 /**
  * Pack proc list into portable buffer
  *
@@ -315,7 +285,6 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
 OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf, 
                                    int proclistsize, ompi_proc_t ***proclist,
                                    int *newproclistsize, ompi_proc_t ***newproclist);
-
 
 /**
  * Refresh the OMPI process subsystem

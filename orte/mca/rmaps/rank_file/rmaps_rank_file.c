@@ -372,6 +372,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     map = jdata->map;
     apps = (orte_app_context_t**)jdata->apps->addr;
     
+    /* flag the map as containing cpu_lists */
+    map->cpu_lists = true;
+    
     /* start at the beginning... */
     vpid_start = 0;
 

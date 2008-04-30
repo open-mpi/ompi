@@ -37,18 +37,29 @@
 static int rte_init(char flags);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
+static bool proc_is_local(orte_process_name_t *proc);
+static char* proc_get_hostname(orte_process_name_t *proc);
+static uint32_t proc_get_arch(orte_process_name_t *proc);
+static uint8_t proc_get_local_rank(orte_process_name_t *proc);
+static uint8_t proc_get_node_rank(orte_process_name_t *proc);
 
 orte_ess_base_module_t orte_ess_cnos_module = {
     rte_init,
     rte_finalize,
     rte_abort,
+    proc_is_local,
+    proc_get_hostname,
+    proc_get_arch,
+    proc_get_local_rank,
+    proc_get_node_rank,
     NULL /* ft_event */
 };
+
+static cnos_nidpid_map_t *map;
 
 static int rte_init(char flags)
 {
     int rc;
-    cnos_nidpid_map_t *map;
     int nprocs;
     
     /* Get our process information */
@@ -66,14 +77,13 @@ static int rte_init(char flags)
     /* Get the number of procs in the job from cnos */
     orte_process_info.num_procs = (orte_std_cntr_t) cnos_get_size();
     
-    /* Set the nodeid to the machine nid */
+    /* Get the nid map */
     nprocs = cnos_get_nidpid_map(&map);
     if (nprocs <= 0) {
         opal_output(0, "%5d: cnos_get_nidpid_map() returned %d", 
                     cnos_get_rank(), nprocs);
         return ORTE_ERR_FATAL;
     }
-    orte_process_info.nodeid = map[cnos_get_rank()].nid;
 
     /* MPI_Init needs the grpcomm framework, so we have to init it */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_open())) {
@@ -104,4 +114,40 @@ static int rte_finalize(void)
 static void rte_abort(int status, bool report)
 {
     exit(status);
+}
+
+static bool proc_is_local(orte_process_name_t *proc)
+{
+    if (map[ORTE_PROC_MY_NAME->vpid].nid ==
+        map[proc->vpid].nid) {
+        return true;
+    }
+    
+    return false;
+}
+
+static char* proc_get_hostname(orte_process_name_t *proc)
+{
+    return map[proc->vpid].nid;
+}
+
+static uint32_t proc_get_arch(orte_process_name_t *proc);
+{
+    return 0;
+}
+
+static uint8_t proc_get_local_rank(orte_process_name_t *proc)
+{
+    /* RHC: someone more familiar with CNOS needs to
+     * fix this to return the correct value
+     */
+    return 0;
+}
+
+static uint8_t proc_get_node_rank(orte_process_name_t *proc)
+{
+    /* RHC: someone more familiar with CNOS needs to
+     * fix this to return the correct value
+     */
+    return 0;
 }
