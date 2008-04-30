@@ -37,7 +37,7 @@ BEGIN_C_DECLS
 ORTE_DECLSPEC int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t job,
                                                 int *num_jobs, orte_job_t ***job_info_array);
 
-ORTE_DECLSPEC int orte_util_comm_query_node_info(const orte_process_name_t *hnp, orte_nodeid_t nodeid,
+ORTE_DECLSPEC int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
                                                  int *num_nodes, orte_node_t ***node_info_array);
 
 ORTE_DECLSPEC int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,

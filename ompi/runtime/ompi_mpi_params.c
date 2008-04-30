@@ -154,11 +154,6 @@ int ompi_mpi_register_params(void)
                                 false, false, 1, &value);
     ompi_mpi_keep_peer_hostnames = OPAL_INT_TO_BOOL(value);
 
-    mca_base_param_reg_int_name("mpi", "keep_fqdn_hostnames",
-                                "If nonzero, use the FQDN host name when saving hostnames.  This can add quite a bit of memory usage to each MPI process.",
-                                false, false, 1, &value);
-    ompi_mpi_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
-    
     /* MPI_ABORT controls */
 
     mca_base_param_reg_int_name("mpi", "abort_delay",

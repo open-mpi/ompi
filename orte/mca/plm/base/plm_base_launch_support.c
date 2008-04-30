@@ -49,6 +49,11 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
 
+
+#include "orte/util/nidmap.h"
+#include "opal/class/opal_pointer_array.h"
+
+
 #include "orte/tools/orterun/totalview.h"
 
 #include "orte/mca/plm/base/plm_private.h"
@@ -73,12 +78,35 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }         
-    
+
     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }         
 
+#if 0
+    /* RHC: Please leave this code here - it is needed for
+     * rare debugging that doesn't merit a separate debug-flag,
+     * but is a pain to have to replicate when needed
+     */
+    {
+        opal_byte_object_t bo;
+
+        /* construct a nodemap */
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* construct the daemon map, if required - the decode function
+         * knows what to do
+         */
+        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo, &orte_daemonmap))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }  
+    }
+#endif
+    
     /* if we don't want to launch, now is the time to leave */
     if (orte_do_not_launch) {
         orte_finalize();
@@ -247,6 +275,8 @@ static void process_orted_launch_report(int fd, short event, void *data)
     opal_buffer_t *buffer = mev->buffer;
     char *rml_uri;
     int rc, idx;
+    int32_t arch;
+    orte_node_t **nodes;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch from daemon %s",
@@ -279,6 +309,23 @@ static void process_orted_launch_report(int fd, short event, void *data)
         goto CLEANUP;
     }
 
+    /* get the remote arch */
+    idx = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &arch, &idx, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        orted_failed_launch = true;
+        goto CLEANUP;
+    }
+    /* lookup the node */
+    nodes = (orte_node_t**)orte_node_pool->addr;
+    if (NULL == nodes[mev->sender.vpid]) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        orted_failed_launch = true;
+        goto CLEANUP;
+    }
+    /* store the arch */
+    nodes[mev->sender.vpid]->arch = arch;
+    
 CLEANUP:
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -405,6 +452,17 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
         orte_errmgr.incomplete_start(-1, -1); /* no way to know the jobid or exit code */
         return;
     }
+    /* if the jobid is invalid, then we know that this is a failed
+     * launch report from before we could even attempt to launch the
+     * procs - most likely, while we were attempting to unpack the
+     * launch cmd itself. In this case, just abort
+     */
+    if (ORTE_JOBID_INVALID == jobid) {
+        jdata = NULL;
+        app_launch_failed = true;
+        goto CLEANUP;
+    }
+    
     /* get the job data object */
     if (NULL == (jdata = orte_get_job_data_object(jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -483,7 +541,11 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     
 CLEANUP:
     if (app_launch_failed) {
-        orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
+        if (NULL == jdata) {
+            orte_errmgr.incomplete_start(ORTE_JOBID_INVALID, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else {
+            orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
+        }
     }
     
 }

@@ -65,3 +65,13 @@ environment.
 WARNING: The MCA parameter mpi_use_sparse_group_storage has been set
 to true, but sparse group support was not compiled into Open MPI.  The
 mpi_use_sparse_group_storage value has therefore been ignored.
+#
+[heterogeneous-support-unavailable]
+This installation of Open MPI was configured without support for
+heterogeneous architectures, but at least one node in the allocation
+was detected to have a different architecture. The detected node was:
+
+Node: %s
+
+In order to operate in a heterogeneous environment, please reconfigure
+Open MPI with --enable-heterogeneous.

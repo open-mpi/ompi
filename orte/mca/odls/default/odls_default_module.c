@@ -348,45 +348,18 @@ static int odls_default_fork_local_proc(
 int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 {
     int rc;
-    orte_std_cntr_t total_slots_alloc, num_local_procs;
     orte_jobid_t job;
-    orte_vpid_t range;
-    bool node_included;
-    bool override_oversubscribed;
-    bool oversubscribed;
-    orte_std_cntr_t i, num_contexts;
-    orte_app_context_t **app_contexts;
 
     /* construct the list of children we are to launch */
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job,
-                                                                          &num_local_procs,
-                                                                          &range,
-                                                                          &total_slots_alloc,
-                                                                          &node_included,
-                                                                          &oversubscribed,
-                                                                          &override_oversubscribed,
-                                                                          &num_contexts,
-                                                                          &app_contexts))) {
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     
-    /* if there is nothing for us to do, just return */
-    if (!node_included) {
-        rc = ORTE_SUCCESS;
-        goto CLEANUP;
-    }
-
     /* launch the local procs */
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job,
-                                                                  num_contexts, app_contexts,
-                                                                  num_local_procs,
-                                                                  range, total_slots_alloc,
-                                                                  oversubscribed,
-                                                                  override_oversubscribed,
-                                                                  odls_default_fork_local_proc))) {
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_default_fork_local_proc))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
@@ -394,12 +367,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     }
     
 CLEANUP:
-    /* cleanup */
-    for (i=0; i < num_contexts; i++) {
-        if (NULL != app_contexts[i]) OBJ_RELEASE(app_contexts[i]);
-    };
-    if (NULL != app_contexts) free(app_contexts);
-    
+   
     return rc;
 }
 

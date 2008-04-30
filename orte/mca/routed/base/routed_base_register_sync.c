@@ -26,23 +26,42 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/routed/base/base.h"
 
-int orte_routed_base_register_sync(void)
+static bool sync_recvd;
+
+static void report_sync(int status, orte_process_name_t* sender,
+                        opal_buffer_t *buffer,
+                        orte_rml_tag_t tag, void *cbdata)
 {
-    opal_buffer_t buffer, ack;
+    /* just copy the payload to the sync_buf */
+    opal_dss.copy_payload(orte_process_info.sync_buf, buffer);
+    /* flag as complete */
+    sync_recvd = true;
+}
+
+int orte_routed_base_register_sync(bool setup)
+{
+    opal_buffer_t buffer;
     int rc;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SYNC_BY_PROC;
     char *rml_uri;
     
-    /* we need to send a very small message to get the oob to establish
+    /* we need to get the oob to establish
      * the connection - the oob will leave the connection "alive"
      * thereafter so we can communicate readily
      */
     
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     
+    /* if we are setting up, tell the daemon to send back a nidmap */
+    if (setup) {
+        command = ORTE_DAEMON_SYNC_WANT_NIDMAP;
+    }
+
+
     /* tell the daemon to sync */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buffer, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -74,13 +93,15 @@ int orte_routed_base_register_sync(void)
      * gets serviced by the event library on the orted prior to the
      * process exiting
      */
-    OBJ_CONSTRUCT(&ack, opal_buffer_t);
-    if (0 > orte_rml.recv_buffer(ORTE_PROC_MY_DAEMON, &ack, ORTE_RML_TAG_SYNC, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        OBJ_DESTRUCT(&ack);
-        return ORTE_ERR_COMM_FAILURE;
+    sync_recvd = false;
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
+                                 ORTE_RML_NON_PERSISTENT, report_sync, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    OBJ_DESTRUCT(&ack);
+    
+    ORTE_PROGRESSED_WAIT(sync_recvd, 0, 1);
     
     return ORTE_SUCCESS;
 }

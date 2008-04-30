@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/name_fns.h"
@@ -36,13 +37,25 @@
 static int rte_init(char flags);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
+static bool proc_is_local(orte_process_name_t *proc);
+static char* proc_get_hostname(orte_process_name_t *proc);
+static uint32_t proc_get_arch(orte_process_name_t *proc);
+static uint8_t proc_get_local_rank(orte_process_name_t *proc);
+static uint8_t proc_get_node_rank(orte_process_name_t *proc);
 
 orte_ess_base_module_t orte_ess_portals_utcp_module = {
     rte_init,
     rte_finalize,
     rte_abort,
+    proc_is_local,
+    proc_get_hostname,
+    proc_get_arch,
+    proc_get_local_rank,
+    proc_get_node_rank,
     NULL /* ft_event */
 };
+
+static char **nidmap=NULL;
 
 static int rte_init(char flags)
 {
@@ -80,13 +93,9 @@ static int rte_init(char flags)
      * : seperated list of nids, and the utcp reference implementation
      * assumes all will be present
      */
-    len = strlen(nidmap_string);
-    num_procs = 1;
-    for (i = 0 ; i < len ; ++i) {
-        if (nidmap_string[i] == ':') num_procs++;
-    }
-    
-    orte_process_info.num_procs = (orte_std_cntr_t) num_procs;
+    /* split the nidmap string */
+    nidmap = opal_argv_split(nidmap_string, ':');
+    orte_process_info.num_procs = (orte_std_cntr_t) opal_argv_count(nidmap);
 
     /* MPI_Init needs the grpcomm framework, so we have to init it */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_open())) {
@@ -143,6 +152,9 @@ static int rte_init(char flags)
 
 static int rte_finalize(void)
 {
+    /* destruct the nidmap */
+    opal_argv_free(nidmap);
+    
     /* just cleanup the things we used */
     orte_grpcomm_base_close();
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
@@ -156,4 +168,42 @@ static int rte_finalize(void)
 static void rte_abort(int status, bool report)
 {
     exit(status);
+}
+
+static bool proc_is_local(orte_process_name_t *proc)
+{
+    if (NULL != nidmap[proc->name.vpid] &&
+        NULL != nidmap[ORTE_PROC_MY_NAME->vpid] &&
+        0 == strcmp(nidmap[proc->name.vpid],
+                    nidmap[ORTE_PROC_MY_NAME->vpid])) {
+        return true;
+    }
+    
+    return false;
+}
+
+static char* proc_get_hostname(orte_process_name_t *proc)
+{
+    return nidmap[proc->name.vpid];
+}
+
+static uint32_t proc_get_arch(orte_process_name_t *proc)
+{
+    return 0;
+}
+
+static uint8_t proc_get_local_rank(orte_process_name_t *proc)
+{
+    /* RHC: someone more familiar with CNOS needs to
+     * fix this to return the correct value
+     */
+    return 0;
+}
+
+static uint8_t proc_get_node_rank(orte_process_name_t *proc)
+{
+    /* RHC: someone more familiar with CNOS needs to
+     * fix this to return the correct value
+     */
+    return 0;
 }

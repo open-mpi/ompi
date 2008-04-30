@@ -99,14 +99,6 @@ struct orte_process_name_t {
 };
 typedef struct orte_process_name_t orte_process_name_t;
 
-/*
- * define a generic id for nodes
- */
-typedef int32_t orte_nodeid_t;
-#define ORTE_NODEID OPAL_INT32
-#define ORTE_NODEID_WILDCARD    -1
-#define ORTE_NODEID_INVALID     INT32_MIN
-
 
 /**
  * handle differences in iovec

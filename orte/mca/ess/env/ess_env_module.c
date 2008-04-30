@@ -35,6 +35,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -42,6 +43,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/malloc.h"
+#include "opal/util/argv.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -79,6 +81,12 @@ static int env_set_name(void);
 
 static int rte_init(char flags);
 static int rte_finalize(void);
+static bool proc_is_local(orte_process_name_t *proc);
+static char* proc_get_hostname(orte_process_name_t *proc);
+static uint32_t proc_get_arch(orte_process_name_t *proc);
+static uint8_t proc_get_local_rank(orte_process_name_t *proc);
+static uint8_t proc_get_node_rank(orte_process_name_t *proc);
+
 #if OPAL_ENABLE_FT == 1
 static int rte_ft_event(int state);
 static int ess_env_ft_event_update_process_info(orte_process_name_t proc, pid_t pid);
@@ -88,12 +96,21 @@ orte_ess_base_module_t orte_ess_env_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
+    proc_is_local,
+    proc_get_hostname,
+    proc_get_arch,
+    proc_get_local_rank,
+    proc_get_node_rank,
 #if OPAL_ENABLE_FT == 1
     rte_ft_event
 #else
     NULL
 #endif
 };
+
+static opal_pointer_array_t nidmap;
+static orte_pmap_t *pmap;
+static orte_vpid_t nprocs;
 
 static int rte_init(char flags)
 {
@@ -122,8 +139,8 @@ static int rte_init(char flags)
         }
         
     } else {
-        /* otherwise, I must be an application process, so
-         * use that default procedure
+        /* otherwise, I must be an application process - use
+         * the default procedure to finish my setup
          */
         if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -131,6 +148,17 @@ static int rte_init(char flags)
             goto error;
         }
         
+        /* setup the nidmap arrays */
+        OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
+        opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
+        
+        /* if one was provided, build my nidmap */
+        if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
+                                                              &nidmap, &pmap, &nprocs))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_ess_base_build_nidmap";
+            goto error;
+        }
     }
 
     return ORTE_SUCCESS;
@@ -146,6 +174,8 @@ error:
 static int rte_finalize(void)
 {
     int ret;
+    orte_nid_t **nids;
+    int32_t i;
     
     /* if I am a daemon, finalize using the default procedure */
     if (orte_process_info.daemon) {
@@ -158,15 +188,105 @@ static int rte_finalize(void)
             ORTE_ERROR_LOG(ret);
         }
     } else {
-        /* otherwise, I must be an application process, so
-         * use that default procedure
+        /* otherwise, I must be an application process - deconstruct
+         * my nidmap arrays
          */
+        nids = (orte_nid_t**)nidmap.addr;
+        for (i=0; i < nidmap.size; i++) {
+            if (NULL == nids[i]) {
+                break;
+            }
+            if (NULL != nids[i]->name) {
+                free(nids[i]->name);
+            }
+        }
+        OBJ_DESTRUCT(&nidmap);
+        free(pmap);
+        
+        /* use the default procedure to finish */
         if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
     }
     
     return ret;    
+}
+
+static bool proc_is_local(orte_process_name_t *proc)
+{
+    if (pmap[proc->vpid].node == (int32_t)ORTE_PROC_MY_DAEMON->vpid) {
+        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                             "%s ess:env: proc %s is LOCAL",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
+        return true;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s is REMOTE",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+    
+    return false;
+    
+}
+
+static char* proc_get_hostname(orte_process_name_t *proc)
+{
+    int32_t node;
+    orte_nid_t **nids;
+    
+    node = pmap[proc->vpid].node;
+    nids = (orte_nid_t**)nidmap.addr;
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s is on host %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         nids[node]->name));
+    
+    return nids[node]->name;
+}
+
+static uint32_t proc_get_arch(orte_process_name_t *proc)
+{
+    int32_t node;
+    orte_nid_t **nids;
+    
+    node = pmap[proc->vpid].node;
+    nids = (orte_nid_t**)nidmap.addr;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s has arch %0x",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         nids[node]->arch));
+    
+    return nids[node]->arch;
+}
+
+static uint8_t proc_get_local_rank(orte_process_name_t *proc)
+{
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s has local rank %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         (int)pmap[proc->vpid].local_rank));
+    
+    return pmap[proc->vpid].local_rank;
+}
+
+static uint8_t proc_get_node_rank(orte_process_name_t *proc)
+{
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s has node rank %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         (int)pmap[proc->vpid].node_rank));
+    
+    return pmap[proc->vpid].node_rank;
 }
 
 static int env_set_name(void)

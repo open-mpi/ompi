@@ -79,8 +79,7 @@ typedef int (*orte_grpcomm_base_module_daemon_collective_fn_t)(orte_jobid_t jobi
                                                                orte_std_cntr_t num_local_contributors,
                                                                orte_grpcomm_coll_t type,
                                                                opal_buffer_t *data,
-                                                               orte_rmaps_dp_t flag,
-                                                               opal_value_array_t *participants);
+                                                               bool hnp_has_local_procs);
 
 /* update the xcast trees - called after a change to the number of daemons
  * in the system

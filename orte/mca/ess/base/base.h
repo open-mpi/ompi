@@ -25,6 +25,11 @@
 #include "orte/types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/dss/dss_types.h"
+#include "opal/class/opal_pointer_array.h"
+
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/ess/ess.h"
 
 BEGIN_C_DECLS
@@ -68,6 +73,9 @@ ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);
 ORTE_DECLSPEC int orte_ess_base_orted_setup(void);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
+ORTE_DECLSPEC int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
+                                             opal_pointer_array_t *nidmap,
+                                             orte_pmap_t **pmap, orte_vpid_t *num_procs);
 
 /*
  * Put functions

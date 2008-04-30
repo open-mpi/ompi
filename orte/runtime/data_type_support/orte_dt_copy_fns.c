@@ -271,7 +271,6 @@ int orte_dt_copy_map(orte_job_map_t **dest, orte_job_map_t *src, opal_data_type_
     
     /* copy data into it */
     (*dest)->policy = src->policy;
-    (*dest)->hnp_has_local_procs = src->hnp_has_local_procs;
     (*dest)->pernode = src->pernode;
     (*dest)->npernode = src->npernode;
     (*dest)->oversubscribe = src->oversubscribe;

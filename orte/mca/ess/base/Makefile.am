@@ -29,5 +29,6 @@ libmca_ess_la_SOURCES += \
 	base/ess_base_put.c \
 	base/ess_base_std_tool.c \
 	base/ess_base_std_app.c \
-	base/ess_base_std_orted.c
+	base/ess_base_std_orted.c \
+	base/ess_base_build_nidmap.c
 

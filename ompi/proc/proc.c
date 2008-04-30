@@ -28,6 +28,7 @@
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -60,20 +61,20 @@ void ompi_proc_construct(ompi_proc_t* proc)
     proc->proc_pml = NULL;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 
-    /* By default all processors are supposelly having the same architecture as me. Thus,
-     * by default we run in a homogeneous environment. Later when the registry callback
-     * get fired we will have to set the convertors to the correct architecture.
+    /* By default all processors are supposedly having the same architecture as me. Thus,
+     * by default we run in a homogeneous environment. Later, when the RTE can tell us
+     * the arch of the remote nodes, we will have to set the convertors to the correct
+     * architecture.
      */
+    proc->proc_arch = orte_process_info.arch;
     proc->proc_convertor = ompi_mpi_local_convertor;
     OBJ_RETAIN( ompi_mpi_local_convertor );
-    proc->proc_arch = ompi_mpi_local_arch;
 
     proc->proc_flags = 0;
 
-    /* By default, put NULL in the hostname.  It may or may not get
-       filled in later -- consumer of this field beware! */
+    /* initialize this pointer to NULL */
     proc->proc_hostname = NULL;
-
+    
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -88,9 +89,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
      * destroyed here. It will be destroyed later when the ompi_ddt_finalize is called.
      */
     OBJ_RELEASE( proc->proc_convertor );
-    if (NULL != proc->proc_hostname) {
-        free(proc->proc_hostname);
-    }
+    /* DO NOT FREE THE HOSTNAME FIELD AS THIS POINTS
+     * TO AN AREA ALLOCATED/FREE'D ELSEWHERE
+     */
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -101,8 +102,6 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_vpid_t i;
-    int rc;
-    uint32_t ui32;
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
@@ -112,177 +111,36 @@ int ompi_proc_init(void)
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
         proc->proc_name.vpid = i;
-        if( i == ORTE_PROC_MY_NAME->vpid ) {
+        if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
-        }
-    }
-
-    /* Fill in our local information */
-    rc = opal_arch_compute_local_id(&ui32);
-    if (OMPI_SUCCESS != rc) return rc;
-
-    ompi_proc_local_proc->proc_nodeid = orte_process_info.nodeid;
-    ompi_proc_local_proc->proc_arch = ui32;
-    if (ompi_mpi_keep_peer_hostnames) {
-        if (ompi_mpi_keep_fqdn_hostnames) {
-            /* use the entire FQDN name */
-            ompi_proc_local_proc->proc_hostname = strdup(orte_process_info.nodename);
+            proc->proc_hostname = orte_process_info.nodename;
+            proc->proc_arch = orte_process_info.arch;
         } else {
-            /* use the unqualified name */
-            char *tmp, *ptr;
-            tmp = strdup(orte_process_info.nodename);
-            if (NULL != (ptr = strchr(tmp, '.'))) {
-                *ptr = '\0';
+            if (orte_ess.proc_is_local(&proc->proc_name)) {
+                proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
             }
-            ompi_proc_local_proc->proc_hostname = strdup(tmp);
-            free(tmp);
-        }
-    }
-
-    rc = ompi_proc_publish_info();
-
-    return rc;
-}
-
-int ompi_proc_publish_info(void)
-{
-    orte_std_cntr_t datalen;
-    void *data;
-    opal_buffer_t* buf;    
-    int rc;
-
-    /* pack our local data for others to use */
-    buf = OBJ_NEW(opal_buffer_t);
-    rc = ompi_proc_pack(&ompi_proc_local_proc, 1, buf);
-    if (OMPI_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* send our data into the ether */
-    rc = opal_dss.unload(buf, &data, &datalen);
-    if (OMPI_SUCCESS != rc) return rc;
-    OBJ_RELEASE(buf);
-
-    rc = ompi_modex_send_string("ompi-proc-info", data, datalen);
-
-    free(data);
-
-    return rc;
-}
-
-
-int
-ompi_proc_get_info(void)
-{
-    int ret = OMPI_SUCCESS;
-    opal_list_item_t *item;
-
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
-
-    for (item = opal_list_get_first(&ompi_proc_list) ;
-         item != opal_list_get_end(&ompi_proc_list) ;
-         item = opal_list_get_next(item)) {
-        ompi_proc_t *proc = (ompi_proc_t*) item;
-        uint32_t arch;
-        char *hostname;
-        void *data;
-        size_t datalen;
-        orte_nodeid_t nodeid;
-
-        /* Don't reset the information determined about the current
-           process during the init step.  Saves time and problems if
-           modex is unimplemented */
-        if (ompi_proc_local() == proc) continue;
-
-        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_JOBID,
-                                                 &ompi_proc_local_proc->proc_name,
-                                                 &proc->proc_name)) {
-            /* not in our jobid -- this shouldn't happen */
-            ret = OMPI_ERR_FATAL;
-            goto out;
-        }
-
-        ret = ompi_modex_recv_string("ompi-proc-info", proc, &data, &datalen);
-        if (OMPI_SUCCESS == ret) {
-            opal_buffer_t *buf;
-            orte_std_cntr_t count=1;
-            orte_process_name_t name;
-
-            buf = OBJ_NEW(opal_buffer_t);
-            ret = opal_dss.load(buf, data, datalen);
-            if (OMPI_SUCCESS != ret)
-                goto out;
-
-           /* This isn't needed here, but packed just so that you
-               could, in theory, use the unpack code on this proc.  We
-               don't,because we aren't adding procs, but need to
-               update them */
-            ret = opal_dss.unpack(buf, &name, &count, ORTE_NAME);
-            if (ret != ORTE_SUCCESS)
-                goto out;
-
-            ret = opal_dss.unpack(buf, &nodeid, &count, ORTE_NODEID);
-            if (ret != ORTE_SUCCESS) {
-                ORTE_ERROR_LOG(ret);
-                goto out;
-            }
-
-            ret = opal_dss.unpack(buf, &arch, &count, OPAL_UINT32);
-            if (ret != ORTE_SUCCESS) {
-                ORTE_ERROR_LOG(ret);
-                goto out;
-            }
-                
-            ret = opal_dss.unpack(buf, &hostname, &count, OPAL_STRING);
-            if (ret != ORTE_SUCCESS) {
-                ORTE_ERROR_LOG(ret);
-                goto out;
-            }
-            /* Free the buffer for the next proc */
-            OBJ_RELEASE(buf);
-        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
-            nodeid = ORTE_NODEID_INVALID;
-            arch = ompi_proc_local_proc->proc_arch;
-            hostname = strdup("");
-            ret = ORTE_SUCCESS;
-        } else {
-            goto out;
-        }
-        
-        proc->proc_nodeid = nodeid;
-        proc->proc_arch = arch;
-        /* if arch is different than mine, create a new convertor for this proc */
-        if (proc->proc_arch != ompi_proc_local_proc->proc_arch) {
+            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
+            proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
+            /* if arch is different than mine, create a new convertor for this proc */
+            if (proc->proc_arch != orte_process_info.arch) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            OBJ_RELEASE(proc->proc_convertor);
-            proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+                OBJ_RELEASE(proc->proc_convertor);
+                proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
-            opal_show_help("help-mpi-runtime",
-                           "heterogeneous-support-unavailable",
-                           true, orte_process_info.nodename, 
-                           hostname == NULL ? "<hostname unavailable>" :
-                           hostname);
-            ret = OMPI_ERR_NOT_SUPPORTED;
-            goto out;
+                opal_show_help("help-mpi-runtime",
+                               "heterogeneous-support-unavailable",
+                               true, orte_process_info.nodename, 
+                               proc->proc_hostname == NULL ? "<hostname unavailable>" :
+                               proc->proc_hostname);
+                return OMPI_ERR_NOT_SUPPORTED;
 #endif
-        } 
-        if ((ompi_proc_local_proc->proc_nodeid == proc->proc_nodeid) &&
-            (proc->proc_nodeid != ORTE_NODEID_INVALID)) {
-            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+            } 
         }
-
-        /* Save the hostname.  The dss code will have strdup'ed this
-           for us -- no need to do so again */
-        proc->proc_hostname = hostname;
     }
 
-out:
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-    return ret;
+    return OMPI_SUCCESS;
 }
-
 
 int ompi_proc_finalize (void)
 {
@@ -408,55 +266,60 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
 }
 
 
-static ompi_proc_t *
-ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
-{
-    ompi_proc_t *proc, *rproc = NULL;
-    orte_ns_cmp_bitmask_t mask;
+int ompi_proc_refresh(void) {
+    ompi_proc_t *proc = NULL;
+    opal_list_item_t *item = NULL;
+    orte_vpid_t i = 0;
 
-    /* return the proc-struct which matches this jobid+process id */
-    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
-        proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
-        proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, name)) {
-            rproc = proc;
-            *isnew = false;
-            break;
-        }
-    }
 
-    if (NULL == rproc) {
-        *isnew = true;
-        rproc = OBJ_NEW(ompi_proc_t);
-        if (NULL != rproc) {
-            rproc->proc_name = *name;
+    for( item  = opal_list_get_first(&ompi_proc_list), i = 0;
+         item != opal_list_get_end(&ompi_proc_list);
+         item  = opal_list_get_next(item), ++i ) {
+        proc = (ompi_proc_t*)item;
+
+        if (i == ORTE_PROC_MY_NAME->vpid) {
+            ompi_proc_local_proc = proc;
+            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+            proc->proc_hostname = orte_process_info.nodename;
+            proc->proc_arch = orte_process_info.arch;
+        } else {
+            if (orte_ess.proc_is_local(&proc->proc_name)) {
+                proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+            }
+            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
+            proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
+            /* if arch is different than mine, create a new convertor for this proc */
+            if (proc->proc_arch != orte_process_info.arch) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+                OBJ_RELEASE(proc->proc_convertor);
+                proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+#else
+                opal_show_help("help-mpi-runtime",
+                               "heterogeneous-support-unavailable",
+                               true, orte_process_info.nodename, 
+                               proc->proc_hostname == NULL ? "<hostname unavailable>" :
+                               proc->proc_hostname);
+                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+                return OMPI_ERR_NOT_SUPPORTED;
+#endif
+            } 
         }
-        /* caller had better fill in the rest of the proc, or there's
-           going to be pain later... */
     }
 
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 
-    return rproc;
+    return OMPI_SUCCESS;   
 }
-
 
 int
 ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
 {
     int i, rc;
-
+    
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for (i=0; i<proclistsize; i++) {
         rc = opal_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
-        if(rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-            return rc;
-        }
-        rc = opal_dss.pack(buf, &(proclist[i]->proc_nodeid), 1, ORTE_NODEID);
         if(rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -479,6 +342,40 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
     return OMPI_SUCCESS;
 }
 
+static ompi_proc_t *
+ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
+{
+    ompi_proc_t *proc, *rproc = NULL;
+    orte_ns_cmp_bitmask_t mask;
+    
+    /* return the proc-struct which matches this jobid+process id */
+    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
+        proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
+        proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, name)) {
+            rproc = proc;
+            *isnew = false;
+            break;
+        }
+    }
+    
+    if (NULL == rproc) {
+        *isnew = true;
+        rproc = OBJ_NEW(ompi_proc_t);
+        if (NULL != rproc) {
+            rproc->proc_name = *name;
+        }
+        /* caller had better fill in the rest of the proc, or there's
+         going to be pain later... */
+    }
+    
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    
+    return rproc;
+}
+
 
 int
 ompi_proc_unpack(opal_buffer_t* buf, 
@@ -488,9 +385,9 @@ ompi_proc_unpack(opal_buffer_t* buf,
     int i;
     size_t newprocs_len = 0;
     ompi_proc_t **plist=NULL, **newprocs = NULL;
-
+    
     /* do not free plist *ever*, since it is used in the remote group
-       structure of a communicator */
+        structure of a communicator */
     plist = (ompi_proc_t **) calloc (proclistsize, sizeof (ompi_proc_t *));
     if ( NULL == plist ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -500,7 +397,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
     if (NULL == newprocs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
+    
     for ( i=0; i<proclistsize; i++ ){
         orte_std_cntr_t count=1;
         orte_process_name_t new_name;
@@ -508,14 +405,8 @@ ompi_proc_unpack(opal_buffer_t* buf,
         char *new_hostname;
         bool isnew = false;
         int rc;
-        orte_nodeid_t new_nodeid;
-
+        
         rc = opal_dss.unpack(buf, &new_name, &count, ORTE_NAME);
-        if (rc != ORTE_SUCCESS) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        rc = opal_dss.unpack(buf, &new_nodeid, &count, ORTE_NODEID);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -530,14 +421,13 @@ ompi_proc_unpack(opal_buffer_t* buf,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        
         plist[i] = ompi_proc_find_and_add(&new_name, &isnew);
         if (isnew) {
             newprocs[newprocs_len++] = plist[i];
-
-            plist[i]->proc_nodeid = new_nodeid;
+            
             plist[i]->proc_arch = new_arch;
-
+            
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->proc_arch != ompi_mpi_local_arch) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -548,82 +438,26 @@ ompi_proc_unpack(opal_buffer_t* buf,
                                "heterogeneous-support-unavailable",
                                true, orte_process_info.nodename, 
                                new_hostname == NULL ? "<hostname unavailable>" :
-                                   new_hostname);
+                               new_hostname);
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
-            if (ompi_proc_local_proc->proc_nodeid == plist[i]->proc_nodeid) {
+            if (0 == strcmp(ompi_proc_local_proc->proc_hostname,new_hostname)) {
                 plist[i]->proc_flags |= OMPI_PROC_FLAG_LOCAL;
             }
-
+            
             /* Save the hostname */
             plist[i]->proc_hostname = new_hostname;
         }
     }
-
+    
     if (NULL != newproclistsize) *newproclistsize = newprocs_len;
     if (NULL != newproclist) {
         *newproclist = newprocs;
     } else if (newprocs != NULL) {
         free(newprocs);
     }
-
+    
     *proclist = plist;
     return OMPI_SUCCESS;
-}
-
-int ompi_proc_refresh(void) {
-    ompi_proc_t *proc = NULL;
-    opal_list_item_t *item = NULL;
-    orte_vpid_t i = 0;
-    int rc;
-    uint32_t ui32;
-
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
-
-    for( item  = opal_list_get_first(&ompi_proc_list), i = 0;
-         item != opal_list_get_end(&ompi_proc_list);
-         item  = opal_list_get_next(item), ++i ) {
-        proc = (ompi_proc_t*)item;
-
-        /* Does not change: orte_process_info.num_procs */
-        /* Does not change: proc->proc_name.vpid */
-        proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
-        if( i == ORTE_PROC_MY_NAME->vpid ) {
-            ompi_proc_local_proc = proc;
-            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
-        } else {
-            proc->proc_flags = 0;
-        }
-    }
-
-    /* Fill in our local information */
-    rc = opal_arch_compute_local_id(&ui32);
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    ompi_proc_local_proc->proc_nodeid = orte_process_info.nodeid;
-    ompi_proc_local_proc->proc_arch = ui32;
-    if (ompi_mpi_keep_peer_hostnames) {
-        if (ompi_mpi_keep_fqdn_hostnames) {
-            /* use the entire FQDN name */
-            ompi_proc_local_proc->proc_hostname = strdup(orte_process_info.nodename);
-        } else {
-            /* use the unqualified name */
-            char *tmp, *ptr;
-            tmp = strdup(orte_process_info.nodename);
-            if (NULL != (ptr = strchr(tmp, '.'))) {
-                *ptr = '\0';
-            }
-            ompi_proc_local_proc->proc_hostname = strdup(tmp);
-            free(tmp);
-        }
-    }
-
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-
-    rc = ompi_proc_publish_info();
-
-    return rc;   
 }

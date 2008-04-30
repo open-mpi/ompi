@@ -180,7 +180,6 @@ OBJ_CLASS_INSTANCE(orte_job_t,
 static void orte_node_construct(orte_node_t* node)
 {
     node->name = NULL;
-    node->nodeid = ORTE_NODEID_INVALID;
     node->allocate = false;
     node->index = -1;
     node->daemon = NULL;
@@ -193,6 +192,7 @@ static void orte_node_construct(orte_node_t* node)
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
+    node->next_node_rank = 0;
     
     node->oversubscribed = false;
     node->arch = 0;
@@ -236,7 +236,8 @@ static void orte_proc_construct(orte_proc_t* proc)
 {
     proc->name = *ORTE_NAME_INVALID;
     proc->pid = 0;
-    proc->local_rank = ORTE_VPID_INVALID;
+    proc->local_rank = UINT8_MAX;
+    proc->node_rank = UINT8_MAX;
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->app_idx = -1;
     proc->slot_list = NULL;
@@ -252,14 +253,18 @@ static void orte_proc_construct(orte_proc_t* proc)
 
 static void orte_proc_destruct(orte_proc_t* proc)
 {
+    /* do NOT free the nodename field as this is
+     * simply a pointer to a field in the
+     * associated node object - the node object
+     * will free it
+     */
+    
     if (NULL != proc->slot_list) {
         free(proc->slot_list);
     }
 
     if (NULL != proc->node) OBJ_RELEASE(proc->node);
     
-    if (NULL != proc->nodename) free(proc->nodename);
-
     if (NULL != proc->rml_uri) free(proc->rml_uri);
     
 #if OPAL_ENABLE_FT == 1
@@ -280,11 +285,11 @@ OBJ_CLASS_INSTANCE(orte_proc_t,
 static void orte_job_map_construct(orte_job_map_t* map)
 {
     map->policy = ORTE_RMAPS_BYSLOT;    /* default to byslot mapping as per orterun options */
-    map->hnp_has_local_procs = false;
     map->pernode = false;
     map->npernode = 0;
     map->oversubscribe = true;  /* default to allowing oversubscribe */
     map->display_map = false;
+    map->cpu_lists = false;
     map->num_new_daemons = 0;
     map->daemon_vpid_start = ORTE_VPID_INVALID;
     map->num_nodes = 0;

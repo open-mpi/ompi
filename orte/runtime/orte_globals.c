@@ -52,6 +52,7 @@ bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
 
+int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;
 char **orte_launch_environ;
 opal_pointer_array_t orte_daemonmap;
@@ -59,7 +60,6 @@ char **orted_cmd_line=NULL;
 int orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
-orte_node_t *orte_hnpnode = NULL;
 
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
@@ -171,7 +171,18 @@ int orte_register_params(void)
                                 "Whether or not to keep FQDN hostnames [default: no]",
                                 false, false, (int)false, &value);
     orte_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
+    
+    /* whether or not static ports exist */
+    mca_base_param_reg_int_name("orte", "static_ports",
+                                "Whether or not static ports are in use [default: no]",
+                                false, false, (int)false, &value);
+    orte_static_ports = OPAL_INT_TO_BOOL(value);
 
+    /* whether or not contiguous nodenames are in use */
+    mca_base_param_reg_int_name("orte", "contiguous_nodes",
+                                "Number of nodes after which contiguous nodenames will be used [default: INT_MAX]",
+                                false, false, INT32_MAX, &orte_contiguous_nodes);
+    
     /* All done */
     params_set = true;
     return ORTE_SUCCESS;

@@ -67,7 +67,7 @@ typedef struct {
     /** Parent object */
     opal_object_t super;
     /** Unique index when multiple apps per job */
-    orte_std_cntr_t idx;
+    int8_t idx;
     /** Absolute pathname of argv[0] */
     char   *app;
     /** Number of copies of this process that are to be launched */
@@ -107,11 +107,9 @@ typedef struct {
     orte_std_cntr_t index;
     /** String node name */
     char *name;
-    /* an id for the node in case we need it */
-    orte_nodeid_t nodeid;
     /* whether or not this node is available for allocation */
     bool allocate;
-    /* daemon on this node - it's vpid equates to the nodeid in many environments */
+    /* daemon on this node */
     struct orte_proc_t *daemon;
     /* whether or not this daemon has been launched */
     bool daemon_launched;
@@ -121,6 +119,8 @@ typedef struct {
     orte_vpid_t num_procs;
     /* array of pointers to procs on this node */
     opal_pointer_array_t *procs;
+    /* next node rank on this node */
+    uint8_t next_node_rank;
     /* whether or not we are oversubscribed */
     bool oversubscribed;
     /** The node architecture, as reported by the remote node. This
@@ -224,14 +224,25 @@ struct orte_proc_t {
     orte_process_name_t name;
     /* pid */
     pid_t pid;
-    /* local rank on the node where this is running */
-    orte_vpid_t local_rank;
+    /* local rank amongst my peers on the node
+     * where this is running - this value is
+     * needed by MPI procs so that the lowest
+     * rank on a node can perform certain fns -
+     * e.g., open an sm backing file
+     */
+    uint8_t local_rank;
+    /* local rank on the node across all procs
+     * and jobs known to this HNP - this is
+     * needed so that procs can do things like
+     * know which static IP port to use
+     */
+    uint8_t node_rank;
     /* process state */
     orte_proc_state_t state;
     /* exit code */
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */
-    orte_std_cntr_t app_idx;
+    int8_t app_idx;
     /* a cpu list, if specified by the user */
     char *slot_list;
     /* pointer to the node where this proc is executing */
@@ -254,6 +265,23 @@ struct orte_proc_t {
 };
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
+
+
+typedef struct {
+    /* nodename */
+    char *name;
+    /* arch of node */
+    uint32_t arch;
+} orte_nid_t;
+
+typedef struct {
+    /* index to node */
+    int32_t node;
+    /* local rank */
+    uint8_t local_rank;
+    /* node rank */
+    uint8_t node_rank;
+} orte_pmap_t;
 
 /**
 * Get a job data object
@@ -288,6 +316,7 @@ ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
+ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
 ORTE_DECLSPEC extern int orte_debug_output;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
 
@@ -298,7 +327,6 @@ ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern int orte_exit, orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
-ORTE_DECLSPEC extern orte_node_t *orte_hnpnode;
 
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;

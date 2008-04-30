@@ -230,44 +230,6 @@ char* orte_util_print_vpids(const orte_vpid_t vpid)
     return ptr->buffers[ptr->cntr-1];
 }
 
-char* orte_util_print_nodeids(const orte_nodeid_t nodeid)
-{
-    orte_print_args_buffers_t *ptr;
-    int rc;
-    
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            ORTE_ERROR_LOG(rc);
-            return NULL;
-        }
-        fns_init = true;
-    }
-    
-    ptr = get_print_name_buffer();
-    
-    if (NULL == ptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return orte_print_args_null;
-    }
-    
-    /* cycle around the ring */
-    if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
-        ptr->cntr = 0;
-    }
-    
-    if (ORTE_NODEID_INVALID == nodeid) {
-        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "INVALID");
-    } else if (ORTE_NODEID_WILDCARD == nodeid) {
-        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
-    } else {
-        snprintf(ptr->buffers[ptr->cntr++], 
-                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
-                 "%ld", (long)nodeid);
-    }
-    return ptr->buffers[ptr->cntr-1];
-}
-
 
 
 /***   STRING FUNCTIONS   ***/

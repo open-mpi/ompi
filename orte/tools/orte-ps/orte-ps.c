@@ -418,7 +418,6 @@ static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
 static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
     int line_len;
     int len_name    = 0,
-        len_id      = 0,
         len_arch    = 0,
         len_state   = 0,
         len_slots   = 0,
@@ -426,13 +425,11 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         len_slots_m = 0;
     orte_node_t *node;
     orte_std_cntr_t i;
-    char *nid=NULL;
 
     /*
      * Caculate segment lengths
      */
     len_name    = (int) strlen("Node Name");
-    len_id      = (int) strlen("Node ID");
     len_arch    = (int) strlen("Arch");
     len_state   = (int) strlen("State");
     len_slots   = (int) strlen("Slots");
@@ -445,19 +442,12 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         if( NULL != node->name &&
             (int)strlen(node->name) > len_name)
             len_name = (int) strlen(node->name);
-        
-        /* setup the printed nodeid - do -not- free this! */
-        nid = ORTE_NODEID_PRINT(node->nodeid);
-
-        if ((int)strlen(nid) > len_id)
-            len_id = (int)strlen(nid);
-        
+                
         if( (int)strlen(pretty_node_state(node->state)) > len_state )
             len_state = (int)strlen(pretty_node_state(node->state));
     }
     
     line_len = (len_name    + 3 +
-                len_id      + 3 +
                 len_arch    + 3 +
                 len_state   + 3 +
                 len_slots   + 3 +
@@ -468,7 +458,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
      * Print the header
      */
     printf("%*s | ", len_name,    "Node Name");
-    printf("%*s | ", len_id,      "Node ID");
     printf("%*s | ", len_arch,    "Arch");
     printf("%*s | ", len_state,   "State");
     printf("%*s | ", len_slots,   "Slots");
@@ -488,7 +477,6 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
         node = nodes[i];
         
         printf("%*s | ", len_name,    node->name);
-        printf("%*s | ", len_id,      nid);
         printf("%*x | ", len_arch,    node->arch);
         printf("%*s | ", len_state,   pretty_node_state(node->state));
         printf("%*d | ", len_slots,   (uint)node->slots);
@@ -675,9 +663,6 @@ static int pretty_print_vpids(orte_job_t *job) {
         if ((int)strlen(o_proc_name) > len_o_proc_name)
             len_o_proc_name = strlen(o_proc_name);
 
-        if( ORTE_VPID_INVALID == vpid->local_rank ) {
-            vpid->local_rank = vpid->name.vpid;
-        }
         asprintf(&rankstr, "%u", (uint)vpid->local_rank);
         if ((int)strlen(rankstr) > len_rank)
             len_rank = strlen(rankstr);
@@ -825,7 +810,7 @@ static int gather_active_jobs(orte_ps_mpirun_info_t *hnpinfo) {
 static int gather_nodes(orte_ps_mpirun_info_t *hnpinfo) {
     int ret;
     
-    if (ORTE_SUCCESS != (ret = orte_util_comm_query_node_info(&(hnpinfo->hnp->name), ORTE_NODEID_WILDCARD,
+    if (ORTE_SUCCESS != (ret = orte_util_comm_query_node_info(&(hnpinfo->hnp->name), NULL,
                                                              &hnpinfo->num_nodes, &hnpinfo->nodes))) {
         ORTE_ERROR_LOG(ret);
     }

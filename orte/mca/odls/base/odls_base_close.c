@@ -45,7 +45,10 @@ int orte_odls_base_close(void)
     OBJ_DESTRUCT(&orte_odls_globals.cond);
     OBJ_DESTRUCT(&orte_odls_globals.children);
     OBJ_DESTRUCT(&orte_odls_globals.jobs);
-
+    if (NULL != orte_odls_globals.dmap && NULL != orte_odls_globals.dmap->bytes) {
+        free(orte_odls_globals.dmap->bytes);
+        free(orte_odls_globals.dmap);
+    }
     nodes = (char**)orte_daemonmap.addr;
     for (i=0; i < orte_daemonmap.size; i++) {
         if (NULL != nodes[i]) {

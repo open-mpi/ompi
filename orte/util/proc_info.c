@@ -32,6 +32,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/util/arch.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -47,15 +48,19 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  ,app_num =              */   -1,
     /*  ,universe_size =        */   -1,
     /*  .num_procs =            */   1,
-    /*  .local_rank =           */   ORTE_VPID_INVALID,
+    /*  .local_rank =           */   UINT8_MAX,
+    /*  .node_rank =            */   UINT8_MAX,
     /*  .num_local_procs =      */   0,
-    /*  .nodeid =               */   ORTE_NODEID_INVALID,
+    /*  .local_procs =          */   NULL,
     /*  .nodename =             */   NULL,
+    /*  .arch =                 */   0,
     /*  .pid =                  */   0,
     /*  .singleton =            */   false,
     /*  .daemon =               */   false,
     /*  .hnp =                  */   false,
     /*  .tool =                 */   false,
+    /*  .mpi_proc =             */   false,
+    /*  .sync_buf =             */   NULL,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .job_session_dir =      */   NULL,
@@ -136,18 +141,18 @@ int orte_proc_info(void)
     /* get the process id */
     orte_process_info.pid = getpid();
 
-    /* get the nodeid */
-    mca_base_param_reg_int_name("orte", "nodeid",
-                                "ORTE ID for this node",
-                                false, false, ORTE_NODEID_INVALID, &tmp);
-    orte_process_info.nodeid = (orte_nodeid_t)tmp;
-
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
-    /* overwrite with value if in environment */
-    mca_base_param_reg_string_name("orte", "base_nodename",
-                                   "Name of this node, as provided in environment",
-                                   false, false, hostname,  &(orte_process_info.nodename));
+    orte_process_info.nodename = strdup(hostname);
+    
+    /* get the arch */
+    if (ORTE_SUCCESS != opal_arch_compute_local_id(&orte_process_info.arch)) {
+        opal_output(0, "Process on node %s could not obtain local architecture - aborting", orte_process_info.nodename);
+        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    }
+    
+    /* setup the sync buffer */
+    orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     
     return ORTE_SUCCESS;
 }

@@ -79,8 +79,7 @@ static int daemon_collective(orte_jobid_t jobid,
                              orte_std_cntr_t num_local_contributors,
                              orte_grpcomm_coll_t type,
                              opal_buffer_t *data,
-                             orte_rmaps_dp_t flag,
-                             opal_value_array_t *participants);
+                             bool hnp_has_local_procs);
 static int update_trees(void);
 
 /* Module def */
@@ -1116,8 +1115,7 @@ static int daemon_leader(orte_jobid_t jobid,
                          orte_std_cntr_t num_local_contributors,
                          orte_grpcomm_coll_t type,
                          opal_buffer_t *data,
-                         orte_rmaps_dp_t flag,
-                         opal_value_array_t *participants)
+                         bool hnp_has_local_procs)
 {
     int rc;
     opal_buffer_t buf;
@@ -1127,13 +1125,13 @@ static int daemon_leader(orte_jobid_t jobid,
                          "%s grpcomm:basic daemon_collective - I am the leader!",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (ORTE_RMAPS_ALL_DAEMONS == flag) {
+    if (hnp_has_local_procs) {
         /* if everyone is participating, then I must be the HNP,
          * so the #children is just the #children determined for
          * my outgoing xcast
          */
         num_children = my_num_children;
-    } else if (ORTE_RMAPS_ALL_EXCEPT_HNP == flag) {
+    } else {
         /* if the HNP has no local procs, then it won't
          * know that a collective is underway, so that means
          * I must be rank=1. The number of messages I must get
@@ -1148,18 +1146,8 @@ static int daemon_leader(orte_jobid_t jobid,
          * my peers sending to me, plus my own children
          */
         num_children = num_children - 1 + my_num_children;
-    } else if (ORTE_RMAPS_DAEMON_SUBSET == flag) {
-        /* for this first cut, all members will send to me direct,
-         * so the #children I should hear from is just the
-         * size of the value array - 1
-         */
-        num_children = opal_value_array_get_size(participants) - 1;
-    } else {
-        /* no idea */
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
     }
-
+    
     /* setup to recv the messages from my children */
     collective_num_recvd = 0;
     collective_failed = false;
@@ -1240,44 +1228,35 @@ static int daemon_collective(orte_jobid_t jobid,
                              orte_std_cntr_t num_local_contributors,
                              orte_grpcomm_coll_t type,
                              opal_buffer_t *data,
-                             orte_rmaps_dp_t flag,
-                             opal_value_array_t *participants)
+                             bool hnp_has_local_procs)
 {
     orte_process_name_t lead, parent;
-    orte_vpid_t *vptr;
     int num_children;
     opal_buffer_t buf;
     int rc;
         
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:basic daemon_collective entered with dp flag %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)flag));
+                         "%s grpcomm:basic daemon_collective entered - %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         hnp_has_local_procs ? "HNP HAS LOCAL PROCS" : "HNP DOES NOT HAVE LOCAL PROCS"));
     
     parent.jobid = ORTE_PROC_MY_NAME->jobid;
     lead.jobid = ORTE_PROC_MY_NAME->jobid;
 
     /* if the participation is full, then the HNP is the lead */
-    if (ORTE_RMAPS_ALL_DAEMONS == flag) {
+    if (hnp_has_local_procs) {
         lead.vpid = ORTE_PROC_MY_HNP->vpid;
-    } else if (ORTE_RMAPS_ALL_EXCEPT_HNP == flag) {
+    } else {
         /* if the HNP has no local procs, then it won't
          * know that a collective is underway, so let
          * rank=1 be the lead
          */
         lead.vpid = 1;
-    } else if (ORTE_RMAPS_DAEMON_SUBSET == flag) {
-        /* let the first proc in the array be the lead */
-        vptr = (orte_vpid_t*)opal_value_array_get_item(participants, 0);
-        lead.vpid = *vptr;
-    } else {
-        /* no idea */
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
     }
     
     /* if I am the lead, do my own thing */
     if (ORTE_PROC_MY_NAME->vpid == lead.vpid) {
-        return daemon_leader(jobid, num_local_contributors, type, data, flag, participants);
+        return daemon_leader(jobid, num_local_contributors, type, data, hnp_has_local_procs);
     }
     
     
@@ -1285,13 +1264,13 @@ static int daemon_collective(orte_jobid_t jobid,
      * I need to collect messages from and who my parent will be
      */
     
-    if (ORTE_RMAPS_ALL_DAEMONS == flag) {
+    if (hnp_has_local_procs) {
         /* everyone is participating, so my parent and
          * num_children can be as initially computed
          */
         parent.vpid = my_parent.vpid;
         num_children = my_num_children;
-    } else if (ORTE_RMAPS_ALL_EXCEPT_HNP == flag) {
+    } else {
         /* if the HNP has no local procs, then it won't
          * know that a collective is underway, so we need
          * to send to rank=1 if our parent would have been
@@ -1305,14 +1284,6 @@ static int daemon_collective(orte_jobid_t jobid,
             parent.vpid = my_parent.vpid;
         }
         num_children = my_num_children;
-    } else if (ORTE_RMAPS_DAEMON_SUBSET == flag) {
-        /* regardless of mode, we always send direct */
-        num_children = 0;
-        parent.vpid = lead.vpid;
-    } else {
-        /* no idea */
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,

@@ -104,14 +104,6 @@ OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
 OMPI_DECLSPEC extern bool ompi_mpi_keep_peer_hostnames;
 
 /**
- * Whether or not to use the FQDN for the peer hostnames. This
- * can eat up a good bit of memory as well as a lot of communication
- * during startup - it can be reduced by just using the hostname
- * instead of the FQDN
- */
-OMPI_DECLSPEC extern bool ompi_mpi_keep_fqdn_hostnames;
-
-/**
  * Whether an MPI_ABORT should print out a stack trace or not.
  */
 OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;

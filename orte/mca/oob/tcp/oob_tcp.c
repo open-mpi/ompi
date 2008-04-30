@@ -590,6 +590,16 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     }
 #endif  /* OPAL_WANT_IPV6 */
 
+#if 0
+    /* flag whether or not static ports are in use so that other
+     * parts of ORTE can act appropriately
+     * LEAVE OFF FOR MOMENT PENDING FURTHER TEST
+     */
+    if (0 != port) {
+        orte_static_ports = true;
+    }
+#endif
+    
     for (index = 0;  index < range; index++ ) {
         if (AF_INET == af_family) {
             ((struct sockaddr_in*) &inaddr)->sin_port = port + index;
