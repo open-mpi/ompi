@@ -53,6 +53,8 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
      * PLM PROXY WILL SEND A JOB-OBJECT THAT WILL INCLUDE ANY
      * MAPPING DIRECTIVES - OTHERWISE, THAT OBJECT WILL HAVE A
      * NULL MAP FIELD
+     * LONE EXCEPTION - WE COPY DISPLAY MAP ACROSS IF THEY
+     * DIDN'T SET IT
      */
     
     if (NULL == jdata->map) {
@@ -73,6 +75,10 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         map->display_map = orte_rmaps_base.display_map;
         /* assign the map object to this job */
         jdata->map = map;
+    } else {
+        if (!map->display_map) {
+            map->display_map = orte_rmaps_base.display_map;
+        }
     }
 
     /* go ahead and map the job */
