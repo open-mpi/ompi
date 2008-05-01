@@ -719,14 +719,16 @@ void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
 {
     int len;
     int i;
+    int token_avail;
     mca_btl_udapl_frag_t* frag;
     
     if (BTL_UDAPL_EAGER_CONNECTION == connection) {
         len = opal_list_get_size(&endpoint->endpoint_eager_frags);
 
         /* progress eager frag queue as needed */
-        for(i = 0; i < len &&
-                BTL_UDAPL_TOKENS(endpoint, connection) > 0; i++) {
+	BTL_UDAPL_TOKEN_AVAIL(endpoint, connection, token_avail);
+	
+        for(i = 0; i < len && token_avail > 0; i++) {
 
             OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
             frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&(endpoint->endpoint_eager_frags));
@@ -740,14 +742,16 @@ void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
                     BTL_UDAPL_EAGER_CONNECTION));
                 return;
             }
+            BTL_UDAPL_TOKEN_AVAIL(endpoint, connection, token_avail);
         }
 
     } else if (BTL_UDAPL_MAX_CONNECTION == connection) {
         len = opal_list_get_size(&endpoint->endpoint_max_frags);
 
+        BTL_UDAPL_TOKEN_AVAIL(endpoint, connection, token_avail);
+	
         /* progress max frag queue as needed */
-        for(i = 0; i < len &&
-                BTL_UDAPL_TOKENS(endpoint, connection) > 0; i++) {
+        for(i = 0; i < len && token_avail > 0; i++) {
 
             OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
             frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&(endpoint->endpoint_max_frags));
@@ -761,6 +765,7 @@ void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
                     BTL_UDAPL_MAX_CONNECTION));
                 return;
             }
+	    BTL_UDAPL_TOKEN_AVAIL(endpoint, connection, token_avail);
         }
 
     } else {
@@ -841,7 +846,9 @@ int mca_btl_udapl_component_progress()
                             &frag->base);
                     }
 
-                    mca_btl_udapl_frag_progress_pending(btl,
+                    OPAL_THREAD_ADD32(&(endpoint->endpoint_lwqe_tokens[BTL_UDAPL_EAGER_CONNECTION]), 1);
+
+		    mca_btl_udapl_frag_progress_pending(btl,
                         endpoint, BTL_UDAPL_EAGER_CONNECTION);
 
                     break;
@@ -869,6 +876,8 @@ int mca_btl_udapl_component_progress()
                         mca_btl_udapl_free(&btl->super,
                             &frag->base);
                     }
+
+                    OPAL_THREAD_ADD32(&(endpoint->endpoint_lwqe_tokens[connection]), 1);
 
                     mca_btl_udapl_frag_progress_pending(btl,
                         endpoint, connection);
@@ -972,6 +981,7 @@ int mca_btl_udapl_component_progress()
                             &frag->base);
                     }
 
+                    OPAL_THREAD_ADD32(&(endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION]), 1);
                     OPAL_THREAD_ADD32(&(endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION]), 1);
 
                     mca_btl_udapl_frag_progress_pending(btl,
