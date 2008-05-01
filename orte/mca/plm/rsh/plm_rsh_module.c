@@ -764,12 +764,11 @@ static int construct_daemonmap(opal_buffer_t *data)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* unpack the nodemap */
+    /* unpack the nodemap - this will free the bytes in bo */
     if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &orte_daemonmap))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    free(bo->bytes);
     
     return ORTE_SUCCESS;
 }
