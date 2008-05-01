@@ -37,6 +37,19 @@
 extern char** environ;
 
 /**
+ * Reduce function that compute the MAX over an array of integers.
+ */
+static void __reduce_max_fn( void *vin, void* vinout, int* count, void* handle )
+{
+    int *in = (int*)vin, *inout = (int*)vinout;
+    int i;
+    
+    for( i = 0; i < (*count); i++ ) {
+        if( in[i] > inout[i] ) inout[i] = in[i];
+    }
+}
+
+/**
  * PML->BTL notification of change in the process list.
  * 
  * @param btl (IN)
@@ -112,6 +125,28 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     }
     elan_btl->base      = base; 
     elan_btl->elan_vp   = base->state->vp;
+
+    {
+        unsigned int* vp_array = (unsigned int*)calloc( nprocs, sizeof(unsigned int) );
+        /* Set my position in the array with the Elan vp */
+        vp_array[(int)ompi_proc_local_proc->proc_name.vpid] = elan_btl->elan_vp;
+        
+        /* Do a reduce with the previously defined MAX function. The outcome will be
+         * that at each process vpid index we will have their Elan vp. With this Elan
+         * vp we can therefore communicate with the process.
+         */
+        elan_reduce( base->allGroup, vp_array, vp_array, sizeof(unsigned int), (int)nprocs,
+                     __reduce_max_fn, NULL, 0, 0,
+                     ELAN_REDUCE_COMMUTE | ELAN_RESULT_ALL | base->group_flags, 0);
+        
+        for(i = 0; i < (int)nprocs; i++) {
+            if(NULL == peers[i])
+                continue;
+            peers[i]->elan_vp = vp_array[(int)ompi_procs[i]->proc_name.vpid];       
+        }
+        free(vp_array);
+    }
+
     /* Create the tport global queue */
     if( (elan_btl->tport_queue = elan_gallocQueue(base, base->allGroup)) == NULL ) {  
         return OMPI_ERR_OUT_OF_RESOURCE;
