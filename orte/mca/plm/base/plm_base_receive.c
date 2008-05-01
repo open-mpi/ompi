@@ -135,8 +135,14 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 goto ANSWER_LAUNCH;
             }
-            /* xfer the parent's bookmark so the child starts from that place */
-            jdata->bookmark = parent->bookmark;
+            /* find the sender's node in the job map */
+            procs = (orte_proc_t**)parent->procs->addr;
+            /* set the bookmark so the child starts from that place - this means
+             * that the first child process could be co-located with the proc
+             * that called comm_spawn, assuming slots remain on that node. Otherwise,
+             * the procs will start on the next available node
+             */
+            jdata->bookmark = procs[mev->sender.vpid]->node;
                 
             /* launch it */
             if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
