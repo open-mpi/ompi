@@ -208,6 +208,9 @@ int orte_proc_info_finalize(void)
     orte_process_info.singleton = false;
     orte_process_info.daemon = false;
     
+    OBJ_RELEASE(orte_process_info.sync_buf);
+    orte_process_info.sync_buf = NULL;
+
     init = false;
     return ORTE_SUCCESS;
 }

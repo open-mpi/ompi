@@ -109,7 +109,7 @@ orte_ess_base_module_t orte_ess_env_module = {
 };
 
 static opal_pointer_array_t nidmap;
-static orte_pmap_t *pmap;
+static orte_pmap_t *pmap = NULL;
 static orte_vpid_t nprocs;
 
 static int rte_init(char flags)
@@ -198,11 +198,13 @@ static int rte_finalize(void)
             }
             if (NULL != nids[i]->name) {
                 free(nids[i]->name);
+                nids[i]->name = NULL;
             }
         }
         OBJ_DESTRUCT(&nidmap);
         free(pmap);
-        
+        pmap = NULL;
+
         /* use the default procedure to finish */
         if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
             ORTE_ERROR_LOG(ret);
@@ -341,6 +343,8 @@ static int rte_ft_event(int state)
     int ret, exit_status = ORTE_SUCCESS;
     char * procid_str = NULL;
     char * jobid_str  = NULL;
+    orte_nid_t **nids = NULL;
+    int32_t i;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -415,6 +419,23 @@ static int rte_ft_event(int state)
         /*
          * This should follow the ess init() function
          */
+
+        /*
+         * Clear nidmap
+         */
+        nids = (orte_nid_t**)nidmap.addr;
+        for (i=0; i < nidmap.size; i++) {
+            if (NULL == nids[i]) {
+                break;
+            }
+            if (NULL != nids[i]->name) {
+                free(nids[i]->name);
+                nids[i]->name = NULL;
+            }
+        }
+        OBJ_DESTRUCT(&nidmap);
+        free(pmap);
+        pmap = NULL;
 
         /*
          * - Reset Contact information
@@ -538,6 +559,20 @@ static int rte_ft_event(int state)
          *         of the program across checkpointes
          */
         if( ORTE_SUCCESS != (ret = ess_env_ft_event_update_process_info(orte_process_info.my_name, getpid())) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        /*
+         * Refresh nidmap structure
+         */
+        OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
+        opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
+
+        /* if one was provided, build my nidmap */
+        if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
+                                                              &nidmap, &pmap, &nprocs))) {
+            ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
         }
