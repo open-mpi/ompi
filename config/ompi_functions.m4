@@ -132,7 +132,7 @@ case "$prefix" in
     echo installing to directory \"$prefix\" 
     ;;
   *) 
-    AC_MSG_ERROR(prefix \"$prefix\" must be an absolute directory path) 
+    AC_MSG_ERROR(prefix "$prefix" must be an absolute directory path) 
     ;;
 esac
 
