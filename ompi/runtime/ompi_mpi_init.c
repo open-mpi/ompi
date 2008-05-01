@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -89,6 +90,14 @@
 #include "ompi/runtime/ompi_cr.h"
 
 #include "orte/runtime/orte_globals.h"
+
+#if OMPI_CC_USE_PRAGMA_IDENT
+#pragma ident OMPI_IDENT_STRING
+#elif OMPI_CC_USE_IDENT
+#ident OMPI_IDENT_STRING
+#endif
+const char ompi_version_string[] = OMPI_IDENT_STRING;
+
 /*
  * Global variables and symbols for the MPI layer
  */
