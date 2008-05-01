@@ -283,6 +283,9 @@ static void process_orted_launch_report(int fd, short event, void *data)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mev->sender)));
     
+    /* update state */
+    pdatorted[mev->sender.vpid]->state = ORTE_PROC_STATE_RUNNING;
+
     /* unpack its contact info */
     idx = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
@@ -325,6 +328,11 @@ static void process_orted_launch_report(int fd, short event, void *data)
     }
     /* store the arch */
     nodes[mev->sender.vpid]->arch = arch;
+    
+    /* if a tree-launch is underway, send the cmd back */
+    if (NULL != orte_tree_launch_cmd) {
+        orte_rml.send_buffer(&mev->sender, orte_tree_launch_cmd, ORTE_RML_TAG_DAEMON, 0);
+    }
     
 CLEANUP:
 
@@ -412,6 +420,11 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         ORTE_ERROR_LOG(rc);
     }
 
+    /* if a tree-launch was underway, clear out the cmd */
+    if (NULL != orte_tree_launch_cmd) {
+        OBJ_RELEASE(orte_tree_launch_cmd);
+    }
+    
     return ORTE_SUCCESS;
 }
 

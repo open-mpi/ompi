@@ -107,7 +107,6 @@ static struct {
     char* num_procs;
     int uri_pipe;
     int singleton_died_pipe;
-    char* parent;
 } orted_globals;
 
 /*
@@ -167,10 +166,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.singleton_died_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Watch on indicated pipe for singleton termination"},
     
-    { NULL, NULL, NULL, '\0', NULL, "parent", 1,
-      &orted_globals.parent, OPAL_CMD_LINE_TYPE_STRING,
-      "Parent vpid for tree-based spawns"},
-
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -524,7 +519,6 @@ int orte_daemon(int argc, char *argv[])
          * We need to do this at the last possible second as the HNP
          * can turn right around and begin issuing orders to us
          */
-        orte_process_name_t parent;
 
         buffer = OBJ_NEW(opal_buffer_t);
         /* if we are using static ports, there is no need to send our
@@ -549,19 +543,7 @@ int orte_daemon(int argc, char *argv[])
             OBJ_RELEASE(buffer);
             return ret;
         }
-        /* if no parent was specified, send to my hnp */
-        if (NULL == orted_globals.parent) {
-            parent.vpid = ORTE_PROC_MY_HNP->vpid;
-            parent.jobid = ORTE_PROC_MY_HNP->jobid;
-        } else {
-            /* set the parent's contact info into our hash tables */
-            orte_rml.set_contact_info(orted_globals.parent);
-            /* extract the parent's name */
-            orte_rml_base_parse_uris(orted_globals.parent, &parent, NULL);
-            /* set the route to be direct */
-            orte_routed.update_route(&parent, &parent);
-         }
-        if (0 > (ret = orte_rml.send_buffer(&parent, buffer,
+        if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
                                             ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);

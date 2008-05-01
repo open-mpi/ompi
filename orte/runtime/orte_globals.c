@@ -65,6 +65,8 @@ int orte_timeout_usec_per_proc;
 float orte_max_timeout;
 char *orte_default_hostfile;
 
+opal_buffer_t *orte_tree_launch_cmd = NULL;
+
 orte_process_name_t orte_globals_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
 orte_process_name_t orte_globals_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
 

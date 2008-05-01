@@ -333,6 +333,8 @@ ORTE_DECLSPEC extern float orte_max_timeout;
 
 ORTE_DECLSPEC extern char *orte_default_hostfile;
 
+ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
+
 /* global arrays for data storage */
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;

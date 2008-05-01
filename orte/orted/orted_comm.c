@@ -301,11 +301,10 @@ static int process_commands(orte_process_name_t* sender,
     int32_t signal;
     orte_jobid_t job;
     orte_rml_tag_t target_tag;
-    char *contact_info, *prefix;
+    char *contact_info;
     opal_buffer_t *answer;
     orte_rml_cmd_flag_t rml_cmd;
     orte_job_t *jdata;
-    char *save_buf;
 
     /* unpack the command */
     n = 1;
@@ -371,14 +370,12 @@ static int process_commands(orte_process_name_t* sender,
             }
             break;
            
-            /****    ADD_AND_SPAWN   ****/
-        case ORTE_DAEMON_ADD_AND_SPAWN:
+            /****    TREE_SPAWN   ****/
+        case ORTE_DAEMON_TREE_SPAWN:
             if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received add_and_spawn",
+                opal_output(0, "%s orted_cmd: received tree_spawn",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
-            /* save our current buffer location */
-            save_buf = buffer->unpack_ptr;
             /* if the PLM supports remote spawn, pass it all along */
             if (NULL != orte_plm.remote_spawn) {
                 if (ORTE_SUCCESS != (ret = orte_plm.remote_spawn(buffer))) {
@@ -386,20 +383,6 @@ static int process_commands(orte_process_name_t* sender,
                 }
             } else {
                 opal_output(0, "%s remote spawn is NULL!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            /* rewind the buffer so we can reuse it */
-            buffer->unpack_ptr = save_buf;
-            /* unpack the prefix and throw it away - we don't need it here */
-            n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &prefix, &n, OPAL_STRING))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }            
-            /* launch the local processes */
-            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(buffer))) {
-                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                                     "%s orted:comm:add_procs failed to launch on error %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
             }
             break;
 
