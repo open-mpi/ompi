@@ -238,7 +238,7 @@ static int map_app_by_slot(
              * OR we are at our ppn and loadbalancing, then break from the loop 
              */
             if (ORTE_ERR_NODE_FULLY_USED == rc ||
-                (orte_rmaps_base.loadbalance && i == ppn)) {
+                (orte_rmaps_base.loadbalance && (int)node->num_procs >= ppn)) {
                 break;
             }
         }
@@ -250,7 +250,7 @@ static int map_app_by_slot(
          */
         if (i < (num_slots_to_take-1) &&
             ORTE_ERR_NODE_FULLY_USED != rc &&
-            (orte_rmaps_base.loadbalance && i != ppn)) {
+            (orte_rmaps_base.loadbalance && (int)node->num_procs < ppn)) {
             continue;
         }
         cur_node_item = next;
@@ -270,7 +270,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     orte_std_cntr_t i;
     opal_list_t node_list;
     opal_list_item_t *item;
-    orte_node_t *node, **nodes;
+    orte_node_t *node, **nodes, *nd1;
     orte_vpid_t vpid_start;
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
@@ -290,11 +290,12 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
      * if we are doing pernode or if #procs was not given
      */
     if (orte_rmaps_base.loadbalance && !map->pernode) {
-        /* compute total #procs */
+        float res;
+        /* compute total #procs we are going to add */
         for(i=0; i < jdata->num_apps; i++) {
             app = apps[i];
             if (0 == app->num_procs) {
-                /* can't do it - just move on */
+                /* can't do it - tell user and quit */
                 opal_show_help("help-orte-rmaps-rr.txt",
                                "orte-rmaps-rr:loadbalance-and-zero-np",
                                true);
@@ -303,7 +304,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             }
             ppn += app->num_procs;
         }
-        /* get the total avail nodes */
+        /* get the total avail nodes and the number
+         * of procs already using them
+         */
         nodes = (orte_node_t**)orte_node_pool->addr;
         num_nodes=0;
         for (i=0; i < orte_node_pool->size; i++) {
@@ -315,7 +318,11 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             }
         }
         /* compute the balance */
+        res = ((float)ppn / num_nodes);
         ppn = ppn / num_nodes;
+        if (0 < (res-ppn)) {
+            ppn++;
+        }
     }
 
     /* cycle through the app_contexts, mapping them sequentially */
@@ -368,6 +375,37 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             cur_node_item = opal_list_get_first(&node_list);
         }
 
+        /* is this node oversubscribed? */
+        node = (orte_node_t*)cur_node_item;
+        if (node->slots_inuse > node->slots) {
+            /* work down the list - is there another node that
+             * would not be oversubscribed?
+             */
+            if (cur_node_item != opal_list_get_end(&node_list)) {
+                item = opal_list_get_next(cur_node_item);
+            } else {
+                item = opal_list_get_first(&node_list);
+            }
+            while (item != cur_node_item) {
+                nd1 = (orte_node_t*)item;
+                if (nd1->slots_inuse < nd1->slots) {
+                    /* this node is not oversubscribed! use it! */
+                    cur_node_item = item;
+                    goto proceed;
+                }
+                if (item == opal_list_get_end(&node_list)) {
+                    item = opal_list_get_first(&node_list);
+                } else {
+                    item= opal_list_get_next(item);
+                }
+            }
+            /* if we get here, then we cycled all the way around the
+             * list without finding a better answer - just use what
+             * we have
+             */
+        }
+        
+    proceed:
         if (map->pernode && map->npernode == 1) {
             /* there are three use-cases that we need to deal with:
             * (a) if -np was not provided, then we just use the number of nodes
