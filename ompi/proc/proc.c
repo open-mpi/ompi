@@ -278,6 +278,9 @@ int ompi_proc_refresh(void) {
          item  = opal_list_get_next(item), ++i ) {
         proc = (ompi_proc_t*)item;
 
+        /* Does not change: proc->proc_name.vpid */
+        proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
+
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;

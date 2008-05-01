@@ -536,17 +536,7 @@ int mca_pml_ob1_ft_event( int state )
                         ret);
             return ret;
         }
-#if 0
-        /*
-         * Fill in remote proc information
-         */
-        if (OMPI_SUCCESS != (ret = ompi_proc_get_info())) {
-            opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed ompi_proc_get_info() = %d",
-                        ret);
-            return ret;
-        }
-#endif
+
         /*
          * Startup the PML stack now that the modex is running again
          * Add the new procs (BTLs redo modex recv's)
