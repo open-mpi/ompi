@@ -37,8 +37,16 @@ extern "C" {
 #endif
 
 
-#define BTL_UDAPL_TOKENS(E, C) ((E)->endpoint_sr_tokens[(C)] + \
-        (((C) == BTL_UDAPL_EAGER_CONNECTION)?(E)->endpoint_eager_rdma_remote.tokens:0))
+#define BTL_UDAPL_TOKEN_AVAIL(E, C, T) \
+do {					\
+    (T) = 0;				\
+    if ( (E)->endpoint_lwqe_tokens[(C)] > 0 && 	\
+        ((E)->endpoint_sr_tokens[(C)] +		\
+        (((C) == BTL_UDAPL_EAGER_CONNECTION)?(E)->endpoint_eager_rdma_remote.tokens:0)) 				\
+        ) { 				\
+              (T) = 1;			\
+    }					\
+} while (0)
 
 /**
  * Structure used to publish uDAPL id information to peers.
@@ -115,6 +123,10 @@ struct mca_btl_base_endpoint_t {
 
     int32_t endpoint_sr_credits[BTL_UDAPL_NUM_CONNECTION];
     /**< number of recvs that are now available */
+
+    int32_t endpoint_lwqe_tokens[BTL_UDAPL_NUM_CONNECTION];
+    /**< number of local work queue credits available (combination of
+       posted sends and rdma writes allowed per endpoint */
 
     int32_t endpoint_connection_seq;
     /**< sequence number of sendrecv message for the connection est */

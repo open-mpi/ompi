@@ -1138,42 +1138,54 @@ int mca_btl_udapl_put(
     frag->endpoint = endpoint;
     frag->type = MCA_BTL_UDAPL_PUT;
 
-    if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
-        OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+    if (OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
+        /* no local work queue tokens available */
+        OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         opal_list_append(&endpoint->endpoint_max_frags,
             (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         opal_progress();
     } else {
-        frag->triplet.segment_length = frag->segment.seg_len;
-        
-        remote_buffer.rmr_context =
-            (DAT_RMR_CONTEXT)dst_segment->seg_key.key32[0];
-        remote_buffer.target_address =
-            (DAT_VADDR)(uintptr_t)dst_segment->seg_addr.lval;
-        remote_buffer.segment_length = dst_segment->seg_len;
+        /* work queue tokens available, try to send  */
 
-        cookie.as_ptr = frag;
+	if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
+            OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+	    OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+	    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+	    opal_list_append(&endpoint->endpoint_max_frags,
+		(opal_list_item_t*)frag);
+	    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+	    opal_progress();
+	} else {
+	    frag->triplet.segment_length = frag->segment.seg_len;
         
-        OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        rc = dat_ep_post_rdma_write(endpoint->endpoint_max,
-            1,
-            &frag->triplet,
-            cookie,
-            &remote_buffer,
-            DAT_COMPLETION_DEFAULT_FLAG);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
+	    remote_buffer.rmr_context =
+		(DAT_RMR_CONTEXT)dst_segment->seg_key.key32[0];
+	    remote_buffer.target_address =
+		(DAT_VADDR)(uintptr_t)dst_segment->seg_addr.lval;
+	    remote_buffer.segment_length = dst_segment->seg_len;
 
-            dat_strerror(rc, (const char**)&major,
-                (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
-                major, minor));
-            rc = OMPI_ERROR;
-        }
+	    cookie.as_ptr = frag;
+	    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+	    rc = dat_ep_post_rdma_write(endpoint->endpoint_max,
+		1,
+		&frag->triplet,
+		cookie,
+		&remote_buffer,	
+		DAT_COMPLETION_DEFAULT_FLAG);
+	    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+	    if(DAT_SUCCESS != rc) {
+		char* major;
+		char* minor;
+
+		dat_strerror(rc, (const char**)&major,
+		    (const char**)&minor);
+		BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
+		    major, minor));
+		rc = OMPI_ERROR;
+	    }
+	}
     }
     
     return rc;

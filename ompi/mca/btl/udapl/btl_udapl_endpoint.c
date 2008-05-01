@@ -173,24 +173,82 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
         /* just send it already.. */
         if(frag->size ==
             mca_btl_udapl_component.udapl_eager_frag_size) {
-            
-            if(OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, -1) < 0) {
-                /* no rdma segment available so either send or queue */
-                OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, 1);
 
-                if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION], -1) < 0) {
-                    OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION], 1);
-                    opal_list_append(&endpoint->endpoint_eager_frags,
+            if (OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_EAGER_CONNECTION], -1) < 0) {
+                /* no local work queue tokens available */
+                OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_EAGER_CONNECTION], 1);
+                opal_list_append(&endpoint->endpoint_eager_frags,
+                    (opal_list_item_t*)frag);
+                call_progress = true;
+
+            } else {
+                /* work queue tokens available, try to write  */
+                if(OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, -1) < 0) {
+                    /* no rdma segment available so either send or queue */
+                    OPAL_THREAD_ADD32(&endpoint->endpoint_eager_rdma_remote.tokens, 1);
+
+                    if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION], -1) < 0) {
+                        /* no sr tokens available, put on queue */
+                        OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_EAGER_CONNECTION], 1);
+                        OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION], 1);
+                        opal_list_append(&endpoint->endpoint_eager_frags,
+                            (opal_list_item_t*)frag);
+                        call_progress = true;
+
+                    } else {
+                        /* sr tokens available, send eager size frag */
+                        cookie.as_ptr = frag;
+                        dat_rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
+                            &frag->triplet, cookie,
+                            DAT_COMPLETION_DEFAULT_FLAG);
+        
+                        if(DAT_SUCCESS != dat_rc) {
+                            char* major;
+                            char* minor;
+
+                            dat_strerror(dat_rc, (const char**)&major,
+                                (const char**)&minor);
+                            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
+                                major, minor));
+                            endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
+                            rc = OMPI_ERROR;
+                        }
+                    }
+
+                } else {
+                    rc = mca_btl_udapl_endpoint_write_eager(endpoint, frag);
+                }
+            }
+            
+        } else {
+            assert(frag->size ==
+                mca_btl_udapl_component.udapl_max_frag_size);
+
+            if (OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
+
+                /* no local work queue tokens available, put on queue */
+                OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+                opal_list_append(&endpoint->endpoint_max_frags,
+                    (opal_list_item_t*)frag);
+                call_progress = true;
+
+            } else {
+                /* work queue tokens available, try to send  */
+                if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
+                    /* no sr tokens available, put on queue */
+                    OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+                    OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+                    opal_list_append(&endpoint->endpoint_max_frags,
                         (opal_list_item_t*)frag);
                     call_progress = true;
 
                 } else {
+                    /* sr tokens available, send max size frag */
                     cookie.as_ptr = frag;
-
-                    dat_rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
+                    dat_rc = dat_ep_post_send(endpoint->endpoint_max, 1,
                         &frag->triplet, cookie,
                         DAT_COMPLETION_DEFAULT_FLAG);
-        
+                 
                     if(DAT_SUCCESS != dat_rc) {
                         char* major;
                         char* minor;
@@ -199,41 +257,9 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                             (const char**)&minor);
                         BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
                             major, minor));
-                        endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
                         rc = OMPI_ERROR;
                     }
                 }
-
-            } else {
-                rc = mca_btl_udapl_endpoint_write_eager(endpoint, frag);
-            }
-            
-        } else {
-            assert(frag->size ==
-                mca_btl_udapl_component.udapl_max_frag_size);
-            if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
-                OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
-                opal_list_append(&endpoint->endpoint_max_frags,
-                    (opal_list_item_t*)frag);
-                call_progress = true;
-
-            } else {
-                 cookie.as_ptr = frag;
-
-                 dat_rc = dat_ep_post_send(endpoint->endpoint_max, 1,
-                     &frag->triplet, cookie,
-                     DAT_COMPLETION_DEFAULT_FLAG);
-                 
-                 if(DAT_SUCCESS != dat_rc) {
-                    char* major;
-                    char* minor;
-
-                    dat_strerror(dat_rc, (const char**)&major,
-                        (const char**)&minor);
-                    BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
-                        major, minor));
-                    rc = OMPI_ERROR;
-                 }
             }
         }
 
@@ -401,7 +427,8 @@ int mca_btl_udapl_endpoint_get_params(mca_btl_udapl_module_t* btl,
                 true,
                 btl->udapl_max_request_dtos, request_dtos));
         } else {
-            btl->udapl_max_request_dtos = request_dtos;
+            btl->udapl_max_request_dtos =
+                mca_btl_udapl_module.udapl_max_request_dtos = request_dtos;
         }         
     }
 
@@ -754,10 +781,11 @@ static int mca_btl_udapl_endpoint_finish_eager(
 static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
 {
     mca_btl_udapl_frag_t* frag;
-    DAT_DTO_COOKIE cookie;
     int ret = OMPI_SUCCESS;
-    int rc;
-
+    int token_avail;
+    int queue_len;
+    int i;
+    
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTED;
     OPAL_THREAD_ADD32(&(endpoint->endpoint_btl->udapl_connect_inprogress), -1);
 
@@ -767,73 +795,41 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
     mca_btl_udapl_endpoint_post_recv(endpoint,
             mca_btl_udapl_component.udapl_max_frag_size);
 
-    /* post queued sends */
-    assert(endpoint->endpoint_eager_sends ==
-            mca_btl_udapl_component.udapl_num_sends);
-    while(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION], -1) >= 0 &&
-            NULL != (frag = (mca_btl_udapl_frag_t*)
-                opal_list_remove_first(&endpoint->endpoint_eager_frags))) {
-        cookie.as_ptr = frag;
-            
-        assert(frag->triplet.virtual_address == 
-               (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval);
-        assert(frag->triplet.segment_length ==
-                frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
-        assert(frag->size ==
-                mca_btl_udapl_component.udapl_eager_frag_size);
-        
-        rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
-            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
+    /* progress eager frag queue as allowed */
+    queue_len = opal_list_get_size(&(endpoint->endpoint_eager_frags));
+    BTL_UDAPL_TOKEN_AVAIL(endpoint, BTL_UDAPL_EAGER_CONNECTION, token_avail);
+	
+    for(i = 0; i < queue_len && token_avail > 0; i++) {
 
-            dat_strerror(rc, (const char**)&major,
-                (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
-                major, minor));
-            endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
-            ret = OMPI_ERROR;
+        frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&(endpoint->endpoint_eager_frags));
+
+        if(NULL == frag) {
             break;
         }
+
+        mca_btl_udapl_endpoint_send(frag->endpoint, frag);
+
+	BTL_UDAPL_TOKEN_AVAIL(endpoint, BTL_UDAPL_EAGER_CONNECTION,
+            token_avail);
     }
 
-    if(endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION] < 0) {
-        OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_EAGER_CONNECTION], 1);
-    }
+    /* progress max frag queue as allowed */
+    queue_len = opal_list_get_size(&(endpoint->endpoint_max_frags));
+    BTL_UDAPL_TOKEN_AVAIL(endpoint, BTL_UDAPL_MAX_CONNECTION, token_avail);
 
-    assert(endpoint->endpoint_max_sends ==
-            mca_btl_udapl_component.udapl_num_sends);
-    while(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) >= 0 &&
-            NULL != (frag = (mca_btl_udapl_frag_t*)
-                opal_list_remove_first(&endpoint->endpoint_max_frags))) {
-        cookie.as_ptr = frag;
-            
-        assert(frag->triplet.segment_length ==
-                frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
-        assert(frag->size ==
-                mca_btl_udapl_component.udapl_max_frag_size);
+    for(i = 0; i < queue_len && token_avail > 0; i++) {
 
-        rc = dat_ep_post_send(endpoint->endpoint_max, 1,
-            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            char* major;
-            char* minor;
+        frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&(endpoint->endpoint_max_frags));
 
-            dat_strerror(rc, (const char**)&major,
-                (const char**)&minor);
-            BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_send",
-                major, minor));
-            endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
-            ret = OMPI_ERROR;
+        if(NULL == frag) {
             break;
         }
+
+        mca_btl_udapl_endpoint_send(frag->endpoint, frag);
+
+	BTL_UDAPL_TOKEN_AVAIL(endpoint, BTL_UDAPL_MAX_CONNECTION, token_avail);
     }
 
-    if(endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION] < 0) {
-        OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
-    }
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     return ret;
 }
 
@@ -921,7 +917,13 @@ static void mca_btl_udapl_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
         endpoint->endpoint_max_sends;
     endpoint->endpoint_sr_credits[BTL_UDAPL_EAGER_CONNECTION] = 0;
     endpoint->endpoint_sr_credits[BTL_UDAPL_MAX_CONNECTION] = 0;
-
+    endpoint->endpoint_lwqe_tokens[BTL_UDAPL_EAGER_CONNECTION] =
+        mca_btl_udapl_component.udapl_num_sends +
+        (2*mca_btl_udapl_component.udapl_eager_rdma_num);
+    endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION] =
+        mca_btl_udapl_component.udapl_num_sends +
+        (2*mca_btl_udapl_component.udapl_eager_rdma_num);
+    
     OBJ_CONSTRUCT(&endpoint->endpoint_eager_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_max_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_lock, opal_mutex_t);
@@ -945,7 +947,7 @@ static void mca_btl_udapl_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
     mca_mpool_base_registration_t *reg =
         (mca_mpool_base_registration_t*)endpoint->endpoint_eager_rdma_local.reg;
-
+    
     OBJ_DESTRUCT(&endpoint->endpoint_eager_frags);
     OBJ_DESTRUCT(&endpoint->endpoint_max_frags);
     OBJ_DESTRUCT(&endpoint->endpoint_lock);
@@ -979,6 +981,18 @@ static void mca_btl_udapl_endpoint_control_send_cb(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
+    int connection = BTL_UDAPL_EAGER_CONNECTION;
+    mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)descriptor;
+    
+    if(frag->size != mca_btl_udapl_component.udapl_eager_frag_size) {
+	connection = BTL_UDAPL_MAX_CONNECTION;
+    }
+
+    /* control messages are not part of the regular accounting
+     * so here we subtract because the addition was made during
+     * the send completion during progress */
+    OPAL_THREAD_ADD32(&(endpoint->endpoint_lwqe_tokens[connection]), -1);
+
     MCA_BTL_UDAPL_FRAG_RETURN_CONTROL(((mca_btl_udapl_module_t*)btl),
         ((mca_btl_udapl_frag_t*)descriptor)); 
 }
@@ -1050,11 +1064,12 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     mca_btl_udapl_eager_rdma_connect_t* rdma_connect;
     mca_btl_base_descriptor_t* des;    
     mca_btl_base_segment_t* segment;
-    mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)endpoint->endpoint_eager_rdma_local.base.pval;
+    mca_btl_udapl_frag_t* data_frag;
+    mca_btl_udapl_frag_t* local_frag = (mca_btl_udapl_frag_t*)endpoint->endpoint_eager_rdma_local.base.pval;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
     size_t cntrl_msg_size = sizeof(mca_btl_udapl_eager_rdma_connect_t);
     int rc = OMPI_SUCCESS;
-
+    
     des = mca_btl_udapl_endpoint_initialize_control_message(
         &udapl_btl->super, cntrl_msg_size); 
     
@@ -1071,11 +1086,21 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     rdma_connect->rkey =
         endpoint->endpoint_eager_rdma_local.reg->rmr_context;
     rdma_connect->rdma_start.pval =
-        (unsigned char*)frag->base.super.ptr;
+        (unsigned char*)local_frag->base.super.ptr;
 
-    /* send fragment */
-    rc = mca_btl_udapl_send(&udapl_btl->super, endpoint,
-        des, MCA_BTL_TAG_UDAPL);
+    /* prep fragment and put on queue */
+    data_frag = (mca_btl_udapl_frag_t*)des;
+    data_frag->endpoint = endpoint;
+    data_frag->ftr = (mca_btl_udapl_footer_t *)
+        ((char *)data_frag->segment.seg_addr.pval +
+            data_frag->segment.seg_len);
+    data_frag->ftr->tag = MCA_BTL_TAG_UDAPL;
+    data_frag->type = MCA_BTL_UDAPL_SEND;
+
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+    opal_list_append(&endpoint->endpoint_eager_frags,
+	(opal_list_item_t*)data_frag);   
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     return rc;
 }
