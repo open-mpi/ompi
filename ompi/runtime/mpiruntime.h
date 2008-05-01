@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,6 +65,8 @@ OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
     MPI_FINALIZE. */
 OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
 
+/** version string of ompi */
+OMPI_DECLSPEC extern const char ompi_version_string[];
 
 /**
  * Initialize the Open MPI MPI environment
