@@ -229,11 +229,15 @@ static int map_app_by_slot(
             /* Update the number of procs allocated */
             ++num_alloc;
 
-            /** if all the procs have been mapped OR we have fully used up this node
+            /** if all the procs have been mapped, we return */
+            if (num_alloc == app->num_procs) {
+                return ORTE_SUCCESS;
+            }
+
+            /* if we have fully used up this node
              * OR we are at our ppn and loadbalancing, then break from the loop 
              */
-            if (num_alloc == app->num_procs ||
-                ORTE_ERR_NODE_FULLY_USED == rc ||
+            if (ORTE_ERR_NODE_FULLY_USED == rc ||
                 (orte_rmaps_base.loadbalance && i == ppn)) {
                 break;
             }
@@ -246,7 +250,7 @@ static int map_app_by_slot(
          */
         if (i < (num_slots_to_take-1) &&
             ORTE_ERR_NODE_FULLY_USED != rc &&
-            i != ppn) {
+            (orte_rmaps_base.loadbalance && i != ppn)) {
             continue;
         }
         cur_node_item = next;
