@@ -42,6 +42,7 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_xrc.h"
 #include "btl_openib_async.h"
+#include "connect/connect.h"
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
 static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
@@ -350,8 +351,9 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
             endpoint_init_qp_srq(ep_qp, qp);
             break;
         case MCA_BTL_OPENIB_XRC_QP:
-            if(NULL == ep->ib_addr->qp)
+            if (NULL == ep->ib_addr->qp) {
                 ep->ib_addr->qp = endpoint_alloc_qp();
+            }
             endpoint_init_qp_xrc(ep, qp);
             break;
         default:
@@ -361,7 +363,10 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
 }
 
 void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
-        mca_btl_base_endpoint_t *ep)
+                                  mca_btl_base_endpoint_t *ep,
+                                  ompi_btl_openib_connect_base_module_t *local_cpc,
+                                  mca_btl_openib_proc_modex_t *remote_proc_info,
+                                  ompi_btl_openib_connect_base_module_data_t *remote_cpc_data)
 {
     int qp;
 
@@ -369,9 +374,20 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
     ep->use_eager_rdma = btl->hca->use_eager_rdma &
         mca_btl_openib_component.use_eager_rdma;
     ep->subnet_id = btl->port_info.subnet_id;
+    ep->endpoint_local_cpc = local_cpc;
+    ep->endpoint_remote_cpc_data = remote_cpc_data;
 
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++)
+    ep->rem_info.rem_lid = remote_proc_info->pm_port_info.lid;
+    ep->rem_info.rem_subnet_id = remote_proc_info->pm_port_info.subnet_id;
+    ep->rem_info.rem_mtu = remote_proc_info->pm_port_info.mtu;
+    opal_output(-1, "Got remote LID, subnet, MTU: %d, %lx, %d", 
+                ep->rem_info.rem_lid,
+                ep->rem_info.rem_subnet_id,
+                ep->rem_info.rem_mtu);
+
+    for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         endpoint_init_qp(ep, qp);
+    }
 }
 
 static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
@@ -397,6 +413,8 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->xrc_recv_qp_num = 0;
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
+    endpoint->endpoint_local_cpc = NULL;
+    endpoint->endpoint_remote_cpc_data = NULL;
     endpoint->endpoint_tstamp = 0.0;
     endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
     endpoint->endpoint_retries = 0;
@@ -433,6 +451,11 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
     bool pval_clean = false;
     int qp;
+
+    /* If the CPC has an endpoint_finalize function, call it */
+    if (NULL != endpoint->endpoint_local_cpc->cbm_endpoint_finalize) {
+        endpoint->endpoint_local_cpc->cbm_endpoint_finalize(endpoint);
+    }
 
     /* Release memory resources */
     do {
@@ -480,6 +503,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* free the qps */
     free(endpoint->qps);
+    endpoint->qps = NULL;
 
     /* unregister xrc recv qp */
 #if HAVE_XRC
@@ -548,7 +572,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
 
     /* Run over all qps and load alternative path */
-#if OMPI_HAVE_THREADS
+#if OMPI_HAVE_THREAD_SUPPORT
     if (APM_ENABLED) {
         int i;
         if (MCA_BTL_XRC_ENABLED) {
@@ -589,7 +613,9 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         while(master && !opal_list_is_empty(&endpoint->ib_addr->pending_ep)) {
             ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
             ep = (mca_btl_openib_endpoint_t *)ep_item;
-            if (OMPI_SUCCESS != ompi_btl_openib_connect.bcf_start_connect(ep)) {
+            if (OMPI_SUCCESS != 
+                endpoint->endpoint_local_cpc->cbm_start_connect(endpoint->endpoint_local_cpc, 
+                                                                ep)) {
                 BTL_ERROR(("Failed to connect pending endpoint\n"));
             }
         }

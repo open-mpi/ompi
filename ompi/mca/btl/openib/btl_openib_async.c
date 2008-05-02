@@ -107,6 +107,7 @@ static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib
     return NULL;
 }
 
+#if HAVE_XRC
 /* XRC recive QP to endpoint */
 static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_hca_t *hca)
 {
@@ -119,6 +120,7 @@ static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_open
     }
     return NULL;
 }
+#endif
 
 /* Function inits mca_btl_openib_async_poll */
 static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_poll)
@@ -194,7 +196,7 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
                 }
             }
             if (!fd_found) {
-                BTL_ERROR(("Requested FD[%d] was not found in poll array\n",fd));
+                BTL_ERROR(("Requested FD[%d] was not found in poll array",fd));
                 return OMPI_ERROR;
             }
         }
@@ -402,8 +404,8 @@ static int apm_update_port(mca_btl_openib_endpoint_t *ep,
     }
     /* looking for alternatve lid on remote site */
     for(port_i = 0; port_i < ep->endpoint_proc->proc_port_count; port_i++) {
-        if (ep->endpoint_proc->proc_ports[port_i].lid == attr->ah_attr.dlid - mca_btl_openib_component.apm_lmc) {
-            apm_lid = ep->endpoint_proc->proc_ports[port_i].apm_lid;
+        if (ep->endpoint_proc->proc_ports[port_i].pm_port_info.lid == attr->ah_attr.dlid - mca_btl_openib_component.apm_lmc) {
+            apm_lid = ep->endpoint_proc->proc_ports[port_i].pm_port_info.apm_lid;
         }
     }
     if (0 == apm_lid) {

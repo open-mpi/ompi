@@ -39,6 +39,7 @@
 BEGIN_C_DECLS
 
 struct mca_btl_openib_frag_t;
+struct mca_btl_openib_proc_modex_t;
 
 /**
  * State of IB endpoint connection.
@@ -68,37 +69,38 @@ typedef enum {
     MCA_BTL_IB_FAILED
 } mca_btl_openib_endpoint_state_t;
 
-struct mca_btl_openib_rem_qp_info_t {
+typedef struct mca_btl_openib_rem_qp_info_t {
     uint32_t                    rem_qp_num;
     /* Remote QP number */
     uint32_t                    rem_psn;
     /* Remote processes port sequence number */
-}; typedef struct mca_btl_openib_rem_qp_info_t mca_btl_openib_rem_qp_info_t;
+} mca_btl_openib_rem_qp_info_t;
 
-struct mca_btl_openib_rem_srq_info_t {
+typedef struct mca_btl_openib_rem_srq_info_t {
     /* Remote SRQ number */
     uint32_t                    rem_srq_num;
-}; typedef struct mca_btl_openib_rem_srq_info_t mca_btl_openib_rem_srq_info_t;
+} mca_btl_openib_rem_srq_info_t;
 
-struct mca_btl_openib_rem_info_t {
-    uint16_t                    rem_lid;
+typedef struct mca_btl_openib_rem_info_t {
     /* Local identifier of the remote process */
-    uint64_t                    rem_subnet_id;
+    uint16_t                    rem_lid;
     /* subnet id of remote process */
-    uint32_t                    rem_mtu;
+    uint64_t                    rem_subnet_id;
     /* MTU of remote process */
-    uint32_t                    rem_index;
+    uint32_t                    rem_mtu;
     /* index of remote endpoint in endpoint array */
+    uint32_t                    rem_index;
+    /* Remote QPs */
     mca_btl_openib_rem_qp_info_t *rem_qps;
-    /* remote xrc_srq info , used only with xrc connections */
+    /* Remote xrc_srq info, used only with XRC connections */
     mca_btl_openib_rem_srq_info_t *rem_srqs;
-}; typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t;
+} mca_btl_openib_rem_info_t;
 
 
 /**
  *  Agggregates all per peer qp info for an endpoint
  */
-struct mca_btl_openib_endpoint_pp_qp_t {
+typedef struct mca_btl_openib_endpoint_pp_qp_t {
     int32_t sd_credits;  /**< this rank's view of the credits
                           *  available for sending:
                           *  this is the credits granted by the
@@ -110,15 +112,15 @@ struct mca_btl_openib_endpoint_pp_qp_t {
     int32_t  cm_received; /**< Credit messages received */
     int32_t  cm_return;   /**< how may credits to return */
     int32_t  cm_sent;     /**< Outstanding number of credit messages */
-}; typedef struct mca_btl_openib_endpoint_pp_qp_t mca_btl_openib_endpoint_pp_qp_t;
+} mca_btl_openib_endpoint_pp_qp_t;
 
 
 /**
  *  Aggregates all srq qp info for an endpoint
  */
-struct mca_btl_openib_endpoint_srq_qp_t {
+typedef struct mca_btl_openib_endpoint_srq_qp_t {
     int32_t dummy;
-}; typedef struct mca_btl_openib_endpoint_srq_qp_t mca_btl_openib_endpoint_srq_qp_t;
+} mca_btl_openib_endpoint_srq_qp_t;
 
 typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
@@ -152,61 +154,70 @@ typedef struct mca_btl_openib_endpoint_qp_t {
 struct mca_btl_base_endpoint_t {
     opal_list_item_t            super;
 
+    /** BTL module that created this connection */
     struct mca_btl_openib_module_t* endpoint_btl;
-    /**< BTL instance that created this connection */
 
+    /** proc structure corresponding to endpoint */
     struct mca_btl_openib_proc_t*   endpoint_proc;
-    /**< proc structure corresponding to endpoint */
 
+    /** local CPC to connect to this endpoint */
+    ompi_btl_openib_connect_base_module_t *endpoint_local_cpc;
+
+    /** hook for local CPC to hang endpoint-specific data */
+    void *endpoint_local_cpc_data;
+
+    /** pointer to remote CPC's data (essentially its CPC modex message) */
+    ompi_btl_openib_connect_base_module_data_t *endpoint_remote_cpc_data;
+
+    /** current state of the connection */
     mca_btl_openib_endpoint_state_t     endpoint_state;
-    /**< current state of the connection */
 
+    /** number of connection retries attempted */
     size_t                      endpoint_retries;
-    /**< number of connection retries attempted */
 
+    /** timestamp of when the first connection was attempted */
     double                      endpoint_tstamp;
-    /**< timestamp of when the first connection was attempted */
 
+    /** lock for concurrent access to endpoint state */
     opal_mutex_t                endpoint_lock;
-    /**< lock for concurrent access to endpoint state */
 
+    /** list of pending frags due to lazy connection establishment
+        for this endpotint */
     opal_list_t                 pending_lazy_frags;
-    /**< list of pending frags due to lazy connection establishment
-     *   for this endpotint
-     */
 
     mca_btl_openib_endpoint_qp_t *qps;
     uint32_t xrc_recv_qp_num; /* in xrc we will use it as recv qp */
     uint32_t xrc_recv_psn;
 
+    /** list of pending rget ops */
+    opal_list_t                 pending_get_frags;
+    /** list of pending rput ops */
+    opal_list_t                 pending_put_frags; 
 
-    opal_list_t                 pending_get_frags; /**< list of pending rget ops */
-    opal_list_t                 pending_put_frags; /**< list of pending rput ops */
+    /** number of available get tokens */
+    int32_t                     get_tokens;
 
+    /** subnet id of this endpoint*/
+    uint64_t subnet_id;
+    /** used only for xrc; pointer to struct that keeps remote port
+        info */
+    struct ib_address_t *ib_addr;
 
-
-
-    /* Local processes port sequence number (Low and High) */
-
-
-    int32_t                     get_tokens;    /**< number of available get tokens */
-
-
-    uint64_t subnet_id; /**< subnet id of this endpoint*/
-    struct ib_address_t *ib_addr; /**< used only for xrc; pointer to struct
-                                    that keeps remote port info */
-
-    int32_t eager_recv_count; /**< number of eager received */
+    /** number of eager received */
+    int32_t eager_recv_count;
+    /** info about remote RDMA buffer */
     mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;
-    /**< info about remote RDMA buffer */
+    /** info about local RDMA buffer */
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
-    /**< info about local RDMA buffer */
-    int32_t index;           /**< index of the endpoint in endpoints array */
+    /** index of the endpoint in endpoints array */
+    int32_t index;
 
-    /**< frags for sending explicit high priority credits */
-    bool nbo;       /**< does the endpoint require network byte ordering? */
-    bool use_eager_rdma; /**< use eager rdma for this peer? */
+    /** does the endpoint require network byte ordering? */
+    bool nbo;
+    /** use eager rdma for this peer? */
+    bool use_eager_rdma;
 
+    /** information about the remote port */
     mca_btl_openib_rem_info_t rem_info;
 };
 
@@ -234,12 +245,15 @@ void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_init(mca_btl_openib_module_t*,
-        mca_btl_base_endpoint_t*);
+                                  mca_btl_base_endpoint_t*,
+                                  ompi_btl_openib_connect_base_module_t *local_cpc,
+                                  struct mca_btl_openib_proc_modex_t *remote_proc_info,
+                                  ompi_btl_openib_connect_base_module_data_t *remote_cpc_data);
 
 static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
         const int num_post)
 {
-    int i;
+    int i, rc;
     struct ibv_recv_wr *bad_wr, *wr_list = NULL, *wr = NULL;
     mca_btl_openib_module_t *openib_btl = ep->endpoint_btl;
 
@@ -260,10 +274,11 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
 
     wr->next = NULL;
 
-    if(!ibv_post_recv(ep->qps[qp].qp->lcl_qp, wr_list, &bad_wr))
+    rc = ibv_post_recv(ep->qps[qp].qp->lcl_qp, wr_list, &bad_wr);
+    if (0 == rc)
         return OMPI_SUCCESS;
 
-    BTL_ERROR(("error posting receive on qp %d\n", qp));
+    BTL_ERROR(("error %d posting receive on qp %d\n", rc, qp));
     return OMPI_ERROR;
 }
 
@@ -361,9 +376,10 @@ static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
 
     switch(ep->endpoint_state) {
         case MCA_BTL_IB_CLOSED:
-            rc = ompi_btl_openib_connect.bcf_start_connect(ep);
-            if(rc == OMPI_SUCCESS)
+            rc = ep->endpoint_local_cpc->cbm_start_connect(ep->endpoint_local_cpc, ep);
+            if (OMPI_SUCCESS == rc) {
                 rc = ORTE_ERR_RESOURCE_BUSY;
+            }
             /*
              * As long as we expect a message from the peer (in order
              * to setup the connection) let the event engine pool the

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007      Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -10,10 +11,12 @@
 
 #include "ompi_config.h"
 
+#include "opal/dss/dss.h"
+#include "opal/util/error.h"
+#include "opal/util/output.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "opal/dss/dss.h"
 #include "ompi/mca/dpm/dpm.h"
 
 #include "btl_openib.h"
@@ -23,28 +26,28 @@
 #include "btl_openib_async.h"
 #include "connect/connect.h"
 
-static void xoob_open(void);
-static int xoob_init(void);
-static int xoob_start_connect(mca_btl_base_endpoint_t *e);
-static int xoob_query(mca_btl_openib_hca_t *hca);
-static int xoob_finalize(void);
+static void xoob_component_register(void);
+static int xoob_component_query(mca_btl_openib_module_t *openib_btl, 
+                                ompi_btl_openib_connect_base_module_t **cpc);
+static int xoob_component_finalize(void);
+
+static int xoob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
+                                     mca_btl_base_endpoint_t *endpoint);
 
 /*
- * The "module" struct -- the top-level function pointers for the xoob
- * connection scheme.
+ * The "component" struct -- the top-level function pointers for the
+ * xoob connection scheme.
  */
-ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_xoob = {
+ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_xoob = {
     "xoob",
-    /* Open */
-    xoob_open,
+    /* Register */
+    xoob_component_register,
     /* Init */
-    xoob_init,
-    /* Connect */
-    xoob_start_connect,
+    NULL,
     /* Query */
-    xoob_query,
+    xoob_component_query,
     /* Finalize */
-    xoob_finalize,
+    xoob_component_finalize
 };
 
 typedef enum {
@@ -54,6 +57,8 @@ typedef enum {
     ENDPOINT_XOOB_CONNECT_XRC_RESPONSE,
     ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE /* The xrc recv qp already was destroyed */
 } connect_message_type_t;
+
+static bool rml_recv_posted = false;
 
 #define XOOB_SET_REMOTE_INFO(EP, INFO)                                    \
 do {                                                                      \
@@ -707,8 +712,8 @@ static void xoob_restart_connect(mca_btl_base_endpoint_t *endpoint)
                         " starting from scratch\n",
                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
             OPAL_THREAD_UNLOCK(&endpoint->ib_addr->addr_lock);
-            /* xoob_start_connect() should automaticly handle all other cases */
-            if (OMPI_SUCCESS != xoob_start_connect(endpoint))
+            /* xoob_module_start_connect() should automaticly handle all other cases */
+            if (OMPI_SUCCESS != xoob_module_start_connect(NULL, endpoint))
                 BTL_ERROR(("Failed to restart connection from MCA_BTL_IB_ADDR_CONNECTING/CLOSED"));
             break;
         default :
@@ -912,17 +917,61 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
  */
 
 /* Quere for the XOOB priority - will be highest in XRC case */
-static int xoob_query(mca_btl_openib_hca_t *hca)
+static int xoob_component_query(mca_btl_openib_module_t *openib_btl, 
+        ompi_btl_openib_connect_base_module_t **cpc)
 {
-    if (mca_btl_openib_component.num_xrc_qps > 0) {
-        return xoob_priority;
+    int rc;
+
+    if (mca_btl_openib_component.num_xrc_qps <= 0) {
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: xoob CPC only supported with XRC receive queues; skipped on device %s",
+                            ibv_get_device_name(openib_btl->hca->ib_dev));
+        return OMPI_ERR_NOT_SUPPORTED;
     }
 
-    return -1;
+    *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));
+    if (NULL == *cpc) {
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: xoob CPC system error (malloc failed)");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* If this btl supports XOOB, then post the RML message.  But
+       ensure to only post it *once*, because another btl may have
+       come in before this and already posted it. */
+    if (!rml_recv_posted) {
+        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
+                                     OMPI_RML_TAG_XOPENIB,
+                                     ORTE_RML_PERSISTENT,
+                                     xoob_rml_recv_cb,
+                                     NULL);
+        if (ORTE_SUCCESS != rc) {
+            opal_output_verbose(5, mca_btl_base_output,
+                                "openib BTL: xoob CPC system error %d (%s)",
+                                rc, opal_strerror(rc));
+            return rc;
+        }
+        rml_recv_posted = true;
+    }
+        
+    (*cpc)->data.cbm_component = &ompi_btl_openib_connect_xoob;
+    (*cpc)->data.cbm_priority = xoob_priority;
+    (*cpc)->data.cbm_modex_message = NULL;
+    (*cpc)->data.cbm_modex_message_len = 0;
+
+    (*cpc)->cbm_endpoint_init = NULL;
+    (*cpc)->cbm_start_connect = xoob_module_start_connect;
+    (*cpc)->cbm_endpoint_finalize = NULL;
+    (*cpc)->cbm_finalize = NULL;
+
+    opal_output_verbose(5, mca_btl_base_output,
+                        "openib BTL: xoob CPC available for use on %s",
+                        ibv_get_device_name(openib_btl->hca->ib_dev));
+    return OMPI_SUCCESS;
 }
 
 /* Open - this functions sets up any xoob specific commandline params */
-static void xoob_open(void)
+static void xoob_component_register(void)
 {
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
                            "connect_xoob_priority",
@@ -937,28 +986,13 @@ static void xoob_open(void)
 }
 
 /*
- * Init function.  Post non-blocking RML receive to accept incoming
- * connection requests.
- */
-static int xoob_init(void)
-{
-    int rc;
-
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                 OMPI_RML_TAG_XOPENIB,
-                                 ORTE_RML_PERSISTENT,
-                                 xoob_rml_recv_cb,
-                                 NULL);
-    return (ORTE_SUCCESS == rc) ? OMPI_SUCCESS : rc;
-}
-
-/*
  * Connect function.  Start initiation of connections to a remote
  * peer.  We send our Queue Pair information over the RML/OOB
  * communication mechanism.  On completion of our send, a send
  * completion handler is called.
  */
-static int xoob_start_connect(mca_btl_base_endpoint_t *endpoint)
+static int xoob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
+                                     mca_btl_base_endpoint_t *endpoint)
 {
     int rc = OMPI_SUCCESS;
 
@@ -987,7 +1021,7 @@ static int xoob_start_connect(mca_btl_base_endpoint_t *endpoint)
                         " Subscribing to this address\n",
                         endpoint->ib_addr->subnet_id,endpoint->ib_addr->lid));
             /* some body already connectng to this machine, lets wait */
-            opal_list_append(&endpoint->ib_addr->pending_ep, (opal_list_item_t*)endpoint);
+            opal_list_append(&endpoint->ib_addr->pending_ep, &(endpoint->super));
             endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
             break;
         case MCA_BTL_IB_ADDR_CONNECTED:
@@ -1014,8 +1048,11 @@ static int xoob_start_connect(mca_btl_base_endpoint_t *endpoint)
 /*
  * Finalize function.  Cleanup RML non-blocking receive.
  */
-static int xoob_finalize(void)
+static int xoob_component_finalize(void)
 {
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_XOPENIB);
+    if (rml_recv_posted) {
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_XOPENIB);
+        rml_recv_posted = false;
+    }
     return OMPI_SUCCESS;
 }

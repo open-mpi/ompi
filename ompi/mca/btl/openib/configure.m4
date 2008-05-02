@@ -22,6 +22,8 @@
 # ------------------------------------------
 AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
     AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1" -a "x$ompi_want_connectx_xrc" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 -a "x$btl_openib_have_rdmacm" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_ibcm], [test $1 -eq 1 -a "x$btl_openib_have_ibcm" = "x1"])
 ])
 
 
@@ -29,6 +31,9 @@ AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_btl_openib_CONFIG],[
+    OMPI_VAR_SCOPE_PUSH([cpcs])
+    cpcs="oob"
+
     OMPI_CHECK_OPENIB([btl_openib],
                      [btl_openib_happy="yes"],
                      [btl_openib_happy="no"])
@@ -49,9 +54,24 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
           [$2])
 
 
+    AS_IF([test "$btl_openib_happy" = "yes"],
+          [if test "x$btl_openib_have_xrc" = "x1" -a "x$ompi_want_connectx_xrc" = "x1"; then
+              cpcs="$cpcs xrc"
+          fi
+          if test "x$btl_openib_have_rdma_cm" = "x1"; then
+              cpcs="$cpcs rdma_cm"
+          fi
+          if test "x$btl_openib_have_ib_cm" = "x1"; then
+              cpcs="$cpcs ibcm"
+          fi
+          AC_MSG_CHECKING([which openib btl cpcs will be built])
+          AC_MSG_RESULT([$cpcs])])
+
     # substitute in the things needed to build openib
     AC_SUBST([btl_openib_CFLAGS])
     AC_SUBST([btl_openib_CPPFLAGS])
     AC_SUBST([btl_openib_LDFLAGS])
     AC_SUBST([btl_openib_LIBS])
+
+    OMPI_VAR_SCOPE_POP
 ])dnl

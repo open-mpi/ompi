@@ -289,6 +289,8 @@ int mca_btl_openib_add_procs(
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
     mca_btl_base_endpoint_t* endpoint;
+    ompi_btl_openib_connect_base_module_t *local_cpc;
+    ompi_btl_openib_connect_base_module_data_t *remote_cpc_data;
 
     for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
         if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
@@ -305,66 +307,85 @@ int mca_btl_openib_add_procs(
             NULL == mca_btl_openib_component.ib_addr_table.ht_table) {
         if(OPAL_SUCCESS != opal_hash_table_init(
                     &mca_btl_openib_component.ib_addr_table, nprocs)) {
-            BTL_ERROR(("XRC internal error. Failed to allocate ib_table\n"));
+            BTL_ERROR(("XRC internal error. Failed to allocate ib_table"));
             return OMPI_ERROR;
         }
     }
 #endif
 
-    for(i = 0; i < (int) nprocs; i++) {
+    for (i = 0; i < (int) nprocs; i++) {
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
-        bool cpc_error = 0;
+        int remote_matching_port;
 
+        opal_output(-1, "add procs: adding proc %d", i);
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        rem_subnet_id_port_cnt  = 0;
-        /* check if the remote proc has a reachable subnet first */
-        BTL_VERBOSE(("got %d port_infos \n", ib_proc->proc_port_count));
-        for(j = 0; j < (int) ib_proc->proc_port_count; j++){
-            int rc;
-
-            /* Setup connect module */
-            rc = ompi_btl_openib_connect_base_select(ib_proc->proc_ports[j].cpclist,
-                                                     openib_btl->port_info.cpclist);
-            if (rc != OMPI_SUCCESS) {
-                cpc_error = 1;
-                continue;
-            }
-
-            BTL_VERBOSE(("got a subnet %016x\n",
-                         ib_proc->proc_ports[j].subnet_id));
-            if(ib_proc->proc_ports[j].subnet_id ==
-               openib_btl->port_info.subnet_id) {
-                BTL_VERBOSE(("Got a matching subnet!\n"));
-                rem_subnet_id_port_cnt ++;
+        /* check if the remote proc has any ports that:
+           - on the same subnet as the local proc, and
+           - on that subnet, has a CPC in common with the local proc
+        */
+        remote_matching_port = -1;
+        rem_subnet_id_port_cnt = 0;
+        BTL_VERBOSE(("got %d port_infos ", ib_proc->proc_port_count));
+        for (j = 0; j < (int) ib_proc->proc_port_count; j++){
+            BTL_VERBOSE(("got a subnet %016x",
+                         ib_proc->proc_ports[j].pm_port_info.subnet_id));
+            if (ib_proc->proc_ports[j].pm_port_info.subnet_id ==
+                openib_btl->port_info.subnet_id) {
+                BTL_VERBOSE(("Got a matching subnet!"));
+                if (rem_subnet_id_port_cnt == btl_rank) {
+                    remote_matching_port = j;
+                }
+                rem_subnet_id_port_cnt++;
             }
         }
 
-        if (cpc_error) {
-            BTL_ERROR(("cpc_error error"));
-            return OMPI_ERROR;
-        }
-
-        if(!rem_subnet_id_port_cnt ) {
-            /* no use trying to communicate with this endpointlater */
-            BTL_VERBOSE(("No matching subnet id was found, moving on.. \n"));
+        if (0 == rem_subnet_id_port_cnt) {
+            /* no use trying to communicate with this endpoint */
+            BTL_VERBOSE(("No matching subnet id/CPC was found, moving on.. "));
             continue;
         }
 
-#if 0
-        num_endpoints = rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt +
-            (btl_rank < (rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt)) ? 1:0;
-#endif
+        /* If this process has multiple ports on a single subnet ID,
+           and the report proc also has multiple ports on this same
+           subnet ID, the default connection pattern is:
 
-        if(rem_subnet_id_port_cnt  < lcl_subnet_id_port_cnt &&
-           btl_rank >= rem_subnet_id_port_cnt ) {
-            BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. \n"));
+                      LOCAL                   REMOTE PEER
+                 1st port on subnet X <--> 1st port on subnet X
+                 2nd port on subnet X <--> 2nd port on subnet X
+                 3nd port on subnet X <--> 3nd port on subnet X
+                 ...etc.
+
+           Note that the port numbers may not be contiguous, and they
+           may not be the same on either side.  Hence the "1st", "2nd",
+           "3rd, etc. notation, above.
+
+           Hence, if the local "rank" of this module's port on the
+           subnet ID is greater than the total number of ports on the
+           peer on this same subnet, then we have no match.  So skip
+           this connection.  */
+        if (rem_subnet_id_port_cnt < lcl_subnet_id_port_cnt &&
+            btl_rank >= rem_subnet_id_port_cnt) {
+            BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. "));
             continue;
-
         }
+
+        /* Now that we have verified that we're on the same subnet and
+           the remote peer has enough ports, see if that specific port
+           on the peer has a matching CPC. */
+        assert(btl_rank <= ib_proc->proc_port_count);
+        assert(remote_matching_port != -1);
+        if (OMPI_SUCCESS != 
+            ompi_btl_openib_connect_base_find_match(openib_btl,
+                                                    &(ib_proc->proc_ports[remote_matching_port]),
+                                                    &local_cpc,
+                                                    &remote_cpc_data)) {
+            continue;
+        }
+
         OPAL_THREAD_LOCK(&ib_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all IB BTL
@@ -382,7 +403,7 @@ int mca_btl_openib_add_procs(
         if (MCA_BTL_XRC_ENABLED) {
             int rem_port_cnt = 0;
             for(j = 0; j < (int) ib_proc->proc_port_count; j++) {
-                if(ib_proc->proc_ports[j].subnet_id ==
+                if(ib_proc->proc_ports[j].pm_port_info.subnet_id ==
                         openib_btl->port_info.subnet_id) {
                     if (rem_port_cnt == btl_rank)
                         break;
@@ -394,7 +415,8 @@ int mca_btl_openib_add_procs(
             assert(rem_port_cnt == btl_rank);
             /* Push the subnet/lid/jobid to xrc hash */
             rc = mca_btl_openib_ib_address_add_new(
-                    ib_proc->proc_ports[j].lid, ib_proc->proc_ports[j].subnet_id,
+                    ib_proc->proc_ports[j].pm_port_info.lid,
+                    ib_proc->proc_ports[j].pm_port_info.subnet_id,
                     ompi_proc->proc_name.jobid, endpoint);
             if (OMPI_SUCCESS != rc ) {
                 OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
@@ -402,9 +424,13 @@ int mca_btl_openib_add_procs(
             }
         }
 #endif
-        mca_btl_openib_endpoint_init(openib_btl, endpoint);
+        mca_btl_openib_endpoint_init(openib_btl, endpoint, 
+                                     local_cpc, 
+                                     &(ib_proc->proc_ports[remote_matching_port]),
+                                     remote_cpc_data);
+
         rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
-        if(rc != OMPI_SUCCESS) {
+        if (OMPI_SUCCESS != rc) {
             OBJ_RELEASE(endpoint);
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
@@ -416,6 +442,19 @@ int mca_btl_openib_add_procs(
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
         }
+
+        /* Tell the selected CPC that it won.  NOTE: This call is
+           outside of / separate from mca_btl_openib_endpoint_init()
+           because this function likely needs the endpoint->index. */
+        if (NULL != local_cpc->cbm_endpoint_init) {
+            rc = local_cpc->cbm_endpoint_init(endpoint);
+            if (OMPI_SUCCESS != rc) {
+                OBJ_RELEASE(endpoint);
+                OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+                continue;
+            }
+        }
+
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
 
@@ -449,11 +488,12 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
                 continue;
             }
             if (endpoint == del_endpoint) {
-                BTL_VERBOSE(("in del_procs %d, setting another endpoint to null\n",
+                BTL_VERBOSE(("in del_procs %d, setting another endpoint to null",
                              ep_index));
                 opal_pointer_array_set_item(openib_btl->hca->endpoints,
                         ep_index, NULL);
                 assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
+                mca_btl_openib_proc_remove(procs[i], endpoint);
                 OBJ_RELEASE(endpoint);
             }
         }
@@ -876,7 +916,7 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
 {
 #if OMPI_HAVE_THREADS
     int hca_to_remove;
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS
     if(hca->progress) {
         hca->progress = false;
         if (pthread_cancel(hca->thread.t_handle)) {
@@ -899,6 +939,7 @@ static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
         }
     }
 #endif
+
     /* Release CQs */
     if(hca->ib_cq[BTL_OPENIB_HP_CQ] != NULL) {
         if (ibv_destroy_cq(hca->ib_cq[BTL_OPENIB_HP_CQ])) {
@@ -974,7 +1015,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         endpoint=opal_pointer_array_get_item(openib_btl->hca->endpoints,
                 ep_index);
         if(!endpoint) {
-            BTL_VERBOSE(("In finalize, got another null endpoint\n"));
+            BTL_VERBOSE(("In finalize, got another null endpoint"));
             continue;
         }
         if(endpoint->endpoint_btl != openib_btl)
@@ -987,6 +1028,16 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
         OBJ_RELEASE(endpoint);
     }
+
+    /* Finalize the CPC modules on this openib module */
+    for (i = 0; i < openib_btl->num_cpcs; ++i) {
+        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
+            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+        }
+        free(openib_btl->cpcs[i]);
+    }
+    free(openib_btl->cpcs);
+
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
  *
@@ -27,6 +27,8 @@
 
 #include "btl_openib.h"
 #include "btl_openib_proc.h"
+#include "connect/base.h"
+#include "connect/connect.h"
 
 static void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* proc);
 static void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* proc);
@@ -38,6 +40,7 @@ OBJ_CLASS_INSTANCE(mca_btl_openib_proc_t,
 void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* proc)
 {
     proc->proc_ompi = 0;
+    proc->proc_ports = NULL;
     proc->proc_port_count = 0;
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
@@ -62,6 +65,17 @@ void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* proc)
     /* release resources */
     if(NULL != proc->proc_endpoints) {
         free(proc->proc_endpoints);
+    }
+    if (NULL != proc->proc_ports) {
+        int i, j;
+        for (i = 0; i < proc->proc_port_count; ++i) {
+            for (j = 0; j < proc->proc_ports[i].pm_cpc_data_count; ++j) {
+                if (NULL != proc->proc_ports[i].pm_cpc_data[j].cbm_modex_message) {
+                    free(proc->proc_ports[i].pm_cpc_data[j].cbm_modex_message);
+                }
+            }
+        }
+        free(proc->proc_ports);
     }
 }
 
@@ -90,12 +104,20 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
     return NULL;
 }
 
+static void inline unpack8(char **src, uint8_t *value)
+{
+    /* Copy one character */
+    *value = (uint8_t) **src;
+    /* Most the src ahead one */
+    ++*src;
+}
+
 /*
  * Create a IB process structure. There is a one-to-one correspondence
- * between a ompi_proc_t and a mca_btl_openib_proc_t instance. We cache
- * additional data (specifically the list of mca_btl_openib_endpoint_t instances,
- * and published addresses) associated w/ a given destination on this
- * datastructure.
+ * between a ompi_proc_t and a mca_btl_openib_proc_t instance. We
+ * cache additional data (specifically the list of
+ * mca_btl_openib_endpoint_t instances, and published addresses)
+ * associated w/ a given destination on this datastructure.
  */
 
 mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
@@ -103,10 +125,11 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     mca_btl_openib_proc_t* module_proc = NULL;
     size_t msg_size;
     uint32_t size;
-    size_t i;
-    int rc;
+    int rc, i, j;
     void *message;
     char *offset;
+    int modex_message_size;
+    mca_btl_openib_modex_message_t dummy;
 
     /* Check if we have already created a IB proc
      * structure for this ompi process */
@@ -145,56 +168,118 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 
     /* Message was packed in btl_openib_component.c; the format is
        listed in a comment in that file */
-    /* Unpack the number of ports in the message */
+    modex_message_size = ((char *) &(dummy.end)) - ((char*) &dummy);
+
+    /* Unpack the number of modules in the message */
     offset = message;
-    memcpy(&size, offset, sizeof(uint32_t));
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    size = ntohl(size);
-#endif
-    module_proc->proc_port_count = size;
-    module_proc->proc_ports = (mca_btl_openib_port_info_t *)malloc(sizeof(mca_btl_openib_port_info_t) * module_proc->proc_port_count);
-    offset += sizeof(uint32_t);
+    unpack8(&offset, &(module_proc->proc_port_count));
+    opal_output(-1, "unpack: %d btls", module_proc->proc_port_count);
+    if (module_proc->proc_port_count > 0) {
+        module_proc->proc_ports = (mca_btl_openib_proc_modex_t *)
+            malloc(sizeof(mca_btl_openib_proc_modex_t) * 
+                   module_proc->proc_port_count);
+    } else {
+        module_proc->proc_ports = NULL;
+    }
 
     /* Loop over unpacking all the ports */
     for (i = 0; i < module_proc->proc_port_count; i++) {
-        /* Unpack the port */
-        memcpy(&module_proc->proc_ports[i], offset,
-               sizeof(mca_btl_openib_port_info_t));
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        MCA_BTL_OPENIB_PORT_INFO_NTOH(module_proc->proc_ports[i]);
-#endif
-        offset += sizeof(mca_btl_openib_port_info_t);
 
-        /* Unpack the string length */
-        memcpy(&size, offset, sizeof(size));
+        /* Unpack the modex comment message struct */
+        size = modex_message_size;
+        memcpy(&(module_proc->proc_ports[i].pm_port_info), offset, size);
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        size = ntohl(size);
+        MCA_BTL_OPENIB_MODEX_MSG_NTOH(module_proc->proc_ports[i].pm_port_info);
 #endif
-        offset += sizeof(size);
-
-        /* Unpack the string */
-        module_proc->proc_ports[i].cpclist = malloc(size + 1);
-        if (NULL == module_proc->proc_ports[i].cpclist) {
-            /* JMS some error */
-        }
-        memcpy(module_proc->proc_ports[i].cpclist, offset, size);
-        module_proc->proc_ports[i].cpclist[size] = '\0';
         offset += size;
+        opal_output(-1, "unpacked btl %d: modex message, offset now %d",
+                    i, (int)(offset-((char*)message)));
+
+        /* Unpack the number of CPCs that follow */
+        unpack8(&offset, &(module_proc->proc_ports[i].pm_cpc_data_count));
+        opal_output(-1, "unpacked btl %d: number of cpcs to follow %d (offset now %d)",
+                    i, module_proc->proc_ports[i].pm_cpc_data_count, (int)(offset-((char*)message)));
+        module_proc->proc_ports[i].pm_cpc_data = 
+            calloc(module_proc->proc_ports[i].pm_cpc_data_count,
+                   sizeof(ompi_btl_openib_connect_base_module_data_t));
+        if (NULL == module_proc->proc_ports[i].pm_cpc_data) {
+            return NULL;
+        }
+
+        /* Unpack the CPCs */
+        for (j = 0; j < module_proc->proc_ports[i].pm_cpc_data_count; ++j) {
+            uint8_t u8;
+            ompi_btl_openib_connect_base_module_data_t *cpcd;
+            cpcd = module_proc->proc_ports[i].pm_cpc_data + j;
+            unpack8(&offset, &u8);
+            opal_output(-1, "unpacked btl %d: cpc %d: index %d (offset now %d)",
+                        i, j, u8, (int)(offset-(char*)message));
+            cpcd->cbm_component = 
+                ompi_btl_openib_connect_base_get_cpc_byindex(u8);
+            opal_output(-1, "unpacked btl %d: cpc %d: component %s",
+                        i, j, cpcd->cbm_component->cbc_name);
+            
+            unpack8(&offset, &cpcd->cbm_priority);
+            unpack8(&offset, &cpcd->cbm_modex_message_len);
+            opal_output(-1, "unpacked btl %d: cpc %d: priority %d, msg len %d (offset now %d)",
+                        i, j, cpcd->cbm_priority, cpcd->cbm_modex_message_len, (int)(offset-(char*)message));
+            if (cpcd->cbm_modex_message_len > 0) {
+                cpcd->cbm_modex_message = malloc(cpcd->cbm_modex_message_len);
+                if (NULL == cpcd->cbm_modex_message) {
+                    BTL_ERROR(("Failed to malloc"));
+                    return NULL;
+                }
+                memcpy(cpcd->cbm_modex_message, offset, 
+                       cpcd->cbm_modex_message_len);
+                offset += cpcd->cbm_modex_message_len;
+                opal_output(-1, "unpacked btl %d: cpc %d: blob unpacked %d %x (offset now %d)",
+                            i, j,
+                            ((uint32_t*)cpcd->cbm_modex_message)[0],
+                            ((uint32_t*)cpcd->cbm_modex_message)[1],
+                            (int)(offset-((char*)message)));
+            }
+        }
     }
 
     if (0 == module_proc->proc_port_count) {
         module_proc->proc_endpoints = NULL;
     } else {
         module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-            malloc(module_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
+            malloc(module_proc->proc_port_count * 
+                   sizeof(mca_btl_base_endpoint_t*));
     }
     if (NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
     }
+
+    opal_output(-1, "unpacking done!");
     return module_proc;
 }
 
+int mca_btl_openib_proc_remove(ompi_proc_t *proc,
+                               mca_btl_base_endpoint_t *endpoint)
+{
+    size_t i;
+    mca_btl_openib_proc_t* ib_proc = NULL;
+
+    /* Remove endpoint from the openib BTL version of the proc as
+       well */
+    ib_proc = mca_btl_openib_proc_lookup_ompi(proc);
+    if (NULL != ib_proc) {
+        for (i = 0; i < ib_proc->proc_endpoint_count; ++i) {
+            if (ib_proc->proc_endpoints[i] == endpoint) {
+                ib_proc->proc_endpoints[i] = NULL;
+                if (i == ib_proc->proc_endpoint_count - 1) {
+                    --ib_proc->proc_endpoint_count;
+                }
+                return OMPI_SUCCESS;
+            }
+        }
+    }
+
+    return OMPI_ERR_NOT_FOUND;
+}
 
 /*
  * Note that this routine must be called with the lock on the process

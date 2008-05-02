@@ -72,6 +72,10 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_hca_t *hca)
 /* This func. closes XRC domain */
 int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_hca_t *hca)
 {
+    if (NULL == hca->xrc_domain) {
+        /* No XRC domain, just exit */
+        return OMPI_SUCCESS;
+    }
     if (ibv_close_xrc_domain(hca->xrc_domain)) {
         BTL_ERROR(("Failed to close XRC domain, errno says %s\n",
                     hca->xrc_fd, strerror(errno)));
