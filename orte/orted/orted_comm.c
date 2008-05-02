@@ -125,6 +125,11 @@ static void send_relay(int fd, short event, void *data)
         if (!orte_process_info.hnp) {
             goto CLEANUP;
         }
+
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s orte:daemon:send_relay linear mode with %d procs",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)orte_process_info.num_procs));
+
         /* if the mode is linear and we are the HNP, don't ask for
          * next recipients as this will generate a potentially very
          * long list! Instead, just send the message to each daemon
@@ -133,6 +138,12 @@ static void send_relay(int fd, short event, void *data)
         dummy.jobid = ORTE_PROC_MY_HNP->jobid;
         for (i=1; i < orte_process_info.num_procs; i++) {            
             dummy.vpid = i;
+
+            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                 "%s orte:daemon:send_relay sending relay msg to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&dummy)));
+        
             if (0 > (ret = orte_rml.send_buffer(&dummy, buffer, ORTE_RML_TAG_DAEMON, 0))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
