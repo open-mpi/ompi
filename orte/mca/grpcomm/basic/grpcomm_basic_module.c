@@ -360,19 +360,18 @@ static int xcast_linear(orte_jobid_t job,
      * and rattling messages around the system if daemons are not
      * fully connected
      */
-    if (!orte_process_info.hnp) {
-        /* tell the HNP to relay */
-        command = ORTE_DAEMON_PROCESS_AND_RELAY_CMD;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        /* tell the HNP the routing algorithm this xmission is using */
-        mode = ORTE_GRPCOMM_LINEAR;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &mode, 1, ORTE_GRPCOMM_MODE))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
+
+    /* tell the HNP to relay */
+    command = ORTE_DAEMON_PROCESS_AND_RELAY_CMD;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    /* tell the HNP the routing algorithm this xmission is using */
+    mode = ORTE_GRPCOMM_LINEAR;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &mode, 1, ORTE_GRPCOMM_MODE))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
     }
     
     /* if this isn't intended for the daemon command tag, then we better
@@ -542,8 +541,8 @@ static int xcast_direct(orte_jobid_t job,
         if (ORTE_PROC_MY_NAME->jobid != job) {
             if (ORTE_SUCCESS != (rc = relay_via_hnp(job, buffer, tag))) {
                 ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
             }
+            goto CLEANUP;
         }
         /* if it is my jobid, then we can just send this ourselves -
          * set the target tag
@@ -566,8 +565,8 @@ static int xcast_direct(orte_jobid_t job,
         if (ORTE_PROC_MY_NAME->jobid != job) {
             if (ORTE_SUCCESS != (rc = relay_via_hnp(job, buffer, tag))) {
                 ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
             }
+            goto CLEANUP;
         }
         /* if this is going to the daemon job to
          * someplace other than the daemon cmd processor, then I need to add
