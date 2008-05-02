@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,6 +26,7 @@ dist_amca_param_DATA = btl-openib-benchmark
 
 dist_pkgdata_DATA = \
         help-mpi-btl-openib.txt \
+        connect/help-mpi-btl-openib-cpc-base.txt \
         mca-btl-openib-hca-params.ini
 
 sources = \
@@ -49,20 +50,39 @@ sources = \
     btl_openib_async.h \
     btl_openib_xrc.c \
     btl_openib_xrc.h \
+    btl_openib_fd.h \
+    btl_openib_fd.c \
     connect/base.h \
     connect/btl_openib_connect_base.c \
     connect/btl_openib_connect_oob.c \
     connect/btl_openib_connect_oob.h \
-    connect/btl_openib_connect_rdma_cm.c \
-    connect/btl_openib_connect_rdma_cm.h \
-    connect/btl_openib_connect_ibcm.c \
-    connect/btl_openib_connect_ibcm.h \
+    connect/btl_openib_connect_empty.c \
+    connect/btl_openib_connect_empty.h \
     connect/connect.h
 
+# If we have XRC support, build that CPC
 if MCA_btl_openib_have_xrc
 sources += \
     connect/btl_openib_connect_xoob.c \
     connect/btl_openib_connect_xoob.h
+endif
+
+# If we have ibcm support, build that CPC
+if MCA_btl_openib_have_ibcm
+sources += \
+    connect/btl_openib_connect_ibcm.c \
+    connect/btl_openib_connect_ibcm.h
+
+dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-ibcm.txt
+endif
+
+# If we have rdmacm support, build that CPC
+if MCA_btl_openib_have_rdmacm
+sources += \
+    connect/btl_openib_connect_rdmacm.c \
+    connect/btl_openib_connect_rdmacm.h
+
+dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
 endif
 
 # Make the output library in this directory, and name it either

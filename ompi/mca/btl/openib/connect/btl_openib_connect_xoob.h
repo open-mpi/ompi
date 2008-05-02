@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -13,6 +14,6 @@
 
 #include "connect/connect.h"
 
-extern ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_xoob;
+extern ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_xoob;
 
 #endif

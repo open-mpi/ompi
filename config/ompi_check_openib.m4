@@ -28,6 +28,8 @@
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_OPENIB],[
+    OMPI_VAR_SCOPE_PUSH([$1_msg])
+
     AC_ARG_WITH([openib],
         [AC_HELP_STRING([--with-openib(=DIR)],
              [Build OpenFabrics support, searching for libraries in DIR])])
@@ -99,6 +101,12 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                                      [$ompi_cv_func_ibv_create_cq_args],
                                      [Number of arguments to ibv_create_cq])])])
 
+    # Set these up so that we can do an AC_DEFINE below
+    # (unconditionally)
+    $1_have_rdmacm=0
+    $1_have_ibcm=0
+
+    # If we have the openib stuff available, find out what we've got
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER], [], [], 
                           [#include <infiniband/verbs.h>])
@@ -110,7 +118,37 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
            AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
+
+           # Do we have a recent enough RDMA CM?  Need to have the
+           # rdma_get_peer_addr (inline) function (originally appeared
+           # in OFED v1.3).
+           AC_CHECK_HEADERS([rdma/rdma_cma.h],
+               [AC_CHECK_LIB([rdmacm], [rdma_create_id],
+                   [AC_MSG_CHECKING([for rdma_get_peer_addr])
+                    $1_msg=no
+                    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
+]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
+                                      [$1_have_rdmacm=1 
+                                       $1_msg=yes])
+                    AC_MSG_RESULT([$$1_msg])])])
+
+           if test "1" = "$$1_have_rdmacm"; then
+                $1_LIBS="-lrdmacm $$1_LIBS"
+           fi
+
+           # Do we have IB CM? (note that OFED IB CM depends on RDMA
+           # CM, so no need to add it into the other-libraries
+           # argument to AC_CHECK_ LIB).
+           AC_CHECK_HEADERS([infiniband/cm.h],
+               [AC_CHECK_LIB([ibcm], [ib_cm_create_id],
+                   [$1_have_ibcm=1
+                    $1_LIBS="-libcm $$1_LIBS"])])
           ])
+
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMACM], [$$1_have_rdmacm],
+        [Whether RDMA CM is available or not])
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_IBCM], [$$1_have_ibcm],
+        [Whether IB CM is available or not])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
@@ -123,5 +161,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                   AC_MSG_WARN([If you are using libibverbs v1.0 (i.e., OFED v1.0 or v1.1), you *MUST* have both the libsysfs headers and libraries installed.  Later versions of libibverbs do not require libsysfs.])
                   AC_MSG_ERROR([Aborting.])])
            $3])
+
+     OMPI_VAR_SCOPE_POP
 ])
 

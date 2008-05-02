@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -13,6 +13,6 @@
 
 #include "connect/connect.h"
 
-extern ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_oob;
+extern ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_oob;
 
 #endif

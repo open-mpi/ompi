@@ -56,6 +56,20 @@ BEGIN_C_DECLS
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
 
 
+/*--------------------------------------------------------------------*/
+
+#if OMPI_ENABLE_DEBUG
+#define ATTACH() do { \
+  int i = 0; \
+  opal_output(0, "WAITING TO DEBUG ATTACH"); \
+  while (i == 0) sleep(5); \
+  } while(0);
+#else
+#define ATTACH()
+#endif
+
+/*--------------------------------------------------------------------*/
+
 /**
  * Infiniband (IB) BTL component.
  */
@@ -224,37 +238,31 @@ OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
 
 typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t;
 
-struct mca_btl_openib_port_info {
-    uint32_t mtu;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t padding[4];
-#endif
+/**
+ * Common information for all ports that is sent in the modex message
+ */
+typedef struct mca_btl_openib_modex_message_t {
+    /** The subnet ID of this port */
     uint64_t subnet_id;
-    uint16_t lid; /* used only in xrc */
-    uint16_t apm_lid; /* the lid is used for APM to different port */
-    char *cpclist;
-};
-typedef struct mca_btl_openib_port_info mca_btl_openib_port_info_t;
+    /** LID of this port */
+    uint16_t lid;
+    /** APM LID for this port */
+    uint16_t apm_lid;
+    /** The MTU used by this port */
+    uint8_t mtu;
+    /** Dummy field used to calculate the real length */
+    uint8_t end;
+} mca_btl_openib_modex_message_t;
 
-#if HAVE_XRC
-#define MCA_BTL_OPENIB_LID_NTOH(hdr) (hdr).lid = ntohs((hdr).lid)
-#define MCA_BTL_OPENIB_LID_HTON(hdr) (hdr).lid = htons((hdr).lid)
-#else
-#define MCA_BTL_OPENIB_LID_NTOH(hdr)
-#define MCA_BTL_OPENIB_LID_HTON(hdr)
-#endif
-
-#define MCA_BTL_OPENIB_PORT_INFO_NTOH(hdr)     \
+#define MCA_BTL_OPENIB_MODEX_MSG_NTOH(hdr)     \
     do {                              \
-        (hdr).mtu = ntohl((hdr).mtu); \
         (hdr).subnet_id = ntoh64((hdr).subnet_id); \
-        MCA_BTL_OPENIB_LID_NTOH(hdr); \
+        (hdr).lid = ntohs((hdr).lid); \
     } while (0)
-#define MCA_BTL_OPENIB_PORT_INFO_HTON(hdr)     \
+#define MCA_BTL_OPENIB_MODEX_MSG_HTON(hdr)     \
     do {                              \
-        (hdr).mtu = htonl((hdr).mtu); \
         (hdr).subnet_id = hton64((hdr).subnet_id); \
-        MCA_BTL_OPENIB_LID_HTON(hdr); \
+        (hdr).lid = htons((hdr).lid); \
     } while (0)
 
 typedef struct mca_btl_openib_hca_qp_t {
@@ -328,9 +336,20 @@ struct mca_btl_openib_module_qp_t {
  * IB BTL Interface
  */
 struct mca_btl_openib_module_t {
-    mca_btl_base_module_t  super;      /**< base BTL interface */
+    /* Base BTL module */
+    mca_btl_base_module_t  super;
+
     bool btl_inited;
-    mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */
+
+    /** Common information about all ports */
+    mca_btl_openib_modex_message_t port_info;
+
+    /** Array of CPCs on this port */
+    ompi_btl_openib_connect_base_module_t **cpcs;
+
+    /** Number of elements in the cpcs array */
+    uint8_t num_cpcs;
+
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;                  /**< ID of the PORT */
     uint16_t pkey_index;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -15,21 +15,52 @@
 
 BEGIN_C_DECLS
 
-/**
- * Global variable with the selected function pointers in it
- */
-extern ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect;
-
 /*
  * Open function
  */
-int ompi_btl_openib_connect_base_open(void);
+int ompi_btl_openib_connect_base_register(void);
+
+/*
+ * Component-wide CPC init
+ */
+int ompi_btl_openib_connect_base_init(void);
+
+/*
+ * Query CPCs to see if they want to run on a specific module
+ */
+int ompi_btl_openib_connect_base_select_for_local_port
+    (mca_btl_openib_module_t *btl);
+
+/*
+ * Forward reference to avoid an include file loop
+ */
+struct mca_btl_openib_proc_modex_t;
 
 /*
  * Select function
  */
-int ompi_btl_openib_connect_base_select(char*, char*);
-int ompi_btl_openib_connect_base_query(char**, mca_btl_openib_hca_t*);
+int ompi_btl_openib_connect_base_find_match
+    (mca_btl_openib_module_t *btl,
+     struct mca_btl_openib_proc_modex_t *peer_port,
+     ompi_btl_openib_connect_base_module_t **local_cpc,
+     ompi_btl_openib_connect_base_module_data_t **remote_cpc_data);
+
+/*
+ * Find a CPC's index so that we can send it in the modex
+ */
+int ompi_btl_openib_connect_base_get_cpc_index
+    (ompi_btl_openib_connect_base_component_t *cpc);
+
+/*
+ * Lookup a CPC by its index (received from the modex)
+ */
+ompi_btl_openib_connect_base_component_t *
+    ompi_btl_openib_connect_base_get_cpc_byindex(uint8_t index);
+
+/*
+ * Component-wide CPC finalize
+ */
+void ompi_btl_openib_connect_base_finalize(void);
 
 END_C_DECLS
 

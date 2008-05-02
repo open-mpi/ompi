@@ -22,13 +22,14 @@
 
 #include "ompi_config.h"
 
+#include "opal/dss/dss.h"
+#include "opal/util/output.h"
+#include "opal/util/error.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "opal/dss/dss.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-
 #include "ompi/mca/dpm/dpm.h"
 
 #include "btl_openib.h"
@@ -43,13 +44,15 @@ typedef enum {
 } connect_message_type_t;
 
 static int oob_priority = 50;
+static bool rml_recv_posted = false;
 
-static void oob_open(void);
-static int oob_init(void);
-static int oob_start_connect(mca_btl_base_endpoint_t *e);
-static int oob_query(mca_btl_openib_hca_t *hca);
-static int oob_finalize(void);
+static void oob_component_register(void);
+static int oob_component_query(mca_btl_openib_module_t *openib_btl, 
+                               ompi_btl_openib_connect_base_module_t **cpc);
+static int oob_component_finalize(void);
 
+static int oob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
+                                    mca_btl_base_endpoint_t *endpoint);
 static int reply_start_connect(mca_btl_openib_endpoint_t *endpoint,
                                mca_btl_openib_rem_info_t *rem_info);
 static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
@@ -69,25 +72,23 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                         void* cbdata);
 
 /*
- * The "module" struct -- the top-level function pointers for the oob
- * connection scheme.
+ * The "component" struct -- the top-level function pointers for the
+ * oob connection scheme.
  */
-ompi_btl_openib_connect_base_funcs_t ompi_btl_openib_connect_oob = {
+ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_oob = {
     "oob",
-    /* Open */
-    oob_open,
+    /* Register */
+    oob_component_register,
     /* Init */
-    oob_init,
-    /* Connect */
-    oob_start_connect,
+    NULL,
     /* Query */
-    oob_query,
+    oob_component_query,
     /* Finalize */
-    oob_finalize,
+    oob_component_finalize
 };
 
 /* Open - this functions sets up any oob specific commandline params */
-static void oob_open(void)
+static void oob_component_register(void)
 {
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
                            "connect_oob_priority",
@@ -105,16 +106,64 @@ static void oob_open(void)
  * Init function.  Post non-blocking RML receive to accept incoming
  * connection requests.
  */
-static int oob_init(void)
+static int oob_component_query(mca_btl_openib_module_t *btl, 
+                               ompi_btl_openib_connect_base_module_t **cpc)
 {
     int rc;
 
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
-                                 OMPI_RML_TAG_OPENIB,
-                                 ORTE_RML_PERSISTENT,
-                                 rml_recv_cb,
-                                 NULL);
-    return (ORTE_SUCCESS == rc) ? OMPI_SUCCESS : rc;
+    /* If we have the transport_type member, check to ensure we're on
+       IB (this CPC will not work with iWarp).  If we do not have the
+       transport_type member, then we must be < OFED v1.2, and
+       therefore we must be IB. */   
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+    if (IBV_TRANSPORT_IB != btl->hca->ib_dev->transport_type) {
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: oob CPC only supported on InfiniBand; skipped on device %s",
+                            ibv_get_device_name(btl->hca->ib_dev));
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+#endif
+
+    /* If this btl supports OOB, then post the RML message.  But
+       ensure to only post it *once*, because another btl may have
+       come in before this and already posted it. */
+    if (!rml_recv_posted) {
+        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
+                                     OMPI_RML_TAG_OPENIB,
+                                     ORTE_RML_PERSISTENT,
+                                     rml_recv_cb,
+                                     NULL);
+        if (ORTE_SUCCESS != rc) {
+            opal_output_verbose(5, mca_btl_base_output,
+                                "openib BTL: oob CPC system error %d (%s)",
+                                rc, opal_strerror(rc));
+            return rc;
+        }
+        rml_recv_posted = true;
+    }
+
+    *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));
+    if (NULL == *cpc) {
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
+        rml_recv_posted = false;
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: oob CPC system error (malloc failed)");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    (*cpc)->data.cbm_component = &ompi_btl_openib_connect_oob;
+    (*cpc)->data.cbm_priority = oob_priority;
+    (*cpc)->data.cbm_modex_message = NULL;
+    (*cpc)->data.cbm_modex_message_len = 0;
+
+    (*cpc)->cbm_endpoint_init = NULL;
+    (*cpc)->cbm_start_connect = oob_module_start_connect;
+    (*cpc)->cbm_endpoint_finalize = NULL;
+    (*cpc)->cbm_finalize = NULL;
+
+    opal_output_verbose(5, mca_btl_base_output,
+                        "openib BTL: oob CPC available for use on %s",
+                        ibv_get_device_name(btl->hca->ib_dev));
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -123,10 +172,11 @@ static int oob_init(void)
  * communication mechanism.  On completion of our send, a send
  * completion handler is called.
  */
-static int oob_start_connect(mca_btl_base_endpoint_t *endpoint)
+static int oob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
+                                    mca_btl_base_endpoint_t *endpoint)
 {
     int rc;
-   
+
     if (OMPI_SUCCESS != (rc = qp_create_all(endpoint))) {
         return rc;
     }
@@ -142,26 +192,16 @@ static int oob_start_connect(mca_btl_base_endpoint_t *endpoint)
     return OMPI_SUCCESS;
 }
 
-static int oob_query(mca_btl_openib_hca_t *hca)
+/*
+ * Component finalize function.  Cleanup RML non-blocking receive.
+ */
+static int oob_component_finalize(void)
 {
-    /* JMS need something better than this */
-#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-    if (IBV_TRANSPORT_IB == hca->ib_dev->transport_type) {
-        return oob_priority;
+    if (rml_recv_posted) {
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
+        rml_recv_posted = false;
     }
 
-    return -1;
-#else
-    return oob_priority;
-#endif
-}
-
-/*
- * Finalize function.  Cleanup RML non-blocking receive.
- */
-static int oob_finalize(void)
-{
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
     return OMPI_SUCCESS;
 }
 
@@ -705,7 +745,8 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             if (master) {
                 rc = reply_start_connect(ib_endpoint, &rem_info);
             } else {
-                rc = oob_start_connect(ib_endpoint);
+                rc = oob_module_start_connect(ib_endpoint->endpoint_local_cpc, 
+                                              ib_endpoint);
             }
             
             if (OMPI_SUCCESS != rc) {

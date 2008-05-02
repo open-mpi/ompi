@@ -66,6 +66,7 @@
 #include "btl_openib_ini.h"
 #include "btl_openib_mca.h"
 #include "btl_openib_xrc.h"
+#include "btl_openib_fd.h"
 #if OMPI_HAVE_THREADS
 #include "btl_openib_async.h"
 #endif
@@ -145,84 +146,161 @@ int btl_openib_component_open(void)
 
 static int btl_openib_component_close(void)
 {
-    /* Close down the connect pseudo component */
-    if (NULL != ompi_btl_openib_connect.bcf_finalize) {
-        ompi_btl_openib_connect.bcf_finalize();
-    }
-
+    ompi_btl_openib_connect_base_finalize();
+    ompi_btl_openib_fd_finalize();
     ompi_btl_openib_ini_finalize();
     return OMPI_SUCCESS;
 }
 
+static void inline pack8(char **dest, uint8_t value)
+{
+    /* Copy one character */
+    **dest = (char) value;
+    /* Most the dest ahead one */
+    ++*dest;
+}
+
 /*
- *  Register OPENIB  port information. The MCA framework
- *  will make this available to all peers.
+ *  Register local openib port information with the modex so that it
+ *  can be shared with all other peers.
  */
 static int btl_openib_modex_send(void)
 {
-    int    rc, i;
+    int rc, i, j;
+    int modex_message_size;
+    mca_btl_openib_modex_message_t dummy;
     char *message, *offset;
-    uint32_t size, size_save;
-    size_t msg_size;
+    size_t size, msg_size;
+    ompi_btl_openib_connect_base_module_t *cpc;
 
-    /* The message is packed into 2 parts:
-     * 1. a uint32_t indicating the number of ports in the message
-     * 2. for each port:
-     *    a. the port data
-     *    b. a uint32_t indicating a string length
-     *    c. the string cpc list for that port, length specified by 2b.
-     */
-    msg_size = sizeof(uint32_t) + mca_btl_openib_component.ib_num_btls * (sizeof(uint32_t) + sizeof(mca_btl_openib_port_info_t));
-    for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        msg_size += strlen(mca_btl_openib_component.openib_btls[i]->port_info.cpclist);
-    }
-
-    if (0 == msg_size) {
+    opal_output(-1, "Starting to modex send");
+    if (0 == mca_btl_openib_component.ib_num_btls) {
         return 0;
     }
+    modex_message_size = ((char *) &(dummy.end)) - ((char*) &dummy);
 
+    /* The message is packed into multiple parts:
+     * 1. a uint8_t indicating the number of modules (ports) in the message
+     * 2. for each module:
+     *    a. the common module data
+     *    b. a uint8_t indicating how many CPCs follow
+     *    c. for each CPC:
+     *       a. a uint8_t indicating the index of the CPC in the all[]
+     *          array in btl_openib_connect_base.c
+     *       b. a uint8_t indicating the priority of this CPC
+     *       c. a uint8_t indicating the length of the blob to follow
+     *       d. a blob that is only meaningful to that CPC
+     */
+    msg_size = 
+        /* uint8_t for number of modules in the message */
+        1 +
+        /* For each module: */
+        mca_btl_openib_component.ib_num_btls * 
+        (
+         /* Common module data */
+         modex_message_size + 
+         /* uint8_t for how many CPCs follow */
+         1
+         );
+    /* For each module, add in the size of the per-CPC data */
+    for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        for (j = 0; 
+             j < mca_btl_openib_component.openib_btls[i]->num_cpcs;
+             ++j) {
+            msg_size += 
+                /* uint8_t for the index of the CPC */
+                1 +
+                /* uint8_t for the CPC's priority */
+                1 + 
+                /* uint8_t for the blob length */
+                1 +
+                /* blob length */
+                mca_btl_openib_component.openib_btls[i]->cpcs[j]->data.cbm_modex_message_len;
+        }
+    }
     message = malloc(msg_size);
     if (NULL == message) {
-        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        BTL_ERROR(("Failed malloc"));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Pack the number of ports */
-    size = mca_btl_openib_component.ib_num_btls;
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    size = htonl(size);
-#endif
-    memcpy(message, &size, sizeof(size));
-    offset = message + sizeof(size);
+    /* Pack the number of modules */
+    offset = message;
+    pack8(&offset, mca_btl_openib_component.ib_num_btls);
+    opal_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_num_btls, *((uint8_t*) message), (int) (offset - message));
 
-    /* Pack each of the ports */
+    /* Pack each of the modules */
     for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        /* Pack the port struct */
-        memcpy(offset, &mca_btl_openib_component.openib_btls[i]->port_info, sizeof(mca_btl_openib_port_info_t));
-#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        MCA_BTL_OPENIB_PORT_INFO_HTON(*(mca_btl_openib_port_info_t *)offset);
-#endif
-        offset += sizeof(mca_btl_openib_port_info_t);
 
-        /* Pack the strlen of the cpclist */
-        size = size_save =
-            strlen(mca_btl_openib_component.openib_btls[i]->port_info.cpclist);
+        /* Pack the modex common message struct.  */
+        size = modex_message_size;
+        memcpy(offset, 
+               &(mca_btl_openib_component.openib_btls[i]->port_info), 
+               size);
+        opal_output(-1, "modex packed btl port modex message: %lx, %d, %d (size: %d)",
+                    mca_btl_openib_component.openib_btls[i]->port_info.subnet_id,
+                    mca_btl_openib_component.openib_btls[i]->port_info.mtu,
+                    mca_btl_openib_component.openib_btls[i]->port_info.lid,
+                    (int) size);
+                    
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        size = htonl(size);
+        MCA_BTL_OPENIB_MODEX_MSG_HTON(*(mca_btl_openib_modex_message_t *)offset);
 #endif
-        memcpy(offset, &size, sizeof(size));
-        offset += sizeof(size);
+        offset += size;
+        opal_output(-1, "modex packed btl %d: modex message, offset now %d",
+                    i, (int) (offset -message));
 
-        /* Pack the string */
-        memcpy(offset,
-               mca_btl_openib_component.openib_btls[i]->port_info.cpclist,
-               size_save);
-        offset += size_save;
+        /* Pack the number of CPCs that follow */
+        pack8(&offset, 
+              mca_btl_openib_component.openib_btls[i]->num_cpcs);
+        opal_output(-1, "modex packed btl %d: to pack %d cpcs (packed: %d, offset now %d)",
+                    i, mca_btl_openib_component.openib_btls[i]->num_cpcs,
+                    *((uint8_t*) (offset - 1)), (int) (offset-message));
+
+        /* Pack each CPC */
+        for (j = 0; 
+             j < mca_btl_openib_component.openib_btls[i]->num_cpcs;
+             ++j) {
+            uint8_t u8;
+
+            cpc = mca_btl_openib_component.openib_btls[i]->cpcs[j];
+            opal_output(-1, "modex packed btl %d: packing cpc %s", 
+                        i, cpc->data.cbm_component->cbc_name);
+            /* Pack the CPC index */
+            u8 = ompi_btl_openib_connect_base_get_cpc_index(cpc->data.cbm_component);
+            pack8(&offset, u8);
+            opal_output(-1, "packing btl %d: cpc %d: index %d (packed %d, offset now %d)",
+                        i, j, u8, *((uint8_t*) (offset-1)), (int)(offset-message));
+            /* Pack the CPC priority */
+            pack8(&offset, cpc->data.cbm_priority);
+            opal_output(-1, "packing btl %d: cpc %d: priority %d (packed %d, offset now %d)",
+                        i, j, cpc->data.cbm_priority, *((uint8_t*) (offset-1)), (int)(offset-message));
+            /* Pack the blob length */
+            u8 = cpc->data.cbm_modex_message_len;
+            pack8(&offset, u8);
+            opal_output(-1, "packing btl %d: cpc %d: message len %d (packed %d, offset now %d)",
+                        i, j, u8, *((uint8_t*) (offset-1)), (int)(offset-message));
+            /* If the blob length is > 0, pack the blob */
+            if (u8 > 0) {
+                memcpy(offset, cpc->data.cbm_modex_message, u8);
+                offset += u8;
+                opal_output(-1, "packing btl %d: cpc %d: blob packed %d %x (offset now %d)",
+                            i, j,
+                            ((uint32_t*)cpc->data.cbm_modex_message)[0],
+                            ((uint32_t*)cpc->data.cbm_modex_message)[1],
+                            (int)(offset-message));
+            }
+
+            /* Sanity check */
+            assert((size_t) (offset - message) <= msg_size);
+        }
     }
 
+    /* All done -- send it! */
     rc = ompi_modex_send(&mca_btl_openib_component.super.btl_version,
                          message, msg_size);
     free(message);
+    opal_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));
 
     return rc;
 }
@@ -253,7 +331,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
 
-       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n",
+       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u",
                   rdma_hdr->rkey,
                   (unsigned long) rdma_hdr->rdma_start.lval,
                   rdma_hdr->rdma_start.pval,
@@ -265,7 +343,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
        }
 
        BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p,"
-                   " ival %u\n", rdma_hdr->rkey,
+                   " ival %u", rdma_hdr->rkey,
                    (unsigned long) rdma_hdr->rdma_start.lval,
                   rdma_hdr->rdma_start.pval, rdma_hdr->rdma_start.ival));
 
@@ -330,7 +408,7 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
 
     if(openib_reg->mr != NULL) {
         if(ibv_dereg_mr(openib_reg->mr)) {
-            BTL_ERROR(("%s: error unpinning openib memory errno says %s\n",
+            BTL_ERROR(("%s: error unpinning openib memory errno says %s",
                        __func__, strerror(errno)));
             return OMPI_ERROR;
         }
@@ -382,8 +460,21 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     uint64_t subnet_id;
 
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
+
+    /* If we have struct ibv_device.transport_type, then we're >= OFED
+       v1.2, and it could be iWarp of IB.  If we don't have that
+       member, then we're < OFED v1.2, and it can only be IB. */
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+    if (IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
+        subnet_id = 0;
+    } else {
+        subnet_id = ntoh64(gid.global.subnet_prefix);
+    }
+#else
     subnet_id = ntoh64(gid.global.subnet_prefix);
-    BTL_VERBOSE(("my subnet_id is %016x\n", subnet_id));
+#endif
+
+    BTL_VERBOSE(("my subnet_id is %016x", subnet_id));
 
     if(mca_btl_openib_component.ib_num_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
@@ -401,7 +492,10 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     }
 
 #if OMPI_HAVE_THREADS
-    /* APM support */
+    /* APM support -- only meaningful if async event support is
+       enabled.  If async events are not enabled, then there's nothing
+       to listen for the APM event to load the new path, so it's not
+       worth enabling APM.  */
     if (lmc > 1){
         if (-1 == mca_btl_openib_component.apm_lmc) {
             lmc_step = lmc;
@@ -430,7 +524,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
 
             openib_btl = malloc(sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
-                BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+                BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
             memcpy(openib_btl, &mca_btl_openib_module,
@@ -445,15 +539,22 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->lid = lid;
             openib_btl->apm_port = 0;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
-            /* store the subnet for multi-nic support */
+
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
-            /* This code is protected with ifdef because we don't want to send
-             * extra bytes during OOB */
             openib_btl->port_info.lid = lid;
-            rc = ompi_btl_openib_connect_base_query(&openib_btl->port_info.cpclist, hca);
-            if (OMPI_SUCCESS != rc) {
+
+            openib_btl->cpcs = NULL;
+            openib_btl->num_cpcs = 0;
+
+            /* Do we have at least one CPC that can handle this
+               port? */
+            rc = 
+                ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
+            if (OMPI_ERR_NOT_SUPPORTED == rc) {
                 continue;
+            } else if (OMPI_SUCCESS != rc) {
+                return rc;
             }
 
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
@@ -569,7 +670,7 @@ static void hca_construct(mca_btl_openib_hca_t *hca)
     hca->ib_dev_context = NULL;
     hca->ib_pd = NULL;
     hca->mpool = NULL;
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS
     hca->ib_channel = NULL;
 #endif
     hca->btls = 0;
@@ -658,7 +759,7 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
             calloc(mca_btl_openib_component.max_eager_rdma * hca->btls,
                     sizeof(mca_btl_openib_endpoint_t*));
         if(NULL == hca->eager_rdma_buffers) {
-            BTL_ERROR(("Memory allocation fails\n"));
+            BTL_ERROR(("Memory allocation fails"));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
@@ -895,26 +996,27 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     hca = OBJ_NEW(mca_btl_openib_hca_t);
     if(NULL == hca){
-        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     hca->ib_dev = ib_dev;
     hca->ib_dev_context = ibv_open_device(ib_dev);
+    hca->ib_pd = NULL;
     hca->hca_btls = OBJ_NEW(opal_pointer_array_t);
     if (OPAL_SUCCESS != opal_pointer_array_init(hca->hca_btls, 2, INT_MAX, 2)) {
-        BTL_ERROR(("Failed to initialize hca_btls array: %s:%d\n", __FILE__, __LINE__));
+        BTL_ERROR(("Failed to initialize hca_btls array: %s:%d", __FILE__, __LINE__));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if(NULL == hca->ib_dev_context){
-        BTL_ERROR(("error obtaining device context for %s errno says %s\n",
+        BTL_ERROR(("error obtaining device context for %s errno says %s",
                     ibv_get_device_name(ib_dev), strerror(errno)));
         goto error;
     }
 
     if(ibv_query_device(hca->ib_dev_context, &hca->ib_dev_attr)){
-        BTL_ERROR(("error obtaining device attributes for %s errno says %s\n",
+        BTL_ERROR(("error obtaining device attributes for %s errno says %s",
                     ibv_get_device_name(ib_dev), strerror(errno)));
         goto error;
     }
@@ -991,7 +1093,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
             hca->mtu = IBV_MTU_4096;
             break;
         default:
-            BTL_ERROR(("invalid MTU value specified in INI file (%d); ignored\n", values.mtu));
+            BTL_ERROR(("invalid MTU value specified in INI file (%d); ignored", values.mtu));
             hca->mtu = mca_btl_openib_component.ib_mtu;
             break;
         }
@@ -1007,7 +1109,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* Allocate the protection domain for the HCA */
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
     if(NULL == hca->ib_pd){
-        BTL_ERROR(("error allocating protection domain for %s errno says %s\n",
+        BTL_ERROR(("error allocating protection domain for %s errno says %s",
                     ibv_get_device_name(ib_dev), strerror(errno)));
         goto error;
     }
@@ -1029,15 +1131,15 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
                 hca, &mpool_resources);
     if(NULL == hca->mpool){
-         BTL_ERROR(("error creating IB memory pool for %s errno says %s\n",
+         BTL_ERROR(("error creating IB memory pool for %s errno says %s",
                      ibv_get_device_name(ib_dev), strerror(errno)));
          goto error;
     }
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS
     hca->ib_channel = ibv_create_comp_channel(hca->ib_dev_context);
     if (NULL == hca->ib_channel) {
-        BTL_ERROR(("error creating channel for %s errno says %s\n",
+        BTL_ERROR(("error creating channel for %s errno says %s",
                     ibv_get_device_name(hca->ib_dev),
                     strerror(errno)));
         goto error;
@@ -1100,7 +1202,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
 error:
-#if defined(OMPI_HAVE_THREADS) && OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS
     if (hca->ib_channel) {
         ibv_destroy_comp_channel(hca->ib_channel);
     }
@@ -1191,7 +1293,7 @@ static struct ibv_device **ibv_get_device_list_compat(int *num_devs)
     ib_devs = (struct ibv_device**)malloc(*num_devs * sizeof(struct ibv_dev*));
     if(NULL == ib_devs) {
         *num_devs = 0;
-        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
         return NULL;
     }
 
@@ -1335,8 +1437,13 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
     }
+    
+    /* Init CPC components */
+    if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
+        goto no_btls;
+    }
 
-    if(MCA_BTL_XRC_ENABLED) {
+    if (MCA_BTL_XRC_ENABLED) {
         OBJ_CONSTRUCT(&mca_btl_openib_component.ib_addr_table,
                 opal_hash_table_t);
     }
@@ -1435,6 +1542,11 @@ btl_openib_component_init(int *num_btl_modules,
             opal_argv_copy(mca_btl_openib_component.if_exclude_list);
     }
 
+    /* Initialize FD listening */
+    if (OMPI_SUCCESS != ompi_btl_openib_fd_init()) {
+        goto no_btls;
+    }
+
     ib_devs = ibv_get_device_list_compat(&num_devs);
 
     if(0 == num_devs || NULL == ib_devs) {
@@ -1499,14 +1611,14 @@ btl_openib_component_init(int *num_btl_modules,
         malloc(sizeof(mca_btl_openib_module_t*) *
                 mca_btl_openib_component.ib_num_btls);
     if(NULL == mca_btl_openib_component.openib_btls) {
-        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
         return NULL;
     }
     btls = (struct mca_btl_base_module_t **)
         malloc(mca_btl_openib_component.ib_num_btls *
                sizeof(struct mca_btl_base_module_t*));
     if(NULL == btls) {
-        BTL_ERROR(("Failed malloc: %s:%d\n", __FILE__, __LINE__));
+        BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
         return NULL;
     }
 
@@ -1542,8 +1654,11 @@ btl_openib_component_init(int *num_btl_modules,
     /* If we fail early enough in the setup, we just modex around that
        there are no openib BTL's in this process and return NULL. */
 
-    if (MCA_BTL_XRC_ENABLED)
+    if (MCA_BTL_XRC_ENABLED) {
         OBJ_DESTRUCT(&mca_btl_openib_component.ib_addr_table);
+    }
+    /* Be sure to shut down the fd listener */
+    ompi_btl_openib_fd_finalize();
 
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();
@@ -1997,12 +2112,12 @@ static int poll_hca(mca_btl_openib_hca_t* hca, int count)
 
     return count;
 error:
-    BTL_ERROR(("error polling %s with %d errno says %s\n", cq_name[cq], ne,
+    BTL_ERROR(("error polling %s with %d errno says %s", cq_name[cq], ne,
                 strerror(errno)));
     return count;
 }
 
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS
 void* mca_btl_openib_progress_thread(opal_object_t* arg)
 {
     opal_thread_t* thread = (opal_thread_t*)arg;
@@ -2014,7 +2129,7 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
 
-    opal_output(0, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
+    opal_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
 
     while (hca->progress) {
         while(opal_progress_threads()) {

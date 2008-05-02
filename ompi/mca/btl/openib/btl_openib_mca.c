@@ -69,7 +69,7 @@ static inline int reg_string(const char* param_name, const char* param_desc,
                               default_value, &value);
 
     if (0 != (flags & REGSTR_EMPTY_OK) && 0 == strlen(value)) {
-        opal_output(0, "Bad parameter value for parameter \"%s\"\n",
+        opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OMPI_ERR_BAD_PARAM;
     }
@@ -96,7 +96,7 @@ static inline int reg_int(const char* param_name, const char* param_desc,
     if ((0 != (flags & REGINT_GE_ZERO) && value < 0) ||
         (0 != (flags & REGINT_GE_ONE) && value < 1) ||
         (0 != (flags & REGINT_NONZERO) && 0 == value)) {
-        opal_output(0, "Bad parameter value for parameter \"%s\"\n",
+        opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OMPI_ERR_BAD_PARAM;
     }
@@ -412,6 +412,15 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.apm_ports = (uint32_t) ival;
 
+    CHECK(reg_int("enable_apm_over_lmc", "Maximum number of alterative paths for each HCA port "
+                  "(must be >= -1, where 0 = disable apm, -1 = all availible alternative paths )",
+                  0, &ival, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
+    mca_btl_openib_component.apm_lmc = (uint32_t) ival;
+    CHECK(reg_int("enable_apm_over_ports", "Enable alterative path migration over different ports of the same HCA"
+                  "(must be >= 0, where 0 = disable apm over ports , 1 = enable apm over ports of the same hca )",
+                  0, &ival, REGINT_GE_ZERO));
+    mca_btl_openib_component.apm_ports = (uint32_t) ival;
+
     CHECK(reg_int("use_async_event_thread",
                 "If nonzero, use the thread that will handle InfiniBand asyncihronous events ",
                 1, &ival, 0));
@@ -610,7 +619,7 @@ static int mca_btl_openib_mca_setup_qps(void)
             rd_win = atoi_param(P(4), (rd_num - rd_low) * 2);
             rd_rsv = atoi_param(P(5), (rd_num * 2) / rd_win);
 
-            BTL_VERBOSE(("pp: rd_num is %d rd_low is %d rd_win %d rd_rsv %d\n",
+            BTL_VERBOSE(("pp: rd_num is %d rd_low is %d rd_win %d rd_rsv %d",
                          rd_num, rd_low, rd_win, rd_rsv));
 
             /* Calculate the smallest freelist size that can be allowed */
@@ -637,7 +646,7 @@ static int mca_btl_openib_mca_setup_qps(void)
             /* by default set rd_low to be 3/4 of rd_num */
             rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
             sd_max = atoi_param(P(4), rd_low / 4);
-            BTL_VERBOSE(("srq: rd_num is %d rd_low is %d sd_max is %d\n",
+            BTL_VERBOSE(("srq: rd_num is %d rd_low is %d sd_max is %d",
                          rd_num, rd_low, sd_max));
 
             /* Calculate the smallest freelist size that can be allowed */
@@ -682,7 +691,7 @@ static int mca_btl_openib_mca_setup_qps(void)
                        orte_process_info.nodename, max_qp_size,
                        max_size_needed);
         opal_output(0, "The biggest QP size is bigger than maximum send size. "
-                "This is not optimal configuration as memory will be waisted.\n");
+                "This is not optimal configuration as memory will be wasted.");
     }
 
     if (mca_btl_openib_component.ib_free_list_max > 0 &&
@@ -698,7 +707,7 @@ static int mca_btl_openib_mca_setup_qps(void)
     mca_btl_openib_component.credits_qp = smallest_pp_qp;
 
     /* Register any MCA params for the connect pseudo-components */
-    if (OMPI_SUCCESS != ompi_btl_openib_connect_base_open())
+    if (OMPI_SUCCESS != ompi_btl_openib_connect_base_register())
         goto error;
 
     ret = OMPI_SUCCESS;
