@@ -81,6 +81,7 @@ struct rdmacm_endpoint_local_cpc_data {
 
 struct id_contexts {
     struct rdmacm_contents *local;
+    mca_btl_openib_endpoint_t *endpoint;
     uint8_t qpnum;
 };
 
@@ -91,6 +92,7 @@ struct list_item {
 
 struct conn_message {
     uint32_t rem_index; 
+    uint16_t rem_port;
     uint8_t qpnum;
 };
 
@@ -194,7 +196,7 @@ static void rdmacm_component_register(void)
     }
 }
 
-static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *local, struct rdma_cm_id *id)
+static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *local, struct rdma_cm_id *id, uint16_t rem_port)
 {
     int i;
     mca_btl_openib_endpoint_t *ep = NULL;
@@ -211,9 +213,10 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *l
 
         message = ib_endpoint->endpoint_remote_cpc_data->cbm_modex_message;
 
-        BTL_VERBOSE(("message ipaddr = %x, rdma_get_peer_addr = %x",
-                     message->ipaddr, ((struct sockaddr_in *)rdma_get_peer_addr(id))->sin_addr.s_addr));
-        if (message->ipaddr == ((struct sockaddr_in *)rdma_get_peer_addr(id))->sin_addr.s_addr) { 
+        BTL_VERBOSE(("message ipaddr = %x port %d, rdma_get_peer_addr = %x",
+                     message->ipaddr, message->port, ((struct sockaddr_in *)rdma_get_peer_addr(id))->sin_addr.s_addr));
+        if (message->ipaddr == ((struct sockaddr_in *)rdma_get_peer_addr(id))->sin_addr.s_addr &&
+            message->port == rem_port) { 
             ep = ib_endpoint;
             break;
         }
@@ -378,6 +381,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
     OPAL_THREAD_LOCK(endpoint_state_lock);
 
     BTL_VERBOSE(("remote ip addr = %x, port = %d  ep state = %d", message->ipaddr, message->port, endpoint->endpoint_state));
+    BTL_VERBOSE(("%p local message = %x %d", endpoint->endpoint_local_cpc->data.cbm_modex_message, ((struct message *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->ipaddr, ((struct message *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->port));
 
     if (MCA_BTL_IB_CONNECTED == endpoint->endpoint_state ||
         MCA_BTL_IB_CONNECTING == endpoint->endpoint_state ||
@@ -398,6 +402,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
     client->openib_btl = endpoint->endpoint_btl;
     client->endpoint = endpoint;
     client->server = false;
+    client->port = ((struct message *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->port;
 
     rc = rdma_client_connect(client, message);
     if (0 != rc) {
@@ -419,10 +424,12 @@ static int handle_connect_request(struct rdmacm_contents *local, struct rdma_cm_
     mca_btl_openib_endpoint_t *endpoint;
     opal_mutex_t *endpoint_state_lock;
     struct conn_message msg;
+    uint16_t rem_port;
 
     qpnum = ((struct conn_message *)event->param.conn.private_data)->qpnum;
+    rem_port = ((struct conn_message *)event->param.conn.private_data)->rem_port;
 
-    endpoint = rdmacm_find_endpoint(local, event->id);
+    endpoint = rdmacm_find_endpoint(local, event->id, rem_port);
     if (NULL == endpoint) {
         BTL_ERROR(("Failed to find endpoint"));
         return -1;
@@ -433,7 +440,7 @@ static int handle_connect_request(struct rdmacm_contents *local, struct rdma_cm_
 
     message = endpoint->endpoint_remote_cpc_data->cbm_modex_message;
 
-    BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x", endpoint->endpoint_state, local->ipaddr, message->ipaddr));
+    BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x port %d", endpoint->endpoint_state, local->ipaddr, message->ipaddr, ((struct conn_message *)event->param.conn.private_data)->rem_port));
 
     /* See if a race is occurring between the two sides attempting to connect to each other at the same time */
     if (local->ipaddr > message->ipaddr) {
@@ -449,7 +456,6 @@ static int handle_connect_request(struct rdmacm_contents *local, struct rdma_cm_
         }
 
         if (0 == qpnum) {
-        //if (0 == qpnum && endpoint->endpoint_state == MCA_BTL_IB_CLOSED) {
             rdmacm_module_start_connect(NULL, endpoint);
         }
 
@@ -497,6 +503,7 @@ static int handle_connect_request(struct rdmacm_contents *local, struct rdma_cm_
 
     ((struct id_contexts *)event->id->context)->local = local;
     ((struct id_contexts *)event->id->context)->qpnum = qpnum;
+    ((struct id_contexts *)event->id->context)->endpoint = endpoint;
 
     rc = rdma_accept(event->id, &conn_param);
     if (0 != rc) {
@@ -608,7 +615,7 @@ static int rdmacm_connect_endpoint(struct rdmacm_contents *local, struct rdma_cm
     mca_btl_openib_endpoint_t *endpoint;
 
     if (local->server)
-        endpoint = rdmacm_find_endpoint(local, event->id);
+        endpoint = ((struct id_contexts *)event->id->context)->endpoint;
     else {
         int rc;
 
@@ -764,8 +771,9 @@ static int finish_connect(struct rdmacm_contents *local, int num)
 
     msg.qpnum = num;
     msg.rem_index = local->endpoint->index;
+    msg.rem_port = local->port;
 
-    BTL_VERBOSE(("Connecting from %x to %x", ((struct sockaddr_in *)rdma_get_local_addr(local->id[num]))->sin_addr.s_addr, ((struct sockaddr_in *)rdma_get_peer_addr(local->id[num]))->sin_addr.s_addr));
+    BTL_VERBOSE(("Connecting from %x, port %d to %x", ((struct sockaddr_in *)rdma_get_local_addr(local->id[num]))->sin_addr.s_addr, msg.rem_port, ((struct sockaddr_in *)rdma_get_peer_addr(local->id[num]))->sin_addr.s_addr));
 
     /* connect via rdma_connect() */
     rc = rdma_connect(local->id[num], &conn_param);
@@ -808,7 +816,6 @@ static int rdma_event_handler(struct rdma_cm_event *event)
 
     case RDMA_CM_EVENT_ROUTE_RESOLVED:
         local->ipaddr = ((struct sockaddr_in *)rdma_get_local_addr(event->id))->sin_addr.s_addr;
-        local->port = 0;
         rc = finish_connect(local, qpnum);
         break;
 
