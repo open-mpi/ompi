@@ -697,10 +697,6 @@ static int create_dummy_qp(struct rdmacm_contents *local, struct rdma_cm_id *id,
     struct ibv_qp_init_attr attr;
     struct ibv_qp *qp;
 
-    if (qpnum != 0) {
-        return -1;
-    }
-
     /* create the qp via rdma_create_qp() */
     memset(&attr, 0, sizeof(attr));
     attr.qp_type = IBV_QPT_RC;
