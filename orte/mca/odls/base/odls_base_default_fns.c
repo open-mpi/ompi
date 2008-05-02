@@ -1938,9 +1938,6 @@ static bool all_children_participated(orte_jobid_t job)
     
 }
 
-static opal_buffer_t *collection_bucket=NULL;
-static orte_grpcomm_coll_t collective_type;
-
 int orte_odls_base_default_collect_data(orte_process_name_t *proc,
                                         opal_buffer_t *buf)
 {
@@ -1998,20 +1995,38 @@ int orte_odls_base_default_collect_data(orte_process_name_t *proc,
         opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
     }
    
+    /* find the jobdat for this job */
+    jobdat = NULL;
+    for (item = opal_list_get_first(&orte_odls_globals.jobs);
+         item != opal_list_get_end(&orte_odls_globals.jobs);
+         item = opal_list_get_next(item)) {
+        jobdat = (orte_odls_job_t*)item;
+        
+        /* is this the specified job? */
+        if (jobdat->jobid == proc->jobid) {
+            break;
+        }
+    }
+    if (NULL == jobdat) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        rc = ORTE_ERR_NOT_FOUND;
+        goto CLEANUP;
+    }
+    
     /* unpack the collective type */
     n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &collective_type, &n, ORTE_GRPCOMM_COLL_T))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &jobdat->collective_type, &n, ORTE_GRPCOMM_COLL_T))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
 
     /* if the collection bucket isn't initialized, do so now */
-    if (NULL == collection_bucket) {
-        collection_bucket = OBJ_NEW(opal_buffer_t);
+    if (NULL == jobdat->collection_bucket) {
+        jobdat->collection_bucket = OBJ_NEW(opal_buffer_t);
     }
     
     /* collect the provided data */
-    opal_dss.copy_payload(collection_bucket, buf);
+    opal_dss.copy_payload(jobdat->collection_bucket, buf);
     
     /* flag this proc as having participated */
     child->coll_recvd = true;
@@ -2024,33 +2039,14 @@ int orte_odls_base_default_collect_data(orte_process_name_t *proc,
                              "%s odls: executing collective",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
-        /* find the jobdat for this job */
-        jobdat = NULL;
-        for (item = opal_list_get_first(&orte_odls_globals.jobs);
-             item != opal_list_get_end(&orte_odls_globals.jobs);
-             item = opal_list_get_next(item)) {
-            jobdat = (orte_odls_job_t*)item;
-            
-            /* is this the specified job? */
-            if (jobdat->jobid == proc->jobid) {
-                break;
-            }
-        }
-        if (NULL == jobdat) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            OBJ_RELEASE(collection_bucket);
-            goto CLEANUP;
-        }
-        
         if (ORTE_SUCCESS != (rc = orte_grpcomm.daemon_collective(proc->jobid, num_local_contributors,
-                                                                 collective_type, collection_bucket,
+                                                                 jobdat->collective_type, jobdat->collection_bucket,
                                                                  jobdat->hnp_has_local_procs))) {
             ORTE_ERROR_LOG(rc);
         }
         
         /* release the collection bucket for reuse */
-        OBJ_RELEASE(collection_bucket);
+        OBJ_RELEASE(jobdat->collection_bucket);
 
         OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s odls: collective completed",
