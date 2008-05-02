@@ -60,6 +60,7 @@ typedef uint8_t orte_grpcomm_mode_t;
 typedef uint8_t orte_grpcomm_coll_t;
 #define ORTE_GRPCOMM_COLL_T     OPAL_UINT8
 
+#define ORTE_GRPCOMM_COLL_NONE  0x00
 #define ORTE_GRPCOMM_BARRIER    0x01
 #define ORTE_GRPCOMM_ALLGATHER  0x02
 

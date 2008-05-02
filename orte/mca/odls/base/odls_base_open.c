@@ -92,6 +92,8 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->hnp_has_local_procs = false;
     ptr->procmap = NULL;
     ptr->pmap = NULL;
+    ptr->collection_bucket = NULL;
+    ptr->collective_type = ORTE_GRPCOMM_COLL_NONE;
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
@@ -113,6 +115,10 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
     if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
         free(ptr->pmap->bytes);
         free(ptr->pmap);
+    }
+    
+    if (NULL != ptr->collection_bucket) {
+        OBJ_RELEASE(ptr->collection_bucket);
     }
 }
 OBJ_CLASS_INSTANCE(orte_odls_job_t,

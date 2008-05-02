@@ -31,8 +31,9 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-
 #include "opal/dss/dss_types.h"
+
+#include "orte/mca/grpcomm/grpcomm_types.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -70,16 +71,18 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
  * List object to locally store job related info
  */
 typedef struct orte_odls_job_t {
-    opal_list_item_t super;     /* required to place this on a list */
-    orte_jobid_t jobid;         /* jobid for this data */
-    orte_app_context_t **apps;  /* app_contexts for this job */
-    orte_std_cntr_t num_apps;   /* number of app_contexts */
-    orte_std_cntr_t total_slots_alloc;
-    orte_vpid_t num_procs;
-    uint8_t num_local_procs;
-    bool hnp_has_local_procs;
-    orte_pmap_t *procmap;           /* map of procs/node, local ranks */
-    opal_byte_object_t *pmap;     /* byte object version of procmap */
+    opal_list_item_t    super;                  /* required to place this on a list */
+    orte_jobid_t        jobid;                  /* jobid for this data */
+    orte_app_context_t  **apps;                 /* app_contexts for this job */
+    orte_std_cntr_t     num_apps;               /* number of app_contexts */
+    orte_std_cntr_t     total_slots_alloc;
+    orte_vpid_t         num_procs;
+    uint8_t             num_local_procs;
+    bool                hnp_has_local_procs;
+    orte_pmap_t         *procmap;               /* map of procs/node, local ranks */
+    opal_byte_object_t  *pmap;                  /* byte object version of procmap */
+    opal_buffer_t       *collection_bucket;
+    orte_grpcomm_coll_t collective_type;
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
 
