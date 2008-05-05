@@ -126,7 +126,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                [AC_CHECK_LIB([rdmacm], [rdma_create_id],
                    [AC_MSG_CHECKING([for rdma_get_peer_addr])
                     $1_msg=no
-                    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
+                    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
 ]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
                                       [$1_have_rdmacm=1 
                                        $1_msg=yes])
