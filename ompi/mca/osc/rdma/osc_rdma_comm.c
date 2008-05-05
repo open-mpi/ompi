@@ -25,6 +25,7 @@
 #include "osc_rdma_sendreq.h"
 #include "osc_rdma_header.h"
 #include "osc_rdma_data_move.h"
+#include "ompi/memchecker.h"
 
 static int
 enqueue_sendreq(ompi_osc_rdma_module_t *module,
@@ -78,6 +79,10 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
                                             target_dt,
                                             module,
                                             &sendreq);
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_origin_convertor);
+    );
     if (OMPI_SUCCESS != ret) return ret;
 
     sendreq->req_op_id = op->o_f_to_c_index;
@@ -148,6 +153,10 @@ ompi_osc_rdma_module_get(void *origin_addr,
                                            target_dt,
                                            module,
                                            &sendreq);
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_origin_convertor);
+    );
     if (OMPI_SUCCESS != ret) return ret;
 
     if (module->m_eager_send_active) {
@@ -212,6 +221,10 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
                                             target_dt,
                                             module,
                                             &sendreq);
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_origin_convertor);
+    );
     if (OMPI_SUCCESS != ret) return ret;
 
     if (module->m_eager_send_active) {

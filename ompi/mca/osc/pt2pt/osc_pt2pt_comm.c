@@ -23,6 +23,7 @@
 #include "osc_pt2pt_sendreq.h"
 #include "osc_pt2pt_header.h"
 #include "osc_pt2pt_data_move.h"
+#include "ompi/memchecker.h"
 
 static int
 enqueue_sendreq(ompi_osc_pt2pt_module_t *module,
@@ -76,6 +77,10 @@ ompi_osc_pt2pt_module_accumulate(void *origin_addr, int origin_count,
                                             target_dt,
                                             P2P_MODULE(win),
                                             &sendreq);
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_origin_convertor);
+    );
     if (OMPI_SUCCESS != ret) return ret;
 
     sendreq->req_op_id = op->o_f_to_c_index;
@@ -127,6 +132,10 @@ ompi_osc_pt2pt_module_get(void *origin_addr,
                                             target_dt,
                                             P2P_MODULE(win),
                                             &sendreq);
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_origin_convertor);
+    );
     if (OMPI_SUCCESS != ret) return ret;
 
     /* enqueue sendreq */
@@ -172,6 +181,10 @@ ompi_osc_pt2pt_module_put(void *origin_addr, int origin_count,
                                             target_dt,
                                             P2P_MODULE(win),
                                             &sendreq);
+    MEMCHECKER(
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_origin_convertor);
+    );
     if (OMPI_SUCCESS != ret) return ret;
 
     /* enqueue sendreq */

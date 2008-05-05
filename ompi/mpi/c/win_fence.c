@@ -21,7 +21,6 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_fence = PMPI_Win_fence
@@ -52,11 +51,6 @@ int MPI_Win_fence(int assert, MPI_Win win)
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         } 
     }
-    MEMCHECKER (
-        /* First, we have to make sure it's a valid and initialised win. */
-        if( win->w_baseptr != NULL && win->w_size != 0 && win->w_mode != 0)
-            opal_memchecker_base_mem_noaccess( win->w_baseptr, win->w_size );
-    );
 
     OPAL_CR_ENTER_LIBRARY();
 
