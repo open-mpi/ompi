@@ -578,11 +578,29 @@ static int route_lost(const orte_process_name_t *route)
 }
 
 
-
-/******* stub functions - to be implemented ******/
 static bool route_is_defined(const orte_process_name_t *target)
 {
-    return true;
+    orte_process_name_t *ret;
+    int rc;
+    
+    /* if it is me, then the route is just direct */
+    if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME))
+        return true;
+    
+    /* check exact matches */
+    rc = opal_hash_table_get_value_uint64(&peer_list,
+                                          orte_util_hash_name(target), (void**)&ret);
+    if (ORTE_SUCCESS == rc) {
+        return true;
+    }
+    /* didn't find an exact match - check to see if a route for this job was defined */
+    rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+                                          target->jobid, (void**)&ret);
+    if (ORTE_SUCCESS == rc) {
+        return true;
+    }
+
+    return false;
 }
 
 static int update_routing_tree(void)
