@@ -9,28 +9,28 @@
 #
 
 sources = \
-	routed_unity.h \
-	routed_unity_component.c \
-	routed_unity.c
+	routed_linear.h \
+	routed_linear.c \
+	routed_linear_component.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_routed_unity_DSO
+if OMPI_BUILD_routed_linear_DSO
 component_noinst =
-component_install = mca_routed_unity.la
+component_install = mca_routed_linear.la
 else
-component_noinst = libmca_routed_unity.la
+component_noinst = libmca_routed_linear.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_routed_unity_la_SOURCES = $(sources)
-mca_routed_unity_la_LDFLAGS = -module -avoid-version
+mca_routed_linear_la_SOURCES = $(sources)
+mca_routed_linear_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_routed_unity_la_SOURCES = $(sources)
-libmca_routed_unity_la_LDFLAGS = -module -avoid-version
+libmca_routed_linear_la_SOURCES = $(sources)
+libmca_routed_linear_la_LDFLAGS = -module -avoid-version
 

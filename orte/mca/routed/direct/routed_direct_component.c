@@ -10,25 +10,17 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
-#include "orte/types.h"
 
-#include "opal/util/output.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
 
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/runtime/orte_globals.h"
+#include "routed_direct.h"
 
-#include "orte/mca/routed/base/base.h"
-#include "routed_tree.h"
+static orte_routed_module_t* routed_direct_init(int* priority);
 
-static orte_routed_module_t* routed_tree_init(int* priority);
 
 /**
  * component definition
  */
-orte_routed_component_t mca_routed_tree_component = {
+orte_routed_component_t mca_routed_direct_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
 
@@ -38,7 +30,7 @@ orte_routed_component_t mca_routed_tree_component = {
 
         ORTE_ROUTED_BASE_VERSION_1_0_0,
 
-        "tree", /* MCA component name */
+        "direct", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
@@ -51,14 +43,13 @@ orte_routed_component_t mca_routed_tree_component = {
           /* This component can be checkpointed */
           MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
-      routed_tree_init
+      routed_direct_init
 };
 
 static orte_routed_module_t*
-routed_tree_init(int* priority)
+routed_direct_init(int* priority)
 {
-    *priority = 70;
+    *priority = 10;
 
-    return &orte_routed_tree_module;
+    return &orte_routed_direct_module;
 }
-

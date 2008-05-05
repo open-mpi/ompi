@@ -171,6 +171,20 @@ typedef int (*orte_routed_module_init_routes_fn_t)(orte_jobid_t job, opal_buffer
  */
 typedef int (*orte_routed_module_route_lost_fn_t)(const orte_process_name_t *route);
 
+/*
+ * Is this route defined?
+ *
+ * Check to see if a route to the specified target has been defined. The
+ * function returns "true" if it has, and "false" if no route to the
+ * target was previously defined.
+ *
+ * This is needed because routed modules will return their "wildcard"
+ * route if we request a route to a target that they don't know about.
+ * In some cases, though, we truly -do- need to know if a route was
+ * specifically defined.
+ */
+typedef bool (*orte_routed_module_route_is_defined_fn_t)(const orte_process_name_t *target);
+
 /**
  * Get wireup data for the specified job
  *
@@ -181,6 +195,25 @@ typedef int (*orte_routed_module_route_lost_fn_t)(const orte_process_name_t *rou
 typedef int (*orte_routed_module_get_wireup_info_fn_t)(orte_jobid_t job,
                                                        opal_buffer_t *buf);
 
+/*
+ * Update the module's routing tree for this process
+ *
+ * Called only by a daemon and the HNP, this function creates a list
+ * of "leaves" for this process and identifies the vpid of the parent
+ * sitting above this process in the tree.
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR_xxx   The specifed error occurred
+ */
+typedef int (*orte_routed_module_update_routing_tree_fn_t)(void);
+
+/*
+ * Get the routing tree for this process
+ *
+ * Fills the provided list with the direct children of this process
+ * in the routing tree, and returns the vpid of the parent
+ */
+typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(opal_list_t *children);
 
 /**
  * Handle fault tolerance updates
@@ -211,6 +244,10 @@ struct orte_routed_module_t {
     orte_routed_module_get_route_fn_t               get_route;
     orte_routed_module_init_routes_fn_t             init_routes;
     orte_routed_module_route_lost_fn_t              route_lost;
+    orte_routed_module_route_is_defined_fn_t        route_is_defined;
+    /* fns for daemons */
+    orte_routed_module_update_routing_tree_fn_t     update_routing_tree;
+    orte_routed_module_get_routing_tree_fn_t        get_routing_tree;
     orte_routed_module_get_wireup_info_fn_t         get_wireup_info;
     /* FT Notification */
     orte_routed_module_ft_event_fn_t                ft_event;

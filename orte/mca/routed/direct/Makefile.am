@@ -9,28 +9,28 @@
 #
 
 sources = \
-	routed_tree.h \
-	routed_tree.c \
-	routed_tree_component.c
+	routed_direct.h \
+	routed_direct_component.c \
+	routed_direct.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_routed_tree_DSO
+if OMPI_BUILD_routed_direct_DSO
 component_noinst =
-component_install = mca_routed_tree.la
+component_install = mca_routed_direct.la
 else
-component_noinst = libmca_routed_tree.la
+component_noinst = libmca_routed_direct.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_routed_tree_la_SOURCES = $(sources)
-mca_routed_tree_la_LDFLAGS = -module -avoid-version
+mca_routed_direct_la_SOURCES = $(sources)
+mca_routed_direct_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_routed_tree_la_SOURCES = $(sources)
-libmca_routed_tree_la_LDFLAGS = -module -avoid-version
+libmca_routed_direct_la_SOURCES = $(sources)
+libmca_routed_direct_la_LDFLAGS = -module -avoid-version
 
