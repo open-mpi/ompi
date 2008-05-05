@@ -583,10 +583,30 @@ static int route_lost(const orte_process_name_t *route)
 }
 
 
-/******* stub functions - to be implemented ******/
 static bool route_is_defined(const orte_process_name_t *target)
 {
-    return true;
+    orte_process_name_t *ret, lookup;
+    int rc;
+    
+    if (ORTE_JOB_FAMILY(target->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) 
+        /* we always have a route to our own job */
+        return true;
+    else  {
+        rc = opal_hash_table_get_value_uint64(&peer_list, orte_util_hash_name(target),
+                                              (void**)&ret);
+        if (ORTE_SUCCESS == rc) {
+            return true;
+        }
+        /* check to see if we specified the route to be for all vpids in the job */
+        lookup = *target;
+        lookup.vpid = ORTE_VPID_WILDCARD;
+        rc = opal_hash_table_get_value_uint64(&peer_list, orte_util_hash_name(&lookup),
+                                              (void**)&ret);
+        if (ORTE_SUCCESS == rc) {
+            return true;
+        }
+    }
+    return false;
 }
 
 static int update_routing_tree(void)
