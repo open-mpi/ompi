@@ -21,14 +21,14 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/routed/base/base.h"
-#include "routed_linear.h"
+#include "routed_binomial.h"
 
-static orte_routed_module_t* routed_linear_init(int* priority);
+static orte_routed_module_t* routed_binomial_init(int* priority);
 
 /**
  * component definition
  */
-orte_routed_component_t mca_routed_linear_component = {
+orte_routed_component_t mca_routed_binomial_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
 
@@ -38,7 +38,7 @@ orte_routed_component_t mca_routed_linear_component = {
 
         ORTE_ROUTED_BASE_VERSION_1_0_0,
 
-        "linear", /* MCA component name */
+        "binomial", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
@@ -51,14 +51,14 @@ orte_routed_component_t mca_routed_linear_component = {
           /* This component can be checkpointed */
           MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
-      routed_linear_init
+      routed_binomial_init
 };
 
 static orte_routed_module_t*
-routed_linear_init(int* priority)
+routed_binomial_init(int* priority)
 {
-    *priority = 40;
+    *priority = 70;
 
-    return &orte_routed_linear_module;
+    return &orte_routed_binomial_module;
 }
 

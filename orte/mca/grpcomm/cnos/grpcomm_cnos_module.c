@@ -54,8 +54,6 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
 static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 
-static opal_list_t* next_recips(orte_grpcomm_mode_t mode);
-
 static int set_proc_attr(const char *attr_name,
                          const void *data,
                          size_t size);
@@ -86,7 +84,6 @@ orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     orte_grpcomm_cnos_barrier,
     daemon_collective,
     update_trees,
-    next_recips,
     set_proc_attr,
     get_proc_attr,
     modex,
@@ -175,12 +172,6 @@ static int daemon_collective(orte_jobid_t jobid,
 static int update_trees(void)
 {
     return ORTE_SUCCESS;
-}
-
-static opal_list_t* next_recips(orte_grpcomm_mode_t mode)
-{
-    /* nothing to do here */
-    return NULL;
 }
 
 static int set_proc_attr(const char *attr_name,
