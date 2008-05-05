@@ -265,6 +265,11 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
         return ORTE_SUCCESS;
     }
     
+    /* if we are a daemon or the HNP, update our num_procs */
+    if (orte_process_info.hnp || orte_process_info.daemon) {
+        orte_process_info.num_procs = num_nodes;
+    }
+    
     /* set the size of the nidmap storage so we minimize
      * realloc's
      */

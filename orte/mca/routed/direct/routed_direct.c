@@ -45,7 +45,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
-static orte_vpid_t get_routing_tree(opal_list_t *children);
+static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
 
 #if OPAL_ENABLE_FT == 1
@@ -609,18 +609,40 @@ static bool route_is_defined(const orte_process_name_t *target)
     return false;
 }
 
+/*************************************/
+
+
 static int update_routing_tree(void)
 {
+    /* nothing to do here as the routing tree is fixed */
     return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(opal_list_t *children)
+static orte_vpid_t get_routing_tree(orte_jobid_t job,
+                                    opal_list_t *children)
 {
+    orte_namelist_t *nm;
+    
+    /* for anyone other than the HNP, the direct routing
+     * does not go anywhere - we don't relay - and our
+     * parent is the HNP
+     */
+    if (!orte_process_info.hnp) {
+        return ORTE_PROC_MY_HNP->vpid;
+    }
+    
+    /* if we are the HNP, then the direct routing tree
+     * consists of every process in the job - indicate that by
+     * adding a proc name of the jobid and a wildcard vpid. The
+     * HNP is capable of looking up the vpid range for this job
+     */
+    nm = OBJ_NEW(orte_namelist_t);
+    nm->name.jobid = job;
+    nm->name.vpid = ORTE_VPID_WILDCARD;
+    opal_list_append(children, &nm->item);
+    /* the parent of the HNP is invalid */
     return ORTE_VPID_INVALID;
 }
-
-/*************************************/
-
 
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 {

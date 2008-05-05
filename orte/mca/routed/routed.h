@@ -213,7 +213,8 @@ typedef int (*orte_routed_module_update_routing_tree_fn_t)(void);
  * Fills the provided list with the direct children of this process
  * in the routing tree, and returns the vpid of the parent
  */
-typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(opal_list_t *children);
+typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(orte_jobid_t job,
+                                                                opal_list_t *children);
 
 /**
  * Handle fault tolerance updates

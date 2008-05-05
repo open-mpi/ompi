@@ -419,7 +419,10 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
     if (ORTE_SUCCESS != (rc = orte_grpcomm.update_trees())) {
         ORTE_ERROR_LOG(rc);
     }
-
+    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     /* if a tree-launch was underway, clear out the cmd */
     if (NULL != orte_tree_launch_cmd) {
         OBJ_RELEASE(orte_tree_launch_cmd);

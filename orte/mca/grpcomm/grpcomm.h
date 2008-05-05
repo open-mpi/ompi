@@ -86,9 +86,6 @@ typedef int (*orte_grpcomm_base_module_daemon_collective_fn_t)(orte_jobid_t jobi
  */
 typedef int (*orte_grpcomm_base_module_update_trees_fn_t)(void);
 
-/* for collectives, return next recipients in the chain */
-typedef opal_list_t* (*orte_gprcomm_base_module_next_recipients_fn_t)(orte_grpcomm_mode_t mode);
-
 /** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
  *  OF HOW THIS ALL WORKS
  */
@@ -122,7 +119,6 @@ struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_barrier_fn_t               barrier;
     orte_grpcomm_base_module_daemon_collective_fn_t     daemon_collective;
     orte_grpcomm_base_module_update_trees_fn_t          update_trees;
-    orte_gprcomm_base_module_next_recipients_fn_t       next_recipients;
     /* modex functions */
     orte_grpcomm_base_module_modex_set_proc_attr_fn_t   set_proc_attr;
     orte_grpcomm_base_module_modex_get_proc_attr_fn_t   get_proc_attr;
