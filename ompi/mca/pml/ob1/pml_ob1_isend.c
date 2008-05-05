@@ -24,6 +24,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
+#include "ompi/memchecker.h"
 
 int mca_pml_ob1_isend_init(void *buf,
                            size_t count,
@@ -48,6 +49,14 @@ int mca_pml_ob1_isend_init(void *buf,
                                   dst, tag,
                                   comm, sendmode, true);
 
+    /*
+     * Send request is initialized, let's start memory checking.
+     */
+    MEMCHECKER (
+        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
+                                  &sendreq->req_send.req_base.req_convertor);
+    );
+    
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);

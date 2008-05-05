@@ -221,11 +221,6 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
         return MPI_SUCCESS;
     }
 
-    /* Set buffer to be unaccessable before sending it.
-     * It's set accessable again in file osc_pt2pt_data_move. */
-    MEMCHECKER (
-        memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
-    );
     OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, 

@@ -23,7 +23,6 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Put = PMPI_Put
@@ -71,12 +70,6 @@ int MPI_Put(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
     }
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
-    
-    /* Set buffer to be unaccessable before using it.
-     * It's set accessable again in file osc_pt2pt_data_move. */
-    MEMCHECKER (
-        memchecker_call(&opal_memchecker_base_mem_noaccess, origin_addr, origin_count, origin_datatype);
-    );
 
     OPAL_CR_ENTER_LIBRARY();
 
