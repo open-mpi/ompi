@@ -224,7 +224,7 @@ extern opal_data_type_t opal_dss_num_reg_types;
 
     int opal_dss_copy(void **dest, void *src, opal_data_type_t type);
 
-    int opal_dss_compare(void *value1, void *value2,
+    int opal_dss_compare(const void *value1, const void *value2,
                          opal_data_type_t type);
 
     int opal_dss_print(char **output, char *prefix, void *src, opal_data_type_t type);

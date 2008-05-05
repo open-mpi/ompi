@@ -21,7 +21,7 @@
 
 #include "opal/dss/dss_internal.h"
 
-int opal_dss_compare(void *value1, void *value2, opal_data_type_t type)
+int opal_dss_compare(const void *value1, const void *value2, opal_data_type_t type)
 {
     opal_dss_type_info_t *info;
 

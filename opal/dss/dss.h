@@ -395,7 +395,7 @@ typedef int (*opal_dss_copy_fn_t)(void **dest, void *src, opal_data_type_t type)
  * @retval 0 Indicates two values are equal
  * @retval +1 Indicates second value is greater than first value
  */
-typedef int (*opal_dss_compare_fn_t)(void *value1, void *value2,
+typedef int (*opal_dss_compare_fn_t)(const void *value1, const void *value2,
                                      opal_data_type_t type);
 
 
