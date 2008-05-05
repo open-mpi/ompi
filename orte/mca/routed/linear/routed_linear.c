@@ -28,7 +28,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/routed/base/base.h"
-#include "routed_tree.h"
+#include "routed_linear.h"
 
 static int init(void);
 static int finalize(void);
@@ -37,24 +37,30 @@ static int update_route(orte_process_name_t *target,
 static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
+static bool route_is_defined(const orte_process_name_t *target);
+static int update_routing_tree(void);
+static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
 
 #if OPAL_ENABLE_FT == 1
-static int tree_ft_event(int state);
+static int linear_ft_event(int state);
 #endif
 
 static orte_process_name_t *lifeline=NULL;
 
-orte_routed_module_t orte_routed_tree_module = {
+orte_routed_module_t orte_routed_linear_module = {
     init,
     finalize,
     update_route,
     get_route,
     init_routes,
     route_lost,
+    route_is_defined,
+    update_routing_tree,
+    get_routing_tree,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
-    tree_ft_event
+    linear_ft_event
 #else
     NULL
 #endif
@@ -148,7 +154,7 @@ static int update_route(orte_process_name_t *target,
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_tree_update: %s --> %s",
+                         "%s routed_linear_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(route)));
@@ -238,7 +244,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
  found:
 
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                         "%s routed_tree_get(%s) --> %s",
+                         "%s routed_linear_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(ret)));
@@ -267,7 +273,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
         
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_tree:callback got uri %s",
+                             "%s routed_linear:callback got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri));
         
@@ -313,7 +319,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
 
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
-    /* the tree module routes all proc communications through
+    /* the linear module routes all proc communications through
      * the local daemon. Daemons must identify which of their
      * daemon-peers is "hosting" the specified recipient and
      * route the message to that daemon. Daemon contact info
@@ -336,7 +342,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     if (orte_process_info.daemon) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_tree: init routes for daemon job %s\n\thnp_uri %s",
+                             "%s routed_linear: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
@@ -394,7 +400,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             }
 
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_tree: completed init routes",
+                             "%s routed_linear: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         return ORTE_SUCCESS;
@@ -404,7 +410,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     if (orte_process_info.hnp) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_tree: init routes for HNP job %s",
+                             "%s routed_linear: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
         
@@ -454,7 +460,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             int rc;
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_tree: init routes w/non-NULL data",
+                                 "%s routed_linear: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* send the buffer to the proper tag on the daemon */
@@ -474,7 +480,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          */
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_tree: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
+                             "%s routed_linear: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
                              (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
@@ -485,7 +491,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
              */
             opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_output(0, "%s ERROR: This is a fatal condition when the tree router",
+            opal_output(0, "%s ERROR: This is a fatal condition when the linear router",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_output(0, "%s ERROR: has been selected - either select the unity router",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -561,7 +567,7 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        opal_output(0, "%s routed:tree: Connection to lifeline %s lost",
+        opal_output(0, "%s routed:linear: Connection to lifeline %s lost",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
@@ -570,6 +576,26 @@ static int route_lost(const orte_process_name_t *route)
     /* we don't care about this one, so return success */
     return ORTE_SUCCESS;
 }
+
+
+
+/******* stub functions - to be implemented ******/
+static bool route_is_defined(const orte_process_name_t *target)
+{
+    return true;
+}
+
+static int update_routing_tree(void)
+{
+    return ORTE_SUCCESS;
+}
+
+static orte_vpid_t get_routing_tree(opal_list_t *children)
+{
+    return ORTE_VPID_INVALID;
+}
+
+/*************************************/
 
 
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
@@ -593,7 +619,7 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 }
 
 #if OPAL_ENABLE_FT == 1
-static int tree_ft_event(int state)
+static int linear_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
 

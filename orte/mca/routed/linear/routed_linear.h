@@ -8,8 +8,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_ROUTED_TREE_ROUTED_TREE_H
-#define MCA_ROUTED_TREE_ROUTED_TREE_H
+#ifndef MCA_ROUTED_LINEAR_H
+#define MCA_ROUTED_LINEAR_H
 
 #include "orte_config.h"
 #include "orte/types.h"
@@ -18,9 +18,9 @@
 
 BEGIN_C_DECLS
 
-ORTE_MODULE_DECLSPEC extern orte_routed_component_t mca_routed_tree_component;
+ORTE_MODULE_DECLSPEC extern orte_routed_component_t mca_routed_linear_component;
 
-extern orte_routed_module_t orte_routed_tree_module;
+extern orte_routed_module_t orte_routed_linear_module;
 
 END_C_DECLS
 

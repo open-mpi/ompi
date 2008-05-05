@@ -30,7 +30,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/routed/base/base.h"
-#include "routed_unity.h"
+#include "routed_direct.h"
 
 static opal_condition_t cond;
 static opal_mutex_t lock;
@@ -43,24 +43,30 @@ static int update_route(orte_process_name_t *target,
 static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
+static bool route_is_defined(const orte_process_name_t *target);
+static int update_routing_tree(void);
+static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
 
 #if OPAL_ENABLE_FT == 1
-static int unity_ft_event(int state);
+static int direct_ft_event(int state);
 #endif
 
 static orte_process_name_t *lifeline=NULL;
 
-orte_routed_module_t orte_routed_unity_module = {
+orte_routed_module_t orte_routed_direct_module = {
     init,
     finalize,
     update_route,
     get_route,
     init_routes,
     route_lost,
+    route_is_defined,
+    update_routing_tree,
+    get_routing_tree,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
-    unity_ft_event
+    direct_ft_event
 #else
     NULL
 #endif
@@ -143,7 +149,7 @@ static int update_route(orte_process_name_t *target,
         }
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_unity_update: diff job family routing %s --> %s",
+                             "%s routed_direct_update: diff job family routing %s --> %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(target), 
                              ORTE_NAME_PRINT(route)));
@@ -165,7 +171,7 @@ static int update_route(orte_process_name_t *target,
 direct:
     /* if it came from our own job family or was direct, there is nothing to do */
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_unity_update: %s --> %s",
+                         "%s routed_direct_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(route)));
@@ -202,7 +208,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     
 found:
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
-                         "%s routed_unity_get(%s) --> %s",
+                         "%s routed_direct_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(ret)));
@@ -231,7 +237,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
         
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_unity:callback got uri %s",
+                             "%s routed_direct:callback got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri));
         
@@ -270,7 +276,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     if (jdata->num_reported == jdata->num_procs) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_unity:callback trigger fired on job %s",
+                             "%s routed_direct:callback trigger fired on job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(jdata->jobid)));
         
         /* update the job state */
@@ -300,7 +306,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
 
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
 {
-    /* the unity module just sends direct to everyone, so it requires
+    /* the direct module just sends direct to everyone, so it requires
      * that the RML get loaded with contact info from all of our peers.
      * We also look for and provide contact info for our local daemon
      * so we can use it if needed
@@ -316,12 +322,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
         int rc;
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_unity: init routes for daemon job %s\n\thnp_uri %s",
+                             "%s routed_direct: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
         if (NULL == ndata) {
             /* indicates this is being called during orte_init.
-             * since the daemons in the unity component don't route messages,
+             * since the daemons in the direct component don't route messages,
              * there is nothing for them to do - daemons will send their
              * contact info as part of the message confirming they are ready
              * to go. Just get the HNP's name for possible later use
@@ -343,7 +349,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            /* we don't have to update the route as the unity component is
+            /* we don't have to update the route as the direct component is
             * always "direct"
             */
             
@@ -372,7 +378,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
          * shouldn't get called during daemon startup. This situation
          * would occur, though, when we are doing orte_init within the HNP
          * itself, but we store our data during orte_init anyway
-         * However, for the unity component, I do have to make myself
+         * However, for the direct component, I do have to make myself
          * available for processing incoming rml contact info messages
          * from the procs - so setup that receive here
          */
@@ -413,7 +419,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             orte_rml_cmd_flag_t command;
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_unity: init routes w/non-NULL data",
+                                 "%s routed_direct: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* extract the RML command from the buffer and discard it - this
@@ -442,7 +448,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             opal_buffer_t buf;
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_unity: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
+                                 "%s routed_direct: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                                  (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
                                  (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
@@ -470,14 +476,14 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
                     return rc;
                 }
                 
-                /* we don't have to update the route as the unity component is
+                /* we don't have to update the route as the direct component is
                  * always "direct"
                  */
             }
             
             /* setup the hnp - this must always be provided, so
              * error if it isn't there as we won't know how to complete
-             * the wireup for the unity component
+             * the wireup for the direct component
              */
             if (NULL == orte_process_info.my_hnp_uri) {
                 /* fatal error */
@@ -486,7 +492,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             }
 
             OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                                 "%s routed_unity_init: set hnp contact info and name",
+                                 "%s routed_direct_init: set hnp contact info and name",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* set the contact info into the hash table */
@@ -507,12 +513,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
              */
             lifeline = ORTE_PROC_MY_HNP;
             
-            /* we don't have to update the route as the unity component is
+            /* we don't have to update the route as the direct component is
             * always "direct"
             */
 
             OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                                 "%s routed_unity_init: register sync",
+                                 "%s routed_direct_init: register sync",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* register myself to require that I finalize before exiting
@@ -525,7 +531,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             }
             
             OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                                 "%s routed_unity_init: wait to recv contact info for peers",
+                                 "%s routed_direct_init: wait to recv contact info for peers",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* now setup a blocking receive and wait right here until we get
@@ -540,7 +546,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             }
             
             OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                                 "%s routed_unity_init: peer contact info recvd",
+                                 "%s routed_direct_init: peer contact info recvd",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* process it */
@@ -566,7 +572,7 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        opal_output(0, "%s routed:unity: Connection to lifeline %s lost",
+        opal_output(0, "%s routed:direct: Connection to lifeline %s lost",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
@@ -575,6 +581,25 @@ static int route_lost(const orte_process_name_t *route)
     /* we don't care about this one, so return success */
     return ORTE_SUCCESS;
 }
+
+
+/******* stub functions - to be implemented ******/
+static bool route_is_defined(const orte_process_name_t *target)
+{
+    return true;
+}
+
+static int update_routing_tree(void)
+{
+    return ORTE_SUCCESS;
+}
+
+static orte_vpid_t get_routing_tree(opal_list_t *children)
+{
+    return ORTE_VPID_INVALID;
+}
+
+/*************************************/
 
 
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
@@ -591,7 +616,7 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 }
 
 #if OPAL_ENABLE_FT == 1
-static int unity_ft_event(int state)
+static int direct_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
