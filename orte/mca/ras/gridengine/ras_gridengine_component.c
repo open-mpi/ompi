@@ -98,7 +98,7 @@ static int orte_ras_gridengine_open(void)
     return ORTE_SUCCESS;
 }
 
-static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *priority);
+static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = mca_ras_gridengine_component.priority;
 
