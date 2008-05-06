@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,11 +37,6 @@ extern "C" {
     
     ORTE_DECLSPEC extern orte_ras_ccp_component_t mca_ras_ccp_component;
     ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_ccp_module;
-
-    /**
-     * Module init function
-     */
-    orte_ras_base_module_t *orte_ras_ccp_init(int* priority);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

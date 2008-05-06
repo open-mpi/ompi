@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,7 @@ BEGIN_C_DECLS
  */
 int orte_plm_submit_component_open(void);
 int orte_plm_submit_component_close(void);
-orte_plm_base_module_t* orte_plm_submit_component_init(int *priority);
+int orte_plm_submit_component_query(mca_base_module_t **module, int *priority);
 
 /*
  * Startup / Shutdown

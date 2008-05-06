@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -71,6 +71,7 @@ extern "C" {
      */
     int ompi_crcp_base_none_open(void);
     int ompi_crcp_base_none_close(void);
+    int ompi_crcp_base_none_query(mca_base_module_t **module, int *priority);
 
     int ompi_crcp_base_module_init(void);
     int ompi_crcp_base_module_finalize(void);

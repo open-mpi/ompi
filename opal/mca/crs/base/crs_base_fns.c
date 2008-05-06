@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -78,6 +78,14 @@ int opal_crs_base_none_close(void)
     return OPAL_SUCCESS;
 }
 
+int opal_crs_base_none_query(mca_base_module_t **module, int *priority)
+{
+    *module = NULL;
+    *priority = 0;
+
+    return OPAL_SUCCESS;
+}
+
 int opal_crs_base_none_module_init(void)
 {
 
@@ -121,7 +129,7 @@ int opal_crs_base_none_checkpoint(pid_t pid, opal_crs_base_snapshot_t *snapshot,
     /*
      * Create the snapshot directory
      */
-    snapshot->super.component_name = strdup(mca_crs_none_component.super.crs_version.mca_component_name);
+    snapshot->super.component_name = strdup(mca_crs_none_component.super.base_version.mca_component_name);
     if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(&snapshot->super) )) {
         opal_output(mca_crs_none_component.super.output_handle,
                     "crs:none: checkpoint(): Error: Unable to initialize the directory for (%s).", 

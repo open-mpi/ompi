@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -165,14 +165,6 @@ typedef struct orte_snapc_base_global_snapshot_1_0_0_t orte_snapc_base_global_sn
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_snapc_base_global_snapshot_t);
 
 /**
- * Query function for SNAPC components.
- * Returns a priority to rank it agaianst other available SNAPC components.
- */
-typedef struct orte_snapc_base_module_1_0_0_t *
-        (*orte_snapc_base_component_query_1_0_0_fn_t)
-        (int *priority);
-
-/**
  * Module initialization function.
  * Returns ORTE_SUCCESS
  */
@@ -216,13 +208,10 @@ typedef int  (*orte_snapc_base_ft_event_fn_t)(int state);
  */
 struct orte_snapc_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t snapc_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t snapc_data;
+    mca_base_component_data_1_0_0_t base_data;
 
-    /** Component Query for Selection Function */
-    orte_snapc_base_component_query_1_0_0_fn_t snapc_query;
-    
     /** Verbosity Level */
     int verbose;
     /** Output Handle for opal_output */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -39,7 +39,7 @@
 
 static int orte_ras_gridengine_open(void);
 static int orte_ras_gridengine_close(void);
-static orte_ras_base_module_t* orte_ras_gridengine_init(int* priority);
+static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *priority);
 
 
 orte_ras_gridengine_component_t mca_ras_gridengine_component = {
@@ -57,16 +57,15 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
         ORTE_MINOR_VERSION,          /* MCA component minor version */
         ORTE_RELEASE_VERSION,        /* MCA component release version */
         orte_ras_gridengine_open,    /* component open  */
-        orte_ras_gridengine_close    /* component close */
+        orte_ras_gridengine_close,    /* component close */
+        orte_ras_gridengine_component_query
       },
 
       /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT
-      },
-
-      orte_ras_gridengine_init
+      }
     }
 };
 
@@ -76,7 +75,7 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
 static int orte_ras_gridengine_open(void)
 {
     int value;
-    mca_base_component_t *c = &mca_ras_gridengine_component.super.ras_version;
+    mca_base_component_t *c = &mca_ras_gridengine_component.super.base_version;
 
     mca_base_param_reg_int(c, "debug",
         "Enable debugging output for the gridengine ras component",
@@ -99,7 +98,7 @@ static int orte_ras_gridengine_open(void)
     return ORTE_SUCCESS;
 }
 
-static orte_ras_base_module_t *orte_ras_gridengine_init(int* priority)
+static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *priority);
 {
     *priority = mca_ras_gridengine_component.priority;
 
@@ -108,12 +107,14 @@ static orte_ras_base_module_t *orte_ras_gridengine_init(int* priority)
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:gridengine: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return &orte_ras_gridengine_module;
+        *module = (mca_base_module_t *) &orte_ras_gridengine_module;
+        return ORTE_SUCCESS;
     }
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:gridengine: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 /**

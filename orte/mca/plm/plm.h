@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -109,28 +109,15 @@ typedef struct orte_plm_base_module_1_0_0_t orte_plm_base_module_1_0_0_t;
 /** shorten orte_plm_base_module_t declaration */
 typedef struct orte_plm_base_module_1_0_0_t orte_plm_base_module_t;
 
-/**
- * plm initialization function
- *
- * Called by the MCA framework to initialize the component.  Invoked
- * exactly once per process.
- *
- * @param priority (OUT) Relative priority or ranking use by MCA to
- *                       select a module.
- */
-typedef struct orte_plm_base_module_1_0_0_t*
-(*orte_plm_base_component_init_fn_t)(int *priority);
 
 /**
  * plm component v1.0.0
  */
 struct orte_plm_base_component_1_0_0_t {
     /** component version */
-    mca_base_component_t plm_version;
+    mca_base_component_t base_version;
     /** component data */
-    mca_base_component_data_1_0_0_t plm_data;
-    /** Function called when component is initialized */
-    orte_plm_base_component_init_fn_t plm_init;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /** Convenience typedef */
 typedef struct orte_plm_base_component_1_0_0_t orte_plm_base_component_1_0_0_t;

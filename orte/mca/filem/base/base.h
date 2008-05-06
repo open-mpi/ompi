@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -94,8 +94,9 @@ typedef uint8_t orte_filem_cmd_flag_t;
      * These are to be used when no component is selected.
      * They just return success, and empty strings as necessary.
      */
-    int orte_filem_base_none_open(void);
-    int orte_filem_base_none_close(void);
+    ORTE_DECLSPEC int orte_filem_base_none_open(void);
+    ORTE_DECLSPEC int orte_filem_base_none_close(void);
+    ORTE_DECLSPEC int orte_filem_base_none_query(mca_base_module_t **module, int *priority);
 
     int orte_filem_base_module_init(void);
     int orte_filem_base_module_finalize(void);

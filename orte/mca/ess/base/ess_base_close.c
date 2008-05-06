@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -43,7 +43,7 @@ orte_ess_base_close(void)
         component = (orte_ess_base_component_t *) cli->cli_component;
         opal_output_verbose(10, 0,
                             "orte_ess_base_close: module %s unloaded",
-                            component->ess_version.mca_component_name);
+                            component->base_version.mca_component_name);
         mca_base_component_repository_release((mca_base_component_t *) component);
         OBJ_RELEASE(item);
     }

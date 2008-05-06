@@ -101,14 +101,6 @@ typedef struct opal_crs_base_snapshot_1_0_0_t opal_crs_base_snapshot_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_crs_base_snapshot_t);
 
 /**
- * Query function for CRS components.
- * Returns a priority to rank it agaianst other available CRS components.
- */
-typedef struct opal_crs_base_module_1_0_0_t *
-        (*opal_crs_base_component_query_1_0_0_fn_t)
-        (int *priority);
-
-/**
  * Module initialization function.
  * Returns OPAL_SUCCESS
  */
@@ -222,13 +214,10 @@ typedef int (*opal_crs_base_module_reg_thread_fn_t)
  */
 struct opal_crs_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t crs_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t crs_data;
+    mca_base_component_data_1_0_0_t base_data;
 
-    /** Component Query for Selection Function */
-    opal_crs_base_component_query_1_0_0_fn_t crs_query;
-    
     /** Verbosity Level */
     int verbose;
     /** Output Handle for opal_output */

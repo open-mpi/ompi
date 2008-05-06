@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -59,7 +59,7 @@ static int opal_carto_file_parse(const char *cartofile);
 /*
  * File carto module
  */
-static const opal_carto_base_module_1_0_0_t module = {
+static const opal_carto_base_module_1_0_0_t loc_module = {
     opal_carto_file_init,
     opal_carto_base_graph_get_host_graph,
     opal_carto_base_free_graph,
@@ -70,18 +70,19 @@ static const opal_carto_base_module_1_0_0_t module = {
 };
 
 
-const opal_carto_base_module_1_0_0_t *
-opal_carto_file_component_query(int *query)
+int opal_carto_file_component_query(mca_base_module_t **module, int *priority)
 {
     int param;
 
     param = mca_base_param_find("carto", "file", "priority");
-    mca_base_param_lookup_int(param, query);
+    mca_base_param_lookup_int(param, priority);
 
     param = mca_base_param_find("carto", "file", "path");
     mca_base_param_lookup_string(param, &carto_file_path);
 
-    return &module;
+    *module = (mca_base_module_t *)&loc_module;
+
+    return OPAL_SUCCESS;
 }
 
 

@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -50,11 +49,11 @@ extern "C" {
     typedef struct opal_crs_blcr_component_t opal_crs_blcr_component_t;
     OPAL_MODULE_DECLSPEC extern opal_crs_blcr_component_t mca_crs_blcr_component;
 
+    int opal_crs_blcr_component_query(mca_base_module_t **module, int *priority);
+
     /*
      * Module functions
      */
-    opal_crs_base_module_1_0_0_t *
-          opal_crs_blcr_component_query(int *priority);
     int opal_crs_blcr_module_init(void);
     int opal_crs_blcr_module_finalize(void);
 

@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,12 +26,7 @@ BEGIN_C_DECLS
  */
 int orte_odls_process_component_open(void);
 int orte_odls_process_component_close(void);
-orte_odls_base_module_t* orte_odls_process_component_init(int *priority);
-
-/*
- * Startup / Shutdown
- */
-int orte_odls_process_component_finalize(void);
+int orte_odls_process_component_query(mca_base_module_t **module, int *priority);
 
 /*
  * ODLS Process module

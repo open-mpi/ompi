@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,19 +52,18 @@ mca_errmgr_base_component_t mca_errmgr_default_component = {
     {
     ORTE_ERRMGR_BASE_VERSION_1_3_0,
 
-    "default", /* MCA module name */
-    ORTE_MAJOR_VERSION,  /* MCA module major version */
-    ORTE_MINOR_VERSION,  /* MCA module minor version */
-    ORTE_RELEASE_VERSION,  /* MCA module release version */
-    orte_errmgr_default_open,  /* module open */
-    orte_errmgr_default_close /* module close */
+    "default", /* MCA component name */
+    ORTE_MAJOR_VERSION,  /* MCA component major version */
+    ORTE_MINOR_VERSION,  /* MCA component minor version */
+    ORTE_RELEASE_VERSION,  /* MCA component release version */
+    orte_errmgr_default_component_open,  /* component open */
+    orte_errmgr_default_component_close, /* component close */
+    orte_errmgr_default_component_query  /* component query */
     },
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    orte_errmgr_default_component_init,    /* module init */
-    orte_errmgr_default_finalize /* module shutdown */
+    }
 };
 
 /*
@@ -81,7 +80,7 @@ orte_errmgr_base_module_t orte_errmgr_default = {
 /*
  * Open the component
  */
-int orte_errmgr_default_open(void)
+int orte_errmgr_default_component_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -89,33 +88,24 @@ int orte_errmgr_default_open(void)
 /*
  * Close the component
  */
-int orte_errmgr_default_close(void)
+int orte_errmgr_default_component_close(void)
 {
     return ORTE_SUCCESS;
 }
 
-orte_errmgr_base_module_t*
-orte_errmgr_default_component_init(int *priority)
+int orte_errmgr_default_component_query(mca_base_module_t **module, int *priority)
 {
     /* If we are not an HNP, then don't pick us! */
     if (!orte_process_info.hnp) {
         /* don't take me! */
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
     
     /* Return a module (choose an arbitrary, positive priority --
        it's only relevant compared to other components). */
 
     *priority = 10;
-
-    return &orte_errmgr_default;
-}
-
-/*
- * finalize routine
- */
-int orte_errmgr_default_finalize(void)
-{
-    /* All done */
+    *module = (mca_base_module_t *)&orte_errmgr_default;
     return ORTE_SUCCESS;
 }

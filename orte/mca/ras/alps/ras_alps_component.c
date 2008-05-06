@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -37,7 +37,7 @@ static int param_priority;
  * Local functions
  */
 static int ras_alps_open(void);
-static orte_ras_base_module_t *ras_alps_init(int*);
+static int orte_ras_alps_component_query(mca_base_module_t **module, int *priority);
 
 
 orte_ras_base_component_t mca_ras_alps_component = {
@@ -60,23 +60,21 @@ orte_ras_base_component_t mca_ras_alps_component = {
         /* Component open and close functions */
         
         ras_alps_open,
-        NULL
+        NULL,
+        orte_ras_alps_component_query
     },
-    
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    
-    ras_alps_init
+    }
 };
 
 
 static int ras_alps_open(void)
 {
     param_priority = 
-        mca_base_param_reg_int(&mca_ras_alps_component.ras_version,
+        mca_base_param_reg_int(&mca_ras_alps_component.base_version,
                                "priority",
                                "Priority of the alps ras component",
                                false, false, 75, NULL);
@@ -84,12 +82,12 @@ static int ras_alps_open(void)
     return ORTE_SUCCESS;
 }
 
-
-static orte_ras_base_module_t *ras_alps_init(int* priority)
+static int orte_ras_alps_component_query(mca_base_module_t **module, int *priority)
 {
     /* if we are not an HNP, then we must not be selected */
     if (!orte_process_info.hnp) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
     
     /* Are we running under a ALPS job? */
@@ -98,12 +96,14 @@ static orte_ras_base_module_t *ras_alps_init(int* priority)
         mca_base_param_lookup_int(param_priority, priority);
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "ras:alps: available for selection"));
-        return &orte_ras_alps_module;
+        *module = (mca_base_module_t *) &orte_ras_alps_module;
+        return ORTE_SUCCESS;
     }
 
     /* Sadly, no */
 
     opal_output(orte_ras_base.ras_output,
                 "ras:alps: NOT available for selection");
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }

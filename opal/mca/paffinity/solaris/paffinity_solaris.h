@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -40,9 +40,7 @@ extern "C" {
     /*
      * paffinity API functions
      */
-
-    const opal_paffinity_base_module_1_1_0_t *
-        opal_paffinity_solaris_component_query(int *query);
+    int opal_paffinity_solaris_component_query(mca_base_module_t **module, int *priority);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

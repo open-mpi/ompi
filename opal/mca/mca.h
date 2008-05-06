@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -28,6 +28,23 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/cmd_line.h"
+
+/**
+ * Common type for all MCA modules.
+ *
+ * An instance of this type is always the first element in MCA
+ * modules, allowing the module to be associated with a
+ * particular version of a specific framework, and to publish its own
+ * name and version.
+ */
+struct mca_base_module_t {
+    int dummy_value;
+};
+/**
+ * Convenience typedef.
+ */
+typedef struct mca_base_module_t mca_base_module_t;
+
 
 /**
  * MCA component open function.
@@ -87,6 +104,23 @@ typedef int (*mca_base_open_component_fn_t)(void);
  */
 typedef int (*mca_base_close_component_fn_t)(void);
 
+/** MCA component query function
+ *
+ * @retval OPAL_SUCCESS The component successfully queried.
+ *
+ * @retval any_other_value Some error occurred, but is likely to be
+ * ignored.
+ *
+ * @param module The module to be used if this component is selected.
+ *
+ * @param priority The priority of this component.
+ *
+ * This function is used by the mca_base_select function to find the highest
+ * priority component to select. Frameworks are free to implement their own
+ * query function, but must also implment their own select function as a result.
+ * 
+ */
+typedef int (*mca_base_query_component_fn_t)(mca_base_module_t **module, int *priority);
 
 /**
  * Maximum length of MCA framework string names.
@@ -139,6 +173,8 @@ struct mca_base_component_t {
   /**< Method for opening this component. */
   mca_base_close_component_fn_t mca_close_component;
   /**< Method for closing this component. */
+  mca_base_query_component_fn_t mca_query_component;
+  /**< Method for querying this component. */
 };
 /**
  * Convenience typedef.

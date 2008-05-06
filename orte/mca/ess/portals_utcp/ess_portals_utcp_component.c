@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,17 +52,14 @@ orte_ess_base_component_t mca_ess_portals_utcp_component = {
 
         /* Component open and close functions */
         orte_ess_portals_utcp_component_open,
-        orte_ess_portals_utcp_component_close
+        orte_ess_portals_utcp_component_close,
+        orte_ess_portals_utcp_component_query
     },
-
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is not checkpoint ready */
         MCA_BASE_METADATA_PARAM_NONE
-    },
-
-    /* Initialization / querying functions */
-    orte_ess_portals_utcp_component_init
+    }
 };
 
 
@@ -73,8 +70,7 @@ orte_ess_portals_utcp_component_open(void)
 }
 
 
-orte_ess_base_module_t *
-orte_ess_portals_utcp_component_init(int *priority)
+int orte_ess_portals_utcp_component_query(mca_base_module_t **module, int *priority)
 {
     /* since we are not launched by an ORTE launcher,
      * we want to be selected ahead of the singleton
@@ -82,10 +78,15 @@ orte_ess_portals_utcp_component_init(int *priority)
      * So ensure that our priority is higher than
      * the singleton's
      */
-    if (NULL == getenv("PTL_MY_RID")) return NULL;
+    if (NULL == getenv("PTL_MY_RID")) {
+        *priority = -1;
+        *module = NULL;
+        return ORTE_ERROR;
+    }
 
     *priority = 60;
-    return &orte_ess_portals_utcp_module;
+    *module = (mca_base_module_t *)&orte_ess_portals_utcp_module;
+    return ORTE_SUCCESS;
 }
 
 

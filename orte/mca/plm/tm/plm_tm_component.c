@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,7 +52,7 @@ const char *mca_plm_tm_component_version_string =
  */
 static int plm_tm_open(void);
 static int plm_tm_close(void);
-static orte_plm_base_module_t *plm_tm_init(int *priority);
+static int orte_plm_tm_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -79,16 +79,14 @@ orte_plm_tm_component_t mca_plm_tm_component = {
             /* Component open and close functions */
             plm_tm_open,
             plm_tm_close,
+            orte_plm_tm_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
-
-        /* Initialization / querying functions */
-        plm_tm_init
+        }
     }
 };
 
@@ -96,7 +94,7 @@ orte_plm_tm_component_t mca_plm_tm_component = {
 static int plm_tm_open(void)
 {
     int tmp;
-    mca_base_component_t *comp = &mca_plm_tm_component.super.plm_version;
+    mca_base_component_t *comp = &mca_plm_tm_component.super.base_version;
 
     mca_base_param_reg_string(comp, "orted",
                               "Command to use to start proxy orted",
@@ -123,7 +121,7 @@ static int plm_tm_close(void)
 }
 
 
-static orte_plm_base_module_t *plm_tm_init(int *priority)
+static int orte_plm_tm_component_query(mca_base_module_t **module, int *priority)
 {
     /* Are we running under a TM job? */
 
@@ -131,9 +129,11 @@ static orte_plm_base_module_t *plm_tm_init(int *priority)
         NULL != getenv("PBS_JOBID")) {
 
         *priority = 75;
-        return &orte_plm_tm_module;
+        *module = (mca_base_module_t *) &orte_plm_tm_module;
+        return ORTE_SUCCESS;
     }
 
     /* Sadly, no */
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR:
 }

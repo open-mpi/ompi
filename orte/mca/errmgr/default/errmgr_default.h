@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -33,17 +33,10 @@ BEGIN_C_DECLS
 /*
  * Module open / close
  */
-int orte_errmgr_default_open(void);
-int orte_errmgr_default_close(void);
+int orte_errmgr_default_component_open(void);
+int orte_errmgr_default_component_close(void);
+int orte_errmgr_default_component_query(mca_base_module_t **module, int *priority);
 
-
-/*
- * Startup / Shutdown
- */
-orte_errmgr_base_module_t*
-orte_errmgr_default_component_init(int *priority);
-
-int orte_errmgr_default_finalize(void);
 
 /*
  * Component API functions

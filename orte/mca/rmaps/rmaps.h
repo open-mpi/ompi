@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -94,24 +94,15 @@ typedef orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_t;
 /*
  * rmaps component
  */
-
-/**
- * Component init / selection
- */
-typedef orte_rmaps_base_module_t* (*orte_rmaps_base_component_init_fn_t)(
-    int *priority);
-
  
 /**
  * rmaps component version 1.3.0
  */
 struct orte_rmaps_base_component_1_3_0_t {
     /** Base MCA structure */
-    mca_base_component_t rmaps_version;
+    mca_base_component_t base_version;
     /** Base MCA data */
-    mca_base_component_data_1_0_0_t rmaps_data;
-    /** Initialization / selection function pointer */
-    orte_rmaps_base_component_init_fn_t rmaps_init;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /** Convenience typedef */
 typedef struct orte_rmaps_base_component_1_3_0_t orte_rmaps_base_component_1_3_0_t;

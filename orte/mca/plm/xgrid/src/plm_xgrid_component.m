@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -38,7 +38,7 @@
 
 int orte_plm_xgrid_component_open(void);
 int orte_plm_xgrid_component_close(void);
-orte_plm_base_module_t * orte_plm_xgrid_component_init(int *priority);
+int orte_plm_xgrid_component_query(mca_base_module_t **module, int *priority);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -65,7 +65,8 @@ orte_plm_xgrid_component_t mca_plm_xgrid_component = {
         /* Component open and close functions */
 
         orte_plm_xgrid_component_open,
-        orte_plm_xgrid_component_close
+        orte_plm_xgrid_component_close,
+        orte_plm_xgrid_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -73,11 +74,7 @@ orte_plm_xgrid_component_t mca_plm_xgrid_component = {
     {
         /* This component is not checkpointable */
         MCA_BASE_METADATA_PARAM_NONE
-    },
-
-    /* Initialization / querying functions */
-
-    orte_plm_xgrid_component_init
+    }
     }
 };
 
@@ -117,16 +114,16 @@ orte_plm_xgrid_component_close(void)
 }
 
 
-orte_plm_base_module_t *
-orte_plm_xgrid_component_init(int *priority)
+int orte_plm_xgrid_component_query(mca_base_module_t **module, int *priority)
 {
     char *string;
     int ret, val, param;
 
     if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME")) {
-	opal_output_verbose(10, orte_plm_globals.output,
-		    "orte:plm:xgrid: not available: controller info not set");
-        return NULL;
+        opal_output_verbose(10, orte_plm_globals.output,
+                            "orte:plm:xgrid: not available: controller info not set");
+        *module = NULL;
+        return ORTE_ERROR:
     }
 
     opal_output_verbose(1, orte_plm_globals.output,
@@ -160,16 +157,17 @@ orte_plm_xgrid_component_init(int *priority)
 
     ret = [mca_plm_xgrid_component.client connect];
     if (ret != ORTE_SUCCESS) {
-	opal_output_verbose(10, orte_plm_globals.output,
-			    "orte:plm:xgrid: not available: connection failed");
-	orte_plm_xgrid_finalize();
-	return NULL;
+        opal_output_verbose(10, orte_plm_globals.output,
+                            "orte:plm:xgrid: not available: connection failed");
+        orte_plm_xgrid_finalize();
+        *module = NULL;
+        return ORTE_ERROR:
     }
 
     opal_output_verbose(10, orte_plm_globals.output,
 			"orte:plm:xgrid: initialized");
-
-    return &orte_plm_xgrid_module;
+    *module = (mca_base_module_t *) &orte_plm_xgrid_module;
+    return ORTE_SUCCESS;
 }
 
 

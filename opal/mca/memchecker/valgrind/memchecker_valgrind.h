@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,9 +36,13 @@ OPAL_DECLSPEC extern const opal_memchecker_base_component_1_0_0_t
 
 /**
  * memchecker query API function
+ *
+ * Query function for memchecker components.  Simply returns a priority
+ * to rank it against other available memchecker components (assumedly,
+ * only one component will be available per platform, but it's
+ * possible that there could be more than one available).
  */
-const opal_memchecker_base_module_1_0_0_t *
-    opal_memchecker_valgrind_component_query(int *query);
+int opal_memchecker_valgrind_component_query(mca_base_module_t **module, int *priority);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

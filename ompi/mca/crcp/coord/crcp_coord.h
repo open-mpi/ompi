@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -56,8 +56,7 @@ extern "C" {
     /*
      * Module functions
      */
-    ompi_crcp_base_module_1_0_0_t *
-        ompi_crcp_coord_component_query(int *priority);
+    int ompi_crcp_coord_component_query(mca_base_module_t **module, int *priority);
     int ompi_crcp_coord_module_init(void);
     int ompi_crcp_coord_module_finalize(void);
 

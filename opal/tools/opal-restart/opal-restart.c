@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -224,12 +224,12 @@ main(int argc, char *argv[])
      * Make sure we have selected the proper component
      */
     if(0 != strncmp(expected_crs_comp, 
-                    opal_crs_base_selected_component.crs_version.mca_component_name, 
+                    opal_crs_base_selected_component.base_version.mca_component_name, 
                     strlen(expected_crs_comp)) ) {
         opal_show_help("help-opal-restart.txt", "comp_select_mismatch", 
                        true,
                        expected_crs_comp, 
-                       opal_crs_base_selected_component.crs_version.mca_component_name,
+                       opal_crs_base_selected_component.base_version.mca_component_name,
                        ret);
         exit_status = ret;
         goto cleanup;
@@ -281,7 +281,7 @@ main(int argc, char *argv[])
     if(!opal_restart_globals.forked) {
         opal_show_help("help-opal-restart.txt", "failed-to-exec", true,
                        expected_crs_comp,
-                       opal_crs_base_selected_component.crs_version.mca_component_name);
+                       opal_crs_base_selected_component.base_version.mca_component_name);
         exit_status = ret;
         goto cleanup;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -30,23 +30,6 @@
 #include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
-
-/*
- * Module and component structures
- */
-struct orte_ess_base_module_1_0_0_t;
-typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_1_0_0_t;
-typedef orte_ess_base_module_1_0_0_t orte_ess_base_module_t;
-
-struct orte_ess_base_component_1_0_0_t;
-typedef struct orte_ess_base_component_1_0_0_t orte_ess_base_component_1_0_0_t;
-typedef orte_ess_base_component_1_0_0_t orte_ess_base_component_t;
-
-/**
- * Selection function
- */
-typedef orte_ess_base_module_t* 
-(*orte_ess_base_component_init_fn_t)(int *priority);
 
 /*
  * API functions
@@ -147,16 +130,18 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
     orte_ess_base_module_ft_event_fn_t              ft_event;
 };
+typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_1_0_0_t;
+typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_t;
 
- 
 /*
  * the standard component data structure
  */
 struct orte_ess_base_component_1_0_0_t {
-    mca_base_component_t ess_version;
-    mca_base_component_data_1_0_0_t ess_data;
-    orte_ess_base_component_init_fn_t  ess_init;
+    mca_base_component_t base_version;
+    mca_base_component_data_1_0_0_t base_data;
 };
+typedef struct orte_ess_base_component_1_0_0_t orte_ess_base_component_1_0_0_t;
+typedef struct orte_ess_base_component_1_0_0_t orte_ess_base_component_t;
 
 /*
  * Macro for use in components that are of type ess v1.0.0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -66,17 +66,13 @@ const opal_carto_base_component_1_0_0_t mca_carto_file_component = {
         /* Component open and close functions */
 
         file_open,
-        NULL
+        NULL,
+        opal_carto_file_component_query
     },
     {
-
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Query function */
-
-    opal_carto_file_component_query
+    }
 };
 
 
@@ -84,12 +80,12 @@ static int file_open(void)
 {
     int index;
 
-    mca_base_param_reg_int(&mca_carto_file_component.cartoc_version,
+    mca_base_param_reg_int(&mca_carto_file_component.base_version,
                            "priority",
                            "Priority of the file carto component",
                            false, false, 10, NULL);
 
-    mca_base_param_reg_string(&mca_carto_file_component.cartoc_version,
+    mca_base_param_reg_string(&mca_carto_file_component.base_version,
                               "path",
                               "The path to the cartography file",
                               false, false, NULL, &carto_file_path);

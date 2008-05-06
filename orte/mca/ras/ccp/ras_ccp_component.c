@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +41,7 @@ static int param_priority;
  * Local functions
  */
 static int ras_ccp_open(void);
-static orte_ras_base_module_t *ras_ccp_init(int*);
+static int orte_ras_ccp_component_query(mca_base_module_t **module, int *priority);
 
 
 orte_ras_ccp_component_t mca_ras_ccp_component = {
@@ -63,22 +65,22 @@ orte_ras_ccp_component_t mca_ras_ccp_component = {
             /* Component open and close functions */
             
             ras_ccp_open,
-            NULL
+            NULL,
+            orte_ras_ccp_component_query
         },
         
         /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
-        ras_ccp_init
+        }
     }
 };
 
 
 static int ras_ccp_open(void)
 {
-    mca_base_param_reg_int(&mca_ras_ccp_component.super.ras_version,
+    mca_base_param_reg_int(&mca_ras_ccp_component.super.base_version,
                            "priority",
                            "Priority of the ccp ras component",
                            false, false, 13, 
@@ -87,8 +89,7 @@ static int ras_ccp_open(void)
     return ORTE_SUCCESS;
 }
 
-
-static orte_ras_base_module_t *ras_ccp_init(int* priority)
+static int orte_ras_ccp_component_query(mca_base_module_t **module, int *priority);
 {
     int rc;
     ICluster* pCluster = NULL;
@@ -105,17 +106,20 @@ static orte_ras_base_module_t *ras_ccp_init(int* priority)
                            reinterpret_cast<void **> (&pCluster) );
     if (FAILED(hr)) {
         /* We are not Windows clusters, don't select us.*/
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
 
     /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.hnp) {
         pCluster->Release();
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
 
     /* We are Windows clusters and this is HNP. */
     pCluster->Release();  
     *priority = mca_ras_ccp_component.priority;
-    return &orte_ras_ccp_module;
+    *module = (mca_base_module_t *) &orte_ras_ccp_module;
+    return ORTE_SUCCESS;
 }

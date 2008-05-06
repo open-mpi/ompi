@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -41,7 +41,8 @@ static orte_snapc_base_component_t none_component = {
         
         /* Component open and close functions */
         orte_snapc_base_none_open,
-        orte_snapc_base_none_close
+        orte_snapc_base_none_close,
+        orte_snapc_base_none_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -49,9 +50,7 @@ static orte_snapc_base_component_t none_component = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    
-    /* Query Function */
-    NULL,
+
     /* Verbosity level */
     0,
     /* opal_output handler */
@@ -72,126 +71,62 @@ static orte_snapc_base_module_t none_module = {
 
 int orte_snapc_base_select(bool seed, bool app)
 {
-    int priority = 0, best_priority = -1;
-    opal_list_item_t *item = NULL;
-    mca_base_component_list_item_t *cli = NULL;
-    orte_snapc_base_component_t *component = NULL, *best_component = NULL;
-    orte_snapc_base_module_t *module = NULL, *best_module = NULL;
-    char *snapc_include_list = NULL;
-    bool fail_on_non_selection = false;
+    int ret, exit_status = OPAL_SUCCESS;
+    orte_snapc_base_component_t *best_component = NULL;
+    orte_snapc_base_module_t *best_module = NULL;
+    char *include_list = NULL;
 
-    /* Register the framework MCA param and look it up */
+    /*
+     * Register the framework MCA param and look up include list
+     */
     mca_base_param_reg_string_name("snapc", NULL,
                                    "Which SNAPC component to use (empty = auto-select)",
                                    false, false,
-                                   strdup("none"), &snapc_include_list);
-
-    if (NULL == snapc_include_list || 0 == strlen(snapc_include_list)) {
-        opal_output_verbose(25, orte_snapc_base_output,
-                            "snapc:select: auto-selecting");
-    } else {
-        opal_output_verbose(25, orte_snapc_base_output,
-                            "snapc:select: looking for %s component", snapc_include_list);
-        if(0 == strncmp(snapc_include_list, "none", strlen("none")) ) {
-            goto do_none_comp;
-        }
-        else {
-            fail_on_non_selection = true;
-        }
+                                   strdup("none"), &include_list);
+    if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
+        opal_output_verbose(10, orte_snapc_base_output,
+                            "snapc:select: Using %s component",
+                            include_list);
+        best_component = &none_component;
+        best_module    = &none_module;
+        /* Close all components since none will be used */
+        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
+                                  &orte_snapc_base_components_available,
+                                  NULL);
+        /* JJH: Todo: Check if none is in the list */
+        goto skip_select;
     }
-    
-    /* Traverse the list of available components;
-     * calling their init functions
-     */
-    for (item  = opal_list_get_first(&orte_snapc_base_components_available);
-         item != opal_list_get_end(&orte_snapc_base_components_available);
-         item  = opal_list_get_next(item) ) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_snapc_base_component_t *) cli->cli_component;
-        
-        /* If there is an include list -
-         * the item must be in the list to be included :)
-         */
-        if (NULL != snapc_include_list &&
-            0 < strlen(snapc_include_list) &&
-            0 != strncmp(component->snapc_version.mca_component_name,
-                         snapc_include_list, strlen(snapc_include_list)) ) {
-            opal_output_verbose(25, orte_snapc_base_output,
-                                "snapc:select: Skipping %s component",
-                                component->snapc_version.mca_component_name);
-            continue;
-        }
-        
-        if (NULL == component->snapc_query) {
-            opal_output_verbose(25, orte_snapc_base_output,
-                                "snapc:select: No init function! Ignoring component %s",
-                                component->snapc_version.mca_component_name );
-            continue;
-        }
-        
-        opal_output_verbose(25, orte_snapc_base_output,
-                            "snapc:select: Initializing component %s",
-                            component->snapc_version.mca_component_name);
 
-        module = component->snapc_query(&priority);
-        if (NULL == module) {
-            opal_output_verbose(25, orte_snapc_base_output,
-                                "snapc:select: Init returned failure for component %s",
-                                component->snapc_version.mca_component_name );
-            continue;
-        }
-        
-        opal_output_verbose(25, orte_snapc_base_output,
-                            "snapc:select: Init returned priority %d", 
-                            priority);
-        if (priority > best_priority) {
-            best_priority  = priority;
-            best_component = component;
-            best_module    = module;
-        }
-    }
-    
-    /* Finished querying all components.
-     * Check for the bozo case.
+    /*
+     * Select the best component
      */
- do_none_comp:
-    if (NULL == best_component ) {
-        if( fail_on_non_selection ) {
-            return ORTE_ERROR;
-        }
-        else {
-            opal_output_verbose(25, orte_snapc_base_output,
-                                "snapc:select: No component found, using the base component.  ;(");
-            best_component = &none_component;
-            best_module    = &none_module;
-        }
+    if( OPAL_SUCCESS != (ret = mca_base_select("snapc", orte_snapc_base_output,
+                                               &orte_snapc_base_components_available,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERROR;
+        goto cleanup;
     }
-    
-    /* Go through the list and close
-     * the non-selected components
-     */
-    mca_base_components_close(orte_snapc_base_output,
-                              &orte_snapc_base_components_available,
-                              (mca_base_component_t *) best_component);
 
+ skip_select:
     /* Save the winner */
     orte_snapc_base_selected_component = *best_component;
     orte_snapc = *best_module;
-    opal_output_verbose(15, orte_snapc_base_output,
-                        "snapc:select: Component %s selected",
-                        best_component->snapc_version.mca_component_name);
 
     /* Initialize the winner */
     if (NULL != best_module) {
-        if (ORTE_SUCCESS != orte_snapc.snapc_init( seed, app )) {
-            return ORTE_ERROR;
+        if (OPAL_SUCCESS != orte_snapc.snapc_init(seed, app)) {
+            exit_status = OPAL_ERROR;
+            goto cleanup;
         }
     }
 
-    if( NULL != snapc_include_list ) {
-        free(snapc_include_list);
-        snapc_include_list = NULL;
+ cleanup:
+    if( NULL != include_list ) {
+        free(include_list);
+        include_list = NULL;
     }
 
-    return ORTE_SUCCESS;
+    return exit_status;
 }

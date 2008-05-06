@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,7 +78,8 @@ orte_plm_submit_component_t mca_plm_submit_component = {
         /* Component open and close functions */
 
         orte_plm_submit_component_open,
-        orte_plm_submit_component_close
+        orte_plm_submit_component_close,
+        orte_plm_submit_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -84,11 +87,7 @@ orte_plm_submit_component_t mca_plm_submit_component = {
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Initialization / querying functions */
-
-    orte_plm_submit_component_init
+    }
     }
 };
 
@@ -97,7 +96,7 @@ orte_plm_submit_component_t mca_plm_submit_component = {
 int orte_plm_submit_component_open(void)
 {
     int tmp, value;
-    mca_base_component_t *c = &mca_plm_submit_component.super.plm_version;
+    mca_base_component_t *c = &mca_plm_submit_component.super.base_version;
 
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_plm_submit_component.lock, opal_mutex_t);
@@ -169,7 +168,7 @@ int orte_plm_submit_component_open(void)
 }
 
 
-orte_plm_base_module_t *orte_plm_submit_component_init(int *priority)
+int orte_plm_submit_component_query(mca_base_module_t **module, int *priority)
 {
     char *bname;
     size_t i;
@@ -208,17 +207,19 @@ orte_plm_base_module_t *orte_plm_submit_component_init(int *priority)
        component */
     if (NULL == mca_plm_submit_component.agent_argv || 
         NULL == mca_plm_submit_component.agent_argv[0]) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR:
     }
     mca_plm_submit_component.agent_path = 
         opal_path_findv(mca_plm_submit_component.agent_argv[0], X_OK,
                         environ, NULL);
     if (NULL == mca_plm_submit_component.agent_path) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR:
     }
     *priority = mca_plm_submit_component.priority;
-    
-    return &orte_plm_submit_module;
+    *module = (mca_base_module_t *) &orte_plm_submit_module;
+    return ORTE_SUCCESS;
 }
 
 

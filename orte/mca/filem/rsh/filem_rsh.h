@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -56,11 +56,11 @@ extern "C" {
     extern int orte_filem_rsh_max_incomming;
     extern int orte_filem_rsh_max_outgoing;
 
+    int orte_filem_rsh_component_query(mca_base_module_t **module, int *priority);
+
     /*
      * Module functions
      */
-    orte_filem_base_module_1_0_0_t *
-        orte_filem_rsh_component_query(int *priority);
     int orte_filem_rsh_module_init(void);
     int orte_filem_rsh_module_finalize(void);
 

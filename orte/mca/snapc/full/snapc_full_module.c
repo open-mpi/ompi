@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -125,15 +125,15 @@ void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj) {
 /*
  * MCA Functions
  */
-orte_snapc_base_module_1_0_0_t *
-orte_snapc_full_component_query(int *priority)
+int orte_snapc_full_component_query(mca_base_module_t **module, int *priority)
 {
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: component_query()");
 
     *priority = mca_snapc_full_component.super.priority;
+    *module = (mca_base_module_t *)&loc_module;
 
-    return &loc_module;
+    return ORTE_SUCCESS;
 }
 
 int orte_snapc_full_module_init(bool seed, bool app)

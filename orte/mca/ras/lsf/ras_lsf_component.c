@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -35,7 +35,7 @@
 
 static int orte_ras_lsf_open(void);
 static int orte_ras_lsf_close(void);
-static orte_ras_base_module_t* orte_ras_lsf_init(int* priority);
+static int orte_ras_lsf_component_query(mca_base_module_t **module, int *priority);
 
 
 orte_ras_lsf_component_t mca_ras_lsf_component = {
@@ -54,16 +54,15 @@ orte_ras_lsf_component_t mca_ras_lsf_component = {
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
         orte_ras_lsf_open,  /* component open  */
-        orte_ras_lsf_close  /* component close */
+        orte_ras_lsf_close, /* component close */
+        orte_ras_lsf_component_query
       },
 
       /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT
-      },
-
-      orte_ras_lsf_init
+      }
     }
 };
 
@@ -73,7 +72,7 @@ orte_ras_lsf_component_t mca_ras_lsf_component = {
   */
 static int orte_ras_lsf_open(void)
 {
-    mca_base_component_t *c = &mca_ras_lsf_component.super.ras_version;
+    mca_base_component_t *c = &mca_ras_lsf_component.super.base_version;
     int tmp;
     
     mca_base_param_reg_int(c, "debug",
@@ -89,21 +88,24 @@ static int orte_ras_lsf_open(void)
 }
 
 
-static orte_ras_base_module_t *orte_ras_lsf_init(int* priority)
+static int orte_ras_lsf_component_query(mca_base_module_t **module, int *priority)
 {
     /* if we are not an HNP, then we must not be selected */
     if (!orte_process_info.seed) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
     
     /* check if lsf is running here */
     if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
     
     *priority = mca_ras_lsf_component.priority;
-    return &orte_ras_lsf_module;
+    *module = (mca_base_module_t *) &orte_ras_lsf_module;
+    return ORTE_SUCCESS;
 }
 
 /**

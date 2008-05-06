@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -36,16 +38,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
-/**
- * Query function for memchecker components.  Simply returns a priority
- * to rank it against other available memchecker components (assumedly,
- * only one component will be available per platform, but it's
- * possible that there could be more than one available).
- */
-typedef const struct opal_memchecker_base_module_1_0_0_t *
-    (*opal_memchecker_base_component_query_1_0_0_fn_t)
-    (int *priority);
 
 /**
  * Module initialization function.  Should return OPAL_SUCCESS.
@@ -121,24 +113,21 @@ typedef int (*opal_memchecker_base_module_set_vbits_fn_t)(void * p, char * vbits
  */
 struct opal_memchecker_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t memchecker_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t memchecker_data;
-
-    /** Component query function */
-    opal_memchecker_base_component_query_1_0_0_fn_t memchecker_query;
+    mca_base_component_data_1_0_0_t base_data;
 };
 
 /**
  * Convenience typedef
  */
 typedef struct opal_memchecker_base_component_1_0_0_t opal_memchecker_base_component_1_0_0_t;
+typedef struct opal_memchecker_base_component_1_0_0_t opal_memchecker_base_component_t;
 
 /**
  * Structure for memchecker v1.0.0 modules
  */
 struct opal_memchecker_base_module_1_0_0_t {
-
     /** Module initialization function */
     opal_memchecker_base_module_init_1_0_0_fn_t init;
 
@@ -183,6 +172,7 @@ struct opal_memchecker_base_module_1_0_0_t {
  * Convenience typedef
  */
 typedef struct opal_memchecker_base_module_1_0_0_t opal_memchecker_base_module_1_0_0_t;
+typedef struct opal_memchecker_base_module_1_0_0_t opal_memchecker_base_module_t;
 
 
 /**

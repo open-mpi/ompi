@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -32,77 +32,26 @@ extern opal_list_t orte_ess_base_components_available;
 int 
 orte_ess_base_select(void)
 {
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
-    int selected_priority = -1;
-    orte_ess_base_component_t *selected_component = NULL;
-    orte_ess_base_module_t *selected_module = NULL;
- 
-    /* Traverse the list of opened modules; call their init functions. */
-    for(item = opal_list_get_first(&orte_ess_base_components_available);
-        item != opal_list_get_end(&orte_ess_base_components_available);
-        item = opal_list_get_next(item)) {
-        orte_ess_base_component_t* component;
- 
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_ess_base_component_t *) cli->cli_component;
+    int ret, exit_status = OPAL_SUCCESS;
+    orte_ess_base_component_t *best_component = NULL;
+    orte_ess_base_module_t *best_module = NULL;
 
-        opal_output_verbose(5, orte_ess_base_output, 
-            "orte_ess_base_select: initializing %s component %s",
-            component->ess_version.mca_type_name,
-            component->ess_version.mca_component_name);
-
-        if (NULL == component->ess_init) {
-          opal_output_verbose(5, orte_ess_base_output, 
-              "orte_ess_base_select: no init function; ignoring component");
-        } else {
-            int priority;
-            orte_ess_base_module_t* module = component->ess_init(&priority);
-
-            /* If the component didn't initialize, remove it from the opened
-               list and remove it from the component repository */
-            if (NULL == module) {
-                opal_output_verbose(5, orte_ess_base_output,
-                    "orte_ess_base_select: init returned failure");
-                continue;
-            }
-
-            if(priority > selected_priority) {
-                selected_priority = priority;
-                selected_component = component;
-                selected_module = module;
-            }
-        }
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != (ret = mca_base_select("ess", orte_ess_base_output,
+                                               &orte_ess_base_components_available,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
 
-    if (NULL == selected_component) {
-        return ORTE_ERR_NOT_FOUND;
-    }
+    /* Save the winner */
+    /* No global component structure */
+    orte_ess = *best_module;
 
-    /* unload all components that were not selected */
-    item = opal_list_get_first(&orte_ess_base_components_available);
-    while(item != opal_list_get_end(&orte_ess_base_components_available)) {
-        opal_list_item_t* next = opal_list_get_next(item);
-        orte_ess_base_component_t* component;
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_ess_base_component_t *) cli->cli_component;
-        if(component != selected_component) {
-            opal_output_verbose(5, orte_ess_base_output,
-                "orte_ess_base_select: module %s unloaded",
-                component->ess_version.mca_component_name);
-            mca_base_component_repository_release((mca_base_component_t *) component);
-            opal_list_remove_item(&orte_ess_base_components_available, item);
-            OBJ_RELEASE(item);
-        }
-        item = next;
-    }
-
-    /* setup reference to selected module */
-    if(NULL != selected_module) {
-        opal_output_verbose(5, orte_ess_base_output,
-            "orte_ess_base_select: module %s selected",
-            selected_component->ess_version.mca_component_name);
-        orte_ess = *selected_module;
-    }
-    return ORTE_SUCCESS;
+ cleanup:
+    return exit_status;
 }

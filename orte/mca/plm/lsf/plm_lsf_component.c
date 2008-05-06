@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -54,7 +54,7 @@ const char *mca_plm_lsf_component_version_string =
  */
 static int plm_lsf_open(void);
 static int plm_lsf_close(void);
-static orte_plm_base_module_t *plm_lsf_init(int *priority);
+static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -81,16 +81,14 @@ orte_plm_lsf_component_t mca_plm_lsf_component = {
             /* Component open and close functions */
             plm_lsf_open,
             plm_lsf_close,
+            orte_plm_lsf_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
-
-        /* Initialization / querying functions */
-        plm_lsf_init
+        }
     }
 };
 
@@ -98,7 +96,7 @@ orte_plm_lsf_component_t mca_plm_lsf_component = {
 static int plm_lsf_open(void)
 {
     int tmp, value;
-    mca_base_component_t *comp = &mca_plm_lsf_component.super.plm_version;
+    mca_base_component_t *comp = &mca_plm_lsf_component.super.base_version;
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, &mca_plm_lsf_component.priority);
@@ -127,7 +125,7 @@ static int plm_lsf_close(void)
 }
 
 
-static orte_plm_base_module_t *plm_lsf_init(int *priority)
+static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priority)
 {
     
     /* check if lsf is running here */
@@ -135,9 +133,11 @@ static orte_plm_base_module_t *plm_lsf_init(int *priority)
         /* nope, not here */
         opal_output_verbose(10, orte_plm_base.plm_output,
                             "plm:lsf: NOT available for selection");
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR:
     }
     
     *priority = mca_plm_lsf_component.priority;
-    return &orte_plm_lsf_module;
+    *module = (mca_base_module_t *) &orte_plm_lsf_module;
+    return ORTE_SUCCESS;
 }

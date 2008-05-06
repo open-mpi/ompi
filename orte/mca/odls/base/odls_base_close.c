@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -62,12 +62,6 @@ int orte_odls_base_close(void)
         return ORTE_SUCCESS;
     }
     
-    /* If we have a selected component and module, then finalize it */
-
-    if (orte_odls_base.selected) {
-        orte_odls_base.selected_component.finalize();
-    }
-
     /* Close all available components (only one in this case)  */
 
     mca_base_components_close(orte_odls_globals.output, 

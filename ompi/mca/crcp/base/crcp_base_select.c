@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -40,7 +40,8 @@ static ompi_crcp_base_component_t none_component = {
         
         /* Component open and close functions */
         ompi_crcp_base_none_open,
-        ompi_crcp_base_none_close
+        ompi_crcp_base_none_close,
+        ompi_crcp_base_none_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -48,9 +49,7 @@ static ompi_crcp_base_component_t none_component = {
         /* Is the component checkpointable ? */
         true
     },
-    
-    /* Query Function */
-    NULL,
+
     /* Verbosity level */
     0,
     /* opal_output handler */
@@ -117,125 +116,63 @@ static ompi_crcp_base_module_t none_module = {
 
 int ompi_crcp_base_select(void)
 {
-    int priority = 0, best_priority = -1;
-    opal_list_item_t *item = NULL;
-    mca_base_component_list_item_t *cli = NULL;
-    ompi_crcp_base_component_t *component = NULL, *best_component = NULL;
-    ompi_crcp_base_module_t *module = NULL, *best_module = NULL;
-    char *crcp_include_list = NULL;
-    bool fail_on_non_selection = false;
+    int ret, exit_status = OMPI_SUCCESS;
+    ompi_crcp_base_component_t *best_component = NULL;
+    ompi_crcp_base_module_t *best_module = NULL;
+    char *include_list = NULL;
 
-    /* Register the framework MCA param and look it up */
+    /*
+     * Register the framework MCA param and look up include list
+     */
     mca_base_param_reg_string_name("crcp", NULL,
                                    "Which CRCP component to use (empty = auto-select)",
                                    false, false,
-                                   strdup("none"), &crcp_include_list);
+                                   strdup("none"), &include_list);
 
-    if (NULL == crcp_include_list || 0 == strlen(crcp_include_list)) {
-        opal_output_verbose(20, ompi_crcp_base_output,
-                            "crcp:select: auto-selecting");
-    } else {
-        opal_output_verbose(20, ompi_crcp_base_output,
-                            "crcp:select: looking for %s component", crcp_include_list);
-        if(0 == strncmp(crcp_include_list, "none", strlen("none")) ) {
-            goto do_none_comp;
-        }
-        else {
-            fail_on_non_selection = true;
-        }
+    if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
+        opal_output_verbose(10, ompi_crcp_base_output,
+                            "crcp:select: Using %s component",
+                            include_list);
+        best_component = &none_component;
+        best_module    = &none_module;
+        /* JJH: Todo: Check if none is in the list */
+        /* Close all components since none will be used */
+        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
+                                  &ompi_crcp_base_components_available,
+                                  NULL);
+        goto skip_select;
     }
-    
-    /* Traverse the list of available components;
-     * calling their init functions
-     */
-    for (item  = opal_list_get_first(&ompi_crcp_base_components_available);
-         item != opal_list_get_end(&ompi_crcp_base_components_available);
-         item  = opal_list_get_next(item) ) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (ompi_crcp_base_component_t *) cli->cli_component;
-        
-        /* If there is an include list -
-         * the item must be in the list to be included :)
-         */
-        if (NULL != crcp_include_list && 
-            0 < strlen(crcp_include_list) &&
-            0 != strncmp(component->crcp_version.mca_component_name,
-                         crcp_include_list, strlen(crcp_include_list)) ) {
-            opal_output_verbose(20, ompi_crcp_base_output,
-                                "crcp:select: Skipping %s component",
-                                component->crcp_version.mca_component_name);
-            continue;
-        }
-        
-        if (NULL == component->crcp_query) {
-            opal_output_verbose(20, ompi_crcp_base_output,
-                                "crcp:select: No init function! Ignoring component %s",
-                                component->crcp_version.mca_component_name );
-            continue;
-        }
-        
-        opal_output_verbose(20, ompi_crcp_base_output,
-                            "crcp:select: Initializing component %s",
-                            component->crcp_version.mca_component_name);
 
-        module = component->crcp_query(&priority);
-        if (NULL == module) {
-            opal_output_verbose(20, ompi_crcp_base_output,
-                                "crcp:select: Init returned failure for component %s",
-                                component->crcp_version.mca_component_name );
-            continue;
-        }
-        
-        opal_output_verbose(20, ompi_crcp_base_output,
-                            "crcp:select: Init returned priority %d", 
-                            priority);
-        if (priority > best_priority) {
-            best_priority  = priority;
-            best_component = component;
-            best_module    = module;
-        }
-    }
-    
-    /* Finished querying all components.
-     * Check for the bozo case.
+    /*
+     * Select the best component
      */
- do_none_comp:
-    if (NULL == best_component ) {
-        if( fail_on_non_selection ) {
-            return OMPI_ERROR;
-        }
-        else {
-            opal_output_verbose(20, ompi_crcp_base_output,
-                                "crcp:select: No component found, using the base component.  ;(");
-            best_component = &none_component;
-            best_module    = &none_module;
-        }
+    if( OPAL_SUCCESS != (ret = mca_base_select("crcp", ompi_crcp_base_output,
+                                               &ompi_crcp_base_components_available,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = OMPI_ERROR;
+        goto cleanup;
     }
-    
-    /* Go through the list and close
-     * the non-selected components
-     */
-    mca_base_components_close(0, /* We must pass it 0, to keep it from closing it */
-                              &ompi_crcp_base_components_available,
-                              (mca_base_component_t *) best_component);
 
+ skip_select:
     /* Save the winner */
     ompi_crcp_base_selected_component = *best_component;
     ompi_crcp = *best_module;
-    opal_output_verbose(15, ompi_crcp_base_output,
-                        "crcp:select: Component %s selected",
-                        best_component->crcp_version.mca_component_name);
 
     /* Initialize the winner */
     if (NULL != best_module) {
-        if (OMPI_SUCCESS != ompi_crcp.crcp_init(  )) {
-            return OMPI_ERROR;
+        if (OPAL_SUCCESS != ompi_crcp.crcp_init()) {
+            exit_status = OMPI_ERROR;
+            goto cleanup;
         }
     }
 
-    if( NULL != crcp_include_list ) {
-        free(crcp_include_list);
+ cleanup:
+    if( NULL != include_list ) {
+        free(include_list);
+        include_list = NULL;
     }
-    
-    return OMPI_SUCCESS;
+
+    return exit_status;
 }

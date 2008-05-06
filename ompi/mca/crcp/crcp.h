@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -48,14 +48,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-/**
- * Query function for CRCP components.
- * Returns a priority to rank it agaianst other available CRCP components.
- */
-typedef struct ompi_crcp_base_module_1_0_0_t *
-        (*ompi_crcp_base_component_query_1_0_0_fn_t)
-        (int *priority);
 
 /**
  * Module initialization function.
@@ -269,13 +261,10 @@ typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_ft_event_fn_t)
  */
 struct ompi_crcp_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t crcp_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t crcp_data;
+    mca_base_component_data_1_0_0_t base_data;
 
-    /** Component Query for Selection Function */
-    ompi_crcp_base_component_query_1_0_0_fn_t crcp_query;
-    
     /** Verbosity Level */
     int verbose;
     /** Output Handle for opal_output */

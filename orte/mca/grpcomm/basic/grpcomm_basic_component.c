@@ -1,6 +1,6 @@
 /* -*- C -*-
 *
-* Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+* Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
 *                         University Research and Technology
 *                         Corporation.  All rights reserved.
 * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -62,13 +62,13 @@ orte_grpcomm_base_component_t mca_grpcomm_basic_component = {
         ORTE_MINOR_VERSION,  /* MCA module minor version */
         ORTE_RELEASE_VERSION,  /* MCA module release version */
         orte_grpcomm_basic_open,  /* module open */
-        orte_grpcomm_basic_close /* module close */
+        orte_grpcomm_basic_close, /* module close */
+        orte_grpcomm_basic_component_query /* module query */
     },
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    orte_grpcomm_basic_init    /* component init */
+    }
 };
 
 /*
@@ -80,7 +80,7 @@ orte_grpcomm_basic_globals_t orte_grpcomm_basic;
 int orte_grpcomm_basic_open(void)
 {
     char *mode;
-    mca_base_component_t *c = &mca_grpcomm_basic_component.grpcomm_version;
+    mca_base_component_t *c = &mca_grpcomm_basic_component.base_version;
     int tmp;
 
     mca_base_param_reg_int(c, "xcast_linear_xover",
@@ -117,10 +117,10 @@ int orte_grpcomm_basic_close(void)
     return ORTE_SUCCESS;
 }
 
-orte_grpcomm_base_module_t* orte_grpcomm_basic_init(int *priority)
+int orte_grpcomm_basic_component_query(mca_base_module_t **module, int *priority)
 {
     /* we are the default, so set a low priority so we can be overridden */
     *priority = 1;
-    
-    return &orte_grpcomm_basic_module;
+    *module = (mca_base_module_t *)&orte_grpcomm_basic_module;
+    return ORTE_SUCCESS;    
 }
