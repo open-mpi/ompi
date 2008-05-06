@@ -574,12 +574,6 @@ static int rdmacm_connection_shutdown(struct mca_btl_base_endpoint_t *endpoint)
         return 0;
     }
 
-    if (IBV_TRANSPORT_IWARP == endpoint->endpoint_btl->hca->ib_dev->transport_type) {
-        int i;
-        for (i = 0; i < mca_btl_openib_component.num_qps; i++)
-            endpoint->qps[i].qp->lcl_qp = NULL;
-    }
-
     for (temp = client_list_head; NULL != temp; temp = temp->next) {
         if (endpoint == temp->item->endpoint) {
             int i;
