@@ -89,11 +89,14 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->total_slots_alloc = 0;
     ptr->num_procs = 0;
     ptr->num_local_procs = 0;
-    ptr->hnp_has_local_procs = false;
     ptr->procmap = NULL;
     ptr->pmap = NULL;
-    ptr->collection_bucket = NULL;
+    OBJ_CONSTRUCT(&ptr->collection_bucket, opal_buffer_t);
+    OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
     ptr->collective_type = ORTE_GRPCOMM_COLL_NONE;
+    ptr->num_contributors = 0;
+    ptr->num_participating = 0;
+    ptr->num_collected = 0;
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
@@ -117,9 +120,8 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
         free(ptr->pmap);
     }
     
-    if (NULL != ptr->collection_bucket) {
-        OBJ_RELEASE(ptr->collection_bucket);
-    }
+    OBJ_DESTRUCT(&ptr->collection_bucket);
+    OBJ_DESTRUCT(&ptr->local_collection);
 }
 OBJ_CLASS_INSTANCE(orte_odls_job_t,
                    opal_list_item_t,

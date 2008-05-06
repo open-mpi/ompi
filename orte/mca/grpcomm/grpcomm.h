@@ -74,17 +74,6 @@ typedef int (*orte_grpcomm_base_module_allgather_list_fn_t)(opal_list_t *names,
 /* barrier function */
 typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
 
-/* daemon collective operations */
-typedef int (*orte_grpcomm_base_module_daemon_collective_fn_t)(orte_jobid_t jobid,
-                                                               orte_std_cntr_t num_local_contributors,
-                                                               orte_grpcomm_coll_t type,
-                                                               opal_buffer_t *data,
-                                                               bool hnp_has_local_procs);
-
-/* update the xcast trees - called after a change to the number of daemons
- * in the system
- */
-typedef int (*orte_grpcomm_base_module_update_trees_fn_t)(void);
 
 /** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
  *  OF HOW THIS ALL WORKS
@@ -117,8 +106,6 @@ struct orte_grpcomm_base_module_2_0_0_t {
     orte_grpcomm_base_module_allgather_fn_t             allgather;
     orte_grpcomm_base_module_allgather_list_fn_t        allgather_list;
     orte_grpcomm_base_module_barrier_fn_t               barrier;
-    orte_grpcomm_base_module_daemon_collective_fn_t     daemon_collective;
-    orte_grpcomm_base_module_update_trees_fn_t          update_trees;
     /* modex functions */
     orte_grpcomm_base_module_modex_set_proc_attr_fn_t   set_proc_attr;
     orte_grpcomm_base_module_modex_get_proc_attr_fn_t   get_proc_attr;

@@ -682,14 +682,16 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
     /* the binomial routing tree always goes to our children,
      * for any job
      */
-    for (item = opal_list_get_first(&my_children);
-         item != opal_list_get_end(&my_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_namelist_t*)item;
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = child->name.jobid;
-        nm->name.vpid = child->name.vpid;
-        opal_list_append(children, &nm->item);
+    if (NULL != children) {
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_namelist_t*)item;
+            nm = OBJ_NEW(orte_namelist_t);
+            nm->name.jobid = child->name.jobid;
+            nm->name.vpid = child->name.vpid;
+            opal_list_append(children, &nm->item);
+        }
     }
     /* return my parent's vpid */
     return my_parent.vpid;

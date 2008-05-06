@@ -415,10 +415,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
     
     /* all done launching - update the num_procs in my local structure */
     orte_process_info.num_procs = jdatorted->num_procs;
-    /* update the grpcomm xcast tree(s) */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.update_trees())) {
-        ORTE_ERROR_LOG(rc);
-    }
+    /* update the routing tree */
     if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
         ORTE_ERROR_LOG(rc);
     }

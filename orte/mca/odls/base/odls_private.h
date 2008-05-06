@@ -77,12 +77,15 @@ typedef struct orte_odls_job_t {
     orte_std_cntr_t     num_apps;               /* number of app_contexts */
     orte_std_cntr_t     total_slots_alloc;
     orte_vpid_t         num_procs;
-    uint8_t             num_local_procs;
-    bool                hnp_has_local_procs;
+    int32_t             num_local_procs;
     orte_pmap_t         *procmap;               /* map of procs/node, local ranks */
     opal_byte_object_t  *pmap;                  /* byte object version of procmap */
-    opal_buffer_t       *collection_bucket;
+    opal_buffer_t       collection_bucket;
+    opal_buffer_t       local_collection;
     orte_grpcomm_coll_t collective_type;
+    int32_t             num_contributors;
+    int                 num_participating;
+    int                 num_collected;
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
 
