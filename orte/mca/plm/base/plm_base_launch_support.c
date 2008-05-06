@@ -765,42 +765,43 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "mca_base_param_file_prefix");
         opal_argv_append(argc, argv, amca_param_prefix);
-    }
     
-    /* Add the 'path' param */
-    loc_id = mca_base_param_find("mca", NULL, "base_param_file_path");
-    mca_base_param_lookup_string(loc_id, &amca_param_path);
-    if( NULL != amca_param_path ) {
+        /* Add the 'path' param */
+        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path");
+        mca_base_param_lookup_string(loc_id, &amca_param_path);
+        if( NULL != amca_param_path ) {
+            opal_argv_append(argc, argv, "-mca");
+            opal_argv_append(argc, argv, "mca_base_param_file_path");
+            opal_argv_append(argc, argv, amca_param_path);
+        }
+    
+        /* Add the 'path' param */
+        loc_id = mca_base_param_find("mca", NULL, "base_param_file_path_force");
+        mca_base_param_lookup_string(loc_id, &tmp_force);
+        if( NULL == tmp_force ) {
+            /* Get the current working directory */
+            tmp_force = (char *) malloc(sizeof(char) * OMPI_PATH_MAX);
+            if( NULL == (tmp_force = getcwd(tmp_force, OMPI_PATH_MAX) )) {
+                tmp_force = strdup("");
+            }
+        }
         opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "mca_base_param_file_path");
-        opal_argv_append(argc, argv, amca_param_path);
-    }
+        opal_argv_append(argc, argv, "mca_base_param_file_path_force");
+        opal_argv_append(argc, argv, tmp_force);
     
-    /* Add the 'path' param */
-    loc_id = mca_base_param_find("mca", NULL, "base_param_file_path_force");
-    mca_base_param_lookup_string(loc_id, &tmp_force);
-    if( NULL == tmp_force ) {
-        /* Get the current working directory */
-        tmp_force = (char *) malloc(sizeof(char) * OMPI_PATH_MAX);
-        if( NULL == (tmp_force = getcwd(tmp_force, OMPI_PATH_MAX) )) {
-            tmp_force = strdup("");
+        free(tmp_force);
+    
+        if( NULL != amca_param_path ) {
+            free(amca_param_path);
+            amca_param_path = NULL;
+        }
+
+        if( NULL != amca_param_prefix ) {
+            free(amca_param_prefix);
+            amca_param_prefix = NULL;
         }
     }
-    opal_argv_append(argc, argv, "-mca");
-    opal_argv_append(argc, argv, "mca_base_param_file_path_force");
-    opal_argv_append(argc, argv, tmp_force);
-    
-    free(tmp_force);
-    
-    if( NULL != amca_param_path ) {
-        free(amca_param_path);
-        amca_param_path = NULL;
-    }
-    if( NULL != amca_param_prefix ) {
-        free(amca_param_prefix);
-        amca_param_prefix = NULL;
-    }
-    
+
     return ORTE_SUCCESS;
 }
 
