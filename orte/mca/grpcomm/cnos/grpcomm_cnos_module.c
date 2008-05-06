@@ -66,15 +66,6 @@ static int modex(opal_list_t *procs);
 
 static int purge_proc_attrs(void);
 
-static int daemon_collective(orte_jobid_t jobid,
-                             orte_std_cntr_t num_local_contributors,
-                             orte_grpcomm_coll_t type,
-                             opal_buffer_t *data,
-                             orte_rmaps_dp_t flag,
-                             opal_value_array_t *participants);
-
-static int update_trees(void);
-
 orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     init,
     finalize,
@@ -82,8 +73,6 @@ orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     allgather,
     allgather_list,
     orte_grpcomm_cnos_barrier,
-    daemon_collective,
-    update_trees,
     set_proc_attr,
     get_proc_attr,
     modex,
@@ -158,21 +147,6 @@ static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t
 }
 
 static int purge_proc_attrs(void);
-
-static int daemon_collective(orte_jobid_t jobid,
-                             orte_std_cntr_t num_local_contributors,
-                             orte_grpcomm_coll_t type,
-                             opal_buffer_t *data,
-                             orte_rmaps_dp_t flag,
-                             opal_value_array_t *participants)
-{
-    return ORTE_SUCCESS;
-}
-
-static int update_trees(void)
-{
-    return ORTE_SUCCESS;
-}
 
 static int set_proc_attr(const char *attr_name,
                          const void *data,

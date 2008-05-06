@@ -629,10 +629,12 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
      * consists of every daemon - indicate that by
      * adding a proc name of our jobid and a wildcard vpid
      */
-    nm = OBJ_NEW(orte_namelist_t);
-    nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-    nm->name.vpid = ORTE_VPID_WILDCARD;
-    opal_list_append(children, &nm->item);
+    if (NULL != children) {
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(children, &nm->item);
+    }
     /* the parent of the HNP is invalid */
     return ORTE_VPID_INVALID;
 }

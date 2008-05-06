@@ -128,10 +128,10 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         orte_process_info.daemon &&
         orte_process_info.num_procs < num_procs) {
         orte_process_info.num_procs = num_procs;
-        /* if we changed it, then we better update the trees in the
-         * grpcomm so daemon collectives work correctly
+        /* if we changed it, then we better update the routed
+         * tree so daemon collectives work correctly
          */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.update_trees())) {
+        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
             ORTE_ERROR_LOG(rc);
         }
     }
