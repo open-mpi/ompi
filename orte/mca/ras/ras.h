@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -215,20 +215,13 @@ typedef orte_ras_base_module_2_0_0_t orte_ras_base_module_t;
 
 /**
  * Component init / selection
- */
-typedef orte_ras_base_module_t* (*orte_ras_base_component_init_fn_t)(int* priority);
-
- 
-/**
  * ras component version 2.0.0
  */
 struct orte_ras_base_component_2_0_0_t {
     /** Base MCA structure */
-    mca_base_component_t ras_version;
+    mca_base_component_t base_version;
     /** Base MCA data */
-    mca_base_component_data_1_0_0_t ras_data;
-    /** Initialization / selection function pointer */
-    orte_ras_base_component_init_fn_t ras_init;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /** Convenience typedef */
 typedef struct orte_ras_base_component_2_0_0_t orte_ras_base_component_2_0_0_t;

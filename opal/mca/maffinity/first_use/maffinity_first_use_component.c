@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -59,7 +59,8 @@ const opal_maffinity_base_component_1_0_0_t mca_maffinity_first_use_component = 
         /* Component open and close functions */
 
         first_use_open,
-        NULL
+        NULL,
+        opal_maffinity_first_use_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -67,17 +68,13 @@ const opal_maffinity_base_component_1_0_0_t mca_maffinity_first_use_component = 
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Query function */
-
-    opal_maffinity_first_use_component_query
+    }
 };
 
 
 static int first_use_open(void)
 {
-    mca_base_param_reg_int(&mca_maffinity_first_use_component.maffinityc_version,
+    mca_base_param_reg_int(&mca_maffinity_first_use_component.base_version,
                            "priority",
                            "Priority of the first_use maffinity component",
                            false, false, 10, NULL);

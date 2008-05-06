@@ -2,6 +2,8 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,74 +60,37 @@ orte_routed_base_open(void)
 int
 orte_routed_base_select(void)
 {
-    opal_list_item_t *item;
+    int ret, exit_status = OPAL_SUCCESS;
+    orte_routed_component_t *best_component = NULL;
+    orte_routed_module_t *best_module = NULL;
 
-    int selected_priority = -1;
-    orte_routed_component_t *selected_component = NULL;
-    orte_routed_module_t *selected_module = NULL;
-    
-    for (item = opal_list_get_first(&orte_routed_base_components);
-         item != opal_list_get_end(&orte_routed_base_components) ;
-         item = opal_list_get_next(item)) {
-        mca_base_component_list_item_t *cli;
-        orte_routed_component_t* component;
- 
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_routed_component_t *) cli->cli_component;
-
-        opal_output_verbose(10, orte_routed_base_output, 
-                            "orte_routed_base_select: initializing %s component %s",
-                            component->routed_version.mca_type_name,
-                            component->routed_version.mca_component_name);
-
-        if (NULL == component->routed_init) {
-            opal_output_verbose(10, orte_routed_base_output, 
-                                "orte_routed_base_select: no init function; ignoring component");
-        } else {
-            int priority = 0;
-
-            orte_routed_module_t* module = component->routed_init(&priority);
-            if (NULL == module) {
-                opal_output_verbose(10, orte_routed_base_output,
-                                    "orte_routed_base_select: init returned failure");
-                continue;
-            }
-
-            if (priority > selected_priority) {
-                /* Otherwise this is a normal module and subject to normal selection */
-                selected_priority = priority;
-                selected_component = component;
-                selected_module = module;
-            }
-        }
-    }
-
-    /* 
-     * Unload all components that were not selected
+    /*
+     * Select the best component
      */
-    opal_output_verbose(10, orte_routed_base_output,
-                        "orte_routed_base_select: unloading unused components");
-    mca_base_components_close(orte_routed_base_output,
-                              &orte_routed_base_components,
-                              &selected_component->routed_version);
-
-    /* setup reference to selected module */
-    if (NULL != selected_module) {
-        orte_routed = *selected_module;
-        active_component = selected_component;
+    if( OPAL_SUCCESS != (ret = mca_base_select("routed", orte_routed_base_output,
+                                               &orte_routed_base_components,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
 
-    if (NULL == selected_component) return ORTE_ERROR;
-    
+    /* Save the winner */
+    orte_routed = *best_module;
+    active_component = best_component;
+
     /* initialize the selected component */
     opal_output_verbose(10, orte_routed_base_output,
                         "orte_routed_base_select: initializing selected component %s",
-                        selected_component->routed_version.mca_component_name);
+                        best_component->base_version.mca_component_name);
     if (ORTE_SUCCESS != orte_routed.initialize()) {
-        return ORTE_ERROR;
+        exit_status = ORTE_ERROR;
+        goto cleanup;
     }
-    
-    return ORTE_SUCCESS;
+
+ cleanup:
+    return exit_status;
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -58,7 +58,8 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
             
             /* Component open and close functions */
             filem_rsh_open,
-            filem_rsh_close
+            filem_rsh_close,
+            orte_filem_rsh_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -66,9 +67,7 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        /* Query Function */
-        orte_filem_rsh_component_query,
+
         /* Verbosity level */
         0,
         /* opal_output handler */
@@ -86,14 +85,14 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
 
 static int filem_rsh_open(void) 
 {
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.filem_version,
+    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
                            "priority",
                            "Priority of the FILEM rsh component",
                            false, false,
                            mca_filem_rsh_component.super.priority,
                            &mca_filem_rsh_component.super.priority);
     
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.filem_version,
+    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
                            "verbose",
                            "Verbose level for the FILEM rsh component",
                            false, false,
@@ -110,20 +109,20 @@ static int filem_rsh_open(void)
         mca_filem_rsh_component.super.output_handle = orte_filem_base_output;
     }
     
-    mca_base_param_reg_string(&mca_filem_rsh_component.super.filem_version,
+    mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
                               "rcp",
                               "The rsh cp command for the FILEM rsh component",
                               false, false,
                               "scp",
                               &mca_filem_rsh_component.cp_command);
-    mca_base_param_reg_string(&mca_filem_rsh_component.super.filem_version,
+    mca_base_param_reg_string(&mca_filem_rsh_component.super.base_version,
                               "rsh",
                               "The remote shell command for the FILEM rsh component",
                               false, false,
                               "ssh",
                               &mca_filem_rsh_component.remote_sh_command);
 
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.filem_version,
+    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
                            "max_incomming",
                            "Maximum number of incomming connections",
                            false, false,
@@ -134,7 +133,7 @@ static int filem_rsh_open(void)
         orte_filem_rsh_max_incomming = 1;
     }
 
-    mca_base_param_reg_int(&mca_filem_rsh_component.super.filem_version,
+    mca_base_param_reg_int(&mca_filem_rsh_component.super.base_version,
                            "max_outgoing",
                            "Maximum number of out going connections (Currently not used)",
                            false, false,

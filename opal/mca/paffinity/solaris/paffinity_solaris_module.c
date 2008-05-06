@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,14 +52,11 @@ static int solaris_module_get_core_info(int socket, int *num_cores, int *max_cor
 /*
  * Solaris paffinity module
  */
-static const opal_paffinity_base_module_1_1_0_t module = {
-
+static const opal_paffinity_base_module_1_1_0_t loc_module = {
     /* Initialization function */
-
     solaris_module_init,
 
     /* Module function pointers */
-
     solaris_module_set,
     solaris_module_get,
     solaris_module_map_to_processor_id,
@@ -70,16 +67,16 @@ static const opal_paffinity_base_module_1_1_0_t module = {
     solaris_module_finalize
 };
 
-
-const opal_paffinity_base_module_1_1_0_t *
-opal_paffinity_solaris_component_query(int *query)
+int opal_paffinity_solaris_component_query(mca_base_module_t **module, int *priority)
 {
     int param;
 
     param = mca_base_param_find("paffinity", "solaris", "priority");
-    mca_base_param_lookup_int(param, query);
+    mca_base_param_lookup_int(param, priority);
 
-    return &module;
+    *module = (mca_base_module_t *)&loc_module;
+
+    return OPAL_SUCCESS;
 }
 
 /* do nothing here. both mpirun and processes would run init(), but

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,7 +23,7 @@ BEGIN_C_DECLS
 
 int orte_ess_portals_utcp_component_open(void);
 int orte_ess_portals_utcp_component_close(void);
-orte_ess_base_module_t* orte_ess_portals_utcp_component_init(int *priority);
+int orte_ess_portals_utcp_component_query(mca_base_module_t **module, int *priority);
 
 END_C_DECLS
 

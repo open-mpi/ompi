@@ -2,6 +2,9 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,21 +54,15 @@ orte_odls_base_component_t mca_odls_process_component = {
         /* Component open and close functions */
 
         orte_odls_process_component_open,
-        orte_odls_process_component_close
+        orte_odls_process_component_close,
+        orte_odls_process_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
-
     {
-        /* Whether the component is checkpointable or not */
-
-        true
-    },
-
-    /* Initialization / querying functions */
-
-    orte_odls_process_component_init,
-    orte_odls_process_component_finalize
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    }
 };
 
 int orte_odls_process_component_open(void)
@@ -73,15 +70,15 @@ int orte_odls_process_component_open(void)
     return ORTE_SUCCESS;
 }
 
-orte_odls_base_module_t *orte_odls_process_component_init(int *priority)
+int orte_odls_process_component_query(mca_base_module_t **module, int *priority)
 {
     /* the base open/select logic protects us against operation when
      * we are NOT in a daemon, so we don't have to check that here
      */
     
     *priority = 1;
-    
-    return &orte_odls_process_module;
+    *module = (mca_base_module_t *) &orte_odls_process_module;
+    return ORTE_SUCCESS;
 }
 
 int orte_odls_process_component_close(void)

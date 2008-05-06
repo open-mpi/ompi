@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -163,14 +163,6 @@ typedef struct orte_filem_base_request_1_0_0_t orte_filem_base_request_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_filem_base_request_t);
 
 /**
- * Query function for FILEM components.
- * Returns a priority to rank it agaianst other available FILEM components.
- */
-typedef struct orte_filem_base_module_1_0_0_t *
-        (*orte_filem_base_component_query_1_0_0_fn_t)
-        (int *priority);
-
-/**
  * Module initialization function.
  * Returns ORTE_SUCCESS
  */
@@ -313,13 +305,10 @@ typedef int (*orte_filem_base_wait_all_fn_t)
  */
 struct orte_filem_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t filem_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t filem_data;
+    mca_base_component_data_1_0_0_t base_data;
 
-    /** Component Query for Selection Function */
-    orte_filem_base_component_query_1_0_0_fn_t filem_query;
-    
     /** Verbosity Level */
     int verbose;
     /** Output Handle for opal_output */

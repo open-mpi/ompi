@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -31,17 +31,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_graph.h"
-
-
-/**
- * Query function for carto components.  Simply returns a priority
- * to rank it against other available carto components (assumedly,
- * only one component will be available per platform, but it's
- * possible that there could be more than one available).
- */
-typedef const struct opal_carto_base_module_1_0_0_t *
-    (*opal_carto_base_component_query_1_0_0_fn_t)
-    (int *priority);
 
 /**
  * type for carto graph
@@ -129,24 +118,21 @@ typedef int (*opal_carto_base_module_finalize_fn_t)(void);
  */
 struct opal_carto_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t cartoc_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t cartoc_data;
-
-    /** Component query function */
-    opal_carto_base_component_query_1_0_0_fn_t cartoc_query;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /**
  * Convenience typedef
  */
 typedef struct opal_carto_base_component_1_0_0_t opal_carto_base_component_1_0_0_t;
+typedef struct opal_carto_base_component_1_0_0_t opal_carto_base_component_t;
 
 
 /**
  * Structure for carto v1.0.0 modules
  */
 struct opal_carto_base_module_1_0_0_t {
-
     /** Module initialization function */
     opal_carto_base_module_init_1_0_0_fn_t carto_module_init;
     /** Get host graph */
@@ -166,6 +152,7 @@ struct opal_carto_base_module_1_0_0_t {
  * Convenience typedef
  */
 typedef struct opal_carto_base_module_1_0_0_t opal_carto_base_module_1_0_0_t;
+typedef struct opal_carto_base_module_1_0_0_t opal_carto_base_module_t;
 
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -149,22 +149,11 @@ typedef orte_errmgr_base_module_1_3_0_t orte_errmgr_base_module_t;
 
 /*
  * ERRMGR Component
- */
-
-typedef orte_errmgr_base_module_t* (*orte_errmgr_base_component_init_fn_t)(int *priority);
-
-typedef int (*orte_errmgr_base_component_finalize_fn_t)(void);
-
-/*
  * the standard component data structure
  */
-
 struct mca_errmgr_base_component_1_3_0_t {
-    mca_base_component_t errmgr_version;
-    mca_base_component_data_1_0_0_t errmgr_data;
-
-    orte_errmgr_base_component_init_fn_t errmgr_init;
-    orte_errmgr_base_component_finalize_fn_t errmgr_finalize;
+    mca_base_component_t base_version;
+    mca_base_component_data_1_0_0_t base_data;
 };
 typedef struct mca_errmgr_base_component_1_3_0_t mca_errmgr_base_component_1_3_0_t;
 typedef mca_errmgr_base_component_1_3_0_t mca_errmgr_base_component_t;

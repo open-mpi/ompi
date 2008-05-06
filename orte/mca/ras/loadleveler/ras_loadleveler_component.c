@@ -38,7 +38,7 @@ static int param_priority;
  * Local functions
  */
 static int orte_ras_loadleveler_open(void);
-static orte_ras_base_module_t *orte_ras_loadleveler_init(int*);
+static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int *priority);
 
 
 orte_ras_base_component_t mca_ras_loadleveler_component = {
@@ -60,16 +60,15 @@ orte_ras_base_component_t mca_ras_loadleveler_component = {
         /* Component open and close functions */
         
         orte_ras_loadleveler_open,
-        NULL
+        NULL,
+        orte_ras_loadleveler_component_query
     },
     
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    
-    orte_ras_loadleveler_init
+    }
 };
 
 
@@ -78,7 +77,7 @@ static int orte_ras_loadleveler_open(void)
     /* for now we set the priority lower then the priority of the POE RAS
      * so that it is used whenever the LOADL_PROCESSOR_LIST is actually set */
     param_priority = 
-        mca_base_param_reg_int(&mca_ras_loadleveler_component.ras_version,
+        mca_base_param_reg_int(&mca_ras_loadleveler_component.base_version,
                                "priority",
                                "Priority of the loadleveler ras component",
                                false, false, 90, NULL);
@@ -86,8 +85,7 @@ static int orte_ras_loadleveler_open(void)
     return ORTE_SUCCESS;
 }
 
-
-static orte_ras_base_module_t *orte_ras_loadleveler_init(int* priority)
+static int orte_ras_loadleveler_component_query(mca_base_module_t **module, int *priority)
 {
     /* Are we running under a LOADLEVELER job? */
     if (NULL != getenv("LOADL_STEP_ID")) {
@@ -95,13 +93,15 @@ static orte_ras_base_module_t *orte_ras_loadleveler_init(int* priority)
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:loadleveler: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return &orte_ras_loadleveler_module;
+        *module = (mca_base_module_t *) &orte_ras_loadleveler_module;
+        return ORTE_SUCCESS;
     }
 
     /* Sadly, no */
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:loadleveler: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -92,6 +92,15 @@ OPAL_DECLSPEC int mca_base_open(void);
  * special case of the laminfo command.
  */
 OPAL_DECLSPEC int mca_base_close(void);
+
+/**
+ * A generic select function
+ *
+ */
+OPAL_DECLSPEC int mca_base_select(const char *type_name, int output_id,
+                                  opal_list_t *components_available,
+                                  mca_base_module_t **best_module,
+                                  mca_base_component_t **best_component);
 
 /* mca_base_cmd_line.c */
 

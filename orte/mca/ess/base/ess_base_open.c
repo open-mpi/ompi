@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -37,8 +37,10 @@
 
 opal_list_t orte_ess_base_components_available;
 orte_ess_base_module_t orte_ess = {
-    NULL,
-    NULL
+    NULL, /* init     */
+    NULL, /* finalize */
+    NULL, /* abort    */
+    NULL  /* ft_event */
 };
 int orte_ess_base_output;
 

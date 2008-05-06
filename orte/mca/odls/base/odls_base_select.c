@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -24,6 +24,7 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/odls/base/odls_private.h"
 
 
 /**
@@ -32,80 +33,33 @@
  */
 int orte_odls_base_select(void)
 {
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
-    orte_odls_base_component_t *component, *best_component = NULL;
-    orte_odls_base_module_t *module, *best_module = NULL;
-    int priority, best_priority = -1;
-    
-    /* if no components are available (e.g., we are not in a daemon), then
-        * there is nothing to do - so just return
-        */
+    int ret, exit_status = OPAL_SUCCESS;
+    orte_odls_base_component_t *best_component = NULL;
+    orte_odls_base_module_t *best_module = NULL;
+
+    orte_odls_base.selected = false;
+
     if (!orte_odls_base.components_available) {
-        orte_odls_base.selected = false;
         return ORTE_SUCCESS;
     }
-    
-    /* Iterate through all the available components */
-    
-    for (item = opal_list_get_first(&orte_odls_base.available_components);
-         item != opal_list_get_end(&orte_odls_base.available_components);
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_odls_base_component_t *) cli->cli_component;
-        
-        /* Call the component's init function and see if it wants to be
-            selected */
-        
-        module = component->init(&priority);
-        
-        /* If we got a non-NULL module back, then the component wants to
-            be selected.  So save its multi/hidden values and save the
-            module with the highest priority */
-        
-        if (NULL != module) {
-            /* If this is the best one, save it */
-            
-            if (priority > best_priority) {
-                
-                /* If there was a previous best one, finalize */
-                
-                if (NULL != best_component) {
-                    best_component->finalize();
-                }
-                
-                /* Save the new best one */
-                
-                best_module = module;
-                best_component = component;
-                
-                /* update the best priority */
-                best_priority = priority;
-            } 
-            
-            /* If it's not the best one, finalize it */
-            
-            else {
-                component->finalize();
-            }
-        }
+
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != (ret = mca_base_select("odls", orte_odls_globals.output,
+                                               &orte_odls_base.available_components,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
-    
-    /* If we didn't find one to select, then we have a big problem */
-    
-    if (NULL == best_component) {
-        orte_odls_base.selected = false;
-        return ORTE_ERROR;
-    }
-    
-    /* We have happiness -- save the component and module for later
-        usage */
-    
+
+    /* Save the winner */
     orte_odls = *best_module;
     orte_odls_base.selected_component = *best_component;
     orte_odls_base.selected = true;
-    
-    /* all done */
-    
-    return ORTE_SUCCESS;
+
+ cleanup:
+    return exit_status;
 }

@@ -1,6 +1,6 @@
 /* -*- C -*-
  * 
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -49,7 +49,7 @@ extern orte_grpcomm_basic_globals_t orte_grpcomm_basic;
  */
 int orte_grpcomm_basic_open(void);
 int orte_grpcomm_basic_close(void);
-orte_grpcomm_base_module_t* orte_grpcomm_basic_init(int *priority);
+int orte_grpcomm_basic_component_query(mca_base_module_t **module, int *priority);
 
 
 /*

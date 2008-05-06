@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -81,7 +81,8 @@ orte_plm_gridengine_component_t mca_plm_gridengine_component = {
         /* Component open and close functions */
 
         orte_plm_gridengine_component_open,
-        orte_plm_gridengine_component_close
+        orte_plm_gridengine_component_close,
+        orte_plm_gridengine_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -89,11 +90,7 @@ orte_plm_gridengine_component_t mca_plm_gridengine_component = {
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Initialization / querying functions */
-
-    orte_plm_gridengine_component_init
+    }
     }
 };
 
@@ -104,7 +101,7 @@ orte_plm_gridengine_component_open - open component and register all parameters
 int orte_plm_gridengine_component_open(void)
 {
     int tmp;
-    mca_base_component_t *c = &mca_plm_gridengine_component.super.plm_version;
+    mca_base_component_t *c = &mca_plm_gridengine_component.super.base_version;
 
     mca_base_param_reg_int(c, "verbose",
                            "Enable verbose output of the gridengine qrsh -inherit command",
@@ -137,7 +134,7 @@ int orte_plm_gridengine_component_close(void)
 orte_plm_gridengine_component_init - initialize component, check if we can run on this machine.
 @return error number
 */
-orte_plm_base_module_t *orte_plm_gridengine_component_init(int *priority)
+int orte_plm_gridengine_component_query(mca_base_module_t **module, int *priority)
 {
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
@@ -145,9 +142,11 @@ orte_plm_base_module_t *orte_plm_gridengine_component_init(int *priority)
             "plm:gridengine: available for selection");
 
         *priority = mca_plm_gridengine_component.priority;
-        return &orte_plm_gridengine_module;
+        *module = (mca_base_module_t *) &orte_plm_gridengine_module;
+        return ORTE_SUCCESS;
     }
     opal_output_verbose(10, orte_plm_globals.output,
             "plm:gridengine: NOT available for selection");
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }

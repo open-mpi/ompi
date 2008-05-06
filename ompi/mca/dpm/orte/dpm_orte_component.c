@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -23,7 +23,7 @@
 
 static int dpm_orte_component_open(void);
 static int dpm_orte_component_close(void);
-static ompi_dpm_base_module_t* dpm_orte_component_init( int* priority );
+static int dpm_orte_component_query(mca_base_module_t **module, int *priority);
 
 ompi_dpm_base_component_t mca_dpm_orte_component = {
     /* First, the mca_base_component_t struct containing meta
@@ -40,17 +40,15 @@ ompi_dpm_base_component_t mca_dpm_orte_component = {
       OMPI_MINOR_VERSION,  /* MCA component minor version */
       OMPI_RELEASE_VERSION,  /* MCA component release version */
       dpm_orte_component_open,  /* component open */
-      dpm_orte_component_close  /* component close */
+      dpm_orte_component_close, /* component close */
+      dpm_orte_component_query  /* component query */
     },
 
     /* Next the MCA v1.0.0 component meta data */
-
     {
         /* This component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    dpm_orte_component_init,  /* component init */
+    }
 };
 
 
@@ -64,9 +62,9 @@ int dpm_orte_component_close(void)
     return OMPI_SUCCESS;
 }
 
-ompi_dpm_base_module_t* dpm_orte_component_init(int* priority)
+static int dpm_orte_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = 50;
-       
-    return &ompi_dpm_orte_module;
+    *module = (mca_base_module_t *) &ompi_dpm_orte_module;
+    return ORTE_SUCCESS;
 }

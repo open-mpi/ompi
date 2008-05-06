@@ -1,6 +1,6 @@
 /* -*- C -*-
 *
-* Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+* Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
 *                         University Research and Technology
 *                         Corporation.  All rights reserved.
 * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,13 +52,13 @@ orte_grpcomm_base_component_t mca_grpcomm_cnos_component = {
         ORTE_MINOR_VERSION,  /* MCA module minor version */
         ORTE_RELEASE_VERSION,  /* MCA module release version */
         orte_grpcomm_cnos_open,  /* module open */
-        orte_grpcomm_cnos_close /* module close */
+        orte_grpcomm_cnos_close, /* module close */
+        orte_grpcomm_cnos_query  /* module query */
     },
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    orte_grpcomm_cnos_init,    /* component init */
+    }
 };
 
 /*
@@ -77,11 +77,11 @@ int orte_grpcomm_cnos_close(void)
     return ORTE_SUCCESS;
 }
 
-orte_grpcomm_base_module_t* orte_grpcomm_cnos_init(int *priority)
+int orte_grpcomm_cnos_query(mca_base_module_t **module, int *priority)
 {
     /* we are the default, so set a low priority so we can be overridden */
     *priority = 50;
-    
-    return &orte_grpcomm_cnos_module;
+    *module = (mca_base_module_t *)&orte_grpcomm_cnos_module;
+    return ORTE_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -49,7 +49,8 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
             
             /* Component open and close functions */
             crs_blcr_open,
-            crs_blcr_close
+            crs_blcr_close,
+            opal_crs_blcr_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -58,8 +59,6 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         
-        /* Query Function */
-        opal_crs_blcr_component_query,
         /* Verbosity level */
         0,
         /* opal_output handler */
@@ -72,14 +71,14 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
 static int crs_blcr_open(void) 
 {
     
-    mca_base_param_reg_int(&mca_crs_blcr_component.super.crs_version,
+    mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
                            "priority",
                            "Priority of the CRS blcr component",
                            false, false,
                            mca_crs_blcr_component.super.priority, 
                            &mca_crs_blcr_component.super.priority);
 
-    mca_base_param_reg_int(&mca_crs_blcr_component.super.crs_version,
+    mca_base_param_reg_int(&mca_crs_blcr_component.super.base_version,
                            "verbose",
                            "Verbose level for the CRS blcr component",
                            false, false,

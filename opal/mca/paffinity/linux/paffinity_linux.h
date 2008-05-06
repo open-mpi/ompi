@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -59,9 +59,13 @@ extern "C" {
 
     /**
      * paffinity query API function
+     *
+     * Query function for paffinity components.  Simply returns a priority
+     * to rank it against other available paffinity components (assumedly,
+     * only one component will be available per platform, but it's
+     * possible that there could be more than one available).
      */
-    const opal_paffinity_base_module_1_1_0_t *
-        opal_paffinity_linux_component_query(int *query);
+    int opal_paffinity_linux_component_query(mca_base_module_t **module, int *priority);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -55,7 +55,8 @@ orte_snapc_full_component_t mca_snapc_full_component = {
             
             /* Component open and close functions */
             snapc_full_open,
-            snapc_full_close
+            snapc_full_close,
+            orte_snapc_full_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -63,9 +64,7 @@ orte_snapc_full_component_t mca_snapc_full_component = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        /* Query Function */
-        orte_snapc_full_component_query,
+
         /* Verbosity level */
         0,
         /* opal_output handler */
@@ -83,14 +82,14 @@ static int snapc_full_open(void)
      * This should be the last componet to ever get used since
      * it doesn't do anything.
      */
-    mca_base_param_reg_int(&mca_snapc_full_component.super.snapc_version,
+    mca_base_param_reg_int(&mca_snapc_full_component.super.base_version,
                            "priority",
                            "Priority of the SNAPC full component",
                            false, false,
                            mca_snapc_full_component.super.priority,
                            &mca_snapc_full_component.super.priority);
     
-    mca_base_param_reg_int(&mca_snapc_full_component.super.snapc_version,
+    mca_base_param_reg_int(&mca_snapc_full_component.super.base_version,
                            "verbose",
                            "Verbose level for the SNAPC full component",
                            false, false,
@@ -107,7 +106,7 @@ static int snapc_full_open(void)
         mca_snapc_full_component.super.output_handle = orte_snapc_base_output;
     }
 
-    mca_base_param_reg_int(&mca_snapc_full_component.super.snapc_version,
+    mca_base_param_reg_int(&mca_snapc_full_component.super.base_version,
                            "skip_filem",
                            "Not for general use! For debugging only! Pretend to move files. [Default = disabled]",
                            false, false,

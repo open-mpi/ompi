@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -123,7 +123,7 @@ static pid_t my_pid = -1;
 
 void opal_crs_blcr_construct(opal_crs_blcr_snapshot_t *snapshot) {
     snapshot->context_filename = NULL;
-    snapshot->super.component_name = strdup(mca_crs_blcr_component.super.crs_version.mca_component_name);
+    snapshot->super.component_name = strdup(mca_crs_blcr_component.super.base_version.mca_component_name);
 }
 
 void opal_crs_blcr_destruct( opal_crs_blcr_snapshot_t *snapshot) {
@@ -134,15 +134,15 @@ void opal_crs_blcr_destruct( opal_crs_blcr_snapshot_t *snapshot) {
 /*****************
  * MCA Functions
  *****************/ 
-opal_crs_base_module_1_0_0_t *
-opal_crs_blcr_component_query(int *priority)
+int opal_crs_blcr_component_query(mca_base_module_t **module, int *priority)
 {
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: component_query()");
 
     *priority = mca_crs_blcr_component.super.priority;
-    
-    return &blcr_module;
+    *module = (mca_base_module_t *)&blcr_module;
+
+    return OPAL_SUCCESS;
 }
 
 int opal_crs_blcr_module_init(void)
@@ -274,7 +274,7 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     /*
      * Create the snapshot directory
      */
-    snapshot->super.component_name = strdup(mca_crs_blcr_component.super.crs_version.mca_component_name);
+    snapshot->super.component_name = strdup(mca_crs_blcr_component.super.base_version.mca_component_name);
     if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(&snapshot->super) )) {
         *state = OPAL_CRS_ERROR;
         opal_output(mca_crs_blcr_component.super.output_handle,
@@ -768,13 +768,13 @@ static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot) {
                         "crs:blcr: update_snapshot_metadata(%s)", snapshot->super.reference_name);
 
     /* Bozo check to make sure this snapshot is ours */
-    if ( 0 != strncmp(mca_crs_blcr_component.super.crs_version.mca_component_name, 
+    if ( 0 != strncmp(mca_crs_blcr_component.super.base_version.mca_component_name, 
                       snapshot->super.component_name, 
                       strlen(snapshot->super.component_name)) ) {
         exit_status = OPAL_ERROR;
         opal_output(mca_crs_blcr_component.super.output_handle,
                     "crs:blcr: blcr_update_snapshot_metadata: Error: This snapshot (%s) is not intended for us (%s)\n", 
-                    snapshot->super.component_name, mca_crs_blcr_component.super.crs_version.mca_component_name);
+                    snapshot->super.component_name, mca_crs_blcr_component.super.base_version.mca_component_name);
         goto cleanup;
     }
 
@@ -823,12 +823,12 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     snapshot->super.component_name = strdup(component_name);
 
     /* Compare the component strings to make sure this is our snapshot before going further */
-    if ( 0 != strncmp(mca_crs_blcr_component.super.crs_version.mca_component_name,
+    if ( 0 != strncmp(mca_crs_blcr_component.super.base_version.mca_component_name,
                       component_name, strlen(component_name)) ) {
         exit_status = OPAL_ERROR;
         opal_output(mca_crs_blcr_component.super.output_handle,
                     "crs:blcr: blcr_cold_start: Error: This snapshot (%s) is not intended for us (%s)\n", 
-                    component_name, mca_crs_blcr_component.super.crs_version.mca_component_name);
+                    component_name, mca_crs_blcr_component.super.base_version.mca_component_name);
         goto cleanup;
     }
 

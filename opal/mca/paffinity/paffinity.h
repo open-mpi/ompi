@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -139,17 +139,6 @@ typedef struct opal_paffinity_base_cpu_set_t {
 /***************************************************************************/
 
 /**
- * Query function for paffinity components.  Simply returns a priority
- * to rank it against other available paffinity components (assumedly,
- * only one component will be available per platform, but it's
- * possible that there could be more than one available).
- */
-typedef const struct opal_paffinity_base_module_1_1_0_t *
-    (*opal_paffinity_base_component_query_1_1_0_fn_t)
-    (int *priority);
-
-
-/**
  * Module initialization function.  Should return OPAL_SUCCESS.
  */
 typedef int (*opal_paffinity_base_module_init_1_1_0_fn_t)(void);
@@ -228,24 +217,21 @@ typedef int (*opal_paffinity_base_module_finalize_fn_t)(void);
  */
 struct opal_paffinity_base_component_1_1_0_t {
     /** MCA base component */
-    mca_base_component_t paffinityc_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t paffinityc_data;
-
-    /** Component query function */
-    opal_paffinity_base_component_query_1_1_0_fn_t paffinityc_query;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /**
  * Convenience typedef
  */
 typedef struct opal_paffinity_base_component_1_1_0_t opal_paffinity_base_component_1_1_0_t;
+typedef struct opal_paffinity_base_component_1_1_0_t opal_paffinity_base_component_t;
 
 
 /**
  * Structure for paffinity v1.0.0 modules
  */
 struct opal_paffinity_base_module_1_1_0_t {
-
     /** Module initialization function */
     opal_paffinity_base_module_init_1_1_0_fn_t paff_module_init;
 
@@ -277,6 +263,7 @@ struct opal_paffinity_base_module_1_1_0_t {
  * Convenience typedef
  */
 typedef struct opal_paffinity_base_module_1_1_0_t opal_paffinity_base_module_1_1_0_t;
+typedef struct opal_paffinity_base_module_1_1_0_t opal_paffinity_base_module_t;
 
 
 /*

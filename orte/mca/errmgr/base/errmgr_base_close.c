@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -33,12 +33,6 @@
 int orte_errmgr_base_close(void)
 {
     OPAL_TRACE(5);
-    
-    /* If we have a selected component and module, then finalize it */
-    
-    if (orte_errmgr_base_selected) {
-        orte_errmgr_base_selected_component.errmgr_finalize();
-    }
     
     /* Close all remaining available components (may be one if this is a
         OMPI RTE program, or [possibly] multiple if this is ompi_info) */

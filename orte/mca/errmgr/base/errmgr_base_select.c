@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,6 +23,7 @@
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/errmgr/base/errmgr_private.h"
 
 
 /**
@@ -31,71 +32,27 @@
  */
 int orte_errmgr_base_select(void)
 {
-  opal_list_item_t *item;
-  mca_base_component_list_item_t *cli;
-  mca_errmgr_base_component_t *component, *best_component = NULL;
-  orte_errmgr_base_module_t *module, *best_module = NULL;
-  int priority, best_priority = -1;
+    int ret, exit_status = OPAL_SUCCESS;
+    mca_errmgr_base_component_t *best_component = NULL;
+    orte_errmgr_base_module_t *best_module = NULL;
 
-  /* Iterate through all the available components */
-
-  for (item = opal_list_get_first(&orte_errmgr_base_components_available);
-       item != opal_list_get_end(&orte_errmgr_base_components_available);
-       item = opal_list_get_next(item)) {
-    cli = (mca_base_component_list_item_t *) item;
-    component = (mca_errmgr_base_component_t *) cli->cli_component;
-
-    /* Call the component's init function and see if it wants to be
-       selected */
-
-    module = component->errmgr_init(&priority);
-
-    /* If we got a non-NULL module back, then the component wants to
-       be selected.  So save its multi/hidden values and save the
-       module with the highest priority */
-
-    if (NULL != module) {
-      /* If this is the best one, save it */
-
-      if (priority > best_priority) {
-
-        /* If there was a previous best one, finalize */
-
-        if (NULL != best_component) {
-          best_component->errmgr_finalize();
-        }
-
-        /* Save the new best one */
-
-        best_module = module;
-        best_component = component;
-
-        /* update the best priority */
-        best_priority = priority;
-      } 
-
-      /* If it's not the best one, finalize it */
-
-      else {
-        component->errmgr_finalize();
-      }
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != (ret = mca_base_select("errmgr", orte_errmgr_base_output,
+                                               &orte_errmgr_base_components_available,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
-  }
 
-  /* If we didn't find one to select, then we have a big problem */
+    /* Save the winner */
+    orte_errmgr = *best_module;
+    orte_errmgr_base_selected_component = *best_component;
+    orte_errmgr_base_selected = true;
 
-  if (NULL == best_component) {
-    return ORTE_ERROR;
-  }
-
-  /* We have happiness -- save the component and module for later
-     usage */
-
-  orte_errmgr = *best_module;
-  orte_errmgr_base_selected_component = *best_component;
-  orte_errmgr_base_selected = true;
-  
-  /* all done */
-
-  return ORTE_SUCCESS;
+ cleanup:
+    return exit_status;
 }

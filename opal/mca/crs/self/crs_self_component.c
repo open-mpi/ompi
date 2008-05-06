@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -53,7 +53,8 @@ opal_crs_self_component_t mca_crs_self_component = {
             
             /* Component open and close functions */
             crs_self_open,
-            crs_self_close
+            crs_self_close,
+            opal_crs_self_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -62,8 +63,6 @@ opal_crs_self_component_t mca_crs_self_component = {
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
         
-        /* Query Function */
-        opal_crs_self_component_query,
         /* Verbosity level */
         0,
         /* opal_output handler */
@@ -91,14 +90,14 @@ static int crs_self_open(void)
      * This should be the last componet to ever get used since
      * it doesn't do anything.
      */
-    mca_base_param_reg_int(&mca_crs_self_component.super.crs_version,
+    mca_base_param_reg_int(&mca_crs_self_component.super.base_version,
                            "priority",
                            "Priority of the CRS self component",
                            false, false,
                            mca_crs_self_component.super.priority,
                            &mca_crs_self_component.super.priority);
     
-    mca_base_param_reg_int(&mca_crs_self_component.super.crs_version,
+    mca_base_param_reg_int(&mca_crs_self_component.super.base_version,
                            "verbose",
                            "Verbose level for the CRS self component",
                            false, false,
@@ -118,14 +117,14 @@ static int crs_self_open(void)
     /*
      * Handler names
      */
-    mca_base_param_reg_string(&mca_crs_self_component.super.crs_version,
+    mca_base_param_reg_string(&mca_crs_self_component.super.base_version,
                               "prefix",
                               "Prefix for user defined callback functions",
                               false, false,
                               mca_crs_self_component.prefix,
                               &mca_crs_self_component.prefix);
 
-    mca_base_param_reg_int(&mca_crs_self_component.super.crs_version,
+    mca_base_param_reg_int(&mca_crs_self_component.super.base_version,
                            "do_restart",
                            "Start execution by calling restart callback",
                            false, false,

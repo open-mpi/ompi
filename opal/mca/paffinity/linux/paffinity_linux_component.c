@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -66,23 +66,19 @@ const opal_paffinity_base_component_1_1_0_t mca_paffinity_linux_component = {
         /* Component open and close functions */
 
         linux_open,
-        NULL
+        NULL,
+        opal_paffinity_linux_component_query
     },
     {
-
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Query function */
-
-    opal_paffinity_linux_component_query
+    }
 };
 
 
 static int linux_open(void)
 {
-    mca_base_param_reg_int(&mca_paffinity_linux_component.paffinityc_version,
+    mca_base_param_reg_int(&mca_paffinity_linux_component.base_version,
                            "priority",
                            "Priority of the linux paffinity component",
                            false, false, 10, NULL);

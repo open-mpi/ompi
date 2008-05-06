@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,17 +52,14 @@ orte_ess_base_component_t mca_ess_tool_component = {
 
         /* Component open and close functions */
         orte_ess_tool_component_open,
-        orte_ess_tool_component_close
+        orte_ess_tool_component_close,
+        orte_ess_tool_component_query
     },
-
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Initialization / querying functions */
-    orte_ess_tool_component_init
+    }
 };
 
 
@@ -73,10 +70,8 @@ orte_ess_tool_component_open(void)
 }
 
 
-orte_ess_base_module_t *
-orte_ess_tool_component_init(int *priority)
+int orte_ess_tool_component_query(mca_base_module_t **module, int *priority)
 {
-
     /* if we are a tool, we want to be selected
      * UNLESS some enviro-specific component takes
      * precedence. This would happen, for example,
@@ -84,12 +79,14 @@ orte_ess_tool_component_init(int *priority)
      */
     if (orte_process_info.tool) {
        *priority = 10;
-        return &orte_ess_tool_module;
+        *module = (mca_base_module_t *)&orte_ess_tool_module;
+        return ORTE_SUCCESS;
     }
     
     /* else, don't */
     *priority = -1;
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 

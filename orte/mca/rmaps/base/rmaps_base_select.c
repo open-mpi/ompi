@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -38,70 +38,26 @@
  */
 int orte_rmaps_base_select(void)
 {
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
-    orte_rmaps_base_component_t *component, *best_component=NULL;
-    orte_rmaps_base_module_t *module, *best_module=NULL;
-    int priority, best_priority = -1;
-    
-    /* Query all the available components and see if they want to run */
-    for (item = opal_list_get_first(&orte_rmaps_base.available_components); 
-         opal_list_get_end(&orte_rmaps_base.available_components) != item; 
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_rmaps_base_component_t *) cli->cli_component;
+    int ret, exit_status = OPAL_SUCCESS;
+    orte_rmaps_base_component_t *best_component = NULL;
+    orte_rmaps_base_module_t *best_module = NULL;
 
-        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                             "%s orte:rmaps:base:select: querying component %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             component->rmaps_version.mca_component_name));
+    /*
+     * Select the best component
+     */
+    if( OPAL_SUCCESS != (ret = mca_base_select("rmaps", orte_rmaps_base.rmaps_output,
+                                               &orte_rmaps_base.available_components,
+                                               (mca_base_module_t **) &best_module,
+                                               (mca_base_component_t **) &best_component) ) ) {
+        /* This will only happen if no component was selected */
+        exit_status = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
+    }
 
-        /* Call the component's init function and see if it wants to be
-            selected */
-        
-        module = component->rmaps_init(&priority);
-        
-        /* If we got a non-NULL module back, then the component wants
-            to be considered for selection */
-        
-        if (NULL != module) {
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s orte:rmaps:base:select: component %s returns priority %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 component->rmaps_version.mca_component_name,
-                                 priority));
-            
-            /* If this is the best one, save it */
-            if (priority > best_priority) {
-                /* Save the new best one */
-                best_module = module;
-                best_component = component;
-                
-                /* update the best priority */
-                best_priority = priority;
-            } else {
-                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                     "%s orte:rmaps:base:select: component %s does did not win the election",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     component->rmaps_version.mca_component_name));
-            }
-        } else {
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                 "%s orte:rmaps:base:select: component %s does NOT want to be considered for selection",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 component->rmaps_version.mca_component_name));
-        }
-    }
-    
-    /* If we didn't find one to select, that is fatal */
-    
-    if (NULL == best_component) {
-        return ORTE_ERROR;
-    }
-    
-    /* We have happiness */
+    /* Save the winner */
+    /* No global component structure */
     orte_rmaps_base.active_module = best_module;
 
-    /* all done */
-    return ORTE_SUCCESS;
+ cleanup:
+    return exit_status;
 }

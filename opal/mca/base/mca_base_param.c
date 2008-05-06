@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2008 The University of Tennessee and The University
@@ -421,7 +421,6 @@ int mca_base_param_register_string(const char *type_name,
                          &storage, NULL, NULL, NULL);
     return ret;
 }
-
 
 /*
  * Associate a keyval with a parameter index

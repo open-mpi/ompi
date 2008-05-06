@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,27 +49,6 @@ struct orte_rml_module_t;
 
 /* ******************************************************************** */
 
-
-/**
- * routed component initialization 
- *
- * Create an instance (module) of the given routed component.  Upon
- * returning, the module data structure should be fully populated and
- * all functions should be usable.
- *
- * @return Exactly one module created by the call to the component's
- * initialization function should be returned.  The module structure
- * should be fully populated, and the priority should be set to a
- * reasonable value.
- *
- * @param[out] priority Selection priority for the given component
- *
- * @retval NULL An error occurred and initialization did not occur
- * @retval non-NULL The module was successfully initialized
- */
-typedef struct orte_routed_module_t* (*orte_routed_component_init_fn_t)(int  *priority);
-
-
 /**
  * routed component interface
  *
@@ -77,11 +58,9 @@ typedef struct orte_routed_module_t* (*orte_routed_component_init_fn_t)(int  *pr
  */
 struct orte_routed_component_1_0_0_t {
     /* Base component description */
-    mca_base_component_t routed_version;
+    mca_base_component_t base_version;
     /* Base component data block */
-    mca_base_component_data_1_0_0_t routed_data;
-    /* Component intialization function */
-    orte_routed_component_init_fn_t routed_init;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /** Convienence typedef */
 typedef struct orte_routed_component_1_0_0_t orte_routed_component_t;

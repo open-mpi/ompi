@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The University of Tennessee and The University
@@ -58,20 +58,15 @@ orte_odls_base_component_t mca_odls_default_component = {
         /* Component open and close functions */
 
         orte_odls_default_component_open,
-        orte_odls_default_component_close
+        orte_odls_default_component_close,
+        orte_odls_default_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
-
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-
-    /* Initialization / querying functions */
-
-    orte_odls_default_component_init,
-    orte_odls_default_finalize
+    }
 };
 
 
@@ -83,7 +78,7 @@ int orte_odls_default_component_open(void)
 }
 
 
-orte_odls_base_module_t *orte_odls_default_component_init(int *priority)
+int orte_odls_default_component_query(mca_base_module_t **module, int *priority)
 {
     /* the base open/select logic protects us against operation when
      * we are NOT in a daemon, so we don't have to check that here
@@ -95,17 +90,12 @@ orte_odls_base_module_t *orte_odls_default_component_init(int *priority)
      * case, we definitely should be considered for selection
      */
     *priority = 1; /* let others override us - we are the default */
-    
-    return &orte_odls_default_module;
+    *module = (mca_base_module_t *) &orte_odls_default_module;
+    return ORTE_SUCCESS;
 }
 
 
 int orte_odls_default_component_close(void)
-{
-    return ORTE_SUCCESS;
-}
-
-int orte_odls_default_finalize(void)
 {
     opal_list_item_t *item;
     
@@ -113,6 +103,6 @@ int orte_odls_default_finalize(void)
     while (NULL != (item = opal_list_remove_first(&orte_odls_globals.children))) {
         OBJ_RELEASE(item);
     }
-    
+
     return ORTE_SUCCESS;
 }

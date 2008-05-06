@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -194,7 +194,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
      * Allocate the snapshot structures
      */
     OBJ_CONSTRUCT(&global_snapshot, orte_snapc_base_global_snapshot_t);
-    global_snapshot.component_name = strdup(mca_snapc_full_component.super.snapc_version.mca_component_name);
+    global_snapshot.component_name = strdup(mca_snapc_full_component.super.base_version.mca_component_name);
     for(i = vpid_start; i < vpid_start + vpid_range; ++i) {
         orte_snapc_full_global_snapshot_t *vpid_snapshot;
         

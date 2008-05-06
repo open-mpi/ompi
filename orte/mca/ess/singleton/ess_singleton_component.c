@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -54,17 +54,14 @@ orte_ess_base_component_t mca_ess_singleton_component = {
 
         /* Component open and close functions */
         orte_ess_singleton_component_open,
-        orte_ess_singleton_component_close
+        orte_ess_singleton_component_close,
+        orte_ess_singleton_component_query
     },
-
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is not checkpoint ready */
         MCA_BASE_METADATA_PARAM_NONE
-    },
-
-    /* Initialization / querying functions */
-    orte_ess_singleton_component_init
+    }
 };
 
 
@@ -74,9 +71,7 @@ orte_ess_singleton_component_open(void)
     return ORTE_SUCCESS;
 }
 
-
-orte_ess_base_module_t *
-orte_ess_singleton_component_init(int *priority)
+int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority)
 {
     /* if we are an HNP, daemon, or tool, then we
      * are definitely not a singleton!
@@ -84,7 +79,8 @@ orte_ess_singleton_component_init(int *priority)
     if (orte_process_info.hnp ||
         orte_process_info.daemon ||
         orte_process_info.tool) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
     
     /* okay, we still could be a singleton or
@@ -93,7 +89,8 @@ orte_ess_singleton_component_init(int *priority)
      * not a singleton
      */
     if (NULL != orte_process_info.my_hnp_uri) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR;
     }
     
     /* okay, we could still be an application process,
@@ -104,7 +101,8 @@ orte_ess_singleton_component_init(int *priority)
      * want to be selected as we must be a singleton
      */
     *priority = 25;
-    return &orte_ess_singleton_module;
+    *module = (mca_base_module_t *)&orte_ess_singleton_module;
+    return ORTE_SUCCESS;
 }
 
 

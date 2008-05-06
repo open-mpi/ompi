@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -129,21 +129,12 @@ struct orte_grpcomm_base_module_2_0_0_t {
 typedef struct orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_2_0_0_t;
 typedef orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_t;
 
-/**
- * Initialize the selected component.
- */
-typedef orte_grpcomm_base_module_t* (*orte_grpcomm_base_component_init_fn_t)(int *priority);
-
-
 /*
  * the standard component data structure
  */
-
 struct orte_grpcomm_base_component_2_0_0_t {
-    mca_base_component_t grpcomm_version;
-    mca_base_component_data_1_0_0_t grpcomm_data;
-
-    orte_grpcomm_base_component_init_fn_t grpcomm_init;
+    mca_base_component_t base_version;
+    mca_base_component_data_1_0_0_t base_data;
 };
 typedef struct orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_2_0_0_t;
 typedef orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_t;

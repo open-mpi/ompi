@@ -1,6 +1,6 @@
 /* -*- C -*-
  *
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -111,35 +111,13 @@ typedef struct orte_odls_base_module_1_3_0_t orte_odls_base_module_1_3_0_t;
 typedef struct orte_odls_base_module_1_3_0_t orte_odls_base_module_t;
 
 /**
- * odls initialization function
- *
- * Called by the MCA framework to initialize the component.  Invoked
- * exactly once per process.
- *
- * @param priority (OUT) Relative priority or ranking use by MCA to
- *                       select a module.
- */
-typedef struct orte_odls_base_module_1_3_0_t*
-(*orte_odls_base_component_init_fn_t)(int *priority);
-
-/**
- * Cleanup all resources held by the component
- */
-typedef int (*orte_odls_base_component_finalize_fn_t)(void);
-
-
-/**
  * odls component v1.3.0
  */
 struct orte_odls_base_component_1_3_0_t {
     /** component version */
     mca_base_component_t version;
     /** component data */
-    mca_base_component_data_1_0_0_t odls_data;
-    /** Function called when component is initialized */
-    orte_odls_base_component_init_fn_t init;
-    /* Function called when component is finalized */
-    orte_odls_base_component_finalize_fn_t finalize;
+    mca_base_component_data_1_0_0_t base_data;
 };
 /** Convenience typedef */
 typedef struct orte_odls_base_component_1_3_0_t orte_odls_base_component_1_3_0_t;

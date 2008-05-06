@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -60,16 +62,15 @@ const opal_memchecker_base_component_1_0_0_t mca_memchecker_valgrind_component =
         /* Component open and close functions */
 
         valgrind_open,
-        valgrind_close
-    },
+        valgrind_close,
+        opal_memchecker_valgrind_component_query
 
+    },
     /* Next the MCA v1.0.0 component meta data */
     {
-        false   /* Valgrind does not offer functionality to safe the state  */
-    },
-
-    /* Query function */
-    opal_memchecker_valgrind_component_query
+        /* Valgrind does not offer functionality to save the state  */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    }
 };
 
 

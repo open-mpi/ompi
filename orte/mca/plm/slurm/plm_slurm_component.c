@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -48,7 +48,7 @@ const char *mca_plm_slurm_component_version_string =
  */
 static int plm_slurm_open(void);
 static int plm_slurm_close(void);
-static orte_plm_base_module_t *plm_slurm_init(int *priority);
+static int orte_plm_slurm_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -78,7 +78,8 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
             /* Component open and close functions */
             
             plm_slurm_open,
-            plm_slurm_close
+            plm_slurm_close,
+            orte_plm_slurm_component_query
         },
         
         /* Next the MCA v1.0.0 component meta data */
@@ -86,11 +87,7 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
-        
-        /* Initialization / querying functions */
-        
-        plm_slurm_init
+        }
     }
 
     /* Other orte_plm_slurm_component_t items -- left uninitialized
@@ -100,7 +97,7 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
 
 static int plm_slurm_open(void)
 {
-    mca_base_component_t *comp = &mca_plm_slurm_component.super.plm_version;
+    mca_base_component_t *comp = &mca_plm_slurm_component.super.base_version;
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, 
@@ -119,8 +116,7 @@ static int plm_slurm_open(void)
     return ORTE_SUCCESS;
 }
 
-
-static orte_plm_base_module_t *plm_slurm_init(int *priority)
+static int orte_plm_slurm_component_query(mca_base_module_t **module, int *priority)
 {
     /* Are we running under a SLURM job? */
 
@@ -131,12 +127,13 @@ static orte_plm_base_module_t *plm_slurm_init(int *priority)
                              "%s plm:slrum: available for selection", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-        return &orte_plm_slurm_module;
+        *module = (mca_base_module_t *)&orte_plm_slurm_module;
+        return ORTE_SUCCESS;
     }
 
     /* Sadly, no */
-
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -52,14 +52,11 @@ static int linux_module_get_core_info(int socket, int *num_cores, int *max_core_
 /*
  * Linux paffinity module
  */
-static const opal_paffinity_base_module_1_1_0_t module = {
-
+static const opal_paffinity_base_module_1_1_0_t loc_module = {
     /* Initialization function */
-
     linux_module_init,
 
     /* Module function pointers */
-
     linux_module_set,
     linux_module_get,
     linux_module_map_to_processor_id,
@@ -70,16 +67,16 @@ static const opal_paffinity_base_module_1_1_0_t module = {
     NULL
 };
 
-
-const opal_paffinity_base_module_1_1_0_t *
-opal_paffinity_linux_component_query(int *query)
+int opal_paffinity_linux_component_query(mca_base_module_t **module, int *priority)
 {
     int param;
 
     param = mca_base_param_find("paffinity", "linux", "priority");
-    mca_base_param_lookup_int(param, query);
+    mca_base_param_lookup_int(param, priority);
 
-    return &module;
+    *module = (mca_base_module_t *)&loc_module;
+
+    return OPAL_SUCCESS;
 }
 
 

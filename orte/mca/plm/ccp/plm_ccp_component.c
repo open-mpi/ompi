@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +49,7 @@ const char *mca_plm_ccp_component_version_string =
  */
 static int plm_ccp_open(void);
 static int plm_ccp_close(void);
-static orte_plm_base_module_t *plm_ccp_init(int *priority);
+static int orte_plm_ccp_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -74,16 +76,14 @@ orte_plm_ccp_component_t mca_plm_ccp_component = {
             /* Component open and close functions */
             plm_ccp_open,
             plm_ccp_close,
+            orte_plm_ccp_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
-
-        /* Initialization / querying functions */
-        plm_ccp_init
+        }
     }
 };
 
@@ -91,7 +91,7 @@ orte_plm_ccp_component_t mca_plm_ccp_component = {
 static int plm_ccp_open(void)
 {
     int tmp, value;
-    mca_base_component_t *comp = &mca_plm_ccp_component.super.plm_version;
+    mca_base_component_t *comp = &mca_plm_ccp_component.super.base_version;
 
     mca_base_param_reg_int(comp, "debug", "Enable debugging of the CCP plm",
                            false, false, 0, &mca_plm_ccp_component.debug);
@@ -131,7 +131,7 @@ static int plm_ccp_close(void)
 }
 
 
-static orte_plm_base_module_t *plm_ccp_init(int *priority)
+static int orte_plm_ccp_component_query(mca_base_module_t **module, int *priority)
 {
     int rc;
     ICluster* pCluster = NULL;
@@ -148,17 +148,20 @@ static orte_plm_base_module_t *plm_ccp_init(int *priority)
                            reinterpret_cast<void **> (&pCluster) );
     if (FAILED(hr)) {
         /* We are not Windows clusters, don't select us.*/
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR:
     }
 
     /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.hnp) {
         pCluster->Release();
-        return NULL;
+        *module = NULL;
+        return ORTE_ERROR:
     }
 
     /* We are Windows clusters and this is HNP. */
     pCluster->Release();
     *priority = mca_plm_ccp_component.priority;
-    return &orte_plm_ccp_module;
+    *module = (mca_base_module_t *) &orte_plm_ccp_module;
+    return ORTE_SUCCESS;
 }

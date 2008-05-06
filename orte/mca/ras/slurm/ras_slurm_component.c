@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -41,7 +41,7 @@ static int param_priority;
  * Local functions
  */
 static int ras_slurm_open(void);
-static orte_ras_base_module_t *ras_slurm_init(int*);
+static int orte_ras_slurm_component_query(mca_base_module_t **module, int *priority);
 
 
 orte_ras_base_component_t mca_ras_slurm_component = {
@@ -64,23 +64,22 @@ orte_ras_base_component_t mca_ras_slurm_component = {
         /* Component open and close functions */
         
         ras_slurm_open,
-        NULL
+        NULL,
+        orte_ras_slurm_component_query
     },
     
     /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-    
-    ras_slurm_init
+    }
 };
 
 
 static int ras_slurm_open(void)
 {
     param_priority = 
-        mca_base_param_reg_int(&mca_ras_slurm_component.ras_version,
+        mca_base_param_reg_int(&mca_ras_slurm_component.base_version,
                                "priority",
                                "Priority of the slurm ras component",
                                false, false, 75, NULL);
@@ -89,7 +88,7 @@ static int ras_slurm_open(void)
 }
 
 
-static orte_ras_base_module_t *ras_slurm_init(int* priority)
+static int orte_ras_slurm_component_query(mca_base_module_t **module, int *priority)
 {
     /* Are we running under a SLURM job? */
 
@@ -98,7 +97,8 @@ static orte_ras_base_module_t *ras_slurm_init(int* priority)
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return &orte_ras_slurm_module;
+        *module = (mca_base_module_t *) &orte_ras_slurm_module;
+        return ORTE_SUCCESS;
     }
 
     /* Sadly, no */
@@ -106,6 +106,6 @@ static orte_ras_base_module_t *ras_slurm_init(int* priority)
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:slurm: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    return NULL;
+    *module = NULL;
+    return ORTE_ERROR;
 }

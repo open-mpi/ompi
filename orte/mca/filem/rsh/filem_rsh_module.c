@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -203,15 +203,15 @@ static orte_filem_base_module_t loc_module = {
 /*
  * MCA Functions
  */
-orte_filem_base_module_1_0_0_t *
-orte_filem_rsh_component_query(int *priority)
+int orte_filem_rsh_component_query(mca_base_module_t **module, int *priority)
 {
     OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
                          "filem:rsh: component_query()"));
 
     *priority = mca_filem_rsh_component.super.priority;
+    *module = (mca_base_module_t *)&loc_module;
 
-    return &loc_module;
+    return ORTE_SUCCESS;
 }
 
 int orte_filem_rsh_module_init(void)

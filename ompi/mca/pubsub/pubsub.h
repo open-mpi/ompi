@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -83,20 +83,14 @@ typedef struct ompi_pubsub_base_module_1_0_0_t ompi_pubsub_base_module_t;
 OMPI_DECLSPEC extern ompi_pubsub_base_module_t ompi_pubsub;
 
 
-typedef struct ompi_pubsub_base_module_1_0_0_t*
-(*ompi_pubsub_base_component_init_fn_t)(int *priority);
-
-
 /**
  * Structure for PUBSUB v1.0.0 components.
  */
 struct ompi_pubsub_base_component_1_0_0_t {
     /** MCA base component */
-    mca_base_component_t pubsub_version;
+    mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t pubsub_data;
-    /* component selection */
-    ompi_pubsub_base_component_init_fn_t pubsub_init;
+    mca_base_component_data_1_0_0_t base_data;
 };
 typedef struct ompi_pubsub_base_component_1_0_0_t ompi_pubsub_base_component_1_0_0_t;
 typedef struct ompi_pubsub_base_component_1_0_0_t ompi_pubsub_base_component_t;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -54,7 +54,8 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
             
             /* Component open and close functions */
             crcp_coord_open,
-            crcp_coord_close
+            crcp_coord_close,
+            ompi_crcp_coord_component_query
         },
 
         /* Next the MCA v1.0.0 component meta data */
@@ -62,9 +63,7 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
-        /* Query Function */
-        ompi_crcp_coord_component_query,
+
         /* Verbosity level */
         0,
         /* opal_output handler */
@@ -82,14 +81,14 @@ static int crcp_coord_open(void)
      * This should be the last componet to ever get used since
      * it doesn't do anything.
      */
-    mca_base_param_reg_int(&mca_crcp_coord_component.super.crcp_version,
+    mca_base_param_reg_int(&mca_crcp_coord_component.super.base_version,
                            "priority",
                            "Priority of the CRCP coord component",
                            false, false,
                            mca_crcp_coord_component.super.priority,
                            &mca_crcp_coord_component.super.priority);
     
-    mca_base_param_reg_int(&mca_crcp_coord_component.super.crcp_version,
+    mca_base_param_reg_int(&mca_crcp_coord_component.super.base_version,
                            "verbose",
                            "Verbose level for the CRCP coord component",
                            false, false,
@@ -106,7 +105,7 @@ static int crcp_coord_open(void)
         mca_crcp_coord_component.super.output_handle = ompi_crcp_base_output;
     }
 
-    mca_base_param_reg_int(&mca_crcp_coord_component.super.crcp_version,
+    mca_base_param_reg_int(&mca_crcp_coord_component.super.base_version,
                            "timing",
                            "Enable Performance timing",
                            false, false,

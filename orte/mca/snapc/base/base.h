@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -108,6 +108,7 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
      */
     ORTE_DECLSPEC int orte_snapc_base_none_open(void);
     ORTE_DECLSPEC int orte_snapc_base_none_close(void);
+    ORTE_DECLSPEC int orte_snapc_base_none_query(mca_base_module_t **module, int *priority);
 
     ORTE_DECLSPEC int orte_snapc_base_module_init(bool seed, bool app);
     ORTE_DECLSPEC int orte_snapc_base_module_finalize(void);

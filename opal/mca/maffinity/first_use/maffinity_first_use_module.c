@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -36,27 +36,24 @@ static int first_use_module_set(opal_maffinity_base_segment_t *segments,
 /*
  * First_Use maffinity module
  */
-static const opal_maffinity_base_module_1_0_0_t module = {
-
+static const opal_maffinity_base_module_1_0_0_t loc_module = {
     /* Initialization function */
-
     first_use_module_init,
 
     /* Module function pointers */
-
     first_use_module_set
 };
 
-
-const opal_maffinity_base_module_1_0_0_t *
-opal_maffinity_first_use_component_query(int *query)
+int opal_maffinity_first_use_component_query(mca_base_module_t **module, int *priority)
 {
     int param;
 
     param = mca_base_param_find("maffinity", "first_use", "priority");
-    mca_base_param_lookup_int(param, query);
+    mca_base_param_lookup_int(param, priority);
 
-    return &module;
+    *module = (mca_base_module_t *)&loc_module;
+
+    return OPAL_SUCCESS;
 }
 
 

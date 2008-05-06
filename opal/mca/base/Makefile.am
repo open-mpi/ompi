@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -45,6 +45,7 @@ libmca_base_la_SOURCES = \
         mca_base_component_repository.c \
         mca_base_components_open.c \
         mca_base_components_close.c \
+        mca_base_components_select.c \
         mca_base_list.c \
         mca_base_open.c \
         mca_base_param.c \
