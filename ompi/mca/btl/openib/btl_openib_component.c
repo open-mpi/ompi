@@ -449,6 +449,12 @@ static int start_async_event_thread(void)
 }
 #endif
 
+#if OMPI_HAVE_RDMACM
+extern uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev);
+#else
+static inline uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev) {return 0;}
+#endif
+
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
                          uint8_t port_num, uint16_t pkey_index,
                          struct ibv_port_attr *ib_port_attr)
@@ -466,7 +472,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
        member, then we're < OFED v1.2, and it can only be IB. */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
-        subnet_id = 0;
+        subnet_id = get_iwarp_subnet_id(hca->ib_dev);
     } else {
         subnet_id = ntoh64(gid.global.subnet_prefix);
     }
@@ -1437,7 +1443,12 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
         goto no_btls;
     }
-    
+
+    /* Initialize FD listening */
+    if (OMPI_SUCCESS != ompi_btl_openib_fd_init()) {
+        goto no_btls;
+    }
+
     /* Init CPC components */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
         goto no_btls;
@@ -1540,11 +1551,6 @@ btl_openib_component_init(int *num_btl_modules,
             opal_argv_split(mca_btl_openib_component.if_exclude, ',');
         mca_btl_openib_component.if_list =
             opal_argv_copy(mca_btl_openib_component.if_exclude_list);
-    }
-
-    /* Initialize FD listening */
-    if (OMPI_SUCCESS != ompi_btl_openib_fd_init()) {
-        goto no_btls;
     }
 
     ib_devs = ibv_get_device_list_compat(&num_devs);

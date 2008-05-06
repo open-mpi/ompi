@@ -50,11 +50,28 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
                                         mca_btl_base_endpoint_t *endpoint);
 static uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port);
 static int rdmacm_component_destroy(void);
+static int rdmacm_component_init(void);
+
+/* 
+ * The cruft below maintains the linked list of rdma ipv4 addresses and their
+ * associated rdma device names and device port numbers.  
+ */
+struct rdma_addr_list {
+    uint32_t              addr;
+    uint32_t              subnet;
+    char                  addr_str[16];
+    char                  dev_name[IBV_SYSFS_NAME_MAX];
+    uint8_t               dev_port;
+    struct rdma_addr_list *next;
+};
+static struct rdma_addr_list *myaddrs;
+static int build_rdma_addr_list(void);
+static void free_rdma_addr_list(void);
 
 ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_rdmacm = {
     "rdmacm",
     rdmacm_component_register,
-    NULL,
+    rdmacm_component_init,
     rdmacm_component_query,
     rdmacm_component_destroy
 };
@@ -145,21 +162,6 @@ static struct rdmacm_contents *list_del(struct list_item **head)
 
     return temp;
 }
-
-/* 
- * The cruft below maintains the linked list of rdma ipv4 addresses and their
- * associated rdma device names and device port numbers.  
- */
-struct rdma_addr_list {
-    uint32_t              addr;
-    char                  addr_str[16];
-    char                  dev_name[IBV_SYSFS_NAME_MAX];
-    uint8_t               dev_port;
-    struct rdma_addr_list *next;
-};
-static struct rdma_addr_list *myaddrs;
-static int build_rdma_addr_list(void);
-static void free_rdma_addr_list(void);
 
 /* Open - this functions sets up any rdma_cm specific commandline params */
 static void rdmacm_component_register(void)
@@ -1077,20 +1079,6 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl,
     server->server = true;
     server->openib_btl = openib_btl;
 
-    if (NULL == event_channel) {
-        event_channel = rdma_create_event_channel();
-        if (NULL == event_channel) {
-            opal_output_verbose(5, mca_btl_base_output,
-                                "openib BTL: rdmacm CPC failed to create channel");
-            rc = OMPI_ERR_UNREACH;
-            goto out;
-        }
-
-        /* Start monitoring the fd associated with the cm_device */
-        ompi_btl_openib_fd_monitor(event_channel->fd, OPAL_EV_READ,
-                                   rdmacm_event_dispatch, NULL);
-    }
-
     /* create an rdma_cm_id */
     rc = rdma_create_id(event_channel, &server->id[0], NULL, RDMA_PS_TCP);
     if (0 != rc) {
@@ -1205,6 +1193,42 @@ static int rdmacm_component_destroy(void)
     return OMPI_SUCCESS;
 }
 
+static int rdmacm_component_init(void)
+{
+    int rc;
+
+    rc = build_rdma_addr_list();
+    if (-1 == rc) {
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: rdmacm CPC unable to find any valid IP address");
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    event_channel = rdma_create_event_channel();
+    if (NULL == event_channel) {
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: rdmacm CPC failed to create channel");
+        return OMPI_ERR_UNREACH;
+    }
+
+    /* Start monitoring the fd associated with the cm_device */
+    ompi_btl_openib_fd_monitor(event_channel->fd, OPAL_EV_READ,
+                               rdmacm_event_dispatch, NULL);
+
+    return OMPI_SUCCESS;
+}
+
+uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev)
+{
+    struct rdma_addr_list *addr;
+
+    for (addr = myaddrs; addr; addr = addr->next)
+        if (!strcmp(addr->dev_name, ib_dev->name))
+            return addr->subnet;
+
+    return 0;
+}
+
 static uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
 {
     struct rdma_addr_list *addr;
@@ -1219,11 +1243,6 @@ static uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
 static int dev_specified(char *name, uint32_t ipaddr, int port)
 {
     char **list;
-    struct rdma_addr_list *addr;
-
-    for (addr = myaddrs; addr != NULL; addr = addr->next)
-        if (addr->addr == ipaddr)
-            return 1;
 
     if (NULL != mca_btl_openib_component.if_include) {
         int i;
@@ -1299,12 +1318,14 @@ static int add_rdma_addr(struct ifaddrs *ifa)
 
     sinp = (struct sockaddr_in *)ifa->ifa_addr;
     myaddr->addr = sinp->sin_addr.s_addr;
+    myaddr->subnet = myaddr->addr & ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
     inet_ntop(sinp->sin_family, &sinp->sin_addr, 
             myaddr->addr_str, sizeof myaddr->addr_str);
     memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);
     myaddr->dev_port = cm_id->port_num;
     BTL_VERBOSE(("adding addr %s dev %s port %d to rdma_addr_list", 
                  myaddr->addr_str, myaddr->dev_name, myaddr->dev_port));
+
     myaddr->next = myaddrs;
     myaddrs = myaddr;
 
