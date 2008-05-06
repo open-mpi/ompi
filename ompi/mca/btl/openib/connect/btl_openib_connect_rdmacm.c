@@ -962,11 +962,10 @@ out:
     return -1;
 }
 
-static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_t *openib_btl, ompi_btl_openib_connect_base_module_data_t *data)
+static int ipaddrcheck(struct rdmacm_contents *server, mca_btl_openib_module_t *openib_btl)
 {
     int rc, i;
     struct ibv_device_attr attr;
-    struct message *message;
 
     rc = ibv_query_device(openib_btl->hca->ib_dev_context, &attr);
     if (-1 == rc) {
@@ -998,6 +997,16 @@ static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_
         BTL_ERROR(("No IP address found"));
         goto out;
     }
+
+    return OMPI_SUCCESS;
+
+out:
+    return OMPI_ERROR;
+}
+
+static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_t *openib_btl, ompi_btl_openib_connect_base_module_data_t *data)
+{
+    struct message *message;
 
     message = malloc(sizeof(struct message));
     if (NULL == message) {
@@ -1113,6 +1122,14 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl,
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to bind to address");
         rc = OMPI_ERR_UNREACH;
+        goto out;
+    }
+
+    rc = ipaddrcheck(server, openib_btl);
+    if (0 != rc) {
+        opal_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: rdmacm IP address not found on port");
+        rc = OMPI_ERR_NOT_SUPPORTED;
         goto out;
     }
 
