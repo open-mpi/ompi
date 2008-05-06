@@ -113,7 +113,7 @@ int orte_filem_base_select(void)
                                                (mca_base_component_t **) &best_component) ) ) {
         /* This will only happen if no component was selected */
         exit_status = ORTE_ERROR;
-        goto skip_select;
+        goto cleanup;
     }
 
  skip_select:
