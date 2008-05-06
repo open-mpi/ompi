@@ -2144,7 +2144,7 @@ static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         opal_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
                        "ib_cm function error", true,
                        orte_process_info.nodename, 
-                       "ib_cm_send_rep", rc, sys_errlist[rc]);
+                       "ib_cm_send_rep", rc, strerror(rc));
         return OMPI_ERR_UNREACH;
     }
     opal_output(-1, "Retransmitted IBCM reply (CM ID: %p)",
