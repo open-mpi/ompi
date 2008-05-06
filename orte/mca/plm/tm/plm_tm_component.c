@@ -135,5 +135,5 @@ static int orte_plm_tm_component_query(mca_base_module_t **module, int *priority
 
     /* Sadly, no */
     *module = NULL;
-    return ORTE_ERROR:
+    return ORTE_ERROR;
 }
