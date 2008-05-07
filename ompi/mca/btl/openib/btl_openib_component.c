@@ -468,8 +468,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
 
     /* If we have struct ibv_device.transport_type, then we're >= OFED
-       v1.2, and it could be iWarp of IB.  If we don't have that
-       member, then we're < OFED v1.2, and it can only be IB. */
+       v1.2, and the transport could be iWarp or IB.  If we don't have
+       that member, then we're < OFED v1.2, and it can only be IB. */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
         subnet_id = get_iwarp_subnet_id(hca->ib_dev);
