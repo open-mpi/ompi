@@ -2068,11 +2068,14 @@ error:
     if(endpoint && endpoint->endpoint_proc && endpoint->endpoint_proc->proc_ompi)
         remote_proc = endpoint->endpoint_proc->proc_ompi;
 
-    /* For iWARP, the TCP connection is tied to the QP once the QP is in RTS.  
-     * And destroying the QP is thus tied to connection teardown for iWARP.  
-     * To destroy the connection in iWARP you must move the QP out of RTS, either
-     * into CLOSING for a nice graceful close, or to ERROR if you want to be rude.
-     * In both cases, all pending non-completed SQ and RQ WRs must be flushed. 
+    /* For iWARP, the TCP connection is tied to the QP once the QP is
+     * in RTS.  And destroying the QP is thus tied to connection
+     * teardown for iWARP.  To destroy the connection in iWARP you
+     * must move the QP out of RTS, either into CLOSING for a nice
+     * graceful close (e.g., via rdma_disconnect()), or to ERROR if
+     * you want to be rude (e.g., just destroying the QP without
+     * disconnecting first).  In both cases, all pending non-completed
+     * SQ and RQ WRs will automatically be flushed.
      */
     if (wc->status == IBV_WC_WR_FLUSH_ERR && IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
         return;
