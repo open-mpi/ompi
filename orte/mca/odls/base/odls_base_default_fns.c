@@ -1269,6 +1269,48 @@ static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
     
 }
 
+static void setup_singleton_jobdat(orte_jobid_t jobid)
+{
+    orte_odls_job_t *jobdat;
+    int32_t one32;
+    int8_t one8;
+    opal_buffer_t buffer;
+    int rc;
+    
+    jobdat = OBJ_NEW(orte_odls_job_t);
+    jobdat->jobid = jobid;
+    jobdat->num_procs = 1;
+    jobdat->num_local_procs = 1;
+    jobdat->procmap = (orte_pmap_t*)malloc(sizeof(orte_pmap_t));
+    jobdat->procmap[0].node = ORTE_PROC_MY_NAME->vpid;
+    jobdat->procmap[0].local_rank = 0;
+    jobdat->procmap[0].node_rank = opal_list_get_size(&orte_odls_globals.children);
+    /* also need to setup a pidmap for it */
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID); /* num_procs */
+    one32 = 0;
+    opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
+    one8 = 0;
+    opal_dss.pack(&buffer, &one8, 1, OPAL_UINT8);  /* local rank */
+    opal_dss.pack(&buffer, &one8, 1, OPAL_UINT8);  /* node rank */
+    opal_dss.pack(&buffer, &one8, 1, OPAL_INT8);  /* app_idx */
+    jobdat->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+    opal_dss.unload(&buffer, (void**)&jobdat->pmap->bytes, &jobdat->pmap->size);
+    OBJ_DESTRUCT(&buffer);
+    opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
+    /* if we don't yet have a daemon map, then we have to generate one
+     * to pass back to it
+     */
+    if (NULL == orte_odls_globals.dmap) {
+        orte_odls_globals.dmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+        /* construct a nodemap */
+        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+    /* setup the daemon collectives */
+    jobdat->num_participating = 1;    
+}
 
 int orte_odls_base_default_require_sync(orte_process_name_t *proc,
                                         opal_buffer_t *buf,
@@ -1281,6 +1323,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     int rc;
     bool found=false;
     orte_odls_job_t *jobdat;
+    
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -1310,7 +1353,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         child = OBJ_NEW(orte_odls_child_t);
         if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
         opal_list_append(&orte_odls_globals.children, &child->super);
         /* we don't know any other info about the child, so just indicate it's
@@ -1318,13 +1361,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
          */
         child->alive = true;
         /* setup jobdat object for its job so daemon collectives work */
-        jobdat = OBJ_NEW(orte_odls_job_t);
-        jobdat->jobid = proc->jobid;
-        jobdat->procmap = (orte_pmap_t*)malloc(sizeof(orte_pmap_t));
-        jobdat->procmap[0].node = ORTE_PROC_MY_NAME->vpid;
-        jobdat->procmap[0].local_rank = 0;
-        jobdat->procmap[0].node_rank = opal_list_get_size(&orte_odls_globals.children);
-        opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
+        setup_singleton_jobdat(proc->jobid);
     }
     
     /* if the contact info is already set, then we are "de-registering" the child
@@ -2232,12 +2269,7 @@ int orte_odls_base_default_collect_data(orte_process_name_t *proc,
          */
         child->alive = true;
         /* setup a jobdat for it */
-        jobdat = OBJ_NEW(orte_odls_job_t);
-        jobdat->jobid = child->name->jobid;
-        jobdat->procmap = (orte_pmap_t*)malloc(sizeof(orte_pmap_t));
-        jobdat->procmap[0].node = ORTE_PROC_MY_NAME->vpid;
-        jobdat->procmap[0].local_rank = 0;
-        opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
+        setup_singleton_jobdat(proc->jobid);
     }
    
     /* this was one of our local procs - find the jobdat for this job */
