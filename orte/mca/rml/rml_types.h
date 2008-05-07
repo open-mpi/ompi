@@ -69,35 +69,36 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_RML_ROUTE              14
 
 #define ORTE_RML_TAG_ALLGATHER              15
-#define ORTE_RML_TAG_BARRIER                16
+#define ORTE_RML_TAG_ALLGATHER_LIST         16
+#define ORTE_RML_TAG_BARRIER                17
 
-#define ORTE_RML_TAG_INIT_ROUTES            17
-#define ORTE_RML_TAG_UPDATE_ROUTES          18
-#define ORTE_RML_TAG_SYNC                   19
+#define ORTE_RML_TAG_INIT_ROUTES            18
+#define ORTE_RML_TAG_UPDATE_ROUTES          19
+#define ORTE_RML_TAG_SYNC                   20
 
 /* For FileM Base */
-#define ORTE_RML_TAG_FILEM_BASE             20
-#define ORTE_RML_TAG_FILEM_BASE_RESP        21
+#define ORTE_RML_TAG_FILEM_BASE             21
+#define ORTE_RML_TAG_FILEM_BASE_RESP        22
 
 /* For FileM RSH Component */
-#define ORTE_RML_TAG_FILEM_RSH              22
+#define ORTE_RML_TAG_FILEM_RSH              23
 
 /* For SnapC Framework */
-#define ORTE_RML_TAG_SNAPC                  23
-#define ORTE_RML_TAG_SNAPC_FULL             24
+#define ORTE_RML_TAG_SNAPC                  24
+#define ORTE_RML_TAG_SNAPC_FULL             25
 
 /* For tools */
-#define ORTE_RML_TAG_TOOL                   25
+#define ORTE_RML_TAG_TOOL                   26
 
 /* support data store/lookup */
-#define ORTE_RML_TAG_DATA_SERVER            26
-#define ORTE_RML_TAG_DATA_CLIENT            27
+#define ORTE_RML_TAG_DATA_SERVER            27
+#define ORTE_RML_TAG_DATA_CLIENT            28
 
 /* timing related */
-#define ORTE_RML_TAG_COLLECTIVE_TIMER       28
+#define ORTE_RML_TAG_COLLECTIVE_TIMER       29
 
 /* daemon collectives */
-#define ORTE_RML_TAG_DAEMON_COLLECTIVE      29
+#define ORTE_RML_TAG_DAEMON_COLLECTIVE      30
 
 
 #define ORTE_RML_TAG_MAX                   100

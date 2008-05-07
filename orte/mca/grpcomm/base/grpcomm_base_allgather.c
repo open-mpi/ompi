@@ -68,7 +68,7 @@ static void allgather_server_recv(int status, orte_process_name_t* sender,
     ++allgather_num_recvd;
     
     /* reissue the recv */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST,
                                  ORTE_RML_NON_PERSISTENT, allgather_server_recv, NULL);
     if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
@@ -131,7 +131,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&root->name)));
         
-        if (0 > orte_rml.send_buffer(&root->name, sbuf, ORTE_RML_TAG_ALLGATHER, 0)) {
+        if (0 > orte_rml.send_buffer(&root->name, sbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             return ORTE_ERR_COMM_FAILURE;
         }
@@ -148,7 +148,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
          */
         allgather_num_recvd = 0;
         allgather_failed = false;
-        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
+        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST,
                                      ORTE_RML_NON_PERSISTENT, allgather_client_recv, NULL);
         if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
             ORTE_ERROR_LOG(rc);
@@ -209,7 +209,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
                          (long)num_peers-1));
     
     /* post the non-blocking recv */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST,
                                  ORTE_RML_NON_PERSISTENT, allgather_server_recv, NULL);
     if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
@@ -219,7 +219,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     ORTE_PROGRESSED_WAIT(allgather_failed, allgather_num_recvd, num_peers-1);
     
     /* cancel the lingering recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_LIST))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(allgather_buf);
         return rc;
@@ -250,7 +250,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
         }
         
         /* transmit the buffer to this process */
-        if (0 > orte_rml.send_buffer_nb(&peer->name, rbuf, ORTE_RML_TAG_ALLGATHER,
+        if (0 > orte_rml.send_buffer_nb(&peer->name, rbuf, ORTE_RML_TAG_ALLGATHER_LIST,
                                         0, allgather_send_cb, 0)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             return ORTE_ERR_COMM_FAILURE;
