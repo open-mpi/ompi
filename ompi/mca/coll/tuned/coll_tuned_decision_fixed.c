@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -151,6 +152,24 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     }
     return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
 #endif
+}
+
+/*
+ *      Function:       - selects alltoallv algorithm to use
+ *      Accepts:        - same arguments as MPI_Alltoallv()
+ *      Returns:        - MPI_SUCCESS or error code
+ */
+int ompi_coll_tuned_alltoallv_intra_dec_fixed(void *sbuf, int *scounts, int *sdisps,
+                                              struct ompi_datatype_t *sdtype,
+                                              void *rbuf, int *rcounts, int *rdisps,
+                                              struct ompi_datatype_t *rdtype,
+                                              struct ompi_communicator_t *comm,
+                                              struct mca_coll_base_module_1_1_0_t *module)
+{
+    /* For starters, just keep the original algorithm. */
+    return ompi_coll_tuned_alltoallv_intra_basic_linear(sbuf, scounts, sdisps, sdtype, 
+                                                        rbuf, rcounts, rdisps,rdtype,
+                                                        comm, module);
 }
 
 

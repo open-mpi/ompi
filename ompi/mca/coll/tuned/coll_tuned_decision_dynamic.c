@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -144,6 +145,44 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
     return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype,
 						     rbuf, rcount, rdtype,
 						     comm, module);
+}
+
+/*
+ *    Function:   - selects alltoallv algorithm to use
+ *    Accepts:    - same arguments as MPI_Alltoallv()
+ *    Returns:    - MPI_SUCCESS or error code
+ */
+
+int ompi_coll_tuned_alltoallv_intra_dec_dynamic(void *sbuf, int *scounts, int *sdisps,
+                                                struct ompi_datatype_t *sdtype,
+                                                void* rbuf, int *rcounts, int *rdisps,
+                                                struct ompi_datatype_t *rdtype, 
+                                                struct ompi_communicator_t *comm,
+                                                struct mca_coll_base_module_1_1_0_t *module)
+{
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoallv_intra_dec_dynamic"));
+
+    /* 
+     * BEGIN - File Based Rules
+     *
+     * Here is where we would check to see if we have some file based
+     * rules.  Currently, we do not, so move on to seeing if the user
+     * specified a specific algorithm.  If not, then use the fixed
+     * decision code to decide.
+     *
+     * END - File Based Rules
+     */
+    if (data->user_forced[ALLTOALLV].algorithm) {
+        return ompi_coll_tuned_alltoallv_intra_do_forced(sbuf, scounts, sdisps, sdtype,
+                                                         rbuf, rcounts, rdisps, rdtype,
+                                                         comm, module);
+    }
+    return ompi_coll_tuned_alltoallv_intra_dec_fixed(sbuf, scounts, sdisps, sdtype,
+                                                     rbuf, rcounts, rdisps, rdtype,
+                                                     comm, module);
 }
 
 /*

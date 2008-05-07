@@ -32,6 +32,7 @@ sources = \
         coll_tuned_forced.c \
         coll_tuned_allreduce.c \
         coll_tuned_alltoall.c \
+        coll_tuned_alltoallv.c \
         coll_tuned_allgather.c \
         coll_tuned_allgatherv.c \
         coll_tuned_barrier.c \

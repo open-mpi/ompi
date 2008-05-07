@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -104,7 +105,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 	tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic;
 	tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_dynamic;
 	tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_dynamic;
-	tuned_module->super.coll_alltoallv  = NULL;
+	tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_dynamic;
 	tuned_module->super.coll_alltoallw  = NULL;
 	tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_dynamic;
 	tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic;
@@ -124,7 +125,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 	tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
 	tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
 	tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_fixed;
-	tuned_module->super.coll_alltoallv  = NULL;
+	tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_fixed;
 	tuned_module->super.coll_alltoallw  = NULL;
 	tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_fixed;
 	tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_fixed;
@@ -250,7 +251,7 @@ tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLTOALL],  &(data->user_forced[ALLTOALL]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLGATHER],  &(data->user_forced[ALLGATHER]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLGATHERV],  &(data->user_forced[ALLGATHERV]));
-        /*         ompi_coll_tuned_forced_getvalues (ompi_coll_tuned_forced_params[ALLTOALLV], &(data->user_forced[ALLTOALLV])); */
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLTOALLV], &(data->user_forced[ALLTOALLV]));
         ompi_coll_tuned_forced_getvalues_barrier (ompi_coll_tuned_forced_params[BARRIER],   &(data->user_forced[BARRIER]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[BCAST],     &(data->user_forced[BCAST]));
         ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[REDUCE],    &(data->user_forced[REDUCE]));
