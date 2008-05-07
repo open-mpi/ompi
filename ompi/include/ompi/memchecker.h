@@ -84,152 +84,47 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), ompi_conv
  * Set the corresponding memory area of count elements of type ty
  *
  */
-static inline int memchecker_call (int (*f)(void *, size_t), void * p, size_t count, MPI_Datatype type)
+static inline int memchecker_call (int (*f)(void *, size_t), void * addr,
+                                   size_t count, struct ompi_datatype_t * datatype)
 {
-    int num_ints, num_adds, num_dtypes, i, combiner;
-    int *array_of_ints;
-    size_t j;
-    MPI_Aint *array_of_adds;
-    MPI_Datatype *array_of_dtypes;
-
     if (!opal_memchecker_base_runindebugger()) {
         return OMPI_SUCCESS;
     }
-
-    if (ompi_ddt_is_contiguous_memory_layout(type, count)) {
-        f(p, count * (type->true_ub - type->true_lb));
+        
+    if( datatype->size == (datatype->true_ub - datatype->true_lb) ) {
+        /*  We have a contiguous type. */
+        f( addr , datatype->size );
     } else {
-        char * tmp = (char *)p;
-        int disp;
+        /* Now we got a noncontigous type. */
+        uint32_t         stack_disp  = 0, elem_pos = 0, i;
+        dt_elem_desc_t*  description = datatype->opt_desc.desc;
+        dt_elem_desc_t*  pElem       = &(description[elem_pos]);
+        unsigned char   *source_base = addr;
 
-        ompi_ddt_get_args( type, 0, &num_ints, NULL, &num_adds, NULL, 
-                           &num_dtypes, NULL, &combiner );
-        
-        if( (MPI_COMBINER_NAMED == combiner) || (MPI_COMBINER_CONTIGUOUS == combiner) ) {
-            return 0;  /* safety net: this case is handled few lines before in the contiguous case */
-        }
-
-        array_of_ints = (int *)malloc( num_ints * sizeof(int) );
-        array_of_adds = (MPI_Aint *)malloc( num_adds * sizeof(MPI_Aint) );
-        array_of_dtypes = (MPI_Datatype *)malloc( num_dtypes * sizeof(MPI_Datatype) );
-
-        ompi_ddt_get_args( type, 1, &num_ints, array_of_ints,
-                            &num_adds, array_of_adds,
-                            &num_dtypes, array_of_dtypes, NULL );
+        if ( NULL != datatype ) 
+            stack_disp = datatype->ub - datatype->lb;
+    
+        for (i = 0; i < count; i++){
+            while ( DT_LOOP == pElem->elem.common.flags ) {
+                elem_pos++;
+                pElem = &(description[elem_pos]);
+            }
             
-        switch(combiner) {
-        case MPI_COMBINER_VECTOR:
-            /* Take care of datatypes created by MPI_Type_vector().
-
-               array_of_dtypes[0] : oldtype
-               array_of_ints[0]   : block_count, number of blocks
-               array_of_ints[1]   : block_len, number of elements in each block
-               array_of_ints[2]   : stride, integer
-            */
-            for (j=0; j<count; j++) {
-                for (i=0; i<array_of_ints[0]; i++) {
-                    /* disp = block_size * ( stride + block_len ) * block_count */
-                    disp = (array_of_dtypes[0]->true_ub-array_of_dtypes[0]->true_lb)*(array_of_ints[2]+array_of_ints[1])*i;
-                    memchecker_call(f, tmp + disp,
-                                    array_of_ints[1], array_of_dtypes[0]);
-                }
-                tmp += (type->true_ub - type->true_lb);
+            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+                /* now here we have a basic datatype */
+                f( (void *)(source_base + pElem->elem.disp), pElem->elem.count*pElem->elem.extent );
+                elem_pos++;       /* advance to the next data */
+                pElem = &(description[elem_pos]);
+                continue;
             }
-            break;
-        case MPI_COMBINER_HVECTOR_INTEGER:
-        case MPI_COMBINER_HVECTOR:
-            /* Take care of datatypes created by MPI_Type_hvector().
-               
-               array_of_dtypes[0] : oldtype
-               array_of_ints[0]   : block_count, number of blocks
-               array_of_ints[1]   : block_len, number of elements in each block
-               array_of_adds[0]   : stride, bytes
-            */
-            for (j=0; j<count; j++) {
-                for (i=0; i<array_of_ints[0]; i++) {
-                    /* disp = stride * block_count */
-                    disp = array_of_adds[0]*i;
-                    memchecker_call(f, tmp + disp,
-                                    array_of_ints[1], array_of_dtypes[0]);
-                }
-                tmp += (type->true_ub - type->true_lb);
-            }
-            break;
-        case MPI_COMBINER_INDEXED:
-            /* Take care of datatypes created by MPI_Type_indexed().
-
-               array_of_dtypes[0]                          : oldtype
-               array_of_ints[0]                            : block_count, number of blocks
-               array_of_ints[1...block_count+1]            : block_len, number of elements in each block
-               array_of_ints[block_count...2*block_count]  : displacement, array of integer
-             */
-            for (j=0; j<count; j++) {
-                for (i=0; i<array_of_ints[0]; i++) {
-                    /* disp = disp_int * block_ex */
-                    disp = array_of_ints[i+array_of_ints[0]+1] * (array_of_dtypes[0]->true_ub - array_of_dtypes[0]->true_lb);
-                    memchecker_call(f, tmp + disp, array_of_ints[i+1], array_of_dtypes[0]);
-                }
-                tmp +=  (type->true_ub - type->true_lb);
-            }
-            break;            
-        case MPI_COMBINER_HINDEXED_INTEGER:
-        case MPI_COMBINER_HINDEXED:
-            /* Take care of datatypes created by MPI_Type_hindexed().
-
-               array_of_dtypes[0]                   : oldtype
-               array_of_ints[0]                     : block_count, number of blocks
-               array_of_ints[1...block_count+1]     : block_len, number of elements in each block
-               array_of_adds[0...block_count]       : bytes displacement, array of integer
-             */
-            for (j=0; j<count; j++) {
-                for (i=0; i<array_of_ints[0]; i++) {
-                    memchecker_call(f, tmp + array_of_adds[i], array_of_ints[i+1], array_of_dtypes[0]);
-                }
-                tmp +=  (type->true_ub - type->true_lb);
-            }
-            break;            
-        case MPI_COMBINER_INDEXED_BLOCK:
-            /* Take care of datatypes created by MPI_Type_create_hindexed_block().
-
-               array_of_dtypes[0]                : oldtype
-               array_of_ints[0]                  : block_count, number of blocks
-               array_of_ints[1]                  : block_len, number of elements in each block
-               array_of_ints[2...block_count+2]  : displacement, array of integer
-             */
-            for (j=0; j<count; j++) {
-                for (i=0; i<array_of_ints[0]; i++) {
-                    /* disp = disp_int * block_ex */
-                    disp = array_of_ints[i+2] * (array_of_dtypes[0]->true_ub - array_of_dtypes[0]->true_lb);
-                    memchecker_call(f, tmp, array_of_ints[1], array_of_dtypes[0]);
-                }
-                tmp +=  (type->true_ub - type->true_lb);
-            }
-            break;
-        case MPI_COMBINER_STRUCT_INTEGER:
-        case MPI_COMBINER_STRUCT:
-            /* Take care of datatypes created by MPI_Type_struct().
-
-               array_of_dtypes[0]               : oldtype
-               array_of_ints[0]                 : block_count, number of blocks
-               array_of_ints[1...block_count+1] : block_len, number of elements in each block
-               array_of_adds[0...block_count]   : bytes displacement, array of integer
-            */
-            for (j=0; j<count; j++) {
-                for (i=0; i<array_of_ints[0]; i++) {
-                    memchecker_call(f, tmp + array_of_adds[i], array_of_ints[i+1], array_of_dtypes[i]);
-                }
-                tmp +=  (type->true_ub - type->true_lb);
-            }
-            break;
-        default:
-            printf( "ERROR:Unrecognized combiner type!\n" );
+            
+            elem_pos = 0;
+            pElem = &(description[elem_pos]);
+            /* starting address of next stack. */
+            source_base += stack_disp;
         }
-        
-        free( array_of_ints );
-        free( array_of_adds );
-        free( array_of_dtypes );
     }
-
+    
     return OMPI_SUCCESS;
 }
 
