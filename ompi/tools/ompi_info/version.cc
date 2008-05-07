@@ -309,11 +309,6 @@ static string make_version_str(const string& scope,
     str = greek;
   } else if (scope == ver_svn) {
     str = svn;
-  } else {
-#if 0
-    show_help("ompi_info", "usage");
-#endif
-    exit(1);
   }
 
   if (str.empty()) {
