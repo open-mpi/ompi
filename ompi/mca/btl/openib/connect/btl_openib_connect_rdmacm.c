@@ -25,8 +25,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <ifaddrs.h>
-#include <stdio.h>
 #include <malloc.h>
 
 #include "opal/util/argv.h"
@@ -38,6 +36,7 @@
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
 #include "connect/connect.h"
+#include "btl_openib_iwarp.h"
 
 /* JMS to be removed: see #1264 */
 #undef event
@@ -48,25 +47,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl,
 
 static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
                                         mca_btl_base_endpoint_t *endpoint);
-static uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port);
 static int rdmacm_component_destroy(void);
 static int rdmacm_component_init(void);
-
-/* 
- * The cruft below maintains the linked list of rdma ipv4 addresses and their
- * associated rdma device names and device port numbers.  
- */
-struct rdma_addr_list {
-    uint32_t              addr;
-    uint32_t              subnet;
-    char                  addr_str[16];
-    char                  dev_name[IBV_SYSFS_NAME_MAX];
-    uint8_t               dev_port;
-    struct rdma_addr_list *next;
-};
-static struct rdma_addr_list *myaddrs;
-static int build_rdma_addr_list(void);
-static void free_rdma_addr_list(void);
 
 ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_rdmacm = {
     "rdmacm",
@@ -102,66 +84,29 @@ struct id_contexts {
     uint8_t qpnum;
 };
 
-struct list_item {
-    struct list_item *next;
-    struct rdmacm_contents *item;
-}; 
-
 struct conn_message {
     uint32_t rem_index; 
     uint16_t rem_port;
     uint8_t qpnum;
 };
 
-static struct list_item *server_list_head = NULL;
-static struct list_item *server_list_tail = NULL;
-static struct list_item *client_list_head = NULL;
-static struct list_item *client_list_tail = NULL;
+struct list_item {
+    opal_list_item_t super;
+    struct rdmacm_contents *item;
+}; 
+typedef struct list_item list_item_t;
+
+static OBJ_CLASS_INSTANCE(list_item_t, opal_list_item_t, 
+                          NULL, NULL);
+
+static opal_list_t server_list;
+static opal_list_t client_list;
 static struct rdma_event_channel *event_channel = NULL;
 static int rdmacm_priority = 30;
 static uint16_t rdmacm_port = 0;
 static uint32_t rdmacm_addr = 0;
 
 #define RDMA_RESOLVE_ADDR_TIMEOUT 2000
-
-static int list_add(struct rdmacm_contents *client, struct list_item **head, struct list_item **tail)
-{
-    struct list_item *temp;
-
-    temp = malloc(sizeof(struct list_item));
-    if (NULL == temp) {
-        BTL_ERROR(("malloc error"));
-        return 1;
-    }
-
-    temp->item = client;
-    temp->next = NULL;
-    if (NULL != *tail)
-        (*tail)->next = temp;
-    *tail = temp;
- 
-    if (NULL == *head) {
-        *head = temp;
-    }
-
-    return 0;
-}
-
-static struct rdmacm_contents *list_del(struct list_item **head)
-{
-    struct rdmacm_contents *temp;
-    struct list_item *temp_item;
-
-    if (NULL == *head)
-        return NULL;
-
-    temp_item = *head;
-    temp = (*head)->item;
-    *head = (*head)->next;
-    free(temp_item);
-
-    return temp;
-}
 
 /* Open - this functions sets up any rdma_cm specific commandline params */
 static void rdmacm_component_register(void)
@@ -572,7 +517,7 @@ static void rdmacm_server_cleanup(struct rdmacm_contents *local)
 
 static int rdmacm_connection_shutdown(struct mca_btl_base_endpoint_t *endpoint)
 {
-    struct list_item *temp;
+    opal_list_item_t *item;
 
     BTL_VERBOSE(("Start disconnecting..."));
 
@@ -581,7 +526,9 @@ static int rdmacm_connection_shutdown(struct mca_btl_base_endpoint_t *endpoint)
         return 0;
     }
 
-    for (temp = client_list_head; NULL != temp; temp = temp->next) {
+    for (item = opal_list_get_first(&client_list); item != opal_list_get_end(&client_list); item = opal_list_get_next(item)) {
+        struct list_item *temp = (struct list_item *)item;
+
         if (endpoint == temp->item->endpoint) {
             int i;
             for (i = 0; i < mca_btl_openib_component.num_qps; i++)
@@ -618,16 +565,18 @@ static int rdmacm_connect_endpoint(struct rdmacm_contents *local, struct rdma_cm
     if (local->server)
         endpoint = ((struct id_contexts *)event->id->context)->endpoint;
     else {
-        int rc;
+        struct list_item *temp;
 
         endpoint = local->endpoint;
         local->endpoint->rem_info.rem_index = ((struct conn_message *)event->param.conn.private_data)->rem_index;
 
-        rc = list_add(local, &client_list_head, &client_list_tail);
-        if (0 != rc) {
-            BTL_ERROR(("list_add error"));
+        temp = OBJ_NEW(list_item_t);
+        if (NULL == temp) {
+            BTL_ERROR(("malloc error"));
             return -1;
         }
+        temp->item = local;
+        opal_list_append(&client_list, &(temp->super));
     }
     if (NULL == endpoint) {
         BTL_ERROR(("Can't find endpoint"));
@@ -980,11 +929,12 @@ static int ipaddrcheck(struct rdmacm_contents *server, mca_btl_openib_module_t *
     }
 
     for (i = 0; i < attr.phys_port_cnt; i++) {
-        struct list_item *pitem;
         bool found = false;
         uint32_t temp = rdma_get_ipv4addr(openib_btl->hca->ib_dev_context, i+1);
+        opal_list_item_t *item;
 
-        for (pitem = server_list_head; NULL != pitem; pitem = pitem->next) {
+        for (item = opal_list_get_first(&server_list); item != opal_list_get_end(&server_list); item = opal_list_get_next(item)) {
+            struct list_item *pitem = (struct list_item *)item;
             BTL_VERBOSE(("paddr = %x, temp addr = %x", pitem->item->ipaddr, temp));
             if (pitem->item->ipaddr == temp || 0 == temp) {
                 BTL_VERBOSE(("addr %x already exists", temp));
@@ -1038,6 +988,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl,
 {
     struct rdmacm_contents *server = NULL;
     struct sockaddr_in sin;
+    struct list_item *temp;
     int rc;
 
     /* RDMACM is not supported if we have any XRC QPs */
@@ -1143,12 +1094,14 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl,
         goto out;
     }
 
-    rc = list_add(server, &server_list_head, &server_list_tail);
-    if (0 != rc) {
+    temp = OBJ_NEW(list_item_t);
+    if (NULL== temp) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to add to list");
         goto out;
     }
+    temp->item = server;
+    opal_list_append(&server_list, &(temp->super));
 
     opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: rdmacm CPC available for use on %s",
@@ -1174,15 +1127,29 @@ out:
 
 static int rdmacm_component_destroy(void)
 {
-    struct rdmacm_contents *local;
+    opal_list_item_t *item;
     int rc;
 
-    while (NULL != (local = list_del(&client_list_head))) {
-        rdmacm_destroy(local);
+    if (0 != opal_list_get_size(&client_list)) {
+        for (item = opal_list_get_first(&client_list);
+             item != opal_list_get_end(&client_list);
+             item = opal_list_get_next(item)) {
+            struct rdmacm_contents *temp = ((struct list_item *)item)->item;
+
+            rdmacm_destroy(temp);
+            opal_list_remove_item(&client_list, item);
+        }
     }
 
-    while (NULL != (local = list_del(&server_list_head))) {
-        rdmacm_server_cleanup(local);
+    if (0 != opal_list_get_size(&server_list)) {
+        for (item = opal_list_get_first(&server_list);
+             item != opal_list_get_end(&server_list);
+             item = opal_list_get_next(item)) {
+            struct rdmacm_contents *temp = ((struct list_item *)item)->item;
+
+            rdmacm_destroy(temp);
+            opal_list_remove_item(&server_list, item);
+        }
     }
 
     if (NULL != event_channel) {
@@ -1200,6 +1167,9 @@ static int rdmacm_component_destroy(void)
 static int rdmacm_component_init(void)
 {
     int rc;
+
+    OBJ_CONSTRUCT(&server_list, opal_list_t);
+    OBJ_CONSTRUCT(&client_list, opal_list_t);
 
     rc = build_rdma_addr_list();
     if (-1 == rc) {
@@ -1220,163 +1190,4 @@ static int rdmacm_component_init(void)
                                rdmacm_event_dispatch, NULL);
 
     return OMPI_SUCCESS;
-}
-
-uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev)
-{
-    struct rdma_addr_list *addr;
-
-    for (addr = myaddrs; addr; addr = addr->next) {
-        if (!strcmp(addr->dev_name, ib_dev->name)) {
-            return addr->subnet;
-        }
-    }
-
-    return 0;
-}
-
-static uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
-{
-    struct rdma_addr_list *addr;
-
-    for (addr = myaddrs; addr; addr = addr->next) {
-        if (!strcmp(addr->dev_name, verbs->device->name) && 
-            port == addr->dev_port) {
-            return addr->addr;
-        }
-    }
-    return 0;
-}
-
-static int dev_specified(char *name, uint32_t ipaddr, int port)
-{
-    char **list;
-
-    if (NULL != mca_btl_openib_component.if_include) {
-        int i;
-
-        list = opal_argv_split(mca_btl_openib_component.if_include, ',');
-        for (i = 0; NULL != list[i]; i++) {
-            char **temp = opal_argv_split(list[i], ':');
-            if (0 == strcmp(name, temp[0]) &&
-                (NULL == temp[1] || port == atoi(temp[1]))) {
-                return 0;
-            }
-        }
-
-        return 1;
-    }
-
-    if (NULL != mca_btl_openib_component.if_exclude) {
-        int i;
-
-        list = opal_argv_split(mca_btl_openib_component.if_exclude, ',');
-        for (i = 0; NULL != list[i]; i++) {
-            char **temp = opal_argv_split(list[i], ':');
-            if (0 == strcmp(name, temp[0]) &&
-                (NULL == temp[1] || port == atoi(temp[1]))) {
-                return 1;
-            }
-        }
-    }
-
-    return 0;
-}
-
-static int add_rdma_addr(struct ifaddrs *ifa)
-{
-    struct sockaddr_in *sinp;
-    struct rdma_cm_id *cm_id;
-    struct rdma_event_channel *ch;
-    int rc = OMPI_SUCCESS;
-    struct rdma_addr_list *myaddr;
-
-    ch = rdma_create_event_channel();
-    if (NULL == ch) {
-        BTL_ERROR(("failed creating event channel"));
-        rc = OMPI_ERROR;
-        goto out1;
-    }
-
-    rc = rdma_create_id(ch, &cm_id, NULL, RDMA_PS_TCP);
-    if (rc) {
-        BTL_ERROR(("rdma_create_id returned %d", rc));
-        rc = OMPI_ERROR;
-        goto out2;
-    }
-
-    rc = rdma_bind_addr(cm_id, ifa->ifa_addr);
-    if (rc) {
-        rc = OMPI_SUCCESS;
-        goto out3;
-    }
-
-    if (!cm_id->verbs ||
-        0 == ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr ||
-        dev_specified(cm_id->verbs->device->name, ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr, cm_id->port_num)) {
-        goto out3;
-    }
-
-    myaddr = malloc(sizeof *myaddr);
-    if (NULL == myaddr) {
-        BTL_ERROR(("malloc failed!"));
-        rc = OMPI_ERROR;
-        goto out3;
-    }
-
-    sinp = (struct sockaddr_in *)ifa->ifa_addr;
-    myaddr->addr = sinp->sin_addr.s_addr;
-    myaddr->subnet = myaddr->addr & ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
-    inet_ntop(sinp->sin_family, &sinp->sin_addr, 
-            myaddr->addr_str, sizeof myaddr->addr_str);
-    memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);
-    myaddr->dev_port = cm_id->port_num;
-    BTL_VERBOSE(("adding addr %s dev %s port %d to rdma_addr_list", 
-                 myaddr->addr_str, myaddr->dev_name, myaddr->dev_port));
-
-    myaddr->next = myaddrs;
-    myaddrs = myaddr;
-
-out3:
-    rdma_destroy_id(cm_id);
-out2:
-    rdma_destroy_event_channel(ch);
-out1:
-    return rc;
-}
-  
-static int build_rdma_addr_list(void)
-{
-    int rc;
-    struct ifaddrs *ifa_list, *ifa;
-
-    rc = getifaddrs(&ifa_list);
-    if (-1 == rc) {
-        return OMPI_ERROR;
-    }
-
-    ifa = ifa_list;
-    while (ifa) {
-        if (ifa->ifa_addr->sa_family == AF_INET) {
-            rc = add_rdma_addr(ifa);
-            if (OMPI_SUCCESS != rc) {
-                break;
-            }
-        }
-        ifa = ifa->ifa_next;
-    }
-    freeifaddrs(ifa_list);
-    return rc;
-}
-  
-static void free_rdma_addr_list(void)
-{
-    struct rdma_addr_list *addr, *tmp;
-
-    addr = myaddrs;
-    while (addr) {
-        tmp = addr->next;
-        free(addr);
-        addr = tmp;
-    }
 }

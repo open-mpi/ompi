@@ -52,6 +52,8 @@ sources = \
     btl_openib_xrc.h \
     btl_openib_fd.h \
     btl_openib_fd.c \
+    btl_openib_iwarp.h \
+    btl_openib_iwarp.c \
     connect/base.h \
     connect/btl_openib_connect_base.c \
     connect/btl_openib_connect_oob.c \
