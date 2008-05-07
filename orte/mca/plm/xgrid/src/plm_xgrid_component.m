@@ -82,22 +82,22 @@ orte_plm_xgrid_component_t mca_plm_xgrid_component = {
 int
 orte_plm_xgrid_component_open(void)
 {
-    mca_base_param_reg_string(&mca_plm_xgrid_component.super.plm_version,
+    mca_base_param_reg_string(&mca_plm_xgrid_component.super.base_version,
 			      "orted",
 			      "The command name that the component will invoke for the ORTE daemon",
 			      false, false, "orted", NULL);
 
-    mca_base_param_reg_int(&mca_plm_xgrid_component.super.plm_version,
+    mca_base_param_reg_int(&mca_plm_xgrid_component.super.base_version,
 			   "priority",
 			   "Priority of the xgrid plm component",
 			   false, false, 20, NULL);
 
-    mca_base_param_reg_int(&mca_plm_xgrid_component.super.plm_version,
+    mca_base_param_reg_int(&mca_plm_xgrid_component.super.base_version,
 			   "delete_job",
 			   "Delete job from XGrid controller's database on job completion",
 			   false, false, 1, NULL);
 
-    mca_base_param_reg_int(&mca_plm_xgrid_component.super.plm_version,
+    mca_base_param_reg_int(&mca_plm_xgrid_component.super.base_version,
 			   "num_slots",
 			   "Number of slots to reserve for job (including future spawned processes).  "
 			   "0 will result in number of processes requested in initial launch.",
@@ -123,7 +123,7 @@ int orte_plm_xgrid_component_query(mca_base_module_t **module, int *priority)
         opal_output_verbose(10, orte_plm_globals.output,
                             "orte:plm:xgrid: not available: controller info not set");
         *module = NULL;
-        return ORTE_ERROR:
+        return ORTE_ERROR;
     }
 
     opal_output_verbose(1, orte_plm_globals.output,
@@ -161,7 +161,7 @@ int orte_plm_xgrid_component_query(mca_base_module_t **module, int *priority)
                             "orte:plm:xgrid: not available: connection failed");
         orte_plm_xgrid_finalize();
         *module = NULL;
-        return ORTE_ERROR:
+        return ORTE_ERROR;
     }
 
     opal_output_verbose(10, orte_plm_globals.output,
