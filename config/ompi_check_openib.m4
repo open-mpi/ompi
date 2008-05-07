@@ -138,9 +138,11 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
            # Do we have IB CM? (note that OFED IB CM depends on RDMA
            # CM, so no need to add it into the other-libraries
-           # argument to AC_CHECK_ LIB).
+           # argument to AC_CHECK_ LIB).  Note that we only want IBCM
+           # starting with OFED 1.2 or so, so check for
+           # ib_cm_open_device (introduced in libibcm 1.0/OFED 1.2).
            AC_CHECK_HEADERS([infiniband/cm.h],
-               [AC_CHECK_LIB([ibcm], [ib_cm_create_id],
+               [AC_CHECK_LIB([ibcm], [ib_cm_open_device],
                    [$1_have_ibcm=1
                     $1_LIBS="-libcm $$1_LIBS"])])
           ])
