@@ -75,6 +75,9 @@ int MPI_Isend(void *buf, int count, MPI_Datatype type, int dest,
 
     OPAL_CR_ENTER_LIBRARY();
 
+    MEMCHECKER (
+        memchecker_call(&opal_memchecker_base_mem_noaccess, buf, count, type);
+    );
     rc = MCA_PML_CALL(isend(buf,count,type,dest,tag,MCA_PML_BASE_SEND_STANDARD,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

@@ -104,8 +104,10 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     MEMCHECKER(
-        memchecker_convertor_call(&opal_memchecker_base_mem_defined,
-                                  &sendreq->req_send.req_base.req_convertor);
+        memchecker_call(&opal_memchecker_base_mem_defined,
+                        sendreq->req_send.req_base.req_addr,
+                        sendreq->req_send.req_base.req_count,
+                        sendreq->req_send.req_base.req_datatype);
     );
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
@@ -439,8 +441,10 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
          * accessable.
          */
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
         (void)ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                    &iov, &iov_count, &max_data );
@@ -448,8 +452,10 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
           *  Packing finished, make the user buffer unaccessable.
           */
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_noaccess,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
     }
 
@@ -580,8 +586,10 @@ int mca_pml_ob1_send_request_start_rdma(
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
         /* prepare source descriptor/segment(s) */
         /* PML owns this descriptor and will free it in */
@@ -595,8 +603,10 @@ int mca_pml_ob1_send_request_start_rdma(
                                   0,
                                   &src );
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_noaccess,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
         if( OPAL_UNLIKELY(NULL == src) ) {
             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
@@ -727,8 +737,10 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP ); 
     } else {
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
         mca_bml_base_prepare_src( bml_btl, 
                                   NULL,
@@ -739,8 +751,10 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                                   MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                                   &des );
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_noaccess,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
     }
 
@@ -934,8 +948,10 @@ cannot_pack:
 
         data_remaining = size;
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_defined,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
         mca_bml_base_prepare_src(bml_btl, NULL,
                                  &sendreq->req_send.req_base.req_convertor,
@@ -943,8 +959,10 @@ cannot_pack:
                                  sizeof(mca_pml_ob1_frag_hdr_t),
                                  &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP, &des);
         MEMCHECKER(
-            memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
-                                      &sendreq->req_send.req_base.req_convertor);
+            memchecker_call(&opal_memchecker_base_mem_noaccess,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
         );
 
         if( OPAL_UNLIKELY(des == NULL || size == 0) ) {
