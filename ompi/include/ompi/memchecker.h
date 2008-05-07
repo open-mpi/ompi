@@ -91,7 +91,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * addr,
         return OMPI_SUCCESS;
     }
         
-    if( datatype->size == (datatype->true_ub - datatype->true_lb) ) {
+    if( datatype->size == (size_t) (datatype->true_ub - datatype->true_lb) ) {
         /*  We have a contiguous type. */
         f( addr , datatype->size );
     } else {
