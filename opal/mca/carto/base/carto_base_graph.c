@@ -42,8 +42,6 @@ static void *opal_carto_base_alloc_node(void);
 static int opal_carto_compare_nodes(void *node1, void *node2);
 static char* opal_carto_print_node(void* node);
 
-opal_carto_graph_t *carto_base_common_host_graph;
-
 
 
 /*
@@ -157,7 +155,7 @@ static int opal_carto_compare_nodes(void *node1, void *node2)
  * 
  * @param graph an empty graph pointer
  */
-void opal_carto_base_graph_create(opal_carto_graph_t **graph)
+void opal_carto_base_graph_create_fn(opal_carto_graph_t **graph)
 {
     *graph = (opal_carto_graph_t *)OBJ_NEW(opal_graph_t);
 }
@@ -168,7 +166,7 @@ void opal_carto_base_graph_create(opal_carto_graph_t **graph)
  * @param graph the carto graph to add the node to.
  * @param node the node to add.
  */
-void opal_carto_base_graph_add_node(opal_carto_graph_t *graph, opal_carto_base_node_t *node)
+void opal_carto_base_graph_add_node_fn(opal_carto_graph_t *graph, opal_carto_base_node_t *node)
 {
     /* construct new vertex */
     node->vertex = OBJ_NEW(opal_graph_vertex_t);
@@ -188,7 +186,7 @@ void opal_carto_base_graph_add_node(opal_carto_graph_t *graph, opal_carto_base_n
  * Free a carto graph
  * @param graph the graph we want to free.
  */
-void opal_carto_base_free_graph(opal_carto_graph_t *graph)
+void opal_carto_base_free_graph_fn(opal_carto_graph_t *graph)
 {
     int i, graph_order;
     opal_carto_base_node_t *node;
@@ -221,7 +219,7 @@ void opal_carto_base_free_graph(opal_carto_graph_t *graph)
  * @return int success or error (if one of the nodes does not
  *         belong to the graph.
  */
-int opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_node_t *start, opal_carto_base_node_t *end, uint32_t weight)
+int opal_carto_base_connect_nodes_fn(opal_carto_graph_t *graph, opal_carto_base_node_t *start, opal_carto_base_node_t *end, uint32_t weight)
 {
     opal_graph_edge_t *edge;
 
@@ -246,7 +244,7 @@ int opal_carto_base_connect_nodes(opal_carto_graph_t *graph, opal_carto_base_nod
  * @param node_type the node type(s) that the new graph will
  *                  include.
  */
-void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opal_carto_graph_t *source, const char *node_type)
+void opal_carto_base_duplicate_graph_fn(opal_carto_graph_t **destination, const opal_carto_graph_t *source, const char *node_type)
 {
     opal_pointer_array_t *vertices;
     int i, graph_order; 
@@ -286,7 +284,7 @@ void opal_carto_base_duplicate_graph(opal_carto_graph_t **destination, const opa
  * 
  * @return int number of nodes in the returned array.
  */
-int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *reference_node, 
+int opal_carto_base_get_nodes_distance_fn(opal_carto_graph_t *graph, opal_carto_base_node_t *reference_node, 
                                        const char *node_type, opal_value_array_t *dist_array)
 {
     opal_value_array_t *distance_array;
@@ -301,7 +299,7 @@ int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_bas
     opal_value_array_init(distance_array, sizeof(vertex_distance_from_t));
     opal_value_array_reserve(distance_array,50);
     /* use dijkstra algorithm to receive the distance of all the nodes from the referenced node */
-    graph_order = dijkstra(graph, reference_node->vertex, distance_array);
+    graph_order = opal_graph_dijkstra(graph, reference_node->vertex, distance_array);
     /* for all the nodes in the dijkstra array */
     for (i = 0, distance_array_size = 0; i < graph_order; i++) {
         vertex_distance = opal_value_array_get_item(distance_array, i);
@@ -327,7 +325,7 @@ int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_bas
  * 
  * @return uint32_t he distance between the nodes.
  */
-uint32_t opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_node_t *node1, opal_carto_base_node_t *node2)
+uint32_t opal_carto_base_graph_spf_fn(opal_carto_graph_t *graph, opal_carto_base_node_t *node1, opal_carto_base_node_t *node2)
 {
     return opal_graph_spf((opal_graph_t *)graph, node1->vertex, node2->vertex);
 }
@@ -341,7 +339,7 @@ uint32_t opal_carto_base_graph_spf(opal_carto_graph_t *graph, opal_carto_base_no
  * @return opal_carto_base_node_t* the node with the name -if
  *         found or NULL.
  */
-opal_carto_base_node_t *opal_carto_base_graph_find_node(opal_carto_graph_t *graph, const char *node_name)
+opal_carto_base_node_t *opal_carto_base_graph_find_node_fn(opal_carto_graph_t *graph, const char *node_name)
 {
     opal_carto_base_node_t node;
     opal_graph_vertex_t    *vertex;
@@ -365,16 +363,6 @@ opal_carto_base_node_t *opal_carto_base_graph_find_node(opal_carto_graph_t *grap
 }
 
 /**
- * Print a carto graph (for debug uses)
- * 
- * @param graph the graph we want to print.
- */
-void opal_carto_print_graph(opal_carto_graph_t *graph)
-{
-    opal_graph_print(graph);
-}
-
-/**
  * Get the host cartography graph.
  * 
  * @param graph an unallocated pointer to a graph.
@@ -383,10 +371,10 @@ void opal_carto_print_graph(opal_carto_graph_t *graph)
  * 
  * @return int success or error
  */
-int opal_carto_base_graph_get_host_graph(opal_carto_graph_t **graph, const char *graph_type)
+int opal_carto_base_graph_get_host_graph_fn(opal_carto_graph_t **graph, const char *graph_type)
 {
     /* duplicate the host graph and delete all the relevant nodes */
-    opal_carto_base_duplicate_graph(graph, carto_base_common_host_graph, graph_type);
+    opal_carto_base_duplicate_graph_fn(graph, opal_carto_base_common_host_graph, graph_type);
     return OPAL_SUCCESS;
 }
 

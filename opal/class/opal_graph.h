@@ -34,9 +34,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /* When two vertices are not connected, the distance between them is infinite. */
 #define DISTANCE_INFINITY 0x7fffffff
@@ -341,7 +339,7 @@ uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_
  * 
  * @return uint32_t the size of the distance array
  */
-uint32_t dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array);
+uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array);
 
 /**
  * This graph API prints a graph - mostly for debug uses.
@@ -349,10 +347,7 @@ uint32_t dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_a
  */
 void opal_graph_print(opal_graph_t *graph);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 
 
 #endif /* OPAL_GRAPH_H */

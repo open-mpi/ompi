@@ -54,11 +54,11 @@ static int opal_carto_auto_detect_finalize(void);
  */
 static const opal_carto_base_module_1_0_0_t loc_module = {
     opal_carto_auto_detect_init,
-    opal_carto_base_graph_get_host_graph,
-    opal_carto_base_free_graph,
-    opal_carto_base_get_nodes_distance,
-    opal_carto_base_graph_spf,
-    opal_carto_base_graph_find_node,
+    opal_carto_base_graph_get_host_graph_fn,
+    opal_carto_base_free_graph_fn,
+    opal_carto_base_get_nodes_distance_fn,
+    opal_carto_base_graph_spf_fn,
+    opal_carto_base_graph_find_node_fn,
     opal_carto_auto_detect_finalize,
 };
 
@@ -85,7 +85,10 @@ int opal_carto_auto_detect_component_query(mca_base_module_t **module, int *prio
  */
 static int opal_carto_auto_detect_init(void)
 {
-    opal_carto_base_graph_create(&carto_base_common_host_graph);
+    /* create an empty graph */
+    if (NULL == opal_carto_base_common_host_graph) {
+        opal_carto_base_graph_create_fn(&opal_carto_base_common_host_graph);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -96,7 +99,10 @@ static int opal_carto_auto_detect_init(void)
  */
 static int opal_carto_auto_detect_finalize(void)
 {
-    opal_carto_base_free_graph(carto_base_common_host_graph);
+    /* free the host cartography graph. */
+    if (NULL != opal_carto_base_common_host_graph) {
+        opal_carto_base_free_graph_fn(opal_carto_base_common_host_graph);
+    }
     return OPAL_SUCCESS;
 }
 

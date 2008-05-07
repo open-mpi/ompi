@@ -101,7 +101,7 @@ typedef uint32_t (*opal_carto_base_spf_fn_t)
 /**
  * Find a node in the graph
  */
-typedef opal_carto_base_node_t *(*opal_carto_base_find_node)
+typedef opal_carto_base_node_t *(*opal_carto_base_find_node_fn_t)
             (opal_carto_graph_t *graph, const char *node_name);
 
 
@@ -134,19 +134,19 @@ typedef struct opal_carto_base_component_1_0_0_t opal_carto_base_component_t;
  */
 struct opal_carto_base_module_1_0_0_t {
     /** Module initialization function */
-    opal_carto_base_module_init_1_0_0_fn_t carto_module_init;
+    opal_carto_base_module_init_1_0_0_fn_t      carto_module_init;
     /** Get host graph */
-    opal_carto_base_get_host_graph_fn_t get_host_graph;
+    opal_carto_base_get_host_graph_fn_t         get_host_graph;
     /** free graph */
-    opal_carto_base_free_graph_fn_t free_graph;
+    opal_carto_base_free_graph_fn_t             free_graph;
     /** Get the distance from one node to all other nodes */
-    opal_carto_base_get_nodes_distance_fn_t get_nodes_distance;
+    opal_carto_base_get_nodes_distance_fn_t     get_nodes_distance;
     /** Find the distance between two nodes */
-    opal_carto_base_spf_fn_t  spf;
+    opal_carto_base_spf_fn_t                    spf;
     /** Find a node in the graph */
-    opal_carto_base_find_node find_node;
+    opal_carto_base_find_node_fn_t              find_node;
     /** Shut down this module */
-    opal_carto_base_module_finalize_fn_t carto_module_finalize;
+    opal_carto_base_module_finalize_fn_t        carto_module_finalize;
 };
 /**
  * Convenience typedef

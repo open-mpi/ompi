@@ -51,125 +51,125 @@ main(int argc, char* argv[])
          */
 
         opal_output(0," \n\nget_host_graph Full\n");
-        carto_base_get_host_graph(&graph,NULL);
+        opal_carto_base_get_host_graph(&graph,NULL);
         opal_graph_print(graph);
-        slot0 = carto_base_find_node(graph, "slot0");
+        slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
             opal_output(0,"couldnt find slot0 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        end_node = carto_base_find_node(graph, "slot3");
+        end_node = opal_carto_base_find_node(graph, "slot3");
         if (NULL == end_node) {
             opal_output(0,"couldnt find mthca1 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        distance = carto_base_spf(graph, slot0, end_node);
+        distance = opal_carto_base_spf(graph, slot0, end_node);
         opal_output(0,"\nThe distance between slot0 and slot3 is %d\n",distance);
         distance_array = OBJ_NEW(opal_value_array_t);
         opal_value_array_init(distance_array, sizeof(opal_carto_node_distance_t));
         opal_value_array_reserve(distance_array, 50);
-        distance_array_size = carto_base_get_nodes_distance(graph, slot0, NULL, distance_array);
+        distance_array_size = opal_carto_base_get_nodes_distance(graph, slot0, NULL, distance_array);
         for (i=0; i < distance_array_size; i++) {
             node_distance = opal_value_array_get_item(distance_array, i);
             opal_output(0,"Node %s distance from slot0 is %d\n",node_distance->node->node_name, node_distance->node_distance);
         }
         OBJ_RELEASE(distance_array);
-        carto_base_free_graph(graph);
+        opal_carto_base_free_graph(graph);
         /**
          * 
          */
 
         opal_output(0," \n\nget_host_graph Infiniband\n");
-        carto_base_get_host_graph(&graph,"Infiniband");
+        opal_carto_base_get_host_graph(&graph,"Infiniband");
         opal_graph_print(graph);
-        slot0 = carto_base_find_node(graph, "slot0");
+        slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
             opal_output(0,"couldnt find slot0 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        end_node = carto_base_find_node(graph, "mthca1");
+        end_node = opal_carto_base_find_node(graph, "mthca1");
         if (NULL == end_node) {
             opal_output(0,"couldnt find mthca1 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        distance = carto_base_spf(graph, slot0, end_node);
+        distance = opal_carto_base_spf(graph, slot0, end_node);
         opal_output(0,"\nThe distance between slot0 and mthca1 is %d\n",distance);
         distance_array = OBJ_NEW(opal_value_array_t);
         opal_value_array_init(distance_array, sizeof(opal_carto_node_distance_t));
         opal_value_array_reserve(distance_array, 50);
-        distance_array_size = carto_base_get_nodes_distance(graph, slot0, "Infiniband", distance_array);
+        distance_array_size = opal_carto_base_get_nodes_distance(graph, slot0, "Infiniband", distance_array);
         for (i=0; i < distance_array_size; i++) {
             node_distance = opal_value_array_get_item(distance_array, i);
             opal_output(0,"Node %s distance from slot0 is %d\n",node_distance->node->node_name, node_distance->node_distance);
         }
         OBJ_RELEASE(distance_array);
-        carto_base_free_graph(graph);
+        opal_carto_base_free_graph(graph);
         /**
          * 
          */
 
         opal_output(0," \n\nget_host_graph Ethernet\n");
-        carto_base_get_host_graph(&graph,"Ethernet");
+        opal_carto_base_get_host_graph(&graph,"Ethernet");
         opal_graph_print(graph);
-        slot0 = carto_base_find_node(graph, "slot0");
+        slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
             opal_output(0,"couldnt find slot0 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        end_node = carto_base_find_node(graph, "eth1");
+        end_node = opal_carto_base_find_node(graph, "eth1");
         if (NULL == end_node) {
             opal_output(0,"couldnt find mthca1 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        distance = carto_base_spf(graph, slot0, end_node);
+        distance = opal_carto_base_spf(graph, slot0, end_node);
         opal_output(0,"\nThe distance between slot0 and eth1 is %d\n",distance);
         distance_array = OBJ_NEW(opal_value_array_t);
         opal_value_array_init(distance_array, sizeof(opal_carto_node_distance_t));
         opal_value_array_reserve(distance_array, 50);
-        distance_array_size = carto_base_get_nodes_distance(graph, slot0, "Ethernet", distance_array);
+        distance_array_size = opal_carto_base_get_nodes_distance(graph, slot0, "Ethernet", distance_array);
         for (i=0; i < distance_array_size; i++) {
             node_distance = opal_value_array_get_item(distance_array, i);
             opal_output(0,"Node %s distance from slot0 is %d\n",node_distance->node->node_name, node_distance->node_distance);
         }
         OBJ_RELEASE(distance_array);
-        carto_base_free_graph(graph);
+        opal_carto_base_free_graph(graph);
         /**
          * 
          */
 
         opal_output(0," \n\nget_host_graph Memory\n");
-        carto_base_get_host_graph(&graph,"Memory");
+        opal_carto_base_get_host_graph(&graph,"Memory");
         opal_graph_print(graph);
-        slot0 = carto_base_find_node(graph, "slot0");
+        slot0 = opal_carto_base_find_node(graph, "slot0");
         if (NULL == slot0) {
             opal_output(0,"couldnt find slot0 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        end_node = carto_base_find_node(graph, "mem3");
+        end_node = opal_carto_base_find_node(graph, "mem3");
         if (NULL == end_node) {
             opal_output(0,"couldnt find mthca1 in the graph exiting\n");
-            carto_base_free_graph(graph);
+            opal_carto_base_free_graph(graph);
             return -1;
         }
-        distance = carto_base_spf(graph, slot0, end_node);
+        distance = opal_carto_base_spf(graph, slot0, end_node);
         opal_output(0,"\nThe distance between slot0 and mem3 is %d\n",distance);
         distance_array = OBJ_NEW(opal_value_array_t);
         opal_value_array_init(distance_array, sizeof(opal_carto_node_distance_t));
         opal_value_array_reserve(distance_array, 50);
-        distance_array_size = carto_base_get_nodes_distance(graph, slot0, "Memory", distance_array);
+        distance_array_size = opal_carto_base_get_nodes_distance(graph, slot0, "Memory", distance_array);
         for (i=0; i < distance_array_size; i++) {
             node_distance = opal_value_array_get_item(distance_array, i);
             opal_output(0,"Node %s distance from slot0 is %d\n",node_distance->node->node_name, node_distance->node_distance);
         }
         OBJ_RELEASE(distance_array);
-       carto_base_free_graph(graph);
+       opal_carto_base_free_graph(graph);
 
     }
     MPI_Barrier(MPI_COMM_WORLD);

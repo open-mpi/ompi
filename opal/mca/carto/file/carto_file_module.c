@@ -61,11 +61,11 @@ static int opal_carto_file_parse(const char *cartofile);
  */
 static const opal_carto_base_module_1_0_0_t loc_module = {
     opal_carto_file_init,
-    opal_carto_base_graph_get_host_graph,
-    opal_carto_base_free_graph,
-    opal_carto_base_get_nodes_distance,
-    opal_carto_base_graph_spf,
-    opal_carto_base_graph_find_node,
+    opal_carto_base_graph_get_host_graph_fn,
+    opal_carto_base_free_graph_fn,
+    opal_carto_base_get_nodes_distance_fn,
+    opal_carto_base_graph_spf_fn,
+    opal_carto_base_graph_find_node_fn,
     opal_carto_file_finalize,
 };
 
@@ -96,7 +96,9 @@ static int opal_carto_file_init(void)
     int rc;
 
     /* create an empty graph */
-    opal_carto_base_graph_create(&carto_base_common_host_graph);
+    if (NULL == opal_carto_base_common_host_graph) {
+        opal_carto_base_graph_create_fn(&opal_carto_base_common_host_graph);
+    }
     if (NULL == carto_file_path) {
         return OPAL_ERROR;
     }
@@ -113,7 +115,9 @@ static int opal_carto_file_init(void)
 static int opal_carto_file_finalize(void)
 {
     /* free the host cartography graph. */
-    opal_carto_base_free_graph(carto_base_common_host_graph);
+    if (NULL != opal_carto_base_common_host_graph) {
+        opal_carto_base_free_graph_fn(opal_carto_base_common_host_graph);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -177,7 +181,7 @@ static int opal_carto_file_parse(const char *cartofile)
                     switch (token) {
                     case OPAL_CARTO_FILE_NAME:
                         node->node_name = strdup(carto_file_value.sval);
-                        opal_carto_base_graph_add_node(carto_base_common_host_graph, node);
+                        opal_carto_base_graph_add_node_fn(opal_carto_base_common_host_graph, node);
                         break;
                     default:
                         free(node);
@@ -215,7 +219,7 @@ static int opal_carto_file_parse(const char *cartofile)
                         }
                         opal_argv_free (argv);
                         /* find the start node of the connection */
-                        node = opal_carto_base_graph_find_node(carto_base_common_host_graph,node1_name);
+                        node = opal_carto_base_graph_find_node_fn(opal_carto_base_common_host_graph,node1_name);
                         if (NULL == node) {
                             opal_show_help("help-opal-carto-file.txt", "vertex not found", true, cartofile, line_number, node1_name);
                             free(node1_name);
@@ -223,14 +227,14 @@ static int opal_carto_file_parse(const char *cartofile)
                             goto error;
                         }
                         /* find the end node of the connection */
-                        end_node = opal_carto_base_graph_find_node(carto_base_common_host_graph,node2_name);
+                        end_node = opal_carto_base_graph_find_node_fn(opal_carto_base_common_host_graph,node2_name);
                         if (NULL == end_node) {
                             opal_show_help("help-opal-carto-file.txt", "vertex not found", true, cartofile, line_number, node2_name);
                             free(node1_name);
                             free(node2_name);
                             goto error;
                         }
-                        opal_carto_base_connect_nodes(carto_base_common_host_graph, node, end_node, weight);
+                        opal_carto_base_connect_nodes_fn(opal_carto_base_common_host_graph, node, end_node, weight);
                         free(node2_name);
                         break;
                     case OPAL_CARTO_FILE_NEWLINE:
@@ -274,7 +278,7 @@ static int opal_carto_file_parse(const char *cartofile)
                         }
                         opal_argv_free (argv);
                         /* find the start node of the connection */
-                        node = opal_carto_base_graph_find_node(carto_base_common_host_graph,node1_name);
+                        node = opal_carto_base_graph_find_node_fn(opal_carto_base_common_host_graph,node1_name);
                         if (NULL == node) {
                             opal_show_help("help-opal-carto-file.txt", "vertex not found", true, cartofile, line_number, node1_name);
                             free(node1_name);
@@ -282,15 +286,15 @@ static int opal_carto_file_parse(const char *cartofile)
                             goto error;
                         }
                         /* find the end node of the connection */
-                        end_node = opal_carto_base_graph_find_node(carto_base_common_host_graph,node2_name);
+                        end_node = opal_carto_base_graph_find_node_fn(opal_carto_base_common_host_graph,node2_name);
                         if (NULL == end_node) {
                             opal_show_help("help-opal-carto-file.txt", "vertex not found", true, cartofile, line_number, node2_name);
                             free(node1_name);
                             free(node2_name);
                             goto error;
                         }
-                        opal_carto_base_connect_nodes(carto_base_common_host_graph, node, end_node, weight);
-                        opal_carto_base_connect_nodes(carto_base_common_host_graph, end_node, node, weight);
+                        opal_carto_base_connect_nodes_fn(opal_carto_base_common_host_graph, node, end_node, weight);
+                        opal_carto_base_connect_nodes_fn(opal_carto_base_common_host_graph, end_node, node, weight);
                         free(node2_name);
                         break;
                     case OPAL_CARTO_FILE_NEWLINE:

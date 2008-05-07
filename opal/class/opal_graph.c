@@ -612,7 +612,7 @@ uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_
     distance_array = OBJ_NEW(opal_value_array_t);
     opal_value_array_init(distance_array, sizeof(vertex_distance_from_t));
     opal_value_array_reserve(distance_array,50);
-    items_in_distance_array = dijkstra(graph, vertex1, distance_array);
+    items_in_distance_array = opal_graph_dijkstra(graph, vertex1, distance_array);
     /**
      * find the end vertex in the distance array that Dijkstra
      * algorithm returned.
@@ -675,7 +675,7 @@ static int compare_vertex_distance(const void *item1, const void *item2)
  * 
  * @return uint32_t the size of the distance array
  */
-uint32_t dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array)
+uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array)
 {
     int graph_order;
     vertex_distance_from_t *Q, *q_start, *current_vertex;
@@ -690,7 +690,7 @@ uint32_t dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_a
      * Verify that the reference vertex belongs to the graph.
      */
     if (graph != vertex->in_graph) {
-        OPAL_OUTPUT((0,"dijkstra: vertex %p not in the graph %p\n",(void *)vertex,(void *)graph));
+        OPAL_OUTPUT((0,"opal:graph:dijkstra: vertex %p not in the graph %p\n",(void *)vertex,(void *)graph));
         return 0;
     }
     /* get the order of the graph and allocate a working queue accordingly */
