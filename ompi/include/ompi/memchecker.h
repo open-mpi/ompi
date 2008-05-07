@@ -93,7 +93,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * addr,
         
     if( datatype->size == (size_t) (datatype->true_ub - datatype->true_lb) ) {
         /*  We have a contiguous type. */
-        f( addr , datatype->size );
+        f( addr , datatype->size * count );
     } else {
         /* Now we got a noncontigous type. */
         uint32_t         stack_disp  = 0, elem_pos = 0, i;
