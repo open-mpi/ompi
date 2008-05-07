@@ -22,7 +22,6 @@
 #include "ompi/request/request.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
-#include "ompi/memchecker.h"
 
 int mca_pml_ob1_irecv_init(void *addr,
                            size_t count,
@@ -41,13 +40,6 @@ int mca_pml_ob1_irecv_init(void *addr,
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, true);
-    /*
-     * Receive request is initialized, let's start memory checking.
-     */
-    MEMCHECKER (
-        memchecker_convertor_call(&opal_memchecker_base_mem_noaccess,
-                                  &recvreq->req_recv.req_base.req_convertor);
-    );
     
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &((recvreq)->req_recv.req_base),
