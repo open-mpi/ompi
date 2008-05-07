@@ -139,7 +139,7 @@ OPAL_DECLSPEC extern opal_list_t opal_carto_base_components_opened;
  * 
  * @return OPAL_DECLSPEC int
  */
-OPAL_DECLSPEC int carto_base_get_host_graph(opal_carto_graph_t **graph, const char *graph_type);
+OPAL_DECLSPEC int opal_carto_base_get_host_graph(opal_carto_graph_t **graph, const char *graph_type);
 
 
 /**
@@ -149,7 +149,7 @@ OPAL_DECLSPEC int carto_base_get_host_graph(opal_carto_graph_t **graph, const ch
  * 
  * @return OPAL_DECLSPEC void
  */
-OPAL_DECLSPEC void carto_base_free_graph(opal_carto_graph_t *graph);
+OPAL_DECLSPEC void opal_carto_base_free_graph(opal_carto_graph_t *graph);
 
 /**
  * Get the distance (weight) from a start node to all other
@@ -163,7 +163,7 @@ OPAL_DECLSPEC void carto_base_free_graph(opal_carto_graph_t *graph);
  * 
  * @return OPAL_DECLSPEC int
  */
-OPAL_DECLSPEC int carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *start, const char *node_type, opal_value_array_t *distance_);
+OPAL_DECLSPEC int opal_carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_carto_base_node_t *start, const char *node_type, opal_value_array_t *distance_);
 
 /**
  * find the distance between two nodes.
@@ -174,7 +174,7 @@ OPAL_DECLSPEC int carto_base_get_nodes_distance(opal_carto_graph_t *graph, opal_
  * 
  * @return OPAL_DECLSPEC uint32_t
  */
-OPAL_DECLSPEC uint32_t carto_base_spf(opal_carto_graph_t *graph,opal_carto_base_node_t *start, opal_carto_base_node_t *end);
+OPAL_DECLSPEC uint32_t opal_carto_base_spf(opal_carto_graph_t *graph,opal_carto_base_node_t *start, opal_carto_base_node_t *end);
 
 /**
  * Find a node in the graph
@@ -184,7 +184,7 @@ OPAL_DECLSPEC uint32_t carto_base_spf(opal_carto_graph_t *graph,opal_carto_base_
  * 
  * @return OPAL_DECLSPEC opal_carto_base_node_t
  */
-OPAL_DECLSPEC opal_carto_base_node_t *carto_base_find_node(opal_carto_graph_t *graph, const char *node_name);
+OPAL_DECLSPEC opal_carto_base_node_t *opal_carto_base_find_node(opal_carto_graph_t *graph, const char *node_name);
 
 
 /**
@@ -192,7 +192,7 @@ OPAL_DECLSPEC opal_carto_base_node_t *carto_base_find_node(opal_carto_graph_t *g
  */
 extern int opal_carto_base_output;
 
-extern opal_carto_graph_t *carto_base_common_host_graph;
+extern opal_carto_graph_t *opal_carto_base_common_host_graph;
 
 END_C_DECLS
 

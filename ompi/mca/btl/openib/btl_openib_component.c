@@ -1333,7 +1333,7 @@ static int get_ib_dev_distance(struct ibv_device *dev)
     if(opal_paffinity_base_get_processor_info(&num_processors, &max_proc_id) != OMPI_SUCCESS)
         max_proc_id = 100; /* Choose something big enough */
 
-    hca_node = carto_base_find_node(host_topo, hca);
+    hca_node = opal_carto_base_find_node(host_topo, hca);
 
     /* no topology info for HCA found. Assume that it is close */
     if(NULL == hca_node)
@@ -1353,14 +1353,14 @@ static int get_ib_dev_distance(struct ibv_device *dev)
         opal_paffinity_base_map_to_socket_core(i, &socket, &core);
         asprintf(&slot, "slot%d", socket);
 
-        slot_node = carto_base_find_node(host_topo, slot);
+        slot_node = opal_carto_base_find_node(host_topo, slot);
 
         free(slot);
 
         if(NULL == slot_node)
             return 0;
 
-        distance = carto_base_spf(host_topo, slot_node, hca_node);
+        distance = opal_carto_base_spf(host_topo, slot_node, hca_node);
 
         if(distance < 0)
             return 0;
@@ -1391,7 +1391,7 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
     int i;
     struct dev_distance *devs = malloc(count * sizeof(struct dev_distance));
 
-    carto_base_get_host_graph(&host_topo, "Infiniband");
+    opal_carto_base_get_host_graph(&host_topo, "Infiniband");
 
     for(i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
@@ -1400,7 +1400,7 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);
 
-    carto_base_free_graph(host_topo);
+    opal_carto_base_free_graph(host_topo);
 
     return devs;
 }
