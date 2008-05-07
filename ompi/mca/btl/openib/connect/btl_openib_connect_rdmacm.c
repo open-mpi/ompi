@@ -446,10 +446,11 @@ static int handle_connect_request(struct rdmacm_contents *local, struct rdma_cm_
 
     message = endpoint->endpoint_remote_cpc_data->cbm_modex_message;
 
-    BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x port %d", endpoint->endpoint_state, local->ipaddr, message->ipaddr, ((struct conn_message *)event->param.conn.private_data)->rem_port));
+    BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x port %d", endpoint->endpoint_state, local->ipaddr, message->ipaddr, rem_port));
 
     /* See if a race is occurring between the two sides attempting to connect to each other at the same time */
-    if (local->ipaddr > message->ipaddr) {
+    if ((local->ipaddr > message->ipaddr && local->port > rem_port) ||
+        local->ipaddr > message->ipaddr) {
         int race = 1;
 
         OPAL_THREAD_UNLOCK(endpoint_state_lock);
@@ -726,15 +727,18 @@ static int finish_connect(struct rdmacm_contents *local, int num)
     struct rdma_conn_param conn_param;
     struct sockaddr *peeraddr, *localaddr;
     uint32_t localipaddr, remoteipaddr;
+    uint16_t remoteport;
     struct conn_message msg;
     int rc;
 
+    remoteport = rdma_get_dst_port(local->id[num]);
     localaddr = rdma_get_local_addr(local->id[num]);
     peeraddr = rdma_get_peer_addr(local->id[num]);
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
 
-    if (localipaddr > remoteipaddr) {
+    if ((localipaddr == remoteipaddr && local->port <= remoteport) ||
+        localipaddr > remoteipaddr) {
         rc = rdmacm_setup_qp(local, local->endpoint, local->id[num], num);
         if (0 != rc) {
             BTL_ERROR(("rdmacm_setup_qp error %d", rc));
@@ -1222,9 +1226,11 @@ uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev)
 {
     struct rdma_addr_list *addr;
 
-    for (addr = myaddrs; addr; addr = addr->next)
-        if (!strcmp(addr->dev_name, ib_dev->name))
+    for (addr = myaddrs; addr; addr = addr->next) {
+        if (!strcmp(addr->dev_name, ib_dev->name)) {
             return addr->subnet;
+        }
+    }
 
     return 0;
 }
@@ -1233,10 +1239,12 @@ static uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
 {
     struct rdma_addr_list *addr;
 
-    for (addr = myaddrs; addr; addr = addr->next)
+    for (addr = myaddrs; addr; addr = addr->next) {
         if (!strcmp(addr->dev_name, verbs->device->name) && 
-            port == addr->dev_port)
+            port == addr->dev_port) {
             return addr->addr;
+        }
+    }
     return 0;
 }
 
@@ -1351,8 +1359,9 @@ static int build_rdma_addr_list(void)
     while (ifa) {
         if (ifa->ifa_addr->sa_family == AF_INET) {
             rc = add_rdma_addr(ifa);
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
         ifa = ifa->ifa_next;
     }
@@ -1366,7 +1375,7 @@ static void free_rdma_addr_list(void)
 
     addr = myaddrs;
     while (addr) {
-    tmp = addr->next;
+        tmp = addr->next;
         free(addr);
         addr = tmp;
     }
