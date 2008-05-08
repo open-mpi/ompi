@@ -212,7 +212,19 @@ fi
 
 havekqueue=no
 if test "x$ac_cv_header_sys_event_h" = "xyes"; then
-	AC_CHECK_FUNCS(kqueue, [havekqueue=yes], )
+    # All versions of MAC OS X before at least 10.5.2 are
+    # completely broken when kqueue is used with pty. So, until
+    # they get fixed, completely disable kqueue on MAC OS X.
+    case "$host" in
+        *apple-darwin*)
+		    AC_MSG_CHECKING(for working kqueue)
+            havekqueue="no"
+            AC_MSG_RESULT([no (MAC OS X)])
+        ;;
+        *)
+            AC_CHECK_FUNCS(kqueue, [havekqueue=yes], )
+        ;;
+    esac
 	if test "x$havekqueue" = "xyes" ; then
 		AC_MSG_CHECKING(for working kqueue)
 		AC_TRY_RUN(
