@@ -631,7 +631,7 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
                                        char *snapshot_ref,
                                        char *snapshot_location)
 {
-    int exit_status = ORTE_SUCCESS;
+    int ret, exit_status = ORTE_SUCCESS;
     FILE * meta_data = NULL;
     char * meta_data_fname = NULL;
     char * crs_comp = NULL;
@@ -659,8 +659,7 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
     orte_util_convert_process_name_to_string(&proc_name, proc);
 
     /* Extract the checkpointer */
-    crs_comp = opal_crs_base_extract_expected_component(snapshot_location, &prev_pid);
-    if( NULL == crs_comp ) {
+    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot_location, &crs_comp, &prev_pid)) ) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }

@@ -252,7 +252,7 @@ int opal_crs_blcr_module_finalize(void)
 
 int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,  opal_crs_state_type_t *state)
 {
-    int ret;
+    int ret, exit_status = OPAL_SUCCESS;
     opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
     char * tmp_str = NULL;
 
@@ -272,15 +272,15 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     snapshot->super.remote_location  = strdup(base_snapshot->remote_location);
 
     /*
-     * Create the snapshot directory
+     * Update the snapshot metadata
      */
     snapshot->super.component_name = strdup(mca_crs_blcr_component.super.base_version.mca_component_name);
-    if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(&snapshot->super) )) {
-        *state = OPAL_CRS_ERROR;
+    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_COMP, snapshot->super.component_name) ) ) {
         opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: checkpoint(): Error: Unable to initialize the directory for (%s).", 
+                    "crs:blcr: checkpoint(): Error: Unable to write component name to the directory for (%s).",
                     snapshot->super.reference_name);
-        return ret;
+        exit_status = ret;
+        goto cleanup;
     }
 
     /*
@@ -328,7 +328,8 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
             opal_output(mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d)",
                         pid);
-            return ret;
+            exit_status = ret;
+            goto cleanup;
         }
 
         *state = blcr_current_state;
@@ -347,7 +348,9 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
                         snapshot->context_filename, tmp_str, ret);
             perror("crs:blcr: checkpoint");
             free(tmp_str);
-            return ret;
+
+            exit_status = ret;
+            goto cleanup;
         }
 
         /*
@@ -358,7 +361,8 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
             opal_output(mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint(): Error: Unable to update metadata for snapshot (%s).", 
                         snapshot->super.reference_name);
-            return ret;
+            exit_status = ret;
+            goto cleanup;
         }
     }
 
@@ -367,10 +371,13 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
      */
     base_snapshot = &(snapshot->super);
 
-    if(NULL != tmp_str) 
+ cleanup:
+    if(NULL != tmp_str) {
         free(tmp_str);
+        tmp_str = NULL;
+    }
 
-    return OPAL_SUCCESS;
+    return exit_status;
 }
 
 int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_child, pid_t *child_pid)
@@ -760,8 +767,6 @@ static int blcr_get_checkpoint_filename(char **fname, pid_t pid)
 }
 
 static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot) {
-    char * dir_name  = NULL;
-    FILE * meta_data = NULL;
     int exit_status  = OPAL_SUCCESS;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
@@ -779,34 +784,19 @@ static int blcr_update_snapshot_metadata(opal_crs_blcr_snapshot_t *snapshot) {
     }
 
     /*
-     * Append to the metadata file:
-     *  the relative path of the context filename
+     * Append to the metadata file the context filename
      */
-    if( NULL == (meta_data = opal_crs_base_open_metadata(&snapshot->super, 'w') ) ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-
-    /* Context Filename -- Relative path */
-    fprintf(meta_data, "%s\n", snapshot->context_filename);
-
+    opal_crs_base_metadata_write_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, snapshot->context_filename);
     
  cleanup:
-    if(NULL != meta_data)
-        fclose(meta_data);
-    if(NULL != dir_name)
-        free(dir_name);
-
     return exit_status;
 }
 
 static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
-    char * content = NULL;
+    int ret, exit_status = OPAL_SUCCESS;
+    char **tmp_argv = NULL;
     char * component_name = NULL;
     int prev_pid;
-    int len = 0;
-    FILE * meta_data = NULL;
-    int exit_status = OPAL_SUCCESS;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: cold_start(%s)", snapshot->super.reference_name);
@@ -814,9 +804,9 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     /*
      * Find the snapshot directory, read the metadata file
      */
-    if( NULL == (meta_data = opal_crs_base_open_read_metadata(snapshot->super.local_location, 
-                                                              &component_name, &prev_pid) ) ) {
-        exit_status = OPAL_ERROR;
+    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.local_location, 
+                                                                        &component_name, &prev_pid) ) ) {
+        exit_status = ret;
         goto cleanup;
     }
 
@@ -835,19 +825,8 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     /*
      * Context Filename
      */
-    len = 256; /* Max size for a BLCR filename */
-    content = (char *) malloc(sizeof(char) * len);
-    if (NULL == fgets(content, len, meta_data) ) {
-        free(content);
-        content = NULL;
-        goto cleanup;
-    }
-    /* Strip of newline */
-    len = strlen(content);
-    content[len - 1] = '\0';
-
-    /* save the filename in the structure */
-    asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.local_location, content);
+    opal_crs_base_metadata_read_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    asprintf(&snapshot->context_filename, "%s/%s", snapshot->super.local_location, tmp_argv[0]);
 
     /*
      * Reset the cold_start flag
@@ -855,10 +834,10 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     snapshot->super.cold_start = false;
 
  cleanup:
-    if(NULL != meta_data)
-        fclose(meta_data);
-    if(NULL != content)
-        free(content);
+    if(NULL != tmp_argv) {
+        opal_argv_free(tmp_argv);
+        tmp_argv = NULL;
+    }
 
     return exit_status;
 }

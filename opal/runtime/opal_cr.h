@@ -61,28 +61,39 @@ enum opal_cr_ckpt_cmd_state_t {
     OPAL_CR_STATUS_NONE,       /* No checkpoint in progress */
     OPAL_CR_STATUS_REQUESTED,  /* Checkpoint has been requested */
     OPAL_CR_STATUS_RUNNING,    /* Checkpoint is currently running */
-    OPAL_CR_STATUS_TERM        /* Checkpoint is running and will terminate process upon completion */
+    OPAL_CR_STATUS_TERM,       /* Checkpoint is running and will terminate process upon completion */
+    /* State of the continue operation */
+    OPAL_CR_STATUS_CONTINUE,
+    /* State of the restart operation */
+    OPAL_CR_STATUS_RESTART_PRE,
+    OPAL_CR_STATUS_RESTART_POST
 };
 typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
+
+    /* An output handle to be used by the cr runtime 
+     * functionality as an argument to opal_output() */
+    OPAL_DECLSPEC extern int    opal_cr_output;
 
     /* Directory containing the named pipes for communication
      * with the opal-checkpoint tool  */
     OPAL_DECLSPEC extern char * opal_cr_pipe_dir;
+
     /* Signal that opal-checkpoint uses to contact the 
      * application process */
     OPAL_DECLSPEC extern int    opal_cr_entry_point_signal;
+
     /* If Checkpointing is enabled in this application */
     OPAL_DECLSPEC extern bool   opal_cr_is_enabled;
+
     /* If the application running is a tool
      * (e.g., opal-checkpoint, orted, ...) */
     OPAL_DECLSPEC extern bool   opal_cr_is_tool;
-    /* An output handle to be used by the cr runtime 
-     * functionality as an argument to opal_output() */
-    OPAL_DECLSPEC extern int    opal_cr_output;
+
     /* If a checkpoint has been requested */
     OPAL_DECLSPEC extern int opal_cr_checkpoint_request;
+
     /* The current state of a checkpoint operation */
-    OPAL_DECLSPEC extern int opal_cr_checkpointing;
+    OPAL_DECLSPEC extern int opal_cr_checkpointing_state;
 
     /*
      * If this is an application that doesn't want to have
@@ -217,16 +228,6 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /*******************************
      * Notification Routines
      *******************************/
-    /*
-     * Init OPAL entry point functionality
-     */
-    OPAL_DECLSPEC int opal_cr_entry_point_init(void);
-
-    /*
-     * Finalize OPAL entry point functionality
-     */
-    OPAL_DECLSPEC int opal_cr_entry_point_finalize(void);
-
     /**
      * A function to respond to the async checkpoint request
      * this is useful when figuring out who should respond

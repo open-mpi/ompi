@@ -73,7 +73,6 @@
 /******************
  * Global Var Decls
  ******************/
-bool opal_cr_allow_opal_only   = false;
 bool opal_cr_stall_check       = false;
 bool opal_cr_currently_stalled = false;
 int  opal_cr_output;
@@ -81,17 +80,12 @@ int  opal_cr_output;
 /******************
  * Local Functions & Var Decls
  ******************/
-static int cr_notify_response(opal_cr_ckpt_cmd_state_t resp);
 static int extract_env_vars(int prev_pid);
-static int cr_entry_point_notify_reopen_files(int *prog_read_fd, int *prog_write_fd);
-static void opal_cr_entry_point_signal_handler (int signo);
+
 static void opal_cr_sigpipe_debug_signal_handler (int signo);
 
 static opal_cr_coord_callback_fn_t  cur_coord_callback = NULL;
 static opal_cr_notify_callback_fn_t cur_notify_callback = NULL;
-
-static char *prog_named_pipe_r = NULL;
-static char *prog_named_pipe_w = NULL;
 
 /******************
  * Interface Functions & Vars
@@ -100,10 +94,12 @@ char * opal_cr_pipe_dir   = NULL;
 int    opal_cr_entry_point_signal     = 0;
 bool   opal_cr_is_enabled = true;
 bool   opal_cr_is_tool    = false;
+
 /* Current checkpoint state */
-int    opal_cr_checkpointing      = OPAL_CR_STATUS_NONE;
+int    opal_cr_checkpointing_state = OPAL_CR_STATUS_NONE;
+
 /* Current checkpoint request channel state */
-int    opal_cr_checkpoint_request = OPAL_CR_STATUS_NONE;
+int    opal_cr_checkpoint_request  = OPAL_CR_STATUS_NONE;
 
 static bool   opal_cr_debug_sigpipe = false;
 
@@ -241,22 +237,6 @@ int opal_cr_init(void )
                         opal_cr_thread_sleep_check, opal_cr_thread_sleep_wait);
 #endif
 
-    /*
-     * Whether or not to allow OPAL only checkpointing.
-     * By default we rely on ORTE to provide this functionality for us, but
-     * if the application is OPAL only then we need to fallback to the signal
-     * method which is activated by setting this MCA parameter to 'true'.
-     */
-    mca_base_param_reg_int_name("opal_cr", "allow_opal_only",
-                                "Enable OPAL Only checkpointing [Default: Disabled]",
-                                true, false,
-                                0, &val);
-    opal_cr_allow_opal_only = OPAL_INT_TO_BOOL(val);
-
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: init: OPAL CR Allow OPAL Only: %d",
-                        val);
-
     mca_base_param_reg_int_name("opal_cr", "is_tool",
                                 "Is this a tool program, meaning does it require a fully operational OPAL or just enough to exec.",
                                 false, false,
@@ -315,13 +295,6 @@ int opal_cr_init(void )
         opal_cr_stall_check = false;
         opal_cr_currently_stalled = false;
 
-        /*
-         * Register the entry point
-         */
-        if( OPAL_SUCCESS != (ret = opal_cr_entry_point_init()) ) {
-            exit_status = OPAL_ERROR;
-            goto cleanup;
-        }
     } /* End opal_cr_is_tool = true */
 
     /* 
@@ -381,7 +354,7 @@ int opal_cr_init(void )
 
 int opal_cr_finalize(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int exit_status = OPAL_SUCCESS;
 
     if( --opal_cr_initalized != 0 ) {
         if( opal_cr_initalized < 0 ) {
@@ -407,13 +380,9 @@ int opal_cr_finalize(void)
         }
 #endif /* OPAL_ENABLE_FT_THREAD == 1 */
 
-        if( OPAL_SUCCESS != (ret = opal_cr_entry_point_finalize()) ) {
-            exit_status = ret;
-        }
-
         /* Nothing to do for just process notifications */
-        opal_cr_checkpointing      = OPAL_CR_STATUS_TERM;
-        opal_cr_checkpoint_request = OPAL_CR_STATUS_TERM;
+        opal_cr_checkpointing_state = OPAL_CR_STATUS_TERM;
+        opal_cr_checkpoint_request  = OPAL_CR_STATUS_TERM;
     }
 
 #if OPAL_ENABLE_FT    == 1
@@ -452,7 +421,7 @@ void opal_cr_test_if_checkpoint_ready(void)
      *  - If a request is pending then cancel it
      *  - o.w., skip it.
      */
-    if(OPAL_CR_STATUS_RUNNING == opal_cr_checkpointing ) {
+    if(OPAL_CR_STATUS_RUNNING == opal_cr_checkpointing_state ) {
         if( OPAL_SUCCESS != (ret = cur_notify_callback(OPAL_CHECKPOINT_CMD_IN_PROGRESS) ) ) {
             opal_output(opal_cr_output,
                         "Error: opal_cr: test_if_checkpoint_ready: Respond [In Progress] Failed. (%d)",
@@ -478,8 +447,8 @@ void opal_cr_test_if_checkpoint_ready(void)
     /* 
      * Start the checkpoint
      */
-    opal_cr_checkpointing      = OPAL_CR_STATUS_RUNNING;
-    opal_cr_checkpoint_request = OPAL_CR_STATUS_NONE;
+    opal_cr_checkpointing_state = OPAL_CR_STATUS_RUNNING;
+    opal_cr_checkpoint_request  = OPAL_CR_STATUS_NONE;
 
  STAGE_1:
     if( OPAL_SUCCESS != (ret = cur_notify_callback(OPAL_CHECKPOINT_CMD_START) ) ) {
@@ -525,8 +494,12 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
     }
 
     if(*state == OPAL_CRS_CONTINUE) {
-        if(term)
+        if(term) {
             *state = OPAL_CRS_TERM;
+            opal_cr_checkpointing_state  = OPAL_CR_STATUS_TERM;
+        } else {
+            opal_cr_checkpointing_state  = OPAL_CR_STATUS_CONTINUE;
+        }
     }
     else {
         term = false;
@@ -537,6 +510,7 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
      */
     if(*state == OPAL_CRS_RESTART) {
         extract_env_vars(prev_pid);
+        opal_cr_checkpointing_state  = OPAL_CR_STATUS_RESTART_PRE;
     }
 
     /*
@@ -594,11 +568,10 @@ int opal_cr_coord(int state)
 
     /*
      * Here we are returning to either:
-     *  - opal_notify()
-     *    If we have an OPAL only opplication.
      *  - [orte | ompi]_notify()
-     *    If we have an ORTE or OPAL application.
      */
+    opal_cr_checkpointing_state  = OPAL_CR_STATUS_RESTART_POST;
+
     return OPAL_SUCCESS;
 }
 
@@ -720,83 +693,6 @@ static int extract_env_vars(int prev_pid)
 /*****************************************
  * OPAL CR Entry Point Functionality
 *****************************************/
-int opal_cr_entry_point_init(void)
-{
-    int exit_status = OPAL_SUCCESS;
-    char *tmp_pid = NULL;
-    opal_cr_notify_callback_fn_t prev_notify_func;
-
-    if( !opal_cr_allow_opal_only ) {
-        return OPAL_SUCCESS;
-    }
-
-    opal_cr_reg_notify_callback(cr_notify_response, &prev_notify_func);
-
-    /* String representation of the PID */
-    asprintf(&tmp_pid, "%d", getpid());
-
-    asprintf(&prog_named_pipe_r, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
-    asprintf(&prog_named_pipe_w, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
-
-    opal_output_verbose(15, opal_cr_output,
-                        "opal_cr: init: Named Pipes (%s) (%s)", 
-                        prog_named_pipe_r, prog_named_pipe_w);
-
-    /*
-     * Setup a signal handler to catch and start the proper thread
-     * to handle the checkpoint
-     */
-    if( SIG_ERR == signal(opal_cr_entry_point_signal, opal_cr_entry_point_signal_handler) ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-
- cleanup:
-    if( NULL != tmp_pid) {
-        free(tmp_pid);
-        tmp_pid = NULL;
-    }
-
-    return exit_status;
-}
-
-int opal_cr_entry_point_finalize(void)
-{
-    if( !opal_cr_allow_opal_only ) {
-        return OPAL_SUCCESS;
-    }
-
-    if( NULL != prog_named_pipe_r) {
-        free(prog_named_pipe_r);
-        prog_named_pipe_r = NULL;
-    }
-
-    if( NULL != prog_named_pipe_w) {
-        free(prog_named_pipe_w);
-        prog_named_pipe_w = NULL;
-    }
-
-    return OPAL_SUCCESS;
-}
-
-/*
- * C/R Signal Handler.
- * Once a signal is received then the notification thread is notified
- * so it can communicate with the checkpoint command to take the approprate 
- * action.
- */
-static void opal_cr_entry_point_signal_handler (int signo)
-{
-    if( opal_cr_entry_point_signal != signo ) {
-        /* Not our signal */
-        return;
-    }
-    /*
-     * Signal thread to start checkpoint handshake
-     */
-    opal_cr_checkpoint_request   = OPAL_CR_STATUS_REQUESTED;
-}
-
 /*
  * Used only for debugging SIGPIPE problems
  */
@@ -816,346 +712,6 @@ static void opal_cr_sigpipe_debug_signal_handler (int signo)
     while(sleeper == 1 ) {
         sleep(1);
     }
-}
-
-/*
- * Respond to an asynchronous checkpoint request
- */
-int cr_notify_response(opal_cr_ckpt_cmd_state_t resp)
-{
-    static int app_term = 0, app_pid = 0;
-    static opal_crs_base_snapshot_t *snapshot = NULL;
-    static int prog_named_read_pipe_fd, prog_named_write_pipe_fd;
-    static int len = 0;
-    static int cr_state;
-    int ret, exit_status = OPAL_SUCCESS;
-    int tmp_resp;
-    char *tmp_str = NULL;
-    ssize_t tmp_size = 0;
-    /* Commands from the command line tool */
-    unsigned char app_cmd;
-
-    if( opal_cr_currently_stalled ) {
-        goto STAGE_1;
-    }
-
-    /*
-     * Open a named pipe for our application
-     */
-    if (OPAL_SUCCESS != (ret = cr_entry_point_notify_reopen_files(&prog_named_read_pipe_fd, &prog_named_write_pipe_fd))) {
-        goto ckpt_cleanup;
-    }
-
-    /*
-     * Get the initial handshake command
-     */
-    if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &len, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the first handshake from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-
-    tmp_resp = (int)resp;
-    if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &tmp_resp, sizeof(int)) ) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: %d: Error: Unable to write to pipe (%s) ret = %d [Line %d]\n",
-                    tmp_resp, prog_named_pipe_w, ret, __LINE__);
-        goto ckpt_cleanup;
-    }
-    
-    /*
-     * Respond that the checkpoint is currently in progress
-     */
-    if( OPAL_CHECKPOINT_CMD_IN_PROGRESS == resp ) {
-        opal_output_verbose(10, opal_cr_output,
-                            "opal_cr: cr_notify_response: Checkpoint in progress, cannot start (%d)",
-                            getpid());
-        goto ckpt_cleanup;
-    }
-    /*
-     * Respond that the application is unable to be checkpointed
-     */
-    else if( OPAL_CHECKPOINT_CMD_NULL == resp ) {
-        opal_output_verbose(10, opal_cr_output,
-                            "opal_cr: cr_notify_response: Non-checkpointable application, cannot start (%d)", 
-                            getpid());
-        goto ckpt_cleanup;
-    }
-    /*
-     * Respond that some error has occurred such that the application is 
-     * not able to be checkpointed
-     */
-    else if( OPAL_CHECKPOINT_CMD_ERROR == resp ) {
-        opal_output_verbose(10, opal_cr_output,
-                            "opal_cr: cr_notify_response: Error generated, cannot start (%d)", 
-                            getpid());
-        goto ckpt_cleanup;
-    }
-
-    /*
-     * Respond signalng that we wish to respond to this request
-     */
-    opal_output_verbose(10, opal_cr_output,
-                        "opal_cr: cr_notify_response: Starting checkpoint request (%d)", 
-                        getpid());
-
-    /*
-     * Wait for a notify command from command line tool
-     */
-    if( sizeof(app_cmd) != (ret = read(prog_named_read_pipe_fd, &app_cmd, sizeof(app_cmd))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the requested command from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    /* get PID argument */
-    if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &app_pid, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the pid from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    /* get term argument */
-    if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &app_term, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the term from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    /* get Snapshot Handle argument */
-    if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &len, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the snapshot_handle len from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    tmp_size = sizeof(char) * len;
-    tmp_str  = (char *) malloc(sizeof(char) * len);
-    if( tmp_size != (ret = read(prog_named_read_pipe_fd, tmp_str, (sizeof(char) * len))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the snapshot_handle from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    /* 
-     * If they didn't send anything of meaning then use the defaults 
-     */
-    snapshot = OBJ_NEW(opal_crs_base_snapshot_t);
-
-    if( 1 < strlen(tmp_str) ) {
-        if( NULL != snapshot->reference_name)
-            free( snapshot->reference_name );
-        snapshot->reference_name = strdup(tmp_str);
-        
-        if( NULL != snapshot->local_location )
-            free( snapshot->local_location );
-        snapshot->local_location = opal_crs_base_get_snapshot_directory(snapshot->reference_name);
-        
-        if( NULL != snapshot->remote_location )
-            free( snapshot->remote_location );
-        snapshot->remote_location = strdup(snapshot->local_location);
-        
-        free(tmp_str);
-        tmp_str = NULL;
-    }
-    
-    /* get Snapshot location argument */
-    if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &len, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the snapshot_location len from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    tmp_str = (char *) malloc(sizeof(char) * len);
-    tmp_size = sizeof(char) * len;
-    if( tmp_size != (ret = read(prog_named_read_pipe_fd, tmp_str, (sizeof(char) * len))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to read the snapshot_location from named pipe (%s). %d\n",
-                    prog_named_pipe_r, ret);
-        goto ckpt_cleanup;
-    }
-    
-    /* 
-     * If they didn't send anything of meaning then use the defaults 
-     */
-    if( 1 < strlen(tmp_str) ) {
-        if( NULL != snapshot->local_location)
-            free( snapshot->local_location );
-        asprintf(&(snapshot->local_location), "%s/%s", tmp_str, snapshot->reference_name);
-        
-        if( NULL != snapshot->remote_location)
-            free( snapshot->remote_location );
-        snapshot->remote_location = strdup(snapshot->local_location);
-        
-        free(tmp_str);
-        tmp_str = NULL;
-    }
-    
-    /*
-     * Raise the notification flag.
-     * This will trigger the coordination, and checkpoint of the 
-     * application if it is possible
-     */
- STAGE_1:
-    opal_cr_currently_stalled = false;
-
-    ret = opal_cr_inc_core(app_pid, snapshot, app_term, &cr_state);
-    if( OPAL_EXISTS == ret ) {
-        opal_output_verbose(5, opal_cr_output,
-                            "opal_cr: cr_notify_response: Stalling the checkpoint progress until state is stable again (PID = %d)\n",
-                            getpid());
-        opal_cr_currently_stalled = true;
-        return exit_status;
-    }
-    else if(OPAL_SUCCESS != ret) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: checkpoint notification failed. %d\n", ret);
-        goto ckpt_cleanup;
-    }
-    
-    /* Don't stall any longer */
-    opal_cr_stall_check = false;
-
-    if(OPAL_CRS_RESTART == cr_state) {
-        opal_output_verbose(10, opal_cr_output,
-                            "opal_cr: cr_notify_response: Restarting...(%d)\n",
-                            getpid());
-        
-        app_term = false;
-        /* Do not respond to the non-existent command line tool */
-        goto ckpt_cleanup;
-    }
-    else if(cr_state == OPAL_CRS_CONTINUE) {
-        ;  /* Don't need to do anything here */
-    }
-    else if(cr_state == OPAL_CRS_TERM ) {
-        ; /* Don't need to do anything here */
-    }
-    else {
-        opal_output_verbose(5, opal_cr_output,
-                            "opal_cr: cr_notify_response: Unknown cr_state(%d) [%d]",
-                            cr_state, getpid());
-    }
-    
-    /*
-     * Return the expected variables to the command line tool
-     */
-    len = strlen(snapshot->reference_name);
-    len++; /* To account for the Null character */
-    if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &len, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to write fname length to named pipe (%s). %d.\n",
-                    prog_named_pipe_w, ret);
-        goto ckpt_cleanup;
-    }
-    
-    if(len > 0) {
-        if( (ssize_t)(sizeof(char) * len) != 
-            (ret = write(prog_named_write_pipe_fd, snapshot->reference_name, (sizeof(char) * len))) ) {
-            opal_output(opal_cr_output,
-                        "opal_cr: cr_notify_response: Error: Unable to write snapshot->reference_name to named pipe (%s). %d\n",
-                        prog_named_pipe_w, ret);
-            goto ckpt_cleanup;
-        }
-    }
-    
-    if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &cr_state, sizeof(int))) ) {
-        opal_output(opal_cr_output,
-                    "opal_cr: cr_notify_response: Error: Unable to write cr_state to named pipe (%s). %d\n",
-                    prog_named_pipe_w, ret);
-        goto ckpt_cleanup;
-    }
-    
- ckpt_cleanup:
-    close(prog_named_write_pipe_fd);
-    close(prog_named_read_pipe_fd);
-    remove(prog_named_pipe_r);
-    remove(prog_named_pipe_w);
-    
-    if(app_term) {
-        opal_output_verbose(10, opal_cr_output,
-                            "opal_cr: cr_notify_response: User has asked to terminate the application");
-        exit(OPAL_SUCCESS);
-    }
-        
-    /* Prepare to wait for another checkpoint action */
-    opal_cr_checkpointing      = OPAL_CR_STATUS_NONE;
-
-    opal_cr_currently_stalled = false;
-
-    return exit_status;
-}
-
-static int cr_entry_point_notify_reopen_files(int *prog_read_fd, int *prog_write_fd)
-{
-    int ret = OPAL_ERR_NOT_IMPLEMENTED;
-
-#ifndef HAVE_MKFIFO
-    return ret;
-#else
-#ifdef __WINDOWS__
-    return ret;
-#else
-    /*
-     * Open up the read pipe
-     */
-    if( (ret = mkfifo(prog_named_pipe_r, 0660)) < 0) {
-        if(EEXIST == ret || -1 == ret ) {
-            opal_output_verbose(10, opal_cr_output,
-                                "opal_cr: notify_reopen_files: mkfifo failed because file (%s) already exists, attempting to use this pipe. (%d)",
-                                prog_named_pipe_r, ret);
-        }
-        else {
-            opal_output(opal_cr_output,
-                        "opal_cr: notify_reopen_files: Error: mkfifo failed to make named pipe (%s). (%d)\n",
-                        prog_named_pipe_r, ret);
-            return OPAL_ERROR;
-        }
-    }
-    
-    *prog_read_fd = open(prog_named_pipe_r, O_RDWR);
-    if(*prog_read_fd < 0) {
-        opal_output(opal_cr_output,
-                    "opal_cr: init: Error: open failed to open the named pipe (%s). %d\n",
-                    prog_named_pipe_r, *prog_read_fd);
-        return OPAL_ERROR;
-    }
-
-    /*
-     * Open up the write pipe
-     */
-    if( (ret = mkfifo(prog_named_pipe_w, 0660)) < 0) {
-        if(EEXIST == ret || -1 == ret ) {
-            opal_output_verbose(10, opal_cr_output,
-                                "opal_cr: notify_reopen_files: mkfifo failed because file (%s) already exists, attempting to use this pipe. (%d)",
-                                prog_named_pipe_w, ret);
-        }
-        else {
-            opal_output(opal_cr_output,
-                        "opal_cr: notify_reopen_files: Error: mkfifo failed to make named pipe (%s). (%d)\n",
-                        prog_named_pipe_w, ret);
-            return OPAL_ERROR;
-        }
-    }
-    
-    *prog_write_fd = open(prog_named_pipe_w, O_WRONLY);
-    if(*prog_write_fd < 0) {
-        opal_output(opal_cr_output,
-                    "opal_cr: notify_reopen_files: Error: open failed to open the named pipe (%s). (%d)\n",
-                    prog_named_pipe_w, *prog_write_fd);
-        return OPAL_ERROR;
-    }
-    
-    return OPAL_SUCCESS;
-#endif  /* __WINDOWS__ */
-#endif  /* HAVE_MKFIFO */
 }
 
 #if OPAL_ENABLE_FT_THREAD == 1
