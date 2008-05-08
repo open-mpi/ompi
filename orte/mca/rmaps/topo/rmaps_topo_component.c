@@ -24,31 +24,31 @@
 #include "opal/util/output.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
-#include "rmaps_rr.h"
+#include "rmaps_topo.h"
 
 /*
  * Local functions
  */
 
-static int orte_rmaps_round_robin_open(void);
-static int orte_rmaps_round_robin_close(void);
-static int orte_rmaps_round_robin_query(mca_base_module_t **module, int *priority);
+static int orte_rmaps_topo_open(void);
+static int orte_rmaps_topo_close(void);
+static int orte_rmaps_topo_query(mca_base_module_t **module, int *priority);
 
 
-orte_rmaps_base_component_t mca_rmaps_round_robin_component = {
+orte_rmaps_base_component_t mca_rmaps_topo_component = {
     {
         /* Indicate that we are a rmaps v1.3.0 component (which also
          implies a specific MCA version) */
         
         ORTE_RMAPS_BASE_VERSION_1_3_0,
         
-        "round_robin", /* MCA component name */
+        "topo", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_rmaps_round_robin_open,  /* component open  */
-        orte_rmaps_round_robin_close, /* component close */
-        orte_rmaps_round_robin_query  /* component query */
+        orte_rmaps_topo_open,  /* component open  */
+        orte_rmaps_topo_close, /* component close */
+        orte_rmaps_topo_query  /* component query */
     },
     /* Next the MCA v1.0.0 component meta data */
     {
@@ -61,20 +61,20 @@ orte_rmaps_base_component_t mca_rmaps_round_robin_component = {
 /**
   * component open/close/init function
   */
-static int orte_rmaps_round_robin_open(void)
+static int orte_rmaps_topo_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
-static int orte_rmaps_round_robin_query(mca_base_module_t **module, int *priority)
+static int orte_rmaps_topo_query(mca_base_module_t **module, int *priority)
 {
     /* the RMAPS framework is -only- opened on HNP's,
      * so no need to check for that here
      */
     
-    *priority = 70;  /* this is the default mapper */
-    *module = (mca_base_module_t *)&orte_rmaps_round_robin_module;
+    *priority = 0; /* only select if specified */
+    *module = (mca_base_module_t *)&orte_rmaps_topo_module;
     return ORTE_SUCCESS;
 }
 
@@ -82,7 +82,7 @@ static int orte_rmaps_round_robin_query(mca_base_module_t **module, int *priorit
  *  Close all subsystems.
  */
 
-static int orte_rmaps_round_robin_close(void)
+static int orte_rmaps_topo_close(void)
 {
     return ORTE_SUCCESS;
 }
