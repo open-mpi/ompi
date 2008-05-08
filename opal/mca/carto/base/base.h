@@ -190,9 +190,9 @@ OPAL_DECLSPEC opal_carto_base_node_t *opal_carto_base_find_node(opal_carto_graph
 /**
  * Debugging output stream
  */
-extern int opal_carto_base_output;
+OPAL_DECLSPEC extern int opal_carto_base_output;
 
-extern opal_carto_graph_t *opal_carto_base_common_host_graph;
+OPAL_DECLSPEC extern opal_carto_graph_t *opal_carto_base_common_host_graph;
 
 END_C_DECLS
 
