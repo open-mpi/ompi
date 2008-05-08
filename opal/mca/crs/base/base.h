@@ -32,6 +32,14 @@
 extern "C" {
 #endif
 
+/* Some local strings to use genericly with the local metadata file */
+#define CRS_METADATA_BASE       ("# ")
+#define CRS_METADATA_COMP       ("# Component: ")
+#define CRS_METADATA_PID        ("# PID: ")
+#define CRS_METADATA_CONTEXT    ("# CONTEXT: ")
+#define CRS_METADATA_MKDIR      ("# MKDIR: ")
+#define CRS_METADATA_TOUCH      ("# TOUCH: ")
+
     /**
      * Initialize the CRS MCA framework
      *
@@ -106,24 +114,32 @@ extern "C" {
     OPAL_DECLSPEC char * opal_crs_base_state_str(opal_crs_state_type_t state);
 
     OPAL_DECLSPEC char * opal_crs_base_unique_snapshot_name(pid_t pid);
-    OPAL_DECLSPEC char * opal_crs_base_extract_expected_component(char *snapshot_loc, int *prev_pid);
+    OPAL_DECLSPEC int    opal_crs_base_extract_expected_component(char *snapshot_loc, char ** component_name, int *prev_pid);
     OPAL_DECLSPEC int    opal_crs_base_init_snapshot_directory(opal_crs_base_snapshot_t *snapshot);
     OPAL_DECLSPEC char * opal_crs_base_get_snapshot_directory(char *uniq_snapshot_name);
 
-    /* Opens the metadata file and places all the base information in the file.
-     * Options:
-     *  'w' = Open for writing
-     *  'a' = Open for writing and appending information
+    /*
+     * Read a token to the metadata file
+     * NULL can be passed for snapshot_loc if nit_snapshot_directory has been called.
      */
-    OPAL_DECLSPEC FILE *opal_crs_base_open_metadata(opal_crs_base_snapshot_t *snapshot, char mode );
+    OPAL_DECLSPEC int opal_crs_base_metadata_read_token(char *snapshot_loc, char * token, char ***value);
 
-    /* Open the metadata file, read off the base information and 
-     * return the component and previous pid to the caller.
-     * Note: component is allocated inside this function, it is the
-     *       callers responsibility to free this memory.
+    /*
+     * Write a token to the metadata file
+     * NULL can be passed for snapshot_loc if nit_snapshot_directory has been called.
      */
-    OPAL_DECLSPEC FILE * opal_crs_base_open_read_metadata(char *location, char **component, int *prev_pid);
+    OPAL_DECLSPEC int opal_crs_base_metadata_write_token(char *snapshot_loc, char * token, char *value);
 
+    /*
+     * Register a file for cleanup.
+     * Useful in C/R when files only need to temporarily exist for restart
+     */
+    OPAL_DECLSPEC int opal_crs_base_cleanup_append(char* filename, bool is_dir);
+
+    /*
+     * Flush the cleanup of all registered files.
+     */
+    OPAL_DECLSPEC int opal_crs_base_cleanup_flush(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

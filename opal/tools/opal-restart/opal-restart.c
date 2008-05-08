@@ -41,6 +41,9 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif  /* HAVE_FCNTL_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -75,7 +78,7 @@ static int initialize(int argc, char *argv[]);
 static int finalize(void);
 static int parse_args(int argc, char *argv[]);
 static int check_file(char *given_filename);
-static int post_env_vars(int prev_pid);
+static int post_env_vars(int prev_pid, char *location);
 
 /*****************************************
  * Global Vars for Command line Arguments
@@ -185,7 +188,7 @@ main(int argc, char *argv[])
         char * base = NULL;
 
         base = opal_crs_base_get_snapshot_directory(opal_restart_globals.filename);
-        expected_crs_comp = strdup(opal_crs_base_extract_expected_component(base, &prev_pid));
+        opal_crs_base_extract_expected_component(base, &expected_crs_comp, &prev_pid);
 
         free(base);
     }
@@ -260,12 +263,18 @@ main(int argc, char *argv[])
 
     /* Since some checkpoint/restart systems don't pass along env vars to the
      * restarted app, we need to take care of that.
+     *
+     * Included here is the creation of any files or directories that need to be
+     * created before the process is restarted.
      */
-    if(OPAL_SUCCESS != (ret = post_env_vars(prev_pid) ) ) {
+    if(OPAL_SUCCESS != (ret = post_env_vars(prev_pid, snapshot->local_location) ) ) {
         exit_status = ret;
         goto cleanup;
     }
 
+    /*
+     * Do the actual restart
+     */
     ret = opal_crs.crs_restart(snapshot, 
                                opal_restart_globals.forked,
                                &child_pid);
@@ -513,12 +522,15 @@ static int check_file(char *given_filename)
     return exit_status;
 }
 
-static int post_env_vars(int prev_pid)
+static int post_env_vars(int prev_pid, char *location)
 {
     int ret, exit_status = OPAL_SUCCESS;
     char *command = NULL;
     char *proc_file = NULL;
-    
+    char **loc_touch = NULL;
+    char **loc_mkdir = NULL;
+    int argc, i;
+
     if( 0 > prev_pid ) {
         opal_output(opal_restart_globals.output,
                     "Invalid PID (%d)\n",
@@ -535,17 +547,82 @@ static int post_env_vars(int prev_pid)
     asprintf(&proc_file, "/tmp/%s-%d", OPAL_CR_BASE_ENV_NAME, prev_pid);
     asprintf(&command, "env | grep OMPI_ > %s", proc_file);
 
+    opal_output_verbose(5, opal_restart_globals.output,
+                        "post_env_vars: Execute: <%s>", command);
+
     ret = system(command);
     if( 0 > ret) {
         exit_status = ret;
         goto cleanup;
     }
 
+    /*
+     * Any directories that need to be created
+     */
+    opal_crs_base_metadata_read_token(location, CRS_METADATA_MKDIR, &loc_mkdir);
+    argc = opal_argv_count(loc_mkdir);
+    for( i = 0; i < argc; ++i ) {
+        if( NULL != command ) {
+            free(command);
+            command = NULL;
+        }
+        asprintf(&command, "mkdir -p %s", loc_mkdir[i]);
+
+        opal_output_verbose(5, opal_restart_globals.output,
+                            "post_env_vars: Execute: <%s>", command);
+
+        ret = system(command);
+        if( 0 > ret) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+    if( 0 < argc ) {
+        system("sync ; sync");
+    }
+
+    /*
+     * Any files that need to exist
+     */
+    opal_crs_base_metadata_read_token(location, CRS_METADATA_TOUCH, &loc_touch);
+    argc = opal_argv_count(loc_touch);
+    for( i = 0; i < argc; ++i ) {
+        if( NULL != command ) {
+            free(command);
+            command = NULL;
+        }
+        asprintf(&command, "touch %s", loc_touch[i]);
+
+        opal_output_verbose(5, opal_restart_globals.output,
+                            "post_env_vars: Execute: <%s>", command);
+
+        ret = system(command);
+        if( 0 > ret) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+    if( 0 < argc ) {
+        system("sync ; sync");
+    }
+
  cleanup:
-    if( NULL != command)
+    if( NULL != command) {
         free(command);
-    if( NULL != proc_file)
+        command = NULL;
+    }
+    if( NULL != proc_file) {
         free(proc_file);
+        proc_file = NULL;
+    }
+    if( NULL != loc_mkdir ) {
+        opal_argv_free(loc_mkdir);
+        loc_mkdir = NULL;
+    }
+    if( NULL != loc_touch ) {
+        opal_argv_free(loc_touch);
+        loc_touch = NULL;
+    }
     
     return exit_status;
 }

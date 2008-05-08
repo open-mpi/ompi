@@ -281,6 +281,9 @@ int ompi_proc_refresh(void) {
         /* Does not change: proc->proc_name.vpid */
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
 
+        /* Make sure to clear the local flag before we set it below */
+        proc->proc_flags = 0;
+
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;

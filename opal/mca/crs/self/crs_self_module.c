@@ -291,13 +291,12 @@ int opal_crs_self_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     }
 
     /*
-     * Create the snapshot directory
+     * Update the snapshot metadata
      */
     snapshot->super.component_name = strdup(mca_crs_self_component.super.base_version.mca_component_name);
-    if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(&snapshot->super) )) {
-        *state = OPAL_CRS_ERROR;
+    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_COMP, snapshot->super.component_name) ) ) {
         opal_output(mca_crs_self_component.super.output_handle,
-                    "crs:self: checkpoint(): Error: Unable to initialize the directory for (%s).",
+                    "crs:self: checkpoint(): Error: Unable to write component name to the directory for (%s).",
                     snapshot->super.reference_name);
         exit_status = ret;
         goto cleanup;
@@ -592,12 +591,10 @@ static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **
 }
 
 static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
-    char * content = NULL;
+    int ret, exit_status = OPAL_SUCCESS;
+    char **tmp_argv = NULL;
     char * component_name = NULL;
     int prev_pid;
-    int len = 0;
-    FILE * meta_data = NULL;
-    int exit_status = OPAL_SUCCESS;
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: cold_start(%s)", snapshot->super.reference_name);
@@ -605,9 +602,9 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
     /*
      * Find the snapshot directory, read the metadata file
      */
-    if( NULL == (meta_data = opal_crs_base_open_read_metadata(snapshot->super.local_location,
-                                                              &component_name, &prev_pid) ) ) {
-        exit_status = OPAL_ERROR;
+    if( OPAL_SUCCESS != (ret = opal_crs_base_extract_expected_component(snapshot->super.local_location, 
+                                                                        &component_name, &prev_pid) ) ) {
+        exit_status = ret;
         goto cleanup;
     }
 
@@ -627,19 +624,8 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
      * Restart command
      * JJH: Command lines limited to 256 chars.
      */
-    len = 256; /* Max size for a SELF filename */
-    content = (char *) malloc(sizeof(char) * len);
-    if (NULL == fgets(content, len, meta_data) ) {
-        free(content);
-        content = NULL;
-        goto cleanup;
-    }
-    /* Strip of newline */
-    len = strlen(content);
-    content[len - 1] = '\0';
-
-    /* save the command line in the structure */
-    asprintf(&snapshot->cmd_line, "%s", content);
+    opal_crs_base_metadata_read_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, &tmp_argv);
+    asprintf(&snapshot->cmd_line, "%s", tmp_argv[0]);
 
     /*
      * Reset the cold_start flag
@@ -647,51 +633,35 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
     snapshot->super.cold_start = false;
 
  cleanup:
-    if(NULL != meta_data)
-        fclose(meta_data);
-    if(NULL != content)
-        free(content);
+    if(NULL != tmp_argv) {
+        opal_argv_free(tmp_argv);
+        tmp_argv = NULL;
+    }
 
     return exit_status;
 
 }
 
 static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot) {
-    char * dir_name = NULL;
-    FILE *meta_data = NULL;
     int exit_status = OPAL_SUCCESS;
     
+    if(NULL == snapshot->cmd_line) {
+        opal_show_help("help-opal-crs-self.txt", "self:no-restart-cmd",
+                       true);
+        exit_status = OPAL_ERROR;
+        goto cleanup;
+    }
+
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: update_snapshot_metadata(%s)",
                         snapshot->super.reference_name);
     
     /*
-     * Append to the metadata file:
-     *  the relative path of the context filename
+     * Append to the metadata file the command line to restart with
+     *  - How user wants us to restart
      */
-    if( NULL == (meta_data = opal_crs_base_open_metadata(&snapshot->super, 'w') ) ) {
-        exit_status = OPAL_ERROR;
-        goto cleanup;
-    }
-
-    /* How user wants us to restart */
-    if(NULL != snapshot->cmd_line) {
-        fprintf(meta_data, "%s\n", snapshot->cmd_line);
-    }
-    else {
-        opal_show_help("help-opal-crs-self.txt", "self:no-restart-cmd",
-                       true);
-        exit_status = OPAL_ERROR;
-    }
+    opal_crs_base_metadata_write_token(snapshot->super.local_location, CRS_METADATA_CONTEXT, snapshot->cmd_line);
 
  cleanup:
-    if(NULL != meta_data) {
-        fclose(meta_data);
-    }
-    if(NULL != dir_name) {
-        free(dir_name);
-        dir_name = NULL;
-    }
-    
     return exit_status;
 }

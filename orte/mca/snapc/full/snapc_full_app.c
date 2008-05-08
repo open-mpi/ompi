@@ -86,7 +86,6 @@ int app_coord_init() {
      * Register the INC notification callback
      */
     opal_cr_reg_notify_callback(snapc_full_app_notify_response, &prev_notify_func);
-    opal_cr_entry_point_finalize();
 
     /* String representation of the PID */
     asprintf(&tmp_pid, "%d", getpid());
@@ -198,9 +197,15 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
 
     /*
      * Begin checkpoint
+     * - Init the checkpoint metadata file
      */
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Start checkpoint..."));
+    if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(local_snapshot) ) ) {
+        opal_output(0, "App) Error: Unable to initalize the snapshot directory!\n");
+        exit_status = ret;
+        goto ckpt_cleanup;
+    }
 
  STAGE_1:
     opal_cr_currently_stalled = false;
@@ -269,8 +274,8 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     }
         
     /* Prepare to wait for another checkpoint action */
-    opal_cr_checkpointing      = OPAL_CR_STATUS_NONE;
-    opal_cr_currently_stalled = false;
+    opal_cr_checkpointing_state = OPAL_CR_STATUS_NONE;
+    opal_cr_currently_stalled   = false;
 
     return exit_status;
 }

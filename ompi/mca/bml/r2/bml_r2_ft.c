@@ -35,6 +35,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "ompi/proc/proc.h"
 
 #include "bml_r2.h"
@@ -94,18 +95,6 @@ int mca_bml_r2_ft_event(int state)
          */
         for(btl_idx = 0; btl_idx < mca_bml_r2.num_btl_modules; btl_idx++) {
             /*
-             * Notify BTL
-             */
-            if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event) {
-                opal_output_verbose(10, ompi_cr_output,
-                                    "bml:r2: ft_event: Notify the %s BTL.\n",
-                                    (mca_bml_r2.btl_modules[btl_idx])->btl_component->btl_version.mca_component_name);
-                if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event(loc_state) ) ) {
-                    continue;
-                }
-            }
-
-            /*
              * Notify Mpool
              */
             if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool &&
@@ -114,6 +103,18 @@ int mca_bml_r2_ft_event(int state)
                                     "bml:r2: ft_event: Notify the %s MPool.\n",
                                     (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_component->mpool_version.mca_component_name);
                 if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event(loc_state) ) ) {
+                    continue;
+                }
+            }
+
+            /*
+             * Notify BTL
+             */
+            if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event) {
+                opal_output_verbose(10, ompi_cr_output,
+                                    "bml:r2: ft_event: Notify the %s BTL.\n",
+                                    (mca_bml_r2.btl_modules[btl_idx])->btl_component->btl_version.mca_component_name);
+                if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event(loc_state) ) ) {
                     continue;
                 }
             }
@@ -140,7 +141,7 @@ int mca_bml_r2_ft_event(int state)
         }
 
         opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(reboot): Reselect BTLs\n");
+                            "bml:r2: ft_event(Restart): Reselect BTLs\n");
 
         /*
          * Close the BTLs
@@ -157,6 +158,20 @@ int mca_bml_r2_ft_event(int state)
 
     }
     else if(OPAL_CRS_RESTART == state  ) {
+
+        /*
+         * Barrier to make all processes have been successfully restarted before
+         * we try to remove some restart only files.
+         */
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            return ret;
+        }
+
+        opal_output_verbose(10, ompi_cr_output,
+                            "bml:r2: ft_event(Restart): Cleanup restart files\n");
+        opal_crs_base_cleanup_flush();
+
         /*
          * Re-open the BTL framework to get the full list of components.
          */

@@ -542,13 +542,13 @@ int mca_pml_ob1_ft_event( int state )
          * Add the new procs (BTLs redo modex recv's)
          */
         if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
-            opal_output(0, "pml:ob1: fr_event(Restart): Failed in add_procs (%d)", ret);
+            opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
             return ret;
         }
 
         /* Is this barrier necessary ? JJH */
         if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
-            opal_output(0, "pml:ob1: fr_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            opal_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
         }
 
