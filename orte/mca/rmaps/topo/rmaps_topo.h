@@ -20,15 +20,15 @@
  *
  * Resource Mapping 
  */
-#ifndef ORTE_RMAPS_RR_H
-#define ORTE_RMAPS_RR_H
+#ifndef ORTE_RMAPS_TOPO_H
+#define ORTE_RMAPS_TOPO_H
 
 #include "orte/mca/rmaps/rmaps.h"
 
 BEGIN_C_DECLS
 
-ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_round_robin_component;
-extern orte_rmaps_base_module_t orte_rmaps_round_robin_module;
+ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_topo_component;
+extern orte_rmaps_base_module_t orte_rmaps_topo_module;
 
 
 END_C_DECLS
