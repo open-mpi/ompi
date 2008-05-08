@@ -36,30 +36,13 @@ int mca_base_select(const char *type_name, int output_id,
     mca_base_module_t *module = NULL;
     opal_list_item_t *item = NULL;
     int priority = 0, best_priority = -1;
-    char *include_list = NULL;
-    char *tmp_str = NULL;
 
     *best_module = NULL;
     *best_component = NULL;
 
-    /*
-     * See if there is an include list
-     */
-    asprintf(&tmp_str, "Which %s component to use (empty = auto-select)", type_name);
-    mca_base_param_reg_string_name(type_name, NULL, tmp_str,
-                                   false, false,
-                                   NULL, &include_list);
-    free(tmp_str);
-    tmp_str = NULL;
-    if (NULL == include_list || 0 == strlen(include_list)) {
-        opal_output_verbose(10, output_id,
-                            "%s:select: Auto-selecting",
-                            type_name);
-    } else {
-        opal_output_verbose(10, output_id,
-                            "%s:select: Selecting from %s component(s)",
-                            type_name, include_list);
-    }
+    opal_output_verbose(10, output_id,
+                        "mca:base:select: Auto-selecting %s components",
+                        type_name);
 
     /*
      * Traverse the list of available components.
@@ -70,21 +53,6 @@ int mca_base_select(const char *type_name, int output_id,
          item  = opal_list_get_next(item) ) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_base_component_t *) cli->cli_component;
-
-        /*
-         * If there is an include list, make sure this item is in the list
-         */
-        if( NULL != include_list && 0 < strlen(include_list) ) {
-            if( 0 != strncmp(component->mca_component_name,
-                             include_list,
-                             strlen(include_list)) ) {
-                opal_output_verbose(5, output_id,
-                                    "mca:base:select: Skipping component [%s]. Not in the include list [%s]",
-                                    component->mca_component_name,
-                                    include_list);
-                continue;
-            }
-        }
 
         /*
          * If there is a query function then use it.
@@ -157,11 +125,6 @@ int mca_base_select(const char *type_name, int output_id,
                               components_available,
                               (mca_base_component_t *) (*best_component));
 
-
-    if( NULL != include_list ) {
-        free(include_list);
-        include_list = NULL;
-    }
 
     return OPAL_SUCCESS;
 }
