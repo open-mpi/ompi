@@ -71,7 +71,6 @@
 #include "btl_openib_async.h"
 #endif
 #include "connect/base.h"
-#include "btl_openib_iwarp.h"
 
 /*
  * Local functions
@@ -448,6 +447,12 @@ static int start_async_event_thread(void)
 
     return OMPI_SUCCESS;
 }
+#endif
+
+#if OMPI_HAVE_RDMACM
+extern uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev);
+#else
+static inline uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev) {return 0;}
 #endif
 
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
