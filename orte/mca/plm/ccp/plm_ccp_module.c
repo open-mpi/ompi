@@ -80,7 +80,7 @@ static int plm_ccp_connect(ICluster* pCluster);
 static int plm_ccp_disconnect(void);
 
 void get_cluster_message(ICluster* pCluster);
-static char *plm_ccp_commandline(char *node_name, int argc, char **argv);
+static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv);
 
 /*
  * Global variable
@@ -127,7 +127,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     int argc, rc, node_name_index, proc_vpid_index, proc_name_index;
     char *param, **env = NULL, *var, **argv = NULL;
     bool connected = false;
-    char *bin_base = NULL, *lib_base = NULL, command_line[300];
+    char *bin_base = NULL, *lib_base = NULL, *command_line;
     
     struct timeval completionstart, completionstop, launchstart, launchstop;
     struct timeval jobstart, jobstop;
@@ -436,15 +436,9 @@ GETMAP:
                                     "plm:ccp:failed to set required nodes!"));
             goto cleanup;
         }
-
-        /* Prepare the command a little bit. */
-        strcpy_s(command_line, apps[0]->prefix_dir);
-        strcat(command_line,"\\");
-        {
-            char* ccp_cmdline = plm_ccp_commandline(node->name, argc, argv);
-            strcat(command_line, ccp_cmdline);
-            free(ccp_cmdline);
-        }
+        
+        /* Prepare the command line a little bit. */
+        command_line = plm_ccp_commandline(apps[0]->prefix_dir, node->name, argc, argv);
 
         hr = pTask->put_CommandLine(_bstr_t(command_line));
         if (FAILED(hr)) {
@@ -685,7 +679,7 @@ static int plm_ccp_disconnect(void)
 
 
 /* Generate the proper command line according to the env. */
-static char *plm_ccp_commandline(char *node_name, int argc, char **argv)
+static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv)
 {
     char *commandline;
     int i, len = 0;
@@ -693,8 +687,13 @@ static char *plm_ccp_commandline(char *node_name, int argc, char **argv)
     for( i = 0; i < argc; i++ ) {
         len += strlen(argv[i]) + 1;
     }
-    commandline = (char*)malloc( len + 1);
-    memset(commandline, '\0', len+1);
+
+    commandline = (char*)malloc( len + strlen(prefix) + 3);
+    memset(commandline, '\0', len+strlen(prefix)+3);
+
+    commandline[0] = '"';
+    strcat(commandline, prefix);
+    strcat(commandline, "\"\\");
 
     for(i=0;i<argc;i++) {
 
@@ -717,7 +716,6 @@ static char *plm_ccp_commandline(char *node_name, int argc, char **argv)
 
         commandline[strlen(commandline)]=' ';
     }
-    
     return commandline;
 }
 
