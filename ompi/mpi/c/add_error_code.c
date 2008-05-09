@@ -51,6 +51,11 @@ int MPI_Add_error_code(int errorclass, int *errorcode)
 	if ( !ompi_mpi_errnum_is_class ( errorclass) ) 
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
 					  FUNC_NAME);
+
+        if (NULL == errorcode) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                          MPI_ERR_ARG, FUNC_NAME);
+        }
     }
     
     code = ompi_mpi_errcode_add ( errorclass);

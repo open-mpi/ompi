@@ -43,6 +43,11 @@ int MPI_Add_error_class(int *errorclass)
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if (NULL == errorclass) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
+                                           MPI_ERR_ARG, FUNC_NAME);
+        }
     }
     
     err_class = ompi_mpi_errclass_add();
