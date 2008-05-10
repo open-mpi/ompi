@@ -185,18 +185,20 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
     AC_MSG_RESULT([no])
     ompi_cv___attribute__aligned=0
     ompi_cv___attribute__always_inline=0
+    ompi_cv___attribute__cold=0
     ompi_cv___attribute__const=0
     ompi_cv___attribute__deprecated=0
     ompi_cv___attribute__format=0
+    ompi_cv___attribute__hot=0
     ompi_cv___attribute__malloc=0
     ompi_cv___attribute__may_alias=0
     ompi_cv___attribute__no_instrument_function=0
     ompi_cv___attribute__nonnull=0
     ompi_cv___attribute__noreturn=0
-    ompi_cv___attribute__pure=0
     ompi_cv___attribute__packed=0
-    ompi_cv___attribute__unused=0
+    ompi_cv___attribute__pure=0
     ompi_cv___attribute__sentinel=0
+    ompi_cv___attribute__unused=0
     ompi_cv___attribute__visibility=0
     ompi_cv___attribute__warn_unused_result=0
     ompi_cv___attribute__weak_alias=0
@@ -216,6 +218,13 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         [],
         [])
 
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([cold],
+        [
+         int foo(int arg1, int arg2) __attribute__ ((__cold__));
+         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+        ],
+        [],
+        [])
 
     _OMPI_CHECK_SPECIFIC_ATTRIBUTE([const],
         [
@@ -261,6 +270,13 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
         ],
         [$ATTRIBUTE_CFLAGS])
 
+    _OMPI_CHECK_SPECIFIC_ATTRIBUTE([hot],
+        [
+         int foo(int arg1, int arg2) __attribute__ ((__hot__));
+         int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+        ],
+        [],
+        [])
 
     _OMPI_CHECK_SPECIFIC_ATTRIBUTE([malloc],
         [
@@ -464,12 +480,16 @@ AC_DEFUN([OMPI_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ aligned or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE, [$ompi_cv___attribute__always_inline],
                      [Whether your compiler has __attribute__ always_inline or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_COLD, [$ompi_cv___attribute__cold],
+                     [Whether your compiler has __attribute__ cold or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_CONST, [$ompi_cv___attribute__const],
                      [Whether your compiler has __attribute__ const or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_DEPRECATED, [$ompi_cv___attribute__deprecated],
                      [Whether your compiler has __attribute__ deprecated or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_FORMAT, [$ompi_cv___attribute__format],
                      [Whether your compiler has __attribute__ format or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_HOT, [$ompi_cv___attribute__hot],
+                     [Whether your compiler has __attribute__ hot or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MALLOC, [$ompi_cv___attribute__malloc],
                      [Whether your compiler has __attribute__ malloc or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_MAY_ALIAS, [$ompi_cv___attribute__may_alias],
