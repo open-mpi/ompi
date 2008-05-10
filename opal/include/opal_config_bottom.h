@@ -92,6 +92,12 @@
 #    define __opal_attribute_always_inline__
 #endif
 
+#if OMPI_HAVE_ATTRIBUTE_COLD
+#    define __opal_attribute_cold__          __attribute__((__cold__))
+#else
+#    define __opal_attribute_cold__
+#endif
+
 #if OMPI_HAVE_ATTRIBUTE_CONST
 #    define __opal_attribute_const__         __attribute__((__const__))
 #else
@@ -108,6 +114,12 @@
 #    define __opal_attribute_format__(a,b,c) __attribute__((__format__(a, b, c)))
 #else
 #    define __opal_attribute_format__(a,b,c)
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_HOT
+#    define __opal_attribute_hot__           __attribute__((__hot__))
+#else
+#    define __opal_attribute_hot__
 #endif
 
 #if OMPI_HAVE_ATTRIBUTE_MALLOC
