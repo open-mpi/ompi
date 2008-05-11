@@ -1,4 +1,5 @@
 #include "ompi_config.h"
+#if OMPI_HAVE_RDMACM
 
 #include <rdma/rdma_cma.h>
 #include <ifaddrs.h>
@@ -10,7 +11,6 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_iwarp.h"
 
-#if OMPI_HAVE_RDMACM
 /* 
  * The cruft below maintains the linked list of rdma ipv4 addresses and their
  * associated rdma device names and device port numbers.  
