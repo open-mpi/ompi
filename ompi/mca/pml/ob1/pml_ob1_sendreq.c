@@ -1093,7 +1093,10 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
             /* send fragment by copy in/out */
             mca_pml_ob1_send_request_copy_in_out(sendreq,
                     frag->rdma_hdr.hdr_rdma.hdr_rdma_offset, frag->rdma_length);
-            mca_pml_ob1_send_request_schedule(sendreq);
+            /* if a pointer to a receive request is not set it means that
+             * ACK was not yet received. Don't schedule sends before ACK */
+            if(NULL != sendreq->req_recv.pval)
+                mca_pml_ob1_send_request_schedule(sendreq);
         }
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

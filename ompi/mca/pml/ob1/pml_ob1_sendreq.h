@@ -147,6 +147,7 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
                                        comm,                            \
                                        sendmode,                        \
                                        persistent);                     \
+        (sendreq)->req_recv.pval = NULL;                                \
     }
 
 
