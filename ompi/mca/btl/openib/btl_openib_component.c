@@ -2072,9 +2072,12 @@ error:
      * disconnecting first).  In both cases, all pending non-completed
      * SQ and RQ WRs will automatically be flushed.
      */
-    if (wc->status == IBV_WC_WR_FLUSH_ERR && IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+    if (wc->status == IBV_WC_WR_FLUSH_ERR && 
+        IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
         return;
     }
+#endif
 
     if(wc->status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed[cq]++) {
         BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
