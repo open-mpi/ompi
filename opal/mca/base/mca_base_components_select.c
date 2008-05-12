@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 
 #include "opal/class/opal_list.h"
 #include "opal/util/strncpy.h"
@@ -35,7 +38,7 @@ int mca_base_select(const char *type_name, int output_id,
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
     opal_list_item_t *item = NULL;
-    int priority = 0, best_priority = -1;
+    int priority = 0, best_priority = INT32_MIN;
 
     *best_module = NULL;
     *best_component = NULL;
@@ -59,8 +62,8 @@ int mca_base_select(const char *type_name, int output_id,
          */
         if (NULL == component->mca_query_component) {
             opal_output_verbose(5, output_id,
-                                "mca:base:select: Skipping component [%s]. It does not implement a query function",
-                                component->mca_component_name );
+                                "mca:base:select:(%5s) Skipping component [%s]. It does not implement a query function",
+                                type_name, component->mca_component_name );
             continue;
         }
 
@@ -68,8 +71,8 @@ int mca_base_select(const char *type_name, int output_id,
          * Query this component for the module and priority
          */
         opal_output_verbose(5, output_id,
-                            "mca:base:select: Querying component [%s]",
-                            component->mca_component_name);
+                            "mca:base:select:(%5s) Querying component [%s]",
+                            type_name, component->mca_component_name);
 
         component->mca_query_component(&module, &priority);
 
@@ -78,8 +81,8 @@ int mca_base_select(const char *type_name, int output_id,
          */
         if (NULL == module) {
             opal_output_verbose(5, output_id,
-                                "mca:base:select: Skipping component [%s]. Query failed to return a module",
-                                component->mca_component_name );
+                                "mca:base:select:(%5s) Skipping component [%s]. Query failed to return a module",
+                                type_name, component->mca_component_name );
             continue;
         }
 
@@ -87,9 +90,8 @@ int mca_base_select(const char *type_name, int output_id,
          * Determine if this is the best module we have seen by looking the priority
          */
         opal_output_verbose(5, output_id,
-                            "mca:base:select: Query of component [%s] set priority to %d", 
-                            component->mca_component_name,
-                            priority);
+                            "mca:base:select:(%5s) Query of component [%s] set priority to %d", 
+                            type_name, component->mca_component_name, priority);
         if (priority > best_priority) {
             best_priority  = priority;
             *best_component = component;
@@ -104,7 +106,8 @@ int mca_base_select(const char *type_name, int output_id,
      */
     if (NULL == *best_component) {
         opal_output_verbose(5, output_id,
-                            "mca:base:select: No component selected!");
+                            "mca:base:select:(%5s) No component selected!",
+                            type_name);
         /*
          * Still close the non-selected components
          */
@@ -115,8 +118,8 @@ int mca_base_select(const char *type_name, int output_id,
     }
 
     opal_output_verbose(5, output_id,
-                        "mca:base:select: Selected component [%s]",
-                        (*best_component)->mca_component_name);
+                        "mca:base:select:(%5s) Selected component [%s]",
+                        type_name, (*best_component)->mca_component_name);
 
     /*
      * Close the non-selected components
