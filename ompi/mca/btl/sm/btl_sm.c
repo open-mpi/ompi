@@ -640,7 +640,7 @@ int mca_btl_sm_send(
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
             endpoint->peer_smp_rank, frag->hdr, false, rc);
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 int mca_btl_sm_ft_event(int state) {
