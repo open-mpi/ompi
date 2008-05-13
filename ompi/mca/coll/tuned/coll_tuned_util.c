@@ -62,7 +62,7 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
     return (MPI_SUCCESS);
 
  error_handler:
-    OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
+    ORTE_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
                   __FILE__,line,err));
     return (err);
 }
@@ -107,7 +107,7 @@ int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount,
     return (MPI_SUCCESS);
 
  error_handler:
-    OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
+    ORTE_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
     return (err);
 }
 

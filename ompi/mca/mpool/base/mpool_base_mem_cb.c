@@ -20,7 +20,7 @@
  * @file
  */
 #include "ompi_config.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "mpool_base_mem_cb.h"
 #include "base.h"
 #include "orte/types.h"
@@ -53,7 +53,7 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata,
                     base, size);
 
             if(rc != OMPI_SUCCESS && true == warn) {
-                 opal_output(0, "Memory %p:%lu cannot be freed from the "
+                 orte_output(0, "Memory %p:%lu cannot be freed from the "
                          "registration cache. Possible memory corruption.\n",
                          base, (unsigned long)size);
                  warn = false;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,21 +49,10 @@ static char *output_prefix = NULL;
 
 
 /*
- * Private functions
- */
-static void construct(opal_object_t *stream);
-static int do_open(int output_id, opal_output_stream_t * lds);
-static int open_file(int i);
-static void free_descriptor(int output_id);
-static void output(int output_id, const char *format, va_list arglist);
-
-
-/*
  * Internal data structures and helpers for the generalized output
  * stream mechanism.
  */
-struct output_desc_t
-{
+typedef struct {
     bool ldi_used;
     bool ldi_enabled;
     int ldi_verbose_level;
@@ -87,8 +76,21 @@ struct output_desc_t
     char *ldi_file_suffix;
     int ldi_fd;
     int ldi_file_num_lines_lost;
-};
-typedef struct output_desc_t output_desc_t;
+
+    int ldi_filter_flags;
+} output_desc_t;
+
+/*
+ * Private functions
+ */
+static void construct(opal_object_t *stream);
+static int do_open(int output_id, opal_output_stream_t * lds);
+static int open_file(int i);
+static void free_descriptor(int output_id);
+static int make_string(char **no_newline_string, output_desc_t *ldi, 
+                       const char *format, va_list arglist);
+static int output(int output_id, const char *format, va_list arglist);
+
 
 #define OPAL_OUTPUT_MAX_STREAMS 32
 #if defined(__WINDOWS__) || defined(HAVE_SYSLOG)
@@ -143,6 +145,8 @@ bool opal_output_init(void)
         info[i].ldi_file_want_append = false;
         info[i].ldi_fd = -1;
         info[i].ldi_file_num_lines_lost = 0;
+        info[i].ldi_filter_flags = 
+            OPAL_OUTPUT_FILTER_STDOUT | OPAL_OUTPUT_FILTER_STDERR;
     }
 
     /* Initialize the mutex that protects the output */
@@ -237,6 +241,7 @@ void opal_output_reopen_all(void)
         /* open all streams in append mode */
         lds.lds_want_file_append = true;
         lds.lds_file_suffix = info[i].ldi_file_suffix;
+        lds.lds_filter_flags = info[i].ldi_filter_flags;
 
         /* 
          * call opal_output_open to open the stream. The return value
@@ -328,6 +333,63 @@ void opal_output_verbose(int level, int output_id, const char *format, ...)
 
 
 /*
+ * Send a message to a stream if the verbose level is high enough
+ */
+void opal_output_vverbose(int level, int output_id, const char *format, 
+                          va_list arglist)
+{
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
+        info[output_id].ldi_verbose_level >= level) {
+        output(output_id, format, arglist);
+    }
+}
+
+
+/*
+ * Send a message to a string if the verbose level is high enough
+ */
+char *opal_output_string(int level, int output_id, const char *format, ...)
+{
+    int rc;
+    char *ret = NULL;
+
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
+        info[output_id].ldi_verbose_level >= level) {
+        va_list arglist;
+        va_start(arglist, format);
+        rc = make_string(&ret, &info[output_id], format, arglist);
+        va_end(arglist);
+        if (OPAL_SUCCESS != rc) {
+            ret = NULL;
+        }
+    }
+
+    return ret;
+}
+
+
+/*
+ * Send a message to a string if the verbose level is high enough
+ */
+char *opal_output_vstring(int level, int output_id, const char *format,  
+                          va_list arglist)
+{
+    int rc;
+    char *ret = NULL;
+
+    if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
+        info[output_id].ldi_verbose_level >= level) {
+        rc = make_string(&ret, &info[output_id], format, arglist);
+        if (OPAL_SUCCESS != rc) {
+            ret = NULL;
+        }
+    }
+
+    return ret;
+}
+
+
+/*
  * Set the verbosity level of a stream
  */
 void opal_output_set_verbosity(int output_id, int level)
@@ -405,6 +467,8 @@ static void construct(opal_object_t *obj)
     stream->lds_want_file = false;
     stream->lds_want_file_append = false;
     stream->lds_file_suffix = NULL;
+    stream->lds_filter_flags = 
+        OPAL_OUTPUT_FILTER_STDOUT | OPAL_OUTPUT_FILTER_STDERR;
 }
 
 /*
@@ -508,6 +572,8 @@ static int do_open(int output_id, opal_output_stream_t * lds)
     info[i].ldi_file_want_append = lds->lds_want_file_append;
     info[i].ldi_file_num_lines_lost = 0;
 
+    info[i].ldi_filter_flags = lds->lds_filter_flags;
+
     /* Don't open a file in the session directory now -- do that lazily
      * so that if there's no output, we don't have an empty file */
 
@@ -607,16 +673,61 @@ static void free_descriptor(int output_id)
 }
 
 
+static int make_string(char **no_newline_string, output_desc_t *ldi, 
+                       const char *format, va_list arglist)
+{
+    size_t len, total_len;
+    bool want_newline = false;
+
+    /* Make the formatted string */
+
+    vasprintf(no_newline_string, format, arglist);
+    total_len = len = strlen(*no_newline_string);
+    if ('\n' != (*no_newline_string)[len - 1]) {
+        want_newline = true;
+        ++total_len;
+    }
+    if (NULL != ldi->ldi_prefix) {
+        total_len += strlen(ldi->ldi_prefix);
+    }
+    if (temp_str_len < total_len + want_newline) {
+        if (NULL != temp_str) {
+            free(temp_str);
+        }
+        temp_str = (char *) malloc(total_len * 2);
+        if (NULL == temp_str) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        temp_str_len = total_len * 2;
+    }
+    if (NULL != ldi->ldi_prefix) {
+        if (want_newline) {
+            snprintf(temp_str, temp_str_len, "%s%s\n", ldi->ldi_prefix, 
+                     *no_newline_string);
+        } else {
+            snprintf(temp_str, temp_str_len, "%s%s", ldi->ldi_prefix, 
+                     *no_newline_string);
+        }
+    } else {
+        if (want_newline) {
+            snprintf(temp_str, temp_str_len, "%s\n", *no_newline_string);
+        } else {
+            snprintf(temp_str, temp_str_len, "%s", *no_newline_string);
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+    
 /*
  * Do the actual output.  Take a va_list so that we can be called from
  * multiple different places, even functions that took "..." as input
  * arguments.
  */
-static void output(int output_id, const char *format, va_list arglist)
+static int output(int output_id, const char *format, va_list arglist)
 {
-    size_t len, total_len;
-    bool want_newline = false;
-    char *str;
+    int rc = OPAL_SUCCESS;
+    char *str, *out = NULL;
     output_desc_t *ldi;
 
     /* Setup */
@@ -629,60 +740,63 @@ static void output(int output_id, const char *format, va_list arglist)
 
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
         info[output_id].ldi_used && info[output_id].ldi_enabled) {
+        OPAL_THREAD_LOCK(&mutex);
         ldi = &info[output_id];
 
-        /* Make the formatted string */
-
-        OPAL_THREAD_LOCK(&mutex);
-        vasprintf(&str, format, arglist);
-        total_len = len = strlen(str);
-        if ('\n' != str[len - 1]) {
-            want_newline = true;
-            ++total_len;
-        }
-        if (NULL != ldi->ldi_prefix) {
-            total_len += strlen(ldi->ldi_prefix);
-        }
-        if (temp_str_len < total_len + want_newline) {
-            if (NULL != temp_str) {
-                free(temp_str);
-            }
-            temp_str = (char *) malloc(total_len * 2);
-            temp_str_len = total_len * 2;
-        }
-        if (NULL != ldi->ldi_prefix) {
-            if (want_newline) {
-                snprintf(temp_str, temp_str_len, "%s%s\n", ldi->ldi_prefix,
-                         str);
-            } else {
-                snprintf(temp_str, temp_str_len, "%s%s", ldi->ldi_prefix,
-                         str);
-            }
-        } else {
-            if (want_newline) {
-                snprintf(temp_str, temp_str_len, "%s\n", str);
-            } else {
-                snprintf(temp_str, temp_str_len, "%s", str);
-            }
+        /* Make the strings */
+        if (OPAL_SUCCESS != (rc = make_string(&str, ldi, format, arglist))) {
+            OPAL_THREAD_UNLOCK(&mutex);
+            return rc;
         }
 
-        /* Syslog output */
-
+        /* Syslog output -- does not use the newline-appended string */
 #if defined(HAVE_SYSLOG)
         if (ldi->ldi_syslog) {
-	        syslog(ldi->ldi_syslog_priority, "%s", str);
+            char *out = str;
+            if (ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_SYSLOG) {
+#if 0
+                /* JMS call the filter, perhaps like this */
+                out = filter(str);
+                if (NULL == out) {
+                    out = str;
+                }
+#endif
+            }
+            syslog(ldi->ldi_syslog_priority, "%s", str);
+            if (out != str) {
+                free(out);
+            }
         }
 #endif
 
+        /* All others (stdout, stderr, file) use temp_str, potentially
+           with a newline appended */
+
+        out = temp_str;
+        if ((ldi->ldi_stdout &&
+             ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_STDOUT) ||
+            (ldi->ldi_stderr &&
+             ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_STDERR) ||
+            (ldi->ldi_file &&
+             ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_FILE)) {
+#if 0
+            /* JMS call the filter, perhaps like this */
+            out = filter(temp_str);
+            if (NULL == out) {
+                out = temp_str;
+            }
+#endif
+        }
+
         /* stdout output */
         if (ldi->ldi_stdout) {
-            write(fileno(stdout), temp_str, (int)strlen(temp_str)); 
+            write(fileno(stdout), out, (int)strlen(out)); 
             fflush(stdout);
         }
 
         /* stderr output */
         if (ldi->ldi_stderr) {
-            write(fileno(stderr),temp_str, (int)strlen(temp_str)); 
+            write(fileno(stderr), out, (int)strlen(out)); 
             fflush(stderr);
 	}
 
@@ -697,22 +811,36 @@ static void output(int output_id, const char *format, va_list arglist)
                     ++ldi->ldi_file_num_lines_lost;
                 } else if (ldi->ldi_file_num_lines_lost > 0) {
                     char buffer[BUFSIZ];
+                    char *out = buffer;
                     memset(buffer, 0, BUFSIZ);
                     snprintf(buffer, BUFSIZ - 1,
                              "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
                              ldi->ldi_file_num_lines_lost);
+                    if (ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_FILE) {
+#if 0
+                        /* JMS call the filter */
+                        out = filter(buffer);
+                        if (NULL == out) {
+                            out = buffer;
+                        }
+#endif
+                    }
                     write(ldi->ldi_fd, buffer, (int)strlen(buffer));
                     ldi->ldi_file_num_lines_lost = 0;
+                    if (out != buffer) {
+                        free(out);
+                    }
                 }
             }
             if (ldi->ldi_fd != -1) {
-                write(ldi->ldi_fd, temp_str, (int)total_len);
+                write(ldi->ldi_fd, out, (int)strlen(out));
             }
         }
         OPAL_THREAD_UNLOCK(&mutex);
-
         free(str);
     }
+
+    return rc;
 }
 
 int opal_output_get_verbosity(int output_id)

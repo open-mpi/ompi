@@ -28,9 +28,8 @@
 #include <malloc.h>
 
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
 #include "opal/util/error.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "btl_openib_fd.h"
 #include "btl_openib_proc.h"
@@ -953,7 +952,7 @@ static int ipaddrcheck(struct rdmacm_contents *server, mca_btl_openib_module_t *
 
     rc = ibv_query_device(openib_btl->hca->ib_dev_context, &attr);
     if (-1 == rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC system error (verbs failure)");
         goto out;
     }
@@ -983,7 +982,7 @@ static int ipaddrcheck(struct rdmacm_contents *server, mca_btl_openib_module_t *
        supported on this HCA.  So just gracefully return "sorry,
        Charlie" */
     if (0 == server->ipaddr) {
-        opal_output_verbose(5, mca_btl_base_output, "openib BTL: rdmacm CPC unable to find IP address for %s", ibv_get_device_name(openib_btl->hca->ib_dev));
+        orte_output_verbose(5, mca_btl_base_output, "openib BTL: rdmacm CPC unable to find IP address for %s", ibv_get_device_name(openib_btl->hca->ib_dev));
         goto out;
     }
 
@@ -1029,7 +1028,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     /* RDMACM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
-        opal_output_verbose(5, mca_btl_base_output, "openib BTL: rdmacm CPC not supported with XRC receive queues; skipped");
+        orte_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: rdmacm CPC not supported with XRC receive queues; skipped");
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto out;
     }
@@ -1066,7 +1066,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     context = malloc(sizeof(struct id_contexts));
     if (NULL == context) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC system error (malloc failed)");
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out3;
@@ -1077,7 +1077,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     rc = rdma_create_id(event_channel, &server->id[0], context, RDMA_PS_TCP);
     if (0 != rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC failed to create ID");
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out4;
@@ -1093,7 +1093,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
      */
     rc = rdma_bind_addr(server->id[0], (struct sockaddr *)&sin);
     if (0 != rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to bind to address");
         rc = OMPI_ERR_UNREACH;
         goto out5;
@@ -1102,7 +1102,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     /* Verify that the HCA has a valid IP address on it, or we cannot use the cpc */
     rc = ipaddrcheck(server, openib_btl);
     if (0 != rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm IP address not found on port");
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto out5;
@@ -1112,7 +1112,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     /* FIXME - 1024 should be (num of connectors * mca_btl_openib_component.num_qps) */
     rc = rdma_listen(server->id[0], 1024);
     if (0 != rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to listen");
         rc = OMPI_ERR_UNREACH;
         goto out5;
@@ -1120,7 +1120,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     rc = create_message(server, openib_btl, &(*cpc)->data);
     if (0 != rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to create message");
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out5;
@@ -1128,7 +1128,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     li = OBJ_NEW(list_item_t);
     if (NULL== li) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to add to list");
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out6;
@@ -1136,7 +1136,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     li->item = server;
     opal_list_append(&server_list, &(li->super));
 
-    opal_output_verbose(5, mca_btl_base_output,
+    orte_output_verbose(5, mca_btl_base_output,
                         "openib BTL: rdmacm CPC available for use on %s",
                         ibv_get_device_name(openib_btl->hca->ib_dev));
     return OMPI_SUCCESS;
@@ -1155,11 +1155,11 @@ out1:
     free(*cpc);
 out:
     if (OMPI_ERR_NOT_SUPPORTED == rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unavailable for use on %s; skipped",
                             ibv_get_device_name(openib_btl->hca->ib_dev));
     } else {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rmacm CPC unavailable for use on %s; fatal error %d (%s)",
                             ibv_get_device_name(openib_btl->hca->ib_dev), rc,
                             opal_strerror(rc));
@@ -1216,14 +1216,14 @@ static int rdmacm_component_init(void)
 
     rc = build_rdma_addr_list();
     if (-1 == rc) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to find any valid IP address");
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
     event_channel = rdma_create_event_channel();
     if (NULL == event_channel) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC failed to create channel");
         return OMPI_ERR_UNREACH;
     }

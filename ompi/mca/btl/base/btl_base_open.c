@@ -23,7 +23,10 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
+
+#include "orte/util/output.h"
+
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -94,8 +97,8 @@ int mca_btl_base_open(void)
                                 0, 
                                 &mca_btl_base_verbose);
 
-    mca_btl_base_output = opal_output_open(NULL);
-    opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
+    mca_btl_base_output = orte_output_open(NULL, "BTL", "DEBUG", NULL);
+    orte_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
 
   /* Open up all available components */
     

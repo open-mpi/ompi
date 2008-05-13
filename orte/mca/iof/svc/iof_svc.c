@@ -28,7 +28,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/runtime/orte_globals.h"

@@ -29,8 +29,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
@@ -42,6 +41,8 @@
 #endif
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/output.h"
+
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -89,6 +90,7 @@ int orte_ess_base_tool_setup(void)
         error = "orte_rml.enable_comm";
         goto error;
     }
+    
     /* we -may- need to know the name of the head
      * of our session directory tree, particularly the
      * tmp base where any other session directories on
@@ -126,7 +128,7 @@ int orte_ess_base_tool_setup(void)
     return ORTE_SUCCESS;
     
 error:
-    opal_show_help("help-orte-runtime.txt",
+    orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     

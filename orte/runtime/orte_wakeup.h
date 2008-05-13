@@ -27,7 +27,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
@@ -55,7 +55,7 @@ BEGIN_C_DECLS
 #define ORTE_UPDATE_EXIT_STATUS(newstatus)                                  \
     do {                                                                    \
         if (0 == orte_exit_status && 0 != newstatus) {                      \
-            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                      \
+            ORTE_OUTPUT_VERBOSE((1, orte_debug_output,                      \
                                  "%s:%s(%d) updating exit status to %d",    \
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),        \
                                  __FILE__, __LINE__, newstatus));           \

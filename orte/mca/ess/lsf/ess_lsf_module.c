@@ -122,7 +122,7 @@ static int rte_init(char flags)
     return ORTE_SUCCESS;
     
 error:
-    opal_show_help("help-orte-runtime.txt",
+    orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     
@@ -173,14 +173,14 @@ static int rte_finalize(void)
 static bool proc_is_local(orte_process_name_t *proc)
 {
     if (pmap[proc->vpid].node == (int32_t)ORTE_PROC_MY_DAEMON->vpid) {
-        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                              "%s ess:lsf: proc %s is LOCAL",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
         return true;
     }
     
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:lsf: proc %s is REMOTE",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
@@ -197,7 +197,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     node = pmap[proc->vpid].node;
     nids = (orte_nid_t**)nidmap.addr;
     
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:lsf: proc %s is on host %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
@@ -214,7 +214,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     node = pmap[proc->vpid].node;
     nids = (orte_nid_t**)nidmap.addr;
     
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:lsf: proc %s has arch %0x",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
@@ -226,7 +226,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
 static uint8_t proc_get_local_rank(orte_process_name_t *proc)
 {
     
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:lsf: proc %s has local rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
@@ -238,7 +238,7 @@ static uint8_t proc_get_local_rank(orte_process_name_t *proc)
 static uint8_t proc_get_node_rank(orte_process_name_t *proc)
 {
     
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:lsf: proc %s has node rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),

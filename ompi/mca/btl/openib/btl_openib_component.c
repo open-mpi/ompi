@@ -34,8 +34,7 @@
 #include "opal/include/opal/align.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/sys/timer.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
@@ -174,7 +173,7 @@ static int btl_openib_modex_send(void)
     size_t size, msg_size;
     ompi_btl_openib_connect_base_module_t *cpc;
 
-    opal_output(-1, "Starting to modex send");
+    orte_output(-1, "Starting to modex send");
     if (0 == mca_btl_openib_component.ib_num_btls) {
         return 0;
     }
@@ -228,7 +227,7 @@ static int btl_openib_modex_send(void)
     /* Pack the number of modules */
     offset = message;
     pack8(&offset, mca_btl_openib_component.ib_num_btls);
-    opal_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_num_btls, *((uint8_t*) message), (int) (offset - message));
+    orte_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_num_btls, *((uint8_t*) message), (int) (offset - message));
 
     /* Pack each of the modules */
     for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
@@ -238,7 +237,7 @@ static int btl_openib_modex_send(void)
         memcpy(offset, 
                &(mca_btl_openib_component.openib_btls[i]->port_info), 
                size);
-        opal_output(-1, "modex packed btl port modex message: %lx, %d, %d (size: %d)",
+        orte_output(-1, "modex packed btl port modex message: %lx, %d, %d (size: %d)",
                     mca_btl_openib_component.openib_btls[i]->port_info.subnet_id,
                     mca_btl_openib_component.openib_btls[i]->port_info.mtu,
                     mca_btl_openib_component.openib_btls[i]->port_info.lid,
@@ -248,13 +247,13 @@ static int btl_openib_modex_send(void)
         MCA_BTL_OPENIB_MODEX_MSG_HTON(*(mca_btl_openib_modex_message_t *)offset);
 #endif
         offset += size;
-        opal_output(-1, "modex packed btl %d: modex message, offset now %d",
+        orte_output(-1, "modex packed btl %d: modex message, offset now %d",
                     i, (int) (offset -message));
 
         /* Pack the number of CPCs that follow */
         pack8(&offset, 
               mca_btl_openib_component.openib_btls[i]->num_cpcs);
-        opal_output(-1, "modex packed btl %d: to pack %d cpcs (packed: %d, offset now %d)",
+        orte_output(-1, "modex packed btl %d: to pack %d cpcs (packed: %d, offset now %d)",
                     i, mca_btl_openib_component.openib_btls[i]->num_cpcs,
                     *((uint8_t*) (offset - 1)), (int) (offset-message));
 
@@ -265,27 +264,27 @@ static int btl_openib_modex_send(void)
             uint8_t u8;
 
             cpc = mca_btl_openib_component.openib_btls[i]->cpcs[j];
-            opal_output(-1, "modex packed btl %d: packing cpc %s", 
+            orte_output(-1, "modex packed btl %d: packing cpc %s", 
                         i, cpc->data.cbm_component->cbc_name);
             /* Pack the CPC index */
             u8 = ompi_btl_openib_connect_base_get_cpc_index(cpc->data.cbm_component);
             pack8(&offset, u8);
-            opal_output(-1, "packing btl %d: cpc %d: index %d (packed %d, offset now %d)",
+            orte_output(-1, "packing btl %d: cpc %d: index %d (packed %d, offset now %d)",
                         i, j, u8, *((uint8_t*) (offset-1)), (int)(offset-message));
             /* Pack the CPC priority */
             pack8(&offset, cpc->data.cbm_priority);
-            opal_output(-1, "packing btl %d: cpc %d: priority %d (packed %d, offset now %d)",
+            orte_output(-1, "packing btl %d: cpc %d: priority %d (packed %d, offset now %d)",
                         i, j, cpc->data.cbm_priority, *((uint8_t*) (offset-1)), (int)(offset-message));
             /* Pack the blob length */
             u8 = cpc->data.cbm_modex_message_len;
             pack8(&offset, u8);
-            opal_output(-1, "packing btl %d: cpc %d: message len %d (packed %d, offset now %d)",
+            orte_output(-1, "packing btl %d: cpc %d: message len %d (packed %d, offset now %d)",
                         i, j, u8, *((uint8_t*) (offset-1)), (int)(offset-message));
             /* If the blob length is > 0, pack the blob */
             if (u8 > 0) {
                 memcpy(offset, cpc->data.cbm_modex_message, u8);
                 offset += u8;
-                opal_output(-1, "packing btl %d: cpc %d: blob packed %d %x (offset now %d)",
+                orte_output(-1, "packing btl %d: cpc %d: blob packed %d %x (offset now %d)",
                             i, j,
                             ((uint32_t*)cpc->data.cbm_modex_message)[0],
                             ((uint32_t*)cpc->data.cbm_modex_message)[1],
@@ -301,7 +300,7 @@ static int btl_openib_modex_send(void)
     rc = ompi_modex_send(&mca_btl_openib_component.super.btl_version,
                          message, msg_size);
     free(message);
-    opal_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));
+    orte_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));
 
     return rc;
 }
@@ -480,7 +479,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     if(mca_btl_openib_component.ib_num_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
-        opal_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
+        orte_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
                 true, orte_process_info.nodename);
     }
 
@@ -504,7 +503,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
         } else if (0 == lmc % (mca_btl_openib_component.apm_lmc + 1)) {
             lmc_step = mca_btl_openib_component.apm_lmc + 1;
         } else {
-            opal_show_help("help-mpi-btl-openib.txt", "apm with wrong lmc",true,
+            orte_show_help("help-mpi-btl-openib.txt", "apm with wrong lmc",true,
                     mca_btl_openib_component.apm_lmc, lmc);
             return OMPI_ERROR;
         }
@@ -512,7 +511,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
         if (mca_btl_openib_component.apm_lmc) {
             /* Disable apm and report warning */
             mca_btl_openib_component.apm_lmc = 0;
-            opal_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
+            orte_show_help("help-mpi-btl-openib.txt", "apm without lmc",true);
         }
     }
 #endif
@@ -1034,7 +1033,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
      */
     if (!(hca->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
             mca_btl_openib_component.num_xrc_qps > 0) {
-        opal_show_help("help-mpi-btl-openib.txt",
+        orte_show_help("help-mpi-btl-openib.txt",
                 "XRC on device without XRC support", true,
                 mca_btl_openib_component.num_xrc_qps,
                 ibv_get_device_name(ib_dev),
@@ -1058,7 +1057,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
            warning that we're using default values (unless overridden
            that we don't want to see these warnings) */
         if (mca_btl_openib_component.warn_no_hca_params_found) {
-            opal_show_help("help-mpi-btl-openib.txt",
+            orte_show_help("help-mpi-btl-openib.txt",
                            "no hca params found", true,
                            orte_process_info.nodename,
                            hca->ib_dev_attr.vendor_id,
@@ -1193,7 +1192,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     if (hca->btls > 0) {
         /* if apm was enabled it should be > 1 */
         if (1 == mca_btl_openib_component.apm_ports) {
-            opal_show_help("help-mpi-btl-openib.txt", "apm not enough ports", true);
+            orte_show_help("help-mpi-btl-openib.txt", "apm not enough ports", true);
             mca_btl_openib_component.apm_ports = 0;
         }
         ret = prepare_hca_for_use(hca);
@@ -1516,7 +1515,7 @@ btl_openib_component_init(int *num_btl_modules,
                couldn't provide it.  So print an error and deactivate
                this BTL. */
             if (mca_btl_openib_component.want_fork_support > 0) {
-                opal_show_help("help-mpi-btl-openib.txt",
+                orte_show_help("help-mpi-btl-openib.txt",
                                "ibv_fork_init fail", true,
                                orte_process_info.nodename);
                 goto no_btls;
@@ -1531,7 +1530,7 @@ btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_component.if_list = NULL;
     if (NULL != mca_btl_openib_component.if_include &&
         NULL != mca_btl_openib_component.if_exclude) {
-        opal_show_help("help-mpi-btl-openib.txt",
+        orte_show_help("help-mpi-btl-openib.txt",
                        "specified include and exclude", true,
                        mca_btl_openib_component.if_include,
                        mca_btl_openib_component.if_exclude, NULL);
@@ -1580,7 +1579,7 @@ btl_openib_component_init(int *num_btl_modules,
     }
 
     if(ret != OMPI_SUCCESS) {
-        opal_show_help("help-mpi-btl-openib.txt",
+        orte_show_help("help-mpi-btl-openib.txt",
                 "error in hca init", true, orte_process_info.nodename);
     }
 
@@ -1594,7 +1593,7 @@ btl_openib_component_init(int *num_btl_modules,
     if (0 != opal_argv_count(mca_btl_openib_component.if_list) &&
         mca_btl_openib_component.warn_nonexistent_if) {
         char *str = opal_argv_join(mca_btl_openib_component.if_list, ',');
-        opal_show_help("help-mpi-btl-openib.txt", "nonexistent port",
+        orte_show_help("help-mpi-btl-openib.txt", "nonexistent port",
                        true, orte_process_info.nodename,
                        ((NULL != mca_btl_openib_component.if_include) ?
                         "in" : "ex"), str);
@@ -1602,7 +1601,7 @@ btl_openib_component_init(int *num_btl_modules,
     }
 
     if(0 == mca_btl_openib_component.ib_num_btls) {
-        opal_show_help("help-mpi-btl-openib.txt",
+        orte_show_help("help-mpi-btl-openib.txt",
                 "no active ports found", true, orte_process_info.nodename);
         return NULL;
     }
@@ -2087,7 +2086,7 @@ error:
     }
 
     if(IBV_WC_RETRY_EXC_ERR == wc->status)
-        opal_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
+        orte_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
 
     if(openib_btl)
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
@@ -2146,7 +2145,7 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
 
-    opal_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
+    orte_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
 
     while (hca->progress) {
         while(opal_progress_threads()) {

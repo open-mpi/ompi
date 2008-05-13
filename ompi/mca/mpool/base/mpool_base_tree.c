@@ -25,7 +25,7 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
@@ -171,13 +171,13 @@ void mca_mpool_base_tree_print(void)
 
     if (num_leaks <= ompi_debug_show_mpi_alloc_mem_leaks ||
         ompi_debug_show_mpi_alloc_mem_leaks < 0) {
-        opal_show_help("help-mpool-base.txt", "all mem leaks",
+        orte_show_help("help-mpool-base.txt", "all mem leaks",
                        true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                        orte_process_info.nodename,
                        orte_process_info.pid, leak_msg);
     } else {
         int i = num_leaks - ompi_debug_show_mpi_alloc_mem_leaks;
-        opal_show_help("help-mpool-base.txt", "some mem leaks",
+        orte_show_help("help-mpool-base.txt", "some mem leaks",
                        true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                        orte_process_info.nodename, 
                        orte_process_info.pid, leak_msg, i,

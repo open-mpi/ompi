@@ -19,7 +19,7 @@
 
 #include "orte_config.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -114,7 +114,7 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
         NULL
     );
     if(rc < 0) {
-        opal_output(orte_iof_base.iof_output, 
+        orte_output(orte_iof_base.iof_output, 
                     "orte_iof_proxy_init: unable to post non-blocking recv");
         return NULL;
     }

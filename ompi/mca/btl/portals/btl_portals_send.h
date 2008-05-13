@@ -28,7 +28,7 @@
          mca_btl_portals_module.portals_max_outstanding_ops)) {                      \
         mca_btl_portals_frag_t *qfrag = (mca_btl_portals_frag_t*)                    \
             opal_list_remove_first(&(mca_btl_portals_module.portals_queued_sends));  \
-        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,           \
+        ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,           \
                              "retransmit for frag 0x%lx, 0x%lx",                     \
                              (unsigned long) qfrag,                                  \
                              (unsigned long) qfrag->base.des_cbfunc));               \

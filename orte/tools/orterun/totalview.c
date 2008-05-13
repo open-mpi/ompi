@@ -54,9 +54,8 @@
 #include <ctype.h>
 
 #include "opal/util/opal_environ.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
 #include "opal/class/opal_list.h"
@@ -278,7 +277,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
            -np value if the user did not specify -np on the command
            line. */
         if (used_num_procs && 0 == orterun_globals.num_procs) {
-            opal_show_help("help-orterun.txt", "debugger requires -np",
+            orte_show_help("help-orterun.txt", "debugger requires -np",
                            true, (*new_argv)[0], argv[0], user_argv, 
                            (*new_argv)[0]);
             /* Fall through to free / fail, below */
@@ -286,7 +285,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 
         /* Some debuggers do not support launching MPMD */
         else if (single_app && NULL != strchr(tmp, ':')) {
-            opal_show_help("help-orterun.txt", 
+            orte_show_help("help-orterun.txt", 
                            "debugger only accepts single app", true,
                            (*new_argv)[0], (*new_argv)[0]);
             /* Fall through to free / fail, below */
@@ -296,7 +295,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
            must have an executable to run (e.g., cannot use mpirun's
            app context file feature). */
         else if (fail_needed_executable) {
-            opal_show_help("help-orterun.txt", 
+            orte_show_help("help-orterun.txt", 
                            "debugger requires executable", true,
                            (*new_argv)[0], argv[0], (*new_argv)[0], argv[0],
                            (*new_argv)[0]);
@@ -333,14 +332,14 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     
     id = mca_base_param_find("orte", NULL, "base_user_debugger");
     if (id < 0) {
-        opal_show_help("help-orterun.txt", "debugger-mca-param-not-found", 
+        orte_show_help("help-orterun.txt", "debugger-mca-param-not-found", 
                        true);
         exit(1);
     }
     value = NULL;
     mca_base_param_lookup_string(id, &value);
     if (NULL == value) {
-        opal_show_help("help-orterun.txt", "debugger-orte_base_user_debugger-empty",
+        orte_show_help("help-orterun.txt", "debugger-orte_base_user_debugger-empty",
                        true);
         exit(1);
     }
@@ -359,7 +358,7 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     /* If we didn't find one, abort */
 
     if (NULL == lines[i]) {
-        opal_show_help("help-orterun.txt", "debugger-not-found", true);
+        orte_show_help("help-orterun.txt", "debugger-not-found", true);
         exit(1);
     }
     opal_argv_free(lines);
@@ -368,7 +367,7 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 
     execvp(new_argv[0], new_argv);
     value = opal_argv_join(new_argv, ' ');
-    opal_show_help("help-orterun.txt", "debugger-exec-failed",
+    orte_show_help("help-orterun.txt", "debugger-exec-failed",
                    true, basename, value, new_argv[0]);
     free(value);
     opal_argv_free(new_argv);
@@ -390,20 +389,20 @@ void orte_totalview_init_before_spawn(void)
         char *s;
 
         if (orte_debug_flag) {
-            opal_output(0, "Info: Spawned by a debugger");
+            orte_output(0, "Info: Spawned by a debugger");
         }
 
         if (mca_base_param_reg_int_name("orte", "mpi_wait_for_totalview",
                                         "Whether the MPI application should wait for a debugger or not",
                                         false, false, (int)false, &value) < 0) {
-            opal_output(0, "Error: mca_base_param_reg_int_name\n");
+            orte_output(0, "Error: mca_base_param_reg_int_name\n");
         }
 
         /* push mca parameter into the environment (not done automatically?) */
 
         s = mca_base_param_environ_variable("orte", "mpi_wait_for_totalview", NULL);
         if (ORTE_SUCCESS != opal_setenv(s, "1", true, &environ)) {
-            opal_output(0, "Error: Can't setenv %s\n", s);
+            orte_output(0, "Error: Can't setenv %s\n", s);
         }
         free(s);
     }
@@ -433,7 +432,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
     if (0) { /* debugging daemons <<-- needs work */
 
         if (orte_debug_flag) {
-            opal_output(0, "Info: Setting up debugger process table for daemons\n");
+            orte_output(0, "Info: Setting up debugger process table for daemons\n");
         }
 
     } else {
@@ -446,14 +445,14 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
          */
 
         if (orte_debug_flag) {
-            opal_output(0, "Info: Setting up debugger process table for applications\n");
+            orte_output(0, "Info: Setting up debugger process table for applications\n");
         }
 
         MPIR_debug_state = 1;
 
         /* Get the job data for this job */
         if (NULL == (jdata = orte_get_job_data_object(jobid))) {
-            opal_output(0, "Error: Can't get job data\n");
+            orte_output(0, "Error: Can't get job data\n");
             return;
         }
         
@@ -466,7 +465,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         MPIR_proctable = (struct MPIR_PROCDESC *) malloc(sizeof(struct MPIR_PROCDESC) *
                                                          MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
-            opal_output(0, "Error: Out of memory\n");
+            orte_output(0, "Error: Out of memory\n");
         }
 
         /* initialize MPIR_proctable */
@@ -476,7 +475,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         apps = (orte_app_context_t**)jdata->apps->addr;
         for (j=0; j < jdata->num_procs; j++) {
             if (NULL == procs[j]) {
-                opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
+                orte_output(0, "Error: undefined proc at position %ld\n", (long)j);
             }
             
             appctx = apps[procs[j]->app_idx];

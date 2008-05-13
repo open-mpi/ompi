@@ -23,8 +23,10 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/util/output.h"
 
 #include "orte/mca/oob/base/base.h"
 
@@ -54,8 +56,6 @@ bool orte_oob_base_already_opened = false;
  */
 int mca_oob_base_open(void)
 {
-    int param, value;
-    
     /* Sanity check.  This may be able to be removed when the rml/oob
        interface is re-worked (the current infrastructure may invoke
        this function twice: once as a standalone, and once via the rml
@@ -65,14 +65,7 @@ int mca_oob_base_open(void)
     }
 
     /* register parameters */
-    param = mca_base_param_reg_int_name("oob", "base_verbose",
-                                        "Verbosity level for the oob framework",
-                                        false, false, 0, &value);
-    if (value != 0) {
-        mca_oob_base_output = opal_output_open(NULL);
-    } else {
-        mca_oob_base_output = -1;
-    }
+    mca_oob_base_output = orte_output_open(NULL, "OOB", "DEBUG", NULL);
     
     /* Open up all available components */
     OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);

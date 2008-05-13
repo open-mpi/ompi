@@ -18,7 +18,7 @@
 
 #include <catamount/cnos_mpi_os.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
 #include "opal/mca/base/base.h"
@@ -51,7 +51,7 @@ ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
      */
     ret = PtlInit(&max_interfaces);
     if (PTL_OK != ret) {
-        opal_output(0, "%5d: PtlInit failed, returning %d\n", 
+        orte_output(0, "%5d: PtlInit failed, returning %d\n", 
                     cnos_get_rank(), ret);
         return OMPI_ERR_NOT_AVAILABLE;
     }
@@ -101,7 +101,7 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
      */
     ret = PtlInit(&max_interfaces);
     if (PTL_OK != ret) {
-        opal_output(0, "%5d: PtlInit failed, returning %d\n", 
+        orte_output(0, "%5d: PtlInit failed, returning %d\n", 
                     cnos_get_rank(), ret);
         return OMPI_ERR_NOT_AVAILABLE;
     }
@@ -116,7 +116,7 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
                     ni_handle          /* our interface handle */
                     );
     if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
-        opal_output(0, "%5d: PtlNIInit failed, returning %d (%s : %d)\n", 
+        orte_output(0, "%5d: PtlNIInit failed, returning %d (%s : %d)\n", 
                     cnos_get_rank(), ret, __FILE__, __LINE__);
         return OMPI_ERROR;
     }
@@ -142,7 +142,7 @@ ompi_common_portals_get_procs(size_t nprocs,
      */
     nptl_procs = cnos_get_nidpid_map(&map);
     if (nptl_procs <= 0) {
-        opal_output(0, "%5d: cnos_get_nidpid_map() returned %d", 
+        orte_output(0, "%5d: cnos_get_nidpid_map() returned %d", 
                     cnos_get_rank(), nptl_procs);
         return OMPI_ERR_FATAL;
     }

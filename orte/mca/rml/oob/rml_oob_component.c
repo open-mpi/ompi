@@ -20,7 +20,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -345,7 +345,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
 
         next = orte_routed.get_route(&hdr->destination);
         if (next.vpid == ORTE_VPID_INVALID) {
-            opal_output(0,
+            orte_output(0,
                         "%s tried routing message to %s, can't find route",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&hdr->destination));
@@ -353,7 +353,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
         }
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
-            opal_output(0, "%s trying to get message to %s, routing loop",
+            orte_output(0, "%s trying to get message to %s, routing loop",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&hdr->destination));
             abort();
@@ -365,7 +365,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
             real_tag = ORTE_RML_TAG_RML_ROUTE;
         }
 
-        OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_rml_base_output,
                              "%s routing message from %s for %s to %s (tag: %d)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&hdr->origin),
@@ -396,7 +396,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                 }
                 OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
             } else {
-                opal_output(0,
+                orte_output(0,
                             "%s failed to send message to %s: %s (rc = %d)",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&next),
@@ -442,7 +442,7 @@ rml_oob_recv_route_callback(int status,
 
     next = orte_routed.get_route(&hdr->destination);
     if (next.vpid == ORTE_VPID_INVALID) {
-        opal_output(0,
+        orte_output(0,
                     "%s tried routing message to %s, can't find route",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&hdr->destination));
@@ -450,7 +450,7 @@ rml_oob_recv_route_callback(int status,
     }
 
     if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
-        opal_output(0, "%s trying to get message to %s, routing loop",
+        orte_output(0, "%s trying to get message to %s, routing loop",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&hdr->destination));
         abort();
@@ -462,7 +462,7 @@ rml_oob_recv_route_callback(int status,
         real_tag = ORTE_RML_TAG_RML_ROUTE;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_rml_base_output,
                          "%s routing message from %s for %s to %s (tag: %d)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&hdr->origin),
@@ -485,7 +485,7 @@ rml_oob_recv_route_callback(int status,
         if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
             /* no route -- queue and hope we find a route */
             orte_rml_oob_queued_msg_t *qmsg = OBJ_NEW(orte_rml_oob_queued_msg_t);
-            OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
+            ORTE_OUTPUT_VERBOSE((1, orte_rml_base_output,
                                  "%s: no OOB information for %s.  Queuing for later.",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&next)));
@@ -503,7 +503,7 @@ rml_oob_recv_route_callback(int status,
             }
             OPAL_THREAD_UNLOCK(&orte_rml_oob_module.queued_lock);
         } else {
-            opal_output(0,
+            orte_output(0,
                         "%s failed to send message to %s: %s (rc = %d)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&next),

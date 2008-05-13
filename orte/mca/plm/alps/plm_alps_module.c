@@ -52,10 +52,10 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -153,7 +153,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     
     if (mca_plm_alps_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
-            opal_output(0, "plm_alps: could not obtain job start time");
+            orte_output(0, "plm_alps: could not obtain job start time");
         }        
     }
     
@@ -166,7 +166,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:alps: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -191,7 +191,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     
     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:alps: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
@@ -247,7 +247,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
         opal_argv_append(&nodelist_argc, &nodelist_argv, nodes[nnode]->name);
     }
     if (0 == opal_argv_count(nodelist_argv)) {
-        opal_show_help("help-plm-alps.txt", "no-hosts-in-list", true);
+        orte_show_help("help-plm-alps.txt", "no-hosts-in-list", true);
         rc = ORTE_ERR_FAILED_TO_START;
         goto cleanup;
     }
@@ -276,7 +276,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
      */
     rc = orte_util_convert_vpid_to_string(&vpid_string, map->daemon_vpid_start);
     if (ORTE_SUCCESS != rc) {
-        opal_output(0, "plm_alps: unable to create process name");
+        orte_output(0, "plm_alps: unable to create process name");
         goto cleanup;
     }
 
@@ -287,8 +287,8 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     if (mca_plm_alps_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
-            opal_output(0, "plm:alps: final top-level argv:");
-            opal_output(0, "plm:alps:     %s", param);
+            orte_output(0, "plm:alps: final top-level argv:");
+            orte_output(0, "plm:alps:     %s", param);
             free(param);
         }
     }
@@ -307,7 +307,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
         if (NULL != app_prefix_dir) {
             if (NULL != cur_prefix &&
                 0 != strcmp (cur_prefix, app_prefix_dir)) {
-                opal_show_help("help-plm-alps.txt", "multiple-prefixes",
+                orte_show_help("help-plm-alps.txt", "multiple-prefixes",
                                true, cur_prefix, app_prefix_dir);
                 return ORTE_ERR_FATAL;
             }
@@ -317,7 +317,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
             if (NULL == cur_prefix) {
                 cur_prefix = strdup(app_prefix_dir);
                 if (mca_plm_alps_component.debug) {
-                    opal_output (0, "plm:alps: Set prefix:%s",
+                    orte_output (0, "plm:alps: Set prefix:%s",
                                  cur_prefix);
                 }
             }
@@ -335,7 +335,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
 
     if (mca_plm_alps_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
-            opal_output(0, "plm_alps: could not obtain start time");
+            orte_output(0, "plm_alps: could not obtain start time");
         }        
     }
     
@@ -367,19 +367,19 @@ launch_apps:
     
     if (mca_plm_alps_component.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
-             opal_output(0, "plm_alps: could not obtain stop time");
+             orte_output(0, "plm_alps: could not obtain stop time");
          } else {
-             opal_output(0, "plm_alps: daemon block launch time is %ld usec",
+             orte_output(0, "plm_alps: daemon block launch time is %ld usec",
                          (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
                          (launchstop.tv_usec - launchstart.tv_usec));
-             opal_output(0, "plm_alps: total job launch time is %ld usec",
+             orte_output(0, "plm_alps: total job launch time is %ld usec",
                          (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
                          (launchstop.tv_usec - joblaunchstart.tv_usec));
          }
     }
 
     if (ORTE_SUCCESS != rc) {
-        opal_output(0, "plm:alps: start_procs returned error %d", rc);
+        orte_output(0, "plm:alps: start_procs returned error %d", rc);
         goto cleanup;
     }
 
@@ -487,10 +487,10 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
     if (0 != status) {
         if (failed_launch) {
             /* we have a problem during launch */
-            opal_output(0, "ERROR: alps failed to start the required daemons.");
-            opal_output(0, "ERROR: This could be due to an inability to find the orted binary");
-            opal_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
-            opal_output(0, "ERROR: on one or more specified nodes, or other factors.");
+            orte_output(0, "ERROR: alps failed to start the required daemons.");
+            orte_output(0, "ERROR: This could be due to an inability to find the orted binary");
+            orte_output(0, "ERROR: on one or more remote nodes, lack of authority to execute");
+            orte_output(0, "ERROR: on one or more specified nodes, or other factors.");
             
             /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
@@ -549,7 +549,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
             }
             opal_setenv("PATH", newenv, true, &env);
             if (mca_plm_alps_component.debug) {
-                opal_output(0, "plm:alps: reset PATH: %s", newenv);
+                orte_output(0, "plm:alps: reset PATH: %s", newenv);
             }
             free(newenv);
 
@@ -562,7 +562,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
             }
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
             if (mca_plm_alps_component.debug) {
-                opal_output(0, "plm:alps: reset LD_LIBRARY_PATH: %s",
+                orte_output(0, "plm:alps: reset LD_LIBRARY_PATH: %s",
                             newenv);
             }
             free(newenv);
@@ -598,7 +598,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
         
         execve(exec_argv, argv, env);
 
-        opal_output(0, "plm:alps:start_proc: exec failed");
+        orte_output(0, "plm:alps:start_proc: exec failed");
         /* don't return - need to exit - returning would be bad -
            we're not in the calling process anymore */
         exit(1);

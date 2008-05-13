@@ -70,7 +70,7 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
 		       &mtl_psm_request->psm_request);
     
     if (err) {
-        opal_output(0, "Error in psm_mq_irecv (error %s)\n", psm_error_get_string(err));
+        orte_output(0, "Error in psm_mq_irecv (error %s)\n", psm_error_get_string(err));
         return OMPI_ERROR;
     }
 

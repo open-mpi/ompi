@@ -21,7 +21,7 @@
 
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/datatype/convertor.h"
 
 #include "mtl_psm.h"
@@ -99,7 +99,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     err = psm_error_register_handler(NULL /* no ep */,
 			             PSM_ERRHANDLER_NOP);
     if (err) {
-        opal_output(0, "Error in psm_error_register_handler (error %s)\n", 
+        orte_output(0, "Error in psm_error_register_handler (error %s)\n", 
 		    psm_error_get_string(err));
 	return NULL;
     }
@@ -111,7 +111,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 
     err = psm_init(&verno_major, &verno_minor);
     if (err) {
-        opal_output(0, "Error in psm_init (error %s)\n", 
+        orte_output(0, "Error in psm_init (error %s)\n", 
 		    psm_error_get_string(err));
         return NULL;
     }

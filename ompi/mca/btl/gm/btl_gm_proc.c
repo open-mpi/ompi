@@ -131,14 +131,14 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
                  (void*)&gm_proc->proc_addrs,
                  &size); 
     if(OMPI_SUCCESS != rc) {
-        opal_output(0, "[%s:%d] ompi_modex_recv failed for peer %s",
+        orte_output(0, "[%s:%d] ompi_modex_recv failed for peer %s",
             __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
         OBJ_RELEASE(gm_proc);
         return NULL;
     }
 
     if((size % sizeof(mca_btl_gm_addr_t)) != 0) {
-        opal_output(0, "[%s:%d] invalid gm address for peer %s",
+        orte_output(0, "[%s:%d] invalid gm address for peer %s",
             __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
         OBJ_RELEASE(gm_proc);
         return NULL;
@@ -187,12 +187,12 @@ int mca_btl_gm_proc_insert(
         gm_btl->port,
         gm_endpoint->endpoint_addr.global_id,
         &gm_endpoint->endpoint_addr.node_id)) {
-        opal_output( 0, "[%s:%d] error in converting global to local id \n",
+        orte_output( 0, "[%s:%d] error in converting global to local id \n",
             __FILE__, __LINE__ );
         return OMPI_ERROR;
     }
     if(mca_btl_gm_component.gm_debug > 0) {
-        opal_output(0, "%s mapped global id %" PRIu32 
+        orte_output(0, "%s mapped global id %" PRIu32 
             " to node id %" PRIu32 "\n", 
             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
             gm_endpoint->endpoint_addr.global_id,
@@ -202,7 +202,7 @@ int mca_btl_gm_proc_insert(
     gm_endpoint->endpoint_addr.node_id = gm_host_name_to_node_id( gm_btl->port,
         gm_endpoint->endpoint_addr.global_id);
     if( GM_NO_SUCH_NODE_ID == gm_endpoint->endpoint_addr.node_id ) {
-        opal_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
+        orte_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
             __FILE__, __LINE__, gm_endpoint->endpoint_addr.global_id);
         return OMPI_ERROR;
     }

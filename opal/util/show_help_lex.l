@@ -49,7 +49,6 @@ static int opal_show_help_yywrap(void);
  */
 int opal_show_help_yynewlines = 1;
 bool opal_show_help_parse_done = false;
-char *opal_show_help_string = NULL;
 
 #define yyterminate() \
   return opal_show_help_finish_parsing()

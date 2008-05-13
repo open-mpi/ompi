@@ -21,12 +21,13 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
@@ -74,7 +75,7 @@ int orte_plm_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_plm_globals.output = opal_output_open(NULL);
+    orte_plm_globals.output = orte_output_open(NULL, "PLM", "DEBUG", NULL);
     
     /* init selected to be false */
     orte_plm_base.selected = false;

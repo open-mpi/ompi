@@ -17,6 +17,8 @@
 #include "orte_config.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/util/output.h"
+
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "snapc_full.h"
@@ -67,7 +69,7 @@ orte_snapc_full_component_t mca_snapc_full_component = {
 
         /* Verbosity level */
         0,
-        /* opal_output handler */
+        /* orte_output handler */
         -1,
         /* Default priority */
         20
@@ -99,8 +101,8 @@ static int snapc_full_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_snapc_full_component.super.verbose) {
-        mca_snapc_full_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_snapc_full_component.super.output_handle,
+        mca_snapc_full_component.super.output_handle = orte_output_open(NULL, "SNAPC", "FULL", "DEBUG", NULL);
+        orte_output_set_verbosity(mca_snapc_full_component.super.output_handle,
                                   mca_snapc_full_component.super.verbose);
     } else {
         mca_snapc_full_component.super.output_handle = orte_snapc_base_output;
@@ -117,15 +119,15 @@ static int snapc_full_open(void)
     /*
      * Debug Output
      */
-    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open()");
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(20, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open: priority    = %d", 
                         mca_snapc_full_component.super.priority);
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(20, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open: verbosity   = %d", 
                         mca_snapc_full_component.super.verbose);
-    opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(20, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open: skip_filem  = %s", 
                         (orte_snapc_full_skip_filem == true ? "True" : "False"));
 
@@ -134,7 +136,7 @@ static int snapc_full_open(void)
 
 static int snapc_full_close(void)
 {
-    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: close()");
 
     return ORTE_SUCCESS;

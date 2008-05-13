@@ -70,7 +70,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
         sendtmpbuf = (char *)recvbuf; 
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d", original_count, (unsigned long)(num_segments * segment_increment), (unsigned long)segment_increment, max_outstanding_reqs));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d", original_count, (unsigned long)(num_segments * segment_increment), (unsigned long)segment_increment, max_outstanding_reqs));
 
     rank = ompi_comm_rank(comm);
 
@@ -326,7 +326,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
     return OMPI_SUCCESS;
 
  error_hndl:  /* error handler */
-    OPAL_OUTPUT (( ompi_coll_tuned_stream, 
+    ORTE_OUTPUT (( ompi_coll_tuned_stream, 
                    "ERROR_HNDL: node %d file %s line %d error %d\n", 
                    rank, __FILE__, line, ret ));
     if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
@@ -355,7 +355,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", ompi_comm_rank(comm), fanout, segsize));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", ompi_comm_rank(comm), fanout, segsize));
 
     COLL_TUNED_UPDATE_CHAIN( comm, tuned_module, root, fanout );
     /**
@@ -385,7 +385,7 @@ int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d ss %5d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
     COLL_TUNED_UPDATE_PIPELINE( comm, tuned_module, root );
@@ -416,7 +416,7 @@ int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binary rank %d ss %5d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binary rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
     COLL_TUNED_UPDATE_BINTREE( comm, tuned_module, root );
@@ -447,7 +447,7 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binomial rank %d ss %5d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binomial rank %d ss %5d",
                  ompi_comm_rank(comm), segsize));
 
     COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
@@ -491,7 +491,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_in_order_binary rank %d ss %5d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_in_order_binary rank %d ss %5d",
                  rank, segsize));
 
     COLL_TUNED_UPDATE_IN_ORDER_BINTREE( comm, tuned_module );
@@ -611,7 +611,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_basic_linear rank %d", rank));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_basic_linear rank %d", rank));
 
     /* If not root, send data to the root. */
 
@@ -732,7 +732,7 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
     if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Reduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+            orte_output( 0, "Reduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
         }
         mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -770,7 +770,7 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     mca_base_param_lookup_int(mca_param_indices->max_requests_param_index, &(max_requests));
     if( max_requests < 0 ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Maximum outstanding requests must be positive number or 0.  Initializing to 0 (no limit).\n" );
+            orte_output( 0, "Maximum outstanding requests must be positive number or 0.  Initializing to 0 (no limit).\n" );
         }
         mca_base_param_set_int( mca_param_indices->max_requests_param_index, 0);
     }
@@ -792,7 +792,7 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
     const int chain_fanout = data->user_forced[REDUCE].chain_fanout;
     const int max_requests = data->user_forced[REDUCE].max_requests;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced selected algorithm %d", 
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced selected algorithm %d", 
                  data->user_forced[REDUCE].algorithm));
 
 
@@ -817,7 +817,7 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
 								   op, root, comm, module,
                                                                    segsize, max_requests);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                      data->user_forced[REDUCE].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
         return (MPI_ERR_ARG);
     } /* switch */
@@ -832,7 +832,7 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
                                          int algorithm, int faninout, 
                                          int segsize, int max_requests )
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
@@ -856,7 +856,7 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
 								   op, root, comm, module,
                                                                    segsize, max_requests);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
         return (MPI_ERR_ARG);
     } /* switch */

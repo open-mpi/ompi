@@ -44,7 +44,7 @@ ompi_mtl_portals_medium_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *pt
 		free(ev->md.start);
 	    }
 	    
-	    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+	    ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
 				 "send complete: 0x%016llx\n",
 				 ev->match_bits));
 	    
@@ -58,7 +58,7 @@ ompi_mtl_portals_medium_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *pt
 	    break;
 
 	default:
-	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_medium_callback()\n",ev->type); 
+	    orte_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_medium_callback()\n",ev->type); 
 	    /* abort(); */
     }
 
@@ -84,7 +84,7 @@ ompi_mtl_portals_long_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_
 		    free(ev->md.start);
 		}
 
-		OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+		ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
 				     "send complete: 0x%016llx\n", 
 				     ev->match_bits));
 
@@ -98,7 +98,7 @@ ompi_mtl_portals_long_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_
 	    break;
 
 	default:
-	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_long_callback()\n",ev->type); 
+	    orte_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_long_callback()\n",ev->type); 
 	    abort();
     }
     
@@ -118,7 +118,7 @@ ompi_mtl_portals_long_rendezvous_callback(ptl_event_t *ev, struct ompi_mtl_porta
 		    free(ev->md.start);
 		}
 
-		OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+		ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
 				     "send complete: 0x%016llx\n", 
 				     ev->match_bits));
 
@@ -131,7 +131,7 @@ ompi_mtl_portals_long_rendezvous_callback(ptl_event_t *ev, struct ompi_mtl_porta
 	    break;
 
 	default:
-	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_long_callback()\n",ev->type); 
+	    orte_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_long_callback()\n",ev->type); 
 	    abort();
     }
     
@@ -157,7 +157,7 @@ ompi_mtl_portals_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_
 		    free(ev->md.start);
 		}
 
-		OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+		ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
 				     "send complete: 0x%016llx\n", 
 				     ev->match_bits));
 
@@ -171,7 +171,7 @@ ompi_mtl_portals_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals_request_
 	    break;
 
 	default:
-	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_sync_callback()\n",ev->type); 
+	    orte_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_sync_callback()\n",ev->type); 
 	    abort();
     }
     
@@ -526,7 +526,7 @@ ompi_mtl_portals_sync_isend( void *start, int length, int contextid, int localra
 	    break;									\
 											\
 	default:									\
-	    opal_output(fileno(stderr),"Unexpected msg type\n");                        \
+	    orte_output(fileno(stderr),"Unexpected msg type\n");                        \
 											\
     }											\
 }

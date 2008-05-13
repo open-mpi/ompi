@@ -23,7 +23,7 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 extern int ompi_ddt_dfd;
 
@@ -31,17 +31,17 @@ extern int ompi_ddt_dfd;
 #  define DDT_DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
      ompi_ddt_dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
 #  if defined(ACCEPT_C99)
-#    define DUMP( ARGS... )          opal_output(ompi_ddt_dfd, __VA_ARGS__)
+#    define DUMP( ARGS... )          orte_output(ompi_ddt_dfd, __VA_ARGS__)
 #  else
 #    if defined(__GNUC__) && !defined(__STDC__)
-#      define DUMP(ARGS...)          opal_output( ompi_ddt_dfd, ARGS)
+#      define DUMP(ARGS...)          orte_output( ompi_ddt_dfd, ARGS)
 #  else
 static inline void DUMP( char* fmt, ... )
 {
    va_list list;
 
    va_start( list, fmt );
-   opal_output( ompi_ddt_dfd, fmt, list );
+   orte_output( ompi_ddt_dfd, fmt, list );
    va_end( list );
 }
 #      define DUMP                   printf
@@ -265,7 +265,7 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
             ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1);                \
         if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
             ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
-            opal_output( 0, "%s:%d\n\tPointer %p size %lu is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
+            orte_output( 0, "%s:%d\n\tPointer %p size %lu is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
                          __FILE__, __LINE__, (ACTPTR), (unsigned long)(LENGTH), __lower_bound, __upper_bound, \
                          (INITPTR), (COUNT) );                          \
             ompi_ddt_dump( (PDATA) );                                   \

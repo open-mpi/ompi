@@ -10,6 +10,8 @@
 
 #include "ompi_config.h"
 
+#include "orte/util/output.h"
+
 #include "pml_v_output.h"
 
 #if defined(HAVE_UNISTD_H)
@@ -45,12 +47,12 @@ int pml_v_output_open(char *output, int verbosity) {
         gethostname(hostname, 32);
         asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
-        pml_v_output = opal_output_open(&lds);
+        pml_v_output = orte_output_open(&lds, "PML", "V", "DEBUG", NULL);
         free(lds.lds_prefix);
     }
     return pml_v_output;
 }
 
 void pml_v_output_close(void) {
-    opal_output_close(pml_v_output);
+    orte_output_close(pml_v_output);
 }

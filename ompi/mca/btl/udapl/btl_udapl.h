@@ -38,7 +38,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/btl/btl.h"
 #include "btl_udapl_endpoint.h"
@@ -236,7 +236,7 @@ do {                                                                \
 #define BTL_UDAPL_VERBOSE_HELP(verbose_level, args)                 \
 do {                                                                \
     if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
-        opal_show_help args;                                        \
+        orte_show_help args;                                        \
     }                                                               \
 } while(0);
 

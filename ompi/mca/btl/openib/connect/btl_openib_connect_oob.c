@@ -23,7 +23,7 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/error.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
@@ -117,7 +117,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        therefore we must be IB. */   
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IB != btl->hca->ib_dev->transport_type) {
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: oob CPC only supported on InfiniBand; skipped on device %s",
                             ibv_get_device_name(btl->hca->ib_dev));
         return OMPI_ERR_NOT_SUPPORTED;
@@ -134,7 +134,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
                                      rml_recv_cb,
                                      NULL);
         if (ORTE_SUCCESS != rc) {
-            opal_output_verbose(5, mca_btl_base_output,
+            orte_output_verbose(5, mca_btl_base_output,
                                 "openib BTL: oob CPC system error %d (%s)",
                                 rc, opal_strerror(rc));
             return rc;
@@ -146,7 +146,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     if (NULL == *cpc) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
         rml_recv_posted = false;
-        opal_output_verbose(5, mca_btl_base_output,
+        orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: oob CPC system error (malloc failed)");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -160,7 +160,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     (*cpc)->cbm_endpoint_finalize = NULL;
     (*cpc)->cbm_finalize = NULL;
 
-    opal_output_verbose(5, mca_btl_base_output,
+    orte_output_verbose(5, mca_btl_base_output,
                         "openib BTL: oob CPC available for use on %s",
                         ibv_get_device_name(btl->hca->ib_dev));
     return OMPI_SUCCESS;

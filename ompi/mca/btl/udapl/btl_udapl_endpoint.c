@@ -27,7 +27,7 @@
 #include <time.h>
 #include "ompi/types.h"
 #include "opal/include/opal/align.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"

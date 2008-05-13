@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/threads/tsd.h"
 
@@ -240,7 +240,7 @@ int orte_util_comm_attach_stdout(const orte_process_name_t *hnp,
     orte_std_cntr_t count;
     int rc, ret=ORTE_ERROR;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_attach_stdout: requesting HNP %s attach stdio for job %s vpid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp),
@@ -279,7 +279,7 @@ int orte_util_comm_attach_stdout(const orte_process_name_t *hnp,
         goto CLEANUP;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_attach_stdout: sending request to HNP %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp)));
@@ -293,7 +293,7 @@ int orte_util_comm_attach_stdout(const orte_process_name_t *hnp,
     OBJ_DESTRUCT(&buf);
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_attach_stdout: waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -327,7 +327,7 @@ int orte_util_comm_attach_stderr(const orte_process_name_t *hnp,
     orte_std_cntr_t count;
     int rc, ret=ORTE_ERROR;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_attach_stderr: requesting HNP %s attach stderr for job %s vpid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp),
@@ -366,7 +366,7 @@ int orte_util_comm_attach_stderr(const orte_process_name_t *hnp,
         goto CLEANUP;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_attach_stderr: sending request to HNP %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp)));
@@ -380,7 +380,7 @@ int orte_util_comm_attach_stderr(const orte_process_name_t *hnp,
     OBJ_DESTRUCT(&buf);
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_attach_stderr: waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -432,7 +432,7 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
     orte_std_cntr_t count;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: requesting HNP %s spawn new job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp)));
@@ -454,7 +454,7 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
         
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: sending spawn cmd to HNP %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp)));
@@ -467,7 +467,7 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
     OBJ_DESTRUCT(&buf);
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -506,7 +506,7 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
     orte_std_cntr_t count;
     int rc, ret = ORTE_ERROR;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: requesting HNP %s terminate job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp),
@@ -530,7 +530,7 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
         goto CLEANUP;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: sending terminate cmd to HNP %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp)));
@@ -544,7 +544,7 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
     OBJ_DESTRUCT(&buf);
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_terminate_job: waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -576,7 +576,7 @@ int orte_util_comm_halt_vm(const orte_process_name_t *hnp)
     orte_daemon_cmd_flag_t command;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_halt_vm: ordering HNP %s terminate",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(hnp)));

@@ -106,14 +106,14 @@ ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rul
 int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
 {
     if (!msg_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Message rule was a NULL ptr?!\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"Message rule was a NULL ptr?!\n"));
         return (-1);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"alg_id %3d\tcom_id %3d\tcom_size %3d\tmsg_id %3d\t", msg_p->alg_rule_id, 
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"alg_id %3d\tcom_id %3d\tcom_size %3d\tmsg_id %3d\t", msg_p->alg_rule_id, 
                  msg_p->com_rule_id, msg_p->mpi_comsize, msg_p->msg_rule_id));
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"msg_size %6d -> algorithm %2d\ttopo in/out %2d\tsegsize %5ld\tmax_requests %4d\n", 
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"msg_size %6d -> algorithm %2d\ttopo in/out %2d\tsegsize %5ld\tmax_requests %4d\n", 
                  msg_p->msg_size, msg_p->result_alg, msg_p->result_topo_faninout, msg_p->result_segsize, 
                  msg_p->result_max_requests));
 
@@ -126,18 +126,18 @@ int ompi_coll_tuned_dump_com_rule (ompi_coll_com_rule_t* com_p)
     int i;
 
     if (!com_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Com rule was a NULL ptr?!\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"Com rule was a NULL ptr?!\n"));
         return (-1);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "alg_id %3d\tcom_id %3d\tcom_size %3d\t", com_p->alg_rule_id, com_p->com_rule_id, com_p->mpi_comsize));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "alg_id %3d\tcom_id %3d\tcom_size %3d\t", com_p->alg_rule_id, com_p->com_rule_id, com_p->mpi_comsize));
 
     if (!com_p->n_msg_sizes) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"no msgsizes defined\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"no msgsizes defined\n"));
         return (0);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"number of message sizes %3d\n", com_p->n_msg_sizes));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"number of message sizes %3d\n", com_p->n_msg_sizes));
 
     for (i=0;i<com_p->n_msg_sizes;i++) {
         ompi_coll_tuned_dump_msg_rule (&(com_p->msg_rules[i]));
@@ -152,18 +152,18 @@ int ompi_coll_tuned_dump_alg_rule (ompi_coll_alg_rule_t* alg_p)
     int i;
 
     if (!alg_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Algorithm rule was a NULL ptr?!\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"Algorithm rule was a NULL ptr?!\n"));
         return (-1);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"alg_id %3d\t", alg_p->alg_rule_id));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"alg_id %3d\t", alg_p->alg_rule_id));
 
     if (!alg_p->n_com_sizes) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"no coms defined\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"no coms defined\n"));
         return (0);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"number of com sizes %3d\n", alg_p->n_com_sizes));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"number of com sizes %3d\n", alg_p->n_com_sizes));
 
     for (i=0;i<alg_p->n_com_sizes;i++) {
         ompi_coll_tuned_dump_com_rule (&(alg_p->com_rules[i]));
@@ -178,11 +178,11 @@ int ompi_coll_tuned_dump_all_rules (ompi_coll_alg_rule_t* alg_p, int n_rules)
     int i;
 
     if (!alg_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Algorithm rule was a NULL ptr?!\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"Algorithm rule was a NULL ptr?!\n"));
         return (-1);
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of algorithm rules %3d\n", n_rules));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"Number of algorithm rules %3d\n", n_rules));
 
     for (i=0;i<n_rules;i++) {
         ompi_coll_tuned_dump_alg_rule (&(alg_p[i]));
@@ -204,7 +204,7 @@ int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
     ompi_coll_msg_rule_t* msg_p;
 
     if (!com_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rule ptr\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rule ptr\n"));
         return (-1);
     }
 
@@ -212,7 +212,7 @@ int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
         msg_p = com_p->msg_rules;
 
         if (!msg_p) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL msg_rules when msg count was %d\n", com_p->n_msg_sizes));
+            ORTE_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL msg_rules when msg count was %d\n", com_p->n_msg_sizes));
             rc = -1; /* some error */
         }
         else {
@@ -236,7 +236,7 @@ int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
     ompi_coll_com_rule_t* com_p;
 
     if (!alg_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL alg_rule ptr\n"));
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL alg_rule ptr\n"));
         return (-1);
     }
 
@@ -244,7 +244,7 @@ int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
         com_p = alg_p->com_rules;
 
         if (!com_p) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes));
+            ORTE_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes));
         }
         else {
             /* ok, memory exists for the com rules so free their message rules first */
@@ -319,15 +319,15 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
     i = best = 0;
 
     while (i<alg_p->n_com_sizes) {
-        /*       OPAL_OUTPUT((ompi_coll_tuned_stream,"checking comsize %d against alg_id %d com_id %d index %d com_size %d",  */
+        /*       ORTE_OUTPUT((ompi_coll_tuned_stream,"checking comsize %d against alg_id %d com_id %d index %d com_size %d",  */
         /*             mpi_comsize, com_p->alg_rule_id, com_p->com_rule_id, i, com_p->mpi_comsize)); */
         if (com_p->mpi_comsize <= mpi_comsize) {
             best = i;
             best_com_p = com_p;
-            /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
+            /*          ORTE_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
         }
         else {
-            /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":nop\n")); */
+            /*          ORTE_OUTPUT((ompi_coll_tuned_stream(":nop\n")); */
             break;
         }
         /* go to the next entry */
@@ -335,7 +335,7 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
         i++;
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following com rule id %d\n", best_com_p->com_rule_id));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"Selected the following com rule id %d\n", best_com_p->com_rule_id));
     ompi_coll_tuned_dump_com_rule (best_com_p);
 
     return (best_com_p);
@@ -390,15 +390,15 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
     i = best = 0;
 
     while (i<base_com_rule->n_msg_sizes) {
-        /*       OPAL_OUTPUT((ompi_coll_tuned_stream,"checking mpi_msgsize %d against com_id %d msg_id %d index %d msg_size %d",  */
+        /*       ORTE_OUTPUT((ompi_coll_tuned_stream,"checking mpi_msgsize %d against com_id %d msg_id %d index %d msg_size %d",  */
         /*             mpi_msgsize, msg_p->com_rule_id, msg_p->msg_rule_id, i, msg_p->msg_size)); */
         if (msg_p->msg_size <= mpi_msgsize) {
             best = i;
             best_msg_p = msg_p;
-            /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
+            /*          ORTE_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
         }
         else {
-            /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":nop\n")); */
+            /*          ORTE_OUTPUT((ompi_coll_tuned_stream(":nop\n")); */
             break;
         }
         /* go to the next entry */
@@ -406,7 +406,7 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
         i++;
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following msg rule id %d\n", best_msg_p->msg_rule_id));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"Selected the following msg rule id %d\n", best_msg_p->msg_rule_id));
     ompi_coll_tuned_dump_msg_rule (best_msg_p);
 
     /* return the segment size */

@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 

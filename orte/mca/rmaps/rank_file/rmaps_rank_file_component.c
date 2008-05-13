@@ -26,7 +26,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
@@ -98,7 +98,7 @@ static int orte_rmaps_rank_file_open(void)
     if (index >= 0) { 
         if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &paffinity_alone)) {
             if ( 1000000 == mca_rmaps_rank_file_component.priority && paffinity_alone ){
-                 opal_output(0, "WARNING: paffinity_alone cannot be set with paffinity_slot_list or rank_file\nTherefore mca_rmaps_rank_file_component.priority set to 0\n");
+                 orte_output(0, "WARNING: paffinity_alone cannot be set with paffinity_slot_list or rank_file\nTherefore mca_rmaps_rank_file_component.priority set to 0\n");
                 mca_rmaps_rank_file_component.priority = 0;
             }
         }

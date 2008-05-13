@@ -35,9 +35,6 @@
 #endif
 
 #include "opal/runtime/opal_cr.h"
-#include "opal/util/output.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
@@ -46,6 +43,7 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+#include "orte/util/output.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/snapc/snapc.h"
@@ -78,7 +76,7 @@ int app_coord_init() {
     opal_cr_notify_callback_fn_t prev_notify_func;
     char *tmp_pid = NULL;
 
-    OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "App) Initalized for Application %s\n", 
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -98,14 +96,14 @@ int app_coord_init() {
      * to handle the checkpoint
      */
     if( SIG_ERR == signal(opal_cr_entry_point_signal, snapc_full_app_signal_handler) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) init: Error: Failed to register signal %d\n",
                     opal_cr_entry_point_signal);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "app) Named Pipes (%s) (%s), Signal (%d)", 
                          app_comm_pipe_r, app_comm_pipe_w, opal_cr_entry_point_signal));
 
@@ -146,7 +144,7 @@ int app_coord_finalize() {
 static void snapc_full_app_signal_handler (int signo)
 {
     if( opal_cr_entry_point_signal != signo ) {
-        OPAL_OUTPUT_VERBOSE((1, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((1, mca_snapc_full_component.super.output_handle,
                              "App) signal_handler: Received unknown signal %d",
                              signo));
         /* Not our signal */
@@ -157,7 +155,7 @@ static void snapc_full_app_signal_handler (int signo)
      */
     opal_cr_checkpoint_request   = OPAL_CR_STATUS_REQUESTED;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) signal_handler: Receive Checkpoint Request."));
 }
 
@@ -178,7 +176,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     /*
      * Open communication channels
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                         "App) notify_response: Open Communication Channels."));
     if (ORTE_SUCCESS != (ret = snapc_full_app_notify_reopen_files())) {
         exit_status = ret;
@@ -188,7 +186,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     /*
      * Initial Handshake
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Initial Handshake."));
     if( ORTE_SUCCESS != (ret = snapc_full_app_ckpt_handshake_start(&app_term, resp) ) ) {
         exit_status = ret;
@@ -199,10 +197,10 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
      * Begin checkpoint
      * - Init the checkpoint metadata file
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Start checkpoint..."));
     if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(local_snapshot) ) ) {
-        opal_output(0, "App) Error: Unable to initalize the snapshot directory!\n");
+        orte_output(0, "App) Error: Unable to initalize the snapshot directory!\n");
         exit_status = ret;
         goto ckpt_cleanup;
     }
@@ -213,14 +211,14 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     app_pid = getpid();
     ret = opal_cr_inc_core(app_pid, local_snapshot, app_term, &cr_state);
     if( OPAL_EXISTS == ret ) {
-        OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Stalling the checkpoint progress until state is stable again (PID = %d)\n",
                              getpid()));
         opal_cr_currently_stalled = true;
         return exit_status;
     }
     else if(ORTE_SUCCESS != ret) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: checkpoint notification failed. %d\n", ret);
         goto ckpt_cleanup;
     }
@@ -229,7 +227,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     opal_cr_stall_check = false;
 
     if(OPAL_CRS_RESTART == cr_state) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Restarting...(%d)\n",
                              getpid()));
         
@@ -244,7 +242,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         ; /* Don't need to do anything here */
     }
     else {
-        OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Unknown cr_state(%d) [%d]",
                              cr_state, getpid()));
     }
@@ -252,13 +250,13 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     /*
      * Final Handshake
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Waiting for final handshake."));
     if( ORTE_SUCCESS != (ret = snapc_full_app_ckpt_handshake_end(cr_state ) ) ) {
         exit_status = ret;
         goto ckpt_cleanup;
     }
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Final Handshake complete."));
 
  ckpt_cleanup:
@@ -268,7 +266,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     remove(app_comm_pipe_w);
     
     if(app_term) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: User has asked to terminate the application"));
         exit(ORTE_SUCCESS);
     }
@@ -295,12 +293,12 @@ static int snapc_full_app_notify_reopen_files(void)
      */
     if( (ret = mkfifo(app_comm_pipe_r, 0660)) < 0) {
         if(EEXIST == ret || -1 == ret ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "App) notify_reopen_files: mkfifo failed because file (%s) already exists, attempting to use this pipe. (%d)",
                                  app_comm_pipe_r, ret));
         }
         else {
-            opal_output(mca_snapc_full_component.super.output_handle,
+            orte_output(mca_snapc_full_component.super.output_handle,
                         "App) notify_reopen_files: Error: mkfifo failed to make named pipe (%s). (%d)\n",
                         app_comm_pipe_r, ret);
             return ORTE_ERROR;
@@ -309,7 +307,7 @@ static int snapc_full_app_notify_reopen_files(void)
     
     app_comm_pipe_r_fd = open(app_comm_pipe_r, O_RDWR);
     if(app_comm_pipe_r_fd < 0) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) init: Error: open failed to open the named pipe (%s). %d\n",
                     app_comm_pipe_r, app_comm_pipe_r_fd);
         return ORTE_ERROR;
@@ -320,12 +318,12 @@ static int snapc_full_app_notify_reopen_files(void)
      */
     if( (ret = mkfifo(app_comm_pipe_w, 0660)) < 0) {
         if(EEXIST == ret || -1 == ret ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "App) notify_reopen_files: mkfifo failed because file (%s) already exists, attempting to use this pipe. (%d)",
                                  app_comm_pipe_w, ret));
         }
         else {
-            opal_output(mca_snapc_full_component.super.output_handle,
+            orte_output(mca_snapc_full_component.super.output_handle,
                         "App) notify_reopen_files: Error: mkfifo failed to make named pipe (%s). (%d)\n",
                         app_comm_pipe_w, ret);
             return ORTE_ERROR;
@@ -334,7 +332,7 @@ static int snapc_full_app_notify_reopen_files(void)
     
     app_comm_pipe_w_fd = open(app_comm_pipe_w, O_WRONLY);
     if(app_comm_pipe_w_fd < 0) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_reopen_files: Error: open failed to open the named pipe (%s). (%d)\n",
                     app_comm_pipe_w, app_comm_pipe_w_fd);
         return ORTE_ERROR;
@@ -356,7 +354,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
      * Get the initial handshake command: Term argument
      */
     if( sizeof(int) != (ret = read(app_comm_pipe_r_fd, app_term, sizeof(int))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to read the term from named pipe (%s). %d\n",
                     app_comm_pipe_r, ret);
         goto cleanup;
@@ -364,7 +362,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
 
     tmp_resp = (int)resp;
     if( sizeof(int) != (ret = write(app_comm_pipe_w_fd, &tmp_resp, sizeof(int)) ) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: %d: Error: Unable to write to pipe (%s) ret = %d [Line %d]\n",
                     tmp_resp, app_comm_pipe_w, ret, __LINE__);
         goto cleanup;
@@ -374,7 +372,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
      * Respond that the checkpoint is currently in progress
      */
     if( OPAL_CHECKPOINT_CMD_IN_PROGRESS == resp ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Checkpoint in progress, cannot start (%d)",
                              getpid()));
         goto cleanup;
@@ -383,7 +381,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
      * Respond that the application is unable to be checkpointed
      */
     else if( OPAL_CHECKPOINT_CMD_NULL == resp ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Non-checkpointable application, cannot start (%d)", 
                              getpid()));
         goto cleanup;
@@ -393,7 +391,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
      * not able to be checkpointed
      */
     else if( OPAL_CHECKPOINT_CMD_ERROR == resp ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "App) notify_response: Error generated, cannot start (%d)", 
                              getpid()));
         goto cleanup;
@@ -402,7 +400,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
     /*
      * Respond signalng that we wish to respond to this request
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Starting checkpoint request (%d)", 
                          getpid()));
 
@@ -410,7 +408,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
      * Get Snapshot Handle argument
      */
     if( sizeof(int) != (ret = read(app_comm_pipe_r_fd, &len, sizeof(int))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to read the snapshot_handle len from named pipe (%s). %d\n",
                     app_comm_pipe_r, ret);
         goto cleanup;
@@ -419,7 +417,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
     tmp_size = sizeof(char) * len;
     tmp_str  = (char *) malloc(sizeof(char) * len);
     if( tmp_size != (ret = read(app_comm_pipe_r_fd, tmp_str, (sizeof(char) * len))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to read the snapshot_handle from named pipe (%s). %d\n",
                     app_comm_pipe_r, ret);
         goto cleanup;
@@ -452,7 +450,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
      * Get Snapshot location argument
      */
     if( sizeof(int) != (ret = read(app_comm_pipe_r_fd, &len, sizeof(int))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to read the snapshot_location len from named pipe (%s). %d\n",
                     app_comm_pipe_r, ret);
         goto cleanup;
@@ -461,7 +459,7 @@ static int snapc_full_app_ckpt_handshake_start(int *app_term, opal_cr_ckpt_cmd_s
     tmp_str = (char *) malloc(sizeof(char) * len);
     tmp_size = sizeof(char) * len;
     if( tmp_size != (ret = read(app_comm_pipe_r_fd, tmp_str, (sizeof(char) * len))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to read the snapshot_location from named pipe (%s). %d\n",
                     app_comm_pipe_r, ret);
         goto cleanup;
@@ -502,7 +500,7 @@ static int snapc_full_app_ckpt_handshake_end(int cr_state)
      * Return the final checkpoint state to the local coordinator
      */
     if( sizeof(int) != (ret = write(app_comm_pipe_w_fd, &cr_state, sizeof(int))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to write cr_state to named pipe (%s). %d\n",
                     app_comm_pipe_w, ret);
         goto cleanup;
@@ -512,7 +510,7 @@ static int snapc_full_app_ckpt_handshake_end(int cr_state)
      * Wait for the local coordinator to release us
      */
     if( sizeof(int) != (ret = read(app_comm_pipe_r_fd, &last_cmd, sizeof(int))) ) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "App) notify_response: Error: Unable to read the term from named pipe (%s). %d\n",
                     app_comm_pipe_r, ret);
         goto cleanup;

@@ -293,7 +293,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
         mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_bml;
         size_t n;
 
-        opal_output(0, "[Rank %d]\n", i);
+        orte_output(0, "[Rank %d]\n", i);
         /* dump all receive queues */
 
         /* dump all btls */
@@ -416,7 +416,7 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                      return;
                 break;
             default:
-                opal_output(0, "[%s:%d] wrong header type\n",
+                orte_output(0, "[%s:%d] wrong header type\n",
                         __FILE__, __LINE__);
                 break;
         }
@@ -493,7 +493,7 @@ int mca_pml_ob1_ft_event( int state )
          *       references.
          */
         if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
-            opal_output(0,
+            orte_output(0,
                         "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
                         ret);
             return ret;
@@ -512,7 +512,7 @@ int mca_pml_ob1_ft_event( int state )
      * - MPool(s)
      */
     if( OMPI_SUCCESS != (ret = mca_bml.bml_ft_event(state))) {
-        opal_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
+        orte_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
                     ret);
     }
     
@@ -531,7 +531,7 @@ int mca_pml_ob1_ft_event( int state )
          * BTLs will have republished their modex information.
          */
         if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
-            opal_output(0,
+            orte_output(0,
                         "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
                         ret);
             return ret;
@@ -542,13 +542,13 @@ int mca_pml_ob1_ft_event( int state )
          * Add the new procs (BTLs redo modex recv's)
          */
         if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
+            orte_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
             return ret;
         }
 
         /* Is this barrier necessary ? JJH */
         if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            orte_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
         }
 

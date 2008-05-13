@@ -63,7 +63,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_dynamic"));
 
     /* check to see if we have some filebased rules */
     if (data->com_rules[ALLREDUCE]) {
@@ -111,7 +111,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_dynamic"));
 
     /* check to see if we have some filebased rules */
     if (data->com_rules[ALLTOALL]) {
@@ -163,7 +163,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(void *sbuf, int *scounts, int *s
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoallv_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoallv_intra_dec_dynamic"));
 
     /* 
      * BEGIN - File Based Rules
@@ -198,7 +198,7 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_dec_dynamic"));
 
     /* check to see if we have some filebased rules */
     if (data->com_rules[BARRIER]) {
@@ -236,7 +236,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:bcast_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:bcast_intra_dec_dynamic"));
 
     /* check to see if we have some filebased rules */
     if (data->com_rules[BCAST]) {
@@ -284,7 +284,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_intra_dec_dynamic"));
 
     /* check to see if we have some filebased rules */
     if (data->com_rules[REDUCE]) {
@@ -339,7 +339,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(void *sbuf, void *rbuf,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_intra_dec_dynamic"));
+    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_intra_dec_dynamic"));
 
     /* check to see if we have some filebased rules */
     if (data->com_rules[REDUCESCATTER]) {
@@ -394,7 +394,7 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, 
+    ORTE_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_allgather_intra_dec_dynamic"));
    
     if (data->com_rules[ALLGATHER]) {
@@ -454,7 +454,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
    
-    OPAL_OUTPUT((ompi_coll_tuned_stream, 
+    ORTE_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_allgatherv_intra_dec_dynamic"));
    
     if (data->com_rules[ALLGATHERV]) {
@@ -509,7 +509,7 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "ompi_coll_tuned_gather_intra_dec_dynamic"));
 
     if (data->user_forced[GATHER].algorithm) {
@@ -533,7 +533,7 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "ompi_coll_tuned_scatter_intra_dec_dynamic"));
 
     if (data->user_forced[SCATTER].algorithm) {

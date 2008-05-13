@@ -53,7 +53,7 @@ ompi_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count
 
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_nonoverlapping rank %d", rank));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_nonoverlapping rank %d", rank));
 
     /* Reduce to 0 and broadcast. */
 
@@ -134,7 +134,7 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
 
-   OPAL_OUTPUT((ompi_coll_tuned_stream,
+   ORTE_OUTPUT((ompi_coll_tuned_stream,
                 "coll:tuned:allreduce_intra_recursivedoubling rank %d", rank));
    
    /* Special case for size == 1 */
@@ -263,7 +263,7 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
    return MPI_SUCCESS;
 
  error_hndl:
-   OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
+   ORTE_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
                 __FILE__, line, rank, ret));
    if (NULL != inplacebuf) free(inplacebuf);
    return ret;
@@ -354,7 +354,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
 
-   OPAL_OUTPUT((ompi_coll_tuned_stream,
+   ORTE_OUTPUT((ompi_coll_tuned_stream,
                 "coll:tuned:allreduce_intra_ring rank %d, count %d", rank, count));
       
    /* Special case for size == 1 */
@@ -368,7 +368,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
 
    /* Special case for count less than size - use recursive doubling */
    if (count < size) {
-      OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:allreduce_ring rank %d/%d, count %d, switching to recursive doubling", rank, size, count));
+      ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:allreduce_ring rank %d/%d, count %d, switching to recursive doubling", rank, size, count));
       return (ompi_coll_tuned_allreduce_intra_recursivedoubling(sbuf, rbuf, 
                                                                 count,
                                                                 dtype, op, 
@@ -525,7 +525,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
    return MPI_SUCCESS;
 
  error_hndl:
-   OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
+   ORTE_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
                 __FILE__, line, rank, ret));
    if (NULL != inbuf[0]) free(inbuf[0]);
    if (NULL != inbuf[1]) free(inbuf[1]);
@@ -635,7 +635,7 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
 
-   OPAL_OUTPUT((ompi_coll_tuned_stream,
+   ORTE_OUTPUT((ompi_coll_tuned_stream,
                 "coll:tuned:allreduce_intra_ring_segmented rank %d, count %d", rank, count));
       
    /* Special case for size == 1 */
@@ -659,7 +659,7 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
 
    /* Special case for count less than size * segcount - use regular ring */
    if (count < size * segcount) {
-      OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:allreduce_ring_segmented rank %d/%d, count %d, switching to regular ring", rank, size, count));
+      ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:allreduce_ring_segmented rank %d/%d, count %d, switching to regular ring", rank, size, count));
       return (ompi_coll_tuned_allreduce_intra_ring(sbuf, rbuf, count, dtype, op, 
                                                    comm, module));
    }
@@ -848,7 +848,7 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
    return MPI_SUCCESS;
 
  error_hndl:
-   OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
+   ORTE_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
                 __FILE__, line, rank, ret));
    if (NULL != inbuf[0]) free(inbuf[0]);
    if (NULL != inbuf[1]) free(inbuf[1]);
@@ -889,7 +889,7 @@ ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_basic_linear rank %d", rank));
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_basic_linear rank %d", rank));
 
     /* Reduce to 0 and broadcast. */
 
@@ -943,7 +943,7 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
     mca_base_param_lookup_int( mca_param_indices->algorithm_param_index, &(requested_alg));
     if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Allreduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+            orte_output( 0, "Allreduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
         }
         mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -983,7 +983,7 @@ int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d, segment size %d", 
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced selected algorithm %d, segment size %d", 
                  data->user_forced[ALLREDUCE].algorithm,
                  data->user_forced[ALLREDUCE].segsize));
 
@@ -995,7 +995,7 @@ int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
     case (4):  return ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, op, comm, module);
     case (5):  return ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, count, dtype, op, comm, module, data->user_forced[ALLREDUCE].segsize);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                      data->user_forced[ALLREDUCE].algorithm, 
                      ompi_coll_tuned_forced_max_algorithms[ALLREDUCE]));
         return (MPI_ERR_ARG);
@@ -1011,7 +1011,7 @@ int ompi_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
 					    struct mca_coll_base_module_1_1_0_t *module,
                                             int algorithm, int faninout, int segsize)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
@@ -1022,7 +1022,7 @@ int ompi_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
     case (4):   return ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, op, comm, module);
     case (5):   return ompi_coll_tuned_allreduce_intra_ring_segmented (sbuf, rbuf, count, dtype, op, comm, module, segsize);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[ALLREDUCE]));
         return (MPI_ERR_ARG);
     } /* switch */

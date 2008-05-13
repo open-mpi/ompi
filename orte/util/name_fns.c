@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/threads/tsd.h"
 

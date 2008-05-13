@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "mtl_portals.h"
 #include "mtl_portals_recv_short.h"

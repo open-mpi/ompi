@@ -24,7 +24,7 @@
 #include "osc_rdma_data_move.h"
 #include "osc_rdma_obj_convert.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/arch.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/bml/bml.h"
@@ -190,7 +190,7 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
             descriptor->des_dst[0].seg_key.key64 = 
                 rdma_btl->peer_seg_key;
 #if 0
-            opal_output(0, "putting to %d: 0x%lx(%d), %d, %d",
+            orte_output(0, "putting to %d: 0x%lx(%d), %d, %d",
                         target, descriptor->des_dst[0].seg_addr.lval,
                         descriptor->des_dst[0].seg_len,
                         rdma_btl->rdma_order,
@@ -258,7 +258,7 @@ ompi_osc_rdma_sendreq_send_long_cb(ompi_osc_rdma_longreq_t *longreq)
         (ompi_osc_rdma_sendreq_t*) longreq->cbdata;
     int32_t count;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d completed long sendreq to %d",
                          ompi_comm_rank(sendreq->req_module->m_comm),
                          sendreq->req_target_rank));
@@ -332,7 +332,7 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
                 
                 longreq->cbfunc = ompi_osc_rdma_sendreq_send_long_cb;
                 longreq->cbdata = sendreq;
-                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+                ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                      "%d starting long sendreq to %d (%d)",
                                      ompi_comm_rank(sendreq->req_module->m_comm),
                                      sendreq->req_target_rank,
@@ -577,7 +577,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 #endif
 
         /* send fragment */
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d sending sendreq to %d",
                              ompi_comm_rank(sendreq->req_module->m_comm),
                              sendreq->req_target_rank));
@@ -785,7 +785,7 @@ ompi_osc_rdma_sendreq_recv_put_long_cb(ompi_osc_rdma_longreq_t *longreq)
     OBJ_RELEASE(longreq->req_datatype);
     ompi_osc_rdma_longreq_free(longreq);
     
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d finished receiving long put message",
                          ompi_comm_rank(longreq->req_module->m_comm))); 
 
@@ -806,7 +806,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         ompi_osc_base_datatype_create(proc, inbuf);
 
     if (NULL == datatype) {
-        opal_output(ompi_osc_base_output,
+        orte_output(ompi_osc_base_output,
                     "Error recreating datatype.  Aborting.");
         ompi_mpi_abort(module->m_comm, 1, false);
     }
@@ -847,7 +847,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         inmsg_mark_complete(module);
         *inbuf = ((char*) *inbuf) + header->hdr_msg_length;
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d received put message from %d",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin));
@@ -869,7 +869,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
                                 module->m_comm,
                                 &(longreq->request));
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d started long recv put message from %d (%d)",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin,
@@ -956,7 +956,7 @@ ompi_osc_rdma_sendreq_recv_accum_long_cb(ompi_osc_rdma_longreq_t *longreq)
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->m_acc_lock);
     
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d finished receiving long accum message from %d",
                          ompi_comm_rank(longreq->req_module->m_comm), 
                          header->hdr_origin));
@@ -986,7 +986,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         ompi_osc_base_datatype_create(proc, payload);
 
     if (NULL == datatype) {
-        opal_output(ompi_osc_base_output,
+        orte_output(ompi_osc_base_output,
                     "Error recreating datatype.  Aborting.");
         ompi_mpi_abort(module->m_comm, 1, false);
     }
@@ -1108,7 +1108,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
 
         inmsg_mark_complete(module);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d received accum message from %d",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin));
@@ -1153,7 +1153,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
                                 module->m_comm,
                                 &(longreq->request));
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d started long recv accum message from %d (%d)",
                              ompi_comm_rank(module->m_comm),
                              header->hdr_origin,

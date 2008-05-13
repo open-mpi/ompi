@@ -30,11 +30,10 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
 #include "opal/util/trace.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 
+#include "orte/util/output.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/name_fns.h"
@@ -69,7 +68,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t *default_node_list=NULL;
     opal_list_t *node_list=NULL;
 
-    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:seq mapping job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -108,7 +107,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             node_list = default_node_list;
         }
         if (NULL == node_list || 0 == (num_nodes = (orte_std_cntr_t)opal_list_get_size(node_list))) {
-            opal_show_help("help-orte-rmaps-base.txt",
+            orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:no-available-resources",
                            true);
             return ORTE_ERR_SILENT;
@@ -149,7 +148,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
              */
             if(0 >= opal_list_get_size(node_list) ) {
                 /* Everything is at max usage! :( */
-                opal_show_help("help-orte-rmaps-seq.txt", "orte-rmaps-seq:alloc-error",
+                orte_show_help("help-orte-rmaps-seq.txt", "orte-rmaps-seq:alloc-error",
                                true, app->num_procs, app->app);
                 return ORTE_ERR_SILENT;
             }
@@ -182,7 +181,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             }
             if (NULL == node) {
                 /* wasn't found - that is an error */
-                opal_show_help("help-orte-rmaps-seq.txt",
+                orte_show_help("help-orte-rmaps-seq.txt",
                                "orte-rmaps-seq:resource-not-found",
                                true, nd->name);
                 rc = ORTE_ERR_SILENT;

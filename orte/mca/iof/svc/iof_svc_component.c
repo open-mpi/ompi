@@ -19,7 +19,7 @@
 
 #include "orte_config.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -116,7 +116,7 @@ static void
 orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_exception_t reason)
 {
     orte_iof_base_endpoint_t *endpoint;
-    opal_output(orte_iof_base.iof_output, 
+    orte_output_verbose(1, orte_iof_base.iof_output, 
                 "iof svc exception handler! %s\n",
                 ORTE_NAME_PRINT((orte_process_name_t*)peer));
 
@@ -126,7 +126,7 @@ orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
        are recoverable events (no need to abort). */
     orte_iof_svc_sub_delete_all(peer);
     orte_iof_svc_pub_delete_all(peer);
-    opal_output(orte_iof_base.iof_output, "deleted all pubs and subs\n");
+    orte_output_verbose(1, orte_iof_base.iof_output, "deleted all pubs and subs\n");
 
     /* Find any streams on any endpoints for this peer and close them */
     while (NULL != 
@@ -137,7 +137,7 @@ orte_iof_svc_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
         /* Delete the endpoint that we just matched */
         orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY);
     }
-    opal_output(orte_iof_base.iof_output, "done with exception handler\n");
+    orte_output_verbose(1, orte_iof_base.iof_output, "done with exception handler\n");
 }
 
 
@@ -176,7 +176,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         NULL
     );
     if(rc != ORTE_SUCCESS) {
-        opal_output(orte_iof_base.iof_output,
+        orte_output(orte_iof_base.iof_output,
                     "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }

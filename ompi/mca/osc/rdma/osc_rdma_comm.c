@@ -236,7 +236,7 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
         ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
         if (OMPI_SUCCESS != ret) {
-            opal_output(0, "rdma_senreq_send from put failed: %d", ret);
+            orte_output(0, "rdma_senreq_send from put failed: %d", ret);
             OPAL_THREAD_LOCK(&module->m_lock);
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),

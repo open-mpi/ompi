@@ -26,7 +26,7 @@
 #include <inttypes.h>
 
 #include "ompi/constants.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/convertor.h"
@@ -91,7 +91,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
     bool accel;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
-    opal_output_verbose(50, mca_btl_portals_component.portals_output,
+    orte_output_verbose(50, mca_btl_portals_component.portals_output,
                         "Adding %d procs (%d)", (int) nprocs,
                         (int) mca_btl_portals_module.portals_num_procs);
 
@@ -130,7 +130,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
                             portals_procs[i],
                             &distance);
             if (ret != PTL_OK) {
-                opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                orte_output_verbose(10, mca_btl_portals_component.portals_output,
                                     "Could not find distance to process %d", (int) i);
                 continue;
             }
@@ -147,7 +147,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
         /* create eqs */
         int i;
 
-        opal_output_verbose(50, mca_btl_portals_component.portals_output,
+        orte_output_verbose(50, mca_btl_portals_component.portals_output,
                             "Enabling progress");
 
         for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
@@ -156,7 +156,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
                                      PTL_EQ_HANDLER_NONE,
                                      &(mca_btl_portals_module.portals_eq_handles[i]));
             if (PTL_OK != ptl_ret) {
-                opal_output(mca_btl_portals_component.portals_output,
+                orte_output(mca_btl_portals_component.portals_output,
                             "Error creating EQ %d: %d", i, ptl_ret);
                 /* BWB - better error code? */
                 return OMPI_ERROR;
@@ -192,7 +192,7 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
     int ret = OMPI_SUCCESS;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
-    opal_output_verbose(50, mca_btl_portals_component.portals_output,
+    orte_output_verbose(50, mca_btl_portals_component.portals_output,
                         "Removing %d procs (%d)", (int) nprocs,
                         (int) mca_btl_portals_module.portals_num_procs);
 
@@ -204,7 +204,7 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
     if (0 == mca_btl_portals_module.portals_num_procs) {
         int i;
 
-        opal_output_verbose(50, mca_btl_portals_component.portals_output,
+        orte_output_verbose(50, mca_btl_portals_component.portals_output,
                             "Disabling progress");
 
         ret = mca_btl_portals_recv_disable(&mca_btl_portals_module);
@@ -213,7 +213,7 @@ mca_btl_portals_del_procs(struct mca_btl_base_module_t *btl_base,
         for (i = 0 ; i < OMPI_BTL_PORTALS_EQ_SIZE ; ++i) {
             int ptl_ret = PtlEQFree(mca_btl_portals_module.portals_eq_handles[i]);
             if (PTL_OK != ptl_ret) {
-                opal_output(mca_btl_portals_component.portals_output,
+                orte_output(mca_btl_portals_component.portals_output,
                             "Error freeing EQ %d: %d", i, ptl_ret);
             }
         }
@@ -362,7 +362,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         frag->base.des_src_cnt = 1;
 
         /* either a put or get.  figure out which later */
-        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+        ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                              "rdma src posted for frag 0x%lx, callback 0x%lx, bits %"PRIu64", flags say %d" ,
                              (unsigned long) frag, 
                              (unsigned long) frag->base.des_cbfunc,
@@ -378,7 +378,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                           PTL_INS_AFTER,
                           &me_h);
         if (PTL_OK != ret) {
-            opal_output(mca_btl_portals_component.portals_output,
+            orte_output(mca_btl_portals_component.portals_output,
                         "Error creating rdma src ME: %d", ret);
             OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
             OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
@@ -399,7 +399,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                           PTL_UNLINK,
                           &(frag->md_h));
         if (PTL_OK != ret) {
-            opal_output(mca_btl_portals_component.portals_output,
+            orte_output(mca_btl_portals_component.portals_output,
                         "Error creating rdma src MD: %d", ret);
             PtlMEUnlink(me_h);
             OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
@@ -457,7 +457,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
 
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64 " flags %d",
                          (unsigned long) frag,
                          (unsigned long) frag->base.des_cbfunc,
@@ -474,7 +474,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                       PTL_INS_AFTER,
                       &me_h);
     if (PTL_OK != ret) {
-        opal_output(mca_btl_portals_component.portals_output,
+        orte_output(mca_btl_portals_component.portals_output,
                     "Error creating rdma dest ME: %d", ret);
         OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
@@ -495,7 +495,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                       PTL_UNLINK,
                       &(frag->md_h));
     if (PTL_OK != ret) {
-        opal_output(mca_btl_portals_component.portals_output,
+        orte_output(mca_btl_portals_component.portals_output,
                     "Error creating rdma dest MD: %d", ret);
         PtlMEUnlink(me_h);
         OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
@@ -513,7 +513,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     int ret;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                             "in mca_btl_portals_finalize"));
 
     /* sanity check */
@@ -521,7 +521,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     
     /* finalize all communication */
     while (mca_btl_portals_module.portals_outstanding_ops > 0) {
-        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+        ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                             "portals_outstanding_ops: %d", 
                             mca_btl_portals_module.portals_outstanding_ops));
         
@@ -543,7 +543,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
                     /* The PML isn't great about cleaning up after itself.
                        Ignore related errors. */
 #endif
-                    opal_output(mca_btl_portals_component.portals_output,
+                    orte_output(mca_btl_portals_component.portals_output,
                             "Error freeing EQ %d: %d", i, ptl_ret);
 #if (OMPI_PORTALS_CRAYXT3 || OMPI_PORTALS_CRAYXT3_MODEX)
                 }
@@ -562,7 +562,7 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
 
-    opal_output_verbose(20, mca_btl_portals_component.portals_output,
+    orte_output_verbose(20, mca_btl_portals_component.portals_output,
                         "successfully finalized module");
 
     return OMPI_SUCCESS;

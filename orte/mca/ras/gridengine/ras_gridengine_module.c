@@ -28,8 +28,8 @@
 #include <string.h>
 
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -71,12 +71,12 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
     /* show the Grid Engine's JOB_ID */
     if (mca_ras_gridengine_component.show_jobid ||
         mca_ras_gridengine_component.verbose != -1) {
-        opal_output(0, "ras:gridengine: JOB_ID: %s", job_id);
+        orte_output(0, "ras:gridengine: JOB_ID: %s", job_id);
     }
    
     /* check the PE_HOSTFILE before continuing on */
     if (!(fp = fopen(pe_hostfile, "r"))) {
-        opal_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
+        orte_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         rc = ORTE_ERROR;
         ORTE_ERROR_LOG(rc);
@@ -103,7 +103,7 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
         node->slots_inuse = 0;
         node->slots_max = 0;
         node->slots = (int)strtol(num, (char **)NULL, 10);
-        opal_output(mca_ras_gridengine_component.verbose,
+        orte_output(mca_ras_gridengine_component.verbose,
             "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
             node->name, node->slots);
         opal_list_append(nodelist, &node->super);
@@ -119,7 +119,7 @@ cleanup:
      * is considered an unrecoverable error and we need to report it
      */
     if (opal_list_is_empty(nodelist)) {
-        opal_show_help("help-ras-gridengine.txt", "no-nodes-found", true);
+        orte_show_help("help-ras-gridengine.txt", "no-nodes-found", true);
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -141,7 +141,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     
     /* check the PE_HOSTFILE before continuing on */
     if (!(fp = fopen(pe_hostfile, "r"))) {
-        opal_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
+        orte_show_help("help-ras-gridengine.txt", "cannot-read-pe-hostfile",
             true, pe_hostfile, strerror(errno));
         ORTE_ERROR_LOG(ORTE_ERROR);
         return(ORTE_ERROR);
@@ -155,7 +155,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
         
         if(strcmp(node_name,name) == 0) {
             *slot_cnt = (int) strtol(num, (char **)NULL, 10);
-            opal_output(mca_ras_gridengine_component.verbose,
+            orte_output(mca_ras_gridengine_component.verbose,
                 "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
                 node_name, *slot_cnt);
             fclose(fp);
@@ -175,7 +175,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
 static int orte_ras_gridengine_finalize(void)
 {
     /* Nothing to do */
-    opal_output(mca_ras_gridengine_component.verbose,
+    orte_output(mca_ras_gridengine_component.verbose,
         "ras:gridengine:finalize: success (nothing to do)");
     return ORTE_SUCCESS;
 }

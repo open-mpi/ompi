@@ -27,6 +27,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/output.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ess/base/base.h"
@@ -39,7 +40,7 @@ int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
     opal_byte_object_t *bo;
     int32_t cnt;
    
-    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_ess_base_output,
                          "%s ess:build:nidmap: received buffer with %ld bytes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)buffer->bytes_used));

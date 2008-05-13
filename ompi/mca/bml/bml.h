@@ -133,7 +133,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_insert(mca_bml_base_btl
 {
 #if OMPI_ENABLE_DEBUG
     if(array->arr_size >= array->arr_reserve) {
-        opal_output(0, "mca_bml_base_btl_array_insert: invalid array index %lu >= %lu", 
+        orte_output(0, "mca_bml_base_btl_array_insert: invalid array index %lu >= %lu", 
                     (unsigned long)array->arr_size, (unsigned long)array->arr_reserve);
         return 0;
     }
@@ -179,7 +179,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_
 {
 #if OMPI_ENABLE_DEBUG
     if(item_index >= array->arr_size) {
-        opal_output(0, "mca_bml_base_btl_array_get_index: invalid array index %lu >= %lu",
+        orte_output(0, "mca_bml_base_btl_array_get_index: invalid array index %lu >= %lu",
                     (unsigned long)item_index, (unsigned long)array->arr_size);
         return 0;
     }
@@ -198,7 +198,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_b
 {
 #if OMPI_ENABLE_DEBUG
     if(array->arr_size == 0) {
-        opal_output(0, "mca_bml_base_btl_array_get_next: invalid array size");
+        orte_output(0, "mca_bml_base_btl_array_get_next: invalid array size");
         return 0;
     }
 #endif

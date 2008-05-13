@@ -97,7 +97,7 @@ int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
     MCA_BTL_UD_START_TIME(ibv_post_send);
     if(OPAL_UNLIKELY((ret = ibv_post_send(ib_qp, wr, &bad_wr)))) {
 #if 0
-        opal_output(0, "ep->sd_wqe %d btl->sd_wqe %d len %d ib_qp_next %d",
+        orte_output(0, "ep->sd_wqe %d btl->sd_wqe %d len %d ib_qp_next %d",
                 endpoint->sd_wqe, ud_btl->sd_wqe,
                 frag->sg_entry.length, ud_btl->ib_qp_next);
 #endif

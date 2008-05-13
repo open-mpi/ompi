@@ -130,7 +130,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
     } else if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_BOOLIS32 ) ) {
         remote_sizes[DT_CXX_BOOL] = 4;
     } else {
-        opal_output( 0, "Unknown sizeof(bool) for the remote architecture\n" );
+        orte_output( 0, "Unknown sizeof(bool) for the remote architecture\n" );
     }
 
     /* check the length of the long */
@@ -151,7 +151,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
     } else if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_LOGICALIS32 ) ) {
         remote_sizes[DT_LOGIC] = 4;
     } else {
-        opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
+        orte_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
     }
 
     /**
@@ -637,17 +637,17 @@ void ompi_convertor_dump( ompi_convertor_t* convertor )
 void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                           const union dt_elem_desc* pDesc, const char* name )
 {
-    opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
+    orte_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ; stack_pos >= 0; stack_pos-- ) {
-        opal_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
+        orte_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
                      (int)pStack[stack_pos].count, (long)pStack[stack_pos].disp );
         if( pStack->index != -1 )
-            opal_output( 0, "\t[desc count %d disp %ld extent %ld]\n",
+            orte_output( 0, "\t[desc count %d disp %ld extent %ld]\n",
                          pDesc[pStack[stack_pos].index].elem.count,
                          (long)pDesc[pStack[stack_pos].index].elem.disp,
                          (long)pDesc[pStack[stack_pos].index].elem.extent );
         else
-            opal_output( 0, "\n" );
+            orte_output( 0, "\n" );
     }
-    opal_output( 0, "\n" );
+    orte_output( 0, "\n" );
 }

@@ -22,8 +22,7 @@
 #include <string.h>
 
 #include "opal/threads/mutex.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/util/arch.h"
 
 #include "opal/dss/dss.h"
@@ -128,7 +127,7 @@ int ompi_proc_init(void)
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
-                opal_show_help("help-mpi-runtime",
+                orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
                                true, orte_process_info.nodename, 
                                proc->proc_hostname == NULL ? "<hostname unavailable>" :
@@ -301,7 +300,7 @@ int ompi_proc_refresh(void) {
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
-                opal_show_help("help-mpi-runtime",
+                orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
                                true, orte_process_info.nodename, 
                                proc->proc_hostname == NULL ? "<hostname unavailable>" :
@@ -440,7 +439,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
                 OBJ_RELEASE(plist[i]->proc_convertor);
                 plist[i]->proc_convertor = ompi_convertor_create(plist[i]->proc_arch, 0);
 #else
-                opal_show_help("help-mpi-runtime",
+                orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
                                true, orte_process_info.nodename, 
                                new_hostname == NULL ? "<hostname unavailable>" :

@@ -52,8 +52,6 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
-#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
 #include "opal/util/basename.h"
@@ -68,6 +66,7 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
+#include "orte/util/output.h"
 
 /******************
  * Local Functions
@@ -172,7 +171,7 @@ main(int argc, char *argv[])
      * Check for existence of the file
      */
     if( ORTE_SUCCESS != (ret = check_file(snapshot)) ) {
-        opal_show_help("help-orte-restart.txt", "invalid_filename", true,
+        orte_show_help("help-orte-restart.txt", "invalid_filename", true,
                        orte_restart_globals.filename);
         exit_status = ret;
         goto cleanup;
@@ -190,27 +189,27 @@ main(int argc, char *argv[])
      * Restart in this process [mpirun/orterun]
      ******************************/
     if( orte_restart_globals.verbose ) {
-        opal_output_verbose(10, orte_restart_globals.output,
+        orte_output_verbose(10, orte_restart_globals.output,
                             "Restarting from file (%s)",
                             orte_restart_globals.filename);
         
         if( orte_restart_globals.forked ) {
-            opal_output_verbose(10, orte_restart_globals.output,
+            orte_output_verbose(10, orte_restart_globals.output,
                                 "\t Forking off a child");
         } else {
-            opal_output_verbose(10, orte_restart_globals.output,
+            orte_output_verbose(10, orte_restart_globals.output,
                                 "\t Exec in self");
         }
     }
 
     if( ORTE_SUCCESS != (ret = spawn_children(snapshot, &child_pid)) ) {
-        opal_show_help("help-orte-restart.txt", "restart_cmd_failure", true,
+        orte_show_help("help-orte-restart.txt", "restart_cmd_failure", true,
                        orte_restart_globals.filename, ret);
         exit_status = ret;
         goto cleanup;
     }
 
-    opal_output_verbose(10, orte_restart_globals.output,
+    orte_output_verbose(10, orte_restart_globals.output,
                         "orte_restart: Restarted Child with PID = %d\n", child_pid);
 
     /***************
@@ -252,10 +251,10 @@ static int initialize(int argc, char *argv[]) {
      * Setup OPAL Output handle from the verbose argument
      */
     if( orte_restart_globals.verbose ) {
-        orte_restart_globals.output = opal_output_open(NULL);
-        opal_output_set_verbosity(orte_restart_globals.output, 10);
+        orte_restart_globals.output = orte_output_open(NULL, "ORTE", "RESTART", "DEBUG", NULL);
+        orte_output_set_verbosity(orte_restart_globals.output, 10);
     } else {
-        orte_restart_globals.output = 0; /* Default=STDOUT */
+        orte_restart_globals.output = 0; /* Default=STDERR */
     }
 
     /* Disable the checkpoint notification routine for this
@@ -362,7 +361,7 @@ static int parse_args(int argc, char *argv[])
     {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-restart.txt", "usage-no-cr",
+        orte_show_help("help-orte-restart.txt", "usage-no-cr",
                        true, args);
         free(args);
         return ORTE_ERROR;
@@ -374,7 +373,7 @@ static int parse_args(int argc, char *argv[])
         1 >= argc) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-restart.txt", "usage", true,
+        orte_show_help("help-orte-restart.txt", "usage", true,
                        args);
         free(args);
         return ORTE_ERROR;
@@ -385,7 +384,7 @@ static int parse_args(int argc, char *argv[])
     if ( 1 > argc ) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-restart.txt", "usage", true,
+        orte_show_help("help-orte-restart.txt", "usage", true,
                        args);
         free(args);
         return ORTE_ERROR;
@@ -394,7 +393,7 @@ static int parse_args(int argc, char *argv[])
     orte_restart_globals.filename = strdup(argv[0]);
     if ( NULL == orte_restart_globals.filename || 
          0 >= strlen(orte_restart_globals.filename) ) {
-        opal_show_help("help-orte-restart.txt", "invalid_filename", true,
+        orte_show_help("help-orte-restart.txt", "invalid_filename", true,
                        orte_restart_globals.filename);
         return ORTE_ERROR;
     }
@@ -413,7 +412,7 @@ static int check_file(orte_snapc_base_global_snapshot_t *snapshot)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    opal_output_verbose(10, orte_restart_globals.output,
+    orte_output_verbose(10, orte_restart_globals.output,
                         "Checking for the existence of (%s)\n",
                         snapshot->local_location);
 
@@ -546,7 +545,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
             /* Child Process */
             status = execvp(strdup(argv[0]), argv);
             if( 0 > status) {
-                opal_output(orte_restart_globals.output,
+                orte_output(orte_restart_globals.output,
                             "orte_restart: execv failed with status = %d\n",
                             status);
             }
@@ -558,7 +557,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
             ;
         }
         else {
-            opal_output(orte_restart_globals.output,
+            orte_output(orte_restart_globals.output,
                         "orte_restart: fork failed: This should never happen!");
             /* Fork failed :( */
             exit_status = *child_pid;

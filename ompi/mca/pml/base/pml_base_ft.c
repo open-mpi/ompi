@@ -31,7 +31,7 @@ int mca_pml_base_ft_event(int state)
     int ret;
 
 #if 0
-    opal_output(0, "pml:base: ft_event: Called (%d)!!\n", state);
+    orte_output(0, "pml:base: ft_event: Called (%d)!!\n", state);
 #endif
 
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -56,7 +56,7 @@ int mca_pml_base_ft_event(int state)
      * - MPool(s)
      */
     if( OMPI_SUCCESS != (ret = mca_bml.bml_ft_event(state))) {
-        opal_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
+        orte_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
                     ret);
     }
     

@@ -61,7 +61,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "ompi_coll_tuned_gather_intra_binomial rank %d", rank));
 
     /* create the binomial tree */
@@ -145,7 +145,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 		mycount = size - vkid;
 	    mycount *= rcount;
 
-	    OPAL_OUTPUT((ompi_coll_tuned_stream,
+	    ORTE_OUTPUT((ompi_coll_tuned_stream,
 			 "ompi_coll_tuned_gather_intra_binomial rank %d recv %d mycount = %d",
 			 rank, bmtree->tree_next[i], mycount));
 
@@ -160,7 +160,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 
     if (rank != root) {
 	/* all nodes except root send to parents */
-	OPAL_OUTPUT((ompi_coll_tuned_stream,
+	ORTE_OUTPUT((ompi_coll_tuned_stream,
 		     "ompi_coll_tuned_gather_intra_binomial rank %d send %d count %d\n",
 		     rank, bmtree->tree_prev, total_recv));
 
@@ -195,7 +195,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     if (NULL != tempbuf)
 	free(tempbuf);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
 		 __FILE__, line, err, rank));
     return err;
 }
@@ -229,7 +229,7 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
 
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "ompi_coll_tuned_gather_intra_linear_sync rank %d, segment %d", rank, first_segment_size));
 
     if (rank != root) {
@@ -335,7 +335,7 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
 
     return MPI_SUCCESS;
  error_hndl:
-    OPAL_OUTPUT (( ompi_coll_tuned_stream, 
+    ORTE_OUTPUT (( ompi_coll_tuned_stream, 
                    "ERROR_HNDL: node %d file %s line %d error %d\n", 
                    rank, __FILE__, line, ret ));
     return ret;
@@ -383,7 +383,7 @@ ompi_coll_tuned_gather_intra_basic_linear(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
 
     /* Everyone but root sends data and returns. */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "ompi_coll_tuned_gather_intra_basic_linear rank %d", rank));
 
     if (rank != root) {
@@ -454,7 +454,7 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
                               &(requested_alg));
     if( requested_alg > max_alg ) {
 	if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-	    opal_output( 0, "Gather algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+	    orte_output( 0, "Gather algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
 			 requested_alg, max_alg );
 	}
 	mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -497,7 +497,7 @@ ompi_coll_tuned_gather_intra_do_forced(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "coll:tuned:gather_intra_do_forced selected algorithm %d",
 		 data->user_forced[GATHER].algorithm));
 
@@ -523,7 +523,7 @@ ompi_coll_tuned_gather_intra_do_forced(void *sbuf, int scount,
                                                              first_segment_size);
         }
     default:
-	OPAL_OUTPUT((ompi_coll_tuned_stream,
+	ORTE_OUTPUT((ompi_coll_tuned_stream,
 		     "coll:tuned:gather_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
 		     data->user_forced[GATHER].algorithm,
 		     ompi_coll_tuned_forced_max_algorithms[GATHER]));
@@ -541,7 +541,7 @@ ompi_coll_tuned_gather_intra_do_this(void *sbuf, int scount,
 				     struct mca_coll_base_module_1_1_0_t *module,
 				     int algorithm, int faninout, int segsize)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "coll:tuned:gather_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
 		 algorithm, faninout, segsize));
    
@@ -565,7 +565,7 @@ ompi_coll_tuned_gather_intra_do_this(void *sbuf, int scount,
 							 segsize);
 
     default:
-	OPAL_OUTPUT((ompi_coll_tuned_stream,
+	ORTE_OUTPUT((ompi_coll_tuned_stream,
 		     "coll:tuned:gather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
 		     algorithm, 
 		     ompi_coll_tuned_forced_max_algorithms[GATHER]));

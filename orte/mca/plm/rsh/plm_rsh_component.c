@@ -37,12 +37,12 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
-#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -121,7 +121,7 @@ int orte_plm_rsh_component_open(void)
                            "How many plm_rsh_agent instances to invoke concurrently (must be > 0)",
                            false, false, 128, &tmp);
     if (tmp <= 0) {
-        opal_show_help("help-plm-rsh.txt", "concurrency-less-than-zero",
+        orte_show_help("help-plm-rsh.txt", "concurrency-less-than-zero",
                        true, tmp);
         tmp = 1;
     }
@@ -182,7 +182,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
 
         bname = opal_basename(mca_plm_rsh_component.agent_argv[0]);
         if (NULL != bname && 0 == strcmp(bname, "ssh")
-            && 0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
+            && 0 >= orte_output_get_verbosity(orte_plm_globals.output)) {
             for (i = 1; NULL != mca_plm_rsh_component.agent_argv[i]; ++i) {
                 if (0 == strcasecmp("-x", 
                                     mca_plm_rsh_component.agent_argv[i])) {
@@ -203,7 +203,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
        component */
     if (NULL == mca_plm_rsh_component.agent_argv || 
         NULL == mca_plm_rsh_component.agent_argv[0]) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find the "
                              "launching agent. Looked for: %s\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -215,7 +215,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         opal_path_findv(mca_plm_rsh_component.agent_argv[0], X_OK,
                         environ, NULL);
     if (NULL == mca_plm_rsh_component.agent_path) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find path "
                              "for launching agent \"%s\"\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

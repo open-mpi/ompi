@@ -283,8 +283,8 @@ extern "C" {
  */
 OMPI_DECLSPEC extern int mca_io_base_param;
 /**
- * io framework debugging stream ID used with opal_output() and
- * opal_output_verbose().
+ * io framework debugging stream ID used with orte_output() and
+ * orte_output_verbose().
  */
 OMPI_DECLSPEC extern int mca_io_base_output;
 

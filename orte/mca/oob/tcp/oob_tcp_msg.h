@@ -29,7 +29,7 @@
 #include <errno.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/oob/oob.h"
 #include "oob_tcp_peer.h"

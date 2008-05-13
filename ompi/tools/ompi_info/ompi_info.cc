@@ -41,10 +41,9 @@
 #include "opal/class/opal_object.h"
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/base/base.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
@@ -80,8 +79,8 @@ int main(int argc, char *argv[])
   int i, len;
 
   // Initialize the argv parsing handle
-  if (OMPI_SUCCESS != opal_init_util()) {
-    opal_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+  if (OMPI_SUCCESS != orte_init(ORTE_TOOL)) {
+    orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                    "opal_init_util", __FILE__, __LINE__, NULL);
     exit(ret);
   }
@@ -89,7 +88,7 @@ int main(int argc, char *argv[])
   cmd_line = OBJ_NEW(opal_cmd_line_t);
   if (NULL == cmd_line) {
     ret = errno;
-    opal_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+    orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                    "opal_cmd_line_create", __FILE__, __LINE__, NULL);
     exit(ret);
   }
@@ -137,7 +136,7 @@ int main(int argc, char *argv[])
   // Get MCA parameters, if any */
   
   if( OMPI_SUCCESS != mca_base_open() ) {
-      opal_show_help("help-ompi_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
+      orte_show_help("help-ompi_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
       exit(1);
   }
   mca_base_cmd_line_setup(cmd_line);
@@ -154,7 +153,7 @@ int main(int argc, char *argv[])
   }
   if (cmd_error || want_help) {
       char *usage = opal_cmd_line_get_usage_msg(cmd_line);
-      opal_show_help("help-ompi_info.txt", "usage", true, usage);
+      orte_show_help("help-ompi_info.txt", "usage", true, usage);
       free(usage);
       exit(cmd_error ? 1 : 0);
   }

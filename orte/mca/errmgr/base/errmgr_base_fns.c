@@ -25,7 +25,7 @@
 #endif
 #include <stdlib.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/trace.h"
 #include "opal/util/error.h"
 
@@ -47,7 +47,7 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
         return;
     }
     
-    opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
+    orte_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 ORTE_ERROR_NAME(error_code), filename, line);
 }
@@ -71,7 +71,7 @@ void orte_errmgr_base_error_abort(int error_code, char *fmt, ...)
     if( NULL != fmt ) {
         char* buffer = NULL;
         vasprintf( &buffer, fmt, arglist );
-        opal_output( 0, buffer );
+        orte_output( 0, buffer );
         free( buffer );
     }
     va_end(arglist);

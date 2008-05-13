@@ -20,7 +20,7 @@
 
 #include "orte/util/name_fns.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -40,7 +40,7 @@ int orte_rml_ftrm_module_enable_comm(void)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: module_init(): Normal...");
 
     if( NULL != orte_rml_ftrm_wrapped_module.enable_comm ) {
@@ -59,7 +59,7 @@ int orte_rml_ftrm_module_finalize(void)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: module_finalize()");
 
 
@@ -77,7 +77,7 @@ int orte_rml_ftrm_get_new_name(orte_process_name_t *name)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: get_new_name()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.get_new_name ) {
@@ -97,7 +97,7 @@ char * orte_rml_ftrm_get_contact_info(void)
 {
     char * rtn_val = NULL;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: get_uri()");
 
 
@@ -115,7 +115,7 @@ int orte_rml_ftrm_set_contact_info(const char* contact_info)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: set_contact_info()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.set_contact_info ) {
@@ -135,7 +135,7 @@ int orte_rml_ftrm_ping(const char* uri, const struct timeval* tv)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: ping()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.ping ) {
@@ -159,7 +159,7 @@ int orte_rml_ftrm_send(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send(%s, %d, %d, %d )",
                         ORTE_NAME_PRINT(peer), count, tag, flags);
 
@@ -185,7 +185,7 @@ int orte_rml_ftrm_send_nb(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send_nb(%s, %d, %d, %d )",
                         ORTE_NAME_PRINT(peer), count, tag, flags);
 
@@ -208,7 +208,7 @@ int orte_rml_ftrm_send_buffer(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send_buffer(%s, %d, %d )",
                         ORTE_NAME_PRINT(peer), tag, flags);
 
@@ -233,7 +233,7 @@ int orte_rml_ftrm_send_buffer_nb(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send_buffer_nb(%s, %d, %d )",
                         ORTE_NAME_PRINT(peer), tag, flags);
 
@@ -258,7 +258,7 @@ int orte_rml_ftrm_recv(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv(%s, %d, %d, %d )",
                         ORTE_NAME_PRINT(peer), count, tag, flags);
 
@@ -284,7 +284,7 @@ int orte_rml_ftrm_recv_nb(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_nb(%s, %d, %d, %d )",
                         ORTE_NAME_PRINT(peer), count, tag, flags);
 
@@ -307,7 +307,7 @@ int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_buffer(%s, %d )",
                         ORTE_NAME_PRINT(peer), tag);
 
@@ -331,7 +331,7 @@ int orte_rml_ftrm_recv_buffer_nb(orte_process_name_t* peer,
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_buffer_nb(%s, %d, %d)",
                         ORTE_NAME_PRINT(peer), tag, flags);
 
@@ -351,7 +351,7 @@ int orte_rml_ftrm_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_cancel()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.recv_cancel ) {
@@ -371,7 +371,7 @@ int orte_rml_ftrm_add_exception_handler(orte_rml_exception_callback_t cbfunc)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: add_exception_handler()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.add_exception_handler ) {
@@ -387,7 +387,7 @@ int orte_rml_ftrm_del_exception_handler(orte_rml_exception_callback_t cbfunc)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: del_exception_handler()");
 
     if( NULL != orte_rml_ftrm_wrapped_module.del_exception_handler ) {
@@ -406,7 +406,7 @@ int orte_rml_ftrm_ft_event(int state)
 {
     int ret;
 
-    opal_output_verbose(20, rml_ftrm_output_handle,
+    orte_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: ft_event()");
 
     if(OPAL_CRS_CHECKPOINT == state) {

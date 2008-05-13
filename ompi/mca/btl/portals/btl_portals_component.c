@@ -25,9 +25,12 @@
 
 #include "ompi/constants.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/util/output.h"
+
 #include "ompi/mca/common/portals/common_portals.h"
 
 #include "btl_portals.h"
@@ -67,7 +70,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
 };
 
 
-static opal_output_stream_t portals_output_stream;
+static orte_output_stream_t portals_output_stream;
 
 int
 mca_btl_portals_component_open(void)
@@ -81,7 +84,7 @@ mca_btl_portals_component_open(void)
      */
 
     /* start up debugging output */
-    OBJ_CONSTRUCT(&portals_output_stream, opal_output_stream_t);
+    OBJ_CONSTRUCT(&portals_output_stream, orte_output_stream_t);
     portals_output_stream.lds_is_debugging = true;
     portals_output_stream.lds_want_stdout = true;
     portals_output_stream.lds_file_suffix = "btl-portals";
@@ -95,7 +98,7 @@ mca_btl_portals_component_open(void)
     asprintf(&(portals_output_stream.lds_prefix),
              "btl: portals (%s): ", ompi_common_portals_nodeid());
     mca_btl_portals_component.portals_output = 
-        opal_output_open(&portals_output_stream);
+        orte_output_open(&portals_output_stream, "BTL", "PORTALS", "DEBUG", NULL);
 
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "free_list_init_num",
@@ -226,7 +229,7 @@ mca_btl_portals_component_close(void)
     }
 
     /* close debugging stream */
-    opal_output_close(mca_btl_portals_component.portals_output);
+    orte_output_close(mca_btl_portals_component.portals_output);
     mca_btl_portals_component.portals_output = -1;
 
     return OMPI_SUCCESS;
@@ -243,7 +246,7 @@ mca_btl_portals_component_init(int *num_btls,
     btls[0] = (mca_btl_base_module_t*) &mca_btl_portals_module;
 
     if (enable_progress_threads || enable_mpi_threads) {
-        opal_output_verbose(20, mca_btl_portals_component.portals_output,
+        orte_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because threads enabled");
         return NULL;
     }
@@ -251,7 +254,7 @@ mca_btl_portals_component_init(int *num_btls,
     /* initialize portals btl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
     if (OMPI_SUCCESS != ompi_common_portals_initialize(&mca_btl_portals_module.portals_ni_h, &accel)) {
-        opal_output_verbose(20, mca_btl_portals_component.portals_output,
+        orte_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because compatibility init failed");
         return NULL;
     }
@@ -308,7 +311,7 @@ mca_btl_portals_component_init(int *num_btls,
 
     *num_btls = 1;
 
-    opal_output_verbose(20, mca_btl_portals_component.portals_output,
+    orte_output_verbose(20, mca_btl_portals_component.portals_output,
                         "initialized Portals module");
 
     return btls;
@@ -344,7 +347,7 @@ mca_btl_portals_component_progress(void)
             switch (ev.type) {
             case PTL_EVENT_GET_START:
                 /* generated on source (target) when a get from memory starts */
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_GET_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
                 
@@ -352,13 +355,13 @@ mca_btl_portals_component_progress(void)
                 
             case PTL_EVENT_GET_END:
                 /* generated on source (target) when a get from memory ends */
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_GET_END for 0x%lx, %d, flags %d",
                                      (unsigned long) frag, (int) ev.hdr_data, 
                                      frag->base.des_flags));
                 
                 if( btl_ownership ) {
-                    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                          "in PTL_EVENT_GET_END received a frag with btl_ownership!"));
                     mca_btl_portals_free(&mca_btl_portals_module.super,
                                          &frag->base);
@@ -366,13 +369,13 @@ mca_btl_portals_component_progress(void)
                 break;
             case PTL_EVENT_PUT_START:
                 /* generated on destination (target) when a put into memory starts */
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
-                    opal_output(mca_btl_portals_component.portals_output,
+                    orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to start event\n");
                     return OMPI_ERROR;
                 }
@@ -387,13 +390,13 @@ mca_btl_portals_component_progress(void)
 
             case PTL_EVENT_PUT_END: 
                 /* generated on destination (target) when a put into memory ends */
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_END for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
-                    opal_output(mca_btl_portals_component.portals_output,
+                    orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to end event\n");
                     mca_btl_portals_return_block_part(&mca_btl_portals_module,
                                                       block);
@@ -411,7 +414,7 @@ mca_btl_portals_component_progress(void)
                     frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
                     frag->segments[0].seg_len = ev.mlength;
 
-                    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                          "received send fragment 0x%lx (thresh: %d, length %d)", 
                                          (unsigned long) frag,
                                          ev.md.threshold, (int) ev.mlength));
@@ -422,7 +425,7 @@ mca_btl_portals_component_progress(void)
                            can't start it up again until everyone is done with it.
                            The actual reactivation and all that will happen after the
                            free completes the last operation... */
-                        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                        ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                              "marking block 0x%lx as full",
                                              (unsigned long) block->start));
                         block->full = true;
@@ -441,7 +444,7 @@ mca_btl_portals_component_progress(void)
                 /* generated on destination (origin) when a get starts
                    returning data */
                 
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_REPLY_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
                 
@@ -451,7 +454,7 @@ mca_btl_portals_component_progress(void)
                 /* generated on destination (origin) when a get is
                    done returning data */
                 
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_REPLY_END for 0x%lx",
                                      (unsigned long) frag));
                 
@@ -461,7 +464,7 @@ mca_btl_portals_component_progress(void)
                                       &frag->base,
                                       OMPI_SUCCESS);
                 if( btl_ownership ) {
-                    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                         "in PTL_EVENT_REPLY_END received a frag with btl_ownership!"));
                     mca_btl_portals_free(&mca_btl_portals_module.super,
                                          &frag->base);
@@ -473,12 +476,12 @@ mca_btl_portals_component_progress(void)
                 /* generated on source (origin) when put starts sending */
 
 #if OMPI_ENABLE_DEBUG
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_START for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
 
                 if (ev.ni_fail_type != PTL_NI_OK) {
-                    opal_output(mca_btl_portals_component.portals_output,
+                    orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to start send event\n");
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
@@ -495,12 +498,12 @@ mca_btl_portals_component_progress(void)
             case PTL_EVENT_SEND_END:
                 /* generated on source (origin) when put stops sending */
 #if OMPI_ENABLE_DEBUG
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_SEND_END for 0x%lx, %d",
                                      (unsigned long) frag, (int) ev.hdr_data));
                 
                 if (ev.ni_fail_type != PTL_NI_OK) {
-                    opal_output(mca_btl_portals_component.portals_output,
+                    orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to end send event\n");
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
@@ -537,18 +540,18 @@ mca_btl_portals_component_progress(void)
                    just call the callback function on goodness.
                    Requeue the put on badness */
 
-                OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_ACK for 0x%lx",
                                      (unsigned long) frag));
                 
 #if OMPI_ENABLE_DEBUG
                 if(!mca_btl_portals_component.portals_need_ack) { 
-                    opal_output(mca_btl_portals_component.portals_output, 
+                    orte_output(mca_btl_portals_component.portals_output, 
                                 "Received PTL_EVENT_ACK but ACK's are disabled!\n");
                     abort();
                 }
                 if (ev.ni_fail_type != PTL_NI_OK) {
-                    opal_output(mca_btl_portals_component.portals_output,
+                    orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to ack event\n");
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
@@ -566,7 +569,7 @@ mca_btl_portals_component_progress(void)
                        This should only happen for unexpected
                        messages, and only when the other side has no
                        buffer space available for receiving */
-                    opal_output_verbose(50,
+                    orte_output_verbose(50,
                                         mca_btl_portals_component.portals_output,
                                         "message was dropped.  Trying again");
                     
@@ -611,15 +614,15 @@ mca_btl_portals_component_progress(void)
 
         case PTL_EQ_DROPPED:
             /* not sure how we could deal with this more gracefully */
-            opal_output(mca_btl_portals_component.portals_output,
+            orte_output(mca_btl_portals_component.portals_output,
                         "WARNING: EQ events dropped.  Too many messages pending.");
-            opal_output(mca_btl_portals_component.portals_output,
+            orte_output(mca_btl_portals_component.portals_output,
                         "WARNING: Giving up in dispair");
             abort();
             break;
         
         default:
-            opal_output(mca_btl_portals_component.portals_output,
+            orte_output(mca_btl_portals_component.portals_output,
                         "WARNING: Error in PtlEQPoll (%d).  This shouldn't happen",
                         ret);
             abort();

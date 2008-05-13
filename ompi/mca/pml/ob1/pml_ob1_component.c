@@ -130,14 +130,14 @@ static int mca_pml_ob1_component_open(void)
 
     allocator_component = mca_allocator_component_lookup( mca_pml_ob1.allocator_name );
     if(NULL == allocator_component) {
-        opal_output(0, "mca_pml_ob1_component_open: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
+        orte_output(0, "mca_pml_ob1_component_open: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
         return OMPI_ERROR;
     }
     mca_pml_ob1.allocator = allocator_component->allocator_init(true,
                                                                 mca_pml_ob1_seg_alloc,
                                                                 mca_pml_ob1_seg_free, NULL);
     if(NULL == mca_pml_ob1.allocator) {
-        opal_output(0, "mca_pml_ob1_component_open: unable to initialize allocator\n");
+        orte_output(0, "mca_pml_ob1_component_open: unable to initialize allocator\n");
         return OMPI_ERROR;
     }
 
@@ -166,7 +166,7 @@ mca_pml_ob1_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
-    opal_output_verbose( 10, 0, 
+    orte_output_verbose( 10, 0, 
                          "in ob1, my priority is %d\n", mca_pml_ob1.priority);
     
     if((*priority) > mca_pml_ob1.priority) { 
@@ -219,13 +219,13 @@ int mca_pml_ob1_component_fini(void)
 #if 0
     if (mca_pml_base_send_requests.fl_num_allocated !=
         mca_pml_base_send_requests.super.opal_list_length) {
-        opal_output(0, "ob1 send requests: %d allocated %d returned\n",
+        orte_output(0, "ob1 send requests: %d allocated %d returned\n",
                     mca_pml_base_send_requests.fl_num_allocated,
                     mca_pml_base_send_requests.super.opal_list_length);
     }
     if (mca_pml_base_recv_requests.fl_num_allocated !=
         mca_pml_base_recv_requests.super.opal_list_length) {
-        opal_output(0, "ob1 recv requests: %d allocated %d returned\n",
+        orte_output(0, "ob1 recv requests: %d allocated %d returned\n",
                     mca_pml_base_recv_requests.fl_num_allocated,
                     mca_pml_base_recv_requests.super.opal_list_length);
     }

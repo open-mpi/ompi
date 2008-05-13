@@ -9,8 +9,11 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+
+#include "orte/util/output.h"
+
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -24,7 +27,9 @@
 
 int               orte_rml_base_output = -1;
 opal_list_t       orte_rml_base_subscriptions;
-orte_rml_module_t orte_rml;
+orte_rml_module_t orte_rml = {
+    NULL,
+};
 opal_list_t       orte_rml_base_components;
 orte_rml_component_t *orte_rml_component = NULL;
 
@@ -51,7 +56,7 @@ orte_rml_base_open(void)
                                    NULL, NULL);
     
     /* register parameters */
-    orte_rml_base_output = opal_output_open(NULL);
+    orte_rml_base_output = orte_output_open(NULL, "RML", "DEBUG", NULL);
     
     /* Open up all available components */
     ret = mca_base_components_open("rml",
@@ -93,20 +98,20 @@ orte_rml_base_select(void)
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_rml_component_t *) cli->cli_component;
 
-        opal_output_verbose(10, orte_rml_base_output, 
+        orte_output_verbose(10, orte_rml_base_output, 
                             "orte_rml_base_select: initializing %s component %s",
                             component->rml_version.mca_type_name,
                             component->rml_version.mca_component_name);
 
         if (NULL == component->rml_init) {
-            opal_output_verbose(10, orte_rml_base_output, 
+            orte_output_verbose(10, orte_rml_base_output, 
                                 "orte_rml_base_select: no init function; ignoring component");
         } else {
             int priority = 0;
 
             orte_rml_module_t* module = component->rml_init(&priority);
             if (NULL == module) {
-                opal_output_verbose(10, orte_rml_base_output,
+                orte_output_verbose(10, orte_rml_base_output,
                                     "orte_rml_base_select: init returned failure");
                 continue;
             }
@@ -154,7 +159,7 @@ orte_rml_base_select(void)
         }
         /* Not the selected component */
         if (component != selected_component) {
-            opal_output_verbose(10, orte_rml_base_output,
+            orte_output_verbose(10, orte_rml_base_output,
                                 "orte_rml_base_select: module %s unloaded",
                                 component->rml_version.mca_component_name);
 

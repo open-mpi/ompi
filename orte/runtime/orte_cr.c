@@ -41,7 +41,7 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/event/event.h"
 #include "opal/mca/crs/crs.h"
@@ -54,6 +54,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
@@ -115,14 +116,20 @@ int orte_cr_init(void)
                                 false, false,
                                 0,
                                 &val);
+    
+    /*** RHC: This is going to crash-and-burn when the output conversion is
+     * completed as orte_output will have no idea what opal_cr_output stream means,
+     * or even worse, will have assigned it to someone else!
+     */
+    
     if(0 != val) {
-        orte_cr_output = opal_output_open(NULL);
-        opal_output_set_verbosity(orte_cr_output, val);
+        orte_cr_output = orte_output_open(NULL, "ORTE", "CR", "DEBUG", NULL);
+        orte_output_set_verbosity(orte_cr_output, val);
     } else {
         orte_cr_output = opal_cr_output;
     }
 
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: init: orte_cr_init()\n");
 
     /* Init ORTE Entry Point Function */
@@ -144,7 +151,7 @@ int orte_cr_init(void)
  */
 int orte_cr_finalize(void)
 {
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: finalize: orte_cr_finalize()");
 
     orte_cr_entry_point_finalize();
@@ -164,7 +171,7 @@ int orte_cr_coord(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord: orte_cr_coord(%s)",
                         opal_crs_base_state_str((opal_crs_state_type_t)state));
 
@@ -240,7 +247,7 @@ static int orte_cr_coord_pre_ckpt(void) {
     /*
      * All the checkpoint heavey lifting in here...
      */
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_pre_ckpt: orte_cr_coord_pre_ckpt()");
 
     /*
@@ -263,7 +270,7 @@ static int orte_cr_coord_pre_restart(void) {
      * Can not really do much until OPAL is up and running,
      * so defer action until the post_restart function.
      */
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_pre_restart: orte_cr_coord_pre_restart()");
     
     return ORTE_SUCCESS;
@@ -274,7 +281,7 @@ static int orte_cr_coord_pre_continue(void) {
      * Can not really do much until OPAL is up and running,
      * so defer action until the post_continue function.
      */
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_pre_continue: orte_cr_coord_pre_continue()");
 
     return ORTE_SUCCESS;
@@ -288,7 +295,7 @@ static int orte_cr_coord_post_ckpt(void) {
      * Now that OPAL is shutdown, we really can't do much
      * so assume pre_ckpt took care of everything.
      */
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_post_ckpt: orte_cr_coord_post_ckpt()");
 
     return ORTE_SUCCESS;
@@ -297,7 +304,7 @@ static int orte_cr_coord_post_ckpt(void) {
 static int orte_cr_coord_post_restart(void) {
     int ret, exit_status = ORTE_SUCCESS;
 
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_post_restart: orte_cr_coord_post_restart()");
 
     /*
@@ -339,7 +346,7 @@ static int orte_cr_coord_post_restart(void) {
 static int orte_cr_coord_post_continue(void) {
     int ret, exit_status = ORTE_SUCCESS;
 
-    opal_output_verbose(10, orte_cr_output,
+    orte_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_post_continue: orte_cr_coord_post_continue()\n");
 
     /*

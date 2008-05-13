@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -484,7 +484,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
  
         default:
             /* error condition can't deal with */
-            opal_output(0, "[%s:%d] send completed with unhandled gm error %d\n", __FILE__,__LINE__,status);
+            orte_output(0, "[%s:%d] send completed with unhandled gm error %d\n", __FILE__,__LINE__,status);
 
             /* release the send token */
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
@@ -678,7 +678,7 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             break;
         default:
             /* error condition can't deal with */
-            opal_output(0, "[%s:%d] gm_put operation failed with status %d\n", __FILE__, __LINE__, status);
+            orte_output(0, "[%s:%d] gm_put operation failed with status %d\n", __FILE__, __LINE__, status);
 
             /* release the send token */
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
@@ -832,7 +832,7 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             break;
         default:
             /* error condition can't deal with */
-            opal_output(0, "[%s:%d] gm_get operation failed with status %d\n", __FILE__, __LINE__, status);
+            orte_output(0, "[%s:%d] gm_get operation failed with status %d\n", __FILE__, __LINE__, status);
 
             /* release the send token */
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );

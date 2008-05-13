@@ -34,7 +34,7 @@
 
 /* Open MPI includes */
 #include "opal/class/opal_hash_table.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/sys/timer.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
@@ -345,7 +345,7 @@ do {                                                                         \
 } while(0)
 
 #define MCA_BTL_UD_SHOW_TIME(var)                                            \
-    OPAL_OUTPUT((0, "  " #var " avg %lu cnt %lu",                            \
+    ORTE_OUTPUT((0, "  " #var " avg %lu cnt %lu",                            \
         (mca_btl_ud_profile.avg_ ## var) / (mca_btl_ud_profile.cnt_ ## var), \
         mca_btl_ud_profile.cnt_ ## var));
 

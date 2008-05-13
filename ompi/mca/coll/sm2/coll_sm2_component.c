@@ -31,7 +31,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
 #include "orte/mca/rml/rml.h"

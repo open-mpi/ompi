@@ -28,8 +28,8 @@
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/runtime/params.h"
@@ -183,7 +183,7 @@ mca_btl_udapl_error(DAT_RETURN ret, char* str)
         exit(-1);
     }
 
-    OPAL_OUTPUT((0, "ERROR: %s %s %s\n", str, major, minor));
+    ORTE_OUTPUT((0, "ERROR: %s %s %s\n", str, major, minor));
 }
 #endif
 

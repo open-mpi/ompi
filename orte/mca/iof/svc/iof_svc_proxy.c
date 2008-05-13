@@ -20,7 +20,7 @@
 #include "orte/types.h"
 #include "orte/constants.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -72,49 +72,49 @@ void orte_iof_svc_proxy_recv(
     switch(hdr->hdr_common.hdr_type) {
         case ORTE_IOF_BASE_HDR_MSG:
             ORTE_IOF_BASE_HDR_MSG_NTOH(hdr->hdr_msg);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_MSG\n");
             orte_iof_svc_proxy_msg(peer, &hdr->hdr_msg,
                 ((unsigned char*)iov[0].iov_base)+sizeof(orte_iof_base_header_t));
             break;
         case ORTE_IOF_BASE_HDR_ACK:
             ORTE_IOF_BASE_HDR_MSG_NTOH(hdr->hdr_msg);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_ACK\n");
             orte_iof_svc_proxy_ack(peer, &hdr->hdr_msg, false);
             break;
         case ORTE_IOF_BASE_HDR_CLOSE:
             ORTE_IOF_BASE_HDR_MSG_NTOH(hdr->hdr_msg);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_CLOSE\n");
             orte_iof_svc_proxy_ack(peer, &hdr->hdr_msg, true);
             break;
         case ORTE_IOF_BASE_HDR_PUB:
             ORTE_IOF_BASE_HDR_PUB_NTOH(hdr->hdr_pub);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_PUB\n");
             orte_iof_svc_proxy_pub(peer, &hdr->hdr_pub);
             break;
         case ORTE_IOF_BASE_HDR_UNPUB:
             ORTE_IOF_BASE_HDR_PUB_NTOH(hdr->hdr_pub);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_UNPUB\n");
             orte_iof_svc_proxy_unpub(peer, &hdr->hdr_pub);
             break;
         case ORTE_IOF_BASE_HDR_SUB:
             ORTE_IOF_BASE_HDR_SUB_NTOH(hdr->hdr_sub);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_SUB\n");
             orte_iof_svc_proxy_sub(peer, &hdr->hdr_sub);
             break;
         case ORTE_IOF_BASE_HDR_UNSUB:
             ORTE_IOF_BASE_HDR_SUB_NTOH(hdr->hdr_sub);
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_proxy_recv: HDR_UNSUB\n");
             orte_iof_svc_proxy_unsub(peer, &hdr->hdr_sub);
             break;
         default:
-            opal_output(orte_iof_base.iof_output,
+            orte_output_verbose(1, orte_iof_base.iof_output,
                         "orte_iof_svc_recv: invalid message type: %d (ignored)\n",
                         hdr->hdr_common.hdr_type);
             break;
@@ -159,7 +159,7 @@ static void orte_iof_svc_proxy_msg(
 {
     opal_list_item_t* item;
     bool forwarded_at_all = false, forward = false;
-    opal_output(orte_iof_base.iof_output,
+    orte_output_verbose(1, orte_iof_base.iof_output,
                 "orte_iof_svc_proxy_msg: tag %d seq %d",
                 hdr->msg_tag,hdr->msg_seq);
 
@@ -178,7 +178,7 @@ static void orte_iof_svc_proxy_msg(
         /* if the subscription origin doesn't match the message's
            origin, skip this subscription */
         if (OPAL_EQUAL == orte_util_compare_name_fields(sub->origin_mask,&sub->origin_name,&hdr->msg_origin)) {
-            opal_output(orte_iof_base.iof_output, "sub MATCH: origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d",
+            orte_output_verbose(1, orte_iof_base.iof_output, "sub MATCH: origin %s, msg origin %s, msg proxy %s orte_iof_svc_proxy_msg: tag %d sequence %d, len %d",
                         ORTE_NAME_PRINT(&sub->origin_name),
                         ORTE_NAME_PRINT(&hdr->msg_origin),
                         ORTE_NAME_PRINT(&hdr->msg_proxy),
@@ -201,7 +201,7 @@ static void orte_iof_svc_proxy_msg(
         orte_iof_base_frag_t* frag;
         int rc;
 
-        opal_output(orte_iof_base.iof_output, "no sub match found -- dropped");
+        orte_output_verbose(1, orte_iof_base.iof_output, "no sub match found -- dropped");
         ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
         if(NULL == frag) {
             ORTE_ERROR_LOG(rc);
@@ -248,7 +248,7 @@ static void orte_iof_svc_proxy_pub(
     orte_iof_base_pub_header_t* hdr)
 {
     int rc;
-    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_pub: mask %d, tag %d, proc %s, proxy %s",
+    orte_output_verbose(1, orte_iof_base.iof_output, "orte_iof_svc_proxy_pub: mask %d, tag %d, proc %s, proxy %s",
                 hdr->pub_mask, hdr->pub_tag, 
                 ORTE_NAME_PRINT(&hdr->pub_name),
                 ORTE_NAME_PRINT(&hdr->pub_proxy));
@@ -273,7 +273,7 @@ static void orte_iof_svc_proxy_unpub(
     orte_iof_base_pub_header_t* hdr)
 {
     int rc;
-    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_unpub: mask %d, tag %d, proc %s, proxy %s",
+    orte_output_verbose(1, orte_iof_base.iof_output, "orte_iof_svc_proxy_unpub: mask %d, tag %d, proc %s, proxy %s",
                 hdr->pub_mask, hdr->pub_tag, 
                 ORTE_NAME_PRINT(&hdr->pub_name),
                 ORTE_NAME_PRINT(&hdr->pub_proxy));
@@ -299,7 +299,7 @@ static void orte_iof_svc_proxy_sub(
     orte_iof_base_sub_header_t* hdr)
 {
     int rc;
-    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_sub");
+    orte_output_verbose(1, orte_iof_base.iof_output, "orte_iof_svc_proxy_sub");
 
     rc = orte_iof_svc_sub_create(
         &hdr->origin_name,
@@ -322,7 +322,7 @@ static void orte_iof_svc_proxy_unsub(
     orte_iof_base_sub_header_t* hdr)
 {
     int rc;
-    opal_output(orte_iof_base.iof_output, "orte_iof_svc_proxy_unsub");
+    orte_output_verbose(1, orte_iof_base.iof_output, "orte_iof_svc_proxy_unsub");
 
     rc = orte_iof_svc_sub_delete(
         &hdr->origin_name,

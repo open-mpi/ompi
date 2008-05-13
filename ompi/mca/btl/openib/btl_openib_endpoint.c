@@ -380,7 +380,7 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
     ep->rem_info.rem_lid = remote_proc_info->pm_port_info.lid;
     ep->rem_info.rem_subnet_id = remote_proc_info->pm_port_info.subnet_id;
     ep->rem_info.rem_mtu = remote_proc_info->pm_port_info.mtu;
-    opal_output(-1, "Got remote LID, subnet, MTU: %d, %lx, %d", 
+    orte_output(-1, "Got remote LID, subnet, MTU: %d, %lx, %d", 
                 ep->rem_info.rem_lid,
                 ep->rem_info.rem_subnet_id,
                 ep->rem_info.rem_mtu);

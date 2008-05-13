@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -42,7 +42,7 @@ mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                               struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo alltoallv_intra");
+    orte_output_verbose(10, mca_coll_base_output, "In demo alltoallv_intra");
     return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps,
                                                   sdtype, rbuf, rcounts,
                                                   rdisps, rdtype, comm,
@@ -66,7 +66,7 @@ mca_coll_demo_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
                               struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo alltoallv_inter");
+    orte_output_verbose(10, mca_coll_base_output, "In demo alltoallv_inter");
     return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps,
                                                   sdtype, rbuf, rcounts,
                                                   rdisps, rdtype, comm,

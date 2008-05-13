@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 
@@ -64,7 +64,7 @@ static bool server_setup=false;
 
 static void setup_server(void)
 {
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: setting up server at URI %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == mca_pubsub_orte_component.server_uri) ? "NULL" : mca_pubsub_orte_component.server_uri));
@@ -86,7 +86,7 @@ static void setup_server(void)
     /* flag setup as completed */
     server_setup = true;
     
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: server %s setup",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mca_pubsub_orte_component.server)));
@@ -116,7 +116,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
 
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: publishing service %s scope %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));
@@ -133,7 +133,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
          * if that server wasn't contacted
          */
         if (!mca_pubsub_orte_component.server_found) {
-            opal_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
+            orte_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
                            true, (long)ORTE_PROC_MY_NAME->vpid, "publish to");
             return OMPI_ERR_NOT_FOUND;
         }
@@ -232,7 +232,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
             if (NULL != tokens) {
                 if ((num_tokens = opal_argv_count(tokens)) > 2) {
                     /* too many values in the comma-delimited list */
-                    opal_show_help("help-ompi-pubsub-orte.txt",
+                    orte_show_help("help-ompi-pubsub-orte.txt",
                                    "pubsub-orte:too-many-orders",
                                    true, (long)ORTE_PROC_MY_NAME->vpid,
                                    (long)num_tokens);
@@ -246,7 +246,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
                             lookup[i] = GLOBAL;
                         } else {
                             /* unrecognized value -- that's an error */
-                            opal_show_help("help-ompi-pubsub-orte.txt",
+                            orte_show_help("help-ompi-pubsub-orte.txt",
                                            "pubsub-orte:unknown-order",
                                            true, (long)ORTE_PROC_MY_NAME->vpid);
                             return NULL;
@@ -260,7 +260,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         }
     }
     
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: lookup service %s scope %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, lookup[0]));
@@ -271,7 +271,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         /* if the user provided an info key, then we at least must
          * be given one place to look
          */
-        opal_show_help("help-ompi-pubsub-orte.txt",
+        orte_show_help("help-ompi-pubsub-orte.txt",
                        "pubsub-orte:unknown-order",
                        true, (long)ORTE_PROC_MY_NAME->vpid);
         return NULL;
@@ -287,7 +287,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
             /* if we were told to look global first and no server is
              * present, then that is an error
              */
-            opal_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
+            orte_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
                            true, (long)ORTE_PROC_MY_NAME->vpid, "lookup from");
             return NULL;
         }
@@ -307,7 +307,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
              * if that server wasn't contacted
              */
             if (!mca_pubsub_orte_component.server_found) {
-                opal_show_help("help-ompi-pubsub-orte.txt",
+                orte_show_help("help-ompi-pubsub-orte.txt",
                                "pubsub-orte:no-server",
                                true, (long)ORTE_PROC_MY_NAME->vpid,
                                "lookup from");
@@ -316,7 +316,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
             info_host = &mca_pubsub_orte_component.server;
         } else {
             /* unknown host! */
-            opal_show_help("help-ompi-pubsub-orte.txt",
+            orte_show_help("help-ompi-pubsub-orte.txt",
                            "pubsub-orte:unknown-order",
                            true, (long)ORTE_PROC_MY_NAME->vpid);
             return NULL;
@@ -406,7 +406,7 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: unpublish service %s scope %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));
@@ -423,7 +423,7 @@ static int unpublish ( char *service_name, ompi_info_t *info )
         * if that server wasn't contacted
         */
         if (!mca_pubsub_orte_component.server_found) {
-            opal_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
+            orte_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
                            true);
             return OMPI_ERR_NOT_FOUND;
         }

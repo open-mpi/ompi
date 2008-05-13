@@ -29,8 +29,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
@@ -50,6 +49,8 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/output.h"
+
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
@@ -146,7 +147,7 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
     
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s\n\tjobid %s\n\tprocid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
@@ -240,7 +241,7 @@ int orte_ess_base_orted_setup(void)
     return ORTE_SUCCESS;
     
 error:
-    opal_show_help("help-orte-runtime.txt",
+    orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     

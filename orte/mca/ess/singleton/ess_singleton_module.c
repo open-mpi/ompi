@@ -30,13 +30,12 @@
 #include <errno.h>
 
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
 #include "opal/util/path.h"
-#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_pointer_array.h"
 
+#include "orte/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
@@ -325,7 +324,7 @@ static int fork_hnp(void)
         execv(cmd, argv);
         
         /* if I get here, the execv failed! */
-        opal_show_help("help-ess-base.txt", "ess-base:execv-error",
+        orte_show_help("help-ess-base.txt", "ess-base:execv-error",
                        true, cmd, strerror(errno));
         exit(1);
         
@@ -398,14 +397,14 @@ static int fork_hnp(void)
 static bool proc_is_local(orte_process_name_t *proc)
 {
     if (pmap[proc->vpid].node == (int32_t)ORTE_PROC_MY_DAEMON->vpid) {
-        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                              "%s ess:env: proc %s is LOCAL",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
         return true;
     }
     
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s is REMOTE",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));

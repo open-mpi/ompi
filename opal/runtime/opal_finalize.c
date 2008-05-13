@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/keyval_parse.h"
+#include "opal/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -38,6 +40,7 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/filter/base/base.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/carto/base/base.h"
@@ -77,6 +80,9 @@ opal_finalize_util(void)
 
     /* finalize the trace system */
     opal_trace_finalize();
+
+    /* finalize the show_help system */
+    opal_show_help_finalize();
 
     /* finalize the output system.  This has to come *after* the
        malloc code, as the malloc code needs to call into this, but
@@ -132,6 +138,9 @@ opal_finalize(void)
     /* close the processor affinity base */
     opal_paffinity_base_close();
 
+    /* finalize the filter system */
+    opal_filter_base_close();
+    
     /* close the memcpy base */
     opal_memcpy_base_close();
 

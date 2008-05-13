@@ -13,12 +13,15 @@
 
 #include "orte_config.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+
+#include "orte/util/output.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/routed/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 
 /* The following file was created by configure.  It contains extern
@@ -40,7 +43,7 @@ orte_routed_base_open(void)
     int ret;
 
     /* setup the output stream */
-    orte_routed_base_output = opal_output_open(NULL);
+    orte_routed_base_output = orte_output_open(NULL, "ROUTED", "DEBUG", NULL);
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_routed_base_components, opal_list_t);
@@ -81,7 +84,7 @@ orte_routed_base_select(void)
     active_component = best_component;
 
     /* initialize the selected component */
-    opal_output_verbose(10, orte_routed_base_output,
+    orte_output_verbose(10, orte_routed_base_output,
                         "orte_routed_base_select: initializing selected component %s",
                         best_component->base_version.mca_component_name);
     if (ORTE_SUCCESS != orte_routed.initialize()) {

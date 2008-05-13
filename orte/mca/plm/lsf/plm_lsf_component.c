@@ -29,7 +29,7 @@
 #include <lsf/lsbatch.h>
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"
@@ -131,7 +131,7 @@ static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priorit
     /* check if lsf is running here */
     if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
-        opal_output_verbose(10, orte_plm_base.plm_output,
+        orte_output_verbose(10, orte_plm_base.plm_output,
                             "plm:lsf: NOT available for selection");
         *module = NULL;
         return ORTE_ERROR:

@@ -55,8 +55,6 @@
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
-#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
 #include "opal/mca/base/base.h"
@@ -73,6 +71,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/output.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/comm/comm.h"
 #include "orte/mca/ras/ras_types.h"
@@ -231,7 +230,7 @@ main(int argc, char *argv[])
     /*
      * Get the directory listing
      */
-    opal_output_verbose(10, orte_ps_globals.output,
+    orte_output_verbose(10, orte_ps_globals.output,
                         "orte_ps: Acquiring list of HNPs...\n");
 
     if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list) ) ) {
@@ -249,7 +248,7 @@ main(int argc, char *argv[])
         /*
          * Gather the information
          */
-        opal_output_verbose(10, orte_ps_globals.output,
+        orte_output_verbose(10, orte_ps_globals.output,
                             "orte_ps: Gathering Information for HNP: %s:%d\n",
                             ORTE_NAME_PRINT(&(hnpinfo.hnp->name)),
                             hnpinfo.hnp->pid);
@@ -304,7 +303,7 @@ static int parse_args(int argc, char *argv[]) {
         orte_ps_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-ps.txt", "usage", true,
+        orte_show_help("help-orte-ps.txt", "usage", true,
                        args);
         free(args);
         return ORTE_ERROR;
@@ -315,7 +314,7 @@ static int parse_args(int argc, char *argv[]) {
      */
     if( 0 <= orte_ps_globals.vpid) {
         if( 0 > orte_ps_globals.jobid) {
-            opal_show_help("help-orte-ps.txt", "vpid-usage", true,
+            orte_show_help("help-orte-ps.txt", "vpid-usage", true,
                            orte_ps_globals.vpid);
             return ORTE_ERROR;
         }
@@ -348,10 +347,10 @@ static int orte_ps_init(int argc, char *argv[]) {
      * Setup OPAL Output handle from the verbose argument
      */
     if( orte_ps_globals.verbose ) {
-        orte_ps_globals.output = opal_output_open(NULL);
-        opal_output_set_verbosity(orte_ps_globals.output, 10);
+        orte_ps_globals.output = orte_output_open(NULL, "ORTE", "PS", "DEBUG", NULL);
+        orte_output_set_verbosity(orte_ps_globals.output, 10);
     } else {
-        orte_ps_globals.output = 0; /* Default=STDOUT */
+        orte_ps_globals.output = 0; /* Default=STDERR */
     }
 
 #if OPAL_ENABLE_FT == 1

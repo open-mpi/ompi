@@ -88,7 +88,7 @@ static void process_message(int fd, short event, void *data)
     orte_std_cntr_t count;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_rml_base_output,
                          "%s rml:base:recv: processing message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mev->sender)));

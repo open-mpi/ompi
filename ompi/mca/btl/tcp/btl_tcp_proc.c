@@ -326,7 +326,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                         sizeof(int));
                 break;
             default:
-                opal_output(0, "unknown address family for tcp: %d\n",
+                orte_output(0, "unknown address family for tcp: %d\n",
                         local_addr.ss_family);
         }
     }
@@ -376,7 +376,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                         &endpoint_addr_ss, sizeof(endpoint_addr_ss));
                 break;
             default:
-                opal_output(0, "unknown address family for tcp: %d\n",
+                orte_output(0, "unknown address family for tcp: %d\n",
                         local_addr.ss_family);
                 /*
                  * return OMPI_UNREACH or some error, as this is not
@@ -647,7 +647,7 @@ bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
         break;
 #endif
     default:
-        opal_output( 0, "mca_btl_tcp_proc: unknown af_family received: %d\n",
+        orte_output( 0, "mca_btl_tcp_proc: unknown af_family received: %d\n",
                      proc_addr->addr_family );
         return false;
     } 

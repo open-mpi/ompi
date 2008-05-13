@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,6 +79,15 @@
 #include "opal/class/opal_object.h"
 
 BEGIN_C_DECLS
+
+/** Flag to filter syslog output */
+#define OPAL_OUTPUT_FILTER_SYSLOG 0x01
+/** Flag to filter stdout output */
+#define OPAL_OUTPUT_FILTER_STDOUT 0x02
+/** Flag to filter stderr output */
+#define OPAL_OUTPUT_FILTER_STDERR 0x04
+/** Flag to filter file output */
+#define OPAL_OUTPUT_FILTER_FILE   0x08
 
 /**
  * \class opal_output_stream_t 
@@ -214,6 +223,16 @@ struct opal_output_stream_t {
      * for details on what happens in this situation.
      */
     char *lds_file_suffix;
+
+    /**
+     * What outputs do we want passed through the filter first?
+     *
+     * Bit field indicating which of syslog, stdout, stderr, and file
+     * you want passed through the filter before sending to the
+     * output.  Default is stdout, stderr filtered; syslog and file
+     * are not filtered.
+    */
+    int lds_filter_flags;
 };
 
     /**
@@ -383,7 +402,36 @@ struct opal_output_stream_t {
      */
     OPAL_DECLSPEC void opal_output_verbose(int verbose_level, int output_id, 
                                            const char *format, ...) __opal_attribute_format__(__printf__, 3, 4);
-    
+
+   /**
+    * Same as opal_output_verbose(), but takes a va_list form of varargs.
+    */
+    OPAL_DECLSPEC void opal_output_vverbose(int verbose_level, int output_id, 
+                                            const char *format, va_list ap);
+
+    /**    
+     * Send output to a string if the verbosity level is high enough.
+     *
+     * @param output_id Stream id returned from opal_output_open().
+     * @param level Target verbosity level.
+     * @param format printf-style format string.
+     * @param varargs printf-style varargs list to fill the string
+     * specified by the format parameter.
+     *
+     * Exactly the same as opal_output_verbose(), except the output it
+     * sent to a string instead of to the stream.  If the verbose
+     * level is not high enough, NULL is returned.  The caller is
+     * responsible for free()'ing the returned string.
+     */
+    OPAL_DECLSPEC char *opal_output_string(int verbose_level, int output_id, 
+                                           const char *format, ...) __opal_attribute_format__(__printf__, 3, 4);
+
+   /**
+    * Same as opal_output_string, but accepts a va_list form of varargs.
+    */
+    OPAL_DECLSPEC char *opal_output_vstring(int verbose_level, int output_id, 
+                                            const char *format, va_list ap);
+
     /**
      * Set the verbosity level for a stream.
      *

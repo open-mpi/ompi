@@ -24,7 +24,7 @@
 #include "opal/mca/mca.h"
 
 #include "ompi/mca/bml/bml.h"
-#include "opal/util/output.h" 
+#include "orte/util/output.h" 
 
 /*
  * Global functions for the BML

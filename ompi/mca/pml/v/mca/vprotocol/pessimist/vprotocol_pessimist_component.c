@@ -90,7 +90,7 @@ static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int*
     /* sanity check */
     if(enable_mpi_threads)
     {
-        opal_output(0, "vprotocol_pessimist: component_init: threads are enabled, and not supported by vprotocol pessimist fault tolerant layer, will not load");
+        orte_output(0, "vprotocol_pessimist: component_init: threads are enabled, and not supported by vprotocol pessimist fault tolerant layer, will not load");
         return NULL;
     }
 

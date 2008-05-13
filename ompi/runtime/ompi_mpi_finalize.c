@@ -40,7 +40,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/sys/atomic.h"
 
 #include "orte/util/proc_info.h"
@@ -103,7 +103,7 @@ int ompi_mpi_finalize(void)
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 
-        opal_show_help("help-mpi-runtime.txt",
+        orte_show_help("help-mpi-runtime.txt",
                        "mpi_finalize:invoked_multiple_times",
                        true, hostname, pid);
         return MPI_ERR_OTHER;

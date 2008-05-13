@@ -108,7 +108,7 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
         }
         if(mca_bml_base_error_count % 2) {
             /* local completion - network "drops" packet */
-            opal_output(0, "%s:%d: dropping data, with local completion\n", __FILE__, __LINE__);
+            orte_output(0, "%s:%d: dropping data, with local completion\n", __FILE__, __LINE__);
             des->des_cbfunc(bml_btl->btl, bml_btl->btl_endpoint, des, OMPI_SUCCESS);
             return OMPI_SUCCESS;
         } else {
@@ -116,7 +116,7 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
             mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) 
                 malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
-                opal_output(0, "%s:%d: corrupting data\n", __FILE__, __LINE__);
+                orte_output(0, "%s:%d: corrupting data\n", __FILE__, __LINE__);
                 ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;

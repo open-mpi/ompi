@@ -20,7 +20,10 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
+
+#include "orte/util/output.h"
+
 #include "ompi/constants.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
@@ -48,7 +51,7 @@ int
 ompi_mtl_base_open(void)
 {
     /* setup the output stream */
-    ompi_mtl_base_output = opal_output_open(NULL);
+    ompi_mtl_base_output = orte_output_open(NULL, "MTL", "DEBUG", NULL);
 
     /* Open up all available components */
     if (OMPI_SUCCESS != 
@@ -93,24 +96,24 @@ ompi_mtl_base_select(bool enable_progress_threads,
         component = (mca_mtl_base_component_t *) cli->cli_component;
 
         if (NULL == component->mtl_init) {
-            opal_output_verbose( 10, ompi_mtl_base_output,
+            orte_output_verbose( 10, ompi_mtl_base_output,
                                  "select: no init function; ignoring component %s",
                                  component->mtl_version.mca_component_name );
             continue;
         }
-        opal_output_verbose( 10, ompi_mtl_base_output, 
+        orte_output_verbose( 10, ompi_mtl_base_output, 
                              "select: initializing %s component %s",
                              component->mtl_version.mca_type_name,
                              component->mtl_version.mca_component_name );
         module = component->mtl_init(enable_progress_threads,
                                      enable_mpi_threads);
         if (NULL == module) {
-            opal_output_verbose( 10, ompi_mtl_base_output,
+            orte_output_verbose( 10, ompi_mtl_base_output,
                                  "select: init returned failure for component %s",
                                  component->mtl_version.mca_component_name );
             continue;
         }
-        opal_output_verbose( 10, ompi_mtl_base_output,
+        orte_output_verbose( 10, ompi_mtl_base_output,
                              "select: init returned success");
 
         ompi_mtl_base_selected_component = component;
@@ -126,11 +129,11 @@ ompi_mtl_base_select(bool enable_progress_threads,
 
     /* All done */
     if (NULL == module) {
-        opal_output_verbose( 10, ompi_mtl_base_output, 
+        orte_output_verbose( 10, ompi_mtl_base_output, 
                              "select: no component selected");
         return OMPI_ERR_NOT_FOUND;
     } else {
-        opal_output_verbose( 10, ompi_mtl_base_output, 
+        orte_output_verbose( 10, ompi_mtl_base_output, 
                              "select: component %s selected",
                              ompi_mtl_base_selected_component->
                              mtl_version.mca_component_name );

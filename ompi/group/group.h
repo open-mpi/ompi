@@ -28,7 +28,7 @@
 #ifndef OMPI_GROUP_H
 #define OMPI_GROUP_H
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "mpi.h"
 #include "opal/class/opal_pointer_array.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -310,7 +310,7 @@ static inline struct ompi_proc_t* ompi_group_peer_lookup(ompi_group_t *group, in
 {
 #if OMPI_ENABLE_DEBUG
     if (peer_id >= group->grp_proc_count) {
-        opal_output(0, "ompi_group_lookup_peer: invalid peer index (%d)", peer_id);
+        orte_output(0, "ompi_group_lookup_peer: invalid peer index (%d)", peer_id);
         return (struct ompi_proc_t *) NULL;
     }
 #endif

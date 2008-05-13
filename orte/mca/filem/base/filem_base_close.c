@@ -20,7 +20,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/filem/filem.h"

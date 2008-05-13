@@ -23,8 +23,8 @@
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/event/event.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"

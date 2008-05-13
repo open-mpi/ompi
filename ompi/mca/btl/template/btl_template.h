@@ -33,7 +33,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/btl/btl.h"
 

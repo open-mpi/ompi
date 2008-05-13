@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -92,43 +93,78 @@
 
 #include <stdarg.h>
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-    /**
-     * Look up a text message in a text file and display it to the
-     * stderr using printf()-like substitutions (%d, %s, etc.).
-     *
-     * @param filename File where the text messages are contained.
-     * @param topic String index of which message to display from the
-     * text file.
-     * @param want_error_header Display error-bar line header and
-     * footer with the message.
-     * @param varargs Any additional parameters are substituted,
-     * printf()-style into the help message that is displayed.
-     *
-     * This function looks for the filename in the $pkgdatadir
-     * (typically $prefix/share/openmpi), and looks up the message
-     * based on the topic, and displays it.  If want_error_header is
-     * true, a header and footer of asterisks are also displayed.
-     */
-    OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
-                                     bool want_error_header, ...);
+/**
+ * \internal
+ *
+ * Initialization of show_help subsystem
+ */
+OPAL_DECLSPEC int opal_show_help_init(void);
 
-    /**
-     * \internal
-     *
-     * Internal function to help clean up the flex parser.
-     *
-     * This function is called internally by the SHS to shut down the
-     * flex parser since we may not hit the <<EOF>> rule and call this
-     * function automatically.
-     */
-    OPAL_DECLSPEC int opal_show_help_finish_parsing(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+/**
+ * \internal
+ *
+ * Finalization of show_help subsystem
+ */
+OPAL_DECLSPEC int opal_show_help_finalize(void);
+
+
+/**
+ * Look up a text message in a text file and display it to the
+ * stderr using printf()-like substitutions (%d, %s, etc.).
+ *
+ * @param filename File where the text messages are contained.
+ * @param topic String index of which message to display from the
+ * text file.
+ * @param want_error_header Display error-bar line header and
+ * footer with the message.
+ * @param varargs Any additional parameters are substituted,
+ * printf()-style into the help message that is displayed.
+ *
+ * This function looks for the filename in the $pkgdatadir
+ * (typically $prefix/share/openmpi), and looks up the message
+ * based on the topic, and displays it.  If want_error_header is
+ * true, a header and footer of asterisks are also displayed.
+ */
+OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
+                                 bool want_error_header, ...);
+
+/**
+ * This function does the same thing as opal_show_help(), but accepts
+ * a va_list form of varargs.
+ */
+OPAL_DECLSPEC int opal_show_vhelp(const char *filename, const char *topic, 
+                                  bool want_error_header, va_list ap);
+
+/**
+ * This function does the same thing as opal_show_help(), but returns
+ * its output in a string (that must be freed by the caller).
+ */
+OPAL_DECLSPEC char* opal_show_help_string(const char *filename, 
+                                          const char *topic, 
+                                          bool want_error_header, ...);
+
+/**
+ * This function does the same thing as opal_show_help_string(), but
+ * accepts a va_list form of varargs.
+ */
+OPAL_DECLSPEC char* opal_show_help_vstring(const char *filename, 
+                                          const char *topic, 
+                                          bool want_error_header, va_list ap);
+
+/** 
+ * \internal
+ *
+ * Internal function to help clean up the flex parser.
+ *
+ * This function is called internally by the SHS to shut down the
+ * flex parser since we may not hit the <<EOF>> rule and call this
+ * function automatically.
+ */
+OPAL_DECLSPEC int opal_show_help_finish_parsing(void);
+
+END_C_DECLS
 
 #endif

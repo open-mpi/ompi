@@ -21,14 +21,13 @@
 
 #include <string.h>
 
-#include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
-#include "opal/util/show_help.h"
 
+#include "orte/util/output.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/proc_info.h"
@@ -72,7 +71,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /** check that anything is here */
     if (0 == opal_list_get_size(allocated_nodes)) {
-        opal_show_help("help-orte-rmaps-base.txt",
+        orte_show_help("help-orte-rmaps-base.txt",
                        "orte-rmaps-base:no-available-resources",
                        true);
         return ORTE_ERR_SILENT;
@@ -90,7 +89,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         /** check that anything is here */
         if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt",
+            orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:no-available-resources",
                            true);
             return ORTE_ERR_SILENT;
@@ -110,7 +109,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         /** check that anything is here */
         if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
                            true, app->app, app->hostfile);
             return ORTE_ERR_SILENT;
         }
@@ -126,7 +125,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
+            orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
                            true, app->app, "");
             return ORTE_ERR_SILENT;
         }
@@ -152,7 +151,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(allocated_nodes)) {
-            opal_show_help("help-orte-rmaps-base.txt",
+            orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:nolocal-no-available-resources", true);
             return ORTE_ERR_SILENT;
         }
@@ -185,7 +184,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /* Sanity check to make sure we have resources available */
     if (0 == num_slots) {
-        opal_show_help("help-orte-rmaps-base.txt", 
+        orte_show_help("help-orte-rmaps-base.txt", 
                        "orte-rmaps-base:all-available-resources-used", true);
         return ORTE_ERR_SILENT;
     }
@@ -214,7 +213,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
         }
     }
     /* if we get here, then this node isn't already in the map - add it */
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base: adding node %s to map",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == node->name) ? "NULL" : node->name));
@@ -231,7 +230,7 @@ PROCESS:
      * that the proc isn't already there as this would be an error
      * in the mapper
      */
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base: mapping proc %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&proc->name),
@@ -288,7 +287,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
      * about keeping the array left-justified as all vpids
      * from 0 to num_procs will be filled
      */
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:claim_slot mapping rank %d to job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          vpid, ORTE_JOBID_PRINT(jdata->jobid)));
@@ -349,7 +348,7 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     uint8_t local_rank;
     orte_job_map_t *map;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:compute_usage",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -416,7 +415,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     orte_vpid_t numdaemons;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:define_daemons",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -445,14 +444,14 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
             proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
             if (ORTE_VPID_MAX-1 <= daemons->num_procs) {
                 /* no more daemons available */
-                opal_show_help("help-orte-rmaps-base.txt", "out-of-vpids", true);
+                orte_show_help("help-orte-rmaps-base.txt", "out-of-vpids", true);
                 OBJ_RELEASE(proc);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             proc->name.vpid = daemons->num_procs;  /* take the next available vpid */
             proc->node = node;
             proc->nodename = node->name;
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons add new daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
@@ -476,7 +475,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         } else {
             /* this daemon was previously defined - flag it */
             node->daemon_launched = true;
-            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons existing daemon %s already launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&node->daemon->name)));

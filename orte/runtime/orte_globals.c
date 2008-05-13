@@ -29,9 +29,10 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/class/opal_pointer_array.h"
-
 #include "opal/dss/dss.h"
+
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/output.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -93,7 +94,7 @@ int orte_register_params(void)
     }
     
     /* set default output */
-    orte_debug_output = -1;
+    orte_debug_output = orte_output_open(NULL, "ORTE", "DEBUG", NULL);
     
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch (default verbosity: 1)",
@@ -122,11 +123,10 @@ int orte_register_params(void)
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
         (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {
-        orte_debug_output = opal_output_open(NULL);
         if (0 < orte_debug_verbosity) {
-            opal_output_set_verbosity(orte_debug_output, orte_debug_verbosity);
+            orte_output_set_verbosity(orte_debug_output, orte_debug_verbosity);
         } else {
-            opal_output_set_verbosity(orte_debug_output, 1);
+            orte_output_set_verbosity(orte_debug_output, 1);
         }
     }
     

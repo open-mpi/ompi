@@ -59,7 +59,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_scatter_intra_binomial rank %d", rank));
 
     /* create the binomial tree */
@@ -174,7 +174,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     if (NULL != tempbuf)
 	free(tempbuf);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
 		 __FILE__, line, err, rank));
     return err;
 }
@@ -294,7 +294,7 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
                               &(requested_alg));
     if( requested_alg > max_alg ) {
 	if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-	    opal_output( 0, "Scatter algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+	    orte_output( 0, "Scatter algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
 			 requested_alg, max_alg );
 	}
 	mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -337,7 +337,7 @@ ompi_coll_tuned_scatter_intra_do_forced(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "coll:tuned:scatter_intra_do_forced selected algorithm %d",
 		 data->user_forced[SCATTER].algorithm));
 
@@ -355,7 +355,7 @@ ompi_coll_tuned_scatter_intra_do_forced(void *sbuf, int scount,
 						     rbuf, rcount, rdtype,
 						     root, comm, module);
    default:
-       OPAL_OUTPUT((ompi_coll_tuned_stream,
+       ORTE_OUTPUT((ompi_coll_tuned_stream,
 		    "coll:tuned:scatter_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
 		    data->user_forced[SCATTER].algorithm,
 		    ompi_coll_tuned_forced_max_algorithms[SCATTER]));
@@ -373,7 +373,7 @@ ompi_coll_tuned_scatter_intra_do_this(void *sbuf, int scount,
 				      struct mca_coll_base_module_1_1_0_t *module,
 				      int algorithm, int faninout, int segsize)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
 		 "coll:tuned:scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
 		 algorithm, faninout, segsize));
    
@@ -391,7 +391,7 @@ ompi_coll_tuned_scatter_intra_do_this(void *sbuf, int scount,
 						      rbuf, rcount, rdtype,
 						      root, comm, module);
    default:
-       OPAL_OUTPUT((ompi_coll_tuned_stream,
+       ORTE_OUTPUT((ompi_coll_tuned_stream,
 		    "coll:tuned:scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
 		    algorithm, 
 		    ompi_coll_tuned_forced_max_algorithms[SCATTER]));

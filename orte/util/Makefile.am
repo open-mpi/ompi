@@ -35,7 +35,8 @@ headers += \
         util/hostfile/hostfile_lex.h \
         util/dash_host/dash_host.h \
         util/comm/comm.h \
-        util/nidmap.h
+        util/nidmap.h \
+        util/output.h
 
 libopen_rte_la_SOURCES += \
         util/error_strings.c \
@@ -49,4 +50,6 @@ libopen_rte_la_SOURCES += \
         util/hostfile/hostfile.c \
         util/dash_host/dash_host.c \
         util/comm/comm.c \
-        util/nidmap.c
+        util/nidmap.c \
+        util/output.c
+
