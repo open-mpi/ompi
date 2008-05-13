@@ -12,10 +12,9 @@
  * TO-DO:
  *
  * - audit control values passed to req_send()
- * - Somehow handle retransmission of RTU; don't know how to do this 
- *   yet. :-( 
  * - More show_help() throughout 
- * - ...?
+ * - error handling in case of broken connection is not good; need to
+ *   notify btl module safely
  */
 
 /*
@@ -219,23 +218,15 @@
  *   start_connect() will have created them already), create all
  *   num_qps QPs.  Also post receive buffers on all QPs.
  *
- * The IBCM CPC handles the retransmission of request and reply
- * messages, but not RTUs.  If we get a REQ_ERROR or REP_ERROR, it
- * means that the IBCM system tried to retransmit a few times and
- * failed.  Honestly, we could probably just give up at this point,
- * but one of the point of the IBCM CPC is to work at large scale, so
- * there might be heavy-duty congestion such that the UD messages are
- * actually getting lost.  So we'll find the request / reply and
- * re-send it -- we'll do this indefinitely.  
+ * We wholly reply on the IBCM system for all retransmissions and
+ * duplicate filtering of IBCM requests, replies, and RTUs.  If IBCM
+ * reports a timeout error up to OMPI, we abort the connection.  Lists
+ * are maintained of pending IBCM requests and replies solely for
+ * error handling; request/reply timeouts are reported via CM ID.  We
+ * can cross-reference this CM ID to the endpoint that it was trying
+ * to connect via these lists.
  *
- * We wholly rely on the IBCM system to retransmit the RTU, however.
- * If the passive side doesn't receive the RTU, it'll automatically
- * retransmit the reply (or raise a REP_ERROR and have us retransmit
- * it).  If the active side had already sent the RTU, it'll recognize
- * the incoming reply as a duplicate and therefore retransmit the RTU
- * for us.  Nifty.
- *
- * However, there is a race condition: because UD is unordered, the
+ * Note that there is a race condition: because UD is unordered, the
  * first message may arrive on the QP before the RTU has arrived.
  * This will cause an IBV_EVENT_COMM_EST event to be raised, which
  * would then be picked up by the async event handler in the
@@ -387,9 +378,9 @@ typedef struct {
 static OBJ_CLASS_INSTANCE(ibcm_base_cm_id_t, opal_list_item_t, NULL, NULL);
 
 /*
- * Need to maintain a list of pending CM ID requests (in case we need
- * to retransmit).  Need to use the struct name here because it was
- * forward referenced, above.
+ * Need to maintain a list of pending CM ID requests (for error
+ * handling if the requests timeout).  Need to use the struct name
+ * here because it was forward referenced, above.
  */
 typedef struct ibcm_request_t {
     ibcm_base_cm_id_t super;
@@ -412,9 +403,9 @@ static OBJ_CLASS_INSTANCE(ibcm_request_t, ibcm_base_cm_id_t,
                           ibcm_request_cm_id_constructor, NULL);
 
 /*
- * Need to maintain a list of pending CM ID replies (in case we need
- * to retransmit).  Need to use a struct name here because it was
- * forward referenced, above.
+ * Need to maintain a list of pending CM ID replies (for error
+ * handling if the replies timeout).  Need to use a struct name here
+ * because it was forward referenced, above.
  */
 typedef struct ibcm_reply_t {
     ibcm_base_cm_id_t super;
@@ -1693,9 +1684,9 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     opal_mutex_unlock(&ie->ie_lock);
 
     /* If logic above selected a rejection reason, reject this
-       request.  No need to cache this reject message for
-       retransmission; if the same request arrives again later, IBCM
-       will trigger a new event and we'll just reject it again. */
+       request.  Note that if the same request arrives again later,
+       IBCM will trigger a new event and we'll just reject it
+       again. */
     if (REJ_MAX != rej_reason) {
         opal_output(-1, "arbitrartion failed -- reject");
         goto reject;
@@ -1923,9 +1914,7 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         ie->ie_recv_buffers_posted = true;
     }
 
-    /* Send the RTU -- note that we don't need to queue it up for
-       retransmission (see lengthy explanation at beginning of this
-       file). */
+    /* Send the RTU */
     rtu_data.irtud_reply = reply;
     rtu_data.irtud_qp_index = p->irepd_qp_index;
     if (0 != ib_cm_send_rtu(event->cm_id, &rtu_data, sizeof(rtu_data))) {
@@ -1933,8 +1922,8 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         return OMPI_ERR_IN_ERRNO;
     }
 
-    /* Remove the pending request so that we don't try to retransmit
-       it */
+    /* Remove the pending request because we won't need to handle
+       errors for it */
     opal_output(-1, "reply received cm id %p -- original cached req %p",
                 (void*)cmh->listen_cm_id, (void*)request);
     opal_list_remove_item(&ibcm_pending_requests, &(request->super.super));
@@ -1967,20 +1956,17 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
     /* Move the QP to RTS */
     if (OMPI_SUCCESS != (rc = qp_to_rts(p->irtud_qp_index,
                                         event->cm_id, endpoint))) {
-        /* JMS */
         opal_output(-1, "ib cm rtu handler: failed move to RTS (index %d)",
                     p->irtud_qp_index);
         return rc;
     }
 
-    /* Remove the pending reply so that we don't try to retransmit
-       it */
+    /* Remove the pending reply because we won't need to handle errors
+       for it */
     opal_output(-1, "RTU received cm id %p -- original cached reply %p",
                 (void*)event->cm_id, (void*)reply);
     opal_list_remove_item(&ibcm_pending_replies, &(reply->super.super));
     OBJ_RELEASE(reply);
-
-    /* JMS Send a 0 byte message to the other side to ACK this RTU */
 
     /* Have all the QP's been connected?  If so, tell the main BTL
        that we're done. */
@@ -2042,8 +2028,8 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
             opal_output(-1, "ibcm rej handler: WRONG_DIRECTION unexpected!");
         } else {
 
-            /* Remove from the global pending_requests list (because
-               it no longer needs to be retransmitted upon timeout) */
+            /* Remove from the global pending_requests list because we
+               no longer need to handle errors for it */
             opal_output(-1, "reply received cm id %p -- original cached req %p",
                         (void*)cmh->listen_cm_id, 
                         (void*)request);
@@ -2077,7 +2063,6 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
 static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 {
-    int rc;
     ibcm_request_t *req;
     opal_output(-1, "ibcm handler: request error!");
 
@@ -2100,23 +2085,13 @@ static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         return OMPI_ERR_NOT_FOUND;
     }
 
-    rc = ib_cm_send_req(event->cm_id, &(req->cm_req));
-    if (0 != rc) {
-        opal_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
-                       "ib_cm function error", true,
-                       orte_process_info.nodename, 
-                       "ib_cm_send_req", rc, strerror(rc));
-        return OMPI_ERR_UNREACH;
-    }
-    opal_output(-1, "Retransmitted IBCM request (CM ID: %p)",
-                (void*)event->cm_id);
+    /* JMS need to barf this connection request appropriately */
     return OMPI_SUCCESS;
 }
 
 
 static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 {
-    int rc;
     ibcm_reply_t *rep;
     opal_output(-1, "ibcm handler: reply error!");
 
@@ -2139,17 +2114,7 @@ static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         return OMPI_ERR_NOT_FOUND;
     }
 
-    rc = ib_cm_send_rep(event->cm_id, &(rep->cm_rep));
-    if (0 != rc) {
-        opal_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
-                       "ib_cm function error", true,
-                       orte_process_info.nodename, 
-                       "ib_cm_send_rep", rc, strerror(rc));
-        return OMPI_ERR_UNREACH;
-    }
-    opal_output(-1, "Retransmitted IBCM reply (CM ID: %p)",
-                (void*)event->cm_id);
-
+    /* JMS need to barf this connection request appropriately */
     return OMPI_SUCCESS;
 }
 
