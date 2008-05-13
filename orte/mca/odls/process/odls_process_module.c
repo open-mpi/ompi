@@ -33,8 +33,8 @@
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
 
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/sys_limits.h"
 
 #include "orte/runtime/orte_wait.h"
@@ -155,7 +155,7 @@ static int odls_process_fork_local_proc(
         if( -1 == handle ) {
             child->state = ORTE_PROC_STATE_FAILED_TO_START;
             child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
-            opal_show_help("help-orted-launcher.txt", "orted-launcher:execv-error",
+            orte_show_help("help-orted-launcher.txt", "orted-launcher:execv-error",
                            true, context->app, "TODO: some error");
             child->state = ORTE_PROC_STATE_ABORTED;
             return ORTE_ERROR;
@@ -183,7 +183,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:process:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
@@ -191,7 +191,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     
     /* launch the local procs */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_process_fork_local_proc))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:process:launch:local failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;

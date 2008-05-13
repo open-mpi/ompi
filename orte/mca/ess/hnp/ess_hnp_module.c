@@ -30,14 +30,13 @@
 #endif
 
 #include "opal/event/event.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
 #include "opal/util/os_path.h"
 #include "opal/util/malloc.h"
 
+#include "orte/util/output.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
@@ -58,6 +57,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/output.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -229,6 +229,18 @@ static int rte_init(char flags)
         goto error;
     }
 
+#if ORTE_DISABLE_FULL_SUPPORT
+#else
+    /* setup the orte_output system to recv remote output */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_OUTPUT,
+                                 ORTE_RML_NON_PERSISTENT, orte_output_recv_output, NULL);
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup receive for orte_output";
+        goto error;
+    }
+#endif
+
     /* setup my session directory */
     if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobid_str, ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(ret);
@@ -241,7 +253,7 @@ static int rte_init(char flags)
         goto error;
     }
 
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s\n\tjobid %s\n\tprocid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
@@ -265,7 +277,7 @@ static int rte_init(char flags)
     }
 
     /* Once the session directory location has been established, set
-       the opal_output hnp file location to be in the
+       the orte_output hnp file location to be in the
        proc-specific session directory. */
     opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                      "output-", NULL, NULL);
@@ -274,18 +286,18 @@ static int rte_init(char flags)
     contact_path = opal_os_path(false, orte_process_info.job_session_dir,
                 "contact.txt", NULL);
     
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s writing contact file %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          contact_path));
     
     if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s writing contact file failed with error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_ERROR_NAME(ret)));
     } else {
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s wrote contact file",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
@@ -401,7 +413,7 @@ static int rte_init(char flags)
     return ORTE_SUCCESS;
 
 error:
-    opal_show_help("help-orte-runtime.txt",
+    orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     

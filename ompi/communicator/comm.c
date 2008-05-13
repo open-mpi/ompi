@@ -30,7 +30,7 @@
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/convert.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
@@ -1154,7 +1154,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     /* rprocs isn't freed unless we have an error, 
        since it is used in the communicator */
     if ( OMPI_SUCCESS !=rc ) {
-        opal_output(0, "%d: Error in ompi_get_rprocs\n", local_rank);
+        orte_output(0, "%d: Error in ompi_get_rprocs\n", local_rank);
         if ( NULL != rprocs ) {
             free ( rprocs );
             rprocs=NULL;
@@ -1269,25 +1269,25 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
 /********************************************************************************/
 int ompi_comm_dump ( ompi_communicator_t *comm )
 {
-    opal_output(0, "Dumping information for comm_cid %d\n", comm->c_contextid);
-    opal_output(0,"  f2c index:%d cube_dim: %d\n", comm->c_f_to_c_index,  
+    orte_output(0, "Dumping information for comm_cid %d\n", comm->c_contextid);
+    orte_output(0,"  f2c index:%d cube_dim: %d\n", comm->c_f_to_c_index,  
                 comm->c_cube_dim);
-    opal_output(0,"  Local group: size = %d my_rank = %d\n", 
+    orte_output(0,"  Local group: size = %d my_rank = %d\n", 
                 comm->c_local_group->grp_proc_count, 
                 comm->c_local_group->grp_my_rank );
 
-    opal_output(0,"  Communicator is:");
+    orte_output(0,"  Communicator is:");
     /* Display flags */
     if ( OMPI_COMM_IS_INTER(comm) )
-        opal_output(0," inter-comm,");
+        orte_output(0," inter-comm,");
     if ( OMPI_COMM_IS_CART(comm))
-        opal_output(0," topo-cart,");
+        orte_output(0," topo-cart,");
     if ( OMPI_COMM_IS_GRAPH(comm))
-        opal_output(0," topo-graph");
-    opal_output(0,"\n");
+        orte_output(0," topo-graph");
+    orte_output(0,"\n");
 
     if (OMPI_COMM_IS_INTER(comm)) {
-        opal_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
+        orte_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
     }
     return OMPI_SUCCESS;
 }

@@ -29,9 +29,8 @@
 #endif
 
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/trace.h"
-#include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 
 #include "orte/util/name_fns.h"
@@ -86,12 +85,12 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
     opal_list_append(&(filem_request->process_sets), &(p_set->super) );
 
     if(app_context->preload_binary) {
-        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s) Preload Binary...",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if( ORTE_SUCCESS != (ret = orte_odls_base_preload_append_binary(app_context, 
                                                                        filem_request) ) ){
-            opal_show_help("help-orte-odls-base.txt",
+            orte_show_help("help-orte-odls-base.txt",
                            "orte-odls-base:could-not-preload-binary",
                            true, app_context->app);
             ORTE_ERROR_LOG(ret);
@@ -100,13 +99,13 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
         }
     }
     if( NULL != app_context->preload_files) {
-        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s) Preload Files... [%s]",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              app_context->preload_files));
         if( ORTE_SUCCESS != (ret = orte_odls_base_preload_append_files(app_context, 
                                                                       filem_request) ) ){
-            opal_show_help("help-orte-odls-base.txt",
+            orte_show_help("help-orte-odls-base.txt",
                            "orte-odls-base:could-not-preload-files",
                            true, app_context->preload_files);
             ORTE_ERROR_LOG(ret);
@@ -120,7 +119,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
      *      the requests for all app contexts.
      */
     if( ORTE_SUCCESS != (ret = orte_filem.get(filem_request)) ) {
-        opal_show_help("help-orte-odls-base.txt",
+        orte_show_help("help-orte-odls-base.txt",
                        "orte-odls-base:could-not-preload",
                        true,
                        (app_context->preload_binary ? app_context->app : ""),
@@ -221,7 +220,7 @@ static int orte_odls_base_preload_append_files(orte_app_context_t* context,
         if(0 == system(temp)) {
             char hostname[MAXHOSTNAMELEN];
             gethostname(hostname, sizeof(hostname));
-            opal_show_help("help-orte-odls-base.txt",
+            orte_show_help("help-orte-odls-base.txt",
                            "orte-odls-base:preload-file-exists",
                            true, local_ref, hostname);
             free(temp);

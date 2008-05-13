@@ -28,6 +28,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
+#include "orte/util/output.h"
 
 /**
  * Leave ORTE.
@@ -51,6 +52,9 @@ int orte_finalize(void)
     /* set the flag indicating we are finalizing */
     orte_finalizing = true;
 
+    /* close the orte_output system */
+    orte_output_finalize();
+    
     /* call the finalize function for this environment */
     orte_ess.finalize();
     

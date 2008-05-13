@@ -29,10 +29,9 @@
 #include <unistd.h>
 #endif
 
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "orte/util/output.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -109,7 +108,7 @@ static int rte_init(char flags)
     return ORTE_SUCCESS;        
 
 error:
-    opal_show_help("help-ess-tool.txt",
+    orte_show_help("help-ess-tool.txt",
                    "tool:rte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     

@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -40,7 +40,7 @@ int mca_coll_demo_scan_intra(void *sbuf, void *rbuf, int count,
                              struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo scan_intra");
+    orte_output_verbose(10, mca_coll_base_output, "In demo scan_intra");
     return demo_module->underlying.coll_scan(sbuf, rbuf, count,
                                              dtype, op, comm,
                                              demo_module->underlying.coll_scan_module);

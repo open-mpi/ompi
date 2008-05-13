@@ -68,10 +68,10 @@
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
 
@@ -139,7 +139,7 @@ static int orte_plm_gridengine_fill_orted_path(char** orted_path)
         if (NULL == path) {
             path = ("PATH is empty!");
         }
-        opal_show_help("help-plm-gridengine.txt", "no-local-orted",
+        orte_show_help("help-plm-gridengine.txt", "no-local-orted",
             true, path, opal_install_dirs.bindir);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -158,31 +158,31 @@ static void orte_plm_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
          * SIGSTOP/SIGKILL. So just return and ignore the daemon_failed
          * at the end as that would kill off the user processes */
         if (SIGUSR1 == status || SIGUSR2 == status) {
-            opal_output(0, "The daemon received a signal %d", status);
+            orte_output(0, "The daemon received a signal %d", status);
             return;
         }
         /* Otherwise, tell the user something went wrong. */
-        opal_output(0, "ERROR: A daemon failed to start as expected.");
-        opal_output(0, "ERROR: There may be more information available from");
-        opal_output(0, "ERROR: the 'qstat -t' command on the Grid Engine tasks.");
-        opal_output(0, "ERROR: If the problem persists, please restart the");
-        opal_output(0, "ERROR: Grid Engine PE job");
+        orte_output(0, "ERROR: A daemon failed to start as expected.");
+        orte_output(0, "ERROR: There may be more information available from");
+        orte_output(0, "ERROR: the 'qstat -t' command on the Grid Engine tasks.");
+        orte_output(0, "ERROR: If the problem persists, please restart the");
+        orte_output(0, "ERROR: Grid Engine PE job");
         if (WIFEXITED(status)) {
-            opal_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
+            orte_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
                         WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
-                opal_output(0, "The daemon received a signal %d (with core).",
+                orte_output(0, "The daemon received a signal %d (with core).",
                             WTERMSIG(status));
             } else {
-                opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+                orte_output(0, "The daemon received a signal %d.", WTERMSIG(status));
             }
 #else
-            opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+            orte_output(0, "The daemon received a signal %d.", WTERMSIG(status));
 #endif /* WCOREDUMP */
         } else {
-            opal_output(0, "No extra status information is available: %d.", status);
+            orte_output(0, "No extra status information is available: %d.", status);
         }
         
         /* report that the daemon has failed so we break out of the daemon
@@ -227,7 +227,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:gridengine: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -252,7 +252,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
     
     if (map->num_new_daemons == 0) {
         /* have all the daemons we need - launch app */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:gridengine: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
@@ -299,11 +299,11 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
       */
      env = opal_argv_copy(environ);
      
-     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+     if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
-            opal_output(0, "plm:gridengine: final template argv:");
-            opal_output(0, "plm:gridengine:     %s", param);
+            orte_output(0, "plm:gridengine: final template argv:");
+            orte_output(0, "plm:gridengine:     %s", param);
             free(param);
         }
     }
@@ -338,7 +338,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
              newenv = temp;
          }
          opal_setenv("PATH", newenv, true, &env);
-         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+         ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                               "%s plm:gridengine: reset PATH: %s",
                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                               newenv));
@@ -354,7 +354,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
              newenv = temp;
          }
          opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
-         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+         ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                               "%s plm:gridengine: reset LD_LIBRARY_PATH: %s",
                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                               newenv));
@@ -401,7 +401,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
             char* var;
             long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:gridengine: launching on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  nodes[nnode]->name));
@@ -414,12 +414,12 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
             asprintf(&exec_path, "%s/bin/%s/qrsh", sge_root, sge_arch);
             exec_path = opal_path_findv(exec_path, X_OK, environ, NULL);
             if (NULL == exec_path) {
-                opal_show_help("help-plm-gridengine.txt", "bad-qrsh-path",
+                orte_show_help("help-plm-gridengine.txt", "bad-qrsh-path",
                     true, exec_path, sge_root, sge_arch);
                 exit(-1);  /* forked child must ALWAYS exit, not return */
             }
 
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:gridengine: exec_argv[0]=%s, exec_path=%s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  exec_argv[0], exec_path));
@@ -445,14 +445,14 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
                 }
             }
             asprintf(&argv[orted_index], orted_path);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:gridengine: orted_path=%s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  orted_path));
             
             var = opal_home_directory();
             if (NULL != var) {
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:gridengine: changing to directory %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      var));
@@ -465,14 +465,14 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
             /* pass the vpid */
             rc = orte_util_convert_vpid_to_string(&param, nodes[nnode]->daemon->name.vpid);
             if (ORTE_SUCCESS != rc) {
-                opal_output(0, "plm:gridengine: unable to get daemon vpid as string");
+                orte_output(0, "plm:gridengine: unable to get daemon vpid as string");
                 exit(-1);
             }
             free(argv[proc_vpid_index]);
             argv[proc_vpid_index] = strdup(param);
             free(param);
 
-            if (0 > opal_output_get_verbosity(orte_plm_globals.output)) {
+            if (0 > orte_output_get_verbosity(orte_plm_globals.output)) {
                 /* setup stdin */
                 int fd = open("/dev/null", O_RDWR, 0);
                 dup2(fd, 0);
@@ -507,18 +507,18 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
             
             /* exec the daemon */
-            if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+            if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
                 param = opal_argv_join(exec_argv, ' ');
                 if (NULL != param) {
-                    opal_output(0, "plm:gridengine: executing: %s", param);
+                    orte_output(0, "plm:gridengine: executing: %s", param);
                     free(param);
                 }
             }
             execve(exec_path, exec_argv, env);
-            opal_output(0, "plm:gridengine: execve failed with errno=%d\n", errno);
+            orte_output(0, "plm:gridengine: execve failed with errno=%d\n", errno);
             exit(-1);
         } else { /* parent */
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:gridengine: parent",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -532,7 +532,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
 
      /* wait for daemons to callback */
      if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+         ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                               "%s plm:gridengine: daemon launch failed for job %s on error %s",
                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                               ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
@@ -541,7 +541,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
      
 launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "%s plm:gridengine: launch of apps failed for job %s on error %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));

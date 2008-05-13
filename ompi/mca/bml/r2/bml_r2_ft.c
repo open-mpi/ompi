@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
@@ -99,7 +99,7 @@ int mca_bml_r2_ft_event(int state)
              */
             if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool &&
                 NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event ) {
-                opal_output_verbose(10, ompi_cr_output,
+                orte_output_verbose(10, ompi_cr_output,
                                     "bml:r2: ft_event: Notify the %s MPool.\n",
                                     (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_component->mpool_version.mca_component_name);
                 if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_mpool->mpool_ft_event(loc_state) ) ) {
@@ -111,7 +111,7 @@ int mca_bml_r2_ft_event(int state)
              * Notify BTL
              */
             if( NULL != (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event) {
-                opal_output_verbose(10, ompi_cr_output,
+                orte_output_verbose(10, ompi_cr_output,
                                     "bml:r2: ft_event: Notify the %s BTL.\n",
                                     (mca_bml_r2.btl_modules[btl_idx])->btl_component->btl_version.mca_component_name);
                 if(OMPI_SUCCESS != (ret = (mca_bml_r2.btl_modules[btl_idx])->btl_ft_event(loc_state) ) ) {
@@ -140,7 +140,7 @@ int mca_bml_r2_ft_event(int state)
             mca_bml_r2.btl_progress = NULL;
         }
 
-        opal_output_verbose(10, ompi_cr_output,
+        orte_output_verbose(10, ompi_cr_output,
                             "bml:r2: ft_event(Restart): Reselect BTLs\n");
 
         /*
@@ -152,7 +152,7 @@ int mca_bml_r2_ft_event(int state)
          * are not available now.
          */
         if( OMPI_SUCCESS != (ret = mca_btl_base_close())) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed to close BTL framework\n");
+            orte_output(0, "bml:r2: ft_event(Restart): Failed to close BTL framework\n");
             return ret;
         }
 
@@ -164,11 +164,11 @@ int mca_bml_r2_ft_event(int state)
          * we try to remove some restart only files.
          */
         if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            orte_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
         }
 
-        opal_output_verbose(10, ompi_cr_output,
+        orte_output_verbose(10, ompi_cr_output,
                             "bml:r2: ft_event(Restart): Cleanup restart files\n");
         opal_crs_base_cleanup_flush();
 
@@ -176,7 +176,7 @@ int mca_bml_r2_ft_event(int state)
          * Re-open the BTL framework to get the full list of components.
          */
         if( OMPI_SUCCESS != (ret = mca_btl_base_open()) ) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed to open BTL framework\n");
+            orte_output(0, "bml:r2: ft_event(Restart): Failed to open BTL framework\n");
             return ret;
         }
         
@@ -187,7 +187,7 @@ int mca_bml_r2_ft_event(int state)
          */
         if( OMPI_SUCCESS != (ret = mca_btl_base_select(OMPI_ENABLE_PROGRESS_THREADS,
                                                        OMPI_ENABLE_MPI_THREADS) ) ) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed to select in BTL framework\n");
+            orte_output(0, "bml:r2: ft_event(Restart): Failed to select in BTL framework\n");
             return ret;
         }
 

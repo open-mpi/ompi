@@ -398,11 +398,11 @@ repeat11:
                     case EWOULDBLOCK:
                         return false;
                     case EFAULT:
-                        opal_output( 0, "mca_btl_sctp_frag_recv: readv error (%p, %d)\n\t%s(%d)\n",
+                        orte_output( 0, "mca_btl_sctp_frag_recv: readv error (%p, %d)\n\t%s(%d)\n",
                                 frag->iov_ptr[0].iov_base, (int) frag->iov_ptr[0].iov_len,
                                 strerror(opal_socket_errno), (int) frag->iov_cnt );
                     default:
-                        opal_output(0, "mca_btl_sctp_frag_recv: readv failed with errno=%d",
+                        orte_output(0, "mca_btl_sctp_frag_recv: readv failed with errno=%d",
                                 opal_socket_errno);
                         mca_btl_sctp_endpoint_close(btl_endpoint);
                         return false;
@@ -542,11 +542,11 @@ repeat:
                     case EWOULDBLOCK:
                         return false;
                     case EFAULT:
-                        opal_output( 0, "mca_btl_sctp_frag_recv: error (%p, %d)\n\t%s(%d)\n",
+                        orte_output( 0, "mca_btl_sctp_frag_recv: error (%p, %d)\n\t%s(%d)\n",
                                 frag->iov_ptr[0].iov_base, (int) frag->iov_ptr[0].iov_len,
                                 strerror(opal_socket_errno), (int) frag->iov_cnt );
                     default:
-                        opal_output(0, "mca_btl_sctp_frag_recv: failed with errno=%d",
+                        orte_output(0, "mca_btl_sctp_frag_recv: failed with errno=%d",
                                 opal_socket_errno);
                         mca_btl_sctp_endpoint_close(btl_endpoint);
                         return false;

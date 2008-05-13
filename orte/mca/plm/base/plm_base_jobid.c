@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/hash_string.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -46,7 +46,7 @@ int orte_plm_base_set_hnp_name(void)
     
     bias = (uint32_t)orte_process_info.pid;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "plm:base:set_hnp_name: initial bias %ld nodename hash %lu",
                          (long)bias, (unsigned long)hash32));
 
@@ -56,7 +56,7 @@ int orte_plm_base_set_hnp_name(void)
     /* now compress to 16-bits */
     jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "plm:base:set_hnp_name: final jobfam %lu",
                          (unsigned long)jobfam));
     

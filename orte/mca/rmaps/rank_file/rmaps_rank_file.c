@@ -33,14 +33,12 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
 #include "opal/util/trace.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-
+#include "orte/util/output.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
@@ -86,7 +84,7 @@ static int map_app_by_user_map(
     * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
             /* No more nodes to allocate :( */
-            opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
+            orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
                             true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
@@ -107,14 +105,14 @@ static int map_app_by_user_map(
                 node = (orte_node_t*) cur_node_item;
                 cur_node_item = next;
                 if ( round_cnt == 2 ) {
-                    opal_show_help("help-rmaps_rank_file.txt","bad-host", true,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].node_name);
+                    orte_show_help("help-rmaps_rank_file.txt","bad-host", true,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].node_name);
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                     return ORTE_ERR_BAD_PARAM; 
                 }
         } while ( strcmp(node->name, rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name));
         node->slot_list = strdup(rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].slot_list);
         if (mca_rmaps_rank_file_component.debug) {
-           opal_output(0, "rank_file RMAPS component: [%s:%d]->slot_list=%s\n",
+           orte_output(0, "rank_file RMAPS component: [%s:%d]->slot_list=%s\n",
                    rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, node->slot_list);
         }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, app->idx,
@@ -180,7 +178,7 @@ static int map_app_by_node(
          * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
             /* No more nodes to allocate :( */
-            opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
+            orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
@@ -250,7 +248,7 @@ static int map_app_by_slot(
         * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
             /* Everything is at max usage! :( */
-            opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
+            orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
@@ -387,7 +385,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
          * all available slots. We'll double-check the single app_context rule first
          */
         if (0 == app->num_procs && 1 < jdata->num_apps) {
-            opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:multi-apps-and-zero-np",
+            orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:multi-apps-and-zero-np",
                            true, jdata->num_apps, NULL);
             rc = ORTE_ERR_SILENT;
             goto error;
@@ -451,7 +449,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             if (0 == app->num_procs) {
                 app->num_procs = num_nodes;
             } else if (app->num_procs > num_nodes) {
-                opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:per-node-and-too-many-procs",
+                orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:per-node-and-too-many-procs",
                                true, app->num_procs, num_nodes, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -462,7 +460,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
              */
             slots_per_node = num_slots / num_nodes;
             if (map->npernode > slots_per_node) {
-                opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:n-per-node-and-not-enough-slots",
+                orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:n-per-node-and-not-enough-slots",
                                true, map->npernode, slots_per_node, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -478,7 +476,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* set the num_procs to equal the specified num/node * the number of nodes */
                 app->num_procs = map->npernode * num_nodes;
             } else if (app->num_procs > (map->npernode * num_nodes)) {
-                opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:n-per-node-and-too-many-procs",
+                orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:n-per-node-and-too-many-procs",
                                true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -487,7 +485,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 /* we can't handle this - it should have been set when we got
                  * the map info. If it wasn't, then we can only error out
                  */
-                opal_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:no-np-and-user-map",
+                orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:no-np-and-user-map",
                                true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -586,7 +584,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
    orte_rmaps_rank_file_in = fopen(rankfile, "r");
 
    if (NULL == orte_rmaps_rank_file_in) {
-       opal_show_help("help-rmaps_rank_file.txt", "no-rankfile", true, rankfile, np);
+       orte_show_help("help-rmaps_rank_file.txt", "no-rankfile", true, rankfile, np);
        rc = OPAL_ERR_NOT_FOUND;
        goto unlock;
    }
@@ -605,7 +603,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
             case ORTE_RANKFILE_EQUAL:
                 ival = orte_rmaps_rank_file_value.ival;
                 if ( ival > (np-1) ) {
-                    opal_show_help("help-rmaps_rank_file.txt", "bad-rankfile", true, ival, rankfile);
+                    orte_show_help("help-rmaps_rank_file.txt", "bad-rankfile", true, ival, rankfile);
                     rc = ORTE_ERR_BAD_PARAM;
                     goto unlock;
                 }                    
@@ -631,7 +629,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
                         node_name = strdup(argv[1]);
                     }
                     else {
-                        opal_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
+                        orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                         rc = ORTE_ERR_BAD_PARAM;
                         goto unlock;
                     }
@@ -647,7 +645,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
                 break;
             case ORTE_RANKFILE_SLOT:
                 if ( NULL == (value = orte_rmaps_rank_file_parse_string_or_int())) {
-                    opal_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
+                    orte_show_help("help-rmaps_rank_file.txt", "bad-syntax", true, rankfile);
                     rc = ORTE_ERR_BAD_PARAM;
                     goto unlock;
                 }

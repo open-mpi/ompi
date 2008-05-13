@@ -28,17 +28,16 @@
 #include <sys/stat.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/show_help.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
 
+#include "orte/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -56,7 +55,7 @@ static void hostfile_parse_error(int token)
 {
     switch (token) {
     case ORTE_HOSTFILE_STRING:
-        opal_show_help("help-hostfile.txt", "parse_error_string",
+        orte_show_help("help-hostfile.txt", "parse_error_string",
                        true,
                        cur_hostfile_name, 
                        orte_util_hostfile_line, 
@@ -66,7 +65,7 @@ static void hostfile_parse_error(int token)
     case ORTE_HOSTFILE_IPV4:
     case ORTE_HOSTFILE_IPV6:
     case ORTE_HOSTFILE_INT:
-        opal_show_help("help-hostfile.txt", "parse_error_int",
+        orte_show_help("help-hostfile.txt", "parse_error_int",
                        true,
                        cur_hostfile_name, 
                        orte_util_hostfile_line, 
@@ -74,7 +73,7 @@ static void hostfile_parse_error(int token)
                        orte_util_hostfile_value.ival);
         break;
      default:
-        opal_show_help("help-hostfile.txt", "parse_error",
+        orte_show_help("help-hostfile.txt", "parse_error",
                        true,
                        cur_hostfile_name, 
                        orte_util_hostfile_line, 
@@ -161,7 +160,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             username = strdup(argv[0]);
             node_name = strdup(argv[1]);
         } else {
-            opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
+            orte_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
 
@@ -177,7 +176,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             }
             node_name[len-1] = '\0';  /* truncate */
             
-            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+            ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                                  "%s hostfile: node %s is being excluded",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
             
@@ -209,7 +208,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node_name = strdup(orte_process_info.nodename);
         }
 
-        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s hostfile: node %s is being included - keep all is %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
@@ -249,7 +248,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         case ORTE_HOSTFILE_SLOTS:
             rc = hostfile_parse_int();
             if (rc < 0) {
-                opal_show_help("help-hostfile.txt", "slots",
+                orte_show_help("help-hostfile.txt", "slots",
                                true,
                                cur_hostfile_name, rc);
                 OBJ_RELEASE(node);
@@ -267,7 +266,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         case ORTE_HOSTFILE_SLOTS_MAX:
             rc = hostfile_parse_int();
             if (rc < 0) {
-                opal_show_help("help-hostfile.txt", "max_slots",
+                orte_show_help("help-hostfile.txt", "max_slots",
                                true,
                                cur_hostfile_name, ((size_t) rc));
                 OBJ_RELEASE(node);
@@ -280,7 +279,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
                     got_max = true;
                 }
             } else {
-                opal_show_help("help-hostfile.txt", "max_slots_lt",
+                orte_show_help("help-hostfile.txt", "max_slots_lt",
                                true,
                                cur_hostfile_name, node->slots, rc);
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -331,7 +330,7 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_
     orte_util_hostfile_done = false;
     orte_util_hostfile_in = fopen(hostfile, "r");
     if (NULL == orte_util_hostfile_in) {
-        opal_show_help("help-hostfile.txt", "no-hostfile", true, hostfile);
+        orte_show_help("help-hostfile.txt", "no-hostfile", true, hostfile);
         rc = ORTE_ERR_NOT_FOUND;
         goto unlock;
     }
@@ -393,7 +392,7 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
     int rc;
 
     
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s hostfile: checking hostfile %s for nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
 
@@ -450,7 +449,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     bool node_found;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
                         "%s hostfile: filtering nodes through hostfile %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
 
@@ -518,7 +517,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
      * This is an error - report it to the user and return an error
      */
     if (0 != opal_list_get_size(&newnodes)) {
-        opal_show_help("help-hostfile.txt", "not-all-mapped-alloc",
+        orte_show_help("help-hostfile.txt", "not-all-mapped-alloc",
                        true, hostfile);
         while (NULL != (item1 = opal_list_remove_first(&newnodes))) {
             OBJ_RELEASE(item1);
@@ -539,7 +538,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     opal_list_item_t *item, *itm;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s hostfile: creating ordered list of hosts from hostfile %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
     

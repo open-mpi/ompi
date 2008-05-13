@@ -73,7 +73,7 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
             }
             break;
         default:
-            opal_output(0, "[%s:%d] wrong send request type\n",
+            orte_output(0, "[%s:%d] wrong send request type\n",
                     __FILE__, __LINE__);
             break;
         }
@@ -162,7 +162,7 @@ mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
     }
 
@@ -195,7 +195,7 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
     }
 
@@ -280,7 +280,7 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
+        orte_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
     }
 

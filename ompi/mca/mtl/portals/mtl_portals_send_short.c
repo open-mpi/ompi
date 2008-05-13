@@ -38,7 +38,7 @@ ompi_mtl_portals_short_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *ptl
 	    break;
 
 	default:
-	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_short_callback()\n",ev->type); 
+	    orte_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_short_callback()\n",ev->type); 
 	    abort();
     }
 

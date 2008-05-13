@@ -37,7 +37,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -61,7 +61,7 @@ int orte_routed_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:base: Receive: Start command recv",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -87,7 +87,7 @@ int orte_routed_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -136,7 +136,7 @@ void orte_routed_base_recv(int status, orte_process_name_t* sender,
 {
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:base:receive got message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));

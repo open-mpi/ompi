@@ -20,8 +20,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -99,12 +98,12 @@ int mca_btl_base_select(bool enable_progress_threads,
             }
         }
 
-        opal_output_verbose(10, mca_btl_base_output, 
+        orte_output_verbose(10, mca_btl_base_output, 
                             "select: initializing %s component %s",
                             component->btl_version.mca_type_name,
                             component->btl_version.mca_component_name);
         if (NULL == component->btl_init) {
-            opal_output_verbose(10, mca_btl_base_output,
+            orte_output_verbose(10, mca_btl_base_output,
                                 "select: no init function; ignoring component %s",
                                 component->btl_version.mca_component_name);
         } else {
@@ -115,10 +114,10 @@ int mca_btl_base_select(bool enable_progress_threads,
                list and remove it from the component repository */
 
             if (NULL == modules) {
-                opal_output_verbose(10, mca_btl_base_output,
+                orte_output_verbose(10, mca_btl_base_output,
                                     "select: init of component %s returned failure",
                                     component->btl_version.mca_component_name);
-                opal_output_verbose(10, mca_btl_base_output,
+                orte_output_verbose(10, mca_btl_base_output,
                                     "select: module %s unloaded",
                                     component->btl_version.mca_component_name);
 
@@ -129,7 +128,7 @@ int mca_btl_base_select(bool enable_progress_threads,
             /* Otherwise, it initialized properly.  Save it. */
 
             else {
-                opal_output_verbose(10, mca_btl_base_output,
+                orte_output_verbose(10, mca_btl_base_output,
                                     "select: init of component %s returned success",
                                     component->btl_version.mca_component_name);
 
@@ -152,7 +151,7 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
-        opal_show_help("help-mca-base.txt", "find-available:none-found", true,
+        orte_show_help("help-mca-base.txt", "find-available:none-found", true,
                        "btl");
         orte_errmgr.abort(1, NULL);
     }

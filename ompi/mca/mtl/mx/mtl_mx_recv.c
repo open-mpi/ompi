@@ -61,7 +61,7 @@ ompi_mtl_mx_irecv(struct mca_mtl_base_module_t* mtl,
                      src,
                      tag);
     
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "recv bits:   0x%016" PRIu64 " 0x%016" PRIu64 "\n", 
                          match_bits, mask_bits));
 
@@ -73,7 +73,7 @@ ompi_mtl_mx_irecv(struct mca_mtl_base_module_t* mtl,
                           mtl_mx_request, 
                           &mtl_mx_request->mx_request);
     if(mx_return != MX_SUCCESS) {
-        opal_output(ompi_mtl_base_output, "Error in mx_irecv (error %s)\n", mx_strerror(mx_return));
+        orte_output(ompi_mtl_base_output, "Error in mx_irecv (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
 

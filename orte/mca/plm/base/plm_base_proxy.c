@@ -27,6 +27,7 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 
@@ -43,7 +44,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     orte_process_name_t *target;
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -67,14 +68,14 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     /* identify who gets this command - the HNP or the local orted */
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SPAWN) {
         /* for now, this is unsupported */
-        opal_output(0, "LOCAL DAEMON SPAWN IS CURRENTLY UNSUPPORTED");
+        orte_output(0, "LOCAL DAEMON SPAWN IS CURRENTLY UNSUPPORTED");
         target = ORTE_PROC_MY_HNP;
         /* target = ORTE_PROC_MY_DAEMON; */
     } else {
         target = ORTE_PROC_MY_HNP;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy sending spawn cmd to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target)));
@@ -87,7 +88,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     OBJ_DESTRUCT(&buf);
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

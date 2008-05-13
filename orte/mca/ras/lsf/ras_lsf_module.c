@@ -27,7 +27,7 @@
 #include <lsf/lsbatch.h>
 
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -60,7 +60,7 @@ static int allocate(orte_jobid_t job, opal_list_t *nodes)
 
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
-        opal_show_help("help-ras-lsf.txt", "nodelist-failed", true);
+        orte_show_help("help-ras-lsf.txt", "nodelist-failed", true);
         return ORTE_ERR_NOT_AVAILABLE;
     }
     

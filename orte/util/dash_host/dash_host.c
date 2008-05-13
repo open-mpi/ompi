@@ -20,10 +20,9 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
-#include "opal/util/show_help.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -213,7 +212,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     if (j < k) {
         char *tmp;
         tmp = opal_argv_join(mapped_nodes, ',');
-        opal_show_help("help-dash-host.txt", "not-all-mapped-alloc",
+        orte_show_help("help-dash-host.txt", "not-all-mapped-alloc",
                        true, tmp);
         free(tmp);
         rc = ORTE_ERR_SILENT;

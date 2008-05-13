@@ -58,7 +58,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
     opal_free_list_item_t* _item; \
     OPAL_FREE_LIST_GET(&orte_iof_base.iof_fragments, _item, rc); \
     if(NULL == (frag = (orte_iof_base_frag_t*)_item)) { \
-        opal_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
+        orte_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
     } \
     frag->frag_owner = NULL; \
     frag->frag_ptr = frag->frag_data; \

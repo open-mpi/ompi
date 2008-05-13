@@ -40,7 +40,7 @@
 #include "opal/util/opal_environ.h"
 
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm_types.h"

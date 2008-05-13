@@ -360,7 +360,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
          * store this fragment in a global list, and deliver it to the right
          * communicator once it get created.
          */
-        opal_output( 0, "Dropped message for the non-existing communicator %d\n",
+        orte_output( 0, "Dropped message for the non-existing communicator %d\n",
                      (int)hdr->hdr_ctx );
         return OMPI_SUCCESS;
     }

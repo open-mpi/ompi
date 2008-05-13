@@ -22,7 +22,7 @@
 #include "rcache_rb.h"
 #include "rcache_rb_tree.h"
 #include "rcache_rb_mru.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/mpool/base/base.h" 
 
 /**

@@ -27,7 +27,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "coll_sm.h"
 
 
@@ -223,13 +223,13 @@ static int sm_open(void)
                            cs->sm_tree_degree,
                            &cs->sm_tree_degree);
     if (cs->sm_tree_degree > cs->sm_control_size) {
-        opal_show_help("help-coll-sm.txt", 
+        orte_show_help("help-coll-sm.txt", 
                        "tree-degree-larger-than-control", true,
                        cs->sm_tree_degree, cs->sm_control_size);
         cs->sm_tree_degree = cs->sm_control_size;
     }
     if (cs->sm_tree_degree > 255) {
-        opal_show_help("help-coll-sm.txt", 
+        orte_show_help("help-coll-sm.txt", 
                        "tree-degree-larger-than-255", true,
                        cs->sm_tree_degree);
         cs->sm_tree_degree = 255;

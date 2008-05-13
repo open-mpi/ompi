@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -89,8 +89,7 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
     
     /* if we wanted to display the map, now is the time to do it */
     if (jdata->map->display_map) {
-        opal_output(0, "***   JOB MAP FOR JOB %s   ***", ORTE_JOBID_PRINT(jdata->jobid));
-        opal_dss.dump(0, jdata->map, ORTE_JOB_MAP);
+        opal_dss.dump(orte_rmaps_base.map_output, jdata->map, ORTE_JOB_MAP);
     }
     
     return ORTE_SUCCESS;

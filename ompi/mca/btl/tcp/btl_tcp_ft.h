@@ -24,7 +24,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

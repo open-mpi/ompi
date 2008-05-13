@@ -25,9 +25,8 @@
 #include "ompi_config.h"
 #include <string.h>
 #include <inttypes.h>
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/if.h"
-#include "opal/util/show_help.h"
 #include "opal/util/arch.h"
 
 #include "ompi/mca/pml/pml.h"
@@ -109,13 +108,13 @@ static void show_init_error(const char *file, int line,
             asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
 
-        opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
+        orte_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
                        true, orte_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
-        opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+        orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                        true, orte_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
@@ -318,7 +317,7 @@ int mca_btl_openib_add_procs(
         mca_btl_openib_proc_t* ib_proc;
         int remote_matching_port;
 
-        opal_output(-1, "add procs: adding proc %d", i);
+        orte_output(-1, "add procs: adding proc %d", i);
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

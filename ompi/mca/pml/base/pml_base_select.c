@@ -20,8 +20,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/util/show_help.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -98,7 +97,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         }
 
         if(!found_pml && opal_pointer_array_get_size(&mca_pml_base_pml)) { 
-            opal_output_verbose( 10, mca_pml_base_output,
+            orte_output_verbose( 10, mca_pml_base_output,
                                      "select: component %s not in the include list",
                                      component->pmlm_version.mca_component_name );
                 
@@ -107,14 +106,14 @@ int mca_pml_base_select(bool enable_progress_threads,
 
         /* if there is no init function - ignore it */
         if (NULL == component->pmlm_init) {
-            opal_output_verbose( 10, mca_pml_base_output,
+            orte_output_verbose( 10, mca_pml_base_output,
                                  "select: no init function; ignoring component %s",
                                  component->pmlm_version.mca_component_name );
             continue;
         }
 
         /* Init component to get its priority */
-        opal_output_verbose( 10, mca_pml_base_output, 
+        orte_output_verbose( 10, mca_pml_base_output, 
                              "select: initializing %s component %s",
                              component->pmlm_version.mca_type_name,
                              component->pmlm_version.mca_component_name );
@@ -122,18 +121,18 @@ int mca_pml_base_select(bool enable_progress_threads,
         module = component->pmlm_init(&priority, enable_progress_threads,
                                       enable_mpi_threads);
         if (NULL == module) {
-            opal_output_verbose( 10, mca_pml_base_output,
+            orte_output_verbose( 10, mca_pml_base_output,
                                  "select: init returned failure for component %s",
                                  component->pmlm_version.mca_component_name );
             continue;
         }
 
-        opal_output_verbose( 10, mca_pml_base_output,
+        orte_output_verbose( 10, mca_pml_base_output,
                              "select: init returned priority %d", priority );
 #if OPAL_ENABLE_FT == 1
         /* Determine if this is the wrapper component */
         if( priority <= PML_SELECT_WRAPPER_PRIORITY) {
-            opal_output_verbose( 10, mca_pml_base_output,
+            orte_output_verbose( 10, mca_pml_base_output,
                                  "pml:select: Wrapper Component: Component %s was determined to be a Wrapper PML with priority %d",
                                  component->pmlm_version.mca_component_name, priority );
             wrapper_priority  = priority;
@@ -162,7 +161,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
     
     if( NULL == best_component ) {
-        opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
+        orte_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
         for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) { 
             char * tmp_val = NULL;
             tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
@@ -176,7 +175,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         }
     } 
     
-    opal_output_verbose( 10, mca_pml_base_output,
+    orte_output_verbose( 10, mca_pml_base_output,
                          "selected %s best priority %d\n", 
                          best_component->pmlm_version.mca_component_name, best_priority);
     
@@ -201,7 +200,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                    don't matter anymore) */
                 
                 om->om_component->pmlm_finalize();
-                opal_output_verbose(10, mca_pml_base_output, 
+                orte_output_verbose(10, mca_pml_base_output, 
                                     "select: component %s not selected / finalized",
                                     om->om_component->pmlm_version.mca_component_name);
             }
@@ -233,7 +232,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
     mca_pml_base_selected_component = *best_component;
     mca_pml = *best_module;
-    opal_output_verbose( 10, mca_pml_base_output, 
+    orte_output_verbose( 10, mca_pml_base_output, 
                          "select: component %s selected",
                          mca_pml_base_selected_component.pmlm_version.mca_component_name );
 
@@ -249,7 +248,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* If we have a wrapper then initalize it */
     if( NULL != wrapper_component ) {
         priority = PML_SELECT_WRAPPER_PRIORITY;
-        opal_output_verbose( 10, mca_pml_base_output,
+        orte_output_verbose( 10, mca_pml_base_output,
                              "pml:select: Wrapping: Component %s [%d] is being wrapped by component %s [%d]", 
                              mca_pml_base_selected_component.pmlm_version.mca_component_name,
                              best_priority,
@@ -324,12 +323,12 @@ mca_pml_base_pml_check_selected(const char *my_pml,
         if ((size != strlen(my_pml) + 1) ||
             (0 != strcmp(my_pml, remote_pml))) {
             if (procs[i]->proc_hostname) {
-                opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
+                orte_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
                             ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
                             my_pml, ORTE_NAME_PRINT(&procs[i]->proc_name),
                             procs[i]->proc_hostname, remote_pml);
             } else {
-                opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
+                orte_output(0, "%s selected pml %s, but peer %s selected pml %s",
                             ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
                             my_pml, ORTE_NAME_PRINT(&procs[i]->proc_name),
                             remote_pml);

@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "ompi/info/info.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/dpm/dpm.h"

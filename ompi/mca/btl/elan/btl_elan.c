@@ -10,7 +10,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -471,7 +471,7 @@ static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
                                          (void*)elan_hdr,
                                          send_len, ELAN_RAIL_ALL );
         if( OPAL_UNLIKELY(NULL == frag->elan_event) ) {
-            opal_output( 0, "elan_queueTx failed for destination %d\n", endpoint->elan_vp );
+            orte_output( 0, "elan_queueTx failed for destination %d\n", endpoint->elan_vp );
             return OMPI_ERROR;
         }
     } else {
@@ -479,7 +479,7 @@ static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
                                               elan_btl->elan_vp, frag->tag,
                                               (void*)elan_hdr, frag->segment.seg_len );
         if( OPAL_UNLIKELY(NULL == frag->elan_event) ) {
-            opal_output( 0, "elan_tportTxStart failed for destination %d\n", endpoint->elan_vp );
+            orte_output( 0, "elan_tportTxStart failed for destination %d\n", endpoint->elan_vp );
             return OMPI_ERROR;
         }
     }
@@ -554,7 +554,7 @@ static int mca_btl_elan_get( mca_btl_base_module_t* btl,
     frag->endpoint = endpoint;
     frag->btl = elan_btl;
     frag->type = MCA_BTL_ELAN_HDR_TYPE_GET;
-    opal_output( 0, "elan_get( remote %p, local %p, length %d, peer %d )\n",
+    orte_output( 0, "elan_get( remote %p, local %p, length %d, peer %d )\n",
                  (void*)src_addr, (void*)dst_addr, (int)src_len, peer );
     frag->elan_event = elan_get(elan_btl->base->state, src_addr, dst_addr, src_len, peer);
     /* Add the fragment to the pending RDMA list */

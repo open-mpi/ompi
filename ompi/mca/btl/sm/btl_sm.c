@@ -29,7 +29,7 @@
 #include "opal/threads/mutex.h"
 #include "ompi/datatype/convertor.h"
 #include "opal/sys/atomic.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/if.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/printf.h"
@@ -177,7 +177,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
          mca_common_sm_mmap_init(size, sm_ctl_file,
                                  sizeof(mca_common_sm_file_header_t),
                                  CACHE_LINE_SIZE))) {
-        opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
+        orte_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
         free(sm_ctl_file);
@@ -311,7 +311,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
             (unsigned long)proc->proc_name.vpid);
     ep->fifo_fd = open(path, O_WRONLY);
     if(ep->fifo_fd < 0) {
-        opal_output(0, "mca_btl_sm_add_procs: open(%s) failed with errno=%d\n",
+        orte_output(0, "mca_btl_sm_add_procs: open(%s) failed with errno=%d\n",
                     path, errno);
         free(ep);
         return NULL;

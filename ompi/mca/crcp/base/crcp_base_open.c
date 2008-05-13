@@ -19,8 +19,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/util/output.h"
 
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
@@ -44,20 +46,9 @@ ompi_crcp_base_component_t ompi_crcp_base_selected_component;
  */
 int ompi_crcp_base_open(void)
 {
-    int value;
     char *str_value = NULL;
 
-    /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("crcp",
-                                "base_verbose",
-                                "Verbosity level of the CRCP framework",
-                                false, false,
-                                0, &value);
-    if(0 != value) {
-        ompi_crcp_base_output = opal_output_open(NULL);
-    } else {
-        ompi_crcp_base_output = -1;
-    }
+    ompi_crcp_base_output = orte_output_open(NULL, "CRCP", "DEBUG", NULL);
 
     /* 
      * Which CRCP component to open

@@ -21,7 +21,7 @@
 #ifndef MCA_BML_R2_FT_H
 #define MCA_BML_R2_FT_H
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/btl/btl.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

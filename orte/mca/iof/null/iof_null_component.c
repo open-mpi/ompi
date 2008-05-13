@@ -19,7 +19,7 @@
 
 #include "orte_config.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "orte/mca/rml/rml.h"
 #include "opal/mca/base/base.h"

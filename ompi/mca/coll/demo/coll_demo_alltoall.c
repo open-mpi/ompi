@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -41,7 +41,7 @@ int mca_coll_demo_alltoall_intra(void *sbuf, int scount,
                                  struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo alltoall_intra\n");
+    orte_output_verbose(10, mca_coll_base_output, "In demo alltoall_intra\n");
     return demo_module->underlying.coll_alltoall(sbuf, scount, sdtype,
                                                  rbuf, rcount, rdtype, 
                                                  comm,
@@ -64,7 +64,7 @@ int mca_coll_demo_alltoall_inter(void *sbuf, int scount,
                                  struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    opal_output_verbose(10, mca_coll_base_output, "In demo alltoall_inter\n");
+    orte_output_verbose(10, mca_coll_base_output, "In demo alltoall_inter\n");
     return demo_module->underlying.coll_alltoall(sbuf, scount, sdtype,
                                                  rbuf, rcount, rdtype, 
                                                  comm,

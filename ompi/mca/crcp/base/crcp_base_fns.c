@@ -28,7 +28,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/os_dirpath.h"
 
 #include "ompi/communicator/communicator.h"

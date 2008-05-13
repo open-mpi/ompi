@@ -25,7 +25,7 @@
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
 #include "mtl_psm_endpoint.h" 

@@ -63,9 +63,7 @@
 #endif
 #endif /* HAVE_SCHED_YIELD */
 
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
-
+#include "orte/util/output.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -278,7 +276,7 @@ static int odls_default_fork_local_proc(
         /* Exec the new executable */
 
         execve(context->app, context->argv, environ_copy);
-        opal_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
+        orte_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
                        true, context->app, strerror(errno));
         exit(1);
     } else {
@@ -303,7 +301,7 @@ static int odls_default_fork_local_proc(
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
                 child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
                 
-                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 
@@ -324,7 +322,7 @@ static int odls_default_fork_local_proc(
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
                 child->exit_code = i;
                 
-                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 
@@ -352,7 +350,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
@@ -360,7 +358,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     
     /* launch the local procs */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_default_fork_local_proc))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
@@ -387,7 +385,7 @@ static int send_signal(pid_t pid, int signal)
 {
     int rc = ORTE_SUCCESS;
     
-    OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                          "%s sending signal %d to pid %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));

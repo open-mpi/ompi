@@ -67,7 +67,7 @@ static int
 ompi_mtl_portals_catchall_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *ptl_request)
 {
 
-    opal_output(fileno(stderr),"ERROR - received catchall event\n"); 
+    orte_output(fileno(stderr),"ERROR - received catchall event\n"); 
 
     abort();
 
@@ -338,14 +338,14 @@ ompi_mtl_portals_progress(void)
                 ret = ptl_request->event_callback(&ev, ptl_request);
 
                 if (OMPI_SUCCESS != ret) {
-                    opal_output(0, " Error returned from the even callback.  Error code - %d \n",ret);
+                    orte_output(0, " Error returned from the even callback.  Error code - %d \n",ret);
                     abort();
                 }
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
         } else {
-            opal_output(0, " Error returned from PtlEQGet.  Error code - %d \n",ret);
+            orte_output(0, " Error returned from PtlEQGet.  Error code - %d \n",ret);
             abort();
         }
     }

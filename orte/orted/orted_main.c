@@ -46,9 +46,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
-#include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
@@ -56,6 +54,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 
+#include "orte/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -98,6 +97,7 @@ static void shutdown_callback(int fd, short flags, void *arg);
 static void signal_callback(int fd, short event, void *arg);
 
 static struct {
+    bool debug;
     bool help;
     bool set_sid;
     bool hnp;
@@ -131,7 +131,7 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       "Daemonize the orted into the background" },
 
     { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      &orted_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE daemons" },
 
     { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
@@ -197,7 +197,7 @@ int orte_daemon(int argc, char *argv[])
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        opal_show_help("help-orted.txt", "orted:usage", false,
+        orte_show_help("help-orted.txt", "orted:usage", false,
                        argv[0], args);
         free(args);
         return ret;
@@ -229,15 +229,11 @@ int orte_daemon(int argc, char *argv[])
     /* save the environment for use when launching application processes */
     orte_launch_environ = opal_argv_copy(environ);
     
-    /* register and process the orte params */
-    if (ORTE_SUCCESS != (ret = orte_register_params())) {
-        return ret;
-    }
     
     /* if orte_daemon_debug is set, let someone know we are alive right
      * away just in case we have a problem along the way
      */
-    if (orte_debug_daemons_flag) {
+    if (orted_globals.debug) {
         gethostname(hostname, 100);
         fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
@@ -246,7 +242,7 @@ int orte_daemon(int argc, char *argv[])
     if (orted_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        opal_show_help("help-orted.txt", "orted:usage", false,
+        orte_show_help("help-orted.txt", "orted:usage", false,
                        argv[0], args);
         free(args);
         return 1;
@@ -287,15 +283,6 @@ int orte_daemon(int argc, char *argv[])
 #endif
     tmp_env_var = NULL; /* Silence compiler warning */
 
-    /* detach from controlling terminal
-     * otherwise, remain attached so output can get to us
-     */
-    if(!orte_debug_flag &&
-       !orte_debug_daemons_flag &&
-       orted_globals.daemonize) {
-        opal_daemon_init(NULL);
-    }
-    
     /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
@@ -304,6 +291,15 @@ int orte_daemon(int argc, char *argv[])
     if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
         ORTE_ERROR_LOG(ret);
         return ret;
+    }
+    
+    /* detach from controlling terminal
+     * otherwise, remain attached so output can get to us
+     */
+    if(!orte_debug_flag &&
+       !orte_debug_daemons_flag &&
+       orted_globals.daemonize) {
+        opal_daemon_init(NULL);
     }
     
     /* insert our contact info into our process_info struct so we
@@ -553,7 +549,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        orte_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
     /* wait to hear we are done */
@@ -586,7 +582,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     }
     
     if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        orte_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
     
     /* cleanup */

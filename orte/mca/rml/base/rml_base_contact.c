@@ -22,7 +22,7 @@
 #include "orte/types.h"
 
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -80,7 +80,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &rml_uri, &cnt, OPAL_STRING))) {
         
-        OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
+        ORTE_OUTPUT_VERBOSE((5, orte_rml_base_output,
                              "%s rml:base:update:contact:info got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              NULL == rml_uri ? "NULL" : rml_uri));

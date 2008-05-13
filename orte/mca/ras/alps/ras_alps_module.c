@@ -26,9 +26,9 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/os_path.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -70,7 +70,7 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
     
     alps_batch_id = getenv("BATCH_PARTITION_ID");
     if (NULL == alps_batch_id) {
-        opal_show_help("help-ras-alps.txt", "alps-env-var-not-found", 1,
+        orte_show_help("help-ras-alps.txt", "alps-env-var-not-found", 1,
                        "BATCH_PARTITION_ID");
         return ORTE_ERR_NOT_FOUND;
     }
@@ -78,7 +78,7 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
     node_file = opal_os_path(false, orte_process_info.job_session_dir,
                              "orte_ras_alps_node_file.txt", NULL); 
     
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "ras:alps:allocate: node_file in %s", node_file));
     
     asprintf(&str, "%s/ras-alps-command.sh",
@@ -99,12 +99,12 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
              node_file
              );
 
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "ras:alps:allocate: got command string %s", alps_node_cmd_str));
     
 
     if(system(alps_node_cmd_str)) { 
-        opal_output(0, "Error in orte_ras_alps_allocate: system call returned an error, for reference I tried to run: %s", 
+        orte_output(0, "Error in orte_ras_alps_allocate: system call returned an error, for reference I tried to run: %s", 
                     alps_node_cmd_str);
         return ORTE_ERROR;
     }
@@ -131,10 +131,10 @@ cleanup:
     /* All done */
 
     if (ORTE_SUCCESS == ret) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "ras:alps:allocate: success"));
     } else {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "ras:alps:allocate: failure (base_allocate_nodes=%d)", ret));
     }
     return ret;
@@ -170,7 +170,7 @@ int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
     }
     
     while (NULL != (hostname = ras_alps_getline(fp))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "ras:alps:read_nodename: got hostname %s", hostname));
         
         /* if this matches the prior nodename, then just add
@@ -185,7 +185,7 @@ int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
         }
         
         /* must be a new name, so add a new item to the list */
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "ras:alps:read_nodename: not found -- added to list"));
         node = OBJ_NEW(orte_node_t);
         node->name = hostname;
@@ -207,7 +207,7 @@ int orte_ras_alps_read_nodename_file(opal_list_t *nodes, char *filename)
  */
 static int orte_ras_alps_finalize(void)
 {
-    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "ras:alps:finalize: success (nothing to do)"));
     return ORTE_SUCCESS;
 }

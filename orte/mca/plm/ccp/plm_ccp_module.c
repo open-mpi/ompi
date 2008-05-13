@@ -41,9 +41,9 @@
 #include "opal/threads/condition.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -151,7 +151,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     /* check for timing request - get start time if so */
     if (orte_timing) {
         if (0 != gettimeofday(&jobstart, NULL)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm_ccp: could not obtain job start time"));
         }
     }
@@ -160,7 +160,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
      * has been setup, so skip the setup actions
      */
     if (ORTE_JOBID_INVALID != jdata->jobid) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launching job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
@@ -173,7 +173,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -211,9 +211,9 @@ GETMAP:
                                           &proc_vpid_index,
                                           &node_name_index);
 
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: final top-level argv:\n\t%s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
@@ -230,7 +230,7 @@ GETMAP:
                            __uuidof(ICluster),
                            reinterpret_cast<void **> (&pCluster) );
     if (FAILED(hr)) {
-        opal_output(orte_plm_globals.output,
+        orte_output(orte_plm_globals.output,
                     "plm:ccp: failed to create cluster object!");
         goto cleanup;
     }
@@ -245,7 +245,7 @@ GETMAP:
     hr = pCluster->CreateJob(&pJob);
     if (FAILED(hr)) {
         get_cluster_message(pCluster);
-        opal_output(orte_plm_globals.output,
+        orte_output(orte_plm_globals.output,
                     "plm:ccp:failed to create cluster object!");
         goto cleanup;
     }
@@ -279,7 +279,7 @@ GETMAP:
             if (0 == strncmp("PATH=", env[i], 5)) {
                 asprintf(&newenv, "%s/%s:%s", 
                             apps[0]->prefix_dir, bin_base, env[i] + 5);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:ccp: resetting PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
@@ -291,7 +291,7 @@ GETMAP:
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
                 asprintf(&newenv, "%s/%s:%s", 
                             apps[0]->prefix_dir, lib_base, env[i] + 16);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:ccp: resetting LD_LIBRARY_PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
@@ -335,21 +335,21 @@ GETMAP:
 
     pJob->put_MinimumNumberOfProcessors(num_processors);
     if (FAILED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                     "plm:ccp:failed to put min num of processors!"));
         goto cleanup;
     }
 
     pJob->put_MaximumNumberOfProcessors(num_processors);
     if (FAILED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                     "plm:ccp:failed to put max num of processors!"));
         goto cleanup;
     }
 
     hr = pJob->put_Priority(job_priority);
     if (FAILED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                     "plm:ccp:failed to set proiority!"));
         goto cleanup;
     }
@@ -372,7 +372,7 @@ GETMAP:
         free(argv[node_name_index]);
         argv[node_name_index] = strdup(node->name);
         
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name));
@@ -380,7 +380,7 @@ GETMAP:
         /* setup process name */
         rc = orte_util_convert_vpid_to_string(&vpid_string, nodes[i]->daemon->name.vpid);
         if (ORTE_SUCCESS != rc) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm:ccp: unable to get daemon vpid as string"));
             exit(-1);
         }
@@ -389,9 +389,9 @@ GETMAP:
         free(vpid_string);
 
         /* exec the daemon */
-        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
             param = opal_argv_join(argv, ' ');
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:ccp: executing:\n\t%s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == param) ? "NULL" : param));
@@ -401,7 +401,7 @@ GETMAP:
         /* check for timing request - get start time if so */
         if (orte_timing) {
             if (0 != gettimeofday(&launchstart, NULL)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm_ccp: could not obtain start time"));
                 launchstart.tv_sec = 0;
                 launchstart.tv_usec = 0;
@@ -411,28 +411,28 @@ GETMAP:
         hr = pCluster->CreateTask(&pTask);
         if (FAILED(hr)) {
             get_cluster_message(pCluster);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
             goto cleanup;
         }
         
         pTask->put_MinimumNumberOfProcessors(node->num_procs);
         if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
             goto cleanup;
         }
 
         pTask->put_MaximumNumberOfProcessors(node->num_procs);
         if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
             goto cleanup;
         }
 
         pTask->put_RequiredNodes(_bstr_t(node->name));
         if (FAILED(hr)) {
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                     "plm:ccp:failed to set required nodes!"));
             goto cleanup;
         }
@@ -442,28 +442,28 @@ GETMAP:
 
         hr = pTask->put_CommandLine(_bstr_t(command_line));
         if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to put command line!"));
             goto cleanup;
         }
 
         hr = pTask->put_Stdout(_bstr_t(L"ompi_ccp_output.txt"));
         if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to set stdout!"));
             goto cleanup;
         }
 
         hr = pTask->put_Stderr(_bstr_t(L"ompi_ccp_error.txt"));
         if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to set stderr!"));
             goto cleanup;
         }
 
         hr = pJob->AddTask(pTask);
         if (FAILED(hr)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to add task!"));
             goto cleanup;
         }
@@ -480,19 +480,19 @@ GETMAP:
     /* Add job to the queue. */
     hr = pCluster->QueueJob(pJob, NULL, NULL, VARIANT_TRUE, 0, &job_id);
     if (SUCCEEDED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "Added job %d to scheduling queue.\n", job_id));
     }else {
         get_cluster_message(pCluster);
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp:launch: finished spawning orteds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: daemon launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
@@ -501,7 +501,7 @@ GETMAP:
 
 launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
@@ -514,21 +514,21 @@ launch_apps:
     /* check for timing request - get stop time for launch completion and report */
     if (orte_timing) {
         if (0 != gettimeofday(&completionstop, NULL)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm_ccp: could not obtain completion stop time"));
         } else {
             deltat = (launchstop.tv_sec - launchstart.tv_sec)*1000000 +
                      (launchstop.tv_usec - launchstart.tv_usec);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm_ccp: launch completion required %d usec", deltat));
         }
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm_ccp: Launch statistics:"));
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm_ccp: Average time to launch an orted: %f usec", avgtime));
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm_ccp: Max time to launch an orted: %d usec at iter %d", maxtime, maxiter));
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm_ccp: Min time to launch an orted: %d usec at iter %d", mintime, miniter));
     }
     
@@ -562,17 +562,17 @@ launch_apps:
     /* check for timing request - get stop time and process if so */
     if (orte_timing) {
         if (0 != gettimeofday(&jobstop, NULL)) {
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm_ccp: could not obtain stop time"));
         } else {
             deltat = (jobstop.tv_sec - jobstart.tv_sec)*1000000 +
                      (jobstop.tv_usec - jobstart.tv_usec);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm_ccp: launch of entire job required %d usec", deltat));
         }
     }
     
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp:launch: finished",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -648,7 +648,7 @@ static int plm_ccp_connect(ICluster* pCluster)
     _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
     if(cluster_head == NULL) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm:ccp:allocate: connot find cluster head node!"));
 	    return ORTE_ERROR;
     }
@@ -662,11 +662,11 @@ static int plm_ccp_connect(ICluster* pCluster)
     /* Connect to the cluster's head node */
     hr = pCluster->Connect(_bstr_t(cluster_head));
     if (FAILED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "plm:ccp:allocate: connection failed!"));
         return ORTE_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                         "Connected to Cluster: %s. \n", cluster_head));
     return ORTE_SUCCESS;
 }
@@ -727,12 +727,12 @@ void get_cluster_message(ICluster* pCluster)
 
     hr = pCluster->get_ErrorMessage(&message);
     if (SUCCEEDED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             _com_util::ConvertBSTRToString(message)));
         SysFreeString(message);
     }
     else {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "pCluster->get_ErrorMessage failed.\n"));
     }
 }

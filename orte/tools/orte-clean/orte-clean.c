@@ -55,13 +55,12 @@
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
-#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/util/output.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"
@@ -190,7 +189,7 @@ static int parse_args(int argc, char *argv[]) {
         orte_clean_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-clean.txt", "usage", true,
+        orte_show_help("help-orte-clean.txt", "usage", true,
                        args);
         free(args);
         return ORTE_ERROR;

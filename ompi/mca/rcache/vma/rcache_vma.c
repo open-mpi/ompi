@@ -25,7 +25,7 @@
 #include "ompi/mca/rcache/rcache.h"
 #include "rcache_vma.h"
 #include "rcache_vma_tree.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "ompi/mca/mpool/base/base.h" 
 
 /**

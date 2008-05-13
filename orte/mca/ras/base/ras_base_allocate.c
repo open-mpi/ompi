@@ -22,10 +22,9 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
-#include "opal/util/show_help.h"
 
+#include "orte/util/output.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -49,7 +48,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     bool override_oversubscribed;
     orte_app_context_t **apps;
 
-    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -58,7 +57,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      */
     if (orte_ras_base.allocation_read) {
         
-        OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+        ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                              "%s ras:base:allocate allocation already read",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -109,7 +108,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in module - proceeding to hostfile",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -119,7 +118,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      * as set by an mca param
      */
     if (NULL != orte_default_hostfile) {
-        OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+        ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                              "%s ras:base:allocate parsing default hostfile %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_default_hostfile));
@@ -165,7 +164,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     for (i=0; i < jdata->num_apps; i++) {
         if (NULL != apps[i]->hostfile) {
             
-            OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+            ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:allocate checking hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  apps[i]->hostfile));
@@ -200,7 +199,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in hostfiles - checking dash-host options",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -247,7 +246,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     
     
-    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+    ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in dash-host - inserting current node",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -286,12 +285,11 @@ DISPLAY:
     /* shall we display the results? */
     if (orte_ras_base.display_alloc) {
         alloc = (orte_node_t**)orte_node_pool->addr;
-        opal_output(0, "***   ALLOCATED NODES   ***");
         for (i=0; i < orte_node_pool->size; i++) {
             if (NULL == alloc[i]) {
                 break;
             }
-            opal_dss.dump(0, alloc[i], ORTE_NODE);
+            opal_dss.dump(orte_ras_base.alloc_output, alloc[i], ORTE_NODE);
         }
     }
     

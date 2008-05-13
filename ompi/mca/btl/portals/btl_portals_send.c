@@ -23,7 +23,7 @@
 #include <assert.h>
 
 #include "ompi/constants.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "btl_portals.h"
 #include "btl_portals_send.h"
@@ -43,14 +43,14 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
     frag->endpoint = endpoint;
     frag->hdr.tag = tag;
 
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "PtlPut (send) fragment %lx",
                          (unsigned long) frag));
 
     if (OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, 1) >
         mca_btl_portals_module.portals_max_outstanding_ops) {
         /* no space - queue and continute */
-        opal_output_verbose(50, mca_btl_portals_component.portals_output,
+        orte_output_verbose(50, mca_btl_portals_component.portals_output,
                             "no space for message 0x%lx.  Adding to back of queue",
                             (unsigned long) frag);
         OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
@@ -81,13 +81,13 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                         PTL_UNLINK,
                         &frag->md_h);
         if (ret != PTL_OK) {
-            opal_output(mca_btl_portals_component.portals_output,
+            orte_output(mca_btl_portals_component.portals_output,
                         "PtlMDBind failed with error %d", ret);
             return OMPI_ERROR;
         }
     } 
 
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "fragment info:\n"
                          "\tstart: 0x%lx\n"
                          "\tlen: %d",
@@ -105,7 +105,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                        0,                         /* remote offset - not used */
                        frag->hdr.tag);            /* hdr_data: tag */
     if (ret != PTL_OK) {
-        opal_output(mca_btl_portals_component.portals_output,
+        orte_output(mca_btl_portals_component.portals_output,
                     "send: PtlPut failed with error %d", ret);
         return OMPI_ERROR;
     }

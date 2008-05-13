@@ -34,7 +34,7 @@ ompi_osc_rdma_windx_to_module(uint32_t windx)
                                            windx,
                                            (void**) (&module));
     if (OMPI_SUCCESS != ret) {
-        opal_output(0, "Could not translate windx %d to a local MPI_Win instance",
+        orte_output(0, "Could not translate windx %d to a local MPI_Win instance",
                     windx);
         return NULL;
     }

@@ -20,11 +20,12 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/filem/base/static-components.h"
 
@@ -49,20 +50,9 @@ orte_filem_base_component_t orte_filem_base_selected_component;
  */
 int orte_filem_base_open(void)
 {
-    int value;
     char *str_value = NULL;
 
-    /* Debugging/Verbose output */
-    mca_base_param_reg_int_name("filem",
-                                "base_verbose",
-                                "Verbosity level of the FILEM framework",
-                                false, false,
-                                0, &value);
-    if(0 != value) {
-        orte_filem_base_output = opal_output_open(NULL);
-    } else {
-        orte_filem_base_output = 0;
-    }
+    orte_filem_base_output = orte_output_open(NULL, "FILEM", "DEBUG", NULL);
 
     /* 
      * Which FileM component to open

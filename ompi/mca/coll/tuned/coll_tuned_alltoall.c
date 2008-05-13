@@ -46,7 +46,7 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoall_intra_pairwise rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
@@ -78,7 +78,7 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     return MPI_SUCCESS;
  
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, 
                  err, rank));
     return err;
@@ -108,7 +108,7 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoall_intra_bruck rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &slb, &sext);
@@ -221,7 +221,7 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, 
                  rank));
     if (tmpbuf != NULL) free(tmpbuf_free);
@@ -274,7 +274,7 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_alltoall_intra_linear_sync rank %d", rank));
 
 
@@ -390,7 +390,7 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  error_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, error, 
                  rank));
     if (NULL != reqs) free(reqs);
@@ -413,7 +413,7 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
 
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_alltoall_intra_two_procs rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
@@ -447,7 +447,7 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
     return err;
@@ -499,7 +499,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_alltoall_intra_basic_linear rank %d", rank));
 
 
@@ -623,7 +623,7 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
     if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Alltoall algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+            orte_output( 0, "Alltoall algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
         }
         mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -661,7 +661,7 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     mca_base_param_lookup_int(mca_param_indices->max_requests_param_index, &(max_requests));
     if( max_requests <= 1 ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            opal_output( 0, "Maximum outstanding requests must be positive number greater than 1.  Switching to system level default %d \n",
+            orte_output( 0, "Maximum outstanding requests must be positive number greater than 1.  Switching to system level default %d \n",
                          ompi_coll_tuned_init_max_requests );
         }
         mca_base_param_set_int( mca_param_indices->max_requests_param_index, 
@@ -683,7 +683,7 @@ int ompi_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d",
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d",
                  data->user_forced[ALLTOALL].algorithm));
 
     switch (data->user_forced[ALLTOALL].algorithm) {
@@ -694,7 +694,7 @@ int ompi_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
     case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, data->user_forced[ALLTOALL].max_requests);
     case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
                      data->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
         return (MPI_ERR_ARG);
     } /* switch */
@@ -711,7 +711,7 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
                                            int algorithm, int faninout, int segsize, 
                                            int max_requests)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
+    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
                  algorithm, faninout, segsize));
 
     switch (algorithm) {
@@ -722,7 +722,7 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
     case (4):   return ompi_coll_tuned_alltoall_intra_linear_sync (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, max_requests);
     case (5):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
+        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
                      algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
         return (MPI_ERR_ARG);
     } /* switch */

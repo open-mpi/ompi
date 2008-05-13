@@ -30,12 +30,11 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
 #include "opal/util/trace.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/mca/carto/base/base.h"
 
+#include "orte/util/output.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -95,7 +94,7 @@ static int map_app_by_node(
          * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
             /* No more nodes to allocate :( */
-            opal_show_help("help-orte-rmaps-topo.txt", "orte-rmaps-topo:alloc-error",
+            orte_show_help("help-orte-rmaps-topo.txt", "orte-rmaps-topo:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
@@ -167,7 +166,7 @@ static int map_app_by_slot(
         * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
             /* Everything is at max usage! :( */
-            opal_show_help("help-orte-rmaps-topo.txt", "orte-rmaps-topo:alloc-error",
+            orte_show_help("help-orte-rmaps-topo.txt", "orte-rmaps-topo:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
@@ -309,7 +308,7 @@ static int topo_map(orte_job_t *jdata)
          * all available slots. We'll double-check the single app_context rule first
          */
         if (0 == app->num_procs && 1 < jdata->num_apps) {
-            opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:multi-apps-and-zero-np",
+            orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:multi-apps-and-zero-np",
                            true, jdata->num_apps, NULL);
             rc = ORTE_ERR_SILENT;
             goto error;
@@ -438,7 +437,7 @@ static int topo_map(orte_job_t *jdata)
             if (0 == app->num_procs) {
                 app->num_procs = num_nodes;
             } else if (app->num_procs > num_nodes) {
-                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:per-node-and-too-many-procs",
+                orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:per-node-and-too-many-procs",
                                true, app->num_procs, num_nodes, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -449,7 +448,7 @@ static int topo_map(orte_job_t *jdata)
              */
             slots_per_node = num_slots / num_nodes;
             if (map->npernode > slots_per_node) {
-                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-not-enough-slots",
+                orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-not-enough-slots",
                                true, map->npernode, slots_per_node, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -465,7 +464,7 @@ static int topo_map(orte_job_t *jdata)
                 /* set the num_procs to equal the specified num/node * the number of nodes */
                 app->num_procs = map->npernode * num_nodes;
             } else if (app->num_procs > (map->npernode * num_nodes)) {
-                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-too-many-procs",
+                orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-too-many-procs",
                                true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
@@ -482,7 +481,7 @@ static int topo_map(orte_job_t *jdata)
                 /* we can't handle this - it should have been set when we got
                  * the map info. If it wasn't, then we can only error out
                  */
-                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:no-np-and-user-map",
+                orte_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:no-np-and-user-map",
                                true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;

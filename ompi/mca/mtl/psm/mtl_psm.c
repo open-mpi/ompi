@@ -64,12 +64,12 @@ ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error,
 	case PSM_EP_NO_PORTS_AVAIL:
 	case PSM_EP_NO_NETWORK:
 	case PSM_EP_INVALID_UUID_KEY:
-	    opal_output(0, "Open MPI failed to open a PSM endpoint: %s\n", error_string);
+	    orte_output(0, "Open MPI failed to open a PSM endpoint: %s\n", error_string);
 	    break;
 
 	/* We can't handle any other errors than the ones above */
 	default:
-	    opal_output(0, "Open MPI detected an unexpected PSM error in opening "
+	    orte_output(0, "Open MPI detected an unexpected PSM error in opening "
 			"an endpoint: %s\n", error_string);
 	    return psm_error_defer(token);
 	    break;
@@ -94,7 +94,7 @@ int ompi_mtl_psm_module_init() {
     if (!generated_key || (strlen(generated_key) != 33) ||
         sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2)
     {
-        opal_output(0, "Error obtaining unique transport key from ORTE "
+        orte_output(0, "Error obtaining unique transport key from ORTE "
                        "(orte_precondition_transpots %s the environment)\n", 
 			generated_key ? "could not be parsed from" :
 		       "not present in");
@@ -107,7 +107,7 @@ int ompi_mtl_psm_module_init() {
          
     err = psm_ep_open(unique_job_key, NULL, &ep, &epid);
     if (err) {
-        opal_output(0, "Error in psm_ep_open (error %s)\n", 
+        orte_output(0, "Error in psm_ep_open (error %s)\n", 
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
@@ -121,7 +121,7 @@ int ompi_mtl_psm_module_init() {
 		      0,
 		      &mq);
     if (err) {
-        opal_output(0, "Error in psm_mq_init (error %s)\n", 
+        orte_output(0, "Error in psm_mq_init (error %s)\n", 
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
@@ -134,7 +134,7 @@ int ompi_mtl_psm_module_init() {
 	ompi_modex_send( &mca_mtl_psm_component.super.mtl_version, 
                              &ompi_mtl_psm.epid, 
 			     sizeof(psm_epid_t))) {
-	opal_output(0, "Open MPI couldn't send PSM epid to head node process"); 
+	orte_output(0, "Open MPI couldn't send PSM epid to head node process"); 
 	return OMPI_ERROR;
     }
     
@@ -153,21 +153,21 @@ ompi_mtl_psm_finalize(struct mca_mtl_base_module_t* mtl) {
     /* free resources */
     err = psm_mq_finalize(ompi_mtl_psm.mq);
     if (err) {
-        opal_output(0, "Error in psm_mq_finalize (error %s)\n", 
+        orte_output(0, "Error in psm_mq_finalize (error %s)\n", 
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
 
     err = psm_ep_close(ompi_mtl_psm.ep, PSM_EP_CLOSE_GRACEFUL, 1*1e9);
     if (err) {
-        opal_output(0, "Error in psm_ep_close (error %s)\n", 
+        orte_output(0, "Error in psm_ep_close (error %s)\n", 
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
 
     err = psm_finalize();
     if (err) {
-        opal_output(0, "Error in psm_finalize (error %s)\n", 
+        orte_output(0, "Error in psm_finalize (error %s)\n", 
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
@@ -256,7 +256,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
     if (err) {
 	char *errstr = (char *) ompi_mtl_psm_connect_error_msg(err);
 	if (errstr == NULL) {
-	    opal_output(0, "PSM returned unhandled/unknown connect error: %s\n",
+	    orte_output(0, "PSM returned unhandled/unknown connect error: %s\n",
 			psm_error_get_string(err));
 	}
 	for (i = 0; i < (int) nprocs; i++) {
@@ -264,13 +264,13 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 	    errstr = (char *) ompi_mtl_psm_connect_error_msg(thiserr);
 	    if (proc_errors[thiserr] == 0) {
 		proc_errors[thiserr] = 1;
-		opal_output(0, "PSM EP connect error (%s):", 
+		orte_output(0, "PSM EP connect error (%s):", 
 			    errstr ? errstr : "unknown connect error");
 		for (j = 0; j < (int) nprocs; j++) {
 		    if (errs_out[j] == thiserr)
-			opal_output(0, " %s", procs[j]->proc_hostname);
+			orte_output(0, " %s", procs[j]->proc_hostname);
 		}
-		opal_output(0, "\n");
+		orte_output(0, "\n");
 	    }
 	}
 
@@ -373,7 +373,7 @@ int ompi_mtl_psm_progress( void ) {
     while (1);
 
  error: 
-    opal_output(0, "Error in psm progress function: %s\n", 
+    orte_output(0, "Error in psm progress function: %s\n", 
 		psm_error_get_string(err));
     return 1;
 }

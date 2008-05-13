@@ -443,7 +443,7 @@ static void mca_pml_ob1_recv_request_rget(
     }
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
-        opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
+        orte_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
     }
     frag->rdma_hdr.hdr_rget = *hdr;

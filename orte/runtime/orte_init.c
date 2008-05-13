@@ -32,10 +32,9 @@
 #endif
 
 #include "opal/util/error.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 
+#include "orte/util/output.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -69,6 +68,13 @@ int orte_init(char flags)
     if (ORTE_SUCCESS != (ret = opal_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
+    }
+    
+    /* setup the orte_output system */
+    if (ORTE_SUCCESS != (ret = orte_output_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_output_init";
+        goto error;
     }
     
     /* register handler for errnum -> string conversion */
@@ -124,7 +130,6 @@ int orte_init(char flags)
         goto error;
     }
 
-    
     /* open the ESS and select the correct module for this environment */
     if (ORTE_SUCCESS != (ret = orte_ess_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -149,7 +154,7 @@ int orte_init(char flags)
     return ORTE_SUCCESS;
     
 error:
-    opal_show_help("help-orte-runtime",
+    orte_show_help("help-orte-runtime",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
 

@@ -42,7 +42,7 @@
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -207,7 +207,7 @@ int mca_btl_sm_component_close(void)
         return_value = mca_common_sm_mmap_fini( mca_btl_sm_component.mmap_file );
         if( OMPI_SUCCESS != return_value ) {
             return_value=OMPI_ERROR;
-            opal_output(0," munmap failed :: file - %s :: errno - %d \n",
+            orte_output(0," munmap failed :: file - %s :: errno - %d \n",
                     mca_btl_sm_component.mmap_file->map_addr,
                     errno);
             goto CLEANUP;
@@ -228,7 +228,7 @@ int mca_btl_sm_component_close(void)
         unsigned char cmd = DONE;
         if( write(mca_btl_sm_component.sm_fifo_fd,&cmd,sizeof(cmd)) !=
                 sizeof(cmd)){
-            opal_output(0, "mca_btl_sm_component_close: write fifo failed: errno=%d\n",
+            orte_output(0, "mca_btl_sm_component_close: write fifo failed: errno=%d\n",
                     errno);
         }
         opal_thread_join(&mca_btl_sm_component.sm_fifo_thread, NULL);
@@ -266,12 +266,12 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
              "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
              (unsigned long)ORTE_PROC_MY_NAME->vpid );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
-        opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
+        orte_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
     }
     mca_btl_sm_component.sm_fifo_fd = open(mca_btl_sm_component.sm_fifo_path, O_RDWR);
     if(mca_btl_sm_component.sm_fifo_fd < 0) {
-        opal_output(0, "mca_btl_sm_component_init: open(%s) failed with errno=%d\n",
+        orte_output(0, "mca_btl_sm_component_init: open(%s) failed with errno=%d\n",
             mca_btl_sm_component.sm_fifo_path, errno);
         return NULL;
     }

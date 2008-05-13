@@ -45,7 +45,7 @@
 #include "ompi/proc/proc.h"
 #include "common_sm_mmap.h"
 #include "opal/util/basename.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/align.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml_types.h"
@@ -79,7 +79,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if((void*)-1 == seg) {
-        opal_output(0, "mca_common_sm_mmap_init: "
+        orte_output(0, "mca_common_sm_mmap_init: "
                     "mmap failed with errno=%d\n", errno);
         return NULL;
     }
@@ -101,7 +101,7 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
 
         /* is addr past end of file ? */
         if((unsigned char*)seg + size < addr) {
-            opal_output(0, "mca_common_sm_mmap_init: "
+            orte_output(0, "mca_common_sm_mmap_init: "
                         "memory region too small len %lu  addr %p\n",
                         (unsigned long)size, addr);
             return NULL;
@@ -148,10 +148,10 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         /* process initializing the file */
         fd = open(file_name, O_CREAT|O_RDWR, 0600);
         if(fd < 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
+            orte_output(0, "mca_common_sm_mmap_init: "
                         "open %s failed with errno=%d\n", file_name, errno);
         } else if(ftruncate(fd, size) != 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
+            orte_output(0, "mca_common_sm_mmap_init: "
                         "ftruncate failed with errno=%d\n", errno);
         } else {
 
@@ -177,7 +177,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
             rc = orte_rml.send(&(procs[p]->proc_name), iov, 2,
                                OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
             if(rc < 0) {
-                opal_output(0, "mca_common_sm_mmap_init: "
+                orte_output(0, "mca_common_sm_mmap_init: "
                             "orte_rml.send failed to %lu with errno=%d\n",
                             (unsigned long)p, errno);
                 goto out;
@@ -189,7 +189,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         rc = orte_rml.recv(&(procs[0]->proc_name), iov, 2,
                            OMPI_RML_TAG_SM_BACK_FILE_CREATED, 0);
         if(rc < 0) {
-            opal_output(0, "mca_common_sm_mmap_init: "
+            orte_output(0, "mca_common_sm_mmap_init: "
                         "orte_rml.recv failed from %d with errno=%d\n",
                         0, errno);
             goto out;
@@ -288,7 +288,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 
         /* is addr past end of file ? */
         if( (unsigned char*)seg+size < addr ) {
-            opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
+            orte_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
                         size,addr);
             goto return_error;
         }
@@ -318,7 +318,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         char* localbuf = NULL;
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                        NULL, rc, 0, (LPTSTR)&localbuf, 1024, NULL );
-        opal_output( 0, "%s\n", localbuf );
+        orte_output( 0, "%s\n", localbuf );
         LocalFree( localbuf );
     }
     if( NULL != lpvMem ) UnmapViewOfFile( lpvMem );

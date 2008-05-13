@@ -19,7 +19,7 @@
 
 #include "orte_config.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
@@ -224,7 +224,7 @@ void orte_iof_proxy_svc_recv(
 {
     orte_iof_base_header_t* hdr = (orte_iof_base_header_t*)msg->iov_base;
     if(NULL == msg->iov_base) {
-        opal_output(orte_iof_base.iof_output,
+        orte_output(orte_iof_base.iof_output,
                     "orte_iof_proxy_svc_recv: invalid message\n");
         return;
     }

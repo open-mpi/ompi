@@ -19,7 +19,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_udapl.h"
 #include "btl_udapl_mca.h"

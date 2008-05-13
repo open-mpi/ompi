@@ -25,14 +25,12 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 
+#include "orte/util/output.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
@@ -127,7 +125,7 @@ void orte_snapc_full_local_destruct( orte_snapc_full_local_snapshot_t *obj) {
  */
 int orte_snapc_full_component_query(mca_base_module_t **module, int *priority)
 {
-    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: component_query()");
 
     *priority = mca_snapc_full_component.super.priority;
@@ -140,14 +138,14 @@ int orte_snapc_full_module_init(bool seed, bool app)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: module_init(%d, %d)", seed, app);
 
     /* 
      * Global Snapshot Coordinator 
      */
     if(seed) {
-        opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
+        orte_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Global Snapshot Coordinator");
 
         orte_snapc_coord_type |= ORTE_SNAPC_GLOBAL_COORD_TYPE;
@@ -167,7 +165,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
          * JJH or from the HNP inside the application.
          * JJH so for this component we assume that there exists a local coordinator
          */
-        opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
+        orte_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Local Snapshot Coordinator");
 
         orte_snapc_coord_type |= ORTE_SNAPC_LOCAL_COORD_TYPE;
@@ -181,7 +179,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
      * Application Snapshot Coordinator
      */
     else if(app) {
-        opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
+        orte_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Application Snapshot Coordinator");
 
         orte_snapc_coord_type |= ORTE_SNAPC_APP_COORD_TYPE;
@@ -195,7 +193,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
         /* 
          * Logically this should not happen
          */
-        opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
+        orte_output_verbose(5, mca_snapc_full_component.super.output_handle,
                             "snapc:full: module_init: Unknown Snapshot Coordinator");
 
         orte_snapc_coord_type = ORTE_SNAPC_UNASSIGN_TYPE;
@@ -210,7 +208,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
 
 int orte_snapc_full_module_finalize(void)
 {
-    opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
+    orte_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: module_finalize()");
 
     switch(orte_snapc_coord_type) 

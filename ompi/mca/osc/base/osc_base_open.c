@@ -20,6 +20,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/util/output.h"
+
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 
@@ -48,7 +51,7 @@ ompi_osc_base_open(void)
     int ret;
 
     /* setup the output stream */
-    ompi_osc_base_output = opal_output_open(NULL);
+    ompi_osc_base_output = orte_output_open(NULL, "OSC", "DEBUG", NULL);
 
     /* initialize the base code */
     OBJ_CONSTRUCT(&ompi_osc_base_open_components, opal_list_t);

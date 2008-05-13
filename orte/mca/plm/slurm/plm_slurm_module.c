@@ -52,13 +52,12 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
-#include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/util/output.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
@@ -136,7 +135,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     char **argv = NULL;
     int argc;
     int rc;
-    char *tmp;
+    char *tmp, **tmpv;
     char** env = NULL;
     char* var;
     char *nodelist_flat;
@@ -151,7 +150,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     
     if (orte_timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
-            opal_output(0, "plm_slurm: could not obtain job start time");
+            orte_output(0, "plm_slurm: could not obtain job start time");
             launchstart.tv_sec = 0;
             launchstart.tv_usec = 0;
         }        
@@ -166,7 +165,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
         
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:slurm: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -191,7 +190,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         
     if (0 == map->num_new_daemons) {
         /* no new daemons required - just launch apps */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
@@ -249,7 +248,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         opal_argv_append(&nodelist_argc, &nodelist_argv, nodes[n]->name);
     }
     if (0 == opal_argv_count(nodelist_argv)) {
-        opal_show_help("help-plm-slurm.txt", "no-hosts-in-list", true);
+        orte_show_help("help-plm-slurm.txt", "no-hosts-in-list", true);
         rc = ORTE_ERR_FAILED_TO_START;
         goto cleanup;
     }
@@ -259,7 +258,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
 
-    OPAL_OUTPUT_VERBOSE((2, orte_plm_globals.output,
+    ORTE_OUTPUT_VERBOSE((2, orte_plm_globals.output,
                          "%s plm:slurm: launching on nodes %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodelist_flat));
     
@@ -268,7 +267,11 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
      */
 
     /* add the daemon command (as specified by user) */
-    opal_argv_append(&argc, &argv, mca_plm_slurm_component.orted);
+    tmpv = opal_argv_split(mca_plm_slurm_component.orted, ' ');
+    for (i = 0; NULL != tmpv && NULL != tmpv[i]; ++i) {
+        opal_argv_append(&argc, &argv, tmpv[i]);
+    }
+    opal_argv_free(tmpv);
     
    /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
@@ -281,7 +284,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
      */
     rc = orte_util_convert_vpid_to_string(&name_string, map->daemon_vpid_start);
     if (ORTE_SUCCESS != rc) {
-        opal_output(0, "plm_slurm: unable to get daemon vpid as string");
+        orte_output(0, "plm_slurm: unable to get daemon vpid as string");
         goto cleanup;
     }
 
@@ -289,9 +292,9 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     argv[proc_vpid_index] = strdup(name_string);
     free(name_string);
 
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: final top-level argv:\n\t%s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
@@ -312,7 +315,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         if (NULL != app_prefix_dir) {
             if (NULL != cur_prefix &&
                 0 != strcmp (cur_prefix, app_prefix_dir)) {
-                opal_show_help("help-plm-slurm.txt", "multiple-prefixes",
+                orte_show_help("help-plm-slurm.txt", "multiple-prefixes",
                                true, cur_prefix, app_prefix_dir);
                 return ORTE_ERR_FATAL;
             }
@@ -321,7 +324,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
                same anyway */
             if (NULL == cur_prefix) {
                 cur_prefix = strdup(app_prefix_dir);
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:slurm: Set prefix:%s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      cur_prefix));
@@ -351,7 +354,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: daemon launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
@@ -360,7 +363,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     
 launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
@@ -372,16 +375,16 @@ launch_apps:
     
     if (orte_timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
-             opal_output(0, "plm_slurm: could not obtain stop time");
+             orte_output(0, "plm_slurm: could not obtain stop time");
          } else {
-             opal_output(0, "plm_slurm: total job launch time is %ld usec",
+             orte_output(0, "plm_slurm: total job launch time is %ld usec",
                          (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
                          (launchstop.tv_usec - launchstart.tv_usec));
          }
     }
 
     if (ORTE_SUCCESS != rc) {
-        opal_output(0, "plm:slurm: start_procs returned error %d", rc);
+        orte_output(0, "plm:slurm: start_procs returned error %d", rc);
         goto cleanup;
     }
 
@@ -548,7 +551,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
                 asprintf(&newenv, "%s/%s", prefix, bin_base);
             }
             opal_setenv("PATH", newenv, true, &env);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:slurm: reset PATH: %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  newenv));
@@ -562,7 +565,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
                 asprintf(&newenv, "%s/%s", prefix, lib_base);
             }
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
-            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:slurm: reset LD_LIBRARY_PATH: %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  newenv));
@@ -576,7 +579,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
 
         /* When not in debug mode and --debug-daemons was not passed,
          * tie stdout/stderr to dev null so we don't see messages from orted */
-        if (0 >= opal_output_get_verbosity(orte_plm_globals.output) &&
+        if (0 >= orte_output_get_verbosity(orte_plm_globals.output) &&
             !orte_debug_daemons_flag) {
             if (fd >= 0) {
                 if (fd != 1) {
@@ -599,7 +602,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
 
         execve(exec_argv, argv, env);
 
-        opal_output(0, "plm:slurm:start_proc: exec failed");
+        orte_output(0, "plm:slurm:start_proc: exec failed");
         /* don't return - need to exit - returning would be bad -
            we're not in the calling process anymore */
         exit(1);

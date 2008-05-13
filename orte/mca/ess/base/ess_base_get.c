@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include "opal/util/opal_environ.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"

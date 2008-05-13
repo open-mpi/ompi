@@ -19,7 +19,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "orte/mca/iof/iof.h"
@@ -52,13 +52,13 @@ int orte_iof_base_select(void)
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_iof_base_component_t *) cli->cli_component;
 
-        opal_output_verbose(10, orte_iof_base.iof_output, 
+        orte_output_verbose(10, orte_iof_base.iof_output, 
             "orte_iof_base_select: initializing %s component %s",
             component->iof_version.mca_type_name,
             component->iof_version.mca_component_name);
 
         if (NULL == component->iof_init) {
-            opal_output_verbose(10, orte_iof_base.iof_output, 
+            orte_output_verbose(10, orte_iof_base.iof_output, 
                                 "orte_iof_base_select: no init function; ignoring component");
             continue;
         } else {
@@ -70,7 +70,7 @@ int orte_iof_base_select(void)
             /* If the component didn't initialize, remove it from the opened
                list and remove it from the component repository */
             if (NULL == module) {
-                opal_output_verbose(10, orte_iof_base.iof_output,
+                orte_output_verbose(10, orte_iof_base.iof_output,
                     "orte_iof_base_select: init returned failure");
                 continue;
             }
@@ -104,7 +104,7 @@ int orte_iof_base_select(void)
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_iof_base_component_t *) cli->cli_component;
         if(component != selected_component) {
-            opal_output_verbose(10, orte_iof_base.iof_output,
+            orte_output_verbose(10, orte_iof_base.iof_output,
                 "orte_iof_base_select: module %s unloaded",
                 component->iof_version.mca_component_name);
             mca_base_component_repository_release((mca_base_component_t *) component);
@@ -123,7 +123,7 @@ int orte_iof_base_select(void)
 
     /* Oops -- this shouldn't happen */
 
-    opal_output(orte_iof_base.iof_output, "iof:select: no components found!");
+    orte_output(orte_iof_base.iof_output, "iof:select: no components found!");
     return ORTE_ERR_OUT_OF_RESOURCE;
 }
 

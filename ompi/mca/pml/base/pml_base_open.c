@@ -26,7 +26,10 @@
 #endif  /* HAVE_UNIST_H */
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
+
+#include "orte/util/output.h"
+
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -99,8 +102,8 @@ int mca_pml_base_open(void)
                                  false, false,
                                  0, &value);
  
-     mca_pml_base_output = opal_output_open(NULL);
-     opal_output_set_verbosity(mca_pml_base_output, value);
+     mca_pml_base_output = orte_output_open(NULL, "PML", "DEBUG", NULL);
+     orte_output_set_verbosity(mca_pml_base_output, value);
 
     /* Open up all available components */
 

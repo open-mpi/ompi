@@ -299,7 +299,7 @@ void mca_btl_sm_component_event_thread(opal_object_t*);
 { \
     unsigned char cmd = DATA; \
     if(write(peer->fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) { \
-        opal_output(0, "mca_btl_sm_send: write fifo failed: errno=%d\n", errno); \
+        orte_output(0, "mca_btl_sm_send: write fifo failed: errno=%d\n", errno); \
     } \
 }
 #else

@@ -125,7 +125,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 /* The data-type contain too many elements. We will be unable
                  * to handle it, so let's just complain by now.
                  */
-                opal_output( 0, "Too many elements in the datatype. The limit is %ud\n",
+                orte_output( 0, "Too many elements in the datatype. The limit is %ud\n",
                              MAX_DT_COMPONENT_COUNT );
                 return OMPI_ERROR;
             }

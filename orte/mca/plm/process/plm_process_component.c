@@ -36,7 +36,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -116,7 +116,7 @@ int orte_plm_process_component_open(void)
                            "How many plm_process_agent instances to invoke concurrently (must be > 0)",
                            false, false, 128, &tmp);
     if (tmp <= 0) {
-        opal_show_help("help-plm-process.txt", "concurrency-less-than-zero",
+        orte_show_help("help-plm-process.txt", "concurrency-less-than-zero",
                        true, tmp);
         tmp = 1;
     }

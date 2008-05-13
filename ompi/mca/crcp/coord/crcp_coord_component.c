@@ -16,6 +16,8 @@
 
 #include "ompi_config.h"
 
+#include "orte/util/output.h"
+
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 #include "crcp_coord.h"
@@ -66,7 +68,7 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
 
         /* Verbosity level */
         0,
-        /* opal_output handler */
+        /* orte_output handler */
         -1,
         /* Default priority */
         10
@@ -98,8 +100,8 @@ static int crcp_coord_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_crcp_coord_component.super.verbose) {
-        mca_crcp_coord_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_crcp_coord_component.super.output_handle,
+        mca_crcp_coord_component.super.output_handle = orte_output_open(NULL, "CRCP", "COORD", "DEBUG", NULL);
+        orte_output_set_verbosity(mca_crcp_coord_component.super.output_handle,
                                   mca_crcp_coord_component.super.verbose);
     } else {
         mca_crcp_coord_component.super.output_handle = ompi_crcp_base_output;
@@ -116,12 +118,12 @@ static int crcp_coord_open(void)
     /*
      * Debug Output
      */
-    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+    orte_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: open()");
-    opal_output_verbose(20, mca_crcp_coord_component.super.output_handle,
+    orte_output_verbose(20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: open: priority   = %d", 
                         mca_crcp_coord_component.super.priority);
-    opal_output_verbose(20, mca_crcp_coord_component.super.output_handle,
+    orte_output_verbose(20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: open: verbosity  = %d", 
                         mca_crcp_coord_component.super.verbose);
 
@@ -130,7 +132,7 @@ static int crcp_coord_open(void)
 
 static int crcp_coord_close(void)
 {
-    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+    orte_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: close()");
 
     return OMPI_SUCCESS;

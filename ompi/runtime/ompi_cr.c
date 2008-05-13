@@ -39,7 +39,7 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/event/event.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -49,6 +49,7 @@
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "orte/runtime/runtime.h"
+#include "orte/util/output.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -152,13 +153,13 @@ int ompi_cr_init(void)
                                 0,
                                 &val);
     if(0 != val) {
-        ompi_cr_output = opal_output_open(NULL);
-        opal_output_set_verbosity(ompi_cr_output, val);
+        ompi_cr_output = orte_output_open(NULL, "OMPI", "CR", "DEBUG", NULL);
+        orte_output_set_verbosity(ompi_cr_output, val);
     } else {
         ompi_cr_output = opal_cr_output;
     }
 
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: init: ompi_cr_init()");
     
     /* Register the OMPI interlevel coordination callback */
@@ -172,7 +173,7 @@ int ompi_cr_init(void)
  */
 int ompi_cr_finalize(void)
 {
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: finalize: ompi_cr_finalize()");
     
     return OMPI_SUCCESS;
@@ -185,7 +186,7 @@ int ompi_cr_coord(int state)
 {
     int ret, exit_status = OMPI_SUCCESS;
 
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord: ompi_cr_coord(%s)\n",
                         opal_crs_base_state_str((opal_crs_state_type_t)state));
 
@@ -267,7 +268,7 @@ static int ompi_cr_coord_pre_ckpt(void) {
     /*
      * All the checkpoint heavey lifting in here...
      */
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_ckpt: ompi_cr_coord_pre_ckpt()\n");
 
     /*
@@ -296,7 +297,7 @@ static int ompi_cr_coord_pre_ckpt(void) {
 static int ompi_cr_coord_pre_restart(void) {
     int ret, exit_status = OMPI_SUCCESS;
 
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_restart: ompi_cr_coord_pre_restart()");
 
     /*
@@ -320,7 +321,7 @@ static int ompi_cr_coord_pre_continue(void) {
      * Can not really do much until ORTE is up and running,
      * so defer action until the post_continue function.
      */
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_continue: ompi_cr_coord_pre_continue()");
 
     return OMPI_SUCCESS;
@@ -334,7 +335,7 @@ static int ompi_cr_coord_post_ckpt(void) {
      * Now that ORTE/OPAL are shutdown, we really can't do much
      * so assume pre_ckpt took care of everything.
      */
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_ckpt: ompi_cr_coord_post_ckpt()");
 
     return OMPI_SUCCESS;
@@ -343,7 +344,7 @@ static int ompi_cr_coord_post_ckpt(void) {
 static int ompi_cr_coord_post_restart(void) {
     int ret, exit_status = OMPI_SUCCESS;
 
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_restart: ompi_cr_coord_post_restart()");
 
     /*
@@ -372,7 +373,7 @@ static int ompi_cr_coord_post_restart(void) {
 static int ompi_cr_coord_post_continue(void) {
     int ret, exit_status = OMPI_SUCCESS;
 
-    opal_output_verbose(10, ompi_cr_output,
+    orte_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_post_continue: ompi_cr_coord_post_continue()");
 
     /*

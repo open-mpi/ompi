@@ -11,7 +11,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/threads/condition.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
@@ -170,7 +170,7 @@ static int update_route(orte_process_name_t *target,
         return ORTE_ERR_BAD_PARAM;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_binomial_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -260,7 +260,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
  found:
 
-    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+    ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_binomial_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -289,7 +289,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
         
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_binomial:callback got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri));
@@ -358,7 +358,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     if (orte_process_info.daemon) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_binomial: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
@@ -416,7 +416,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_binomial: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -426,7 +426,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
     if (orte_process_info.hnp) {
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_binomial: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
@@ -476,7 +476,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         if (NULL != ndat) {
             int rc;
             
-            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+            ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_binomial: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -496,7 +496,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * case, we need to setup a few critical pieces of info
          */
         
-        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_binomial: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
@@ -506,13 +506,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             /* in this module, we absolutely MUST have this information - if
              * we didn't get it, then error out
              */
-            opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
+            orte_output(0, "%s ERROR: Failed to identify the local daemon's URI",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_output(0, "%s ERROR: This is a fatal condition when the binomial router",
+            orte_output(0, "%s ERROR: This is a fatal condition when the binomial router",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_output(0, "%s ERROR: has been selected - either select the unity router",
+            orte_output(0, "%s ERROR: has been selected - either select the unity router",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_output(0, "%s ERROR: or ensure that the local daemon info is provided",
+            orte_output(0, "%s ERROR: or ensure that the local daemon info is provided",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return ORTE_ERR_FATAL;
         }
@@ -584,7 +584,7 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        opal_output(0, "%s routed:binomial: Connection to lifeline %s lost",
+        orte_output(0, "%s routed:binomial: Connection to lifeline %s lost",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
@@ -622,7 +622,7 @@ static int binomial_tree(int rank, int parent, int me, int num_procs)
                 child = OBJ_NEW(orte_namelist_t);
                 child->name.jobid = ORTE_PROC_MY_NAME->jobid;
                 child->name.vpid = peer;
-                OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                ORTE_OUTPUT_VERBOSE((3, orte_routed_base_output,
                                      "%s routed:binomial found child %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&child->name)));
@@ -631,7 +631,7 @@ static int binomial_tree(int rank, int parent, int me, int num_procs)
                 num_children++;
             }
         }
-        OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+        ORTE_OUTPUT_VERBOSE((3, orte_routed_base_output,
                              "%s routed:binomial found parent %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              parent));

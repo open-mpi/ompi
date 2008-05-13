@@ -41,9 +41,8 @@
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/cmd_line.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"
@@ -119,7 +118,7 @@ int main(int argc, char *argv[])
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        opal_show_help("help-ompi-server.txt", "ompiserver:usage", false,
+        orte_show_help("help-ompi-server.txt", "ompiserver:usage", false,
                        argv[0], args);
         free(args);
         return ret;
@@ -129,7 +128,7 @@ int main(int argc, char *argv[])
     if (help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        opal_show_help("help-ompi-server.txt", "ompiserver:usage", false,
+        orte_show_help("help-ompi-server.txt", "ompiserver:usage", false,
                        argv[0], args);
         free(args);
         return 1;
@@ -262,7 +261,7 @@ int main(int argc, char *argv[])
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
 
     if (debug) {
-        opal_output(0, "%s ompi-server: up and running!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        orte_output(0, "%s ompi-server: up and running!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
     /* wait to hear we are done */
@@ -282,7 +281,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     int ret;
     
     if (debug) {
-        opal_output(0, "%s ompi-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        orte_output(0, "%s ompi-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
     
     /* Finalize and clean up ourselves */

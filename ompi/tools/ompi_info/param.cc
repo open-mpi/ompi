@@ -37,7 +37,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/printf.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
@@ -112,7 +112,7 @@ void ompi_info::do_params(bool want_all, bool want_internal)
 
       if (!found) {
           char *usage = opal_cmd_line_get_usage_msg(cmd_line);
-          opal_show_help("help-ompi_info.txt", "usage", true, usage);
+          orte_show_help("help-ompi_info.txt", "usage", true, usage);
           free(usage);
           exit(1);
       }
@@ -285,7 +285,7 @@ void ompi_info::do_path(bool want_all, opal_cmd_line_t *cmd_line)
         show_path(path_sysconfdir, opal_install_dirs.sysconfdir);
       else {
           char *usage = opal_cmd_line_get_usage_msg(cmd_line);
-          opal_show_help("help-ompi_info.txt", "usage", true, usage);
+          orte_show_help("help-ompi_info.txt", "usage", true, usage);
           free(usage);
           exit(1);
       }

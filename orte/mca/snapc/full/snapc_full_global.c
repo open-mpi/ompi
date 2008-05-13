@@ -22,8 +22,6 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
@@ -33,6 +31,7 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+#include "orte/util/output.h"
 #include "orte/util/name_fns.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/rml/rml.h"
@@ -158,7 +157,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
     }
     else if ( jobid == cur_job_id ) {
         /* Local Coordinator pass -- Will always happen after Global Coordinator Pass */
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) [%d] Setup job %s again as the local coordinator for %s\n",
                              getpid(), ORTE_JOBID_PRINT(jobid), ORTE_JOBID_PRINT(cur_job_id)));
 
@@ -171,7 +170,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
          * We do not currently support the ability to checkpoint more than one 
          * jobid
          */
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "global [%d]) Setup job (%d) Failed. Already setup job (%d)\n", getpid(), jobid, cur_job_id);
         return ORTE_ERROR;
     }
@@ -239,7 +238,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
         global_snapshot.reference_name = strdup(global_snapshot_handle);
         global_snapshot.local_location = opal_dirname(orte_snapc_base_get_global_snapshot_directory(global_snapshot.reference_name));
 
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) Pre-establish the global snapshot directory\n"));
 
         /* Creates the directory (with metadata files):
@@ -257,7 +256,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
         global_dir = NULL;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Global) [%d] Setup job %s with vpid [%d, %d]\n",
                          getpid(), ORTE_JOBID_PRINT(jobid), vpid_start, vpid_range));
 
@@ -300,7 +299,7 @@ static int snapc_full_global_start_listener(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Receive: Start command recv"));
 
     /*
@@ -331,7 +330,7 @@ static int snapc_full_global_stop_listener(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Receive stop command recv"));
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
@@ -356,7 +355,7 @@ static int snapc_full_global_start_cmdline_listener(void)
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Receive (Command line): Start command recv"));
 
     /*
@@ -387,7 +386,7 @@ static int snapc_full_global_stop_cmdline_listener(void)
         return ORTE_SUCCESS;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Receive (Command Line) stop command"));
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
@@ -413,7 +412,7 @@ void snapc_full_global_cmd_recv(int status,
     orte_std_cntr_t count;
     int rc;
 
-    OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Receive a command message from %s.",
                          ORTE_NAME_PRINT(sender)));
 
@@ -421,7 +420,7 @@ void snapc_full_global_cmd_recv(int status,
      * If this is a command line checkpoint request, handle directly
      */
     if( ORTE_RML_TAG_CKPT == tag ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) Command Line: Start a checkpoint operation"));
 
         snapc_cmdline_recv_issued = false; /* Not a persistent RML message */
@@ -440,28 +439,28 @@ void snapc_full_global_cmd_recv(int status,
     
     switch (command) {
         case ORTE_SNAPC_FULL_UPDATE_JOB_STATE_CMD:
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Update Job state command"));
 
             snapc_full_process_job_update_cmd(sender, buffer);
             break;
 
         case ORTE_SNAPC_FULL_UPDATE_PROC_STATE_CMD:
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Update Proc state command"));
 
             snapc_full_process_proc_update_cmd(sender, buffer);
             break;
 
         case ORTE_SNAPC_FULL_VPID_ASSOC_CMD:
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Update process/orted associations"));
 
             snapc_full_process_vpid_assoc_cmd(sender, buffer);
             break;
 
         case ORTE_SNAPC_FULL_ESTABLISH_DIR_CMD:
-            OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                                  "Global) Command: Establish checkpoint directory"));
 
             snapc_full_process_establish_dir_cmd(sender, buffer);
@@ -487,7 +486,7 @@ static void snapc_full_process_job_update_cmd(orte_process_name_t* sender,
      */
     if( sender->jobid == ORTE_PROC_MY_NAME->jobid &&
         sender->vpid  == ORTE_PROC_MY_NAME->vpid ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) Command: Reflect the job update command"));
         return;
     }
@@ -544,7 +543,7 @@ int global_coord_job_state_update(orte_jobid_t jobid,
     opal_list_item_t* item = NULL;
     bool term_job  = false;
 
-    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Job update command: jobid %s -> state %d\n",
                          ORTE_JOBID_PRINT(jobid), (int)job_ckpt_state));
 
@@ -581,7 +580,7 @@ int global_coord_job_state_update(orte_jobid_t jobid,
             goto cleanup;
         }
 #else
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "ERROR: Internal Checkpoint request not implemented.");
 #endif
     }
@@ -721,16 +720,16 @@ int global_coord_vpid_state_update(orte_process_name_t proc_name,
     orte_snapc_full_global_snapshot_t *vpid_snapshot = NULL;
     opal_list_item_t* item = NULL;
 
-    OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global) Process %s: Changed to state to:\n",
                          ORTE_NAME_PRINT(&proc_name)));
-    OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global)   State:            %d\n",
                          (int)proc_ckpt_state));
-    OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global)   Snapshot Ref:    [%s]\n",
                          *proc_ckpt_ref));
-    OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global)   Remote Location: [%s]\n",
                          *proc_ckpt_loc));
 
@@ -805,7 +804,7 @@ static void snapc_full_process_vpid_assoc_cmd(orte_process_name_t* sender,
 
     count = 1;
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_vpids, &count, OPAL_SIZE))) {
-        opal_output(mca_snapc_full_component.super.output_handle,
+        orte_output(mca_snapc_full_component.super.output_handle,
                     "Global) vpid_assoc: Failed to unpack num_vpids from peer %s\n",
                     ORTE_NAME_PRINT(sender));
         goto cleanup;
@@ -814,7 +813,7 @@ static void snapc_full_process_vpid_assoc_cmd(orte_process_name_t* sender,
     for(i = 0; i < num_vpids; ++i) {
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &tmp_proc_name, &count, ORTE_NAME))) {
-            opal_output(mca_snapc_full_component.super.output_handle,
+            orte_output(mca_snapc_full_component.super.output_handle,
                         "Global) vpid_assoc: Failed to unpack process name from peer %s\n",
                         ORTE_NAME_PRINT(sender));
             goto cleanup;
@@ -910,7 +909,7 @@ static void snapc_full_process_cmdline_request_cmd(orte_process_name_t* sender,
      * orte_checkpoint has requested that a checkpoint be taken
      */
     if (ORTE_SNAPC_GLOBAL_INIT_CMD == command) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) Command line requested a checkpoint (command %d)\n",
                              command));
         /********************
@@ -944,7 +943,7 @@ static void snapc_full_process_cmdline_request_cmd(orte_process_name_t* sender,
         
     }
     else if (ORTE_SNAPC_GLOBAL_TERM_CMD == command) {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) Command line requested to terminate connection (command %d)\n",
                              command));
         /* Something must have happened so we are forced to terminate */
@@ -954,7 +953,7 @@ static void snapc_full_process_cmdline_request_cmd(orte_process_name_t* sender,
      * Unknown command
      */
     else {
-        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) Command line sent an unknown command (command %d)\n",
                              command));
         goto cleanup;
@@ -1035,7 +1034,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Notifying all Local Coordinators of job %s state change to %d\n",
                          ORTE_JOBID_PRINT(jobid), (int)ckpt_state));
 
@@ -1048,7 +1047,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
     /*
      * Process the job update - Global Coordinator
      */
-    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Act locally on job %s state change to %d\n",
                          ORTE_JOBID_PRINT(jobid), (int)ckpt_state));
     if( ORTE_SUCCESS != (ret = global_coord_job_state_update(jobid, ckpt_state, &ckpt_snapshot_ref, &ckpt_snapshot_loc) ) ) {
@@ -1109,7 +1108,7 @@ static int snapc_full_global_checkpoint(orte_jobid_t jobid,
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Global) Checkpoint of job %s has been requested\n",
                          ORTE_JOBID_PRINT(jobid)));
 
@@ -1143,14 +1142,14 @@ static int snapc_full_global_checkpoint(orte_jobid_t jobid,
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global) Using the checkpoint directory (%s)\n",
                          *global_snapshot_handle));
 
     /**********************
      * Notify the Local Snapshot Coordinators of the checkpoint request
      **********************/
-    OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+    ORTE_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Notifying the Local Coordinators\n"));
 
     if( ORTE_SUCCESS != (ret = snapc_full_global_notify_checkpoint(*global_snapshot_handle, 
@@ -1321,15 +1320,15 @@ static int snapc_full_global_gather_all_files(void) {
             orte_snapc_full_global_snapshot_t *vpid_snapshot;
             vpid_snapshot = (orte_snapc_full_global_snapshot_t*)item;
 
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global) Updating Metadata - Files stored in place, no transfer required:\n"));
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global)   State:            %d\n",
                                  (int)vpid_snapshot->super.state));
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global)   Remote Location: [%s]\n",
                                  vpid_snapshot->super.crs_snapshot_super.remote_location));
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global)   Local Location:  [%s]\n",
                                  vpid_snapshot->super.crs_snapshot_super.local_location));
 
@@ -1365,15 +1364,15 @@ static int snapc_full_global_gather_all_files(void) {
             orte_snapc_full_global_snapshot_t *vpid_snapshot;
             vpid_snapshot = (orte_snapc_full_global_snapshot_t*)item;
 
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global) Getting remote directory:\n"));
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global)   Status:          (%d)\n",
                                  (int)vpid_snapshot->super.state));
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global)   Remote Location: (%s)\n",
                                  vpid_snapshot->super.crs_snapshot_super.remote_location));
-            OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+            ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                                  "Global)   Local Location:  (%s)\n",
                                  vpid_snapshot->super.crs_snapshot_super.local_location));
 
@@ -1426,7 +1425,7 @@ static int snapc_full_global_gather_all_files(void) {
         /*
          * Wait for all the transfers to complete
          */
-        OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "Global) Getting remote directory: Waiting...\n"));
         if(ORTE_SUCCESS != (ret = orte_filem.wait_all(&all_filem_requests) ) ) {
             exit_status = ret;
@@ -1450,7 +1449,7 @@ static int snapc_full_global_gather_all_files(void) {
         /*
          * Update all of the metadata
          */
-        OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "Global) Getting remote directory: Updating Metadata...\n"));
         for(item  = opal_list_get_first(&global_snapshot.snapshots);
             item != opal_list_get_end(&global_snapshot.snapshots);
@@ -1470,7 +1469,7 @@ static int snapc_full_global_gather_all_files(void) {
         /*
          * Wait for all the removes to complete
          */
-        OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+        ORTE_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "Global) Waiting for removes to complete...\n"));
         if(ORTE_SUCCESS != (ret = orte_filem.wait_all(&all_filem_requests) ) ) {
             exit_status = ret;

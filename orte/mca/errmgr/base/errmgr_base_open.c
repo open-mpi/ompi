@@ -23,8 +23,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/trace.h"
+
+#include "orte/util/output.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -70,22 +72,11 @@ bool orte_errmgr_initialized = false;
  */
 int orte_errmgr_base_open(void)
 {
-    int param, value;
-
     OPAL_TRACE(5);
     
     if (!orte_errmgr_initialized) { /* ensure we only do this once */
       
-        /* Debugging / verbose output */
-        
-        param = mca_base_param_reg_int_name("errmgr", "base_verbose",
-                                            "Verbosity level for the errmgr framework",
-                                            false, false, 0, &value);
-        if (value != 0) {
-            orte_errmgr_base_output = opal_output_open(NULL);
-        } else {
-            orte_errmgr_base_output = -1;
-        }
+        orte_errmgr_base_output = orte_output_open(NULL, "ERRMGR", "DEBUG", NULL);
 
         /* Open up all available components */
     

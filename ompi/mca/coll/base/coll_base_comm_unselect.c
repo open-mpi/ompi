@@ -24,7 +24,7 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/coll/coll.h"

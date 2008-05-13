@@ -20,7 +20,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/filem/filem.h"
@@ -53,7 +53,7 @@ static orte_filem_base_component_t none_component = {
     
     /* Verbosity level */
     0,
-    /* opal_output handler */
+    /* orte_output handler */
     -1,
     /* Default priority */
     1
@@ -91,7 +91,7 @@ int orte_filem_base_select(void)
      */
     if( 0 >= opal_list_get_size(&orte_filem_base_components_available) || 
         (NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ) ) { 
-        opal_output_verbose(1, orte_filem_base_output,
+        orte_output_verbose(1, orte_filem_base_output,
                             "filem:select: Warning: Using none component. Some functionality (e.g., --preload-binary) will not work in this mode.");
         best_component = &none_component;
         best_module    = &none_module;

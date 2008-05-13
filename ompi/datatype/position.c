@@ -120,7 +120,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     if( iov_len_local > pConvertor->pDesc->size ) {
         pStack = pConvertor->pStack;  /* we're working with the full stack */
         count_desc = (uint32_t)(iov_len_local / pConvertor->pDesc->size);
-        DO_DEBUG( opal_output( 0, "position before %lu asked %lu data size %lu"
+        DO_DEBUG( orte_output( 0, "position before %lu asked %lu data size %lu"
                                " iov_len_local %lu count_desc %d\n",
                                (unsigned long)pConvertor->bConverted, (unsigned long)*position, (unsigned long)pConvertor->pDesc->size,
                                (unsigned long)iov_len_local, count_desc ); );
@@ -133,7 +133,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
         pStack[0].count -= count_desc;
-        DO_DEBUG( opal_output( 0, "after bConverted %lu remaining count %lu iov_len_local %lu\n",
+        DO_DEBUG( orte_output( 0, "after bConverted %lu remaining count %lu iov_len_local %lu\n",
                                (unsigned long)pConvertor->bConverted, (unsigned long)pStack[0].count, (unsigned long)iov_len_local ); );
     }
 
@@ -146,14 +146,14 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     pElem = &(description[pos_desc]); 
     base_pointer += pStack->disp;
     
-    DO_DEBUG( opal_output( 0, "position start pos_desc %d count_desc %d disp %llx\n"
+    DO_DEBUG( orte_output( 0, "position start pos_desc %d count_desc %d disp %llx\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %llx\n",
                            pos_desc, count_desc, (unsigned long long)(base_pointer - pConvertor->pBaseBuf),
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (unsigned long long)pStack->disp ); );
 
     while( 1 ) {
         if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-            DO_DEBUG( opal_output( 0, "position end_loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
+            DO_DEBUG( orte_output( 0, "position end_loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
                                    (int)pStack->count, pConvertor->stack_pos, pos_desc,
                                    (unsigned long long)pStack->disp, (unsigned long)iov_len_local ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
@@ -176,7 +176,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            DO_DEBUG( opal_output( 0, "position new_loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
+            DO_DEBUG( orte_output( 0, "position new_loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
                                    (int)pStack->count, pConvertor->stack_pos, pos_desc,
                                    (unsigned long long)pStack->disp, (unsigned long)iov_len_local ); );
         }
@@ -199,7 +199,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
-            DO_DEBUG( opal_output( 0, "position set loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
+            DO_DEBUG( orte_output( 0, "position set loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
                                    (int)pStack->count, pConvertor->stack_pos, pos_desc,
                                    (unsigned long long)pStack->disp, (unsigned long)iov_len_local ); );
             continue;
@@ -216,7 +216,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             pos_desc++;  /* advance to the next data */
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            DO_DEBUG( opal_output( 0, "position set loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
+            DO_DEBUG( orte_output( 0, "position set loop count %d stack_pos %d pos_desc %d disp %llx space %lu\n",
                                    (int)pStack->count, pConvertor->stack_pos, pos_desc,
                                    (unsigned long long)pStack->disp, (unsigned long)iov_len_local ); );
         }
@@ -228,7 +228,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
                     base_pointer - pStack->disp - pConvertor->pBaseBuf );
-        DO_DEBUG( opal_output( 0, "position save stack stack_pos %d pos_desc %d count_desc %d disp %llx\n",
+        DO_DEBUG( orte_output( 0, "position save stack stack_pos %d pos_desc %d count_desc %d disp %llx\n",
                                pConvertor->stack_pos, pStack->index, (int)pStack->count, (unsigned long long)pStack->disp ); );
         return 0;
     }

@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -71,7 +71,7 @@ int mca_oob_base_init(void)
         component = (mca_oob_base_component_t *) cli->cli_component;
 
         if (NULL == component->oob_init) {
-            opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
+            orte_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
         } else {
             int priority = -1;
             module = component->oob_init(&priority);
@@ -91,7 +91,7 @@ int mca_oob_base_init(void)
     }
     /* set the global variable to point to the first initialize module */
     if(s_module == NULL) {
-        opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no OOB modules available\n");
+        orte_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no OOB modules available\n");
       return ORTE_ERROR;
    }
 

@@ -298,7 +298,7 @@ void mca_pml_dr_error_handler(
         struct mca_btl_base_module_t* btl,
         int32_t flags) { 
     /* try failover ! */
-    opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__,
+    orte_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__,
                    btl->btl_component->btl_version.mca_component_name);
     mca_pml_dr_sendreq_cleanup_active(btl);
     mca_bml.bml_del_btl(btl);

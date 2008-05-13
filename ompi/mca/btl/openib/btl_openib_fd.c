@@ -17,7 +17,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 
 #include "ompi/constants.h"
 
@@ -252,12 +252,12 @@ static bool local_pipe_cmd(void)
         break;
 
     case CMD_TIME_TO_QUIT:
-        opal_output(-1, "fd listener thread: time to quit");
+        orte_output(-1, "fd listener thread: time to quit");
         ret = true;
         break;
 
     default:
-        opal_output(-1, "fd listener thread: unknown pipe command!");
+        orte_output(-1, "fd listener thread: unknown pipe command!");
         break;
     }
 
@@ -281,24 +281,24 @@ static void *thread_main(void *context)
     FD_SET(pipe_fd[0], &read_fds);
     max_fd = pipe_fd[0] + 1;
 
-    opal_output(-1, "fd listener thread running");
+    orte_output(-1, "fd listener thread running");
 
     /* Main loop waiting for commands over the fd's */
     while (1) {
         memcpy(&read_fds_copy, &read_fds, sizeof(read_fds));
         memcpy(&write_fds_copy, &write_fds, sizeof(write_fds));
-        opal_output(-1, "fd listener thread blocking on select...");
+        orte_output(-1, "fd listener thread blocking on select...");
         rc = select(max_fd, &read_fds_copy, &write_fds_copy, NULL, NULL);
         if (0 != rc && EAGAIN == errno) {
             continue;
         }
 
-        opal_output(-1, "fd listener thread woke up!");
+        orte_output(-1, "fd listener thread woke up!");
         if (rc > 0) {
             if (FD_ISSET(pipe_fd[0], &read_fds_copy)) {
-                opal_output(-1, "fd listener thread: pipe command");
+                orte_output(-1, "fd listener thread: pipe command");
                 if (local_pipe_cmd()) {
-                    opal_output(-1, "fd listener thread: exiting");
+                    orte_output(-1, "fd listener thread: exiting");
                     break;
                 }
             } 
@@ -324,7 +324,7 @@ static void *thread_main(void *context)
 
                     /* If either was ready, invoke the callback */
                     if (0 != flags) {
-                        opal_output(-1, "fd listener thread: invoking callback for registered fd %d", ri->ri_fd);
+                        orte_output(-1, "fd listener thread: invoking callback for registered fd %d", ri->ri_fd);
                         ri->ri_callback.fd(ri->ri_fd, flags, 
                                            ri->ri_context);
                     }

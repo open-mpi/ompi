@@ -31,7 +31,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
-#include "opal/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/dpm/dpm.h"
@@ -238,7 +238,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         /* process initializing the file */
         fd = open(*file_name, O_CREAT|O_RDWR, 0600);
         if (fd < 0) {
-            opal_output(0,"mca_common_sm_mmap_init: open %s len %ld failed with errno=%d\n",                      
+            orte_output(0,"mca_common_sm_mmap_init: open %s len %ld failed with errno=%d\n",                      
                         *file_name, len, errno);
             goto file_opened;
         }
@@ -246,14 +246,14 @@ static int allocate_shared_file(size_t size, char **file_name,
         *sm_backing_file = (char *)
             mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
         if( (void*)-1 == sm_backing_file ) {
-            opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
+            orte_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
                     errno);
             goto file_opened;
         }
 
         /* truncate the file to the requested size */
         if(ftruncate(fd, size) != 0) {
-            opal_output(0, 
+            orte_output(0, 
                     "mca_common_sm_mmap_init: ftruncate failed with errno=%d\n",
                     errno);
             goto file_opened;
@@ -279,7 +279,7 @@ static int allocate_shared_file(size_t size, char **file_name,
             rc=orte_rml.send(&(comm_proc_list[p]->proc_name),iov,3,
                 OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
             if( rc < 0 ) {
-                opal_output(0,
+                orte_output(0,
                     "allocate_shared_file: orte_rml.send failed to %lu with errno=%d\n",
                     (unsigned long)p, errno);
                 goto return_error;
@@ -301,7 +301,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         rc=orte_rml.recv(&(comm_proc_list[0]->proc_name),iov,3,
               OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
-            opal_output(0, "allocate_shared_file: orte_rml.recv failed from %ld with errno=%d\n",            
+            orte_output(0, "allocate_shared_file: orte_rml.recv failed from %ld with errno=%d\n",            
                         0L, errno);
             goto return_error;
         }
@@ -323,7 +323,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         /* open backing file */
         fd = open(*file_name, O_RDWR, 0600);
             if (fd < 0) {
-            opal_output(0,"mca_common_sm_mmap_init: open %s len %ld failed with errno=%d\n",                      
+            orte_output(0,"mca_common_sm_mmap_init: open %s len %ld failed with errno=%d\n",                      
                         *file_name, len, errno);
             goto return_error;
         }
@@ -332,7 +332,7 @@ static int allocate_shared_file(size_t size, char **file_name,
         *sm_backing_file = (char *)
             mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
         if( (void*)-1 == sm_backing_file ) {
-            opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
+            orte_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
                     errno);
             goto return_error;
         }
@@ -387,7 +387,7 @@ int barrier( struct ompi_communicator_t *comm ,
         rc=orte_rml.recv(&(comm_proc_list[child_rank]->proc_name),&iov,1,
                 OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
-            opal_output(0,
+            orte_output(0,
                     "sm barrier fan-in:  orte_rml.recv failed to %lu with errno=%d\n",
                     (unsigned long)child_rank, errno);
             goto return_error;
@@ -400,7 +400,7 @@ int barrier( struct ompi_communicator_t *comm ,
         rc=orte_rml.send(&(comm_proc_list[my_fanout_parent]->proc_name),&iov,1,
                 OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
-            opal_output(0,
+            orte_output(0,
                     "sm barrier fan-in: orte_rml.send failed to %lu with errno=%d\n",
                     (unsigned long)my_fanout_parent, errno);
             goto return_error;
@@ -417,7 +417,7 @@ int barrier( struct ompi_communicator_t *comm ,
         rc=orte_rml.recv(&(comm_proc_list[my_fanout_parent]->proc_name),&iov,1,
                 OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
-            opal_output(0,
+            orte_output(0,
                     "sm barrier fan-out: orte_rml.recv failed to %lu with errno=%d\n",
                     (unsigned long)my_fanout_parent, errno);
             goto return_error;
@@ -432,7 +432,7 @@ int barrier( struct ompi_communicator_t *comm ,
         rc=orte_rml.send(&(comm_proc_list[child_rank]->proc_name),&iov,1,
                 OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
-            opal_output(0,
+            orte_output(0,
                     "sm barrier fan-out:  orte_rml.send failed to %lu with errno=%d\n",
                     (unsigned long)child_rank, errno);
             goto return_error;
@@ -1205,7 +1205,7 @@ sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
     memset(&output_buffer[0],0,sizeof(output_buffer));
     snprintf(output_buffer,sizeof(output_buffer),"%s (cid %d)", comm->c_name,
                        comm->c_contextid);
-    opal_output_verbose(10, mca_coll_base_output,
+    orte_output_verbose(10, mca_coll_base_output,
             "coll:sm2:enable: new communicator: %s", output_buffer);
 
     /* All done */

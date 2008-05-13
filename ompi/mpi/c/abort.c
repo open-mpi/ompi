@@ -49,7 +49,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    opal_output(0, "MPI_ABORT invoked on rank %d in communicator %s with errorcode %d\n", 
+    orte_output(0, "MPI_ABORT invoked on rank %d in communicator %s with errorcode %d\n", 
                 ompi_comm_rank(comm), comm->c_name, errorcode);
     return ompi_mpi_abort(comm, errorcode, true);
 }

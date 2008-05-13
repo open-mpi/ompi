@@ -34,7 +34,7 @@
 
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/proc_info.h"
@@ -138,14 +138,14 @@ int orte_plm_gridengine_component_query(mca_base_module_t **module, int *priorit
 {
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        opal_output_verbose(10, orte_plm_globals.output,
+        orte_output_verbose(10, orte_plm_globals.output,
             "plm:gridengine: available for selection");
 
         *priority = mca_plm_gridengine_component.priority;
         *module = (mca_base_module_t *) &orte_plm_gridengine_module;
         return ORTE_SUCCESS;
     }
-    opal_output_verbose(10, orte_plm_globals.output,
+    orte_output_verbose(10, orte_plm_globals.output,
             "plm:gridengine: NOT available for selection");
     *module = NULL;
     return ORTE_ERROR;

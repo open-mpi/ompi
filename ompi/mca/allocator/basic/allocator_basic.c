@@ -18,7 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "allocator_basic.h"
 #include "ompi/constants.h"
 

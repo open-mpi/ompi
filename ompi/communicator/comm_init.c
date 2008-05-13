@@ -258,7 +258,7 @@ int ompi_comm_finalize(void)
             if ( NULL != comm ) {
                 /* Still here ? */
                 if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
-                    opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
+                    orte_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
                     ompi_comm_dump ( comm);
                     OBJ_RELEASE(comm);
                 }

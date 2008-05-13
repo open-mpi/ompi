@@ -87,7 +87,7 @@ mca_pml_v_protocol_base_module_t *mca_vprotocol_example_component_init( int* pri
   * Some protocols requires sanity check about thread support (those making piecewise deterministic assumption) 
   if(enable_mpi_threads)
   {
-    OPAL_OUTPUT_VERBOSE( mca_pml_v_verbose, mca_pml_v_output, "vprotocol_example.init: threads are enabled, and not supported by vprotocol example fault tolerant layer, will not load"));
+    ORTE_OUTPUT_VERBOSE( mca_pml_v_verbose, mca_pml_v_output, "vprotocol_example.init: threads are enabled, and not supported by vprotocol example fault tolerant layer, will not load"));
     return NULL;
   }
   */

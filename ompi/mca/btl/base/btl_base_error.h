@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -28,6 +28,7 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/output.h"
 #include "orte/runtime/orte_globals.h"
 
 OMPI_DECLSPEC extern int mca_btl_base_verbose;

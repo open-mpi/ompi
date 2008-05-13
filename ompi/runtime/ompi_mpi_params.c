@@ -29,8 +29,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/datatype/datatype.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 /*
@@ -73,7 +72,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            opal_show_help("help-mpi-runtime.txt", 
+            orte_show_help("help-mpi-runtime.txt", 
                            "mpi-param-check-enabled-but-compiled-out",
                            true);
             ompi_mpi_param_check = false;
@@ -117,9 +116,9 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            opal_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
-            opal_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
-            opal_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
+            orte_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
+            orte_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
+            orte_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
         }
     }
 
@@ -224,7 +223,7 @@ int ompi_mpi_register_params(void)
     
     if (ompi_mpi_leave_pinned && ompi_mpi_leave_pinned_pipeline) {
         ompi_mpi_leave_pinned_pipeline = 0;
-        opal_show_help("help-mpi-runtime.txt", 
+        orte_show_help("help-mpi-runtime.txt", 
                        "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
     }
@@ -244,7 +243,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            opal_show_help("help-mpi-runtime.txt", 
+            orte_show_help("help-mpi-runtime.txt", 
                            "sparse groups enabled but compiled out",
                            true);
             ompi_use_sparse_group_storage = false;
@@ -273,7 +272,7 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
    /* Open the file if one is specified */
    if (0 != strlen(ompi_mpi_show_mca_params_file)) {
       if ( NULL == (fp = fopen(ompi_mpi_show_mca_params_file, "w")) ) {
-         opal_output(0, "Unable to open file <%s> to write MCA parameters", ompi_mpi_show_mca_params_file);
+         orte_output(0, "Unable to open file <%s> to write MCA parameters", ompi_mpi_show_mca_params_file);
          return OMPI_ERR_FILE_OPEN_FAILURE;
       }
       fprintf(fp, "#\n");
@@ -303,7 +302,7 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
       if (0 != strlen(ompi_mpi_show_mca_params_file)) {
          fprintf(fp, "%s=%s\n", item->mbpp_full_name, value_string);
       } else {
-         opal_output(0, "%s=%s", item->mbpp_full_name, value_string);
+         orte_output(0, "%s=%s", item->mbpp_full_name, value_string);
       }
 
       free(value_string);

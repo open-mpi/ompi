@@ -17,7 +17,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
+
+#include "orte/util/output.h"
 
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
@@ -70,7 +72,7 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
 
         /* Verbosity level */
         0,
-        /* opal_output handler */
+        /* orte_output handler */
         -1,
         /* Default priority */
         20
@@ -102,8 +104,8 @@ static int filem_rsh_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_filem_rsh_component.super.verbose) {
-        mca_filem_rsh_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_filem_rsh_component.super.output_handle,
+        mca_filem_rsh_component.super.output_handle = orte_output_open(NULL, "FILEM", "RSH", "DEBUG", NULL);
+        orte_output_set_verbosity(mca_filem_rsh_component.super.output_handle,
                                   mca_filem_rsh_component.super.verbose);
     } else {
         mca_filem_rsh_component.super.output_handle = orte_filem_base_output;
@@ -147,18 +149,18 @@ static int filem_rsh_open(void)
     /*
      * Debug Output
      */
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
+    orte_output_verbose(10, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open()");
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    orte_output_verbose(20, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open: priority   = %d", 
                         mca_filem_rsh_component.super.priority);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    orte_output_verbose(20, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open: verbosity  = %d", 
                         mca_filem_rsh_component.super.verbose);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    orte_output_verbose(20, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open: cp command  = %s", 
                         mca_filem_rsh_component.cp_command);
-    opal_output_verbose(20, mca_filem_rsh_component.super.output_handle,
+    orte_output_verbose(20, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: open: rsh command  = %s", 
                         mca_filem_rsh_component.remote_sh_command);
 
@@ -167,7 +169,7 @@ static int filem_rsh_open(void)
 
 static int filem_rsh_close(void)
 {
-    opal_output_verbose(10, mca_filem_rsh_component.super.output_handle,
+    orte_output_verbose(10, mca_filem_rsh_component.super.output_handle,
                         "filem:rsh: close()");
 
     return ORTE_SUCCESS;

@@ -48,7 +48,7 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_pairwise rank %d", rank));
 
     ompi_ddt_type_extent(sdtype, &sext);
@@ -93,7 +93,7 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     return MPI_SUCCESS;
  
  err_hndl:
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, 
                  err, rank));
     return err;
@@ -124,7 +124,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_basic_linear rank %d", rank));
 
     size = ompi_comm_size(comm);
@@ -237,7 +237,7 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
     if (requested_alg > max_alg) {
         if (0 == ompi_comm_rank( MPI_COMM_WORLD)) {
-            opal_output(0, "Alltoallv algorithm #%d is not available (range [0..%d]). "
+            orte_output(0, "Alltoallv algorithm #%d is not available (range [0..%d]). "
                         "Switching back to ignore(0)\n",
                         requested_alg, max_alg );
         }
@@ -259,7 +259,7 @@ int ompi_coll_tuned_alltoallv_intra_do_forced(void *sbuf, int *scounts, int *sdi
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_do_forced selected algorithm %d",
                  data->user_forced[ALLTOALLV].algorithm));
 
@@ -277,7 +277,7 @@ int ompi_coll_tuned_alltoallv_intra_do_forced(void *sbuf, int *scounts, int *sdi
                                                         rbuf, rcounts, rdisps, rdtype,
                                                         comm, module);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
+        ORTE_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:alltoallv_intra_do_forced attempt to "
                      "select algorithm %d when only 0-%d is valid.", 
                      data->user_forced[ALLTOALLV].algorithm,
@@ -296,7 +296,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(void *sbuf, int *scounts, int *sdisp
                                             struct mca_coll_base_module_1_1_0_t *module,
                                             int algorithm)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_do_this selected algorithm %d ",
                  algorithm));
 
@@ -314,7 +314,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(void *sbuf, int *scounts, int *sdisp
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        comm, module);
     default:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,
+        ORTE_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:alltoall_intra_do_this attempt to select "
                      "algorithm %d when only 0-%d is valid.", 
                      algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]));

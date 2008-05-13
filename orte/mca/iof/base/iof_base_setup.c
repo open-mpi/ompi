@@ -54,7 +54,7 @@
 #include <libutil.h>
 #endif
 
-#include "opal/util/output.h"
+#include "orte/util/output.h"
 #include "opal/util/opal_pty.h"
 
 #include "orte/mca/errmgr/errmgr.h"

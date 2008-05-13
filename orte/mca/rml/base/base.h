@@ -119,7 +119,7 @@ ORTE_DECLSPEC int orte_rml_base_comm_stop(void);
 /**
  * Output stream for RML debugging
  *
- * Output stream for the opal_output() code intended for RML output.
+ * Output stream for the orte_output() code intended for RML output.
  * It will be have its verbosity set according to the MCA parameter
  * rml_base_verbose.  Useable between call to orte_rml_base_open() and
  * orte_rml_base_close().

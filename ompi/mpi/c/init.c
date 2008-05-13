@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 
-#include "opal/util/show_help.h"
+#include "orte/util/output.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/constants.h"
 
@@ -48,14 +48,14 @@ int MPI_Init(int *argc, char ***argv)
 
   if (ompi_mpi_finalized) {
       if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-          opal_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
+          orte_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
                          true, FUNC_NAME);
       }
       return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM, 
                                     MPI_ERR_OTHER, FUNC_NAME);
   } else if (ompi_mpi_initialized) {
       if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-          opal_show_help("help-mpi-api.txt", "mpi-initialize-twice",
+          orte_show_help("help-mpi-api.txt", "mpi-initialize-twice",
                          true, FUNC_NAME);
       }
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);

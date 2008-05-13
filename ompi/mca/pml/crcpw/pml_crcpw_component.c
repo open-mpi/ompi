@@ -19,6 +19,9 @@
 #include "ompi_config.h"
 #include "opal/sys/cache.h"
 #include "opal/event/event.h"
+
+#include "orte/util/output.h"
+
 #include "mpi.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -70,7 +73,7 @@ ompi_free_list_t pml_state_list;
 
 int mca_pml_crcpw_component_open(void)
 {
-    opal_output_verbose( 10, mca_pml_crcpw_component.output_handle,
+    orte_output_verbose( 10, mca_pml_crcpw_component.output_handle,
                          "pml:crcpw: component_open: Open");
 
     /*
@@ -90,21 +93,21 @@ int mca_pml_crcpw_component_open(void)
                            mca_pml_crcpw_component.verbose, 
                            &mca_pml_crcpw_component.verbose);
 
-    mca_pml_crcpw_component.output_handle = opal_output_open(NULL);
+    mca_pml_crcpw_component.output_handle = orte_output_open(NULL, "PML", "CRCPW", "DEBUG", NULL);
     if ( 0 != mca_pml_crcpw_component.verbose) {
-        opal_output_set_verbosity(mca_pml_crcpw_component.output_handle,
+        orte_output_set_verbosity(mca_pml_crcpw_component.output_handle,
                                   mca_pml_crcpw_component.verbose);
     }
     
     /*
      * Debug Output
      */
-    opal_output_verbose(10, mca_pml_crcpw_component.output_handle,
+    orte_output_verbose(10, mca_pml_crcpw_component.output_handle,
                         "pml:crcpw: open()");
-    opal_output_verbose(20, mca_pml_crcpw_component.output_handle,
+    orte_output_verbose(20, mca_pml_crcpw_component.output_handle,
                         "pml:crcpw: open: priority   = %d", 
                         mca_pml_crcpw_component.priority);
-    opal_output_verbose(20, mca_pml_crcpw_component.output_handle,
+    orte_output_verbose(20, mca_pml_crcpw_component.output_handle,
                         "pml:crcpw: open: verbosity  = %d", 
                         mca_pml_crcpw_component.verbose);
 
@@ -114,7 +117,7 @@ int mca_pml_crcpw_component_open(void)
 
 int mca_pml_crcpw_component_close(void)
 {
-    opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
+    orte_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                          "pml:crcpw: component_close: Close");
 
     return OMPI_SUCCESS;
@@ -131,7 +134,7 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
      * normal selection operation
      */
     if(*priority == PML_SELECT_WRAPPER_PRIORITY ) {
-        opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
+        orte_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                              "pml:crcpw: component_init: Wrap the selected component %s",
                              mca_pml_base_selected_component.pmlm_version.mca_component_name);
 
@@ -139,7 +142,7 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
         mca_pml_crcpw_module.wrapped_pml_module    = mca_pml;
         mca_pml_crcpw_component.pml_crcp_wrapped = true;
 
-        opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
+        orte_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                              "pml:crcpw: component_init: Initalize Wrapper");
         
         OBJ_CONSTRUCT(&pml_state_list, ompi_free_list_t);
@@ -154,7 +157,7 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
                              NULL);
     }
     else {
-        opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
+        orte_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                              "pml:crcpw: component_init: Priority %d",
                              mca_pml_crcpw_component.priority);
     }
@@ -167,7 +170,7 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
 
 int mca_pml_crcpw_component_finalize(void)
 {
-    opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
+    orte_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                          "pml:crcpw: component_finalize: Finalize");
 
     OBJ_DESTRUCT(&pml_state_list);
