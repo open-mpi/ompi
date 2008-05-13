@@ -175,9 +175,11 @@ int opal_cr_init(void )
 
     if( ++opal_cr_initalized != 1 ) {
         if( opal_cr_initalized < 1 ) {
-            return OPAL_ERROR;
+            exit_status = OPAL_ERROR;
+            goto cleanup;
         }
-        return OPAL_SUCCESS;
+        exit_status = OPAL_SUCCESS;
+        goto cleanup;
     }
 
     /*
@@ -310,12 +312,14 @@ int opal_cr_init(void )
     if (OPAL_SUCCESS != (ret = opal_crs_base_open())) {
         opal_output(opal_cr_output,
                     "opal_cr: init: opal_crs_base_open Failed to open. (%d)\n", ret);
+        exit_status = ret;
         goto cleanup;
     }
     
     if (OPAL_SUCCESS != (ret = opal_crs_base_select())) {
         opal_output(opal_cr_output,
                     "opal_cr: init: opal_crs_base_select Failed. (%d)\n", ret);
+        exit_status = ret;
         goto cleanup;
     }
 #endif
