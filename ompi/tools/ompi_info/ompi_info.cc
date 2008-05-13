@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copryight (c) 2007      Cisco Systems, Inc.  All rights reserved.
+// Copryight (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -179,6 +179,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("orte");
   ompi_info::mca_types.push_back("opal");
 
+  ompi_info::mca_types.push_back("filter");
   ompi_info::mca_types.push_back("backtrace");
   ompi_info::mca_types.push_back("memchecker");
   ompi_info::mca_types.push_back("memory");

@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -53,6 +53,8 @@
 #endif
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/filter/filter.h"
+#include "opal/mca/filter/base/base.h"
 
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -197,6 +199,9 @@ void ompi_info::open_components()
 
   // OPAL frameworks
 
+  opal_filter_base_open();
+  component_map["filter"] = &opal_filter_base_components_available;
+
   opal_backtrace_base_open();
   component_map["backtrace"] = &opal_backtrace_base_components_opened;
 
@@ -205,7 +210,6 @@ void ompi_info::open_components()
 
   opal_memchecker_base_open();
   component_map["memchecker"] = &opal_memchecker_base_components_opened;
-
 
   opal_paffinity_base_open();
   component_map["paffinity"] = &opal_paffinity_base_components_opened;
@@ -389,6 +393,7 @@ void ompi_info::close_components()
 #if OPAL_ENABLE_FT == 1
         opal_crs_base_close();
 #endif
+
         // Do not call OPAL's installdirs close; it will be handled in
         // opal_finalize_util().
 
