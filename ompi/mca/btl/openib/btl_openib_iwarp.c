@@ -1,4 +1,5 @@
 #include "ompi_config.h"
+#include <infiniband/verbs.h>
 #if OMPI_HAVE_RDMACM
 
 #include <rdma/rdma_cma.h>
