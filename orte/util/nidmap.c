@@ -468,7 +468,7 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
         flag = (int)true;
         opal_dss.pack(&buf, &flag, 1, OPAL_INT8);
         for (i=0; i < jdata->num_procs; i++) {
-            opal_dss.pack(&buf, procs[i]->slot_list, 1, OPAL_STRING);
+            opal_dss.pack(&buf, &procs[i]->slot_list, 1, OPAL_STRING);
         }
     } else {
         flag = (int)false;
