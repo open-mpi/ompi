@@ -68,7 +68,6 @@
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "orte/util/output.h"
@@ -450,7 +449,7 @@ static int plm_gridengine_launch_job(orte_job_t *jdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  orted_path));
             
-            var = opal_home_directory();
+            var = (char*)opal_home_directory();
             if (NULL != var) {
                 ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:gridengine: changing to directory %s",
