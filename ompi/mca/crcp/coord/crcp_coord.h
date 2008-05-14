@@ -51,7 +51,7 @@ extern "C" {
     /*
      * Local variables
      */
-    extern bool timing_enabled;
+    extern int timing_enabled;
 
     /*
      * Module functions
