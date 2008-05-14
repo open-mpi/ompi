@@ -34,7 +34,6 @@
 #endif  /* HAVE_FCNTL_H */
 
 #include "orte/util/output.h"
-#include "orte/util/show_help.h"
 #include "opal/util/sys_limits.h"
 
 #include "orte/runtime/orte_wait.h"

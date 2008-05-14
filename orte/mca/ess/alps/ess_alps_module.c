@@ -22,7 +22,7 @@
 
 #include <catamount/cnos_mpi_os.h>
 
-#include "orte/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 
