@@ -522,7 +522,7 @@ static int rte_ft_event(int state)
             exit_status = ret;
         }
 
-        orte_output_set_output_file_info(orte_process_info.proc_session_dir,
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
 
         /*
