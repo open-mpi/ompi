@@ -28,7 +28,7 @@
 const char *ompi_crcp_coord_component_version_string = 
 "OMPI CRCP coord MCA component version " OMPI_VERSION;
 
-bool timing_enabled = false;
+int timing_enabled = 0;
 
 /*
  * Local functionality
@@ -113,7 +113,7 @@ static int crcp_coord_open(void)
                            false, false,
                            0,
                            &val);
-    timing_enabled = OPAL_INT_TO_BOOL(val);
+    timing_enabled = val;
 
     /*
      * Debug Output

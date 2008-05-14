@@ -152,6 +152,8 @@
  *   send(2)   |  --
  *   send(3)   |  --
  *   send(4)   |  --
+ *
+ *
  */
 #include "ompi_config.h"
 
@@ -416,22 +418,58 @@ static int wait_quiesce_drain_ack(void);
 
 /************************************
  * A few timing structures
+ *
+ * CRCP Timing Information
+ * -----------------------
+ *  Pi                     Pj  | Variable
+ * ----                   -----+----------
+ * exchange_bookmark()         | CRCP_TIMER_CKPT_EX_B
+ *      ------------->         | CRCP_TIMER_CKPT_EX_PEER_S
+ *      <-------------         | CRCP_TIMER_CKPT_EX_PEER_R
+ *  -> wait_for_bk_done()      |
+ *  --                     --  | CRCP_TIMER_CKPT_EX_WAIT
+ * check_bookmarks()           |
+ *  --                     --  | CRCP_TIMER_CKPT_CHECK_B
+ *  -> exchange_details (*)    |
+ *      ------------->         | CRCP_TIMER_CKPT_CHECK_PEER_S
+ *      <-------------         | CRCP_TIMER_CKPT_CHECK_PEER_R
+ * post_drain[ack]()           |
+ *  --                     --  | CRCP_TIMER_CKPT_POST_DRAIN
+ * wait_quiescence()           |
+ *  --                     --  | CRCP_TIMER_CKPT_WAIT_QUI
+ * Finish checkpoint           |   -- Total Pre-Checkpoint
+ *  --                     --  | CRCP_TIMER_TOTAL_CKPT
+ * finalize_exchange()         |   -- Total Continue   / Restart
+ *  --                     --  | CRCP_TIMER_TOTAL_CONT / _RST
+ *-----------------------------+
+ * (*) If needed.
+ *
+ * timing_enabled:
+ * < 0 : Off
+ *   1 : Summary only
+ *   2 : Per Peer messages
+ *   3 : Messages from all procs
+ * 
  ************************************/
-#define CRCP_TIMER_CKPT         0
-#define CRCP_TIMER_CKPT_EX_B    1
-#define CRCP_TIMER_CKPT_CK_B    2
-#define CRCP_TIMER_CKPT_POST    3
-#define CRCP_TIMER_CKPT_WAIT    4
-#define CRCP_TIMER_CONT         5
-#define CRCP_TIMER_CKPT_PEER_S  6
-#define CRCP_TIMER_CKPT_PEER_R  7
-#define CRCP_TIMER_CKPT_WAIT_B  8
-#define CRCP_TIMER_MAX          9
+#define CRCP_TIMER_TOTAL_CKPT          0
+#define CRCP_TIMER_CKPT_EX_B           1
+#define CRCP_TIMER_CKPT_EX_PEER_S      2
+#define CRCP_TIMER_CKPT_EX_PEER_R      3
+#define CRCP_TIMER_CKPT_EX_WAIT        4
+#define CRCP_TIMER_CKPT_CHECK_B        5
+#define CRCP_TIMER_CKPT_CHECK_PEER_S   6
+#define CRCP_TIMER_CKPT_CHECK_PEER_R   7
+#define CRCP_TIMER_CKPT_POST_DRAIN     8
+#define CRCP_TIMER_CKPT_WAIT_QUI       9
+#define CRCP_TIMER_TOTAL_CONT         10
+#define CRCP_TIMER_TOTAL_RST          11
+#define CRCP_TIMER_MAX                12
 
 static double get_time(void);
 static void start_time(int idx);
 static void end_time(int idx);
-static void display_indv_timer(int idx, int var);
+static void display_indv_timer(int idx, int proc, int msgs);
+static void display_indv_timer_core(int idx, int proc, int msgs, bool direct);
 static void display_all_timers(int state);
 static void clear_timers(void);
 
@@ -441,28 +479,28 @@ char * timer_label[CRCP_TIMER_MAX];
 
 #define START_TIMER(idx)                 \
   {                                      \
-    if(OPAL_UNLIKELY(timing_enabled)) {  \
+    if(OPAL_UNLIKELY(timing_enabled > 0)) {  \
       start_time(idx);                   \
     }                                    \
   }
 
 #define END_TIMER(idx)                   \
   {                                      \
-    if(OPAL_UNLIKELY(timing_enabled)) {  \
+    if(OPAL_UNLIKELY(timing_enabled > 0)) {  \
       end_time(idx);                     \
     }                                    \
   }
 
-#define DISPLAY_INDV_TIMER(idx, var)     \
+#define DISPLAY_INDV_TIMER(idx, proc, msg) \
   {                                      \
-    if(OPAL_UNLIKELY(timing_enabled)) {  \
-      display_indv_timer(idx, var);      \
+    if(OPAL_UNLIKELY(timing_enabled > 0)) {  \
+      display_indv_timer(idx, proc, msg);\
     }                                    \
   }
 
 #define DISPLAY_ALL_TIMERS(var)          \
   {                                      \
-    if(OPAL_UNLIKELY(timing_enabled)) {  \
+    if(OPAL_UNLIKELY(timing_enabled > 0)) {  \
       display_all_timers(var);           \
     }                                    \
   }
@@ -806,15 +844,24 @@ int ompi_crcp_coord_pml_init(void) {
     OBJ_CONSTRUCT(&drained_msg_list, opal_list_t);
 
     clear_timers();
-    timer_label[CRCP_TIMER_CKPT]      = strdup("Ckpt");
-    timer_label[CRCP_TIMER_CKPT_EX_B] = strdup("Ckpt Exchange");
-    timer_label[CRCP_TIMER_CKPT_CK_B] = strdup("Ckpt Check");
-    timer_label[CRCP_TIMER_CKPT_POST] = strdup("Ckpt Post");
-    timer_label[CRCP_TIMER_CKPT_WAIT] = strdup("Ckpt Wait");
-    timer_label[CRCP_TIMER_CONT]      = strdup("Continue");
-    timer_label[CRCP_TIMER_CKPT_PEER_S] = strdup("Peer Send");
-    timer_label[CRCP_TIMER_CKPT_PEER_R] = strdup("Peer Recv");
-    timer_label[CRCP_TIMER_CKPT_WAIT_B] = strdup("Bookmark Wait");
+
+    timer_label[CRCP_TIMER_TOTAL_CKPT]        = strdup("Total Ckpt.");
+    timer_label[CRCP_TIMER_CKPT_EX_B]         = strdup("Exchange Bookmarks");
+    timer_label[CRCP_TIMER_CKPT_EX_PEER_S]    = strdup("  Ex.Bk. Send Peer");
+    timer_label[CRCP_TIMER_CKPT_EX_PEER_R]    = strdup("  Ex.Bk. Recv Peer");
+    timer_label[CRCP_TIMER_CKPT_EX_WAIT]      = strdup("  Ex.Bk. Wait");
+
+    timer_label[CRCP_TIMER_CKPT_CHECK_B]      = strdup("Check Bookmarks");
+    timer_label[CRCP_TIMER_CKPT_CHECK_PEER_S] = strdup("  Ck.Bk. Send Peer");
+    timer_label[CRCP_TIMER_CKPT_CHECK_PEER_R] = strdup("  Ck.Bk. Recv Peer");
+
+    timer_label[CRCP_TIMER_CKPT_POST_DRAIN]   = strdup("Post Drain Msgs.");
+    timer_label[CRCP_TIMER_CKPT_WAIT_QUI]     = strdup("Wait for Quiescence");
+
+    timer_label[CRCP_TIMER_TOTAL_CONT]        = strdup("Total Continue");
+
+    timer_label[CRCP_TIMER_TOTAL_RST]         = strdup("Total Restart");
+
 
     return OMPI_SUCCESS;
 }
@@ -2726,7 +2773,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
             goto DONE;
         }
 
-        START_TIMER(CRCP_TIMER_CKPT);
+        START_TIMER(CRCP_TIMER_TOTAL_CKPT);
     STEP_1:
         step_to_return_to = 0;
 
@@ -2754,7 +2801,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
             exit_status = OMPI_EXISTS;
             goto DONE_STALL;
         }
-        END_TIMER(CRCP_TIMER_CKPT);
+        END_TIMER(CRCP_TIMER_TOTAL_CKPT);
+
+        DISPLAY_ALL_TIMERS(state);
+        clear_timers();
     }
     /*****************************
      * Continue after a checkpoint
@@ -2764,7 +2814,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
             goto DONE;
         }
 
-        START_TIMER(CRCP_TIMER_CONT);
+        START_TIMER(CRCP_TIMER_TOTAL_CONT);
         /*
          * Finish the coord protocol
          */
@@ -2775,7 +2825,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
             exit_status = ret;
             goto DONE;
         }
-        END_TIMER(CRCP_TIMER_CONT);
+        END_TIMER(CRCP_TIMER_TOTAL_CONT);
+
+        DISPLAY_ALL_TIMERS(state);
+        clear_timers();
     }
     /*****************************
      * Restart from a checkpoint
@@ -2785,6 +2838,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
             goto DONE;
         }
 
+        START_TIMER(CRCP_TIMER_TOTAL_RST);
         /*
          * Refresh the jobids
          */
@@ -2808,6 +2862,11 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
             exit_status = ret;
             goto DONE;
         }
+
+        END_TIMER(CRCP_TIMER_TOTAL_RST);
+
+        DISPLAY_ALL_TIMERS(state);
+        clear_timers();
     }
     /*****************************
      * Terminating the process post checkpoint
@@ -2825,9 +2884,6 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
  DONE:
     step_to_return_to = 0;
     ft_event_state = OPAL_CRS_RUNNING;
-
-    DISPLAY_ALL_TIMERS(state);
-    clear_timers();
 
  DONE_STALL:
     pml_state->error_code = exit_status;
@@ -2972,7 +3028,7 @@ static int ft_event_coordinate_peers(void)
     /*
      * Check exchanged bookmarks 
      */
-    START_TIMER(CRCP_TIMER_CKPT_CK_B);
+    START_TIMER(CRCP_TIMER_CKPT_CHECK_B);
     if( OMPI_SUCCESS != (ret = ft_event_check_bookmarks() ) ) {
         orte_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Bookmark Check Failed %d",
@@ -2980,12 +3036,12 @@ static int ft_event_coordinate_peers(void)
         exit_status = ret;
         goto DONE;
     }
-    END_TIMER(CRCP_TIMER_CKPT_CK_B);
+    END_TIMER(CRCP_TIMER_CKPT_CHECK_B);
 
     /*
      * Post Drain Acks and Msgs
      */
-    START_TIMER(CRCP_TIMER_CKPT_POST);
+    START_TIMER(CRCP_TIMER_CKPT_POST_DRAIN);
     if( OMPI_SUCCESS != (ret = ft_event_post_drain_acks() ) ) {
         orte_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Bookmark Post Drain ACKS Failed %d",
@@ -3001,7 +3057,7 @@ static int ft_event_coordinate_peers(void)
         exit_status = ret;
         goto DONE;
     }
-    END_TIMER(CRCP_TIMER_CKPT_POST);
+    END_TIMER(CRCP_TIMER_CKPT_POST_DRAIN);
 
     /*
      * Check if we need to stall for completion of tasks
@@ -3023,7 +3079,7 @@ static int ft_event_coordinate_peers(void)
      * - Outstanding Receives (to drain wire) -- Receiver
      * - Outstanding Irecvs (for drain ack)   -- Sender
      */
-    START_TIMER(CRCP_TIMER_CKPT_WAIT);
+    START_TIMER(CRCP_TIMER_CKPT_WAIT_QUI);
     if( OMPI_SUCCESS != (ret = ft_event_wait_quiesce() ) ) {
         orte_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Wait Quiesce Failed %d",
@@ -3031,7 +3087,7 @@ static int ft_event_coordinate_peers(void)
         exit_status = ret;
         goto DONE;
     }
-    END_TIMER(CRCP_TIMER_CKPT_WAIT);
+    END_TIMER(CRCP_TIMER_CKPT_WAIT_QUI);
 
     ORTE_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: ft_event_coordinate_peers: %s Coordination Finished...\n",
@@ -3140,14 +3196,13 @@ static int ft_event_exchange_bookmarks(void)
         }
     
     /* Wait for all bookmarks to arrive */
-    START_TIMER(CRCP_TIMER_CKPT_WAIT_B);
+    START_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
     while( total_recv_bookmarks > 0 ) {
         opal_progress();
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
     }
     total_recv_bookmarks = 0;
-    END_TIMER(CRCP_TIMER_CKPT_WAIT_B);
-    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_WAIT_B, 0);
+    END_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
 
     return OMPI_SUCCESS;
 }
@@ -3914,7 +3969,7 @@ static int send_bookmarks(int peer_idx)
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    START_TIMER(CRCP_TIMER_CKPT_PEER_S);
+    START_TIMER(CRCP_TIMER_CKPT_EX_PEER_S);
     /*
      * Find the peer structure for this peer
      */
@@ -3976,14 +4031,12 @@ static int send_bookmarks(int peer_idx)
         OBJ_RELEASE(buffer);
     }
 
-    END_TIMER(CRCP_TIMER_CKPT_PEER_S);
-    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_PEER_S, peer_idx);
+    END_TIMER(CRCP_TIMER_CKPT_EX_PEER_S);
+    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_S, peer_idx, 1);
 
     return exit_status;
 }
 
-/* JJH -- Blocking vs Non-Blocking Bookmark exchange */
-#if 1
 /* Paired with send_bookmarks */
 static int recv_bookmarks(int peer_idx)
 {
@@ -3991,7 +4044,7 @@ static int recv_bookmarks(int peer_idx)
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    START_TIMER(CRCP_TIMER_CKPT_PEER_R);
+    START_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
 
     peer_name.jobid  = ORTE_PROC_MY_NAME->jobid;
     peer_name.vpid   = peer_idx;
@@ -4012,96 +4065,11 @@ static int recv_bookmarks(int peer_idx)
     ++total_recv_bookmarks;
 
  cleanup:
-    END_TIMER(CRCP_TIMER_CKPT_PEER_R);
-    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_PEER_R, peer_idx);
+    END_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
+    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_R, peer_idx, 1);
 
     return exit_status;
 }
-#else
-/* Paired with send_bookmarks */
-static int recv_bookmarks(int peer_idx)
-{
-    ompi_crcp_coord_pml_peer_ref_t *peer_ref;
-    orte_process_name_t peer_name;
-    opal_buffer_t * buffer = NULL;
-    int exit_status = OMPI_SUCCESS;
-    int ret, tmp_int;
-
-    START_TIMER(CRCP_TIMER_CKPT_PEER_R);
-
-    /*
-     * Find the peer structure for this peer
-     */
-    peer_name.jobid  = ORTE_PROC_MY_NAME->jobid;
-    peer_name.vpid   = peer_idx;
-
-    if( NULL == (peer_ref = find_peer(peer_name))) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
-                    "crcp:coord: recv_bookmarks: Could not find peer indexed %d\n",
-                    peer_idx);
-        exit_status = OMPI_ERROR;
-        goto cleanup;
-    }
-
-    /*
-     * Receive the bookmark from peer
-     */
-    if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-
-    if ( 0 > (ret = orte_rml.recv_buffer(&peer_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) , 0) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
-                    "crcp:coord: recv_bookmarks: Failed to receive bookmark from peer %s: Return %d\n",
-                    ORTE_NAME_PRINT(&peer_name),
-                    ret);
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
-                  "crcp:coord: recv_bookmarks: Unable to unpack total_send_msgs");
-    peer_ref->matched_send_msgs = tmp_int;
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
-                  "crcp:coord: recv_bookmarks: Unable to unpack total_isend_msgs");
-    peer_ref->matched_isend_msgs = tmp_int;
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
-                  "crcp:coord: recv_bookmarks: Unable to unpack total_send_init_msgs");
-    peer_ref->matched_send_init_msgs = tmp_int;
-
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
-                  "crcp:coord: recv_bookmarks: Unable to unpack total_recv_msgs");
-    peer_ref->matched_recv_msgs = tmp_int;
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
-                  "crcp:coord: recv_bookmarks: Unable to unpack total_irecv_msgs");
-    peer_ref->matched_irecv_msgs = tmp_int;
-    UNPACK_BUFFER(buffer, tmp_int, 1, OPAL_UINT32,
-                  "crcp:coord: recv_bookmarks: Unable to unpack total_recv_init_msgs");
-    peer_ref->matched_recv_init_msgs = tmp_int;
-
-    ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: recv_bookmarks: %s <- %s Received bookmark S[%4d,%4d,%4d] R[%4d,%4d,%4d]\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&peer_name),
-                        peer_ref->matched_send_msgs,
-                        peer_ref->matched_isend_msgs,
-                        peer_ref->matched_send_init_msgs,
-                        peer_ref->matched_recv_msgs,
-                        peer_ref->matched_irecv_msgs,
-                        peer_ref->matched_recv_init_msgs));
-
- cleanup:
-    if(NULL != buffer) {
-        OBJ_RELEASE(buffer);
-    }
-
-    END_TIMER(CRCP_TIMER_CKPT_PEER_R);
-    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_PEER_R, peer_idx);
-
-    return exit_status;
-}
-#endif
 
 static void recv_bookmarks_cbfunc(int status,
                                   orte_process_name_t* sender,
@@ -4114,7 +4082,7 @@ static void recv_bookmarks_cbfunc(int status,
     int ret, tmp_int;
     orte_vpid_t peer_idx;
 
-    START_TIMER(CRCP_TIMER_CKPT_PEER_R);
+    START_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
 
     peer_idx = sender->vpid;
 
@@ -4161,8 +4129,8 @@ static void recv_bookmarks_cbfunc(int status,
                         peer_ref->matched_recv_init_msgs));
 
  cleanup:
-    END_TIMER(CRCP_TIMER_CKPT_PEER_R);
-    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_PEER_R, peer_idx);
+    END_TIMER(CRCP_TIMER_CKPT_EX_PEER_R);
+    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_EX_PEER_R, peer_idx, 1);
     --total_recv_bookmarks;
 
     return;
@@ -4179,11 +4147,14 @@ static int send_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
     int need, found;
     int exit_status = OMPI_SUCCESS;
     int ret;
+    int total_details_sent = 0;
 
     need = total_sent - total_matched;
     found = 0;
     finished = false;
     assert(need > 0);
+
+    START_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_S);
 
     /*
      * Check the 'send_list' for this peer
@@ -4204,6 +4175,7 @@ static int send_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         }
 
         found_match = false;
+        total_details_sent++;
         if(OMPI_SUCCESS != (ret = do_send_msg_detail(peer_ref, msg_ref, &found_match, &finished)) ) {
             orte_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: send_msg_details: %s --> %s Failed to send message details to peer. Return %d\n",
@@ -4270,6 +4242,9 @@ static int send_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         COORD_MSG_TYPE_B_SEND == current_msg_type) {
         stall_for_completion = true;
     }
+
+    END_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_S);
+    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_S, peer_ref->proc_name.vpid, total_details_sent);
 
     return exit_status;
 }
@@ -4404,10 +4379,13 @@ static int recv_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
     int response;
     int exit_status = OMPI_SUCCESS;
     int ret;
+    int total_details_recv = 0;
 
     need = total_recv - total_matched;
     found = 0;
     assert(need > 0);
+
+    START_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_R);
 
     /*
      * While we are still looking for messages to drain
@@ -4422,6 +4400,7 @@ static int recv_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         /*
          * Receive the message details from peer
          */
+        total_details_recv++;
         if( OMPI_SUCCESS != (ret = do_recv_msg_detail(peer_ref,
                                                       &p_rank, &p_comm_id,
                                                       &p_tag, &p_count,
@@ -4485,6 +4464,9 @@ static int recv_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
     }
 
  cleanup:
+
+    END_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_R);
+    DISPLAY_INDV_TIMER(CRCP_TIMER_CKPT_CHECK_PEER_R, peer_ref->proc_name.vpid, total_details_recv);
 
     return exit_status;
 }
@@ -5074,28 +5056,69 @@ static void clear_timers(void) {
 }
 
 static void display_all_timers(int state) {
+    bool report_ready = false;
     int i;
 
-    for( i = 0; i <= CRCP_TIMER_CONT; ++i) {
-        display_indv_timer(i, state);
+    if( 0 != ORTE_PROC_MY_NAME->vpid && timing_enabled < 3) {
+        return;
     }
+
+    for( i = 0; i < CRCP_TIMER_MAX; ++i) {
+        if(timer_end[i] > 0.001) {
+            report_ready = true;
+        }
+    }
+    if( !report_ready ) {
+        return;
+    }
+
+    opal_output(0, "crcp:coord: timing(%20s): ******************** Begin: [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
+    for( i = 0; i < CRCP_TIMER_MAX; ++i) {
+        display_indv_timer_core(i, 0, 0, false);
+    }
+    opal_output(0, "crcp:coord: timing(%20s): ******************** End:   [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
 }
 
-static void display_indv_timer(int idx, int var) {
+static void display_indv_timer(int idx, int proc, int msgs) {
+    display_indv_timer_core(idx, proc, msgs, true);
+}
+
+static void display_indv_timer_core(int idx, int proc, int msgs, bool direct) {
     double diff = timer_end[idx] - timer_start[idx];
+    char * str = NULL;
 
-    if( 0 != ORTE_PROC_MY_NAME->vpid ) {
+    if( 0 != ORTE_PROC_MY_NAME->vpid && timing_enabled < 3 ) {
         return;
     }
 
-    if( diff < 0.001 ) {
+    /* Only display the timer if an end value was set */
+    if(timer_end[idx] <= 0.001) {
         return;
     }
-    orte_output(0,
-                "crcp:coord: timing(%3d): %15s = %10.2f [%15.2f - %15.2f]\n",
-                var,
+
+    switch(idx) {
+    case CRCP_TIMER_CKPT_EX_PEER_S:
+    case CRCP_TIMER_CKPT_EX_PEER_R:
+    case CRCP_TIMER_CKPT_CHECK_PEER_S:
+    case CRCP_TIMER_CKPT_CHECK_PEER_R:
+        /* These timers do not mean anything in the aggregate, so only display
+         * them when directly asked for */
+        if( direct && timing_enabled >= 2) {
+            asprintf(&str, "Proc %2d, Msg %5d", proc, msgs);
+        } else {
+            return;
+        }
+        break;
+    default:
+        str = strdup("");
+        break;
+    }
+
+    opal_output(0,
+                "crcp:coord: timing(%20s): %20s = %10.2f s\n",
+                str,
                 timer_label[idx],
-                diff,
-                timer_end[idx],
-                timer_start[idx]);
+                diff);
+    free(str);
+    str = NULL;
 }
