@@ -62,7 +62,6 @@
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "orte/util/output.h"

@@ -28,7 +28,6 @@
 #include "opal/util/argv.h"
 #include "orte/util/output.h"
 #include "opal/util/os_path.h"
-#include "orte/util/show_help.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 

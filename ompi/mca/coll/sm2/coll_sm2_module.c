@@ -31,7 +31,6 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
-#include "orte/util/show_help.h"
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/dpm/dpm.h"
