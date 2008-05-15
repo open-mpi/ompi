@@ -34,6 +34,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "paffinity_solaris.h"
+#include "opal/util/output.h"
 
 /*
  * Local functions
@@ -172,7 +173,26 @@ static int solaris_module_map_to_socket_core(int processor_id, int *socket, int 
 
 static int solaris_module_get_processor_info(int *num_processors, int *max_processor_id)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    processorid_t currid, cpuid_max;
+    processor_info_t pinfo;
+
+    /* cpuid_max is the max number available for a system arch. It is
+     * an inclusive list. e.g. If cpuid_max=31, cpuid would be 0-31 */
+    cpuid_max = sysconf(_SC_CPUID_MAX);
+
+    /* Because not all CPU ID in cpuid_max are actually valid,
+     * and CPU ID may also not be contiguous. Therefore we
+     * need to run through processor_info to ensure the validity.
+     * Then find out which are actually online */
+    for (currid=0; currid<=cpuid_max; currid++) {
+        if (0 == processor_info(currid, &pinfo)) {
+            if (P_ONLINE == pinfo.pi_state) {
+                 *num_processors++;
+                 *max_processor_id = currid;
+            }
+        }
+    }
+    return OPAL_SUCCESS;
 }
 
 static int solaris_module_get_socket_info(int *num_sockets, int *max_socket_num)
