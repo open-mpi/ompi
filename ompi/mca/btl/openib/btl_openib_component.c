@@ -1025,6 +1025,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     port_cnt = get_port_list(hca, allowed_ports);
     if(0 == port_cnt) {
         ret = OMPI_SUCCESS;
+        free(allowed_ports);
         goto error;
     }
 #if HAVE_XRC
@@ -1186,6 +1187,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
             }
         }
     }
+    free(allowed_ports);
 
     /* If we made a BTL, we're done.  Otherwise, fall through and
        destroy everything */
