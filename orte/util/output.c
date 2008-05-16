@@ -523,7 +523,7 @@ static int show_help(const char *filename, const char *topic,
 
     /* If we're aggregating, check for duplicates.  Otherwise, don't
        track duplicates at all and always display the message. */
-    if (want_aggregate) {
+    if (orte_output_ready && want_aggregate) {
         rc = get_tli(filename, topic, &tli);
     } else {
         rc = ORTE_ERR_NOT_FOUND;
@@ -580,7 +580,7 @@ static int show_help(const char *filename, const char *topic,
     }
 
     /* If we're aggregating, add this process name to the list */
-    if (want_aggregate) {
+    if (orte_output_ready && want_aggregate) {
         pnli = OBJ_NEW(process_name_list_item_t);
         if (NULL == pnli) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
