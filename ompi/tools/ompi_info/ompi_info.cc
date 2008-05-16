@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   int i, len;
 
   // Initialize the argv parsing handle
-  if (OMPI_SUCCESS != orte_init(ORTE_TOOL)) {
+  if (OMPI_SUCCESS != opal_init_util()) {
     orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                    "opal_init_util", __FILE__, __LINE__, NULL);
     exit(ret);
