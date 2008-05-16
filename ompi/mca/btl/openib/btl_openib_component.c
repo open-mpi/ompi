@@ -1011,13 +1011,13 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
     if(NULL == hca->ib_dev_context){
         BTL_ERROR(("error obtaining device context for %s errno says %s",
-                    ibv_get_device_name(ib_dev), strerror(errno)));
+                    ibv_get_device_name(hca->ib_dev), strerror(errno)));
         goto error;
     }
 
     if(ibv_query_device(hca->ib_dev_context, &hca->ib_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s",
-                    ibv_get_device_name(ib_dev), strerror(errno)));
+                    ibv_get_device_name(hca->ib_dev), strerror(errno)));
         goto error;
     }
     /* If mca_btl_if_include/exclude were specified, get usable ports */
@@ -1037,7 +1037,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         orte_show_help("help-mpi-btl-openib.txt",
                 "XRC on device without XRC support", true,
                 mca_btl_openib_component.num_xrc_qps,
-                ibv_get_device_name(ib_dev),
+                ibv_get_device_name(hca->ib_dev),
                 orte_process_info.nodename);
         ret = OMPI_SUCCESS;
         goto error;
@@ -1111,7 +1111,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
     if(NULL == hca->ib_pd){
         BTL_ERROR(("error allocating protection domain for %s errno says %s",
-                    ibv_get_device_name(ib_dev), strerror(errno)));
+                    ibv_get_device_name(hca->ib_dev), strerror(errno)));
         goto error;
     }
 
@@ -1133,7 +1133,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 hca, &mpool_resources);
     if(NULL == hca->mpool){
          BTL_ERROR(("error creating IB memory pool for %s errno says %s",
-                     ibv_get_device_name(ib_dev), strerror(errno)));
+                     ibv_get_device_name(hca->ib_dev), strerror(errno)));
          goto error;
     }
 
@@ -1156,7 +1156,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         if(ibv_query_port(hca->ib_dev_context, i, &ib_port_attr)){
             BTL_ERROR(("error getting port attributes for device %s "
                         "port number %d errno says %s",
-                        ibv_get_device_name(ib_dev), i, strerror(errno)));
+                        ibv_get_device_name(hca->ib_dev), i, strerror(errno)));
             break;
         }
         if(IBV_PORT_ACTIVE == ib_port_attr.state) {
@@ -1181,20 +1181,22 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
             if (OMPI_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number
                  * don't propagate the error to the caller */
-                if(OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret)
+                if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
                     ret = OMPI_SUCCESS;
+                }
                 break;
             }
         }
     }
     free(allowed_ports);
 
-    /* If we made a BTL, we're done.  Otherwise, fall through and
-       destroy everything */
+    /* If we made a BTL, check APM status and return.  Otherwise, fall
+       through and destroy everything */
     if (hca->btls > 0) {
         /* if apm was enabled it should be > 1 */
         if (1 == mca_btl_openib_component.apm_ports) {
-            orte_show_help("help-mpi-btl-openib.txt", "apm not enough ports", true);
+            orte_show_help("help-mpi-btl-openib.txt",
+                           "apm not enough ports", true);
             mca_btl_openib_component.apm_ports = 0;
         }
         ret = prepare_hca_for_use(hca);
@@ -1243,8 +1245,8 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
                 sizeof(mca_btl_openib_module_qp_t));
 
     /* setup all the qps */
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
+    for (qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+        if (!BTL_OPENIB_QP_TYPE_PP(qp)) {
             OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0],
                     opal_list_t);
             OBJ_CONSTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1],
@@ -1338,7 +1340,7 @@ static int get_ib_dev_distance(struct ibv_device *dev)
     OPAL_PAFFINITY_CPU_ZERO(cpus);
     opal_paffinity_base_get(&cpus);
 
-    for(i = 0; i < max_proc_id; i++) {
+    for (i = 0; i < max_proc_id; i++) {
         opal_carto_base_node_t *slot_node;
         int distance, socket, core;
         char *slot;
@@ -1389,7 +1391,7 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 
     opal_carto_base_get_host_graph(&host_topo, "Infiniband");
 
-    for(i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
         devs[i].distance = get_ib_dev_distance(ib_devs[i]);
     }
@@ -1464,7 +1466,7 @@ btl_openib_component_init(int *num_btl_modules,
     init_data->order = mca_btl_openib_component.rdma_qp;
     init_data->list = &mca_btl_openib_component.send_user_free;
 
-    if(OMPI_SUCCESS != ompi_free_list_init_ex_new(
+    if (OMPI_SUCCESS != ompi_free_list_init_ex_new(
                 &mca_btl_openib_component.send_user_free,
                 sizeof(mca_btl_openib_put_frag_t), 2,
                 OBJ_CLASS(mca_btl_openib_put_frag_t),
@@ -1567,20 +1569,21 @@ btl_openib_component_init(int *num_btl_modules,
 #if OMPI_HAVE_THREADS
     mca_btl_openib_component.async_thread = 0;
 #endif
-    for(i = 0; i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
+    for (i = 0; i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
-        if(0 == mca_btl_openib_component.ib_num_btls)
+        if (0 == mca_btl_openib_component.ib_num_btls) {
             distance = dev_sorted[i].distance;
-        else if(distance != dev_sorted[i].distance)
+        } else if (distance != dev_sorted[i].distance) {
             break;
+        }
 
-        if(OMPI_SUCCESS !=
+        if (OMPI_SUCCESS !=
            (ret = init_one_hca(&btl_list, dev_sorted[i].ib_dev)))
             break;
     }
 
-    if(ret != OMPI_SUCCESS) {
+    if (OMPI_SUCCESS != ret) {
         orte_show_help("help-mpi-btl-openib.txt",
                 "error in hca init", true, orte_process_info.nodename);
     }
