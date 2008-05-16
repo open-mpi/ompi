@@ -764,7 +764,11 @@ void orte_output_finalize(void)
 {
     int i;
     orte_output_stream_t **streams;
-    
+
+    if (!orte_output_ready) {
+        return;
+    }
+
     orte_output_ready = false;
     
     OBJ_DESTRUCT(&orte_output_default);
@@ -808,6 +812,13 @@ int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
     orte_output_stream_t *ptr;
     va_list arglist;
     char *tag;
+    
+    if (!orte_output_ready) {
+        int rc;
+        if (ORTE_SUCCESS != (rc = orte_output_init())) {
+            return rc;
+        }
+    }
     
     /* if we are the HNP, this function just acts as
      * a wrapper around the corresponding opal_output fn
@@ -870,8 +881,15 @@ track:
 
 void orte_output(int output_id, const char *format, ...)
 {
-    /* just call output_vverbose with a verbosity of 0 */
     va_list arglist;
+
+    if (!orte_output_ready) {
+        if (ORTE_SUCCESS != orte_output_init()) {
+            return;
+        }
+    }
+    
+    /* just call output_vverbose with a verbosity of 0 */
     va_start(arglist, format);
     output_vverbose(0, output_id, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid, format, arglist);
     va_end(arglist);
@@ -879,8 +897,15 @@ void orte_output(int output_id, const char *format, ...)
 
 void orte_output_verbose(int verbose_level, int output_id, const char *format, ...)
 {
-    /* just call output_verbose with the specified verbosity */
     va_list arglist;
+
+    if (!orte_output_ready) {
+        if (ORTE_SUCCESS != orte_output_init()) {
+            return;
+        }
+    }
+    
+    /* just call output_verbose with the specified verbosity */
     va_start(arglist, format);
     output_vverbose(verbose_level, output_id, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid, format, arglist);
     va_end(arglist);
@@ -889,6 +914,12 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
 void orte_output_close(int output_id)
 {
     orte_output_stream_t **streams;
+    
+    if (!orte_output_ready) {
+        if (ORTE_SUCCESS != orte_output_init()) {
+            return;
+        }
+    }
     
     /* cleanout the stream settings */
     streams = (orte_output_stream_t**)orte_output_streams.addr;
@@ -905,6 +936,13 @@ int orte_show_help(const char *filename, const char *topic,
     int rc = ORTE_SUCCESS;
     va_list arglist;
     char *output;
+    
+    if (!orte_output_ready) {
+        int rc;
+        if (ORTE_SUCCESS != (rc = orte_output_init())) {
+            return rc;
+        }
+    }
     
     va_start(arglist, want_error_header);
     output = opal_show_help_vstring(filename, topic, want_error_header, 
