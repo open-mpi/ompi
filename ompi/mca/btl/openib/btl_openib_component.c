@@ -1586,6 +1586,7 @@ btl_openib_component_init(int *num_btl_modules,
     if (OMPI_SUCCESS != ret) {
         orte_show_help("help-mpi-btl-openib.txt",
                 "error in hca init", true, orte_process_info.nodename);
+        return NULL;
     }
 
     free(dev_sorted);
