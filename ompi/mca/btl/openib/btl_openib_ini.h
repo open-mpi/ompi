@@ -25,6 +25,9 @@ typedef struct ompi_btl_openib_ini_values_t {
 
     uint32_t use_eager_rdma;
     bool use_eager_rdma_set;
+
+    char *receive_queues;
+    bool receive_queues_set;
 } ompi_btl_openib_ini_values_t;
 
 

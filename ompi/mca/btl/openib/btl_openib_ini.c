@@ -388,6 +388,11 @@ static int parse_line(parsed_section_values_t *sv)
         sv->values.use_eager_rdma_set = true;
     }
 
+    else if (0 == strcasecmp(key_buffer, "receive_queues")) {
+        sv->values.receive_queues = strdup(value);
+        sv->values.receive_queues_set = true;
+    }
+
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -469,6 +474,9 @@ static void reset_values(ompi_btl_openib_ini_values_t *v)
 
     v->use_eager_rdma = 0;
     v->use_eager_rdma_set = false;
+
+    v->receive_queues = NULL;
+    v->receive_queues_set = false;
 }
 
 
