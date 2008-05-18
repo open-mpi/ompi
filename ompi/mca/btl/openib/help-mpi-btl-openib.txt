@@ -448,3 +448,20 @@ Can not provide %d alternative paths with LMC bit configured to %d.
 [apm not enough ports]
 WARNING: For APM over ports ompi require at least 2 active ports and only single
 active port was found. Disabling APM over ports
+#
+[conflicting receive_queues]
+Open MPI detected two different sets of OpenFabrics receives queues on
+the same host (in the openib BTL).  Open MPI currently only supports
+one set of OF receive queues in an MPI job, even if you have different
+types of OpenFabrics adapters on the same host.
+
+Host:      %s
+Adapter 1: %s (vendor 0x%x, part ID %d)
+Queues:    %s
+Adapter 2: %s (vendor 0x%x, part ID %d)
+Queues:    %s
+
+Note that these receive queues values may have come from the Open MPI
+adapter default settings file:
+
+    %s/mca-btl-openib-hca-params.ini
