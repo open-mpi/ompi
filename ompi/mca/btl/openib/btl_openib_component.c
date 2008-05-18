@@ -42,7 +42,6 @@
 #include "opal/mca/carto/carto.h"
 #include "opal/mca/carto/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/installdirs/installdirs.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
@@ -80,11 +79,6 @@ static int btl_openib_component_open(void);
 static int btl_openib_component_close(void);
 static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
 static int btl_openib_component_progress(void);
-
-/*
- * Local variables
- */
-static mca_btl_openib_hca_t *receive_queues_hca = NULL;
 
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
@@ -670,6 +664,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
 
 static void hca_construct(mca_btl_openib_hca_t *hca)
 {
+    int i;
+
     hca->ib_dev = NULL;
     hca->ib_dev_context = NULL;
     hca->ib_pd = NULL;
@@ -691,8 +687,13 @@ static void hca_construct(mca_btl_openib_hca_t *hca)
 #if HAVE_XRC
     hca->xrc_fd = -1;
 #endif
-    hca->qps = NULL;
+    hca->qps = (mca_btl_openib_hca_qp_t*)calloc(mca_btl_openib_component.num_qps,
+            sizeof(mca_btl_openib_hca_qp_t));
     OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t);
+    for(i = 0; i < mca_btl_openib_component.num_qps; i++) {
+        OBJ_CONSTRUCT(&hca->qps[i].send_free, ompi_free_list_t);
+        OBJ_CONSTRUCT(&hca->qps[i].recv_free, ompi_free_list_t);
+    }
     OBJ_CONSTRUCT(&hca->send_free_control, ompi_free_list_t);
 }
 
@@ -708,14 +709,13 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
         free(hca->eager_rdma_buffers);
     }
     OBJ_DESTRUCT(&hca->hca_lock);
-    OBJ_DESTRUCT(&hca->send_free_control);
-    if (hca->qps) {
-        for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
-            OBJ_DESTRUCT(&hca->qps[i].send_free);
-            OBJ_DESTRUCT(&hca->qps[i].recv_free);
-        }
-        free(hca->qps);
+    for(i = 0; i < mca_btl_openib_component.num_qps; i++) {
+        OBJ_DESTRUCT(&hca->qps[i].send_free);
+        OBJ_DESTRUCT(&hca->qps[i].recv_free);
     }
+    OBJ_DESTRUCT(&hca->send_free_control);
+    if(hca->qps)
+        free(hca->qps);
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_openib_hca_t, opal_object_t, hca_construct,
@@ -947,9 +947,6 @@ done:
     return num_ports;
 }
 
-/*
- * Prefer values that are already in the target
- */
 static void merge_values(ompi_btl_openib_ini_values_t *target,
                          ompi_btl_openib_ini_values_t *src)
 {
@@ -962,12 +959,6 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
         target->use_eager_rdma = src->use_eager_rdma;
         target->use_eager_rdma_set = true;
     }
-
-    if (!target->receive_queues_set && src->receive_queues_set) {
-        free(target->receive_queues);
-        target->receive_queues = strdup(src->receive_queues);
-        target->receive_queues_set = true;
-    }
 }
 
 static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
@@ -976,14 +967,6 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
         to_base_frag(frag)->segment.seg_addr.pval;
     return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
-}
-
-static int32_t atoi_param(char *param, int32_t dflt)
-{
-    if(NULL == param || '\0' == param[0])
-        return dflt ? dflt : 1;
-
-    return atoi(param);
 }
 
 static void init_apm_port(mca_btl_openib_hca_t *hca, int port, uint16_t lid)
@@ -1000,203 +983,6 @@ static void init_apm_port(mca_btl_openib_hca_t *hca, int port, uint16_t lid)
         BTL_VERBOSE(("APM-PORT: Setting alternative port - %d, lid - %d"
                     ,port ,lid));
     }
-}
-
-static int setup_qps(void)
-{
-    char **queues, **params = NULL;
-    int num_xrc_qps = 0, num_pp_qps = 0, num_srq_qps = 0, qp = 0;
-    uint32_t max_qp_size, max_size_needed;
-    int32_t min_freelist_size = 0;
-    int smallest_pp_qp = 0, ret = OMPI_ERROR;
-
-    queues = opal_argv_split(mca_btl_openib_component.receive_queues, ':');
-
-    if (0 == opal_argv_count(queues)) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                       "no qps in receive_queues", true,
-                       orte_process_info.nodename, 
-                       mca_btl_openib_component.receive_queues);
-        return OMPI_ERROR;
-    }
-
-    while (queues[qp] != NULL) {
-        if (0 == strncmp("P,", queues[qp], 2)) {
-            num_pp_qps++;
-            if(smallest_pp_qp > qp)
-                smallest_pp_qp = qp;
-        } else if (0 == strncmp("S,", queues[qp], 2)) {
-            num_srq_qps++;
-        } else if (0 == strncmp("X,", queues[qp], 2)) {
-#if HAVE_XRC
-            num_xrc_qps++;
-#else
-            orte_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
-                           orte_process_info.nodename, 
-                           mca_btl_openib_component.receive_queues);
-            goto error;
-#endif
-        } else {
-            orte_show_help("help-mpi-btl-openib.txt",
-                           "invalid qp type in receive_queues", true,
-                           orte_process_info.nodename, 
-                           mca_btl_openib_component.receive_queues,
-                           queues[qp]);
-            goto error;
-        }
-        qp++;
-    }
-    /* Current XRC implementation can't used with other QP types - PP
-       and SRQ */
-    if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
-        orte_show_help("help-mpi-btl-openib.txt", "XRC with PP or SRQ", true,
-                       orte_process_info.nodename, 
-                       mca_btl_openib_component.receive_queues);
-        goto error;
-    }
-
-    /* Current XRC implementation can't used with btls_per_lid > 1 */
-    if (num_xrc_qps > 0 && mca_btl_openib_component.btls_per_lid > 1) {
-        orte_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID", 
-                       true, orte_process_info.nodename, 
-                       mca_btl_openib_component.receive_queues, num_xrc_qps);
-        goto error;
-    }
-    mca_btl_openib_component.num_pp_qps = num_pp_qps;
-    mca_btl_openib_component.num_srq_qps = num_srq_qps;
-    mca_btl_openib_component.num_xrc_qps = num_xrc_qps;
-    mca_btl_openib_component.num_qps = num_pp_qps + num_srq_qps + num_xrc_qps;
-
-    mca_btl_openib_component.qp_infos = (mca_btl_openib_qp_info_t*)
-        malloc(sizeof(mca_btl_openib_qp_info_t) *
-                mca_btl_openib_component.num_qps);
-
-    qp = 0;
-#define P(N) (((N) > count)?NULL:params[(N)])
-    while(queues[qp] != NULL) {
-        int i = 0, count;
-        int32_t rd_low, rd_num;
-        params = opal_argv_split_with_empty(queues[qp], ',');
-        count = opal_argv_count(params);
-
-        if ('P' == params[0][0]) {
-            int32_t rd_win, rd_rsv;
-            if (count < 3 || count > 6) {
-                orte_show_help("help-mpi-btl-openib.txt",
-                               "invalid pp qp specification", true,
-                               orte_process_info.nodename, queues[qp]);
-                goto error;
-            }
-            mca_btl_openib_component.qp_infos[qp].type = MCA_BTL_OPENIB_PP_QP;
-            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
-            rd_num = atoi_param(P(2), 256);
-            /* by default set rd_low to be 3/4 of rd_num */
-            rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
-            rd_win = atoi_param(P(4), (rd_num - rd_low) * 2);
-            rd_rsv = atoi_param(P(5), (rd_num * 2) / rd_win);
-
-            BTL_VERBOSE(("pp: rd_num is %d rd_low is %d rd_win %d rd_rsv %d",
-                         rd_num, rd_low, rd_win, rd_rsv));
-
-            /* Calculate the smallest freelist size that can be allowed */
-            if (rd_num + rd_rsv > min_freelist_size)
-                min_freelist_size = rd_num + rd_rsv;
-
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_win = rd_win;
-            mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv = rd_rsv;
-            if((rd_num - rd_low) > rd_win)
-                orte_show_help("help-mpi-btl-openib.txt", "non optimal rd_win",
-                        true, rd_win, rd_num - rd_low);
-        } else {
-            int32_t sd_max;
-            if(count < 3 || count > 5) {
-                orte_show_help("help-mpi-btl-openib.txt",
-                               "invalid srq specification", true,
-                               orte_process_info.nodename, queues[qp]);
-                goto error;
-            }
-            mca_btl_openib_component.qp_infos[qp].type = (params[0][0] =='X') ?
-                MCA_BTL_OPENIB_XRC_QP : MCA_BTL_OPENIB_SRQ_QP;
-            mca_btl_openib_component.qp_infos[qp].size = atoi_param(P(1), 0);
-            rd_num = atoi_param(P(2), 256);
-            /* by default set rd_low to be 3/4 of rd_num */
-            rd_low = atoi_param(P(3), rd_num - (rd_num / 4));
-            sd_max = atoi_param(P(4), rd_low / 4);
-            BTL_VERBOSE(("srq: rd_num is %d rd_low is %d sd_max is %d",
-                         rd_num, rd_low, sd_max));
-
-            /* Calculate the smallest freelist size that can be allowed */
-            if (rd_num > min_freelist_size)
-                min_freelist_size = rd_num;
-
-            mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max = sd_max;
-        }
-
-        if (rd_num <= rd_low) {
-            orte_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
-                    true, orte_process_info.nodename, queues[qp]);
-            goto error;
-        }
-        mca_btl_openib_component.qp_infos[qp].rd_num = rd_num;
-        mca_btl_openib_component.qp_infos[qp].rd_low = rd_low;
-        while (NULL != params[i]) {
-            free(params[i++]);
-        }
-        free(params);
-        qp++;
-    }
-    params = NULL;
-
-    /* Sanity check some sizes */
-
-    max_qp_size = mca_btl_openib_component.qp_infos[mca_btl_openib_component.num_qps - 1].size;
-    max_size_needed = (mca_btl_openib_module.super.btl_eager_limit >
-                       mca_btl_openib_module.super.btl_max_send_size) ?
-        mca_btl_openib_module.super.btl_eager_limit :
-        mca_btl_openib_module.super.btl_max_send_size;
-    if (max_qp_size < max_size_needed) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                       "biggest qp size is too small", true,
-                       orte_process_info.nodename, max_qp_size,
-                       max_size_needed);
-        ret = OMPI_ERROR;
-        goto error;
-    } else if (max_qp_size > max_size_needed) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                       "biggest qp size is too big", true,
-                       orte_process_info.nodename, max_qp_size,
-                       max_size_needed);
-    }
-
-    if (mca_btl_openib_component.ib_free_list_max > 0 &&
-        min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
-        orte_show_help("help-mpi-btl-openib.txt", "freelist too small", true,
-                       orte_process_info.nodename,
-                       mca_btl_openib_component.ib_free_list_max,
-                       min_freelist_size);
-        goto error;
-    }
-
-    mca_btl_openib_component.rdma_qp = mca_btl_openib_component.num_qps - 1;
-    mca_btl_openib_component.credits_qp = smallest_pp_qp;
-
-    ret = OMPI_SUCCESS;
-error:
-    if(params) {
-        qp = 0;
-        while(params[qp] != NULL)
-            free(params[qp++]);
-        free(params);
-    }
-
-    if(queues) {
-        qp = 0;
-        while(queues[qp] != NULL)
-            free(queues[qp++]);
-        free(queues);
-    }
-
-    return ret;
 }
 
 static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
@@ -1238,12 +1024,25 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     allowed_ports = (int*)malloc(hca->ib_dev_attr.phys_port_cnt * sizeof(int));
     port_cnt = get_port_list(hca, allowed_ports);
     if(0 == port_cnt) {
-        free(allowed_ports);
         ret = OMPI_SUCCESS;
         free(allowed_ports);
         goto error;
     }
-
+#if HAVE_XRC
+    /* if user configured to run with XRC qp and the device don't support it -
+     * we should ignore this hca. Maybe we have other one that have XRC support
+     */
+    if (!(hca->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
+            mca_btl_openib_component.num_xrc_qps > 0) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                "XRC on device without XRC support", true,
+                mca_btl_openib_component.num_xrc_qps,
+                ibv_get_device_name(hca->ib_dev),
+                orte_process_info.nodename);
+        ret = OMPI_SUCCESS;
+        goto error;
+    }
+#endif
     /* Load in vendor/part-specific HCA parameters.  Note that even if
        we don't find values for this vendor/part, "values" will be set
        indicating that it does not have good values */
@@ -1303,66 +1102,10 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->mtu = mca_btl_openib_component.ib_mtu;
     }
 
-    /* If the user specified btl_openib_receive_queues MCA param, it
-       overrides all HCA INI params */
-    if (BTL_OPENIB_RQ_SOURCE_MCA != 
-        mca_btl_openib_component.receive_queues_source && 
-        values.receive_queues_set) {
-        /* If a prior HCA's INI values set a different value for
-           receive_queues, this is unsupported (see
-           https://svn.open-mpi.org/trac/ompi/ticket/1285) */
-        if (BTL_OPENIB_RQ_SOURCE_HCA_INI ==
-            mca_btl_openib_component.receive_queues_source) {
-            if (0 != strcmp(values.receive_queues, 
-                            mca_btl_openib_component.receive_queues)) {
-                orte_show_help("help-mpi-btl-openib.txt",
-                               "conflicting receive_queues", true,
-                               orte_process_info.nodename,
-                               ibv_get_device_name(hca->ib_dev),
-                               hca->ib_dev_attr.vendor_id,
-                               hca->ib_dev_attr.vendor_part_id,
-                               values.receive_queues,
-                               ibv_get_device_name(receive_queues_hca->ib_dev),
-                               receive_queues_hca->ib_dev_attr.vendor_id,
-                               receive_queues_hca->ib_dev_attr.vendor_part_id,
-                               mca_btl_openib_component.receive_queues,
-                               opal_install_dirs.pkgdatadir);
-                ret = OMPI_ERR_RESOURCE_BUSY;
-                goto error;
-            }
-        } else {
-            if (NULL != mca_btl_openib_component.receive_queues) {
-                free(mca_btl_openib_component.receive_queues);
-            }
-            receive_queues_hca = hca;
-            mca_btl_openib_component.receive_queues = 
-                strdup(values.receive_queues);
-            mca_btl_openib_component.receive_queues_source =
-                BTL_OPENIB_RQ_SOURCE_HCA_INI;
-        }
-    }
-
     /* If "use eager rdma" was set, then enable it on this HCA */
     if (values.use_eager_rdma_set) {
         hca->use_eager_rdma = values.use_eager_rdma;
     }
-
-#if HAVE_XRC
-    /* if user configured to run with XRC qp and the device doesn't
-     * support it - we should ignore this hca. Maybe we have another
-     * one that has XRC support
-     */
-    if (!(hca->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
-            mca_btl_openib_component.num_xrc_qps > 0) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                "XRC on device without XRC support", true,
-                mca_btl_openib_component.num_xrc_qps,
-                ibv_get_device_name(hca->ib_dev),
-                orte_process_info.nodename);
-        ret = OMPI_SUCCESS;
-        goto error;
-    }
-#endif
 
     /* Allocate the protection domain for the HCA */
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
@@ -1456,7 +1199,10 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                            "apm not enough ports", true);
             mca_btl_openib_component.apm_ports = 0;
         }
-        return OMPI_SUCCESS;
+        ret = prepare_hca_for_use(hca);
+        if(OMPI_SUCCESS == ret) {
+            return OMPI_SUCCESS;
+        }
     }
 
 error:
@@ -1814,6 +1560,10 @@ btl_openib_component_init(int *num_btl_modules,
 
     dev_sorted = sort_devs_by_distance(ib_devs, num_devs);
 
+    /* We must loop through all the hca id's, get their handles and
+       for each hca we query the number of ports on the hca and set up
+       a distinct btl module for each hca port */
+
     OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
 #if OMPI_HAVE_THREADS
@@ -1829,9 +1579,8 @@ btl_openib_component_init(int *num_btl_modules,
         }
 
         if (OMPI_SUCCESS !=
-            (ret = init_one_hca(&btl_list, dev_sorted[i].ib_dev))) {
+           (ret = init_one_hca(&btl_list, dev_sorted[i].ib_dev)))
             break;
-        }
     }
 
     if (OMPI_SUCCESS != ret) {
@@ -1861,42 +1610,6 @@ btl_openib_component_init(int *num_btl_modules,
         orte_show_help("help-mpi-btl-openib.txt",
                 "no active ports found", true, orte_process_info.nodename);
         return NULL;
-    }
-
-    /* Setup the BSRQ QP's based on the final value of
-       mca_btl_openib_component.receive_queues. */
-    setup_qps();
-
-    /* Loop through all the btl modules that we made and find every
-       base HCA that doesn't have hca->qps setup on it yet (remember
-       that some modules may share the same HCA, so when going through
-       to loop, we may hit an HCA that was already setup earlier in
-       the loop). */
-    for (item = opal_list_get_first(&btl_list);
-         opal_list_get_end(&btl_list) != item;
-         item = opal_list_get_next(item)) {
-        mca_btl_base_selected_module_t *m = 
-            (mca_btl_base_selected_module_t*) item;
-        mca_btl_openib_hca_t *hca = 
-            ((mca_btl_openib_module_t*) m->btl_module)->hca;
-        if (NULL == hca->qps) {
-
-            /* Setup the HCA qps info */
-            hca->qps = (mca_btl_openib_hca_qp_t*)
-                calloc(mca_btl_openib_component.num_qps,
-                       sizeof(mca_btl_openib_hca_qp_t));
-            for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
-                OBJ_CONSTRUCT(&hca->qps[i].send_free, ompi_free_list_t);
-                OBJ_CONSTRUCT(&hca->qps[i].recv_free, ompi_free_list_t);
-            }
-
-            /* Do finial init on HCA */
-            ret = prepare_hca_for_use(hca);
-            if (OMPI_SUCCESS != ret) {
-                /* JMS */
-                return NULL;
-            }
-        }
     }
 
     /* Allocate space for btl modules */
