@@ -110,13 +110,6 @@ struct mca_btl_openib_qp_info_t {
 #define BTL_OPENIB_QP_TYPE_XRC(Q) \
     (BTL_OPENIB_QP_TYPE(Q) == MCA_BTL_OPENIB_XRC_QP)
 
-typedef enum {
-    BTL_OPENIB_RQ_SOURCE_DEFAULT,
-    BTL_OPENIB_RQ_SOURCE_MCA,
-    BTL_OPENIB_RQ_SOURCE_HCA_INI,
-    BTL_OPENIB_RQ_SOURCE_HCA_MAX
-} btl_openib_receive_queues_source_t;
-
 struct mca_btl_openib_component_t {
     mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */
 
@@ -203,11 +196,6 @@ struct mca_btl_openib_component_t {
     char **if_include_list;
     char *if_exclude;
     char **if_exclude_list;
-
-    /* MCA param btl_openib_receive_queues */
-    char *receive_queues;
-    /* Whether we got a non-default value of btl_openib_receive_queues */
-    btl_openib_receive_queues_source_t receive_queues_source;
 
     /** Colon-delimited list of filenames for HCA parameters */
     char *hca_params_file_names;
