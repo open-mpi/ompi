@@ -218,7 +218,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
 int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t
                                                       *mca_param_indices)
 {
-    int max_alg = 2, requested_alg, max_requests;
+    int max_alg = 2, requested_alg;
 
     ompi_coll_tuned_forced_max_algorithms[ALLTOALLV] = max_alg;
 
