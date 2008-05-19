@@ -38,6 +38,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/num_procs.h"
+#include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/event/event.h"
 
@@ -242,6 +243,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* see comment below about sched_yield */
     int num_processors;
 #endif
+    bool orte_setup = false;
 
     /* Setup enough to check get/set MCA params */
 
@@ -298,6 +300,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_init: orte_init failed";
         goto error;
     }
+    orte_setup = true;
     
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
@@ -748,9 +751,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
  error:
     if (ret != OMPI_SUCCESS) {
         const char *err_msg = opal_strerror(ret);
-        orte_show_help("help-mpi-runtime",
-                       "mpi_init:startup:internal-failure", true,
-                       "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+        /* If ORTE was not setup yet, don't use orte_show_help */
+        if (orte_setup) {
+            orte_show_help("help-mpi-runtime",
+                           "mpi_init:startup:internal-failure", true,
+                           "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+        } else {
+            opal_show_help("help-mpi-runtime",
+                           "mpi_init:startup:internal-failure", true,
+                           "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+        }
         return ret;
     }
 
