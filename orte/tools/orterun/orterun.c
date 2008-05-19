@@ -343,7 +343,9 @@ int orterun(int argc, char *argv[])
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
-    opal_init_util();
+    if (OPAL_SUCCESS != opal_init_util()) {
+        exit(1);
+    }
     
     /* flag that I am the HNP */
     orte_process_info.hnp = true;
