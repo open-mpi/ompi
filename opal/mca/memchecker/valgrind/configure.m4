@@ -20,13 +20,13 @@ AC_DEFUN([MCA_memchecker_valgrind_COMPILE_MODE], [
 # -----------------------------------------------------------
 AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
 
+    AC_ARG_WITH([valgrind],
+        [AC_HELP_STRING([--with-valgrind(=DIR)],
+            [Directory where the valgrind software is installed])])
+
     if test "$WANT_MEMCHECKER" = "1" ; then
 
-        AC_ARG_WITH([valgrind],
-            [AC_HELP_STRING([--with-valgrind(=DIR)],
-                [Directory where the valgrind software is installed])])
-
-        AC_MSG_CHECKING([checking for the valgrind include directory ])
+        AC_MSG_CHECKING([for the valgrind include directory])
         if test -n "$with_valgrind" -a -d "$with_valgrind/include" ; then
             CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
             AC_MSG_RESULT([$with_valgrind/include])
@@ -52,7 +52,7 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
                 AC_MSG_RESULT($valgrind_version_new)
                 
                 if test "x$valgrind_version_new" != "xyes" ; then
-                    AC_MSG_WARN([*** Need at least version 3.2.0, please specify using --with-valgrind])
+                    AC_MSG_WARN([*** Need at least Valgrind v3.2.0, please specify using --with-valgrind])
                     AC_MSG_WARN([*** Cannot compile this component])
                     memchecker_valgrind_happy=0
                     want_component=0
@@ -60,7 +60,8 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
                 fi
             fi
         else
-            AC_MSG_RESULT([should not compile])
+            AC_MSG_RESULT([not found])
+            AC_MSG_WARN([*** Cannot compile this component])
             memchecker_valgrind_happy=0
             want_component=0
             should_build=2
