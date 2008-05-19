@@ -69,16 +69,26 @@ namespace ompi_info {
   // Parameter/configuration-related functions
   //
 
-  extern std::string component_all;
-  extern std::string param_all;
+  extern const std::string component_all;
+  extern const std::string param_all;
 
-  extern std::string path_prefix;
-  extern std::string path_bindir;
-  extern std::string path_libdir;
-  extern std::string path_incdir;
-  extern std::string path_mandir;
-  extern std::string path_pkglibdir;
-  extern std::string path_sysconfdir;
+  extern const std::string path_prefix;
+  extern const std::string path_bindir;
+  extern const std::string path_libdir;
+  extern const std::string path_incdir;
+  extern const std::string path_mandir;
+  extern const std::string path_pkglibdir;
+  extern const std::string path_sysconfdir;
+  extern const std::string path_exec_prefix;
+  extern const std::string path_sbindir;
+  extern const std::string path_libexecdir;
+  extern const std::string path_datarootdir;
+  extern const std::string path_datadir;
+  extern const std::string path_sharedstatedir;
+  extern const std::string path_localstatedir;
+  extern const std::string path_infodir;
+  extern const std::string path_pkgdatadir;
+  extern const std::string path_pkgincludedir;
 
   void do_params(bool want_all, bool want_internal);
   void show_mca_params(const std::string& type, const std::string& component, 

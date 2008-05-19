@@ -50,16 +50,26 @@ using namespace ompi_info;
 // Public variables
 //
 
-string ompi_info::component_all = "all";
-string ompi_info::param_all = "all";
+const string ompi_info::component_all = "all";
+const string ompi_info::param_all = "all";
 
-string ompi_info::path_prefix = "prefix";
-string ompi_info::path_bindir = "bindir";
-string ompi_info::path_libdir = "libdir";
-string ompi_info::path_incdir = "incdir";
-string ompi_info::path_mandir = "mandir";
-string ompi_info::path_pkglibdir = "pkglibdir";
-string ompi_info::path_sysconfdir = "sysconfdir";
+const string ompi_info::path_prefix = "prefix";
+const string ompi_info::path_bindir = "bindir";
+const string ompi_info::path_libdir = "libdir";
+const string ompi_info::path_incdir = "incdir";
+const string ompi_info::path_mandir = "mandir";
+const string ompi_info::path_pkglibdir = "pkglibdir";
+const string ompi_info::path_sysconfdir = "sysconfdir";
+const string ompi_info::path_exec_prefix = "exec_prefix";
+const string ompi_info::path_sbindir = "sbindir";
+const string ompi_info::path_libexecdir = "libexecdir";
+const string ompi_info::path_datarootdir = "datarootdir";
+const string ompi_info::path_datadir = "datadir";
+const string ompi_info::path_sharedstatedir = "sharedstatedir";
+const string ompi_info::path_localstatedir = "localstatedir";
+const string ompi_info::path_infodir = "infodir";
+const string ompi_info::path_pkgdatadir = "pkgdatadir";
+const string ompi_info::path_pkgincludedir = "pkgincludedir";
 
 //
 // External variables
@@ -256,34 +266,75 @@ void ompi_info::do_path(bool want_all, opal_cmd_line_t *cmd_line)
   int i, count;
   string scope;
 
+  // Check bozo case
+  count = opal_cmd_line_get_ninsts(cmd_line, "path");
+  for (i = 0; i < count; ++i) {
+      scope = opal_cmd_line_get_param(cmd_line, "path", i, 0);
+      if ("all" == scope) {
+          want_all = true;
+          break;
+      }
+  }
+
   if (want_all) {
     show_path(path_prefix, opal_install_dirs.prefix);
+    show_path(path_exec_prefix, opal_install_dirs.exec_prefix);
     show_path(path_bindir, opal_install_dirs.bindir);
+    show_path(path_sbindir, opal_install_dirs.sbindir);
     show_path(path_libdir, opal_install_dirs.libdir);
     show_path(path_incdir, opal_install_dirs.includedir);
     show_path(path_mandir, opal_install_dirs.mandir);
     show_path(path_pkglibdir, opal_install_dirs.pkglibdir);
+    show_path(path_libexecdir, opal_install_dirs.libexecdir);
+    show_path(path_datarootdir, opal_install_dirs.datarootdir);
+    show_path(path_datadir, opal_install_dirs.datadir);
     show_path(path_sysconfdir, opal_install_dirs.sysconfdir);
+    show_path(path_sharedstatedir, opal_install_dirs.sharedstatedir);
+    show_path(path_localstatedir, opal_install_dirs.localstatedir);
+    show_path(path_infodir, opal_install_dirs.infodir);
+    show_path(path_pkgdatadir, opal_install_dirs.pkgdatadir);
+    show_path(path_pkglibdir, opal_install_dirs.pkglibdir);
+    show_path(path_pkgincludedir, opal_install_dirs.pkgincludedir);
   } else {
     count = opal_cmd_line_get_ninsts(cmd_line, "path");
     for (i = 0; i < count; ++i) {
       scope = opal_cmd_line_get_param(cmd_line, "path", i, 0);
 
-      if (path_prefix == scope)
-        show_path(path_prefix, opal_install_dirs.prefix);
-      else if (path_bindir == scope)
-        show_path(path_bindir, opal_install_dirs.bindir);
-      else if (path_libdir == scope)
-        show_path(path_libdir, opal_install_dirs.libdir);
-      else if (path_incdir == scope)
-        show_path(path_incdir, opal_install_dirs.includedir);
-      else if (path_mandir == scope)
-        show_path(path_mandir, opal_install_dirs.mandir);
-      else if (path_pkglibdir == scope)
-        show_path(path_pkglibdir, opal_install_dirs.pkglibdir);
-      else if (path_sysconfdir == scope)
-        show_path(path_sysconfdir, opal_install_dirs.sysconfdir);
-      else {
+      if (path_prefix == scope) {
+          show_path(path_prefix, opal_install_dirs.prefix);
+      } else if (path_bindir == scope) {
+          show_path(path_bindir, opal_install_dirs.bindir);
+      } else if (path_libdir == scope) {
+          show_path(path_libdir, opal_install_dirs.libdir);
+      } else if (path_incdir == scope) {
+          show_path(path_incdir, opal_install_dirs.includedir);
+      } else if (path_mandir == scope) {
+          show_path(path_mandir, opal_install_dirs.mandir);
+      } else if (path_pkglibdir == scope) {
+          show_path(path_pkglibdir, opal_install_dirs.pkglibdir);
+      } else if (path_sysconfdir == scope) {
+          show_path(path_sysconfdir, opal_install_dirs.sysconfdir);
+      } else if (path_exec_prefix == scope) {
+          show_path(path_exec_prefix, opal_install_dirs.exec_prefix);
+      } else if (path_sbindir == scope) {
+          show_path(path_sbindir, opal_install_dirs.sbindir);
+      } else if (path_libexecdir == scope) {
+          show_path(path_libexecdir, opal_install_dirs.libexecdir);
+      } else if (path_datarootdir == scope) {
+          show_path(path_datarootdir, opal_install_dirs.datarootdir);
+      } else if (path_datadir == scope) {
+          show_path(path_datadir, opal_install_dirs.datadir);
+      } else if (path_sharedstatedir == scope) {
+          show_path(path_sharedstatedir, opal_install_dirs.sharedstatedir);
+      } else if (path_localstatedir == scope) {
+          show_path(path_localstatedir, opal_install_dirs.localstatedir);
+      } else if (path_infodir == scope) {
+          show_path(path_infodir, opal_install_dirs.infodir);
+      } else if (path_pkgdatadir == scope) {
+          show_path(path_pkgdatadir, opal_install_dirs.pkgdatadir);
+      } else if (path_pkgincludedir == scope) {
+          show_path(path_pkgincludedir, opal_install_dirs.pkgincludedir);
+      } else {
           char *usage = opal_cmd_line_get_usage_msg(cmd_line);
           orte_show_help("help-ompi_info.txt", "usage", true, usage);
           free(usage);
