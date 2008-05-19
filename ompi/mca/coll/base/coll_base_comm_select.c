@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Lawrence Livermore National Security, LLC.  All
  *                         rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -142,7 +143,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm)
 
   /* Upon return from the above, the modules list will contain the
      list of modules that returned (priority >= 0).  If we have no
-     collective modules available, then use the basic component */
+     collective modules available, then print error and return. */
   if (NULL == selectable) {
       /* There's no modules available */
       orte_show_help("help-mca-coll-base",
@@ -154,9 +155,10 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm)
      that everyone has available */
 
   /* do the selection loop */
-  for (item = opal_list_get_first(selectable) ;
-       item != opal_list_get_end(selectable) ;
-       item = opal_list_get_next(item)) {
+  for (item = opal_list_remove_first(selectable);
+       NULL != item; 
+       item = opal_list_remove_first(selectable))
+      {
       avail_coll_t *avail = (avail_coll_t*) item;
 
       /* initialize the module */
@@ -184,9 +186,13 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm)
       COPY(avail->ac_module, comm, scatter); 
       COPY(avail->ac_module, comm, scatterv); 
 
-      /* release the original module reference */
+      /* release the original module reference and the list item */
       OBJ_RELEASE(avail->ac_module);
+      OBJ_RELEASE(avail);
   }
+
+  /* Done with the list from the check_components() call so release it. */
+  OBJ_RELEASE(selectable);
 
   /* check to make sure no NULLs */
   if ((NULL == comm->c_coll.coll_allgather) ||
