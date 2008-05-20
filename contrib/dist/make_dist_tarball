@@ -21,9 +21,10 @@
 # Version of auto tools that we want
 #
 
-AM_TARGET_VERSION=1.10
-AC_TARGET_VERSION=2.60
-LT_TARGET_VERSION=2.1a
+M4_TARGET_VERSION=1.4.11
+AM_TARGET_VERSION=1.10.1
+AC_TARGET_VERSION=2.62
+LT_TARGET_VERSION=2.2.4
 
 #
 # First things first -- check that the auto versions that we have are
@@ -41,6 +42,7 @@ ERROR: Program "$prog" does not have the correct/expected version:
        Found: $ver
 
 Expected versions:
+m4: $M4_TARGET_VERSION
 Automake: $AM_TARGET_VERSION
 Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
@@ -104,6 +106,7 @@ make_tarball() {
 #########################################################################
 
 echo "*** Checking GNU tools versions..."
+check_gnu_version m4 $M4_TARGET_VERSION
 check_gnu_version automake $AM_TARGET_VERSION
 check_gnu_version autoconf $AC_TARGET_VERSION
 check_gnu_version libtool $LT_TARGET_VERSION
