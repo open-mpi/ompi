@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,12 +57,12 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
     } else if (MPI_ROOT != root) {
         /* First process receives the data from root */
 	if(0 == rank) { 
-	    err = ompi_ddt_get_extent(sdtype, &lb, &incr);
+	    err = ompi_ddt_get_extent(rdtype, &lb, &incr);
 	    if (OMPI_SUCCESS != err) {
 		return OMPI_ERROR;
 	    }
 	    
-	    incr *= scount;
+	    incr *= rcount;
 	    size_local = ompi_comm_size(comm->c_local_comm);
 	    ptmp = (char*)malloc(size_local * incr);
 	    if (NULL == ptmp) {
