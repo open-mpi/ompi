@@ -57,9 +57,8 @@
 #pragma ident OPAL_IDENT_STRING
 #elif OMPI_CC_USE_IDENT
 #ident OPAL_IDENT_STRING
-#else
-static const char ident[] = OPAL_IDENT_STRING;
 #endif
+const char opal_version_string[] = OPAL_IDENT_STRING;
 
 int opal_initialized = 0;
 int opal_util_initialized = 0;

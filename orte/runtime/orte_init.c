@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -51,9 +51,8 @@
 #pragma ident ORTE_IDENT_STRING
 #elif OMPI_CC_USE_IDENT
 #ident ORTE_IDENT_STRING
-#else
-static const char ident[] = ORTE_IDENT_STRING;
 #endif
+const char orte_version_string[] = ORTE_IDENT_STRING;
 
 int orte_init(char flags)
 {
