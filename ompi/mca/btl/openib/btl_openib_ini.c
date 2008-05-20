@@ -23,6 +23,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include <unistd.h>
+
 #include "orte/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -388,6 +390,12 @@ static int parse_line(parsed_section_values_t *sv)
         sv->values.use_eager_rdma_set = true;
     }
 
+    else if (0 == strcasecmp(key_buffer, "receive_queues")) {
+        /* Single value (already strdup'ed) */
+        sv->values.receive_queues = value;
+        value = NULL;
+    }
+
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -429,6 +437,9 @@ static void hca_values_destructor(hca_values_t *s)
     if (NULL != s->section_name) {
         free(s->section_name);
     }
+    if (NULL != s->values.receive_queues) {
+        free(s->values.receive_queues);
+    }
 }
 
 
@@ -469,6 +480,8 @@ static void reset_values(ompi_btl_openib_ini_values_t *v)
 
     v->use_eager_rdma = 0;
     v->use_eager_rdma_set = false;
+
+    v->receive_queues = NULL;
 }
 
 
@@ -532,6 +545,10 @@ static int save_section(parsed_section_values_t *s)
                    containing bool members by value.  So do a memcpy
                    here instead. */
                 memcpy(&h->values, &s->values, sizeof(s->values));
+                /* Need to strdup the string, though */
+                if (NULL != h->values.receive_queues) {
+                    h->values.receive_queues = strdup(s->values.receive_queues);
+                }
                 opal_list_append(&hcas, &h->super);
             }
         }
@@ -586,14 +603,26 @@ static int intify_list(char *value, uint32_t **values, int *len)
         *values[0] = (uint32_t) intify(str);
         *len = 1;
     } else {
-        /* If we found a comma, loop over all the values.  Be a
-           little clever in that we alwasy alloc enough space for
-           an extra value so that when we exit the loop, we don't
-           have to realloc again to get space for the last item. */
+        int newsize = 1;
+
+        /* Count how many values there are and allocate enough space
+           for them */
+        while (NULL != comma) {
+            ++newsize;
+            str = comma + 1;
+            comma = strchr(str, ',');
+        }
+        *values = malloc(sizeof(uint32_t) * newsize);
+        if (NULL == *values) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        /* Iterate over the values and save them */
+        str = value;
+        comma = strchr(str, ',');
         do {
             *comma = '\0';
-            *values = realloc(*values, sizeof(uint32_t) * (*len + 2));
-            (*values)[*len] = (int32_t) intify(str);
+            (*values)[*len] = (uint32_t) intify(str);
             ++(*len);
             str = comma + 1;
             comma = strchr(str, ',');
