@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +37,9 @@
 #include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
+
+/** version string of ompi */
+ORTE_DECLSPEC extern const char orte_version_string[];
 
 /* some convenience definitions for code clarity */
 #define ORTE_NON_TOOL           0x00
