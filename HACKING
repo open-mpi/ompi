@@ -78,8 +78,8 @@ developer's checkout, you have three main options:
      shell$ make all install
 
 
-Use of GNU Autoconf, Automake, and Libtool
-==========================================
+Use of GNU m4, Autoconf, Automake, and Libtool
+==============================================
 
 This procedure is *ONLY* necessary if you are building from a
 developer's tree.  If you have an Open MPI distribution tarball, this
@@ -87,7 +87,7 @@ procedure is unnecessary -- you can (and should) skip reading this
 section.
 
 If you are building Open MPI from a developer's tree, you must first
-install fairly recent versions of the GNU tools Autoconf, Automake,
+install fairly recent versions of the GNU tools m4, Autoconf, Automake,
 and Libtool.  The specific versions required depend on if you are
 using the trunk or a release branch (and which release branch you are
 using).  The specific versions can be found at:
@@ -97,6 +97,7 @@ using).  The specific versions can be found at:
 You can check what versions of the autotools you have installed with
 the following:
 
+shell$ m4 --version
 shell$ autoconf --version
 shell$ automake --version
 shell$ libtoolize --version
@@ -117,18 +118,20 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
 1. Unless your OS distribution has easy-to-use binary installations,
    the sources can be can be downloaded from:
 
+        ftp://ftp.gnu.org/gnu/m4/
         ftp://ftp.gnu.org/gnu/autoconf/
         ftp://ftp.gnu.org/gnu/automake/
         ftp://ftp.gnu.org/gnu/libtool/
 
 2. Build and install the tools in the following order:
 
-   2a. Autoconf
-   2b. Automake
-   2c. Libtool
+   2a. m4
+   2b. Autoconf
+   2c. Automake
+   2d. Libtool
 
-3. You MUST install all three tools into the same prefix directory.
-   These three tools are somewhat inter-related, and if they're going
+3. You MUST install all four tools into the same prefix directory.
+   These four tools are somewhat inter-related, and if they're going
    to be used together, they MUST share a common installation prefix.
 
    3a. It is *strongly* encouraged that you do not install your new
@@ -147,14 +150,14 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
           set path = ($HOME/local/bin $path)
 
    3c. Ensure to set your $path *BEFORE* you configure/build/install
-       the three packages.
+       the four packages.
 
-4. All three packages require two simple commands to build and
+4. All four packages require two simple commands to build and
    install (where PREFIX is the prefix discussed in 3, above).
 
-      shell$ cd autoconf-2.59
+      shell$ cd m4-1.4.11
       shell$ ./configure --prefix=PREFIX
-      shell$ make all install
+      shell$ make; make install
 
       --> NOTE: The builds are so short that parallel builds really
           aren't worth it (and cause problems in some cases).
@@ -162,21 +165,28 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../automake-1.9.6
+      shell$ cd ../autoconf-2.62
       shell$ ./configure --prefix=PREFIX
-      shell$ make all install
+      shell$ make; make install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../libtool-1.5.20
+      shell$ cd ../automake-1.10.1
       shell$ ./configure --prefix=PREFIX
-      shell$ make all install
+      shell$ make; make install
 
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-   Autoconf and Automake build and install very quickly; Libtool will
+      shell$ cd ../libtool-2.2.4
+      shell$ ./configure --prefix=PREFIX
+      shell$ make; make install
+
+      --> If you are using the csh or tcsh shells, be sure to run the
+          "rehash" command after you install each package.
+
+   m4, Autoconf and Automake build and install very quickly; Libtool will
    take a minute or two.
 
 5. You can now run OMPI's top-level "autogen.sh" script.  This script
