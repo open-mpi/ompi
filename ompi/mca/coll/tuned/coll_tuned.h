@@ -188,6 +188,7 @@ extern "C" {
     int ompi_coll_tuned_barrier_intra_bruck(BARRIER_ARGS);
     int ompi_coll_tuned_barrier_intra_two_procs(BARRIER_ARGS);
     int ompi_coll_tuned_barrier_intra_linear(BARRIER_ARGS);
+    int ompi_coll_tuned_barrier_intra_tree(BARRIER_ARGS);
 
     /* Bcast */
     int ompi_coll_tuned_bcast_intra_generic( BCAST_ARGS, uint32_t count_by_segment, ompi_coll_tree_t* tree );
