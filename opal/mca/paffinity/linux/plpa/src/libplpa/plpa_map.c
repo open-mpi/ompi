@@ -251,6 +251,13 @@ static void load_cache(const char *sysfs_mount)
         }
     }
 
+    /* If we didn't find any core_id/physical_package_id's, then we
+       don't have the topology info */
+    if (!found) {
+        clear_cache();
+        return;
+    }
+
     /* Now that we know the max number of sockets, allocate some
        arrays */
     max_core_id = malloc(sizeof(int) * (max_socket_id + 1));
@@ -270,6 +277,13 @@ static void load_cache(const char *sysfs_mount)
 
     /* Find the max core number on each socket */
     for (i = 0; i <= max_processor_num; ++i) {
+        /* If we don't have the core/socket for a given processor ID,
+           then skip it */
+        if (map_processor_id_to_tuple[i].core < 0 ||
+            map_processor_id_to_tuple[i].socket < 0) {
+            continue;
+        }
+
         if (map_processor_id_to_tuple[i].core > 
             max_core_id[map_processor_id_to_tuple[i].socket]) {
             max_core_id[map_processor_id_to_tuple[i].socket] = 
@@ -280,13 +294,6 @@ static void load_cache(const char *sysfs_mount)
             max_core_id_overall = 
                 max_core_id[map_processor_id_to_tuple[i].socket];
         }
-    }
-
-    /* If we didn't find any core_id/physical_package_id's, then we
-       don't have the topology info */
-    if (!found) {
-        clear_cache();
-        return;
     }
 
     /* Go through and count the number of unique sockets found.  It
