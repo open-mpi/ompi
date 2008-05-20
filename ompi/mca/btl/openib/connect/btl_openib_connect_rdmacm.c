@@ -959,7 +959,7 @@ static int ipaddrcheck(struct rdmacm_contents *server, mca_btl_openib_module_t *
 
     for (i = 0; i < attr.phys_port_cnt; i++) {
         bool found = false;
-        uint32_t ipaddr = rdma_get_ipv4addr(openib_btl->hca->ib_dev_context, i+1);
+        uint32_t ipaddr = mca_btl_openib_rdma_get_ipv4addr(openib_btl->hca->ib_dev_context, i+1);
         opal_list_item_t *item;
 
         for (item = opal_list_get_first(&server_list); item != opal_list_get_end(&server_list); item = opal_list_get_next(item)) {
@@ -1202,7 +1202,7 @@ static int rdmacm_component_destroy(void)
             BTL_ERROR(("Error disabling fd monitor"));
     }
 
-    free_rdma_addr_list();
+    mca_btl_openib_free_rdma_addr_list();
 
     return OMPI_SUCCESS;
 }
@@ -1214,7 +1214,7 @@ static int rdmacm_component_init(void)
     OBJ_CONSTRUCT(&server_list, opal_list_t);
     OBJ_CONSTRUCT(&client_list, opal_list_t);
 
-    rc = build_rdma_addr_list();
+    rc = mca_btl_openib_build_rdma_addr_list();
     if (-1 == rc) {
         orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unable to find any valid IP address");

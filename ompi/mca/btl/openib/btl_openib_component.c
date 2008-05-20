@@ -473,7 +473,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
        that member, then we're < OFED v1.2, and it can only be IB. */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
-        subnet_id = get_iwarp_subnet_id(hca->ib_dev);
+        subnet_id = mca_btl_openib_get_iwarp_subnet_id(hca->ib_dev);
     } else {
         ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
         subnet_id = ntoh64(gid.global.subnet_prefix);

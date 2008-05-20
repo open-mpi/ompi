@@ -30,7 +30,7 @@ static OBJ_CLASS_INSTANCE(rdma_addr_list_t, opal_list_item_t,
                           NULL, NULL);
 static opal_list_t myaddrs;
 
-uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev)
+uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
 {
     opal_list_item_t *item;
 
@@ -46,7 +46,7 @@ uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev)
     return 0;
 }
 
-uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
+uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
 {
     opal_list_item_t *item;
 
@@ -158,7 +158,7 @@ out1:
     return rc;
 }
 
-int build_rdma_addr_list(void)
+int mca_btl_openib_build_rdma_addr_list(void)
 {
     int rc, i;
 
@@ -181,7 +181,7 @@ int build_rdma_addr_list(void)
     return rc;
 }
   
-void free_rdma_addr_list(void)
+void mca_btl_openib_free_rdma_addr_list(void)
 {
     opal_list_item_t *item;
 
@@ -194,8 +194,8 @@ void free_rdma_addr_list(void)
     }
 }
 #else
-static inline uint64_t get_iwarp_subnet_id(struct ibv_device *ib_dev) {return 0;}
-static inline uint32_t rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port) {return 0;}
-static inline int build_rdma_addr_list(void) {return 0;}
-static inline void free_rdma_addr_list(void) {}
+uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) {return 0;}
+uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port) {return 0;}
+int mca_btl_openib_build_rdma_addr_list(void) {return 0;}
+void mca_btl_openib_free_rdma_addr_list(void) {}
 #endif
