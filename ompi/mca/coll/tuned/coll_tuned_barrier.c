@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -338,6 +339,68 @@ static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t
 }
 /* copied function (with appropriate renaming) ends here */
 
+/*
+ * Another recursive doubling type algorithm, but in this case
+ * we go up the tree and back down the tree.  
+ */
+int ompi_coll_tuned_barrier_intra_tree(struct ompi_communicator_t *comm,
+                                       struct mca_coll_base_module_1_1_0_t *module)
+{
+    int rank, size, depth;
+    int err, line;
+    int jump, partner;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
+                 "ompi_coll_tuned_barrier_intra_tree %d", 
+                 rank));
+
+    /* Find the nearest power of 2 of the communicator size. */
+    for(depth = 1; depth < size; depth <<= 1 );
+
+    for (jump=1; jump<depth; jump<<=1) {
+        partner = rank ^ jump;
+        if (!(partner & (jump-1)) && partner < size) {
+            if (partner > rank) {
+                err = MCA_PML_CALL(recv (NULL, 0, MPI_BYTE, partner, 
+                                         MCA_COLL_BASE_TAG_BARRIER, comm,
+                                         MPI_STATUS_IGNORE));
+                if (MPI_SUCCESS != err)
+                    return err;
+            } else if (partner < rank) {
+                err = MCA_PML_CALL(send (NULL, 0, MPI_BYTE, partner,
+                                         MCA_COLL_BASE_TAG_BARRIER, 
+                                         MCA_PML_BASE_SEND_STANDARD, comm));
+                if (MPI_SUCCESS != err)
+                    return err;
+            }
+        }
+    }
+    
+    depth>>=1;
+    for (jump = depth; jump>0; jump>>=1) {
+        partner = rank ^ jump;
+        if (!(partner & (jump-1)) && partner < size) {
+            if (partner > rank) {
+                err = MCA_PML_CALL(send (NULL, 0, MPI_BYTE, partner,
+                                         MCA_COLL_BASE_TAG_BARRIER,
+                                         MCA_PML_BASE_SEND_STANDARD, comm));
+                if (MPI_SUCCESS != err)
+                    return err;
+            } else if (partner < rank) {
+                err = MCA_PML_CALL(recv (NULL, 0, MPI_BYTE, partner, 
+                                         MCA_COLL_BASE_TAG_BARRIER, comm,
+                                         MPI_STATUS_IGNORE));
+                if (MPI_SUCCESS != err)
+                    return err;
+            }
+        }
+    }
+
+    return MPI_SUCCESS;
+}
+
 
 /* The following are used by dynamic and forced rules */
 
@@ -352,7 +415,7 @@ static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t
 
 int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc, max_alg = 5, requested_alg;
+    int rc, max_alg = 6, requested_alg;
 
     ompi_coll_tuned_forced_max_algorithms[BARRIER] = max_alg;
 
@@ -364,7 +427,7 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
     mca_param_indices->algorithm_param_index = 
        mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                               "barrier_algorithm",
-                              "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only",
+                              "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only, 6: tree",
                               false, false, 0, NULL);
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, 
                               &(requested_alg));
@@ -398,6 +461,7 @@ int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
     case (3):   return ompi_coll_tuned_barrier_intra_recursivedoubling (comm, module);
     case (4):   return ompi_coll_tuned_barrier_intra_bruck (comm, module);
     case (5):   return ompi_coll_tuned_barrier_intra_two_procs (comm, module);
+    case (6):   return ompi_coll_tuned_barrier_intra_tree (comm, module);
     default:
         ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                      data->user_forced[BARRIER].algorithm,
@@ -421,6 +485,7 @@ int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm,
     case (3):   return ompi_coll_tuned_barrier_intra_recursivedoubling (comm, module);
     case (4):   return ompi_coll_tuned_barrier_intra_bruck (comm, module);
     case (5):   return ompi_coll_tuned_barrier_intra_two_procs (comm, module);
+    case (6):   return ompi_coll_tuned_barrier_intra_tree (comm, module);
     default:
         ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
