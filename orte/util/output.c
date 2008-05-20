@@ -769,10 +769,6 @@ void orte_output_finalize(void)
         return;
     }
 
-    orte_output_ready = false;
-    
-    OBJ_DESTRUCT(&orte_output_default);
-    
     /* Shutdown show_help, showing final messages */
     if (orte_process_info.hnp) {
         show_accumulated_duplicates(0, 0, NULL);
@@ -782,8 +778,11 @@ void orte_output_finalize(void)
         opal_evtimer_del(&show_help_timer_event);
     }
 
+    orte_output_ready = false;
+
     /* if we are the HNP, cancel the recv */
     if (orte_process_info.hnp) {
+        OBJ_DESTRUCT(&orte_output_default);
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_OUTPUT);
         /* close our output streams */
         opal_output_close(stdout_stream);
