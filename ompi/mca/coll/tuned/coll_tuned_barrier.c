@@ -347,8 +347,7 @@ int ompi_coll_tuned_barrier_intra_tree(struct ompi_communicator_t *comm,
                                        struct mca_coll_base_module_1_1_0_t *module)
 {
     int rank, size, depth;
-    int err, line;
-    int jump, partner;
+    int err, jump, partner;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
