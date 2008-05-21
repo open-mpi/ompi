@@ -1037,7 +1037,7 @@ static int setup_qps(void)
             orte_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
                            orte_process_info.nodename, 
                            mca_btl_openib_component.receive_queues);
-            ret = OMPI_ERR_RESOURCE_UNAVAILABLE;
+            ret = OMPI_ERR_NOT_AVAILABLE;
             goto error;
 #endif
         } else {
