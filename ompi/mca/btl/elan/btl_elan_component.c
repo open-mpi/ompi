@@ -302,7 +302,7 @@ int mca_btl_elan_component_progress( void )
             num_progressed++;
         }
         /* This is the slower receive over the tport */
-        if(elan_btl->expect_tport_recv) {
+        if(elan_btl->expect_tport_recv && !OPAL_THREAD_TRYLOCK(&elan_btl->elan_lock)) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->recv_list) );
             if( elan_done(frag->elan_event, 0) ) {
                 int tag; 
@@ -314,7 +314,6 @@ int mca_btl_elan_component_progress( void )
                 num_progressed++;
                 /*elan_btl->expect_tport_recv--;*/
 
-                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_remove_first( &(elan_btl->recv_list) );
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
 
@@ -328,23 +327,22 @@ int mca_btl_elan_component_progress( void )
                     frag->base.des_dst->seg_addr.pval = (void*)(frag+1);
                 }
 
-                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 frag->elan_event = elan_tportRxStart( elan_btl->tport,
                                                       ELAN_TPORT_RXBUF | ELAN_TPORT_RXANY,
                                                       0, 0, 0, 0,
                                                       frag->base.des_dst->seg_addr.pval,
                                                       mca_btl_elan_module.super.btl_eager_limit );
+                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_append( &(elan_btl->recv_list), (opal_list_item_t*)frag );
-                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
             }
+            OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
         }
         /* If there are any pending sends check their completion */
-        if( !opal_list_is_empty( &(elan_btl->send_list) ) ) {
+        if( !opal_list_is_empty( &(elan_btl->send_list) ) && !OPAL_THREAD_TRYLOCK(&elan_btl->elan_lock) ) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->send_list) );
-            if( elan_poll(frag->elan_event, 0) ) {
+            if( (NULL != frag) && elan_poll(frag->elan_event, 0) ) {
                 int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP );
 
-                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_remove_first( &(elan_btl->send_list) );
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
                 num_progressed++;
@@ -354,15 +352,16 @@ int mca_btl_elan_component_progress( void )
                 if( btl_ownership ) {
                     MCA_BTL_ELAN_FRAG_RETURN(frag);
                 }
+            } else {
+                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
             }
         }
         /* If any RDMA have been posted, check their status */
-        if( !opal_list_is_empty( &(elan_btl->rdma_list) ) ) {
+        if( !opal_list_is_empty( &(elan_btl->rdma_list) ) && !OPAL_THREAD_TRYLOCK(&elan_btl->elan_lock) ) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->rdma_list) );
-            if( elan_poll(frag->elan_event, 0) ) {
+            if( (NULL != frag) && elan_poll(frag->elan_event, 0) ) {
                 int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP );
 
-                OPAL_THREAD_LOCK(&elan_btl->elan_lock);
                 opal_list_remove_first( &(elan_btl->rdma_list) );
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
                 num_progressed++;
@@ -372,6 +371,8 @@ int mca_btl_elan_component_progress( void )
                 if( btl_ownership ) {
                     MCA_BTL_ELAN_FRAG_RETURN(frag);
                 }
+            } else {
+                OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
             }
         }
     }
