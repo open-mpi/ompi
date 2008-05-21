@@ -494,7 +494,9 @@ static int mca_btl_elan_send( struct mca_btl_base_module_t* btl,
         return OMPI_SUCCESS;
     }
     /* Add the fragment to the pending send list */
+    OPAL_THREAD_LOCK( &elan_btl->elan_lock );
     opal_list_append( &(elan_btl->send_list), (opal_list_item_t*)frag );
+    OPAL_THREAD_UNLOCK( &elan_btl->elan_lock );
     return OMPI_ERR_RESOURCE_BUSY;
 }
 
@@ -524,7 +526,9 @@ static int mca_btl_elan_put( mca_btl_base_module_t* btl,
     frag->type = MCA_BTL_ELAN_HDR_TYPE_PUT;
     frag->elan_event = elan_put(elan_btl->base->state, src_addr, dst_addr, src_len, peer);
     /* Add the fragment to the pending RDMA list */
+    OPAL_THREAD_LOCK( &elan_btl->elan_lock );
     opal_list_append( &(elan_btl->rdma_list), (opal_list_item_t*)frag );
+    OPAL_THREAD_UNLOCK( &elan_btl->elan_lock );
     return OMPI_SUCCESS;
 }
 
@@ -558,7 +562,9 @@ static int mca_btl_elan_get( mca_btl_base_module_t* btl,
                  (void*)src_addr, (void*)dst_addr, (int)src_len, peer );
     frag->elan_event = elan_get(elan_btl->base->state, src_addr, dst_addr, src_len, peer);
     /* Add the fragment to the pending RDMA list */
+    OPAL_THREAD_LOCK( &elan_btl->elan_lock );
     opal_list_append( &(elan_btl->rdma_list), (opal_list_item_t*)frag );
+    OPAL_THREAD_UNLOCK( &elan_btl->elan_lock );
     return OMPI_SUCCESS;
 }
 
