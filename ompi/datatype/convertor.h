@@ -261,11 +261,6 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
                              size_t* position )
 {
     /*
-     * If the convertor is already at the correct position we are happy.
-     */
-    if( OPAL_LIKELY((*position) == convertor->bConverted) ) return OMPI_SUCCESS;
-
-    /*
      * Do not allow the convertor to go outside the data boundaries. This test include
      * the check for datatype with size zero as well as for convertors with a count of zero.
      */
@@ -275,6 +270,11 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
         *position = convertor->bConverted;
         return OMPI_SUCCESS;
     }
+
+    /*
+     * If the convertor is already at the correct position we are happy.
+     */
+    if( OPAL_LIKELY((*position) == convertor->bConverted) ) return OMPI_SUCCESS;
 
     /* Remove the completed flag if it's already set */
     convertor->flags &= ~CONVERTOR_COMPLETED;
