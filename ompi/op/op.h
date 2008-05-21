@@ -689,9 +689,9 @@ static inline void ompi_3buff_op_reduce(ompi_op_t *op, void *source1, void *sour
   void * restrict src1;
   void * restrict src2;
   void * restrict tgt;
-  src1=(void * restrict) source1;
-  src2=(void * restrict) source2;
-  tgt=(void * restrict) target;
+  src1=source1;
+  src2=source2;
+  tgt=target;
 
   /*
    * Call the reduction function.  Two dimensions: a) if both the op
