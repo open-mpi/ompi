@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -131,7 +132,10 @@ int orte_plm_rsh_component_open(void)
                            "Force the launcher to always use rsh",
                            false, false, false, &tmp);
     mca_plm_rsh_component.force_rsh = OPAL_INT_TO_BOOL(tmp);
-    
+    mca_base_param_reg_int(c, "disable_qrsh",
+                           "Disable the launcher to use qrsh when under the SGE parallel environment",
+                           false, false, false, &tmp);
+    mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);  
     mca_base_param_reg_string(c, "orted",
                               "The command name that the rsh plm component will invoke for the ORTE daemon",
                               false, false, "orted", 
@@ -176,6 +180,24 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
     mca_plm_rsh_component.agent_argc = 
         opal_argv_count(mca_plm_rsh_component.agent_argv);
     mca_plm_rsh_component.agent_path = NULL;
+
+
+    /* To be absolutely sure that we are under an SGE parallel env */
+    if (!mca_plm_rsh_component.disable_qrsh &&
+        NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
+        NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
+        /* setting exec_argv and exec_path for qrsh */
+        asprintf(&mca_plm_rsh_component.agent_param, "qrsh");
+        asprintf(&mca_plm_rsh_component.agent_path, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        asprintf(&mca_plm_rsh_component.agent_argv[0], "%s/bin/%s/qrsh", getenv("SGE_ROOT"), getenv("ARC"));
+        if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
+            orte_output_verbose(1, orte_plm_globals.output,
+               "%s plm:rsh: using %s for launching\n",
+               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+               mca_plm_rsh_component.agent_argv[0]);
+        }
+    }
+
     if (mca_plm_rsh_component.agent_argc > 0) {
         /* If the agent is ssh, and debug was not selected, then
            automatically add "-x" */
@@ -192,6 +214,23 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
             if (NULL == mca_plm_rsh_component.agent_argv[i]) {
                 opal_argv_append(&mca_plm_rsh_component.agent_argc, 
                                  &mca_plm_rsh_component.agent_argv, "-x");
+            }
+        }
+
+        /* If the agent is qrsh, then automatically add -inherit 
+         * and grid engine PE related flags */
+        if (NULL != bname && 0 == strcmp(bname, "qrsh")) {
+            opal_argv_append(&mca_plm_rsh_component.agent_argc, 
+                             &mca_plm_rsh_component.agent_argv, "-inherit");
+            /* Don't use the "-noshell" flag as qrsh would have a problem 
+             * swallowing a long command */
+            opal_argv_append(&mca_plm_rsh_component.agent_argc, 
+                             &mca_plm_rsh_component.agent_argv, "-nostdin");
+            opal_argv_append(&mca_plm_rsh_component.agent_argc, 
+                             &mca_plm_rsh_component.agent_argv, "-V");
+            if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
+                opal_argv_append(&mca_plm_rsh_component.agent_argc, 
+                                 &mca_plm_rsh_component.agent_argv, "-verbose");
             }
         }
         if (NULL != bname) {
