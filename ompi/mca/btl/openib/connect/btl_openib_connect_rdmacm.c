@@ -63,12 +63,12 @@ struct rdmacm_contents {
     struct ibv_cq *dummy_cq;
     struct rdma_cm_id **id;
     uint32_t ipaddr;
-    uint16_t port;
+    uint16_t tcp_port;
 };
 
 struct message {
     uint32_t ipaddr;
-    uint16_t port;
+    uint16_t tcp_port;
 };
 
 struct rdmacm_endpoint_local_cpc_data {
@@ -169,8 +169,8 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *l
         peeripaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
 
         BTL_VERBOSE(("message ipaddr = %x port %d, rdma_get_peer_addr = %x",
-                     message->ipaddr, message->port, peeripaddr));
-        if (message->ipaddr == peeripaddr && message->port == rem_port) {
+                     message->ipaddr, message->tcp_port, peeripaddr));
+        if (message->ipaddr == peeripaddr && message->tcp_port == rem_port) {
             ep = ib_endpoint;
             break;
         }
@@ -287,7 +287,7 @@ static int rdma_client_connect_one(struct rdmacm_contents *local,
     memset(&din, 0, sizeof(din));
     din.sin_family = AF_INET;
     din.sin_addr.s_addr = message->ipaddr;
-    din.sin_port = message->port;
+    din.sin_port = message->tcp_port;
 
     /* Once the route to the remote system is discovered, a
      * RDMA_CM_EVENT_ADDR_RESOLVED event will occur on the local event
@@ -351,7 +351,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
     message = (struct message *)endpoint->endpoint_remote_cpc_data->cbm_modex_message;
 
     BTL_VERBOSE(("Connecting to remote ip addr = %x, port = %d  ep state = %d",
-                 message->ipaddr, message->port, endpoint->endpoint_state));
+                 message->ipaddr, message->tcp_port, endpoint->endpoint_state));
 
     if (MCA_BTL_IB_CONNECTED == endpoint->endpoint_state ||
         MCA_BTL_IB_CONNECTING == endpoint->endpoint_state ||
@@ -376,7 +376,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
      * is being connected from, in the isntance where there are
      * multiple listeners on the local system.
      */
-    client->port = ((struct message *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->port;
+    client->tcp_port = ((struct message *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->tcp_port;
 
     rc = rdma_client_connect(client, message);
     if (0 != rc) {
@@ -425,7 +425,7 @@ static int handle_connect_request(struct rdmacm_contents *local,
     BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x port %d",
                  endpoint->endpoint_state, local->ipaddr, message->ipaddr, rem_port));
 
-    if ((local->ipaddr > message->ipaddr && local->port > rem_port) ||
+    if ((local->ipaddr > message->ipaddr && local->tcp_port > rem_port) ||
         local->ipaddr > message->ipaddr) {
         int race = 1;
 
@@ -737,7 +737,7 @@ static int finish_connect(struct rdmacm_contents *local, int num)
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
     remoteipaddr = ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
 
-    if ((localipaddr == remoteipaddr && local->port <= remoteport) ||
+    if ((localipaddr == remoteipaddr && local->tcp_port <= remoteport) ||
         localipaddr > remoteipaddr) {
         rc = rdmacm_setup_qp(local, local->endpoint, local->id[num], num);
         if (0 != rc) {
@@ -784,7 +784,7 @@ static int finish_connect(struct rdmacm_contents *local, int num)
 
     msg.qpnum = num;
     msg.rem_index = local->endpoint->index;
-    msg.rem_port = local->port;
+    msg.rem_port = local->tcp_port;
 
     BTL_VERBOSE(("Connecting from %x, port %d to %x", localipaddr, msg.rem_port, remoteipaddr));
 
@@ -945,51 +945,46 @@ out:
     return -1;
 }
 
-static int ipaddrcheck(struct rdmacm_contents *server, mca_btl_openib_module_t *openib_btl)
+static int ipaddrcheck(struct rdmacm_contents *server, 
+                       mca_btl_openib_module_t *openib_btl)
 {
-    int rc, i;
-    struct ibv_device_attr attr;
+    uint32_t ipaddr;
+    bool already_exists = false;
+    opal_list_item_t *item;
+    int server_tcp_port = rdma_get_src_port(server->id[0]);
 
-    rc = ibv_query_device(openib_btl->hca->ib_dev_context, &attr);
-    if (-1 == rc) {
-        orte_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: rdmacm CPC system error (verbs failure)");
-        goto out;
+    /* Look up the IP address of this device/port */
+    ipaddr = 
+        mca_btl_openib_rdma_get_ipv4addr(openib_btl->hca->ib_dev_context, 
+                                         openib_btl->port_num);
+    if (0 == ipaddr) {
+        BTL_VERBOSE(("openib BTL: rdmacm CPC unable to find IP address for %s", ibv_get_device_name(openib_btl->hca->ib_dev)));
+        return OMPI_ERR_NOT_FOUND;
     }
 
-    for (i = 0; i < attr.phys_port_cnt; i++) {
-        bool found = false;
-        uint32_t ipaddr = mca_btl_openib_rdma_get_ipv4addr(openib_btl->hca->ib_dev_context, i+1);
-        opal_list_item_t *item;
-
-        for (item = opal_list_get_first(&server_list); item != opal_list_get_end(&server_list); item = opal_list_get_next(item)) {
-            struct list_item *pitem = (struct list_item *)item;
-            BTL_VERBOSE(("paddr = %x, ipaddr addr = %x", pitem->item->ipaddr, ipaddr));
-            if (pitem->item->ipaddr == ipaddr || 0 == ipaddr) {
-                BTL_VERBOSE(("addr %x already exists", ipaddr));
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            server->ipaddr = ipaddr;
-            server->port = rdma_get_src_port(server->id[0]);
+    /* Ok, we found the IP address of this device/port.  Have we
+       already see this IP address/TCP port before? */
+    for (item = opal_list_get_first(&server_list); 
+         item != opal_list_get_end(&server_list); 
+         item = opal_list_get_next(item)) {
+        struct list_item *pitem = (struct list_item *)item;
+        BTL_VERBOSE(("paddr = %x, ipaddr addr = %x", 
+                     pitem->item->ipaddr, ipaddr));
+        if (pitem->item->ipaddr == ipaddr &&
+            pitem->item->tcp_port == server_tcp_port) {
+            BTL_VERBOSE(("addr %x already exists", ipaddr));
+            already_exists = true;
             break;
         }
     }
-    /* It's not an error if these things fail; perhaps RDMA CM is not
-       supported on this HCA.  So just gracefully return "sorry,
-       Charlie" */
-    if (0 == server->ipaddr) {
-        orte_output_verbose(5, mca_btl_base_output, "openib BTL: rdmacm CPC unable to find IP address for %s", ibv_get_device_name(openib_btl->hca->ib_dev));
-        goto out;
+
+    /* If we haven't seen it before, save it */
+    if (!already_exists) {
+        server->ipaddr = ipaddr;
+        server->tcp_port = server_tcp_port;
     }
 
-    return OMPI_SUCCESS;
-
-out:
-    return OMPI_ERROR;
+    return already_exists ? OMPI_ERROR : OMPI_SUCCESS;
 }
 
 static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_t *openib_btl, ompi_btl_openib_connect_base_module_data_t *data)
@@ -1003,9 +998,9 @@ static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_
     }
 
     message->ipaddr = server->ipaddr;
-    message->port = server->port;
+    message->tcp_port = server->tcp_port;
 
-    BTL_VERBOSE(("Message IP address is %x, port %d", message->ipaddr, message->port));
+    BTL_VERBOSE(("Message IP address is %x, port %d", message->ipaddr, message->tcp_port));
     data->cbm_modex_message = message;
     data->cbm_modex_message_len = sizeof(struct message);
 
@@ -1099,7 +1094,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
         goto out5;
     }
 
-    /* Verify that the HCA has a valid IP address on it, or we cannot use the cpc */
+    /* Verify that the HCA has a valid IP address on it, or we cannot
+       use the cpc */
     rc = ipaddrcheck(server, openib_btl);
     if (0 != rc) {
         orte_output_verbose(5, mca_btl_base_output,
@@ -1108,8 +1104,10 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
         goto out5;
     }
 
-    /* Listen on the specified address/port with the rdmacm, limit the amount of incoming connections to 1024 */
-    /* FIXME - 1024 should be (num of connectors * mca_btl_openib_component.num_qps) */
+    /* Listen on the specified address/port with the rdmacm, limit the
+       amount of incoming connections to 1024 */
+    /* FIXME - 1024 should be (num of connectors *
+       mca_btl_openib_component.num_qps) */
     rc = rdma_listen(server->id[0], 1024);
     if (0 != rc) {
         orte_output_verbose(5, mca_btl_base_output,
