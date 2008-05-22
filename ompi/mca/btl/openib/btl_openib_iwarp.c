@@ -1,7 +1,19 @@
-#include "ompi_config.h"
-#include <infiniband/verbs.h>
-#if OMPI_HAVE_RDMACM
+/*
+ * Copyright (c) 2008 Chelsio
+ * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ *
+ * @file
+ */
 
+#include "ompi_config.h"
+
+#include <infiniband/verbs.h>
+
+#if OMPI_HAVE_RDMACM
 #include <rdma/rdma_cma.h>
 #include <malloc.h>
 
@@ -10,7 +22,10 @@
 
 #include "connect/connect.h"
 #include "btl_openib_endpoint.h"
+#endif
+/* Always want to include this file */
 #include "btl_openib_iwarp.h"
+#if OMPI_HAVE_RDMACM
 
 /* 
  * The cruft below maintains the linked list of rdma ipv4 addresses and their
