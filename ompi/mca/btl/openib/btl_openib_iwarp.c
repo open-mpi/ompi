@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Chelsio
+ * Copyright (c) 2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
  *
  * Additional copyrights may follow
