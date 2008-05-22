@@ -31,6 +31,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
+#include "opal/util/show_help.h"
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/dpm/dpm.h"
@@ -748,17 +749,35 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         mca_coll_sm2_reduce_intra_fanin;
     sm_module->list_reduce_functions[REDUCE_SCATTER_GATHER_FN]=
         mca_coll_sm2_reduce_intra_reducescatter_gather;
-    sm_module->reduce_functions[SHORT_DATA_FN]=
+    sm_module->reduce_functions[SHORT_DATA_FN_REDUCE]=
         sm_module->list_reduce_functions[FANIN_REDUCE_FN];
-    sm_module->reduce_functions[LONG_DATA_FN]=
+    sm_module->reduce_functions[LONG_DATA_FN_REDUCE]=
         sm_module->list_reduce_functions[REDUCE_SCATTER_GATHER_FN];
     if( ( 0 <= mca_coll_sm2_component.force_reduce ) &&
             ( N_REDUCE_FNS > mca_coll_sm2_component.force_reduce ) ) {
         /* set user specifed function */
-        mca_coll_base_module_barrier_fn_t tmp_fn=
-            sm_module->reduce_functions[mca_coll_sm2_component.force_reduce];
-        sm_module->reduce_functions[SHORT_DATA_FN]=tmp_fn;
-        sm_module->reduce_functions[LONG_DATA_FN]=tmp_fn;
+        mca_coll_base_module_reduce_fn_t tmp_fn=sm_module->
+            list_reduce_functions[mca_coll_sm2_component.force_reduce];
+        sm_module->reduce_functions[SHORT_DATA_FN_REDUCE]=tmp_fn;
+        sm_module->reduce_functions[LONG_DATA_FN_REDUCE]=tmp_fn;
+    }
+
+    /* allreduce */
+    sm_module->list_allreduce_functions[FANIN_FANOUT_ALLREDUCE_FN]=
+        mca_coll_sm2_allreduce_intra_fanin_fanout;
+    sm_module->list_allreduce_functions[REDUCE_SCATTER_ALLGATHER_FN]=
+        mca_coll_sm2_allreduce_intra_reducescatter_allgather;
+    sm_module->allreduce_functions[SHORT_DATA_FN_ALLREDUCE]=
+        sm_module->list_allreduce_functions[FANIN_FANOUT_ALLREDUCE_FN];
+    sm_module->allreduce_functions[LONG_DATA_FN_ALLREDUCE]=
+        sm_module->list_allreduce_functions[REDUCE_SCATTER_ALLGATHER_FN];
+    if( ( 0 <= mca_coll_sm2_component.force_allreduce ) &&
+            ( N_ALLREDUCE_FNS > mca_coll_sm2_component.force_allreduce ) ) {
+        /* set user specifed function */
+        mca_coll_base_module_allreduce_fn_t tmp_fn=sm_module->
+            list_allreduce_functions[mca_coll_sm2_component.force_allreduce];
+        sm_module->allreduce_functions[SHORT_DATA_FN_ALLREDUCE]=tmp_fn;
+        sm_module->allreduce_functions[LONG_DATA_FN_ALLREDUCE]=tmp_fn;
     }
 
     /*

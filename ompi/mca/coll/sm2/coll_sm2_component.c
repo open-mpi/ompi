@@ -35,19 +35,6 @@
 #include "ompi/mca/coll/base/base.h"
 #include "orte/mca/rml/rml.h"
 
-/* debug */
-#include <signal.h>
-
-extern int debug_print;
-extern int my_debug_rank;
-extern void debug_module(void);
-
-void dbg_handler(int my_signal) {
-/* debug_print=1; */
- debug_module();
- return;
-}
-/* end debug */
 
 /*
  * Public string showing the coll ompi_sm V2 component version number
@@ -129,10 +116,6 @@ mca_coll_sm2_component_t mca_coll_sm2_component = {
  */
 static int sm2_open(void)
 {
-/* debug */
-    int retVal;
-    struct sigaction new_sigact;
-/* end debug */
 
     /* local variables */
     mca_coll_sm2_component_t *cs = &mca_coll_sm2_component;
@@ -205,17 +188,8 @@ static int sm2_open(void)
         mca_coll_sm2_param_register_int("force_barrier",(-1));
     cs->force_reduce=
         mca_coll_sm2_param_register_int("force_reduce",(-1));
-
-
-/* debug */
-    /*
-    new_sigact.sa_handler=dbg_handler;
-    sigemptyset(&(new_sigact.sa_mask));
-
-    retVal=sigaction(SIGUSR2,&new_sigact,NULL);
-    */
-    signal(SIGUSR2,dbg_handler);
-/* end debug */
+    cs->force_allreduce=
+        mca_coll_sm2_param_register_int("force_allreduce",(-1));
 
     return OMPI_SUCCESS;
 }

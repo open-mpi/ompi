@@ -741,11 +741,11 @@ int mca_coll_sm2_reduce_intra(void *sbuf, void *rbuf, int count,
     len_data_buffer=count*dt_extent;
     
     if( len_data_buffer <= sm_module->short_message_size) {
-        rc=sm_module->reduce_functions[SHORT_DATA_FN]
+        rc=sm_module->reduce_functions[SHORT_DATA_FN_REDUCE]
             (sbuf, rbuf, count, dtype, op, root, comm, module);
     }
     else {
-        rc=sm_module->reduce_functions[LONG_DATA_FN]
+        rc=sm_module->reduce_functions[LONG_DATA_FN_REDUCE]
             (sbuf, rbuf, count, dtype, op, root, comm, module);
     }
 

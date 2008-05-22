@@ -126,11 +126,16 @@ BEGIN_C_DECLS
         int force_barrier;
 
         /** MCA parameter:  method to force a given reduce method to be used.
-         * 0 - FANIN_FAN_OUT_REDUCE_FN,
-         * 1 - REDUCE_SCATTER_GATHER_FN,
+         * 0 - FANIN_FAN_OUT_REDUCE_FN
+         * 1 - REDUCE_SCATTER_GATHER_FN
          */
         int force_reduce;
 
+        /** MCA parameter: method to force a given allreduce method to be used.
+         * 0 - FANIN_FANOUT_ALLREDUCE_FN
+         * 1 - REDUCE_SCATTER_ALLGATHER_FN
+         */
+        int force_allreduce;
 
     };
 
@@ -157,9 +162,21 @@ BEGIN_C_DECLS
         N_REDUCE_FNS
     };
     enum{
-        SHORT_DATA_FN,
-        LONG_DATA_FN,
+        SHORT_DATA_FN_REDUCE,
+        LONG_DATA_FN_REDUCE,
         N_REDUCE_FNS_USED
+    };
+
+    /* all-reduce */
+    enum{
+        FANIN_FANOUT_ALLREDUCE_FN,
+        REDUCE_SCATTER_ALLGATHER_FN,
+        N_ALLREDUCE_FNS
+    };
+    enum{
+        SHORT_DATA_FN_ALLREDUCE,
+        LONG_DATA_FN_ALLREDUCE,
+        N_ALLREDUCE_FNS_USED
     };
 
 
@@ -463,6 +480,11 @@ BEGIN_C_DECLS
         mca_coll_base_module_barrier_fn_t barrier_functions[N_BARRIER_FNS];
         mca_coll_base_module_reduce_fn_t list_reduce_functions[N_REDUCE_FNS];
         mca_coll_base_module_reduce_fn_t reduce_functions[N_REDUCE_FNS_USED];
+        mca_coll_base_module_allreduce_fn_t 
+            list_allreduce_functions[N_ALLREDUCE_FNS];
+        mca_coll_base_module_allreduce_fn_t 
+            allreduce_functions[N_ALLREDUCE_FNS_USED];
+
 
     };
 
@@ -582,6 +604,16 @@ BEGIN_C_DECLS
             struct ompi_datatype_t *dtype,
             struct ompi_op_t *op,
             struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
+    int mca_coll_sm2_allreduce_intra_reducescatter_allgather(
+            void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op, struct ompi_communicator_t *comm,
+            struct mca_coll_base_module_1_1_0_t *module);
+
+    int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, 
+            int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+            struct ompi_communicator_t *comm, 
             struct mca_coll_base_module_1_1_0_t *module);
 
     /**

@@ -26,7 +26,6 @@ extern uint64_t timers[7];
 /**
  * Shared memory blocking allreduce.
  */
-static
 int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
@@ -909,8 +908,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     }
 
                     /* apply collective operation to first half of the data */
-                    ompi_op_reduce(op,(void *)extra_rank_write_data_pointer,
-                        (void *)my_write_pointer, n_my_count,dtype);
+                    if( 0 < n_my_count ) {
+                        ompi_op_reduce(op,(void *)extra_rank_write_data_pointer,
+                                (void *)my_write_pointer, n_my_count,dtype);
+                    }
 
 
                     /* wait for my partner to finish reducing the data */
@@ -923,16 +924,16 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     /* read my partner's data */
    
                     /* adjust read an write pointers */
-                    extra_rank_write_data_pointer+=
-                        (count_this_stripe-n_my_count)*dt_extent;
+                    extra_rank_write_data_pointer+=(n_my_count*dt_extent);
 
-                    rc=ompi_ddt_copy_content_same_ddt(dtype, 
-                            count_this_stripe-n_my_count,
-                            (char *)(my_write_pointer+
-                                     (count_this_stripe-n_my_count)*dt_extent),
-                            (char *)extra_rank_write_data_pointer);
-                    if( 0 != rc ) {
-                        return OMPI_ERROR;
+                    if( 0 < (count_this_stripe-n_my_count) ) {
+                        rc=ompi_ddt_copy_content_same_ddt(dtype, 
+                                count_this_stripe-n_my_count,
+                                (char *)(my_write_pointer+n_my_count*dt_extent),
+                                (char *)extra_rank_write_data_pointer);
+                        if( 0 != rc ) {
+                            return OMPI_ERROR;
+                        }
                     }
                 
                     /* now we are ready for the power of 2 portion of the
@@ -963,9 +964,9 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                     sm_buffer_desc->proc_memory[extra_rank].data_segment;
                 /* offset into my half of the data */
                 extra_rank_write_data_pointer+= 
-                        (count_this_stripe/2)*dt_extent;
+                        ((count_this_stripe/2)*dt_extent);
                 my_extra_write_pointer=my_write_pointer+
-                    (count_this_stripe/2)*dt_extent;
+                    ((count_this_stripe/2)*dt_extent);
                     
                 /* wait until remote data is read */
                 while( extra_ctl_pointer->flag < tag ) {
@@ -973,8 +974,10 @@ int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf,
                 }
 
                 /* apply collective operation to second half of the data  */
-                ompi_op_reduce(op,(void *)extra_rank_write_data_pointer,
-                        (void *)my_extra_write_pointer, n_my_count,dtype);
+                if( 0 < n_my_count ) {
+                    ompi_op_reduce(op,(void *)extra_rank_write_data_pointer,
+                            (void *)my_extra_write_pointer, n_my_count,dtype);
+                }
 
                 /* signal that I am done, so my partner can read my data */
                 MB();
@@ -1159,7 +1162,6 @@ Error:
 /**
  * Shared memory blocking allreduce.
  */
-static
 int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf, 
         int count, struct ompi_datatype_t *dtype, 
         struct ompi_op_t *op, struct ompi_communicator_t *comm,
@@ -1402,17 +1404,6 @@ int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf,
          * at the number of procs in the exchange, so a divide by two at each
          * iteration will give the right number of proc for the given iteration 
          */
-        /* debug 
-        { int *int_tmp=(int *)my_base_pointer;
-            int i;
-            fprintf(stderr,"  GGG my rank %d data in tmp :: ",my_rank);
-            for (i=0 ; i < count_this_stripe ; i++ ) {
-                fprintf(stderr," %d ",int_tmp[i]);
-            }
-            fprintf(stderr,"\n");
-            fflush(stderr);
-        }
-         end debug */
         n_proc_data=my_exchange_node->n_largest_pow_2;
         starting_proc=0;
         for(exchange=my_exchange_node->n_exchanges-1;exchange>=0;exchange--) {
@@ -1888,40 +1879,34 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
 {
     /* local variables */
     int rc;
+    mca_coll_sm2_module_t *sm_module;
+    ptrdiff_t dt_extent;
+    size_t len_data_buffer;
 
-#if 0
-    if( 0 != (op->o_flags & OMPI_OP_FLAGS_COMMUTE)) {
-        /* Commutative Operation */
-        rc= mca_coll_sm2_allreduce_intra_recursive_doubling(sbuf, rbuf, count,
-                dtype, op, comm, module);
-        if( OMPI_SUCCESS != rc ) {
-            goto Error;
-        }
-#endif
-        rc= mca_coll_sm2_allreduce_intra_reducescatter_allgather(sbuf, rbuf, count,
-                dtype, op, comm, module);
-        if( OMPI_SUCCESS != rc ) {
-            goto Error;
-        }
-#if 0
-    } else {
-        /* Non-Commutative Operation */
-#endif
-#if 0
-        rc= mca_coll_sm2_allreduce_intra_fanin_fanout_pipeline(
-                sbuf, rbuf, count,dtype, op, comm, module);
-        if( OMPI_SUCCESS != rc ) {
-            goto Error;
-        }
-        /* Non-Commutative Operation */
-        rc= mca_coll_sm2_allreduce_intra_fanin_fanout(sbuf, rbuf, count,
-                dtype, op, comm, module);
-        if( OMPI_SUCCESS != rc ) {
-            goto Error;
-        }
+    sm_module=(mca_coll_sm2_module_t *) module;
+
+    /* get size of data needed - same layout as user data, so that
+     *   we can apply the reudction routines directly on these buffers
+     */
+    rc=ompi_ddt_type_extent(dtype, &dt_extent);
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
     }
-#endif
 
+    len_data_buffer=count*dt_extent;
+    
+    if( len_data_buffer <= sm_module->short_message_size) {
+        rc=sm_module->allreduce_functions[SHORT_DATA_FN_ALLREDUCE]
+            (sbuf, rbuf, count, dtype, op, comm, module);
+    }
+    else {
+        rc=sm_module->allreduce_functions[LONG_DATA_FN_ALLREDUCE]
+            (sbuf, rbuf, count, dtype, op, comm, module);
+    }
+
+    if( OMPI_SUCCESS != rc ) {
+        goto Error;
+    }
 
     return OMPI_SUCCESS;
 
