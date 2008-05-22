@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      University of Houston.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -123,7 +124,8 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
          (ompi_comm_rank(comm) != root || 
           (ompi_comm_rank(comm) == root && MPI_IN_PLACE != recvbuf))) ||
         (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf &&
-         0 == sendcount)) {
+         0 == sendcount) || 
+	((0 == sendcount && (MPI_ROOT == root) || MPI_PROC_NULL == root))) {
         return MPI_SUCCESS;
     }
 
