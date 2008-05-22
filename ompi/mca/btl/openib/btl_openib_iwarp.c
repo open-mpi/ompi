@@ -164,7 +164,7 @@ int mca_btl_openib_build_rdma_addr_list(void)
 
     OBJ_CONSTRUCT(&myaddrs, opal_list_t);
 
-    for (i = opal_ifbegin(); i < opal_ifcount(); i = opal_ifnext(i)) {
+    for (i = opal_ifbegin(); i >= 0; i = opal_ifnext(i)) {
         struct sockaddr ipaddr;
         uint32_t netmask;
 
@@ -194,8 +194,22 @@ void mca_btl_openib_free_rdma_addr_list(void)
     }
 }
 #else
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) {return 0;}
-uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port) {return 0;}
-int mca_btl_openib_build_rdma_addr_list(void) {return 0;}
-void mca_btl_openib_free_rdma_addr_list(void) {}
+uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) 
+{
+    return 0;
+}
+
+uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
+                                          uint8_t port) 
+{
+    return 0;
+}
+
+int mca_btl_openib_build_rdma_addr_list(void) 
+{
+    return 0;
+}
+
+void mca_btl_openib_free_rdma_addr_list(void) {
+}
 #endif
