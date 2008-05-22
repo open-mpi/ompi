@@ -56,7 +56,7 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_rdmacm = {
     rdmacm_component_destroy
 };
 
-struct rdmacm_contents {
+typedef struct {
     bool server;
     mca_btl_openib_endpoint_t *endpoint;
     mca_btl_openib_module_t *openib_btl;
@@ -64,34 +64,33 @@ struct rdmacm_contents {
     struct rdma_cm_id **id;
     uint32_t ipaddr;
     uint16_t tcp_port;
-};
+} rdmacm_contents_t;
 
-struct message {
+typedef struct {
     uint32_t ipaddr;
     uint16_t tcp_port;
-};
+} message_t;
 
-struct rdmacm_endpoint_local_cpc_data {
+typedef struct {
     int rdmacm_counter;
-};
+} rdmacm_endpoint_local_cpc_data_t;
 
-struct id_contexts {
-    struct rdmacm_contents *local;
+typedef struct {
+    rdmacm_contents_t *local;
     mca_btl_openib_endpoint_t *endpoint;
     uint8_t qpnum;
-};
+} id_contexts_t;
 
-struct conn_message {
+typedef struct {
     uint32_t rem_index;
     uint16_t rem_port;
     uint8_t qpnum;
-};
+} conn_message_t;
 
-struct list_item {
+typedef struct {
     opal_list_item_t super;
-    struct rdmacm_contents *item;
-};
-typedef struct list_item list_item_t;
+    rdmacm_contents_t *item;
+} list_item_t;
 
 static OBJ_CLASS_INSTANCE(list_item_t, opal_list_item_t, NULL, NULL);
 
@@ -145,7 +144,7 @@ static void rdmacm_component_register(void)
  * recevied and the IP address and port associated with the rdma_cm
  * event id
  */
-static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *local,
+static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *local,
                                                        struct rdma_cm_id *id,
                                                        uint16_t rem_port)
 {
@@ -155,7 +154,7 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *l
 
     for (i = 0; i < opal_pointer_array_get_size(endpoints); i++) {
         mca_btl_openib_endpoint_t *ib_endpoint;
-        struct message *message;
+        message_t *message;
         struct sockaddr *peeraddr;
         uint32_t peeripaddr;
 
@@ -182,7 +181,7 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(struct rdmacm_contents *l
     return ep;
 }
 
-static void rdmacm_cleanup(struct rdmacm_contents *local,
+static void rdmacm_cleanup(rdmacm_contents_t *local,
                            struct rdma_cm_id *id,
                            uint32_t num)
 {
@@ -198,7 +197,7 @@ static void rdmacm_cleanup(struct rdmacm_contents *local,
     }
 }
 
-static int rdmacm_setup_qp(struct rdmacm_contents *local,
+static int rdmacm_setup_qp(rdmacm_contents_t *local,
                            mca_btl_openib_endpoint_t *endpoint,
                            struct rdma_cm_id *id,
                            int qpnum)
@@ -256,19 +255,19 @@ out:
     return 1;
 }
 
-static int rdma_client_connect_one(struct rdmacm_contents *local,
-                                   struct message *message,
+static int rdma_client_connect_one(rdmacm_contents_t *local,
+                                   message_t *message,
                                    int num)
 {
     struct sockaddr_in din;
-    struct id_contexts *context;
+    id_contexts_t *context;
     int rc;
 
     /* We'll need to access some data in the event handler.  We can
      * encapsulate it in this data struct and attach it to the id being
      * created below.  The event->id will contain this same pointer.
      */
-    context = malloc(sizeof(struct id_contexts));
+    context = malloc(sizeof(id_contexts_t));
     if (NULL == context) {
         BTL_ERROR(("malloc error"));
         goto out;
@@ -310,7 +309,7 @@ out:
     return OMPI_ERROR;
 }
 
-static int rdma_client_connect(struct rdmacm_contents *local, struct message *message)
+static int rdma_client_connect(rdmacm_contents_t *local, message_t *message)
 {
     int rc, qp;
 
@@ -344,11 +343,11 @@ out:
 static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
                                        mca_btl_base_endpoint_t *endpoint)
 {
-    struct rdmacm_contents *client;
-    struct message *message;
+    rdmacm_contents_t *client;
+    message_t *message;
     int rc;
 
-    message = (struct message *)endpoint->endpoint_remote_cpc_data->cbm_modex_message;
+    message = (message_t *)endpoint->endpoint_remote_cpc_data->cbm_modex_message;
 
     BTL_VERBOSE(("Connecting to remote ip addr = %x, port = %d  ep state = %d",
                  message->ipaddr, message->tcp_port, endpoint->endpoint_state));
@@ -361,7 +360,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
 
     endpoint->endpoint_state = MCA_BTL_IB_CONNECT_ACK;
 
-    client = calloc(1, sizeof(struct rdmacm_contents));
+    client = calloc(1, sizeof(rdmacm_contents_t));
     if (NULL == client) {
         BTL_ERROR(("malloc of client failed"));
         goto out;
@@ -376,7 +375,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
      * is being connected from, in the isntance where there are
      * multiple listeners on the local system.
      */
-    client->tcp_port = ((struct message *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->tcp_port;
+    client->tcp_port = ((message_t *)endpoint->endpoint_local_cpc->data.cbm_modex_message)->tcp_port;
 
     rc = rdma_client_connect(client, message);
     if (0 != rc) {
@@ -398,20 +397,20 @@ out:
  * the requestion is disallowed by this rule, then the server will
  * reject the connection and make its own in the proper direction.
  */
-static int handle_connect_request(struct rdmacm_contents *local,
+static int handle_connect_request(rdmacm_contents_t *local,
                                   struct rdma_cm_event *event)
 {
     mca_btl_openib_endpoint_t *endpoint;
     struct rdma_conn_param conn_param;
-    struct message *message;
-    struct conn_message msg;
+    message_t *message;
+    conn_message_t msg;
     int rc = -1, qpnum;
     uint32_t rem_index;
     uint16_t rem_port;
 
-    qpnum = ((struct conn_message *)event->param.conn.private_data)->qpnum;
-    rem_port = ((struct conn_message *)event->param.conn.private_data)->rem_port;
-    rem_index = ((struct conn_message *)event->param.conn.private_data)->rem_index;
+    qpnum = ((conn_message_t *)event->param.conn.private_data)->qpnum;
+    rem_port = ((conn_message_t *)event->param.conn.private_data)->rem_port;
+    rem_index = ((conn_message_t *)event->param.conn.private_data)->rem_index;
 
     /* Determine which endpoint the remote side is trying to connect to */
     endpoint = rdmacm_find_endpoint(local, event->id, rem_port);
@@ -486,21 +485,21 @@ static int handle_connect_request(struct rdmacm_contents *local,
      * information in the normal way.  Instead we must reference its
      * location and put the data there so that it can be access later.
      */
-    event->id->context = malloc(sizeof(struct id_contexts));
+    event->id->context = malloc(sizeof(id_contexts_t));
     if (NULL == event->id->context) {
         BTL_ERROR(("malloc error"));
         goto out1;
     }
 
-    ((struct id_contexts *)event->id->context)->local = local;
-    ((struct id_contexts *)event->id->context)->qpnum = qpnum;
-    ((struct id_contexts *)event->id->context)->endpoint = endpoint;
+    ((id_contexts_t *)event->id->context)->local = local;
+    ((id_contexts_t *)event->id->context)->qpnum = qpnum;
+    ((id_contexts_t *)event->id->context)->endpoint = endpoint;
 
     memset(&conn_param, 0, sizeof(conn_param));
     conn_param.responder_resources = 1;
     conn_param.initiator_depth = 1;
     conn_param.private_data = &msg;
-    conn_param.private_data_len = sizeof(struct conn_message);
+    conn_param.private_data_len = sizeof(conn_message_t);
 
     msg.qpnum = qpnum;
     msg.rem_index = endpoint->index;
@@ -535,7 +534,7 @@ static void *rdmacm_unmonitor(int fd, int flags, void *context)
     return NULL;
 }
 
-static void rdmacm_destroy(struct rdmacm_contents *local)
+static void rdmacm_destroy(rdmacm_contents_t *local)
 {
     int i;
     bool last = true;
@@ -554,7 +553,7 @@ static void rdmacm_destroy(struct rdmacm_contents *local)
     }
 }
 
-static void rdmacm_server_cleanup(struct rdmacm_contents *local)
+static void rdmacm_server_cleanup(rdmacm_contents_t *local)
 {
         rdma_destroy_id(local->id[0]);
         free(local->id);
@@ -581,7 +580,7 @@ static int rdmacm_connection_shutdown(struct mca_btl_base_endpoint_t *endpoint)
     for (item = opal_list_get_first(&client_list);
          item != opal_list_get_end(&client_list);
          item = opal_list_get_next(item)) {
-        struct list_item *cli = (struct list_item *)item;
+        list_item_t *cli = (list_item_t *)item;
 
         if (endpoint == cli->item->endpoint) {
             int i;
@@ -609,19 +608,19 @@ static void *local_endpoint_connected(void *context)
     return NULL;
 }
 
-static int rdmacm_connect_endpoint(struct rdmacm_contents *local, struct rdma_cm_event *event)
+static int rdmacm_connect_endpoint(rdmacm_contents_t *local, struct rdma_cm_event *event)
 {
-    struct rdmacm_endpoint_local_cpc_data *data;
+    rdmacm_endpoint_local_cpc_data_t *data;
     mca_btl_openib_endpoint_t *endpoint;
-    struct message *message;
+    message_t *message;
 
     if (local->server)
-        endpoint = ((struct id_contexts *)event->id->context)->endpoint;
+        endpoint = ((id_contexts_t *)event->id->context)->endpoint;
     else {
-        struct list_item *li;
+        list_item_t *li;
         uint32_t rem_index;
 
-        rem_index = ((struct conn_message *)event->param.conn.private_data)->rem_index;
+        rem_index = ((conn_message_t *)event->param.conn.private_data)->rem_index;
 
         endpoint = local->endpoint;
         local->endpoint->rem_info.rem_index = rem_index;
@@ -638,7 +637,7 @@ static int rdmacm_connect_endpoint(struct rdmacm_contents *local, struct rdma_cm
         BTL_ERROR(("Can't find endpoint"));
         return -1;
     }
-    data = (struct rdmacm_endpoint_local_cpc_data *)endpoint->endpoint_local_cpc_data;
+    data = (rdmacm_endpoint_local_cpc_data_t *)endpoint->endpoint_local_cpc_data;
 
     /* Only notify the upper layers after the last QO has been connected */
     if (++data->rdmacm_counter < mca_btl_openib_component.num_qps) {
@@ -658,7 +657,7 @@ static int rdmacm_connect_endpoint(struct rdmacm_contents *local, struct rdma_cm
     return 0;
 }
 
-static int start_connect(struct rdmacm_contents *local, int num)
+static int start_connect(rdmacm_contents_t *local, int num)
 {
     int rc;
 
@@ -679,7 +678,7 @@ out:
     return -1;
 }
 
-static int create_dummy_cq(struct rdmacm_contents *local, mca_btl_openib_module_t *openib_btl)
+static int create_dummy_cq(rdmacm_contents_t *local, mca_btl_openib_module_t *openib_btl)
 {
     local->dummy_cq = ibv_create_cq(openib_btl->hca->ib_dev_context, 1, NULL, NULL, 0);
     if (NULL == local->dummy_cq) {
@@ -692,7 +691,7 @@ out:
     return -1;
 }
 
-static int create_dummy_qp(struct rdmacm_contents *local, struct rdma_cm_id *id, int qpnum)
+static int create_dummy_qp(rdmacm_contents_t *local, struct rdma_cm_id *id, int qpnum)
 {
     struct ibv_qp_init_attr attr;
     struct ibv_qp *qp;
@@ -722,13 +721,13 @@ out:
     return -1;
 }
 
-static int finish_connect(struct rdmacm_contents *local, int num)
+static int finish_connect(rdmacm_contents_t *local, int num)
 {
     struct rdma_conn_param conn_param;
     struct sockaddr *peeraddr, *localaddr;
     uint32_t localipaddr, remoteipaddr;
     uint16_t remoteport;
-    struct conn_message msg;
+    conn_message_t msg;
     int rc;
 
     remoteport = rdma_get_dst_port(local->id[num]);
@@ -780,7 +779,7 @@ static int finish_connect(struct rdmacm_contents *local, int num)
     conn_param.initiator_depth = 1;
     conn_param.retry_count = 10;
     conn_param.private_data = &msg;
-    conn_param.private_data_len = sizeof(struct conn_message);
+    conn_param.private_data_len = sizeof(conn_message_t);
 
     msg.qpnum = num;
     msg.rem_index = local->endpoint->index;
@@ -810,7 +809,7 @@ out:
 
 static int rdma_event_handler(struct rdma_cm_event *event)
 {
-    struct rdmacm_contents *local;
+    rdmacm_contents_t *local;
     struct sockaddr *peeraddr, *localaddr;
     uint32_t peeripaddr, localipaddr;
     int rc = -1, qpnum;
@@ -818,8 +817,8 @@ static int rdma_event_handler(struct rdma_cm_event *event)
     if (NULL == event->id->context)
         return rc;
 
-    local = ((struct id_contexts *)event->id->context)->local;
-    qpnum = ((struct id_contexts *)event->id->context)->qpnum;
+    local = ((id_contexts_t *)event->id->context)->local;
+    qpnum = ((id_contexts_t *)event->id->context)->qpnum;
     localaddr = rdma_get_local_addr(event->id);
     peeraddr = rdma_get_peer_addr(event->id);
     localipaddr = ((struct sockaddr_in *)localaddr)->sin_addr.s_addr;
@@ -933,7 +932,7 @@ static int rdmacm_init(mca_btl_openib_endpoint_t *endpoint)
 {
     void *data;
 
-    data = calloc(1, sizeof(struct rdmacm_endpoint_local_cpc_data));
+    data = calloc(1, sizeof(rdmacm_endpoint_local_cpc_data_t));
     if (NULL == data) {
         BTL_ERROR(("malloc failed"));
         goto out;
@@ -945,7 +944,7 @@ out:
     return -1;
 }
 
-static int ipaddrcheck(struct rdmacm_contents *server, 
+static int ipaddrcheck(rdmacm_contents_t *server, 
                        mca_btl_openib_module_t *openib_btl)
 {
     uint32_t ipaddr;
@@ -967,7 +966,7 @@ static int ipaddrcheck(struct rdmacm_contents *server,
     for (item = opal_list_get_first(&server_list); 
          item != opal_list_get_end(&server_list); 
          item = opal_list_get_next(item)) {
-        struct list_item *pitem = (struct list_item *)item;
+        list_item_t *pitem = (list_item_t *)item;
         BTL_VERBOSE(("paddr = %x, ipaddr addr = %x", 
                      pitem->item->ipaddr, ipaddr));
         if (pitem->item->ipaddr == ipaddr &&
@@ -987,11 +986,11 @@ static int ipaddrcheck(struct rdmacm_contents *server,
     return already_exists ? OMPI_ERROR : OMPI_SUCCESS;
 }
 
-static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_t *openib_btl, ompi_btl_openib_connect_base_module_data_t *data)
+static int create_message(rdmacm_contents_t *server, mca_btl_openib_module_t *openib_btl, ompi_btl_openib_connect_base_module_data_t *data)
 {
-    struct message *message;
+    message_t *message;
 
-    message = malloc(sizeof(struct message));
+    message = malloc(sizeof(message_t));
     if (NULL == message) {
         BTL_ERROR(("malloc Failed"));
         goto out;
@@ -1002,7 +1001,7 @@ static int create_message(struct rdmacm_contents *server, mca_btl_openib_module_
 
     BTL_VERBOSE(("Message IP address is %x, port %d", message->ipaddr, message->tcp_port));
     data->cbm_modex_message = message;
-    data->cbm_modex_message_len = sizeof(struct message);
+    data->cbm_modex_message_len = sizeof(message_t);
 
     return OMPI_SUCCESS;
 
@@ -1015,10 +1014,10 @@ out:
  */
 static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_openib_connect_base_module_t **cpc)
 {
-    struct rdmacm_contents *server = NULL;
+    rdmacm_contents_t *server = NULL;
     struct sockaddr_in sin;
-    struct list_item *li;
-    struct id_contexts *context;
+    list_item_t *li;
+    id_contexts_t *context;
     int rc;
 
     /* RDMACM is not supported if we have any XRC QPs */
@@ -1044,7 +1043,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     (*cpc)->cbm_endpoint_finalize = rdmacm_connection_shutdown;
     (*cpc)->cbm_finalize = NULL;
 
-    server = malloc(sizeof(struct rdmacm_contents));
+    server = malloc(sizeof(rdmacm_contents_t));
     if (NULL == server) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out1;
@@ -1059,7 +1058,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     server->server = true;
     server->openib_btl = openib_btl;
 
-    context = malloc(sizeof(struct id_contexts));
+    context = malloc(sizeof(id_contexts_t));
     if (NULL == context) {
         orte_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC system error (malloc failed)");
@@ -1176,7 +1175,7 @@ static int rdmacm_component_destroy(void)
         for (item = opal_list_get_first(&client_list);
              item != opal_list_get_end(&client_list);
              item = opal_list_get_next(item)) {
-            struct rdmacm_contents *local = ((struct list_item *)item)->item;
+            rdmacm_contents_t *local = ((list_item_t *)item)->item;
 
             rdmacm_destroy(local);
             opal_list_remove_item(&client_list, item);
@@ -1187,7 +1186,7 @@ static int rdmacm_component_destroy(void)
         for (item = opal_list_get_first(&server_list);
              item != opal_list_get_end(&server_list);
              item = opal_list_get_next(item)) {
-            struct rdmacm_contents *local = ((struct list_item *)item)->item;
+            rdmacm_contents_t *local = ((list_item_t *)item)->item;
 
             rdmacm_server_cleanup(local);
             opal_list_remove_item(&server_list, item);
