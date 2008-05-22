@@ -283,7 +283,9 @@ typedef struct {
     uint64_t mm_port_guid;
     /** The service ID that we're listening on */
     uint32_t mm_service_id;
-    /************** JMS is this duplicate info? **************/
+    /** The LID that we're sitting on; it also identifies the source
+        endpoint when an IB CM request arrives */
+    uint16_t mm_lid;
     /** The port number of this port, also used to locate the source
         endpoint when an IB CM request arrives */
     uint8_t mm_port_num;
@@ -724,6 +726,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         goto error;
     }
     msg->mm_port_guid = ntoh64(gid.global.interface_id);
+    msg->mm_lid = btl->lid;
     msg->mm_port_num = btl->port_num;
     msg->mm_service_id = ibcm_pid;
     m->cpc.data.cbm_modex_message_len = sizeof(*msg);
@@ -1094,7 +1097,9 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
     struct ibv_sa_path_rec path_rec;
     bool do_initiate;
 
-    OPAL_OUTPUT((-1,"ibcm start connect on endpoint %p", (void*)endpoint));
+    OPAL_OUTPUT((-1,"ibcm start connect, endpoint %p (lid %d, ep index %d)", 
+                 (void*)endpoint, endpoint->endpoint_btl->port_info.lid,
+                 endpoint->index));
 
     /* Has an incoming request already initiated the connect sequence
        on this endpoint?  If so, just exit successfully -- the
@@ -1103,6 +1108,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
     opal_mutex_lock(&ie->ie_lock);
     if (0 != ie->ie_connection_flags) {
         opal_mutex_unlock(&ie->ie_lock);
+        OPAL_OUTPUT((-1,"ibcm start connect already ongoing %p", (void*)endpoint));
         return OMPI_SUCCESS;
     }
     ie->ie_connection_flags = CFLAGS_ONGOING;
@@ -1626,10 +1632,14 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
             OPAL_OUTPUT((-1, "ibcm req: my guid 0x%lx, remote guid 0x%lx",
                         msg->mm_port_guid,
                          ntoh64(req->primary_path->dgid.global.interface_id)));
+            OPAL_OUTPUT((-1, "ibcm req: my LID %d, remote LID %d",
+                         msg->mm_lid,
+                         ntohs(req->primary_path->dlid)));
             if (msg->mm_port_guid == 
                 ntoh64(req->primary_path->dgid.global.interface_id) &&
                 msg->mm_service_id == active_private_data->ireqd_pid &&
-                msg->mm_port_num == req->port) {
+                msg->mm_port_num == req->port &&
+                msg->mm_lid == htons(req->primary_path->dlid)) {
                 OPAL_OUTPUT((-1, "*** found matching endpoint!!!"));
                 endpoint = ib_proc->proc_endpoints[i];
                 found = true;
