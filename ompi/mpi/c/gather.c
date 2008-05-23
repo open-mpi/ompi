@@ -130,7 +130,7 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           (ompi_comm_rank(comm) == root && MPI_IN_PLACE != sendbuf))) ||
         (ompi_comm_rank(comm) == root && MPI_IN_PLACE == sendbuf && 
          0 == recvcount) || 
-	((0 == recvcount && (MPI_ROOT == root) || MPI_PROC_NULL == root))) {
+	(0 == recvcount && (MPI_ROOT == root || MPI_PROC_NULL == root))) {
         return MPI_SUCCESS;
     }
 

@@ -125,7 +125,7 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
           (ompi_comm_rank(comm) == root && MPI_IN_PLACE != recvbuf))) ||
         (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf &&
          0 == sendcount) || 
-	((0 == sendcount && (MPI_ROOT == root) || MPI_PROC_NULL == root))) {
+	(0 == sendcount && (MPI_ROOT == root || MPI_PROC_NULL == root))) {
         return MPI_SUCCESS;
     }
 
