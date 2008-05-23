@@ -124,11 +124,11 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
-                 "coll:tuned:alltoallv_intra_basic_linear rank %d", rank));
-
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
+
+    ORTE_OUTPUT((ompi_coll_tuned_stream,
+                 "coll:tuned:alltoallv_intra_basic_linear rank %d", rank));
 
     ompi_ddt_type_extent(sdtype, &sext);
     ompi_ddt_type_extent(rdtype, &rext);
