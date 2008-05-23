@@ -1166,7 +1166,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
                                     sizeof(ibcm_base_cm_id_t*));
         if (NULL == ie->ie_cm_id_cache) {
             OPAL_OUTPUT((-1, "ib cm: failed to malloc %d active device ids",
-                         num_ids));
+                         ie->ie_cm_id_cache_size));
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto err;
         }
