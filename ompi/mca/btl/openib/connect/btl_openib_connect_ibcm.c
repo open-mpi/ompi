@@ -1088,7 +1088,7 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
 static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
                                      mca_btl_base_endpoint_t *endpoint)
 {
-    int i, rc, num_ids;
+    int i, rc;
     ibcm_module_t *m = (ibcm_module_t *) cpc;
     ibcm_endpoint_t *ie = 
         (ibcm_endpoint_t *) endpoint->endpoint_local_cpc_data;
