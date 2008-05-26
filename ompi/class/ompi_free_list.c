@@ -156,7 +156,7 @@ int ompi_free_list_init_ex_new(
     flist->fl_num_per_alloc = num_elements_per_alloc;
     flist->fl_mpool = mpool;
     flist->fl_frag_alignment = frag_alignment;
-    flist->fl_payload_buffer_alignment = frag_alignment;
+    flist->fl_payload_buffer_alignment = payload_buffer_alignment;
     flist->item_init = item_init;
     flist->ctx = ctx;
     if (num_elements_to_alloc)
@@ -196,7 +196,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
                 flist->fl_payload_buffer_alignment, size_t);
         if(elem_size != 0) {
             mpool_alloc_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool,
-                   num_elements * elem_size, flist->fl_frag_alignment,
+                   num_elements * elem_size, flist->fl_payload_buffer_alignment,
                    MCA_MPOOL_FLAGS_CACHE_BYPASS, &reg);
             if(NULL == mpool_alloc_ptr) {
                 free(alloc_ptr);
