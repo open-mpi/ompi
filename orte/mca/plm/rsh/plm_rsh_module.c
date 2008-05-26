@@ -259,7 +259,7 @@ static int orte_plm_rsh_probe(char *nodename,
             for (i = 0; i < (int)(sizeof (orte_plm_rsh_shell_name)/
                                   sizeof(orte_plm_rsh_shell_name[0])); i++) {
                 if ( 0 == strcmp(sh_name, orte_plm_rsh_shell_name[i]) ) {
-                    *shell = i;
+                    *shell = (orte_plm_rsh_shell_t)i;
                     break;
                 }
             }
@@ -270,7 +270,7 @@ static int orte_plm_rsh_probe(char *nodename,
                          "%s plm:rsh: node %s has SHELL: %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          nodename,
-                         (ORTE_PLM_RSH_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : orte_plm_rsh_shell_name[*shell]));
+                         (ORTE_PLM_RSH_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_rsh_shell_name[*shell]));
 
     return rc;
 }
@@ -1353,7 +1353,7 @@ static orte_plm_rsh_shell_t find_shell(char *shell)
     for (i = 0; i < (int)(sizeof (orte_plm_rsh_shell_name) /
                           sizeof(orte_plm_rsh_shell_name[0])); ++i) {
         if (0 == strcmp(sh_name, orte_plm_rsh_shell_name[i])) {
-            return i;
+            return (orte_plm_rsh_shell_t)i;
         }
     }
 
