@@ -78,29 +78,28 @@ const opal_carto_base_component_1_0_0_t mca_carto_file_component = {
 
 static int file_open(void)
 {
-    int index;
 
-    mca_base_param_reg_int(&mca_carto_file_component.base_version,
-                           "priority",
-                           "Priority of the file carto component",
-                           false, false, 10, NULL);
 
     mca_base_param_reg_string(&mca_carto_file_component.base_version,
                               "path",
                               "The path to the cartography file",
                               false, false, NULL, &carto_file_path);
+
     /**
      * If the user specified the carto file path (not NULL), use the
      * carto file component. The auto detect component is with
      * higher priority, so by default it will be chosen.
      */
-    if (NULL != carto_file_path) {
-        index = mca_base_param_find("carto",NULL,NULL);
-        if (index != OPAL_ERROR) {
-            /* set the "carto" mca parameter to "file" */
-            mca_base_param_set_string(index,"file");
-        }
+    if (NULL == carto_file_path) {
+        mca_base_param_reg_int(&mca_carto_file_component.base_version,
+                               "priority",
+                               "Priority of the file carto component",
+                               false, false, 10, NULL);
+    }else{
+        mca_base_param_reg_int(&mca_carto_file_component.base_version,
+                               "priority",
+                               "Priority of the file carto component",
+                               false, false, 12, NULL);
     }
-
     return OPAL_SUCCESS;
 }
