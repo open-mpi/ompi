@@ -68,7 +68,7 @@
 #include "orte/mca/odls/base/odls_private.h"
 
 static int8_t *app_idx;
-static char **slot_str;
+static char **slot_str=NULL;
 
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
