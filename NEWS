@@ -95,6 +95,9 @@ Trunk (not on release branches yet)
 1.2.7 (might never be released)
 -----
 
+- Added vendor IDs for some ConnectX openib HCAs. See ticket #1311.
+- Fix some RPM specfile inconsistencies.  See ticket #1308.
+  Thanks to Jim Kusznir for noticing the problem.
 - Removed an unused function prototype that caused warnings on
   some systems (e.g., OS X).  See ticket #1274.
 - Fix a deadlock in inter-communicator scatter/gather operations.
