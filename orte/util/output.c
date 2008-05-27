@@ -349,6 +349,24 @@ static int get_tli(const char *filename, const char *topic,
 }
 
 
+static void new_stream_tracker(int stream, uint8_t flag, const char *primary_tag, va_list arglist)
+{
+    orte_output_stream_t *ptr;
+    char *tag;
+    
+    ptr = OBJ_NEW(orte_output_stream_t);
+    ptr->flags = flag;
+    ptr->num_tags = 1;
+    ptr->tags[0] = strdup(primary_tag);
+    if (NULL != arglist) {
+        while (NULL != (tag = va_arg(arglist, char*))) {
+            ptr->tags[ptr->num_tags] = strdup(tag);
+            ptr->num_tags++;
+        }
+    }
+    opal_pointer_array_set_item(&orte_output_streams, stream, ptr);    
+}
+
 
 static void output_vverbose(int verbose_level, int output_id,
                             int major_id, int minor_id,
@@ -691,8 +709,6 @@ cleanup:
 
 int orte_output_init(void)
 {
-    orte_output_stream_t *stream;
-
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output, "orte_output init"));
 
     register_mca();
@@ -716,11 +732,7 @@ int orte_output_init(void)
      * corresponds to the automatically-opened stderr
      * stream of opal_output
      */
-    stream = OBJ_NEW(orte_output_stream_t);
-    stream->flags = ORTE_OUTPUT_STDERR;
-    stream->num_tags = 1;
-    stream->tags[0] = strdup("STDERR");
-    opal_pointer_array_set_item(&orte_output_streams, 0, stream);
+    new_stream_tracker(0, ORTE_OUTPUT_STDERR, "STDERR", NULL);
 
     /* if we are on the HNP, we need to open
      * dedicated orte_output streams for stdout/stderr
@@ -735,11 +747,7 @@ int orte_output_init(void)
         /* deliver to stdout only */
         stdout_lds.lds_want_stdout = true;
         stdout_stream = opal_output_open(&stdout_lds);
-        stream = OBJ_NEW(orte_output_stream_t);
-        stream->flags = ORTE_OUTPUT_STDOUT;
-        stream->num_tags = 1;
-        stream->tags[0] = strdup("STDOUT");
-        opal_pointer_array_set_item(&orte_output_streams, stdout_stream, stream);
+        new_stream_tracker(stdout_stream, ORTE_OUTPUT_STDOUT, "STDOUT", NULL);
         /* setup stderr stream - we construct our own
          * stream object so we can control the behavior
          */
@@ -749,11 +757,7 @@ int orte_output_init(void)
         /* we filter the stderr */
         stderr_lds.lds_filter_flags = OPAL_OUTPUT_FILTER_STDERR;
         stderr_stream = opal_output_open(&stderr_lds);
-        stream = OBJ_NEW(orte_output_stream_t);
-        stream->flags = ORTE_OUTPUT_STDERR;
-        stream->num_tags = 1;
-        stream->tags[0] = strdup("STDERR");
-        opal_pointer_array_set_item(&orte_output_streams, stderr_stream, stream);
+        new_stream_tracker(stderr_stream, ORTE_OUTPUT_STDERR, "STDERR", NULL);
     }
     
     orte_output_ready = true;
@@ -813,9 +817,7 @@ int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
 {
     int stream;
     uint8_t flag = ORTE_OUTPUT_OTHER;
-    orte_output_stream_t *ptr;
     va_list arglist;
-    char *tag;
     
     if (!orte_output_ready) {
         int rc;
@@ -868,17 +870,9 @@ int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
     
 track:
     /* track the settings */
-    ptr = OBJ_NEW(orte_output_stream_t);
-    ptr->flags = flag;
-    ptr->num_tags = 1;
-    ptr->tags[0] = strdup(primary_tag);
     va_start(arglist, primary_tag);
-    while (NULL != (tag = va_arg(arglist, char*))) {
-        ptr->tags[ptr->num_tags] = strdup(tag);
-        ptr->num_tags++;
-    }
+    new_stream_tracker(stream, flag, primary_tag, arglist);
     va_end(arglist);
-    opal_pointer_array_set_item(&orte_output_streams, stream, ptr);
     
     return stream;
 }
@@ -886,6 +880,7 @@ track:
 void orte_output(int output_id, const char *format, ...)
 {
     va_list arglist;
+    orte_output_stream_t **streams;
 
     if (!orte_output_ready) {
         /* if we are finalizing, then we have no way to process
@@ -903,6 +898,14 @@ void orte_output(int output_id, const char *format, ...)
             if (ORTE_SUCCESS != orte_output_init()) {
                 return;
             }
+            /* and then setup the specified output stream, if necessary
+             * Provide some meaningless tag here to indicate this stream was
+             * used prior to properly being opened
+             */
+            streams = (orte_output_stream_t**)orte_output_streams.addr;
+            if (NULL == streams[output_id]) {
+                new_stream_tracker(output_id, ORTE_OUTPUT_OTHER, "EARLY-OPEN", NULL);
+            }
         }
     }
     
@@ -915,6 +918,7 @@ void orte_output(int output_id, const char *format, ...)
 void orte_output_verbose(int verbose_level, int output_id, const char *format, ...)
 {
     va_list arglist;
+    orte_output_stream_t **streams;
 
     if (!orte_output_ready) {
         /* if we are finalizing, then we have no way to process
@@ -932,6 +936,14 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
             if (ORTE_SUCCESS != orte_output_init()) {
                 return;
             }
+            /* and then setup the specified output stream, if necessary
+             * Provide some meaningless tag here to indicate this stream was
+             * used prior to properly being opened
+             */
+            streams = (orte_output_stream_t**)orte_output_streams.addr;
+            if (NULL == streams[output_id]) {
+                new_stream_tracker(output_id, ORTE_OUTPUT_OTHER, "EARLY-OPEN", NULL);
+            }
         }
     }
     
@@ -945,7 +957,11 @@ void orte_output_close(int output_id)
 {
     orte_output_stream_t **streams;
     
-    if (!orte_output_ready) {
+    if (!orte_output_ready && !orte_finalizing) {
+        /* if we are finalizing, then we really don't want
+         * to init this system - otherwise, this was called prior
+         * to the normal init, so just go ahead and init now
+         */
         if (ORTE_SUCCESS != orte_output_init()) {
             return;
         }
@@ -968,9 +984,27 @@ int orte_show_help(const char *filename, const char *topic,
     char *output;
     
     if (!orte_output_ready) {
-        int rc;
-        if (ORTE_SUCCESS != (rc = orte_output_init())) {
+        /* if we are finalizing, then we have no way to process
+         * this through the orte_output system - just drop it to
+         * opal_show_help for handling
+         */
+        if (orte_finalizing) {
+            va_start(arglist, want_error_header);
+            output = opal_show_help_vstring(filename, topic, want_error_header, 
+                                            arglist);
+            va_end(arglist);
+            rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
             return rc;
+        } else {
+            /* if we are not finalizing, then this was called prior
+             * to the normal init, so just go ahead and init now
+             */
+            if (ORTE_SUCCESS != (rc = orte_output_init())) {
+                return rc;
+            }
+            /* we don't need to open a stream here as show_help
+             * always defaults to stream 0 for stderr
+             */
         }
     }
     
@@ -994,7 +1028,6 @@ int orte_show_help(const char *filename, const char *topic,
     else {
         opal_buffer_t buf;
         uint8_t flag = ORTE_OUTPUT_SHOW_HELP;
-        int rc;
         static bool am_inside = false;
 
         /* JMS Note that we *may* have a similar recursion situation
