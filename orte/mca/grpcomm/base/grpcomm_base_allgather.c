@@ -25,7 +25,6 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
-#include <zlib.h>
 
 #include "opal/threads/condition.h"
 #include "orte/util/output.h"
