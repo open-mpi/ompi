@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 University of Houston. All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,14 +86,31 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
     int detection_alg=0;
     mca_coll_hierarch_module_t *hierarch_module;
 
-    hierarch_module = OBJ_NEW ( mca_coll_hierarch_module_t);
-    if ( NULL == hierarch_module  ) {
+    /* This module only works for intra-communicators at the moment */
+    if (OMPI_COMM_IS_INTER(comm)) {
+        return NULL;
+    }
+
+    /* Get the priority level attached to this module. If priority is less
+     * than or equal to 0, then the module is unavailable. */
+    *priority = mca_coll_hierarch_priority_param;
+    if (0 >= mca_coll_hierarch_priority_param) {
+	return NULL;
+    }
+
+    size = ompi_comm_size(comm);
+    if (size < 3) {
+	/* No need for hierarchical collectives for 1 or 2 procs. */
+	return NULL;
+    }
+
+    hierarch_module = OBJ_NEW(mca_coll_hierarch_module_t);
+    if (NULL == hierarch_module) {
 	return NULL;
     }
 
     hierarch_module->super.coll_module_enable = mca_coll_hierarch_module_enable;
     hierarch_module->super.ft_event = mca_coll_hierarch_ft_event;
-
     hierarch_module->super.coll_allgather  = NULL;
     hierarch_module->super.coll_allgatherv = NULL;
     hierarch_module->super.coll_allreduce  = mca_coll_hierarch_allreduce_intra;
@@ -111,29 +129,9 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
     hierarch_module->super.coll_scatterv   = NULL;
 
 
-    /* This module only works for intra-communicators at the moment */
-    if ( OMPI_COMM_IS_INTER(comm) ) {
-        return NULL;
-    }
-
-
-    /* Get the priority level attached to this module. If priority = 0,
-       we assume that we won't be chosen anyway, so we quit and improve
-       therefore the startup time. */
-    *priority = mca_coll_hierarch_priority_param;
-    if ( 0 >= mca_coll_hierarch_priority_param ) {
-	return NULL;
-    }
-
     /* Check whether we should ignore sm. This might be necessary to take advantage
        of the some ib or gm collectives. */
     ignore_sm = mca_coll_hierarch_ignore_sm_param;
-
-    size = ompi_comm_size(comm);
-    if ( size < 3 ) {
-	/* No need for hierarchical collectives for 1 or 2 procs. */
-	return NULL;
-    }
 
     rank = ompi_comm_rank(comm);
 

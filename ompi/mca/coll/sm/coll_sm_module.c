@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -160,7 +161,14 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     /* Get our priority */
 
+
+    /* Get the priority level attached to this module. If priority is less
+     * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_sm_component.sm_priority;
+    if (0 >= mca_coll_sm_component.sm_priority) {
+	return NULL;
+    }
+
     
     /* All is good -- return a module */
     sm_module = OBJ_NEW(mca_coll_sm_module_t);
