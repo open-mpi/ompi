@@ -29,6 +29,7 @@ version 1.0.
 1.2.7 (might never be released)
 -----
 
+- Added vendor IDs for some ConnectX openib HCAs. See ticket #1311.
 - Fix some RPM specfile inconsistencies.  See ticket #1308.
   Thanks to Jim Kusznir for noticing the problem.
 - Removed an unused function prototype that caused warnings on
