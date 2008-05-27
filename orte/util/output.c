@@ -794,6 +794,11 @@ void orte_output_finalize(void)
 
     /* if we are not the HNP, we just need to
      * cleanup our tracking array
+     *
+     * NOTE: we specifically do NOT call opal_output_close
+     * on these streams! It may be that additional output
+     * will be called after we close orte_output, and we
+     * need to retain an ability to get those messages out.
      */
     streams = (orte_output_stream_t**)orte_output_streams.addr;
     for (i=0; i < orte_output_streams.size; i++) {
@@ -883,8 +888,21 @@ void orte_output(int output_id, const char *format, ...)
     va_list arglist;
 
     if (!orte_output_ready) {
-        if (ORTE_SUCCESS != orte_output_init()) {
+        /* if we are finalizing, then we have no way to process
+         * this through the orte_output system - just drop it to
+         * opal_output for handling
+         */
+        if (orte_finalizing) {
+            va_start(arglist, format);
+            opal_output_vverbose(0, output_id, format, arglist);
             return;
+        } else {
+            /* if we are not finalizing, then this was called prior
+             * to the normal init, so just go ahead and init now
+             */
+            if (ORTE_SUCCESS != orte_output_init()) {
+                return;
+            }
         }
     }
     
@@ -899,8 +917,21 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
     va_list arglist;
 
     if (!orte_output_ready) {
-        if (ORTE_SUCCESS != orte_output_init()) {
+        /* if we are finalizing, then we have no way to process
+         * this through the orte_output system - just drop it to
+         * opal_output for handling
+         */
+        if (orte_finalizing) {
+            va_start(arglist, format);
+            opal_output_vverbose(verbose_level, output_id, format, arglist);
             return;
+        } else {
+            /* if we are not finalizing, then this was called prior
+             * to the normal init, so just go ahead and init now
+             */
+            if (ORTE_SUCCESS != orte_output_init()) {
+                return;
+            }
         }
     }
     
