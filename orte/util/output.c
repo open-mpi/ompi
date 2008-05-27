@@ -813,6 +813,30 @@ void orte_output_finalize(void)
     OBJ_DESTRUCT(&orte_output_streams);
 }
 
+/* NOTE: HOW WE HANDLE THE ERROR CASE OF SOMEONE
+ * CALLING AN ORTE_OUTPUT FUNCTION PRIOR TO CALLING
+ * ORTE_OUTPUT_INIT
+ *
+ * if we are not finalizing, then this was called prior
+ * to the normal init. Despite multiple attempts, we
+ * haven't really found a good solution to this problem.
+ * We could call orte_output_init to setup our own
+ * internal tracking system, but that won't open up
+ * an associated opal_output stream for this output_id!
+ * Accordingly, opal_output will simply ignore anything
+ * being output to output_id - with the caller none-the-wiser
+ * that this is happening!
+ *
+ * After discussion, RHC and JMS decided that orte_output_init
+ * comes -so- early in the orte_init procedure that the only
+ * way this error can occur is for someone to call orte_output
+ * PRIOR to calling orte_init. This is an obvious error, so the
+ * main concern here is to avoid segfaulting. We therefore print
+ * out an error message so the caller knows what happened, use
+ * opal_output to let them see the error message (if possible),
+ * and do nothing else
+ */
+
 int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
 {
     int stream;
@@ -820,10 +844,11 @@ int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
     va_list arglist;
     
     if (!orte_output_ready) {
-        int rc;
-        if (ORTE_SUCCESS != (rc = orte_output_init())) {
-            return rc;
-        }
+        /* see above discussion on how we handle this error */
+        fprintf(stderr, "A call was made to orte_output_open %s with primary tag %s\n",
+                orte_finalizing ? "during or after calling orte_finalize" : "prior to calling orte_init",
+                primary_tag);
+        return ORTE_ERROR;
     }
     
     /* if we are the HNP, this function just acts as
@@ -880,8 +905,8 @@ track:
 void orte_output(int output_id, const char *format, ...)
 {
     va_list arglist;
-    orte_output_stream_t **streams;
-
+    char *output;
+    
     if (!orte_output_ready) {
         /* if we are finalizing, then we have no way to process
          * this through the orte_output system - just drop it to
@@ -892,20 +917,14 @@ void orte_output(int output_id, const char *format, ...)
             opal_output_vverbose(0, output_id, format, arglist);
             return;
         } else {
-            /* if we are not finalizing, then this was called prior
-             * to the normal init, so just go ahead and init now
-             */
-            if (ORTE_SUCCESS != orte_output_init()) {
-                return;
-            }
-            /* and then setup the specified output stream, if necessary
-             * Provide some meaningless tag here to indicate this stream was
-             * used prior to properly being opened
-             */
-            streams = (orte_output_stream_t**)orte_output_streams.addr;
-            if (NULL == streams[output_id]) {
-                new_stream_tracker(output_id, ORTE_OUTPUT_OTHER, "EARLY-OPEN", NULL);
-            }
+            /* see above discussion as to how we handle this error */
+            va_start(arglist, format);
+            fprintf(stderr, "A call was made to orte_output prior to calling orte_init\n");
+            fprintf(stderr, "The offending message is:\n");
+            output = opal_output_vstring(0, 0, format, arglist);
+            fprintf(stderr, "%s\n", (NULL == output) ? "NULL" : output);
+            if (NULL != output) free(output);
+            return;
         }
     }
     
@@ -918,7 +937,7 @@ void orte_output(int output_id, const char *format, ...)
 void orte_output_verbose(int verbose_level, int output_id, const char *format, ...)
 {
     va_list arglist;
-    orte_output_stream_t **streams;
+    char *output;
 
     if (!orte_output_ready) {
         /* if we are finalizing, then we have no way to process
@@ -931,19 +950,15 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
             return;
         } else {
             /* if we are not finalizing, then this was called prior
-             * to the normal init, so just go ahead and init now
+             * to the normal init - see above discussion as to
+             * how this is being handled
              */
-            if (ORTE_SUCCESS != orte_output_init()) {
-                return;
-            }
-            /* and then setup the specified output stream, if necessary
-             * Provide some meaningless tag here to indicate this stream was
-             * used prior to properly being opened
-             */
-            streams = (orte_output_stream_t**)orte_output_streams.addr;
-            if (NULL == streams[output_id]) {
-                new_stream_tracker(output_id, ORTE_OUTPUT_OTHER, "EARLY-OPEN", NULL);
-            }
+            va_start(arglist, format);
+            fprintf(stderr, "A call was made to orte_output_verbose prior to calling orte_init\n");
+            fprintf(stderr, "The offending message (verbosity=%d) is:\n", verbose_level);
+            output = opal_output_vstring(0, 0, format, arglist);
+            fprintf(stderr, "%s\n", (NULL == output) ? "NULL" : output);
+            if (NULL != output) free(output);
         }
     }
     
@@ -960,11 +975,11 @@ void orte_output_close(int output_id)
     if (!orte_output_ready && !orte_finalizing) {
         /* if we are finalizing, then we really don't want
          * to init this system - otherwise, this was called prior
-         * to the normal init, so just go ahead and init now
+         * to the normal init, see above discussion as to
+         * how this was handled
          */
-        if (ORTE_SUCCESS != orte_output_init()) {
-            return;
-        }
+        fprintf(stderr, "A call was made to orte_output_close prior to calling orte_init\n");
+        return;
     }
     
     /* cleanout the stream settings */
@@ -997,14 +1012,12 @@ int orte_show_help(const char *filename, const char *topic,
             return rc;
         } else {
             /* if we are not finalizing, then this was called prior
-             * to the normal init, so just go ahead and init now
+             * to the normal init - see above discussion as to
+             * how this was handled
              */
-            if (ORTE_SUCCESS != (rc = orte_output_init())) {
-                return rc;
-            }
-            /* we don't need to open a stream here as show_help
-             * always defaults to stream 0 for stderr
-             */
+            fprintf(stderr, "A call was made to orte_show_help prior to calling orte_init\n");
+            fprintf(stderr, "The offending message referenced filename: %s topic %s\n", filename, topic);
+            return ORTE_ERROR;
         }
     }
     
