@@ -9,6 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -16,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-define(OMPI_CHECK_PTHREAD_PIDS,[
+AC_DEFUN([OMPI_CHECK_PTHREAD_PIDS],[
 #
 # Arguments: none
 #
@@ -28,9 +29,6 @@ define(OMPI_CHECK_PTHREAD_PIDS,[
 # Test for Linux-like threads in the system. We will need to handle things like
 # getpid() differently in the case of a Linux-like threads model.
 #
-
-AH_TEMPLATE([OMPI_THREADS_HAVE_DIFFERENT_PIDS],
-    [Do threads have different pids (pthreads on linux)])
 
 AC_MSG_CHECKING([if threads have different pids (pthreads on linux)])
 CFLAGS_save="$CFLAGS"
