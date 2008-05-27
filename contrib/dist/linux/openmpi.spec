@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -101,10 +101,6 @@
 # type: bool (0/1)
 %{!?build_all_in_one_rpm: %define build_all_in_one_rpm 1}
 
-# Should we leave the BUILD_ROOT around?  Default: no
-# type: bool (0/1)
-%{!?leave_build_root: %define leave_build_root 0}
-
 # Should we use the default "check_files" RPM step (i.e., check for
 # unpackaged files)?  It is discouraged to disable this, but some
 # installers need it (e.g., OFED, because it installs lots of other
@@ -167,7 +163,6 @@
 #############################################################################
 
 %if %{ofed}
-%define leave_build_root 1
 %define use_check_files 0
 %define install_shell_scripts 1
 %define shell_scripts_basename mpivars
@@ -188,7 +183,12 @@
 %define _libdir /opt/%{name}/%{version}/lib
 %define _includedir /opt/%{name}/%{version}/include
 %define _mandir /opt/%{name}/%{version}/man
-%define _pkgdatadir /opt/%{name}/%{version}/share/%{name}
+# Note that the name "openmpi" is hard-coded in
+# opal/mca/installdirs/config for pkgdatadir; there is currently no
+# easy way to have OMPI change this directory name internally.  So we
+# just hard-code that name here as well (regardless of the value of
+# %{name} or %{_name}).
+%define _pkgdatadir /opt/%{name}/%{version}/share/openmpi
 # Per advice from Doug Ledford at Red Hat, docdir is supposed to be in
 # a fixed location.  But if you're installing a package in /opt, all
 # bets are off.  So feel free to install it anywhere in your tree.  He
@@ -206,7 +206,12 @@
 %global _sysconfdir %{_prefix}/etc
 %endif
 
-%{!?_pkgdatadir: %define _pkgdatadir %{_datadir}/%{name}}
+# Is the sysconfdir under the prefix directory?  This affects
+# whether we list the sysconfdir separately in the files sections,
+# below.
+%define sysconfdir_in_prefix %(test "`echo %{_sysconfdir} | grep %{_prefix}`" = "" && echo 0 || echo 1)
+
+%{!?_pkgdatadir: %define _pkgdatadir %{_datadir}/openmpi}
 
 %if !%{use_check_files}
 %define __check_files %{nil}
@@ -297,7 +302,7 @@ Group: Development/Libraries
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
-Requires: openmpi-runtime
+Requires: %{name}-runtime
 
 %description devel
 Open MPI is a project combining technologies and resources from
@@ -319,7 +324,7 @@ Group: Development/Documentation
 %if %{disable_auto_requires}
 AutoReq: no
 %endif
-Requires: openmpi-runtime
+Requires: %{name}-runtime
 
 %description docs
 Open MPI is a project combining technologies and resources from several other
@@ -337,14 +342,8 @@ This subpackage provides the documentation for Open MPI.
 # Unbelievably, some versions of RPM do not first delete the previous
 # installation root (e.g., it may have been left over from a prior
 # failed build).  This can lead to Badness later if there's files in
-# there that are not meant to be packaged.  HOWEVER: in some cases, we
-# do not want to delete the prior RPM_BUILD_ROOT because there may be
-# other stuff in there that we need (e.g., the OFED installer installs
-# everything into RPM_BUILD_ROOT that OMPI needs to compile, like the
-# OpenFabrics drivers).
-%if !%{leave_build_root}
+# there that are not meant to be packaged.
 rm -rf $RPM_BUILD_ROOT
-%endif
 
 %setup -q -n openmpi-%{version}
 
@@ -550,7 +549,7 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 # Devel files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*\.a|lib.*\.la" > devel.files | /bin/true
+   egrep "lib.*\.a|lib.*\.la|mpi.*mod" > devel.files | /bin/true
 
 %endif
 # End of build_all_in_one_rpm
@@ -568,10 +567,7 @@ cd /tmp
 # Remove installed driver after rpm build finished
 rm -rf $RPM_BUILD_DIR/%{name}-%{version} 
 
-# Leave $RPM_BUILD_ROOT in order to build dependent packages, if desired
-%if !%{leave_build_root}
 test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
-%endif
 
 #############################################################################
 #
@@ -615,13 +611,15 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root, -)
 %{_prefix}
-# If we're not installing in /opt, then the prefix is /usr, but the
-# sysconfdir is /etc -- so list them both.  Otherwise, we install in
-# /opt/openmpi/<version>, so be sure to list /opt/openmpi as well (so
-# that it can be removed).
-%if !%{install_in_opt}
+# If the sysconfdir is not under the prefix, then list it explicitly.
+%if !%{sysconfdir_in_prefix}
 %{_sysconfdir}
-%else
+%endif
+# If %{instal_in_opt}, then we're instaling OMPI to
+# /opt/openmpi/<version>.  But be sure to also explicitly mention
+# /opt/openmpi so that it can be removed by RPM when everything under
+# there is also removed.
+%if %{install_in_opt}
 %dir /opt/%{name}
 %endif
 # If we're installing the modulefile, get that, too
@@ -649,15 +647,18 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %files runtime -f runtime.files
 %defattr(-, root, root, -)
 %dir %{_prefix}
-# If we're not installing in /opt, then the prefix is /usr, but the
-# sysconfdir is /etc -- so list them both.  Otherwise, we install in
-# /opt/openmpi/<version>, so be sure to list /opt/openmpi as well (so
-# that it can be removed).
+# If the sysconfdir is not under the prefix, then list it explicitly.
+%if !%{sysconfdir_in_prefix}
+%{_sysconfdir}
+%endif
+# If %{instal_in_opt}, then we're instaling OMPI to
+# /opt/openmpi/<version>.  But be sure to also explicitly mention
+# /opt/openmpi so that it can be removed by RPM when everything under
+# there is also removed.  Also list /opt/openmpi/<version>/share so
+# that it can be removed as well.
 %if %{install_in_opt}
 %dir /opt/%{name}
 %dir /opt/%{name}/%{version}/share
-%else
-%{_sysconfdir}
 %endif
 # If we're installing the modulefile, get that, too
 %if %{install_modulefile}
@@ -672,7 +673,6 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %dir %{_libdir}
 %dir %{_libdir}/openmpi
 %doc README INSTALL LICENSE
-%{_sysconfdir}
 %{_pkgdatadir}
 %{_bindir}/mpirun
 %{_bindir}/mpiexec
@@ -708,7 +708,24 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
-* Tue Dec  4 2008 Jeff Squyres <jsquyres@cisco.com>
+* Mon Feb  4 2008 Jeff Squyres <jsquyres@cisco.com>
+- OFED 1.3 has a much better installer; remove all the
+  leave_build_root kludge nastyness.  W00t!
+
+* Fri Jan 18 2008 Jeff Squyres <jsquyres@cisco.com>
+- Remove the hard-coded "openmpi" name from two Requires statements
+  and use %{name} instead (FWIW, %{_name} caused rpmbuild to barf).
+
+* Wed Jan  2 2008 Jeff Squyres <jsquyres@cisco.com>
+- Remove duplicate %{_sysconfdir} in the % files sections when
+  building the sub-packages.
+- When building the sub-packages, ensure that devel.files also picks
+  up the F90 module.
+- Hard-code the directory name "openmpi" into _pkglibdir (vs. using
+  %{name}) because the OMPI code base has it hard-coded as well.
+  Thanks to Jim Kusznir for noticing the problem.
+
+* Tue Dec  4 2007 Jeff Squyres <jsquyres@cisco.com>
 - Added define option for disabling the use of rpmbuild's
   auto-dependency generation stuff.  This is necessary for some
   compilers that allow themselves to be installed via tarball (not
