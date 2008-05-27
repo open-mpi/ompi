@@ -9,6 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -116,6 +117,9 @@ AC_MSG_RESULT($THREAD_TYPE)
 #
 # Blah - this should be made better, but I don't know how...
 #
+AH_TEMPLATE([OMPI_THREADS_HAVE_DIFFERENT_PIDS],
+    [Do threads have different pids (pthreads on linux)])
+
 if test "$THREAD_TYPE" = "solaris"; then
     AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 1)
     AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 0)

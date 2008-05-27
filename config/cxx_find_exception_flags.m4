@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -17,7 +18,7 @@ dnl
 dnl $HEADER$
 dnl
 
-define([OMPI_CXX_FIND_EXCEPTION_FLAGS],[
+AC_DEFUN([OMPI_CXX_FIND_EXCEPTION_FLAGS],[
 #
 # Arguments: none
 #
