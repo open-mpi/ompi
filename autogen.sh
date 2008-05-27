@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -391,49 +391,6 @@ EOF
 	cd ..
     fi
 
-    run_and_check $ompi_aclocal
-    if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
-	"`grep AM_CONFIG_HEADER $file`" != ""; then
-	run_and_check $ompi_autoheader
-    fi
-
-    # We only need to patch the top-level aclocal.m4 for libtool stuff
-    # because this only affects creating C++ libraries (with pathCC).
-    # This must be done before we run autoconf.
-
-    if test -f $topdir_file; then 
-        echo "** Adjusting libtool for OMPI :-("
-        if ! check_version "2.0.0" $ompi_libtoolize_found_version ; then
-            echo "   ++ patching for pathscale multi-line output (LT 1.5.x)"
-            patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
-        else
-            echo "   ++ patching for pathscale multi-line output (LT 2.x)"
-            patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
-        fi
-        rm -f aclocal.m4.orig
-
-
-        # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
-        # when using the Sun compilers on Linux or Solaris, even if the
-        # application does not use the STL (as of Feb 2008, Open MPI does not
-        # use any C++ STL). The problem is that Solaris has two different STL
-        # libraries: Cstd and stlport. Having Libtool choose that OMPI (and its
-        # wrapper compilers) use Cstd is problematic for users who want to
-        # compile their MPI applications with the other STL library. So we
-        # currently hack aclocal's LT macros to *not* add the Cstd library to
-        # any of OMPI's CXXFLAGS; the OMPI wrapper compilers can then therefore
-        # be used with any STL library -- it's the user's choice.
-
-        echo "   ++ patching to remove solaris Cstd"
-        sed -e 's/-lCstd -lCrun//' \
-            -e 's/-library=Cstd -library=Crun//' \
-            aclocal.m4 > aclocal.m4.new
-        cp aclocal.m4.new aclocal.m4
-        rm -f aclocal.m4.new
-    fi
-
-    run_and_check $ompi_autoconf
-
     # We only need the libltdl stuff for the top-level
     # configure, not any of the MCA components.
 
@@ -514,9 +471,75 @@ EOF
             mv configure.new configure
             chmod a+x configure
         fi
+
+        # See http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html
+        if check_version "2.1.9999" $ompi_libtoolize_found_version ; then
+            echo "   ++ patching for ifort (LT 2.2.0-4)"
+            cd opal/libltdl/m4
+            patch -N -p0 < ../../../config/lt224-icc.diff > /dev/null 2>&1
+            rm -f libtool.m4.orig
+            cd ../../..
+        fi
     else
 	run_and_check $ompi_libtoolize --automake --copy
     fi
+
+    if test -f $topdir_file; then 
+        run_and_check $ompi_aclocal -I config
+    else
+        run_and_check $ompi_aclocal
+    fi
+
+    if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
+	"`grep AM_CONFIG_HEADER $file`" != ""; then
+	run_and_check $ompi_autoheader
+    fi
+
+    # We only need to patch the top-level aclocal.m4 for libtool stuff
+    # because this only affects creating C++ libraries (with pathCC).
+    # This must be done before we run autoconf.
+
+    if test -f $topdir_file; then 
+        echo "** Adjusting libtool for OMPI :-("
+        if ! check_version "2.0.0" $ompi_libtoolize_found_version ; then
+            echo "   ++ patching for pathscale multi-line output (LT 1.5.x)"
+            patch -N -p0 < config/lt1522-pathCC.diff > /dev/null 2>&1
+        else
+            echo "   ++ patching for pathscale multi-line output (LT 2.x)"
+            patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
+        fi
+        # See http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html
+        if check_version "2.1.9999" $ompi_libtoolize_found_version ; then
+            echo "   ++ patching for ifort (LT 2.2.0-4)"
+            cd config
+            patch -N -p0 < lt224-icc.diff > /dev/null 2>&1
+            rm -f libtool.m4.orig
+            cd ..
+        fi
+        rm -f aclocal.m4.orig
+
+
+        # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
+        # when using the Sun compilers on Linux or Solaris, even if the
+        # application does not use the STL (as of Feb 2008, Open MPI does not
+        # use any C++ STL). The problem is that Solaris has two different STL
+        # libraries: Cstd and stlport. Having Libtool choose that OMPI (and its
+        # wrapper compilers) use Cstd is problematic for users who want to
+        # compile their MPI applications with the other STL library. So we
+        # currently hack aclocal's LT macros to *not* add the Cstd library to
+        # any of OMPI's CXXFLAGS; the OMPI wrapper compilers can then therefore
+        # be used with any STL library -- it's the user's choice.
+
+        echo "   ++ patching to remove solaris Cstd"
+        sed -e 's/-lCstd -lCrun//' \
+            -e 's/-library=Cstd -library=Crun//' \
+            aclocal.m4 > aclocal.m4.new
+        cp aclocal.m4.new aclocal.m4
+        rm -f aclocal.m4.new
+    fi
+
+    run_and_check $ompi_autoconf
+
     run_and_check $ompi_automake --foreign -a --copy --include-deps
 }
 
