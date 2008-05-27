@@ -47,6 +47,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     orte_std_cntr_t i;
     bool override_oversubscribed;
     orte_app_context_t **apps;
+    char *output;
 
     ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate",
@@ -289,7 +290,12 @@ DISPLAY:
             if (NULL == alloc[i]) {
                 break;
             }
-            opal_dss.dump(orte_ras_base.alloc_output, alloc[i], ORTE_NODE);
+            if (ORTE_SUCCESS != (rc = opal_dss.print(&output, NULL, alloc[i], ORTE_NODE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            orte_output(orte_ras_base.alloc_output, "%s", output);
+            free(output);
         }
     }
     
