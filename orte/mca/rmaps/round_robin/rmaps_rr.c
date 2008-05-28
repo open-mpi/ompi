@@ -380,7 +380,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             /* work down the list - is there another node that
              * would not be oversubscribed?
              */
-            if (cur_node_item != opal_list_get_end(&node_list)) {
+            if (cur_node_item != opal_list_get_last(&node_list)) {
                 item = opal_list_get_next(cur_node_item);
             } else {
                 item = opal_list_get_first(&node_list);
@@ -392,7 +392,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                     cur_node_item = item;
                     goto proceed;
                 }
-                if (item == opal_list_get_end(&node_list)) {
+                if (item == opal_list_get_last(&node_list)) {
                     item = opal_list_get_first(&node_list);
                 } else {
                     item= opal_list_get_next(item);
