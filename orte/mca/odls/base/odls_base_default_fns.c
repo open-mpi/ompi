@@ -363,8 +363,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* ident this proc's node */
         node = (orte_nid_t*)orte_daemonmap.addr[jobdat->procmap[j].node];
         
+        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:constructing child list - checking proc %s on node %d with daemon %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j),
+                             jobdat->procmap[j].node, ORTE_VPID_PRINT(node->daemon)));
+
         /* does this data belong to us? */
-        if ((int32_t)ORTE_PROC_MY_NAME->vpid == jobdat->procmap[j].node) {
+        if (ORTE_PROC_MY_NAME->vpid == node->daemon) {
             
             ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",

@@ -90,7 +90,9 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      */
     {
         opal_byte_object_t bo;
-
+        int i;
+        orte_nid_t **nodes;
+        
         /* construct a nodemap */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
             ORTE_ERROR_LOG(rc);
@@ -102,7 +104,15 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo, &orte_daemonmap))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }  
+        }
+        /* print-out the map */
+        nodes = (orte_nid_t**)orte_daemonmap.addr;
+        for (i=0; i < orte_daemonmap.size; i++) {
+            if (NULL != nodes[i]) {
+                fprintf(stderr, "NIDMAP: name %s daemon %s arch %0x\n",
+                        nodes[i]->name, ORTE_VPID_PRINT(nodes[i]->daemon), nodes[i]->arch);
+            }
+        }
     }
 #endif
     

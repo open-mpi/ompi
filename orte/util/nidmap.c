@@ -36,8 +36,8 @@
 
 int orte_util_encode_nodemap(opal_byte_object_t *boptr)
 {
-    orte_job_t *jdata;
-    orte_proc_t **procs;
+    orte_vpid_t *vpids;
+    orte_node_t **nodes;
     char prefix[ORTE_MAX_NODE_PREFIX], *tmp;
     int32_t i, len, firstnode, lastnode, nodenum, num_nodes;
     uint8_t command = ORTE_CONTIG_NODE_CMD;
@@ -51,17 +51,16 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     int32_t *arch;
 #endif
     
-    /* get the daemon job's data */
-    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    procs = (orte_proc_t**)(jdata->procs)->addr;
-
+    /* setup a buffer for tmp use */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    
-    /* indicate number of nodes */
-    num_nodes = jdata->num_procs;
+
+    /* determine the number of nodes in the global node array */
+    num_nodes = 0;
+    nodes = (orte_node_t**)orte_node_pool->addr;
+    while (NULL != nodes[num_nodes]) {
+        ++num_nodes;
+    }
+    /* pack number of nodes */
     opal_dss.pack(&buf, &num_nodes, 1, OPAL_INT32);
     
     /* pack the HNP's node name - don't mess with
@@ -72,14 +71,14 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
      */
     if (!orte_keep_fqdn_hostnames) {
         char *ptr;
-        nodename = strdup(procs[0]->nodename);
+        nodename = strdup(nodes[0]->name);
         if (NULL != (ptr = strchr(nodename, '.'))) {
             *ptr = '\0';
         }
         opal_dss.pack(&buf, &nodename, 1, OPAL_STRING);
         free(nodename);
     } else {
-        opal_dss.pack(&buf, &procs[0]->nodename, 1, OPAL_STRING);
+        opal_dss.pack(&buf, &nodes[0]->name, 1, OPAL_STRING);
     }
     
     /* see if the cluster is configured with contiguous
@@ -87,13 +86,13 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
      */
     if (orte_contiguous_nodes < num_nodes) {
         /* discover the prefix - find first non-alpha character */
-        len = strlen(procs[1]->nodename);
+        len = strlen(nodes[1]->name);
         memset(prefix, 0, ORTE_MAX_NODE_PREFIX);
-        prefix[0] = procs[1]->nodename[0];  /* must start with alpha */
+        prefix[0] = nodes[1]->name[0];  /* must start with alpha */
         for (i=1; i < len; i++) {
-            if (!isalpha(procs[1]->nodename[i])) {
+            if (!isalpha(nodes[1]->name[i])) {
                 /* found a non-alpha char */
-                if (!isdigit(procs[1]->nodename[i])) {
+                if (!isdigit(nodes[1]->name[i])) {
                     /* if it is anything but a digit,
                      * then that's not good
                      */
@@ -104,12 +103,12 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                 /* okay, this defines end of the prefix.
                  * convert rest of name to an offset
                  */
-                firstnode = strtol(&(procs[1]->nodename[i]), NULL, 10);
+                firstnode = strtol(&(nodes[1]->name[i]), NULL, 10);
                 /* figure out how many digits are in the index */
-                for (num_digs=0; isdigit(procs[1]->nodename[i+num_digs]); num_digs++);
+                for (num_digs=0; isdigit(nodes[1]->name[i+num_digs]); num_digs++);
                 goto PACK;
             }
-            prefix[i] = procs[1]->nodename[i];
+            prefix[i] = nodes[1]->name[i];
         }
 
     PACK:
@@ -133,7 +132,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                              "%s encode:nidmap:contig_nodes prefix %s num_digits %d offset %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), prefix, num_digs, firstnode));
         
-        lastnode = strtol(&(procs[2]->nodename[i]), NULL, 10);
+        lastnode = strtol(&(nodes[2]->name[i]), NULL, 10);
         if ((lastnode - firstnode) < 0) {
             /* we are decrementing */
             incdec = 0;
@@ -148,8 +147,8 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         /* cycle through the nodes - pack the starting offset
          * and total number of nodes in each contiguous range
          */
-        for (i=2; i < (int)jdata->num_procs; i++) {
-            nodenum = strtol(&(procs[i]->nodename[len]), NULL, 10);
+        for (i=2; i < num_nodes; i++) {
+            nodenum = strtol(&(nodes[i]->name[len]), NULL, 10);
             step = nodenum -lastnode;
             if (step < 0) {
                 /* we are decrementing */
@@ -187,7 +186,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         for (i=1; i < num_nodes; i++) {
             if (!orte_keep_fqdn_hostnames) {
                 char *ptr;
-                nodename = strdup(procs[i]->nodename);
+                nodename = strdup(nodes[i]->name);
                 if (NULL != (ptr = strchr(nodename, '.'))) {
                     *ptr = '\0';
                 }
@@ -197,7 +196,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                 }
                 free(nodename);
             } else {
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &procs[i]->nodename, 1, OPAL_STRING))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &nodes[i]->name, 1, OPAL_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
@@ -205,12 +204,36 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         }
     }
     
+    /* since the daemon vpids may not correspond to the node
+     * index, we need to also pack the vpid array for all
+     * daemons. This scenario can happen when the user is
+     * employing a mapping algo that doesn't use all allocated
+     * nodes, and sprinkles procs across them in some non-contig
+     * manner. For example, use of the seq mapper where only
+     * some nodes are used, and where the usage leaves "holes"
+     * in the node array, will cause the daemon vpids to not
+     * match their node array index
+     */
+    
+    /* allocate space for the daemon vpids */
+    vpids = (orte_vpid_t*)malloc(num_nodes * sizeof(orte_vpid_t));
+    for (i=0; i < num_nodes; i++) {
+        if (NULL == nodes[i]->daemon) {
+            /* some nodes may not have daemons on them */
+            vpids[i] = ORTE_VPID_INVALID;
+            continue;
+        }
+        vpids[i] = nodes[i]->daemon->name.vpid;
+    }
+    opal_dss.pack(&buf, vpids, num_nodes, ORTE_VPID);
+    free(vpids);
+    
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     /* allocate space for the node arch */
     arch = (int32_t*)malloc(num_nodes * 4);
     /* transfer the data from the nodes */
     for (i=0; i < num_nodes; i++) {
-        arch[i] = procs[i]->node->arch;
+        arch[i] = nodes[i]->arch;
     }
     /* pack the values */
     opal_dss.pack(&buf, arch, num_nodes, OPAL_INT32);
@@ -228,8 +251,9 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
 {
     int n, loc, k, diglen, namelen;
     char *prefix, digits[10];
-    int32_t num_nodes, lastnode, endrange, i;
+    int32_t num_nodes, lastnode, endrange, i, num_daemons;
     orte_nid_t *node;
+    orte_vpid_t *vpids;
     uint8_t command, num_digs;
     orte_nid_t **nd;
     uint8_t incdec;
@@ -262,11 +286,6 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
     if (num_nodes <= nodes->lowest_free) {
         /* nothing more to do */
         return ORTE_SUCCESS;
-    }
-    
-    /* if we are a daemon or the HNP, update our num_procs */
-    if (orte_process_info.hnp || orte_process_info.daemon) {
-        orte_process_info.num_procs = num_nodes;
     }
     
     /* set the size of the nidmap storage so we minimize
@@ -341,6 +360,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
                     loc++;
                 }
                 strncat(node->name, digits, num_digs);
+                node->daemon = ORTE_VPID_INVALID;
                 /* default the arch to our arch so that non-hetero
                  * case will yield correct behavior
                  */
@@ -353,7 +373,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
             opal_dss.unpack(&buf, &lastnode, &n, OPAL_INT32);
             /* if that is -1, then it flags no more ranges */
             if (-1 == lastnode) {
-                goto arch;
+                goto vpids;
             }
             n=1;
             opal_dss.unpack(&buf, &endrange, &n, OPAL_INT32);
@@ -370,6 +390,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
         for (i=1; i < num_nodes; i++) {
             node = (orte_nid_t*)malloc(sizeof(orte_nid_t));
             node->name = NULL;
+            node->daemon = ORTE_VPID_INVALID;
             /* default the arch to our arch so that non-hetero
              * case will yield correct behavior
              */
@@ -382,7 +403,30 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
         }
     }
     
-arch:
+vpids:
+    /* unpack the daemon vpids */
+    vpids = (orte_vpid_t*)malloc(num_nodes * sizeof(orte_vpid_t));
+    n=num_nodes;
+    opal_dss.unpack(&buf, vpids, &n, ORTE_VPID);
+    nd = (orte_nid_t**)nodes->addr;
+    /* transfer the data to the nidmap, counting the number of
+     * daemons in the system
+     */
+    num_daemons = 0;
+    for (i=0; i < num_nodes; i++) {
+        nd[i]->daemon = vpids[i];
+        if (ORTE_VPID_INVALID != vpids[i]) {
+            ++num_daemons;
+        }
+    }
+    free(vpids);
+    
+    /* if we are a daemon or the HNP, update our num_procs */
+    if (orte_process_info.hnp || orte_process_info.daemon) {
+        orte_process_info.num_procs = num_daemons;
+    }
+    
+    
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     /* allocate space for the node arch */
     arch = (int32_t*)malloc(num_nodes * 4);
@@ -400,9 +444,10 @@ arch:
     if (0 < orte_output_get_verbosity(orte_debug_output)) {
         nd = (orte_nid_t**)nodes->addr;
         for (i=0; i < num_nodes; i++) {
-            orte_output(0, "%s node[%d].name %s arch %0x",
+            orte_output(0, "%s node[%d].name %s daemon %s arch %0x",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                         (NULL == nd[i]) ? "NULL" : nd[i]->name,
+                        ORTE_VPID_PRINT(nd[i]->daemon),
                         (NULL == nd[i]) ? 0 : nd[i]->arch);
         }
     }
