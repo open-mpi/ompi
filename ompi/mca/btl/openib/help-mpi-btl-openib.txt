@@ -471,3 +471,11 @@ Note that these receive queues values may have come from the Open MPI
 adapter default settings file:
 
     %s/mca-btl-openib-hca-params.ini
+#
+[failed load cpc]
+No OpenFabrics connection schemes reported that they were able to be
+used on a specific device.  As such, the openib BTL (OpenFabrics
+support) will be disabled.
+
+Host:           %s
+Device:         %s
