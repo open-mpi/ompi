@@ -1271,8 +1271,11 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
  */
 static void *callback_unlock(int fd, int flags, void *context)
 {
+/* We need #if protection in order to prevent unused variable warning */
+#if OMPI_HAVE_THREAD_SUPPORT 
     opal_mutex_t *m = (opal_mutex_t*) context;
     OPAL_THREAD_UNLOCK(m);
+#endif
     return NULL;
 }
 
