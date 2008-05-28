@@ -319,6 +319,10 @@ ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
 ORTE_DECLSPEC extern int orte_debug_output;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
+ORTE_DECLSPEC extern bool orte_help_want_aggregate;
+ORTE_DECLSPEC extern bool orte_help_show_recursions;
+ORTE_DECLSPEC extern bool orte_params_set;
+ORTE_DECLSPEC extern int orte_debug_verbosity;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;

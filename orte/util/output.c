@@ -80,31 +80,6 @@ int orte_output_get_verbosity(int output_id)
     return opal_output_get_verbosity(output_id);
 }
 
-/* Whether we aggregate show_help() messages or not */
-static bool want_aggregate = true;
-
-/* Whether to report recursions or not */
-static bool show_recursions;
-
-static void register_mca(void)
-{
-    int tmp;
-
-    mca_base_param_reg_int_name("orte", "base_help_aggregate",
-                                "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
-                                false, false,
-                                (int) want_aggregate, &tmp);
-    want_aggregate = OPAL_INT_TO_BOOL(tmp);
-
-    mca_base_param_reg_int_name("orte", "base_show_output_recursions",
-                                "If orte_base_show_output_recursion is true, recursive calls to orte_output will be reported to stderr",
-                                false, false,
-                                (int) false, &tmp);
-    show_recursions = OPAL_INT_TO_BOOL(tmp);
-    
-}
-
-
 
 /************************************************************************/
 
@@ -118,7 +93,7 @@ int orte_output_init(void)
 {
     stderr_stream = opal_output_open(NULL);
     regiester_mca();
-    if (0 == ORTE_PROC_MY_NAME->vpid && want_aggregate) {
+    if (0 == ORTE_PROC_MY_NAME->vpid && orte_help_want_aggregate) {
         orte_output(stderr_stream, "WARNING: orte_base_help_aggregate was set to true, but this system does not support help message aggregation");
     }
     return ORTE_SUCCESS;
@@ -429,7 +404,7 @@ static void output_vverbose(int verbose_level, int output_id,
        HNP).
     */
     if (am_inside) {
-        if (show_recursions) {
+        if (orte_help_want_aggregate) {
             opal_output(0, "%s orte_output recursion detected!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
         opal_output(output_id, filtered);
@@ -474,9 +449,12 @@ static void output_vverbose(int verbose_level, int output_id,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              filtered, output_id));
 
-        /* If RML is not yet setup, then just output this locally.
-           What else can we do? */
-        if (NULL == orte_rml.send_buffer) {
+        /* If RML is not yet setup, or we haven't yet defined the HNP,
+         * then just output this locally.
+         * What else can we do?
+         */
+        if (NULL == orte_rml.send_buffer ||
+            ORTE_PROC_MY_HNP->vpid == ORTE_VPID_INVALID) {
             opal_output(0, filtered);
         } else {
             /* setup a buffer to send to the HNP */
@@ -541,7 +519,7 @@ static int show_help(const char *filename, const char *topic,
 
     /* If we're aggregating, check for duplicates.  Otherwise, don't
        track duplicates at all and always display the message. */
-    if (orte_output_ready && want_aggregate) {
+    if (orte_output_ready && orte_help_want_aggregate) {
         rc = get_tli(filename, topic, &tli);
     } else {
         rc = ORTE_ERR_NOT_FOUND;
@@ -598,7 +576,7 @@ static int show_help(const char *filename, const char *topic,
     }
 
     /* If we're aggregating, add this process name to the list */
-    if (orte_output_ready && want_aggregate) {
+    if (orte_output_ready && orte_help_want_aggregate) {
         pnli = OBJ_NEW(process_name_list_item_t);
         if (NULL == pnli) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -710,8 +688,6 @@ cleanup:
 int orte_output_init(void)
 {
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output, "orte_output init"));
-
-    register_mca();
 
     /* define the default stream that has everything off */
     OBJ_CONSTRUCT(&orte_output_default, opal_output_stream_t);
@@ -1031,11 +1007,17 @@ int orte_show_help(const char *filename, const char *topic,
         return ORTE_SUCCESS;
     }
 
-    if (orte_process_info.hnp) {
+    /* if we are the HNP, or the RML has not yet been setup,
+     * or we don't yet know our HNP, then all we can do
+     * is process this locally
+     */
+    if (orte_process_info.hnp ||
+        NULL == orte_rml.send_buffer ||
+        ORTE_PROC_MY_HNP->vpid == ORTE_VPID_INVALID) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
     }
     
-    /* if we are not the HNP, then we must relay the output message to
+    /* otherwise, we relay the output message to
      * the HNP for processing
      */
     else {

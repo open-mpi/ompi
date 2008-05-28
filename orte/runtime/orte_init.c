@@ -69,6 +69,15 @@ int orte_init(char flags)
         return ret;
     }
     
+    /* ensure we know the tool setting for when we finalize */
+    if ((flags & ORTE_TOOL) || (flags & ORTE_TOOL_WITH_NAME)) {
+        orte_process_info.tool = true;
+    }
+    
+    if (orte_process_info.hnp) {
+        orte_process_info.daemon = false;
+    }
+    
     /* setup the orte_output system */
     if (ORTE_SUCCESS != (ret = orte_output_init())) {
         ORTE_ERROR_LOG(ret);
@@ -91,29 +100,23 @@ int orte_init(char flags)
         goto error;
     }
 
-   /* Ensure the process info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
-        error = "orte_proc_info";
-        goto error;
-    }
-
-    /* ensure we know the tool setting for when we finalize */
-    if ((flags & ORTE_TOOL) || (flags & ORTE_TOOL_WITH_NAME)) {
-        orte_process_info.tool = true;
-    }
-    
     /* Initialize the ORTE data type support */
     if (ORTE_SUCCESS != (ret = orte_dt_init())) {
         error = "orte_dt_init";
         goto error;
     }
     
+    /* Ensure the rest of the process info structure is initialized */
+    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
+        error = "orte_proc_info";
+        goto error;
+    }
+
     /* if I'm the HNP, make sure that the daemon flag is NOT set so that
      * components unique to non-HNP orteds can be selected and init
      * my basic storage elements
      */
     if (orte_process_info.hnp) {
-        orte_process_info.daemon = false;
         if (ORTE_SUCCESS != (ret = orte_hnp_globals_init())) {
             error = "orte_hnp_globals_init";
             goto error;

@@ -221,7 +221,6 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("rml");
   ompi_info::mca_types.push_back("routed");
   ompi_info::mca_types.push_back("plm");
-  ompi_info::mca_types.push_back("sds");
 #if OPAL_ENABLE_FT == 1
   ompi_info::mca_types.push_back("snapc");
 #endif

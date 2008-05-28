@@ -47,4 +47,6 @@ libopen_rte_la_SOURCES += \
         runtime/orte_wakeup.c \
         runtime/orte_locks.c \
         runtime/orte_cr.c \
-        runtime/orte_data_server.c
+        runtime/orte_data_server.c \
+        runtime/orte_mca_params.c
+

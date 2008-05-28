@@ -42,7 +42,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_daemon =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_daemon_uri =        */   NULL,
-    /*  .my_hnp =               */   {0, 0},
+    /*  .my_hnp =               */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_hnp_uri =           */   NULL,
     /*  .hnp_pid =              */    0,
     /*  ,app_num =              */   -1,
@@ -133,10 +133,6 @@ int orte_proc_info(void)
                                 "Total number of process slots allocated to this job",
                                 true, false, -1, &tmp);
     orte_process_info.universe_size = tmp;
-
-    mca_base_param_reg_string_name("orte", "tmpdir_base",
-                                   "Base of the session directory tree",
-                                   false, false, NULL,  &(orte_process_info.tmpdir_base));
 
     /* get the process id */
     orte_process_info.pid = getpid();
