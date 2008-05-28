@@ -1023,7 +1023,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
     /* RDMACM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
         orte_output_verbose(5, mca_btl_base_output,
-                            "openib BTL: rdmacm CPC not supported with XRC receive queues; skipped");
+                            "openib BTL: rdmacm CPC not supported with XRC receive queues, please try xoob CPC; skipped");
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto out;
     }

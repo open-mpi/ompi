@@ -587,7 +587,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     /* IBCM is not supported if we have any XRC QPs */
     if (mca_btl_openib_component.num_xrc_qps > 0) {
         OPAL_OUTPUT_VERBOSE((5, mca_btl_base_output,
-                             "openib BTL: ibcm CPC not supported with XRC receive queues"));
+                             "openib BTL: ibcm CPC not supported with XRC receive queues, please try xoob CPC; skipped"));
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto error;
     }
