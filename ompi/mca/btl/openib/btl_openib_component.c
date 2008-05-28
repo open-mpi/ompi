@@ -25,9 +25,11 @@
 #include "ompi_config.h"
 
 #include <infiniband/verbs.h>
+#include <infiniband/driver.h>
 #include <errno.h>
 #include <string.h>   /* for strerror()*/
 #include <unistd.h>
+#include <dirent.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
@@ -159,6 +161,40 @@ static int btl_openib_component_close(void)
         free(mca_btl_openib_component.receive_queues);
     }
     return OMPI_SUCCESS;
+}
+
+static bool check_basics(void)
+{
+    int rc;
+    char *file;
+    DIR *dir;
+    struct dirent  *entry;
+
+    /* Check to see if $sysfsdir/class/infiniband exists */
+    asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
+    if (NULL == file) {
+        return false;
+    }
+    dir = opendir(file);
+    free(file);
+    if (NULL == dir) {
+        return false;
+    }
+
+    /* Now check to see if it is non-empty */
+    while (1) {
+        if (NULL == (entry = readdir(dir))) {
+            closedir(dir);
+            return false;
+        } else if (0 != strcmp(entry->d_name, ".") && 
+                   0 != strcmp(entry->d_name, "..")) {
+            /* The directory is not empty -- happy */
+            closedir(dir);
+            return true;
+        }
+    }
+
+    /* Never get here */
 }
 
 static void inline pack8(char **dest, uint8_t value)
@@ -1701,6 +1737,16 @@ btl_openib_component_init(int *num_btl_modules,
     /* initialization */
     *num_btl_modules = 0;
     num_devs = 0;
+
+    /* Per https://svn.open-mpi.org/trac/ompi/ticket/1305, check to
+       see if $sysfsdir/class/infiniband exists.  If it does not,
+       assume that the RDMA hardware drivers are not loaded, and
+       therefore we don't want OpenFabrics verbs support in this OMPI
+       job.  No need to print a warning. */
+    if (!check_basics()) {
+        return NULL;
+    }
+    
 
     seedv[0] = ORTE_PROC_MY_NAME->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
