@@ -529,7 +529,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             lid < ib_port_attr->lid + lmc; lid += lmc_step){
         for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
             char param[40];
-            int rc;
 
             openib_btl = malloc(sizeof(mca_btl_openib_module_t));
             if(NULL == openib_btl) {
@@ -555,16 +554,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
 
             openib_btl->cpcs = NULL;
             openib_btl->num_cpcs = 0;
-
-            /* Do we have at least one CPC that can handle this
-               port? */
-            rc = 
-                ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
-            if (OMPI_ERR_NOT_SUPPORTED == rc) {
-                continue;
-            } else if (OMPI_SUCCESS != rc) {
-                return rc;
-            }
 
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbfunc = btl_openib_control;
             mca_btl_base_active_message_trigger[MCA_BTL_TAG_IB].cbdata = NULL;
@@ -750,6 +739,29 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
     hca->thread.t_arg = hca;
     hca->progress = false;
 #endif
+#endif
+
+#if HAVE_XRC
+    /* if user configured to run with XRC qp and the device doesn't
+     * support it - we should ignore this hca. Maybe we have another
+     * one that has XRC support
+     */
+    if (!(hca->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
+            MCA_BTL_XRC_ENABLED) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                "XRC on device without XRC support", true,
+                mca_btl_openib_component.num_xrc_qps,
+                ibv_get_device_name(hca->ib_dev),
+                orte_process_info.nodename);
+        return OMPI_ERROR;
+    }
+
+    if (MCA_BTL_XRC_ENABLED) {
+        if (OMPI_SUCCESS != mca_btl_openib_open_xrc_domain(hca)) {
+            BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
+            return OMPI_ERROR;
+        }
+    }
 #endif
 
     hca->endpoints = OBJ_NEW(opal_pointer_array_t);
@@ -1710,11 +1722,6 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    if (MCA_BTL_XRC_ENABLED) {
-        OBJ_CONSTRUCT(&mca_btl_openib_component.ib_addr_table,
-                opal_hash_table_t);
-    }
-
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, ompi_free_list_t);
@@ -1871,6 +1878,15 @@ btl_openib_component_init(int *num_btl_modules,
        mca_btl_openib_component.receive_queues. */
     setup_qps();
 
+    /* For XRC: 
+     * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
+
+    /* Init XRC IB Addr hash table */
+    if (MCA_BTL_XRC_ENABLED) {
+        OBJ_CONSTRUCT(&mca_btl_openib_component.ib_addr_table,
+                opal_hash_table_t);
+    }
+
     /* Loop through all the btl modules that we made and find every
        base HCA that doesn't have hca->qps setup on it yet (remember
        that some modules may share the same HCA, so when going through
@@ -1927,10 +1943,22 @@ btl_openib_component_init(int *num_btl_modules,
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
         item = opal_list_remove_first(&btl_list);
         ib_selected = (mca_btl_base_selected_module_t*)item;
-        mca_btl_openib_component.openib_btls[i] =
-            (mca_btl_openib_module_t*)ib_selected->btl_module;
+        openib_btl = (mca_btl_openib_module_t*)ib_selected->btl_module;
+
+        /* Do we have at least one CPC that can handle this
+           port? */
+        ret = 
+            ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
+        if (OMPI_SUCCESS != ret) {
+            orte_show_help("help-mpi-btl-openib.txt",
+                           "failed load cpc", true,
+                           orte_process_info.nodename,
+                           ibv_get_device_name(openib_btl->hca->ib_dev));
+            return NULL;
+        }
+
+        mca_btl_openib_component.openib_btls[i] = openib_btl;
         OBJ_RELEASE(ib_selected);
-        openib_btl = mca_btl_openib_component.openib_btls[i];
         btls[i] = &openib_btl->super;
         if(finish_btl_init(openib_btl) != OMPI_SUCCESS)
             return NULL;
@@ -1954,9 +1982,6 @@ btl_openib_component_init(int *num_btl_modules,
     /* If we fail early enough in the setup, we just modex around that
        there are no openib BTL's in this process and return NULL. */
 
-    if (MCA_BTL_XRC_ENABLED) {
-        OBJ_DESTRUCT(&mca_btl_openib_component.ib_addr_table);
-    }
     /* Be sure to shut down the fd listener */
     ompi_btl_openib_fd_finalize();
 
