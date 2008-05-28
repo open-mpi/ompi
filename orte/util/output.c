@@ -248,6 +248,7 @@ static int stdout_stream, stderr_stream;
 static opal_output_stream_t stdout_lds, stderr_lds, orte_output_default;
 static opal_pointer_array_t orte_output_streams;
 static bool orte_output_ready = false;
+static bool suppress_warnings = false;
 
 static void process_name_list_item_constructor(process_name_list_item_t *obj)
 {
@@ -895,8 +896,10 @@ void orte_output(int output_id, const char *format, ...)
         } else {
             /* see above discussion as to how we handle this error */
             va_start(arglist, format);
-            fprintf(stderr, "A call was made to orte_output prior to calling orte_init\n");
-            fprintf(stderr, "The offending message is:\n");
+            if (!suppress_warnings) {
+                fprintf(stderr, "A call was made to orte_output prior to calling orte_init\n");
+                fprintf(stderr, "The offending message is:\n");
+            }
             output = opal_output_vstring(0, 0, format, arglist);
             fprintf(stderr, "%s\n", (NULL == output) ? "NULL" : output);
             if (NULL != output) free(output);
@@ -930,8 +933,10 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
              * how this is being handled
              */
             va_start(arglist, format);
-            fprintf(stderr, "A call was made to orte_output_verbose prior to calling orte_init\n");
-            fprintf(stderr, "The offending message (verbosity=%d) is:\n", verbose_level);
+            if (!suppress_warnings) {
+                fprintf(stderr, "A call was made to orte_output_verbose prior to calling orte_init\n");
+                fprintf(stderr, "The offending message (verbosity=%d) is:\n", verbose_level);
+            }
             output = opal_output_vstring(0, 0, format, arglist);
             fprintf(stderr, "%s\n", (NULL == output) ? "NULL" : output);
             if (NULL != output) free(output);
@@ -974,29 +979,6 @@ int orte_show_help(const char *filename, const char *topic,
     va_list arglist;
     char *output;
     
-    if (!orte_output_ready) {
-        /* if we are finalizing, then we have no way to process
-         * this through the orte_output system - just drop it to
-         * opal_show_help for handling
-         */
-        if (orte_finalizing) {
-            va_start(arglist, want_error_header);
-            output = opal_show_help_vstring(filename, topic, want_error_header, 
-                                            arglist);
-            va_end(arglist);
-            rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
-            return rc;
-        } else {
-            /* if we are not finalizing, then this was called prior
-             * to the normal init - see above discussion as to
-             * how this was handled
-             */
-            fprintf(stderr, "A call was made to orte_show_help prior to calling orte_init\n");
-            fprintf(stderr, "The offending message referenced filename: %s topic %s\n", filename, topic);
-            return ORTE_ERROR;
-        }
-    }
-    
     va_start(arglist, want_error_header);
     output = opal_show_help_vstring(filename, topic, want_error_header, 
                                     arglist);
@@ -1007,6 +989,25 @@ int orte_show_help(const char *filename, const char *topic,
         return ORTE_SUCCESS;
     }
 
+    if (!orte_output_ready) {
+        /* if we are finalizing, then we have no way to process
+         * this through the orte_output system - just drop it to
+         * opal_show_help for handling
+         *
+         * If we are not finalizing, then this is probably a show_help
+         * stemming from either a cmd-line request to display the usage
+         * message, or a show_help related to a user error. In either case,
+         * we can't do anything but just call opal_show_help
+         *
+         * Ensure we suppress the orte_output warnings for this case, then
+         * re-enable them when we are done
+         */
+        suppress_warnings = true;
+        rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
+        suppress_warnings = false;
+        goto CLEANUP;
+    }
+    
     /* if we are the HNP, or the RML has not yet been setup,
      * or we don't yet know our HNP, then all we can do
      * is process this locally
@@ -1053,6 +1054,7 @@ int orte_show_help(const char *filename, const char *topic,
         }
     }
     
+CLEANUP:
     free(output);
     return rc;
 }
