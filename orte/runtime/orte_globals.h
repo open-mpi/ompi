@@ -270,6 +270,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 typedef struct {
     /* nodename */
     char *name;
+    /* vpid of daemon on this node */
+    orte_vpid_t daemon;
     /* arch of node */
     uint32_t arch;
 } orte_nid_t;
