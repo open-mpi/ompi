@@ -1876,7 +1876,9 @@ btl_openib_component_init(int *num_btl_modules,
 
     /* Setup the BSRQ QP's based on the final value of
        mca_btl_openib_component.receive_queues. */
-    setup_qps();
+    if (OMPI_SUCCESS != setup_qps()) {
+        return NULL;
+    }
 
     /* For XRC: 
      * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
