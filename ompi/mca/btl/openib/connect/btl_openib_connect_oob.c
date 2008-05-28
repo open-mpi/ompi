@@ -124,6 +124,11 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     }
 #endif
 
+    if (mca_btl_openib_component.num_xrc_qps > 0) {
+        orte_output_verbose(5, mca_btl_base_output,
+                            "openib BTL: oob CPC not supported with XRC receive queues, please try xoob CPC; skipped");
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
     /* If this btl supports OOB, then post the RML message.  But
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
