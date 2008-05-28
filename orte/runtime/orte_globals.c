@@ -52,6 +52,10 @@ bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
+bool orte_help_want_aggregate = true;
+bool orte_help_show_recursions;
+bool orte_params_set = false;
+int orte_debug_verbosity;
 
 int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;
@@ -81,45 +85,13 @@ opal_pointer_array_t *orte_node_pool;
 bool orte_initialized = false;
 bool orte_finalizing = false;
 
-/* whether we have registered params or not */
-static bool params_set = false;
-
-int orte_register_params(void)
+int orte_dt_init(void)
 {
-    int value;
-    int orte_debug_verbosity;
-    
-    if (params_set) {
-        return ORTE_SUCCESS;
-    }
-    
+    int rc;
+    opal_data_type_t tmp;
+
     /* set default output */
     orte_debug_output = orte_output_open(NULL, "ORTE", "DEBUG", NULL);
-    
-    mca_base_param_reg_int_name("orte", "debug",
-                                "Top-level ORTE debug switch (default verbosity: 1)",
-                                false, false, (int)false, &value);
-    orte_debug_flag = OPAL_INT_TO_BOOL(value);
-    
-    mca_base_param_reg_int_name("orte", "debug_verbose",
-                                "Verbosity level for ORTE debug messages (default: 1)",
-                                false, false, -1, &orte_debug_verbosity);
-    
-   mca_base_param_reg_int_name("orte", "debug_daemons",
-                                "Whether to debug the ORTE daemons or not",
-                                false, false, (int)false, &value);
-    orte_debug_daemons_flag = OPAL_INT_TO_BOOL(value);
-
-    mca_base_param_reg_int_name("orte", "debug_daemons_file",
-                                "Whether want stdout/stderr of daemons to go to a file or not",
-                                false, false, (int)false, &value);
-    orte_debug_daemons_file_flag = OPAL_INT_TO_BOOL(value);
-    /* If --debug-daemons-file was specified, that also implies
-        --debug-daemons */
-    if (orte_debug_daemons_file_flag) {
-        orte_debug_daemons_flag = true;
-    }
-    
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
         (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {
@@ -129,72 +101,7 @@ int orte_register_params(void)
             orte_output_set_verbosity(orte_debug_output, 1);
         }
     }
-    
-    mca_base_param_reg_int_name("orte", "do_not_launch",
-                                "Perform all necessary operations to prepare to launch the application, but do not actually launch it",
-                                false, false, (int)false, &value);
-    orte_do_not_launch = OPAL_INT_TO_BOOL(value);
-    
-    mca_base_param_reg_int_name("orted", "spin",
-                                "Have any orteds spin until we can connect a debugger to them",
-                                false, false, (int)false, &value);
-    orted_spin_flag = OPAL_INT_TO_BOOL(value);
-
-    /* check for timing requests */
-    mca_base_param_reg_int_name("orte", "timing",
-                                "Request that critical timing loops be measured",
-                                false, false, (int)false, &value);
-    orte_timing = OPAL_INT_TO_BOOL(value);
-    
-    /* User-level debugger info string */
-
-    mca_base_param_reg_string_name("orte", "base_user_debugger",
-                                   "Sequence of user-level debuggers to search for in orterun",
-                                   false, false, "totalview @mpirun@ -a @mpirun_args@ : ddt -n @np@ -start @executable@ @executable_argv@ @single_app@ : fxp @mpirun@ -a @mpirun_args@", NULL);
-
-
-    mca_base_param_reg_int_name("orte", "abort_timeout",
-                                "Max time to wait [in secs] before aborting an ORTE operation (default: 1sec)",
-                                false, false, 1, &value);
-    orte_max_timeout = 1000000.0 * value;  /* convert to usec */
-
-    mca_base_param_reg_int_name("orte", "timeout_step",
-                                "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 100 usec/proc)",
-                                false, false, 100, &orte_timeout_usec_per_proc);
-    
-    /* default hostfile */
-    mca_base_param_reg_string_name("orte", "default_hostfile",
-                                   "Name of the default hostfile (relative or absolute path)",
-                                   false, false, NULL, &orte_default_hostfile);
-    
-    
-    /* whether or not to keep FQDN hostnames */
-    mca_base_param_reg_int_name("orte", "keep_fqdn_hostnames",
-                                "Whether or not to keep FQDN hostnames [default: no]",
-                                false, false, (int)false, &value);
-    orte_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
-    
-    /* whether or not static ports exist */
-    mca_base_param_reg_int_name("orte", "static_ports",
-                                "Whether or not static ports are in use [default: no]",
-                                false, false, (int)false, &value);
-    orte_static_ports = OPAL_INT_TO_BOOL(value);
-
-    /* whether or not contiguous nodenames are in use */
-    mca_base_param_reg_int_name("orte", "contiguous_nodes",
-                                "Number of nodes after which contiguous nodenames will be used [default: INT_MAX]",
-                                false, false, INT32_MAX, &orte_contiguous_nodes);
-    
-    /* All done */
-    params_set = true;
-    return ORTE_SUCCESS;
-}
-
-int orte_dt_init(void)
-{
-    int rc;
-    opal_data_type_t tmp;
-    
+        
     /** register the base system types with the DSS */
     tmp = ORTE_STD_CNTR;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_std_cntr,
