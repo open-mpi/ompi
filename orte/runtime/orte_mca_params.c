@@ -75,6 +75,10 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orted_spin_flag = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("orte", "daemon_fail",
+                                "Have the specified orted fail after init for debugging purposes",
+                                false, false, (int)false, &orted_debug_failure);
+    
     /* check for timing requests */
     mca_base_param_reg_int_name("orte", "timing",
                                 "Request that critical timing loops be measured",

@@ -107,6 +107,7 @@ static struct {
     char* num_procs;
     int uri_pipe;
     int singleton_died_pipe;
+    int fail;
 } orted_globals;
 
 /*
@@ -122,6 +123,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Have the orted spin until we can connect a debugger to it" },
 
+    { NULL, NULL, NULL, '\0', NULL, "debug-failure", 1,
+        &orted_globals.fail, OPAL_CMD_LINE_TYPE_INT,
+      "Have the specified orted fail after init for debugging purposes" },
+    
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
         "Debug the OpenRTE" },
@@ -188,7 +193,9 @@ int orte_daemon(int argc, char *argv[])
     memset(&orted_globals, 0, sizeof(orted_globals));
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
     orted_globals.singleton_died_pipe = -1;
- 
+    /* init the failure orted vpid to an invalid value */
+    orted_globals.fail = ORTE_VPID_INVALID;
+    
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
@@ -293,6 +300,16 @@ int orte_daemon(int argc, char *argv[])
         return ret;
     }
     
+    if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
+        /* Finalize and clean up ourselves */
+        if (ORTE_SUCCESS != (ret = orte_finalize())) {
+            ORTE_ERROR_LOG(ret);
+        }
+        
+        /* return with non-zero status */
+        return -1;
+    }
+
     /* detach from controlling terminal
      * otherwise, remain attached so output can get to us
      */

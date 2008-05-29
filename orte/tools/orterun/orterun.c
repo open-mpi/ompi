@@ -570,6 +570,7 @@ static void job_completed(int trigpipe, short event, void *arg)
 {
     int rc;
     orte_job_state_t exit_state;
+    orte_job_t *daemons;
     
     /* flag that we are here to avoid doing it twice */
     if (!opal_atomic_trylock(&orte_job_complete_lock)) { /* returns 1 if already locked */
@@ -622,7 +623,12 @@ static void job_completed(int trigpipe, short event, void *arg)
          * so
          */
         opal_event_del(orteds_exit_event);
-        ORTE_DETECT_TIMEOUT(&ev, orte_process_info.num_procs,
+        /* get the orted job data object */
+        if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+            /* we are totally hozed */
+            goto DONE;
+        }
+        ORTE_DETECT_TIMEOUT(&ev, daemons->num_procs,
                             orte_timeout_usec_per_proc,
                             orte_max_timeout, terminated);
     }
