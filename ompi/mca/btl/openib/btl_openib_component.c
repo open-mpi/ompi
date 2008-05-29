@@ -165,7 +165,6 @@ static int btl_openib_component_close(void)
 
 static bool check_basics(void)
 {
-    int rc;
     char *file;
     DIR *dir;
     struct dirent  *entry;
