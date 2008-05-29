@@ -273,7 +273,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                orte_output(0, "%s-%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d) [sd = %d]", 
+                orte_output(0, "%s->%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d) [sd = %d]", 
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
                     ORTE_NAME_PRINT(&(peer->peer_name)), 
                     strerror(opal_socket_errno),
