@@ -41,7 +41,7 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
 
-static opal_event_t *ev;
+static opal_event_t *ev=NULL;
 static orte_vpid_t num_reported, num_being_sent;
 static bool done_reporting;
 
@@ -63,10 +63,19 @@ static void send_callback(int status,
                           orte_rml_tag_t tag,
                           void* cbdata)
 {
+    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_cmd message to %s sent",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(peer)));
+    
     num_reported++;
     if (num_reported == num_being_sent) {
         /* cancel the timer */
-        opal_event_del(ev);
+        if (NULL != ev) {
+            opal_event_del(ev);
+            ev = NULL;
+        }
+        
         /* mark as done */
         done_reporting = true;
         
@@ -138,35 +147,22 @@ int orte_plm_base_orted_exit(void)
                              "%s plm:base:orted_cmd:orted_exit abnormal term ordered",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
-        /* since we cannot know which daemons may/may not be alive,
-         * setup an event so we will time out after giving the send
-         * our best attempt
-         */
-        ORTE_DETECT_TIMEOUT(&ev, orte_process_info.num_procs,
-                            orte_timeout_usec_per_proc,
-                            orte_max_timeout, failed_send);
-        /* if I am the HNP, I need to get this message too, but just set things
-         * up so the cmd processor gets called.
-         * We don't want to message ourselves as this can create circular logic
-         * in the RML. Instead, this macro will set a zero-time event which will
-         * cause the buffer to be processed by the cmd processor - probably will
-         * fire right away, but that's okay
-         * The macro makes a copy of the buffer, so it's okay to release it here
-         */
-        if (orte_process_info.hnp) {
-            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-        }
-        
         /* now send the command one daemon at a time using a non-blocking
          * send - let the callback function keep track of how many
          * complete - it will delete the event if they all do.
-         * Start with vpid=1 as the HNP gets it another way
+         * Start with vpid=1 as the HNP is told to exit another way
          */
         done_reporting = false;
         num_reported = 0;
-        num_being_sent = orte_process_info.num_procs-1;
+        num_being_sent = 0;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
-        for(v=1; v < orte_process_info.num_procs; v++) {
+        for(v=1; v < daemons->num_procs; v++) {
+            /* if we don't have contact info for this daemon,
+             * then we know we can't reach it - so don't try
+             */
+            if (NULL == procs[v]->rml_uri) {
+                continue;
+            }
             peer.vpid = v;
             /* check to see if this daemon is known to be "dead" */
             if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
@@ -176,21 +172,38 @@ int orte_plm_base_orted_exit(void)
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
+            ++num_being_sent;
+            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:orted_cmd:orted_exit sending cmd to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer)));
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
                                     send_callback, 0);
         }
+        OBJ_DESTRUCT(&cmd); /* done with this */
+        
+        /* since we cannot know which daemons may/may not be alive,
+         * setup an event so we will time out after giving the send
+         * our best attempt
+         */
+        ORTE_DETECT_TIMEOUT(&ev, num_being_sent,
+                            1000*orte_timeout_usec_per_proc,
+                            10*orte_max_timeout, failed_send);
+        
         /* wait for completion or timeout */
-        while (!done_reporting) {
-            opal_progress();
+        ORTE_PROGRESSED_WAIT(done_reporting, num_reported, num_being_sent);
+
+        /* cleanup the timer */
+        if (NULL != ev) {
+            opal_event_del(ev);
+            ev = NULL;
         }
-        OBJ_DESTRUCT(&cmd);
         
         /* if all the sends didn't go, report that */
-        if (num_reported != num_being_sent) {
-            orte_show_help("help-plm-base.txt", "incomplete-exit-cmd", true);
+        if (num_reported < num_being_sent) {
             return ORTE_ERR_SILENT;
         }
-        
+
         /* if all sends went out, return success */
         return ORTE_SUCCESS;
     }
@@ -254,14 +267,6 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
         }
         procs = (orte_proc_t**)daemons->procs->addr;
 
-        /* since we cannot know which daemons may/may not be alive,
-         * setup an event so we will time out after giving the send
-         * our best attempt
-         */
-        ORTE_DETECT_TIMEOUT(&ev, orte_process_info.num_procs,
-                            orte_timeout_usec_per_proc,
-                            orte_max_timeout, failed_send);
-       
         /* if I am the HNP, I need to get this message too, but just set things
          * up so the cmd processor gets called.
          * We don't want to message ourselves as this can create circular logic
@@ -281,9 +286,15 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
          */
         done_reporting = false;
         num_reported = 0;
-        num_being_sent = orte_process_info.num_procs-1;
+        num_being_sent = 0;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
-        for(v=1; v < orte_process_info.num_procs; v++) {
+        for(v=1; v < daemons->num_procs; v++) {
+            /* if we don't have contact info for this daemon,
+             * then we know we can't reach it - so don't try
+             */
+            if (NULL == procs[v]->rml_uri) {
+                continue;
+            }
             peer.vpid = v;
             /* check to see if this daemon is known to be "dead" */
             if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
@@ -293,18 +304,35 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
+            ++num_being_sent;
+            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:orted_cmd:kill_local_procs sending cmd to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer)));
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
                                 send_callback, 0);
         }
+        OBJ_DESTRUCT(&cmd); /* done with this */
+        
+        /* since we cannot know which daemons may/may not be alive,
+         * setup an event so we will time out after giving the send
+         * our best attempt
+         */
+        ORTE_DETECT_TIMEOUT(&ev, num_being_sent,
+                            1000*orte_timeout_usec_per_proc,
+                            10*orte_max_timeout, failed_send);
+        
         /* wait for completion or timeout */
-        while (!done_reporting) {
-            opal_progress();
+        ORTE_PROGRESSED_WAIT(done_reporting, num_reported, num_being_sent);
+        
+        /* cleanup the timer */
+        if (NULL != ev) {
+            opal_event_del(ev);
+            ev = NULL;
         }
-        OBJ_DESTRUCT(&cmd);
         
         /* if all the sends didn't go, report that */
-        if (num_reported != num_being_sent) {
-            orte_show_help("help-plm-base.txt", "incomplete-kill-procs-cmd", true);
+        if (num_reported < num_being_sent) {
             return ORTE_ERR_SILENT;
         }
         

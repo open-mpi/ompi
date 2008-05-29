@@ -494,19 +494,23 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
        now, though, the only thing that really matters is that
        srun failed. Report the error and make sure that orterun
        wakes up - otherwise, do nothing!
+     
+       Unfortunately, the pid returned here is the srun pid, not the pid of
+       the proc that actually died! So, to avoid confusion, just use -1 as the
+       pid so nobody thinks this is real
     */
     
     if (0 != status) {
         if (failed_launch) {
             /* report that the daemon has failed so we can exit
              */
-            orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
+            orte_plm_base_launch_failed(active_job, true, -1, status, ORTE_JOB_STATE_FAILED_TO_START);
             
         } else {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
-            orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_ABORTED);
+            orte_plm_base_launch_failed(active_job, true, -1, status, ORTE_JOB_STATE_ABORTED);
         }
     }
     

@@ -325,6 +325,7 @@ ORTE_DECLSPEC extern bool orte_help_want_aggregate;
 ORTE_DECLSPEC extern bool orte_help_show_recursions;
 ORTE_DECLSPEC extern bool orte_params_set;
 ORTE_DECLSPEC extern int orte_debug_verbosity;
+ORTE_DECLSPEC extern int orted_debug_failure;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;

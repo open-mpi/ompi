@@ -56,6 +56,7 @@ bool orte_help_want_aggregate = true;
 bool orte_help_show_recursions;
 bool orte_params_set = false;
 int orte_debug_verbosity;
+int orted_debug_failure = ORTE_VPID_INVALID;
 
 int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;

@@ -227,6 +227,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
                                  int status, orte_job_state_t state)
 {
     orte_job_t *jdata;
+    char *pidstr;
     
     ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch_failed for job %s during %s",
@@ -234,23 +235,32 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
                          ORTE_JOBID_PRINT(job),
                          (daemons_launching) ? "daemon launch" : "app launch"));
 
+    if (0 < pid) {
+        asprintf(&pidstr, "%d", (int)pid);
+    } else {
+        /* if the pid is negative, then we couldn't get a real pid
+         * to report here - so tell someone that
+         */
+        pidstr = strdup("NO PID");
+    }
+
     if (daemons_launching) {
         if (WIFSIGNALED(status)) { /* died on signal */
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
                 orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
-                               pid, WTERMSIG(status));
+                               pidstr, WTERMSIG(status));
             } else {
                 orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                               pid, WTERMSIG(status));
+                               pidstr, WTERMSIG(status));
             }
 #else
             orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                           pid, WTERMSIG(status));
+                           pidstr, WTERMSIG(status));
 #endif /* WCOREDUMP */
         } else {
             orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
-                           pid, WEXITSTATUS(status));
+                           pidstr, WEXITSTATUS(status));
         }
         orted_failed_launch = true;
         /* set the flag indicating that a daemon failed so we use the proper
@@ -259,6 +269,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
         orte_abnormal_term_ordered = true;
         
     }
+    free(pidstr);
     
     /* Set the job state as indicated so orterun's exit status
        will be non-zero
@@ -682,6 +693,12 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "--spin");
+    }
+    if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
+        opal_argv_append(argc, argv, "--debug-failure");
+        asprintf(&param, "%d", orted_debug_failure);
+        opal_argv_append(argc, argv, param);
+        free(param);
     }
     
     /* tell the orted what SDS component to use */
