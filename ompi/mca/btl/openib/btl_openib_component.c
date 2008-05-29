@@ -29,7 +29,8 @@
 #include <errno.h>
 #include <string.h>   /* for strerror()*/
 #include <unistd.h>
-#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
@@ -165,35 +166,23 @@ static int btl_openib_component_close(void)
 
 static bool check_basics(void)
 {
+    int rc;
     char *file;
-    DIR *dir;
-    struct dirent  *entry;
+    struct stat s;
 
-    /* Check to see if $sysfsdir/class/infiniband exists */
+    /* Check to see if $sysfsdir/class/infiniband/ exists */
     asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
     if (NULL == file) {
         return false;
     }
-    dir = opendir(file);
+    rc = stat(file, &s);
     free(file);
-    if (NULL == dir) {
+    if (0 != rc || !S_ISDIR(s.st_mode)) {
         return false;
     }
 
-    /* Now check to see if it is non-empty */
-    while (1) {
-        if (NULL == (entry = readdir(dir))) {
-            closedir(dir);
-            return false;
-        } else if (0 != strcmp(entry->d_name, ".") && 
-                   0 != strcmp(entry->d_name, "..")) {
-            /* The directory is not empty -- happy */
-            closedir(dir);
-            return true;
-        }
-    }
-
-    /* Never get here */
+    /* It exists and is a directory -- good enough */
+    return true;
 }
 
 static void inline pack8(char **dest, uint8_t value)
