@@ -255,10 +255,6 @@ int opal_cr_init(void )
                                 false, false,
                                 SIGUSR1,
                                 &opal_cr_entry_point_signal);
-#else
-    opal_output( 0, "This feature is disabled on Windows" );
-    return 0;
-#endif  /* __WINDOWS__ */
 
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: Checkpoint Signal: %d",
@@ -279,6 +275,11 @@ int opal_cr_init(void )
             ;
         }
     }
+
+#else
+    opal_output( 0, "This feature is disabled on Windows" );
+    return 0;
+#endif  /* __WINDOWS__ */
 
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",
                                    "Temporary directory to place rendezvous files for a checkpoint",

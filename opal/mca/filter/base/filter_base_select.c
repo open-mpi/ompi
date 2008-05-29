@@ -18,7 +18,9 @@
 
 #include "opal_config.h"
 
+#ifdef HAVE_UNISTD_H
 #include "unistd.h"
+#endif
 
 #include "opal/include/opal/constants.h"
 #include "opal/util/output.h"
