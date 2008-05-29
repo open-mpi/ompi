@@ -134,6 +134,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
 
+    /* select XML output */
+    { NULL, NULL, NULL, '\0', NULL, "xml", 0,
+      &orterun_globals.xml, OPAL_CMD_LINE_TYPE_BOOL,
+      "Provide all output in XML format" },
+    
     /* Preload the binary on the remote machine */
     { NULL, NULL, NULL, 's', NULL, "preload-binary", 0,
       &orterun_globals.preload_binary, OPAL_CMD_LINE_TYPE_BOOL,
@@ -192,13 +197,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)" },
 
-    /* Specific mapping (C, cX, N, nX) */
-#if 0
-    /* JJH --map is not currently implemented so don't advertise it until it is */
-    { NULL, NULL, NULL, '\0', NULL, "map", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping of processes to nodes / CPUs" },
-#endif
+    /* Mapping options */
     { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
       &orterun_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by node" },
@@ -220,7 +219,14 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "base", "display_map", '\0', "display-map", "display-map", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the process map just before launch"},
+    { NULL, NULL, NULL, 'H', "host", "host", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "List of hosts to invoke processes on" },
+    { "rmaps", "base", "no_schedule_local", '\0', "nolocal", "nolocal", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Do not run any MPI applications on the local node" },
     
+    /* Allocation options */
     { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the allocation being used by this job"},
@@ -235,21 +241,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "path", "path", 1,
       &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
-    /* These arguments can be specified multiple times */
-#if 0
-    /* JMS: Removed because it's not really implemented */
-    { NULL, NULL, NULL, '\0', "arch", "arch", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Architecture to start processes on" },
-#endif
-    { NULL, NULL, NULL, 'H', "host", "host", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "List of hosts to invoke processes on" },
-
-    /* OSC mpiexec-like arguments */
-    { "rmaps", "base", "no_schedule_local", '\0', "nolocal", "nolocal", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not run any MPI applications on the local node" },
 
     /* User-level debugger arguments */
     { NULL, NULL, NULL, '\0', "tv", "tv", 0,
@@ -1013,6 +1004,7 @@ static int init_globals(void)
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
     orterun_globals.quiet                      = false;
+    orterun_globals.xml                        = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
@@ -1081,6 +1073,15 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         exit(0);
     }
 
+    /* Do we want XML output? */
+    if (orterun_globals.xml) {
+        char *tmp;
+        id = mca_base_param_reg_string_name("filter", NULL,
+                                            "Force selection of filter module",
+                                            false, false, NULL, &tmp);
+        mca_base_param_set_string(id, "xml");
+    }
+    
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {
