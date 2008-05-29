@@ -249,6 +249,7 @@ static opal_output_stream_t stdout_lds, stderr_lds, orte_output_default;
 static opal_pointer_array_t orte_output_streams;
 static bool orte_output_ready = false;
 static bool suppress_warnings = false;
+static bool am_inside = false;
 
 static void process_name_list_item_constructor(process_name_list_item_t *obj)
 {
@@ -353,7 +354,6 @@ static void output_vverbose(int verbose_level, int output_id,
     uint8_t flag;
     orte_output_stream_t **streams;
     int rc;
-    static bool am_inside = false;
 
     if (output_id < 0) {
         /* to be ignored */
@@ -405,9 +405,9 @@ static void output_vverbose(int verbose_level, int output_id,
        HNP).
     */
     if (am_inside) {
-        if (orte_help_want_aggregate) {
-            opal_output(0, "%s orte_output recursion detected!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        }
+        OPAL_OUTPUT_VERBOSE((20, orte_debug_output,
+                             "%s orte_output recursion detected",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         opal_output(output_id, filtered);
         goto cleanup;
     }
@@ -470,6 +470,7 @@ static void output_vverbose(int verbose_level, int output_id,
                 ORTE_ERROR_LOG(rc);
             }
             OBJ_DESTRUCT(&buf);
+            am_inside = false;
         }
     }
 
@@ -480,7 +481,6 @@ static void output_vverbose(int verbose_level, int output_id,
     if (NULL != output) {
         free(output);
     }
-    am_inside = false;
 }
 
 static void show_accumulated_duplicates(int fd, short event, void *context)
