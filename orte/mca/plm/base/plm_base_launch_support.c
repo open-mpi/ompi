@@ -241,7 +241,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
         /* if the pid is negative, then we couldn't get a real pid
          * to report here - so tell someone that
          */
-        pidstr = strdup("NO PID");
+        pidstr = strdup("unknown");
     }
 
     if (daemons_launching) {
