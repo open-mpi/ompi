@@ -230,6 +230,9 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
 
+    /* alert us if any orteds die during startup */
+    opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
+
     /* create nodelist */
     nodelist_argv = NULL;
     nodelist_argc = 0;
