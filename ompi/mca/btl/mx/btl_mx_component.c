@@ -620,8 +620,10 @@ int mca_btl_mx_component_progress(void)
             if( MCA_BTL_MX_SEND == frag->type ) {  /* it's a send */
                 int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 /* call the completion callback */
-                frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
-                                       &(frag->base), OMPI_SUCCESS );
+                if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                    frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
+                                           &(frag->base), OMPI_SUCCESS );
+                }
                 if( btl_ownership ) {
                     MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
                 }

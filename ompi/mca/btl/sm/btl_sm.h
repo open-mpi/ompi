@@ -80,24 +80,23 @@ struct mca_btl_sm_component_t {
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
                                                     shared memory */
-    ompi_fifo_t **shm_fifo; /**< pointer to fifo 2D array in shared memory */
-    char **shm_bases;       /**< pointer to base pointers in shared memory */
-    ompi_fifo_t **fifo;    /**< cached copy of the pointer to the 2D
-                             fifo array.  The address in the shared
-                             memory segment sm_ctl_header is a relative,
-                             but this one, in process private memory, is
-                             a real virtual address */
-    size_t size_of_cb_queue; /**< size of each circular buffer queue array */
-    size_t cb_lazy_free_freq; /**< frequency of lazy free */
-    int cb_max_num;           /**< max number of circular buffers for each peer */
-    ptrdiff_t *sm_offset;    /**< offset to be applied to shared memory
-                              addresses, per local process value */
-    int32_t num_smp_procs;  /**< current number of smp procs on this host */
-    int32_t my_smp_rank;    /**< My SMP process rank.  Used for accessing
-			      *   SMP specfic data structures. */
-    ompi_free_list_t sm_frags1;    /**< free list of sm first */
-    ompi_free_list_t sm_frags2;    /**< free list of sm second */
-    ompi_free_list_t sm_frags;    /**< free list of frags without data */
+    ompi_fifo_t **shm_fifo;            /**< pointer to fifo 2D array in shared memory */
+    char **shm_bases;                  /**< pointer to base pointers in shared memory */
+    ompi_fifo_t **fifo;                /**< cached copy of the pointer to the 2D
+                                          fifo array.  The address in the shared
+                                          memory segment sm_ctl_header is a relative,
+                                          but this one, in process private memory, is
+                                          a real virtual address */
+    size_t size_of_cb_queue;           /**< size of each circular buffer queue array */
+    size_t cb_lazy_free_freq;          /**< frequency of lazy free */
+    int cb_max_num;                    /**< max number of circular buffers for each peer */
+    ptrdiff_t *sm_offset;              /**< offset to be applied to shared memory
+                                          addresses, per local process value */
+    int32_t num_smp_procs;             /**< current number of smp procs on this host */
+    int32_t my_smp_rank;               /**< My SMP process rank.  Used for accessing
+                                        *   SMP specfic data structures. */
+    ompi_free_list_t sm_frags_eager;   /**< free list of sm first */
+    ompi_free_list_t sm_frags_max;     /**< free list of sm second */
     ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
                                                     fragments that are
                                                     awaiting resources */
@@ -269,6 +268,23 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     uint32_t flags
 );
 
+
+/**
+ * Initiate an inlined send to the peer or return a descriptor.
+ *
+ * @param btl (IN)      BTL module
+ * @param peer (IN)     BTL peer addressing
+ */
+extern int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* endpoint,
+                             struct ompi_convertor_t* convertor,
+                             void* header,
+                             size_t header_size,
+                             size_t payload_size,
+                             uint8_t order,
+                             uint32_t flags,
+                             mca_btl_base_tag_t tag,
+                             mca_btl_base_descriptor_t** descriptor );
 
 /**
  * Initiate a send to the peer.

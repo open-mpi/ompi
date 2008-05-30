@@ -70,7 +70,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
 };
 
 
-static orte_output_stream_t portals_output_stream;
+static opal_output_stream_t portals_output_stream;
 
 int
 mca_btl_portals_component_open(void)
@@ -84,7 +84,7 @@ mca_btl_portals_component_open(void)
      */
 
     /* start up debugging output */
-    OBJ_CONSTRUCT(&portals_output_stream, orte_output_stream_t);
+    OBJ_CONSTRUCT(&portals_output_stream, opal_output_stream_t);
     portals_output_stream.lds_is_debugging = true;
     portals_output_stream.lds_want_stdout = true;
     portals_output_stream.lds_file_suffix = "btl-portals";
@@ -368,10 +368,11 @@ mca_btl_portals_component_progress(void)
                 }
                 break;
             case PTL_EVENT_PUT_START:
+                tag = ((unsigned char*) (&ev.hdr_data))[7];
                 /* generated on destination (target) when a put into memory starts */
                 ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_START for 0x%lx, %d",
-                                     (unsigned long) frag, (int) ev.hdr_data));
+                                     (unsigned long) frag, (int) tag));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
@@ -381,7 +382,7 @@ mca_btl_portals_component_progress(void)
                 }
 #endif
                 /* if it's a pending unexpected receive, do book keeping. */
-                if (ev.hdr_data < MCA_BTL_TAG_MAX) {
+                if (tag < MCA_BTL_TAG_MAX) {
                     block = ev.md.user_ptr;
                     OPAL_THREAD_ADD32(&(block->pending), 1);
                 }
@@ -389,10 +390,11 @@ mca_btl_portals_component_progress(void)
                 break;
 
             case PTL_EVENT_PUT_END: 
+                tag = ((unsigned char*) (&ev.hdr_data))[7];
                 /* generated on destination (target) when a put into memory ends */
                 ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_END for 0x%lx, %d",
-                                     (unsigned long) frag, (int) ev.hdr_data));
+                                     (unsigned long) frag, (int) tag));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
@@ -404,21 +406,51 @@ mca_btl_portals_component_progress(void)
                 }
 #endif
                 /* if it's an unexpected receive, do book keeping and send to PML */
-                if (ev.hdr_data < MCA_BTL_TAG_MAX) {
+                if (tag < MCA_BTL_TAG_MAX) {
                     block = ev.md.user_ptr;
-                    tag = ev.hdr_data;
-
-                    /* if we ever make this thread hot, need to do
-                       something with the receive fragments */
                     frag = &mca_btl_portals_module.portals_recv_frag;
-                    frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
-                    frag->segments[0].seg_len = ev.mlength;
-
-                    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                         "received send fragment 0x%lx (thresh: %d, length %d)", 
-                                         (unsigned long) frag,
-                                         ev.md.threshold, (int) ev.mlength));
-
+                    if(ev.match_bits) { 
+                        uint8_t header_size = ((uint8_t*) (&ev.hdr_data))[6];
+                        memcpy(frag->data, &ev.match_bits, header_size > 8 ? 8 : header_size);
+                        if(header_size > 8) { 
+                            memcpy(frag->data+8, &ev.hdr_data, header_size - 8);
+                        }
+                        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,"received  %x %x %x %x %x %x %x %x %x %x : header_size %x : tag %x \n",  
+                                             frag->data[0], 
+                                             frag->data[1], 
+                                             frag->data[2], 
+                                             frag->data[3], 
+                                             frag->data[4], 
+                                             frag->data[5], 
+                                             frag->data[6], 
+                                             frag->data[7], 
+                                             frag->data[8], 
+                                             frag->data[9],
+                                             header_size,
+                                             tag
+                                             ));
+                        
+                        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,"received %d bytes \n", ev.mlength));
+                        frag->segments[0].seg_addr.pval = &frag->data;
+                        frag->segments[0].seg_len = header_size;
+                        if(ev.mlength) {
+                            frag->segments[1].seg_addr.pval = ((((char*) ev.md.start) + ev.offset));
+                            frag->segments[1].seg_len = ev.mlength;
+                            frag->base.des_dst_cnt = 2;
+                        } else { 
+                            frag->base.des_dst_cnt = 1;
+                        }
+                    } else { 
+                        /* if we ever make this thread hot, need to do
+                           something with the receive fragments */
+                        frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
+                        frag->segments[0].seg_len = ev.mlength;
+                        
+                        ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                                             "received send fragment 0x%lx (thresh: %d, length %d)", 
+                                             (unsigned long) frag,
+                                             ev.md.threshold, (int) ev.mlength));
+                    }
                     if (ev.md.length - (ev.offset + ev.mlength) < (ptl_size_t) ev.md.max_size ||
                         ev.md.threshold == 1) {
                         /* the block is full.  It's deactivated automagically, but we
@@ -458,11 +490,11 @@ mca_btl_portals_component_progress(void)
                                      "PTL_EVENT_REPLY_END for 0x%lx",
                                      (unsigned long) frag));
                 
-                /* let the PML know we're done */
                 frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                       frag->endpoint,
                                       &frag->base,
                                       OMPI_SUCCESS);
+                
                 if( btl_ownership ) {
                     ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                         "in PTL_EVENT_REPLY_END received a frag with btl_ownership!"));
@@ -505,10 +537,12 @@ mca_btl_portals_component_progress(void)
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to end send event\n");
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_ERROR);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_ERROR);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -517,10 +551,12 @@ mca_btl_portals_component_progress(void)
 #endif
                 if(!mca_btl_portals_component.portals_need_ack) { 
                     /* my part's done, in portals we trust! */
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_SUCCESS);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_SUCCESS);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -553,10 +589,12 @@ mca_btl_portals_component_progress(void)
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     orte_output(mca_btl_portals_component.portals_output,
                                 "Failure to ack event\n");
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_ERROR);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_ERROR);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -564,7 +602,7 @@ mca_btl_portals_component_progress(void)
                 } else
 #endif
 
-                if (0 == ev.mlength) {
+                if (ev.rlength != ev.mlength) {
                     /* other side received message but truncated to 0.
                        This should only happen for unexpected
                        messages, and only when the other side has no
@@ -581,10 +619,12 @@ mca_btl_portals_component_progress(void)
                     /* other side received the message.  should have
                        received entire thing */
                     /* let the PML know we're done */
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_SUCCESS);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_SUCCESS);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);

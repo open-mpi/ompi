@@ -71,6 +71,7 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         mca_btl_udapl_prepare_src,
         mca_btl_udapl_prepare_dst,
         mca_btl_udapl_send,
+        NULL, /* send immediate */
         mca_btl_udapl_put,
         NULL, /* get */ 
         mca_btl_base_dump,

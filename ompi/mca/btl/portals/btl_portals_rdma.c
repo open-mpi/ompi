@@ -35,6 +35,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
 {
     mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*) descriptor;
     int ret;
+    unsigned char hdr_data[8];
 
     ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "PtlPut (rdma) fragment %lx, bits %" PRIx64,
@@ -45,7 +46,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
     assert(frag->md_h != PTL_INVALID_HANDLE);
 
     frag->endpoint = btl_peer;
-    frag->hdr.tag = MCA_BTL_TAG_MAX;
+    hdr_data[7] = frag->hdr.tag = MCA_BTL_TAG_MAX;
 
     /* setup the send */
     assert(1 == frag->base.des_src_cnt);
@@ -57,7 +58,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                  0, /* ac_index - not used*/
                  frag->base.des_dst[0].seg_key.key64, /* match bits */
                  0, /* remote offset - not used */
-                 MCA_BTL_TAG_MAX); /* hdr_data - invalid tag */
+                 *((ptl_hdr_data_t*) hdr_data));            /* hdr_data: tag */
     if (ret != PTL_OK) {
         orte_output(mca_btl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);

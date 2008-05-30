@@ -58,6 +58,7 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         mca_btl_tcp_prepare_src,
         mca_btl_tcp_prepare_dst,
         mca_btl_tcp_send,
+        NULL, /* send immediate */
         mca_btl_tcp_put,
         NULL, /* get */ 
         mca_btl_base_dump,
@@ -428,7 +429,7 @@ int mca_btl_tcp_put( mca_btl_base_module_t* btl,
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
     frag->hdr.count = frag->base.des_dst_cnt;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
-    return mca_btl_tcp_endpoint_send(endpoint,frag);
+    return ((i = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : i);
 }
 
 
@@ -448,6 +449,7 @@ int mca_btl_tcp_get(
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
     mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)descriptor; 
+    int rc;
 
     frag->btl = tcp_btl;
     frag->endpoint = endpoint;
@@ -464,7 +466,7 @@ int mca_btl_tcp_get(
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
     frag->hdr.count = frag->base.des_src_cnt;
     if (endpoint->endpoint_nbo) MCA_BTL_TCP_HDR_HTON(frag->hdr);
-    return mca_btl_tcp_endpoint_send(endpoint,frag);
+    return ((rc = mca_btl_tcp_endpoint_send(endpoint,frag)) >= 0 ? OMPI_SUCCESS : rc);
 }
 
 

@@ -75,6 +75,12 @@ struct mca_pml_ob1_match_hdr_t {
     uint8_t  hdr_padding[2];               /**< explicitly pad to 16 bytes.  Compilers seem to already prefer to do this, but make it explicit just in case */
 #endif
 };
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#define OMPI_PML_OB1_MATCH_HDR_LEN  16
+#else
+#define OMPI_PML_OB1_MATCH_HDR_LEN  14
+#endif 
+
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
 #define MCA_PML_OB1_MATCH_HDR_NTOH(h) \

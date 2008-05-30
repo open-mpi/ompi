@@ -241,28 +241,28 @@ do {                                                                    \
  } while(0);
         
 
-#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                  \
-do {                                                                     \
-    ret = OMPI_SUCCESS;                                                  \
-    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);           \
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
-        MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret);           \
-    }                                                                    \
-    if (OMPI_SUCCESS == ret) {                                           \
-        ret = OMPI_MTL_CALL(isend(ompi_mtl,                              \
-                                  sendreq->req_send.req_base.req_comm,   \
-                                  sendreq->req_peer,                     \
-                                  sendreq->req_tag,                      \
-                                  &sendreq->req_send.req_base.req_convertor, \
-                                  sendreq->req_send.req_send_mode,       \
-                                  sendreq->req_blocking,                 \
-                                  &sendreq->req_mtl));                   \
-        if(OMPI_SUCCESS == ret &&                                        \
-           sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
-            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = 0; \
-            ompi_request_complete(&(sendreq)->req_send.req_base.req_ompi); \
-        }                                                                \
-    }                                                                    \
+#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                          \
+do {                                                                             \
+    ret = OMPI_SUCCESS;                                                          \
+    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                   \
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {         \
+        MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret);                   \
+    }                                                                            \
+    if (OMPI_SUCCESS == ret) {                                                   \
+        ret = OMPI_MTL_CALL(isend(ompi_mtl,                                      \
+                                  sendreq->req_send.req_base.req_comm,           \
+                                  sendreq->req_peer,                             \
+                                  sendreq->req_tag,                              \
+                                  &sendreq->req_send.req_base.req_convertor,     \
+                                  sendreq->req_send.req_send_mode,               \
+                                  sendreq->req_blocking,                         \
+                                  &sendreq->req_mtl));                           \
+        if(OMPI_SUCCESS == ret &&                                                \
+           sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {      \
+            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = 0;        \
+            ompi_request_complete(&(sendreq)->req_send.req_base.req_ompi, true); \
+        }                                                                        \
+    }                                                                            \
  } while (0)
 
 /*
@@ -272,36 +272,36 @@ do {                                                                     \
  * This macro will never be called directly from the upper level, as it should
  * only be an internal call to the PML.
  */
-#define MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(sendreq)               \
-do {                                                                    \
-    assert( false == sendreq->req_send.req_base.req_pml_complete );     \
-                                                                        \
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED && \
-        sendreq->req_count > 0 ) {                                      \
-        mca_pml_base_bsend_request_free(sendreq->req_buff);             \
-    }                                                                   \
-                                                                        \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                               \
-    if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {   \
-        /* Should only be called for long messages (maybe synchronous) */ \
-        ompi_request_complete(&(sendreq->req_send.req_base.req_ompi)); \
-    }                                                                   \
-    sendreq->req_send.req_base.req_pml_complete = true;                 \
-                                                                        \
-    if( sendreq->req_send.req_base.req_free_called ) {                  \
-        MCA_PML_CM_HVY_SEND_REQUEST_RETURN( sendreq );                  \
-    } else {                                                            \
-        if(sendreq->req_send.req_base.req_ompi.req_persistent) {        \
-            /* rewind convertor */                                      \
-            size_t offset = 0;                                          \
+#define MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(sendreq)                          \
+do {                                                                               \
+    assert( false == sendreq->req_send.req_base.req_pml_complete );                \
+                                                                                   \
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&           \
+        sendreq->req_count > 0 ) {                                                 \
+        mca_pml_base_bsend_request_free(sendreq->req_buff);                        \
+    }                                                                              \
+                                                                                   \
+    OPAL_THREAD_LOCK(&ompi_request_lock);                                          \
+    if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {              \
+        /* Should only be called for long messages (maybe synchronous) */          \
+        ompi_request_complete(&(sendreq->req_send.req_base.req_ompi), true);       \
+    }                                                                              \
+    sendreq->req_send.req_base.req_pml_complete = true;                            \
+                                                                                   \
+    if( sendreq->req_send.req_base.req_free_called ) {                             \
+        MCA_PML_CM_HVY_SEND_REQUEST_RETURN( sendreq );                             \
+    } else {                                                                       \
+        if(sendreq->req_send.req_base.req_ompi.req_persistent) {                   \
+            /* rewind convertor */                                                 \
+            size_t offset = 0;                                                     \
             ompi_convertor_set_position(&sendreq->req_send.req_base.req_convertor, \
-                                        &offset);                       \
-        }                                                               \
-    }                                                                   \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
+                                        &offset);                                  \
+        }                                                                          \
+    }                                                                              \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                        \
  } while (0)
-    
-    
+
+
 /*
  * Release resources associated with a request
  */
@@ -323,21 +323,21 @@ do {                                                                    \
  * This macro will never be called directly from the upper level, as it should
  * only be an internal call to the PML.
  */
-#define MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(sendreq)              \
-do {                                                                    \
-    assert( false == sendreq->req_send.req_base.req_pml_complete );     \
-                                                                        \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                               \
-    if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {   \
-        /* Should only be called for long messages (maybe synchronous) */ \
-        ompi_request_complete(&(sendreq->req_send.req_base.req_ompi)); \
-    }                                                                   \
-    sendreq->req_send.req_base.req_pml_complete = true;                 \
-                                                                        \
-    if( sendreq->req_send.req_base.req_free_called ) {                  \
-        MCA_PML_CM_THIN_SEND_REQUEST_RETURN( sendreq );                 \
-    }                                                                   \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
+#define MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(sendreq)                   \
+do {                                                                         \
+    assert( false == sendreq->req_send.req_base.req_pml_complete );          \
+                                                                             \
+    OPAL_THREAD_LOCK(&ompi_request_lock);                                    \
+    if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {        \
+        /* Should only be called for long messages (maybe synchronous) */    \
+        ompi_request_complete(&(sendreq->req_send.req_base.req_ompi), true); \
+    }                                                                        \
+    sendreq->req_send.req_base.req_pml_complete = true;                      \
+                                                                             \
+    if( sendreq->req_send.req_base.req_free_called ) {                       \
+        MCA_PML_CM_THIN_SEND_REQUEST_RETURN( sendreq );                      \
+    }                                                                        \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                  \
  } while (0)
     
     

@@ -127,16 +127,16 @@ do {                                                                            
                                                                                        \
     /* initialize request status */                                                    \
     recvreq->req_recv.req_base.req_pml_complete = true;                                \
-    if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {   \
-        recvreq->req_recv.req_base.req_ompi.req_status._count =         \
-            recvreq->req_bytes_delivered;                               \
-        recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =      \
-            MPI_ERR_TRUNCATE;                                           \
-    } else {                                                            \
-        recvreq->req_recv.req_base.req_ompi.req_status._count =         \
-            recvreq->req_bytes_received;                                \
-    }                                                                   \
-    ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi) );       \
+    if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {                  \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =                        \
+            recvreq->req_bytes_delivered;                                              \
+        recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =                     \
+            MPI_ERR_TRUNCATE;                                                          \
+    } else {                                                                           \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =                        \
+            recvreq->req_bytes_received;                                               \
+    }                                                                                  \
+    ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );             \
                                                                                        \
     if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
         MCA_PML_DR_RECV_REQUEST_RETURN( recvreq );                                     \

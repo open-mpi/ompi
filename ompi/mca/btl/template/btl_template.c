@@ -54,6 +54,7 @@ mca_btl_template_module_t mca_btl_template_module = {
         mca_btl_template_prepare_src,
         mca_btl_template_prepare_dst,
         mca_btl_template_send,
+        NULL, /* send immediate */
         mca_btl_template_put,
         NULL, /* get */ 
         NULL, /*dump */

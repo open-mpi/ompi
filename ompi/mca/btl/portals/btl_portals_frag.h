@@ -42,6 +42,7 @@ struct mca_btl_portals_frag_t {
     enum { BTL_PORTALS_FRAG_TYPE_EAGER, 
            BTL_PORTALS_FRAG_TYPE_MAX,
            BTL_PORTALS_FRAG_TYPE_USER } type;
+    unsigned char  data[16];
 };
 typedef struct mca_btl_portals_frag_t mca_btl_portals_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t);

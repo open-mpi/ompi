@@ -92,6 +92,9 @@ struct mca_mtl_portals_module_t {
     /* use rendezvous for long messages */
     bool ptl_use_rendezvous;
 
+    /* output channel for debugging */
+    int portals_output;
+
 };
 typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
 

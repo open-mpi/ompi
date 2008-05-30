@@ -65,6 +65,7 @@ mca_btl_portals_module_t mca_btl_portals_module = {
         mca_btl_portals_prepare_src,
         mca_btl_portals_prepare_dst,
         mca_btl_portals_send,
+        mca_btl_portals_sendi,
         mca_btl_portals_put,
         mca_btl_portals_get,
         mca_btl_base_dump,
@@ -237,7 +238,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     mca_btl_portals_frag_t* frag;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
-
+    
     if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
         if (OMPI_SUCCESS != rc) return NULL;
@@ -251,7 +252,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     }
     
     frag->base.des_src_cnt = 1;
-    frag->base.des_flags = flags; 
+    frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK; 
     frag->base.order = MCA_BTL_NO_ORDER;
 
     return &frag->base;

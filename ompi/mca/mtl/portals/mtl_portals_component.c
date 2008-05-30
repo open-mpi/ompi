@@ -20,6 +20,7 @@
 
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/util/output.h" 
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/common/portals/common_portals.h"
 
@@ -61,6 +62,8 @@ mca_mtl_base_component_1_0_0_t mca_mtl_portals_component = {
      ompi_mtl_portals_component_init,  /* component init */
 };
 
+static opal_output_stream_t mtl_portals_output_stream;
+
 static int
 ompi_mtl_portals_component_open(void)
 {
@@ -97,6 +100,24 @@ ompi_mtl_portals_component_open(void)
                            false,
                            15 * 1024 * 1024,
                            &ompi_mtl_portals.ptl_recv_short_mds_size);
+
+    OBJ_CONSTRUCT(&mtl_portals_output_stream, opal_output_stream_t);
+    mtl_portals_output_stream.lds_is_debugging = true;
+    mtl_portals_output_stream.lds_want_stdout = true;
+    mtl_portals_output_stream.lds_file_suffix = "btl-portals";
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "debug_level",
+                           "Debugging verbosity (0 - 100)",
+                           false,
+                           false,
+                           0, 
+                           &(mtl_portals_output_stream.lds_verbose_level));
+    asprintf(&(mtl_portals_output_stream.lds_prefix),
+             "btl: portals (%s): ", ompi_common_portals_nodeid());
+    ompi_mtl_portals.portals_output = 
+        orte_output_open(&mtl_portals_output_stream, "MTL", "PORTALS", "DEBUG", NULL);
+
+    
 
     ompi_mtl_portals.ptl_ni_h = PTL_INVALID_HANDLE;
 

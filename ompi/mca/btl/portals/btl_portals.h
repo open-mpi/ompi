@@ -204,6 +204,18 @@ int mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                          struct mca_btl_base_descriptor_t* descriptor, 
                          mca_btl_base_tag_t tag);
 
+
+int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
+                          struct mca_btl_base_endpoint_t* endpoint,
+                          struct ompi_convertor_t* convertor,
+                          void* header,
+                          size_t header_size,
+                          size_t payload_size,
+                          uint8_t order,
+                          uint32_t flags,
+                          mca_btl_base_tag_t tag, 
+                          mca_btl_base_descriptor_t** des);
+
 int mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                         struct mca_btl_base_endpoint_t* btl_peer,
                         struct mca_btl_base_descriptor_t* decriptor);

@@ -112,7 +112,7 @@ static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, i
      * on this request will be able to complete. As the status is marked as
      * cancelled the cancel state will be detected.
      */
-    ompi_request_complete(ompi_request);
+    ompi_request_complete(ompi_request, true);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     return OMPI_SUCCESS;
 }

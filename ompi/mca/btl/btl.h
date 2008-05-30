@@ -118,9 +118,7 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /*
  * BTL types
@@ -273,8 +271,15 @@ typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
-#define MCA_BTL_DES_FLAGS_PRIORITY       0x0001
-#define MCA_BTL_DES_FLAGS_BTL_OWNERSHIP  0x0002
+#define MCA_BTL_DES_FLAGS_PRIORITY          0x0001
+/* Allow the BTL to dispose the descriptor once the callback
+ * associated was triggered.
+ */
+#define MCA_BTL_DES_FLAGS_BTL_OWNERSHIP     0x0002
+/* Allow the BTL to avoid calling the descriptor callback
+ * if the send succeded in the btl_send (i.e in the fast path).
+ */
+#define MCA_BTL_DES_SEND_ALWAYS_CALLBACK    0x0004
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
@@ -624,6 +629,45 @@ typedef int (*mca_btl_base_module_send_fn_t)(
     mca_btl_base_tag_t tag
 );
 
+/**
+ * Initiate an immediate blocking send. 
+ * Completion Semantics: the BTL will make a best effort 
+ *  to send the header and "size" bytes from the datatype using the convertor. 
+ *  The header is guaranteed to be delivered entirely in the first segment. 
+ *  Should the BTL be unable to deliver the data due to resource constraints 
+ *  the BTL will return a descriptor (via the OUT param) 
+ *  of size "payload_size + header_size".
+ *
+ * @param btl (IN)             BTL module
+ * @param endpoint (IN)        BTL addressing information
+ * @param convertor (IN)       Data type convertor
+ * @param header (IN)          Pointer to header.
+ * @param header_size (IN)     Size of header.
+ * @param payload_size (IN)    Size of payload (from convertor).
+ * @param order (IN)           The ordering tag (may be MCA_BTL_NO_ORDER)
+ * @param tag (IN)             The tag value used to notify the peer.
+ * @param descriptor (OUT)     The descriptor to be returned unable to be sent immediately
+
+ * @retval OMPI_SUCCESS           The send was successfully queued  
+ * @retval OMPI_ERROR             The send failed 
+ * @retval OMPI_ERR_UNREACH       The endpoint is not reachable 
+ * @retval OMPI_ERR_RESOURCE_BUSY The BTL is busy a descriptor will be returned 
+ *                                (via the OUT param) if descriptors are available 
+
+ */
+
+typedef int (*mca_btl_base_module_sendi_fn_t)(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct ompi_convertor_t* convertor,
+    void* header,
+    size_t header_size,
+    size_t payload_size,
+    uint8_t order,
+    uint32_t flags,
+    mca_btl_base_tag_t tag,
+    mca_btl_base_descriptor_t** descriptor
+ );
 
 /**
  * Initiate an asynchronous put. 
@@ -725,14 +769,15 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_register_fn_t       btl_register;
     mca_btl_base_module_finalize_fn_t       btl_finalize;
 
-    mca_btl_base_module_alloc_fn_t       btl_alloc;
-    mca_btl_base_module_free_fn_t        btl_free;
-    mca_btl_base_module_prepare_fn_t     btl_prepare_src;
-    mca_btl_base_module_prepare_fn_t     btl_prepare_dst;
-    mca_btl_base_module_send_fn_t        btl_send;
-    mca_btl_base_module_put_fn_t         btl_put;
-    mca_btl_base_module_get_fn_t         btl_get;
-    mca_btl_base_module_dump_fn_t        btl_dump; 
+    mca_btl_base_module_alloc_fn_t          btl_alloc;
+    mca_btl_base_module_free_fn_t           btl_free;
+    mca_btl_base_module_prepare_fn_t        btl_prepare_src;
+    mca_btl_base_module_prepare_fn_t        btl_prepare_dst;
+    mca_btl_base_module_send_fn_t           btl_send;
+    mca_btl_base_module_sendi_fn_t          btl_sendi;
+    mca_btl_base_module_put_fn_t            btl_put;
+    mca_btl_base_module_get_fn_t            btl_get;
+    mca_btl_base_module_dump_fn_t           btl_dump; 
    
     /** the mpool associated with this btl (optional) */ 
     mca_mpool_base_module_t*             btl_mpool; 
@@ -763,8 +808,6 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
   /* btl v1.0 */ \
   "btl", 1, 0, 0
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_MCA_BTL_H */

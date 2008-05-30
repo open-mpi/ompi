@@ -69,6 +69,7 @@ struct mca_bml_base_btl_t {
     mca_btl_base_module_alloc_fn_t   btl_alloc;
     mca_btl_base_module_free_fn_t    btl_free;
     mca_btl_base_module_send_fn_t    btl_send;
+    mca_btl_base_module_sendi_fn_t   btl_sendi;
     mca_btl_base_module_prepare_fn_t btl_prepare_src;
     mca_btl_base_module_prepare_fn_t btl_prepare_dst;
     mca_btl_base_module_put_fn_t     btl_put;
@@ -302,6 +303,22 @@ static inline int mca_bml_base_send_status(
 {
     des->des_context = (void*) bml_btl;
     return bml_btl->btl_send(bml_btl->btl, bml_btl->btl_endpoint, des, tag);
+}
+
+static inline int  mca_bml_base_sendi(
+    mca_bml_base_btl_t* bml_btl,
+    struct ompi_convertor_t* convertor,
+    void* header,
+    size_t header_size,
+    size_t payload_size,
+    uint8_t order,
+    uint32_t flags,
+    mca_btl_base_tag_t tag,
+    mca_btl_base_descriptor_t** descriptor)
+{
+    return bml_btl->btl_sendi(bml_btl->btl, bml_btl->btl_endpoint, 
+                              convertor, header, header_size,
+                              payload_size, order, flags, tag, descriptor);
 }
 
 static inline int mca_bml_base_put(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 

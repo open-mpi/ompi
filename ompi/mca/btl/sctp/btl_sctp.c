@@ -55,6 +55,7 @@ mca_btl_sctp_module_t mca_btl_sctp_module = {
         mca_btl_sctp_prepare_src,
         mca_btl_sctp_prepare_dst,
         mca_btl_sctp_send,
+        NULL, /* send immediate */
         mca_btl_sctp_put,
         NULL, /* get */ 
         mca_btl_base_dump,

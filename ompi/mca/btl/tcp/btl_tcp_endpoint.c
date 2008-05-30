@@ -245,6 +245,7 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
     case MCA_BTL_TCP_CONNECT_ACK:
     case MCA_BTL_TCP_CLOSED:
         opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t*)frag);
+        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
         if(btl_endpoint->endpoint_state == MCA_BTL_TCP_CLOSED)
             rc = mca_btl_tcp_endpoint_start_connect(btl_endpoint);
         break;
@@ -258,16 +259,20 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_tcp
                 int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
                 OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
-                frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+                if( frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK ) {
+                    frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+                }
                 if( btl_ownership ) {
                     MCA_BTL_TCP_FRAG_RETURN(frag);
                 }
-                return OMPI_SUCCESS;
+                return 1;
             } else {
                 btl_endpoint->endpoint_send_frag = frag;
                 opal_event_add(&btl_endpoint->endpoint_send_event, 0);
+                frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             }
         } else {
+            frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t*)frag);
         }
         break;
@@ -762,6 +767,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
 
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
+            assert( frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK );
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
             if( btl_ownership ) {
                 MCA_BTL_TCP_FRAG_RETURN(frag);
