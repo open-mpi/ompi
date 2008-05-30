@@ -9,6 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -165,40 +166,119 @@ haveepoll=no
 AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
 if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
 
-	# OMPI: Unfortunately, this test is not sufficient on some
-	# Linux distros (e.g., RH 9), where the function is defined
-	# and you can link against it, but it's hardwired to return
-	# ENOSYS -- and /usr/include/gnu/stubs.h fails to define
-	# __stub_epoll_ctl (the usual mechanism in glibc to indicate
-	# that a function is a stub and isn't really implemented).
-	# Hence, the test succeeds because it thinks it can use
-	# epoll_ctl (and friends).  So we have to do a better test
-	# after we determine that epoll_ctl is linkable.  Grumble.
+        # OMPI: Unfortunately, this test is not sufficient on some
+        # Linux distros (e.g., RH 9), where the function is defined
+        # and you can link against it, but it's hardwired to return
+        # ENOSYS -- and /usr/include/gnu/stubs.h fails to define
+        # __stub_epoll_ctl (the usual mechanism in glibc to indicate
+        # that a function is a stub and isn't really implemented).
+        # Hence, the test succeeds because it thinks it can use
+        # epoll_ctl (and friends).  So we have to do a better test
+        # after we determine that epoll_ctl is linkable.  Grumble.
         # If we are cross compiling, just trust AC_CHECK_FUNCS
 
-	AC_MSG_CHECKING([for epoll_ctl on broken Linux distros])
-        rm -f conftest.out
+        # OMPI: Unfortunately, this test is not sufficient for another
+        # reason.  The event_poll struct is defined in the sys/epoll.h
+        # file.  The structure is the interface between the application
+        # and the kernel and is therefore compiled into both.  The 
+        # event_poll struct is defined with a compiler directive
+        # __attribute__ ((__packed__).  It turns out that there is
+        # at least one compiler (Sun Studio) that does not currently
+        # recognize this directive.  This means that the event_poll
+        # struct may be packed in the kernel, but not in the OMPI
+        # library.  Badness ensues.  Therefore, check to see that
+        # this struct gets correctly passed between OMPI and the
+        # kernel.
+
+        haveepoll=no
+        AC_MSG_CHECKING([for working epoll library interface])
         AC_RUN_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT
-#include <sys/epoll.h>]], 
-[[int i = epoll_create(2);
-FILE *fp = fopen("conftest.out", "w");
-fprintf(fp, "%d", i);
-fclose(fp);]]))
-	haveepoll=no
-        if test -f conftest.out -a "`cat conftest.out`" = "0"; then
-            haveepoll=yes
-        fi
-        rm -f conftest.out
-	AC_MSG_RESULT([$haveepoll])
+#include <sys/epoll.h>]],
+[[
+    struct epoll_event epevin;
+    struct epoll_event epevout;
+    int res;
+    int epfd;
+    int fildes[[2]];
+
+    if ((epfd = epoll_create(1)) == -1)
+        exit(1);
+    if (pipe(&fildes[[0]]) < 0)
+        exit(1);
+    memset(&epevin, 0, sizeof(epevin));
+    memset(&epevout, 0, sizeof(epevout));
+    memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
+    epevin.events = EPOLLIN | EPOLLOUT;
+
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[[0]], &epevin) == -1)
+        exit(1);
+
+    res = epoll_wait(epfd, &epevout, 1, 0);
+    if (res != 1) {
+        exit(1);
+    } else {
+        if (epevout.data.ptr != epevin.data.ptr) {
+            exit(1);
+        }
+    }
+    /* SUCCESS */
+]]),
+        [haveepoll=yes
+        AC_DEFINE(HAVE_EPOLL, 1,
+                 [Define if your system supports the epoll interface])
+        # OMPI: Don't use AC_LIBOBJ
+        sources="epoll.c $sources"
+        needsignal=yes])
+        AC_MSG_RESULT([$haveepoll])
 fi
 
-if test "x$haveepoll" = "xyes" ; then
-	AC_DEFINE(HAVE_EPOLL, 1,
-		[Define if your system supports the epoll system calls])
-	# OMPI: Don't use AC_LIBOBJ
-	sources="epoll.c $sources"
-	needsignal=yes
+haveepollsyscall=no
+if test "x$ac_cv_header_sys_epoll_h" = "xyes" -a "x$haveepoll" = "xno" -a "$cross_compiling" != "yes"; then
+        # OMPI: See comment above.  This test uses the epoll system call
+        # interface instead of the library interface.
+        AC_MSG_CHECKING(for working epoll system call)
+        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
+AC_INCLUDES_DEFAULT
+#include <sys/syscall.h>
+#include <sys/epoll.h>]],
+[[  
+    struct epoll_event epevin;
+    struct epoll_event epevout;
+    int res;
+    int epfd;
+    int fildes[[2]];
+
+    if ((epfd = syscall(__NR_epoll_create, 1)) == -1)
+        exit(1);
+    if (pipe(&fildes[[0]]) < 0)
+        exit(1);
+    memset(&epevin, 0, sizeof(epevin));
+    memset(&epevout, 0, sizeof(epevout));
+    memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
+    epevin.events = EPOLLIN | EPOLLOUT;
+
+    if (syscall(__NR_epoll_ctl, epfd, 
+        EPOLL_CTL_ADD, fildes[[0]], &epevin) == -1)
+        exit(1);
+
+    res = syscall(__NR_epoll_wait, epfd, &epevout, 1, 0);
+    if (res != 1) {
+        exit(1);
+    } else {
+        if (epevout.data.ptr != epevin.data.ptr) {
+            exit(1);
+        }
+    }
+    /* SUCCESS */
+]]),
+        [haveepollsyscall=yes
+        AC_DEFINE(HAVE_EPOLL, 1,
+                 [Define if your system supports the epoll interface])
+        # OMPI: don't use AC_LIBOBJ
+        sources="epoll_sub.c epoll.c $sources"
+        needsignal=yes])
+        AC_MSG_RESULT([$haveepollsyscall])
 fi
 
 havedevpoll=no
@@ -278,42 +358,6 @@ main()
 		[Define if kqueue works correctly with pipes])
     sources="kqueue.c $sources"], AC_MSG_RESULT(no), AC_MSG_RESULT(no))
     # OMPI: don't use AC_LIBOBJ
-	fi
-fi
-
-haveepollsyscall=no
-if test "x$ac_cv_header_sys_epoll_h" = "xyes"; then
-	if test "x$haveepoll" = "xno" ; then
-		AC_MSG_CHECKING(for epoll system call)
-		AC_TRY_RUN(
-#include <stdint.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/epoll.h>
-#include <unistd.h>
-#include <stdlib.h>
-
-int
-epoll_create(int size)
-{
-	return (syscall(__NR_epoll_create, size));
-}
-
-int
-main()
-{
-	int epfd;
-
-	epfd = epoll_create(256);
-	exit (epfd == -1 ? 1 : 0);
-}, [AC_MSG_RESULT(yes)
-    AC_DEFINE(HAVE_EPOLL, 1,
-	[Define if your system supports the epoll system calls])
-    needsignal=yes
-    # OMPI: don't use AC_LIBOBJ
-    sources="epoll_sub.c epoll.c $sources"
-    ], AC_MSG_RESULT(no), AC_MSG_RESULT(no))
 	fi
 fi
 
