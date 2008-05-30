@@ -285,7 +285,7 @@ static int progress()
             /* we're done, so remove us from the pending list */
             opal_list_remove_item(&mca_io_romio_pending_requests, item);
             /* mark as complete (and make sure to wake up any waiters */
-            ompi_request_complete((ompi_request_t*) item);
+            ompi_request_complete((ompi_request_t*) item, true);
             mca_io_base_request_progress_del();
             /* if the request has been freed already, the user isn't
              * going to call test or wait on us, so we need to do it

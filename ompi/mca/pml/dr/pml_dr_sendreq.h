@@ -211,7 +211,7 @@ do {                                                                            
  * Mark a send request as completed at the MPI level.
  */
 
-#define MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq)                            \
+#define MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq)                             \
 do {                                                                              \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_SOURCE =                  \
        (sendreq)->req_send.req_base.req_comm->c_my_rank;                          \
@@ -220,7 +220,7 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                      \
         (sendreq)->req_send.req_bytes_packed;                                     \
-   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi) ); \
+   ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), true );       \
 } while(0)
 
 /*

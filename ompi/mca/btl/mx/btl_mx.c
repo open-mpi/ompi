@@ -457,16 +457,21 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         }
         if( mx_result ) {
             mx_return = mx_forget( mx_btl->mx_endpoint, &(frag->mx_request) );
-            frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
-            if( btl_ownership ) {
-                MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
-            }
             if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
                 orte_output( 0, "mx_forget failed with error %d (%s)\n",
                              mx_return, mx_strerror(mx_return) );
-                return OMPI_ERROR;
+                frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+                return OMPI_SUCCESS;
             }
-            return OMPI_SUCCESS;
+
+            if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
+                                       &(frag->base), OMPI_SUCCESS);
+            }
+            if( btl_ownership ) {
+                MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+            }
+            return 1;
         }
     }
 #endif
@@ -475,18 +480,22 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         uint32_t mx_result;
 
         /* let's check for completness */
-        mx_return = mx_test( mx_btl->mx_endpoint, &(frag->mx_request), &mx_status, &mx_result );
-        if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) 
-            return OMPI_SUCCESS;
-        /* call the completion callback */
-        if( mx_result ) {
-            frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
-            if( btl_ownership ) {
-                MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+        mx_return = mx_test( mx_btl->mx_endpoint, &(frag->mx_request),
+                             &mx_status, &mx_result );
+        if( OPAL_LIKELY(MX_SUCCESS == mx_return) ) {
+            if( mx_result ) {
+                if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                    frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
+                                           &(frag->base), OMPI_SUCCESS);
+                }
+                if( btl_ownership ) {
+                    MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+                }
+                return 1;
             }
-            return OMPI_SUCCESS;
         }
     }
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     return OMPI_SUCCESS;
 }
@@ -552,6 +561,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_src,
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
+        NULL, /* send immediate */
         mca_btl_mx_put, /* put */
         NULL, /* get */
         mca_btl_base_dump,

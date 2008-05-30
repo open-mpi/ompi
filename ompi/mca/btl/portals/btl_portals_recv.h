@@ -74,6 +74,7 @@ mca_btl_portals_activate_block(mca_btl_portals_recv_block_t *block)
     int ret;
     ptl_process_id_t any_proc = { PTL_NID_ANY, PTL_PID_ANY };
     ptl_md_t md;
+    uint64_t ignore_bits = ~((uint64_t) 0);
 
     /* if we have pending operations, something very, very, very bad
        has happened... */
@@ -85,7 +86,7 @@ mca_btl_portals_activate_block(mca_btl_portals_recv_block_t *block)
     ret = PtlMEInsert(block->btl->portals_recv_reject_me_h,
                       any_proc,
                       0, /* match bits */
-                      0, /* ignore bits */
+                      ignore_bits, /* ignore bits */
                       PTL_UNLINK,
                       PTL_INS_BEFORE,
                       &(block->me_h));

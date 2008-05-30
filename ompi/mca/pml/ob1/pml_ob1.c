@@ -365,7 +365,8 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     int rc;
 
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_ob1_fin_hdr_t),
-                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+                       MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
 
     if(NULL == fin) {
         MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
@@ -387,13 +388,15 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     rc = mca_bml_base_send( bml_btl,
                             fin,
                             MCA_PML_OB1_HDR_TYPE_FIN );
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-        mca_bml_base_free(bml_btl, fin);
-        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if( OPAL_LIKELY( rc >= 0 ) ) {
+        if( OPAL_LIKELY( 1 == rc ) ) {
+            MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+        }
+        return OMPI_SUCCESS;
     }
-    
-    return OMPI_SUCCESS;
+    mca_bml_base_free(bml_btl, fin);
+    MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
+    return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
 void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)

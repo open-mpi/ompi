@@ -214,7 +214,7 @@ do {                                                                    \
  */
 #define MCA_PML_CM_THIN_RECV_REQUEST_MPI_COMPLETE( recvreq )            \
 do {                                                                    \
-    ompi_request_complete(  &(recvreq->req_base.req_ompi) ); \
+    ompi_request_complete(  &(recvreq->req_base.req_ompi), true );      \
  } while (0)
     
 
@@ -233,7 +233,7 @@ do {                                                                    \
         MCA_PML_CM_THIN_RECV_REQUEST_RETURN( recvreq );                 \
     } else {                                                            \
         recvreq->req_base.req_pml_complete = true;                      \
-        ompi_request_complete( &(recvreq->req_base.req_ompi) ); \
+        ompi_request_complete( &(recvreq->req_base.req_ompi), true );   \
     }                                                                   \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
  } while(0)
@@ -262,7 +262,7 @@ do {                                                                    \
             ompi_convertor_set_position(&recvreq->req_base.req_convertor, &offset); \
         }                                                               \
         recvreq->req_base.req_pml_complete = true;                      \
-        ompi_request_complete(  &(recvreq->req_base.req_ompi) ); \
+        ompi_request_complete(  &(recvreq->req_base.req_ompi), true );  \
     }                                                                   \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
  } while(0)

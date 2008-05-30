@@ -177,9 +177,8 @@ int mca_btl_sm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags1, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags2, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_send_fl, opal_free_list_t);
     return OMPI_SUCCESS;
 }
@@ -199,8 +198,8 @@ int mca_btl_sm_component_close(void)
      * directly into the mmapped file, they will auto-magically dissapear
      * when the file get unmapped.
      */
-    /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags1);*/
-    /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags2);*/
+    /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_eager);*/
+    /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max);*/
 
     /* unmap the shared memory control structure */
     if(mca_btl_sm_component.mmap_file != NULL) {
@@ -407,30 +406,9 @@ int mca_btl_sm_component_progress(void)
             continue;
         }
 
+        rc++;
         /* dispatch fragment by type */
         switch(((uintptr_t)hdr) & MCA_BTL_SM_FRAG_TYPE_MASK) {
-            case MCA_BTL_SM_FRAG_ACK:
-            {
-                int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
-                struct mca_btl_base_endpoint_t* endpoint;
-                int btl_ownership;
-
-                frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
-                            (~(MCA_BTL_SM_FRAG_TYPE_MASK |
-                            MCA_BTL_SM_FRAG_STATUS_MASK))));
-                endpoint = frag->endpoint;
-                btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-                /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_sm.super, frag->endpoint,
-                        &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
-                if( btl_ownership ) {
-                    MCA_BTL_SM_FRAG_RETURN(frag);
-                }
-                if(opal_list_get_size(&endpoint->pending_sends)) {
-                    process_pending_send(endpoint);
-                }
-                break;
-            }
             case MCA_BTL_SM_FRAG_SEND:
             {
                 mca_btl_active_message_callback_t* reg;
@@ -452,6 +430,30 @@ int mca_btl_sm_component_progress(void)
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
                 break;
             }
+            case MCA_BTL_SM_FRAG_ACK:
+            {
+                int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
+                struct mca_btl_base_endpoint_t* endpoint;
+                int btl_ownership;
+
+                frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
+                            (~(MCA_BTL_SM_FRAG_TYPE_MASK |
+                            MCA_BTL_SM_FRAG_STATUS_MASK))));
+                endpoint = frag->endpoint;
+                btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                    /* completion callback */
+                    frag->base.des_cbfunc(&mca_btl_sm.super, frag->endpoint,
+                                          &frag->base, status?OMPI_ERROR:OMPI_SUCCESS);
+                }
+                if( btl_ownership ) {
+                    MCA_BTL_SM_FRAG_RETURN(frag);
+                }
+                if(opal_list_get_size(&endpoint->pending_sends)) {
+                    process_pending_send(endpoint);
+                }
+                break;
+            }
             default:
                 /* unknown */
                 hdr = (mca_btl_sm_hdr_t*)((uintptr_t)hdr->frag |
@@ -461,7 +463,6 @@ int mca_btl_sm_component_progress(void)
                         my_smp_rank, peer_smp_rank, hdr, false, rc);
                 break;
         }
-        rc++;
     }
     return rc;
 }

@@ -661,6 +661,7 @@ mca_btl_elan_module_t mca_btl_elan_module = {
         mca_btl_elan_prepare_src,
         mca_btl_elan_prepare_dst,
         mca_btl_elan_send,
+        NULL, /* send immediate */
         mca_btl_elan_put,
         mca_btl_elan_get,
         mca_btl_elan_dump,

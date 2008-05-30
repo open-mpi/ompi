@@ -386,19 +386,23 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 }
 
 /**
- *  Signal a request as complete. Note this will
- *  wake any thread pending on the request.
- *  ompi_request_lock should be held while calling this function
+ *  Signal or mark a request as complete. If with_signal is true this will
+ *  wake any thread pending on the request and ompi_request_lock should be
+ *  held while calling this function. If with_signal is false, there will
+ *  signal generated, and no lock required. This is a special case when
+ *  the function is called from the critical path for small messages, where
+ *  we know the current execution flow created the request, and is still
+ *  in the _START macro.
  */
-
-static inline int ompi_request_complete(ompi_request_t* request)
+static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
     if( NULL != request->req_complete_cb ) {
         request->req_complete_cb( request );
     }
+    request->req_complete = true;
     ompi_request_completed++;
     request->req_complete = true;
-    if(ompi_request_waiting) {
+    if(with_signal && ompi_request_waiting) {
         /* Broadcast the condition, otherwise if there is already a thread
          * waiting on another request it can use all signals.
          */

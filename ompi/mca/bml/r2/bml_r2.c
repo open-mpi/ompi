@@ -296,6 +296,7 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_prepare_src = btl->btl_prepare_src;
                 bml_btl->btl_prepare_dst = btl->btl_prepare_dst;
                 bml_btl->btl_send = btl->btl_send;
+                bml_btl->btl_sendi = btl->btl_sendi;
                 bml_btl->btl_flags = btl->btl_flags; 
                 bml_btl->btl_put = btl->btl_put;
                 if( (bml_btl->btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == bml_btl->btl_put) ) {

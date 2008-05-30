@@ -60,6 +60,7 @@ mca_btl_ud_module_t mca_btl_ofud_module = {
         mca_btl_ud_prepare_src,
         NULL, /*mca_btl_ud_prepare_dst */
         mca_btl_ud_send,
+        NULL, /* send immediate */
         NULL, /*mca_btl_ud_put */
         NULL, /*mca_btl_ud_get */
         mca_btl_base_dump,

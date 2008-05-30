@@ -62,7 +62,8 @@ mca_btl_base_module_t mca_btl_self = {
     mca_btl_self_free,
     mca_btl_self_prepare_src,
     mca_btl_self_prepare_dst,
-    mca_btl_self_send, 
+    mca_btl_self_send,
+    NULL, /* send immediate */
     mca_btl_self_rdma,  /* put */
     mca_btl_self_rdma,  /* get */
     mca_btl_base_dump,
@@ -305,11 +306,13 @@ int mca_btl_self_send( struct mca_btl_base_module_t* btl,
     des->des_dst     = NULL;
     des->des_dst_cnt = 0;
     /* send completion */
-    des->des_cbfunc( btl, endpoint, des, OMPI_SUCCESS );
+    if( des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK ) {
+        des->des_cbfunc( btl, endpoint, des, OMPI_SUCCESS );
+    }
     if( btl_ownership ) {
         mca_btl_self_free( btl, des );
     }
-    return OMPI_SUCCESS;
+    return 1;
 }
 
 /**

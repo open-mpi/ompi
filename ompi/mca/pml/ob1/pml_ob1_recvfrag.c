@@ -89,8 +89,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
     
-
-    if( OPAL_UNLIKELY(segment->seg_len < sizeof(mca_pml_ob1_match_hdr_t))) {
+    if( OPAL_UNLIKELY(segment->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN) ) {
         return;
      }
     ob1_hdr_ntoh(((mca_pml_ob1_hdr_t*) hdr), MCA_PML_OB1_HDR_TYPE_MATCH);
@@ -169,7 +168,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     
     if(OPAL_LIKELY(match)) {
-        bytes_received = segment->seg_len - sizeof(mca_pml_ob1_match_hdr_t);
+        bytes_received = segment->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
         match->req_recv.req_bytes_packed = bytes_received;
         
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
@@ -189,7 +188,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
             
             iov[0].iov_len = bytes_received;
             iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
-                                              sizeof(mca_pml_ob1_match_hdr_t));
+                                              OMPI_PML_OB1_MATCH_HDR_LEN);
             if(num_segments > 1) {
                 bytes_received += segment[1].seg_len;
                 iov[1].iov_len = segment[1].seg_len;

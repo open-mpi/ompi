@@ -39,7 +39,8 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
     ptl_process_id_t any_proc = {PTL_NID_ANY, PTL_PID_ANY};
     int ret;
     int i;
-
+    uint64_t ignore_bits = ~((uint64_t) 0);
+    
     /* create the reject entry */
     md.start = NULL;
     md.length = 0;
@@ -55,7 +56,7 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
                       OMPI_BTL_PORTALS_SEND_TABLE_ID,
                       any_proc,
                       0, /* match */
-                      0, /* ignore */
+                      ignore_bits, /* ignore */
                       PTL_RETAIN,
                       PTL_INS_BEFORE,
                       &(btl->portals_recv_reject_me_h));

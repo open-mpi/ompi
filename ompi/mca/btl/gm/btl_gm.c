@@ -79,6 +79,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_prepare_dst,
 #if OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS
         mca_btl_gm_send,
+        NULL, /* send immediate */
         mca_btl_gm_put,
         mca_btl_gm_get,
 #else

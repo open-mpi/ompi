@@ -68,6 +68,7 @@ int mca_pml_ob1_isend(void *buf,
 {
     int rc;
     mca_pml_ob1_send_request_t *sendreq = NULL;
+    
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
@@ -99,6 +100,7 @@ int mca_pml_ob1_send(void *buf,
 {
     int rc;
     mca_pml_ob1_send_request_t *sendreq;
+
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;

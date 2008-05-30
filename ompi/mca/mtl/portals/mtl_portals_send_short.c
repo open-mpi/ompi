@@ -18,6 +18,8 @@
 
 #include "ompi_config.h"
 
+#include "orte/util/output.h"
+
 #include "mtl_portals.h"
 #include "mtl_portals_request.h"
 #include "mtl_portals_send_short.h"

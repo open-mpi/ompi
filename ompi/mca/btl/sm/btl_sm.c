@@ -67,6 +67,7 @@ mca_btl_sm_t mca_btl_sm = {
         mca_btl_sm_prepare_src,
         NULL,
         mca_btl_sm_send,
+        mca_btl_sm_sendi,  /* send immediate */
         NULL,  /* put */
         NULL,  /* get */
         mca_btl_base_dump,
@@ -252,7 +253,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     length = sizeof(mca_btl_sm_frag1_t);
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.eager_limit;
-    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags1, length,
+    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_eager, length,
                             CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag1_t),
                             length_payload, CACHE_LINE_SIZE,
                             mca_btl_sm_component.sm_free_list_num,
@@ -263,21 +264,13 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     length = sizeof(mca_btl_sm_frag2_t);
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.max_frag_size;
-    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags2, length,
+    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_max, length,
                             CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag2_t),
                             length_payload, CACHE_LINE_SIZE,
                             mca_btl_sm_component.sm_free_list_num,
                             mca_btl_sm_component.sm_free_list_max,
                             mca_btl_sm_component.sm_free_list_inc,
                             mca_btl_sm_component.sm_mpool);
-
-    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags,
-                            sizeof(mca_btl_sm_frag_t), CACHE_LINE_SIZE,
-                            OBJ_CLASS(mca_btl_sm_frag_t), 0, CACHE_LINE_SIZE,
-                            mca_btl_sm_component.sm_free_list_num,
-                            -1,
-                            mca_btl_sm_component.sm_free_list_inc,
-                            NULL);
 
     opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
                         sizeof(btl_sm_pending_send_item_t),
@@ -467,7 +460,7 @@ int mca_btl_sm_add_procs(
     mca_btl_sm_component.num_smp_procs += n_local_procs;
 
     /* make sure we have enough eager fragmnents for each process */
-    return_code = ompi_free_list_resize(&mca_btl_sm_component.sm_frags1,
+    return_code = ompi_free_list_resize(&mca_btl_sm_component.sm_frags_eager,
                                         mca_btl_sm_component.num_smp_procs * 2);
     if (OMPI_SUCCESS != return_code)
         goto CLEANUP;
@@ -610,6 +603,99 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     return &frag->base;
 }
 
+#if 0
+#define MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)          \
+    do {                                                                \
+        char* _memory = (char*)(sm_frag)->segment.seg_addr.pval +       \
+            (sm_frag)->segment.seg_len;                                 \
+        int* _intmem;                                                   \
+        size_t align = (intptr_t)_memory & 0xFUL;                       \
+        switch( align & 0x3 ) {                                         \
+        case 3: *_memory = 0; _memory++;                                \
+        case 2: *_memory = 0; _memory++;                                \
+        case 1: *_memory = 0; _memory++;                                \
+        }                                                               \
+        align >>= 2;                                                    \
+        _intmem = (int*)_memory;                                        \
+        switch( align ) {                                               \
+        case 3: *_intmem = 0; _intmem++;                                \
+        case 2: *_intmem = 0; _intmem++;                                \
+        case 1: *_intmem = 0; _intmem++;                                \
+        }                                                               \
+    } while(0)
+#else
+#define MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)
+#endif
+
+#if 0
+        if( OPAL_LIKELY(align > 0) ) {                                  \
+            align = 0xFUL - align;                                      \
+            memset( _memory, 0, align );                                \
+        }                                                               \
+
+#endif
+
+/**
+ * Initiate an inline send to the peer. If failure then return a descriptor.
+ *
+ * @param btl (IN)      BTL module
+ * @param peer (IN)     BTL peer addressing
+ */
+int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
+                      struct mca_btl_base_endpoint_t* endpoint,
+                      struct ompi_convertor_t* convertor,
+                      void* header,
+                      size_t header_size,
+                      size_t payload_size,
+                      uint8_t order,
+                      uint32_t flags,
+                      mca_btl_base_tag_t tag,
+                      mca_btl_base_descriptor_t** descriptor )
+{
+    size_t max_data, length = (header_size + payload_size);
+    mca_btl_sm_frag_t* frag;
+    int rc;
+
+    if( length < mca_btl_sm_component.eager_limit ) {
+        MCA_BTL_SM_FRAG_ALLOC1(frag, rc);
+        if( OPAL_UNLIKELY(NULL == frag) ) {
+            *descriptor = NULL;
+            return rc;
+        }
+        frag->segment.seg_len = length;
+        frag->hdr->len = length;
+        assert( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
+        frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+        frag->hdr->tag = tag;
+        frag->endpoint = endpoint;
+
+        memcpy( frag->segment.seg_addr.pval, header, header_size );
+        if( payload_size ) {
+            struct iovec iov;
+            unsigned int iov_count;
+            /* pack the data into the supplied buffer */
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
+            iov.iov_len  = payload_size;
+            iov_count    = 1;
+
+            (void)ompi_convertor_pack( convertor,
+                                       &iov, &iov_count, &max_data);
+
+            assert(max_data == payload_size);
+        }
+        MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);
+        /*
+         * post the descriptor in the queue - post with the relative
+         * address
+         */
+        MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
+                              endpoint->peer_smp_rank, frag->hdr, false, rc);
+        return rc;
+    }
+    *descriptor = mca_btl_sm_alloc( btl, endpoint, order,
+                                    payload_size + header_size, flags);
+    return OMPI_ERR_RESOURCE_BUSY;
+}
 
 /**
  * Initiate a send to the peer.
@@ -617,7 +703,6 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-
 int mca_btl_sm_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
@@ -632,6 +717,8 @@ int mca_btl_sm_send(
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
+    MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);
+
     frag->endpoint = endpoint;
 
     /*
@@ -639,8 +726,8 @@ int mca_btl_sm_send(
      * address
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-            endpoint->peer_smp_rank, frag->hdr, false, rc);
-    return rc;
+                          endpoint->peer_smp_rank, frag->hdr, false, rc);
+    return (rc < 0 ? rc : 1);
 }
 
 int mca_btl_sm_ft_event(int state) {

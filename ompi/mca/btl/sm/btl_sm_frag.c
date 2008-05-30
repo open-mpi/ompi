@@ -36,24 +36,17 @@ static inline void mca_btl_sm_frag_common_constructor(mca_btl_sm_frag_t* frag)
     frag->base.des_flags = 0;
 }
 
-static void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t* frag)
-{
-    frag->size = 0;
-    frag->my_list = &mca_btl_sm_component.sm_frags;
-    mca_btl_sm_frag_common_constructor(frag);
-}
-
 static void mca_btl_sm_frag1_constructor(mca_btl_sm_frag_t* frag)
 {
     frag->size = mca_btl_sm_component.eager_limit;
-    frag->my_list = &mca_btl_sm_component.sm_frags1;
+    frag->my_list = &mca_btl_sm_component.sm_frags_eager;
     mca_btl_sm_frag_common_constructor(frag);
 }
 
 static void mca_btl_sm_frag2_constructor(mca_btl_sm_frag_t* frag)
 {
     frag->size = mca_btl_sm_component.max_frag_size;
-    frag->my_list = &mca_btl_sm_component.sm_frags2;
+    frag->my_list = &mca_btl_sm_component.sm_frags_max;
     mca_btl_sm_frag_common_constructor(frag);
 }
 
@@ -61,12 +54,6 @@ static void mca_btl_sm_frag_destructor(mca_btl_sm_frag_t* frag)
 {
 }
 
-
-OBJ_CLASS_INSTANCE(
-    mca_btl_sm_frag_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_sm_frag_constructor,
-    mca_btl_sm_frag_destructor);
 
 OBJ_CLASS_INSTANCE(
     mca_btl_sm_frag1_t,

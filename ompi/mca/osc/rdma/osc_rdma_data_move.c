@@ -448,7 +448,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
                 module->m_use_buffers ? bml_btl->btl_eager_limit :
                 needed_len < bml_btl->btl_eager_limit ? needed_len :
-                bml_btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY);
+                bml_btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
         if (NULL == descriptor) {
             ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
@@ -690,7 +690,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     endpoint = (mca_bml_base_endpoint_t*) replyreq->rep_origin_proc->proc_bml;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
-            bml_btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY);
+            bml_btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
@@ -1295,7 +1295,7 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
             sizeof(ompi_osc_rdma_control_header_t),
-            MCA_BTL_DES_FLAGS_PRIORITY);
+            MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;
@@ -1357,7 +1357,7 @@ ompi_osc_rdma_rdma_ack_send(ompi_osc_rdma_module_t *module,
     /* Get a BTL and a fragment to go with it */
     mca_bml_base_alloc(bml_btl, &descriptor, rdma_btl->rdma_order,
             sizeof(ompi_osc_rdma_control_header_t),
-            MCA_BTL_DES_FLAGS_PRIORITY);
+            MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;

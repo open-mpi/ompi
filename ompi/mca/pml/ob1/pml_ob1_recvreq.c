@@ -235,11 +235,14 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     des->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_ACK);
-    if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) {
-        mca_bml_base_free(bml_btl, des);
-        return OMPI_ERR_OUT_OF_RESOURCE; 
+    if( OPAL_LIKELY( rc >= 0 ) ) {
+        if( OPAL_LIKELY( 1 == rc ) ) {
+            MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+        }
+        return OMPI_SUCCESS;
     }
-    return OMPI_SUCCESS;
+    mca_bml_base_free(bml_btl, des);
+    return OMPI_ERR_OUT_OF_RESOURCE; 
 }
 
 static int mca_pml_ob1_recv_request_ack(
@@ -614,7 +617,7 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
-    bytes_received -= sizeof(mca_pml_ob1_match_hdr_t);
+    bytes_received -= OMPI_PML_OB1_MATCH_HDR_LEN;
     recvreq->req_recv.req_bytes_packed = bytes_received;
     
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
@@ -630,7 +633,7 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
     MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                      segments,
                                      num_segments,
-                                     sizeof(mca_pml_ob1_match_hdr_t),
+                                     OMPI_PML_OB1_MATCH_HDR_LEN,
                                      data_offset,
                                      bytes_received,
                                      bytes_delivered);
@@ -666,7 +669,7 @@ void mca_pml_ob1_recv_request_matched_probe( mca_pml_ob1_recv_request_t* recvreq
         case MCA_PML_OB1_HDR_TYPE_MATCH:
 
             MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
-                                                sizeof(mca_pml_ob1_match_hdr_t),
+                                                OMPI_PML_OB1_MATCH_HDR_LEN,
                                                 bytes_packed );
             break;
 
@@ -819,16 +822,19 @@ int mca_pml_ob1_recv_request_schedule_once(
 
         /* send rdma request to peer */
         rc = mca_bml_base_send(bml_btl, ctl, MCA_PML_OB1_HDR_TYPE_PUT);
-        if(OPAL_LIKELY(OMPI_SUCCESS == rc)) {
+        if( OPAL_LIKELY( rc >= 0 ) ) {
             /* update request state */
             recvreq->req_rdma_offset += size;
             OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth, 1);
             recvreq->req_rdma[rdma_idx].length -= size;
             bytes_remaining -= size;
+            if( OPAL_LIKELY( 1 == rc ) ) {
+                /* The send is completed, trigger the callback */
+                MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+            }
         } else {
             mca_bml_base_free(bml_btl,ctl);
             mca_bml_base_free(bml_btl,dst);
-            continue;
         }
     }
 
