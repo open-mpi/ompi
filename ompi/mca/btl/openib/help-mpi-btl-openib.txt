@@ -124,8 +124,11 @@ helpful:
 [init-fail-create-q]
 The OpenFabrics (openib) BTL failed to initialize while trying to
 create an internal queue.  This typically indicates a failed
-OpenFabrics installation or faulty hardware.  The failure occured
-here:
+OpenFabrics installation, faulty hardware, or that Open MPI is
+attempting to use a feature that is not supported on your hardware
+(i.e., is a shared receive queue specified in the
+btl_openib_receive_queues MCA parameter with a device that does not
+support it?).  The failure occured here:
 
     Host:        %s
     OMPI source: %s:%d
