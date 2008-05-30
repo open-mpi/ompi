@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,6 +36,8 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
 #include "ompi/peruse/peruse-internal.h"
+#include "ompi/memchecker.h"
+
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,
                     ompi_free_list_item_t,
@@ -63,97 +66,296 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
 static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl, 
                                         mca_pml_ob1_match_hdr_t *hdr,
                                         mca_btl_base_segment_t* segments,
-                                        size_t num_segments );
+                                        size_t num_segments,
+                                        int type);
+ 
+static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
+         mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
+         size_t num_segments, ompi_communicator_t *comm_ptr,
+         mca_pml_ob1_comm_proc_t *proc,
+         mca_pml_ob1_recv_frag_t* frag);
+ 
+void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl, 
+                                          mca_btl_base_tag_t tag,
+                                          mca_btl_base_descriptor_t* des,
+                                          void* cbdata ) { 
+    mca_btl_base_segment_t* segment = des->des_dst;
+    mca_pml_ob1_match_hdr_t* hdr = (mca_pml_ob1_match_hdr_t*)segment->seg_addr.pval;
+    ompi_communicator_t *comm_ptr;
+    mca_pml_ob1_recv_request_t *match = NULL;
+    mca_pml_ob1_comm_t *comm;
+    mca_pml_ob1_comm_proc_t *proc;
+    mca_pml_ob1_recv_frag_t* frag = NULL;
+    size_t num_segments = des->des_dst_cnt;
+    size_t bytes_received = 0;
+    
 
-/**
- *  Callback from BTL on receive.
- */
-                                                                                                                      
-void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t* btl, 
-                                     mca_btl_base_tag_t tag,
-                                     mca_btl_base_descriptor_t* des,
-                                     void* cbdata )
-{
+    if( OPAL_UNLIKELY(segment->seg_len < sizeof(mca_pml_ob1_match_hdr_t))) {
+        return;
+     }
+    ob1_hdr_ntoh(((mca_pml_ob1_hdr_t*) hdr), MCA_PML_OB1_HDR_TYPE_MATCH);
+    
+    /* communicator pointer */
+    comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
+    if(OPAL_UNLIKELY(NULL == comm_ptr)) {
+         /* This is a special case. A message for a not yet existing communicator can
+          * happens, but right now we segfault. Instead, and until we find a better
+          * solution, just drop the message. However, in the near future we should
+          * store this fragment in a global list, and deliver it to the right
+          * communicator once it get created.
+          */
+        opal_output( 0, "Dropped message for the non-existing communicator %d\n",
+                     (int)hdr->hdr_ctx );
+        return;
+    }
+    comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
+    
+    /* source sequence number */
+    proc = &comm->procs[hdr->hdr_src];
+ 
+    /**
+     * We generate the MSG_ARRIVED event as soon as the PML is aware of a matching
+      * fragment arrival. Independing if it is received on the correct order or not.
+      * This will allow the tools to figure out if the messages are not received in the
+      * correct order (if multiple network interfaces).
+      */
+    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
+                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+ 
+    /* get next expected message sequence number - if threaded
+     * run, lock to make sure that if another thread is processing 
+      * a frag from the same message a match is made only once.
+      * Also, this prevents other posted receives (for a pair of
+      * end points) from being processed, and potentially "loosing"
+      * the fragment.
+      */
+    OPAL_THREAD_LOCK(&comm->matching_lock);
+    
+     /* get sequence number of next message that can be processed */
+    if(OPAL_UNLIKELY((((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence)) ||
+                     (opal_list_get_size(&proc->frags_cant_match) > 0 ) ||
+                     (num_segments > 1))) {
+           goto slow_path;
+    }
+    
+    /*
+      * This is the sequence number we were expecting,
+      * so we can try matching it to already posted
+      * receives.
+      */
+    
+    /* We're now expecting the next sequence number. */
+    proc->expected_sequence++;
+        
+    /**
+      * We generate the SEARCH_POSTED_QUEUE only when the message is received
+      * in the correct sequence. Otherwise, we delay the event generation until
+      * we reach the correct sequence number.
+      */
+    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
+                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    
+    match = match_one(btl, hdr, segment, num_segments, comm_ptr, proc, frag);
+    
+    /**
+      * The match is over. We generate the SEARCH_POSTED_Q_END here, before going
+      * into the mca_pml_ob1_check_cantmatch_for_match so we can make a difference
+      * for the searching time for all messages.
+      */
+    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
+                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    
+    /* release matching lock before processing fragment */
+    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    
+    if(OPAL_LIKELY(match)) {
+        bytes_received = segment->seg_len - sizeof(mca_pml_ob1_match_hdr_t);
+        match->req_recv.req_bytes_packed = bytes_received;
+        
+        MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
+        if(bytes_received > 0) { 
+            struct iovec iov[2];
+            uint32_t iov_count = num_segments;
+            
+            /*
+             *  Make user buffer accessable(defined) before unpacking.
+             */
+            MEMCHECKER(
+                       memchecker_call(&opal_memchecker_base_mem_defined,
+                                       match->req_recv.req_base.req_addr,
+                                       match->req_recv.req_base.req_count,
+                                       match->req_recv.req_base.req_datatype);
+                       );
+            
+            iov[0].iov_len = bytes_received;
+            iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
+                                              sizeof(mca_pml_ob1_match_hdr_t));
+            if(num_segments > 1) {
+                bytes_received += segment[1].seg_len;
+                iov[1].iov_len = segment[1].seg_len;
+                iov[1].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment[1].seg_addr.pval);
+            }
+            ompi_convertor_unpack( &match->req_recv.req_base.req_convertor,
+                                   iov,
+                                   &iov_count,
+                                   &bytes_received );
+            match->req_bytes_received = bytes_received;
+            /*
+             *  Unpacking finished, make the user buffer unaccessable again.
+             */
+            MEMCHECKER(
+                       memchecker_call(&opal_memchecker_base_mem_noaccess,
+                                       match->req_recv.req_base.req_addr,
+                                       match->req_recv.req_base.req_count,
+                                       match->req_recv.req_base.req_datatype);
+                       );
+        }
+        
+        /* no need to check if complete we know we are.. */
+        /*  don't need a rmb as that is for checking */
+        recv_request_pml_complete(match);
+    }
+    return;
+    
+ slow_path:
+    OPAL_THREAD_UNLOCK(&comm->matching_lock);
+    mca_pml_ob1_recv_frag_match(btl, hdr, segment,
+                                num_segments, MCA_PML_OB1_HDR_TYPE_MATCH);
+}
+
+
+void mca_pml_ob1_recv_frag_callback_rndv(mca_btl_base_module_t* btl, 
+                                         mca_btl_base_tag_t tag,
+                                         mca_btl_base_descriptor_t* des,
+                                         void* cbdata ) { 
+    
+    
+    
+    
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-
+    
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
         return;
     }
-
-    /* hdr_type and hdr_flags are uint8_t, so no endian problems */
-    switch(hdr->hdr_common.hdr_type) {
-    case MCA_PML_OB1_HDR_TYPE_MATCH:
-        {
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_MATCH);
-            mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
-            break;
-        }
-    case MCA_PML_OB1_HDR_TYPE_RNDV:
-        {
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RNDV);
-            mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
-            break;
-        }
-    case MCA_PML_OB1_HDR_TYPE_RGET:
-        {
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RGET);
-            mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
-            break;
-        }
-    case MCA_PML_OB1_HDR_TYPE_ACK:
-        {
-            mca_pml_ob1_send_request_t* sendreq;
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_ACK);
-            sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
-            sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
-
-            /* if the request should be delivered entirely by copy in/out
-             * then throttle sends */
-            if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA)
-                sendreq->req_throttle_sends = true;
-
-            mca_pml_ob1_send_request_copy_in_out(sendreq,
-                    hdr->hdr_ack.hdr_send_offset,
-                    sendreq->req_send.req_bytes_packed -
-                    hdr->hdr_ack.hdr_send_offset);
-
-            OPAL_THREAD_ADD32(&sendreq->req_state, -1);
-
-            if(send_request_pml_complete_check(sendreq) == false)
-                mca_pml_ob1_send_request_schedule(sendreq);
-                
-            break;
-        }
-    case MCA_PML_OB1_HDR_TYPE_FRAG:
-        {
-            mca_pml_ob1_recv_request_t* recvreq;
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
-            recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
-            mca_pml_ob1_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
-            break;
-        }
-    case MCA_PML_OB1_HDR_TYPE_PUT:
-        {
-            mca_pml_ob1_send_request_t* sendreq;
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_PUT);
-            sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
-            mca_pml_ob1_send_request_put(sendreq,btl,&hdr->hdr_rdma);
-            break;
-        }
-    case MCA_PML_OB1_HDR_TYPE_FIN:
-        {
-            mca_btl_base_descriptor_t* rdma;
-            ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FIN);
-            rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
-            rdma->des_cbfunc(btl, NULL, rdma,
-                    hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
-            break;
-        }
-    default:
-        break;
-    }
+    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RNDV);
+    mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
+                                des->des_dst_cnt, MCA_PML_OB1_HDR_TYPE_RNDV);
+    return;
 }
+
+void mca_pml_ob1_recv_frag_callback_rget(mca_btl_base_module_t* btl, 
+                                         mca_btl_base_tag_t tag,
+                                         mca_btl_base_descriptor_t* des,
+                                         void* cbdata ) { 
+    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+    
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
+        return;
+     }
+    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_RGET);
+    mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,
+                                des->des_dst_cnt, MCA_PML_OB1_HDR_TYPE_RGET);
+    return;
+}
+
+  
+
+void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl, 
+                                        mca_btl_base_tag_t tag,
+                                        mca_btl_base_descriptor_t* des,
+                                        void* cbdata ) { 
+    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+    mca_pml_ob1_send_request_t* sendreq;
+    
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
+         return;
+    }
+    
+    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_ACK);
+    sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
+    sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
+    
+    /* if the request should be delivered entirely by copy in/out
+     * then throttle sends */
+    if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA)
+        sendreq->req_throttle_sends = true;
+    
+    mca_pml_ob1_send_request_copy_in_out(sendreq,
+                                         hdr->hdr_ack.hdr_send_offset,
+                                         sendreq->req_send.req_bytes_packed -
+                                         hdr->hdr_ack.hdr_send_offset);
+    
+    OPAL_THREAD_ADD32(&sendreq->req_state, -1);
+     
+    if(send_request_pml_complete_check(sendreq) == false)
+        mca_pml_ob1_send_request_schedule(sendreq);
+    
+    return;
+}
+
+void mca_pml_ob1_recv_frag_callback_frag(mca_btl_base_module_t* btl, 
+                                         mca_btl_base_tag_t tag,
+                                         mca_btl_base_descriptor_t* des,
+                                         void* cbdata ) { 
+     mca_btl_base_segment_t* segments = des->des_dst;
+     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+     mca_pml_ob1_recv_request_t* recvreq;
+     
+     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
+         return;
+     }
+     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
+     recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
+     mca_pml_ob1_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
+     
+     return;
+}
+
+
+void mca_pml_ob1_recv_frag_callback_put(mca_btl_base_module_t* btl, 
+                                        mca_btl_base_tag_t tag,
+                                        mca_btl_base_descriptor_t* des,
+                                        void* cbdata ) { 
+    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+    mca_pml_ob1_send_request_t* sendreq;
+    
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
+        return;
+    }
+    
+    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_PUT);
+    sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
+    mca_pml_ob1_send_request_put(sendreq,btl,&hdr->hdr_rdma);
+    
+    return;
+}
+
+
+void mca_pml_ob1_recv_frag_callback_fin(mca_btl_base_module_t* btl, 
+                                        mca_btl_base_tag_t tag,
+                                        mca_btl_base_descriptor_t* des,
+                                        void* cbdata ) { 
+    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+    mca_btl_base_descriptor_t* rdma;
+    
+    if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
+        return;
+    }
+    
+    ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_FIN);
+    rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
+    rdma->des_cbfunc(btl, NULL, rdma,
+                     hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
+    
+    return;
+}
+
+
 
 #define PML_MAX_SEQ ~((mca_pml_sequence_t)0);
 
@@ -341,7 +543,8 @@ static mca_pml_ob1_recv_frag_t *check_cantmatch_for_match(
 static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl, 
                                         mca_pml_ob1_match_hdr_t *hdr,
                                         mca_btl_base_segment_t* segments,
-                                        size_t num_segments )
+                                        size_t num_segments, 
+                                        int type)
 {
     /* local variables */
     uint16_t next_msg_seq_expected, frag_msg_seq;
@@ -354,7 +557,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
     if(OPAL_UNLIKELY(NULL == comm_ptr)) {
-        /* This is a special case. A message for a not yet exiting communicator can
+        /* This is a special case. A message for a not yet existing communicator can
          * happens, but right now we segfault. Instead, and until we find a better
          * solution, just drop the message. However, in the near future we should
          * store this fragment in a global list, and deliver it to the right
@@ -425,11 +628,22 @@ out_of_order_match:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
     if(OPAL_LIKELY(match)) {
-        mca_pml_ob1_recv_request_progress(match, btl, segments, num_segments);
+        switch(type) { 
+        case MCA_PML_OB1_HDR_TYPE_MATCH:
+            mca_pml_ob1_recv_request_progress_match(match, btl, segments, num_segments);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RNDV:
+            mca_pml_ob1_recv_request_progress_rndv(match, btl, segments, num_segments);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_RGET:
+            mca_pml_ob1_recv_request_progress_rget(match, btl, segments, num_segments);
+            break;
+        }
+        
         if(OPAL_UNLIKELY(frag))
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
     }
-
+    
     /* 
      * Now that new message has arrived, check to see if
      * any fragments on the c_c_frags_cant_match list
@@ -442,6 +656,7 @@ out_of_order_match:
             segments = frag->segments;
             num_segments = frag->num_segments;
             btl = frag->btl;
+            type = hdr->hdr_common.hdr_type;
             goto out_of_order_match;
         }
         OPAL_THREAD_UNLOCK(&comm->matching_lock);

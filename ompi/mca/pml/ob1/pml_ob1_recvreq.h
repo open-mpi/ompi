@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,7 +119,7 @@ do {                                                                \
     do {                                                                              \
        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
                                 &(recvreq->req_recv.req_base), PERUSE_RECV );         \
-        ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi) );  \
+        ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi) );        \
     } while (0)
 
 /*
@@ -274,11 +275,88 @@ do {                                                                            
     }                                                                             \
 } while (0)
 
+
 /**
  *
  */
 
-void mca_pml_ob1_recv_request_progress(
+#define MCA_PML_OB1_RECV_REQUEST_UNPACK_ALL(                                      \
+    request,                                                                      \
+    segments,                                                                     \
+    num_segments,                                                                 \
+    seg_offset,                                                                   \
+    data_offset,                                                                  \
+    bytes_received,                                                               \
+    bytes_delivered)                                                              \
+do {                                                                              \
+    bytes_delivered = 0;                                                          \
+    if(request->req_recv.req_bytes_packed > 0) {                                  \
+        struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
+        uint32_t iov_count = 0;                                                   \
+        size_t max_data = bytes_received;                                         \
+        size_t n, offset = seg_offset;                                            \
+        mca_btl_base_segment_t* segment = segments;                               \
+                                                                                  \
+        OPAL_THREAD_LOCK(&request->lock);                                         \
+        for( n = 0; n < num_segments; n++, segment++ ) {                          \
+            if(offset >= segment->seg_len) {                                      \
+                offset -= segment->seg_len;                                       \
+            } else {                                                              \
+                iov[iov_count].iov_len = segment->seg_len - offset;               \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + offset); \
+                iov_count++;                                                      \
+            }                                                                     \
+        }                                                                         \
+        PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
+                                      &(recvreq->req_recv.req_base),              \
+                                      bytes_received,                             \
+                                      PERUSE_RECV);                               \
+        ompi_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
+                                     &data_offset );                              \
+        ompi_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
+                               iov,                                               \
+                               &iov_count,                                        \
+                               &max_data );                                       \
+        bytes_delivered = max_data;                                               \
+        OPAL_THREAD_UNLOCK(&request->lock);                                       \
+    }                                                                             \
+} while (0)
+
+/**
+ *
+ */
+
+void mca_pml_ob1_recv_request_progress_match(
+    mca_pml_ob1_recv_request_t* req,
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_segment_t* segments,
+    size_t num_segments);
+
+/**
+ *
+ */
+
+void mca_pml_ob1_recv_request_progress_frag(
+    mca_pml_ob1_recv_request_t* req,
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_segment_t* segments,
+    size_t num_segments);
+
+/**
+ *
+ */
+
+void mca_pml_ob1_recv_request_progress_rndv(
+    mca_pml_ob1_recv_request_t* req,
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_segment_t* segments,
+    size_t num_segments);
+
+/**
+ *
+ */
+
+void mca_pml_ob1_recv_request_progress_rget(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* segments,
@@ -368,7 +446,7 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
     }
 
     MCA_PML_OB1_ADD_ACK_TO_PENDING(proc, hdr_src_req, hdr_dst_req,
-            hdr_send_offset);
+                                   hdr_send_offset);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }

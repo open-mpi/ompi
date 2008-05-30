@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -394,7 +395,7 @@ int mca_pml_ob1_send_request_start_buffered(
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
+    rc = mca_bml_base_send(bml_btl, descriptor, MCA_PML_OB1_HDR_TYPE_RNDV);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, descriptor );
     }
@@ -481,7 +482,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
 
 
     /* send */
-    rc = mca_bml_base_send_status(bml_btl, descriptor, MCA_BTL_TAG_PML);
+    rc = mca_bml_base_send_status(bml_btl, descriptor, MCA_PML_OB1_HDR_TYPE_MATCH);
     switch(rc) {
         case OMPI_SUCCESS:
             /* packet is on wire; signal request completion */
@@ -546,7 +547,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     descriptor->des_cbdata = sendreq;
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML); 
+    rc = mca_bml_base_send(bml_btl, descriptor, MCA_PML_OB1_HDR_TYPE_MATCH); 
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, descriptor );
     }
@@ -705,7 +706,7 @@ int mca_pml_ob1_send_request_start_rdma(
     des->des_cbdata = sendreq;
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
+    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RNDV);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des);
     }
@@ -785,7 +786,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
     sendreq->req_state = 2;
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
+    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RNDV);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des );
     }
@@ -996,7 +997,7 @@ cannot_pack:
 #endif  /* OMPI_WANT_PERUSE */
 
         /* initiate send - note that this may complete before the call returns */
-        rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
+        rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_FRAG);
             
         if( OPAL_LIKELY(rc == OMPI_SUCCESS) ) {
             /* update state */

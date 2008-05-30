@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,14 +110,65 @@ do {                                                                    \
 
 
 /**
- *  Callback from BTL on receipt of a recv_frag.
+ *  Callback from BTL on receipt of a recv_frag (match).
  */
 
-extern void mca_pml_ob1_recv_frag_callback( mca_btl_base_module_t *btl, 
-                                            mca_btl_base_tag_t tag,
-                                            mca_btl_base_descriptor_t* descriptor,
-                                            void* cbdata );
-                                                                                                               
+extern void mca_pml_ob1_recv_frag_callback_match( mca_btl_base_module_t *btl, 
+                                                  mca_btl_base_tag_t tag,
+                                                  mca_btl_base_descriptor_t* descriptor,
+                                                  void* cbdata );
+                                                                 
+/**
+ *  Callback from BTL on receipt of a recv_frag (rndv).
+ */
+
+extern void mca_pml_ob1_recv_frag_callback_rndv( mca_btl_base_module_t *btl, 
+                                                 mca_btl_base_tag_t tag,
+                                                 mca_btl_base_descriptor_t* descriptor,
+                                                 void* cbdata );
+/**
+ *  Callback from BTL on receipt of a recv_frag (rget).
+ */
+
+extern void mca_pml_ob1_recv_frag_callback_rget( mca_btl_base_module_t *btl, 
+                                                 mca_btl_base_tag_t tag,
+                                                 mca_btl_base_descriptor_t* descriptor,
+                                                 void* cbdata );
+
+/**
+ *  Callback from BTL on receipt of a recv_frag (ack).
+ */
+
+extern void mca_pml_ob1_recv_frag_callback_ack( mca_btl_base_module_t *btl, 
+                                                mca_btl_base_tag_t tag,
+                                                mca_btl_base_descriptor_t* descriptor,
+                                                void* cbdata );
+/**
+ *  Callback from BTL on receipt of a recv_frag (frag).
+ */
+
+extern void mca_pml_ob1_recv_frag_callback_frag( mca_btl_base_module_t *btl, 
+                                                 mca_btl_base_tag_t tag,
+                                                 mca_btl_base_descriptor_t* descriptor,
+                                                 void* cbdata );
+/**
+ *  Callback from BTL on receipt of a recv_frag (put).
+ */
+
+extern void mca_pml_ob1_recv_frag_callback_put( mca_btl_base_module_t *btl, 
+                                                mca_btl_base_tag_t tag,
+                                                mca_btl_base_descriptor_t* descriptor,
+                                                void* cbdata );
+/**
+ *  Callback from BTL on receipt of a recv_frag (fin).
+ */
+
+extern void mca_pml_ob1_recv_frag_callback_fin( mca_btl_base_module_t *btl, 
+                                                mca_btl_base_tag_t tag,
+                                                mca_btl_base_descriptor_t* descriptor,
+                                                void* cbdata );
+
+                                              
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
