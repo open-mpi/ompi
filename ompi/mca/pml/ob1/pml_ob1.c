@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -248,8 +249,44 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
 
-    rc = mca_bml.bml_register( MCA_BTL_TAG_PML,
-                               mca_pml_ob1_recv_frag_callback,
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_MATCH,
+                               mca_pml_ob1_recv_frag_callback_match,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
+    
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RNDV,
+                               mca_pml_ob1_recv_frag_callback_rndv,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RGET,
+                               mca_pml_ob1_recv_frag_callback_rget,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
+    
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_ACK,
+                               mca_pml_ob1_recv_frag_callback_ack,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
+    
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FRAG,
+                               mca_pml_ob1_recv_frag_callback_frag,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
+    
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_PUT,
+                               mca_pml_ob1_recv_frag_callback_put,
+                               NULL );
+    if(OMPI_SUCCESS != rc)
+        goto cleanup_and_return;
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FIN,
+                               mca_pml_ob1_recv_frag_callback_fin,
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
@@ -347,12 +384,10 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FIN, proc);
 
     /* queue request */
-    rc = mca_bml_base_send(
-                           bml_btl,
-                           fin,
-                           MCA_BTL_TAG_PML
-                           );
-    if(OMPI_SUCCESS != rc) {
+    rc = mca_bml_base_send( bml_btl,
+                            fin,
+                            MCA_PML_OB1_HDR_TYPE_FIN );
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, fin);
         MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
         return OMPI_ERR_OUT_OF_RESOURCE;

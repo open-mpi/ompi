@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -233,7 +234,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     /* initialize descriptor */
     des->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
 
-    rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
+    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_ACK);
     if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) {
         mca_bml_base_free(bml_btl, des);
         return OMPI_ERR_OUT_OF_RESOURCE; 
@@ -399,19 +400,90 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
     return OMPI_SUCCESS;
 }
 
-static void mca_pml_ob1_recv_request_rget(
-    mca_pml_ob1_recv_request_t* recvreq,
-    mca_btl_base_module_t* btl,
-    mca_pml_ob1_rget_hdr_t* hdr)
+
+
+
+/*
+ * Update the recv request status to reflect the number of bytes
+ * received and actually delivered to the application. 
+ */
+
+void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq,
+                                             mca_btl_base_module_t* btl,
+                                             mca_btl_base_segment_t* segments,
+                                             size_t num_segments )
 {
+    size_t bytes_received = 0;
+    size_t bytes_delivered = 0;
+    size_t data_offset = 0;
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
+                                        0, bytes_received );
+    bytes_received -= sizeof(mca_pml_ob1_frag_hdr_t);
+    data_offset     = hdr->hdr_frag.hdr_frag_offset;
+    /*
+     *  Make user buffer accessable(defined) before unpacking.
+     */
+    MEMCHECKER(
+               memchecker_call(&opal_memchecker_base_mem_defined,
+                               recvreq->req_recv.req_base.req_addr,
+                               recvreq->req_recv.req_base.req_count,
+                               recvreq->req_recv.req_base.req_datatype);
+               );
+    MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
+                                     segments,
+                                     num_segments,
+                                     sizeof(mca_pml_ob1_frag_hdr_t),
+                                     data_offset,
+                                     bytes_received,
+                                     bytes_delivered );
+    /*
+     *  Unpacking finished, make the user buffer unaccessable again.
+     */
+    MEMCHECKER(
+               memchecker_call(&opal_memchecker_base_mem_noaccess,
+                               recvreq->req_recv.req_base.req_addr,
+                               recvreq->req_recv.req_base.req_count,
+                               recvreq->req_recv.req_base.req_datatype);
+               );
+    
+    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    /* check completion status */
+    if(recv_request_pml_complete_check(recvreq) == false &&
+            recvreq->req_rdma_offset < recvreq->req_send_offset) {
+        /* schedule additional rdma operations */
+        mca_pml_ob1_recv_request_schedule(recvreq, NULL);
+    }
+}
+
+/*
+ * Update the recv request status to reflect the number of bytes
+ * received and actually delivered to the application. 
+ */
+
+void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq,
+                                             mca_btl_base_module_t* btl,
+                                             mca_btl_base_segment_t* segments,
+                                             size_t num_segments )
+{
+    size_t bytes_received = 0;
+    mca_pml_ob1_rget_hdr_t* hdr = (mca_pml_ob1_rget_hdr_t*)segments->seg_addr.pval;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
     mca_pml_ob1_rdma_frag_t* frag;
     size_t i, size = 0;
     int rc;
+
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
+                                        0, bytes_received );
+    recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
+
+    MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
+
     
     /* if receive buffer is not contiguous we can't just RDMA read into it, so
      * fall back to copy in/out protocol. It is a pity because buffer on the
-     * sender side is already registered. We need to ne smarter here, perhaps
+     * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
     if(ompi_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
         mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
@@ -454,18 +526,25 @@ static void mca_pml_ob1_recv_request_rget(
     frag->reg = NULL;
 
     mca_pml_ob1_recv_request_get_frag(frag);
+    
+    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    /* check completion status */
+    if(recv_request_pml_complete_check(recvreq) == false &&
+            recvreq->req_rdma_offset < recvreq->req_send_offset) {
+        /* schedule additional rdma operations */
+        mca_pml_ob1_recv_request_schedule(recvreq, NULL);
+    }
 }
-
 
 /*
  * Update the recv request status to reflect the number of bytes
  * received and actually delivered to the application. 
  */
 
-void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
-                                        mca_btl_base_module_t* btl,
-                                        mca_btl_base_segment_t* segments,
-                                        size_t num_segments )
+void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq,
+                                             mca_btl_base_module_t* btl,
+                                             mca_btl_base_segment_t* segments,
+                                             size_t num_segments )
 {
     size_t bytes_received = 0;
     size_t bytes_delivered = 0;
@@ -474,123 +553,100 @@ void mca_pml_ob1_recv_request_progress( mca_pml_ob1_recv_request_t* recvreq,
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
-    switch(hdr->hdr_common.hdr_type) {
-        case MCA_PML_OB1_HDR_TYPE_MATCH:
-
-            bytes_received -= sizeof(mca_pml_ob1_match_hdr_t);
-            recvreq->req_recv.req_bytes_packed = bytes_received;
-            MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
-            /*
-             *  Make user buffer accessible (defined) before unpacking.
-             */
-            MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_defined,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
-            );
-            MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
-                                             segments,
-                                             num_segments,
-                                             sizeof(mca_pml_ob1_match_hdr_t),
-                                             data_offset,
-                                             bytes_received,
-                                             bytes_delivered);
-            /*
-             *  Unpacking finished, make the user buffer unaccessable again.
-             */
-            MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_noaccess,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
-            );
-            break;
-
-        case MCA_PML_OB1_HDR_TYPE_RNDV:
-
-            bytes_received                     -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
-            recvreq->req_recv.req_bytes_packed  = hdr->hdr_rndv.hdr_msg_length;
-            recvreq->req_send                   = hdr->hdr_rndv.hdr_src_req;
-            recvreq->req_rdma_offset            = bytes_received;
-            MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
-            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
-            /**
-             * The PUT protocol do not attach any data to the original request.
-             * Therefore, we might want to avoid unpacking if there is nothing to
-             * unpack.
-             */
-            if( 0 < bytes_received ) {
-                MEMCHECKER(
-                    memchecker_call(&opal_memchecker_base_mem_defined,
-                                    recvreq->req_recv.req_base.req_addr,
-                                    recvreq->req_recv.req_base.req_count,
-                                    recvreq->req_recv.req_base.req_datatype);
-                );
-                MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
-                                                 segments,
-                                                 num_segments,
-                                                 sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                                                 data_offset,
-                                                 bytes_received,
-                                                 bytes_delivered );
-                MEMCHECKER(
-                    memchecker_call(&opal_memchecker_base_mem_noaccess,
-                                    recvreq->req_recv.req_base.req_addr,
-                                    recvreq->req_recv.req_base.req_count,
-                                    recvreq->req_recv.req_base.req_datatype);
-                );
-            }
-            break;
-
-        case MCA_PML_OB1_HDR_TYPE_RGET:
-
-            recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
-            MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
-            mca_pml_ob1_recv_request_rget(recvreq, btl, &hdr->hdr_rget);
-            return;
-
-        case MCA_PML_OB1_HDR_TYPE_FRAG:
-            bytes_received -= sizeof(mca_pml_ob1_frag_hdr_t);
-            data_offset     = hdr->hdr_frag.hdr_frag_offset;
-            /*
-             *  Make user buffer accessable(defined) before unpacking.
-             */
-            MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_defined,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
-            );
-            MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
-                                             segments,
-                                             num_segments,
-                                             sizeof(mca_pml_ob1_frag_hdr_t),
-                                             data_offset,
-                                             bytes_received,
-                                             bytes_delivered );
-            /*
-             *  Unpacking finished, make the user buffer unaccessable again.
-             */
-            MEMCHECKER(
-                memchecker_call(&opal_memchecker_base_mem_noaccess,
-                                recvreq->req_recv.req_base.req_addr,
-                                recvreq->req_recv.req_base.req_count,
-                                recvreq->req_recv.req_base.req_datatype);
-            );
-            break;
-
-        default:
-            break;
+    
+    bytes_received -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
+    recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
+    recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
+    recvreq->req_rdma_offset = bytes_received;
+    MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
+    mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
+    /**
+     * The PUT protocol do not attach any data to the original request.
+     * Therefore, we might want to avoid unpacking if there is nothing to
+     * unpack.
+     */
+    if( 0 < bytes_received ) {
+        MEMCHECKER(
+                   memchecker_call(&opal_memchecker_base_mem_defined,
+                                   recvreq->req_recv.req_base.req_addr,
+                                   recvreq->req_recv.req_base.req_count,
+                                   recvreq->req_recv.req_base.req_datatype);
+                   );
+        MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
+                                         segments,
+                                         num_segments,
+                                         sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                                         data_offset,
+                                         bytes_received,
+                                         bytes_delivered );
+        MEMCHECKER(
+                   memchecker_call(&opal_memchecker_base_mem_noaccess,
+                                   recvreq->req_recv.req_base.req_addr,
+                                   recvreq->req_recv.req_base.req_count,
+                                   recvreq->req_recv.req_base.req_datatype);
+                   );
     }
-
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
-            recvreq->req_rdma_offset < recvreq->req_send_offset) {
+       recvreq->req_rdma_offset < recvreq->req_send_offset) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
+}
+
+
+/*
+ * Update the recv request status to reflect the number of bytes
+ * received and actually delivered to the application. 
+ */
+
+void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvreq,
+                                              mca_btl_base_module_t* btl,
+                                              mca_btl_base_segment_t* segments,
+                                              size_t num_segments )
+{
+    size_t bytes_received = 0;
+    size_t bytes_delivered = 0;
+    size_t data_offset = 0;
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+    bool complete; 
+
+    MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
+                                        0, bytes_received );
+    bytes_received -= sizeof(mca_pml_ob1_match_hdr_t);
+    recvreq->req_recv.req_bytes_packed = bytes_received;
+    
+    MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
+    /*
+     *  Make user buffer accessable(defined) before unpacking.
+     */
+    MEMCHECKER(
+               memchecker_call(&opal_memchecker_base_mem_defined,
+                               recvreq->req_recv.req_base.req_addr,
+                               recvreq->req_recv.req_base.req_count,
+                               recvreq->req_recv.req_base.req_datatype);
+               );
+    MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
+                                     segments,
+                                     num_segments,
+                                     sizeof(mca_pml_ob1_match_hdr_t),
+                                     data_offset,
+                                     bytes_received,
+                                     bytes_delivered);
+    /*
+     *  Unpacking finished, make the user buffer unaccessable again.
+     */
+    MEMCHECKER(
+               memchecker_call(&opal_memchecker_base_mem_noaccess,
+                               recvreq->req_recv.req_base.req_addr,
+                               recvreq->req_recv.req_base.req_count,
+                               recvreq->req_recv.req_base.req_datatype);
+               );
+    
+    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
+    complete = recv_request_pml_complete_check(recvreq);
+    assert(complete);
 }
 
 
@@ -762,7 +818,7 @@ int mca_pml_ob1_recv_request_schedule_once(
                                       PERUSE_RECV);
 
         /* send rdma request to peer */
-        rc = mca_bml_base_send(bml_btl, ctl, MCA_BTL_TAG_PML);
+        rc = mca_bml_base_send(bml_btl, ctl, MCA_PML_OB1_HDR_TYPE_PUT);
         if(OPAL_LIKELY(OMPI_SUCCESS == rc)) {
             /* update request state */
             recvreq->req_rdma_offset += size;
@@ -872,6 +928,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     mca_pml_ob1_comm_proc_t* proc;
     mca_pml_ob1_recv_frag_t* frag;
     opal_list_t *queue;
+    mca_pml_ob1_hdr_t* hdr;
 
     /* init/re-init the request */
     req->req_lock = 0;
@@ -940,14 +997,33 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
             opal_list_remove_item(&proc->unexpected_frags,
                     (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
-
-            mca_pml_ob1_recv_request_progress(req, frag->btl, frag->segments,
-                    frag->num_segments);
+            
+            hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
+            switch(hdr->hdr_common.hdr_type) {
+            case MCA_PML_OB1_HDR_TYPE_MATCH:
+                mca_pml_ob1_recv_request_progress_match(req, frag->btl, frag->segments,
+                                                        frag->num_segments);
+                break;
+            case MCA_PML_OB1_HDR_TYPE_RNDV:
+                mca_pml_ob1_recv_request_progress_rndv(req, frag->btl, frag->segments,
+                                                       frag->num_segments);
+                break;
+            case MCA_PML_OB1_HDR_TYPE_RGET:
+                mca_pml_ob1_recv_request_progress_rget(req, frag->btl, frag->segments,
+                                                       frag->num_segments);
+                break;
+            case MCA_PML_OB1_HDR_TYPE_FRAG:
+                mca_pml_ob1_recv_request_progress_frag(req, frag->btl, frag->segments,
+                                                       frag->num_segments);
+                break;
+            }
+            
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+
         } else {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
-                    frag->segments, frag->num_segments);
+                                                   frag->segments, frag->num_segments);
         }
     }
 }
