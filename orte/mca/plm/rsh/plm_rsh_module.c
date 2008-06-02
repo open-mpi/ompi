@@ -457,7 +457,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           proc_vpid_index,
-                                          node_name_index2);
+                                          node_name_index2,
+                                          true);
     
     if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
@@ -1151,6 +1152,14 @@ launch_apps:
         orte_plm_base_launch_failed(jdata->jobid, false, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
 
+    /* setup a "heartbeat" timer to periodically check on
+     * the state-of-health of the orteds, if requested AND
+     * we actually launched some daemons!
+     */
+    if (0 < map->num_new_daemons) {
+        orte_plm_base_start_heart();
+    }
+    
     return rc;
 }
 

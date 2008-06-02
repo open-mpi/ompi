@@ -106,7 +106,7 @@ static int plm_tm_open(void)
     mca_plm_tm_component.want_path_check = OPAL_INT_TO_BOOL(tmp);
     
     mca_plm_tm_component.checked_paths = NULL;
-
+   
     return ORTE_SUCCESS;
 }
 

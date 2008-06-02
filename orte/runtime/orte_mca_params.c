@@ -77,8 +77,20 @@ int orte_register_params(void)
 
     mca_base_param_reg_int_name("orte", "daemon_fail",
                                 "Have the specified orted fail after init for debugging purposes",
-                                false, false, (int)false, &orted_debug_failure);
+                                false, false, ORTE_VPID_INVALID, &orted_debug_failure);
     
+    mca_base_param_reg_int_name("orte", "daemon_fail_delay",
+                                "Have the specified orted fail after specified number of seconds (default: 0 => no delay)",
+                                false, false, 0, &orted_debug_failure_delay);
+
+    mca_base_param_reg_int_name("orte", "heartbeat_rate",
+                                "Seconds between checks for daemon state-of-health (default: 0 => do not check)",
+                                false, false, 0, &orte_heartbeat_rate);
+    
+    mca_base_param_reg_int_name("orte", "startup_timeout",
+                                "Milliseconds/daemon to wait for startup before declaring failed_to_start (default: 0 => do not check)",
+                                false, false, 0, &orte_startup_timeout);
+ 
     /* check for timing requests */
     mca_base_param_reg_int_name("orte", "timing",
                                 "Request that critical timing loops be measured",
@@ -98,8 +110,8 @@ int orte_register_params(void)
     orte_max_timeout = 1000000.0 * value;  /* convert to usec */
 
     mca_base_param_reg_int_name("orte", "timeout_step",
-                                "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 100 usec/proc)",
-                                false, false, 100, &orte_timeout_usec_per_proc);
+                                "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 1000 usec/proc)",
+                                false, false, 1000, &orte_timeout_usec_per_proc);
     
     /* default hostfile */
     mca_base_param_reg_string_name("orte", "default_hostfile",

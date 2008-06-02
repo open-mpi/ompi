@@ -45,6 +45,7 @@
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
 
@@ -229,47 +230,60 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
     orte_job_t *jdata;
     char *pidstr;
     
+    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:base:launch_failed abort in progress, ignoring report",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
+        return;
+    }
+    
     ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:launch_failed for job %s during %s",
+                         "%s plm:base:launch_failed for job %s %s daemon launch",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job),
-                         (daemons_launching) ? "daemon launch" : "app launch"));
+                         (daemons_launching) ? "during" : "after"));
 
-    if (0 < pid) {
-        asprintf(&pidstr, "%d", (int)pid);
-    } else {
-        /* if the pid is negative, then we couldn't get a real pid
-         * to report here - so tell someone that
-         */
-        pidstr = strdup("unknown");
-    }
-
-    if (daemons_launching) {
-        if (WIFSIGNALED(status)) { /* died on signal */
-#ifdef WCOREDUMP
-            if (WCOREDUMP(status)) {
-                orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
-                               pidstr, WTERMSIG(status));
-            } else {
-                orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                               pidstr, WTERMSIG(status));
-            }
-#else
-            orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                           pidstr, WTERMSIG(status));
-#endif /* WCOREDUMP */
-        } else {
-            orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
-                           pidstr, WEXITSTATUS(status));
-        }
-        orted_failed_launch = true;
+    /* if this is the daemon job that failed, set the flag indicating
+     * that a daemon failed so we use the proper
+     * methods for attempting to shutdown the rest of the system
+     */
+    if (ORTE_PROC_MY_NAME->jobid == job) {
         /* set the flag indicating that a daemon failed so we use the proper
          * methods for attempting to shutdown the rest of the system
          */
         orte_abnormal_term_ordered = true;
-        
-    }
-    free(pidstr);
+        if (0 < pid) {
+            asprintf(&pidstr, "%d", (int)pid);
+        } else {
+            /* if the pid is negative, then we couldn't get a real pid
+             * to report here - so tell someone that
+             */
+            pidstr = strdup("unknown");
+        }
+        if (daemons_launching) {
+            if (WIFSIGNALED(status)) { /* died on signal */
+#ifdef WCOREDUMP
+                if (WCOREDUMP(status)) {
+                    orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
+                                   pidstr, WTERMSIG(status));
+                } else {
+                    orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                                   pidstr, WTERMSIG(status));
+                }
+#else
+                orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                                pidstr, WTERMSIG(status));
+#endif /* WCOREDUMP */
+            } else {
+                orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
+                               pidstr, WEXITSTATUS(status));
+            }
+            orted_failed_launch = true;
+        }
+        free(pidstr);
+   }
+    
     
     /* Set the job state as indicated so orterun's exit status
        will be non-zero
@@ -669,7 +683,8 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
                                           int *proc_vpid_index,
-                                          int *node_name_index)
+                                          int *node_name_index,
+                                          bool heartbeat)
 {
     char *param = NULL;
     int loc_id;
@@ -697,6 +712,19 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         opal_argv_append(argc, argv, "--debug-failure");
         asprintf(&param, "%d", orted_debug_failure);
+        opal_argv_append(argc, argv, param);
+        free(param);
+    }
+    if (0 < orted_debug_failure_delay) {
+        opal_argv_append(argc, argv, "--debug-failure-delay");
+        asprintf(&param, "%d", orted_debug_failure_delay);
+        opal_argv_append(argc, argv, param);
+        free(param);
+    }
+    if (heartbeat) {
+        /* tell the daemon to do a heartbeat */
+        opal_argv_append(argc, argv, "--heartbeat");
+        asprintf(&param, "%d", orte_heartbeat_rate);
         opal_argv_append(argc, argv, param);
         free(param);
     }
@@ -915,9 +943,14 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                              "%s plm:base:check_job_completed declared job %s failed to start by proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
-                             ORTE_NAME_PRINT(&(jdata->aborted_proc->name))));
+                             (NULL == jdata->aborted_proc) ? "unknown" : ORTE_NAME_PRINT(&(jdata->aborted_proc->name))));
         /* report this to the errmgr - it will protect us from multiple calls */
-        orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
+        if (NULL == jdata->aborted_proc) {
+            /* we don't know who caused us to abort */
+            orte_errmgr.incomplete_start(jdata->jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else {
+            orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
+        }
         goto CHECK_ALL_JOBS;
     } else if (ORTE_JOB_STATE_ABORTED == jdata->state ||
                ORTE_JOB_STATE_ABORTED_BY_SIG == jdata->state ||
@@ -926,10 +959,15 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                              "%s plm:base:check_job_completed declared job %s aborted by proc %s with code %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
-                             ORTE_NAME_PRINT(&(jdata->aborted_proc->name)),
-                             jdata->aborted_proc->exit_code));
+                             (NULL == jdata->aborted_proc) ? "unknown" : ORTE_NAME_PRINT(&(jdata->aborted_proc->name)),
+                             (NULL == jdata->aborted_proc) ? ORTE_ERROR_DEFAULT_EXIT_CODE : jdata->aborted_proc->exit_code));
         /* report this to the errmgr */
-        orte_errmgr.proc_aborted(&(jdata->aborted_proc->name), jdata->aborted_proc->exit_code);
+        if (NULL == jdata->aborted_proc) {
+            /* we don't know who caused us to abort */
+            orte_errmgr.proc_aborted(ORTE_NAME_INVALID, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else {
+            orte_errmgr.proc_aborted(&(jdata->aborted_proc->name), jdata->aborted_proc->exit_code);
+        }
         goto CHECK_ALL_JOBS;
     } else if (jdata->num_terminated >= jdata->num_procs) {
         /* this job has terminated - now we need to check to see if ALL
@@ -945,24 +983,14 @@ CHECK_ALL_JOBS:
         /* if the job that is being checked is the HNP, then we are
          * trying to terminate the orteds. In that situation, we
          * do -not- check all jobs - we simply notify the HNP
-         * that the orteds are complete
-         *
-         * NOTE: remember to protect against jdata being NULL!
-         */
-        if (NULL != jdata &&
-            jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-            /* we have completed the orteds */
-            int data=1;
-            write(orteds_exit, &data, sizeof(int));
-            return;
-        }
-        /* now check special case if jdata is NULL - we want
+         * that the orteds are complete. Also check special case
+         * if jdata is NULL - we want
          * to definitely declare the job done if the orteds
          * have completed, no matter what else may be happening.
          * This can happen if a ctrl-c hits in the "wrong" place
          * while launching
          */
-        if (jdata == NULL) {
+        if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
             jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
             if (jdata->num_terminated >= jdata->num_procs) {
                 /* orteds are done! */

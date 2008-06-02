@@ -231,8 +231,10 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         opal_evtimer_set(tmp, (cbfunc), NULL);                      \
         now.tv_sec = 0;                                             \
         now.tv_usec = (float)(deltat) * (float)(n);                 \
-        if (now.tv_usec > (maxwait)) {                              \
-            now.tv_usec = (maxwait);                                \
+        if (maxwait > 0) {                                          \
+            if (now.tv_usec > (maxwait)) {                          \
+                now.tv_usec = (maxwait);                            \
+            }                                                       \
         }                                                           \
         if (now.tv_usec > 1000000.0) {                              \
             now.tv_sec = (float)((int)(now.tv_usec/1000000.0));     \

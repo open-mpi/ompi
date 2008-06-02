@@ -56,7 +56,8 @@ bool orte_help_want_aggregate = true;
 bool orte_help_show_recursions;
 bool orte_params_set = false;
 int orte_debug_verbosity;
-int orted_debug_failure = ORTE_VPID_INVALID;
+int orted_debug_failure;
+int orted_debug_failure_delay;
 
 int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;
@@ -66,6 +67,10 @@ char **orted_cmd_line=NULL;
 int orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
+bool orte_shutdown_in_progress = false;
+
+int orte_heartbeat_rate;
+int orte_startup_timeout;
 
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
