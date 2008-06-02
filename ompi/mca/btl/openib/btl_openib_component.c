@@ -2446,8 +2446,29 @@ error:
                     wc->status, wc->wr_id, wc->opcode, qp));
     }
 
-    if(IBV_WC_RETRY_EXC_ERR == wc->status)
-        orte_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
+    if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
+        IBV_WC_RETRY_EXC_ERR == wc->status) {
+        char *peer_hostname = 
+            (NULL != endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
+            endpoint->endpoint_proc->proc_ompi->proc_hostname : 
+            "<unknown -- please run with mpi_keep_peer_hostnames=1>";
+        const char *device_name = 
+            ibv_get_device_name(endpoint->qps[qp].qp->lcl_qp->context->device);
+
+        if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status) {
+            orte_show_help("help-mpi-btl-openib.txt",
+                           BTL_OPENIB_QP_TYPE_PP(qp) ? 
+                           "pp rnr retry exceeded" : 
+                           "srq rnr retry exceeded", true,
+                           orte_process_info.nodename, device_name,
+                           peer_hostname);
+        } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
+            orte_show_help("help-mpi-btl-openib.txt", 
+                           "pp retry exceeded", true,
+                           orte_process_info.nodename,
+                           device_name, peer_hostname);
+        }
+    }
 
     if(openib_btl)
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);

@@ -324,8 +324,10 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_retry_count = (uint32_t) ival;
 
     CHECK(reg_int("ib_rnr_retry", "InfiniBand \"receiver not ready\" "
-                  "retry count "
-                  "(must be >= 0 and <= 7)",
+                  "retry count; applies *only* to SRQ/XRC queues.  PP queues "
+                  "use RNR retry values of 0 because Open MPI performs "
+                  "software flow control to guarantee that RNRs never occur "
+                  "(must be >= 0 and <= 7; 7 = \"infinite\")",
                   7, &ival, 0));
     if (ival > 7) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",

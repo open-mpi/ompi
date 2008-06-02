@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Mellanox Technologies. All rights reserved.
 # $COPYRIGHT$
 # 
@@ -139,7 +139,53 @@ support it?).  The failure occured here:
 You may need to consult with your system administrator to get this
 problem fixed.
 #
-[btl_openib:retry-exceeded]
+[pp rnr retry exceeded]
+The OpenFabrics "receiver not ready" retry count on a per-peer
+connection between two MPI processes has been exceeded.  In general,
+this should not happen because Open MPI uses flow control on per-peer
+connections to ensure that receivers are always ready when data is
+sent.
+
+This error usually means one of two things:
+
+1. There is something awry within the network fabric itself.  
+2. A bug in Open MPI has caused flow control to malfunction.
+ 
+#1 is usually more likely.  You should note the hosts on which this
+error has occurred; it has been observed that rebooting or removing a
+particular host from the job can sometimes resolve this issue.
+
+Below is some information about the host that raised the error and the
+peer to which it was connected:
+
+    Local host:   %s
+    Local device: %s
+    Peer host:    %s
+
+You may need to consult with your system administrator to get this
+problem fixed.
+#
+[srq rnr retry exceeded]
+The OpenFabrics "receiver not ready" retry count on a shared receive
+queue or XRC receive queue has been exceeded.  This error can occur if
+the mca_btl_openib_ib_rnr_retry is set to a value less than 7 (where 7
+the default value and effectively means "infinite retry").  If your
+rnr_retry value is 7, there might be something awry within the network
+fabric itself.  In this case, you should note the hosts on which this
+error has occurred; it has been observed that rebooting or removing a
+particular host from the job can sometimes resolve this issue.
+
+Below is some information about the host that raised the error and the
+peer to which it was connected:
+
+    Local host:   %s
+    Local device: %s
+    Peer host:    %s
+
+You may need to consult with your system administrator to get this
+problem fixed.
+#
+[pp retry exceeded]
 The InfiniBand retry count between two MPI processes has been
 exceeded.  "Retry count" is defined in the InfiniBand spec 1.2
 (section 12.7.38):
@@ -158,13 +204,22 @@ respect to the retry count:
 
 * btl_openib_ib_retry_count - The number of times the sender will
   attempt to retry (defaulted to 7, the maximum value).
-
 * btl_openib_ib_timeout - The local ACK timeout parameter (defaulted
   to 10).  The actual timeout value used is calculated as:
 
      4.096 microseconds * (2^btl_openib_ib_timeout)
 
   See the InfiniBand spec 1.2 (section 12.7.34) for more details.
+
+Below is some information about the host that raised the error and the
+peer to which it was connected:
+
+    Local host:   %s
+    Local device: %s
+    Peer host:    %s
+
+You may need to consult with your system administrator to get this
+problem fixed.
 #
 [no active ports found]
 WARNING: There is at least one IB HCA found on host '%s', but there are
