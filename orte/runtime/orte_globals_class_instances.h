@@ -244,6 +244,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->node = NULL;
     proc->nodename = NULL;
     proc->rml_uri = NULL;
+    proc->beat = 0;
 #if OPAL_ENABLE_FT == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

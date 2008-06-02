@@ -65,6 +65,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 
@@ -86,6 +87,12 @@ static int plm_tm_finalize(void);
 
 static int plm_tm_connect(void);
 static int plm_tm_disconnect(void);
+static void failed_start(int fd, short event, void *arg);
+
+/*
+ * Local "global" variables
+ */
+static opal_event_t *ev=NULL;
 
 /*
  * Global variable
@@ -139,20 +146,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     tm_task_id *tm_task_ids = NULL;
     int local_err;
     tm_event_t event;
-    struct timeval launchstart, launchstop, completionstart, completionstop;
-    struct timeval jobstart, jobstop;
-    int maxtime=0, mintime=99999999, maxiter = 0, miniter = 0, deltat;
-    float avgtime=0.0;
     bool failed_launch = true;
     mode_t current_umask;
     
-    
-    /* check for timing request - get start time if so */
-    if (orte_timing) {
-        if (0 != gettimeofday(&jobstart, NULL)) {
-            orte_output(0, "plm_tm: could not obtain job start time");
-        }
-    }
     
     /* create a jobid for this job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
@@ -206,7 +202,8 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
                                           &proc_vpid_index,
-                                          &node_name_index);
+                                          &node_name_index,
+                                          true);
 
     if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
@@ -316,40 +313,12 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             if (NULL != param) free(param);
         }
         
-        /* check for timing request - get start time if so */
-        if (orte_timing) {
-            if (0 != gettimeofday(&launchstart, NULL)) {
-                orte_output(0, "plm_tm: could not obtain start time");
-                launchstart.tv_sec = 0;
-                launchstart.tv_usec = 0;
-            }
-        }
-        
         rc = tm_spawn(argc, argv, env, node->launch_id, tm_task_ids + launched, tm_events + launched);
         if (TM_SUCCESS != rc) {
             orte_show_help("help-plm-tm.txt", "tm-spawn-failed",
                            true, argv[0], node->name, node->launch_id);
             rc = ORTE_ERROR;
             goto cleanup;
-        }
-        
-        /* check for timing request - get stop time and process if so */
-        if (orte_timing) {
-            if (0 != gettimeofday(&launchstop, NULL)) {
-                orte_output(0, "plm_tm: could not obtain stop time");
-            } else {
-                deltat = (launchstop.tv_sec - launchstart.tv_sec)*1000000 +
-                         (launchstop.tv_usec - launchstart.tv_usec);
-                avgtime = avgtime + deltat / map->num_new_daemons;
-                if (deltat < mintime) {
-                    mintime = deltat;
-                    miniter = launched;
-                }
-                if (deltat > maxtime) {
-                    maxtime = deltat;
-                    maxiter = launched;
-                }
-            }
         }
         
         launched++;
@@ -362,15 +331,6 @@ static int plm_tm_launch_job(orte_job_t *jdata)
                          "%s plm:tm:launch: finished spawning orteds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* check for timing request - get start time for launch completion */
-    if (orte_timing) {
-        if (0 != gettimeofday(&completionstart, NULL)) {
-            orte_output(0, "plm_tm: could not obtain completion start time");
-            completionstart.tv_sec = 0;
-            completionstart.tv_usec = 0;
-        }
-    }
-    
     /* TM poll for all the spawns */
     for (i = 0; i < launched; ++i) {
         rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
@@ -379,6 +339,19 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             orte_output(0, "plm:tm: failed to poll for a spawned daemon, return status = %d", rc);
             goto cleanup;
         }
+    }
+    
+    /* set a timer to tell us if one or more daemon's fails to start - use the
+     * millisec/daemon timeout provided by the user to compute time
+     */
+    if (0 < orte_startup_timeout) {
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:tm: setting startup timer for %d milliseconds",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_startup_timeout));
+        ORTE_DETECT_TIMEOUT(&ev, map->num_new_daemons,
+                            orte_startup_timeout*1000,
+                            -1, failed_start);
     }
     
     /* wait for daemons to callback */
@@ -390,19 +363,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    /* check for timing request - get stop time for launch completion and report */
-    if (orte_timing) {
-        if (0 != gettimeofday(&completionstop, NULL)) {
-            orte_output(0, "plm_tm: could not obtain completion stop time");
-        } else {
-            deltat = (completionstop.tv_sec - jobstart.tv_sec)*1000000 +
-            (completionstop.tv_usec - completionstop.tv_usec);
-            orte_output(0, "plm_tm: time to launch/wireup all daemons: %d usec", deltat);
-        }
-        orte_output(0, "plm_tm: Launch statistics:");
-        orte_output(0, "plm_tm: Average time to launch an orted: %f usec", avgtime);
-        orte_output(0, "plm_tm: Max time to launch an orted: %d usec at iter %d", maxtime, maxiter);
-        orte_output(0, "plm_tm: Min time to launch an orted: %d usec at iter %d", mintime, miniter);
+    /* if issued, cancel the failed-to-start timer */
+    if (NULL != ev) {
+        opal_event_del(ev);
     }
     
 launch_apps:
@@ -446,17 +409,15 @@ launch_apps:
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
         orte_plm_base_launch_failed(jdata->jobid, true, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        return rc;
     }
         
-    /* check for timing request - get stop time and process if so */
-    if (orte_timing) {
-        if (0 != gettimeofday(&jobstop, NULL)) {
-            orte_output(0, "plm_tm: could not obtain stop time");
-        } else {
-            deltat = (jobstop.tv_sec - jobstart.tv_sec)*1000000 +
-                     (jobstop.tv_usec - jobstart.tv_usec);
-            orte_output(0, "plm_tm: launch of entire job required %d usec", deltat);
-        }
+    /* setup a "heartbeat" timer to periodically check on
+     * the state-of-health of the orteds, if requested AND
+     * we actually launched some daemons!
+     */
+    if (0 < map->num_new_daemons) {
+        orte_plm_base_start_heart();
     }
     
     ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -555,4 +516,25 @@ static int plm_tm_disconnect(void)
     tm_finalize();
 
     return ORTE_SUCCESS;
+}
+
+/* call this function if the timer fires indicating that one
+ * or more daemons failed to start
+ */
+static void failed_start(int fd, short dummy, void *arg)
+{
+    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:tm:failed_start",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* if we are aborting, ignore this */
+    if (orte_abnormal_term_ordered) {
+        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:tm:failed_start - abnormal term in progress",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        return;
+    }
+    
+    orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, true, -1,
+                                ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);  
 }

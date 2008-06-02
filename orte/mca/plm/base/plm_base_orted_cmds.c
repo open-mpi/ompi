@@ -90,7 +90,7 @@ int orte_plm_base_orted_exit(void)
 {
     int rc;
     opal_buffer_t cmd;
-    orte_daemon_cmd_flag_t command;
+    orte_daemon_cmd_flag_t command = ORTE_DAEMON_EXIT_CMD;
     orte_job_t *daemons;
     orte_proc_t **procs;
     
@@ -98,6 +98,9 @@ int orte_plm_base_orted_exit(void)
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* flag that a shutdown is in progress so all heartbeats stop */
+    orte_shutdown_in_progress = true;
+    
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
     
     /* since the orteds are being ordered to exit, and we are
@@ -117,16 +120,7 @@ int orte_plm_base_orted_exit(void)
     procs[0]->state = ORTE_PROC_STATE_TERMINATED;
     daemons->num_terminated++;
     
-    /* just to be sure - it could be that we are the only daemon in
-     * the job, and/or that all the other daemons reported termination
-     * due to some other influence, so check to see if we are all done.
-     * This will wake us up if everything is done
-     */
-    orte_plm_base_check_job_completed(daemons);
-
-    command = ORTE_DAEMON_EXIT_CMD;
-    
-    /* pack the command */
+   /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
@@ -154,25 +148,26 @@ int orte_plm_base_orted_exit(void)
          */
         done_reporting = false;
         num_reported = 0;
-        num_being_sent = 0;
+        num_being_sent = daemons->num_procs-1;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
         for(v=1; v < daemons->num_procs; v++) {
             /* if we don't have contact info for this daemon,
              * then we know we can't reach it - so don't try
              */
             if (NULL == procs[v]->rml_uri) {
+                --num_being_sent;
                 continue;
             }
             peer.vpid = v;
             /* check to see if this daemon is known to be "dead" */
             if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */
+                --num_being_sent;
                 continue;
             }
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
-            ++num_being_sent;
             ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_cmd:orted_exit sending cmd to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -187,8 +182,8 @@ int orte_plm_base_orted_exit(void)
          * our best attempt
          */
         ORTE_DETECT_TIMEOUT(&ev, num_being_sent,
-                            1000*orte_timeout_usec_per_proc,
-                            10*orte_max_timeout, failed_send);
+                            orte_timeout_usec_per_proc,
+                            orte_max_timeout, failed_send);
         
         /* wait for completion or timeout */
         ORTE_PROGRESSED_WAIT(done_reporting, num_reported, num_being_sent);
@@ -199,8 +194,10 @@ int orte_plm_base_orted_exit(void)
             ev = NULL;
         }
         
-        /* if all the sends didn't go, report that */
-        if (num_reported < num_being_sent) {
+        /* if all the sends didn't go, or we couldn't send to
+         * all daemons, then report that */
+        if (num_reported < num_being_sent ||
+            num_being_sent < (daemons->num_procs-1)) {
             return ORTE_ERR_SILENT;
         }
 
@@ -286,13 +283,14 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
          */
         done_reporting = false;
         num_reported = 0;
-        num_being_sent = 0;
+        num_being_sent = daemons->num_procs-1;
         peer.jobid = ORTE_PROC_MY_NAME->jobid;
         for(v=1; v < daemons->num_procs; v++) {
             /* if we don't have contact info for this daemon,
              * then we know we can't reach it - so don't try
              */
             if (NULL == procs[v]->rml_uri) {
+                --num_being_sent;
                 continue;
             }
             peer.vpid = v;
@@ -300,11 +298,11 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
             if (procs[v]->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */
                 continue;
+                --num_being_sent;
             }
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
-            ++num_being_sent;
             ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_cmd:kill_local_procs sending cmd to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -319,8 +317,8 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
          * our best attempt
          */
         ORTE_DETECT_TIMEOUT(&ev, num_being_sent,
-                            1000*orte_timeout_usec_per_proc,
-                            10*orte_max_timeout, failed_send);
+                            orte_timeout_usec_per_proc,
+                            orte_max_timeout, failed_send);
         
         /* wait for completion or timeout */
         ORTE_PROGRESSED_WAIT(done_reporting, num_reported, num_being_sent);
@@ -331,8 +329,10 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
             ev = NULL;
         }
         
-        /* if all the sends didn't go, report that */
-        if (num_reported < num_being_sent) {
+        /* if all the sends didn't go, or we couldn't send to
+         * all daemons, then report that */
+        if (num_reported < num_being_sent ||
+            num_being_sent < (daemons->num_procs-1)) {
             return ORTE_ERR_SILENT;
         }
         

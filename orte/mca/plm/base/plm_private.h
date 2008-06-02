@@ -77,6 +77,12 @@ ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
 ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_jobid_t *jobid);
 
 /**
+ * Heartbeat support
+ */
+ORTE_DECLSPEC void orte_plm_base_heartbeat(int fd, short event, void *data);
+ORTE_DECLSPEC void orte_plm_base_start_heart(void);
+
+/**
  * Utilities for plm components that use proxy daemons
  */
 ORTE_DECLSPEC int orte_plm_base_orted_exit(void);
@@ -99,7 +105,8 @@ ORTE_DECLSPEC void orte_plm_base_recv(int status, orte_process_name_t* sender,
 ORTE_DECLSPEC int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                                         char *sds,
                                                         int *proc_vpid_index,
-                                                        int *node_name_index);
+                                                        int *node_name_index,
+                                                        bool heartbeat);
 
 /*
  * Proxy functions for use by daemons and application procs

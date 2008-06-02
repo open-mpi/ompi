@@ -116,6 +116,8 @@ typedef uint8_t orte_plm_cmd_flag_t;
 #define ORTE_PLM_CMD    OPAL_UINT8
 #define ORTE_PLM_LAUNCH_JOB_CMD         1
 #define ORTE_PLM_UPDATE_PROC_STATE      2
+#define ORTE_PLM_HEARTBEAT_CMD          3
+
 
 END_C_DECLS
 

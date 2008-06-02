@@ -27,6 +27,10 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "opal/class/opal_list.h"
 #include "orte/util/output.h"
 #include "opal/mca/mca.h"
@@ -107,6 +111,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     orte_proc_state_t state;
     orte_exit_code_t exit_code;
     int rc, ret;
+    struct timeval beat;
     
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_PLM_CMD))) {
@@ -247,6 +252,21 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
              * So check job has to know how to handle a NULL pointer
              */
             orte_plm_base_check_job_completed(jdata);
+            break;
+            
+        case ORTE_PLM_HEARTBEAT_CMD:
+            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:receive got heartbeat from %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&mev->sender)));
+            /* lookup the daemon object */
+            if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                return;
+            }
+            procs = (orte_proc_t**)jdata->procs->addr;
+            gettimeofday(&beat, NULL);
+            procs[mev->sender.vpid]->beat = beat.tv_sec; 
             break;
             
         default:

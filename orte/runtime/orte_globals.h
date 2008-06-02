@@ -254,6 +254,8 @@ struct orte_proc_t {
     char *nodename;
     /* RML contact info */
     char *rml_uri;
+    /* seconds when last heartbeat was detected */
+    int beat;
 #if OPAL_ENABLE_FT == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -326,6 +328,7 @@ ORTE_DECLSPEC extern bool orte_help_show_recursions;
 ORTE_DECLSPEC extern bool orte_params_set;
 ORTE_DECLSPEC extern int orte_debug_verbosity;
 ORTE_DECLSPEC extern int orted_debug_failure;
+ORTE_DECLSPEC extern int orted_debug_failure_delay;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;
@@ -334,6 +337,10 @@ ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern int orte_exit, orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
+ORTE_DECLSPEC extern bool orte_shutdown_in_progress;
+
+ORTE_DECLSPEC extern int orte_heartbeat_rate;
+ORTE_DECLSPEC extern int orte_startup_timeout;
 
 ORTE_DECLSPEC extern int orte_timeout_usec_per_proc;
 ORTE_DECLSPEC extern float orte_max_timeout;

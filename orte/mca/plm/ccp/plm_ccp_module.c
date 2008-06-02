@@ -208,7 +208,7 @@ GETMAP:
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
                                           &proc_vpid_index,
-                                          &node_name_index);
+                                          &node_name_index, false);
 
     if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');

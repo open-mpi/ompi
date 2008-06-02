@@ -95,6 +95,7 @@ static opal_event_t *orted_exit_event;
 
 static void shutdown_callback(int fd, short flags, void *arg);
 static void signal_callback(int fd, short event, void *arg);
+static void clean_fail(int fd, short flags, void *arg);
 
 static struct {
     bool debug;
@@ -108,6 +109,9 @@ static struct {
     int uri_pipe;
     int singleton_died_pipe;
     int fail;
+    int fail_delay;
+    bool abort;
+    int heartbeat;
 } orted_globals;
 
 /*
@@ -124,12 +128,20 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       "Have the orted spin until we can connect a debugger to it" },
 
     { NULL, NULL, NULL, '\0', NULL, "debug-failure", 1,
-        &orted_globals.fail, OPAL_CMD_LINE_TYPE_INT,
+      &orted_globals.fail, OPAL_CMD_LINE_TYPE_INT,
       "Have the specified orted fail after init for debugging purposes" },
     
+    { NULL, NULL, NULL, '\0', NULL, "debug-failure-delay", 1,
+      &orted_globals.fail_delay, OPAL_CMD_LINE_TYPE_INT,
+      "Have the orted specified for failure delay for the provided number of seconds before failing" },
+    
+    { NULL, NULL, NULL, '\0', NULL, "heartbeat", 1,
+      &orted_globals.heartbeat, OPAL_CMD_LINE_TYPE_INT,
+      "Seconds between orted heartbeat messages to be sent to HNP (default: 0 => no heartbeat)" },
+    
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
-        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-        "Debug the OpenRTE" },
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Debug the OpenRTE" },
         
     { "orte", "daemonize", NULL, '\0', NULL, "daemonize", 0,
       &orted_globals.daemonize, OPAL_CMD_LINE_TYPE_BOOL,
@@ -300,14 +312,43 @@ int orte_daemon(int argc, char *argv[])
         return ret;
     }
     
-    if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
-        /* Finalize and clean up ourselves */
-        if (ORTE_SUCCESS != (ret = orte_finalize())) {
-            ORTE_ERROR_LOG(ret);
+    if ((int)ORTE_VPID_INVALID != orted_globals.fail) {
+        orted_globals.abort=false;
+        /* some vpid was ordered to fail. The value can be positive
+         * or negative, depending upon the desired method for failure,
+         * so need to check both here
+         */
+        if (0 > orted_globals.fail) {
+            orted_globals.fail = -1*orted_globals.fail;
+            orted_globals.abort = true;
         }
-        
-        /* return with non-zero status */
-        return -1;
+        /* are we the specified vpid? */
+        if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
+            /* if the user specified we delay, then setup a timer
+             * and have it kill us
+             */
+            if (0 < orted_globals.fail_delay) {
+                ORTE_TIMER_EVENT(orted_globals.fail_delay, clean_fail);
+                
+            } else {
+                opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            orted_globals.abort ? "abort" : "abnormal termination");
+
+                /* do -not- call finalize as this will send a message to the HNP
+                 * indicating clean termination! Instead, just forcibly cleanup
+                 * the local session_dir tree and exit
+                 */
+                orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+                
+                /* if we were ordered to abort, do so */
+                if (orted_globals.abort) {
+                    abort();
+                }
+                
+                /* otherwise, return with non-zero status */
+                return ORTE_ERROR_DEFAULT_EXIT_CODE;
+            }
+        }
     }
 
     /* detach from controlling terminal
@@ -569,6 +610,11 @@ int orte_daemon(int argc, char *argv[])
         orte_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
+    /* if we were told to do a heartbeat, then setup to do so */
+    if (0 < orted_globals.heartbeat) {
+        ORTE_TIMER_EVENT(orted_globals.heartbeat, orte_plm_base_heartbeat);
+    }
+
     /* wait to hear we are done */
     opal_event_dispatch();
 
@@ -578,10 +624,43 @@ int orte_daemon(int argc, char *argv[])
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
     /* Finalize and clean up ourselves */
-    if (ORTE_SUCCESS != (ret = orte_finalize())) {
-        ORTE_ERROR_LOG(ret);
-    }
+    ret = orte_finalize();
     return ret;
+}
+
+static void clean_fail(int fd, short flags, void *arg)
+{
+    /* protect against multiple calls to exit */
+    if (!opal_atomic_trylock(&orted_exit_lock)) { /* returns 1 if already locked */
+        return;
+    }
+    
+    opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                orted_globals.abort ? "abort" : "abnormal termination");
+    
+    /* cleanup */
+    if (NULL != log_path) {
+        unlink(log_path);
+    }
+    
+    /* make sure our local procs are dead - but don't update their state
+     * on the HNP as this may be redundant
+     */
+    orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+    
+    /* do -not- call finalize as this will send a message to the HNP
+     * indicating clean termination! Instead, just forcibly cleanup
+     * the local session_dir tree and exit
+     */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    
+    /* if we were ordered to abort, do so */
+    if (orted_globals.abort) {
+        abort();
+    }
+
+    /* otherwise, exit with a non-zero status */
+    exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
 static void shutdown_callback(int fd, short flags, void *arg)
@@ -613,9 +692,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
     
    /* Finalize and clean up ourselves */
-    if (ORTE_SUCCESS != (ret = orte_finalize())) {
-        ORTE_ERROR_LOG(ret);
-    }
+    ret = orte_finalize();
     exit(ret);
 }
 

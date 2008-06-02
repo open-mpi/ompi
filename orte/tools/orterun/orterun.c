@@ -112,6 +112,7 @@ static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_event_t *orterun_event, *orteds_exit_event;
 static char *ompi_server=NULL;
+static opal_event_t *abort_exit_event=NULL;
 
 /*
  * Globals
@@ -568,6 +569,10 @@ static void job_completed(int trigpipe, short event, void *arg)
         return;
     }
 
+    /* if the abort exit event is set, delete it */
+    if (NULL != abort_exit_event) {
+        opal_event_del(abort_exit_event);
+    }
     /* close the trigger pipe */
     if (0 <= trigpipe) {
         close(trigpipe);
@@ -694,7 +699,11 @@ static void terminated(int trigpipe, short event, void *arg)
                 /* print out node name */
                 orte_node_t *node = procs[i]->node;
                 if (NULL != node && NULL != node->name) {
-                    fprintf(stderr, "\t%s\n", node->name);
+                    if (NULL != procs[i]->rml_uri) {
+                        fprintf(stderr, "\t%s\n", node->name);
+                    } else {
+                        fprintf(stderr, "\t%s - daemon did not report back when launched\n", node->name);
+                    }
                 }
             }
         }
@@ -873,7 +882,6 @@ static void timeout_callback(int fd, short ign, void *arg)
 static void abort_exit_callback(int fd, short ign, void *arg)
 {
     int ret;
-    opal_event_t *event;
 
     if (!orterun_globals.quiet){
         fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
@@ -891,20 +899,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
      * after jdata has been OBJ_NEW'd
      */
     if (jdata->jobid != ORTE_JOBID_INVALID) {
-        /* give ourselves a time limit on how long to wait
-         * for the job to die, just in case we can't make it go
-         * away for some reason. Don't send us directly back
-         * to job_completed, though, as that function expects
-         * to be triggered via orte_wakeup - we could get into
-         * race conditions, and the timeout won't provide
-         * that function with the orte_exit pipe fd so it can
-         * be closed
-         */
-        ORTE_DETECT_TIMEOUT(&event, jdata->num_procs,
-                            orte_timeout_usec_per_proc,
-                            orte_max_timeout, 
-                            timeout_callback);
-
         /* terminate the job - this will wake us up and
          * call the "terminated" function so we clean up
          * and exit
@@ -917,6 +911,20 @@ static void abort_exit_callback(int fd, short ign, void *arg)
             ORTE_UPDATE_EXIT_STATUS(ret);
             orte_wakeup();
         }
+        /* give ourselves a time limit on how long to wait
+         * for the job to die, just in case we can't make it go
+         * away for some reason. Don't send us directly back
+         * to job_completed, though, as that function expects
+         * to be triggered via orte_wakeup - we could get into
+         * race conditions, and the timeout won't provide
+         * that function with the orte_exit pipe fd so it can
+         * be closed
+         */
+        ORTE_DETECT_TIMEOUT(&abort_exit_event, jdata->num_procs,
+                            orte_timeout_usec_per_proc,
+                            orte_max_timeout, 
+                            timeout_callback);
+        
     } else {
         /* if the jobid is invalid, then we didn't get to
          * the point of setting the job up, so there is nothing

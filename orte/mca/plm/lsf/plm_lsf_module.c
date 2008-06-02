@@ -223,7 +223,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "lsf",
                                           &proc_vpid_index,
-                                          NULL);
+                                          NULL, false);
 
     /* tell the new daemons the base of the name list so they can compute
      * their own name on the other end
