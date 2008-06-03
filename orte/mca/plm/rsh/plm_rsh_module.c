@@ -842,7 +842,7 @@ cleanup:
  */
 int orte_plm_rsh_launch(orte_job_t *jdata)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map = NULL;
     int node_name_index1;
     int node_name_index2;
     int proc_vpid_index;
@@ -1156,7 +1156,7 @@ launch_apps:
      * the state-of-health of the orteds, if requested AND
      * we actually launched some daemons!
      */
-    if (0 < map->num_new_daemons) {
+    if ((NULL != map) && (0 < map->num_new_daemons)) {
         orte_plm_base_start_heart();
     }
     
