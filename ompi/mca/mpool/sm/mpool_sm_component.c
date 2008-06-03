@@ -126,7 +126,7 @@ static int mca_mpool_sm_open(void)
                                "Enable verbose output for mpool sm component",
                                false, false, 0, &value);
     if (value != 0) {
-            mca_mpool_sm_component.verbose = orte_output_open(NULL, "MPOOL", "SM", "DEBUG", NULL);
+            mca_mpool_sm_component.verbose = orte_output_open(NULL);
     } else {
             mca_mpool_sm_component.verbose = -1;
     }

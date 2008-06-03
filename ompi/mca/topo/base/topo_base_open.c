@@ -60,7 +60,7 @@ bool mca_topo_base_components_opened_valid = false;
 int mca_topo_base_open(void) 
 {
      /* Open the topo framework output stream */
-     mca_topo_base_output = orte_output_open(NULL, "TOPO", "DEBUG", NULL);
+     mca_topo_base_output = orte_output_open(NULL);
 
      /* Open up all available components  */
      if (OMPI_SUCCESS !=

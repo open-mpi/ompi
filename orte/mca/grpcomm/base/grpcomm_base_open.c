@@ -56,7 +56,7 @@ int orte_grpcomm_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_grpcomm_base_output = orte_output_open(NULL, "GRPCOMM", "DEBUG", NULL);
+    orte_grpcomm_base_output = orte_output_open(NULL);
     
     /* Open up all available components */
 

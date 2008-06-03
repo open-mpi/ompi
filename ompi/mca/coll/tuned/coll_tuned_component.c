@@ -130,7 +130,7 @@ static int tuned_open(void)
             int verbose;
             mca_base_param_lookup_int(param, &verbose);
             if (verbose > 0) {
-                ompi_coll_tuned_stream = orte_output_open(NULL, "COLL", "TUNED", "DEBUG", NULL);
+                ompi_coll_tuned_stream = orte_output_open(NULL);
             }
         }
     }

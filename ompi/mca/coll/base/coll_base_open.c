@@ -64,7 +64,7 @@ int mca_coll_base_open(void)
 {
     /* Open an output stream for this framework */
 
-    mca_coll_base_output = orte_output_open(NULL, "COLL", "DEBUG", NULL);
+    mca_coll_base_output = orte_output_open(NULL);
 
     /* Open up all available components */
 

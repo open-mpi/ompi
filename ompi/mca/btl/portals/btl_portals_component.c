@@ -98,7 +98,7 @@ mca_btl_portals_component_open(void)
     asprintf(&(portals_output_stream.lds_prefix),
              "btl: portals (%s): ", ompi_common_portals_nodeid());
     mca_btl_portals_component.portals_output = 
-        orte_output_open(&portals_output_stream, "BTL", "PORTALS", "DEBUG", NULL);
+        orte_output_open(&portals_output_stream);
 
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "free_list_init_num",

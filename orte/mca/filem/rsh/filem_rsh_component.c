@@ -104,7 +104,7 @@ static int filem_rsh_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_filem_rsh_component.super.verbose) {
-        mca_filem_rsh_component.super.output_handle = orte_output_open(NULL, "FILEM", "RSH", "DEBUG", NULL);
+        mca_filem_rsh_component.super.output_handle = orte_output_open(NULL);
         orte_output_set_verbosity(mca_filem_rsh_component.super.output_handle,
                                   mca_filem_rsh_component.super.verbose);
     } else {

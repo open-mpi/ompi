@@ -93,7 +93,7 @@ int mca_pml_crcpw_component_open(void)
                            mca_pml_crcpw_component.verbose, 
                            &mca_pml_crcpw_component.verbose);
 
-    mca_pml_crcpw_component.output_handle = orte_output_open(NULL, "PML", "CRCPW", "DEBUG", NULL);
+    mca_pml_crcpw_component.output_handle = orte_output_open(NULL);
     if ( 0 != mca_pml_crcpw_component.verbose) {
         orte_output_set_verbosity(mca_pml_crcpw_component.output_handle,
                                   mca_pml_crcpw_component.verbose);

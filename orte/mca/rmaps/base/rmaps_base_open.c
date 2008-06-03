@@ -69,8 +69,7 @@ int orte_rmaps_base_open(void)
     
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
-    orte_rmaps_base.rmaps_output = orte_output_open(NULL, "RMAPS", "DEBUG", NULL);
-    orte_rmaps_base.map_output = orte_output_open(NULL, "RMAPS", "MAP", NULL);
+    orte_rmaps_base.rmaps_output = orte_output_open(NULL);
 
     /* Are we scheduling by node or by slot? */
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",

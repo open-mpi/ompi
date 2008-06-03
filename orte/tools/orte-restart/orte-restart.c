@@ -251,7 +251,7 @@ static int initialize(int argc, char *argv[]) {
      * Setup OPAL Output handle from the verbose argument
      */
     if( orte_restart_globals.verbose ) {
-        orte_restart_globals.output = orte_output_open(NULL, "ORTE", "RESTART", "DEBUG", NULL);
+        orte_restart_globals.output = orte_output_open(NULL);
         orte_output_set_verbosity(orte_restart_globals.output, 10);
     } else {
         orte_restart_globals.output = 0; /* Default=STDERR */

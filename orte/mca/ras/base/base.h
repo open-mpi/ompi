@@ -38,7 +38,6 @@ BEGIN_C_DECLS
  */
 typedef struct orte_ras_base_t {
     int ras_output;
-    int alloc_output;
     opal_list_t ras_opened;
     bool allocation_read;
     bool display_alloc;

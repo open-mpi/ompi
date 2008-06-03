@@ -44,7 +44,7 @@ ompi_dpm_base_component_t ompi_dpm_base_selected_component;
 int ompi_dpm_base_open(void)
 {
     /* Debugging/Verbose output */
-    ompi_dpm_base_output = orte_output_open(NULL, "DPM", "DEBUG", NULL);
+    ompi_dpm_base_output = orte_output_open(NULL);
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

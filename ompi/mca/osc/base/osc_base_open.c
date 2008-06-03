@@ -51,7 +51,7 @@ ompi_osc_base_open(void)
     int ret;
 
     /* setup the output stream */
-    ompi_osc_base_output = orte_output_open(NULL, "OSC", "DEBUG", NULL);
+    ompi_osc_base_output = orte_output_open(NULL);
 
     /* initialize the base code */
     OBJ_CONSTRUCT(&ompi_osc_base_open_components, opal_list_t);

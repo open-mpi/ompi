@@ -67,7 +67,7 @@ int orte_snapc_base_open(void)
     ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "snapc:base: open()"));
 
-    orte_snapc_base_output = orte_output_open(NULL, "SNAPC", "DEBUG", NULL);
+    orte_snapc_base_output = orte_output_open(NULL);
 
     /* Global Snapshot directory */
     mca_base_param_reg_string_name("snapc",

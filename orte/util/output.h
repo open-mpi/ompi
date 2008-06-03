@@ -97,7 +97,7 @@ ORTE_DECLSPEC void orte_output_finalize(void);
  * through the various streams
  *
  */
-ORTE_DECLSPEC int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...);
+ORTE_DECLSPEC int orte_output_open(opal_output_stream_t *lds);
 
 /**
  * Re-opens / redirects an output stream.

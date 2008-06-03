@@ -66,7 +66,7 @@ int mca_io_base_open(void)
 {
     /* Open an output stream for this framework */
 
-    mca_io_base_output = orte_output_open(NULL, "IO", "DEBUG", NULL);
+    mca_io_base_output = orte_output_open(NULL);
 
     /* Create some parameters */
 

@@ -44,7 +44,7 @@ ompi_pubsub_base_component_t ompi_pubsub_base_selected_component;
 int ompi_pubsub_base_open(void)
 {
     /* Debugging/Verbose output */
-    ompi_pubsub_base_output = orte_output_open(NULL, "PUBSUB", "DEBUG", NULL);
+    ompi_pubsub_base_output = orte_output_open(NULL);
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

@@ -47,7 +47,7 @@ int pml_v_output_open(char *output, int verbosity) {
         gethostname(hostname, 32);
         asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
-        pml_v_output = orte_output_open(&lds, "PML", "V", "DEBUG", NULL);
+        pml_v_output = orte_output_open(&lds);
         free(lds.lds_prefix);
     }
     return pml_v_output;
