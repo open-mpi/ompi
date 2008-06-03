@@ -28,22 +28,6 @@ version 1.0.
 
 Trunk (not on release branches yet)
 -----------------------------------
-- Add Valgrind-based memory checking for MPI-semantic checks.
-
--Add support for some optional Fortran datatypes (MPI_LOGICAL1, MPI_LOGICAL2,
-  MPI_LOGICAL4 and MPI_LOGICAL8)
-
--Convert the C++ Comm, Datatype and Winn keyval creation and intercept callbacks
-  to *not* use the STL as well as removing the STL use from the error handler
-  routines.  This was removing the STL from the C++ bindings (Solaris has 2
-  versions of the STL; if OMPI uses one and an MPI application wants to use
-  another, Bad Things happen).
-
-  The main idea is to wrap up the C++ callback function pointers and the user's
-  extra_state into our own struct that is passed as the extra_state to the C
-  keyval registration along with the intercept routines in intercepts.cc. When the
-  C++ intercepts are activated, they unwrap the user's callback and extra state
-  and call them.
 
 - Added Cray Compute Node Linux (CNL) and ALPS Support.
   --> Expected: ???
@@ -56,7 +40,12 @@ Trunk (not on release branches yet)
   threading support)
   --> Expected: ???
 
-- Added the Sparse Groups implementation.
+- Add Valgrind-based memory checking for MPI-semantic checks.
+  --> Expected: 1.3
+- Add support for some optional Fortran datatypes (MPI_LOGICAL1,
+  MPI_LOGICAL2, MPI_LOGICAL4 and MPI_LOGICAL8)
+  --> Expected: 1.3
+- Remove use of STL from C++ bindings.
   --> Expected: 1.3
 - Added support for Platform/LSF job launchers.  Must be Platform LSF
   v7.0.2 or later.
@@ -90,6 +79,12 @@ Trunk (not on release branches yet)
 - Added more stringent MPI API parameter checking to help user-level
   debugging.
   --> Expected: 1.3
+- Have openib BTL (OpenFabrics support) check for the presence of
+  /sys/class/infiniband before allowing itself to be used.  This check
+  prevents spurrious "OMPI did not find RDMA hardware!" notices on
+  systems that have the software drivers installed, but no
+  corresponding hardware.
+  --> Expected: 1.2.7
 
 
 1.2.7 (might never be released)
