@@ -51,8 +51,11 @@
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include <infiniband/verbs.h> 
+#include <infiniband/driver.h>
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
@@ -159,6 +162,27 @@ static int btl_openib_component_close(void)
     return OMPI_SUCCESS;
 }
 
+
+static bool check_basics(void)
+{
+    int rc;
+    char *file;
+    struct stat s;
+
+    /* Check to see if $sysfsdir/class/infiniband/ exists */
+    asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
+    if (NULL == file) {
+        return false;
+    }
+    rc = stat(file, &s);
+    free(file);
+    if (0 != rc || !S_ISDIR(s.st_mode)) {
+        return false;
+    }
+
+    /* It exists and is a directory -- good enough */
+    return true;
+}
 
 /*
  *  Register OPENIB  port information. The MCA framework
@@ -616,6 +640,15 @@ btl_openib_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0; 
 
+    /* Per https://svn.open-mpi.org/trac/ompi/ticket/1305, check to
+       see if $sysfsdir/class/infiniband exists.  If it does not,
+       assume that the RDMA hardware drivers are not loaded, and
+       therefore we don't want OpenFabrics verbs support in this OMPI
+       job.  No need to print a warning. */
+    if (!check_basics()) {
+        return NULL;
+    }
+    
     /* openib BTL does not currently support progress threads, so
        disable the component if they were requested */
     if (enable_progress_threads) {
