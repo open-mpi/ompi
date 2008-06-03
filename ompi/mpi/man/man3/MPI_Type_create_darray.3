@@ -98,7 +98,7 @@ Each dimension of the array can be distributed in one of three ways:
 - MPI_DISTRIBUTE_NONE - Dimension not distributed. 
 .fi
 .sp
-The constant MPI_DISTRIBUTE_DFLT_DARG specifies a default distribution argument. The distribution argument for a dimension that is not distributed is ignored. For any dimension \fIi\fP in which the distribution is MPI_DISTRIBUTE_BLOCK, it erroneous to specify \fIarray_of_dargs[i]\fP \fI\*\fP \fIarray_of_psizes[i]\fP < \fIarray_of_gsizes[i]\fP.
+The constant MPI_DISTRIBUTE_DFLT_DARG specifies a default distribution argument. The distribution argument for a dimension that is not distributed is ignored. For any dimension \fIi\fP in which the distribution is MPI_DISTRIBUTE_BLOCK, it erroneous to specify \fIarray_of_dargs[i]\fP \fI*\fP \fIarray_of_psizes[i]\fP < \fIarray_of_gsizes[i]\fP.
 .sp
 For example, the HPF layout ARRAY(CYCLIC(15)) corresponds to MPI_DISTRIBUTE_CYCLIC with a distribution argument of 15, and the HPF layout ARRAY(BLOCK) corresponds to MPI_DISTRIBUTE_BLOCK with a distribution argument of MPI_DISTRIBUTE_DFLT_DARG. 
 .sp

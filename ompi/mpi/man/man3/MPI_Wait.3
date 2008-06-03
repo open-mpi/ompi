@@ -50,7 +50,7 @@ If your application does not need to examine the \fIstatus\fP field, you can sav
 .sp
 One is allowed to call MPI_Wait with a null or inactive request argument. In this case the operation returns immediately with empty status. 
 
-.NOTES
+.SH NOTES
 Successful return of MPI_Wait after an MPI_Ibsend implies that the user send buffer can be reused  i.e., data has been sent out or copied into a buffer attached with MPI_Buffer_attach. Note that, at this point, we can no longer cancel the send (for more information, see Section 3.8 of the MPI-1 Standard, "Probe and Cancel"). If a matching receive is never posted, then the buffer cannot be freed. This runs somewhat counter to the stated goal of MPI_Cancel (always being able to free program space that was committed to the communication subsystem). 
 .sp
 Example: Simple usage of nonblocking operations and  MPI_Wait. 
@@ -66,7 +66,6 @@ Example: Simple usage of nonblocking operations and  MPI_Wait.
         **** do some computation **** 
         CALL MPI_WAIT(request, status, ierr) 
     END IF 
-.ni
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
