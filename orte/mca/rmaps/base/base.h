@@ -45,7 +45,6 @@ BEGIN_C_DECLS
 typedef struct {
     /** Verbose/debug output stream */
     int rmaps_output;
-    int map_output;
     /** List of available components */
     opal_list_t available_components;
     /** selected module */

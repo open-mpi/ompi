@@ -153,7 +153,7 @@ int ompi_cr_init(void)
                                 0,
                                 &val);
     if(0 != val) {
-        ompi_cr_output = orte_output_open(NULL, "OMPI", "CR", "DEBUG", NULL);
+        ompi_cr_output = orte_output_open(NULL);
         orte_output_set_verbosity(ompi_cr_output, val);
     } else {
         ompi_cr_output = opal_cr_output;

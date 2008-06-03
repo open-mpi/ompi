@@ -157,7 +157,7 @@ static int orte_rml_ftrm_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != value) {
-        rml_ftrm_output_handle = orte_output_open(NULL, "RML", "FTRM", "DEBUG", NULL);
+        rml_ftrm_output_handle = orte_output_open(NULL);
         orte_output_set_verbosity(rml_ftrm_output_handle, value);
     } else {
         rml_ftrm_output_handle = -1;

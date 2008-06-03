@@ -48,7 +48,7 @@ int ompi_crcp_base_open(void)
 {
     char *str_value = NULL;
 
-    ompi_crcp_base_output = orte_output_open(NULL, "CRCP", "DEBUG", NULL);
+    ompi_crcp_base_output = orte_output_open(NULL);
 
     /* 
      * Which CRCP component to open

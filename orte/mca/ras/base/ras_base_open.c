@@ -78,8 +78,7 @@ int orte_ras_base_open(void)
 
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
-    orte_ras_base.ras_output = orte_output_open(NULL, "RAS", "DEBUG", NULL);
-    orte_ras_base.alloc_output = orte_output_open(NULL, "RAS", "ALLOC", NULL);
+    orte_ras_base.ras_output = orte_output_open(NULL);
     
     /* Open up all available components */
     if (ORTE_SUCCESS != 

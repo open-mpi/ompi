@@ -65,7 +65,7 @@ int mca_oob_base_open(void)
     }
 
     /* register parameters */
-    mca_oob_base_output = orte_output_open(NULL, "OOB", "DEBUG", NULL);
+    mca_oob_base_output = orte_output_open(NULL);
     
     /* Open up all available components */
     OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);

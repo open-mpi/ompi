@@ -100,7 +100,7 @@ static int crcp_coord_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_crcp_coord_component.super.verbose) {
-        mca_crcp_coord_component.super.output_handle = orte_output_open(NULL, "CRCP", "COORD", "DEBUG", NULL);
+        mca_crcp_coord_component.super.output_handle = orte_output_open(NULL);
         orte_output_set_verbosity(mca_crcp_coord_component.super.output_handle,
                                   mca_crcp_coord_component.super.verbose);
     } else {

@@ -102,7 +102,7 @@ int mca_pml_base_open(void)
                                  false, false,
                                  0, &value);
  
-     mca_pml_base_output = orte_output_open(NULL, "PML", "DEBUG", NULL);
+     mca_pml_base_output = orte_output_open(NULL);
      orte_output_set_verbosity(mca_pml_base_output, value);
 
     /* Open up all available components */

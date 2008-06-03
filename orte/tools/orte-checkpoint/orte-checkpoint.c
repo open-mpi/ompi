@@ -440,7 +440,7 @@ static int ckpt_init(int argc, char *argv[]) {
      * Setup OPAL Output handle from the verbose argument
      */
     if( orte_checkpoint_globals.verbose ) {
-        orte_checkpoint_globals.output = orte_output_open(NULL, "ORTE", "CHECKPOINT", "DEBUG", NULL);
+        orte_checkpoint_globals.output = orte_output_open(NULL);
         orte_output_set_verbosity(orte_checkpoint_globals.output, 10);
     } else {
         orte_checkpoint_globals.output = 0; /* Default=STDERR */

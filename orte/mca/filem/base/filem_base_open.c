@@ -52,7 +52,7 @@ int orte_filem_base_open(void)
 {
     char *str_value = NULL;
 
-    orte_filem_base_output = orte_output_open(NULL, "FILEM", "DEBUG", NULL);
+    orte_filem_base_output = orte_output_open(NULL);
 
     /* 
      * Which FileM component to open

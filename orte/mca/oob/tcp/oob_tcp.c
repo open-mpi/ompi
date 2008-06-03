@@ -207,7 +207,7 @@ int mca_oob_tcp_component_open(void)
                            false, false,
                            0,
                            &value);
-    mca_oob_tcp_output_handle = orte_output_open(NULL, "OOB", "TCP", "DEBUG", NULL);
+    mca_oob_tcp_output_handle = orte_output_open(NULL);
     orte_output_set_verbosity(mca_oob_tcp_output_handle, value);
 
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);

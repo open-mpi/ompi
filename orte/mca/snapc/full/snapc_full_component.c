@@ -101,7 +101,7 @@ static int snapc_full_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_snapc_full_component.super.verbose) {
-        mca_snapc_full_component.super.output_handle = orte_output_open(NULL, "SNAPC", "FULL", "DEBUG", NULL);
+        mca_snapc_full_component.super.output_handle = orte_output_open(NULL);
         orte_output_set_verbosity(mca_snapc_full_component.super.output_handle,
                                   mca_snapc_full_component.super.verbose);
     } else {

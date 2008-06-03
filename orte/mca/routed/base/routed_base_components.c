@@ -43,7 +43,7 @@ orte_routed_base_open(void)
     int ret;
 
     /* setup the output stream */
-    orte_routed_base_output = orte_output_open(NULL, "ROUTED", "DEBUG", NULL);
+    orte_routed_base_output = orte_output_open(NULL);
 
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_routed_base_components, opal_list_t);

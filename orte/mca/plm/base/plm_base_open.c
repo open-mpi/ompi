@@ -75,7 +75,7 @@ int orte_plm_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_plm_globals.output = orte_output_open(NULL, "PLM", "DEBUG", NULL);
+    orte_plm_globals.output = orte_output_open(NULL);
     
     /* init selected to be false */
     orte_plm_base.selected = false;

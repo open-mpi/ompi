@@ -97,7 +97,7 @@ int orte_dt_init(void)
     opal_data_type_t tmp;
 
     /* set default output */
-    orte_debug_output = orte_output_open(NULL, "ORTE", "DEBUG", NULL);
+    orte_debug_output = orte_output_open(NULL);
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
         (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {

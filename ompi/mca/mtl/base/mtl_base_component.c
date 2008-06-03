@@ -51,7 +51,7 @@ int
 ompi_mtl_base_open(void)
 {
     /* setup the output stream */
-    ompi_mtl_base_output = orte_output_open(NULL, "MTL", "DEBUG", NULL);
+    ompi_mtl_base_output = orte_output_open(NULL);
 
     /* Open up all available components */
     if (OMPI_SUCCESS != 

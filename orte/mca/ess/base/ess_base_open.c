@@ -49,7 +49,7 @@ int orte_ess_base_output;
 int
 orte_ess_base_open(void)
 {
-    orte_ess_base_output = orte_output_open(NULL, "ESS", "DEBUG", NULL);
+    orte_ess_base_output = orte_output_open(NULL);
     
     OBJ_CONSTRUCT(&orte_ess_base_components_available, opal_list_t);
 

@@ -28,7 +28,6 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/filter/filter.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -105,7 +104,7 @@ void orte_output_finalize(void)
     return;
 }
 
-int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
+int orte_output_open(opal_output_stream_t *lds)
 {
     return opal_output_open(lds);
 }
@@ -169,35 +168,6 @@ int orte_show_help(const char *filename, const char *topic,
 
 #define ORTE_OUTPUT_MAX_TAGS    10
 
-/* struct to store stream-specific data */
-typedef struct {
-    opal_object_t super;
-    uint8_t flags;
-    int num_tags;
-    char *tags[ORTE_OUTPUT_MAX_TAGS];
-} orte_output_stream_t;
-
-static void orte_output_stream_constructor(orte_output_stream_t *ptr)
-{
-    ptr->flags = ORTE_OUTPUT_OTHER;
-    ptr->num_tags = 0;
-    memset(ptr->tags, 0, ORTE_OUTPUT_MAX_TAGS*sizeof(char*));
-}
-static void orte_output_stream_destructor(orte_output_stream_t *ptr)
-{
-    int i;
-    
-    for (i=0; i < ORTE_OUTPUT_MAX_TAGS; i++) {
-        if (NULL != ptr->tags[i]) {
-            free(ptr->tags[i]);
-        }
-    }
-}
-
-OBJ_CLASS_INSTANCE(orte_output_stream_t, opal_object_t,
-                   orte_output_stream_constructor,
-                   orte_output_stream_destructor);
-
 /* List items for holding process names */
 typedef struct {
     opal_list_item_t super;
@@ -246,7 +216,7 @@ static opal_event_t show_help_timer_event;
 /* Local static variables */
 static int stdout_stream, stderr_stream;
 static opal_output_stream_t stdout_lds, stderr_lds, orte_output_default;
-static opal_pointer_array_t orte_output_streams;
+static opal_value_array_t orte_output_streams;
 static bool orte_output_ready = false;
 static bool suppress_warnings = false;
 static bool am_inside = false;
@@ -326,33 +296,13 @@ static int get_tli(const char *filename, const char *topic,
 }
 
 
-static void new_stream_tracker(int stream, uint8_t flag, const char *primary_tag, va_list arglist)
-{
-    orte_output_stream_t *ptr;
-    char *tag;
-    
-    ptr = OBJ_NEW(orte_output_stream_t);
-    ptr->flags = flag;
-    ptr->num_tags = 1;
-    ptr->tags[0] = strdup(primary_tag);
-    if (NULL != arglist) {
-        while (NULL != (tag = va_arg(arglist, char*))) {
-            ptr->tags[ptr->num_tags] = strdup(tag);
-            ptr->num_tags++;
-        }
-    }
-    opal_pointer_array_set_item(&orte_output_streams, stream, ptr);    
-}
-
-
 static void output_vverbose(int verbose_level, int output_id,
                             int major_id, int minor_id,
                             const char *format, va_list arglist)
 {
-    char *output = NULL, *filtered = NULL;
+    char *output = NULL;
     opal_buffer_t buf;
-    uint8_t flag;
-    orte_output_stream_t **streams;
+    uint8_t flags;
     int rc;
 
     if (output_id < 0) {
@@ -373,15 +323,6 @@ static void output_vverbose(int verbose_level, int output_id,
     output = opal_output_vstring(verbose_level, output_id, format, arglist);
     if (NULL == output) {
         return;
-    }
-
-    /* We got a string back, so run it through the filter */
-    streams = (orte_output_stream_t**)orte_output_streams.addr;
-    filtered = opal_filter.process(output, major_id, minor_id, 
-                                   streams[output_id]->num_tags, 
-                                   streams[output_id]->tags);
-    if (NULL == filtered) {
-        filtered = output;
     }
 
     /* Per a soon-to-be-filed trac ticket: because this function calls
@@ -408,7 +349,7 @@ static void output_vverbose(int verbose_level, int output_id,
         OPAL_OUTPUT_VERBOSE((20, orte_debug_output,
                              "%s orte_output recursion detected",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        opal_output(output_id, filtered);
+        opal_output(output_id, output);
         goto cleanup;
     }
     am_inside = true;
@@ -421,20 +362,22 @@ static void output_vverbose(int verbose_level, int output_id,
                              "%s output to stream %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              output_id));
-        opal_output(output_id, filtered);
+        opal_output(output_id, output);
         goto cleanup;
     }
 
+    /* lookup the flags for this stream */
+    flags = OPAL_VALUE_ARRAY_GET_ITEM(&orte_output_streams, uint8_t, output_id);
+    
     /* If there's other flags besides STDOUT and STDERR set, then also
        output this locally via opal_output */
-    if ((~(ORTE_OUTPUT_STDOUT | ORTE_OUTPUT_STDERR)) & 
-        streams[output_id]->flags) {
+    if ((~(ORTE_OUTPUT_STDOUT | ORTE_OUTPUT_STDERR)) & flags) {
         OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                              "%s locally output to stream %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              output_id));
         /* pass the values to opal_output for local handling */
-        opal_output(output_id, filtered);
+        opal_output(output_id, output);
     }
 
     /* We only relay stdout/stderr to the HNP.  Note that it is
@@ -443,12 +386,11 @@ static void output_vverbose(int verbose_level, int output_id,
        relative ordering of output from local calls to opal_output
        (e.g., for syslog or file, above) as the RML sends to the
        HNP. */
-    flag = streams[output_id]->flags;
-    if (ORTE_OUTPUT_STDOUT & flag || ORTE_OUTPUT_STDERR & flag) {
+    if (ORTE_OUTPUT_STDOUT & flags || ORTE_OUTPUT_STDERR & flags) {
         OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                             "%s sending filtered output \'%s\' from stream %d",
+                             "%s sending output \'%s\' from stream %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             filtered, output_id));
+                             output, output_id));
 
         /* If RML is not yet setup, or we haven't yet defined the HNP,
          * then just output this locally.
@@ -456,14 +398,14 @@ static void output_vverbose(int verbose_level, int output_id,
          */
         if (NULL == orte_rml.send_buffer ||
             ORTE_PROC_MY_HNP->vpid == ORTE_VPID_INVALID) {
-            opal_output(0, filtered);
+            opal_output(0, output);
         } else {
             /* setup a buffer to send to the HNP */
             OBJ_CONSTRUCT(&buf, opal_buffer_t);
             /* pack a flag indicating the output channel */
-            opal_dss.pack(&buf, &flag, 1, OPAL_UINT8);
+            opal_dss.pack(&buf, &flags, 1, OPAL_UINT8);
             /* pack the string */
-            opal_dss.pack(&buf, &filtered, 1, OPAL_STRING);
+            opal_dss.pack(&buf, &output, 1, OPAL_STRING);
             /* send to the HNP */
             if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, 
                                                ORTE_RML_TAG_OUTPUT, 0))) {
@@ -475,9 +417,6 @@ static void output_vverbose(int verbose_level, int output_id,
     }
 
  cleanup:
-    if (filtered != output && NULL != filtered) {
-        free(filtered);
-    }
     if (NULL != output) {
         free(output);
     }
@@ -696,20 +635,21 @@ int orte_output_init(void)
     /* Show help duplicate detection */
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
 
-    /* setup arrays to track what output streams are
-     * going to stdout and/or stderr, and to track
-     * tags for possible filtering
+    /* setup array to track what output streams are
+     * going to stdout and/or stderr
      */
-    OBJ_CONSTRUCT(&orte_output_streams, opal_pointer_array_t);
+    OBJ_CONSTRUCT(&orte_output_streams, opal_value_array_t);
+    opal_value_array_init(&orte_output_streams, sizeof(uint8_t));
+    
     /* reserve places for 50 streams - the array will
      * resize above that if required
      */
-    opal_pointer_array_init(&orte_output_streams, 50, INT_MAX, 10);
+    opal_value_array_reserve(&orte_output_streams, 50);
     /* initialize the 0 position of the array as this
      * corresponds to the automatically-opened stderr
      * stream of opal_output
      */
-    new_stream_tracker(0, ORTE_OUTPUT_STDERR, "STDERR", NULL);
+    OPAL_VALUE_ARRAY_SET_ITEM(&orte_output_streams, uint8_t, 0, ORTE_OUTPUT_STDERR);
 
     /* if we are on the HNP, we need to open
      * dedicated orte_output streams for stdout/stderr
@@ -724,7 +664,7 @@ int orte_output_init(void)
         /* deliver to stdout only */
         stdout_lds.lds_want_stdout = true;
         stdout_stream = opal_output_open(&stdout_lds);
-        new_stream_tracker(stdout_stream, ORTE_OUTPUT_STDOUT, "STDOUT", NULL);
+        OPAL_VALUE_ARRAY_SET_ITEM(&orte_output_streams, uint8_t, stdout_stream, ORTE_OUTPUT_STDOUT);
         /* setup stderr stream - we construct our own
          * stream object so we can control the behavior
          */
@@ -734,7 +674,7 @@ int orte_output_init(void)
         /* we filter the stderr */
         stderr_lds.lds_filter_flags = OPAL_OUTPUT_FILTER_STDERR;
         stderr_stream = opal_output_open(&stderr_lds);
-        new_stream_tracker(stderr_stream, ORTE_OUTPUT_STDERR, "STDERR", NULL);
+        OPAL_VALUE_ARRAY_SET_ITEM(&orte_output_streams, uint8_t, stderr_stream, ORTE_OUTPUT_STDERR);
     }
     
     orte_output_ready = true;
@@ -743,9 +683,6 @@ int orte_output_init(void)
 
 void orte_output_finalize(void)
 {
-    int i;
-    orte_output_stream_t **streams;
-
     if (!orte_output_ready) {
         return;
     }
@@ -781,12 +718,6 @@ void orte_output_finalize(void)
      * will be called after we close orte_output, and we
      * need to retain an ability to get those messages out.
      */
-    streams = (orte_output_stream_t**)orte_output_streams.addr;
-    for (i=0; i < orte_output_streams.size; i++) {
-        if (NULL != streams[i]) {
-            OBJ_RELEASE(streams[i]);
-        }
-    }
     OBJ_DESTRUCT(&orte_output_streams);
 }
 
@@ -814,17 +745,15 @@ void orte_output_finalize(void)
  * and do nothing else
  */
 
-int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
+int orte_output_open(opal_output_stream_t *lds)
 {
     int stream;
     uint8_t flag = ORTE_OUTPUT_OTHER;
-    va_list arglist;
     
     if (!orte_output_ready) {
         /* see above discussion on how we handle this error */
-        fprintf(stderr, "A call was made to orte_output_open %s with primary tag %s\n",
-                orte_finalizing ? "during or after calling orte_finalize" : "prior to calling orte_init",
-                primary_tag);
+        fprintf(stderr, "A call was made to orte_output_open %s\n",
+                orte_finalizing ? "during or after calling orte_finalize" : "prior to calling orte_init");
         return ORTE_ERROR;
     }
     
@@ -871,10 +800,8 @@ int orte_output_open(opal_output_stream_t *lds, const char *primary_tag, ...)
                          stream));
     
 track:
-    /* track the settings */
-    va_start(arglist, primary_tag);
-    new_stream_tracker(stream, flag, primary_tag, arglist);
-    va_end(arglist);
+    /* track the settings - can't use macro as this may adjust size of array */
+    opal_value_array_set_item(&orte_output_streams, stream, (void*)&flag);
     
     return stream;
 }
@@ -950,9 +877,7 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
 }
 
 void orte_output_close(int output_id)
-{
-    orte_output_stream_t **streams;
-    
+{    
     if (!orte_output_ready && !orte_finalizing) {
         /* if we are finalizing, then we really don't want
          * to init this system - otherwise, this was called prior
@@ -964,10 +889,7 @@ void orte_output_close(int output_id)
     }
     
     /* cleanout the stream settings */
-    streams = (orte_output_stream_t**)orte_output_streams.addr;
-    if (output_id >= 0 && NULL != streams[output_id]) {
-        OBJ_RELEASE(streams[output_id]);
-    }
+    OPAL_VALUE_ARRAY_SET_ITEM(&orte_output_streams, uint8_t, output_id, ORTE_OUTPUT_OTHER);
     opal_output_close(output_id);
 }
 

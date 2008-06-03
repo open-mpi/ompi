@@ -94,7 +94,7 @@ static int orte_ras_gridengine_open(void)
         false, false, 0, &mca_ras_gridengine_component.show_jobid);
 
     if (value != 0) {
-        mca_ras_gridengine_component.verbose = orte_output_open(NULL, "RAS", "GRIDENGINE", "DEBUG", NULL);
+        mca_ras_gridengine_component.verbose = orte_output_open(NULL);
     } else {
         mca_ras_gridengine_component.verbose = -1;
     }

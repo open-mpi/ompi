@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    stream = orte_output_open(NULL, "HELLO", "OUTPUT", NULL);
+    stream = orte_output_open(NULL);
     orte_output(stream, "(stream) Hello, World, I am %d of %d\n", rank, size);
 
     printf("(printf) Hello, World, I am %d of %d\n", rank, size);

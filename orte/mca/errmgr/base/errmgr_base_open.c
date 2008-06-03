@@ -76,7 +76,7 @@ int orte_errmgr_base_open(void)
     
     if (!orte_errmgr_initialized) { /* ensure we only do this once */
       
-        orte_errmgr_base_output = orte_output_open(NULL, "ERRMGR", "DEBUG", NULL);
+        orte_errmgr_base_output = orte_output_open(NULL);
 
         /* Open up all available components */
     

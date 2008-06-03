@@ -115,7 +115,7 @@ ompi_mtl_portals_component_open(void)
     asprintf(&(mtl_portals_output_stream.lds_prefix),
              "btl: portals (%s): ", ompi_common_portals_nodeid());
     ompi_mtl_portals.portals_output = 
-        orte_output_open(&mtl_portals_output_stream, "MTL", "PORTALS", "DEBUG", NULL);
+        orte_output_open(&mtl_portals_output_stream);
 
     
 

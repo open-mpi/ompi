@@ -86,7 +86,7 @@ int orte_iof_base_open(void)
     orte_util_convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
     free(str_value);
 
-    orte_iof_base.iof_output = orte_output_open(NULL, "IOF", "DEBUG", NULL);
+    orte_iof_base.iof_output = orte_output_open(NULL);
 
     /* initialize free list */
     opal_free_list_init( &orte_iof_base.iof_fragments,

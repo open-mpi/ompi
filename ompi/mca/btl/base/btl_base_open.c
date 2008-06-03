@@ -97,7 +97,7 @@ int mca_btl_base_open(void)
                                 0, 
                                 &mca_btl_base_verbose);
 
-    mca_btl_base_output = orte_output_open(NULL, "BTL", "DEBUG", NULL);
+    mca_btl_base_output = orte_output_open(NULL);
     orte_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
 
   /* Open up all available components */

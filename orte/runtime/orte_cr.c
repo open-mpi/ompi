@@ -123,7 +123,7 @@ int orte_cr_init(void)
      */
     
     if(0 != val) {
-        orte_cr_output = orte_output_open(NULL, "ORTE", "CR", "DEBUG", NULL);
+        orte_cr_output = orte_output_open(NULL);
         orte_output_set_verbosity(orte_cr_output, val);
     } else {
         orte_cr_output = opal_cr_output;

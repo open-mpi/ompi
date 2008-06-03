@@ -143,7 +143,7 @@ int orte_odls_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
-    orte_odls_globals.output = orte_output_open(NULL, "ODLS", "DEBUG", NULL);
+    orte_odls_globals.output = orte_output_open(NULL);
 
     mca_base_param_reg_int_name("odls", "base_sigkill_timeout",
                                 "Time to wait for a process to die after issuing a kill signal to it",

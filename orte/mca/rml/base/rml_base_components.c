@@ -56,7 +56,7 @@ orte_rml_base_open(void)
                                    NULL, NULL);
     
     /* register parameters */
-    orte_rml_base_output = orte_output_open(NULL, "RML", "DEBUG", NULL);
+    orte_rml_base_output = orte_output_open(NULL);
     
     /* Open up all available components */
     ret = mca_base_components_open("rml",
