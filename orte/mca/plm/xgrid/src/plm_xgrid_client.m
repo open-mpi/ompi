@@ -94,7 +94,7 @@
 	    if (XGActionMonitorOutcomeSuccess != [actionMonitor outcome]) {
 		NSError *err = [actionMonitor error];
 		fprintf(stderr, "orte:plm:xgrid: cleanup failed: %s\n", 
-			[[err localizedDescription] cString]);
+			[[err localizedDescription] UTF8String]);
 	    }
 	}
     }
@@ -150,7 +150,7 @@
 
     orte_output_verbose(1, orte_plm_globals.output,
 			"orte:plm:xgrid: Kerberos servicePrincipal: %s",
-			[myServicePrincipal cString]);
+			[myServicePrincipal UTF8String]);
 
     return myServicePrincipal;
 }
@@ -171,7 +171,7 @@
 
 	orte_output_verbose(1, orte_plm_globals.output,
 			    "orte:plm:xgrid: Kerberos principal: %s",
-			    [[self servicePrincipal] cString]);
+			    [[self servicePrincipal] UTF8String]);
 		
 	[authenticator setServicePrincipal:[self servicePrincipal]];
 	[connection setAuthenticator:authenticator];
@@ -207,7 +207,7 @@
 
     orte_output_verbose(1, orte_plm_globals.output,
 			"orte:plm:xgrid: connection name: %s",
-			[[connection name] cString]);
+			[[connection name] UTF8String]);
     
     controller = [[XGController alloc] initWithConnection:connection];
     /* need to call progress exactly once for some reason to get the
@@ -217,7 +217,7 @@
 
     orte_output_verbose(1, orte_plm_globals.output,
 			"plm: xgrid: grid name: %s",
-			[[grid identifier] cString]);
+			[[grid identifier] UTF8String]);
 
     return ORTE_SUCCESS;
 }
@@ -254,7 +254,7 @@
     }
 
     /* find orted */
-    orted_path = opal_path_findv((char*) [orted cString], 0, environ, NULL); 
+    orted_path = opal_path_findv((char*) [orted UTF8String], 0, environ, NULL); 
     
     /* build up the array of task specifications */
     NSMutableDictionary *taskSpecifications = [NSMutableDictionary dictionary];
@@ -324,7 +324,7 @@
 	NSError *err = [actionMonitor error];
 	fprintf(stderr, "orte:plm:xgrid: launch failed: (%d) %s\n", 
 		[actionMonitor outcome],
-		[[err localizedDescription] cString]);
+		[[err localizedDescription] UTF8String]);
 	rc = ORTE_ERROR;
 	goto cleanup;
     }
@@ -371,7 +371,7 @@ cleanup:
 	if (XGActionMonitorOutcomeSuccess != [actionMonitor outcome]) {
 	    NSError *err = [actionMonitor error];
 	    fprintf(stderr, "orte:plm:xgrid: terminate failed: %s\n", 
-		    [[err localizedDescription] cString]);
+		    [[err localizedDescription] UTF8String]);
 	    ret = ORTE_ERROR;
 	}
     }
@@ -395,7 +395,7 @@ cleanup:
     orte_output(orte_plm_globals.output,
 		"orte:plm:xgrid: Controller connection did not open: (%d) %s",
 		[error code],
-		[[error localizedDescription] cString]);
+		[[error localizedDescription] UTF8String]);
     opal_condition_broadcast(&state_cond);
 }
 
@@ -418,7 +418,7 @@ cleanup:
 	    orte_output(orte_plm_globals.output,
 			"orte:plm:xgrid: Connection to XGrid controller unexpectedly closed: (%d) %s",
 			[[myConnection error] code],
-			[[[myConnection error] localizedDescription] cString]);
+			[[[myConnection error] localizedDescription] UTF8String]);
 	    break;
 	}
     } else {
@@ -437,8 +437,9 @@ cleanup:
 
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
-					  NULL,
-					  NULL);
+                                          NULL,
+                                          NULL,
+                                          true);
 
     /* Note that capacity is a starting capacity, not max */
     NSMutableArray *ret = [NSMutableArray arrayWithCapacity: argc];
