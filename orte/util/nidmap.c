@@ -57,7 +57,8 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     /* determine the number of nodes in the global node array */
     num_nodes = 0;
     nodes = (orte_node_t**)orte_node_pool->addr;
-    while (NULL != nodes[num_nodes]) {
+    while (num_nodes < orte_node_pool->size &&
+           NULL != nodes[num_nodes]) {
         ++num_nodes;
     }
     /* pack number of nodes */
