@@ -29,6 +29,7 @@ version 1.0.
 1.2.7 (not released yet)
 -----
 
+- Some more man page fixes from the Debian maintainers. See ticket #1324.
 - Have openib BTL (OpenFabrics support) check for the presence of
   /sys/class/infiniband before allowing itself to be used.  This check
   prevents spurrious "OMPI did not find RDMA hardware!" notices on
