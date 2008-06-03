@@ -506,7 +506,7 @@ static void mca_oob_tcp_accept(int incoming_sd)
 static int
 mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t af_family)
 {
-    int flags, index, range, port=0;
+    int flags, index, range = 0, port=0;
     struct sockaddr_storage inaddr;
     opal_socklen_t addrlen;
 

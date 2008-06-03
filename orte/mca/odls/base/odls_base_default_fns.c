@@ -102,7 +102,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     boptr = &bo;
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(wireup);
         return rc;
     }
     /* release the data since it has now been copied into our buffer */
@@ -1326,9 +1325,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     orte_std_cntr_t cnt;
     int rc;
     bool found=false;
-    orte_odls_job_t *jobdat;
-    
-    
+
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
     
@@ -1388,6 +1385,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     /* do they want the nidmap? */
     if (drop_nidmap) {
+        orte_odls_job_t *jobdat = NULL;
         /* get the jobdata object */
         for (item = opal_list_get_first(&orte_odls_globals.jobs);
              item != opal_list_get_end(&orte_odls_globals.jobs);
