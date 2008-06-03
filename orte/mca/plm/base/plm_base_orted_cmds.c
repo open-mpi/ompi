@@ -117,9 +117,6 @@ int orte_plm_base_orted_exit(void)
     }
     procs = (orte_proc_t**)daemons->procs->addr;
     
-    procs[0]->state = ORTE_PROC_STATE_TERMINATED;
-    daemons->num_terminated++;
-    
    /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -140,6 +137,9 @@ int orte_plm_base_orted_exit(void)
         ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:orted_exit abnormal term ordered",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
+        /* be sure I get the command */
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
         
         /* now send the command one daemon at a time using a non-blocking
          * send - let the callback function keep track of how many

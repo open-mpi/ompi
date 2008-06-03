@@ -68,6 +68,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/routed/routed.h"
 
 #include "orte/runtime/runtime.h"
@@ -557,9 +558,24 @@ static int process_commands(orte_process_name_t* sender,
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
             if (orte_process_info.hnp) {
-                /* if we are the HNP, do nothing - we will
-                 * exit at our own sweet time
+                orte_job_t *daemons;
+                orte_proc_t **procs;
+                /* if we are the HNP, ensure our local procs are terminated */
+                orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+                /* now lookup the daemon job object */
+                if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                procs = (orte_proc_t**)daemons->procs->addr;
+                /* declare us terminated so things can exit cleanly */
+                procs[0]->state = ORTE_PROC_STATE_TERMINATED;
+                daemons->num_terminated++;
+                /* need to check for job complete as otherwise this doesn't
+                 * get triggered in single-daemon systems
                  */
+                orte_plm_base_check_job_completed(daemons);
+                /* all done! */
                 return ORTE_SUCCESS;
             }
             /* eventually, we need to revise this so we only
