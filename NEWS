@@ -79,17 +79,16 @@ Trunk (not on release branches yet)
 - Added more stringent MPI API parameter checking to help user-level
   debugging.
   --> Expected: 1.3
+
+
+1.2.7 (not released yet)
+-----
+
 - Have openib BTL (OpenFabrics support) check for the presence of
   /sys/class/infiniband before allowing itself to be used.  This check
   prevents spurrious "OMPI did not find RDMA hardware!" notices on
   systems that have the software drivers installed, but no
-  corresponding hardware.
-  --> Expected: 1.2.7
-
-
-1.2.7 (might never be released)
------
-
+  corresponding hardware.  See tickets #1321 and #1305.
 - Added vendor IDs for some ConnectX openib HCAs. See ticket #1311.
 - Fix some RPM specfile inconsistencies.  See ticket #1308.
   Thanks to Jim Kusznir for noticing the problem.
