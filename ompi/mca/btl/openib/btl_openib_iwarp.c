@@ -175,7 +175,7 @@ out1:
 
 int mca_btl_openib_build_rdma_addr_list(void)
 {
-    int rc, i;
+    int rc = OMPI_SUCCESS, i;
 
     OBJ_CONSTRUCT(&myaddrs, opal_list_t);
 
