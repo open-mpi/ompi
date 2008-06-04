@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,53 +25,30 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
         [AC_HELP_STRING([--with-valgrind(=DIR)],
             [Directory where the valgrind software is installed])])
 
-    if test "$WANT_MEMCHECKER" = "1" ; then
+    ompi_check_memchecker_valgrind_save_CPPFLAGS="$CPPFLAGS"
+    ompi_check_memchecker_valgrind_happy=no
 
-        AC_MSG_CHECKING([for the valgrind include directory])
-        if test -n "$with_valgrind" -a -d "$with_valgrind/include" ; then
-            CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
-            AC_MSG_RESULT([$with_valgrind/include])
-            
-            AC_CHECK_HEADER([valgrind/valgrind.h],
-                [AC_CHECK_HEADER([valgrind/memcheck.h],
-                        [happy=yes])])
+    AS_IF([test "$with_valgrind" != "no"],
+          [AS_IF([test ! -z "$with_valgrind" -a "$with_valgrind" != "yes"],
+                 [CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
+                  opal_memchecker_valgrind_CPPFLAGS="-I$with_valgrind/include"])
+           AC_CHECK_HEADERS([valgrind/valgrind.h], 
+                 [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
+                  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
+#include "valgrind/memcheck.h"
+]],
+                     [[char buffer = 0xff;
+                       VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]]),
+                     [AC_MSG_RESULT([yes])
+                      ompi_check_memchecker_valgrind_happy=yes],
+                     [AC_MSG_RESULT([no])]
+                     [AC_MSG_ERROR([Need Valgrind version 3.2.0 or later. Can not build component.])])
+                 ],
+                 [AC_MSG_WARN([valgrind.h not found])
+                  AC_MSG_WARN([Cannot compile this component])])])
 
-            if test "x$happy" != "xyes" ; then
-                AC_MSG_WARN([*** Could not find valgrind header files, as valgrind support was requested])
-                AC_MSG_WARN([*** Cannot compile this component])
-                memchecker_valgrind_happy=0
-                want_component=0
-                should_build=2
-            else
-                AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE inside valgrind/memcheck.h])
-                
-                AC_TRY_COMPILE([#include "valgrind/memcheck.h"],
-                    [
-                        char buffer = 0xff;
-                        VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));
-                        ], valgrind_version_new=yes, valgrind_version_new=no)
-                AC_MSG_RESULT($valgrind_version_new)
-                
-                if test "x$valgrind_version_new" != "xyes" ; then
-                    AC_MSG_WARN([*** Need at least Valgrind v3.2.0, please specify using --with-valgrind])
-                    AC_MSG_WARN([*** Cannot compile this component])
-                    memchecker_valgrind_happy=0
-                    want_component=0
-                    should_build=2
-                fi
-            fi
-        else
-            AC_MSG_RESULT([not found])
-            AC_MSG_WARN([*** Cannot compile this component])
-            memchecker_valgrind_happy=0
-            want_component=0
-            should_build=2
-        fi
-    else
-        happy=0                      # none_needed
-        happy_value=0                # none_needed
-        memchecker_valgrind_happy=0  # This should suffice to get rid of the component
-        should_build=2
-        want_component=0
-    fi
+    CPPFLAGS="$ompi_check_memchecker_valgrind_save_CPPFLAGS"
+
+    AS_IF([test "$ompi_check_valgrind_happy" = "yes"],
+          [$1], [$2])
 ])dnl
