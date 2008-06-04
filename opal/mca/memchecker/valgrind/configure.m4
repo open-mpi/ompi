@@ -41,8 +41,10 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
                        VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]]),
                      [AC_MSG_RESULT([yes])
                       ompi_check_memchecker_valgrind_happy=yes],
-                     [AC_MSG_RESULT([no])]
-                     [AC_MSG_ERROR([Need Valgrind version 3.2.0 or later. Can not build component.])])
+                     [AC_MSG_RESULT([no])
+                      AC_MSG_ERROR([Need Valgrind version 3.2.0 or later. Can not build component.])]
+                     [AC_MSG_RESULT([cross-compiling; assume yes...?])
+                      AC_MSG_WARN([OMPI will fail to compile if you do not have Valgrind version 3.2.0 or later])])
                  ],
                  [AC_MSG_WARN([valgrind.h not found])
                   AC_MSG_WARN([Cannot compile this component])])])
