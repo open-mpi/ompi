@@ -119,6 +119,8 @@ int opal_crs_base_none_module_finalize(void)
 
 int opal_crs_base_none_checkpoint(pid_t pid, opal_crs_base_snapshot_t *snapshot, opal_crs_state_type_t *state)
 {
+    int ret;
+
     *state = OPAL_CRS_CONTINUE;
     
     snapshot->component_name  = strdup("none");
@@ -127,41 +129,15 @@ int opal_crs_base_none_checkpoint(pid_t pid, opal_crs_base_snapshot_t *snapshot,
     snapshot->remote_location = strdup("");
     snapshot->cold_start      = false;
 
-#if 0 
-    /*  JJH - A more complete alternative if needed */
-    opal_crs_none_snapshot_t *snapshot = OBJ_NEW(opal_crs_none_snapshot_t);
-
-    if(NULL != snapshot->super.reference_name)
-        free(snapshot->super.reference_name);
-    snapshot->super.reference_name = strdup(base_snapshot->reference_name);
-
-    if(NULL != snapshot->super.local_location)
-        free(snapshot->super.local_location);
-    snapshot->super.local_location  = strdup(base_snapshot->local_location);
-
-    if(NULL != snapshot->super.remote_location)
-        free(snapshot->super.remote_location);
-    snapshot->super.remote_location  = strdup(base_snapshot->remote_location);
-
-    opal_output_verbose(10, mca_crs_none_component.super.output_handle,
-                        "crs:none: checkpoint(%d, ---)", pid);
-
     /*
-     * Create the snapshot directory
+     * Update the snapshot metadata
      */
-    snapshot->super.component_name = strdup(mca_crs_none_component.super.base_version.mca_component_name);
-    if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(&snapshot->super) )) {
-        opal_output(mca_crs_none_component.super.output_handle,
-                    "crs:none: checkpoint(): Error: Unable to initialize the directory for (%s).", 
-                    snapshot->super.reference_name);
+    if( OPAL_SUCCESS != (ret = opal_crs_base_metadata_write_token(NULL, CRS_METADATA_COMP, "none") ) ) {
+        opal_output(0,
+                    "crs:none: checkpoint(): Error: Unable to write component name to the directory for (%s).",
+                    snapshot->reference_name);
         return ret;
     }
-
-    /*
-     * Return to the caller
-     */
-    base_snapshot = &(snapshot->super);
-#endif
 
     return OPAL_SUCCESS;
 }

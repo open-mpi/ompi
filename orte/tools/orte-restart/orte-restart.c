@@ -189,15 +189,15 @@ main(int argc, char *argv[])
      * Restart in this process [mpirun/orterun]
      ******************************/
     if( orte_restart_globals.verbose ) {
-        orte_output_verbose(10, orte_restart_globals.output,
+        opal_output_verbose(10, orte_restart_globals.output,
                             "Restarting from file (%s)",
                             orte_restart_globals.filename);
         
         if( orte_restart_globals.forked ) {
-            orte_output_verbose(10, orte_restart_globals.output,
+            opal_output_verbose(10, orte_restart_globals.output,
                                 "\t Forking off a child");
         } else {
-            orte_output_verbose(10, orte_restart_globals.output,
+            opal_output_verbose(10, orte_restart_globals.output,
                                 "\t Exec in self");
         }
     }
@@ -209,7 +209,7 @@ main(int argc, char *argv[])
         goto cleanup;
     }
 
-    orte_output_verbose(10, orte_restart_globals.output,
+    opal_output_verbose(10, orte_restart_globals.output,
                         "orte_restart: Restarted Child with PID = %d\n", child_pid);
 
     /***************
@@ -251,8 +251,8 @@ static int initialize(int argc, char *argv[]) {
      * Setup OPAL Output handle from the verbose argument
      */
     if( orte_restart_globals.verbose ) {
-        orte_restart_globals.output = orte_output_open(NULL);
-        orte_output_set_verbosity(orte_restart_globals.output, 10);
+        orte_restart_globals.output = opal_output_open(NULL);
+        opal_output_set_verbosity(orte_restart_globals.output, 10);
     } else {
         orte_restart_globals.output = 0; /* Default=STDERR */
     }
@@ -412,7 +412,7 @@ static int check_file(orte_snapc_base_global_snapshot_t *snapshot)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    orte_output_verbose(10, orte_restart_globals.output,
+    opal_output_verbose(10, orte_restart_globals.output,
                         "Checking for the existence of (%s)\n",
                         snapshot->local_location);
 
@@ -545,7 +545,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
             /* Child Process */
             status = execvp(strdup(argv[0]), argv);
             if( 0 > status) {
-                orte_output(orte_restart_globals.output,
+                opal_output(orte_restart_globals.output,
                             "orte_restart: execv failed with status = %d\n",
                             status);
             }
@@ -557,7 +557,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
             ;
         }
         else {
-            orte_output(orte_restart_globals.output,
+            opal_output(orte_restart_globals.output,
                         "orte_restart: fork failed: This should never happen!");
             /* Fork failed :( */
             exit_status = *child_pid;
