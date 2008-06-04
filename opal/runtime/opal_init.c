@@ -36,7 +36,6 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
-#include "opal/mca/filter/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/carto/base/base.h"
 
@@ -288,16 +287,6 @@ opal_init(void)
         goto return_error;
     }
 
-    /* initialize the filter system */
-    if (OPAL_SUCCESS !=  (ret = opal_filter_base_open())) {
-        error = "opal_filter_open";
-        goto return_error;
-    }
-    if (OPAL_SUCCESS !=  (ret = opal_filter_base_select())) {
-        error = "opal_filter_select";
-        goto return_error;
-    }
-    
     /* open the processor affinity base */
     opal_paffinity_base_open();
     opal_paffinity_base_select();

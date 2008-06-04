@@ -53,8 +53,6 @@
 #endif
 #include "opal/runtime/opal.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/filter/filter.h"
-#include "opal/mca/filter/base/base.h"
 
 #include "ompi/mca/allocator/allocator.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -202,9 +200,6 @@ void ompi_info::open_components()
   component_map["base"] = NULL;
 
   // OPAL frameworks
-
-  opal_filter_base_open();
-  component_map["filter"] = &opal_filter_base_components_available;
 
   opal_backtrace_base_open();
   component_map["backtrace"] = &opal_backtrace_base_components_opened;
