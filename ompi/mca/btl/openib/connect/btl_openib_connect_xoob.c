@@ -573,9 +573,11 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
                     endpoint->xrc_recv_qp_num, strerror(ret), ret));
         return OMPI_ERROR;
     }
+#if OMPI_HAVE_THREADS
     if (APM_ENABLED) {
         mca_btl_openib_load_apm_xrc_rcv(endpoint->xrc_recv_qp_num, endpoint);
     }
+#endif
 
     return OMPI_SUCCESS;
 }

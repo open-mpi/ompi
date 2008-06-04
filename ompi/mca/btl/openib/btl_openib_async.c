@@ -469,9 +469,9 @@ void mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep)
                     ,qp->qp_num ,strerror(errno), errno));
 }
 
+#if HAVE_XRC
 void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t *ep)
 {
-#if HAVE_XRC
     struct ibv_qp_init_attr qp_init_attr;
     struct ibv_qp_attr attr;
     enum ibv_qp_attr_mask mask = 0;
@@ -500,7 +500,7 @@ void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t 
 
     ibv_modify_xrc_rcv_qp(btl->hca->xrc_domain, qp_num, &attr, mask);
     /* Maybe the qp already was modified by other process - ignoring error */
-#endif
 }
+#endif
 
 #endif
