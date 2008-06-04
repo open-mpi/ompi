@@ -572,7 +572,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     }
 
     /* Run over all qps and load alternative path */
-#if OMPI_HAVE_THREAD_SUPPORT
+#if OMPI_HAVE_THREADS
     if (APM_ENABLED) {
         int i;
         if (MCA_BTL_XRC_ENABLED) {
