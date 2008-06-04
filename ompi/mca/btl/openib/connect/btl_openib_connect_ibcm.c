@@ -259,9 +259,11 @@
 
 #include "opal/util/if.h"
 #include "opal/util/error.h"
-#include "orte/util/output.h"
 #include "opal/event/event.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal_stdint.h"
+
+#include "orte/util/output.h"
 
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
@@ -960,10 +962,10 @@ static int fill_path_record(ibcm_module_t *m,
         path_rec->rate = IBV_RATE_MAX; break;
     }
 
-    OPAL_OUTPUT((-1, "Got src/dest subnet id: 0x%lx / 0x%lx", 
+    OPAL_OUTPUT((-1, "Got src/dest subnet id: 0x%" PRIx64 " / 0x%" PRIx64,
                  path_rec->sgid.global.subnet_prefix,
                  path_rec->dgid.global.subnet_prefix));
-    OPAL_OUTPUT((-1, "Got src/dest interface id: 0x%lx / 0x%lx", 
+    OPAL_OUTPUT((-1, "Got src/dest interface id: 0x%" PRIx64 " / 0x%" PRIx64, 
                  path_rec->sgid.global.interface_id,
                  path_rec->dgid.global.interface_id));
     OPAL_OUTPUT((-1, "Got src/dest lid: 0x%x / 0x%x", 
@@ -1024,7 +1026,7 @@ static bool i_initiate(ibcm_module_t *m,
     uint64_t my_port_guid = ntoh64(m->btl->hca->ib_dev_attr.node_guid) + 
         m->btl->port_num;
     
-    OPAL_OUTPUT((-1, "i_initiate: my guid (%0lx), msg guid (%0lx)",
+    OPAL_OUTPUT((-1, "i_initiate: my guid (%0" PRIx64 "), msg guid (%0" PRIx64 ")",
                  my_port_guid, msg->mm_port_guid));
     OPAL_OUTPUT((-1, "i_initiate: my pid (%d), msg pid (%d)",
                  ibcm_pid, msg->mm_service_id));
@@ -1581,7 +1583,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     ibcm_module_t *m;
     ibcm_reply_t *rep;
 
-    OPAL_OUTPUT((-1, "ibcm req handler: remote qp index %d, remote guid %lx, remote qkey %u, remote qpn %d, remote psn %d",
+    OPAL_OUTPUT((-1, "ibcm req handler: remote qp index %d, remote guid 0x%" PRIx64 ", remote qkey %u, remote qpn %d, remote psn %d",
                 qp_index,
                 ntoh64(req->primary_path->dgid.global.interface_id),
                 req->remote_qkey, req->remote_qpn,
@@ -1591,7 +1593,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
        events come in per *device*, not per *port*.  So we just got a
        device event, and have to find the ibcm_module_t (i.e., local
        port/openib BTL module ) that corresponds to it. */
-    OPAL_OUTPUT((-1, "looking for ibcm module -- source port guid: 0x%lx (%p)",
+    OPAL_OUTPUT((-1, "looking for ibcm module -- source port guid: 0x%" PRIx64 " (%p)",
                 ntoh64(req->primary_path->sgid.global.interface_id), 
                  (void*)cmh));
     for (item = opal_list_get_first(&(cmh->ibcm_modules));
@@ -1601,7 +1603,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         imli = (ibcm_module_list_item_t*) item;
         m = imli->ibcm_module;
         msg = imli->ibcm_module->cpc.data.cbm_modex_message;
-        OPAL_OUTPUT((-1, "comparing ibcm module port guid: 0x%lx",
+        OPAL_OUTPUT((-1, "comparing ibcm module port guid: 0x%" PRIx64,
                      msg->mm_port_guid));
         if (msg->mm_port_guid ==
             ntoh64(req->primary_path->sgid.global.interface_id)) {
@@ -1632,7 +1634,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
                 OPAL_OUTPUT((-1, "NULL remote cpc data!"));
             }
             msg = ib_proc->proc_endpoints[i]->endpoint_remote_cpc_data->cbm_modex_message;
-            OPAL_OUTPUT((-1, "ibcm req: my guid 0x%lx, remote guid 0x%lx",
+            OPAL_OUTPUT((-1, "ibcm req: my guid 0x%" PRIx64 ", remote guid 0x%" PRIx64,
                         msg->mm_port_guid,
                          ntoh64(req->primary_path->dgid.global.interface_id)));
             OPAL_OUTPUT((-1, "ibcm req: my LID %d, remote LID %d",
