@@ -31,6 +31,7 @@ BEGIN_C_DECLS
         int priority;
         char *orted;
         char *custom_args;
+        bool detect_failure;
     };
     typedef struct orte_plm_slurm_component_t orte_plm_slurm_component_t;
 
