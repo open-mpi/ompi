@@ -91,7 +91,10 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
     
     /* if we wanted to display the map, now is the time to do it */
     if (jdata->map->display_map) {
-        opal_dss.dump(orte_rmaps_base.rmaps_output, jdata->map, ORTE_JOB_MAP);
+        char *output;
+        opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
+        orte_output(orte_rmaps_base.map_output, "%s", output);
+        free(output);
     }
     
     return ORTE_SUCCESS;

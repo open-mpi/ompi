@@ -284,13 +284,34 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 DISPLAY:
     /* shall we display the results? */
     if (orte_ras_base.display_alloc) {
+        char *tmp=NULL, *tmp2, *tmp3, *pfx=NULL;
+        if (orte_xml_output) {
+            asprintf(&tmp, "<allocation>\n");
+            pfx = "\t";
+        }
         alloc = (orte_node_t**)orte_node_pool->addr;
         for (i=0; i < orte_node_pool->size; i++) {
             if (NULL == alloc[i]) {
                 break;
             }
-            opal_dss.dump(orte_ras_base.ras_output, alloc[i], ORTE_NODE);
+            opal_dss.print(&tmp2, pfx, alloc[i], ORTE_NODE);
+            if (NULL == tmp) {
+                tmp = tmp2;
+            } else {
+                asprintf(&tmp3, "%s%s", tmp, tmp2);
+                free(tmp);
+                free(tmp2);
+                tmp = tmp3;
+            }
         }
+        if (orte_xml_output) {
+            asprintf(&tmp2, "%s</allocation>\n", tmp);
+            free(tmp);
+        } else {
+            tmp2 = tmp;
+        }
+        orte_output(orte_ras_base.alloc_output, "%s", tmp2);
+        free(tmp2);
     }
     
     return rc;

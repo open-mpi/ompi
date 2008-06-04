@@ -142,6 +142,11 @@ int orte_register_params(void)
                                 (int) false, &value);
     orte_help_show_recursions = OPAL_INT_TO_BOOL(value);
     
+    mca_base_param_reg_int_name("orte", "xml_output",
+                                "Display all output in XML format (default: false)",
+                                false, false, (int) false, &value);
+    orte_xml_output = OPAL_INT_TO_BOOL(value);
+
     /* some params that are accessed elsewhere, but simply registered here so they will
      * be visible to ompi_info
      */

@@ -42,7 +42,6 @@ struct orterun_globals_t {
     bool version;
     bool verbose;
     bool quiet;
-    bool xml;
     bool exit;
     bool by_node;
     bool by_slot;
