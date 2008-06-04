@@ -68,6 +68,9 @@ typedef struct {
     char *ldi_prefix;
     int ldi_prefix_len;
 
+    char *ldi_suffix;
+    int ldi_suffix_len;
+    
     bool ldi_stdout;
     bool ldi_stderr;
 
@@ -76,8 +79,6 @@ typedef struct {
     char *ldi_file_suffix;
     int ldi_fd;
     int ldi_file_num_lines_lost;
-
-    int ldi_filter_flags;
 } output_desc_t;
 
 /*
@@ -92,7 +93,7 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
 static int output(int output_id, const char *format, va_list arglist);
 
 
-#define OPAL_OUTPUT_MAX_STREAMS 32
+#define OPAL_OUTPUT_MAX_STREAMS 64
 #if defined(__WINDOWS__) || defined(HAVE_SYSLOG)
 #define USE_SYSLOG 1
 #else
@@ -145,8 +146,6 @@ bool opal_output_init(void)
         info[i].ldi_file_want_append = false;
         info[i].ldi_fd = -1;
         info[i].ldi_file_num_lines_lost = 0;
-        info[i].ldi_filter_flags = 
-            OPAL_OUTPUT_FILTER_STDOUT | OPAL_OUTPUT_FILTER_STDERR;
     }
 
     /* Initialize the mutex that protects the output */
@@ -235,13 +234,13 @@ void opal_output_reopen_all(void)
         lds.lds_want_syslog = false;
 #endif
         lds.lds_prefix = info[i].ldi_prefix;
+        lds.lds_suffix = info[i].ldi_suffix;
         lds.lds_want_stdout = info[i].ldi_stdout;
         lds.lds_want_stderr = info[i].ldi_stderr;
         lds.lds_want_file = (-1 == info[i].ldi_fd) ? false : true;
         /* open all streams in append mode */
         lds.lds_want_file_append = true;
         lds.lds_file_suffix = info[i].ldi_file_suffix;
-        lds.lds_filter_flags = info[i].ldi_filter_flags;
 
         /* 
          * call opal_output_open to open the stream. The return value
@@ -460,6 +459,7 @@ static void construct(opal_object_t *obj)
     stream->lds_syslog_priority = 0;
     stream->lds_syslog_ident = NULL;
     stream->lds_prefix = NULL;
+    stream->lds_suffix = NULL;
     stream->lds_is_debugging = false;
     stream->lds_want_syslog = false;
     stream->lds_want_stdout = false;
@@ -467,8 +467,6 @@ static void construct(opal_object_t *obj)
     stream->lds_want_file = false;
     stream->lds_want_file_append = false;
     stream->lds_file_suffix = NULL;
-    stream->lds_filter_flags = 
-        OPAL_OUTPUT_FILTER_STDOUT | OPAL_OUTPUT_FILTER_STDERR;
 }
 
 /*
@@ -562,6 +560,14 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         info[i].ldi_prefix_len = 0;
     }
 
+    if (NULL != lds->lds_suffix) {
+        info[i].ldi_suffix = strdup(lds->lds_suffix);
+        info[i].ldi_suffix_len = (int)strlen(lds->lds_suffix);
+    } else {
+        info[i].ldi_suffix = NULL;
+        info[i].ldi_suffix_len = 0;
+    }
+    
     info[i].ldi_stdout = lds->lds_want_stdout;
     info[i].ldi_stderr = lds->lds_want_stderr;
 
@@ -571,8 +577,6 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         strdup(lds->lds_file_suffix);
     info[i].ldi_file_want_append = lds->lds_want_file_append;
     info[i].ldi_file_num_lines_lost = 0;
-
-    info[i].ldi_filter_flags = lds->lds_filter_flags;
 
     /* Don't open a file in the session directory now -- do that lazily
      * so that if there's no output, we don't have an empty file */
@@ -658,7 +662,12 @@ static void free_descriptor(int output_id)
 	}
 	ldi->ldi_prefix = NULL;
 
-	if (NULL != ldi->ldi_file_suffix) {
+    if (NULL != ldi->ldi_suffix) {
+        free(ldi->ldi_suffix);
+    }
+    ldi->ldi_suffix = NULL;
+    
+    if (NULL != ldi->ldi_file_suffix) {
 	    free(ldi->ldi_file_suffix);
 	}
 	ldi->ldi_file_suffix = NULL;
@@ -686,9 +695,21 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
     if ('\n' != (*no_newline_string)[len - 1]) {
         want_newline = true;
         ++total_len;
+    } else if (NULL != ldi->ldi_suffix) {
+        /* if we have a suffix, then we don't want a
+         * newline to appear before it
+         */
+        (*no_newline_string)[len - 1] = '\0';
+        want_newline = true; /* add newline to end after suffix */
+        /* total_len won't change since we just moved the newline
+         * to appear after the suffix
+         */
     }
     if (NULL != ldi->ldi_prefix) {
         total_len += strlen(ldi->ldi_prefix);
+    }
+    if (NULL != ldi->ldi_suffix) {
+        total_len += strlen(ldi->ldi_suffix);
     }
     if (temp_str_len < total_len + want_newline) {
         if (NULL != temp_str) {
@@ -700,13 +721,29 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
         }
         temp_str_len = total_len * 2;
     }
-    if (NULL != ldi->ldi_prefix) {
+    if (NULL != ldi->ldi_prefix && NULL != ldi->ldi_suffix) {
         if (want_newline) {
-            snprintf(temp_str, temp_str_len, "%s%s\n", ldi->ldi_prefix, 
-                     *no_newline_string);
+            snprintf(temp_str, temp_str_len, "%s%s%s\n",
+                     ldi->ldi_prefix, *no_newline_string, ldi->ldi_suffix);
+        } else {
+            snprintf(temp_str, temp_str_len, "%s%s%s", ldi->ldi_prefix, 
+                     *no_newline_string, ldi->ldi_suffix);
+        }
+    } else if (NULL != ldi->ldi_prefix) {
+        if (want_newline) {
+            snprintf(temp_str, temp_str_len, "%s%s\n",
+                     ldi->ldi_prefix, *no_newline_string);
         } else {
             snprintf(temp_str, temp_str_len, "%s%s", ldi->ldi_prefix, 
                      *no_newline_string);
+        }
+    } else if (NULL != ldi->ldi_suffix) {
+        if (want_newline) {
+            snprintf(temp_str, temp_str_len, "%s%s\n",
+                     *no_newline_string, ldi->ldi_suffix);
+        } else {
+            snprintf(temp_str, temp_str_len, "%s%s", 
+                     *no_newline_string, ldi->ldi_suffix);
         }
     } else {
         if (want_newline) {
@@ -715,7 +752,7 @@ static int make_string(char **no_newline_string, output_desc_t *ldi,
             snprintf(temp_str, temp_str_len, "%s", *no_newline_string);
         }
     }
-
+    
     return OPAL_SUCCESS;
 }
     
@@ -752,20 +789,7 @@ static int output(int output_id, const char *format, va_list arglist)
         /* Syslog output -- does not use the newline-appended string */
 #if defined(HAVE_SYSLOG)
         if (ldi->ldi_syslog) {
-            char *out = str;
-            if (ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_SYSLOG) {
-#if 0
-                /* JMS call the filter, perhaps like this */
-                out = filter(str);
-                if (NULL == out) {
-                    out = str;
-                }
-#endif
-            }
             syslog(ldi->ldi_syslog_priority, "%s", str);
-            if (out != str) {
-                free(out);
-            }
         }
 #endif
 
@@ -773,20 +797,6 @@ static int output(int output_id, const char *format, va_list arglist)
            with a newline appended */
 
         out = temp_str;
-        if ((ldi->ldi_stdout &&
-             ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_STDOUT) ||
-            (ldi->ldi_stderr &&
-             ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_STDERR) ||
-            (ldi->ldi_file &&
-             ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_FILE)) {
-#if 0
-            /* JMS call the filter, perhaps like this */
-            out = filter(temp_str);
-            if (NULL == out) {
-                out = temp_str;
-            }
-#endif
-        }
 
         /* stdout output */
         if (ldi->ldi_stdout) {
@@ -816,16 +826,7 @@ static int output(int output_id, const char *format, va_list arglist)
                     snprintf(buffer, BUFSIZ - 1,
                              "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
                              ldi->ldi_file_num_lines_lost);
-                    if (ldi->ldi_filter_flags & OPAL_OUTPUT_FILTER_FILE) {
-#if 0
-                        /* JMS call the filter */
-                        out = filter(buffer);
-                        if (NULL == out) {
-                            out = buffer;
-                        }
-#endif
-                    }
-                    write(ldi->ldi_fd, buffer, (int)strlen(buffer));
+                   write(ldi->ldi_fd, buffer, (int)strlen(buffer));
                     ldi->ldi_file_num_lines_lost = 0;
                     if (out != buffer) {
                         free(out);

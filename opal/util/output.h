@@ -80,15 +80,6 @@
 
 BEGIN_C_DECLS
 
-/** Flag to filter syslog output */
-#define OPAL_OUTPUT_FILTER_SYSLOG 0x01
-/** Flag to filter stdout output */
-#define OPAL_OUTPUT_FILTER_STDOUT 0x02
-/** Flag to filter stderr output */
-#define OPAL_OUTPUT_FILTER_STDERR 0x04
-/** Flag to filter file output */
-#define OPAL_OUTPUT_FILTER_FILE   0x08
-
 /**
  * \class opal_output_stream_t 
  *
@@ -153,6 +144,16 @@ struct opal_output_stream_t {
      */
     char *lds_prefix;
     
+    /**
+     * String suffix added to all output on the stream.
+     *
+     * When this field is non-NULL, it is appended to all lines of
+     * output on the stream.  When this field is NULL, no suffix is
+     * added to each line of output in the stream. The suffix is copied
+     * to an internal structure in the call to opal_output_open()!
+     */
+    char *lds_suffix;
+
     /**
      * Indicates whether the output of the stream is
      * debugging/developer-only output or not.
@@ -224,15 +225,6 @@ struct opal_output_stream_t {
      */
     char *lds_file_suffix;
 
-    /**
-     * What outputs do we want passed through the filter first?
-     *
-     * Bit field indicating which of syslog, stdout, stderr, and file
-     * you want passed through the filter before sending to the
-     * output.  Default is stdout, stderr filtered; syslog and file
-     * are not filtered.
-    */
-    int lds_filter_flags;
 };
 
     /**
