@@ -56,7 +56,7 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
 
     AS_IF([test "$btl_openib_happy" = "yes"],
           [if test "x$btl_openib_have_xrc" = "x1" -a "x$ompi_want_connectx_xrc" = "x1"; then
-              cpcs="$cpcs xrc"
+              cpcs="$cpcs xoob"
           fi
           if test "x$btl_openib_have_rdma_cm" = "x1"; then
               cpcs="$cpcs rdma_cm"
