@@ -54,6 +54,7 @@ bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
 bool orte_help_want_aggregate = true;
 bool orte_help_show_recursions;
+bool orte_xml_output;
 bool orte_params_set = false;
 int orte_debug_verbosity;
 int orted_debug_failure;

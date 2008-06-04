@@ -136,8 +136,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Suppress helpful messages" },
 
     /* select XML output */
-    { NULL, NULL, NULL, '\0', NULL, "xml", 0,
-      &orterun_globals.xml, OPAL_CMD_LINE_TYPE_BOOL,
+    { "orte", "xml", "output", '\0', NULL, "xml", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
     
     /* Preload the binary on the remote machine */
@@ -1012,7 +1012,6 @@ static int init_globals(void)
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
     orterun_globals.quiet                      = false;
-    orterun_globals.xml                        = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
@@ -1081,15 +1080,6 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         exit(0);
     }
 
-    /* Do we want XML output? */
-    if (orterun_globals.xml) {
-        char *tmp;
-        id = mca_base_param_reg_string_name("filter", NULL,
-                                            "Force selection of filter module",
-                                            false, false, NULL, &tmp);
-        mca_base_param_set_string(id, "xml");
-    }
-    
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {

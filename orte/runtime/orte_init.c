@@ -78,6 +78,12 @@ int orte_init(char flags)
         orte_process_info.daemon = false;
     }
     
+    /* Register all MCA Params */
+    if (ORTE_SUCCESS != (ret = orte_register_params())) {
+        error = "orte_register_params";
+        goto error;
+    }
+    
     /* setup the orte_output system */
     if (ORTE_SUCCESS != (ret = orte_output_init())) {
         ORTE_ERROR_LOG(ret);
@@ -94,12 +100,6 @@ int orte_init(char flags)
         goto error;
     }
     
-    /* Register all MCA Params */
-    if (ORTE_SUCCESS != (ret = orte_register_params())) {
-        error = "orte_register_params";
-        goto error;
-    }
-
     /* Initialize the ORTE data type support */
     if (ORTE_SUCCESS != (ret = orte_dt_init())) {
         error = "orte_dt_init";
