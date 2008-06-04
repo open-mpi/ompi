@@ -111,10 +111,12 @@ int orte_output_open(opal_output_stream_t *lds)
 
 void orte_output(int output_id, const char *format, ...)
 {
-    /* just call opal_output_vverbose with a verbosity of 0 */
+    /* just call opal_output_vverbose with a negative verbosity to
+     * ensure the message gets out
+     */
     va_list arglist;
     va_start(arglist, format);
-    opal_output_vverbose(0, output_id, format, arglist);
+    opal_output_vverbose(-1, output_id, format, arglist);
     va_end(arglist);
 }
 
@@ -165,8 +167,6 @@ int orte_show_help(const char *filename, const char *topic,
 #define ORTE_OUTPUT_STDOUT      0x01
 #define ORTE_OUTPUT_STDERR      0x02
 #define ORTE_OUTPUT_SHOW_HELP   0x04
-
-#define ORTE_OUTPUT_MAX_TAGS    10
 
 /* List items for holding process names */
 typedef struct {
@@ -297,7 +297,6 @@ static int get_tli(const char *filename, const char *topic,
 
 
 static void output_vverbose(int verbose_level, int output_id,
-                            int major_id, int minor_id,
                             const char *format, va_list arglist)
 {
     char *output = NULL;
@@ -325,7 +324,32 @@ static void output_vverbose(int verbose_level, int output_id,
         return;
     }
 
-    /* Per a soon-to-be-filed trac ticket: because this function calls
+    /* lookup the flags for this stream */
+    flags = OPAL_VALUE_ARRAY_GET_ITEM(&orte_output_streams, uint8_t, output_id);
+    
+    /* if I am the HNP, then I need to output this via
+     * the appropriate channel
+     */
+    if (orte_process_info.hnp) {
+        if (ORTE_OUTPUT_STDOUT & flags) {
+            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+                                 "%s output %s to stdout",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 output));
+            opal_output(stdout_stream, output);
+        } else {
+            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+                                 "%s output %s to stderr",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 output));
+            opal_output(stderr_stream, output);
+        }
+        goto cleanup;
+    }
+    
+    /* If I am NOT the HNP...
+     
+       Per a soon-to-be-filed trac ticket: because this function calls
        RML send, recursion is possible in two places:
 
        1. RML send itself calls orte_output()
@@ -353,21 +377,6 @@ static void output_vverbose(int verbose_level, int output_id,
         goto cleanup;
     }
     am_inside = true;
-    
-    /* if I am the HNP, then I need to just pass this on to the
-     * opal_output_verbose function using the provided stream
-     */
-    if (orte_process_info.hnp) {
-        OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                             "%s output to stream %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             output_id));
-        opal_output(output_id, output);
-        goto cleanup;
-    }
-
-    /* lookup the flags for this stream */
-    flags = OPAL_VALUE_ARRAY_GET_ITEM(&orte_output_streams, uint8_t, output_id);
     
     /* If there's other flags besides STDOUT and STDERR set, then also
        output this locally via opal_output */
@@ -631,7 +640,16 @@ int orte_output_init(void)
 
     /* define the default stream that has everything off */
     OBJ_CONSTRUCT(&orte_output_default, opal_output_stream_t);
-
+    orte_output_default.lds_want_stdout = false;
+    if (orte_process_info.hnp) {
+        orte_output_default.lds_want_stderr = true;
+    } else {
+        /* if we are not the HNP, route stderr through
+         * the HNP - don't open it here
+         */
+        orte_output_default.lds_want_stderr = false;
+    }
+    
     /* Show help duplicate detection */
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
 
@@ -663,6 +681,15 @@ int orte_output_init(void)
         OBJ_CONSTRUCT(&stdout_lds, opal_output_stream_t);
         /* deliver to stdout only */
         stdout_lds.lds_want_stdout = true;
+        if (orte_xml_output) {
+            /* define an appropriate prefix/suffix */
+            stdout_lds.lds_prefix = strdup("<stdout>");
+            stdout_lds.lds_suffix = strdup("</stdout>");
+        } else {
+              /* turn off the prefix/suffix */
+            stdout_lds.lds_prefix = NULL;
+            stdout_lds.lds_suffix = NULL;
+        }
         stdout_stream = opal_output_open(&stdout_lds);
         OPAL_VALUE_ARRAY_SET_ITEM(&orte_output_streams, uint8_t, stdout_stream, ORTE_OUTPUT_STDOUT);
         /* setup stderr stream - we construct our own
@@ -671,8 +698,15 @@ int orte_output_init(void)
         OBJ_CONSTRUCT(&stderr_lds, opal_output_stream_t);
         /* deliver to stderr only */
         stderr_lds.lds_want_stderr = true;
-        /* we filter the stderr */
-        stderr_lds.lds_filter_flags = OPAL_OUTPUT_FILTER_STDERR;
+       if (orte_xml_output) {
+            /* define an appropriate prefix/suffix */
+            stderr_lds.lds_prefix = strdup("<stderr>");
+            stderr_lds.lds_suffix = strdup("</stderr>");
+        } else {
+            /* turn off the prefix/suffix */
+            stderr_lds.lds_prefix = NULL;
+            stderr_lds.lds_suffix = NULL;
+        }
         stderr_stream = opal_output_open(&stderr_lds);
         OPAL_VALUE_ARRAY_SET_ITEM(&orte_output_streams, uint8_t, stderr_stream, ORTE_OUTPUT_STDERR);
     }
@@ -757,22 +791,14 @@ int orte_output_open(opal_output_stream_t *lds)
         return ORTE_ERROR;
     }
     
-    /* if we are the HNP, this function just acts as
-     * a wrapper around the corresponding opal_output fn
-     */
-    if (orte_process_info.hnp) {
-        stream = opal_output_open(lds);
-        OPAL_OUTPUT_VERBOSE((5, orte_debug_output, "HNP opened stream %d", stream));
-        goto track;
-   }
-    
-    /* if we not the HNP, then we need to open the stream
+    /* open a stream
      * and also record whether or not it is sending
      * output to stdout/stderr
      */
     if (NULL == lds) {
         /* we have to ensure that the opal_output stream
-         * doesn't open stdout and stderr, so setup the
+         * doesn't open stdout and stderr unless we are
+         * the HNP, so setup the
          * stream here and ensure the settings are
          * correct - otherwise, opal_output will default
          * the stream to having stderr active!
@@ -784,6 +810,7 @@ int orte_output_open(opal_output_stream_t *lds)
         if (lds->lds_want_stdout) {
             flag |= ORTE_OUTPUT_STDOUT;
             lds->lds_want_stdout = false;
+            lds->lds_prefix = NULL;  /* turn off the prefix! */
         }
         /* does it involve stderr? */
         if (lds->lds_want_stderr) {
@@ -799,7 +826,6 @@ int orte_output_open(opal_output_stream_t *lds)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          stream));
     
-track:
     /* track the settings - can't use macro as this may adjust size of array */
     opal_value_array_set_item(&orte_output_streams, stream, (void*)&flag);
     
@@ -836,7 +862,8 @@ void orte_output(int output_id, const char *format, ...)
     
     /* just call output_vverbose with a verbosity of 0 */
     va_start(arglist, format);
-    output_vverbose(0, output_id, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid, format, arglist);
+    /* orte_output -always- gets printed, so set verbosity to neg value */
+    output_vverbose(-1, output_id, format, arglist);
     va_end(arglist);
 }
 
@@ -872,7 +899,7 @@ void orte_output_verbose(int verbose_level, int output_id, const char *format, .
     
     /* just call output_verbose with the specified verbosity */
     va_start(arglist, format);
-    output_vverbose(verbose_level, output_id, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid, format, arglist);
+    output_vverbose(verbose_level, output_id, format, arglist);
     va_end(arglist);
 }
 
