@@ -1580,7 +1580,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     int qp_index = active_private_data->ireqd_qp_index;
     opal_list_item_t *item;
     ibcm_module_list_item_t *imli;
-    ibcm_module_t *m;
+    ibcm_module_t *imodule = NULL;
     ibcm_reply_t *rep;
 
     OPAL_OUTPUT((-1, "ibcm req handler: remote qp index %d, remote guid 0x%" PRIx64 ", remote qkey %u, remote qpn %d, remote psn %d",
@@ -1601,7 +1601,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
          item = opal_list_get_next(item)) {
         modex_msg_t *msg;
         imli = (ibcm_module_list_item_t*) item;
-        m = imli->ibcm_module;
+        imodule = imli->ibcm_module;
         msg = imli->ibcm_module->cpc.data.cbm_modex_message;
         OPAL_OUTPUT((-1, "comparing ibcm module port guid: 0x%" PRIx64,
                      msg->mm_port_guid));
@@ -1666,7 +1666,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
        function).  If the connection comes from the "wrong" direction,
        then the remote peer expects it to be rejected, and further
        expects us to initiate it in the "right" direction. */
-    do_initiate = i_initiate(m, endpoint);
+    do_initiate = i_initiate(imodule, endpoint);
 
     /* See if there is any activity happening on this endpoint
        already.  There's likely little reason to have fine-grained
@@ -1717,7 +1717,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         /* Schedule to set the endpoint_state to "CONNECTING" */
         ompi_btl_openib_fd_schedule(callback_set_endpoint_connecting, 
                                     endpoint);
-        if (OMPI_SUCCESS != (rc = qp_create_all(endpoint, m))) {
+        if (OMPI_SUCCESS != (rc = qp_create_all(endpoint, imodule))) {
             rej_reason = REJ_PASSIVE_SIDE_ERROR;
             OPAL_OUTPUT((-1, "qp_create_all failed -- reject"));
             goto reject;
@@ -1835,7 +1835,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         if (NULL == cbdata) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        cbdata->cscd_cpc = (ompi_btl_openib_connect_base_module_t *) m;
+        cbdata->cscd_cpc = (ompi_btl_openib_connect_base_module_t *) imodule;
         cbdata->cscd_endpoint = endpoint;
         ompi_btl_openib_fd_schedule(callback_start_connect, cbdata);
         
