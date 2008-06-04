@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -29,6 +29,8 @@
 #include <time.h>
 #include <errno.h>
 #include <string.h>
+
+#include "opal_stdint.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
@@ -380,7 +382,7 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
     ep->rem_info.rem_lid = remote_proc_info->pm_port_info.lid;
     ep->rem_info.rem_subnet_id = remote_proc_info->pm_port_info.subnet_id;
     ep->rem_info.rem_mtu = remote_proc_info->pm_port_info.mtu;
-    orte_output(-1, "Got remote LID, subnet, MTU: %d, %lx, %d", 
+    orte_output(-1, "Got remote LID, subnet, MTU: %d, 0x%" PRIx64 ", %d", 
                 ep->rem_info.rem_lid,
                 ep->rem_info.rem_subnet_id,
                 ep->rem_info.rem_mtu);

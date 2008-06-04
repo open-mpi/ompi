@@ -46,6 +46,7 @@
 #include "opal/mca/carto/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal_stdint.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
@@ -270,7 +271,7 @@ static int btl_openib_modex_send(void)
         memcpy(offset, 
                &(mca_btl_openib_component.openib_btls[i]->port_info), 
                size);
-        orte_output(-1, "modex packed btl port modex message: %lx, %d, %d (size: %d)",
+        orte_output(-1, "modex packed btl port modex message: 0x%" PRIx64 ", %d, %d (size: %d)",
                     mca_btl_openib_component.openib_btls[i]->port_info.subnet_id,
                     mca_btl_openib_component.openib_btls[i]->port_info.mtu,
                     mca_btl_openib_component.openib_btls[i]->port_info.lid,
