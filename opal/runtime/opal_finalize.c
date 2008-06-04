@@ -40,7 +40,6 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/filter/base/base.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/carto/base/base.h"
@@ -138,9 +137,6 @@ opal_finalize(void)
     /* close the processor affinity base */
     opal_paffinity_base_close();
 
-    /* finalize the filter system */
-    opal_filter_base_close();
-    
     /* close the memcpy base */
     opal_memcpy_base_close();
 
