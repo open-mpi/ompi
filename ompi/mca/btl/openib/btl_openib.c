@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -42,7 +42,6 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
-#include "ompi/runtime/params.h"
 #include "orte/util/proc_info.h"
 #include <errno.h>
 #include <string.h>
@@ -912,80 +911,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     return &to_base_frag(frag)->base;
 }
 
-static int mca_btl_finalize_hca(struct mca_btl_openib_hca_t *hca)
-{
-#if OMPI_HAVE_THREADS
-    int hca_to_remove;
-#if OMPI_ENABLE_PROGRESS_THREADS
-    if(hca->progress) {
-        hca->progress = false;
-        if (pthread_cancel(hca->thread.t_handle)) {
-            BTL_ERROR(("Failed to cancel OpenIB progress thread"));
-        }
-        opal_thread_join(&hca->thread, NULL);
-    }
-    if (ibv_destroy_comp_channel(hca->ib_channel)) {
-        BTL_VERBOSE(("Failed to close comp_channel"));
-        return OMPI_ERROR;
-    }
-#endif
-    /* signaling to async_tread to stop poll for this hca */
-    if(mca_btl_openib_component.use_async_event_thread) {
-        hca_to_remove = -(hca->ib_dev_context->async_fd);
-        if (write(mca_btl_openib_component.async_pipe[1], &hca_to_remove,
-                    sizeof(int)) < 0){
-            BTL_ERROR(("Failed to write to pipe"));
-            return OMPI_ERROR;
-        }
-    }
-#endif
-
-    /* Release CQs */
-    if(hca->ib_cq[BTL_OPENIB_HP_CQ] != NULL) {
-        if (ibv_destroy_cq(hca->ib_cq[BTL_OPENIB_HP_CQ])) {
-            BTL_VERBOSE(("Failed to close HP CQ"));
-            return OMPI_ERROR;
-        }
-    }
-
-    if(hca->ib_cq[BTL_OPENIB_LP_CQ] != NULL) {
-        if (ibv_destroy_cq(hca->ib_cq[BTL_OPENIB_LP_CQ])) {
-            BTL_VERBOSE(("Failed to close LP CQ"));
-            return OMPI_ERROR;
-        }
-    }
-
-    if (OMPI_SUCCESS != mca_mpool_base_module_destroy(hca->mpool)) {
-        BTL_VERBOSE(("Failed to release mpool"));
-        return OMPI_ERROR;
-    }
-
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED) {
-        if (OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(hca)) {
-            BTL_ERROR(("XRC Internal error. Failed to close xrc domain"));
-            return OMPI_ERROR;
-        }
-    }
-#endif
-
-    if (ibv_dealloc_pd(hca->ib_pd)) {
-        BTL_VERBOSE(("Warning! Failed to release PD"));
-        return OMPI_ERROR;
-    }
-    if (ibv_close_device(hca->ib_dev_context)) {
-        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
-            BTL_VERBOSE(("Warning! Failed to close HCA"));
-            return OMPI_SUCCESS;
-        } else {
-            BTL_ERROR(("Error! Failed to close HCA"));
-            return OMPI_ERROR;
-        }
-    }
-    OBJ_RELEASE(hca);
-    return OMPI_SUCCESS;
-}
-
 int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_openib_module_t* openib_btl;
@@ -1054,15 +979,9 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
     }
 
-    /* Release pending lists */
-    if (!(--openib_btl->hca->btls)) {
-        /* All btls for the HCA were closed
-         * Now we can close the HCA
-         */
-        if (OMPI_SUCCESS != mca_btl_finalize_hca(openib_btl->hca)) {
-            BTL_VERBOSE(("Failed to close HCA"));
-            rc = OMPI_ERROR;
-        }
+    /* Release HCA if it is no more users */
+    if(!(--openib_btl->hca->btls)) {
+        OBJ_RELEASE(openib_btl->hca);
     }
 
 #if OMPI_HAVE_THREADS
