@@ -838,6 +838,7 @@ void opal_graph_print(opal_graph_t *graph)
     opal_graph_edge_t *edge;
     opal_list_item_t *edge_item;
     char *tmp_str1, *tmp_str2;
+    bool need_free1, need_free2;
 
     /* print header */
     opal_output(0, "      Graph         ");
@@ -849,9 +850,11 @@ void opal_graph_print(opal_graph_t *graph)
         aj_list = (opal_adjacency_list_t *) aj_list_item;
         /* print vertex data to temporary string*/
         if (NULL != aj_list->vertex->print_vertex) {
+            need_free1 = true;
             tmp_str1 = aj_list->vertex->print_vertex(aj_list->vertex->vertex_data);
         }
         else {
+            need_free1 = false;
             tmp_str1 = "";
         }
         /* print vertex */
@@ -863,16 +866,22 @@ void opal_graph_print(opal_graph_t *graph)
             edge = (opal_graph_edge_t *)edge_item;
             /* print the vertex data of the vertex in the end of the edge to a temporary string */
             if (NULL != edge->end->print_vertex) {
+                need_free2 = true;
                 tmp_str2 = edge->end->print_vertex(edge->end->vertex_data);
             }
             else {
+                need_free2 = false;
                 tmp_str2 = "";
             }
             /* print the edge */
             opal_output(0, "    E(%s -> %d -> %s)",tmp_str1, edge->weight, tmp_str2);
-            free(tmp_str2);
-         }
-        free(tmp_str1);
+            if (need_free2) {
+                free(tmp_str2);
+            }
+        }
+        if (need_free1) {
+            free(tmp_str1);
+        }
     }
 }
 
