@@ -84,6 +84,8 @@ Trunk (not on release branches yet)
 1.2.7 (not released yet)
 -----
 
+- Fix a gather and scatter bug on intercommunicators when the datatype
+  being moved is 0 bytes. See ticket #1331.
 - Some more man page fixes from the Debian maintainers. See ticket #1324.
 - Have openib BTL (OpenFabrics support) check for the presence of
   /sys/class/infiniband before allowing itself to be used.  This check
