@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -76,6 +76,7 @@
 #endif
 #include "connect/base.h"
 #include "btl_openib_iwarp.h"
+#include "ompi/runtime/params.h"
 
 /*
  * Local functions
@@ -672,7 +673,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             }
             opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
             opal_pointer_array_add(hca->hca_btls, (void*) openib_btl);
-            hca->btls++;
+            ++hca->btls;
             ++mca_btl_openib_component.ib_num_btls;
             if (-1 != mca_btl_openib_component.ib_max_btls &&
                 mca_btl_openib_component.ib_num_btls >=
@@ -717,6 +718,33 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
 {
     int i;
 
+#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
+    if(hca->progress) {
+        hca->progress = false;
+        if (pthread_cancel(hca->thread.t_handle)) {
+            BTL_ERROR(("Failed to cancel OpenIB progress thread"));
+            goto hca_error;
+        }
+        opal_thread_join(&hca->thread, NULL);
+    }
+    if (ibv_destroy_comp_channel(hca->ib_channel)) {
+        BTL_VERBOSE(("Failed to close comp_channel"));
+        goto hca_error;
+    }
+#endif
+    /* signaling to async_tread to stop poll for this hca */
+    if(mca_btl_openib_component.use_async_event_thread) {
+        int hca_to_remove;
+        hca_to_remove = -(hca->ib_dev_context->async_fd);
+        if (write(mca_btl_openib_component.async_pipe[1], &hca_to_remove,
+                    sizeof(int)) < 0){
+            BTL_ERROR(("Failed to write to pipe"));
+            goto hca_error;
+        }
+    }
+#endif
+
     if(hca->eager_rdma_buffers) {
         int i;
         for(i = 0; i < hca->eager_rdma_buffers_count; i++)
@@ -724,8 +752,7 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
                 OBJ_RELEASE(hca->eager_rdma_buffers[i]);
         free(hca->eager_rdma_buffers);
     }
-    OBJ_DESTRUCT(&hca->hca_lock);
-    OBJ_DESTRUCT(&hca->send_free_control);
+
     if (NULL != hca->qps) {
         for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
             OBJ_DESTRUCT(&hca->qps[i].send_free);
@@ -733,6 +760,58 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
         }
         free(hca->qps);
     }
+
+    OBJ_DESTRUCT(&hca->send_free_control);
+
+    /* Release CQs */
+    if(hca->ib_cq[BTL_OPENIB_HP_CQ] != NULL) {
+        if (ibv_destroy_cq(hca->ib_cq[BTL_OPENIB_HP_CQ])) {
+            BTL_VERBOSE(("Failed to close HP CQ"));
+            goto hca_error;
+        }
+    }
+
+    if(hca->ib_cq[BTL_OPENIB_LP_CQ] != NULL) {
+        if (ibv_destroy_cq(hca->ib_cq[BTL_OPENIB_LP_CQ])) {
+            BTL_VERBOSE(("Failed to close LP CQ"));
+            goto hca_error;
+        }
+    }
+
+    if (OMPI_SUCCESS != mca_mpool_base_module_destroy(hca->mpool)) {
+        BTL_VERBOSE(("Failed to release mpool"));
+        goto hca_error;
+    }
+
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED) {
+        if (OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(hca)) {
+            BTL_VERBOSE(("XRC Internal error. Failed to close xrc domain"));
+            goto hca_error;
+        }
+    }
+#endif
+
+    if (ibv_dealloc_pd(hca->ib_pd)) {
+        BTL_VERBOSE(("Warning! Failed to release PD"));
+        goto hca_error;
+    }
+
+    OBJ_DESTRUCT(&hca->hca_lock);
+
+    if (ibv_close_device(hca->ib_dev_context)) {
+        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+            BTL_VERBOSE(("Warning! Failed to close HCA"));
+            goto hca_error;
+        } else {
+            BTL_ERROR(("Error! Failed to close HCA"));
+            goto hca_error;
+        }
+    }
+    BTL_VERBOSE(("HCA was successfully released"));
+    return;
+hca_error:
+    BTL_VERBOSE(("Failed to destroy HCA resources"));
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_openib_hca_t, opal_object_t, hca_construct,
