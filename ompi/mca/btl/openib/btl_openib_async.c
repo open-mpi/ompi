@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
