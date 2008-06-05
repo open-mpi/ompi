@@ -691,7 +691,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 static void*
 mca_oob_tcp_listen_thread(opal_object_t *obj)
 {
-    int rc, count, i, max, accepted_connections, need_write;
+    int rc, i, max, accepted_connections, need_write;
     opal_socklen_t addrlen = sizeof(struct sockaddr_storage);
     opal_free_list_item_t *fl_item;
     mca_oob_tcp_pending_connection_t *pending_connection;
@@ -710,8 +710,6 @@ mca_oob_tcp_listen_thread(opal_object_t *obj)
                         16);  /* increment to grow by */
 
     while (false == mca_oob_tcp_component.tcp_shutdown) {
-        count = 0;
-
         FD_ZERO(&readfds);
         max = -1;
         for (i = 0 ; i < mca_oob_tcp_component.tcp_listen_thread_num_sockets ; ++i) {
