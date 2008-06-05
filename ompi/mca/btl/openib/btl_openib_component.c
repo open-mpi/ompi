@@ -1944,12 +1944,11 @@ btl_openib_component_init(int *num_btl_modules,
 #if OMPI_HAVE_THREADS
     mca_btl_openib_component.async_thread = 0;
 #endif
+    distance = dev_sorted[0].distance;
     for (i = 0; i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
-        if (0 == mca_btl_openib_component.ib_num_btls) {
-            distance = dev_sorted[i].distance;
-        } else if (distance != dev_sorted[i].distance) {
+        if (distance != dev_sorted[i].distance) {
             break;
         }
 
