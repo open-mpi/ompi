@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2006-2007 Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Mellanox Technologies, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
