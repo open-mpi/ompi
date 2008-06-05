@@ -34,7 +34,7 @@ static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_
     char **range;
     int range_cnt;
     int lower_range, upper_range;
-    int processor_id, num_processors;
+    int processor_id, num_processors, socket=-1, core=-1;
     int max_processor_id;
     int rc;
     opal_paffinity_base_cpu_set_t cpumask;
@@ -50,8 +50,9 @@ static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_
                 if (OPAL_SUCCESS != ( rc = opal_paffinity_base_set(cpumask))) {
                     return OPAL_ERROR;
                 }
+                opal_paffinity_base_map_to_socket_core(processor_id, &socket, &core);
                 opal_output_verbose(5, opal_paffinity_base_output,
-                        "paffinity slot assignment: rank %ld runs on cpu #%d (any socket)",rank, processor_id);
+                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d )",rank, processor_id, socket, core);
             }
             continue;
         }
@@ -68,9 +69,10 @@ static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_
                 if (OPAL_SUCCESS != ( rc = opal_paffinity_base_set(cpumask))) {
                     return OPAL_ERROR;
                 }
+                opal_paffinity_base_map_to_socket_core(processor_id, &socket, &core);
                 opal_output_verbose(5, opal_paffinity_base_output,
-                                    "paffinity slot assignment: rank %ld runs on cpu #%d",
-                                    rank, processor_id);
+                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d )",
+                                    rank, processor_id, socket, core);
                 break;
             case 2:
                 lower_range = atoi(range[0]);
@@ -85,9 +87,10 @@ static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_
                     if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
                         return OPAL_ERROR;
                     }
+                    opal_paffinity_base_map_to_socket_core(processor_id, &socket, &core);
                     opal_output_verbose(5, opal_paffinity_base_output,
-                                        "paffinity slot assignment: rank %ld runs on cpu #%d (%d-%d)",
-                                        rank, processor_id, lower_range, upper_range);
+                                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d )",
+                                        rank, processor_id, socket, core);
                 }
                 break;
             default:
@@ -142,7 +145,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                     return OPAL_ERROR;
                 }
                 opal_output_verbose(5, opal_paffinity_base_output,
-                                    "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                     rank, processor_id, socket, core);
             }
         } else {
@@ -164,7 +167,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                         return OPAL_ERROR;
                     }
                     opal_output_verbose(5, opal_paffinity_base_output,
-                                        "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                         rank, processor_id, socket, core);
                     break;
                 case 2:
@@ -184,7 +187,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                             return OPAL_ERROR;
                         }
                         opal_output_verbose(5, opal_paffinity_base_output,
-                                            "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                            "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                             rank, processor_id, socket, core);
                     }
                     break;
@@ -222,7 +225,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                                 return OPAL_ERROR;
                             }
                             opal_output_verbose(5, opal_paffinity_base_output,
-                                                "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                                "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                                 rank, processor_id, socket, core);
                             break;
                         case 2:
@@ -242,7 +245,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                                     return OPAL_ERROR;
                                 }
                                 opal_output_verbose(5, opal_paffinity_base_output,
-                                                    "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                                     rank, processor_id, socket, core);
                             }
                             break;
@@ -265,7 +268,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                                 return OPAL_ERROR;
                             }
                             opal_output_verbose(5, opal_paffinity_base_output,
-                                                "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                                "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                                 rank, processor_id, socket, core);
                         }
                     } else {
@@ -288,7 +291,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                                     return OPAL_ERROR;
                                 }
                                 opal_output_verbose(5, opal_paffinity_base_output,
-                                                    "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
+                                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
                                                     rank, processor_id, socket, core);
                                 break;
                             case 2:
@@ -308,8 +311,8 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                                         return OPAL_ERROR;
                                     }
                                     opal_output_verbose(5, opal_paffinity_base_output,
-                                                        "paffinity slot assignment: rank %ld runs on cpu #%d (%d:%d)",
-                                                        rank, processor_id, socket, core);
+                                                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
+                                                        rank, processor_id, socket, core); 
                                 }
                                 break;
                             default:
