@@ -254,6 +254,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
                     orte_process_info.job_session_dir,
                     orte_process_info.nodename );
     if ( 0 > len ) {
+        free(mpool_module);
         return NULL;
     }
     
@@ -269,6 +270,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     {
         orte_output(0, "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
         free(file_name);
+        free(mpool_module);
         return NULL;
     }
     free(file_name);
@@ -278,7 +280,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
       allocator_component->allocator_init(true,
                                           mca_common_sm_mmap_seg_alloc, NULL, NULL);
     if(NULL == mpool_module->sm_allocator) {
-      orte_output(0, "mca_mpool_sm_init: unable to initialize allocator");
+        orte_output(0, "mca_mpool_sm_init: unable to initialize allocator");
+        free(mpool_module);
         return NULL;
     }
    
