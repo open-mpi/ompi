@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,7 +90,14 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
+    if ( rank == root ) {
+        rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, 
+				      &newcomp);
+    }
+    else {
+        rc = ompi_dpm.connect_accept (comm, root, NULL, send_first, 
+				      &newcomp);
+    }	
     
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
