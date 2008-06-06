@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,10 +52,10 @@ typedef enum component_status {
 struct component_file_item_t {
   opal_list_item_t super;
 
-  char type[MCA_BASE_MAX_TYPE_NAME_LEN];
-  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
-  char basename[OMPI_PATH_MAX];
-  char filename[OMPI_PATH_MAX];
+  char type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
+  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
+  char basename[OMPI_PATH_MAX + 1];
+  char filename[OMPI_PATH_MAX + 1];
   component_status_t status;
 };
 typedef struct component_file_item_t component_file_item_t;
@@ -71,8 +72,8 @@ typedef struct dependency_item_t dependency_item_t;
 static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, NULL, NULL);
 
 struct ltfn_data_holder_t {
-  char type[MCA_BASE_MAX_TYPE_NAME_LEN];
-  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
+  char type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
+  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
 };
 typedef struct ltfn_data_holder_t ltfn_data_holder_t;
 
@@ -195,6 +196,7 @@ static void find_dyn_components(const char *path, const char *type_name,
     opal_list_item_t *cur;
 
     strncpy(params.type, type_name, MCA_BASE_MAX_TYPE_NAME_LEN);
+    params.type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
 
     params.name[0] = '\0';
   
@@ -319,10 +321,14 @@ static int save_filename(const char *filename, lt_ptr data)
     return OPAL_ERR_OUT_OF_RESOURCE;
   }
   strncpy(component_file->type, params->type, MCA_BASE_MAX_TYPE_NAME_LEN);
+  component_file->type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
   strncpy(component_file->name, basename + prefix_len,
           MCA_BASE_MAX_COMPONENT_NAME_LEN);
+  component_file->name[MCA_BASE_MAX_COMPONENT_NAME_LEN] = '\0';
   strncpy(component_file->basename, basename, OMPI_PATH_MAX);
+  component_file->basename[OMPI_PATH_MAX] = '\0';
   strncpy(component_file->filename, filename, OMPI_PATH_MAX);
+  component_file->filename[OMPI_PATH_MAX] = '\0';
   component_file->status = UNVISITED;
   opal_list_append(&found_files, (opal_list_item_t *) component_file);
 
