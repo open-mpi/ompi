@@ -38,10 +38,10 @@ int orte_grpcomm_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("grpcomm", orte_grpcomm_base_output,
-                                               &mca_grpcomm_base_components_available,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("grpcomm", orte_grpcomm_base_output,
+                                        &mca_grpcomm_base_components_available,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = ORTE_ERR_NOT_FOUND;
         goto cleanup;

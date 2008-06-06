@@ -39,17 +39,17 @@
 
 int orte_plm_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int exit_status = ORTE_SUCCESS;
     orte_plm_base_component_t *best_component = NULL;
     orte_plm_base_module_t *best_module = NULL;
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("plm", orte_plm_globals.output,
-                                               &orte_plm_base.available_components,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("plm", orte_plm_globals.output,
+                                        &orte_plm_base.available_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected
          *
          * If we didn't find one, and we are a daemon, then default to retaining the proxy.

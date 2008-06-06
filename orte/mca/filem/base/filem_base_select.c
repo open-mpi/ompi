@@ -72,7 +72,7 @@ static orte_filem_base_module_t none_module = {
 
 int orte_filem_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int exit_status = OPAL_SUCCESS;
     orte_filem_base_component_t *best_component = NULL;
     orte_filem_base_module_t *best_module = NULL;
     char *include_list = NULL;
@@ -107,10 +107,10 @@ int orte_filem_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("filem", orte_filem_base_output,
-                                               &orte_filem_base_components_available,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("filem", orte_filem_base_output,
+                                        &orte_filem_base_components_available,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = ORTE_ERROR;
         goto cleanup;

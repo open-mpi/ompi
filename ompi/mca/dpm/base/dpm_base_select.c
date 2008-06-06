@@ -36,10 +36,10 @@ int ompi_dpm_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("dpm", ompi_dpm_base_output,
-                                               &ompi_dpm_base_components_available,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("dpm", ompi_dpm_base_output,
+                                        &ompi_dpm_base_components_available,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = OMPI_ERR_NOT_FOUND;
         goto cleanup;
