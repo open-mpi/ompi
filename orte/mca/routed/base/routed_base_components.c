@@ -70,10 +70,10 @@ orte_routed_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("routed", orte_routed_base_output,
-                                               &orte_routed_base_components,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("routed", orte_routed_base_output,
+                                        &orte_routed_base_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = ORTE_ERR_NOT_FOUND;
         goto cleanup;
@@ -87,8 +87,8 @@ orte_routed_base_select(void)
     orte_output_verbose(10, orte_routed_base_output,
                         "orte_routed_base_select: initializing selected component %s",
                         best_component->base_version.mca_component_name);
-    if (ORTE_SUCCESS != orte_routed.initialize()) {
-        exit_status = ORTE_ERROR;
+    if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
+        exit_status = ret;
         goto cleanup;
     }
 

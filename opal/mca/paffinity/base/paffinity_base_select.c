@@ -45,10 +45,10 @@ int opal_paffinity_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("paffinity", opal_paffinity_base_output,
-                                               &opal_paffinity_base_components_opened,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("paffinity", opal_paffinity_base_output,
+                                        &opal_paffinity_base_components_opened,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = OPAL_ERR_NOT_FOUND;
         goto cleanup;
@@ -61,8 +61,8 @@ int opal_paffinity_base_select(void)
 
     /* Initialize the winner */
     if (NULL != opal_paffinity_base_module) {
-        if (OPAL_SUCCESS != opal_paffinity_base_module->paff_module_init()) {
-            exit_status = OPAL_ERROR;
+        if (OPAL_SUCCESS != (ret = opal_paffinity_base_module->paff_module_init()) ) {
+            exit_status = ret;
             goto cleanup;
         }
     }

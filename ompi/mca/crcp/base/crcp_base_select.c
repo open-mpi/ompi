@@ -146,10 +146,10 @@ int ompi_crcp_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("crcp", ompi_crcp_base_output,
-                                               &ompi_crcp_base_components_available,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("crcp", ompi_crcp_base_output,
+                                        &ompi_crcp_base_components_available,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = OMPI_ERROR;
         goto cleanup;
@@ -162,8 +162,8 @@ int ompi_crcp_base_select(void)
 
     /* Initialize the winner */
     if (NULL != best_module) {
-        if (OPAL_SUCCESS != ompi_crcp.crcp_init()) {
-            exit_status = OMPI_ERROR;
+        if (OPAL_SUCCESS != (ret = ompi_crcp.crcp_init()) ) {
+            exit_status = ret;
             goto cleanup;
         }
     }

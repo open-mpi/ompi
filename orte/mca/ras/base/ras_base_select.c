@@ -48,28 +48,25 @@ int orte_ras_base_select(void)
 #else
     /* For all other systems, provide the following support */
 
-    int ret, exit_status = OPAL_SUCCESS;
     orte_ras_base_component_t *best_component = NULL;
     orte_ras_base_module_t *best_module = NULL;
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("ras", orte_ras_base.ras_output,
-                                               &orte_ras_base.ras_opened,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("ras", orte_ras_base.ras_output,
+                                        &orte_ras_base.ras_opened,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         /* If we didn't find one to select, that is okay */
-        exit_status = ORTE_SUCCESS;
-        goto cleanup;
+        return ORTE_SUCCESS;
     }
 
     /* Save the winner */
     /* No component saved */
     orte_ras_base.active_module = best_module;
 
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 #endif
 }

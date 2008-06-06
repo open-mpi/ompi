@@ -38,26 +38,23 @@
  */
 int orte_rmaps_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
     orte_rmaps_base_component_t *best_component = NULL;
     orte_rmaps_base_module_t *best_module = NULL;
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("rmaps", orte_rmaps_base.rmaps_output,
-                                               &orte_rmaps_base.available_components,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("rmaps", orte_rmaps_base.rmaps_output,
+                                        &orte_rmaps_base.available_components,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
-        exit_status = ORTE_ERR_NOT_FOUND;
-        goto cleanup;
+        return ORTE_ERR_NOT_FOUND;
     }
 
     /* Save the winner */
     /* No global component structure */
     orte_rmaps_base.active_module = best_module;
 
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;;
 }

@@ -147,10 +147,10 @@ int opal_crs_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != (ret = mca_base_select("crs", opal_crs_base_output,
-                                               &opal_crs_base_components_available,
-                                               (mca_base_module_t **) &best_module,
-                                               (mca_base_component_t **) &best_component) ) ) {
+    if( OPAL_SUCCESS != mca_base_select("crs", opal_crs_base_output,
+                                        &opal_crs_base_components_available,
+                                        (mca_base_module_t **) &best_module,
+                                        (mca_base_component_t **) &best_component) ) {
         /* This will only happen if no component was selected */
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -163,8 +163,8 @@ int opal_crs_base_select(void)
 
     /* Initialize the winner */
     if (NULL != best_module) {
-        if (OPAL_SUCCESS != opal_crs.crs_init()) {
-            exit_status = OPAL_ERROR;
+        if (OPAL_SUCCESS != (ret = opal_crs.crs_init()) ) {
+            exit_status = ret;
             goto cleanup;
         }
     }
