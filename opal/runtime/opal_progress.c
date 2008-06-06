@@ -74,6 +74,15 @@ static int32_t num_event_users = 0;
 static int debug_output = -1;
 #endif
 
+/**
+ * Fake callback used for threading purpose when one thread
+ * progesses callbacks while another unregister somes. The root
+ * of the problem is that we allow modifications of the callback
+ * array directly from the callbacks themselves. Now if
+ * writing a pointer is atomic, we should not have any more
+ * problems.
+ */
+static int fake_cb(void) { return 0; };
 
 /* init the progress engine - called from orte_init */
 int
@@ -308,7 +317,7 @@ opal_progress_set_event_poll_rate(int polltime)
 int
 opal_progress_register(opal_progress_callback_t cb)
 {
-    int ret = OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS, index;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_lock(&progress_lock);
@@ -321,6 +330,10 @@ opal_progress_register(opal_progress_callback_t cb)
         if (tmp == NULL) {
             ret = OPAL_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
+        }
+        /* registering fake callbacks to fill callbacks[] */
+        for( index = callbacks_len + 1 ;  index < callbacks_size + 4 ; index++) {
+            tmp[index] = &fake_cb;
         }
 
         callbacks = tmp;
@@ -350,7 +363,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
 
     for (i = 0 ; i < callbacks_len ; ++i) {
         if (cb == callbacks[i]) {
-            callbacks[i] = NULL;
+            callbacks[i] = &fake_cb;
             ret = OPAL_SUCCESS;
             break;
         }
@@ -368,7 +381,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
                 callbacks[i] = callbacks[i + 1];
             }
         }
-        callbacks[callbacks_len - 1] = NULL;
+        callbacks[callbacks_len - 1] = &fake_cb;
         callbacks_len--;
     }
 
