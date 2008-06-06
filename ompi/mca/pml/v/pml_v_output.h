@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern int pml_v_output;    
+OMPI_MODULE_DECLSPEC extern int pml_v_output;    
 
 int pml_v_output_open(char *output, int verbosity);
 void pml_v_output_close(void);
