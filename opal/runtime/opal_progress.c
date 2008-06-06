@@ -70,6 +70,12 @@ static int32_t event_progress_delta = 0;
    be every time */
 static int32_t num_event_users = 0;
 
+/* How deep are we in opal_progress recursion? */
+#if OMPI_HAVE_THREAD_SUPPORT
+volatile 
+#endif
+uint32_t opal_progress_recursion_depth_counter = 0;
+
 #if OMPI_ENABLE_DEBUG
 static int debug_output = -1;
 #endif
@@ -161,6 +167,11 @@ opal_progress(void)
     size_t i;
     int events = 0;
 
+#if OMPI_HAVE_THREAD_SUPPORT
+    opal_atomic_add(&opal_progress_recursion_depth_counter, 1);
+#else
+    ++opal_progress_recursion_depth_counter;
+#endif
     if( opal_progress_event_flag != 0 ) {
 #if (OMPI_ENABLE_PROGRESS_THREADS == 0) && OPAL_HAVE_WORKING_EVENTOPS
 #if OPAL_PROGRESS_USE_TIMERS
@@ -210,6 +221,11 @@ opal_progress(void)
 #endif  /* defined(__WINDOWS__) */
     }
 #endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD) */
+#if OMPI_HAVE_THREAD_SUPPORT
+    opal_atomic_add(&opal_progress_recursion_depth_counter, -1);
+#else
+    --opal_progress_recursion_depth_counter;
+#endif
 }
 
 

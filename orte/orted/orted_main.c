@@ -201,6 +201,11 @@ int orte_daemon(int argc, char *argv[])
     char hostname[100];
     char *tmp_env_var = NULL;
 
+    /* JUST TO HELP JMS DEBUG RACE CONDITION - TO BE REMOVED!! */
+    gethostname(hostname, 100);
+    fprintf(stderr, "Daemon was launched on %s - starting up\n", hostname);
+    fflush(stderr);
+
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
@@ -385,9 +390,7 @@ int orte_daemon(int argc, char *argv[])
         return ret;
     }
     
-    /* setup our receive function - this will allow us to relay messages
-     * during start for better scalability
-     */
+    /* setup the primary daemon command receive function */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                                   ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {

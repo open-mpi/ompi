@@ -142,7 +142,11 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     orte_app_context_t **apps;
     orte_node_t **nodes;
     orte_std_cntr_t nnode;
+    orte_jobid_t failed_job;
     
+    /* default to declaring the daemons failed*/
+    failed_job = ORTE_PROC_MY_NAME->jobid;
+
     if (mca_plm_lsf_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
             orte_output(0, "plm_lsf: could not obtain job start time");
@@ -307,6 +311,8 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     }
 
 launch_apps:
+    /* daemons succeeded - any failure now would be from apps */
+    failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -346,8 +352,7 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_SUCCESS != 
-            orte_plm_base_launch_failed(jdata->jobid, false, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
 
     return rc;

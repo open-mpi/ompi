@@ -281,7 +281,11 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                          "%s orted_recv_cmd: reissued recv",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }    
-    
+
+static int num_recursions=0;
+static int wait_time=1;
+#define MAX_RECURSIONS 24
+
 void orte_daemon_cmd_processor(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
@@ -294,6 +298,47 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     orte_std_cntr_t n;
     orte_daemon_cmd_flag_t command;
 
+    /* check to see if we are in a progress recursion */
+    if (orte_process_info.daemon && 1 < (ret = opal_progress_recursion_depth())) {
+        /* if we are in a recursion, we want to repost the message event
+         * so the progress engine can work its way back up to the top
+         * of the stack. Given that this could happen multiple times,
+         * we have to be careful to increase the time we wait so that
+         * we provide enough time - but not more time than necessary - for
+         * the stack to clear
+         */
+        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
+                             "%s orte:daemon:cmd:processor in recursion depth %d\n\treposting %s for tag %ld",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ret,
+                             ORTE_NAME_PRINT(sender),
+                             (long)(tag)));
+        if (MAX_RECURSIONS < num_recursions) {
+            /* we need to abort if we get too far down this path */
+            opal_output(0, "%s ORTED_CMD_PROCESSOR: STUCK IN INFINITE LOOP - ABORTING",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            OBJ_RELEASE(mev);
+            /* make sure our local procs are dead - but don't update their state
+             * on the HNP as this may be redundant
+             */
+            orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+            
+            /* do -not- call finalize as this will send a message to the HNP
+             * indicating clean termination! Instead, just forcibly cleanup
+             * the local session_dir tree and abort
+             */
+            orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+            
+            abort();
+        }
+        wait_time = wait_time * 2;
+        ++num_recursions;
+        ORTE_MESSAGE_EVENT_DELAY(wait_time, mev);
+        return;
+    }
+    wait_time = 1;
+    num_recursions = 0;
+    
     ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s orte:daemon:cmd:processor called by %s for tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

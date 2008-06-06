@@ -74,16 +74,27 @@ static opal_list_t registered_cb;
 ********************************************************************/
 static void message_event_destructor(orte_message_event_t *ev)
 {
-    OBJ_RELEASE(ev->buffer);
+    if (NULL != ev->ev) {
+        free(ev->ev);
+    }
+    if (NULL != ev->buffer) {
+        OBJ_RELEASE(ev->buffer);
+    }
 #if OMPI_ENABLE_DEBUG
-    ev->file = NULL;
+    if (NULL != ev->file) {
+        free(ev->file);
+    }
 #endif
 }
 
 static void message_event_constructor(orte_message_event_t *ev)
 {
+    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
     ev->buffer = OBJ_NEW(opal_buffer_t);
-}
+#if OMPI_ENABLE_DEBUG
+    ev->file = NULL;
+#endif
+            }
 OBJ_CLASS_INSTANCE(orte_message_event_t,
                    opal_object_t,
                    message_event_constructor,

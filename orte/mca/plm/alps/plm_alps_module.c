@@ -149,6 +149,10 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     orte_app_context_t **apps;
     orte_node_t **nodes;
     orte_std_cntr_t nnode;
+    orte_jobid_t failed_job;
+    
+    /* default to declaring the daemon launch failed */
+    failed_job = ORTE_PROC_MY_NAME->jobid;
     
     if (mca_plm_alps_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -356,6 +360,8 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     
 launch_apps:
+    /* if we get here, then daemons launched - change to declaring apps failed */
+    failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -398,7 +404,7 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(jdata->jobid, false, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
     
     return rc;
@@ -494,13 +500,13 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
             /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
              */
-            orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
+            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
             
         } else {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
-            orte_plm_base_launch_failed(active_job, false, pid, status, ORTE_JOB_STATE_ABORTED);
+            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, pid, status, ORTE_JOB_STATE_ABORTED);
         }
     }
     
