@@ -63,7 +63,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job);
 
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
-    int rc, fd;
+    int rc;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
     
     ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -135,7 +135,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
+#if 0
     /* IOF cannot currently handle multiple pulls to the same fd.  So
        dup stderr to another fd.  :-\ */
     fd = dup(2);
@@ -145,6 +145,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+#endif
 
 #if OPAL_ENABLE_FT == 1
     /*
