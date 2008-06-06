@@ -148,7 +148,10 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     tm_event_t event;
     bool failed_launch = true;
     mode_t current_umask;
+    orte_jobid_t failed_job;
     
+    /* default to declaring the daemons as failed */
+    failed_job = ORTE_PROC_MY_NAME->jobid;
     
     /* create a jobid for this job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
@@ -369,6 +372,10 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     }
     
 launch_apps:
+    /* since the daemons have launched, any failures now will be for the
+     * application job
+     */
+    failed_job = jdata->jobid;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launch of apps failed for job %s on error %s",
@@ -408,8 +415,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(jdata->jobid, true, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
-        return rc;
+        orte_plm_base_launch_failed(failed_job, true, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
         
     /* setup a "heartbeat" timer to periodically check on

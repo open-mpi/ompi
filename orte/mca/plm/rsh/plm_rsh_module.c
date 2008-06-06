@@ -313,7 +313,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             /* note that this daemon failed */
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
             /* report that the daemon has failed so we can exit */
-            orte_plm_base_launch_failed(active_job, true, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
+            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
         }
     }
 
@@ -857,6 +857,10 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orte_app_context_t **apps;
     orte_node_t **nodes;
     orte_std_cntr_t nnode;
+    orte_jobid_t failed_job;
+    
+    /* default to declaring the daemon launch as having failed */
+    failed_job = ORTE_PROC_MY_NAME->jobid;
     
     if (orte_timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -1124,6 +1128,10 @@ next_node:
     }
     
 launch_apps:
+    /* if we get here, then the daemons succeeded, so any failure would now be
+     * for the application job
+     */
+    failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: launch of apps failed for job %s on error %s",
@@ -1149,7 +1157,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(jdata->jobid, false, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
 
     /* setup a "heartbeat" timer to periodically check on

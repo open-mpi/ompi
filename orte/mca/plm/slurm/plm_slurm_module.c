@@ -147,6 +147,10 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     char *cur_prefix;
     struct timeval launchstart, launchstop;
     int proc_vpid_index;
+    orte_jobid_t failed_job;
+    
+    /* flag the daemons as failing by default */
+    failed_job = ORTE_PROC_MY_NAME->jobid;
     
     if (orte_timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
@@ -231,9 +235,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     free(tmp);
 
     /* alert us if any orteds die during startup */
-    if (mca_plm_slurm_component.detect_failure) {
-        opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
-    }
+    opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
 
     /* create nodelist */
     nodelist_argv = NULL;
@@ -367,6 +369,8 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     }
     
 launch_apps:
+    /* get here if daemons launch okay - any failures now by apps */
+    failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: launch of apps failed for job %s on error %s",
@@ -393,8 +397,6 @@ launch_apps:
         goto cleanup;
     }
 
-    /* JMS: short we stash the srun pid in the gpr somewhere for cleanup? */
-
 cleanup:
     if (NULL != argv) {
         opal_argv_free(argv);
@@ -409,7 +411,7 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(jdata->jobid, false, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
     
     return rc;
@@ -506,13 +508,13 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
         if (failed_launch) {
             /* report that the daemon has failed so we can exit
              */
-            orte_plm_base_launch_failed(active_job, true, -1, status, ORTE_JOB_STATE_FAILED_TO_START);
+            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_FAILED_TO_START);
             
         } else {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
-            orte_plm_base_launch_failed(active_job, true, -1, status, ORTE_JOB_STATE_ABORTED);
+            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_ABORTED);
         }
     }
     

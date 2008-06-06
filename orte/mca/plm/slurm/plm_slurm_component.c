@@ -97,8 +97,6 @@ orte_plm_slurm_component_t mca_plm_slurm_component = {
 
 static int plm_slurm_open(void)
 {
-    int tmp;
-    
     mca_base_component_t *comp = &mca_plm_slurm_component.super.base_version;
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
@@ -115,12 +113,6 @@ static int plm_slurm_open(void)
                               false, false, NULL,
                               &mca_plm_slurm_component.custom_args);
 
-    mca_base_param_reg_int(comp, "detect_failure",
-                              "If set, have srun automatically detect failures and kill the job",
-                              false, false, (int)false,
-                              &tmp);
-    mca_plm_slurm_component.detect_failure = OPAL_INT_TO_BOOL(tmp);
-    
     return ORTE_SUCCESS;
 }
 

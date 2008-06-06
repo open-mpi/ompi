@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +63,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job);
 
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
-    int rc;
+    int rc, fd;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
     
     ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -132,6 +132,16 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         return rc;
     }
     if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* IOF cannot currently handle multiple pulls to the same fd.  So
+       dup stderr to another fd.  :-\ */
+    fd = dup(2);
+    if (fd >= 0 && 
+        ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, 
+                                                ORTE_IOF_INTERNAL, fd))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -224,7 +234,7 @@ static bool orted_failed_launch;
 static orte_job_t *jdatorted;
 static orte_proc_t **pdatorted;
 
-void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t pid,
+void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
                                  int status, orte_job_state_t state)
 {
     orte_job_t *jdata;
@@ -239,10 +249,9 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
     }
     
     ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:launch_failed for job %s %s daemon launch",
+                         "%s plm:base:launch_failed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job),
-                         (daemons_launching) ? "during" : "after"));
+                         ORTE_JOBID_PRINT(job)));
 
     /* if this is the daemon job that failed, set the flag indicating
      * that a daemon failed so we use the proper
@@ -261,26 +270,24 @@ void orte_plm_base_launch_failed(orte_jobid_t job, bool daemons_launching, pid_t
              */
             pidstr = strdup("unknown");
         }
-        if (daemons_launching) {
-            if (WIFSIGNALED(status)) { /* died on signal */
+        if (WIFSIGNALED(status)) { /* died on signal */
 #ifdef WCOREDUMP
-                if (WCOREDUMP(status)) {
-                    orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
-                                   pidstr, WTERMSIG(status));
-                } else {
-                    orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                                   pidstr, WTERMSIG(status));
-                }
-#else
-                orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
-                                pidstr, WTERMSIG(status));
-#endif /* WCOREDUMP */
+            if (WCOREDUMP(status)) {
+                orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
+                               pidstr, WTERMSIG(status));
             } else {
-                orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
-                               pidstr, WEXITSTATUS(status));
+                orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                               pidstr, WTERMSIG(status));
             }
-            orted_failed_launch = true;
+#else
+            orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
+                            pidstr, WTERMSIG(status));
+#endif /* WCOREDUMP */
+        } else {
+            orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
+                           pidstr, WEXITSTATUS(status));
         }
+        orted_failed_launch = true;
         free(pidstr);
    }
     

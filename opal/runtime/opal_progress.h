@@ -202,6 +202,29 @@ static inline bool opal_progress_spin(volatile bool* complete)
 }
 
 
+/**
+ * \internal
+ * Don't use this variable; use the opal_progress_recursion_depth()
+ * function.
+ */
+OPAL_DECLSPEC extern 
+#if OMPI_HAVE_THREAD_SUPPORT
+volatile 
+#endif
+uint32_t opal_progress_recursion_depth_counter;
+
+/**
+ * Return the current level of recursion -- 0 means that we are not
+ * under an opal_progress() call at all.  1 means that you're in the
+ * top-level opal_progress() function (i.e., not deep in recursion).
+ * Higher values mean that you're that many levels deep in recursion.
+ */
+static inline uint32_t opal_progress_recursion_depth(void) 
+{
+    return opal_progress_recursion_depth_counter;
+}
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
