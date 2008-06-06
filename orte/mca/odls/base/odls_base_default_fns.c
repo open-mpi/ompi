@@ -573,7 +573,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         find PATH or LD_LIBRARY_PATH.  If found, that means the
         prior work was clobbered, and we need to re-prefix those
         variables. */
-    for (i = 0; NULL != context->env && NULL != context->env[i]; ++i) {
+    for (i = 0; NULL != context->prefix_dir && NULL != context->env && NULL != context->env[i]; ++i) {
         char *newenv;
         
         /* Reset PATH */
