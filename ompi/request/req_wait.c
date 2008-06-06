@@ -50,6 +50,7 @@ int ompi_request_default_wait(
         /* See MPI-1.2, sec 3.2.5, p.22 */
         status->MPI_TAG    = req->req_status.MPI_TAG;
         status->MPI_SOURCE = req->req_status.MPI_SOURCE;
+        status->MPI_ERROR  = req->req_status.MPI_ERROR;
         status->_count     = req->req_status._count;
         status->_cancelled = req->req_status._cancelled;
     }
