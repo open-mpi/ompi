@@ -496,13 +496,13 @@ AC_MSG_CHECKING([if heterogeneous support should be enabled])
 AC_ARG_ENABLE([heterogeneous],
     [AC_HELP_STRING([--enable-heterogeneous],
                     [Enable features required for heterogeneous
-                     platform support (default: enabled)])])
-if test "$enable_heterogeneous" = "no" ; then
-     AC_MSG_RESULT([no])
-     ompi_want_heterogeneous=0
-else
+                     platform support (default: disabled)])])
+if test "$enable_heterogeneous" = "yes" ; then
      AC_MSG_RESULT([yes])
      ompi_want_heterogeneous=1
+else
+     AC_MSG_RESULT([no])
+     ompi_want_heterogeneous=0
 fi
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_HETEROGENEOUS_SUPPORT], 
                    [$ompi_want_heterogeneous], 
