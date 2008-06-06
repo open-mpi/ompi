@@ -415,7 +415,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, true, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
     }
         
     /* setup a "heartbeat" timer to periodically check on
@@ -541,6 +541,6 @@ static void failed_start(int fd, short dummy, void *arg)
         return;
     }
     
-    orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, true, -1,
+    orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1,
                                 ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);  
 }
