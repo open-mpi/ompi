@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,7 +44,7 @@
 struct repository_item_t {
   opal_list_item_t super;
 
-  char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN];
+  char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
   lt_dlhandle ri_dlhandle;
   const mca_base_component_t *ri_component_struct;
   opal_list_t ri_dependencies;
@@ -154,6 +155,7 @@ int mca_base_component_repository_retain(char *type,
   /* Initialize the repository item */
 
   strncpy(ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
+  ri->ri_type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
   ri->ri_dlhandle = component_handle;
   ri->ri_component_struct = component_struct;
 

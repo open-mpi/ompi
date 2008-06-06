@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -125,11 +126,11 @@ typedef int (*mca_base_query_component_fn_t)(mca_base_module_t **module, int *pr
 /**
  * Maximum length of MCA framework string names.
  */
-#define MCA_BASE_MAX_TYPE_NAME_LEN 32
+#define MCA_BASE_MAX_TYPE_NAME_LEN 31
 /**
  * Maximum length of MCA component string names.
  */
-#define MCA_BASE_MAX_COMPONENT_NAME_LEN 64
+#define MCA_BASE_MAX_COMPONENT_NAME_LEN 63
 
 /**
  * Common type for all MCA components.
@@ -148,7 +149,7 @@ struct mca_base_component_t {
   int mca_release_version;
   /**< Release number of the MCA. */
 
-  char mca_type_name[MCA_BASE_MAX_TYPE_NAME_LEN];
+  char mca_type_name[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
   /**< String name of the framework that this component belongs to. */
   int mca_type_major_version;
   /**< Major version number of the framework that this component
@@ -160,7 +161,7 @@ struct mca_base_component_t {
   /**< Release version number of the framework that this component
      belongs to. */
 
-  char mca_component_name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
+  char mca_component_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
   /**< This comopnent's string name. */
   int mca_component_major_version;
   /**< This component's major version number. */
