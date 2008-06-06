@@ -4,7 +4,7 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,11 +21,6 @@ AM_YFLAGS = -d
 if PLPA_BUILD_EXECUTABLES
 bin_PROGRAMS += plpa-taskset
 endif
-
-# Force recognition that tokens.h is generated via tokens.c; there's a
-# rule to create tokens.c from tokens.y.
-tokens.c: tokens.y
-tokens.h: tokens.c
 
 # Force parser.c to be re-compiled when tokens.h is re-generated
 parser.c: tokens.h
