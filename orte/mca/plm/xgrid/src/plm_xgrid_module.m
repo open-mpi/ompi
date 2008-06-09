@@ -203,7 +203,6 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
         orte_plm_base_launch_failed(jdata->jobid,
-				    false, 
 				    -1, ORTE_ERROR_DEFAULT_EXIT_CODE,
 				    ORTE_JOB_STATE_FAILED_TO_START);
     }
