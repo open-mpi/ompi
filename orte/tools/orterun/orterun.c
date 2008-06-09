@@ -724,6 +724,9 @@ static void terminated(int trigpipe, short event, void *arg)
     
     orte_finalize();
     free(orterun_basename);
+    if (orte_debug_flag) {
+        fprintf(stderr, "orterun: exiting with status %d\n", orte_exit_status);
+    }
     exit(orte_exit_status);
 }
 
