@@ -22,7 +22,7 @@
 
 #include <catamount/cnos_mpi_os.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/name_fns.h"
@@ -80,7 +80,7 @@ static int rte_init(char flags)
     /* Get the nid map */
     nprocs = cnos_get_nidpid_map(&map);
     if (nprocs <= 0) {
-        orte_output(0, "%5d: cnos_get_nidpid_map() returned %d", 
+        opal_output(0, "%5d: cnos_get_nidpid_map() returned %d", 
                     cnos_get_rank(), nprocs);
         return ORTE_ERR_FATAL;
     }

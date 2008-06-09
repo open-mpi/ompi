@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/constants.h"
 

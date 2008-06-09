@@ -29,7 +29,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
@@ -286,13 +286,13 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
      */
     if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&
         peer->vpid  == ORTE_PROC_MY_HNP->vpid ) {
-        ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+        OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                              "%s) base:ckpt_init_cmd: Error: Do not send to self!\n",
                              ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
         return ORTE_SUCCESS;
     }
 
-    ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "%s) base:ckpt_init_cmd: Receiving commands\n",
                          ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
 
@@ -304,7 +304,7 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
      ********************/
     count = 1;
     if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, term, &count, OPAL_BOOL)) ) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:ckpt_init_cmd: Error: DSS Unpack (term) Failure (ret = %d) (LINE = %d)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
@@ -314,7 +314,7 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
     
     count = 1;
     if ( ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, jobid, &count, ORTE_JOBID)) ) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:ckpt_init_cmd: Error: DSS Unpack (jobid) Failure (ret = %d) (LINE = %d)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
@@ -322,7 +322,7 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
         goto cleanup;
     }
 
-    ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "%s) base:ckpt_init_cmd: Received [%d, %s]\n",
                          ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                          (int)*term,
@@ -346,13 +346,13 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
      */
     if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&
         peer->vpid  == ORTE_PROC_MY_HNP->vpid ) {
-        ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+        OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                              "%s) base:ckpt_update_cmd: Error: Do not send to self!\n",
                              ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
         return ORTE_SUCCESS;
     }
 
-    ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "%s) base:ckpt_update_cmd: Sending update command <%s> <seq %d> <status %d>\n",
                          ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                          global_snapshot_handle, seq_num, ckpt_status));
@@ -374,7 +374,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     }
 
     if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &ckpt_status, 1, OPAL_INT))) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:ckpt_update_cmd: Error: DSS Pack (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
@@ -385,7 +385,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     if( ORTE_SNAPC_CKPT_STATE_FINISHED == ckpt_status ||
         ORTE_SNAPC_CKPT_STATE_ERROR    == ckpt_status ) {
         if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &global_snapshot_handle, 1, OPAL_STRING))) {
-            orte_output(orte_snapc_base_output,
+            opal_output(orte_snapc_base_output,
                         "%s) base:ckpt_update_cmd: Error: DSS Pack (snapshot handle) Failure (ret = %d) (LINE = %d)\n",
                         ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                         ret, __LINE__);
@@ -393,7 +393,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
             goto cleanup;
         }
         if (ORTE_SUCCESS != (ret = opal_dss.pack(loc_buffer, &seq_num, 1, OPAL_INT))) {
-            orte_output(orte_snapc_base_output,
+            opal_output(orte_snapc_base_output,
                         "%s) base:ckpt_update_cmd: Error: DSS Pack (seq number) Failure (ret = %d) (LINE = %d)\n",
                         ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                         ret, __LINE__);
@@ -403,7 +403,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     }
 
     if (0 > (ret = orte_rml.send_buffer(peer, loc_buffer, ORTE_RML_TAG_CKPT, 0))) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:ckpt_update_cmd: Error: Send (ckpt_status) Failure (ret = %d) (LINE = %d)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     ret, __LINE__);
@@ -490,7 +490,7 @@ int orte_snapc_base_init_global_snapshot_directory(char *uniq_global_snapshot_na
     meta_data_fname = orte_snapc_base_get_global_snapshot_metadata_file(uniq_global_snapshot_name);
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:init_global_snapshot_directory: Error: Unable to open the file (%s)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
@@ -574,7 +574,7 @@ int orte_snapc_base_add_timestamp(char * global_snapshot_ref)
     meta_data_fname = orte_snapc_base_get_global_snapshot_metadata_file(global_snapshot_ref);
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:add_timestamp: Error: Unable to open the file (%s)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
@@ -606,7 +606,7 @@ int orte_snapc_base_finalize_metadata(char * global_snapshot_ref)
     meta_data_fname = orte_snapc_base_get_global_snapshot_metadata_file(global_snapshot_ref);
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:add_timestamp: Error: Unable to open the file (%s)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);
@@ -642,7 +642,7 @@ int orte_snapc_base_add_vpid_metadata( orte_process_name_t *proc,
     meta_data_fname = orte_snapc_base_get_global_snapshot_metadata_file(global_snapshot_ref);
 
     if (NULL == (meta_data = fopen(meta_data_fname, "a")) ) {
-        orte_output(orte_snapc_base_output,
+        opal_output(orte_snapc_base_output,
                     "%s) base:add_metadata: Error: Unable to open the file (%s)\n",
                     ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                     meta_data_fname);

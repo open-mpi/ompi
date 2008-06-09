@@ -30,9 +30,9 @@
 #include "ompi/mca/coll/coll.h"
 #include "coll_tuned.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 /*
  * Public string showing the coll ompi_tuned component version number
@@ -130,7 +130,7 @@ static int tuned_open(void)
             int verbose;
             mca_base_param_lookup_int(param, &verbose);
             if (verbose > 0) {
-                ompi_coll_tuned_stream = orte_output_open(NULL);
+                ompi_coll_tuned_stream = opal_output_open(NULL);
             }
         }
     }
@@ -197,7 +197,7 @@ static int tuned_open(void)
         ompi_coll_tuned_scatter_intra_check_forced_init(&ompi_coll_tuned_forced_params[SCATTER]);
     }
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_open: done!"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_open: done!"));
 
     return OMPI_SUCCESS;
 }
@@ -206,12 +206,12 @@ static int tuned_open(void)
 /* i.e. alg table and dynamic changable rules if allocated etc */
 static int tuned_close(void)
 {
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: called"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: called"));
 
     /* dealloc alg table if allocated */
     /* dealloc dynamic changable rules if allocated */
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
 
     return OMPI_SUCCESS;
 }

@@ -264,7 +264,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal_stdint.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"

@@ -12,7 +12,7 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/arch.h"
 
 #include "opal/types.h"

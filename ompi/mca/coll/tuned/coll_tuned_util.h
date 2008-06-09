@@ -117,7 +117,7 @@ ompi_coll_tuned_isendrecv( void* sendbuf, int scount, ompi_datatype_t* sdtype,
    
    return MPI_SUCCESS;
  error_handler:
-   ORTE_OUTPUT((ompi_coll_tuned_stream, "%s:%d\tError occurred %d\n",
+   OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%d\tError occurred %d\n",
                 __FILE__, line, ret));
    return ret;
 }

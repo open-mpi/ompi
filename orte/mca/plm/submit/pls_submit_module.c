@@ -56,7 +56,7 @@
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
@@ -158,21 +158,21 @@ static int orte_plm_submit_probe(orte_node_t *node, orte_plm_submit_shell * shel
     char outbuf[4096];
 
     if (mca_plm_submit_component.debug) {
-        orte_output(0, "plm:submit: going to check SHELL variable on node %s\n",
+        opal_output(0, "plm:submit: going to check SHELL variable on node %s\n",
                     node->name);
     }
     *shell = ORTE_PLM_submit_SHELL_UNKNOWN;
     if (pipe(fd)) {
-        orte_output(0, "plm:submit: pipe failed with errno=%d\n", errno);
+        opal_output(0, "plm:submit: pipe failed with errno=%d\n", errno);
         return ORTE_ERR_IN_ERRNO;
     }
     if ((pid = fork()) < 0) {
-        orte_output(0, "plm:submit: fork failed with errno=%d\n", errno);
+        opal_output(0, "plm:submit: fork failed with errno=%d\n", errno);
         return ORTE_ERR_IN_ERRNO;
     }
     else if (pid == 0) {          /* child */
         if (dup2(fd[1], 1) < 0) {
-            orte_output(0, "plm:submit: dup2 failed with errno=%d\n", errno);
+            opal_output(0, "plm:submit: dup2 failed with errno=%d\n", errno);
             exit(01);
         }
         /* Build argv array */
@@ -185,7 +185,7 @@ static int orte_plm_submit_probe(orte_node_t *node, orte_plm_submit_shell * shel
         exit(errno);
     }
     if (close(fd[1])) {
-        orte_output(0, "plm:submit: close failed with errno=%d\n", errno);
+        opal_output(0, "plm:submit: close failed with errno=%d\n", errno);
         return ORTE_ERR_IN_ERRNO;
     }
 
@@ -199,7 +199,7 @@ static int orte_plm_submit_probe(orte_node_t *node, orte_plm_submit_shell * shel
             if (ret < 0) {
                 if (errno == EINTR)
                     continue;
-                orte_output( 0, "Unable to detect the remote shell (error %s)\n",
+                opal_output( 0, "Unable to detect the remote shell (error %s)\n",
                              strerror(errno) );
                 rc = ORTE_ERR_IN_ERRNO;
                 break;
@@ -234,10 +234,10 @@ static int orte_plm_submit_probe(orte_node_t *node, orte_plm_submit_shell * shel
     }
     if (mca_plm_submit_component.debug) {
         if( ORTE_PLM_submit_SHELL_UNKNOWN == *shell ) {
-            orte_output(0, "plm:submit: node:%s has unhandled SHELL\n",
+            opal_output(0, "plm:submit: node:%s has unhandled SHELL\n",
                         node->name);
         } else {
-            orte_output(0, "plm:submit: node:%s has SHELL: %s\n",
+            opal_output(0, "plm:submit: node:%s has SHELL: %s\n",
                         node->name, orte_plm_submit_shell_name[*shell]);
         }
     }
@@ -275,26 +275,26 @@ static void orte_plm_submit_wait_daemon(pid_t pid, int status, void* cbdata)
     
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* tell the user something went wrong */
-        orte_output(0, "ERROR: A daemon failed to start as expected.");
-        orte_output(0, "ERROR: There may be more information available from");
-        orte_output(0, "ERROR: the remote shell (see above).");
+        opal_output(0, "ERROR: A daemon failed to start as expected.");
+        opal_output(0, "ERROR: There may be more information available from");
+        opal_output(0, "ERROR: the remote shell (see above).");
         
         if (WIFEXITED(status)) {
-            orte_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
+            opal_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
                         WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
-                orte_output(0, "The daemon received a signal %d (with core).",
+                opal_output(0, "The daemon received a signal %d (with core).",
                             WTERMSIG(status));
             } else {
-                orte_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+                opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
             }
 #else
-            orte_output(0, "The daemon received a signal %d.", WTERMSIG(status));
+            opal_output(0, "The daemon received a signal %d.", WTERMSIG(status));
 #endif /* WCOREDUMP */
         } else {
-            orte_output(0, "No extra status information is available: %d.", status);
+            opal_output(0, "No extra status information is available: %d.", status);
         }
         /*  The usual reasons for ssh to exit abnormally all are a pretty good
             indication that the child processes aren't going to start up properly.
@@ -316,11 +316,11 @@ static void orte_plm_submit_wait_daemon(pid_t pid, int status, void* cbdata)
 
     if (mca_plm_submit_component.timing && mca_plm_submit_component.num_children == 0) {
         if (0 != gettimeofday(&joblaunchstop, NULL)) {
-            orte_output(0, "plm_submit: could not obtain job launch stop time");
+            opal_output(0, "plm_submit: could not obtain job launch stop time");
         } else {
             deltat = (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
             (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
-            orte_output(0, "plm_submit: total time to launch job is %lu usec", deltat);
+            opal_output(0, "plm_submit: total time to launch job is %lu usec", deltat);
         }
     }
     
@@ -363,7 +363,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     
     if (mca_plm_submit_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
-            orte_output(0, "plm_submit: could not obtain start time");
+            opal_output(0, "plm_submit: could not obtain start time");
             joblaunchstart.tv_sec = 0;
             joblaunchstart.tv_usec = 0;
         }        
@@ -375,7 +375,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
         goto cleanup;
     }
     
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:submit: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -407,7 +407,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     num_nodes = map->num_new_daemons;
     if (0 == num_nodes) {
         /* have all the daemons we need - launch app */
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:submit: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
@@ -485,13 +485,13 @@ int orte_plm_submit_launch(orte_job_t *jdata)
             }
         }
         if ( i == ORTE_PLM_submit_SHELL_UNKNOWN ) {
-            orte_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
+            opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
                         sh_name);
             local_sh = true;
         }
         
         if (mca_plm_submit_component.debug) {
-            orte_output(0, "plm:submit: local csh: %d, local sh: %d\n",
+            opal_output(0, "plm:submit: local csh: %d, local sh: %d\n",
                         local_csh, local_sh);
         }
     }
@@ -501,7 +501,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
         remote_sh = local_sh;
         remote_csh = local_csh;
         if (mca_plm_submit_component.debug) {
-            orte_output(0, "plm:submit: assuming same remote shell as local shell");
+            opal_output(0, "plm:submit: assuming same remote shell as local shell");
         }
     } else {
         orte_plm_submit_shell shell;
@@ -519,13 +519,13 @@ int orte_plm_submit_launch(orte_job_t *jdata)
         case ORTE_PLM_submit_SHELL_TCSH: /* fall through */
         case ORTE_PLM_submit_SHELL_CSH:  remote_csh = true; break;
         default:
-            orte_output(0, "WARNING: submit probe returned unhandled shell:%s assuming bash\n",
+            opal_output(0, "WARNING: submit probe returned unhandled shell:%s assuming bash\n",
                         orte_plm_submit_shell_name[shell]);
             remote_sh = true;
         }
     }
     if (mca_plm_submit_component.debug) {
-        orte_output(0, "plm:submit: remote csh: %d, remote sh: %d\n",
+        opal_output(0, "plm:submit: remote csh: %d, remote sh: %d\n",
                     remote_csh, remote_sh);
     }
 
@@ -553,8 +553,8 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     if (mca_plm_submit_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
-            orte_output(0, "plm:submit: final template argv:");
-            orte_output(0, "plm:submit:     %s", param);
+            opal_output(0, "plm:submit: final template argv:");
+            opal_output(0, "plm:submit:     %s", param);
             free(param);
         }
     }
@@ -633,7 +633,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
             long fd, fdmax = sysconf(_SC_OPEN_MAX);
             
             if (mca_plm_submit_component.debug) {
-                orte_output(0, "plm:submit: launching on node %s\n",
+                opal_output(0, "plm:submit: launching on node %s\n",
                             rmaps_node->nodename);
             }
             
@@ -655,7 +655,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                 (0 == strcmp(nodes[nnode]->name, orte_process_info.nodename) ||
                  opal_ifislocal(nodes[nnode]->name))) {
                 if (mca_plm_submit_component.debug) {
-                    orte_output(0, "plm:submit: %s is a LOCAL node\n",
+                    opal_output(0, "plm:submit: %s is a LOCAL node\n",
                                 nodes[nnode]->name);
                 }
                 
@@ -711,7 +711,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                     }
                     opal_setenv("PATH", newenv, true, &environ);
                     if (mca_plm_submit_component.debug) {
-                        orte_output(0, "plm:submit: reset PATH: %s", newenv);
+                        opal_output(0, "plm:submit: reset PATH: %s", newenv);
                     }
                     free(newenv);
                     
@@ -726,7 +726,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                     }
                     opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
                     if (mca_plm_submit_component.debug) {
-                        orte_output(0, "plm:submit: reset LD_LIBRARY_PATH: %s",
+                        opal_output(0, "plm:submit: reset LD_LIBRARY_PATH: %s",
                                     newenv);
                     }
                     free(newenv);
@@ -760,7 +760,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                 var = opal_home_directory();
                 if (NULL != var) {
                     if (mca_plm_submit_component.debug) {
-                        orte_output(0, "plm:submit: changing to directory %s", var);
+                        opal_output(0, "plm:submit: changing to directory %s", var);
                     }
                     /* Ignore errors -- what are we going to do?
                     (and we ignore errors on the remote nodes
@@ -769,7 +769,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
                 }
             } else {
                 if (mca_plm_submit_component.debug) {
-                    orte_output(0, "plm:submit: %s is a REMOTE node\n",
+                    opal_output(0, "plm:submit: %s is a REMOTE node\n",
                                 nodes[nnode]->name);
                 }
                 exec_argv = argv;
@@ -822,7 +822,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
             /* pass the vpid */
             rc = orte_util_convert_vpid_to_string(&vpid_string, nodes[nnode]->daemon->name.vpid);
             if (ORTE_SUCCESS != rc) {
-                orte_output(0, "orte_plm_submit: unable to get daemon vpid as string");
+                opal_output(0, "orte_plm_submit: unable to get daemon vpid as string");
                 exit(-1);
             }
             free(argv[proc_vpid_index]);
@@ -872,12 +872,12 @@ int orte_plm_submit_launch(orte_job_t *jdata)
             if (mca_plm_submit_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
                 if (NULL != param) {
-                    orte_output(0, "plm:submit: executing: (%s) [%s]", exec_path, param);
+                    opal_output(0, "plm:submit: executing: (%s) [%s]", exec_path, param);
                     free(param);
                 }
             }
             execve(exec_path, exec_argv, env);
-            orte_output(0, "plm:submit: execv of %s failed with errno=%s(%d)\n",
+            opal_output(0, "plm:submit: execv of %s failed with errno=%s(%d)\n",
                         exec_path, strerror(errno), errno);
             exit(-1);
 
@@ -910,7 +910,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:submit: daemon launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
@@ -919,7 +919,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     
 launch_apps:
         if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
-            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:submit: launch of apps failed for job %s on error %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));

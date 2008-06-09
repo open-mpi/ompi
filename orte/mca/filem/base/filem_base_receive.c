@@ -37,7 +37,7 @@
 #include <unistd.h>
 #endif
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -74,7 +74,7 @@ int orte_filem_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_filem_base_output,
                          "%s filem:base: Receive: Start command recv",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -104,7 +104,7 @@ int orte_filem_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_filem_base_output,
                          "%s filem:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -130,7 +130,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
     orte_std_cntr_t count;
     int rc;
 
-    ORTE_OUTPUT_VERBOSE((5, orte_filem_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_filem_base_output,
                          "%s filem:base: Receive a command message.",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -142,7 +142,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
     
     switch (command) {
         case ORTE_FILEM_GET_PROC_NODE_NAME_CMD:
-            ORTE_OUTPUT_VERBOSE((10, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
                                  "%s filem:base: Command: Get Proc node name command",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -150,7 +150,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
             break;
 
         case ORTE_FILEM_GET_REMOTE_PATH_CMD:
-            ORTE_OUTPUT_VERBOSE((10, orte_filem_base_output,
+            OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
                                  "%s filem:base: Command: Get remote path command",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -261,7 +261,7 @@ static void filem_base_process_get_remote_path_cmd(orte_process_name_t* sender,
         tmp_name = strdup(filename);
     }
 
-    orte_output_verbose(10, orte_filem_base_output,
+    opal_output_verbose(10, orte_filem_base_output,
                         "filem:base: process_get_remote_path_cmd: %s -> %s: Filename Requested (%s) translated to (%s)",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(sender),

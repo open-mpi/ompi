@@ -20,11 +20,11 @@
 
 #include "orte/util/name_fns.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rml/base/base.h"
 
@@ -117,7 +117,7 @@ orte_rml_module_t* orte_rml_ftrm_component_init(int* priority)
         orte_rml           = orte_rml_ftrm_module;
         orte_rml_component = &mca_rml_ftrm_component;
 
-        orte_output_verbose(20, rml_ftrm_output_handle,
+        opal_output_verbose(20, rml_ftrm_output_handle,
                             "orte_rml_ftrm: component_init(): Wrapped Component (%s)",
                             mca_rml_ftrm_wrapped_component.rml_version.mca_component_name);
 
@@ -157,15 +157,15 @@ static int orte_rml_ftrm_open(void)
      * otherwise take our parents level and output channel
      */
     if ( 0 != value) {
-        rml_ftrm_output_handle = orte_output_open(NULL);
-        orte_output_set_verbosity(rml_ftrm_output_handle, value);
+        rml_ftrm_output_handle = opal_output_open(NULL);
+        opal_output_set_verbosity(rml_ftrm_output_handle, value);
     } else {
         rml_ftrm_output_handle = -1;
     }
 
-    orte_output_verbose(10, rml_ftrm_output_handle,
+    opal_output_verbose(10, rml_ftrm_output_handle,
                         "orte_rml_ftrm: open(): Priority  = %d", ftrm_priority);
-    orte_output_verbose(10, rml_ftrm_output_handle,
+    opal_output_verbose(10, rml_ftrm_output_handle,
                         "orte_rml_ftrm: open(): Verbosity = %d", value);
 
     return ORTE_SUCCESS;

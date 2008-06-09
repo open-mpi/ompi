@@ -46,7 +46,7 @@
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/oob/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"

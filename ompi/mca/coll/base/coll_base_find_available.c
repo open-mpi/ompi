@@ -25,7 +25,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "opal/class/opal_list.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -126,7 +126,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
     /* Need to free all items in the list */
     OBJ_DESTRUCT(&mca_coll_base_components_available);
     mca_coll_base_components_available_valid = false;
-    orte_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, mca_coll_base_output,
                        "coll:find_available: no coll components available!");
     orte_show_help("help-mca-base", "find-available:none-found", true,
                    "coll");
@@ -150,7 +150,7 @@ static int init_query(const mca_base_component_t *m,
 {
   int ret;
 
-  orte_output_verbose(10, mca_coll_base_output,
+  opal_output_verbose(10, mca_coll_base_output,
                      "coll:find_available: querying coll component %s", 
                      m->mca_component_name);
 
@@ -165,7 +165,7 @@ static int init_query(const mca_base_component_t *m,
   } else {
     /* Unrecognized coll API version */
 
-    orte_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, mca_coll_base_output,
                        "coll:find_available: unrecognized coll API version (%d.%d.%d, ignored)", 
                        m->mca_type_major_version,
                        m->mca_type_minor_version,
@@ -176,14 +176,14 @@ static int init_query(const mca_base_component_t *m,
   /* Query done -- look at the return value to see what happened */
 
   if (OMPI_SUCCESS != ret) {
-    orte_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                         "coll:find_available: coll component %s is not available", 
                         m->mca_component_name);
     if (NULL != m->mca_close_component) {
       m->mca_close_component();
     }
   } else {
-    orte_output_verbose(10, mca_coll_base_output, 
+    opal_output_verbose(10, mca_coll_base_output, 
                         "coll:find_available: coll component %s is available", 
                         m->mca_component_name);
   }      

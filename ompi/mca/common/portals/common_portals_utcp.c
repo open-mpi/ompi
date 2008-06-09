@@ -21,7 +21,7 @@
 #include <p3api/debug.h>
 
 #include "opal/mca/mca.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
 #include "ompi/constants.h"
@@ -116,7 +116,7 @@ ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
 
         ret = PtlInit(&max_interfaces);
         if (PTL_OK != ret) {
-            orte_output(0, "%5d: PtlInit failed, returning %d\n", 
+            opal_output(0, "%5d: PtlInit failed, returning %d\n", 
                         getpid(), ret);
             return OMPI_ERR_NOT_AVAILABLE;
         }
@@ -133,21 +133,21 @@ ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
                         &active_ni_h       /* our interface handle */
                         );
         if (PTL_OK != ret) {
-            orte_output(0, "%5d: PtlNIInit failed, returning %d\n", 
+            opal_output(0, "%5d: PtlNIInit failed, returning %d\n", 
                         getpid(), ret);
             return OMPI_ERR_FATAL;
         }
 
         ret = PtlGetRank(active_ni_h, &rank, &nptl_procs);
         if (ret != PTL_OK) {
-            orte_output(0, "%5d, PtlGetRank() returned %d", 
+            opal_output(0, "%5d, PtlGetRank() returned %d", 
                         getpid(), ret);
             return OMPI_ERR_FATAL;
         }
 
         ret = PtlGetRankId(active_ni_h, rank, &info);
         if (ret != PTL_OK) {
-            orte_output(0, "%5d, PtlGetRank(rank=%d) returned %d", 
+            opal_output(0, "%5d, PtlGetRank(rank=%d) returned %d", 
                         getpid(), rank, ret);
             return OMPI_ERR_FATAL;
         }
@@ -206,11 +206,11 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
             ret = ompi_modex_recv(&portals_component,
                                           procs[i], (void**) &info, &size);
             if (OMPI_SUCCESS != ret) {
-                orte_output(0, "%5d: ompi_modex_recv failed: %d", 
+                opal_output(0, "%5d: ompi_modex_recv failed: %d", 
                             getpid(), ret);
                 return ret;
             } else if (sizeof(ptl_process_id_t) != size) {
-                orte_output(0, "%5d: ompi_modex_recv returned size %d, expected %d", 
+                opal_output(0, "%5d: ompi_modex_recv returned size %d, expected %d", 
                             getpid(), size, sizeof(ptl_process_id_t));
                 return OMPI_ERROR;
             }
@@ -248,7 +248,7 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
 
         ret = PtlInit(&max_interfaces);
         if (PTL_OK != ret) {
-            orte_output(0, "%5d: PtlInit failed, returning %d\n", 
+            opal_output(0, "%5d: PtlInit failed, returning %d\n", 
                         getpid(), ret);
             return OMPI_ERR_NOT_AVAILABLE;
         }
@@ -265,7 +265,7 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
                         &active_ni_h       /* our interface handle */
                         );
         if (PTL_OK != ret) {
-            orte_output(0, "%5d: PtlNIInit failed, returning %d\n", 
+            opal_output(0, "%5d: PtlNIInit failed, returning %d\n", 
                         getpid(), ret);
             return OMPI_ERR_FATAL;
         }
@@ -293,11 +293,11 @@ ompi_common_portals_get_procs(size_t nprocs,
         ret = ompi_modex_recv(&portals_component,
                                       procs[i], (void**) &info, &size);
         if (OMPI_SUCCESS != ret) {
-            orte_output(0, "%5d: ompi_modex_recv failed: %d", 
+            opal_output(0, "%5d: ompi_modex_recv failed: %d", 
                         getpid(), ret);
             return ret;
         } else if (sizeof(ptl_process_id_t) != size) {
-            orte_output(0, "%5d: ompi_modex_recv returned size %d, expected %d", 
+            opal_output(0, "%5d: ompi_modex_recv returned size %d, expected %d", 
                         getpid(), size, sizeof(ptl_process_id_t));
             return OMPI_ERROR;
         }

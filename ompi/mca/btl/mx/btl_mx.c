@@ -95,7 +95,7 @@ int mca_btl_mx_del_procs( struct mca_btl_base_module_t* btl,
                           struct ompi_proc_t** procs, 
                           struct mca_btl_base_endpoint_t** peers )
 {
-    orte_output( 0, "MX BTL delete procs\n" );
+    opal_output( 0, "MX BTL delete procs\n" );
     /* TODO */
     return OMPI_SUCCESS;
 }
@@ -121,7 +121,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
         for( i = 0; i < mca_btl_mx_component.mx_max_posted_recv; i++ ) {
             MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
             if( NULL == frag ) {
-                orte_output( 0, "mca_btl_mx_register: unable to allocate more eager fragments\n" );
+                opal_output( 0, "mca_btl_mx_register: unable to allocate more eager fragments\n" );
                 if( 0 == i ) {
                     return OMPI_ERROR;
                 }
@@ -140,7 +140,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
                                   0x01ULL, BTL_MX_RECV_MASK,
                                   frag, &(frag->mx_request) );
             if( MX_SUCCESS != mx_return ) {
-                orte_output( 0, "mca_btl_mx_register: mx_irecv failed with status %d (%s)\n",
+                opal_output( 0, "mca_btl_mx_register: mx_irecv failed with status %d (%s)\n",
                              mx_return, mx_strerror(mx_return) );
                 MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
                 return OMPI_ERROR;
@@ -323,7 +323,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
                           frag->segment[0].seg_key.key64, 
                           BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
-        orte_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
+        opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
         MCA_BTL_MX_FRAG_RETURN( btl, frag );
         return NULL;
     }
@@ -332,7 +332,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     {
         mx_return = mx_forget( mx_btl->mx_endpoint, &(frag->mx_request) );
         if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
-            orte_output( 0, "mx_forget failed in mca_btl_mx_prepare_dst with error %d (%s)\n",
+            opal_output( 0, "mx_forget failed in mca_btl_mx_prepare_dst with error %d (%s)\n",
                          mx_return, mx_strerror(mx_return) );
             return NULL;
         }
@@ -389,7 +389,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
                           descriptor->des_dst[0].seg_key.key64, frag,
                           &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
-        orte_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
+        opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
@@ -442,7 +442,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
                           endpoint->mx_peer_addr,
                           tag64, frag, &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
-        orte_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
+        opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
     }
 
@@ -451,14 +451,14 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         uint32_t mx_result;
         mx_return = mx_ibuffered( mx_btl->mx_endpoint, &(frag->mx_request), &mx_result );
         if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
-            orte_output( 0, "mx_ibuffered failed with error %d (%s)\n",
+            opal_output( 0, "mx_ibuffered failed with error %d (%s)\n",
                          mx_return, mx_strerror(mx_return) );
             return OMPI_ERROR;
         }
         if( mx_result ) {
             mx_return = mx_forget( mx_btl->mx_endpoint, &(frag->mx_request) );
             if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
-                orte_output( 0, "mx_forget failed with error %d (%s)\n",
+                opal_output( 0, "mx_forget failed with error %d (%s)\n",
                              mx_return, mx_strerror(mx_return) );
                 frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
                 return OMPI_SUCCESS;

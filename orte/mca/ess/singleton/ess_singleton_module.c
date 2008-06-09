@@ -35,7 +35,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_pointer_array.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
@@ -397,14 +397,14 @@ static int fork_hnp(void)
 static bool proc_is_local(orte_process_name_t *proc)
 {
     if (pmap[proc->vpid].node == (int32_t)ORTE_PROC_MY_DAEMON->vpid) {
-        ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                              "%s ess:env: proc %s is LOCAL",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
         return true;
     }
     
-    ORTE_OUTPUT_VERBOSE((2, orte_ess_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s is REMOTE",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));

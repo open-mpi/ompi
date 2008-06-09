@@ -41,7 +41,7 @@
 #include "opal/class/opal_object.h"
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "ompi/communicator/communicator.h"

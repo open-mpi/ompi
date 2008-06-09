@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */
 #include <errno.h>
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 
 #include "ompi/mca/allocator/base/base.h"
@@ -126,7 +126,7 @@ static int mca_mpool_sm_open(void)
                                "Enable verbose output for mpool sm component",
                                false, false, 0, &value);
     if (value != 0) {
-            mca_mpool_sm_component.verbose = orte_output_open(NULL);
+            mca_mpool_sm_component.verbose = opal_output_open(NULL);
     } else {
             mca_mpool_sm_component.verbose = -1;
     }
@@ -172,36 +172,36 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     errno = 0;
     max_size  = strtol(max_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
-        orte_output(0, "mca_mpool_sm_init: max_size overflows! set to default (%ld)", default_max);
+        opal_output(0, "mca_mpool_sm_init: max_size overflows! set to default (%ld)", default_max);
         max_size = default_max;
     } else if (errno == EINVAL) {
-        orte_output(0, "mca_mpool_sm_init: invalid max_size entered. set it to (%ld)", default_max);
+        opal_output(0, "mca_mpool_sm_init: invalid max_size entered. set it to (%ld)", default_max);
         max_size = default_max;
     }
     
     errno = 0;
     min_size  = strtol(min_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
-        orte_output(0, "mca_mpool_sm_init: min_size overflows! set to default (%ld)", default_min);
+        opal_output(0, "mca_mpool_sm_init: min_size overflows! set to default (%ld)", default_min);
         min_size = default_min;
     } else if (errno == EINVAL) {
-        orte_output(0, "mca_mpool_sm_init: invalid min_size entered. set it to (%ld)", default_min);
+        opal_output(0, "mca_mpool_sm_init: invalid min_size entered. set it to (%ld)", default_min);
         min_size = default_min;
     }
 
     errno = 0;
     peer_size  = strtol(peer_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
-        orte_output(0, "mca_mpool_sm_init: peer_size overflows! set to default (%ld)", default_peer);
+        opal_output(0, "mca_mpool_sm_init: peer_size overflows! set to default (%ld)", default_peer);
         peer_size = default_peer;
     } else if (errno == EINVAL) {
-        orte_output(0, "mca_mpool_sm_init: invalid peer_size entered. set it to (%ld)", default_peer);
+        opal_output(0, "mca_mpool_sm_init: invalid peer_size entered. set it to (%ld)", default_peer);
         peer_size = default_peer;
     }
 
     /* more checks... */
     if (min_size > max_size) {
-        orte_output(0, "mca_mpool_sm_init: adjusting max_size to be min_size (%ld)",
+        opal_output(0, "mca_mpool_sm_init: adjusting max_size to be min_size (%ld)",
                     min_size);
         max_size = min_size;
     }
@@ -213,7 +213,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
      * set sm_size to max_size. */
     if ((double)LONG_MAX / num_local_procs < peer_size) {
         /* enable verbose would show if sm_size overflows */ 
-        orte_output(mca_mpool_sm_component.verbose,
+        opal_output(mca_mpool_sm_component.verbose,
             "mca_mpool_sm_init: sm_size overflows, set sm_size to max_size (%ld)",
             LONG_MAX);
         mca_mpool_sm_component.sm_size = max_size;
@@ -237,10 +237,10 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
             mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
                 opal_list_get_first(&mca_allocator_base_components);
             allocator_component = (mca_allocator_base_component_t*)item->cli_component;
-            orte_output(0, "mca_mpool_sm_init: unable to locate allocator: %s - using %s\n",
+            opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s - using %s\n",
                 mca_mpool_sm_component.sm_allocator_name, allocator_component->allocator_version.mca_component_name);
         } else {
-            orte_output(0, "mca_mpool_sm_init: unable to locate allocator: %s\n",
+            opal_output(0, "mca_mpool_sm_init: unable to locate allocator: %s\n",
                 mca_mpool_sm_component.sm_allocator_name);
             return NULL;
         }
@@ -258,7 +258,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         return NULL;
     }
     
-    orte_output(mca_mpool_sm_component.verbose,
+    opal_output(mca_mpool_sm_component.verbose,
         "mca_mpool_sm_init: shared memory size used: (%ld)",
         mca_mpool_sm_component.sm_size);
 
@@ -268,7 +268,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
                  file_name,sizeof(mca_common_sm_mmap_t), 8 )
              )) 
     {
-        orte_output(0, "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
+        opal_output(0, "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
         free(file_name);
         free(mpool_module);
         return NULL;
@@ -280,7 +280,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
       allocator_component->allocator_init(true,
                                           mca_common_sm_mmap_seg_alloc, NULL, NULL);
     if(NULL == mpool_module->sm_allocator) {
-        orte_output(0, "mca_mpool_sm_init: unable to initialize allocator");
+        opal_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         free(mpool_module);
         return NULL;
     }

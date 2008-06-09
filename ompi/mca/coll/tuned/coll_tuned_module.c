@@ -59,7 +59,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_tuned_module_t *tuned_module;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_tuned query called"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_tuned query called"));
 
     /**
      * If it is inter-communicator and size is less than 2 we have specialized modules
@@ -73,9 +73,9 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (OMPI_COMM_IS_INTER(comm)) {
 #if 0
         if (ompi_coll_tuned_use_dynamic_rules) {
-            ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_dynamic"));
         } else {
-            ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using inter_fixed"));
  
         }
 #endif
@@ -99,7 +99,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     tuned_module->super.ft_event = mca_coll_tuned_ft_event;
 
     if (ompi_coll_tuned_use_dynamic_rules) {
-	ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
+	OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
 
 	tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_dynamic;
 	tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic;
@@ -119,7 +119,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 	tuned_module->super.coll_scatterv   = NULL;
 
     } else {
-	ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
+	OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
 
 	tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_fixed;
 	tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
@@ -159,7 +159,7 @@ tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
     int i;
 
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init called."));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init called."));
 
     /* This routine will become more complex and might have to be */
     /* broken into more sections/function calls */
@@ -263,14 +263,14 @@ tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 
     if (&ompi_mpi_comm_world==comm) {
         if (ompi_coll_tuned_use_dynamic_rules) {
-            ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
             if (ompi_coll_tuned_dynamic_rules_filename) {
-                ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Opening [%s]", 
                              ompi_coll_tuned_dynamic_rules_filename));
                 rc = ompi_coll_tuned_read_rules_config_file (ompi_coll_tuned_dynamic_rules_filename,
                                                              &(data->all_base_rules), COLLCOUNT);
                 if (rc>=0) {
-                    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Read %d valid rules\n", rc));
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Read %d valid rules\n", rc));
                     /* at this point we all have a base set of rules */
                     /* now we can get our customized communicator sized rule set, for each collective */
                     for (i=0;i<COLLCOUNT;i++) {
@@ -291,7 +291,7 @@ tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
     if ((ompi_coll_tuned_use_dynamic_rules)&&(!(&ompi_mpi_comm_world==comm))&&
         ((ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules)) {
 
-        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init NOT MCW & Dynamic"));
 
         /* this will, erm fail if MCW doesn't exist which it should! */
         data->all_base_rules = (ompi_mpi_comm_world.c_coll_selected_data)->all_base_rules;
@@ -350,7 +350,7 @@ tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
 
     tuned_module->tuned_data = data;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
     return OMPI_SUCCESS;
 }
 

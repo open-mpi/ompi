@@ -22,7 +22,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/include/opal/align.h"
 #include "opal/sys/cache.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/mpool/mpool.h"
 
 static void ompi_free_list_construct(ompi_free_list_t* fl);
@@ -62,7 +62,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
 
 #if 0 && OMPI_ENABLE_DEBUG
     if(opal_list_get_size(&fl->super) != fl->fl_num_allocated) {
-        orte_output(0, "ompi_free_list: %d allocated %d returned: %s:%d\n",
+        opal_output(0, "ompi_free_list: %d allocated %d returned: %s:%d\n",
             fl->fl_num_allocated, opal_list_get_size(&fl->super),
             fl->super.super.cls_init_file_name, fl->super.super.cls_init_lineno);
     }

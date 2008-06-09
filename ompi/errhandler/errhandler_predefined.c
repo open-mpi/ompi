@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode.h"
@@ -139,9 +139,9 @@ static void out(char *str, char *arg)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized) {
         if (NULL != arg) {
-            orte_output(0, str, arg);
+            opal_output(0, str, arg);
         } else {
-            orte_output(0, str);
+            opal_output(0, str);
         }
     } else {
         if (NULL != arg) {

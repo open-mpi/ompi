@@ -33,7 +33,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
@@ -67,7 +67,7 @@ int orte_iof_base_flush(void)
     size_t pending;
     static int32_t lock = 0;
 
-    orte_output_verbose(1, orte_iof_base.iof_output, "CALLING IOF BASE FLUSH!");
+    opal_output_verbose(1, orte_iof_base.iof_output, "CALLING IOF BASE FLUSH!");
     if(OPAL_THREAD_ADD32(&lock,1) > 1) {
         OPAL_THREAD_ADD32(&lock,-1);
         return ORTE_SUCCESS;
@@ -80,7 +80,7 @@ int orte_iof_base_flush(void)
      * wait on a timer callback to be called out of the event loop
     */
 
-    orte_output_verbose(1, orte_iof_base.iof_output,
+    opal_output_verbose(1, orte_iof_base.iof_output,
                 "IOF BASE FLUSH: tweaking all endpoints once");
     if(opal_event_progress_thread() == false) {
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
@@ -93,7 +93,7 @@ int orte_iof_base_flush(void)
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     }
-    orte_output_verbose(1, orte_iof_base.iof_output,
+    opal_output_verbose(1, orte_iof_base.iof_output,
                 "IOF BASE FLUSH: done tweaking all endpoints once");
     orte_iof_base.iof_waiting++;
 
@@ -124,7 +124,7 @@ int orte_iof_base_flush(void)
             }
         }
     } while (pending > 0);
-    orte_output_verbose(1, orte_iof_base.iof_output, "IOF BASE FLUSH: done waiting");
+    opal_output_verbose(1, orte_iof_base.iof_output, "IOF BASE FLUSH: done waiting");
     orte_iof_base.iof_waiting--;
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     OPAL_THREAD_ADD32(&lock,-1);

@@ -55,7 +55,7 @@
 #include "opal/threads/condition.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
@@ -159,7 +159,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -208,9 +208,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
                                           &node_name_index,
                                           true);
 
-    if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: final top-level argv:\n\t%s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
@@ -253,7 +253,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             if (0 == strncmp("PATH=", env[i], 5)) {
                 asprintf(&newenv, "%s/%s:%s", 
                             apps[0]->prefix_dir, bin_base, env[i] + 5);
-                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:tm: resetting PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
@@ -265,7 +265,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
                 asprintf(&newenv, "%s/%s:%s", 
                             apps[0]->prefix_dir, lib_base, env[i] + 16);
-                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
@@ -291,7 +291,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         free(argv[node_name_index]);
         argv[node_name_index] = strdup(node->name);
         
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name));
@@ -299,7 +299,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         /* setup process name */
         rc = orte_util_convert_vpid_to_string(&vpid_string, nodes[i]->daemon->name.vpid);
         if (ORTE_SUCCESS != rc) {
-            orte_output(0, "plm:tm: unable to get daemon vpid as string");
+            opal_output(0, "plm:tm: unable to get daemon vpid as string");
             exit(-1);
         }
         free(argv[proc_vpid_index]);
@@ -307,9 +307,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         free(vpid_string);
         
         /* exec the daemon */
-        if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
+        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
             param = opal_argv_join(argv, ' ');
-            ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:tm: executing:\n\t%s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == param) ? "NULL" : param));
@@ -330,7 +330,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         opal_event_loop(OPAL_EVLOOP_NONBLOCK);
     }
 
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished spawning orteds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -339,7 +339,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
         if (TM_SUCCESS != rc) {
             errno = local_err;
-            orte_output(0, "plm:tm: failed to poll for a spawned daemon, return status = %d", rc);
+            opal_output(0, "plm:tm: failed to poll for a spawned daemon, return status = %d", rc);
             goto cleanup;
         }
     }
@@ -348,7 +348,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
      * millisec/daemon timeout provided by the user to compute time
      */
     if (0 < orte_startup_timeout) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: setting startup timer for %d milliseconds",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_startup_timeout));
@@ -359,7 +359,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: daemon launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
@@ -377,7 +377,7 @@ launch_apps:
      */
     failed_job = jdata->jobid;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
@@ -426,7 +426,7 @@ launch_apps:
         orte_plm_base_start_heart();
     }
     
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -529,13 +529,13 @@ static int plm_tm_disconnect(void)
  */
 static void failed_start(int fd, short dummy, void *arg)
 {
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:failed_start",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting, ignore this */
     if (orte_abnormal_term_ordered) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm:failed_start - abnormal term in progress",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return;

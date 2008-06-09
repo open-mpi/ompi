@@ -46,7 +46,7 @@
 #endif
 
 #include "opal/dss/dss_types.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
@@ -948,7 +948,7 @@ orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
 
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                        NULL, errcode, 0, (LPTSTR)&localbuf, 1024, NULL );
-        orte_output( 0, "Failed to initialize the process callback for pid %lu error %s\n",
+        opal_output( 0, "Failed to initialize the process callback for pid %lu error %s\n",
                         (unsigned long)(handle->pid), localbuf );
         LocalFree( localbuf );
     }

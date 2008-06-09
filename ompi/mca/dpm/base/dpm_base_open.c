@@ -19,10 +19,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/mca/dpm/base/base.h"
@@ -44,7 +44,7 @@ ompi_dpm_base_component_t ompi_dpm_base_selected_component;
 int ompi_dpm_base_open(void)
 {
     /* Debugging/Verbose output */
-    ompi_dpm_base_output = orte_output_open(NULL);
+    ompi_dpm_base_output = opal_output_open(NULL);
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

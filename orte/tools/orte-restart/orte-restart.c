@@ -66,7 +66,7 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 /******************
  * Local Functions

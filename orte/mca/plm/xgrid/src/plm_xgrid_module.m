@@ -33,7 +33,7 @@
 
 #import "orte/constants.h"
 #import "opal/util/argv.h"
-#import "orte/util/output.h"
+#import "orte/util/show_help.h"
 #import "orte/util/session_dir.h"
 #import "opal/event/event.h"
 #import "orte/runtime/orte_wait.h"
@@ -141,7 +141,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
         goto cleanup;
     }
     
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:xgrid: setting up job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -154,7 +154,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
 	goto cleanup;
     }
 
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:xgrid: mapping job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -164,7 +164,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
 	goto cleanup;
     }         
 
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:xgrid: setting up I/O for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -189,7 +189,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
 
     /* Daemons are running - launch the applications */
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:xgrid: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));

@@ -29,7 +29,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
@@ -41,7 +41,7 @@
 #endif
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"

@@ -27,7 +27,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/threads/condition.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/bit_ops.h"
 
 #include "opal/class/opal_hash_table.h"
@@ -104,7 +104,7 @@ static int xcast(orte_jobid_t job,
     opal_buffer_t buf;
     orte_daemon_cmd_flag_t command;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:xcast sent to job %s tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), (long)tag));
@@ -220,7 +220,7 @@ static int barrier(void)
     int rc;
     struct timeval ompistart, ompistop;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -250,7 +250,7 @@ static int barrier(void)
     }
     OBJ_DESTRUCT(&buf);
     
-    ORTE_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:basic barrier sent",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -267,7 +267,7 @@ static int barrier(void)
     
     ORTE_PROGRESSED_WAIT(barrier_recvd, 0, 1);
     
-    ORTE_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:basic received barrier release",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -285,7 +285,7 @@ static int barrier(void)
             }
             ORTE_PROGRESSED_WAIT(barrier_timer, 0, 1);
             gettimeofday(&ompistop, NULL);
-            orte_output(0, "%s time to complete barrier %ld usec",
+            opal_output(0, "%s time to complete barrier %ld usec",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                    (ompistop.tv_usec - ompistart.tv_usec)));
@@ -335,7 +335,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     opal_buffer_t coll;
     orte_grpcomm_coll_t coll_type=ORTE_GRPCOMM_ALLGATHER;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -371,7 +371,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     }
     OBJ_DESTRUCT(&coll);
     
-    ORTE_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:basic allgather buffer sent",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -399,7 +399,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     }
     OBJ_RELEASE(allgather_buf);
     
-    ORTE_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s allgather buffer received",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -417,7 +417,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
             }
             ORTE_PROGRESSED_WAIT(barrier_timer, 0, 1);
             gettimeofday(&ompistop, NULL);
-            orte_output(0, "%s allgather: time to complete %ld usec",
+            opal_output(0, "%s allgather: time to complete %ld usec",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                    (ompistop.tv_usec - ompistart.tv_usec)));
@@ -441,7 +441,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     }
     
     
-    ORTE_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic allgather completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

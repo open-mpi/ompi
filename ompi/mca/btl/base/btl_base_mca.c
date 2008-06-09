@@ -25,7 +25,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -75,7 +75,7 @@ int mca_btl_base_param_register(mca_base_component_t *version,
         mca_base_param_reg_int(version, "min_rdma_size", "", true, false,
                 0, &value);
         if(value != 0) {
-            orte_output(0, "min_rdma_size BTL parameter is deprecated. Please "
+            opal_output(0, "min_rdma_size BTL parameter is deprecated. Please "
                    "use the rdma_pipeline_send_length BTL parameter instead\n");
             module->btl_rdma_pipeline_send_length = (size_t)value;
         }
@@ -88,7 +88,7 @@ int mca_btl_base_param_register(mca_base_component_t *version,
         mca_base_param_reg_int(version, "max_rdma_size", "", true, false,
                                0, &value);
         if (0 != value) {
-            orte_output(0, "The max_rdma_size BTL parameter is deprecated.  Please use the rdma_pipeline_frag_size BTL parameter instead");
+            opal_output(0, "The max_rdma_size BTL parameter is deprecated.  Please use the rdma_pipeline_frag_size BTL parameter instead");
             module->btl_rdma_pipeline_frag_size = (size_t)value;
         }
 

@@ -80,12 +80,12 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     if(++vfrag->vf_wdog_cnt == mca_pml_dr.wdog_retry_max) {
         /* declare btl dead */
         if(vfrag->bml_btl->btl) { 
-            orte_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
+            opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
                         vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
             mca_pml_dr_sendreq_cleanup_active(vfrag->bml_btl->btl);
             mca_bml.bml_del_btl(vfrag->bml_btl->btl);
         } else { 
-            orte_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
+            opal_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
         }
         mca_pml_dr_vfrag_reset(vfrag);
     } else if(NULL == vfrag->bml_btl->btl) { 
@@ -123,12 +123,12 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
     if(++vfrag->vf_ack_cnt == mca_pml_dr.ack_retry_max) {
         /* declare btl dead */
         if(vfrag->bml_btl->btl) { 
-            orte_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
+            opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
                         vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
             mca_pml_dr_sendreq_cleanup_active(vfrag->bml_btl->btl);
             mca_bml.bml_del_btl(vfrag->bml_btl->btl);
         } else { 
-            orte_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
+            opal_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
         }   
         mca_pml_dr_vfrag_reset(vfrag);
     } else if(NULL == vfrag->bml_btl->btl) { 
@@ -167,7 +167,7 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
     /* make sure a path is available */
     if(mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->bml_endpoint->btl_eager) == 0 ||
        mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->bml_endpoint->btl_eager) == 0) {
-        orte_output(0, "%s:%d:%s: no path to peer", __FILE__, __LINE__, __func__);
+        opal_output(0, "%s:%d:%s: no path to peer", __FILE__, __LINE__, __func__);
         orte_errmgr.abort(-1, NULL);
     }
     if(vfrag->vf_offset == 0) {
@@ -175,7 +175,7 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
     } else {
         vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->bml_endpoint->btl_send);
     }
-    orte_output(0, "%s:%d:%s: selected new BTL: %s", __FILE__, __LINE__, __func__, 
+    opal_output(0, "%s:%d:%s: selected new BTL: %s", __FILE__, __LINE__, __func__, 
         vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
 }
 

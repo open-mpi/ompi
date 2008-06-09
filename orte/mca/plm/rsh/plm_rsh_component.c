@@ -43,7 +43,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -190,8 +190,8 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         asprintf(&mca_plm_rsh_component.agent_param, "qrsh");
         asprintf(&mca_plm_rsh_component.agent_path, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
         asprintf(&mca_plm_rsh_component.agent_argv[0], "%s/bin/%s/qrsh", getenv("SGE_ROOT"), getenv("ARC"));
-        if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
-            orte_output_verbose(1, orte_plm_globals.output,
+        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+            opal_output_verbose(1, orte_plm_globals.output,
                "%s plm:rsh: using %s for launching\n",
                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                mca_plm_rsh_component.agent_argv[0]);
@@ -204,7 +204,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
 
         bname = opal_basename(mca_plm_rsh_component.agent_argv[0]);
         if (NULL != bname && 0 == strcmp(bname, "ssh")
-            && 0 >= orte_output_get_verbosity(orte_plm_globals.output)) {
+            && 0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
             for (i = 1; NULL != mca_plm_rsh_component.agent_argv[i]; ++i) {
                 if (0 == strcasecmp("-x", 
                                     mca_plm_rsh_component.agent_argv[i])) {
@@ -228,7 +228,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
                              &mca_plm_rsh_component.agent_argv, "-nostdin");
             opal_argv_append(&mca_plm_rsh_component.agent_argc, 
                              &mca_plm_rsh_component.agent_argv, "-V");
-            if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
+            if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
                 opal_argv_append(&mca_plm_rsh_component.agent_argc, 
                                  &mca_plm_rsh_component.agent_argv, "-verbose");
             }
@@ -242,7 +242,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
        component */
     if (NULL == mca_plm_rsh_component.agent_argv || 
         NULL == mca_plm_rsh_component.agent_argv[0]) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find the "
                              "launching agent. Looked for: %s\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -254,7 +254,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         opal_path_findv(mca_plm_rsh_component.agent_argv[0], X_OK,
                         environ, NULL);
     if (NULL == mca_plm_rsh_component.agent_path) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find path "
                              "for launching agent \"%s\"\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

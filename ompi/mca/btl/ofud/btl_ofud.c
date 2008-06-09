@@ -23,7 +23,7 @@
 
 #include "ompi_config.h"
 #include "opal/prefetch.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/mca/btl/btl.h"
@@ -436,7 +436,7 @@ static int mca_btl_ud_dereg_mr(void* reg_data,
 
     if(ud_reg->mr != NULL) {
         if(ibv_dereg_mr(ud_reg->mr)) {
-            orte_output(0, "%s: error unpinning UD memory: %s\n",
+            opal_output(0, "%s: error unpinning UD memory: %s\n",
                     __func__, strerror(errno));
             return OMPI_ERROR;
         }

@@ -20,11 +20,11 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/ess/base/base.h"
 
@@ -49,7 +49,7 @@ int orte_ess_base_output;
 int
 orte_ess_base_open(void)
 {
-    orte_ess_base_output = orte_output_open(NULL);
+    orte_ess_base_output = opal_output_open(NULL);
     
     OBJ_CONSTRUCT(&orte_ess_base_components_available, opal_list_t);
 

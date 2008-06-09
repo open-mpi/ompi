@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -41,7 +41,7 @@ int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
                                  struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    orte_output_verbose(10, mca_coll_base_output, "In demo scatterv_intra");
+    opal_output_verbose(10, mca_coll_base_output, "In demo scatterv_intra");
     return demo_module->underlying.coll_scatterv(sbuf, scounts, disps, 
                                                  sdtype, rbuf, rcount,
                                                  rdtype, root, comm,
@@ -64,7 +64,7 @@ int mca_coll_demo_scatterv_inter(void *sbuf, int *scounts,
                                  struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    orte_output_verbose(10, mca_coll_base_output, "In demo scatterv_inter");
+    opal_output_verbose(10, mca_coll_base_output, "In demo scatterv_inter");
     return demo_module->underlying.coll_scatterv(sbuf, scounts, disps, 
                                                  sdtype, rbuf, rcount,
                                                  rdtype, root, comm,

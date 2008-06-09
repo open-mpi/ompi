@@ -104,6 +104,7 @@ static int output(int output_id, const char *format, va_list arglist);
  * Local state
  */
 static bool initialized = false;
+static int default_stderr_fd = -1;
 static output_desc_t info[OPAL_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
 static size_t temp_str_len = 0;
@@ -120,9 +121,15 @@ bool opal_output_init(void)
 {
     int i;
     char hostname[32];
+    char *str;
 
     if (initialized) {
         return true;
+    }
+
+    str = getenv("OPAL_OUTPUT_STDERR_FD");
+    if (NULL != str) {
+        default_stderr_fd = atoi(str);
     }
 
     OBJ_CONSTRUCT(&verbose, opal_output_stream_t);
@@ -806,7 +813,9 @@ static int output(int output_id, const char *format, va_list arglist)
 
         /* stderr output */
         if (ldi->ldi_stderr) {
-            write(fileno(stderr), out, (int)strlen(out)); 
+            write((-1 == default_stderr_fd) ? 
+                  fileno(stderr) : default_stderr_fd,
+                  out, (int)strlen(out)); 
             fflush(stderr);
 	}
 

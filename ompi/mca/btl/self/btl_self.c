@@ -29,7 +29,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
 #include "opal/sys/atomic.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/if.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/printf.h"

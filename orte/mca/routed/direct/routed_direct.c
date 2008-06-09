@@ -11,7 +11,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -148,7 +148,7 @@ static int update_route(orte_process_name_t *target,
             goto direct;
         }
         
-        ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_direct_update: diff job family routing %s --> %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(target), 
@@ -170,7 +170,7 @@ static int update_route(orte_process_name_t *target,
     
 direct:
     /* if it came from our own job family or was direct, there is nothing to do */
-    ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_direct_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -207,7 +207,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     ret = target;
     
 found:
-    ORTE_OUTPUT_VERBOSE((5, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed_direct_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
@@ -236,7 +236,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
         
-        ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_direct:callback got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri));
@@ -275,7 +275,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     /* if all procs have reported, then send out the info to complete the exchange */
     if (jdata->num_reported == jdata->num_procs) {
         
-        ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_direct:callback trigger fired on job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(jdata->jobid)));
         
@@ -321,7 +321,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
     if (orte_process_info.daemon ) {
         int rc;
         
-        ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_direct: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
@@ -418,7 +418,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             orte_std_cntr_t cnt;
             orte_rml_cmd_flag_t command;
             
-            ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_direct: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -447,7 +447,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             int rc;
             opal_buffer_t buf;
             
-            ORTE_OUTPUT_VERBOSE((1, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_direct: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                                  (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
@@ -491,7 +491,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
                 return ORTE_ERR_FATAL;
             }
 
-            ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                                  "%s routed_direct_init: set hnp contact info and name",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -517,7 +517,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             * always "direct"
             */
 
-            ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                                  "%s routed_direct_init: register sync",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -530,7 +530,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
                 return rc;
             }
             
-            ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                                  "%s routed_direct_init: wait to recv contact info for peers",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -545,7 +545,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
                 return rc;
             }
             
-            ORTE_OUTPUT_VERBOSE((2, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                                  "%s routed_direct_init: peer contact info recvd",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -572,7 +572,7 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        orte_output(0, "%s routed:direct: Connection to lifeline %s lost",
+        opal_output(0, "%s routed:direct: Connection to lifeline %s lost",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;

@@ -61,7 +61,7 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_doublering rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_doublering rank %d", rank));
   
     left = ((rank-1)%size);
     right = ((rank+1)%size);
@@ -112,7 +112,7 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
     return MPI_SUCCESS;
 
  err_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", 
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", 
                  __FILE__, line, err, rank));
     return err;
 }
@@ -131,7 +131,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_barrier_intra_recursivedoubling rank %d", 
                  rank));
 
@@ -196,7 +196,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
     return MPI_SUCCESS;
 
  err_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
@@ -215,7 +215,7 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_barrier_intra_bruck rank %d", rank));
 
     /* exchange data with rank-2^k and rank+2^k */
@@ -235,7 +235,7 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
     return MPI_SUCCESS;
 
  err_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", 
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", 
                  __FILE__, line, err, rank));
     return err;
 }
@@ -251,7 +251,7 @@ int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm,
     int remote, err;
 
     remote = ompi_comm_rank(comm);
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_barrier_intra_two_procs rank %d", remote));
     remote = (remote + 1) & 0x1;
 
@@ -432,7 +432,7 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
                               &(requested_alg));
     if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            orte_output( 0, "Barrier algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+            opal_output( 0, "Barrier algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
         }
         mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -449,7 +449,7 @@ int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:barrier_intra_do_forced selected algorithm %d",
                  data->user_forced[BARRIER].algorithm));
 
@@ -462,7 +462,7 @@ int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
     case (5):   return ompi_coll_tuned_barrier_intra_two_procs (comm, module);
     case (6):   return ompi_coll_tuned_barrier_intra_tree (comm, module);
     default:
-        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                      data->user_forced[BARRIER].algorithm,
                      ompi_coll_tuned_forced_max_algorithms[BARRIER]));
         return (MPI_ERR_ARG);
@@ -475,7 +475,7 @@ int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm,
 					   struct mca_coll_base_module_1_1_0_t *module,
 					   int algorithm, int faninout, int segsize)
 {
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));
 
     switch (algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed (comm, module);
@@ -486,7 +486,7 @@ int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm,
     case (5):   return ompi_coll_tuned_barrier_intra_two_procs (comm, module);
     case (6):   return ompi_coll_tuned_barrier_intra_tree (comm, module);
     default:
-        ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
         return (MPI_ERR_ARG);
     } /* switch */

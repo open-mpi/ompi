@@ -20,7 +20,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/snapc/snapc.h"
@@ -53,7 +53,7 @@ static orte_snapc_base_component_t none_component = {
 
     /* Verbosity level */
     0,
-    /* orte_output handler */
+    /* opal_output handler */
     -1,
     /* Default priority */
     1
@@ -84,7 +84,7 @@ int orte_snapc_base_select(bool seed, bool app)
                                    false, false,
                                    strdup("none"), &include_list);
     if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
-        orte_output_verbose(10, orte_snapc_base_output,
+        opal_output_verbose(10, orte_snapc_base_output,
                             "snapc:select: Using %s component",
                             include_list);
         best_component = &none_component;

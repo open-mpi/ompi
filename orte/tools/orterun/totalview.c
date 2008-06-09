@@ -54,7 +54,7 @@
 #include <ctype.h>
 
 #include "opal/util/opal_environ.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
@@ -389,20 +389,20 @@ void orte_totalview_init_before_spawn(void)
         char *s;
 
         if (orte_debug_flag) {
-            orte_output(0, "Info: Spawned by a debugger");
+            opal_output(0, "Info: Spawned by a debugger");
         }
 
         if (mca_base_param_reg_int_name("orte", "mpi_wait_for_totalview",
                                         "Whether the MPI application should wait for a debugger or not",
                                         false, false, (int)false, &value) < 0) {
-            orte_output(0, "Error: mca_base_param_reg_int_name\n");
+            opal_output(0, "Error: mca_base_param_reg_int_name\n");
         }
 
         /* push mca parameter into the environment (not done automatically?) */
 
         s = mca_base_param_environ_variable("orte", "mpi_wait_for_totalview", NULL);
         if (ORTE_SUCCESS != opal_setenv(s, "1", true, &environ)) {
-            orte_output(0, "Error: Can't setenv %s\n", s);
+            opal_output(0, "Error: Can't setenv %s\n", s);
         }
         free(s);
     }
@@ -432,7 +432,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
     if (0) { /* debugging daemons <<-- needs work */
 
         if (orte_debug_flag) {
-            orte_output(0, "Info: Setting up debugger process table for daemons\n");
+            opal_output(0, "Info: Setting up debugger process table for daemons\n");
         }
 
     } else {
@@ -445,14 +445,14 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
          */
 
         if (orte_debug_flag) {
-            orte_output(0, "Info: Setting up debugger process table for applications\n");
+            opal_output(0, "Info: Setting up debugger process table for applications\n");
         }
 
         MPIR_debug_state = 1;
 
         /* Get the job data for this job */
         if (NULL == (jdata = orte_get_job_data_object(jobid))) {
-            orte_output(0, "Error: Can't get job data\n");
+            opal_output(0, "Error: Can't get job data\n");
             return;
         }
         
@@ -465,7 +465,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         MPIR_proctable = (struct MPIR_PROCDESC *) malloc(sizeof(struct MPIR_PROCDESC) *
                                                          MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
-            orte_output(0, "Error: Out of memory\n");
+            opal_output(0, "Error: Out of memory\n");
         }
 
         /* initialize MPIR_proctable */
@@ -475,7 +475,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         apps = (orte_app_context_t**)jdata->apps->addr;
         for (j=0; j < jdata->num_procs; j++) {
             if (NULL == procs[j]) {
-                orte_output(0, "Error: undefined proc at position %ld\n", (long)j);
+                opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
             }
             
             appctx = apps[procs[j]->app_idx];

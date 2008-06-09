@@ -25,11 +25,11 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -86,7 +86,7 @@ int orte_iof_base_open(void)
     orte_util_convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
     free(str_value);
 
-    orte_iof_base.iof_output = orte_output_open(NULL);
+    orte_iof_base.iof_output = opal_output_open(NULL);
 
     /* initialize free list */
     opal_free_list_init( &orte_iof_base.iof_fragments,

@@ -20,7 +20,7 @@
 #include "orte/types.h"
 #include "orte/constants.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/util/name_fns.h"
 
@@ -77,7 +77,7 @@ int orte_iof_svc_pub_create(
     pub->pub_tag = pub_tag;
     pub->pub_endpoint = 
         orte_iof_base_endpoint_match(pub_name,pub_mask,pub_tag);
-    orte_output_verbose(1, orte_iof_base.iof_output, "created svc pub, name %s, proxy %s, tag %d / mask %x, endpoint %p\n",
+    opal_output_verbose(1, orte_iof_base.iof_output, "created svc pub, name %s, proxy %s, tag %d / mask %x, endpoint %p\n",
                 ORTE_NAME_PRINT((orte_process_name_t*)pub_name), ORTE_NAME_PRINT((orte_process_name_t*)pub_proxy),
                 pub_tag, pub_mask, (char*) pub->pub_endpoint);
 

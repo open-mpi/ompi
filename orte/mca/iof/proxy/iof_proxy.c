@@ -28,7 +28,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rml/rml.h"
@@ -90,7 +90,7 @@ int orte_iof_proxy_publish(
     if (orte_iof_base.iof_output >= 0) {
         char* name_str;
         orte_util_convert_process_name_to_string(&name_str, origin);
-        orte_output_verbose(1, orte_iof_base.iof_output,
+        opal_output_verbose(1, orte_iof_base.iof_output,
                     "orte_iof_proxy_publish(%s,%d,%d,%d)\n", 
                     name_str, mode, tag, fd);
         free(name_str);
@@ -132,7 +132,7 @@ int orte_iof_proxy_unpublish(
 #if 0
         {
             int i = 0;
-            orte_output_verbose(1, orte_iof_base.iof_output, "%s orted: ******** ABOUT TO IOF PROXY UNPUBLISH, %d", ORTE_NAME_PRINT(orte_process_info.my_name), getpid());
+            opal_output_verbose(1, orte_iof_base.iof_output, "%s orted: ******** ABOUT TO IOF PROXY UNPUBLISH, %d", ORTE_NAME_PRINT(orte_process_info.my_name), getpid());
             fflush(stderr);
             while (0 == i) sleep(5);
         }

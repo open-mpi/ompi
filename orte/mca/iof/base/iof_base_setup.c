@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,9 +55,10 @@
 #include <libutil.h>
 #endif
 
-#include "orte/util/output.h"
 #include "opal/util/opal_pty.h"
+#include "opal/util/opal_environ.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/iof/iof.h"
@@ -98,11 +100,15 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
             return ORTE_ERR_SYS_LIMITS_PIPES;
         }
     }
-        if (pipe(opts->p_stdin) < 0) {
-            ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-            return ORTE_ERR_SYS_LIMITS_PIPES;
-        }
+    if (pipe(opts->p_stdin) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+        return ORTE_ERR_SYS_LIMITS_PIPES;
+    }
     if (pipe(opts->p_stderr) < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
+        return ORTE_ERR_SYS_LIMITS_PIPES;
+    }
+    if (pipe(opts->p_internal) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
@@ -113,15 +119,17 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
 
 
 int
-orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
+orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
 {
     int ret;
+    char *str;
 
     if (!opts->usepty) {
         close(opts->p_stdout[0]);
     }
     close(opts->p_stdin[1]);
     close(opts->p_stderr[0]);
+    close(opts->p_internal[0]);
 
     if (opts->usepty) {
 #ifndef __WINDOWS__
@@ -177,6 +185,14 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
         close(opts->p_stderr[1]);
     }
 
+    /* Set an environment variable that the new child process can use
+       to get the fd of the pipe connected to the INTERNAL IOF tag. */
+    asprintf(&str, "%d", opts->p_internal[1]);
+    if (NULL != str) {
+        opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
+        free(str);
+    }
+
     return ORTE_SUCCESS;
 }
 
@@ -192,6 +208,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
     }
     close(opts->p_stdin[0]);
     close(opts->p_stderr[1]);
+    close(opts->p_internal[1]);
 
     /* connect stdin endpoint */
     if (opts->connect_stdin) {
@@ -206,7 +223,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
         close(opts->p_stdin[1]);
     }
 
-    /* connect read end to IOF */
+    /* connect read ends to IOF */
     ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE,
                               ORTE_IOF_STDOUT, opts->p_stdout[0]);
     if(ORTE_SUCCESS != ret) {
@@ -216,6 +233,13 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
 
     ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE, 
                               ORTE_IOF_STDERR, opts->p_stderr[0]);
+    if(ORTE_SUCCESS != ret) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE, 
+                               ORTE_IOF_INTERNAL, opts->p_internal[0]);
     if(ORTE_SUCCESS != ret) {
         ORTE_ERROR_LOG(ret);
         return ret;

@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 
@@ -73,7 +73,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
         return ORTE_SUCCESS;  /* nothing to do */
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:node_insert inserting %ld nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)num_nodes));
@@ -98,7 +98,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * if this node is the same as the HNP's node so we don't double-enter it
          */
         if (0 == strcmp(node->name, hnp_node->name) || opal_ifislocal(node->name)) {
-            ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert updating HNP info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (long)node->slots));
@@ -121,7 +121,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             OBJ_RELEASE(node);
         } else {
             /* insert the object onto the orte_nodes global array */
-            ORTE_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));

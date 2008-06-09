@@ -24,7 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/ess/base/base.h"
 
@@ -41,7 +41,7 @@ orte_ess_base_close(void)
         orte_ess_base_component_t* component;
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_ess_base_component_t *) cli->cli_component;
-        orte_output_verbose(10, 0,
+        opal_output_verbose(10, 0,
                             "orte_ess_base_close: module %s unloaded",
                             component->base_version.mca_component_name);
         mca_base_component_repository_release((mca_base_component_t *) component);

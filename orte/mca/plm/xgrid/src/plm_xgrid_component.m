@@ -120,13 +120,13 @@ int orte_plm_xgrid_component_query(mca_base_module_t **module, int *priority)
     int ret, val, param;
 
     if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME")) {
-        orte_output_verbose(10, orte_plm_globals.output,
+        opal_output_verbose(10, orte_plm_globals.output,
                             "orte:plm:xgrid: not available: controller info not set");
         *module = NULL;
         return ORTE_ERROR;
     }
 
-    orte_output_verbose(1, orte_plm_globals.output,
+    opal_output_verbose(1, orte_plm_globals.output,
 			"orte:plm:xgrid: initializing PlmXGridClient");
     mca_plm_xgrid_component.pool = [[NSAutoreleasePool alloc] init];
     mca_plm_xgrid_component.client = [[PlmXGridClient alloc] init];
@@ -157,14 +157,14 @@ int orte_plm_xgrid_component_query(mca_base_module_t **module, int *priority)
 
     ret = [mca_plm_xgrid_component.client connect];
     if (ret != ORTE_SUCCESS) {
-        orte_output_verbose(10, orte_plm_globals.output,
+        opal_output_verbose(10, orte_plm_globals.output,
                             "orte:plm:xgrid: not available: connection failed");
         orte_plm_xgrid_finalize();
         *module = NULL;
         return ORTE_ERROR;
     }
 
-    orte_output_verbose(10, orte_plm_globals.output,
+    opal_output_verbose(10, orte_plm_globals.output,
 			"orte:plm:xgrid: initialized");
     *module = (mca_base_module_t *) &orte_plm_xgrid_module;
     return ORTE_SUCCESS;

@@ -27,7 +27,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/proc_info.h"
@@ -213,7 +213,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
         }
     }
     /* if we get here, then this node isn't already in the map - add it */
-    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base: adding node %s to map",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == node->name) ? "NULL" : node->name));
@@ -230,7 +230,7 @@ PROCESS:
      * that the proc isn't already there as this would be an error
      * in the mapper
      */
-    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base: mapping proc %s to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&proc->name),
@@ -287,7 +287,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
      * about keeping the array left-justified as all vpids
      * from 0 to num_procs will be filled
      */
-    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:claim_slot mapping rank %d to job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          vpid, ORTE_JOBID_PRINT(jdata->jobid)));
@@ -348,7 +348,7 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     uint8_t local_rank;
     orte_job_map_t *map;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:compute_usage",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -415,7 +415,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     orte_vpid_t numdaemons;
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:define_daemons",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -451,7 +451,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
             proc->name.vpid = daemons->num_procs;  /* take the next available vpid */
             proc->node = node;
             proc->nodename = node->name;
-            ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons add new daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
@@ -475,7 +475,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
         } else {
             /* this daemon was previously defined - flag it */
             node->daemon_launched = true;
-            ORTE_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons existing daemon %s already launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&node->daemon->name)));

@@ -23,7 +23,7 @@
 #include <inttypes.h>
 
 #include "ompi/constants.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "btl_portals.h"
 #include "btl_portals_frag.h"
@@ -37,7 +37,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
     int ret;
     unsigned char hdr_data[8];
 
-    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "PtlPut (rdma) fragment %lx, bits %" PRIx64,
                          (unsigned long) frag,
                          frag->base.des_dst[0].seg_key.key64));
@@ -60,7 +60,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                  0, /* remote offset - not used */
                  *((ptl_hdr_data_t*) hdr_data));            /* hdr_data: tag */
     if (ret != PTL_OK) {
-        orte_output(mca_btl_portals_component.portals_output,
+        opal_output(mca_btl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);
         return OMPI_ERROR;
     }
@@ -77,7 +77,7 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
     mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*) descriptor;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "PtlGet (rdma) fragment %lx, bits %" PRIx64,
                          (unsigned long) frag,
                          frag->base.des_src[0].seg_key.key64));
@@ -95,7 +95,7 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
                  frag->base.des_src[0].seg_key.key64, /* match bits */
                  0); /* remote offset - not used */
     if (ret != PTL_OK) {
-        orte_output(mca_btl_portals_component.portals_output,
+        opal_output(mca_btl_portals_component.portals_output,
                     "PtlGet failed with error %d", ret);
         return OMPI_ERROR;
     }

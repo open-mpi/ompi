@@ -240,7 +240,7 @@ ompi_osc_rdma_component_finalize(void)
 
     if (0 != 
         (num_modules = opal_hash_table_get_size(&mca_osc_rdma_component.c_modules))) {
-        orte_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_output,
                     "WARNING: There were %d Windows created but not freed.",
                     (int) num_modules);
 #if OMPI_ENABLE_PROGRESS_THREADS
@@ -324,7 +324,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     ret = ompi_comm_dup(comm, &module->m_comm, 0);
     if (ret != OMPI_SUCCESS) goto cleanup;
 
-    orte_output_verbose(1, ompi_osc_base_output,
+    opal_output_verbose(1, ompi_osc_base_output,
                         "rdma component creating window with id %d",
                         ompi_comm_get_cid(module->m_comm));
 
@@ -455,7 +455,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     }
     if (OMPI_SUCCESS != ret) goto cleanup;
 
-    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "done creating window %d", ompi_comm_get_cid(module->m_comm)));
 
     return OMPI_SUCCESS;
@@ -619,7 +619,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                 datatype = ompi_osc_base_datatype_create(proc, &payload);
 
                 if (NULL == datatype) {
-                    orte_output(ompi_osc_base_output,
+                    opal_output(ompi_osc_base_output,
                                 "Error recreating datatype.  Aborting.");
                     ompi_mpi_abort(module->m_comm, 1, false);
                 }
@@ -875,12 +875,12 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                 endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
                 bml_btl = mca_bml_base_btl_array_find(&endpoint->btl_rdma, btl);
                 if (NULL == bml_btl) {
-                    orte_output(ompi_osc_base_output,
+                    opal_output(ompi_osc_base_output,
                                 "received rdma info for unknown btl from rank %d",
                                 origin);
                     return;
                 } else {
-                    ORTE_OUTPUT_VERBOSE((1, ompi_osc_base_output,
+                    OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_output,
                                          "received rdma info from rank %d for BTL %s",
                                          origin,
                                          bml_btl->btl->
@@ -911,7 +911,7 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
 
         default:
             /* BWB - FIX ME - this sucks */
-            orte_output(ompi_osc_base_output,
+            opal_output(ompi_osc_base_output,
                         "received packet for Window with unknown type");
         }
 

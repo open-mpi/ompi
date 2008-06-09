@@ -54,7 +54,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -200,11 +200,6 @@ int orte_daemon(int argc, char *argv[])
     opal_buffer_t *buffer;
     char hostname[100];
     char *tmp_env_var = NULL;
-
-    /* JUST TO HELP JMS DEBUG RACE CONDITION - TO BE REMOVED!! */
-    gethostname(hostname, 100);
-    fprintf(stderr, "Daemon was launched on %s - starting up\n", hostname);
-    fflush(stderr);
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -610,7 +605,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     if (orte_debug_daemons_flag) {
-        orte_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
     /* if we were told to do a heartbeat, then setup to do so */
@@ -681,7 +676,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     }
     
     if (orte_debug_daemons_flag) {
-        orte_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
     
     /* cleanup */

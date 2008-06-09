@@ -19,7 +19,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -94,7 +94,7 @@ static int orte_ras_slurm_component_query(mca_base_module_t **module, int *prior
 
     if (NULL != getenv("SLURM_JOBID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *module = (mca_base_module_t *) &orte_ras_slurm_module;
@@ -103,7 +103,7 @@ static int orte_ras_slurm_component_query(mca_base_module_t **module, int *prior
 
     /* Sadly, no */
 
-    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:slurm: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     *module = NULL;

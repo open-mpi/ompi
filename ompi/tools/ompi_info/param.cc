@@ -37,7 +37,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/printf.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/tools/ompi_info/ompi_info.h"

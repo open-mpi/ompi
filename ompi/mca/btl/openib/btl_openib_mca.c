@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "opal/mca/installdirs/installdirs.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
@@ -66,7 +66,7 @@ static inline int reg_string(const char* param_name, const char* param_desc,
                               default_value, &value);
 
     if (0 != (flags & REGSTR_EMPTY_OK) && 0 == strlen(value)) {
-        orte_output(0, "Bad parameter value for parameter \"%s\"",
+        opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OMPI_ERR_BAD_PARAM;
     }
@@ -93,7 +93,7 @@ static inline int reg_int(const char* param_name, const char* param_desc,
     if ((0 != (flags & REGINT_GE_ZERO) && value < 0) ||
         (0 != (flags & REGINT_GE_ONE) && value < 1) ||
         (0 != (flags & REGINT_NONZERO) && 0 == value)) {
-        orte_output(0, "Bad parameter value for parameter \"%s\"",
+        opal_output(0, "Bad parameter value for parameter \"%s\"",
                 param_name);
         return OMPI_ERR_BAD_PARAM;
     }

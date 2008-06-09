@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
@@ -244,7 +244,7 @@ int mca_bml_r2_add_procs(
                     /* allocate bml specific proc data */
                     bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
                     if (NULL == bml_endpoint) {
-                        orte_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
+                        opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
                         free(btl_endpoints);
                         return OMPI_ERR_OUT_OF_RESOURCE;
                     }
@@ -300,14 +300,14 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_flags = btl->btl_flags; 
                 bml_btl->btl_put = btl->btl_put;
                 if( (bml_btl->btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == bml_btl->btl_put) ) {
-                    orte_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
+                    opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
                                 " the %s BTL without any PUT function attached. Disard the flag !",
                                 bml_btl->btl->btl_component->btl_version.mca_component_name);
                     bml_btl->btl_flags ^= MCA_BTL_FLAGS_PUT;
                 }
                 bml_btl->btl_get = btl->btl_get;
                 if( (bml_btl->btl_flags & MCA_BTL_FLAGS_GET) && (NULL == bml_btl->btl_get) ) {
-                    orte_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
+                    opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
                                 " the %s BTL without any GET function attached. Disard the flag !",
                                 bml_btl->btl->btl_component->btl_version.mca_component_name);
                     bml_btl->btl_flags ^= MCA_BTL_FLAGS_GET;
@@ -608,7 +608,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
         return OMPI_SUCCESS;
     
     if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2){ 
-        orte_output(0, "only one BTL left, can't failover");
+        opal_output(0, "only one BTL left, can't failover");
         goto CLEANUP; 
     }
     

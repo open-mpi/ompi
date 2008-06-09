@@ -28,7 +28,7 @@
 #include "opal/util/trace.h"
 
 #include "opal/dss/dss.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -51,7 +51,7 @@ static void failed_send(int fd, short event, void *arg)
      * don't get sent in time - set the done flag
      * so we can return the error
      */
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd command messages timed out with num_sent %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)num_reported));
     done_reporting = true;
@@ -63,7 +63,7 @@ static void send_callback(int status,
                           orte_rml_tag_t tag,
                           void* cbdata)
 {
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd message to %s sent",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer)));
@@ -79,7 +79,7 @@ static void send_callback(int status,
         /* mark as done */
         done_reporting = true;
         
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd all messages sent",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -94,7 +94,7 @@ int orte_plm_base_orted_exit(void)
     orte_job_t *daemons;
     orte_proc_t **procs;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -134,7 +134,7 @@ int orte_plm_base_orted_exit(void)
         orte_vpid_t v;
         orte_process_name_t peer;
         
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:orted_exit abnormal term ordered",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -168,7 +168,7 @@ int orte_plm_base_orted_exit(void)
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
-            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_cmd:orted_exit sending cmd to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&peer)));
@@ -221,7 +221,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
     opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_KILL_LOCAL_PROCS;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -253,7 +253,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
         orte_job_t *daemons;
         orte_proc_t **procs;
         
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:kill_local_procs abnormal term ordered",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -303,7 +303,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
-            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_cmd:kill_local_procs sending cmd to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&peer)));
@@ -358,7 +358,7 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
     opal_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SIGNAL_LOCAL_PROCS;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending signal_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

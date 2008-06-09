@@ -34,7 +34,7 @@
 #include "opal/util/error.h"
 #include "opal/runtime/opal.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -84,10 +84,10 @@ int orte_init(char flags)
         goto error;
     }
     
-    /* setup the orte_output system */
-    if (ORTE_SUCCESS != (ret = orte_output_init())) {
+    /* setup the orte_show_help system */
+    if (ORTE_SUCCESS != (ret = orte_show_help_init())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_output_init";
+        error = "opal_output_init";
         goto error;
     }
     

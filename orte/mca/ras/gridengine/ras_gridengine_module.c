@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/ras/base/ras_private.h"
@@ -68,7 +68,7 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
     /* show the Grid Engine's JOB_ID */
     if (mca_ras_gridengine_component.show_jobid ||
         mca_ras_gridengine_component.verbose != -1) {
-        orte_output(0, "ras:gridengine: JOB_ID: %s", job_id);
+        opal_output(0, "ras:gridengine: JOB_ID: %s", job_id);
     }
    
     /* check the PE_HOSTFILE before continuing on */
@@ -100,7 +100,7 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
         node->slots_inuse = 0;
         node->slots_max = 0;
         node->slots = (int)strtol(num, (char **)NULL, 10);
-        orte_output(mca_ras_gridengine_component.verbose,
+        opal_output(mca_ras_gridengine_component.verbose,
             "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
             node->name, node->slots);
         opal_list_append(nodelist, &node->super);
@@ -152,7 +152,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
         
         if(strcmp(node_name,name) == 0) {
             *slot_cnt = (int) strtol(num, (char **)NULL, 10);
-            orte_output(mca_ras_gridengine_component.verbose,
+            opal_output(mca_ras_gridengine_component.verbose,
                 "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
                 node_name, *slot_cnt);
             fclose(fp);
@@ -172,7 +172,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
 static int orte_ras_gridengine_finalize(void)
 {
     /* Nothing to do */
-    orte_output(mca_ras_gridengine_component.verbose,
+    opal_output(mca_ras_gridengine_component.verbose,
         "ras:gridengine:finalize: success (nothing to do)");
     return ORTE_SUCCESS;
 }

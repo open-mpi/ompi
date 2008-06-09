@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h" 
@@ -93,7 +93,7 @@ mca_mtl_mx_endpoint_t* mca_mtl_mx_endpoint_create(ompi_proc_t* ompi_proc) {
         if(MX_SUCCESS != mx_nic_id_to_hostname( mx_peer->nic_id, peer_name)) { 
             sprintf( peer_name, "unknown %lx nic_id", (long)mx_peer->nic_id ); 
         }
-        orte_output(ompi_mtl_base_output, 
+        opal_output(ompi_mtl_base_output, 
                     "mx_connect fail for %s with key %x (error %s)\n", 
                     peer_name, ompi_mtl_mx.mx_filter, mx_strerror(mx_return) );
         return NULL;

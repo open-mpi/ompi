@@ -36,7 +36,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/class/opal_list.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 
@@ -112,7 +112,7 @@ ORTE_DECLSPEC int orte_wait_event(opal_event_t **event, int *trig,
  */
 #define ORTE_PROGRESSED_WAIT(failed, counter, limit)      \
     do {                                                  \
-        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,        \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,        \
                             "progressed_wait: %s %d",     \
                              __FILE__, __LINE__));        \
         while (!(failed) && (counter) < (limit)) {        \
@@ -163,7 +163,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
 #define ORTE_MESSAGE_EVENT_DELAY(delay, mev)                        \
     do {                                                            \
         struct timeval now;                                         \
-        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,                  \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                  \
                             "defining message event delay: %s %d",  \
                             __FILE__, __LINE__));                   \
         now.tv_sec = delay/1000000;                                 \
@@ -177,7 +177,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
     do {                                                        \
         orte_message_event_t *mev;                              \
         struct timeval now;                                     \
-        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,              \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
                             "defining message event: %s %d",    \
                             __FILE__, __LINE__));               \
         mev = OBJ_NEW(orte_message_event_t);                    \
@@ -199,7 +199,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
     do {                                                        \
         orte_message_event_t *mev;                              \
         struct timeval now;                                     \
-        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,              \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
                             "defining message event: %s %d",    \
                             __FILE__, __LINE__));               \
         mev = OBJ_NEW(orte_message_event_t);                    \
@@ -245,7 +245,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         }                                                           \
         now.tv_sec = timeout/1000000;                               \
         now.tv_usec = timeout%1000000;                              \
-        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,                  \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                  \
                              "defining timeout: %ld sec %ld usec",  \
                             (long)now.tv_sec, (long)now.tv_usec));  \
         opal_evtimer_add(tmp, &now);                                \
@@ -266,7 +266,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         opal_evtimer_set(tmp, (cbfunc), tmp);                   \
         now.tv_sec = (time);                                    \
         now.tv_usec = 0;                                        \
-        ORTE_OUTPUT_VERBOSE((1, orte_debug_output,              \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
                             "defining timer event: %ld sec",    \
                             (long)now.tv_sec));                 \
         opal_evtimer_add(tmp, &now);                            \

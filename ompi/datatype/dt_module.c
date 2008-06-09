@@ -837,7 +837,7 @@ int32_t ompi_ddt_finalize( void )
 
 #if defined(VERBOSE)
     if( ompi_ddt_dfd != -1 )
-        orte_output_close( ompi_ddt_dfd );
+        opal_output_close( ompi_ddt_dfd );
     ompi_ddt_dfd = -1;
 #endif  /* VERBOSE */
 
@@ -999,7 +999,7 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
         index += snprintf( buffer + index, length - index, "No optimized description\n" );
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
-    orte_output( 0, "%s\n", buffer );
+    opal_output( 0, "%s\n", buffer );
 
     ompi_ddt_print_args( pData );
 

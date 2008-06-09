@@ -15,7 +15,7 @@
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 
@@ -231,13 +231,13 @@ mca_btl_elan_component_init( int *num_btl_modules,
                 }
             }
             if( 0 == fscanf( position, "%s%i", file_line, &positions[count] ) ) {
-                orte_output( 0, "Unable to read the network position" );
+                opal_output( 0, "Unable to read the network position" );
                 continue;
             }
             fclose(position);
             btl =  (mca_btl_elan_module_t*)malloc (sizeof (mca_btl_elan_module_t));	
             if(NULL == btl) {
-                orte_output( 0, "No enough memory to allocate the Elan internal structures" );
+                opal_output( 0, "No enough memory to allocate the Elan internal structures" );
                 return NULL;
             }
             memcpy( btl, &mca_btl_elan_module, sizeof(mca_btl_elan_module_t) );

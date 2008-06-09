@@ -23,7 +23,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_value_array.h"
@@ -34,7 +34,7 @@
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -143,7 +143,7 @@ int orte_odls_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
-    orte_odls_globals.output = orte_output_open(NULL);
+    orte_odls_globals.output = opal_output_open(NULL);
 
     mca_base_param_reg_int_name("odls", "base_sigkill_timeout",
                                 "Time to wait for a process to die after issuing a kill signal to it",

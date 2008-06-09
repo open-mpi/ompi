@@ -25,7 +25,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/trace.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -54,7 +54,7 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
     
     /* if we are already in progress, then ignore this call */
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
-        ORTE_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: abort in progress, ignoring proc %s aborted with status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(name), exit_code));
@@ -62,7 +62,7 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
         return;
     }
     
-    ORTE_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                          "%s errmgr:default: proc %s aborting with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(name), exit_code));
@@ -120,14 +120,14 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
     
     /* if we are already in progress, then ignore this call */
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
-        ORTE_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: abort in progress, ignoring incomplete start on job %s with status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job), exit_code));
         return;
     }
 
-    ORTE_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                          "%s errmgr:default: job %s reported incomplete start with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), exit_code));

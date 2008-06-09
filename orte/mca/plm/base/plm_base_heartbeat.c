@@ -30,7 +30,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
@@ -79,7 +79,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     struct timeval timeout;
     bool died = false;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:base:check_heartbeat",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

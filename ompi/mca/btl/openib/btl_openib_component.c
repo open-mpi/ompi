@@ -37,7 +37,7 @@
 #include "opal/include/opal/align.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/sys/timer.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
@@ -208,7 +208,7 @@ static int btl_openib_modex_send(void)
     size_t size, msg_size;
     ompi_btl_openib_connect_base_module_t *cpc;
 
-    orte_output(-1, "Starting to modex send");
+    opal_output(-1, "Starting to modex send");
     if (0 == mca_btl_openib_component.ib_num_btls) {
         return 0;
     }
@@ -262,7 +262,7 @@ static int btl_openib_modex_send(void)
     /* Pack the number of modules */
     offset = message;
     pack8(&offset, mca_btl_openib_component.ib_num_btls);
-    orte_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_num_btls, *((uint8_t*) message), (int) (offset - message));
+    opal_output(-1, "modex sending %d btls (packed: %d, offset now at %d)", mca_btl_openib_component.ib_num_btls, *((uint8_t*) message), (int) (offset - message));
 
     /* Pack each of the modules */
     for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
@@ -272,7 +272,7 @@ static int btl_openib_modex_send(void)
         memcpy(offset, 
                &(mca_btl_openib_component.openib_btls[i]->port_info), 
                size);
-        orte_output(-1, "modex packed btl port modex message: 0x%" PRIx64 ", %d, %d (size: %d)",
+        opal_output(-1, "modex packed btl port modex message: 0x%" PRIx64 ", %d, %d (size: %d)",
                     mca_btl_openib_component.openib_btls[i]->port_info.subnet_id,
                     mca_btl_openib_component.openib_btls[i]->port_info.mtu,
                     mca_btl_openib_component.openib_btls[i]->port_info.lid,
@@ -282,13 +282,13 @@ static int btl_openib_modex_send(void)
         MCA_BTL_OPENIB_MODEX_MSG_HTON(*(mca_btl_openib_modex_message_t *)offset);
 #endif
         offset += size;
-        orte_output(-1, "modex packed btl %d: modex message, offset now %d",
+        opal_output(-1, "modex packed btl %d: modex message, offset now %d",
                     i, (int) (offset -message));
 
         /* Pack the number of CPCs that follow */
         pack8(&offset, 
               mca_btl_openib_component.openib_btls[i]->num_cpcs);
-        orte_output(-1, "modex packed btl %d: to pack %d cpcs (packed: %d, offset now %d)",
+        opal_output(-1, "modex packed btl %d: to pack %d cpcs (packed: %d, offset now %d)",
                     i, mca_btl_openib_component.openib_btls[i]->num_cpcs,
                     *((uint8_t*) (offset - 1)), (int) (offset-message));
 
@@ -299,27 +299,27 @@ static int btl_openib_modex_send(void)
             uint8_t u8;
 
             cpc = mca_btl_openib_component.openib_btls[i]->cpcs[j];
-            orte_output(-1, "modex packed btl %d: packing cpc %s", 
+            opal_output(-1, "modex packed btl %d: packing cpc %s", 
                         i, cpc->data.cbm_component->cbc_name);
             /* Pack the CPC index */
             u8 = ompi_btl_openib_connect_base_get_cpc_index(cpc->data.cbm_component);
             pack8(&offset, u8);
-            orte_output(-1, "packing btl %d: cpc %d: index %d (packed %d, offset now %d)",
+            opal_output(-1, "packing btl %d: cpc %d: index %d (packed %d, offset now %d)",
                         i, j, u8, *((uint8_t*) (offset-1)), (int)(offset-message));
             /* Pack the CPC priority */
             pack8(&offset, cpc->data.cbm_priority);
-            orte_output(-1, "packing btl %d: cpc %d: priority %d (packed %d, offset now %d)",
+            opal_output(-1, "packing btl %d: cpc %d: priority %d (packed %d, offset now %d)",
                         i, j, cpc->data.cbm_priority, *((uint8_t*) (offset-1)), (int)(offset-message));
             /* Pack the blob length */
             u8 = cpc->data.cbm_modex_message_len;
             pack8(&offset, u8);
-            orte_output(-1, "packing btl %d: cpc %d: message len %d (packed %d, offset now %d)",
+            opal_output(-1, "packing btl %d: cpc %d: message len %d (packed %d, offset now %d)",
                         i, j, u8, *((uint8_t*) (offset-1)), (int)(offset-message));
             /* If the blob length is > 0, pack the blob */
             if (u8 > 0) {
                 memcpy(offset, cpc->data.cbm_modex_message, u8);
                 offset += u8;
-                orte_output(-1, "packing btl %d: cpc %d: blob packed %d %x (offset now %d)",
+                opal_output(-1, "packing btl %d: cpc %d: blob packed %d %x (offset now %d)",
                             i, j,
                             ((uint32_t*)cpc->data.cbm_modex_message)[0],
                             ((uint32_t*)cpc->data.cbm_modex_message)[1],
@@ -335,7 +335,7 @@ static int btl_openib_modex_send(void)
     rc = ompi_modex_send(&mca_btl_openib_component.super.btl_version,
                          message, msg_size);
     free(message);
-    orte_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));
+    opal_output(-1, "Modex sent!  %d calculated, %d actual\n", (int) msg_size, (int) (offset - message));
 
     return rc;
 }
@@ -2606,7 +2606,7 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
 
-    orte_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
+    opal_output(-1, "WARNING: the openib btl progress thread code *does not yet work*.  Your run is likely to hang, crash, break the kitchen sink, and/or eat your cat.  You have been warned.");
 
     while (hca->progress) {
         while(opal_progress_threads()) {

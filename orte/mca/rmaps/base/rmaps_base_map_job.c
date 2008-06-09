@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -29,7 +29,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -93,7 +93,7 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
     if (jdata->map->display_map) {
         char *output;
         opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
-        orte_output(orte_rmaps_base.map_output, "%s", output);
+        opal_output(orte_rmaps_base.map_output, "%s", output);
         free(output);
     }
     

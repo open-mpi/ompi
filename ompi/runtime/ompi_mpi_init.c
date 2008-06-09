@@ -50,7 +50,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
@@ -305,7 +305,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        orte_output(0, "ompi_mpi_init [%ld]: time from start to completion of orte_init %ld usec",
+        opal_output(0, "ompi_mpi_init [%ld]: time from start to completion of orte_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
@@ -509,7 +509,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        orte_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
@@ -526,7 +526,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        orte_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
@@ -610,7 +610,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        time if so, then start the clock again */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        orte_output(0, "ompi_mpi_init[%ld]: time from stage 2 cast to complete oob wireup %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from stage 2 cast to complete oob wireup %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
@@ -778,7 +778,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        orte_output(0, "ompi_mpi_init[%ld]: time from oob wireup to complete mpi_init %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from oob wireup to complete mpi_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));

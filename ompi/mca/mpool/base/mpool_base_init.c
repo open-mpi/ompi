@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/mpool/mpool.h"

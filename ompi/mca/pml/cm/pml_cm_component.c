@@ -139,7 +139,7 @@ mca_pml_cm_component_init(int* priority,
         return NULL;
     }
     *priority = ompi_pml_cm.default_priority;
-    orte_output_verbose( 10, 0, 
+    opal_output_verbose( 10, 0, 
                          "in cm pml priority is %d\n", *priority);
     /* find a useable MTL */
     ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads);

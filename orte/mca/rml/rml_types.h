@@ -100,8 +100,8 @@ BEGIN_C_DECLS
 /* daemon collectives */
 #define ORTE_RML_TAG_DAEMON_COLLECTIVE      30
 
-/* output and show help */
-#define ORTE_RML_TAG_OUTPUT                 31
+/* show help */
+#define ORTE_RML_TAG_SHOW_HELP              31
 
 
 #define ORTE_RML_TAG_MAX                   100

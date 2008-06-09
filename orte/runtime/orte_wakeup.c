@@ -24,7 +24,7 @@
 #include <unistd.h>
 #endif
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/threads/condition.h"
 #include "opal/runtime/opal_progress.h"
 

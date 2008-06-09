@@ -32,7 +32,7 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -98,14 +98,14 @@ int orte_dt_init(void)
     opal_data_type_t tmp;
 
     /* set default output */
-    orte_debug_output = orte_output_open(NULL);
+    orte_debug_output = opal_output_open(NULL);
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
         (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {
         if (0 < orte_debug_verbosity) {
-            orte_output_set_verbosity(orte_debug_output, orte_debug_verbosity);
+            opal_output_set_verbosity(orte_debug_output, orte_debug_verbosity);
         } else {
-            orte_output_set_verbosity(orte_debug_output, 1);
+            opal_output_set_verbosity(orte_debug_output, 1);
         }
     }
         

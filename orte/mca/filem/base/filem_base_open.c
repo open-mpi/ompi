@@ -20,12 +20,12 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/filem/base/static-components.h"
 
@@ -52,7 +52,7 @@ int orte_filem_base_open(void)
 {
     char *str_value = NULL;
 
-    orte_filem_base_output = orte_output_open(NULL);
+    orte_filem_base_output = opal_output_open(NULL);
 
     /* 
      * Which FileM component to open

@@ -48,7 +48,7 @@
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/types.h"
 #include "ompi/mca/pml/pml.h"
@@ -532,7 +532,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         hints.ai_flags = AI_PASSIVE;
 
         if ((error = getaddrinfo(NULL, "0", &hints, &res))) {
-            orte_output (0,
+            opal_output (0,
                "mca_btl_tcp_create_listen: unable to resolve. %s\n",
                gai_strerror (error));
             CLOSE_THE_SOCKET(sd);
@@ -549,7 +549,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
             int flg = 0;
             if (setsockopt (sd, IPPROTO_IPV6, IPV6_V6ONLY,
                             &flg, sizeof (flg)) < 0) {
-                orte_output(0,
+                opal_output(0,
                     "mca_btl_tcp_create_listen: unable to disable v4-mapped addresses\n");
             }
         }
@@ -724,7 +724,7 @@ static int mca_btl_tcp_component_exchange(void)
                  if (OPAL_SUCCESS != 
                      opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
                                         sizeof (my_ss))) {
-                     orte_output (0, 
+                     opal_output (0, 
                              "btl_tcp_component: problems getting address for index %i (kernel index %i)\n",
                              index, opal_ifindextokindex (index));
                      continue;
@@ -829,7 +829,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
 #if OPAL_WANT_IPV6
     if((ret = mca_btl_tcp_component_create_listen(AF_INET6)) != OMPI_SUCCESS) {
         if (!(OMPI_ERR_IN_ERRNO == ret && EAFNOSUPPORT == opal_socket_errno)) {
-            orte_output (0, "mca_btl_tcp_component: IPv6 listening socket failed\n");
+            opal_output (0, "mca_btl_tcp_component: IPv6 listening socket failed\n");
             return 0;
         }
     }

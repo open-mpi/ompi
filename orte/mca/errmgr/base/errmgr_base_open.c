@@ -23,10 +23,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -76,7 +76,7 @@ int orte_errmgr_base_open(void)
     
     if (!orte_errmgr_initialized) { /* ensure we only do this once */
       
-        orte_errmgr_base_output = orte_output_open(NULL);
+        orte_errmgr_base_output = opal_output_open(NULL);
 
         /* Open up all available components */
     
