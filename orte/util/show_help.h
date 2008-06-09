@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef _ORTE_OUTPUT_H_
-#define _ORTE_OUTPUT_H_
+#ifndef _ORTE_SHOW_HELP_H_
+#define _ORTE_SHOW_HELP_H_
 
 #include "orte_config.h"
 #include "orte/types.h"

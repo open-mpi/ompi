@@ -67,19 +67,12 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
-#include "orterun.h"
-#include "totalview.h"
+#include "orte/util/totalview.h"
 
 /* +++ begin MPICH/TotalView interface definitions */
 
 #define MPIR_DEBUG_SPAWNED  1
 #define MPIR_DEBUG_ABORTING 2
-
-struct MPIR_PROCDESC {
-    char *host_name;        /* something that can be passed to inet_addr */
-    char *executable_name;  /* name of binary */
-    int pid;                /* process pid */
-};
 
 struct MPIR_PROCDESC *MPIR_proctable = NULL;
 int MPIR_proctable_size = 0;
@@ -91,14 +84,6 @@ volatile int MPIR_debug_gate = 0;
 volatile int MPIR_acquired_pre_main = 0;
 
 /* --- end MPICH/TotalView interface definitions */
-
-/*
- * NOTE: The job description in the registry will likely evolve to use
- * the "jobgrp_t", but this works for now.
- * 
- * An initial skeleton of how to implement this with jobgrp_t is
- * available in SVN as orte/tools/orterun/totalview.c, version 7075.
- */
 
 
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
@@ -130,7 +115,7 @@ static void dump(void)
  * new_argv.
  */
 static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
-                   int argc, char **argv, char ***new_argv) 
+                   int argc, char **argv, char ***new_argv, int num_procs) 
 {
     int i;
     char *line, *full_line = strdup(orig_line);
@@ -212,7 +197,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
             asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 14);
         } else if (0 == strncmp(line + i, "@np@", 4)) {
             line[i] = '\0';
-            asprintf(&tmp, "%s%d%s", line, orterun_globals.num_procs,
+            asprintf(&tmp, "%s%d%s", line, num_procs,
                      line + i + 4);
             used_num_procs = true;
         } else if (0 == strncmp(line + i, "@single_app@", 12)) {
@@ -276,7 +261,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
         /* We do not support launching a debugger that requires the
            -np value if the user did not specify -np on the command
            line. */
-        if (used_num_procs && 0 == orterun_globals.num_procs) {
+        if (used_num_procs && 0 == num_procs) {
             orte_show_help("help-orterun.txt", "debugger requires -np",
                            true, (*new_argv)[0], argv[0], user_argv, 
                            (*new_argv)[0]);
@@ -321,7 +306,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
  * Run a user-level debugger
  */
 void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
-                       int argc, char *argv[])
+                       int argc, char *argv[], int num_procs)
 {
     int i, id;
     char **new_argv = NULL;
@@ -350,7 +335,7 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     free(value);
     for (i = 0; NULL != lines[i]; ++i) {
         if (ORTE_SUCCESS == process(lines[i], basename, cmd_line, argc, argv, 
-                                    &new_argv)) {
+                                    &new_argv, num_procs)) {
             break;
         }
     }

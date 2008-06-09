@@ -36,7 +36,8 @@ headers += \
         util/dash_host/dash_host.h \
         util/comm/comm.h \
         util/nidmap.h \
-        util/show_help.h
+        util/show_help.h \
+        util/totalview.h
 
 libopen_rte_la_SOURCES += \
         util/error_strings.c \
@@ -51,5 +52,6 @@ libopen_rte_la_SOURCES += \
         util/dash_host/dash_host.c \
         util/comm/comm.c \
         util/nidmap.c \
-        util/show_help.c
+        util/show_help.c \
+        util/totalview.c
 
