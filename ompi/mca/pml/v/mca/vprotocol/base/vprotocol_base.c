@@ -13,6 +13,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/pml/v/mca/vprotocol/base/static-components.h"
+#include "ompi/mca/pml/v/pml_v.h"
 
 opal_list_t mca_vprotocol_base_components_available;
 char *mca_vprotocol_base_include_list;
@@ -37,7 +38,7 @@ int mca_vprotocol_base_open(char *vprotocol_include_list)
 int mca_vprotocol_base_close(void)
 {
     int ret;
-    ret = mca_base_components_close(pml_v_output, 
+    ret = mca_base_components_close(mca_pml_v.output, 
                                     &mca_vprotocol_base_components_available, 
                                     NULL);
     OBJ_DESTRUCT(&mca_vprotocol_base_components_available);

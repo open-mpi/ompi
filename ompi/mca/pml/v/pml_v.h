@@ -18,6 +18,7 @@
 BEGIN_C_DECLS
 
 struct mca_pml_v_t {
+    int                                 output;
     size_t                              host_pml_req_recv_size;
     size_t                              host_pml_req_send_size;
     mca_pml_base_component_t            host_pml_component;
@@ -30,7 +31,5 @@ OMPI_MODULE_DECLSPEC extern mca_pml_v_t mca_pml_v;
 OMPI_MODULE_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_v_component;
 
 END_C_DECLS
-
-#include "pml_v_output.h"
 
 #endif  /* PML_V_H_HAS_BEEN_INCLUDED */

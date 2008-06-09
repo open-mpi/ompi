@@ -13,6 +13,7 @@
 
 #include "ompi_config.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/mca/pml/v/pml_v_output.h"
 #include "vprotocol_pessimist_sender_based_types.h"
 #include "vprotocol_pessimist_request.h"
 #include "vprotocol_pessimist.h"

@@ -15,6 +15,7 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/base/base.h"
+#include "pml_v_output.h"
 #include "pml_v.h"
 #include "mca/vprotocol/vprotocol.h"
 #include "mca/vprotocol/base/base.h"

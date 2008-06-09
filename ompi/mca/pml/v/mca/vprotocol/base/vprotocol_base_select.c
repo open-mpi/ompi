@@ -12,6 +12,7 @@
 #include "base.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "ompi/mca/pml/v/pml_v_output.h"
 
 mca_vprotocol_base_module_t mca_vprotocol;
 mca_vprotocol_base_component_t mca_vprotocol_component = {
@@ -116,7 +117,7 @@ int mca_vprotocol_base_select(bool enable_progress_threads,
         free(om);
     }
     
-    mca_base_components_close(pml_v_output, 
+    mca_base_components_close(mca_pml_v.output, 
                               &mca_vprotocol_base_components_available, 
                               (mca_base_component_t *) best_component);
     
