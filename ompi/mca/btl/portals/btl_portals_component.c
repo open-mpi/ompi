@@ -450,6 +450,7 @@ mca_btl_portals_component_progress(void)
                                              "received send fragment 0x%lx (thresh: %d, length %d)", 
                                              (unsigned long) frag,
                                              ev.md.threshold, (int) ev.mlength));
+                        frag->base.des_dst_cnt = 1;
                     }
                     if (ev.md.length - (ev.offset + ev.mlength) < (ptl_size_t) ev.md.max_size ||
                         ev.md.threshold == 1) {
@@ -537,12 +538,10 @@ mca_btl_portals_component_progress(void)
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to end send event\n");
-                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
-                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                              frag->endpoint,
-                                              &frag->base,
-                                              OMPI_ERROR);
-                    }
+                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                          frag->endpoint,
+                                          &frag->base,
+                                          OMPI_ERROR);
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -551,12 +550,10 @@ mca_btl_portals_component_progress(void)
 #endif
                 if(!mca_btl_portals_component.portals_need_ack) { 
                     /* my part's done, in portals we trust! */
-                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
-                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                              frag->endpoint,
-                                              &frag->base,
-                                              OMPI_SUCCESS);
-                    }
+                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                          frag->endpoint,
+                                          &frag->base,
+                                          OMPI_SUCCESS);
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -589,12 +586,10 @@ mca_btl_portals_component_progress(void)
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to ack event\n");
-                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
-                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                              frag->endpoint,
-                                              &frag->base,
-                                              OMPI_ERROR);
-                    }
+                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                          frag->endpoint,
+                                          &frag->base,
+                                          OMPI_ERROR);
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -619,12 +614,10 @@ mca_btl_portals_component_progress(void)
                     /* other side received the message.  should have
                        received entire thing */
                     /* let the PML know we're done */
-                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
-                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                              frag->endpoint,
-                                              &frag->base,
-                                              OMPI_SUCCESS);
-                    }
+                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                          frag->endpoint,
+                                          &frag->base,
+                                          OMPI_SUCCESS);
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
