@@ -39,7 +39,6 @@ endif # OMPI_INSTALL_BINARIES
 orterun_SOURCES = \
         main.c \
         orterun.c \
-        orterun.h \
-        totalview.c \
-        totalview.h 
+        orterun.h
+ 
 orterun_LDADD = $(top_builddir)/orte/libopen-rte.la

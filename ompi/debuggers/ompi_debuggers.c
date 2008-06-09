@@ -64,9 +64,8 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/include/mpi.h"
 
-OMPI_DECLSPEC int MPIR_being_debugged = 0;
-OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
-OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
+#include "orte/util/totalview.h"
+
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
    method is preferred because it's more flexible */
@@ -85,14 +84,6 @@ OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
     sizeof(size_t)
 };
     
-struct MPIR_PROCDESC {
-    char *host_name;        /* something that can be passed to inet_addr */
-    char *executable_name;  /* name of binary */
-    int pid;                /* process pid */
-};
-OMPI_DECLSPEC struct MPIR_PROCDESC *MPIR_proctable = NULL;
-OMPI_DECLSPEC int MPIR_proctable_size = 0;
-
 /**
  * There is an issue with the debugger running on different architectures
  * compared with the debugged program. We need to know the sizes of the types

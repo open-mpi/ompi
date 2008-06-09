@@ -71,6 +71,7 @@
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/totalview.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
@@ -90,7 +91,6 @@
 #include "orte/orted/orted.h"
 
 #include "orterun.h"
-#include "totalview.h"
 
 /*
  * Globals
@@ -599,6 +599,9 @@ static void job_completed(int trigpipe, short event, void *arg)
         }
     }
     
+    /* if the debuggers were run, clean up */
+    orte_totalview_finalize();
+    
     /* the job is complete - now setup an event that will
      * trigger when the orteds are gone and tell the orteds that it is
      * okay to finalize and exit, we are done with them.
@@ -1100,7 +1103,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {
-        orte_run_debugger(orterun_basename, cmd_line, argc, argv);
+        orte_run_debugger(orterun_basename, cmd_line, argc, argv, orterun_globals.num_procs);
     }
 
     /* Allocate and map by node or by slot?  Shortcut for setting an

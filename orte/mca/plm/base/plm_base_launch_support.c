@@ -27,6 +27,7 @@
 
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "opal/dss/dss.h"
 #include "orte/util/show_help.h"
@@ -47,14 +48,10 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_wait.h"
+
 #include "orte/util/name_fns.h"
-
-
+#include "orte/util/totalview.h"
 #include "orte/util/nidmap.h"
-#include "opal/class/opal_pointer_array.h"
-
-
-#include "orte/tools/orterun/totalview.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
@@ -217,10 +214,9 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         return rc;
     }
     
-    /* init the debuggers */
-#if 0
+    /* init any debuggers */
     orte_totalview_init_after_spawn(job);
-#endif
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
