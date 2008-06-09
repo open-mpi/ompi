@@ -469,7 +469,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     unsigned int iov_count;
     size_t max_data = size;
     int rc;
-#if 0
+
     if(NULL != bml_btl->btl_sendi) {
         mca_pml_ob1_match_hdr_t match;
         match.hdr_common.hdr_flags = 0;
@@ -489,37 +489,25 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
                                  MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
                                  MCA_PML_OB1_HDR_TYPE_MATCH, 
                                  &des);
-        if( OMPI_SUCCESS == rc ) {
-
-            /* signal request completion */                                                                                             
+        if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
+            /* signal request completion */
             send_request_pml_complete(sendreq);
 
             /* check for pending requests */
             MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
             return OMPI_SUCCESS;
         }
-        switch(rc) {
-        case OMPI_ERR_RESOURCE_BUSY:
-            if(OPAL_UNLIKELY(NULL == des)) { 
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            break;
-        default:
-            return rc;
-            break;
-        }
-    } else
-#endif
- { 
+    } else { 
         /* allocate descriptor */
         mca_bml_base_alloc( bml_btl, &des,
                             MCA_BTL_NO_ORDER,
                             OMPI_PML_OB1_MATCH_HDR_LEN + size,
                             MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-        if( OPAL_UNLIKELY(NULL == des) ) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
     }
+    if( OPAL_UNLIKELY(NULL == des) ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     segment = des->des_src;
 
     if(size > 0) {
