@@ -133,7 +133,8 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 
 static uint32_t proc_get_arch(orte_process_name_t *proc);
 {
-    return 0;
+    /* always homogeneous, so other side is always same as us */
+    return orte_process_info.arch;
 }
 
 static uint8_t proc_get_local_rank(orte_process_name_t *proc)
