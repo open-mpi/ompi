@@ -10,6 +10,7 @@
 
 #include "ompi_config.h"
 #include "vprotocol_base_request.h"
+#include "ompi/mca/pml/v/pml_v_output.h"
 
 int mca_vprotocol_base_request_parasite(void) 
 {
