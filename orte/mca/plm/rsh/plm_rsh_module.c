@@ -460,6 +460,29 @@ static int setup_launch(int *argcptr, char ***argvptr,
                                           node_name_index2,
                                           true);
     
+    /* in the rsh environment, we can append multi-word arguments
+     * by enclosing them in quotes. Check for any multi-word
+     * mca params passed to mpirun and include them
+     */
+    if (orte_process_info.hnp) {
+        int cnt, i;
+        cnt = opal_argv_count(orted_cmd_line);    
+        for (i=0; i < cnt; i+=3) {
+            /* check if the specified option is more than one word - all
+             * others have already been passed
+             */
+            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                /* must add quotes around it */
+                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
+                /* now pass it along */
+                opal_argv_append(&argc, &argv, orted_cmd_line[i]);
+                opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
+                opal_argv_append(&argc, &argv, param);
+                free(param);
+            }
+        }
+    }
+    
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
