@@ -28,11 +28,12 @@ int main(int argc, char* argv[])
     for (iter = 0; iter < 1000; ++iter) {
         /* setup the job object */
         jdata = OBJ_NEW(orte_job_t);
-        
+        jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+
         /* create an app_context that defines the app to be run */
         app = OBJ_NEW(orte_app_context_t);
-        app->app = strdup("orte_loop_child");
-        opal_argv_append_nosize(&app->argv, "orte_loop_child");
+        app->app = strdup("hostname");
+        opal_argv_append_nosize(&app->argv, "hostname");
         app->num_procs = 1;
         
         getcwd(cwd, sizeof(cwd));
