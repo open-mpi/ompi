@@ -128,10 +128,12 @@ static bool proc_is_local(orte_process_name_t *proc)
 
 static char* proc_get_hostname(orte_process_name_t *proc)
 {
-    return map[proc->vpid].nid;
+    static char hostname[128];
+    snprintf(hostname, 128, "n%d", map[proc->vpid].nid);
+    return hostname;
 }
 
-static uint32_t proc_get_arch(orte_process_name_t *proc);
+static uint32_t proc_get_arch(orte_process_name_t *proc)
 {
     /* always homogeneous, so other side is always same as us */
     return orte_process_info.arch;
