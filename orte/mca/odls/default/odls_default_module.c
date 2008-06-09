@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -63,7 +64,7 @@
 #endif
 #endif /* HAVE_SCHED_YIELD */
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -237,15 +238,21 @@ static int odls_default_fork_local_proc(
             for large jobs, so instead we set things up so that orterun
             always outputs a nice, single message indicating what happened
         */
-        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts))) {
+        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts, 
+                                                           &environ_copy))) {
             write(p[1], &i, sizeof(int));
             exit(1);
         }
         
 
-        /* close all file descriptors w/ exception of stdin/stdout/stderr */
-        for(fd=3; fd<fdmax; fd++)
-            close(fd);
+        /* close all file descriptors w/ exception of
+           stdin/stdout/stderr and the pipe used for the IOF INTERNAL
+           messages */
+        for(fd=3; fd<fdmax; fd++) {
+            if (fd != opts.p_internal[1]) {
+                close(fd);
+            }
+        }
 
         if (context->argv == NULL) {
             context->argv = malloc(sizeof(char*)*2);
@@ -301,7 +308,7 @@ static int odls_default_fork_local_proc(
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
                 child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
                 
-                ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 
@@ -322,7 +329,7 @@ static int odls_default_fork_local_proc(
                 child->state = ORTE_PROC_STATE_FAILED_TO_START;
                 child->exit_code = i;
                 
-                ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 
@@ -350,7 +357,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
-        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
@@ -358,7 +365,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     
     /* launch the local procs */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_default_fork_local_proc))) {
-        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
@@ -385,7 +392,7 @@ static int send_signal(pid_t pid, int signal)
 {
     int rc = ORTE_SUCCESS;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                          "%s sending signal %d to pid %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));

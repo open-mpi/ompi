@@ -28,7 +28,7 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -137,7 +137,7 @@ int orte_register_params(void)
     orte_help_want_aggregate = OPAL_INT_TO_BOOL(value);
     
     mca_base_param_reg_int_name("orte", "base_show_output_recursions",
-                                "If orte_base_show_output_recursion is true, recursive calls to orte_output will be reported to stderr",
+                                "If orte_base_show_output_recursion is true, recursive calls to opal_output will be reported to stderr",
                                 false, false,
                                 (int) false, &value);
     orte_help_show_recursions = OPAL_INT_TO_BOOL(value);

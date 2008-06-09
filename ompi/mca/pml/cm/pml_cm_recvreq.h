@@ -185,7 +185,7 @@ do {                                                                    \
 
 #define MCA_PML_CM_HVY_RECV_REQUEST_START(request, ret)                 \
 do {                                                                    \
-/*     orte_output(0, "posting hvy request %d\n", request);                */ \
+/*     opal_output(0, "posting hvy request %d\n", request);                */ \
     /* init/re-init the request */                                      \
     request->req_base.req_pml_complete = false;                         \
     request->req_base.req_ompi.req_complete = false;                    \

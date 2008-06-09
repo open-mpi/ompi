@@ -23,10 +23,10 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/oob/base/base.h"
 
@@ -65,7 +65,7 @@ int mca_oob_base_open(void)
     }
 
     /* register parameters */
-    mca_oob_base_output = orte_output_open(NULL);
+    mca_oob_base_output = opal_output_open(NULL);
     
     /* Open up all available components */
     OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);

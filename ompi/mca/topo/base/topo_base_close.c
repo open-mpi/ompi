@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -45,7 +45,7 @@ int mca_topo_base_close(void)
     }
 
     /* Close the output stream for this framework */
-    orte_output_close (mca_topo_base_output);
+    opal_output_close (mca_topo_base_output);
 
     /*
      * All done

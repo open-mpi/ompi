@@ -311,7 +311,7 @@ struct orte_filem_base_component_1_0_0_t {
 
     /** Verbosity Level */
     int verbose;
-    /** Output Handle for orte_output */
+    /** Output Handle for opal_output */
     int output_handle;
     /** Default Priority */
     int priority;

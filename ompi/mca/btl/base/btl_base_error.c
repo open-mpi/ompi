@@ -25,7 +25,7 @@
 #include "base.h"
 #include "btl_base_error.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/types.h"
 #include "orte/util/name_fns.h"

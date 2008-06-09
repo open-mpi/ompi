@@ -47,7 +47,7 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
     size_t dsize, block_dsize;
     int comm_size = ompi_comm_size(comm);
     const size_t intermediate_message = 10000;
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
     /**
      * Decision function based on MX results from the Grig cluster at UTK.
@@ -141,7 +141,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     ompi_ddt_type_size(sdtype, &dsize);
     total_dsize = dsize * scount * communicator_size;   /* needed for decision */
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed rank %d com_size %d msg_length %ld",
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed rank %d com_size %d msg_length %ld",
                  ompi_comm_rank(comm), communicator_size, total_dsize));
 
     if (communicator_size >= 12 && total_dsize <= 768) {
@@ -185,7 +185,7 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
 {
     int communicator_size = ompi_comm_size(comm);
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed com_size %d",
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed com_size %d",
                  communicator_size));
 
     if( 2 == communicator_size )
@@ -244,7 +244,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     ompi_ddt_type_size(datatype, &dsize);
     message_size = dsize * (unsigned long)count;   /* needed for decision */
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed"
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed"
                  " root %d rank %d com_size %d msg_length %lu",
                  root, ompi_comm_rank(comm), communicator_size, (unsigned long)message_size));
 
@@ -375,7 +375,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
 							     0, max_requests); 
     }
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
                  "root %d rank %d com_size %d msg_length %lu",
                  root, ompi_comm_rank(comm), communicator_size, (unsigned long)message_size));
 
@@ -466,7 +466,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
    const size_t small_message_size = 12 * 1024;
    const size_t large_message_size = 256 * 1024;
 
-   ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
+   OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
 
    if( !ompi_op_is_commute(op) ) {
       return ompi_coll_tuned_reduce_scatter_intra_nonoverlapping (sbuf, rbuf, rcounts, 
@@ -529,7 +529,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    ompi_ddt_type_size(sdtype, &dsize);
    total_dsize = dsize * scount * communicator_size;   
    
-   ORTE_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
+   OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
                 " rank %d com_size %d msg_length %lu",
                 ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
 
@@ -628,7 +628,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
         total_dsize += dsize * rcounts[i];
     }
     
-    ORTE_OUTPUT((ompi_coll_tuned_stream, 
+    OPAL_OUTPUT((ompi_coll_tuned_stream, 
                  "ompi_coll_tuned_allgatherv_intra_dec_fixed"
                  " rank %d com_size %d msg_length %lu",
                  ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
@@ -684,7 +684,7 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
     int communicator_size, rank;
     size_t dsize, block_size;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, 
+    OPAL_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_gather_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
@@ -746,7 +746,7 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
     int communicator_size, rank;
     size_t dsize, block_size;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream, 
+    OPAL_OUTPUT((ompi_coll_tuned_stream, 
 		 "ompi_coll_tuned_scatter_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);

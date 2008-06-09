@@ -164,8 +164,8 @@
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/event/event.h"
-#include "orte/util/output.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/arch.h"
@@ -807,7 +807,7 @@ OBJ_CLASS_INSTANCE(ompi_crcp_coord_pml_state_t,
 #define PACK_BUFFER(buffer, var, count, type, error_msg)                       \
  {                                                                             \
     if (OMPI_SUCCESS != (ret = opal_dss.pack(buffer, &(var), count, type)) ) { \
-        orte_output(mca_crcp_coord_component.super.output_handle,              \
+        opal_output(mca_crcp_coord_component.super.output_handle,              \
                     "%s (Return %d)", error_msg, ret);                         \
         exit_status = ret;                                                     \
         goto cleanup;                                                          \
@@ -818,7 +818,7 @@ OBJ_CLASS_INSTANCE(ompi_crcp_coord_pml_state_t,
  {                                                                             \
     orte_std_cntr_t n = count;                                                 \
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(var), &n, type)) ) {  \
-        orte_output(mca_crcp_coord_component.super.output_handle,              \
+        opal_output(mca_crcp_coord_component.super.output_handle,              \
                     "%s (Return %d)", error_msg, ret);                         \
         exit_status = ret;                                                     \
         goto cleanup;                                                          \
@@ -891,7 +891,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_enable(
                                   bool enable,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_enable()"));
     pml_state->error_code = OMPI_SUCCESS;
     return pml_state;
@@ -901,7 +901,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_enable(
 ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_progress(
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_progress()"));
     pml_state->error_code = OMPI_SUCCESS;
     return pml_state;
@@ -919,7 +919,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_iprobe(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_iprobe(%d, %d)", dst, tag));
 
     /*
@@ -935,7 +935,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_iprobe(
                                                     tag, dst,
                                                     comm->c_contextid,
                                                     &drain_msg_ref) ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_iprobe(): Failed trying to find a drained message."
                         " This should never happen. (%d)",
                         ret);
@@ -949,7 +949,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_iprobe(
          *  - Mark the 'matched' flag as true
          */
         if( NULL != drain_msg_ref ) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_iprobe(): Matched a drained message..."));
             
             /* Copy the status information */
@@ -989,7 +989,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_probe(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_probe(%d, %d)", dst, tag));
 
     /*
@@ -1005,7 +1005,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_probe(
                                                     tag, dst,
                                                     comm->c_contextid,
                                                     &drain_msg_ref) ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_probe(): Failed trying to find a drained message."
                         " This should never happen. (%d)",
                         ret);
@@ -1018,7 +1018,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_probe(
          *  - Copy of the status structure to pass back to the user
          */
         if( NULL != drain_msg_ref ) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_iprobe(): Matched a drained message..."));
             
             /* Copy the status information */
@@ -1044,7 +1044,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_dump(
                                   int verbose, 
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_dump()"));
     pml_state->error_code = OMPI_SUCCESS;
     return pml_state;
@@ -1056,7 +1056,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_add_comm(
                                   struct ompi_communicator_t* comm, 
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_add_comm()"));
     pml_state->error_code = OMPI_SUCCESS;
     return pml_state;
@@ -1066,7 +1066,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_del_comm(
                                   struct ompi_communicator_t* comm, 
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_del_comm()"));
     pml_state->error_code = OMPI_SUCCESS;
     return pml_state;
@@ -1085,7 +1085,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_add_procs(
         goto DONE;
     }
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_add_procs()"));
 
     /*
@@ -1125,13 +1125,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_del_procs(
         goto DONE;
     }
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_del_procs()"));
 
     for( i = 0; i < nprocs; ++i) {
         item = (opal_list_item_t*)find_peer(procs[i]->proc_name);
         if(NULL == item) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: del_procs: Unable to find peer %s\n",
                         ORTE_NAME_PRINT(&(procs[i]->proc_name)));
             exit_status = OMPI_ERROR;
@@ -1165,7 +1165,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_isend_init(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_isend_init()"));
 
     /*
@@ -1177,13 +1177,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_isend_init(
          * Find the peer reference
          */
         if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, dst, &peer_ref) ) ){
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: isend: Failed to find peer_ref\n");
             exit_status = ret;
             goto DONE;
         }
         if( NULL == peer_ref ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: isend: Failed to find peer_ref - peer_ref is NULL\n");
             exit_status = ret;
             goto DONE;
@@ -1259,7 +1259,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_isend(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_isend()"));
 
     /*
@@ -1271,13 +1271,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_isend(
          * Find the peer reference
          */
         if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, dst, &peer_ref) ) ){
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: isend: Failed to find peer_ref\n");
             exit_status = ret;
             goto DONE;
         }
         if( NULL == peer_ref ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: isend: Failed to find peer_ref - peer_ref is NULL\n");
             exit_status = ret;
             goto DONE;
@@ -1354,7 +1354,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_send(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_send()"));
 
     /*
@@ -1366,13 +1366,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_send(
          * Find the peer reference
          */
         if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, dst, &peer_ref) ) ){
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: send: Failed to find peer_ref\n");
             exit_status = ret;
             goto DONE;
         }
         if( NULL == peer_ref ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: send: Failed to find peer_ref - peer_ref is NULL\n");
             exit_status = ret;
             goto DONE;
@@ -1453,7 +1453,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv_init(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_irecv_init()"));
 
     /*
@@ -1495,13 +1495,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv_init(
         }
         else {
             if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, src, &peer_ref) ) ){
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: recv: Failed to find peer_ref\n");
                 exit_status = ret;
                 goto DONE;
             }
             if( NULL == peer_ref ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: recv: Failed to find peer_ref - peer_ref is NULL\n");
                 exit_status = ret;
                 goto DONE;
@@ -1567,7 +1567,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_irecv()"));
 
     /*
@@ -1583,7 +1583,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
                                                     count, tag, src,
                                                     comm->c_contextid,
                                                     &drain_msg_ref) ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_irecv(): Failed trying to find a drained message."
                         " This should never happen. (%d)",
                         ret);
@@ -1598,7 +1598,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
          *    when we originally drained the message.
          */
         if( NULL != drain_msg_ref ) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_irecv(): Matched a drained message. "
                                 "[%3d, %3d] vs [%3d, %3d]",
                                 (int)datatype->size, (int)count,
@@ -1610,7 +1610,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
 
             if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
                                                     buf, drain_msg_ref->buffer) ) {
-                orte_output( mca_crcp_coord_component.super.output_handle,
+                opal_output( mca_crcp_coord_component.super.output_handle,
                              "crcp:coord: pml_irecv(): Datatype copy failed (%d)",
                              ret);
             }
@@ -1628,13 +1628,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
              */
             if( NULL == peer_ref ) {
                 if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, src, &peer_ref) ) ){
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref\n");
                     exit_status = ret;
                     goto DONE;
                 }
                 if( NULL == peer_ref ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref - peer_ref is NULL\n");
                     exit_status = ret;
                     goto DONE;
@@ -1682,13 +1682,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
             }
             else {
                 if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, src, &peer_ref) ) ){
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref\n");
                     exit_status = ret;
                     goto DONE;
                 }
                 if( NULL == peer_ref ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref - peer_ref is NULL\n");
                     exit_status = ret;
                     goto DONE;
@@ -1756,7 +1756,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_recv()"));
 
     /*
@@ -1772,7 +1772,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
                                                     count, tag, src,
                                                     comm->c_contextid,
                                                     &drain_msg_ref) ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_recv(): Failed trying to find a drained message."
                         " This should never happen. (%d)",
                         ret);
@@ -1787,7 +1787,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
          *    when we originally drained the message.
          */
         if( NULL != drain_msg_ref ) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_recv(): Matched a drained message..."));
 
             /* Copy the drained message */
@@ -1795,7 +1795,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
             tag = drain_msg_ref->tag;
             if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
                                                     buf, drain_msg_ref->buffer) ) {
-                orte_output( mca_crcp_coord_component.super.output_handle,
+                opal_output( mca_crcp_coord_component.super.output_handle,
                              "crcp:coord: pml_recv(): Datatype copy failed (%d)",
                              ret);
             }
@@ -1814,13 +1814,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
              */
             if( NULL == peer_ref ) {
                 if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, src, &peer_ref) ) ){
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref\n");
                     exit_status = ret;
                     goto DONE;
                 }
                 if( NULL == peer_ref ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref - peer_ref is NULL\n");
                     exit_status = ret;
                     goto DONE;
@@ -1871,13 +1871,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
             }
             else {
                 if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, src, &peer_ref) ) ){
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref\n");
                     exit_status = ret;
                     goto DONE;
                 }
                 if( NULL == peer_ref ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv: Failed to find peer_ref - peer_ref is NULL\n");
                     exit_status = ret;
                     goto DONE;
@@ -1915,14 +1915,14 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
             src = status->MPI_SOURCE;
 
             if( OMPI_SUCCESS != (ret = find_peer_in_comm(comm, src, &peer_ref) ) ){
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: recv: Failed to resolve peer_ref (rank %d)\n",
                             src);
                 exit_status = ret;
                 goto DONE;
             }
             if( NULL == peer_ref ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: recv: Failed to resolve peer_ref (rank %d) - peer_ref is NULL\n",
                             src);
                 exit_status = ret;
@@ -1978,7 +1978,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
     int exit_status = OMPI_SUCCESS;
     int ret;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_start()"));
 
     /*
@@ -2009,13 +2009,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                     if( OMPI_SUCCESS != (ret = find_peer_in_comm(breq->req_comm,
                                                                  breq->req_peer,
                                                                  &peer_ref) ) ){
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Failed to find peer_ref\n");
                         exit_status = ret;
                         goto DONE;
                     }
                     if( NULL == peer_ref ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Failed to find peer_ref - peer_ref is NULL\n");
                         exit_status = ret;
                         goto DONE;
@@ -2033,7 +2033,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                                                                   FIND_MSG_FALSE,
                                                                   FIND_MSG_TRUE
                                                                   ) ) ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Unable to find the proper (recv) message ref for this recv\n");
                         exit_status = ret;
                         goto DONE;
@@ -2059,7 +2059,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                                                                   FIND_MSG_FALSE,
                                                                   FIND_MSG_TRUE
                                                                   ) ) ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Unable to find the proper (recv) message ref for this recv\n");
                         exit_status = ret;
                         goto DONE;
@@ -2081,7 +2081,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                                                                 msg_ref->rank,
                                                                 msg_ref->comm->c_contextid,
                                                                 &drain_msg_ref) ) ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Failed trying to find a drained message."
                                     " This should never happen. (%d)",
                                     ret);
@@ -2096,20 +2096,20 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                             if( OMPI_SUCCESS != (ret = find_peer_in_comm(drain_msg_ref->comm,
                                                                          drain_msg_ref->rank,
                                                                          &peer_ref) ) ){
-                                orte_output(mca_crcp_coord_component.super.output_handle,
+                                opal_output(mca_crcp_coord_component.super.output_handle,
                                             "crcp:coord: pml_start: Failed to find peer_ref\n");
                                 exit_status = ret;
                                 goto DONE;
                             }
                             if( NULL == peer_ref ) {
-                                orte_output(mca_crcp_coord_component.super.output_handle,
+                                opal_output(mca_crcp_coord_component.super.output_handle,
                                             "crcp:coord: pml_start: Failed to find peer_ref - peer_ref is NULL\n");
                                 exit_status = ret;
                                 goto DONE;
                             }
                         }
 
-                        ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+                        OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                             "crcp:coord: pml_start: Matched a Recv_init: total = %d",
                                             peer_ref->total_recv_init_msgs));
 
@@ -2117,7 +2117,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                         /* Copy the drained message */
                         if( 0 != ompi_ddt_copy_content_same_ddt(msg_ref->datatype, msg_ref->count,
                                                                 msg_ref->buffer, drain_msg_ref->buffer) ) {
-                            orte_output( mca_crcp_coord_component.super.output_handle,
+                            opal_output( mca_crcp_coord_component.super.output_handle,
                                          "crcp:coord: pml_start(): Datatype copy failed (%d)",
                                          ret);
                         }
@@ -2167,13 +2167,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                 if( OMPI_SUCCESS != (ret = find_peer_in_comm(breq->req_comm,
                                                              breq->req_peer,
                                                              &peer_ref) ) ){
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: req_start(): Failed to find peer_ref\n");
                     exit_status = ret;
                     goto DONE;
                 }
                 if( NULL == peer_ref ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: req_start(): Failed to find peer_ref - peer_ref is NULL\n");
                     exit_status = ret;
                     goto DONE;
@@ -2192,7 +2192,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                                                               FIND_MSG_FALSE,
                                                               FIND_MSG_TRUE
                                                               ) ) ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_start(): Unable to find the proper (send_init) message ref for this recv\n");
                     exit_status = ret;
                     goto DONE;
@@ -2226,7 +2226,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                     continue;
                 }
                 else {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_start(): Could not find message ref - THIS SHOULD NEVER HAPPEN"
                                 "[file %s line %d]\n",
                                 __FILE__, __LINE__);
@@ -2245,13 +2245,13 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                     if( OMPI_SUCCESS != (ret = find_peer_in_comm(breq->req_comm,
                                                                  breq->req_peer,
                                                                  &peer_ref) ) ){
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Failed to find peer_ref\n");
                         exit_status = ret;
                         goto DONE;
                     }
                     if( NULL == peer_ref ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Failed to find peer_ref - peer_ref is NULL\n");
                         exit_status = ret;
                         goto DONE;
@@ -2269,7 +2269,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                                                                   FIND_MSG_FALSE,
                                                                   FIND_MSG_TRUE
                                                                   ) ) ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Unable to find the proper (recv) message ref for this recv\n");
                         exit_status = ret;
                         goto DONE;
@@ -2301,7 +2301,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                         continue;
                     }
                     else {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Could not find message ref - THIS SHOULD NEVER HAPPEN"
                                     "[file %s line %d]\n",
                                     __FILE__, __LINE__);
@@ -2325,7 +2325,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                                                                   FIND_MSG_FALSE,
                                                                   FIND_MSG_TRUE
                                                                   ) ) ) {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Unable to find the proper (recv) message ref for this recv\n");
                         exit_status = ret;
                         goto DONE;
@@ -2357,7 +2357,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
                         continue;
                     }
                     else {
-                        orte_output(mca_crcp_coord_component.super.output_handle,
+                        opal_output(mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: pml_start(): Could not find message ref - THIS SHOULD NEVER HAPPEN"
                                     "[file %s line %d]\n",
                                     __FILE__, __LINE__);
@@ -2370,7 +2370,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
              * Unkonwn request type...
              */
             else {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: pml_start(POST): Unknown Request type (%d)",
                             breq->req_type);
                 pml_state->error_code = OMPI_ERROR;
@@ -2403,7 +2403,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
     int src;
     int tag;
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_request_complete()"));
 
     /*
@@ -2432,7 +2432,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
         if( OMPI_SUCCESS != (ret = find_peer_in_comm(breq->req_comm,
                                                      request->req_status.MPI_SOURCE,
                                                      &peer_ref) ) ){
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: req_complete(): Failed to find peer_ref\n");
             exit_status = ret;
             goto DONE;
@@ -2441,14 +2441,14 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
         if( OMPI_SUCCESS != (ret = find_peer_in_comm(breq->req_comm,
                                                      src,
                                                      &peer_ref) ) ){
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: req_complete(): Failed to find peer_ref\n");
             exit_status = ret;
             goto DONE;
         }
     }
     if( NULL == peer_ref ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: req_complete(): Failed to find peer_ref - peer_ref is NULL\n");
         exit_status = ret;
         goto DONE;
@@ -2474,13 +2474,13 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                                                           FIND_MSG_TRUE,
                                                           FIND_MSG_TRUE
                                                           ) ) ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: req_complete: Unable to find the proper (isend) message ref for this complete\n");
                 exit_status = ret;
                 goto DONE;
             }
             if( NULL != msg_ref ) {
-                ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: req_complete: Matched an iSend: total = %d",
                                     peer_ref->total_isend_msgs));
                 goto FOUND;
@@ -2513,7 +2513,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                                                           FIND_MSG_TRUE,
                                                           FIND_MSG_TRUE
                                                           ) ) ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: req_complete: Unable to find the proper (send_init) message ref for this complete\n");
                 exit_status = ret;
                 goto DONE;
@@ -2561,7 +2561,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                                                           FIND_MSG_TRUE,
                                                           FIND_MSG_TRUE
                                                           ) ) ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: req_complete: Unable to find the proper (irecv) message ref for this complete\n");
                 exit_status = ret;
                 goto DONE;
@@ -2574,7 +2574,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                     peer_ref->total_irecv_msgs += 1;
                 }
 
-                ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: req_complete: Matched an iRecv: total = %d",
                                     peer_ref->total_irecv_msgs));
                 goto FOUND;
@@ -2596,7 +2596,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                                                           FIND_MSG_TRUE,
                                                           FIND_MSG_TRUE
                                                           ) ) ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: req_complete: Unable to find the proper (recv_init) message ref for this complete\n");
                 exit_status = ret;
                 goto DONE;
@@ -2612,7 +2612,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                     peer_ref->total_irecv_msgs += 1;
                 }
 
-                ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: req_complete: Matched an iRecv: total = %d",
                                     peer_ref->total_irecv_msgs));
                 goto FOUND;
@@ -2645,7 +2645,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                                                           FIND_MSG_TRUE,
                                                           FIND_MSG_TRUE
                                                           ) ) ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: req_complete: Unable to find the proper (recv_init) message ref for this complete\n");
                 exit_status = ret;
                 goto DONE;
@@ -2673,7 +2673,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
                                                               FIND_MSG_TRUE,
                                                               FIND_MSG_TRUE
                                                               ) ) ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: requ_complete: Unable to find the proper (recv_init) message ref for this complete\n");
                     exit_status = ret;
                     goto DONE;
@@ -2710,7 +2710,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
      * An unknown type of request is completing.
      */
     else {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: req_complete: Unknown request type... %d",
                     breq->req_type);
     }
@@ -2726,7 +2726,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
         msg_ref->done   = true;
         msg_ref->active = false;
 
-        ORTE_OUTPUT_VERBOSE((25, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((25, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: req_complete: Marked Message... ( %d, %d )\n",
                             peer_ref->total_isend_msgs, peer_ref->total_irecv_msgs));
     }
@@ -2736,7 +2736,7 @@ int ompi_crcp_coord_request_complete(struct ompi_request_t *request)
          *  so this case can occur during normal operation.
          * This is caused by us checking for completeness twice in ompi_request_wait_all.
          */
-        ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: request_complete: No match found for this request :( %d, %d ): [%d/%d,%d]\n",
                             peer_ref->total_isend_msgs, peer_ref->total_irecv_msgs,
                             breq->req_peer, src, breq->req_comm->c_contextid));
@@ -2762,7 +2762,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
         goto STEP_1;
     }
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_ft_event()"));
 
     /**************************
@@ -2782,7 +2782,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
          * channels have been flushed.
          */
         if( OMPI_SUCCESS != (ret = ft_event_coordinate_peers()) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: ft_event: Checkpoint Coordination Failed %d",
                         ret);
             exit_status = ret;
@@ -2790,7 +2790,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
         }
 
         if( stall_for_completion ) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: pml_ft_event: STALLING PID %d\n",
                                 getpid()));
 
@@ -2819,7 +2819,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
          * Finish the coord protocol
          */
         if( OMPI_SUCCESS != (ret = ft_event_finalize_exchange() ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_ft_event: Checkpoint Finalization Failed %d",
                         ret);
             exit_status = ret;
@@ -2856,7 +2856,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_ft_event(
          * Finish the coord protocol
          */
         if( OMPI_SUCCESS != (ret = ft_event_finalize_exchange() ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: pml_ft_event: Checkpoint Finalization Failed %d",
                         ret);
             exit_status = ret;
@@ -2949,7 +2949,7 @@ static int find_drained_msg(size_t ddt_size,
 
         drain_msg = (ompi_crcp_coord_pml_message_ref_t*)item;
 
-        ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: find_drain_msg(): Compare [%d, %d, %d, %d] to %c-[%d, %d, %d, %d]",
                             (int)ddt_size, (int)count, tag, peer,
                             (NULL == drain_msg->buffer ? 'T' : 'F'),
@@ -3017,7 +3017,7 @@ static int ft_event_coordinate_peers(void)
      */
     START_TIMER(CRCP_TIMER_CKPT_EX_B);
     if( OMPI_SUCCESS != (ret = ft_event_exchange_bookmarks() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Bookmark Exchange Failed %d",
                     ret);
         exit_status = ret;
@@ -3030,7 +3030,7 @@ static int ft_event_coordinate_peers(void)
      */
     START_TIMER(CRCP_TIMER_CKPT_CHECK_B);
     if( OMPI_SUCCESS != (ret = ft_event_check_bookmarks() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Bookmark Check Failed %d",
                     ret);
         exit_status = ret;
@@ -3043,7 +3043,7 @@ static int ft_event_coordinate_peers(void)
      */
     START_TIMER(CRCP_TIMER_CKPT_POST_DRAIN);
     if( OMPI_SUCCESS != (ret = ft_event_post_drain_acks() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Bookmark Post Drain ACKS Failed %d",
                     ret);
         exit_status = ret;
@@ -3051,7 +3051,7 @@ static int ft_event_coordinate_peers(void)
     }
 
     if( OMPI_SUCCESS != (ret = ft_event_post_drained() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Bookmark Post Drain Msgs Failed %d",
                     ret);
         exit_status = ret;
@@ -3063,7 +3063,7 @@ static int ft_event_coordinate_peers(void)
      * Check if we need to stall for completion of tasks
      */
     if( stall_for_completion ) {
-        ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: ft_event_coordinate_peers: %s **** STALLING ***",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         step_to_return_to = 1;
@@ -3081,7 +3081,7 @@ static int ft_event_coordinate_peers(void)
      */
     START_TIMER(CRCP_TIMER_CKPT_WAIT_QUI);
     if( OMPI_SUCCESS != (ret = ft_event_wait_quiesce() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: ft_event_coordinate_peers: Wait Quiesce Failed %d",
                     ret);
         exit_status = ret;
@@ -3089,7 +3089,7 @@ static int ft_event_coordinate_peers(void)
     }
     END_TIMER(CRCP_TIMER_CKPT_WAIT_QUI);
 
-    ORTE_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: ft_event_coordinate_peers: %s Coordination Finished...\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -3216,10 +3216,10 @@ static int ft_event_check_bookmarks(void)
 
     if( 10 <= mca_crcp_coord_component.super.verbose ) {
         sleep(ORTE_PROC_MY_NAME->vpid);
-        ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                             "Process %s Match Table",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                             "%s  %5s | %7s | %7s | %7s | %7s |",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             "Vpid", "T_Send", "M_Recv", "M_Send", "T_Recv"));
@@ -3245,7 +3245,7 @@ static int ft_event_check_bookmarks(void)
                       peer_ref->matched_irecv_msgs     +
                       peer_ref->matched_recv_init_msgs );
 
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "%s  %5d | %7d | %7d | %7d | %7d |",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 peer_ref->proc_name.vpid,
@@ -3285,7 +3285,7 @@ static int ft_event_check_bookmarks(void)
 
             /* T_Send >= M_Recv */
             if( p_n_to_p_m < p_n_from_p_m ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: check_bookmarks: %s --> %s "
                             "Sent Msgs (%4d) = Received Msgs (%4d) => Diff (%4d). "
                             " WARNING: Peer received more than was sent. :(\n",
@@ -3300,7 +3300,7 @@ static int ft_event_check_bookmarks(void)
             /* I've send more than my peer has received,
              * so need to coordinate with peer. */
             if( p_n_to_p_m > p_n_from_p_m) {
-                ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: %s --> %s "
                                     "Sent Msgs (%4d) = Received Msgs (%4d). Peer needs %4d.\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -3315,7 +3315,7 @@ static int ft_event_check_bookmarks(void)
                  * information for all of the messages since the last checkpoint
                  */
                 if( OMPI_SUCCESS != (ret = send_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: check_bookmarks: Unable to send message details to peer %s: Return %d\n",
                                 ORTE_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
@@ -3336,7 +3336,7 @@ static int ft_event_check_bookmarks(void)
 
             /* M_Send >= T_Recv */
             if( p_n_to_p_m < p_n_from_p_m ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: check_bookmarks: %s --> %s "
                             "Sent Msgs (%4d) = Received Msgs (%4d) => Diff (%4d). "
                             " WARNING: I received more than the peer sent. :(\n",
@@ -3351,7 +3351,7 @@ static int ft_event_check_bookmarks(void)
             /* I've recv'ed less than my peer has sent,
              * so need to coordinate with peer. */
             if( p_n_to_p_m > p_n_from_p_m) {
-                ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: %s <-- %s "
                                     "Received Msgs (%4d) = Sent Msgs (%4d). I need %4d.\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -3365,7 +3365,7 @@ static int ft_event_check_bookmarks(void)
                  *  As we figure out what they are post Irecv's for them into a drained buffer list.
                  */
                 if( OMPI_SUCCESS != (ret = recv_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: check_bookmarks: Unable to recv message details from peer %s: Return %d\n",
                                 ORTE_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
@@ -3388,7 +3388,7 @@ static int ft_event_check_bookmarks(void)
 
             /* M_Send >= T_Recv */
             if( p_n_to_p_m < p_n_from_p_m ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: check_bookmarks: %s --> %s "
                             "Sent Msgs (%4d) = Received Msgs (%4d) => Diff (%4d). "
                             " WARNING: I received more than the peer sent. :(\n",
@@ -3403,7 +3403,7 @@ static int ft_event_check_bookmarks(void)
             /* I've recv'ed less than my peer has sent,
              * so need to coordinate with peer. */
             if( p_n_to_p_m > p_n_from_p_m) {
-                ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: %s <-- %s "
                                     "Received Msgs (%4d) = Sent Msgs (%4d). I need %4d.\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -3417,7 +3417,7 @@ static int ft_event_check_bookmarks(void)
                  *  As we figure out what they are post Irecv's for them into a drained buffer list.
                  */
                 if( OMPI_SUCCESS != (ret = recv_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: check_bookmarks: Unable to recv message details from peer %s: Return %d\n",
                                 ORTE_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
@@ -3438,7 +3438,7 @@ static int ft_event_check_bookmarks(void)
 
             /* T_Send >= M_Recv */
             if( p_n_to_p_m < p_n_from_p_m ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: check_bookmarks: %s --> %s "
                             "Sent Msgs (%4d) = Received Msgs (%4d) => Diff (%4d). "
                             " WARNING: Peer received more than was sent. :(\n",
@@ -3453,7 +3453,7 @@ static int ft_event_check_bookmarks(void)
             /* I've send more than my peer has received,
              * so need to coordinate with peer. */
             if( p_n_to_p_m > p_n_from_p_m) {
-                ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: check_bookmarks: %s --> %s "
                                     "Sent Msgs (%4d) = Received Msgs (%4d). Peer needs %4d.\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -3468,7 +3468,7 @@ static int ft_event_check_bookmarks(void)
                  * information for all of the messages since the last checkpoint
                  */
                 if( OMPI_SUCCESS != (ret = send_msg_details(peer_ref, p_n_to_p_m, p_n_from_p_m) ) ) {
-                    orte_output(mca_crcp_coord_component.super.output_handle,
+                    opal_output(mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: check_bookmarks: Unable to send message details to peer %s: Return %d\n",
                                 ORTE_NAME_PRINT(&peer_ref->proc_name),
                                 ret);
@@ -3502,7 +3502,7 @@ static int ft_event_post_drain_acks(void)
         return OMPI_SUCCESS;
     }
 
-    ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: post_drain_ack: %s Wait on %d Drain ACK Messages.\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (int)req_size));
@@ -3522,7 +3522,7 @@ static int ft_event_post_drain_acks(void)
                                                             0,
                                                             drain_message_ack_cbfunc,
                                                             NULL) ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: post_drain_acks: %s Failed to post a RML receive to the peer\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return ret;
@@ -3564,7 +3564,7 @@ static void drain_message_ack_cbfunc(int status,
                                                             sender) ) {
                 /* We found it! */
                 drain_msg_ack->complete = true;
-                ORTE_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
                                     "crcp:coord: drain_message_ack_cbfunc: %s --> %s Received ACK of FLUSH from peer\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     ORTE_NAME_PRINT(sender) ));
@@ -3573,7 +3573,7 @@ static void drain_message_ack_cbfunc(int status,
         }
     }
 
-    orte_output(mca_crcp_coord_component.super.output_handle,
+    opal_output(mca_crcp_coord_component.super.output_handle,
                 "crcp:coord: drain_message_ack_cbfunc: %s --> %s ERROR: Uable to match ACK to peer\n",
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 ORTE_NAME_PRINT(sender) );
@@ -3593,7 +3593,7 @@ static int ft_event_post_drained(void)
         return OMPI_SUCCESS;
     }
 
-    ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: post_drained: %s Draining %d Messages.\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (int)req_size));
@@ -3614,7 +3614,7 @@ static int ft_event_post_drained(void)
          * we have requests for
          */
         if( drain_msg->already_posted ) {
-            ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: post_drained: %s Found a message that we don't need to post.\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             continue;
@@ -3623,7 +3623,7 @@ static int ft_event_post_drained(void)
          * Post a receive to drain this message
          */
         else {
-            ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: post_drained: %s Posting a message to be drained from %d.\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 drain_msg->rank));
@@ -3634,7 +3634,7 @@ static int ft_event_post_drained(void)
                                                                      drain_msg->tag,
                                                                      drain_msg->comm,
                                                                      &(drain_msg->request) ) ) ) {
-                orte_output(mca_crcp_coord_component.super.output_handle,
+                opal_output(mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: post_drained: %s Failed to post the Draining PML iRecv\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
                 return ret;
@@ -3654,7 +3654,7 @@ static int ft_event_wait_quiesce(void)
      * Wait for all draining receives to complete
      **********************************************/
     if( OMPI_SUCCESS != (ret = wait_quiesce_drained() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: wait_quiesce: %s Failed to quiesce drained messages\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
         exit_status = ret;
@@ -3665,7 +3665,7 @@ static int ft_event_wait_quiesce(void)
      * If we are waiting for All Clear messages from peers wait on them.
      *******************************************************************/
     if( OMPI_SUCCESS != (ret = wait_quiesce_drain_ack() ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: wait_quiesce: %s Failed to recv all drain ACKs\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) );
         exit_status = ret;
@@ -3698,7 +3698,7 @@ static int wait_quiesce_drained(void)
         return OMPI_SUCCESS;
     }
 
-    ORTE_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: wait_quiesce_drained: %s  Waiting on %d messages to drain\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (int)req_size));
@@ -3753,13 +3753,13 @@ static int wait_quiesce_drained(void)
          * Create the array of requests to wait on
          */
         if( drain_msg->already_posted && NULL == drain_msg->request) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: wait_quiesce_drained: %s - %s Already posted this msg.\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&(drain_msg->proc_name)) ));
         }
         else {
-            ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: wait_quiesce_drained: %s - %s Waiting on message. (index = %d)\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&(drain_msg->proc_name)),
@@ -3784,7 +3784,7 @@ static int wait_quiesce_drained(void)
             }
         }
         if( !found ) {
-            ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: wait_quiesce: %s - %s Add process to response list [idx %d]\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_NAME_PRINT(&(drain_msg->proc_name)),
@@ -3812,7 +3812,7 @@ static int wait_quiesce_drained(void)
     /*
      * Send ACKs to all peers
      */
-    ORTE_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((5, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: wait_quiesce: %s  Send ACKs to all Peers\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -3892,7 +3892,7 @@ static int coord_request_wait_all( size_t count,
 
         coord_request_wait(req, status);
 
-        ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: request_wait_all: %s  Done with idx %d of %d\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (int)i, (int)count));
@@ -3929,7 +3929,7 @@ static int wait_quiesce_drain_ack(void)
         return OMPI_SUCCESS;
     }
 
-    ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: wait_quiesce_drain_ack: %s Waiting on %d Drain ACK messages\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         num_outstanding));
@@ -3977,14 +3977,14 @@ static int send_bookmarks(int peer_idx)
     peer_name.vpid   = peer_idx;
 
     if( NULL == (peer_ref = find_peer(peer_name))) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: send_bookmarks: Could not find peer indexed %d\n",
                     peer_idx);
         exit_status = OMPI_ERROR;
         goto cleanup;
     }
 
-    ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: send_bookmarks: %s -> %s Sending bookmark  S[%4d,%4d,%4d] R[%4d,%4d,%4d]\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer_name),
@@ -4018,7 +4018,7 @@ static int send_bookmarks(int peer_idx)
                 "crcp:coord: send_bookmarks: Unable to pack total_recv_init_msgs");
 
     if ( 0 > ( ret = orte_rml.send_buffer(&peer_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: send_bookmarks: Failed to send bookmark to peer %s: Return %d\n",
                     ORTE_NAME_PRINT(&peer_name),
                     ret);
@@ -4054,7 +4054,7 @@ static int recv_bookmarks(int peer_idx)
                                             0,
                                             recv_bookmarks_cbfunc,
                                             NULL) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: recv_bookmarks: Failed to post receive bookmark from peer %s: Return %d\n",
                     ORTE_NAME_PRINT(&peer_name),
                     ret);
@@ -4090,7 +4090,7 @@ static void recv_bookmarks_cbfunc(int status,
      * Find the peer structure for this peer
      */
     if( NULL == (peer_ref = find_peer(*sender))) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: recv_bookmarks: Could not find peer indexed %d\n",
                     peer_idx);
         exit_status = OMPI_ERROR;
@@ -4117,7 +4117,7 @@ static void recv_bookmarks_cbfunc(int status,
                   "crcp:coord: recv_bookmarks: Unable to unpack total_recv_init_msgs");
     peer_ref->matched_recv_init_msgs = tmp_int;
 
-    ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: recv_bookmarks: %s <- %s Received bookmark S[%4d,%4d,%4d] R[%4d,%4d,%4d]\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(sender),
@@ -4177,7 +4177,7 @@ static int send_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         found_match = false;
         total_details_sent++;
         if(OMPI_SUCCESS != (ret = do_send_msg_detail(peer_ref, msg_ref, &found_match, &finished)) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: send_msg_details: %s --> %s Failed to send message details to peer. Return %d\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
@@ -4213,7 +4213,7 @@ static int send_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
 
  ALL_SENT:
     if( need > found ) {
-        ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: send_msg_details: ERROR: ****** Need (%d) vs Found (%d)",
                             need, found));
     }
@@ -4228,7 +4228,7 @@ static int send_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
     d_msg_ack->peer.vpid   = peer_ref->proc_name.vpid;
     d_msg_ack->complete    = false;
     opal_list_append(&drained_msg_ack_list, &(d_msg_ack->super));
-    ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: send_msg_details: %s <--> %s Will wait on ACK from this peer.\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer_ref->proc_name))));
@@ -4303,7 +4303,7 @@ static int do_send_msg_detail(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
      */
     if ( 0 > ( ret = orte_rml.send_buffer(&peer_ref->proc_name, buffer,
                                           OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: do_send_msg_detail: Unable to send message details to peer %s: Return %d\n",
                     ORTE_NAME_PRINT(&peer_ref->proc_name),
                     ret);
@@ -4330,7 +4330,7 @@ static int do_send_msg_detail(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
      */
     if ( 0 > (ret = orte_rml.recv_buffer(&peer_ref->proc_name, buffer,
                                          OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: do_send_msg_detail: %s --> %s Failed to receive ACK buffer from peer. Return %d\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer_ref->proc_name)),
@@ -4405,7 +4405,7 @@ static int recv_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                       &p_rank, &p_comm_id,
                                                       &p_tag, &p_count,
                                                       &p_datatype_size)) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: recv_msg_details: %s <-- %s "
                         "Failed to receive message detail from peer. Return %d\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -4425,7 +4425,7 @@ static int recv_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                             p_tag, p_count,
                                                             p_datatype_size,
                                                             &found_match) ) ) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: recv_msg_details: %s <-- %s "
                         "Failed to check message detail from peer. Return %d\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -4453,7 +4453,7 @@ static int recv_msg_details(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         }
 
         if(OMPI_SUCCESS != (ret = do_recv_msg_detail_resp(peer_ref, response))) {
-            orte_output(mca_crcp_coord_component.super.output_handle,
+            opal_output(mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: recv_msg_details: %s <-- %s Failed to respond to peer. Return %d\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer_ref->proc_name)),
@@ -4488,7 +4488,7 @@ static int do_recv_msg_detail(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
      * Recv the msg
      */
     if ( 0 > (ret = orte_rml.recv_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: do_recv_msg_detail: %s <-- %s Failed to receive buffer from peer. Return %d\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer_ref->proc_name)),
@@ -4549,7 +4549,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                             &msg_complete,        /* Is the recv of the message already finished? */
                             &msg_already_posted); /* Has the recv already been posted? */
     if( OMPI_SUCCESS != ret) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: recv_msg_detail_check: %s -- %s "
                     "Failed to determine if we have received this message. Return %d\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -4559,7 +4559,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         goto cleanup;
     }
 
-    ORTE_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((20, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: recv_msg_detail_check: %s -- %s"
                         " found %s, complete %s, posted %s, peer_rank=[%d vs %d]\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -4578,7 +4578,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
     if( !msg_found ) {
         ompi_crcp_coord_pml_message_ref_t *d_msg = NULL;
 
-        ORTE_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((15, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: recv_msg_detail_check: %s Found a message that needs to be drained\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -4636,7 +4636,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
     else if( msg_already_posted ) {
         ompi_crcp_coord_pml_message_ref_t *d_msg = NULL;
 
-        ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                             "crcp:coord: recv_msg_detail_check: %s "
                             "Found a message already posted! Prepare to drain.\n",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -4647,7 +4647,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
          */
         if( current_msg_id         == posted_msg_ref->msg_id  &&
             COORD_MSG_TYPE_B_RECV  == posted_msg_ref->msg_type) {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv_msg_detail_check: %s "
                                 "Found a message already posted! Prepare to STALL.\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -4658,7 +4658,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
          * current blocking recv
          */
         else {
-            ORTE_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: recv_msg_detail_check: %s "
                                 "Found a message already posted! No stall required [%3d, %3d, %3d, %3d].\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -4707,7 +4707,7 @@ static int do_recv_msg_detail_check(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
         *found_match = true;
     }
     else {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: recv_msg_detail_check: ***** ERROR ***** %s Failed to find an action to use. This should never happen!\n",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         exit_status = OMPI_ERROR;
@@ -4746,7 +4746,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_UNKNOWN, /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4768,7 +4768,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_UNKNOWN, /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4792,7 +4792,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_FALSE,   /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4811,7 +4811,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_TRUE,    /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4833,7 +4833,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_UNKNOWN, /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4857,7 +4857,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_FALSE,   /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4876,7 +4876,7 @@ static int have_received_msg(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                                                   FIND_MSG_TRUE,    /* Active?         */
                                                   FIND_MSG_TRUE     /* Already Posted? */
                                                   ) ) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: have_received_msg: Unable to find the proper message reference.\n");
         return OMPI_ERROR;
     }
@@ -4974,7 +4974,7 @@ static int find_message_named(opal_list_t * search_list,
            (peer          == INVALID_INT || msg_ref->rank == peer)  &&
            msg_ref->ddt_size == ddt_size) {
 
-            ORTE_OUTPUT_VERBOSE((30, mca_crcp_coord_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((30, mca_crcp_coord_component.super.output_handle,
                                 "crcp:coord: find_message_named: Found Message -- Comm list (%d, %d)\n",
                                 tag, peer));
 
@@ -5002,7 +5002,7 @@ static int do_recv_msg_detail_resp(ompi_crcp_coord_pml_peer_ref_t *peer_ref,
                 "crcp:coord: recv_msg_details: Unable to ask peer for more messages");
         
     if ( 0 > ( ret = orte_rml.send_buffer(&peer_ref->proc_name, buffer, OMPI_CRCP_COORD_BOOKMARK_TAG, 0)) ) {
-        orte_output(mca_crcp_coord_component.super.output_handle,
+        opal_output(mca_crcp_coord_component.super.output_handle,
                     "crcp:coord: recv_msg_detail_resp: Unable to send message detail response to peer %s: Return %d\n",
                     ORTE_NAME_PRINT(&peer_ref->proc_name),
                     ret);

@@ -25,7 +25,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/name_fns.h"
@@ -123,7 +123,7 @@ static int orte_plm_slurm_component_query(mca_base_module_t **module, int *prior
     if (NULL != getenv("SLURM_JOBID")) {
         *priority = mca_plm_slurm_component.priority;
 
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slrum: available for selection", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 

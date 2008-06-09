@@ -28,7 +28,7 @@
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/mca.h"
@@ -109,7 +109,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm)
     snprintf(name, sizeof(name), "%s (cid %d)", comm->c_name, 
              comm->c_contextid);
     name[sizeof(name) - 1] = '\0';
-    orte_output_verbose(10, mca_coll_base_output,
+    opal_output_verbose(10, mca_coll_base_output,
                         "coll:base:comm_select: new communicator: %s", 
                         name);
   
@@ -127,7 +127,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm)
         name_array = opal_argv_split(names, ',');
         num_names = opal_argv_count(name_array);
 
-        orte_output_verbose(10, mca_coll_base_output, 
+        opal_output_verbose(10, mca_coll_base_output, 
                             "coll:base:comm_select: Checking specific modules: %s",
                             names);
         selectable = check_components(&mca_coll_base_components_available, 
@@ -135,7 +135,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm)
         opal_argv_free(name_array);
     } else {
         /* no specific components given -- try all */
-        orte_output_verbose(10, mca_coll_base_output, 
+        opal_output_verbose(10, mca_coll_base_output, 
                             "coll:base:comm_select: Checking all available modules");
         selectable = check_components(&mca_coll_base_components_available, 
                                       comm, NULL, 0);
@@ -322,13 +322,13 @@ static int check_one_component(ompi_communicator_t *comm,
 
     if (OMPI_SUCCESS == err) {
         priority = (priority < 100) ? priority : 100;
-        orte_output_verbose(10, mca_coll_base_output, 
+        opal_output_verbose(10, mca_coll_base_output, 
                             "coll:base:comm_select: component available: %s, priority: %d", 
                             component->mca_component_name, priority);
 
     } else {
         priority = -1;
-        orte_output_verbose(10, mca_coll_base_output, 
+        opal_output_verbose(10, mca_coll_base_output, 
                             "coll:base:comm_select: component not available: %s",
                             component->mca_component_name);
     }

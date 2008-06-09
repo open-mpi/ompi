@@ -31,7 +31,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/arch.h"
 
 #include "orte/runtime/orte_globals.h"
@@ -119,7 +119,7 @@ int orte_proc_info(void)
                                    "Daemon contact info",
                                    true, false, NULL,  &(orte_process_info.my_daemon_uri));
     
-    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "proc_info: hnp_uri %s\n\tdaemon uri %s",
                          (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
                          (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
@@ -143,7 +143,7 @@ int orte_proc_info(void)
     
     /* get the arch */
     if (ORTE_SUCCESS != opal_arch_compute_local_id(&orte_process_info.arch)) {
-        orte_output(0, "Process on node %s could not obtain local architecture - aborting", orte_process_info.nodename);
+        opal_output(0, "Process on node %s could not obtain local architecture - aborting", orte_process_info.nodename);
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     

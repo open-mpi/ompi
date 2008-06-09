@@ -105,7 +105,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
 
-   ORTE_OUTPUT((ompi_coll_tuned_stream,
+   OPAL_OUTPUT((ompi_coll_tuned_stream,
                 "coll:tuned:allgather_intra_bruck rank %d", rank));
    
    err = ompi_ddt_get_extent (sdtype, &slb, &sext);
@@ -205,7 +205,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    if( NULL != new_scounts ) free(new_scounts);
    if( NULL != new_sdispls ) free(new_sdispls);
 
-   ORTE_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+   OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
                 __FILE__, line, err, rank));
    return err;
 }
@@ -243,7 +243,7 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_ring rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &slb, &sext);
@@ -295,7 +295,7 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
@@ -380,7 +380,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
 
     if (size % 2) {
-        ORTE_OUTPUT((ompi_coll_tuned_stream,
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:allgatherv_intra_neighborexchange WARNING: odd size %d, switching to ring algorithm", 
                      size));
         return ompi_coll_tuned_allgatherv_intra_ring(sbuf, scount, sdtype,
@@ -389,7 +389,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
                                                      comm, module);
     }
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_neighborexchange rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &slb, &sext);
@@ -503,7 +503,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
     return OMPI_SUCCESS;
 
  err_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
@@ -525,7 +525,7 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 
     rank = ompi_comm_rank(comm);
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_allgatherv_intra_two_procs rank %d", rank));
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
@@ -566,7 +566,7 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
     return MPI_SUCCESS;
 
  err_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tError occurred %d, rank %2d",
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     return err;
 }
@@ -617,7 +617,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
      * to process with rank 0 (OMPI convention)
      */
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "ompi_coll_tuned_allgatherv_intra_basic_default rank %d", 
                  rank));
 
@@ -705,7 +705,7 @@ ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mc
                               &(requested_alg));
     if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            orte_output( 0, "Allgather algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+            opal_output( 0, "Allgather algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
         }
         mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -747,7 +747,7 @@ int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_do_forced selected algorithm %d",
 		 data->user_forced[ALLGATHERV].algorithm));
 
@@ -777,7 +777,7 @@ int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
                                                            rbuf, rcounts, rdispls, rdtype, 
                                                            comm, module);
     default:
-        ORTE_OUTPUT((ompi_coll_tuned_stream,
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:allgatherv_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
 		     data->user_forced[ALLGATHERV].algorithm,
                      ompi_coll_tuned_forced_max_algorithms[ALLGATHERV]));
@@ -797,7 +797,7 @@ int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
                                              int algorithm, int faninout, 
                                              int segsize)
 {
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
                  "coll:tuned:allgatherv_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
                  algorithm, faninout, segsize));
    
@@ -827,7 +827,7 @@ int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
                                                            rbuf, rcounts, rdispls, rdtype, 
                                                            comm, module);
     default:
-        ORTE_OUTPUT((ompi_coll_tuned_stream,
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:allgatherv_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
                      algorithm, 
                      ompi_coll_tuned_forced_max_algorithms[ALLGATHERV]));

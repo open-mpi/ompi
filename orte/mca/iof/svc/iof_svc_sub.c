@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "opal/class/opal_hash_table.h"
 #include "orte/mca/rml/rml.h"
@@ -107,7 +107,7 @@ int orte_iof_svc_sub_create(
     sub->target_mask = target_mask;
     sub->target_tag = target_tag;
     sub->sub_endpoint = orte_iof_base_endpoint_match(&sub->target_name, sub->target_mask, sub->target_tag);
-    orte_output_verbose(1, orte_iof_base.iof_output, "created svc sub, origin %s tag %d / mask %x, target %s, tag %d / mask %x\n",
+    opal_output_verbose(1, orte_iof_base.iof_output, "created svc sub, origin %s tag %d / mask %x, target %s, tag %d / mask %x\n",
                 ORTE_NAME_PRINT((orte_process_name_t*)origin_name), origin_tag, origin_mask,
                 ORTE_NAME_PRINT((orte_process_name_t*)target_name), target_tag, target_mask);
 
@@ -175,9 +175,9 @@ void orte_iof_svc_sub_ack(
         void *vval;
     } value;
 
-    orte_output_verbose(1, orte_iof_base.iof_output, "orte_iof_svc_proxy_ack");
+    opal_output_verbose(1, orte_iof_base.iof_output, "orte_iof_svc_proxy_ack");
     if (do_close) {
-        orte_output_verbose(1, orte_iof_base.iof_output, "CLOSE ACK!\n");
+        opal_output_verbose(1, orte_iof_base.iof_output, "CLOSE ACK!\n");
     }
 
     /* for each of the subscriptions that match the origin of the ACK:
@@ -194,7 +194,7 @@ void orte_iof_svc_sub_ack(
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)s_item;
         opal_list_item_t *f_item;
 
-        orte_output_verbose(1, orte_iof_base.iof_output, "ack: checking sub origin %s tag %d / mask %x, target %s, tag %d / mask %x\n",
+        opal_output_verbose(1, orte_iof_base.iof_output, "ack: checking sub origin %s tag %d / mask %x, target %s, tag %d / mask %x\n",
                     ORTE_NAME_PRINT(&sub->origin_name), sub->origin_tag, sub->origin_mask,
                     ORTE_NAME_PRINT(&sub->target_name), sub->target_tag, sub->target_mask);
 
@@ -216,7 +216,7 @@ void orte_iof_svc_sub_ack(
                 last_ack_forwarded = sub->last_ack_forwarded;
             }
         }
-        orte_output_verbose(1, orte_iof_base.iof_output,
+        opal_output_verbose(1, orte_iof_base.iof_output,
                     "ack: has_beed_acked: %d, last forwarded %d",
                     has_been_acked, last_ack_forwarded);
 
@@ -232,11 +232,11 @@ void orte_iof_svc_sub_ack(
                    to NULL.  Have similar leak for do_close for
                    streams.  See ticket #1048. */
                 sub->sub_endpoint = NULL;
-                orte_output_verbose(1, orte_iof_base.iof_output,
+                opal_output_verbose(1, orte_iof_base.iof_output,
                             "ack: CLOSED local ack to %u", value.uval);
             } else {
                 value.uval = hdr->msg_seq + hdr->msg_len;
-                orte_output_verbose(1, orte_iof_base.iof_output,
+                opal_output_verbose(1, orte_iof_base.iof_output,
                             "ack: local ack to %u", value.uval);
                 if (value.uval < seq_min) {
                     seq_min = value.uval;
@@ -254,7 +254,7 @@ void orte_iof_svc_sub_ack(
             orte_iof_svc_pub_t* pub = fwd->fwd_pub;
             bool value_set = true;
 
-            orte_output_verbose(1, orte_iof_base.iof_output, "ack: checking fwd %s tag %d / mask %x\n",
+            opal_output_verbose(1, orte_iof_base.iof_output, "ack: checking fwd %s tag %d / mask %x\n",
                         ORTE_NAME_PRINT(&pub->pub_name), pub->pub_tag, pub->pub_mask);
 
             /* If the publication origin or publication proxy matches
@@ -262,7 +262,7 @@ void orte_iof_svc_sub_ack(
                *origin* (not the proxy). */
             if (OPAL_EQUAL == orte_util_compare_name_fields(pub->pub_mask,&pub->pub_name,peer) ||
                 OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,&pub->pub_proxy,peer)) {
-                orte_output_verbose(1, orte_iof_base.iof_output,
+                opal_output_verbose(1, orte_iof_base.iof_output,
                             "ack: found matching pub");
                 /* If we're closing, then remove this proc from
                    the table -- we won't be using its value to
@@ -327,7 +327,7 @@ void orte_iof_svc_sub_ack(
                                                     ORTE_NS_CMP_ALL, 
                                                     hdr->msg_tag);
             if (NULL != endpoint) {
-                orte_output_verbose(1, orte_iof_base.iof_output,
+                opal_output_verbose(1, orte_iof_base.iof_output,
                             "ack: forwarding ack locally: %u", seq_min);
                 orte_iof_base_endpoint_ack(endpoint, seq_min);
                 OBJ_RELEASE(endpoint);
@@ -350,7 +350,7 @@ void orte_iof_svc_sub_ack(
             frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
             ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
 
-            orte_output_verbose(1, orte_iof_base.iof_output,
+            opal_output_verbose(1, orte_iof_base.iof_output,
                         "ack: forwarding ack remotely: %u", seq_min);
             rc = orte_rml.send_nb(
                 &hdr->msg_proxy,
@@ -465,12 +465,12 @@ int orte_iof_svc_sub_forward(
         int rc;
 
         if (NULL != pub->pub_endpoint) {
-            orte_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
+            opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
             rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
         } else {
             /* forward */
             orte_iof_base_frag_t* frag;
-            orte_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub stream / remote endpoint");
+            opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub stream / remote endpoint");
             ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
             frag->frag_hdr.hdr_msg = *hdr;
             frag->frag_len = frag->frag_hdr.hdr_msg.msg_len;
@@ -495,7 +495,7 @@ int orte_iof_svc_sub_forward(
         *forward = true;
     }
     if (NULL != sub->sub_endpoint) {
-        orte_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to sub local endpoint");
+        opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to sub local endpoint");
         *forward = true;
         return orte_iof_base_endpoint_forward(sub->sub_endpoint,src,hdr,data); 
     }
@@ -562,7 +562,7 @@ int orte_iof_svc_fwd_create(
     }
     OBJ_RETAIN(pub);
     fwd->fwd_pub = pub;
-    orte_output_verbose(1, orte_iof_base.iof_output, "created svc forward, sub origin %s, tag %d / mask %x, sub target %s, tag %d / mask %x :::: pub name %s, tag %d / mask %x\n",
+    opal_output_verbose(1, orte_iof_base.iof_output, "created svc forward, sub origin %s, tag %d / mask %x, sub target %s, tag %d / mask %x :::: pub name %s, tag %d / mask %x\n",
                 ORTE_NAME_PRINT(&sub->origin_name), sub->origin_tag,
                 sub->origin_mask,
                 ORTE_NAME_PRINT(&sub->target_name), sub->target_tag,

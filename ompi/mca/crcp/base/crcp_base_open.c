@@ -19,10 +19,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
@@ -48,7 +48,7 @@ int ompi_crcp_base_open(void)
 {
     char *str_value = NULL;
 
-    ompi_crcp_base_output = orte_output_open(NULL);
+    ompi_crcp_base_output = opal_output_open(NULL);
 
     /* 
      * Which CRCP component to open

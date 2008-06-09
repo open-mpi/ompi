@@ -33,7 +33,7 @@
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/sys_limits.h"
 
 #include "orte/runtime/orte_wait.h"
@@ -182,7 +182,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
-        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:process:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
@@ -190,7 +190,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     
     /* launch the local procs */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_process_fork_local_proc))) {
-        ORTE_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:process:launch:local failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;

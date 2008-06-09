@@ -36,7 +36,7 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
 
-    orte_output_verbose(1, ompi_osc_base_output,
+    opal_output_verbose(1, ompi_osc_base_output,
                         "pt2pt component destroying window with id %d",
                         ompi_comm_get_cid(module->p2p_comm));
 

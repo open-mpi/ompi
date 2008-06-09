@@ -148,7 +148,7 @@
 	myServicePrincipal = [NSString stringWithFormat:@"xgrid/%@", [connection name]];
     }
 
-    orte_output_verbose(1, orte_plm_globals.output,
+    opal_output_verbose(1, orte_plm_globals.output,
 			"orte:plm:xgrid: Kerberos servicePrincipal: %s",
 			[myServicePrincipal UTF8String]);
 
@@ -163,13 +163,13 @@
 					portnumber:0] autorelease];
 
     if (nil == controller_password) {
-	orte_output_verbose(1, orte_plm_globals.output,
+	opal_output_verbose(1, orte_plm_globals.output,
 			    "orte:plm:xgrid: Using Kerberos authentication");
 
 	XGGSSAuthenticator *authenticator = 
 	    [[[XGGSSAuthenticator alloc] init] autorelease];
 
-	orte_output_verbose(1, orte_plm_globals.output,
+	opal_output_verbose(1, orte_plm_globals.output,
 			    "orte:plm:xgrid: Kerberos principal: %s",
 			    [[self servicePrincipal] UTF8String]);
 		
@@ -177,7 +177,7 @@
 	[connection setAuthenticator:authenticator];
 
     } else {
-	orte_output_verbose(1, orte_plm_globals.output,
+	opal_output_verbose(1, orte_plm_globals.output,
 			    "orte:plm:xgrid: Using password authentication");
 
        XGTwoWayRandomAuthenticator *authenticator =
@@ -205,7 +205,7 @@
 	return ORTE_ERR_NOT_AVAILABLE;
     }
 
-    orte_output_verbose(1, orte_plm_globals.output,
+    opal_output_verbose(1, orte_plm_globals.output,
 			"orte:plm:xgrid: connection name: %s",
 			[[connection name] UTF8String]);
     
@@ -215,7 +215,7 @@
     opal_progress();
     grid = [controller defaultGrid];
 
-    orte_output_verbose(1, orte_plm_globals.output,
+    opal_output_verbose(1, orte_plm_globals.output,
 			"plm: xgrid: grid name: %s",
 			[[grid identifier] UTF8String]);
 
@@ -247,7 +247,7 @@
     /* Shortcut out of here */
     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 	return ORTE_SUCCESS;
@@ -259,7 +259,7 @@
     /* build up the array of task specifications */
     NSMutableDictionary *taskSpecifications = [NSMutableDictionary dictionary];
     for (nnode=0 ; nnode < map->num_nodes ; nnode++) {
-        orte_output_verbose(1, orte_plm_globals.output,
+        opal_output_verbose(1, orte_plm_globals.output,
 			    "orte:plm:xgrid: launching on node %s", 
 			    nodes[nnode]->name);
 
@@ -278,7 +278,7 @@
 	rc = orte_util_convert_vpid_to_string(&vpid_string, 
 					      nodes[nnode]->daemon->name.vpid);
 	if (ORTE_SUCCESS != rc) {
-	    orte_output(0, "orte_plm_rsh: unable to get daemon vpid as string");
+	    opal_output(0, "orte_plm_rsh: unable to get daemon vpid as string");
 	    goto cleanup;
 	}
 	[taskArguments addObject: [NSString stringWithCString: vpid_string]];
@@ -335,7 +335,7 @@
 
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:xgrid: daemon launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
@@ -343,7 +343,7 @@
     }
 
 cleanup:
-    orte_output_verbose(1, orte_plm_globals.output,
+    opal_output_verbose(1, orte_plm_globals.output,
 			"orte:plm:xgrid:launch: finished, rc=%d\n", rc);
 
     return rc;
@@ -392,7 +392,7 @@ cleanup:
 
 -(void) connectionDidNotOpen:(XGConnection*) myConnection withError: (NSError*) error
 {
-    orte_output(orte_plm_globals.output,
+    opal_output(orte_plm_globals.output,
 		"orte:plm:xgrid: Controller connection did not open: (%d) %s",
 		[error code],
 		[[error localizedDescription] UTF8String]);
@@ -410,19 +410,19 @@ cleanup:
 	    break;
 	case 530:
 	case 535:
-	    orte_output(orte_plm_globals.output,
+	    opal_output(orte_plm_globals.output,
 			"orte:plm:xgrid: Connection to XGrid controller failed due to authentication error (%d):",
 			[[myConnection error] code]);
 	    break;
 	default:
-	    orte_output(orte_plm_globals.output,
+	    opal_output(orte_plm_globals.output,
 			"orte:plm:xgrid: Connection to XGrid controller unexpectedly closed: (%d) %s",
 			[[myConnection error] code],
 			[[[myConnection error] localizedDescription] UTF8String]);
 	    break;
 	}
     } else {
-	orte_output(orte_plm_globals.output,
+	opal_output(orte_plm_globals.output,
 		    "orte:plm:xgrid: Connection to XGrid controller unexpectedly closed");
     }
 

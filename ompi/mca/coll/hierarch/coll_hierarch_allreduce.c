@@ -24,7 +24,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/mca/coll/coll.h"

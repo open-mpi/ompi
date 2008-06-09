@@ -112,7 +112,7 @@
 #endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -188,8 +188,8 @@ void ompi_info::open_components()
 
   orte_register_params();
 
-  // Initialize the orte_output system
-  orte_output_init();
+  // Initialize the opal_output system
+  opal_output_init();
     
   // Register the MPI layer's MCA parameters
 

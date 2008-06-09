@@ -37,7 +37,7 @@
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -160,7 +160,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             username = strdup(argv[0]);
             node_name = strdup(argv[1]);
         } else {
-            orte_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
+            opal_output(0, "WARNING: Unhandled user@host-combination\n"); /* XXX */
         }
         opal_argv_free (argv);
 
@@ -176,7 +176,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             }
             node_name[len-1] = '\0';  /* truncate */
             
-            ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                                  "%s hostfile: node %s is being excluded",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
             
@@ -208,7 +208,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node_name = strdup(orte_process_info.nodename);
         }
 
-        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s hostfile: node %s is being included - keep all is %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
@@ -392,7 +392,7 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
     int rc;
 
     
-    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s hostfile: checking hostfile %s for nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
 
@@ -449,7 +449,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     bool node_found;
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                         "%s hostfile: filtering nodes through hostfile %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
 
@@ -538,7 +538,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     opal_list_item_t *item, *itm;
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s hostfile: creating ordered list of hosts from hostfile %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
     

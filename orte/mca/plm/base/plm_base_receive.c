@@ -32,7 +32,7 @@
 #endif
 
 #include "opal/class/opal_list.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -63,7 +63,7 @@ int orte_plm_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive start comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -86,7 +86,7 @@ int orte_plm_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -121,7 +121,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     
     switch (command) {
         case ORTE_PLM_LAUNCH_JOB_CMD:
-            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job launch command",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* setup a default response */
@@ -165,7 +165,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             }
             
         ANSWER_LAUNCH:
-            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job %s launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(job)));
@@ -187,7 +187,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             jdata = NULL;
             while (ORTE_SUCCESS == (rc = opal_dss.unpack(mev->buffer, &job, &count, ORTE_JOBID))) {
                 
-                ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:receive got update_proc_state for job %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(job)));
@@ -217,7 +217,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                         return;
                     }
                     
-                    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                          "%s plm:base:receive got update_proc_state for vpid %lu state %x exit_code %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          (unsigned long)vpid, (unsigned int)state, (int)exit_code));
@@ -255,7 +255,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             break;
             
         case ORTE_PLM_HEARTBEAT_CMD:
-            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive got heartbeat from %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&mev->sender)));
@@ -295,7 +295,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
 {
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive got message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));

@@ -31,7 +31,7 @@
 
 #include "opal/runtime/opal_cr.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"

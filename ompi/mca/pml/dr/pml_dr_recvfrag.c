@@ -154,7 +154,7 @@ void mca_pml_dr_recv_frag_callback(
             } 
             ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
             if(NULL == ompi_comm ) {                                                                   
-                ORTE_OUTPUT((0, "%s:%d: invalid communicator %d\n",                                   
+                OPAL_OUTPUT((0, "%s:%d: invalid communicator %d\n",                                   
                                     __FILE__, __LINE__, hdr->hdr_common.hdr_ctx));                                     
                 return;                                                                                
             }                                                                                          
@@ -207,7 +207,7 @@ void mca_pml_dr_recv_frag_callback(
                                                  ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
                         return;
                     } else { 
-                        ORTE_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
+                        OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
                         orte_errmgr.abort(-1, NULL);
                     }
                 }
@@ -240,7 +240,7 @@ void mca_pml_dr_recv_frag_callback(
             } else {
                 ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);
                 if(NULL == ompi_comm) { 
-                    ORTE_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
+                    OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
                     orte_errmgr.abort(-1, NULL);
                 }
                 comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;

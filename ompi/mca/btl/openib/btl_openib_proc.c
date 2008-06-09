@@ -173,7 +173,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     /* Unpack the number of modules in the message */
     offset = message;
     unpack8(&offset, &(module_proc->proc_port_count));
-    orte_output(-1, "unpack: %d btls", module_proc->proc_port_count);
+    opal_output(-1, "unpack: %d btls", module_proc->proc_port_count);
     if (module_proc->proc_port_count > 0) {
         module_proc->proc_ports = (mca_btl_openib_proc_modex_t *)
             malloc(sizeof(mca_btl_openib_proc_modex_t) * 
@@ -192,12 +192,12 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         MCA_BTL_OPENIB_MODEX_MSG_NTOH(module_proc->proc_ports[i].pm_port_info);
 #endif
         offset += size;
-        orte_output(-1, "unpacked btl %d: modex message, offset now %d",
+        opal_output(-1, "unpacked btl %d: modex message, offset now %d",
                     i, (int)(offset-((char*)message)));
 
         /* Unpack the number of CPCs that follow */
         unpack8(&offset, &(module_proc->proc_ports[i].pm_cpc_data_count));
-        orte_output(-1, "unpacked btl %d: number of cpcs to follow %d (offset now %d)",
+        opal_output(-1, "unpacked btl %d: number of cpcs to follow %d (offset now %d)",
                     i, module_proc->proc_ports[i].pm_cpc_data_count, (int)(offset-((char*)message)));
         module_proc->proc_ports[i].pm_cpc_data = 
             calloc(module_proc->proc_ports[i].pm_cpc_data_count,
@@ -212,16 +212,16 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
             ompi_btl_openib_connect_base_module_data_t *cpcd;
             cpcd = module_proc->proc_ports[i].pm_cpc_data + j;
             unpack8(&offset, &u8);
-            orte_output(-1, "unpacked btl %d: cpc %d: index %d (offset now %d)",
+            opal_output(-1, "unpacked btl %d: cpc %d: index %d (offset now %d)",
                         i, j, u8, (int)(offset-(char*)message));
             cpcd->cbm_component = 
                 ompi_btl_openib_connect_base_get_cpc_byindex(u8);
-            orte_output(-1, "unpacked btl %d: cpc %d: component %s",
+            opal_output(-1, "unpacked btl %d: cpc %d: component %s",
                         i, j, cpcd->cbm_component->cbc_name);
             
             unpack8(&offset, &cpcd->cbm_priority);
             unpack8(&offset, &cpcd->cbm_modex_message_len);
-            orte_output(-1, "unpacked btl %d: cpc %d: priority %d, msg len %d (offset now %d)",
+            opal_output(-1, "unpacked btl %d: cpc %d: priority %d, msg len %d (offset now %d)",
                         i, j, cpcd->cbm_priority, cpcd->cbm_modex_message_len, (int)(offset-(char*)message));
             if (cpcd->cbm_modex_message_len > 0) {
                 cpcd->cbm_modex_message = malloc(cpcd->cbm_modex_message_len);
@@ -232,7 +232,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
                 memcpy(cpcd->cbm_modex_message, offset, 
                        cpcd->cbm_modex_message_len);
                 offset += cpcd->cbm_modex_message_len;
-                orte_output(-1, "unpacked btl %d: cpc %d: blob unpacked %d %x (offset now %d)",
+                opal_output(-1, "unpacked btl %d: cpc %d: blob unpacked %d %x (offset now %d)",
                             i, j,
                             ((uint32_t*)cpcd->cbm_modex_message)[0],
                             ((uint32_t*)cpcd->cbm_modex_message)[1],
@@ -253,7 +253,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-    orte_output(-1, "unpacking done!");
+    opal_output(-1, "unpacking done!");
     return module_proc;
 }
 

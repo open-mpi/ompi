@@ -40,7 +40,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/sys/atomic.h"
 
 #include "orte/util/proc_info.h"

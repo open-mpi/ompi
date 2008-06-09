@@ -76,7 +76,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
@@ -214,7 +214,7 @@ struct orte_snapc_base_component_1_0_0_t {
 
     /** Verbosity Level */
     int verbose;
-    /** Output Handle for orte_output */
+    /** Output Handle for opal_output */
     int output_handle;
     /** Default Priority */
     int priority;

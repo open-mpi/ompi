@@ -60,7 +60,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"

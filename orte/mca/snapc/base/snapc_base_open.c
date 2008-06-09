@@ -22,13 +22,13 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_environ.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/snapc/base/static-components.h"
 
@@ -64,10 +64,10 @@ int orte_snapc_base_open(void)
     int value = 0;
     char * str_value = NULL;
 
-    ORTE_OUTPUT_VERBOSE((10, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "snapc:base: open()"));
 
-    orte_snapc_base_output = orte_output_open(NULL);
+    orte_snapc_base_output = opal_output_open(NULL);
 
     /* Global Snapshot directory */
     mca_base_param_reg_string_name("snapc",
@@ -77,7 +77,7 @@ int orte_snapc_base_open(void)
                                    opal_home_directory(),
                                    &orte_snapc_base_global_snapshot_dir);
 
-    ORTE_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
                          "snapc:base: open: base_global_snapshot_dir    = %s",
                          orte_snapc_base_global_snapshot_dir));
 
@@ -96,7 +96,7 @@ int orte_snapc_base_open(void)
                                 1,
                                 &value);
     orte_snapc_base_store_in_place = OPAL_INT_TO_BOOL(value);
-    ORTE_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
                          "snapc:base: open: base_store_in_place    = %d",
                          orte_snapc_base_store_in_place));
 
@@ -113,7 +113,7 @@ int orte_snapc_base_open(void)
                                 &value);
     orte_snapc_base_store_only_one_seq = OPAL_INT_TO_BOOL(value);
 
-    ORTE_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
                          "snapc:base: open: base_only_one_seq    = %d",
                          orte_snapc_base_store_only_one_seq));
 
@@ -128,7 +128,7 @@ int orte_snapc_base_open(void)
                                 &value);
     orte_snapc_base_establish_global_snapshot_dir = OPAL_INT_TO_BOOL(value);
 
-    ORTE_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
                          "snapc:base: open: base_establish_global_snapshot_dir    = %d",
                          orte_snapc_base_establish_global_snapshot_dir));
 
@@ -143,7 +143,7 @@ int orte_snapc_base_open(void)
                                    NULL,
                                    &orte_snapc_base_global_snapshot_ref);
 
-    ORTE_OUTPUT_VERBOSE((20, orte_snapc_base_output,
+    OPAL_OUTPUT_VERBOSE((20, orte_snapc_base_output,
                          "snapc:base: open: base_global_snapshot_ref    = %s",
                          orte_snapc_base_global_snapshot_ref));
 

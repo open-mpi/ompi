@@ -217,7 +217,7 @@ ompi_osc_pt2pt_component_finalize(void)
 
     if (0 !=
         (num_modules = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules))) {
-        orte_output(ompi_osc_base_output,
+        opal_output(ompi_osc_base_output,
                     "WARNING: There were %d Windows created but not freed.",
                     (int) num_modules); 
 #if OMPI_ENABLE_PROGRESS_THREADS
@@ -287,7 +287,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     ret = ompi_comm_dup(comm, &(module->p2p_comm), 0);
     if (ret != OMPI_SUCCESS) goto cleanup;
 
-    orte_output_verbose(1, ompi_osc_base_output,
+    opal_output_verbose(1, ompi_osc_base_output,
                         "pt2pt component creating window with id %d",
                         ompi_comm_get_cid(module->p2p_comm));
 
@@ -539,7 +539,7 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
             datatype = ompi_osc_base_datatype_create(proc, &payload);
 
             if (NULL == datatype) {
-                orte_output(ompi_osc_base_output,
+                opal_output(ompi_osc_base_output,
                             "Error recreating datatype.  Aborting.");
                 ompi_mpi_abort(module->p2p_comm, 1, false);
             }
@@ -669,7 +669,7 @@ component_fragment_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
         break;
 
     default:
-        orte_output_verbose(5, ompi_osc_base_output,
+        opal_output_verbose(5, ompi_osc_base_output,
                             "received one-sided packet for with unknown type");
     }
     

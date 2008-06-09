@@ -60,7 +60,7 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
     mtl_mx_request.convertor = convertor;
     mtl_mx_request.type = OMPI_MTL_MX_ISEND;
 
-    ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "issend bits: 0x%016" PRIu64 "\n", 
                          match_bits));
 
@@ -90,7 +90,7 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
         if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
             sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
         }
-        orte_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
+        opal_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
                     where, mx_strerror(mx_return), peer_name);
 
         /* Free buffer if needed */
@@ -106,11 +106,11 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
                             &mx_status,
                             &result);
         if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) { 
-            orte_output(ompi_mtl_base_output, "Error in mx_wait (error %s)\n", mx_strerror(mx_return));
+            opal_output(ompi_mtl_base_output, "Error in mx_wait (error %s)\n", mx_strerror(mx_return));
             abort();
         }
         if( OPAL_UNLIKELY(result && mx_status.code != MX_STATUS_SUCCESS) ) { 
-            orte_output(ompi_mtl_base_output, 
+            opal_output(ompi_mtl_base_output, 
                         "Error in ompi_mtl_mx_send, mx_wait returned something other than MX_STATUS_SUCCESS: mx_status.code = %d.\n", 
                         mx_status.code);
             abort();
@@ -155,7 +155,7 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
     mtl_mx_request->convertor = convertor;
     mtl_mx_request->type = OMPI_MTL_MX_ISEND;
 
-    ORTE_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "issend bits: 0x%016" PRIu64 "\n", match_bits));
 
     if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
@@ -184,7 +184,7 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
         if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
             sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
         }
-        orte_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
+        opal_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
                     where, mx_strerror(mx_return), peer_name);
         return OMPI_ERROR;
     }

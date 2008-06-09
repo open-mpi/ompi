@@ -29,7 +29,7 @@
 #include "opal/runtime/opal_progress.h"
 
 #include "opal/dss/dss.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ras/ras.h"
@@ -63,10 +63,10 @@ static int orte_plm_base_report_launched(orte_jobid_t job);
 
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
-    int rc;
+    int rc, fd;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_job for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -135,7 +135,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-#if 0
+
     /* IOF cannot currently handle multiple pulls to the same fd.  So
        dup stderr to another fd.  :-\ */
     fd = dup(2);
@@ -145,7 +145,6 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-#endif
 
 #if OPAL_ENABLE_FT == 1
     /*
@@ -168,7 +167,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
 
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch_apps for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
@@ -201,7 +200,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     
     /* wait for all the daemons to report apps launched */
     if (ORTE_SUCCESS != (rc = orte_plm_base_report_launched(job))) {
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:launch failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job), ORTE_ERROR_NAME(rc)));
@@ -209,7 +208,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     }
     
     /* complete wiring up the iof */
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch wiring up iof",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     name.jobid = job;
@@ -222,7 +221,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
 #if 0
     orte_totalview_init_after_spawn(job);
 #endif
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
@@ -242,14 +241,14 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
     char *pidstr;
     
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:base:launch_failed abort in progress, ignoring report",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         return;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch_failed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
@@ -320,7 +319,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
     int32_t arch;
     orte_node_t **nodes;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch from daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mev->sender)));
@@ -378,7 +377,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
     
 CLEANUP:
 
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch %s for daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
@@ -423,7 +422,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     int rc;
 
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -451,7 +450,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         return rc;
     }
 
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -494,7 +493,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     orte_proc_t **procs;
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch from daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mev->sender)));
@@ -558,7 +557,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
             goto CLEANUP;
         }
         
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:app_report_launched for proc %s from daemon %s: pid %lu state %0x exit %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&(procs[vpid]->name)),
@@ -570,7 +569,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
         procs[vpid]->state = state;
         procs[vpid]->exit_code = exit_code;
         if (ORTE_PROC_STATE_FAILED_TO_START == state) {
-            ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:app_report_launched daemon %s reports proc %s failed to start",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&mev->sender),
@@ -590,7 +589,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
         ORTE_ERROR_LOG(rc);
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch completed processing",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -623,7 +622,7 @@ static void app_report_launch(int status, orte_process_name_t* sender,
      */
     ORTE_MESSAGE_EVENT(sender, buffer, tag, orte_plm_base_app_report_launch);
 
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:app_report_launch reissuing non-blocking recv",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -642,7 +641,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
     int rc;
     orte_job_t *jdata;
 
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:report_launched for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
@@ -673,7 +672,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
         return rc;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:report_launched all apps reported",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -875,13 +874,13 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
      * is check all jobs for complete
      */
     if (NULL == jdata) {
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed called with NULL pointer",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto CHECK_ALL_JOBS;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:check_job_completed for job %s - num_terminated %lu  num_procs %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
@@ -947,7 +946,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
     /* check the resulting job state and notify the appropriate places */
     
     if (ORTE_JOB_STATE_FAILED_TO_START == jdata->state) {
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed declared job %s failed to start by proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
@@ -963,7 +962,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
     } else if (ORTE_JOB_STATE_ABORTED == jdata->state ||
                ORTE_JOB_STATE_ABORTED_BY_SIG == jdata->state ||
                ORTE_JOB_STATE_ABORTED_WO_SYNC == jdata->state) {
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed declared job %s aborted by proc %s with code %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid),
@@ -982,7 +981,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
          * the other jobs have also completed and wakeup if that is true
          */
         jdata->state = ORTE_JOB_STATE_TERMINATED;
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed declared job %s normally terminated - checking all jobs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
@@ -1023,7 +1022,7 @@ CHECK_ALL_JOBS:
             if (ORTE_PROC_MY_NAME->jobid != jobs[j]->jobid &&
                 jobs[j]->num_terminated < jobs[j]->num_procs) {
                 /* we have at least one job that is not done yet */
-                ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:check_job_completed job %s is not terminated",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_JOBID_PRINT(jobs[j]->jobid)));
@@ -1031,7 +1030,7 @@ CHECK_ALL_JOBS:
             }
         }
         /* if we get here, then all jobs are done, so wakeup */
-        ORTE_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed all jobs terminated - waking up",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         orte_wakeup();

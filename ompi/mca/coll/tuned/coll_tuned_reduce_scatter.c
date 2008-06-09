@@ -54,7 +54,7 @@ int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_nonoverlapping, rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_nonoverlapping, rank %d", rank));
 
     for (i = 0, total_count = 0; i < size; i++) { total_count += rcounts[i]; }
 
@@ -140,7 +140,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
    
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_basic_recursivehalving, rank %d", rank));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_basic_recursivehalving, rank %d", rank));
 
     /* Find displacements and the like */
     disps = (int*) malloc(sizeof(int) * size);
@@ -470,7 +470,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT((ompi_coll_tuned_stream,
 		 "coll:tuned:reduce_scatter_intra_ring rank %d, size %d", 
 		 rank, size));
 
@@ -614,7 +614,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     return MPI_SUCCESS;
 
  error_hndl:
-    ORTE_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%4d\tRank %d Error occurred %d\n",
 		 __FILE__, line, rank, ret));
     if (NULL != displs) free(displs);
     if (NULL != accumbuf_free) free(accumbuf_free);
@@ -654,7 +654,7 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
     if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
-            orte_output( 0, "Reduce_scatter algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+            opal_output( 0, "Reduce_scatter algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
         }
         mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
@@ -695,7 +695,7 @@ int ompi_coll_tuned_reduce_scatter_intra_do_forced(void *sbuf, void* rbuf,
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_forced selected algorithm %d", 
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_forced selected algorithm %d", 
 		 data->user_forced[REDUCESCATTER].algorithm));
 
     switch (data->user_forced[REDUCESCATTER].algorithm) {
@@ -708,7 +708,7 @@ int ompi_coll_tuned_reduce_scatter_intra_do_forced(void *sbuf, void* rbuf,
     case (3): return ompi_coll_tuned_reduce_scatter_intra_ring (sbuf, rbuf, rcounts,
 								dtype, op, comm, module);
     default:
-	ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
+	OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
 		     data->user_forced[REDUCESCATTER].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTER]));
 	return (MPI_ERR_ARG);
     } /* switch */
@@ -723,7 +723,7 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(void *sbuf, void* rbuf,
 						 struct mca_coll_base_module_1_1_0_t *module,
                                                  int algorithm, int faninout, int segsize)
 {
-    ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d",
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d",
 		 algorithm, faninout, segsize));
    
     switch (algorithm) {
@@ -736,7 +736,7 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(void *sbuf, void* rbuf,
     case (3): return ompi_coll_tuned_reduce_scatter_intra_ring (sbuf, rbuf, rcounts,
 								dtype, op, comm, module);
     default:
-	ORTE_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+	OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
 		     algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTER]));
 	return (MPI_ERR_ARG);
     } /* switch */

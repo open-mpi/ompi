@@ -27,11 +27,11 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_gridengine.h"
@@ -94,7 +94,7 @@ static int orte_ras_gridengine_open(void)
         false, false, 0, &mca_ras_gridengine_component.show_jobid);
 
     if (value != 0) {
-        mca_ras_gridengine_component.verbose = orte_output_open(NULL);
+        mca_ras_gridengine_component.verbose = opal_output_open(NULL);
     } else {
         mca_ras_gridengine_component.verbose = -1;
     }
@@ -107,13 +107,13 @@ static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *
 
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") && 
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:gridengine: available for selection",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *module = (mca_base_module_t *) &orte_ras_gridengine_module;
         return ORTE_SUCCESS;
     }
-    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:gridengine: NOT available for selection",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     *module = NULL;

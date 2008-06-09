@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/errmgr/base/base.h"
@@ -117,7 +117,7 @@ static int rte_init(char flags)
         return rc;
     }
     
-    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\tuser %s\n\thost %s\n\tjobid %s\n\tprocid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
@@ -140,9 +140,9 @@ static int rte_init(char flags)
     }
     
     /* Once the session directory location has been established, set
-        the orte_output env file location to be in the
+        the opal_output env file location to be in the
         proc-specific session directory. */
-    orte_output_set_output_file_info(orte_process_info.proc_session_dir,
+    opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                      "output-", NULL, NULL);
     
     /* that's all we need here */

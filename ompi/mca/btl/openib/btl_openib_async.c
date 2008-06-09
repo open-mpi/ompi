@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/btl/base/base.h"

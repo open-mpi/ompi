@@ -25,7 +25,7 @@
 #include "connect/btl_openib_connect_ibcm.h"
 #endif
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 
 /*
@@ -107,7 +107,7 @@ int ompi_btl_openib_connect_base_register(void)
         for (save = j = 0; NULL != temp[j]; ++j) {
             for (i = 0; NULL != all[i]; ++i) {
                 if (0 == strcmp(temp[j], all[i]->cbc_name)) { 
-                    orte_output(-1, "include: saving %s", all[i]->cbc_name);
+                    opal_output(-1, "include: saving %s", all[i]->cbc_name);
                     available[save++] = all[i];
                     ++num_available;
                     break;
@@ -158,7 +158,7 @@ int ompi_btl_openib_connect_base_register(void)
                 }
             }
             if (NULL == temp[j]) {
-                orte_output(-1, "exclude: saving %s", all[i]->cbc_name);
+                opal_output(-1, "exclude: saving %s", all[i]->cbc_name);
                 available[save++] = all[i];
                 ++num_available;
             }
@@ -168,7 +168,7 @@ int ompi_btl_openib_connect_base_register(void)
 
     /* If there's no include/exclude list, copy all[] into available[] */
     else {
-        orte_output(-1, "no include or exclude: saving all");
+        opal_output(-1, "no include or exclude: saving all");
         memcpy(available, all, sizeof(all));
         num_available = (sizeof(all) / 
                          sizeof(ompi_btl_openib_connect_base_module_t *)) - 1;
@@ -201,7 +201,7 @@ int ompi_btl_openib_connect_base_init(void)
     for (i = num_available = 0; NULL != available[i]; ++i) {
         if (NULL == available[i]->cbc_init) {
             available[num_available++] = available[i];
-            orte_output(-1, "found available cpc (NULL init): %s",
+            opal_output(-1, "found available cpc (NULL init): %s",
                         all[i]->cbc_name);
             continue;
         }
@@ -209,7 +209,7 @@ int ompi_btl_openib_connect_base_init(void)
         rc = available[i]->cbc_init();
         if (OMPI_SUCCESS == rc) {
             available[num_available++] = available[i];
-            orte_output(-1, "found available cpc (SUCCESS init): %s",
+            opal_output(-1, "found available cpc (SUCCESS init): %s",
                         all[i]->cbc_name);
             continue;
         } else if (OMPI_ERR_NOT_SUPPORTED == rc) {
@@ -265,7 +265,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
             free(msg);
             return rc;
         }
-        orte_output(-1, "match cpc for local port: %s",
+        opal_output(-1, "match cpc for local port: %s",
                     available[i]->cbc_name);
 
         /* This CPC has indicated that it wants to run on this openib
@@ -350,10 +350,10 @@ ompi_btl_openib_connect_base_find_match(mca_btl_openib_module_t *btl,
     if (NULL != local_selected) {
         *ret_local_cpc = local_selected;
         *ret_remote_cpc_data = remote_selected;
-        orte_output(-1, "find_match: found match!");
+        opal_output(-1, "find_match: found match!");
         return OMPI_SUCCESS;
     } else {
-        orte_output(-1, "find_match: did NOT find match!");
+        opal_output(-1, "find_match: did NOT find match!");
         return OMPI_ERR_NOT_FOUND;
     }
 }

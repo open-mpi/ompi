@@ -25,7 +25,7 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"

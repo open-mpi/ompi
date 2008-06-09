@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "mtl_portals.h"
 #include "mtl_portals_request.h"
@@ -40,7 +40,7 @@ ompi_mtl_portals_short_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *ptl
 	    break;
 
 	default:
-	    orte_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_short_callback()\n",ev->type); 
+	    opal_output(fileno(stderr)," Unexpected event type %d in ompi_mtl_portals_short_callback()\n",ev->type); 
 	    abort();
     }
 

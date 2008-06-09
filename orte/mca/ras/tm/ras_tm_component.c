@@ -22,7 +22,7 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/basename.h"
 
 #include "orte/mca/ras/base/ras_private.h"

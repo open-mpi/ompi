@@ -238,7 +238,7 @@ struct ompi_communicator_t {
     {
 #if OMPI_ENABLE_DEBUG
         if(peer_id >= comm->c_remote_group->grp_proc_count) {
-            orte_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
+            opal_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
             return (struct ompi_proc_t *) NULL;
         }
 #endif

@@ -23,9 +23,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 
@@ -56,7 +56,7 @@ int orte_grpcomm_base_open(void)
 {
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
-    orte_grpcomm_base_output = orte_output_open(NULL);
+    orte_grpcomm_base_output = opal_output_open(NULL);
     
     /* Open up all available components */
 

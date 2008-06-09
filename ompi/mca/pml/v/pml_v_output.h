@@ -11,7 +11,7 @@
 #ifndef PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 #define PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal_stdint.h"
 #include <stdio.h>
 
@@ -33,7 +33,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    orte_output(0, str);
+    opal_output(0, str);
     free(str);
     va_end(list);    
 }
@@ -42,15 +42,15 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
  */
 #if   defined(ACCEPT_C99)
 #   define V_OUTPUT(ARGS...)                                                   \
-        ORTE_OUTPUT((pml_v_output, __VA_ARGS__))
+        OPAL_OUTPUT((pml_v_output, __VA_ARGS__))
 #   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
-        ORTE_OUTPUT_VERBOSE((V, pml_v_output, __VA_ARGS__))
+        OPAL_OUTPUT_VERBOSE((V, pml_v_output, __VA_ARGS__))
 
 #elif defined(__GNUC__) && !defined(__STDC__)
 #   define V_OUTPUT(ARGS...)                                                   \
-        ORTE_OUTPUT((pml_v_output, ARGS))
+        OPAL_OUTPUT((pml_v_output, ARGS))
 #   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
-        ORTE_OUTPUT_VERBOSE((V, pml_v_output, ARGS))
+        OPAL_OUTPUT_VERBOSE((V, pml_v_output, ARGS))
             
 #elif OMPI_ENABLE_DEBUG
     /* No variadic macros available... So sad */
@@ -63,7 +63,7 @@ static inline void V_OUTPUT(const char* fmt, ... )
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    orte_output(pml_v_output, str);
+    opal_output(pml_v_output, str);
     free(str);
     va_end(list);
 }
@@ -75,7 +75,7 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    orte_output_verbose(V, pml_v_output, str);
+    opal_output_verbose(V, pml_v_output, str);
     free(str);
     va_end(list);
 }

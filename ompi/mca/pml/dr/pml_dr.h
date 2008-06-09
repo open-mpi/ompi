@@ -223,6 +223,6 @@ extern int mca_pml_dr_ft_event(int state);
 #define MCA_PML_DR_DEBUG_LEVEL -1
 #define MCA_PML_DR_DEBUG(level,msg)             \
     if(level <= MCA_PML_DR_DEBUG_LEVEL){        \
-        ORTE_OUTPUT(msg);                       \
+        OPAL_OUTPUT(msg);                       \
     }
 

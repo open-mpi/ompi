@@ -35,7 +35,7 @@
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 
@@ -75,7 +75,7 @@ int orte_write_hnp_contact_file(char *filename)
 
     fp = fopen(filename, "w");
     if (NULL == fp) {
-        orte_output( 0, "Impossible to open the file %s in write mode\n",
+        opal_output( 0, "Impossible to open the file %s in write mode\n",
                      filename );
         ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
         return ORTE_ERR_FILE_OPEN_FAILURE;

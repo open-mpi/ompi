@@ -67,7 +67,7 @@ int mca_bml_base_init( bool enable_progress_threads,
         cli = (mca_base_component_list_item_t*) item; 
         component = (mca_bml_base_component_t*) cli->cli_component; 
         if(NULL == component->bml_init) {
-            orte_output_verbose( 10, mca_bml_base_output, 
+            opal_output_verbose( 10, mca_bml_base_output, 
                                  "select: no init function; ignoring component %s", 
                                  component->bml_version.mca_component_name ); 
             continue; 

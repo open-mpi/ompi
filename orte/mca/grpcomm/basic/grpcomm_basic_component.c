@@ -34,7 +34,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_list.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -106,7 +106,7 @@ int orte_grpcomm_basic_open(void)
         orte_grpcomm_basic.xcast_binomial_xover = INT_MAX;
         orte_grpcomm_basic.xcast_linear_xover = INT_MAX;
     } else if (0 != strcmp(mode, "none")) {
-        orte_output(0, "grpcomm_basic_xcast_mode: unknown option %s - using defaults", mode);
+        opal_output(0, "grpcomm_basic_xcast_mode: unknown option %s - using defaults", mode);
     }
     
     return ORTE_SUCCESS;

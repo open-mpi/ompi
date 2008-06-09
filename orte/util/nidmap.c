@@ -27,7 +27,7 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -97,7 +97,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                     /* if it is anything but a digit,
                      * then that's not good
                      */
-                    orte_output(0, "%s encode:nidmap Nodename pattern is nonstandard",
+                    opal_output(0, "%s encode:nidmap Nodename pattern is nonstandard",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                     return ORTE_ERROR;
                 }
@@ -129,7 +129,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         /* and the starting offset */
         opal_dss.pack(&buf, &firstnode, 1, OPAL_INT32);
         
-        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s encode:nidmap:contig_nodes prefix %s num_digits %d offset %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), prefix, num_digs, firstnode));
         
@@ -160,7 +160,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
                 opal_dss.pack(&buf, &lastnode, 1, OPAL_INT32);
                 /* indicate start of new range */
                 opal_dss.pack(&buf, &nodenum, 1, OPAL_INT32);
-                ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+                OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                                      "%s encode:nidmap:contig_nodes end range %d start next range %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), lastnode, nodenum));
             }
@@ -168,7 +168,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         }
         /* pack end of range */
         opal_dss.pack(&buf, &lastnode, 1, OPAL_INT32);
-        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s encode:nidmap:contig_nodes end range %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), lastnode));
         /* pack flag end of ranges */
@@ -178,7 +178,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         /* if the nodes aren't contiguous, then we need
          * to simply pack every nodename individually
          */
-        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s encode:nidmap non_contig_nodes - packing all names",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* indicate that this will not be a contiguous node map */
@@ -264,7 +264,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
 #endif
     opal_buffer_t buf;
 
-    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s decode:nidmap decoding nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -277,7 +277,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
     n=1;
     opal_dss.unpack(&buf, &num_nodes, &n, OPAL_INT32);
  
-    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s decode:nidmap decoding %d nodes with %d already loaded",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes, nodes->lowest_free));
     
@@ -341,7 +341,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
             step = 1;
         }
         
-        ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s decode:nidmap:contig_nodes prefix %s num_digits %d offset %d endrange %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), prefix, num_digs, lastnode, endrange));
         
@@ -442,10 +442,10 @@ vpids:
     free(arch);
 #endif
  
-    if (0 < orte_output_get_verbosity(orte_debug_output)) {
+    if (0 < opal_output_get_verbosity(orte_debug_output)) {
         nd = (orte_nid_t**)nodes->addr;
         for (i=0; i < num_nodes; i++) {
-            orte_output(0, "%s node[%d].name %s daemon %s arch %0x",
+            opal_output(0, "%s node[%d].name %s daemon %s arch %0x",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                         (NULL == nd[i]) ? "NULL" : nd[i]->name,
                         ORTE_VPID_PRINT(nd[i]->daemon),

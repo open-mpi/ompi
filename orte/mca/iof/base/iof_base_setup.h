@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +32,7 @@ struct orte_iof_base_io_conf_t {
     int p_stdin[2];
     int p_stdout[2];
     int p_stderr[2];
+    int p_internal[2];
 };
 typedef struct orte_iof_base_io_conf_t orte_iof_base_io_conf_t;
 
@@ -43,7 +45,8 @@ typedef struct orte_iof_base_io_conf_t orte_iof_base_io_conf_t;
  */
 ORTE_DECLSPEC int orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts);
 
-ORTE_DECLSPEC int orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts);
+ORTE_DECLSPEC int orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts,
+                                            char ***env);
 
 ORTE_DECLSPEC int orte_iof_base_setup_parent(const orte_process_name_t* name,
                                              orte_iof_base_io_conf_t *opts);

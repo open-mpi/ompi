@@ -33,7 +33,7 @@
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/name_fns.h"
@@ -68,7 +68,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t *default_node_list=NULL;
     opal_list_t *node_list=NULL;
 
-    ORTE_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:seq mapping job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));

@@ -40,7 +40,7 @@
 #include <llapi.h>
 
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -125,7 +125,7 @@ cleanup:
  */
 static int orte_ras_loadleveler_finalize(void)
 {
-    orte_output(orte_ras_base.ras_output, 
+    opal_output(orte_ras_base.ras_output, 
                 "ras:loadleveler:finalize: success (nothing to do)");
     return ORTE_SUCCESS;
 }
@@ -146,7 +146,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
  
     /* Get the step ID from LOADL_STEP_ID environment variable. */
     if(NULL == (ll_step_id = getenv("LOADL_STEP_ID"))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: could not get LOADL_STEP_ID "
                     "from environment!");
         return ORTE_ERROR;
@@ -161,7 +161,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
 
     /* Initialize the LL API. Specify that query type is JOBS. */
     if(NULL == (queryObject = ll_query(JOBS))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_query faild on JOBS!");
         return ORTE_ERROR;
     }
@@ -169,7 +169,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     /* Specify that this is a QUERY_STEPID type of query. */
     rc = ll_set_request(queryObject, QUERY_STEPID, job_step_list, ALL_DATA);
     if(0 > rc) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_set request failed: error "
                     "%d!", rc);
         return ORTE_ERROR;
@@ -178,20 +178,20 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     /* Get a Job object from LoadL_schedd that contains the relevant job step */
     job = ll_get_objs(queryObject, LL_CM, NULL, &obj_count, &err_code);
     if(NULL == job) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_objs faild!");
         return ORTE_ERROR;
     }
 
     if (obj_count != 1) {  /* Only 1 Job object is expected. */
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_objs: expected one job "
                     "to match, got %d!", obj_count);
         return ORTE_ERROR;
     }
 
     if(0 != (rc = ll_get_data(job, LL_JobSchedd, &schedd_host_name))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_data: failure. RC= %d!", 
                     rc);
         return ORTE_ERROR;
@@ -200,7 +200,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
         job_step_list[0] = ll_step_id;
         job_step_list[1] = NULL;
     } else {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_objs() Error: Could not "
                     "determine managing schedd for job %s.\n",
                     job_step_list[0]);
@@ -214,7 +214,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
 
     /* Initialize the LL API. Specify that query type is JOBS. */
     if(NULL == (queryObject = ll_query(JOBS))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_query faild on JOBS!");
         return ORTE_ERROR;
     }
@@ -222,7 +222,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     /* Specify that this is a QUERY_STEPID type of query. */
     rc = ll_set_request(queryObject, QUERY_STEPID, job_step_list, ALL_DATA);
     if(0 != rc) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_set request failed: error "
                     "%d!", rc);
         return ORTE_ERROR;
@@ -232,27 +232,27 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     job = ll_get_objs(queryObject, LL_SCHEDD, schedd_host_name, &obj_count, 
                       &err_code);
     if(NULL == job) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_set request failed: error "
                     "%d!", rc);
         return ORTE_ERROR;
     }
 
     if (obj_count != 1) {  /* Only 1 Job object is expected. */
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_objs: expected one job " 
                     "to match, got %d!", obj_count);
         return ORTE_ERROR;
     }
 
     if(0 != (rc = ll_get_data(job, LL_JobStepCount, &job_step_count))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_data: failure. RC= %d!",
                     rc);
         return ORTE_ERROR;
     }
     if (job_step_count != 1) { /* Only 1 Job Step object is expected. */
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_objs: expected one job "
                     "step to match, got %d!", obj_count);
         return ORTE_ERROR;
@@ -260,13 +260,13 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
 
     step = NULL;
     if(0 != (rc = ll_get_data(job, LL_JobGetFirstStep, &step))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_data: failure. RC= %d!",
                     rc);
         return ORTE_ERROR;
     }
     if(NULL == step) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ll_get_data() Error: Unable to obtain Job Step "
                     "information.\n");
         return ORTE_ERROR;
@@ -274,7 +274,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
 
     step_mode = -1;
     if(0 != (rc = ll_get_data(step, LL_StepParallelMode, &step_mode))) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: ll_get_data: failure on "
                     "LL_StepParallelMode. RC= %d!", rc);
         return ORTE_ERROR;
@@ -282,7 +282,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     
     /* Serial job step: step_mode==0; Parallel: step_mode==1; Others:2,3,4. */
     if ((step_mode != 0) && (step_mode != 1)) {
-        orte_output(orte_ras_base.ras_output,
+        opal_output(orte_ras_base.ras_output,
                     "ras:loadleveler:allocate: We support only Serial and "
                     "Parallel LoadLeveler job types. PVM, NQS, and Blue Gene"
                     "jobs are not supported by the LoadLeveler RAS!");
@@ -292,14 +292,14 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     if(step_mode == 0) { /* serial job */
         node = NULL;
         if(0 != (rc = ll_get_data(step, LL_StepGetFirstNode, &node))) {
-            orte_output(orte_ras_base.ras_output,
+            opal_output(orte_ras_base.ras_output,
                         "ras:loadleveler:allocate: ll_get_data: failure on "
                         "LL_StepGetFirstNode. RC= %d!", rc);
             return ORTE_ERROR;
         }
         task = NULL;
         if(0 != (rc = ll_get_data(node, LL_NodeGetFirstTask, &task))) {
-            orte_output(orte_ras_base.ras_output,
+            opal_output(orte_ras_base.ras_output,
                         "ras:loadleveler:allocate: ll_get_data: failure on "
                         "LL_NodeGetFirstTask. RC= %d!", rc);
             return ORTE_ERROR;
@@ -307,7 +307,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
         task_instance = NULL;
         rc = ll_get_data(task, LL_TaskGetFirstTaskInstance, &task_instance);
         if(0 != rc) {
-            orte_output(orte_ras_base.ras_output,
+            opal_output(orte_ras_base.ras_output,
                         "ras:loadleveler:allocate: ll_get_data: failure on "
                         "LL_TaskGetFirstInstance. RC= %d!", rc);
             return ORTE_ERROR;
@@ -315,7 +315,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
         task_machine_name = NULL;
         if(0 != (rc = ll_get_data(task_instance, LL_TaskInstanceMachineName, 
                                   &task_machine_name))) {
-            orte_output(orte_ras_base.ras_output,
+            opal_output(orte_ras_base.ras_output,
                         "ras:loadleveler:allocate: ll_get_data: failure on " 
                         "LL_TaskInstanceMachineName. RC= %d!", rc);
             return ORTE_ERROR;
@@ -326,7 +326,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
 
         node = NULL;
         if(0 != (rc = ll_get_data(step, LL_StepGetFirstNode, &node))) {
-            orte_output(orte_ras_base.ras_output,
+            opal_output(orte_ras_base.ras_output,
                         "ras:loadleveler:allocate: ll_get_data: failure on "
                         "LL_StepGetFirstNode. RC= %d!", rc);
             return ORTE_ERROR;
@@ -335,7 +335,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
         while(NULL != node) {     /* Loop through the "Node" objects. */
             task = NULL;
             if(0 != (rc = ll_get_data(node, LL_NodeGetFirstTask, &task))) {
-                orte_output(orte_ras_base.ras_output,
+                opal_output(orte_ras_base.ras_output,
                             "ras:loadleveler:allocate: ll_get_data: failure on "
                             "LL_NodeGetFirstTask. RC= %d!", rc);
                 return ORTE_ERROR;
@@ -345,7 +345,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
                 ll_master_task = 0;
                 rc = ll_get_data(task, LL_TaskIsMaster, &ll_master_task);
                 if(0 != rc) {
-                    orte_output(orte_ras_base.ras_output,
+                    opal_output(orte_ras_base.ras_output,
                                 "ras:loadleveler:allocate: ll_get_data: failure" 
                                 "  on LL_TaskIsMaster. RC= %d!", rc);
                     return ORTE_ERROR;
@@ -358,7 +358,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
                     task_instance = NULL;
                     if(0 != (rc = ll_get_data(task, LL_TaskGetFirstTaskInstance,
                                               &task_instance))) {
-                        orte_output(orte_ras_base.ras_output,
+                        opal_output(orte_ras_base.ras_output,
                                     "ras:loadleveler:allocate: ll_get_data: "
                                     "failure on LL_TaskGetFirstTaskInstance. "
                                     " RC= %d!", rc);
@@ -372,7 +372,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
                                          LL_TaskInstanceMachineName, 
                                          &task_machine_name);
                         if(0 != rc) {
-                            orte_output(orte_ras_base.ras_output,
+                            opal_output(orte_ras_base.ras_output,
                                         "ras:loadleveler:allocate: ll_get_data:"
                                         " failure on LL_TaskInstanceMachineName"
                                         "RC= %d!", rc);
@@ -383,7 +383,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
                         rc = ll_get_data(task, LL_TaskGetNextTaskInstance, 
                                          &task_instance);
                         if(0 != rc) {
-                            orte_output(orte_ras_base.ras_output,
+                            opal_output(orte_ras_base.ras_output,
                                         "ras:loadleveler:allocate: ll_get_data:"
                                         " failure on LL_TaskGetNextInstance. "
                                         "RC= %d!", rc);
@@ -393,7 +393,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
                 }
                 task = NULL;
                 if(0 != (rc = ll_get_data(node, LL_NodeGetNextTask, &task))) {
-                    orte_output(orte_ras_base.ras_output,
+                    opal_output(orte_ras_base.ras_output,
                                 "ras:loadleveler:allocate: ll_get_data: " 
                                 "failure on LL_NodeGetNextTask. RC= %d!", rc);
                     return ORTE_ERROR;
@@ -401,7 +401,7 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
             }
             node = NULL;
             if(0 != (rc = ll_get_data(step, LL_StepGetNextNode, &node))) {
-                orte_output(orte_ras_base.ras_output,
+                opal_output(orte_ras_base.ras_output,
                             "ras:loadleveler:allocate: ll_get_data: failure "
                             "on LL_StepGetNextNode. RC= %d!", rc);
                 return ORTE_ERROR;

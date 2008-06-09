@@ -206,7 +206,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_namelist_t *nm;
     opal_list_t daemon_tree;
 
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -272,7 +272,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:construct_child_list unpacking data to launch job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
     
@@ -290,7 +290,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         
         /* is this the specified job? */
         if (jdat->jobid == *job) {
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:construct_child_list found existing jobdat for job %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
             break;
@@ -298,7 +298,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     if (NULL == jobdat) {
         /* setup jobdat object for this job */
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:construct_child_list adding new jobdat for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
         jobdat = OBJ_NEW(orte_odls_job_t);
@@ -319,7 +319,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:construct_child_list unpacking %ld app_contexts",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)jobdat->num_apps));
     
@@ -362,7 +362,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* ident this proc's node */
         node = (orte_nid_t*)orte_daemonmap.addr[jobdat->procmap[j].node];
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:constructing child list - checking proc %s on node %d with daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j),
                              jobdat->procmap[j].node, ORTE_VPID_PRINT(node->daemon)));
@@ -370,7 +370,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* does this data belong to us? */
         if (ORTE_PROC_MY_NAME->vpid == node->daemon) {
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j)));
             
@@ -794,13 +794,13 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         want_processor = false;  /* default to not being a hog */
         oversubscribed = true;
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:launch could not get number of processors - using conservative settings",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
     } else {
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:launch got %ld processors",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)num_processors));
         
@@ -827,7 +827,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch oversubscribed set to %s want_processor set to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          oversubscribed ? "true" : "false", want_processor ? "true" : "false"));
@@ -844,7 +844,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                                                oversubscribed,
                                                                &apps[i]->env))) {
             
-            ORTE_OUTPUT_VERBOSE((10, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((10, orte_odls_globals.output,
                                  "%s odls:launch:setup_fork failed with error %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_ERROR_NAME(rc)));
@@ -888,7 +888,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         if (child->alive) {
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:launch child %s is already alive",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -902,7 +902,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:launch child %s is not in job %s being launched",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name),
@@ -1032,13 +1032,13 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
 #endif
 #endif
-        if (5 < orte_output_get_verbosity(orte_odls_globals.output)) {
-            orte_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
+        if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
+            opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name));
             
             /* dump what is going to be exec'd */
-            if (7 < orte_output_get_verbosity(orte_odls_globals.output)) {
+            if (7 < opal_output_get_verbosity(orte_odls_globals.output)) {
                 opal_dss.dump(orte_odls_globals.output, app, ORTE_APP_CONTEXT);
             }
         }
@@ -1063,7 +1063,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     launch_failed = false;
 
 CLEANUP:
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch reporting job %s launch status",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
@@ -1088,7 +1088,7 @@ CLEANUP:
     OBJ_DESTRUCT(&alert);
 
     if (!launch_failed) {
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:launch setting waitpids",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -1135,7 +1135,7 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buff
             continue;
         }
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: sending message to tag %lu on child %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (unsigned long)tag, ORTE_NAME_PRINT(child->name)));
@@ -1168,7 +1168,7 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
     opal_list_item_t *item;
     orte_odls_child_t *child;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: signaling proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc)));
@@ -1337,7 +1337,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         /* find this child */
         if (OPAL_EQUAL == opal_dss.compare(proc, child->name, ORTE_NAME)) {
 
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls: registering sync on child %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -1399,7 +1399,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             goto CLEANUP;
         }
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:sync nidmap requested for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jobdat->jobid)));
@@ -1410,7 +1410,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: sending sync ack to child %s with %ld bytes of data",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(proc), (long)buffer.bytes_used));
@@ -1429,7 +1429,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
          * else that needs it
          */
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: sending contact info to HNP",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -1509,7 +1509,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     opal_buffer_t alert;
     orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc child process %ld terminated",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)pid));
@@ -1536,7 +1536,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
      * means we are detecting it exiting multiple times
      */
 
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc did not find pid %ld in table!",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)pid));
@@ -1551,7 +1551,7 @@ GOTCHILD:
      * ensure that its exit state gets reported to avoid hanging
      */
     if (!child->alive) {
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:wait_local_proc child %s was already dead",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
@@ -1572,7 +1572,7 @@ GOTCHILD:
        exception is detected and handled (in which case this unpublish
        request will be ignored/discarded. */
 
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc pid %ld corresponds to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)pid,
@@ -1587,7 +1587,7 @@ GOTCHILD:
         }
     }
 
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc orted sent IOF unpub message!",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -1625,7 +1625,7 @@ GOTCHILD:
         abort_file = opal_os_path(false, orte_process_info.tmpdir_base,
                                   orte_process_info.top_session_dir,
                                   job, vpid, "abort", NULL );
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:wait_local_proc checking abort file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
         
@@ -1636,7 +1636,7 @@ GOTCHILD:
              * meer existence indicates that an abnormal termination occurred
              */
 
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:wait_local_proc child %s died by abort",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -1655,7 +1655,7 @@ GOTCHILD:
                 aborted = true;
                 child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
                 
-                ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "%s odls:wait_local_proc child process %s terminated normally "
                                      "but did not provide a required sync - it "
                                      "will be treated as an abnormal termination",
@@ -1667,7 +1667,7 @@ GOTCHILD:
                 child->state = ORTE_PROC_STATE_TERMINATED;
             }
 
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:wait_local_proc child process %s terminated normally",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -1689,7 +1689,7 @@ GOTCHILD:
          */
         child->exit_code = WTERMSIG(status) + 128;
                 
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:wait_local_proc child process %s terminated with signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
@@ -1730,7 +1730,7 @@ MOVEON:
             goto unlock;
         }
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:wait_local_proc reporting proc %s aborted to HNP",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
@@ -1764,7 +1764,7 @@ MOVEON:
                 goto unlock;
             }
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:wait_local_proc reporting all procs in %s terminated",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(child->name->jobid)));
@@ -1809,7 +1809,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
 
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:kill_local_proc working on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
@@ -1842,7 +1842,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
         next = opal_list_get_next(item);
         
         
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:kill_local_proc checking child process %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
@@ -1853,7 +1853,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
          */
         if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s is not part of job %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name),
@@ -1889,7 +1889,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
          */
         if (!child->alive) {
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s is not alive",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -2025,7 +2025,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     orte_process_name_t my_parent;
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: daemon collective called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -2083,7 +2083,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     /* count the number of participants collected */
     jobdat->num_collected++;
     
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: daemon collective for job %s from %s type %ld num_collected %d num_participating %d num_contributors %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(jobid),
                          ORTE_NAME_PRINT(sender),
@@ -2092,7 +2092,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
 
     /* if we locally created this, do not send it! */
     if (do_not_send) {
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: daemon collective do not send!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return ORTE_SUCCESS;
@@ -2135,7 +2135,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
         /* send it */
         my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
         my_parent.vpid = orte_routed.get_routing_tree(ORTE_PROC_MY_NAME->jobid, NULL);
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: daemon collective not the HNP - sending to parent %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&my_parent)));
@@ -2148,7 +2148,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     return ORTE_SUCCESS;
     
 hnp_process:
-    ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: daemon collective HNP - xcasting to job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jobid)));
@@ -2246,7 +2246,7 @@ int orte_odls_base_default_collect_data(orte_process_name_t *proc,
         /* find this child */
         if (OPAL_EQUAL == opal_dss.compare(proc, child->name, ORTE_NAME)) {
             
-            ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls: collecting data from child %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -2308,7 +2308,7 @@ int orte_odls_base_default_collect_data(orte_process_name_t *proc,
     /* now check to see if all local procs in this job have participated */
     if (all_children_participated(proc->jobid)) {
        
-        ORTE_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: executing collective",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
@@ -2338,7 +2338,7 @@ int orte_odls_base_default_collect_data(orte_process_name_t *proc,
         /* pass this to the daemon collective operation */
         daemon_collective(ORTE_PROC_MY_NAME, &relay);
         
-        ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s odls: collective completed",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }

@@ -19,7 +19,7 @@
 
 #include "orte_config.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/constants.h"
@@ -94,7 +94,7 @@ static int orte_ras_alps_component_query(mca_base_module_t **module, int *priori
 
     if (NULL != getenv("BATCH_PARTITION_ID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "ras:alps: available for selection"));
         *module = (mca_base_module_t *) &orte_ras_alps_module;
         return ORTE_SUCCESS;
@@ -102,7 +102,7 @@ static int orte_ras_alps_component_query(mca_base_module_t **module, int *priori
 
     /* Sadly, no */
 
-    orte_output(orte_ras_base.ras_output,
+    opal_output(orte_ras_base.ras_output,
                 "ras:alps: NOT available for selection");
     *module = NULL;
     return ORTE_ERROR;

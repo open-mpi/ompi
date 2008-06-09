@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 
@@ -64,7 +64,7 @@ static bool server_setup=false;
 
 static void setup_server(void)
 {
-    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: setting up server at URI %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == mca_pubsub_orte_component.server_uri) ? "NULL" : mca_pubsub_orte_component.server_uri));
@@ -86,7 +86,7 @@ static void setup_server(void)
     /* flag setup as completed */
     server_setup = true;
     
-    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: server %s setup",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mca_pubsub_orte_component.server)));
@@ -116,7 +116,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
 
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
-    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: publishing service %s scope %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));
@@ -260,7 +260,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
         }
     }
     
-    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: lookup service %s scope %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, lookup[0]));
@@ -406,7 +406,7 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
-    ORTE_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: unpublish service %s scope %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));

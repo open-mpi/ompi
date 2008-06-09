@@ -122,7 +122,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
     rc = ompi_modex_recv( &mca_btl_mx_component.super.btl_version,
 				  ompi_proc, (void*)&mx_peers, &size );
     if( OMPI_SUCCESS != rc ) {
-        orte_output( 0, "mca_pml_base_modex_recv failed for peer %s",
+        opal_output( 0, "mca_pml_base_modex_recv failed for peer %s",
 		     ORTE_NAME_PRINT(&ompi_proc->proc_name) );
 	return NULL;
     }
@@ -131,7 +131,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
     if( (size % sizeof(mca_btl_mx_addr_t)) != 0 ) {
-        orte_output( 0, "invalid mx address for peer %s",
+        opal_output( 0, "invalid mx address for peer %s",
 		     ORTE_NAME_PRINT(&ompi_proc->proc_name) );
 	return NULL;
     }
@@ -228,7 +228,7 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
             if( MX_SUCCESS != mx_nic_id_to_hostname( module_endpoint->mx_peer.nic_id, peer_name ) )
                 sprintf( peer_name, "unknown %lx nic_id", (long)module_endpoint->mx_peer.nic_id );
             
-            orte_output( 0, "mx_connect fail for %s with key %x (error %s)\n\tUnique ID (local %x remote %x)\n",
+            opal_output( 0, "mx_connect fail for %s with key %x (error %s)\n\tUnique ID (local %x remote %x)\n",
                          peer_name, mca_btl_mx_component.mx_filter, mx_strerror(mx_status),
 			 module_endpoint->endpoint_btl->mx_unique_network_id,
 			 module_endpoint->mx_peer.unique_network_id );

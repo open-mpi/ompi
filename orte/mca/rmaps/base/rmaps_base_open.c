@@ -23,10 +23,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -70,11 +70,11 @@ int orte_rmaps_base_open(void)
     
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
-    orte_rmaps_base.rmaps_output = orte_output_open(NULL);
+    orte_rmaps_base.rmaps_output = opal_output_open(NULL);
 
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     lds.lds_want_stdout = true;
-    orte_rmaps_base.map_output = orte_output_open(&lds);
+    orte_rmaps_base.map_output = opal_output_open(&lds);
     OBJ_DESTRUCT(&lds);
     
     /* Are we scheduling by node or by slot? */

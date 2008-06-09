@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib_xrc.h"

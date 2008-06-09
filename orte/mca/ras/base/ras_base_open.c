@@ -23,14 +23,14 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/threads/mutex.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"
@@ -79,11 +79,11 @@ int orte_ras_base_open(void)
 
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
-    orte_ras_base.ras_output = orte_output_open(NULL);
+    orte_ras_base.ras_output = opal_output_open(NULL);
     
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     lds.lds_want_stdout = true;
-    orte_ras_base.alloc_output = orte_output_open(&lds);
+    orte_ras_base.alloc_output = opal_output_open(&lds);
     OBJ_DESTRUCT(&lds);
     
     /* Open up all available components */

@@ -32,7 +32,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/iof/base/base.h"
@@ -83,7 +83,7 @@ static void orte_iof_base_frag_send_cb(
     void* cbdata)
 {
     orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
-    orte_output_verbose(1, orte_iof_base.iof_output, "iof_base_fragment: ACK send done");
+    opal_output_verbose(1, orte_iof_base.iof_output, "iof_base_fragment: ACK send done");
     ORTE_IOF_BASE_FRAG_RETURN(frag);
 }
 
@@ -102,7 +102,7 @@ int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, bool do_close,
         ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
 
         /* start non-blocking OOB call to forward header */
-        orte_output_verbose(1, orte_iof_base.iof_output, "iof_base_fragment: sending ACK");
+        opal_output_verbose(1, orte_iof_base.iof_output, "iof_base_fragment: sending ACK");
         rc = orte_rml.send_nb(
             &frag->frag_src,
             frag->frag_iov,
@@ -112,7 +112,7 @@ int _orte_iof_base_frag_ack(orte_iof_base_frag_t* frag, bool do_close,
             orte_iof_base_frag_send_cb,
             frag);
         if(rc != ORTE_SUCCESS) {
-            orte_output_verbose(1, 0, "orte_iof_base_frag_ack: orte_oob_send failed with status=%d\n", rc);
+            opal_output_verbose(1, 0, "orte_iof_base_frag_ack: orte_oob_send failed with status=%d\n", rc);
         }
     }
     return rc;

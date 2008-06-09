@@ -55,7 +55,7 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
@@ -149,7 +149,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
 
     if (mca_plm_lsf_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
-            orte_output(0, "plm_lsf: could not obtain job start time");
+            opal_output(0, "plm_lsf: could not obtain job start time");
         }        
     }
     
@@ -159,7 +159,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:lsf: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
@@ -185,7 +185,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     num_nodes = map->num_new_daemons;
     if (num_nodes == 0) {
         /* have all the daemons we need - launch app */
-        ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:lsf: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
@@ -234,18 +234,18 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
      */
     rc = orte_util_convert_vpid_to_string(&vpid_string, map->daemon_vpid_start);
     if (ORTE_SUCCESS != rc) {
-        orte_output(0, "plm_lsf: unable to get daemon vpid as string");
+        opal_output(0, "plm_lsf: unable to get daemon vpid as string");
         goto cleanup;
     }
     free(argv[proc_vpid_index]);
     argv[proc_vpid_index] = strdup(vpid_string);
     free(vpid_string);
 
-    if (0 < orte_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
-            orte_output(0, "plm:lsf: final top-level argv:");
-            orte_output(0, "plm:lsf:     %s", param);
+            opal_output(0, "plm:lsf: final top-level argv:");
+            opal_output(0, "plm:lsf:     %s", param);
             free(param);
         }
     }
@@ -274,7 +274,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
                same anyway */
             if (NULL == cur_prefix) {
                 cur_prefix = strdup(app_prefix_dir);
-                ORTE_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:lsf: Set prefix:%s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cur_prefix));
             }
@@ -286,7 +286,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
 
     if (mca_plm_lsf_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
-            orte_output(0, "plm_lsf: could not obtain start time");
+            opal_output(0, "plm_lsf: could not obtain start time");
         }        
     }
     
@@ -298,7 +298,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
      */
     if (lsb_launch(nodelist_argv, argv, LSF_DJOB_NOWAIT, env) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
-        orte_output(0, "lsb_launch failed: %d", rc);
+        opal_output(0, "lsb_launch failed: %d", rc);
         rc = ORTE_ERR_FAILED_TO_START;
         goto cleanup;
     }
@@ -323,19 +323,19 @@ launch_apps:
     
     if (mca_plm_lsf_component.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
-             orte_output(0, "plm_lsf: could not obtain stop time");
+             opal_output(0, "plm_lsf: could not obtain stop time");
          } else {
-             orte_output(0, "plm_lsf: daemon block launch time is %ld usec",
+             opal_output(0, "plm_lsf: daemon block launch time is %ld usec",
                          (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
                          (launchstop.tv_usec - launchstart.tv_usec));
-             orte_output(0, "plm_lsf: total job launch time is %ld usec",
+             opal_output(0, "plm_lsf: total job launch time is %ld usec",
                          (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
                          (launchstop.tv_usec - joblaunchstart.tv_usec));
          }
     }
 
     if (ORTE_SUCCESS != rc) {
-        orte_output(0, "plm:lsf: start_procs returned error %d", rc);
+        opal_output(0, "plm:lsf: start_procs returned error %d", rc);
         goto cleanup;
     }
 

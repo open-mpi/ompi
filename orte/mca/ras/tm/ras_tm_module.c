@@ -28,7 +28,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -99,7 +99,7 @@ static int allocate(opal_list_t *nodes)
  */
 static int finalize(void)
 {
-    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:tm:finalize: success (nothing to do)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
@@ -157,7 +157,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
     nodeid=0;
     while (NULL != (hostname = tm_getline(fp))) {
 
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:tm:allocate:discover: got hostname %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostname));
 
@@ -171,7 +171,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             if (0 == strcmp(node->name, hostname)) {
                 ++node->slots;
 
-                ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                      "%s ras:tm:allocate:discover: found -- bumped slots to %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->slots));
                 
@@ -185,7 +185,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
 
             /* Nope -- didn't find it, so add a new item to the list */
             
-            ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                  "%s ras:tm:allocate:discover: not found -- added to list",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
@@ -209,7 +209,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
     /* check for timing request - get stop time and report elapsed time if so */
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        orte_output(0, "ras_tm: time to allocate is %ld usec",
+        opal_output(0, "ras_tm: time to allocate is %ld usec",
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
         gettimeofday(&start, NULL);

@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/constants.h"
 #include "common_mx.h"
 
@@ -40,7 +40,7 @@ ompi_common_mx_initialize(void)
         mx_return = mx_init(); 
         
         if(MX_SUCCESS != mx_return) {
-            orte_output(0,
+            opal_output(0,
                         "Error in mx_init (error %s)\n",
                         mx_strerror(mx_return));
             return OMPI_ERR_NOT_AVAILABLE;
@@ -59,7 +59,7 @@ ompi_common_mx_finalize(void)
     if( 0 == ompi_common_mx_initialize_ref_cnt ) { 
         mx_return = mx_finalize(); 
         if(mx_return != MX_SUCCESS){ 
-            orte_output(0, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
+            opal_output(0, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
             return OMPI_ERROR;
         } 
     }

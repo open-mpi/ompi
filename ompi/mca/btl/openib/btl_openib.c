@@ -25,7 +25,7 @@
 #include "ompi_config.h"
 #include <string.h>
 #include <inttypes.h>
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/if.h"
 #include "opal/util/arch.h"
 
@@ -317,7 +317,7 @@ int mca_btl_openib_add_procs(
         mca_btl_openib_proc_t* ib_proc;
         int remote_matching_port;
 
-        orte_output(-1, "add procs: adding proc %d", i);
+        opal_output(-1, "add procs: adding proc %d", i);
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

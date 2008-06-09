@@ -24,7 +24,7 @@
 #include "opal/mca/mca.h"
 
 #include "ompi/mca/bml/bml.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/threads/mutex.h"
 #include "bml_base_btl.h" 
 

@@ -29,7 +29,7 @@
 #endif
 
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/util/basename.h"
 
@@ -85,7 +85,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
     opal_list_append(&(filem_request->process_sets), &(p_set->super) );
 
     if(app_context->preload_binary) {
-        ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s) Preload Binary...",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if( ORTE_SUCCESS != (ret = orte_odls_base_preload_append_binary(app_context, 
@@ -99,7 +99,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
         }
     }
     if( NULL != app_context->preload_files) {
-        ORTE_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s) Preload Files... [%s]",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              app_context->preload_files));

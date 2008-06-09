@@ -27,7 +27,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/threads/condition.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/bit_ops.h"
 
 #include "opal/class/opal_hash_table.h"
@@ -245,7 +245,7 @@ modex_lookup_orte_proc(const orte_process_name_t *orte_proc)
         for it */
         proc_data = OBJ_NEW(modex_proc_data_t);
         if (NULL == proc_data) {
-            orte_output(0, "grpcomm_basic_modex_lookup_orte_proc: unable to allocate modex_proc_data_t\n");
+            opal_output(0, "grpcomm_basic_modex_lookup_orte_proc: unable to allocate modex_proc_data_t\n");
             OPAL_THREAD_UNLOCK(&mutex);
             return NULL;
         }
@@ -336,7 +336,7 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
     /* copy the data out to the user */
     if ((NULL == attr_data) ||
         (attr_data->attr_data_size == 0)) {
-        ORTE_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:get_proc_attr: no attr avail or zero byte size",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         *val = NULL;
@@ -369,7 +369,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
     modex_attr_data_t *attr_data;
     int rc;
     
-    ORTE_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -383,7 +383,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
         goto cleanup;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s modex: reporting %ld entries",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)num_entries));
@@ -406,7 +406,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
     }
     OPAL_THREAD_UNLOCK(&mutex);
     
-    ORTE_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s modex: executing allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -423,7 +423,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
         }
     }
     
-    ORTE_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s modex: processing modex info",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -435,7 +435,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
         goto cleanup;
     }
     
-    ORTE_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s modex: received %ld data bytes from %ld procs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)(rbuf.pack_ptr - rbuf.unpack_ptr), (long)num_procs));
@@ -458,7 +458,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
         proc_data = modex_lookup_orte_proc(&proc_name);
         if (proc_data == NULL) {
             /* report the error */
-            orte_output(0, "grpcomm_basic_modex: received modex info for unknown proc %s\n",
+            opal_output(0, "grpcomm_basic_modex: received modex info for unknown proc %s\n",
                         ORTE_NAME_PRINT(&proc_name));
             rc = ORTE_ERR_NOT_FOUND;
             goto cleanup;
@@ -516,7 +516,7 @@ int orte_grpcomm_base_modex(opal_list_t *procs)
              */
             if (NULL == (attr_data = modex_lookup_attr_data(proc_data, 
                                                             attr_name, true))) {
-                orte_output(0, "grpcomm_basic_modex: modex_lookup_attr_data failed\n");
+                opal_output(0, "grpcomm_basic_modex: modex_lookup_attr_data failed\n");
                 OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
                 rc = ORTE_ERR_NOT_FOUND;
                 goto cleanup;
@@ -536,7 +536,7 @@ cleanup:
     OBJ_DESTRUCT(&buf);
     OBJ_DESTRUCT(&rbuf);
     
-    ORTE_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: modex completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     

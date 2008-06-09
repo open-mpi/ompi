@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,6 +50,9 @@
  *   wherever the standard output is currently tied.
  * - ORTE_IOF_STDERR (value 2): recommended for file descriptor 2, or
  *   wherever the standard error is currently tied.
+ * - ORTE_IOF_INTERNAL (value 3): recommended for "internal" messages
+ *   from the infrastructure, just to differentiate them from user job
+ *   stdout/stderr
  *
  * Note that since streams are identified by ORTE process name, the
  * caller has no idea whether the stream is on the local node or a
@@ -159,7 +162,8 @@ enum {
     ORTE_IOF_ANY = -1,
     ORTE_IOF_STDIN = 0,
     ORTE_IOF_STDOUT = 1,
-    ORTE_IOF_STDERR = 2
+    ORTE_IOF_STDERR = 2,
+    ORTE_IOF_INTERNAL = 3
 };
 typedef int orte_iof_base_tag_t;
 

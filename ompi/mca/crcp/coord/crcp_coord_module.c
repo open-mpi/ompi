@@ -24,10 +24,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 
@@ -104,7 +104,7 @@ static ompi_crcp_base_module_t loc_module = {
  */
 int ompi_crcp_coord_component_query(mca_base_module_t **module, int *priority)
 {
-    orte_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: component_query()");
 
     *priority = mca_crcp_coord_component.super.priority;
@@ -115,7 +115,7 @@ int ompi_crcp_coord_component_query(mca_base_module_t **module, int *priority)
 
 int ompi_crcp_coord_module_init(void)
 {
-    orte_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: module_init()");
 
     ompi_crcp_coord_pml_init();
@@ -125,7 +125,7 @@ int ompi_crcp_coord_module_init(void)
 
 int ompi_crcp_coord_module_finalize(void)
 {
-    orte_output_verbose(10, mca_crcp_coord_component.super.output_handle,
+    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
                         "crcp:coord: module_finalize()");
 
     ompi_crcp_coord_pml_finalize();

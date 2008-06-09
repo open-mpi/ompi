@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include "opal/threads/mutex.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/arch.h"
 
 #include "opal/dss/dss.h"

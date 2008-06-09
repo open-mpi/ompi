@@ -19,7 +19,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "ompi/mca/crcp/crcp.h"
@@ -52,7 +52,7 @@ static ompi_crcp_base_component_t none_component = {
 
     /* Verbosity level */
     0,
-    /* orte_output handler */
+    /* opal_output handler */
     -1,
     /* Default priority */
     1
@@ -130,7 +130,7 @@ int ompi_crcp_base_select(void)
                                    strdup("none"), &include_list);
 
     if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
-        orte_output_verbose(10, ompi_crcp_base_output,
+        opal_output_verbose(10, ompi_crcp_base_output,
                             "crcp:select: Using %s component",
                             include_list);
         best_component = &none_component;

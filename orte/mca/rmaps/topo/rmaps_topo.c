@@ -34,7 +34,7 @@
 #include "opal/util/argv.h"
 #include "opal/mca/carto/base/base.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"

@@ -21,7 +21,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"

@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
@@ -41,7 +41,7 @@ int mca_coll_demo_allgatherv_intra(void *sbuf, int scount,
                                    struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    orte_output_verbose(10, mca_coll_base_output, "In demo allgatherv_intra");
+    opal_output_verbose(10, mca_coll_base_output, "In demo allgatherv_intra");
     return demo_module->underlying.coll_allgatherv(sbuf, scount, sdtype,
                                                    rbuf, rcounts, disps,
                                                    rdtype, comm,
@@ -64,7 +64,7 @@ int mca_coll_demo_allgatherv_inter(void *sbuf, int scount,
                                    struct mca_coll_base_module_1_1_0_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
-    orte_output_verbose(10, mca_coll_base_output, "In demo allgatherv_inter");
+    opal_output_verbose(10, mca_coll_base_output, "In demo allgatherv_inter");
     return demo_module->underlying.coll_allgatherv(sbuf, scount, sdtype,
                                                    rbuf, rcounts, disps,
                                                    rdtype, comm,

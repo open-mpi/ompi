@@ -20,7 +20,7 @@
 
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/output.h" 
+#include "orte/util/show_help.h" 
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/common/portals/common_portals.h"
 
@@ -115,7 +115,7 @@ ompi_mtl_portals_component_open(void)
     asprintf(&(mtl_portals_output_stream.lds_prefix),
              "btl: portals (%s): ", ompi_common_portals_nodeid());
     ompi_mtl_portals.portals_output = 
-        orte_output_open(&mtl_portals_output_stream);
+        opal_output_open(&mtl_portals_output_stream);
 
     
 

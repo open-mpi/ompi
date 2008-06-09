@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "opal/util/argv.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -83,7 +83,7 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
                            reinterpret_cast<void **> (&pCluster) );
 
     if (FAILED(hr)) {
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate: failed to create cluster object!"));
         return ORTE_ERROR;
     }
@@ -92,7 +92,7 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
     _dupenv_s(&cluster_head, &len, "LOGONSERVER");
 
     if(cluster_head == NULL) {
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate: connot find cluster head node!"));
 	    return ORTE_ERROR;
     }
@@ -107,13 +107,13 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
     hr = pCluster->Connect(_bstr_t(cluster_head));
     if (FAILED(hr)) {
         get_cluster_message(pCluster);
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate: connection failed!"));
         return ORTE_ERROR;
     }
    
     if (ORTE_SUCCESS != (ret = discover(nodes, pCluster))) {
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate: discover failed!"));
         return ret;
     }
@@ -138,7 +138,7 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
  */
 static int orte_ras_ccp_finalize(void)
 {
-    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                         "ras:ccp:finalize: success (nothing to do)"));
     return ORTE_SUCCESS;
 }
@@ -179,7 +179,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
     hr = pCluster->get_ComputeNodes(&pNodesCollection);
     if (FAILED(hr)) {
         get_cluster_message(pCluster);
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:pCluster->get_ComputeNodes failed."));
         return ORTE_ERROR;
     }
@@ -188,7 +188,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
     hr = pNodesCollection->GetEnumerator(&pNodes);
     if (FAILED(hr)) {
         get_cluster_message(pCluster);
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:pNodesCollection->GetEnumerator failed."));
         return ORTE_ERROR;
     }
@@ -212,7 +212,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
          */
         hr = pNode->get_Status(&Status);
         if (FAILED(hr)) {
-            ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                 "ras:ccp:pNode->get_Status failed."));
             ret = ORTE_ERROR;
             goto cleanup;
@@ -221,7 +221,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
         /* Get available number of processors on each node. */
         hr = pNode->get_NumberOfIdleProcessors(&idle_processors);
         if (FAILED(hr)) {
-            ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+            OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                 "ras:ccp:pNode->get_NumberOfIdleProcessors failed."));
             ret = ORTE_ERROR;
             goto cleanup;
@@ -235,7 +235,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
             /* Get node name. */
             hr = pNode->get_Name(&node_name);
             if (FAILED(hr)) {
-                ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                     "ras:ccp:pNode->get_Name failed."));
                 ret = ORTE_ERROR;
                 goto cleanup;
@@ -244,7 +244,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
             /* Get node processor architecture. */
             hr = pNode->get_ProcessorArchitecture(&node_arch);
             if (FAILED(hr)) {
-                ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                     "ras:ccp:pNode->get_ProcessorArchitecture failed."));
                 ret = ORTE_ERROR;
                 goto cleanup;
@@ -258,7 +258,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
                 node = (orte_node_t*) item;
                 if (0 == strcmp(node->name, (char *)node_name)) {
                     ++node->slots;
-                    ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                    OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                         "ras:ccp:allocate:discover: found -- bumped slots to %d",
                                         node->slots));
                     break;
@@ -270,7 +270,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
 
                 /* Nope -- didn't find it, so add a new item to the list */
 
-                ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+                OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                     "ras:ccp:allocate:discover: not found -- added to list"));
 
                 node = OBJ_NEW(orte_node_t);
@@ -301,10 +301,10 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
 cleanup:
 
     if (ORTE_SUCCESS == ret) {
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate:discover: success"));
     } else {
-        ORTE_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate:discover: failed (rc=%d)", ret));
     }
 
@@ -315,7 +315,7 @@ cleanup:
     /* check for timing request - get stop time and report elapsed time if so */
     if (orte_timing) {
         gettimeofday(&stop, NULL);
-        orte_output(0, "ras_ccp: time to allocate is %ld usec",
+        opal_output(0, "ras_ccp: time to allocate is %ld usec",
                     (long int)((stop.tv_sec - start.tv_sec)*1000000 +
                                (stop.tv_usec - start.tv_usec)));
         gettimeofday(&start, NULL);

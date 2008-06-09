@@ -29,7 +29,7 @@
 #endif
 
 #include "opal/event/event.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -47,7 +47,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -131,7 +131,7 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
-    ORTE_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s\n\tjobid %s\n\tprocid %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
@@ -155,7 +155,7 @@ int orte_ess_base_app_setup(void)
     }
     
     /* Once the session directory location has been established, set
-        the orte_output env file location to be in the
+        the opal_output env file location to be in the
         proc-specific session directory. */
     opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                      "output-", NULL, NULL);
@@ -305,7 +305,7 @@ void orte_ess_base_app_abort(int status, bool report)
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto CLEANUP;
         }
-        ORTE_OUTPUT_VERBOSE((5, orte_debug_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                              "%s orte_ess_app_abort: dropping abort file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
         fd = open(abort_file, O_CREAT, 0600);

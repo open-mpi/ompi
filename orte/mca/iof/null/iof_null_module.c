@@ -26,7 +26,7 @@
 #endif  /* HAVE_UNISTD_H */
 #include <string.h>
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"

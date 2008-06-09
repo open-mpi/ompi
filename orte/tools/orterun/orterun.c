@@ -54,7 +54,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/opal_getcwd.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
 #include "opal/sys/atomic.h"
 #if OPAL_ENABLE_FT == 1
@@ -426,7 +426,7 @@ int orterun(int argc, char *argv[])
         }
         opal_setenv("PATH", newenv, true, &orte_launch_environ);
         if (orte_debug_flag) {
-            orte_output(0, "%s: reset PATH: %s", orterun_basename, newenv);
+            opal_output(0, "%s: reset PATH: %s", orterun_basename, newenv);
         }
         free(newenv);
         free(bin_base);
@@ -442,7 +442,7 @@ int orterun(int argc, char *argv[])
         }
         opal_setenv("LD_LIBRARY_PATH", newenv, true, &orte_launch_environ);
         if (orte_debug_flag) {
-            orte_output(0, "%s: reset LD_LIBRARY_PATH: %s",
+            opal_output(0, "%s: reset LD_LIBRARY_PATH: %s",
                         orterun_basename, newenv);
         }
         free(newenv);
@@ -1473,7 +1473,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                         free(value2);
                     }
                 } else {
-                    orte_output(0, "Warning: could not find environment variable \"%s\"\n", param);
+                    opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
                 }
             }
         }

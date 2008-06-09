@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "mpi.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 int main(int argc, char* argv[])
 {
@@ -20,9 +20,9 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (0 == rank) {
-        orte_output(0, "============================================================================");
-        orte_output(0, "This test ensures that the aggregation functionality of the orte_show_help\nsystem is working properly.  It outputs a bogus warning about orte_init(),\nand contains sleep statements to ensure that the timer is firiing properly\nin the HNP and aggregates messages properly.  The total sleep time is\n(3 * num_procs).  You should see:\n\n - aggregation messages from the HNP every five seconds or so\n - a total of (2 * num_procs) messages");
-        orte_output(0, "============================================================================");
+        opal_output(0, "============================================================================");
+        opal_output(0, "This test ensures that the aggregation functionality of the orte_show_help\nsystem is working properly.  It outputs a bogus warning about orte_init(),\nand contains sleep statements to ensure that the timer is firiing properly\nin the HNP and aggregates messages properly.  The total sleep time is\n(3 * num_procs).  You should see:\n\n - aggregation messages from the HNP every five seconds or so\n - a total of (2 * num_procs) messages");
+        opal_output(0, "============================================================================");
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -39,9 +39,9 @@ int main(int argc, char* argv[])
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (0 == rank) {
-        orte_output(0, "============================================================================");
-        orte_output(0, "The test is now complete.  Please verify that the HNP output all the required\nmessages (you may see 1 or 2 more messages from the HNP after this message).");
-        orte_output(0, "============================================================================");
+        opal_output(0, "============================================================================");
+        opal_output(0, "The test is now complete.  Please verify that the HNP output all the required\nmessages (you may see 1 or 2 more messages from the HNP after this message).");
+        opal_output(0, "============================================================================");
     }
     MPI_Finalize();
     

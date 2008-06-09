@@ -22,7 +22,7 @@
 #include "common_portals.h"
 #include "ompi/constants.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
 
@@ -71,7 +71,7 @@ ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
      */
     ret = PtlInit(&max_interfaces);
     if (PTL_OK != ret) {
-        orte_output(0, "PtlInit failed, returning %d\n", ret);
+        opal_output(0, "PtlInit failed, returning %d\n", ret);
         return OMPI_ERR_NOT_AVAILABLE;
     }
     
@@ -85,14 +85,14 @@ ompi_common_portals_initialize(ptl_handle_ni_t *ni_handle, bool *accel)
                     ni_handle          /* our interface handle */
                     );
     if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
-        orte_output(0, "PtlNIInit failed, returning %d (%s : %d)\n",
+        opal_output(0, "PtlNIInit failed, returning %d (%s : %d)\n",
                     ret, __FILE__, __LINE__);
         return OMPI_ERROR;
     }
     
     ret = PtlGetId(*ni_handle ,&ptl_process_id);
     if(PTL_OK != ret) { 
-        orte_output(0, "PtlGetId failed, returning %d\n", ret);
+        opal_output(0, "PtlGetId failed, returning %d\n", ret);
         return OMPI_ERROR;
     }
    
@@ -129,10 +129,10 @@ ompi_common_portals_get_procs(size_t nprocs,
         ret = ompi_modex_recv(&portals_component,
                               procs[i], (void**) &ptl_process_id, &size);
         if (OMPI_SUCCESS != ret) {
-            orte_output(0, "ompi_modex_recv failed: %d", ret);
+            opal_output(0, "ompi_modex_recv failed: %d", ret);
             return ret;
         } else if (sizeof(ptl_process_id_t) != size) {
-            orte_output(0, "ompi_modex_recv returned size %d, expected %d", 
+            opal_output(0, "ompi_modex_recv returned size %d, expected %d", 
                         (int) size, (int) sizeof(ptl_process_id_t));
             return OMPI_ERROR;
         }

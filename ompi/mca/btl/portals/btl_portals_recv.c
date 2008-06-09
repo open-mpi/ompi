@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "btl_portals.h"
 #include "btl_portals_recv.h"
@@ -50,7 +50,7 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
     md.user_ptr = NULL;
     md.eq_handle = PTL_EQ_NONE;
 
-    orte_output_verbose(90, mca_btl_portals_component.portals_output,
+    opal_output_verbose(90, mca_btl_portals_component.portals_output,
                         "About to create reject entry");
     ret = PtlMEAttach(btl->portals_ni_h,
                       OMPI_BTL_PORTALS_SEND_TABLE_ID,
@@ -61,7 +61,7 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
                       PTL_INS_BEFORE,
                       &(btl->portals_recv_reject_me_h));
     if (PTL_OK != ret) {
-        orte_output(mca_btl_portals_component.portals_output,
+        opal_output(mca_btl_portals_component.portals_output,
                     "Error creating recv reject ME: %d", ret);
         return OMPI_ERROR;
     }
@@ -71,7 +71,7 @@ mca_btl_portals_recv_enable(mca_btl_portals_module_t *btl)
                       PTL_RETAIN,
                       &md_h);
     if (PTL_OK != ret) {
-        orte_output(mca_btl_portals_component.portals_output,
+        opal_output(mca_btl_portals_component.portals_output,
                     "Error attaching recv reject MD: %d", ret);
         mca_btl_portals_recv_disable(btl);
         return OMPI_ERROR;

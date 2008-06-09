@@ -21,12 +21,12 @@
 #include <stdio.h>
 
 #include "ompi/class/ompi_free_list.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
@@ -66,7 +66,7 @@ int mca_io_base_open(void)
 {
     /* Open an output stream for this framework */
 
-    mca_io_base_output = orte_output_open(NULL);
+    mca_io_base_output = opal_output_open(NULL);
 
     /* Create some parameters */
 

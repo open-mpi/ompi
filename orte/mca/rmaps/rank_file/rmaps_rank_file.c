@@ -38,7 +38,7 @@
 #include "opal/util/if.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
@@ -112,7 +112,7 @@ static int map_app_by_user_map(
         } while ( strcmp(node->name, rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name));
         node->slot_list = strdup(rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].slot_list);
         if (mca_rmaps_rank_file_component.debug) {
-           orte_output(0, "rank_file RMAPS component: [%s:%d]->slot_list=%s\n",
+           opal_output(0, "rank_file RMAPS component: [%s:%d]->slot_list=%s\n",
                    rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, node->slot_list);
         }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, app->idx,

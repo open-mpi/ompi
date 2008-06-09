@@ -107,7 +107,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
             return ret;
         }
 
-        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "fence: waiting on %d in and %d out",
                              module->p2p_num_pending_in,
                              module->p2p_num_pending_out));
@@ -123,7 +123,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
             ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
             if (OMPI_SUCCESS != ret) {
-                orte_output_verbose(5, ompi_osc_base_output,
+                opal_output_verbose(5, ompi_osc_base_output,
                                     "fence: failure in starting sendreq (%d).  "
                                     "Will try later.",
                                     ret);
@@ -267,7 +267,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
         ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
         if (OMPI_SUCCESS != ret) {
-            orte_output_verbose(5, ompi_osc_base_output,
+            opal_output_verbose(5, ompi_osc_base_output,
                                 "complete: failure in starting sendreq (%d).  Will try later.",
                                 ret);
             opal_list_append(&(module->p2p_copy_pending_sendreqs), item);
@@ -413,7 +413,7 @@ ompi_osc_pt2pt_module_lock(int lock_type,
     ompi_win_remove_mode(win, OMPI_WIN_FENCE);
     ompi_win_append_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
-    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: sending lock request to %d", 
                          ompi_comm_rank(module->p2p_comm),
                          target));
@@ -460,7 +460,7 @@ ompi_osc_pt2pt_module_unlock(int target,
     OPAL_THREAD_UNLOCK(&module->p2p_lock);
 
     /* send the unlock request */
-    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: sending unlock request to %d with %d requests", 
                          ompi_comm_rank(module->p2p_comm), target,
                          out_count));
@@ -478,7 +478,7 @@ ompi_osc_pt2pt_module_unlock(int target,
         ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
         if (OMPI_SUCCESS != ret) {
-            orte_output_verbose(5, ompi_osc_base_output,
+            opal_output_verbose(5, ompi_osc_base_output,
                                 "unlock: failure in starting sendreq (%d).  Will try later.",
                                 ret);
             opal_list_append(&(module->p2p_copy_pending_sendreqs), item);
@@ -492,7 +492,7 @@ ompi_osc_pt2pt_module_unlock(int target,
     }
     OPAL_THREAD_UNLOCK(&module->p2p_lock);
 
-    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: finished unlock to %d",
                          ompi_comm_rank(module->p2p_comm), target));
 
@@ -517,13 +517,13 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
     if (lock_type == MPI_LOCK_EXCLUSIVE) {
         if (module->p2p_lock_status == 0) {
             module->p2p_lock_status = MPI_LOCK_EXCLUSIVE;
-            ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: setting lock status to EXCLUSIVE (from %d)",
                                  ompi_comm_rank(module->p2p_comm), origin));
             ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
-            ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: queuing lock request from %d (type=%d)", 
                                  ompi_comm_rank(module->p2p_comm), origin, lock_type));
             new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
@@ -535,13 +535,13 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
         if (module->p2p_lock_status != MPI_LOCK_EXCLUSIVE) {
             module->p2p_lock_status = MPI_LOCK_SHARED;
             module->p2p_shared_count++;
-            ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: setting lock status to SHARED (from %d), count %d",
                                  ompi_comm_rank(module->p2p_comm), origin, module->p2p_shared_count));
             ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
-            ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: queuing lock request from %d (type=%d)", 
                                  ompi_comm_rank(module->p2p_comm), origin, lock_type));
             new_pending = OBJ_NEW(ompi_osc_pt2pt_pending_lock_t);
@@ -555,7 +555,7 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     if (send_ack) {
-        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d: sending lock ack to %d", 
                              ompi_comm_rank(module->p2p_comm), origin));
         ompi_osc_pt2pt_control_send(module, proc,
@@ -578,7 +578,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
 
     assert(module->p2p_lock_status != 0);
 
-    ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                          "%d: received unlock request from %d with %d requests\n",
                          ompi_comm_rank(module->p2p_comm),
                          origin, count));
@@ -614,7 +614,7 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
         module->p2p_lock_status = 0;
     } else {
         module->p2p_shared_count -= opal_list_get_size(&module->p2p_unlocks_pending);
-        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d: decrementing shared count to %d",
                              ompi_comm_rank(module->p2p_comm), 
                              module->p2p_shared_count));
@@ -635,7 +635,7 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
     /* issue whichever unlock acks we should issue */
     while (NULL != (new_pending = (ompi_osc_pt2pt_pending_lock_t*)
                     opal_list_remove_first(&copy_unlock_acks))) {
-        ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                              "%d: sending unlock ack to proc %d",
                              ompi_comm_rank(module->p2p_comm),
                              new_pending->proc->proc_name.vpid));
@@ -655,7 +655,7 @@ ompi_osc_pt2pt_passive_unlock_complete(ompi_osc_pt2pt_module_t *module)
         new_pending = (ompi_osc_pt2pt_pending_lock_t*) 
             opal_list_remove_first(&(module->p2p_locks_pending));
         if (NULL != new_pending) {
-            ORTE_OUTPUT_VERBOSE((50, ompi_osc_base_output,
+            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_output,
                                  "%d: sending lock ack to proc %d",
                                  ompi_comm_rank(module->p2p_comm),
                                  new_pending->proc->proc_name.vpid));

@@ -13,7 +13,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/error.h"
-#include "orte/util/output.h"
+#include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -925,7 +925,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     int rc;
 
     if (mca_btl_openib_component.num_xrc_qps <= 0) {
-        orte_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: xoob CPC only supported with XRC receive queues; skipped on device %s",
                             ibv_get_device_name(openib_btl->hca->ib_dev));
         return OMPI_ERR_NOT_SUPPORTED;
@@ -933,7 +933,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 
     *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));
     if (NULL == *cpc) {
-        orte_output_verbose(5, mca_btl_base_output,
+        opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: xoob CPC system error (malloc failed)");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -948,7 +948,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
                                      xoob_rml_recv_cb,
                                      NULL);
         if (ORTE_SUCCESS != rc) {
-            orte_output_verbose(5, mca_btl_base_output,
+            opal_output_verbose(5, mca_btl_base_output,
                                 "openib BTL: xoob CPC system error %d (%s)",
                                 rc, opal_strerror(rc));
             return rc;
@@ -966,7 +966,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     (*cpc)->cbm_endpoint_finalize = NULL;
     (*cpc)->cbm_finalize = NULL;
 
-    orte_output_verbose(5, mca_btl_base_output,
+    opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: xoob CPC available for use on %s",
                         ibv_get_device_name(openib_btl->hca->ib_dev));
     return OMPI_SUCCESS;
