@@ -88,7 +88,7 @@ static int debug_output = -1;
  * writing a pointer is atomic, we should not have any more
  * problems.
  */
-static int fake_cb(void) { return 0; };
+static int fake_cb(void) { return 0; }
 
 /* init the progress engine - called from orte_init */
 int
@@ -333,7 +333,8 @@ opal_progress_set_event_poll_rate(int polltime)
 int
 opal_progress_register(opal_progress_callback_t cb)
 {
-    int ret = OPAL_SUCCESS, index;
+    int ret = OPAL_SUCCESS;
+    size_t index;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_lock(&progress_lock);
