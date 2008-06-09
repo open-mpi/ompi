@@ -24,11 +24,11 @@
 
 BEGIN_C_DECLS
 
-void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
+ORTE_DECLSPEC void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                        int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
-void orte_totalview_init_before_spawn(void);
-void orte_totalview_init_after_spawn(orte_jobid_t jobid);
-void orte_totalview_finalize(void);
+ORTE_DECLSPEC void orte_totalview_init_before_spawn(void);
+ORTE_DECLSPEC void orte_totalview_init_after_spawn(orte_jobid_t jobid);
+ORTE_DECLSPEC void orte_totalview_finalize(void);
 
 ORTE_DECLSPEC extern void *MPIR_Breakpoint(void);
 
