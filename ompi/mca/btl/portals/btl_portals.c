@@ -252,7 +252,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     }
     
     frag->base.des_src_cnt = 1;
-    frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK; 
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
 
     return &frag->base;
