@@ -529,14 +529,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     frag->reg = NULL;
 
     mca_pml_ob1_recv_request_get_frag(frag);
-    
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
-    /* check completion status */
-    if(recv_request_pml_complete_check(recvreq) == false &&
-            recvreq->req_rdma_offset < recvreq->req_send_offset) {
-        /* schedule additional rdma operations */
-        mca_pml_ob1_recv_request_schedule(recvreq, NULL);
-    }
+    return;
 }
 
 /*
