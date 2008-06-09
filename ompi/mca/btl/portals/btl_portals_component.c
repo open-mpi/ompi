@@ -25,11 +25,8 @@
 
 #include "ompi/constants.h"
 
-#include "orte/util/show_help.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/base/mca_base_param.h"
-
-#include "orte/util/show_help.h"
 
 #include "ompi/mca/common/portals/common_portals.h"
 

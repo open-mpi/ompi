@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 
 #include "btl_portals.h"
 #include "btl_portals_recv.h"

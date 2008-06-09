@@ -26,7 +26,6 @@
 #include <inttypes.h>
 
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/convertor.h"
