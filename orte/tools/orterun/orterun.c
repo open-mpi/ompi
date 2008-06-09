@@ -72,7 +72,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 
-#include "orte/mca/odls/odls_types.h"
+#include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
@@ -113,7 +113,7 @@ static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static opal_event_t *orterun_event, *orteds_exit_event;
 static char *ompi_server=NULL;
 static opal_event_t *abort_exit_event=NULL;
-
+static bool forcibly_die = false;
 /*
  * Globals
  */
@@ -955,7 +955,21 @@ static void abort_signal_callback(int fd, short flags, void *arg)
      * doing it to avoid race conditions
      */
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
-        fprintf(stderr, "%s: abort is already in progress...\n\n", orterun_basename);
+        if (forcibly_die) {
+            /* kill any local procs */
+            orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+            
+            /* whack any lingering session directory files from our jobs */
+            orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+            
+            /* cleanup our data server */
+            orte_data_server_finalize();
+            
+            /* exit with a non-zero status */
+            exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        }
+        fprintf(stderr, "%s: abort is already in progress...hit ctrl-c again to forcibly terminate\n\n", orterun_basename);
+        forcibly_die = true;
         return;
     }
 
