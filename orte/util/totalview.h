@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef ORTERUN_TOTALVIEW_H
-#define ORTERUN_TOTALVIEW_H
+#ifndef ORTE_TOTALVIEW_H
+#define ORTE_TOTALVIEW_H
 
 #include "orte_config.h"
 
@@ -46,4 +46,4 @@ ORTE_DECLSPEC extern volatile int MPIR_debug_gate;
 
 END_C_DECLS
 
-#endif /* ORTERUN_TOTALVIEW_H */
+#endif /* ORTE_TOTALVIEW_H */
