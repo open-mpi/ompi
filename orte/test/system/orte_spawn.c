@@ -37,7 +37,8 @@ int main(int argc, char* argv[])
 
     /* setup the job object */
     jdata = OBJ_NEW(orte_job_t);
-    
+    jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+
     /* create an app_context that defines the app to be run */
     app = OBJ_NEW(orte_app_context_t);
     app->app = strdup("hostname");
