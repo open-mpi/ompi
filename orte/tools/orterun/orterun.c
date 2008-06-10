@@ -114,6 +114,8 @@ static opal_event_t *orterun_event, *orteds_exit_event;
 static char *ompi_server=NULL;
 static opal_event_t *abort_exit_event=NULL;
 static bool forcibly_die = false;
+static opal_event_t *timeout_ev=NULL;
+
 /*
  * Globals
  */
@@ -571,8 +573,10 @@ static void job_completed(int trigpipe, short event, void *arg)
 
     /* if the abort exit event is set, delete it */
     if (NULL != abort_exit_event) {
-        opal_event_del(abort_exit_event);
+        opal_evtimer_del(abort_exit_event);
+        free(abort_exit_event);
     }
+    
     /* close the trigger pipe */
     if (0 <= trigpipe) {
         close(trigpipe);
@@ -612,9 +616,7 @@ static void job_completed(int trigpipe, short event, void *arg)
         goto DONE;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {
-        opal_event_t *ev;
-        
+    if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {        
         /* since we know that the sends didn't completely go out,
          * we know that the prior event will never fire. Delete it
          * for completeness, and replace it with a timeout so
@@ -627,7 +629,7 @@ static void job_completed(int trigpipe, short event, void *arg)
             /* we are totally hozed */
             goto DONE;
         }
-        ORTE_DETECT_TIMEOUT(&ev, daemons->num_procs,
+        ORTE_DETECT_TIMEOUT(&timeout_ev, daemons->num_procs,
                             orte_timeout_usec_per_proc,
                             orte_max_timeout, terminated);
     }
@@ -665,6 +667,12 @@ static void terminated(int trigpipe, short event, void *arg)
     /* close the trigger pipe so it cannot be called again */
     if (0 <= trigpipe) {
         close(trigpipe);
+    }
+    
+    /* clear the event timer */
+    if (NULL != timeout_ev) {
+        opal_evtimer_del(timeout_ev);
+        free(timeout_ev);
     }
     
     /* Remove the TERM and INT signal handlers */
@@ -1560,11 +1568,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 if (0 == param_len) {
                     orte_show_help("help-orterun.txt", "orterun:empty-prefix",
                                    true, orterun_basename, orterun_basename);
+                    free(param);
                     return ORTE_ERR_FATAL;
                 }
             }
 
             app->prefix_dir = strdup(param);
+            free(param);
         }
     }
 

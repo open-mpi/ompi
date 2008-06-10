@@ -72,7 +72,8 @@ static void send_callback(int status,
     if (num_reported == num_being_sent) {
         /* cancel the timer */
         if (NULL != ev) {
-            opal_event_del(ev);
+            opal_evtimer_del(ev);
+            free(ev);
             ev = NULL;
         }
         
