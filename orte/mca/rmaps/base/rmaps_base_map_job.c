@@ -41,8 +41,7 @@
  */
 int orte_rmaps_base_map_job(orte_job_t *jdata)
 {
-    orte_job_map_t *map=NULL;
-    char *output=NULL;
+    orte_job_map_t *map;
     int rc;
     
     /* NOTE: NO PROXY COMPONENT REQUIRED - REMOTE PROCS ARE NOT
@@ -78,16 +77,15 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         /* assign the map object to this job */
         jdata->map = map;
     } else {
-	map = jdata->map;
-	if (!map->display_map) {
-            map->display_map = orte_rmaps_base.display_map;
+        if (!jdata->map->display_map) {
+            jdata->map->display_map = orte_rmaps_base.display_map;
         }
     }
 
     /* go ahead and map the job */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base.active_module->map_job(jdata))) {
         ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
+        return rc;
     }
     
     /* if we wanted to display the map, now is the time to do it */
@@ -99,9 +97,4 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
     }
     
     return ORTE_SUCCESS;
-    
-CLEANUP:
-    if (NULL != map) OBJ_RELEASE(map);
-    if (NULL != output) free(output);
-    return rc;
 }
