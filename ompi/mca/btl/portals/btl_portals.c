@@ -251,7 +251,7 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     }
     
     frag->base.des_src_cnt = 1;
-    frag->base.des_flags = flags;
+    frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK; 
     frag->base.order = MCA_BTL_NO_ORDER;
 
     return &frag->base;
@@ -411,7 +411,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
     frag->base.des_src = frag->segments;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = flags;
+    frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK; 
     frag->base.order = MCA_BTL_NO_ORDER;
     return &frag->base;
 }
@@ -455,8 +455,8 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = frag->segments;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = flags;
-
+    frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK; 
+    
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64 " flags %d",
                          (unsigned long) frag,

@@ -535,10 +535,12 @@ mca_btl_portals_component_progress(void)
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to end send event\n");
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_ERROR);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_ERROR);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -547,10 +549,12 @@ mca_btl_portals_component_progress(void)
 #endif
                 if(!mca_btl_portals_component.portals_need_ack) { 
                     /* my part's done, in portals we trust! */
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_SUCCESS);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_SUCCESS);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -583,10 +587,12 @@ mca_btl_portals_component_progress(void)
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to ack event\n");
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_ERROR);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){ 
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_ERROR);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
@@ -611,10 +617,12 @@ mca_btl_portals_component_progress(void)
                     /* other side received the message.  should have
                        received entire thing */
                     /* let the PML know we're done */
-                    frag->base.des_cbfunc(&mca_btl_portals_module.super,
-                                          frag->endpoint,
-                                          &frag->base,
-                                          OMPI_SUCCESS);
+                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                        frag->base.des_cbfunc(&mca_btl_portals_module.super,
+                                              frag->endpoint,
+                                              &frag->base,
+                                              OMPI_SUCCESS);
+                    }
                     if( btl_ownership ) {
                         mca_btl_portals_free(&mca_btl_portals_module.super,
                                              &frag->base);
