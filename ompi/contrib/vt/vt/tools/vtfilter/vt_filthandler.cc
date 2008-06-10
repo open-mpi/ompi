@@ -17,6 +17,17 @@ using namespace std;
 //#define FF cerr << omp_get_thread_num() << " " << __func__ << endl;
 #define FF
 
+/* MJ: Workaround for Pathscale problem (Open MPI Ticket: #1318)
+   It seems that the Pathscale compiler doesn't allow the implementation
+   of the FiltHandlerArgument's copy-constructor in the header file
+   'vt_filthandler.h'. It looks very stange for me. :-( */
+FiltHandlerArgument::FiltHandlerArgument(const FiltHandlerArgument& fha)
+{
+	nm2tok = fha.nm2tok;
+	t2p = fha.t2p;
+	wstream = fha.wstream;
+	mc = fha.mc;
+}
 
 int handleFiltDefinitionComment( void* userData,
                                    uint32_t stream, 
