@@ -28,6 +28,11 @@ struct Process {
 	std::map<uint32_t,uint64_t> f2l; /* contains the functionstack of every process - written = true, ignored = false */
 };
 struct FiltHandlerArgument {
+
+	FiltHandlerArgument() {}
+
+	FiltHandlerArgument(const FiltHandlerArgument& fha);
+
 	std::map<std::string, uint32_t> nm2tok; /* created during definition reading*/
 	std::map<uint32_t, Process > t2p;
 	OTF_WStream* wstream;
