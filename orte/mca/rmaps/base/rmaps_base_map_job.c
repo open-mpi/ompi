@@ -78,7 +78,8 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         /* assign the map object to this job */
         jdata->map = map;
     } else {
-        if (!map->display_map) {
+	map = jdata->map;
+	if (!map->display_map) {
             map->display_map = orte_rmaps_base.display_map;
         }
     }
