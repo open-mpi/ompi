@@ -115,9 +115,6 @@ static bool show_help_timer_set = false;
 static opal_event_t show_help_timer_event;
 static bool ready;
 
-/* Local static variables */
-static bool suppress_warnings = false;
-
 static void tuple_list_item_constructor(tuple_list_item_t *obj)
 {
     obj->tli_filename = NULL;
@@ -418,9 +415,7 @@ int orte_show_help(const char *filename, const char *topic,
          * Ensure we suppress the opal_output warnings for this case, then
          * re-enable them when we are done
          */
-        suppress_warnings = true;
-        rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
-        suppress_warnings = false;
+        opal_output(0, output);
         goto CLEANUP;
     }
     
