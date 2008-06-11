@@ -209,7 +209,7 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
             attr.attr.max_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-            attr.attr.max_sge = mca_btl_openib_component.ib_sg_list_size;
+            attr.attr.max_sge = 1;
             openib_btl->qps[qp].u.srq_qp.rd_posted = 0;
 #if HAVE_XRC
             if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
