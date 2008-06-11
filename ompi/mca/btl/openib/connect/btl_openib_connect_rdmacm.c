@@ -234,7 +234,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
     attr.cap.max_recv_wr = max_recv_wr;
     attr.cap.max_send_wr = max_send_wr;
     attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
-    attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
+    attr.cap.max_recv_sge = 1; /* we do not use SG list */
 
     qp = ibv_create_qp(local->openib_btl->hca->ib_pd, &attr);
     if (NULL == qp) {

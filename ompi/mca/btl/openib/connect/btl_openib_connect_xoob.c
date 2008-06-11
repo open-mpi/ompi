@@ -394,7 +394,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
 
     qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
     /* this one is ignored by driver */
-    qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
+    qp_init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     qp_init_attr.qp_type = IBV_QPT_XRC;
     qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
     *qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr);

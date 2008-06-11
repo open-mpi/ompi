@@ -423,8 +423,12 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     init_attr.recv_cq = openib_btl->hca->ib_cq[qp_cq_prio(qp)];
     init_attr.srq     = srq;
     init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
-    init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
-    init_attr.cap.max_recv_wr  = max_recv_wr;
+    init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
+    if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+        init_attr.cap.max_recv_wr  = max_recv_wr;
+    } else {
+        init_attr.cap.max_recv_wr  = 0;
+    }
     init_attr.cap.max_send_wr  = max_send_wr;
 
     my_qp = ibv_create_qp(openib_btl->hca->ib_pd, &init_attr); 
