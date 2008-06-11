@@ -1568,13 +1568,11 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 if (0 == param_len) {
                     orte_show_help("help-orterun.txt", "orterun:empty-prefix",
                                    true, orterun_basename, orterun_basename);
-                    free(param);
                     return ORTE_ERR_FATAL;
                 }
             }
 
             app->prefix_dir = strdup(param);
-            free(param);
         }
     }
 
