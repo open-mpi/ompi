@@ -691,6 +691,7 @@ static void terminated(int trigpipe, short event, void *arg)
          */
         orte_show_help("help-orterun.txt", "orterun:no-orted-object-exit",
                        true, orterun_basename);
+        goto finish;
     }
     
     /* did any daemons fail to respond? Remember we already
@@ -725,6 +726,7 @@ static void terminated(int trigpipe, short event, void *arg)
         }
     }
     
+finish:
     /* now clean ourselves up and exit */
     
     /* whack any lingering session directory files from our jobs */
