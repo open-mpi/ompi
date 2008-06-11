@@ -1556,7 +1556,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
         /* --enable-orterun-prefix-default was given to orterun */
         else {
-            param = strdup(opal_install_dirs.prefix);
+            param = opal_install_dirs.prefix;
         }
 
         if (NULL != param) {
