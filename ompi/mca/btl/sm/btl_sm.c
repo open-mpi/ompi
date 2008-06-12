@@ -672,10 +672,10 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
         memcpy( frag->segment.seg_addr.pval, header, header_size );
         if( payload_size ) {
             struct iovec iov;
-            unsigned int iov_count;
+            uint32_t iov_count;
             /* pack the data into the supplied buffer */
             iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
-            iov.iov_len  = payload_size;
+            iov.iov_len  = max_data = payload_size;
             iov_count    = 1;
 
             (void)ompi_convertor_pack( convertor,
