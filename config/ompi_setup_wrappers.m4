@@ -256,6 +256,15 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     fi
     AC_SUBST([OMPI_WRAPPER_F90_REQUIRED_FILE])
 
+    # For script-based wrappers that don't do relocatable binaries.
+    # Don't use if you don't have to.
+    exec_prefix_save="${exec_prefix}"
+    test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
+    eval "OMPI_WRAPPER_INCLUDEDIR=\"${includedir}\""
+    eval "OMPI_WRAPPER_LIBDIR=\"${libdir}\""
+    exec_prefix="${exec_prefix_save}"
+    AC_SUBST(OMPI_WRAPPER_INCLUDEDIR)
+    AC_SUBST(OMPI_WRAPPER_LIBDIR)
 
     # compatibility defines that will eventually go away
     WRAPPER_EXTRA_CFLAGS="$OMPI_WRAPPER_EXTRA_CFLAGS"

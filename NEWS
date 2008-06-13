@@ -94,7 +94,12 @@ Trunk (not on release branches yet)
   --> Expected: 1.3
 - Open MPI will now complain and refuse to use leave_pinned if
   no memory intercept / mallopt option is available.
-  --> Expected: 1.3r
+  --> Expected: 1.3
+- Add option of using Perl-based wrapper compilers instead of the
+  C-based wrapper compilers.  The Perl-based version does not
+  have the features of the C-based version, but does work better
+  in cross-compile environments.
+  --> Expected: 1.3
 
 
 1.2.7 (not released yet)

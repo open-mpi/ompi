@@ -17,6 +17,7 @@
 # $HEADER$
 #
 
+if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 if WANT_INSTALL_HEADERS
 
 nodist_pkgdata_DATA = \
@@ -41,6 +42,7 @@ uninstall-local:
 endif # OMPI_INSTALL_BINARIES
 
 endif # WANT_INSTALL_HEADERS
+endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 
 maintainer-clean-local:
 	rm -f ortecc.1 ortec++.1
