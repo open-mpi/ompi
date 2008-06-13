@@ -173,7 +173,7 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
     if(payload_size) { 
         /* pack the data into the supplied buffer */
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segments[0].seg_addr.pval);
-        iov.iov_len  = payload_size;
+        iov.iov_len  = max_data = payload_size;
         iov_count    = 1;
         
         (void)ompi_convertor_pack( convertor,
