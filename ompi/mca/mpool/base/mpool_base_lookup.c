@@ -25,22 +25,20 @@
 #include <string.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
-extern int mca_mpool_base_disable_sbrk;
-#endif
-#if defined(HAVE_MALLOPT) && defined(M_TRIM_THRESHOLD) && defined(M_MMAP_MAX)
-#define MPOOL_BASE_CAN_DISABLE_SBRK 1
-#else
-#define MPOOL_BASE_CAN_DISABLE_SBRK 0
 #endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
+#include "orte/util/show_help.h"
+#include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
 
-extern int mca_mpool_base_use_mem_hooks;
 extern opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
@@ -98,20 +96,33 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm->user_data = user_data;
     sm->mpool_resources = resources;
     opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
-    /* on the very first creation of a module we init the memory callback*/ 
-    if(opal_list_get_size(&mca_mpool_base_modules) == 1) { 
-        if(mca_mpool_base_use_mem_hooks &&
-	       0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
-              opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
-              OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
+    /* on the very first creation of a module we init the memory
+       callback and (if needed) disable free() returning memory to the
+       OS.  Note that even when we disable free() with mallopt, we
+       still need to register a callback to handle the case of the
+       user calling mmap/munmap on his own. */ 
+    if (opal_list_get_size(&mca_mpool_base_modules) == 1) { 
+        if (mca_mpool_base_use_mem_hooks) {
+            if (0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+                opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+                OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
+            } else if (mca_mpool_base_mallopt_disable_free &&
+                       0 != (OPAL_MEMORY_MUNMAP_SUPPORT & opal_mem_hooks_support_level())) {
+                opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+                OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
+                /* mallopt_disable_free will only be set to 1 if
+                   HAVE_LINUX_MALLOPT, so this is safe */
+#if OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT
+                mallopt(M_TRIM_THRESHOLD, -1); 
+                mallopt(M_MMAP_MAX, 0);
+#endif
+            } else {
+                orte_show_help("help-mpool-base.txt", "leave pinned failed",
+                               true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                               orte_process_info.nodename);
+                return NULL;
+            }
         }
-
-#if MPOOL_BASE_CAN_DISABLE_SBRK
-        else if(mca_mpool_base_disable_sbrk) { 
-            mallopt(M_TRIM_THRESHOLD, -1); 
-            mallopt(M_MMAP_MAX, 0);
-        }
-#endif  /* MPOOL_BASE_CAN_DISABLE_SBRK */
     }
     return module; 
 }

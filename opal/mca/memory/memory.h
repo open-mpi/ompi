@@ -51,6 +51,8 @@ struct opal_memory_base_component_1_0_0_t {
  */
 typedef struct opal_memory_base_component_1_0_0_t opal_memory_base_component_1_0_0_t;
 
+extern opal_memory_base_component_1_0_0_t *opal_memory_active_component;
+
 /*
  * Macro for use in components that are of type memory v1.0.0
  */

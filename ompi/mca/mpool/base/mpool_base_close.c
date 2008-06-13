@@ -28,7 +28,6 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
-extern int mca_mpool_base_use_mem_hooks; 
 extern opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 int mca_mpool_base_close(void)

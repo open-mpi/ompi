@@ -29,8 +29,6 @@
 #include "opal/threads/mutex.h" 
 #include "mpool_base_mem_cb.h"
 
-extern int mca_mpool_base_use_mem_hooks; 
-
 /**
  * Memory Pool Registration
  */

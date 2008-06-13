@@ -29,6 +29,12 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "opal/threads/mutex.h" 
 
+#if defined(HAVE_MALLOPT) && defined(M_TRIM_THRESHOLD) && defined(M_MMAP_MAX)
+#define OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT 1
+#else
+#define OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT 0
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -87,6 +93,11 @@ OMPI_DECLSPEC extern opal_list_t mca_mpool_base_components;
 extern opal_list_t mca_mpool_base_modules;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size_log;
+
+/* only used within base -- no need to DECLSPEC */
+extern int mca_mpool_base_use_mem_hooks; 
+extern int mca_mpool_base_mallopt_disable_free;
+
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

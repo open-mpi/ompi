@@ -27,14 +27,10 @@
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
-#if defined(HAVE_MALLOPT) && defined(M_TRIM_THRESHOLD) && defined(M_MMAP_MAX)
-#define MPOOL_BASE_CAN_DISABLE_SBRK 1
-#else
-#define MPOOL_BASE_CAN_DISABLE_SBRK 0
-#endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/memoryhooks/memory.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -52,11 +48,12 @@
  * Global variables
  */
 int mca_mpool_base_output = -1;
-int mca_mpool_base_use_mem_hooks = 0; 
 
-#if MPOOL_BASE_CAN_DISABLE_SBRK
-int mca_mpool_base_disable_sbrk = 0;
-#endif
+/* should we attempt to use the available memory hooks */
+int mca_mpool_base_use_mem_hooks = 0; 
+/* should we attempt to use mallopt to disable free() returning memory
+   to OS? */
+int mca_mpool_base_mallopt_disable_free = 0;
 
 uint32_t mca_mpool_base_page_size; 
 uint32_t mca_mpool_base_page_size_log;
@@ -74,9 +71,7 @@ int mca_mpool_base_open(void)
        mca_mpool_base_components list */
     
     int use_mem_hooks;
-#if MPOOL_BASE_CAN_DISABLE_SBRK
-    int disable_sbrk;
-#endif  /* MPOOL_BASE_CAN_DISABLE_SBRK */
+    int no_mallopt;
     
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
@@ -112,36 +107,32 @@ int mca_mpool_base_open(void)
     mca_mpool_base_use_mem_hooks = use_mem_hooks || mca_mpool_base_use_mem_hooks;
 
     
-#if MPOOL_BASE_CAN_DISABLE_SBRK
+#if OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT
     mca_base_param_reg_int_name("mpool", 
-                                "base_disable_sbrk", 
-                                "use mallopt to override calling sbrk (doesn't return memory to OS!)",
+                                "base_disable_mallopt",
+                                "do not use mallopt to disable returning memory to "
+                                "the OS when leave_pinned is active and no memory "
+                                "components are found.",
                                 false, 
                                 false, 
                                 0,
-                                &mca_mpool_base_disable_sbrk);
-
-    mca_base_param_reg_int_name("mpool", 
-                                "disable_sbrk", 
-                                "(deprecated, use mca_mpool_base_disable_sbrk)",
-                                false, 
-                                false, 
-                                0,
-                                &disable_sbrk);
-    
-    mca_mpool_base_disable_sbrk = disable_sbrk || mca_mpool_base_disable_sbrk;
-
+                                &no_mallopt);
+#else
+    no_mallopt = 1;
 #endif
 
     /* force mem hooks if leave_pinned or leave_pinned_pipeline is enabled */
-#if MPOOL_BASE_CAN_DISABLE_SBRK
-    if(0 == mca_mpool_base_use_mem_hooks && 0 == mca_mpool_base_disable_sbrk) {
-#else 
-    if(0 == mca_mpool_base_use_mem_hooks ) {
-#endif
-        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
-            mca_mpool_base_use_mem_hooks = 1;
-        }
+    if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+        mca_mpool_base_use_mem_hooks = 1;
+    }
+
+    /* enable mallopt if we're using leave pinned, there is support
+       for intercepting munmap, and the user didn't tell us not to use
+       mallopt */
+    if ((ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) &&
+        (0 != (OPAL_MEMORY_MUNMAP_SUPPORT & opal_mem_hooks_support_level())) &&
+        0 == no_mallopt) {
+        mca_mpool_base_mallopt_disable_free = 1;        
     }
     
     /* get the page size for this architecture*/ 
