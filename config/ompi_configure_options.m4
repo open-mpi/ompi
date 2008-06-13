@@ -635,6 +635,13 @@ AC_ARG_ENABLE([binaries],
         [Build and install binaries required for Open MPI, such as the wrapper compilers.   Useful for multi-lib installations.  (default: enabled)])])
 AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 
+AC_ARG_ENABLE([script-wrapper-compilers],
+  [AC_HELP_STRING([--enable-script-wrapper-compilers],
+     [Use less featured script-based wrapper compilers instead of the standard C-based wrapper compilers.  This option ignores the --disable-binaries option and is mainly useful in cross-compile environments])])
+AM_CONDITIONAL([OMPI_WANT_SCRIPT_WRAPPER_COMPILERS],
+    [test "$enable_script_wrapper_compilers" = "yes"])
+AC_CONFIG_FILES([ompi/tools/wrappers/ompi_wrapper_script], [chmod +x ompi/tools/wrappers/ompi_wrapper_script])
+
 #
 # Do we want to disable IPv6 support?
 #

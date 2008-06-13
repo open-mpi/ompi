@@ -17,13 +17,14 @@
 # $HEADER$
 #
 
+if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = \
         mpicc-vt-wrapper-data.txt \
 	mpic++-vt-wrapper-data.txt \
 	mpif77-vt-wrapper-data.txt \
 	mpif90-vt-wrapper-data.txt
-
-if OMPI_INSTALL_BINARIES
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
@@ -63,3 +64,4 @@ uninstall-local: uninstall-local-always
 endif # CASE_SENSITIVE_FS
 
 endif # OMPI_INSTALL_BINARIES
+endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS

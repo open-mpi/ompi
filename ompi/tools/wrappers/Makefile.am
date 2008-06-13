@@ -17,6 +17,37 @@
 # $HEADER$
 #
 
+
+if OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
+
+bin_SCRIPTS = ompi_wrapper_script
+CLEANFILES += $(bin_SCRIPTS)
+
+install-exec-hook-always:
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	(cd $(DESTDIR)$(bindir); rm -f mpicc; $(LN_S) ompi_wrapper_script mpicc)
+	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
+	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) ompi_wrapper_script mpif77)
+	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) ompi_wrapper_script mpif90)
+uninstall-local-always:
+	rm -f $(DESTDIR)$(bindir)/mpicc \
+	$(DESTDIR)$(bindir)/mpic++ \
+	$(DESTDIR)$(bindir)/mpicxx \
+	$(DESTDIR)$(bindir)/mpif77 \
+	$(DESTDIR)$(bindir)/mpif90
+if CASE_SENSITIVE_FS
+install-exec-hook: install-exec-hook-always
+	(cd $(DESTDIR)$(bindir); rm -f mpiCC; $(LN_S) ompi_wrapper_script mpiCC)
+uninstall-local: uninstall-local-always
+	rm -f $(DESTDIR)$(bindir)/mpiCC
+else # CASE_SENSITIVE_FS
+install-exec-hook: install-exec-hook-always
+uninstall-local: uninstall-local-always
+endif # CASE_SENSITIVE_FS
+
+else # OMPI_WANT_SHELL_WRAPPER_COMPILERS
+
 if OMPI_INSTALL_BINARIES
 
 dist_man_MANS = \
@@ -73,6 +104,14 @@ endif # CASE_SENSITIVE_FS
 
 endif # OMPI_INSTALL_BINARIES
 
+endif # OMPI_WANT_SHELL_WRAPPER_COMPILERS
+
+
+########################################################
+#
+# Man page generation / handling
+#
+########################################################
 maintainer-clean-local:
 	rm -f mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
 
