@@ -28,21 +28,18 @@ AC_DEFUN([MCA_memory_ptmalloc2_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
+    AC_ARG_ENABLE([ptmalloc2-internal],
+       [AC_HELP_STRING([--enable-ptmalloc2-internal],
+                       [Build ptmalloc2 memory manager into libopen-pal,
+                        instead of as separate library.  Only has meaning
+                        if ptmalloc2 memory component exists])])
 
-    AC_ARG_ENABLE([ptmalloc2-opt-sbrk],
-        [AC_HELP_STRING([--enable-ptmalloc2-opt-sbrk],
-            [Only trigger callbacks when sbrk is used for small
-             allocations, rather than every call to malloc/free.
-             (default: enabled)])])
+    AM_CONDITIONAL([OMPI_WANT_EXTERNAL_PTMALLOC2],
+       [test "$enable_ptmalloc2_internal" != "yes"])
+    AC_MSG_CHECKING([if ptmalloc2 should be part of libopen-pal])
+    AS_IF([test "$enable_ptmalloc2_internal" == "yes"],
+          [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
-    if test "$enable_ptmalloc2_opt_sbrk" = "no" ; then
-        memory_ptmalloc2_opt_sbrk=0
-    else
-        memory_ptmalloc2_opt_sbrk=1
-    fi
-    AC_DEFINE_UNQUOTED([OMPI_MEMORY_PTMALLOC2_OPT_SBRK],
-                       [$memory_ptmalloc2_opt_sbrk],
-                       [Trigger callbacks on sbrk instead of malloc or free])
 
     AS_IF([test "$with_memory_manager" = "ptmalloc2"],
           [if test "`echo $host | grep apple-darwin`" != "" ; then
@@ -55,6 +52,7 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
            AS_IF([test "$with_memory_manager" = ""],
                  [memory_ptmalloc2_happy="yes"],
                  [memory_ptmalloc2_happy="no"])])
+
 
     # Per ticket #227, Intel 9.0 v20051201 on ia64 with optimization
     # of -O2 or higher will bork ptmalloc2 in strange in mysterious
@@ -98,7 +96,7 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
     #
     # See if we have sbrk prototyped
     #
-    AC_CHECK_DECLS([sbrk])
+    AS_IF([test "$memory_ptmalloc2_happy" = "yes"], [AC_CHECK_DECLS([sbrk])])
 
     #
     # Figure out how we're going to call mmap/munmap for real

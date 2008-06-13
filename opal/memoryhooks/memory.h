@@ -91,20 +91,15 @@ OPAL_DECLSPEC int opal_mem_hooks_finalize(void);
  *                                    callback events when memory is going 
  *                                    to be released by the process, either
  *                                    by the user calling an allocator
- *                                    function or mmap.
- * @retval OPAL_MEMORY_MALLOC_SUPPORT Memory hooks subsystem can trigger
- *                                    callback events when memory is being
- *                                    allocated by the process through the
- *                                    traditional allocator (malloc,
- *                                    calloc, etc.)
- * @retval OPAL_MEMORY_MMAP_SUPPORT   Memory hooks subsystem can trigger
- *                                    callback events when memory is being
- *                                    allocated by the process through mmap.
+ *                                    function or munmap.  Implies
+ *                                    OPAL_MEMORY_MUNMAP_SUPPORT.
+ * @retval OPAL_MEMORY_MUNMAP_SUPPORT Subsystem can trigger callback events
+ *                                    by the user calling munmap directly.
  * @retval OPAL_MEMORY_CHUNK_SUPPORT  Memory hooks subsystem will only 
  *                                    trigger callback events when the
  *                                    process is giving memory back to the
  *                                    operating system, not at ever call
- *                                    to malloc/realloc/free/etc.
+ *                                    to realloc/free/etc.
  *
  * \note This function must be called after opal_mem_hooks_init().
  */
@@ -132,26 +127,6 @@ typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
 
 
 /**
- * Register callback for when memory has been allocated
- *
- * Register a \c opal_mem_hooks_callback_fn_t function pointer to be
- * called whenever the current process has allocated memory
- *
- * @param func    Function pointer to call when memory has been allocated
- * @param cbdata  A pointer-length field to be passed to func when it is
- *                invoked.
- *
- * @retval OPAL_SUCCESS The registration completed successfully.
- * @retval OPAL_EXISTS  The function is already registered and will not
- *                      be registered again.
- * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
- *                      receiving callbacks when memory is to be allocated
- */
-OPAL_DECLSPEC int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, 
-                                                void *cbdata);
-
-
-/**
  * Register callback for when memory is to be released
  *
  * Register a \c opal_mem_hooks_callback_fn_t function pointer to be called
@@ -169,20 +144,6 @@ OPAL_DECLSPEC int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *fu
  */
 OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, 
                                                   void *cbdata);
-
-
-/**
- * Unregister previously registered alloc callback
- *
- * Unregister previously registered alloc callback.
- *
- * @param func   Function pointer to registered callback to remove
- *
- * @retval OPAL_SUCCESS The function was successfully deregistered
- * @retval OPAL_ERR_NOT_FOUND The function was not previously registered
- */
-OPAL_DECLSPEC int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
-
 
 /**
  * Unregister previously registered release callback

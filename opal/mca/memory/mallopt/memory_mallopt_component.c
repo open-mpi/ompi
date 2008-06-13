@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -34,44 +34,72 @@
 #include <dlfcn.h>
 #endif
 
+#include "opal/mca/memory/memory.h"
 #include "opal/memoryhooks/memory_internal.h"
+#include "opal/constants.h"
 
-#include "opal_ptmalloc2_munmap.h"
-
-/*
- * munmap is always intercepted
- */
 #if defined(HAVE___MUNMAP)
 int  __munmap(void* addr, size_t len);
 #endif
 
+static int opal_memory_malloc_open(void);
 
-/* intercept munmap, as the user can give back memory that way as well. */
-int 
-munmap(void* addr, size_t len)
+const opal_memory_base_component_1_0_0_t mca_memory_mallopt_component = {
+    /* First, the mca_component_t struct containing meta information
+       about the component itself */
+    {
+        /* Indicate that we are a memory v1.0.0 component (which also
+           implies a specific MCA version) */
+        OPAL_MEMORY_BASE_VERSION_1_0_0,
+
+        /* Component name and version */
+        "mallopt",
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
+
+        /* Component open and close functions */
+        opal_memory_malloc_open,
+        NULL
+    },
+
+    /* Next the MCA v1.0.0 component meta data */
+    {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    },
+};
+
+
+static int
+opal_memory_malloc_open(void)
 {
-    return opal_mem_free_ptmalloc2_munmap(addr, len, 0);
+    /* This component is a bit weird, in that it exists only to
+       capture munmap.  Real work happens in mpool_base */
+    opal_mem_hooks_set_support(OPAL_MEMORY_MUNMAP_SUPPORT);
+    return OPAL_SUCCESS;
 }
 
 
-/* three ways to call munmap.  Prefered is to just call syscall, so
-   that we can intercept both munmap and __munmap.  If that isn't
-   possible, try calling __munmap from munmap and let __munmap go.  If
-   that doesn't work, try dlsym */
-int
-opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
+/* three ways to call munmap.  Prefered is to call __munmap, which
+   will exist if munmap is a weak symbol.  If that doesn't work, try
+   the syscal, and if that doesn't work, try looking in the dynamic
+   libc. */
+int 
+munmap(void* addr, size_t len)
 {
+
 #if !defined(HAVE___MUNMAP) && \
     !(defined(HAVE_SYSCALL) && defined(__NR_munmap)) && defined(HAVE_DLSYM)
     static int (*realmunmap)(void*, size_t);
 #endif
 
-    opal_mem_hooks_release_hook(start, length, from_alloc);
+    opal_mem_hooks_release_hook(addr, len, 0);
 
 #if defined(HAVE___MUNMAP)
-    return __munmap(start, length);
+    return __munmap(addr, len);
 #elif defined(HAVE_SYSCALL) && defined(__NR_munmap)
-    return syscall(__NR_munmap, start, length);
+    return syscall(__NR_munmap, addr, len);
 #elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
         union { 
@@ -83,7 +111,7 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
         realmunmap = tmp.munmap_fp;
     }
 
-    return realmunmap(start, length);
+    return realmunmap(addr, len);
 #else
     #error "Can not determine how to call munmap"
 #endif

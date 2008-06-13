@@ -42,10 +42,23 @@ noinst_LTLIBRARIES = libmca_memory_ptmalloc2.la
 
 libmca_memory_ptmalloc2_la_SOURCES = \
    opal_ptmalloc2_component.c \
-   opal_ptmalloc2_munmap.c \
+   opal_ptmalloc2_munmap.c
+
+if OMPI_WANT_EXTERNAL_PTMALLOC2
+lib_LTLIBRARIES = libopenmpi-malloc.la
+
+libopenmpi_malloc_la_SOURCES = \
    malloc.c \
    malloc-stats.c \
    malloc.h
+else
+libmca_memory_ptmalloc2_la_SOURCES += \
+   malloc.c \
+   malloc-stats.c \
+   malloc.h
+endif
+
+
 libmca_memory_ptmalloc2_la_LDFLAGS = -module -avoid-version $(memory_ptmalloc2_LDFLAGS)
 libmca_memory_ptmalloc2_la_LIBADD = $(memory_ptmalloc2_LIBS)
 

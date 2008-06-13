@@ -30,3 +30,8 @@ PID:        %d
 %d additional leak%s recorded but %s not displayed here.  Set the MCA
 parameter mpi_show_mpi_alloc_mem_leaks to a larger number to see that
 many leaks, or set it to a negative number to see all leaks.
+[leave pinned failed]
+Process %s on host %s attempted to use the leave pinned
+feature, but no memory registration hooks were found.  To solve this
+problem, either link in the libopenmpi-malloc library or (on Linux)
+do not set the MCA parameter base_disable_mallopt.
