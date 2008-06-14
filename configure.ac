@@ -1313,7 +1313,6 @@ AC_CONFIG_FILES([
     test/event/Makefile
     test/asm/Makefile
     test/class/Makefile
-    test/memory/Makefile
     test/support/Makefile
     test/threads/Makefile
     test/peruse/Makefile
