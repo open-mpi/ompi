@@ -31,6 +31,10 @@
 #include "opal/sys/atomic.h"
 #include "orte/util/show_help.h"
 #include "opal/util/if.h"
+#include "opal/mca/carto/carto.h"
+#include "opal/mca/carto/base/base.h"
+#include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/maffinity/base/base.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/printf.h"
 #include "ompi/class/ompi_fifo.h"
@@ -39,6 +43,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "btl_sm.h"
 #include "btl_sm_endpoint.h"
 #include "btl_sm_frag.h"
@@ -93,9 +98,10 @@ static void *mpool_calloc(size_t nmemb, size_t size)
 {
     void *buf;
     size_t bsize = nmemb * size;
+    mca_mpool_base_module_t *mpool = mca_btl_sm_component.sm_mpool;
 
-    buf = mca_btl_sm_component.sm_mpool->mpool_alloc(
-        mca_btl_sm_component.sm_mpool, bsize, CACHE_LINE_SIZE, 0, NULL);
+    buf = mpool->mpool_alloc(mpool, bsize, CACHE_LINE_SIZE, 0, NULL);
+
     if (NULL == buf)
         return NULL;
 
@@ -128,27 +134,91 @@ static int init_fifos(ompi_fifo_t *f, int n)
     return OMPI_SUCCESS;
 }
 
+static void init_maffinity(int *my_mem_node, int *max_mem_node)
+{
+    static opal_carto_graph_t *topo;
+    opal_value_array_t dists;
+    int i, num_core, max_core, socket, rc;
+    opal_paffinity_base_cpu_set_t cpus;
+    char *myslot = NULL;
+    opal_carto_node_distance_t *dist;
+    opal_carto_base_node_t *slot_node;
+
+    *my_mem_node = 0;
+    *max_mem_node = 1;
+
+    if(opal_carto_base_get_host_graph(&topo, "Memory") != OMPI_SUCCESS)
+        return;
+
+     OBJ_CONSTRUCT(&dists, opal_value_array_t);
+     opal_value_array_init(&dists, sizeof(opal_carto_node_distance_t));
+
+     if(opal_paffinity_base_get_processor_info(&num_core, &max_core) !=
+        OMPI_SUCCESS)
+         max_core = 100;
+
+     OPAL_PAFFINITY_CPU_ZERO(cpus);
+     opal_paffinity_base_get(&cpus);
+
+     /* find core we are running on */
+     for(i = 0; i < max_core; i++)
+         if(OPAL_PAFFINITY_CPU_ISSET(i, cpus))
+             break;
+
+     rc = opal_paffinity_base_map_to_socket_core(i, &socket, &i);
+     asprintf(&myslot, "slot%d", socket);
+
+     slot_node = opal_carto_base_find_node(topo, myslot);
+
+     if(NULL == slot_node)
+         goto out;
+
+     opal_carto_base_get_nodes_distance(topo, slot_node, "Memory", &dists);
+     if((*max_mem_node = opal_value_array_get_size(&dists)) < 2)
+         goto out;
+
+     dist = opal_value_array_get_item(&dists, 0);
+     opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
+out:
+     if(myslot) free(myslot);
+     OBJ_DESTRUCT(&dists);
+     opal_carto_base_free_graph(topo);
+}
+
 static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 {
     size_t size, length, length_payload;
     char *sm_ctl_file;
     ompi_fifo_t *my_fifos;
+    int my_mem_node=-1, num_mem_nodes=-1, i;
+
+    init_maffinity(&my_mem_node, &num_mem_nodes);
+    mca_btl_sm_component.mem_node = my_mem_node;
+    mca_btl_sm_component.num_mem_nodes = num_mem_nodes;
 
     /* lookup shared memory pool */
-    mca_btl_sm_component.sm_mpool =
-        mca_mpool_base_module_lookup(mca_btl_sm_component.sm_mpool_name);
-    if(NULL == mca_btl_sm_component.sm_mpool) {
-        mca_btl_sm_component.sm_mpool =
+    mca_btl_sm_component.sm_mpools = calloc(num_mem_nodes,
+                                            sizeof(mca_mpool_base_module_t*));
+
+    /* create mpool for each memory node */
+    for(i = 0; i < num_mem_nodes; i++) {
+        mca_mpool_base_resources_t res;
+        /* disable memory binding if there is only one memory node */
+        res.mem_node = (num_mem_nodes == 1) ? -1 : i;
+        mca_btl_sm_component.sm_mpools[i] =
             mca_mpool_base_module_create(mca_btl_sm_component.sm_mpool_name,
-                                         sm_btl, NULL);
+                                         sm_btl, &res);
+        /* Sanity check to ensure that we found it */
+        if(NULL == mca_btl_sm_component.sm_mpools[i])
+            return OMPI_ERR_OUT_OF_RESOURCE;
+
+        if(i == my_mem_node)
+            mca_btl_sm_component.sm_mpool = mca_btl_sm_component.sm_mpools[i];
     }
 
-    /* Sanity check to ensure that we found it */
-    if(NULL == mca_btl_sm_component.sm_mpool)
-        return OMPI_ERR_OUT_OF_RESOURCE;
 
     mca_btl_sm_component.sm_mpool_base =
-        mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool);
+        mca_btl_sm_component.sm_mpools[0]->mpool_base(mca_btl_sm_component.sm_mpools[0]);
 
     /* set the shared memory offset */
     mca_btl_sm_component.sm_offset = (ptrdiff_t*)calloc(n, sizeof(ptrdiff_t));
@@ -173,7 +243,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
     size = sizeof(mca_common_sm_file_header_t) +
-        n * (sizeof(ompi_fifo_t*) + sizeof(char *)) + CACHE_LINE_SIZE;
+        n * (sizeof(ompi_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
     if(!(mca_btl_sm_component.mmap_file =
          mca_common_sm_mmap_init(size, sm_ctl_file,
                                  sizeof(mca_common_sm_file_header_t),
@@ -202,6 +272,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     mca_btl_sm_component.shm_fifo = (ompi_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
+    mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
     /* Sync with other local procs. (Do we have to?) */
     if(0 == mca_btl_sm_component.my_smp_rank) {
@@ -220,6 +291,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* set the base of the shared memory segment */
     mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank] =
         (char*)mca_btl_sm_component.sm_mpool_base;
+    mca_btl_sm_component.shm_mem_nodes[mca_btl_sm_component.my_smp_rank] =
+        (uint16_t)my_mem_node;
 
     /*
      * initialize the array of fifo's "owned" by this process
@@ -246,6 +319,10 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     mca_btl_sm_component.fifo[mca_btl_sm_component.my_smp_rank] = my_fifos;
+
+    mca_btl_sm_component.mem_nodes = malloc(sizeof(uint16_t) * n);
+    if(NULL == mca_btl_sm_component.mem_nodes)
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* initialize fragment descriptor free lists */
 
@@ -418,6 +495,7 @@ int mca_btl_sm_add_procs(
     for(j = mca_btl_sm_component.num_smp_procs;
         j < mca_btl_sm_component.num_smp_procs + n_local_procs; j++) {
         ptrdiff_t diff;
+        int peer_mem_node;
 
         if(j == my_smp_rank)
             continue;
@@ -443,14 +521,21 @@ int mca_btl_sm_add_procs(
                 (opal_atomic_lock_t*)OFFSET2ADDR(diff, mca_btl_sm_component.fifo[j][my_smp_rank].head_lock);
         }
 
+        /* cache local copy of peer memory node number */
+        peer_mem_node = mca_btl_sm_component.mem_nodes[j] = mca_btl_sm_component.shm_mem_nodes[j];
+
         /* Initialize fifo for use. Note that sender does initialization */
         return_code = ompi_fifo_init(mca_btl_sm_component.size_of_cb_queue,
                                      mca_btl_sm_component.cb_lazy_free_freq,
                                      mca_btl_sm_component.cb_max_num,
-                                     0,0,0,
+                                     /* fifo mpool */
+                                     mca_btl_sm_component.sm_mpools[peer_mem_node],
+                                     /* head mpool */
+                                     mca_btl_sm_component.sm_mpool,
+                                     /* tail mpool */
+                                     mca_btl_sm_component.sm_mpools[peer_mem_node],
                                      &mca_btl_sm_component.fifo[j][my_smp_rank],
-                                     mca_btl_sm_component.sm_offset[j],
-                                     mca_btl_sm_component.sm_mpool);
+                                     mca_btl_sm_component.sm_offset[j]);
 
         if(return_code != OMPI_SUCCESS)
             goto CLEANUP;

@@ -48,6 +48,8 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 
+#include "opal/mca/maffinity/base/base.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -61,6 +63,10 @@ extern "C" {
 #define DONE (char)1
 #endif
 
+typedef struct mca_btl_sm_mem_node_t {
+    mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
+} mca_btl_sm_mem_node_t;
+
 /**
  * Shared Memory (SM) BTL module.
  */
@@ -72,7 +78,8 @@ struct mca_btl_sm_component_t {
     int32_t sm_max_procs;              /**< upper limit on the number of processes using the shared memory pool */
     int sm_extra_procs;                /**< number of extra procs to allow */
     char* sm_mpool_name;               /**< name of shared memory pool module */
-    mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
+    mca_mpool_base_module_t **sm_mpools; /**< shared memory pools (one for each memory node */
+    mca_mpool_base_module_t *sm_mpool; /**< mpool on local node */
     void* sm_mpool_base;               /**< base address of shared memory pool */
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
@@ -82,11 +89,13 @@ struct mca_btl_sm_component_t {
                                                     shared memory */
     ompi_fifo_t **shm_fifo;            /**< pointer to fifo 2D array in shared memory */
     char **shm_bases;                  /**< pointer to base pointers in shared memory */
+    uint16_t *shm_mem_nodes;           /**< pointer to mem noded in shared memory */
     ompi_fifo_t **fifo;                /**< cached copy of the pointer to the 2D
                                           fifo array.  The address in the shared
                                           memory segment sm_ctl_header is a relative,
                                           but this one, in process private memory, is
                                           a real virtual address */
+    uint16_t *mem_nodes;                /**< cached copy of mem nodes of each local rank */
     size_t size_of_cb_queue;           /**< size of each circular buffer queue array */
     size_t cb_lazy_free_freq;          /**< frequency of lazy free */
     int cb_max_num;                    /**< max number of circular buffers for each peer */
@@ -103,7 +112,9 @@ struct mca_btl_sm_component_t {
     struct mca_btl_base_endpoint_t **sm_peers;
 
     opal_free_list_t pending_send_fl;
-
+    int mem_node;
+    int num_mem_nodes;
+    
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */

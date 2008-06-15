@@ -21,6 +21,11 @@
 #include "orte/util/show_help.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
+#include <unistd.h>
+#include "opal/include/opal/align.h"
+#include "opal/mca/maffinity/maffinity.h"
+#include "opal/mca/maffinity/maffinity_types.h"
+#include "opal/mca/maffinity/base/base.h"
 
 
 /* 
@@ -51,39 +56,60 @@ void* mca_mpool_sm_base(mca_mpool_base_module_t* mpool)
 }
 
 /**
-  * allocate function 
+  * allocate function
   */
 void* mca_mpool_sm_alloc(
-    mca_mpool_base_module_t* mpool, 
-    size_t size, 
-    size_t align, 
+    mca_mpool_base_module_t* mpool,
+    size_t size,
+    size_t align,
     uint32_t flags,
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
-    return mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, registration);
+    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool;
+    opal_maffinity_base_segment_t mseg;
+
+    mseg.mbs_start_addr =
+        mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, 
+                OPAL_ALIGN(align, getpagesize(), size_t), registration);
+
+    if(mpool_sm->mem_node >= 0) {
+        mseg.mbs_len = size;
+        opal_maffinity_base_bind(&mseg, 1, mpool_sm->mem_node);
+    }
+
+    return mseg.mbs_start_addr;
 }
 
 /**
-  * realloc function 
+  * realloc function
   */
 void* mca_mpool_sm_realloc(
-    mca_mpool_base_module_t* mpool, 
-    void* addr, 
-    size_t size, 
+    mca_mpool_base_module_t* mpool,
+    void* addr,
+    size_t size,
     mca_mpool_base_registration_t** registration)
 {
-    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
-    return mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size, registration);
+    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool;
+    opal_maffinity_base_segment_t mseg;
+
+    mseg.mbs_start_addr =
+        mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size,
+                                            registration);
+    if(mpool_sm->mem_node >= 0) {
+        mseg.mbs_len = size;
+        opal_maffinity_base_bind(&mseg, 1, mpool_sm->mem_node);
+    }
+
+    return mseg.mbs_start_addr;
 }
 
 /**
-  * free function 
+  * free function
   */
-void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr, 
+void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr,
                        mca_mpool_base_registration_t* registration)
 {
-    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool;
     mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
 }
 

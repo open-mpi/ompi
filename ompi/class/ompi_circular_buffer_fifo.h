@@ -18,6 +18,7 @@
 
 #ifndef _OMPI_CIRCULAR_BUFFER_FIFO
 #define _OMPI_CIRCULAR_BUFFER_FIFO
+#include <unistd.h> /* for getpagesize() */
 
 #include "ompi/constants.h"
 #include "opal/sys/cache.h"
@@ -125,10 +126,10 @@ static inline int ompi_cb_fifo_size(ompi_cb_fifo_t *fifo) {
  *
  */
 static inline int ompi_cb_fifo_init(int size_of_fifo,
-        int lazy_free_freq, int fifo_memory_locality_index, 
-        int head_memory_locality_index, int tail_memory_locality_index, 
-        ompi_cb_fifo_t *fifo, ptrdiff_t offset,
-        mca_mpool_base_module_t *memory_allocator)
+        int lazy_free_freq,
+        mca_mpool_base_module_t *head_mpool,
+        mca_mpool_base_module_t *tail_mpool,
+        ompi_cb_fifo_t *fifo, ptrdiff_t offset)
 {
     int i, size;
     char *buf;
@@ -154,37 +155,39 @@ static inline int ompi_cb_fifo_init(int size_of_fifo,
     fifo->mask = (size - 1);
 
     /* allocate fifo array */
-    buf = (char *) memory_allocator->mpool_alloc(memory_allocator,
-            sizeof(void *) * size + 2*CACHE_LINE_SIZE, CACHE_LINE_SIZE, 0,
-            NULL);
+    buf = (char *) tail_mpool->mpool_alloc(tail_mpool,
+            sizeof(void *) * size + CACHE_LINE_SIZE, getpagesize(), 0, NULL);
     if (NULL == buf) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    fifo->queue = (volatile void**)(buf + 2*CACHE_LINE_SIZE);
+    fifo->queue = (volatile void**)(buf + CACHE_LINE_SIZE);
     /* buffer address in a receiver address space */
     fifo->recv_queue = (volatile void**)((char*)fifo->queue - offset);
     /* initialize the queue entries */
     for (i = 0; i < size; i++) {
         fifo->queue[i] = OMPI_CB_FREE;
     }
+    fifo->tail = (ompi_cb_fifo_ctl_t*)buf;
 
-    fifo->head = (ompi_cb_fifo_ctl_t*)buf;
-    /* head address in a receiver address space */
-    fifo->recv_head = (ompi_cb_fifo_ctl_t*)((char*)fifo->head - offset);
-    fifo->tail = (ompi_cb_fifo_ctl_t*)(buf + CACHE_LINE_SIZE);
-
-    /* initialize the head structure */
-    opal_atomic_unlock(&(fifo->head->lock));
-    fifo->head->fifo_index=0;
-    fifo->head->num_to_clear=0;
-
-    /* initialize the head structure */
+    /* initialize the tail structure */
     opal_atomic_unlock(&(fifo->tail->lock));
     fifo->tail->fifo_index=0;
     fifo->tail->num_to_clear=0;
 
     /* recalculate tail address in a receiver address space */
     fifo->tail = (ompi_cb_fifo_ctl_t*)((char*)fifo->tail - offset);
+
+    fifo->head = (ompi_cb_fifo_ctl_t*)head_mpool->mpool_alloc(head_mpool,
+            sizeof(ompi_cb_fifo_ctl_t), getpagesize(), 0, NULL);
+
+    /* head address in a receiver address space */
+    fifo->recv_head = (ompi_cb_fifo_ctl_t*)((char*)fifo->head - offset);
+
+    /* initialize the head structure */
+    opal_atomic_unlock(&(fifo->head->lock));
+    fifo->head->fifo_index=0;
+    fifo->head->num_to_clear=0;
+
 
     /* return */
     return OMPI_SUCCESS;

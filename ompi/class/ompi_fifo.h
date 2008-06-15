@@ -211,13 +211,13 @@ struct ompi_fifo_t {
     int cb_count;
 
     /* fifo memory locality index */
-    int fifo_memory_locality_index;
+    mca_mpool_base_module_t *fifo_mpool;
 
     /* head memory locality index */
-    int head_memory_locality_index;
+    mca_mpool_base_module_t *head_mpool;
 
     /* tail memory locality index */
-    int tail_memory_locality_index;
+    mca_mpool_base_module_t *tail_mpool;
 
     /* offset between sender and receiver shared mapping */
     ptrdiff_t offset;
@@ -259,10 +259,11 @@ typedef struct ompi_fifo_t ompi_fifo_t;
  *
  */
 static inline int ompi_fifo_init(int size_of_cb_fifo,
-        int lazy_free_freq, int cb_num_limit, int fifo_memory_locality_index, 
-        int head_memory_locality_index, int tail_memory_locality_index, 
-        ompi_fifo_t *fifo, ptrdiff_t offset,
-        mca_mpool_base_module_t *memory_allocator)
+        int lazy_free_freq, int cb_num_limit,
+        mca_mpool_base_module_t *fifo_mpool,
+        mca_mpool_base_module_t *head_mpool,
+        mca_mpool_base_module_t *tail_mpool,
+        ompi_fifo_t *fifo, ptrdiff_t offset)
 {
     int error_code;
 
@@ -270,24 +271,23 @@ static inline int ompi_fifo_init(int size_of_cb_fifo,
     fifo->size = size_of_cb_fifo;
     /*we allocate one cb below so subtract one here */
     fifo->cb_count = cb_num_limit - 1;
-    fifo->fifo_memory_locality_index = fifo_memory_locality_index;
-    fifo->head_memory_locality_index = head_memory_locality_index;
-    fifo->tail_memory_locality_index = tail_memory_locality_index;
+    fifo->fifo_mpool = fifo_mpool;
+    fifo->head_mpool = head_mpool;
+    fifo->tail_mpool = tail_mpool;
 
     /* allocate head ompi_cb_fifo_t structure and place for head and tail locks
      * on different cache lines */
-    fifo->head = (ompi_cb_fifo_wrapper_t*)memory_allocator->mpool_alloc(
-            memory_allocator, sizeof(ompi_cb_fifo_wrapper_t), CACHE_LINE_SIZE,
+    fifo->head = (ompi_cb_fifo_wrapper_t*)fifo_mpool->mpool_alloc(
+            fifo_mpool, sizeof(ompi_cb_fifo_wrapper_t), getpagesize(),
             0, NULL);
     if(NULL == fifo->head) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* initialize the circular buffer fifo head structure */
-    error_code=ompi_cb_fifo_init(size_of_cb_fifo,
-            lazy_free_freq, fifo_memory_locality_index, 
-            head_memory_locality_index, tail_memory_locality_index, 
-            &(fifo->head->cb_fifo), offset, memory_allocator);
+    error_code = ompi_cb_fifo_init(size_of_cb_fifo,
+            lazy_free_freq, head_mpool, tail_mpool, &(fifo->head->cb_fifo),
+            offset);
     if ( OMPI_SUCCESS != error_code ) {
         return error_code;
     }
@@ -314,8 +314,7 @@ static inline int ompi_fifo_init(int size_of_cb_fifo,
  * @returncode Slot index to which data is written
  *
  */
-static inline int ompi_fifo_write_to_head(void *data,
-        ompi_fifo_t *fifo, mca_mpool_base_module_t *fifo_allocator)
+static inline int ompi_fifo_write_to_head(void *data, ompi_fifo_t *fifo)
 {
     int error_code;
     ompi_cb_fifo_wrapper_t *next_ff;
@@ -343,7 +342,7 @@ static inline int ompi_fifo_write_to_head(void *data,
         /* We retry to write to the old head before creating new one just in
          * case consumer read all entries after first attempt failed, but
          * before we set cb_overflow to true */
-        error_code=ompi_cb_fifo_write_to_head(data, &fifo->head->cb_fifo);
+        error_code = ompi_cb_fifo_write_to_head(data, &fifo->head->cb_fifo);
 
         if(error_code != OMPI_CB_ERROR) {
             fifo->head->cb_overflow = false;
@@ -361,9 +360,10 @@ static inline int ompi_fifo_write_to_head(void *data,
             if(0 == fifo->cb_count)
                 next_ff = NULL;
             else
-                next_ff = (ompi_cb_fifo_wrapper_t*)fifo_allocator->mpool_alloc(
-                        fifo_allocator, sizeof(ompi_cb_fifo_wrapper_t),
-                        CACHE_LINE_SIZE, 0, NULL);
+                next_ff = (ompi_cb_fifo_wrapper_t*)
+                    fifo->fifo_mpool->mpool_alloc(fifo->fifo_mpool,
+                            sizeof(ompi_cb_fifo_wrapper_t), getpagesize(), 0,
+                            NULL);
             if (NULL == next_ff) {
                 opal_atomic_unlock(&fifo->fifo_lock);
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -372,12 +372,10 @@ static inline int ompi_fifo_write_to_head(void *data,
             /* initialize the circular buffer fifo head structure */
             error_code = ompi_cb_fifo_init(fifo->size,
                     fifo->head->cb_fifo.lazy_free_frequency,
-                    fifo->fifo_memory_locality_index,
-                    fifo->head_memory_locality_index,
-                    fifo->tail_memory_locality_index,
-                    &(next_ff->cb_fifo), fifo->offset, fifo_allocator);
+                    fifo->head_mpool, fifo->tail_mpool,
+                    &(next_ff->cb_fifo), fifo->offset);
             if (OMPI_SUCCESS != error_code) {
-                fifo_allocator->mpool_free(fifo_allocator, next_ff, NULL);
+                fifo->fifo_mpool->mpool_free(fifo->fifo_mpool, next_ff, NULL);
                 opal_atomic_unlock(&fifo->fifo_lock);
                 return error_code;
             }
