@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,7 +65,7 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
       },
 
       /* Next the MCA v1.0.0 component meta data */
-      
+
       {
           /* The component is not checkpoint ready */
           MCA_BASE_METADATA_PARAM_NONE
@@ -89,7 +89,7 @@ static int mca_mpool_sm_open(void)
     default_max = 512*1024*1024;
     default_min = 128*1024*1024;
     default_peer = 32*1024*1024;
-    
+
     /* register SM component parameters */
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                               "allocator",
@@ -151,12 +151,12 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
 {
     char *file_name;
     int len;
-    mca_mpool_sm_module_t* mpool_module; 
+    mca_mpool_sm_module_t* mpool_module;
     mca_allocator_base_component_t* allocator_component;
     long max_size, min_size, peer_size;
     ompi_proc_t **procs;
     size_t num_all_procs, i, num_local_procs = 0;
-    
+
     /* README: this needs to change if procs in different jobs (even
        spawned ones) are to talk using shared memory */
     procs = ompi_proc_world(&num_all_procs);
@@ -166,9 +166,9 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         }
     }
     free(procs);
-    
+
     /* parse the max, min and peer sizes, and validate them */
-    /* absolutely necessary to reset errno each time */ 
+    /* absolutely necessary to reset errno each time */
     errno = 0;
     max_size  = strtol(max_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
@@ -178,7 +178,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         opal_output(0, "mca_mpool_sm_init: invalid max_size entered. set it to (%ld)", default_max);
         max_size = default_max;
     }
-    
+
     errno = 0;
     min_size  = strtol(min_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
@@ -246,8 +246,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         }
     }
 
-    mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t)); 
-    mca_mpool_sm_module_init(mpool_module); 
+    mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t));
+    mca_mpool_sm_module_init(mpool_module);
 
     /* create initial shared memory mapping */
     len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",

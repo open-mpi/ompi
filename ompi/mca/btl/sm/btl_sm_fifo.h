@@ -14,7 +14,7 @@ do {                                                                        \
     if(opal_using_threads())                                                \
         opal_atomic_lock(fifo->head_lock);                                  \
     /* post fragment */                                                     \
-    if(ompi_fifo_write_to_head(hdr, fifo, mca_btl_sm_component.sm_mpool)    \
+    if(ompi_fifo_write_to_head(hdr, fifo)                                   \
             != OMPI_SUCCESS) {                                              \
         btl_sm_add_pending(endpoint_peer, hdr, resend);                     \
         rc = OMPI_ERR_RESOURCE_BUSY;                                        \
