@@ -105,6 +105,9 @@ OPAL_DECLSPEC int opal_maffinity_base_select(void);
  */
 OPAL_DECLSPEC int opal_maffinity_base_set(opal_maffinity_base_segment_t *segments, size_t num_segments);
 
+OPAL_DECLSPEC int opal_maffinity_base_node_name_to_id(char *, int *);
+OPAL_DECLSPEC int opal_maffinity_base_bind(opal_maffinity_base_segment_t *, size_t, int);
+
 /**
  * Shut down the maffinity MCA framework.
  *

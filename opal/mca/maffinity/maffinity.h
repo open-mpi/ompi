@@ -82,6 +82,17 @@ typedef int (*opal_maffinity_base_module_init_1_0_0_fn_t)(void);
 typedef int (*opal_maffinity_base_module_set_fn_t)
     (opal_maffinity_base_segment_t *segments, size_t num_segments);
 
+/**
+ * translate memory node name (such as "mem0") to memory node id
+ */
+typedef int (*opal_maffinity_base_module_node_name_to_id_fn_t)
+    (char *node_name, int *node_id);
+
+/**
+ * bind memory to node
+ */
+typedef int (*opal_maffinity_base_module_bind_fn_t)
+    (opal_maffinity_base_segment_t *segments, size_t num_segments, int node_id);
 
 /**
  * Structure for maffinity v1.0.0 components.
@@ -108,6 +119,8 @@ struct opal_maffinity_base_module_1_0_0_t {
 
     /** Set memory affinity */
     opal_maffinity_base_module_set_fn_t maff_module_set;
+    opal_maffinity_base_module_node_name_to_id_fn_t maff_module_name_to_id;
+    opal_maffinity_base_module_bind_fn_t maff_module_bind;
 };
 /**
  * Convenience typedef

@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <numa.h>
+#include <numaif.h>
 
 #include "opal/constants.h"
 #include "opal/mca/maffinity/maffinity.h"
@@ -33,6 +34,8 @@
 static int libnuma_module_init(void);
 static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
                               size_t num_segments);
+static int libnuma_module_node_name_to_id(char *, int *);
+static int libnuma_modules_bind(opal_maffinity_base_segment_t *, size_t, int);
 
 /*
  * Libnuma maffinity module
@@ -42,7 +45,9 @@ static const opal_maffinity_base_module_1_0_0_t loc_module = {
     libnuma_module_init,
 
     /* Module function pointers */
-    libnuma_module_set
+    libnuma_module_set,
+    libnuma_module_node_name_to_id,
+    libnuma_modules_bind
 };
 
 int opal_maffinity_libnuma_component_query(mca_base_module_t **module, int *priority)
@@ -88,6 +93,31 @@ static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
     for (i = 0; i < num_segments; ++i) {
         numa_setlocal_memory(segments[i].mbs_start_addr,
                              segments[i].mbs_len);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int libnuma_module_node_name_to_id(char *node_name, int *id)
+{
+    /* GLB: fix me */
+    *id = atoi(node_name + 3);
+
+    return OPAL_SUCCESS;
+}
+
+static int libnuma_modules_bind(opal_maffinity_base_segment_t *segs,
+        size_t count, int node_id)
+{
+    size_t i;
+    int rc;
+    unsigned long node_mask = (1 << node_id);
+
+    for(i = 0; i < count; i++) {
+        rc = mbind(segs[i].mbs_start_addr, segs[i].mbs_len, MPOL_PREFERRED,
+                &node_mask, sizeof(node_mask) * 8, MPOL_MF_MOVE);
+        if(rc != 0)
+            return OPAL_ERROR;
     }
 
     return OPAL_SUCCESS;

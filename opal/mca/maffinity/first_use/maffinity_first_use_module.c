@@ -41,7 +41,9 @@ static const opal_maffinity_base_module_1_0_0_t loc_module = {
     first_use_module_init,
 
     /* Module function pointers */
-    first_use_module_set
+    first_use_module_set,
+    NULL,
+    NULL
 };
 
 int opal_maffinity_first_use_component_query(mca_base_module_t **module, int *priority)
