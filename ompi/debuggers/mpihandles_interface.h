@@ -152,7 +152,7 @@ struct mpidbg_process_t {
 /* ==> JMS Should we just use mqs_process_location instead?  George
    thinks that this is unncessary -- perhaps due to the fact that we
    could use mqs_process_location...?  Need to get some feedback from
-   Allinea on this one. */
+   others on this one.  Need to check Euro PVM/MPI '06 paper... */
 
 /* General name -> handle address mappings.  This is an optional type
    that is used to describe MPI's predefined handles if the
@@ -533,7 +533,7 @@ extern struct mpidbg_name_map_t *mpidbg_errhandler_name_map;
  *-----------------------------------------------------------------------*/
 
 /* This function must be called once before any other mpidbg_*()
-   function is called, and before any other global mpidbg_* data is
+   function is called, and before most other global mpidbg_* data is
    read.  It is only necessary to call this function once for a given
    debugger instantiation.  This function will initialize all mpidbg
    global state, to include setting all relevant global capability
@@ -609,12 +609,12 @@ int mpidbg_dll_taddr_width(void);
 
    The DLL should use the mqs_put_image_info and mqs_get_image_info
    functions to associate whatever information it wants to keep with
-   the image.  (For instance all of the type offsets it needs could be
-   kept here).  the debugger will call mqs_destroy_image_info when it
-   no longer wants to keep information about the given executable.
+   the image (e.g., all of the type offsets it needs could be kept
+   here).  The debugger will call mqs_destroy_image_info when it no
+   longer wants to keep information about the given executable.
  
    This will be called once for each executable image in the parallel
-   program.
+   job.
 
    Parameters:
 
@@ -627,9 +627,9 @@ int mpidbg_dll_taddr_width(void);
                   or deallocated by the DLL. This applies to all of
                   the callback tables.
    IN/OUT: handle_types: a pointer to a pre-allocated struct
-           containing mqs_types for each of the MPI handle types.
-           Must be filled in with results from mqs_find_type for each
-           MPI handle type.
+                         containing mqs_types for each of the MPI
+                         handle types.  Must be filled in with results
+                         from mqs_find_type for each MPI handle type.
 
    This function will return:
 
@@ -667,7 +667,7 @@ void mpidbg_finalize_per_image(mqs_image *image, mqs_image_info *image_info);
    use this function to check whether MPI handle information is
    available in the process.
 
-   Set up whatever process specific information we need.  For instance
+   Set up whatever process specific information we need.  For instance,
    addresses of global variables should be handled here rather than in
    the image information, because if data may be in dynamic libraries
    which could end up mapped differently in different processes.
@@ -687,9 +687,10 @@ void mpidbg_finalize_per_image(mqs_image *image, mqs_image_info *image_info);
                   or deallocated by the DLL. This applies to all of
                   the callback tables.
    IN/OUT: handle_types: the same handle_types that was passed to
-           mqs_init_per_image.  It can be left unaltered if the
-           results from mqs_init_per_image were sufficient, or
-           modified if necessary to be specific to this process.
+                         mqs_init_per_image.  It can be left unaltered
+                         if the results from mqs_init_per_image were
+                         sufficient, or modified if necessary to be
+                         specific to this process.
 
    This function will return:
 
