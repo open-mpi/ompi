@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,9 +116,16 @@ static int libnuma_modules_bind(opal_maffinity_base_segment_t *segs,
 
     for(i = 0; i < count; i++) {
         rc = mbind(segs[i].mbs_start_addr, segs[i].mbs_len, MPOL_PREFERRED,
-                &node_mask, sizeof(node_mask) * 8, MPOL_MF_MOVE);
-        if(rc != 0)
+                   &node_mask, sizeof(node_mask) * 8, 
+#ifdef HAVE_MPOL_MF_MOVE
+                   MPOL_MF_MOVE
+#else
+                   MPOL_MF_STRICT
+#endif
+                   );
+        if (0 != rc) {
             return OPAL_ERROR;
+        }
     }
 
     return OPAL_SUCCESS;

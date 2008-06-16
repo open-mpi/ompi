@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -52,8 +53,13 @@ AC_DEFUN([MCA_maffinity_libnuma_CONFIG],[
           [AS_IF([test "$with_libnuma" != "no" -a ! -z "$with_libnuma"],
                  [AC_MSG_ERROR([maffinity:libnuma requested but not found.  Aborting])])])
 
-    # substitute in the things needed to build gm
+   # Check for MPOL_MF_MOVE
+   AS_IF([test "$maffinity_libnuma_happy" = "yes"],
+         [AC_CHECK_DECLS([MPOL_MF_MOVE])])
+ 
+    # substitute in the things needed to build libnuma
     AC_SUBST([maffinity_libnuma_CPPFLAGS])
     AC_SUBST([maffinity_libnuma_LDFLAGS])
     AC_SUBST([maffinity_libnuma_LIBS])
 ])dnl
+>
