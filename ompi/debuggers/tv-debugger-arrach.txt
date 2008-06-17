@@ -1,0 +1,223 @@
+(Downloaded from http://www-unix.mcs.anl.gov/mpi/mpi-debug/mpich-attach.txt,
+17 June 2008; cached here in case it ever disappears from the Argonne site)
+
+TV Process Acquisition with MPICH
+---------------------------------
+
+Revised  2 Apr 2001: Added MPIR_partial_attach_ok
+Revised 25 Oct 2000: Added MPIR_acquired_pre_main
+
+The fundamental model is that TotalView is debugging the process which
+is responsible for starting the parallel MPI application.
+
+This process can either be a participant in the MPI job once it has
+started the other processes (normally it ends up as rank 0 in
+COMM_WORLD), or it can be a separate process which does not
+participate in the job (other than for forwarding I/O, signals and so
+on).
+
+TotalView expects this process to communicate with the debugger in the
+following ways :-
+
+1) TV looks for specific external symbols in the image to identify it
+   as an MPI master code.
+
+2) TV places a breakpoint in the routine MPIR_Breakpoint and expects
+   the MPI masted code to call this at appropriate points to tell TV
+   to look at the values of specific external symbols.
+
+The external symbols and data types expected by TotalView and used for
+process pickup are detailed in the file mpid/ch2/attach.h in the MPICH
+code, appended here...
+
+...............
+/*  $Id: attach.h,v 1.1.1.1 1997/09/17 20:39:24 gropp Exp $
+ */
+
+/* This file contains support for bringing processes up stopped, so that
+ * a debugger can attach to them     (done for TotalView)
+ */
+
+/* Update log
+ *
+ * Nov 27 1996 jcownie@dolphinics.com: Added the executable_name to MPIR_PROCDESC
+ */
+
+#ifndef _ATTACH_INCLUDE
+#define _ATTACH_INCLUDE
+
+#ifndef VOLATILE
+#if defined(__STDC__) || defined(__cplusplus)
+#define VOLATILE volatile
+#else
+#define VOLATILE
+#endif
+#endif
+
+/*****************************************************************************
+*                                DEBUGGING SUPPORT                           *
+*****************************************************************************/
+
+
+/* A little struct to hold the target processor name and pid for
+ * each process which forms part of the MPI program.
+ * We may need to think more about this once we have dynamic processes...
+ *
+ * DO NOT change the name of this structure or its fields. The debugger knows
+ * them, and will be confused if you change them.
+ */
+typedef struct {
+  char * host_name;           /* Something we can pass to inet_addr */
+  char * executable_name;     /* The name of the image */
+  int    pid;		      /* The pid of the process */
+} MPIR_PROCDESC;
+
+/* Array of procdescs for debugging purposes */
+extern MPIR_PROCDESC *MPIR_proctable;
+extern int MPIR_proctable_size;
+
+/* Various global variables which a debugger can use for 
+ * 1) finding out what the state of the program is at
+ *    the time the magic breakpoint is hit.
+ * 2) inform the process that it has been attached to and is
+ *    now free to run.
+ */
+extern VOLATILE int MPIR_debug_state;
+extern VOLATILE int MPIR_debug_gate;
+extern char * MPIR_debug_abort_string;
+extern int          MPIR_being_debugged; /* Cause extra info on internal state
+					  * to be maintained
+					  */
+ 
+/* Values for the debug_state, this seems to be all we need at the moment
+ * but that may change... 
+ */
+#define MPIR_DEBUG_SPAWNED   1
+#define MPIR_DEBUG_ABORTING  2
+
+#endif
+..............................
+
+The named symbols looked for by TotalView are
+
+/* MPICH process startup magic names */
+#define MPICH_breakpoint_name  	"MPIR_Breakpoint"
+#define MPICH_debugstate_name  	"MPIR_debug_state"
+#define MPICH_debuggate_name  	"MPIR_debug_gate"
+#define MPICH_proctable_name  	"MPIR_proctable"
+#define MPICH_proctable_size_name   "MPIR_proctable_size"
+#define MPICH_abort_string_name "MPIR_debug_abort_string"
+#define MPICH_starter_name      "MPIR_i_am_starter"
+#define MPICH_acquired_pre_main_name "MPIR_acquired_pre_main"
+#define MPICH_partial_attach_name "MPIR_partial_attach_ok"
+#define MPICH_being_debugged_name "MPIR_being_debugged"
+#define MPICH_dll_name          "MPIR_dll_name"
+
+If the symbol MPIR_dll_name is present in the image, then it is
+expected to be 
+
+extern char [] MPIR_dll_name; 
+
+and to contain a string which is the name of the message queue
+debugging library to use to debug this code.
+
+This can be used to override the default DLL name which TotalView
+would choose.
+
+MPIR_Breakpoint is the routine that the start up process calls at
+points of interest, after setting the variable MPIR_debug_state to an
+appropriate value.
+
+The proctable contains the array of processes in the MPI program
+indexed by rank in COMM_World, and MPIR_proctable_size gives the count
+of the number of processes.
+
+MPIR_being_debugged is set by TotalView when it starts (or attaches)
+to an MPI program.
+
+MPIR_debug_gate is the volatile variable that TV will set once it has
+attached to a process to let it run.
+
+Totalview also needs the debug information for the MPIR_PROCDESC type,
+since it uses that to work out the size and fields in the procedesc
+array. 
+
+If the symbol MPIR_i_am_starter appears in the program then TotalView
+treats it as a starter process which is not in the MPI world,
+otherwise it treats the initial process as index 0 in COMM_World.
+
+Totalview 4.1.0-2 and later only:
+If the symbol MPIR_acquired_pre_main appears in the program, then
+TotalView forces the display of the main program in its source pane
+after acquiring the new processes at startup. If the symbol is not
+present, then a normal display showing the place at which the code was
+executing when acquired will be shown. This variable should be present
+in the initial process only if the acquired processes have been
+stopped for acquisition before they enter the user's main program,
+either because they are stopped, "on the return from exec", or because
+they are stopped by code in a library init section.
+
+If the symbol MPIR_partial_attach_ok is present in the executable,
+then this informs TotalView that the initial startup barrier is
+implemented by the MPI system, rather than by having each of the child
+processes hang in a loop waiting for the MPIR_debug_gate variable to
+be set. Therefore TotalView need only release the initial process to
+release the whole MPI job, which can therefore be run _without_ having
+to acquire all of the MPI processes which it includes. This is useful
+in versions of TotalView which include the possibility of attaching to
+processes later in the run (for instance, by selecting only processes
+in a specific communicator, or a specific rank process in COMM_WORLD).
+TotalView may choose to ignore this and acquire all processes, and its
+presence does not prevent TotalView from using the old protocol to
+acquire all of the processes. (Since setting the MPIR_debug_gate is
+harmless). 
+
+All of the code that MPICH uses can be found in the MPICH source
+release, specifically in initutil.c and debugutil.c
+
+Here's a little more description of each of the variables TV
+references or sets. 
+
+MPIR_debug_state
+  Required. 
+  If we don't see this we won't know what the target process
+  is trying to tell us by hitting the breakpoint, and we'll ignore it.
+  Process acquisition will not work without this variable existing and
+  being set correctly.
+
+MPIR_debug_gate
+  Not required.
+  If it's not there we won't complain, however if you don't have this
+  you'd better have some other way of holding all the processes until
+  we have attached to them. TV sets this to (int)1 once it has
+  attached to the process.
+
+MPIR_debug_abort_string
+  Not required. 
+  Or rather, only required to get special handling of MPI_Abort.
+
+MPIR_i_am_starter
+  Not required.
+  The presence or absence of this symbol is all that is tested, we
+  never look at the _value_ of the symbol. However, if the first
+  process being debugged should not be included in the user's view of
+  the MPI processes, then this symbol should be in that program.
+
+MPIR_acquired_pre_main
+  Not required.
+  The presence or absence of this symbol is all that is tested, we
+  never look at the _value_ of the symbol. Its existence only matters
+  in the initially debugged process.
+
+MPIR_being_debugged
+  Not required. 
+  We try to set this to (int)1 to let the target processes know that they're
+  being debugged. If the symbol doesn't exist we won't write it and
+  won't complain.
+
+MPIR_dll_name
+  Not required. 
+  If it's not present we'll _only_ use the default name for the debug
+  dll. (But if you don't have dlopen or message queue dumping, that
+  certainly won't matter !)
+
