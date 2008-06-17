@@ -26,9 +26,11 @@ Unfortunately, this installation of Open MPI was not compiled with
 %s support.  As such, the %s compiler is non-functional.
 #
 [no-profiling-support]
-warning: "-lpmpi" was included on the command line indicating use of MPI 
-warning: profiling layer.  However, Open MPI was not compiled with support 
-warning: for the MPI profiling layer; this flag has been ignored.
+Warning: the "-lpmpi" flag was included on the command line,
+indicating use of MPI profiling layer.  However, Open MPI was not
+compiled with support for the MPI profiling layer.  This flag has
+therefore been ignored.
+#
 [no-compiler-found]
 The Open MPI wrapper compiler was unable to find the specified compiler
 %s in your PATH.
