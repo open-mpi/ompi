@@ -110,9 +110,7 @@ OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate=0;
 
-/* we don't believe we need MPIR_being_debugged here */
-
-/* Check for a file in few dirrect ways for portability */
+/* Check for a file in few direct ways for portability */
 static void check(char *dir, char *file, char **locations) 
 {
     char *str;
@@ -144,8 +142,34 @@ static void check(char *dir, char *file, char **locations)
 }
 
 
-/**
- * Wait for a debugger if asked.
+/*
+ * Wait for a debugger if asked.  We support two ways of waiting for
+ * attaching debuggers:
+ *
+
+ * 1. If using orterun: MPI processes will have the
+ * ompi_mpi_being_debugged MCA param set to true.  The HNP will call
+ * MPIR_Breakpoint() and then RML send a message to VPID 0 (MCW rank
+ * 0) when it returns (MPIR_Breakpoint() doesn't return until the
+ * debugger has attached to all relevant processes).  Meanwhile, VPID
+ * 0 blocks waiting for the RML message.  All other VPIDs immediately
+ * call the grpcomm barrier (and therefore block until the debugger
+ * attaches).  Once VPID 0 receives the RML message, we know that the
+ * debugger has attached to all processes that it cares about, and
+ * VPID 0 then joins the grpcomm barrier, allowing the job to
+ * continue.  This scheme has the side effect of nicely supporting
+ * partial attaches by parallel debuggers (i.e., attaching to only
+ * some of the MPI processes; not necessarily all of them).
+ *
+ * 2. If not using orterun: in this case, ORTE_DISABLE_FULL_SUPPORT
+ * will be true, and we know that there will not be an RML message
+ * sent to VPID 0.  So we have to look for a magic environment
+ * variable from the launcher to know if the jobs will be attached by
+ * a debugger (e.g., set by yod, srun, ...etc.), and if so, spin on
+ * MPIR_debug_gate.
+ *
+ * Note that neither of these schemes use MPIR_being_debugged; it
+ * doesn't seem useful to us.
  */
 void ompi_wait_for_debugger(void)
 {
@@ -160,6 +184,12 @@ void ompi_wait_for_debugger(void)
                                 "is being debugged (default: false)",
                                 false, false, (int) false,
                                 &debugger);
+
+    /* Add in environment variables for other launchers, such as yod,
+       srun, ...etc. */
+    if (NULL != getenv("yod_you_are_being_debugged")) {
+        debugger = 1;
+    }
     
     if (!debugger) {
         /* if not, just return */
@@ -167,7 +197,7 @@ void ompi_wait_for_debugger(void)
     }
     
     /* if we are being debugged, then we need to find
-     * the correct plug-in
+     * the correct plug-ins
      */
     a = strdup(opal_install_dirs.pkglibdir);
     mca_base_param_reg_string_name("ompi",
@@ -184,53 +214,42 @@ void ompi_wait_for_debugger(void)
             check(dirs[i], OMPI_MSGQ_DLL_PREFIX, mpimsgq_dll_locations);
         }
     }
-    
-    /* only the rank=0 proc waits for the debugger - everyone else will just
-     * spin in the barrier in mpi_init until rank=0 joins them
-     */
-    if (0 != ORTE_PROC_MY_NAME->vpid) {
-        return;
-    }
-    
-    /* we have to support at least two ways of completing the
-     * debug attachment - either we will get a message from
-     * the HNP telling us it is okay to release, or the debugger
-     * itself will reach into us and set a gate.
-     *
-     * First, attempt to get a message-based release
-     */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_DEBUGGER_RELEASE, 0);
-    OBJ_DESTRUCT(&buf);  /* don't care about contents of message */
-    
-    if (rc > 0) {
-        /* message received - we can go! */
-        return;
-    } else if (ORTE_ERR_NOT_SUPPORTED == rc) {
-        /* if the recv isn't supported, then we fall back
-         * to the alternative method for waiting
-         */
-        goto spin_wait;
-    } else {
-        /* if it failed for some other reason, then we are
-         * in trouble - for now, just report the problem
-         * and give up waiting
-         */
-        opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger - error %s!",
-                    (long)ORTE_PROC_MY_NAME->vpid, ORTE_ERROR_NAME(rc));
-        return;
-    }
-    
-spin_wait:
-    /* spin until debugger attaches and releases us */
-    while (MPIR_debug_gate == 0) {
+
+    if (ORTE_DISABLE_FULL_SUPPORT) {
+        /* spin until debugger attaches and releases us */
+        while (MPIR_debug_gate == 0) {
 #if defined(__WINDOWS__)
-        Sleep(100);     /* milliseconds */
+            Sleep(100);     /* milliseconds */
 #elif defined(HAVE_USLEEP)
-        usleep(100000); /* microseconds */
+            usleep(100000); /* microseconds */
 #else
-        sleep(1);       /* seconds */
+            sleep(1);       /* seconds */
 #endif
+        }
+    } else {
+    
+        /* only the rank=0 proc waits for either a message from the
+         * HNP or for the debugger to attach - everyone else will just
+         * spin in * the grpcomm barrier in ompi_mpi_init until rank=0
+         * joins them.
+         */
+        if (0 != ORTE_PROC_MY_NAME->vpid) {
+            return;
+        }
+    
+        /* VPID 0 waits for a message from the HNP */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, 
+                                  ORTE_RML_TAG_DEBUGGER_RELEASE, 0);
+        OBJ_DESTRUCT(&buf);  /* don't care about contents of message */
+        if (rc < 0) {
+            /* if it failed for some reason, then we are in trouble -
+             * for now, just report the problem and give up waiting
+             */
+            opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger - error %s!",
+                        (long)ORTE_PROC_MY_NAME->vpid, ORTE_ERROR_NAME(rc));
+        }
     }
-}
+}    
+
 
