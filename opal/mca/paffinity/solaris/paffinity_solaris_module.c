@@ -105,9 +105,9 @@ static int solaris_module_set(opal_paffinity_base_cpu_set_t cpumask)
      * Then find out which are actually online */
     for (currid=0; currid<=cpuid_max; currid++) {
         if (0 == processor_info(currid, &pinfo)) {
-            if (P_ONLINE == pinfo.pi_state) {
+            if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
                  cpuid_list[cpuid_loc++] = currid;
-            } 
+            }
         }
     }
 
@@ -121,13 +121,14 @@ static int solaris_module_set(opal_paffinity_base_cpu_set_t cpumask)
     }
 
     if (0 != processor_bind(P_PID, P_MYID, cpuid_list[index], NULL)) {
-        opal_output(0, "paffinity:solaris: Error when binding to CPU %d: %s",
+        opal_output(0, "paffinity:solaris: Error when binding to CPU #%d: %s",
             cpuid_list[index], strerror(errno));
         free(cpuid_list);
         return OPAL_ERR_IN_ERRNO;
     }
-    opal_output_verbose(100, opal_paffinity_base_output,
-        "paffinity:solaris: Successfully bind to CPU %d", cpuid_list[index]);
+
+    opal_output_verbose(5, opal_paffinity_base_output,
+        "paffinity:solaris: Successfully bind to CPU #%d", cpuid_list[index]);
     free(cpuid_list);
     return OPAL_SUCCESS;
 }
@@ -145,19 +146,22 @@ static int cpumask_to_id(opal_paffinity_base_cpu_set_t cpumask)
 }
 
 /* This get function returns the CPU id that's currently binded,
- * and then sets the cpumask. But I don't see this function or the
- * base paffinity get called from anywhere */
+ * and then sets the cpumask. */
 static int solaris_module_get(opal_paffinity_base_cpu_set_t *cpumask) 
 {
     processorid_t obind;
     if (0 != processor_bind(P_PID, P_MYID, PBIND_QUERY, &obind)) {
         return OPAL_ERR_IN_ERRNO;
     }
-    opal_output_verbose(100, opal_paffinity_base_output,
+
+    opal_output_verbose(5, opal_paffinity_base_output,
         "paffinity:solaris: obind=%d", obind);
 
+    /* if there isn't any processor binded, just zero out and return */
     OPAL_PAFFINITY_CPU_ZERO(*cpumask);
-    OPAL_PAFFINITY_CPU_SET(obind, *cpumask);
+    if (PBIND_NONE != obind) {
+        OPAL_PAFFINITY_CPU_SET(obind, *cpumask);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -186,7 +190,7 @@ static int solaris_module_get_processor_info(int *num_processors, int *max_proce
      * Then find out which are actually online */
     for (currid=0; currid<=cpuid_max; currid++) {
         if (0 == processor_info(currid, &pinfo)) {
-            if (P_ONLINE == pinfo.pi_state) {
+            if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
                  *num_processors++;
                  *max_processor_id = currid;
             }
