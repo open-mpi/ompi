@@ -141,7 +141,7 @@ static inline int32_t ompi_ddt_is_valid( const ompi_datatype_t* type )
 static inline int32_t ompi_ddt_is_predefined( const ompi_datatype_t* type )
 { return (type->flags & DT_FLAG_PREDEFINED); }
 
-void ompi_ddt_dump( const ompi_datatype_t* pData );
+OMPI_DECLSPEC void ompi_ddt_dump( const ompi_datatype_t* pData );
 /* data creation functions */
 OMPI_DECLSPEC int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
