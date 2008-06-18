@@ -358,191 +358,6 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
 } 
 
 
-int orte_grpcomm_base_modex(opal_list_t *procs)
-{
-    opal_buffer_t buf, rbuf;
-    orte_std_cntr_t i, j, num_procs, num_recvd_entries;
-    void *bytes = NULL;
-    orte_std_cntr_t cnt;
-    orte_process_name_t proc_name;
-    modex_proc_data_t *proc_data;
-    modex_attr_data_t *attr_data;
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm: modex entered",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* setup the buffer that will actually be sent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
-    
-    /* put our process name in the buffer so it can be unpacked later */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s modex: reporting %ld entries",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)num_entries));
-    
-    /* put the number of entries into the buffer */
-    OPAL_THREAD_LOCK(&mutex);
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &num_entries, 1, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&mutex);
-        goto cleanup;
-    }
-    
-    /* if there are entries, non-destructively copy the data across */
-    if (0 < num_entries) {
-        if (ORTE_SUCCESS != (opal_dss.copy_payload(&buf, modex_buffer))) {
-            ORTE_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&mutex);
-            goto cleanup;
-        }
-    }
-    OPAL_THREAD_UNLOCK(&mutex);
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s modex: executing allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* exchange the buffer with the list of peers (if provided) or all my peers */
-    if (NULL == procs) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s modex: processing modex info",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* process the results */
-    /* extract the number of procs that put data in the buffer */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s modex: received %ld data bytes from %ld procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), (long)num_procs));
-    
-    /* if the buffer doesn't have any more data, ignore it */
-    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
-        goto cleanup;
-    }
-    
-    /* otherwise, process it */
-    for (i=0; i < num_procs; i++) {
-        /* unpack the process name */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* look up the modex data structure */
-        proc_data = modex_lookup_orte_proc(&proc_name);
-        if (proc_data == NULL) {
-            /* report the error */
-            opal_output(0, "grpcomm_basic_modex: received modex info for unknown proc %s\n",
-                        ORTE_NAME_PRINT(&proc_name));
-            rc = ORTE_ERR_NOT_FOUND;
-            goto cleanup;
-        }
-        
-        /* unpack the number of entries for this proc */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        OPAL_THREAD_LOCK(&proc_data->modex_lock);
-        
-        /*
-         * Extract the attribute names and values
-         */
-        for (j = 0; j < num_recvd_entries; j++) {
-            size_t num_bytes;
-            char *attr_name;
-            
-            cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &attr_name, &cnt, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-                goto cleanup;
-            }
-
-            cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
-                ORTE_ERROR_LOG(rc);
-                OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-                goto cleanup;
-            }
-            if (num_bytes != 0) {
-                if (NULL == (bytes = malloc(num_bytes))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    rc = ORTE_ERR_OUT_OF_RESOURCE;
-                    OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-                    goto cleanup;
-                }
-                cnt = (orte_std_cntr_t) num_bytes;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, bytes, &cnt, OPAL_BYTE))) {
-                    ORTE_ERROR_LOG(rc);
-                    OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-                    goto cleanup;
-                }
-                num_bytes = cnt;
-            } else {
-                bytes = NULL;
-            }
-            
-            /*
-             * Lookup the corresponding modex structure
-             */
-            if (NULL == (attr_data = modex_lookup_attr_data(proc_data, 
-                                                            attr_name, true))) {
-                opal_output(0, "grpcomm_basic_modex: modex_lookup_attr_data failed\n");
-                OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-                rc = ORTE_ERR_NOT_FOUND;
-                goto cleanup;
-            }
-            if (NULL != attr_data->attr_data) {
-                /* some pre-existing value must be here - release it */
-                free(attr_data->attr_data);
-            }
-            attr_data->attr_data = bytes;
-            attr_data->attr_data_size = num_bytes;
-            proc_data->modex_received_data = true;            
-        }
-        OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
-    }
-    
-cleanup:
-    OBJ_DESTRUCT(&buf);
-    OBJ_DESTRUCT(&rbuf);
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm: modex completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    return rc;
-}
-
 int orte_grpcomm_base_purge_proc_attrs(void)
 {
     /*
@@ -561,4 +376,122 @@ int orte_grpcomm_base_purge_proc_attrs(void)
     modex_buffer = OBJ_NEW(opal_buffer_t);
 
     return ORTE_SUCCESS;
+}
+
+int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *mdx_reqd)
+{
+    int rc;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:base:pack_modex: reporting %ld entries",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)num_entries));
+    
+    /* put the number of entries into the buffer */
+    OPAL_THREAD_LOCK(&mutex);
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &num_entries, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        OPAL_THREAD_UNLOCK(&mutex);
+        goto cleanup;
+    }
+    
+    /* if there are entries, non-destructively copy the data across */
+    if (0 < num_entries) {
+        if (ORTE_SUCCESS != (opal_dss.copy_payload(buf, modex_buffer))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&mutex);
+            goto cleanup;
+        }
+    }
+    *mdx_reqd = true;
+    
+cleanup:
+    OPAL_THREAD_UNLOCK(&mutex);
+    return rc;
+}
+
+int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
+                                           opal_buffer_t *rbuf)
+{
+    modex_proc_data_t *proc_data;
+    modex_attr_data_t *attr_data;
+    int rc = ORTE_SUCCESS;
+    orte_std_cntr_t num_recvd_entries;
+    orte_std_cntr_t cnt;
+    void *bytes = NULL;
+    orte_std_cntr_t j;
+
+    /* look up the modex data structure */
+    proc_data = modex_lookup_orte_proc(proc_name);
+    if (proc_data == NULL) {
+        /* report the error */
+        opal_output(0, "grpcomm:base:update_modex: received modex info for unknown proc %s\n",
+                    ORTE_NAME_PRINT(proc_name));
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    OPAL_THREAD_LOCK(&proc_data->modex_lock);
+    
+    /* unpack the number of entries for this proc */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /*
+     * Extract the attribute names and values
+     */
+    for (j = 0; j < num_recvd_entries; j++) {
+        size_t num_bytes;
+        char *attr_name;
+        
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &attr_name, &cnt, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        if (num_bytes != 0) {
+            if (NULL == (bytes = malloc(num_bytes))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto cleanup;
+            }
+            cnt = (orte_std_cntr_t) num_bytes;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, bytes, &cnt, OPAL_BYTE))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            num_bytes = cnt;
+        } else {
+            bytes = NULL;
+        }
+        
+        /*
+         * Lookup the corresponding modex structure
+         */
+        if (NULL == (attr_data = modex_lookup_attr_data(proc_data, 
+                                                        attr_name, true))) {
+            opal_output(0, "grpcomm:base:update_modex: modex_lookup_attr_data failed\n");
+            rc = ORTE_ERR_NOT_FOUND;
+            goto cleanup;
+        }
+        if (NULL != attr_data->attr_data) {
+            /* some pre-existing value must be here - release it */
+            free(attr_data->attr_data);
+        }
+        attr_data->attr_data = bytes;
+        attr_data->attr_data_size = num_bytes;
+        proc_data->modex_received_data = true;            
+    }
+    
+cleanup:
+    OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
+    return rc;
 }

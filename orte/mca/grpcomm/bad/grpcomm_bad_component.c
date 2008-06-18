@@ -43,27 +43,22 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 
-#include "grpcomm_basic.h"
-
-/* set the default xovers */
-#define XCAST_LINEAR_XOVER_DEFAULT     0
-#define XCAST_BINOMIAL_XOVER_DEFAULT   0
-
+#include "grpcomm_bad.h"
 
 /*
  * Struct of function pointers that need to be initialized
  */
-orte_grpcomm_base_component_t mca_grpcomm_basic_component = {
+orte_grpcomm_base_component_t mca_grpcomm_bad_component = {
     {
         ORTE_GRPCOMM_BASE_VERSION_2_0_0,
         
-        "basic", /* MCA module name */
+        "bad", /* MCA module name */
         ORTE_MAJOR_VERSION,  /* MCA module major version */
         ORTE_MINOR_VERSION,  /* MCA module minor version */
         ORTE_RELEASE_VERSION,  /* MCA module release version */
-        orte_grpcomm_basic_open,  /* module open */
-        orte_grpcomm_basic_close, /* module close */
-        orte_grpcomm_basic_component_query /* module query */
+        orte_grpcomm_bad_open,  /* module open */
+        orte_grpcomm_bad_close, /* module close */
+        orte_grpcomm_bad_component_query /* module query */
     },
     {
         /* The component is checkpoint ready */
@@ -71,21 +66,22 @@ orte_grpcomm_base_component_t mca_grpcomm_basic_component = {
     }
 };
 
+
 /* Open the component */
-int orte_grpcomm_basic_open(void)
+int orte_grpcomm_bad_open(void)
 {
     return ORTE_SUCCESS;
 }
 
-int orte_grpcomm_basic_close(void)
+int orte_grpcomm_bad_close(void)
 {
     return ORTE_SUCCESS;
 }
 
-int orte_grpcomm_basic_component_query(mca_base_module_t **module, int *priority)
+int orte_grpcomm_bad_component_query(mca_base_module_t **module, int *priority)
 {
-    /* we are a lower-level default, so set a low priority so we can be overridden */
-    *priority = 1;
-    *module = (mca_base_module_t *)&orte_grpcomm_basic_module;
+    /* we are a default, so set a low priority so we can be overridden */
+    *priority = 10;
+    *module = (mca_base_module_t *)&orte_grpcomm_bad_module;
     return ORTE_SUCCESS;    
 }

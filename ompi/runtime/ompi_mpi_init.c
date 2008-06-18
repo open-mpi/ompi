@@ -533,6 +533,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
+    /* identify the architectures of remote procs and setup
+     * their datatype convertors, if required
+     */
+    if (OMPI_SUCCESS != (ret = ompi_proc_set_arch())) {
+        error = "ompi_proc_set_arch failed";
+        goto error;
+    }
+    
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
        MPI_THREAD_MULTIPLE. */

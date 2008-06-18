@@ -119,6 +119,7 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
  */
 OMPI_DECLSPEC int ompi_proc_init(void);
 
+OMPI_DECLSPEC int ompi_proc_set_arch(void);
 
 /**
  * Finalize the OMPI Process subsystem

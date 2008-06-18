@@ -105,6 +105,11 @@ typedef uint8_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_process_na
  */
 typedef uint8_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
 
+/**
+ * Update the arch of a remote process
+ */
+typedef int (*orte_ess_base_module_update_arch_fn_t)(orte_process_name_t *proc, uint32_t arch);
+
 
 /**
  * Handle fault tolerance updates
@@ -128,6 +133,7 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_arch_fn_t         proc_get_arch;
     orte_ess_base_module_proc_get_local_rank_fn_t   get_local_rank;
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
+    orte_ess_base_module_update_arch_fn_t           update_arch;
     orte_ess_base_module_ft_event_fn_t              ft_event;
 };
 typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_1_0_0_t;
