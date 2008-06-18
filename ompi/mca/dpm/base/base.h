@@ -79,21 +79,21 @@ OMPI_DECLSPEC void ompi_dpm_base_disconnect_waitall (int count, ompi_dpm_base_di
 #endif
 
 /* NULL component functions */
-OMPI_DECLSPEC int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
-                                                     char *port_string, bool send_first,
-                                                     ompi_communicator_t **newcomm);
-OMPI_DECLSPEC void ompi_dpm_base_null_disconnect(ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_dpm_base_null_spawn(int count, char **array_of_commands,
-                                           char ***array_of_argv,
-                                           int *array_of_maxprocs,
-                                           MPI_Info *array_of_info,
-                                           char *port_name);
-OMPI_DECLSPEC int ompi_dpm_base_null_dyn_init(void);
-OMPI_DECLSPEC int ompi_dpm_base_null_dyn_finalize (void);
-OMPI_DECLSPEC void ompi_dpm_base_null_mark_dyncomm (ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag);
-OMPI_DECLSPEC char* ompi_dpm_base_null_parse_port (char *port_name, orte_rml_tag_t *tag);
-OMPI_DECLSPEC int ompi_dpm_base_null_close_port(char *port_name);
+int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
+                                       char *port_string, bool send_first,
+                                       ompi_communicator_t **newcomm);
+void ompi_dpm_base_null_disconnect(ompi_communicator_t *comm);
+int ompi_dpm_base_null_spawn(int count, char **array_of_commands,
+                             char ***array_of_argv,
+                             int *array_of_maxprocs,
+                             MPI_Info *array_of_info,
+                             char *port_name);
+int ompi_dpm_base_null_dyn_init(void);
+int ompi_dpm_base_null_dyn_finalize (void);
+void ompi_dpm_base_null_mark_dyncomm (ompi_communicator_t *comm);
+int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag);
+char* ompi_dpm_base_null_parse_port (char *port_name, orte_rml_tag_t *tag);
+int ompi_dpm_base_null_close_port(char *port_name);
 
 /* useful globals */
 OMPI_DECLSPEC extern int  ompi_dpm_base_output;
