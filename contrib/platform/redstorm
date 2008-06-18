@@ -1,4 +1,4 @@
-enable_io_romio=no
+enable_io_romio=yes
 enable_static=yes
 enable_shared=no
 with_threads=no
@@ -6,7 +6,8 @@ enable_pretty_print_stacktrace=no
 enable_dlopen=no
 with_portals_config=redstorm
 with_memory_manager=none
-enable_mca_no_build=carto-file,maffinity,paffinity,timer,btl-sm,btl-self,coll-hierarch,coll-sm,common-sm,mpool-sm,pml-dr,libnbc,vt
+enable_mca_no_build=carto-file,maffinity,paffinity,timer,btl-sm,btl-self,coll-hierarch,coll-sm,common-sm,mpool-sm,pml-dr
+enable_contrib_no_build=libnbc,vt
 with_rte_support=no
 enable_heterogeneous=no
 enable_pty_support=no
@@ -14,6 +15,7 @@ enable_mem_debug=no
 enable_mem_profile=no
 enable_debug_symbols=no
 enable_binaries=no
+enable_script_wrapper_compilers=yes
 
 ompi_cv_f77_sizeof_LOGICAL=${ompi_cv_f77_sizeof_LOGICAL=4}
 ompi_cv_f77_alignment_LOGICAL=${ompi_cv_f77_alignment_LOGICAL=4}
