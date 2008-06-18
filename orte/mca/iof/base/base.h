@@ -41,9 +41,14 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
+
 #include "orte/mca/iof/iof.h"
 
 BEGIN_C_DECLS
+
+ORTE_DECLSPEC int orte_iof_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 
 struct orte_iof_base_t {
    int                  iof_output;
@@ -61,12 +66,13 @@ typedef struct orte_iof_base_t orte_iof_base_t;
 
 
 
-ORTE_DECLSPEC int orte_iof_base_open(void);
 ORTE_DECLSPEC int orte_iof_base_close(void);
 ORTE_DECLSPEC int orte_iof_base_select(void);
 ORTE_DECLSPEC int orte_iof_base_flush(void);
 
 ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

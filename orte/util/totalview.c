@@ -74,13 +74,13 @@
 #define MPIR_DEBUG_SPAWNED  1
 #define MPIR_DEBUG_ABORTING 2
 
+
 struct MPIR_PROCDESC *MPIR_proctable = NULL;
 int MPIR_proctable_size = 0;
 int MPIR_being_debugged = 0;
 int MPIR_force_to_main = 0;
 volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
-volatile int MPIR_debug_gate = 0;
 volatile int MPIR_acquired_pre_main = 0;
 
 /* --- end MPICH/TotalView interface definitions */
@@ -93,7 +93,6 @@ static void dump(void)
     int i;
 
     DUMP_INT(MPIR_being_debugged);
-    DUMP_INT(MPIR_debug_gate);
     DUMP_INT(MPIR_debug_state);
     DUMP_INT(MPIR_acquired_pre_main);
     DUMP_INT(MPIR_i_am_starter);
@@ -377,7 +376,7 @@ void orte_totalview_init_before_spawn(void)
             opal_output(0, "Info: Spawned by a debugger");
         }
 
-        if (mca_base_param_reg_int_name("orte", "mpi_wait_for_totalview",
+        if (mca_base_param_reg_int_name("ompi", "mpi_wait_for_totalview",
                                         "Whether the MPI application should wait for a debugger or not",
                                         false, false, (int)false, &value) < 0) {
             opal_output(0, "Error: mca_base_param_reg_int_name\n");
@@ -385,7 +384,7 @@ void orte_totalview_init_before_spawn(void)
 
         /* push mca parameter into the environment (not done automatically?) */
 
-        s = mca_base_param_environ_variable("orte", "mpi_wait_for_totalview", NULL);
+        s = mca_base_param_environ_variable("ompi", "mpi_wait_for_totalview", NULL);
         if (ORTE_SUCCESS != opal_setenv(s, "1", true, &environ)) {
             opal_output(0, "Error: Can't setenv %s\n", s);
         }

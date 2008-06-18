@@ -41,7 +41,7 @@
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/util/proc_info.h"
-
+#include "orte/runtime/runtime.h"
 
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
@@ -50,6 +50,25 @@
 #define ORTE_ERROR_DEFAULT_EXIT_CODE    1
 
 BEGIN_C_DECLS
+
+ORTE_DECLSPEC extern bool orte_help_want_aggregate;
+
+#define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
+
+/* define a special name that belongs to orterun */
+#define ORTE_PROC_MY_HNP        (&orte_process_info.my_hnp)
+
+/* define the name of my daemon */
+#define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
+
+/*
+ * Shortcut for some commonly used names
+ */
+#define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
+ORTE_DECLSPEC extern orte_process_name_t orte_name_wildcard;  /** instantiated in orte/runtime/orte_init.c */
+
+#define ORTE_NAME_INVALID       (&orte_name_invalid)
+ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
 
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
@@ -287,6 +306,8 @@ typedef struct {
     uint8_t node_rank;
 } orte_pmap_t;
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /**
 * Get a job data object
  * We cannot just reference a job data object with its jobid as
@@ -297,36 +318,15 @@ typedef struct {
  */
 ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
 
-/*
- * Shortcut for some commonly used names
- */
-#define ORTE_NAME_WILDCARD      (&orte_globals_name_wildcard)
-ORTE_DECLSPEC extern orte_process_name_t orte_globals_name_wildcard;  /** instantiated in orte/runtime/orte_globals.c */
-
-#define ORTE_NAME_INVALID       (&orte_globals_name_invalid)
-ORTE_DECLSPEC extern orte_process_name_t orte_globals_name_invalid;  /** instantiated in orte/runtime/orte_globals.c */
-
-#define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
-
-/* define a special name that belongs to orterun */
-#define ORTE_PROC_MY_HNP        (&orte_process_info.my_hnp)
-
-/* define the name of my daemon */
-#define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
-
 /* global variables used by RTE - instanced in orte_globals.c */
-ORTE_DECLSPEC extern bool orte_debug_flag, orte_reuse_daemons, orte_timing;
+ORTE_DECLSPEC extern bool orte_reuse_daemons, orte_timing;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
-ORTE_DECLSPEC extern int orte_debug_output;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
-ORTE_DECLSPEC extern bool orte_help_want_aggregate;
-ORTE_DECLSPEC extern bool orte_help_show_recursions;
 ORTE_DECLSPEC extern bool orte_xml_output;
-ORTE_DECLSPEC extern bool orte_params_set;
 ORTE_DECLSPEC extern int orte_debug_verbosity;
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
@@ -354,11 +354,7 @@ ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 
-/**
- * Whether ORTE is initialized or we are in orte_finalize
- */
-ORTE_DECLSPEC extern bool orte_initialized;
-ORTE_DECLSPEC extern bool orte_finalizing;
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

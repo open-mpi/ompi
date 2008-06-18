@@ -42,6 +42,10 @@
 
 BEGIN_C_DECLS
 
+ORTE_DECLSPEC int mca_oob_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /*
  * global flag for use in timing tests
  */
@@ -83,7 +87,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
 /*
  * Global functions for MCA overall collective open and close
  */
-ORTE_DECLSPEC int mca_oob_base_open(void);
 ORTE_DECLSPEC int mca_oob_base_init(void);
 ORTE_DECLSPEC int mca_oob_base_module_init(void);
 ORTE_DECLSPEC int mca_oob_base_close(void);
@@ -97,6 +100,8 @@ extern char* mca_oob_base_include;
 extern char* mca_oob_base_exclude;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_components;
 ORTE_DECLSPEC extern opal_list_t mca_oob_base_modules;
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

@@ -95,6 +95,12 @@ static int rte_init(char flags)
     orte_node_t *node;
     orte_proc_t *proc;
     
+    /* run the prolog */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
+        error = "orte_ess_base_std_prolog";
+        goto error;
+    }
+    
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
      * respective environment - hence, we have to open the PLM
@@ -229,8 +235,7 @@ static int rte_init(char flags)
         goto error;
     }
 
-#if ORTE_DISABLE_FULL_SUPPORT
-#else
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* setup the orte_show_help system to recv remote output */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                                  ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);

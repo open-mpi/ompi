@@ -92,6 +92,12 @@ static int rte_init(char flags)
 {
     int rc;
 
+    /* run the prolog */
+    if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /*
      * If we are the selected module, then we must be a singleton
      * as it means that no other method for discovering a name

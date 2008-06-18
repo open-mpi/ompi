@@ -37,15 +37,6 @@
  */
 int orte_ras_base_select(void)
 {
-#ifdef ORTE_WANT_NO_RAS_SUPPORT
-    /* some systems require no allocation support - they handle
-    * the allocation internally themselves. In those cases, memory
-    * footprint is often a consideration. Hence, we provide a means
-    * for someone to transparently configure out all RAS support.
-    */
-    return ORTE_SUCCESS;
-    
-#else
     /* For all other systems, provide the following support */
 
     orte_ras_base_component_t *best_component = NULL;
@@ -68,5 +59,4 @@ int orte_ras_base_select(void)
     orte_ras_base.active_module = best_module;
 
     return ORTE_SUCCESS;
-#endif
 }

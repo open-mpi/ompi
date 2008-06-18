@@ -22,5 +22,6 @@ headers += \
 libmca_pubsub_la_SOURCES += \
         base/pubsub_base_open.c \
         base/pubsub_base_close.c \
-        base/pubsub_base_select.c
+        base/pubsub_base_select.c \
+        base/pubsub_base_null_fns.c
 

@@ -53,6 +53,7 @@
  * Open MPI debug library.
  */
 #include "opal/class/opal_list.h"
+
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -63,8 +64,6 @@
 #include "ompi/group/group.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/include/mpi.h"
-
-#include "orte/util/totalview.h"
 
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
@@ -105,6 +104,8 @@ OMPI_DECLSPEC ompi_communicator_t* ompi_communicator_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_inclusion = NULL;
+
+OMPI_DECLSPEC volatile int MPIR_debug_gate=0;
 
 /* Check for a file in few dirrect ways for portability */
 static void check(char *dir, char *file, char **locations) 
@@ -147,13 +148,13 @@ void ompi_wait_for_debugger(void)
     char *a, *b, **dirs;
 
     /* Do we need to wait for a TotalView-like debugger? */
-    mca_base_param_reg_int_name("orte",
+    mca_base_param_reg_int_name("ompi",
                                 "mpi_wait_for_debugger",
                                 "Whether the MPI application "
                                 "should wait for a debugger or not",
                                 false, false, (int) false,
                                 &wait_for_debugger);
-    mca_base_param_reg_int_name("orte",
+    mca_base_param_reg_int_name("ompi",
                                 "mpi_wait_for_totalview",
                                 "Deprecated synonym for mpi_wait_for_debugger",
                                 false, false, (int) false,
@@ -178,11 +179,18 @@ void ompi_wait_for_debugger(void)
 
     /* If we're waiting for the debugger, then, well, wait for it.  :-) */
     if (wait_for_debugger) {
+        /* RHC: the following is a temporary hack until we figure
+         * out how to resolve the problem of where to
+         * instance the MPIR* variables so that multiple
+         * launchers can access them
+         */
         while (MPIR_debug_gate == 0) {
 #if defined(__WINDOWS__)
             Sleep(100);     /* milliseconds */
-#else
+#elif defined(HAVE_USLEEP)
             usleep(100000); /* microseconds */
+#else
+            sleep(1);       /* seconds */
 #endif
         }
     }

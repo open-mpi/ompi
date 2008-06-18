@@ -19,10 +19,15 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_environ.h"
 
@@ -31,6 +36,18 @@
 #include "orte/util/show_help.h"
 
 #include "orte/mca/snapc/base/static-components.h"
+
+#if ORTE_DISABLE_FULL_SUPPORT
+/* have to include a bogus function here so that
+ * the build system sees at least one function
+ * in the library
+ */
+int orte_snapc_base_open(void)
+{
+    return ORTE_SUCCESS;
+}
+
+#else
 
 /*
  * Globals
@@ -189,3 +206,5 @@ int orte_snapc_base_open(void)
     
     return ORTE_SUCCESS;
 }
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */

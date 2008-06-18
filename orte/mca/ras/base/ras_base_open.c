@@ -20,19 +20,16 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
-#include "opal/util/os_path.h"
-#include "opal/mca/installdirs/installdirs.h"
-#include "opal/threads/mutex.h"
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/ras/base/ras_private.h"
+
+#endif
+
 #include "orte/mca/ras/base/base.h"
 
 
@@ -49,6 +46,18 @@
 
 #include "orte/mca/ras/base/static-components.h"
 
+#if ORTE_DISABLE_FULL_SUPPORT
+/* have to include a bogus function here so that
+ * the build system sees at least one function
+ * in the library
+ */
+int orte_ras_base_open(void)
+{
+    return ORTE_SUCCESS;
+}
+
+#else
+
 /*
  * Global variables
  */
@@ -57,6 +66,7 @@ orte_ras_t orte_ras = {
 };
 
 orte_ras_base_t orte_ras_base;
+
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -98,3 +108,4 @@ int orte_ras_base_open(void)
     return ORTE_SUCCESS;
 }
 
+#endif /* ORTE_DISABLE_FULL_SUPPORT */

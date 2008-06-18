@@ -35,6 +35,7 @@
 #include "orte/util/show_help.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/runtime_internals.h"
 #include "orte/runtime/orte_globals.h"
 
 /* need the data type support functions here */
@@ -45,18 +46,13 @@
 
 /* globals used by RTE */
 bool orte_timing;
-bool orte_debug_flag = false;
 bool orte_debug_daemons_flag = false;
 bool orte_debug_daemons_file_flag = false;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
-bool orte_help_want_aggregate = true;
-bool orte_help_show_recursions;
 bool orte_xml_output;
-bool orte_params_set = false;
-int orte_debug_verbosity;
 int orted_debug_failure;
 int orted_debug_failure_delay;
 
@@ -79,18 +75,9 @@ char *orte_default_hostfile;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
-orte_process_name_t orte_globals_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
-orte_process_name_t orte_globals_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
-
 /* global arrays for data storage */
 opal_pointer_array_t *orte_job_data;
 opal_pointer_array_t *orte_node_pool;
-
-/*
- * Whether we have completed orte_init or we are in orte_finalize
- */
-bool orte_initialized = false;
-bool orte_finalizing = false;
 
 int orte_dt_init(void)
 {

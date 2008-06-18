@@ -18,6 +18,7 @@
 #
 
 if OMPI_INSTALL_BINARIES
+if !ORTE_DISABLE_FULL_SUPPORT
 
 dist_man_MANS =\
         mpirun.1 \
@@ -37,6 +38,7 @@ uninstall-local:
 		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT)
 
+endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
 mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1

@@ -23,7 +23,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/show_help.h"
@@ -38,6 +37,17 @@
 
 #include "orte/mca/oob/base/static-components.h"
 
+#if ORTE_DISABLE_FULL_SUPPORT
+/* have to include a bogus function here so that
+ * the build system sees at least one function
+ * in the library
+ */
+int mca_oob_base_open(void)
+{
+    return ORTE_SUCCESS;
+}
+
+#else
 
 /*
  * Global variables
@@ -83,4 +93,6 @@ int mca_oob_base_open(void)
     
     return ORTE_SUCCESS;
 }
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 

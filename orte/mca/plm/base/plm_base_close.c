@@ -23,13 +23,12 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
+#include "orte/mca/plm/base/plm_private.h"
 
 int orte_plm_base_finalize(void)
 {
@@ -68,4 +67,3 @@ int orte_plm_base_close(void)
     
     return ORTE_SUCCESS;
 }
-

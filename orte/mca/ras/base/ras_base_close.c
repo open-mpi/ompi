@@ -24,48 +24,22 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/proc_info.h"
-#include "orte/mca/errmgr/errmgr.h"
-
-#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"
 
+#include "orte/mca/ras/base/ras_private.h"
 
 int orte_ras_base_finalize(void)
 {
-#ifdef ORTE_WANT_NO_RAS_SUPPORT
-    /* some systems require no allocation support - they handle
-     * the allocation internally themselves. In those cases, memory
-     * footprint is often a consideration. Hence, we provide a means
-     * for someone to transparently configure out all RAS support.
-     */
-    return ORTE_SUCCESS;
-    
-#else
-    /* For all other systems, provide the following support */
-
     if (NULL != orte_ras_base.active_module) {
         orte_ras_base.active_module->finalize();
     }
     
     return ORTE_SUCCESS;
-#endif
 }
 
 
 int orte_ras_base_close(void)
 {
-#ifdef ORTE_WANT_NO_RAS_SUPPORT
-    /* some systems require no allocation support - they handle
-     * the allocation internally themselves. In those cases, memory
-     * footprint is often a consideration. Hence, we provide a means
-     * for someone to transparently configure out all RAS support.
-     */
-    return ORTE_SUCCESS;
-    
-#else
-    /* For all other systems, provide the following support */
-    
         /* Close all remaining available components (may be one if this is a
         Open RTE program, or [possibly] multiple if this is ompi_info) */
 
@@ -73,6 +47,4 @@ int orte_ras_base_close(void)
                                   &orte_ras_base.ras_opened, NULL);
   
     return ORTE_SUCCESS;
-#endif
 }
-

@@ -18,6 +18,7 @@
 #
 
 if OMPI_INSTALL_BINARIES
+if !ORTE_DISABLE_FULL_SUPPORT
 
 bin_PROGRAMS = ompi-server
 
@@ -25,7 +26,8 @@ dist_pkgdata_DATA = help-ompi-server.txt
 
 dist_man_MANS = ompi-server.1
 
-endif
+endif # !ORTE_DISABLE_FULL_SUPPORT
+endif # OMPI_INSTALL_BINARIES
 
 ompi_server_SOURCES = ompi-server.c 
 ompi_server_LDADD = $(top_builddir)/ompi/libmpi.la

@@ -20,15 +20,19 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
+
+#endif
+
 #include "orte/mca/rmaps/base/base.h"
 
 
@@ -40,6 +44,17 @@
 
 #include "orte/mca/rmaps/base/static-components.h"
 
+#if ORTE_DISABLE_FULL_SUPPORT
+/* have to include a bogus function here so that
+ * the build system sees at least one function
+ * in the library
+ */
+int orte_rmaps_base_open(void)
+{
+    return ORTE_SUCCESS;
+}
+
+#else
 
 /*
  * Global variables
@@ -160,3 +175,5 @@ int orte_rmaps_base_open(void)
 
     return ORTE_SUCCESS;
 }
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */

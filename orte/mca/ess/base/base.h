@@ -58,10 +58,16 @@ ORTE_DECLSPEC int orte_ess_base_close(void);
  */
 ORTE_DECLSPEC extern int orte_ess_base_output;
 
+ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /*
  * Internal helper functions used by components
  */
 ORTE_DECLSPEC int orte_ess_env_get(void);
+
+ORTE_DECLSPEC int orte_ess_base_std_prolog(void);
 
 ORTE_DECLSPEC int orte_ess_base_app_setup(void);
 ORTE_DECLSPEC int orte_ess_base_app_finalize(void);
@@ -84,7 +90,7 @@ ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
                                    orte_std_cntr_t num_local_procs,
                                    char ***env);
 
-ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

@@ -24,11 +24,17 @@ headers += \
 libmca_ess_la_SOURCES += \
         base/ess_base_close.c \
         base/ess_base_open.c \
-	base/ess_base_select.c \
+	base/ess_base_select.c
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
+libmca_ess_la_SOURCES += \
 	base/ess_base_get.c \
 	base/ess_base_put.c \
 	base/ess_base_std_tool.c \
 	base/ess_base_std_app.c \
 	base/ess_base_std_orted.c \
-	base/ess_base_build_nidmap.c
+	base/ess_base_build_nidmap.c \
+        base/ess_base_std_prolog.c
+endif
 

@@ -36,6 +36,7 @@
 
 #include "orte/util/show_help.h"
 
+bool orte_help_want_aggregate;
 
 /************************************************************************/
 

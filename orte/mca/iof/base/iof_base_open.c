@@ -25,16 +25,18 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/iof/base/iof_base_header.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+#endif
 
 /*
  * The following file was created by configure.  It contains extern
@@ -44,6 +46,17 @@
 
 #include "orte/mca/iof/base/static-components.h"
 
+#if ORTE_DISABLE_FULL_SUPPORT
+/* have to include a bogus function here so that
+ * the build system sees at least one function
+ * in the library
+ */
+int orte_iof_base_open(void)
+{
+    return ORTE_SUCCESS;
+}
+
+#else
 
 /*
  * Global variables
@@ -108,4 +121,4 @@ int orte_iof_base_open(void)
     /* All done */
     return ORTE_SUCCESS;
 }
-
+#endif

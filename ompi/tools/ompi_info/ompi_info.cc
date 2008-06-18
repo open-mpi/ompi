@@ -193,7 +193,6 @@ int main(int argc, char *argv[])
 #endif
   ompi_info::mca_types.push_back("dpm");
   ompi_info::mca_types.push_back("pubsub");
-
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");
   ompi_info::mca_types.push_back("io");
@@ -210,12 +209,10 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("crcp");
 #endif
 
-  ompi_info::mca_types.push_back("errmgr");
-  ompi_info::mca_types.push_back("grpcomm");
+#if !ORTE_DISABLE_FULL_SUPPORT
   ompi_info::mca_types.push_back("iof");
   ompi_info::mca_types.push_back("oob");
   ompi_info::mca_types.push_back("odls");
-  ompi_info::mca_types.push_back("ess");
   ompi_info::mca_types.push_back("ras");
   ompi_info::mca_types.push_back("rmaps");
   ompi_info::mca_types.push_back("rml");
@@ -225,7 +222,12 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("snapc");
 #endif
   ompi_info::mca_types.push_back("filem");
-
+#endif
+    /* these are always included */
+    ompi_info::mca_types.push_back("errmgr");
+    ompi_info::mca_types.push_back("ess");
+    ompi_info::mca_types.push_back("grpcomm");
+    
   // Execute the desired action(s)
 
   if (opal_cmd_line_is_taken(cmd_line, "pretty")) {

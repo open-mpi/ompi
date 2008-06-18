@@ -2,16 +2,19 @@
 # RTE, to closely match the real machine's setup.  You need a number of env
 # variables set for each process before you even *think* of starting to use
 # the results of this configure script.
-enable_f77=no
-enable_io_romio=no
+enable_static=yes
+enable_shared=no
 with_threads=posix
 enable_pretty_print_stacktrace=yes
 enable_dlopen=no
 with_portals_config=utcp
+with_grpcomm_cnos=utcp
 with_memory_manager=no
-enable_heterogeneous=no
-enable_mca_no_build=maffinity,paffinity,timer,errmgr,iof,odls,oob,plm,ras,rmaps,rml,routed,btl-sm,mpool-sm,btl-self,coll-hierarch,coll-sm,pml-dr,btl-tcp,common-sm
+enable_mca_no_build=carto-file,maffinity,paffinity,timer,btl-sm,mpool-sm,btl-self,coll-hierarch,coll-sm,pml-dr,btl-tcp,common-sm,mtl-portals
 with_rte_support=no
+enable_heterogeneous=no
+enable_mem_debug=no
+enable_mem_profile=no
 with_openib=no
 with_gm=no
 with_mx=no

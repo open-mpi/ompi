@@ -41,11 +41,18 @@
 #include "orte/util/proc_info.h"
 
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_locks.h"
 
-#include "orte/runtime/orte_cr.h"
+/*
+ * Whether we have completed orte_init or we are in orte_finalize
+ */
+bool orte_initialized = false;
+bool orte_finalizing = false;
+bool orte_debug_flag = false;
+int orte_debug_verbosity;
+
+orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
+orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
+
 
 #if OMPI_CC_USE_PRAGMA_IDENT
 #pragma ident ORTE_IDENT_STRING
@@ -94,41 +101,9 @@ int orte_init(char flags)
     /* register handler for errnum -> string conversion */
     opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
 
-    /* setup the locks */
-    if (ORTE_SUCCESS != (ret = orte_locks_init())) {
-        error = "orte_locks_init";
-        goto error;
-    }
-    
-    /* Initialize the ORTE data type support */
-    if (ORTE_SUCCESS != (ret = orte_dt_init())) {
-        error = "orte_dt_init";
-        goto error;
-    }
-    
     /* Ensure the rest of the process info structure is initialized */
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
         error = "orte_proc_info";
-        goto error;
-    }
-
-    /* if I'm the HNP, make sure that the daemon flag is NOT set so that
-     * components unique to non-HNP orteds can be selected and init
-     * my basic storage elements
-     */
-    if (orte_process_info.hnp) {
-        if (ORTE_SUCCESS != (ret = orte_hnp_globals_init())) {
-            error = "orte_hnp_globals_init";
-            goto error;
-        }
-    }
-    
-    /*
-     * Internal startup
-     */
-    if (ORTE_SUCCESS != (ret = orte_wait_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_wait_init";
         goto error;
     }
 

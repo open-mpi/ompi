@@ -21,7 +21,8 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "orte/util/show_help.h"
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -30,9 +31,11 @@
 #include "orte/util/show_help.h"
 
 #include "orte/mca/plm/plm.h"
-#include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
 
+#endif
+
+#include "orte/mca/plm/base/base.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -41,6 +44,19 @@
  */
 
 #include "orte/mca/plm/base/static-components.h"
+
+#if ORTE_DISABLE_FULL_SUPPORT
+/* have to include a bogus function here so that
+ * the build system sees at least one function
+ * in the library
+ */
+int orte_plm_base_open(void)
+{
+    return ORTE_SUCCESS;
+}
+
+#else
+
 
 /*
  * Global public variables
@@ -100,3 +116,5 @@ int orte_plm_base_open(void)
 
     return ORTE_SUCCESS;
 }
+
+#endif

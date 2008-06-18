@@ -17,17 +17,20 @@
 #
 
 headers += \
-        base/base.h \
+        base/base.h
+
+libmca_ras_la_SOURCES += \
+        base/ras_base_open.c
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
+headers += \
         base/ras_private.h
 
 libmca_ras_la_SOURCES += \
         base/ras_base_close.c \
         base/ras_base_select.c \
-        base/ras_base_open.c
- 
-if ORTE_DISABLE_FULL_SUPPORT
-else
-libmca_ras_la_SOURCES += \
         base/ras_base_allocate.c \
         base/ras_base_node.c
+ 
 endif

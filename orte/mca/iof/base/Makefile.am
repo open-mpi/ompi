@@ -17,7 +17,14 @@
 #
 
 headers += \
-        base/base.h \
+        base/base.h
+
+libmca_iof_la_SOURCES += \
+        base/iof_base_open.c
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
+headers += \
         base/iof_base_header.h \
         base/iof_base_endpoint.h \
         base/iof_base_fragment.h \
@@ -25,9 +32,10 @@ headers += \
 
 libmca_iof_la_SOURCES += \
         base/iof_base_close.c \
-        base/iof_base_open.c \
+	base/iof_base_select.c \
         base/iof_base_flush.c \
         base/iof_base_endpoint.c \
         base/iof_base_fragment.c \
-	base/iof_base_select.c \
 	base/iof_base_setup.c
+
+endif

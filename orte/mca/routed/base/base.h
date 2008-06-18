@@ -18,11 +18,14 @@
 
 BEGIN_C_DECLS
 
+ORTE_DECLSPEC int orte_routed_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /*
  * Global functions for the ROUTED
  */
 
-ORTE_DECLSPEC int orte_routed_base_open(void);
 ORTE_DECLSPEC int orte_routed_base_select(void);
 ORTE_DECLSPEC int orte_routed_base_close(void);
 
@@ -38,6 +41,7 @@ ORTE_DECLSPEC extern void orte_routed_base_recv(int status, orte_process_name_t*
                                                 opal_buffer_t* buffer, orte_rml_tag_t tag,
                                                 void* cbdata);
 
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

@@ -20,8 +20,11 @@
 
 #include "orte_config.h"
 
-#include "orte/mca/rml/rml.h"
 #include "opal/dss/dss.h"
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+#include "orte/mca/rml/rml.h"
+#endif
 
 #include "orte/mca/filem/filem.h"
 
@@ -31,6 +34,17 @@
 
 BEGIN_C_DECLS
 
+/**
+ * Initialize the FILEM MCA framework
+ *
+ * @retval ORTE_SUCCESS Upon success
+ * @retval ORTE_ERROR   Upon failures
+ * 
+ * This function is invoked during orte_init();
+ */
+ORTE_DECLSPEC int orte_filem_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * cmds for base receive
  */
@@ -51,15 +65,6 @@ typedef uint8_t orte_filem_cmd_flag_t;
     ORTE_DECLSPEC void orte_filem_base_construct(orte_filem_base_request_t *obj);
     ORTE_DECLSPEC void orte_filem_base_destruct( orte_filem_base_request_t *obj);
 
-    /**
-     * Initialize the FILEM MCA framework
-     *
-     * @retval ORTE_SUCCESS Upon success
-     * @retval ORTE_ERROR   Upon failures
-     * 
-     * This function is invoked during orte_init();
-     */
-    ORTE_DECLSPEC int orte_filem_base_open(void);
     
     /**
      * Select an available component.
@@ -131,6 +136,8 @@ typedef uint8_t orte_filem_cmd_flag_t;
      * Setup request structure
      */
     ORTE_DECLSPEC int orte_filem_base_prepare_request(orte_filem_base_request_t *request, int move_type);
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 
