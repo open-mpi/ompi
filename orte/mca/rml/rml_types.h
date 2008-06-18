@@ -103,6 +103,8 @@ BEGIN_C_DECLS
 /* show help */
 #define ORTE_RML_TAG_SHOW_HELP              31
 
+/* debugger release */
+#define ORTE_RML_TAG_DEBUGGER_RELEASE       32
 
 #define ORTE_RML_TAG_MAX                   100
 

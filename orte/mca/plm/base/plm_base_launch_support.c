@@ -50,7 +50,6 @@
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/util/name_fns.h"
-#include "orte/util/totalview.h"
 #include "orte/util/nidmap.h"
 
 #include "orte/mca/plm/base/plm_private.h"
@@ -214,9 +213,6 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         return rc;
     }
     
-    /* init any debuggers */
-    orte_totalview_init_after_spawn(job);
-
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

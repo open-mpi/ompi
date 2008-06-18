@@ -47,8 +47,7 @@ headers += \
         util/hostfile/hostfile_lex.h \
         util/dash_host/dash_host.h \
         util/comm/comm.h \
-        util/nidmap.h \
-        util/totalview.h
+        util/nidmap.h
 
 libopen_rte_la_SOURCES += \
 	util/context_fns.c \
@@ -58,6 +57,5 @@ libopen_rte_la_SOURCES += \
         util/hostfile/hostfile.c \
         util/dash_host/dash_host.c \
         util/comm/comm.c \
-        util/nidmap.c \
-        util/totalview.c
+        util/nidmap.c
 endif

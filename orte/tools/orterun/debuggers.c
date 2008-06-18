@@ -53,37 +53,34 @@
 #endif  /* HAVE_UNISTD_H */
 #include <ctype.h>
 
-#include "opal/util/opal_environ.h"
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
-#include "opal/class/opal_list.h"
-#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/plm/plm_types.h"
-#include "orte/mca/rmaps/rmaps.h"
-#include "orte/runtime/runtime.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/show_help.h"
 
-#include "orte/util/totalview.h"
+#include "debuggers.h"
 
-/* +++ begin MPICH/TotalView interface definitions */
+/* +++ begin MPICH/TotalView std debugger interface definitions */
 
-#define MPIR_DEBUG_SPAWNED  1
-#define MPIR_DEBUG_ABORTING 2
-
+struct MPIR_PROCDESC {
+    char *host_name;        /* something that can be passed to inet_addr */
+    char *executable_name;  /* name of binary */
+    int pid;                /* process pid */
+};
 
 struct MPIR_PROCDESC *MPIR_proctable = NULL;
 int MPIR_proctable_size = 0;
-int MPIR_being_debugged = 0;
-int MPIR_force_to_main = 0;
+bool MPIR_being_debugged = false;
 volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
-volatile int MPIR_acquired_pre_main = 0;
+volatile int MPIR_partial_attach_ok = 1;
 
-/* --- end MPICH/TotalView interface definitions */
+/* --- end MPICH/TotalView std debugger interface definitions */
 
 
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
@@ -94,7 +91,7 @@ static void dump(void)
 
     DUMP_INT(MPIR_being_debugged);
     DUMP_INT(MPIR_debug_state);
-    DUMP_INT(MPIR_acquired_pre_main);
+    DUMP_INT(MPIR_partial_attach_ok);
     DUMP_INT(MPIR_i_am_starter);
     DUMP_INT(MPIR_proctable_size);
     fprintf(stderr, "  MPIR_proctable:\n");
@@ -365,31 +362,29 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  * spawn we need to check if we are being run under a TotalView-like
  * debugger; if so then inform applications via an MCA parameter.
  */
-void orte_totalview_init_before_spawn(void)
+void orte_debugger_init_before_spawn(orte_job_t *jdata)
 {
-    if (MPIR_DEBUG_SPAWNED == MPIR_being_debugged) {
+    char *s;
+    orte_app_context_t **apps;
+    orte_std_cntr_t i;
 
-        int value;
-        char *s;
-
-        if (orte_debug_flag) {
-            opal_output(0, "Info: Spawned by a debugger");
-        }
-
-        if (mca_base_param_reg_int_name("ompi", "mpi_wait_for_totalview",
-                                        "Whether the MPI application should wait for a debugger or not",
-                                        false, false, (int)false, &value) < 0) {
-            opal_output(0, "Error: mca_base_param_reg_int_name\n");
-        }
-
-        /* push mca parameter into the environment (not done automatically?) */
-
-        s = mca_base_param_environ_variable("ompi", "mpi_wait_for_totalview", NULL);
-        if (ORTE_SUCCESS != opal_setenv(s, "1", true, &environ)) {
-            opal_output(0, "Error: Can't setenv %s\n", s);
-        }
-        free(s);
+    if (!MPIR_being_debugged) {
+        /* not being debugged */
+        return;
     }
+
+    if (orte_debug_flag) {
+        opal_output(0, "Info: Spawned by a debugger");
+    }
+    
+    apps = (orte_app_context_t**)jdata->apps->addr;
+    /* tell the procs they are being debugged */
+    s = mca_base_param_environ_variable("ompi", "mpi_being_debugged", NULL);
+    
+    for (i=0; i < jdata->num_apps; i++) {
+        opal_setenv(s, "1", true, &apps[i]->env);
+    }
+    free(s);
 }
 
 
@@ -401,80 +396,65 @@ void orte_totalview_init_before_spawn(void)
  * 
  * @param jobid  The jobid returned by spawn.
  */
-void orte_totalview_init_after_spawn(orte_jobid_t jobid)
+void orte_debugger_init_after_spawn(orte_job_t *jdata)
 {
-    orte_job_t *jdata;
     orte_proc_t **procs;
     orte_app_context_t *appctx, **apps;
     orte_vpid_t i, j;
-
+    opal_buffer_t buf;
+    orte_process_name_t rank0;
+    int rc;
+    
+    if (!MPIR_being_debugged) {
+        /* not being debugged */
+        return;
+    }
+    
     if (MPIR_proctable) {
         /* already initialized */
         return;
     }
 
-    if (0) { /* debugging daemons <<-- needs work */
-
-        if (orte_debug_flag) {
-            opal_output(0, "Info: Setting up debugger process table for daemons\n");
-        }
-
-    } else {
-
-        /*
-         * Debugging applications or not being debugged.
-         *
-         * Either way, fill in the proc table for the application
-         * processes in case someone attaches later.
-         */
-
-        if (orte_debug_flag) {
-            opal_output(0, "Info: Setting up debugger process table for applications\n");
-        }
-
-        MPIR_debug_state = 1;
-
-        /* Get the job data for this job */
-        if (NULL == (jdata = orte_get_job_data_object(jobid))) {
-            opal_output(0, "Error: Can't get job data\n");
-            return;
+    /* fill in the proc table for the application processes */
+    
+    if (orte_debug_flag) {
+        opal_output(0, "Info: Setting up debugger process table for applications\n");
+    }
+    
+    MPIR_debug_state = 1;
+    
+    /* set the total number of processes in the job */
+    MPIR_proctable_size = jdata->num_procs;
+    
+    /* allocate MPIR_proctable */
+    MPIR_proctable = (struct MPIR_PROCDESC *) malloc(sizeof(struct MPIR_PROCDESC) *
+                                                     MPIR_proctable_size);
+    if (MPIR_proctable == NULL) {
+        opal_output(0, "Error: Out of memory\n");
+        return;
+    }
+    
+    /* initialize MPIR_proctable */
+    i=0;
+    procs = (orte_proc_t**)jdata->procs->addr;
+    apps = (orte_app_context_t**)jdata->apps->addr;
+    for (j=0; j < jdata->num_procs; j++) {
+        if (NULL == procs[j]) {
+            opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
         }
         
-        /* set the total number of processes in the job */
-
-        MPIR_proctable_size = jdata->num_procs;
-
-        /* allocate MPIR_proctable */
-
-        MPIR_proctable = (struct MPIR_PROCDESC *) malloc(sizeof(struct MPIR_PROCDESC) *
-                                                         MPIR_proctable_size);
-        if (MPIR_proctable == NULL) {
-            opal_output(0, "Error: Out of memory\n");
-        }
-
-        /* initialize MPIR_proctable */
-
-        i=0;
-        procs = (orte_proc_t**)jdata->procs->addr;
-        apps = (orte_app_context_t**)jdata->apps->addr;
-        for (j=0; j < jdata->num_procs; j++) {
-            if (NULL == procs[j]) {
-                opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
-            }
-            
-            appctx = apps[procs[j]->app_idx];
-            
-            MPIR_proctable[i].host_name = strdup(procs[j]->node->name);
-            if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
-                MPIR_proctable[i].executable_name = 
-                opal_os_path( false, appctx->app, NULL ); 
-            } else {
-                MPIR_proctable[i].executable_name =
-                opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
-            } 
-            MPIR_proctable[i].pid = procs[j]->pid;
-            i++;
-        }
+        appctx = apps[procs[j]->app_idx];
+        
+        MPIR_proctable[i].host_name = strdup(procs[j]->node->name);
+        if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
+            MPIR_proctable[i].executable_name = 
+            opal_os_path( false, appctx->app, NULL ); 
+        } else {
+            MPIR_proctable[i].executable_name =
+            opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
+        } 
+        MPIR_proctable[i].pid = procs[j]->pid;
+        i++;
     }
 
     if (orte_debug_flag) {
@@ -482,6 +462,15 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
     }
 
     (void) MPIR_Breakpoint();
+    
+    /* send a message to rank=0 to release it */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t); /* don't need anything in this */
+    rank0.jobid = jdata->jobid;
+    rank0.vpid = 0;
+    if (0 > (rc = orte_rml.send_buffer(&rank0, &buf, ORTE_RML_TAG_DEBUGGER_RELEASE, 0))) {
+        opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+    }
+    OBJ_DESTRUCT(&buf);
 }
 
 
@@ -489,10 +478,11 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
  * Release resources associated with data structures for running under
  * a debugger using the MPICH/TotalView parallel debugger interface.
  */
-void orte_totalview_finalize(void)
+void orte_debugger_finalize(void)
 {
     if (MPIR_proctable) {
         free(MPIR_proctable);
+        MPIR_proctable = NULL;
     }
 }
 
