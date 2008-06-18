@@ -17,33 +17,23 @@
  * $HEADER$
  */
 
-#ifndef ORTE_TOTALVIEW_H
-#define ORTE_TOTALVIEW_H
+#ifndef ORTE_DEBUGGERS_H
+#define ORTE_DEBUGGERS_H
 
 #include "orte_config.h"
 
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
+void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
                        int argc, char *argv[], int num_procs) __opal_attribute_noreturn__;
-ORTE_DECLSPEC void orte_totalview_init_before_spawn(void);
-ORTE_DECLSPEC void orte_totalview_init_after_spawn(orte_jobid_t jobid);
-ORTE_DECLSPEC void orte_totalview_finalize(void);
+void orte_debugger_init_before_spawn(orte_job_t *jdata);
+void orte_debugger_init_after_spawn(orte_job_t *jdata);
+void orte_debugger_finalize(void);
 
-ORTE_DECLSPEC extern void *MPIR_Breakpoint(void);
-
-struct MPIR_PROCDESC {
-    char *host_name;        /* something that can be passed to inet_addr */
-    char *executable_name;  /* name of binary */
-    int pid;                /* process pid */
-};
-
-ORTE_DECLSPEC extern struct MPIR_PROCDESC *MPIR_proctable;
-ORTE_DECLSPEC extern int MPIR_proctable_size;
-ORTE_DECLSPEC extern int MPIR_being_debugged;
-ORTE_DECLSPEC extern volatile int MPIR_debug_state;
+extern void *MPIR_Breakpoint(void);
 
 END_C_DECLS
 
-#endif /* ORTE_TOTALVIEW_H */
+#endif /* ORTE_DEBUGGERS_H */

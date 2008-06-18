@@ -71,7 +71,6 @@
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/totalview.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
@@ -90,6 +89,7 @@
 /* ensure I can behave like a daemon */
 #include "orte/orted/orted.h"
 
+#include "debuggers.h"
 #include "orterun.h"
 
 /*
@@ -524,7 +524,9 @@ int orterun(int argc, char *argv[])
                     signal_forward_callback, &sigusr2_handler);
     opal_signal_add(&sigusr2_handler, NULL);
 #endif  /* __WINDOWS__ */
-    orte_totalview_init_before_spawn();
+    
+    /* setup for debugging, if we are doing so */
+    orte_debugger_init_before_spawn(jdata);
 
     /* setup an event we can wait for that will tell
      * us to terminate - both normal and abnormal
@@ -541,6 +543,9 @@ int orterun(int argc, char *argv[])
     
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
+    
+    /* complete debugger interface, if we are debugging */
+    orte_debugger_init_after_spawn(jdata);
     
     /* now wait until the termination event fires */
     opal_event_dispatch();
@@ -604,7 +609,7 @@ static void job_completed(int trigpipe, short event, void *arg)
     }
     
     /* if the debuggers were run, clean up */
-    orte_totalview_finalize();
+    orte_debugger_finalize();
     
     /* the job is complete - now setup an event that will
      * trigger when the orteds are gone and tell the orteds that it is

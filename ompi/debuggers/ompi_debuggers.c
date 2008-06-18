@@ -65,6 +65,9 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/include/mpi.h"
 
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rml/rml.h"
+
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
    method is preferred because it's more flexible */
@@ -107,6 +110,8 @@ OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate=0;
 
+/* we don't believe we need MPIR_being_debugged here */
+
 /* Check for a file in few dirrect ways for portability */
 static void check(char *dir, char *file, char **locations) 
 {
@@ -144,30 +149,33 @@ static void check(char *dir, char *file, char **locations)
  */
 void ompi_wait_for_debugger(void)
 {
-    int i, wait_for_debugger, wait_for_tv;
+    int i, debugger, rc;
     char *a, *b, **dirs;
+    opal_buffer_t buf;
 
-    /* Do we need to wait for a TotalView-like debugger? */
+    /* are we being debugged by a TotalView-like debugger? */
     mca_base_param_reg_int_name("ompi",
-                                "mpi_wait_for_debugger",
+                                "mpi_being_debugged",
                                 "Whether the MPI application "
-                                "should wait for a debugger or not",
+                                "is being debugged (default: false)",
                                 false, false, (int) false,
-                                &wait_for_debugger);
-    mca_base_param_reg_int_name("ompi",
-                                "mpi_wait_for_totalview",
-                                "Deprecated synonym for mpi_wait_for_debugger",
-                                false, false, (int) false,
-                                &wait_for_tv);
-    wait_for_debugger |= wait_for_tv;
-
+                                &debugger);
+    
+    if (!debugger) {
+        /* if not, just return */
+        return;
+    }
+    
+    /* if we are being debugged, then we need to find
+     * the correct plug-in
+     */
     a = strdup(opal_install_dirs.pkglibdir);
     mca_base_param_reg_string_name("ompi",
                                    "debugger_dll_path",
                                    "List of directories where MPI_INIT should search for debugger plugins",
                                    false, false, a, &b);
     free(a);
-
+    
     /* Search the directory for MPI debugger DLLs */
     if (NULL != b) {
         dirs = opal_argv_split(b, ':');
@@ -176,23 +184,53 @@ void ompi_wait_for_debugger(void)
             check(dirs[i], OMPI_MSGQ_DLL_PREFIX, mpimsgq_dll_locations);
         }
     }
-
-    /* If we're waiting for the debugger, then, well, wait for it.  :-) */
-    if (wait_for_debugger) {
-        /* RHC: the following is a temporary hack until we figure
-         * out how to resolve the problem of where to
-         * instance the MPIR* variables so that multiple
-         * launchers can access them
+    
+    /* only the rank=0 proc waits for the debugger - everyone else will just
+     * spin in the barrier in mpi_init until rank=0 joins them
+     */
+    if (0 != ORTE_PROC_MY_NAME->vpid) {
+        return;
+    }
+    
+    /* we have to support at least two ways of completing the
+     * debug attachment - either we will get a message from
+     * the HNP telling us it is okay to release, or the debugger
+     * itself will reach into us and set a gate.
+     *
+     * First, attempt to get a message-based release
+     */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, &buf, ORTE_RML_TAG_DEBUGGER_RELEASE, 0);
+    OBJ_DESTRUCT(&buf);  /* don't care about contents of message */
+    
+    if (rc > 0) {
+        /* message received - we can go! */
+        return;
+    } else if (ORTE_ERR_NOT_SUPPORTED == rc) {
+        /* if the recv isn't supported, then we fall back
+         * to the alternative method for waiting
          */
-        while (MPIR_debug_gate == 0) {
+        goto spin_wait;
+    } else {
+        /* if it failed for some other reason, then we are
+         * in trouble - for now, just report the problem
+         * and give up waiting
+         */
+        opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger - error %s!",
+                    (long)ORTE_PROC_MY_NAME->vpid, ORTE_ERROR_NAME(rc));
+        return;
+    }
+    
+spin_wait:
+    /* spin until debugger attaches and releases us */
+    while (MPIR_debug_gate == 0) {
 #if defined(__WINDOWS__)
-            Sleep(100);     /* milliseconds */
+        Sleep(100);     /* milliseconds */
 #elif defined(HAVE_USLEEP)
-            usleep(100000); /* microseconds */
+        usleep(100000); /* microseconds */
 #else
-            sleep(1);       /* seconds */
+        sleep(1);       /* seconds */
 #endif
-        }
     }
 }
 
