@@ -34,12 +34,18 @@
 
 #include "opal/util/cmd_line.h"
 
-#include "orte/runtime/orte_globals.h"
-
 BEGIN_C_DECLS
 
 /** version string of ompi */
 ORTE_DECLSPEC extern const char orte_version_string[];
+
+/**
+ * Whether ORTE is initialized or we are in orte_finalize
+ */
+ORTE_DECLSPEC extern bool orte_initialized;
+ORTE_DECLSPEC extern bool orte_finalizing;
+ORTE_DECLSPEC extern int orte_debug_output;
+ORTE_DECLSPEC extern bool orte_debug_flag;
 
 /* some convenience definitions for code clarity */
 #define ORTE_NON_TOOL           0x00
@@ -66,16 +72,6 @@ ORTE_DECLSPEC    int orte_init(char flags);
      * @retval ORTE_ERROR Upon failure.
      */
 ORTE_DECLSPEC    int orte_register_params(void);
-
-    /**
-     * Initialize global storage for HNPs
-     */
-ORTE_DECLSPEC   int orte_hnp_globals_init(void);
-
-    /**
-     * Init the ORTE datatype support
-     */
-ORTE_DECLSPEC   int orte_dt_init(void);
 
     /**
      * Finalize the Open run time environment. Any function calling \code

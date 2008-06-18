@@ -32,10 +32,11 @@
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
-#include "orte/mca/rml/rml.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/mca/dpm/dpm.h"
+
+#include "orte/mca/rml/rml.h"
 
 BEGIN_C_DECLS
 
@@ -785,12 +786,20 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         }
 
         if ( send_first ) {
-            rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
+            if (0 > (rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+                goto exit;
+            }
+            if (0 > (rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+                goto exit;
+            }
         }
         else {
-            rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
-            rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0);
+            if (0 > (rc = orte_rml.recv_buffer(remote_leader, rbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+                goto exit;
+            }
+            if (0 > (rc = orte_rml.send_buffer(remote_leader, sbuf, OMPI_RML_TAG_COMM_CID_INTRA, 0))) {
+                goto exit;
+            }
         }
 
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, outbuf, &size_count, OPAL_INT))) {

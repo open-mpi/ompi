@@ -64,6 +64,12 @@ static int rte_init(char flags)
     int ret;
     char *error = NULL;
     
+    /* run the prolog */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
+        error = "orte_ess_base_std_prolog";
+        goto error;
+    }
+    
     /* If we are a tool with no name, then responsibility for
      * defining the name falls to the PLM component for our
      * respective environment - hence, we have to open the PLM
@@ -103,8 +109,6 @@ static int rte_init(char flags)
         goto error;
     }
 
-    /* All done */
-    orte_initialized = true;
     return ORTE_SUCCESS;        
 
 error:

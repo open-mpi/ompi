@@ -33,6 +33,8 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
+static bool orte_params_set=false;
+
 int orte_register_params(void)
 {
     int value;
@@ -41,6 +43,17 @@ int orte_register_params(void)
         return ORTE_SUCCESS;
     }
     
+    mca_base_param_reg_int_name("orte", "base_help_aggregate",
+                                "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
+                                false, false,
+                                (int) true, &value);
+    orte_help_want_aggregate = OPAL_INT_TO_BOOL(value);
+    
+    mca_base_param_reg_string_name("orte", "tmpdir_base",
+                                   "Base of the session directory tree",
+                                   false, false, NULL,  &(orte_process_info.tmpdir_base));
+    
+#if !ORTE_DISABLE_FULL_SUPPORT
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch (default verbosity: 1)",
                                 false, false, (int)false, &value);
@@ -130,29 +143,12 @@ int orte_register_params(void)
                                 "Number of nodes after which contiguous nodename encoding will automatically be used [default: INT_MAX]",
                                 false, false, INT32_MAX, &orte_contiguous_nodes);
     
-    mca_base_param_reg_int_name("orte", "base_help_aggregate",
-                                "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
-                                false, false,
-                                (int) orte_help_want_aggregate, &value);
-    orte_help_want_aggregate = OPAL_INT_TO_BOOL(value);
-    
-    mca_base_param_reg_int_name("orte", "base_show_output_recursions",
-                                "If orte_base_show_output_recursion is true, recursive calls to opal_output will be reported to stderr",
-                                false, false,
-                                (int) false, &value);
-    orte_help_show_recursions = OPAL_INT_TO_BOOL(value);
-    
     mca_base_param_reg_int_name("orte", "xml_output",
                                 "Display all output in XML format (default: false)",
                                 false, false, (int) false, &value);
     orte_xml_output = OPAL_INT_TO_BOOL(value);
 
-    /* some params that are accessed elsewhere, but simply registered here so they will
-     * be visible to ompi_info
-     */
-    mca_base_param_reg_string_name("orte", "tmpdir_base",
-                                   "Base of the session directory tree",
-                                   false, false, NULL,  &(orte_process_info.tmpdir_base));
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     /* All done */
     orte_params_set = true;

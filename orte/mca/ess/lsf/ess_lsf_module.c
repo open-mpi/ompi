@@ -76,6 +76,12 @@ static int rte_init(char flags)
     int ret;
     char *error = NULL;
     
+    /* run the prolog */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
+        error = "orte_ess_base_std_prolog";
+        goto error;
+    }
+    
     /* Start by getting a unique name */
     lsf_set_name();
     

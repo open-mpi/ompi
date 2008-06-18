@@ -35,6 +35,13 @@
 BEGIN_C_DECLS
 
 /**
+ * Open the plm framework
+ */
+ORTE_DECLSPEC int orte_plm_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+
+/**
  * Struct to hold data for public access
  */
 typedef struct orte_plm_base_t {
@@ -56,10 +63,6 @@ ORTE_DECLSPEC extern orte_plm_base_t orte_plm_base;
  */
 
 /**
- * Open the plm framework
- */
-ORTE_DECLSPEC int orte_plm_base_open(void);
-/**
  * Select a plm module
  */
 ORTE_DECLSPEC int orte_plm_base_select(void);
@@ -78,6 +81,8 @@ ORTE_DECLSPEC int orte_plm_base_close(void);
  */
 ORTE_DECLSPEC void orte_plm_base_app_report_launch(int fd, short event, void *data);
 ORTE_DECLSPEC void orte_plm_base_receive_process_msg(int fd, short event, void *data);
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

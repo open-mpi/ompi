@@ -88,6 +88,10 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/ess/ess.h"
+#include "orte/mca/ess/base/base.h"
+#include "orte/util/show_help.h"
+#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/oob/oob.h"
@@ -104,15 +108,13 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/mca/ess/base/base.h"
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
-#include "orte/util/show_help.h"
+#endif
 
 using namespace std;
 using namespace ompi_info;
@@ -235,18 +237,22 @@ void ompi_info::open_components()
   // open components
   orte_process_info.hnp = true;
 
+  orte_errmgr_base_open();
+  component_map["errmgr"] = &orte_errmgr_base_components_available;
+    
+  orte_grpcomm_base_open();
+  component_map["grpcomm"] = &mca_grpcomm_base_components_available;
+    
+  orte_ess_base_open();
+  component_map["ess"] = &orte_ess_base_components_available;
+    
+#if !ORTE_DISABLE_FULL_SUPPORT
   mca_oob_base_open();
   component_map["oob"] = &mca_oob_base_components;
 
   orte_odls_base_open();
   component_map["odls"] = &orte_odls_base.available_components;
 
-  orte_errmgr_base_open();
-  component_map["errmgr"] = &orte_errmgr_base_components_available;
-
-  orte_grpcomm_base_open();
-  component_map["grpcomm"] = &mca_grpcomm_base_components_available;
-  
   orte_iof_base_open();
   component_map["iof"] = &orte_iof_base.iof_components_opened;
 
@@ -265,9 +271,6 @@ void ompi_info::open_components()
   orte_plm_base_open();
   component_map["plm"] = &orte_plm_base.available_components;
 
-  orte_ess_base_open();
-  component_map["ess"] = &orte_ess_base_components_available;
-
 #if OPAL_ENABLE_FT == 1
   orte_snapc_base_open();
   component_map["snapc"] = &orte_snapc_base_components_available;
@@ -275,6 +278,7 @@ void ompi_info::open_components()
 
   orte_filem_base_open();
   component_map["filem"] = &orte_filem_base_components_available;
+#endif
 
   // MPI frameworks
 
@@ -366,22 +370,25 @@ void ompi_info::close_components()
         mca_allocator_base_close();
         ompi_osc_base_close();
 
+        orte_grpcomm_base_close();
+        orte_ess_base_close();
+        orte_show_help_finalize();
+#if !ORTE_DISABLE_FULL_SUPPORT
 #if OPAL_ENABLE_FT == 1
         orte_snapc_base_close();
 #endif
         orte_filem_base_close();
         orte_iof_base_close();
-        orte_ess_base_close();
         orte_plm_base_close();
         orte_odls_base_close();
         orte_rmaps_base_close();
         orte_ras_base_close();
-        orte_grpcomm_base_close();
-        orte_errmgr_base_close();
         orte_rml_base_close();
         orte_routed_base_close();
         mca_oob_base_close();
-        
+#endif
+        orte_errmgr_base_close();
+      
         opal_backtrace_base_close();
         opal_memory_base_close();
         opal_memchecker_base_close();

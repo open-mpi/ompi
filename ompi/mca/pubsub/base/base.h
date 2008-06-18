@@ -60,6 +60,11 @@ OMPI_DECLSPEC int ompi_pubsub_base_select(void);
 OMPI_DECLSPEC int ompi_pubsub_base_close(void);
 
 
+/* NULL functions */
+OMPI_DECLSPEC int ompi_pubsub_base_null_publish(char *service, ompi_info_t *info, char *port);
+OMPI_DECLSPEC int ompi_pubsub_base_null_unpublish(char *service, ompi_info_t *info);
+OMPI_DECLSPEC char* ompi_pubsub_base_null_lookup(char *service, ompi_info_t *info);
+
 /* useful globals */
 OMPI_DECLSPEC extern int  ompi_pubsub_base_output;
 OMPI_DECLSPEC extern opal_list_t ompi_pubsub_base_components_available;

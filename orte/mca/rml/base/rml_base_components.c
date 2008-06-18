@@ -9,31 +9,51 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 
-#include "orte/util/show_help.h"
-
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/base/base.h"
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#endif
+
+#include "orte/mca/rml/base/base.h"
 
 /* The following file was created by configure.  It contains extern
  * statements and the definition of an array of pointers to each
  * component's public mca_base_component_t struct. */
 #include "orte/mca/rml/base/static-components.h"
 
+orte_rml_module_t orte_rml = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    orte_rml_base_null_send,
+    orte_rml_base_null_send_nb,
+    orte_rml_base_null_send_buffer,
+    orte_rml_base_null_send_buffer_nb,
+    orte_rml_base_null_recv,
+    orte_rml_base_null_recv_nb,
+    orte_rml_base_null_recv_buffer,
+    orte_rml_base_null_recv_buffer_nb,
+    orte_rml_base_null_recv_cancel,
+    NULL,
+    NULL,
+    NULL
+};
 
 int               orte_rml_base_output = -1;
 opal_list_t       orte_rml_base_subscriptions;
-orte_rml_module_t orte_rml = {
-    NULL,
-};
 opal_list_t       orte_rml_base_components;
 orte_rml_component_t *orte_rml_component = NULL;
 
-static bool                  component_open_called = false;
+static bool       component_open_called = false;
 
 int
 orte_rml_base_open(void)

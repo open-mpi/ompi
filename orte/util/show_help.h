@@ -70,9 +70,7 @@ ORTE_DECLSPEC void orte_show_help_finalize(void);
 ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic, 
                                  bool want_error_header, ...);
 
-#if ORTE_DISABLE_FULL_SUPPORT
-
-#else
+#if !ORTE_DISABLE_FULL_SUPPORT
 
 ORTE_DECLSPEC void orte_show_help_recv(int status, orte_process_name_t* sender,
                                        opal_buffer_t *buffer, orte_rml_tag_t tag,

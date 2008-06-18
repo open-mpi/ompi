@@ -59,7 +59,6 @@ BEGIN_C_DECLS
  */
 ORTE_DECLSPEC int orte_rml_base_open(void);
 
-
 /**
  * Select an active RML component
  *
@@ -159,6 +158,52 @@ ORTE_DECLSPEC extern orte_rml_component_t *orte_rml_component;
  */
 #define RML_SELECT_WRAPPER_PRIORITY -128
 
+/* null functions */
+ORTE_DECLSPEC int orte_rml_base_null_send(struct orte_process_name_t* peer,
+                                          struct iovec *msg,
+                                          int count,
+                                          int tag,
+                                          int flags);
+ORTE_DECLSPEC int orte_rml_base_null_send_nb(struct orte_process_name_t* peer,
+                                             struct iovec* msg,
+                                             int count,
+                                             orte_rml_tag_t tag,
+                                             int flags,
+                                             orte_rml_callback_fn_t cbfunc,
+                                             void* cbdata);
+ORTE_DECLSPEC int orte_rml_base_null_send_buffer(struct orte_process_name_t* peer,
+                                                 struct opal_buffer_t* buffer,
+                                                 orte_rml_tag_t tag,
+                                                 int flags);
+ORTE_DECLSPEC int orte_rml_base_null_send_buffer_nb(struct orte_process_name_t* peer,
+                                                    struct opal_buffer_t* buffer,
+                                                    orte_rml_tag_t tag,
+                                                    int flags,
+                                                    orte_rml_buffer_callback_fn_t cbfunc,
+                                                    void* cbdata);
+ORTE_DECLSPEC int orte_rml_base_null_recv(struct orte_process_name_t* peer,
+                                          struct iovec *msg,
+                                          int count,
+                                          orte_rml_tag_t tag,
+                                          int flags);
+ORTE_DECLSPEC int orte_rml_base_null_recv_nb(struct orte_process_name_t* peer,
+                                             struct iovec* msg,
+                                             int count,
+                                             orte_rml_tag_t tag,
+                                             int flags,
+                                             orte_rml_callback_fn_t cbfunc,
+                                             void* cbdata);
+ORTE_DECLSPEC int orte_rml_base_null_recv_buffer(struct orte_process_name_t* peer,
+                                                 struct opal_buffer_t *buf,
+                                                 orte_rml_tag_t tag,
+                                                 int flags);
+ORTE_DECLSPEC int orte_rml_base_null_recv_buffer_nb(struct orte_process_name_t* peer,
+                                                    orte_rml_tag_t tag,
+                                                    int flags,
+                                                    orte_rml_buffer_callback_fn_t cbfunc,
+                                                    void* cbdata);
+ORTE_DECLSPEC int orte_rml_base_null_recv_cancel(orte_process_name_t* peer,
+                                                 orte_rml_tag_t tag);
 
 END_C_DECLS
 

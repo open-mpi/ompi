@@ -19,6 +19,8 @@
 
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
+if !ORTE_DISABLE_FULL_SUPPORT
+
 dist_pkgdata_DATA += orted/help-orted.txt
 
 headers += \
@@ -27,4 +29,5 @@ headers += \
 libopen_rte_la_SOURCES += \
         orted/orted_main.c \
         orted/orted_comm.c
+endif
 

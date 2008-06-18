@@ -35,6 +35,13 @@
 
 BEGIN_C_DECLS
 
+/**
+ * Open the rmaps framework
+ */
+ORTE_DECLSPEC int orte_rmaps_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /*
  * Global functions for MCA overall collective open and close
  */
@@ -72,11 +79,6 @@ typedef struct {
 ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 
 /**
- * Open the rmaps framework
- */
-ORTE_DECLSPEC int orte_rmaps_base_open(void);
-
-/**
  * Select an rmaps component / module
  */
 ORTE_DECLSPEC int orte_rmaps_base_select(void);
@@ -94,6 +96,8 @@ ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid,
  * Close down the rmaps framework
  */
 ORTE_DECLSPEC int orte_rmaps_base_close(void);
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

@@ -17,10 +17,18 @@
 #
 
 headers += \
-	base/base.h \
-	base/rml_contact.h
+	base/base.h
 
 libmca_rml_la_SOURCES += \
 	base/rml_base_components.c \
+        base/rml_base_null_fns.c
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
+headers += \
+	base/rml_contact.h
+
+libmca_rml_la_SOURCES += \
 	base/rml_base_receive.c \
 	base/rml_base_contact.c
+endif

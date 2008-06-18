@@ -22,6 +22,7 @@
 
 #include "orte_config.h"
 
+
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
@@ -42,7 +43,6 @@ ORTE_DECLSPEC extern struct MPIR_PROCDESC *MPIR_proctable;
 ORTE_DECLSPEC extern int MPIR_proctable_size;
 ORTE_DECLSPEC extern int MPIR_being_debugged;
 ORTE_DECLSPEC extern volatile int MPIR_debug_state;
-ORTE_DECLSPEC extern volatile int MPIR_debug_gate;
 
 END_C_DECLS
 

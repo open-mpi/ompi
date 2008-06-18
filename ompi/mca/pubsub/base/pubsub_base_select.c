@@ -29,19 +29,21 @@
 
 int ompi_pubsub_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int ret;
     ompi_pubsub_base_component_t *best_component = NULL;
     ompi_pubsub_base_module_t *best_module = NULL;
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("pubsub", ompi_pubsub_base_output,
+    if( OPAL_SUCCESS != (ret = mca_base_select("pubsub", ompi_pubsub_base_output,
                                         &ompi_pubsub_base_components_available,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        exit_status = OMPI_ERR_NOT_FOUND;
+                                        (mca_base_component_t **) &best_component))) {
+        /* it is okay not to find any executable components */
+        if (OMPI_ERR_NOT_FOUND == ret) {
+            ret = OPAL_SUCCESS;
+        }
         goto cleanup;
     }
 
@@ -51,12 +53,9 @@ int ompi_pubsub_base_select(void)
     
     /* init the selected module */
     if (NULL != ompi_pubsub.init) {
-        if (OMPI_SUCCESS != (ret = ompi_pubsub.init())) {
-            exit_status = ret;
-            goto cleanup;
-        }
+        ret = ompi_pubsub.init();
     }
 
  cleanup:
-    return exit_status;
+    return ret;
 }

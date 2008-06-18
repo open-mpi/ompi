@@ -28,7 +28,6 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 
-
 int
 ompi_init_preconnect_mpi(void)
 {
@@ -90,9 +89,9 @@ ompi_init_preconnect_mpi(void)
 int
 ompi_init_preconnect_oob(void)
 {
+    int param, ret, value = 0;
     size_t world_size, next, prev, i, j, world_rank, simultaneous;
     ompi_proc_t **procs;
-    int ret, param, value = 0;
     struct iovec inmsg[1], outmsg[1];
 
     param = mca_base_param_find("mpi", NULL, "preconnect_oob");

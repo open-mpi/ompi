@@ -32,49 +32,50 @@
 #include "orte/mca/odls/odls.h"
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-    /**
-     * Struct to hold globals for the odls framework
-     */
-    typedef struct orte_odls_base_t {
-        /* components are available */
-        bool components_available;
-        /* component has been selected */
-        bool selected;
-        /** List of opened components */
-        opal_list_t available_components;
-        /** selected component */
-        orte_odls_base_component_t selected_component;
-    } orte_odls_base_t;
-    
-    /**
-     * Global instance of odls-wide framework data
-     */
-    ORTE_DECLSPEC extern orte_odls_base_t orte_odls_base;
+/**
+ * Open the odls framework
+ */
+ORTE_DECLSPEC int orte_odls_base_open(void);
 
-    /*
-     * Global functions for MCA overall collective open and close
-     */
+#if !ORTE_DISABLE_FULL_SUPPORT
 
-    /**
-     * Open the odls framework
-     */
-    ORTE_DECLSPEC int orte_odls_base_open(void);
-    /**
-     * Select an odls module
-     */
-    ORTE_DECLSPEC int orte_odls_base_select(void);
+/**
+ * Struct to hold globals for the odls framework
+ */
+typedef struct orte_odls_base_t {
+    /* components are available */
+    bool components_available;
+    /* component has been selected */
+    bool selected;
+    /** List of opened components */
+    opal_list_t available_components;
+    /** selected component */
+    orte_odls_base_component_t selected_component;
+} orte_odls_base_t;
 
-    /**
-     * Close the odls framework
-     */
-    ORTE_DECLSPEC int orte_odls_base_finalize(void);
-    ORTE_DECLSPEC int orte_odls_base_close(void);
+/**
+ * Global instance of odls-wide framework data
+ */
+ORTE_DECLSPEC extern orte_odls_base_t orte_odls_base;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+/*
+ * Global functions for MCA overall collective open and close
+ */
+
+/**
+ * Select an odls module
+ */
+ORTE_DECLSPEC int orte_odls_base_select(void);
+
+/**
+ * Close the odls framework
+ */
+ORTE_DECLSPEC int orte_odls_base_finalize(void);
+ORTE_DECLSPEC int orte_odls_base_close(void);
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
+
+END_C_DECLS
 #endif

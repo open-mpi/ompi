@@ -16,16 +16,23 @@
 # $HEADER$
 #
 
+headers += \
+        base/base.h
+
+libmca_rmaps_la_SOURCES += \
+        base/rmaps_base_open.c
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
 dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
 
 headers += \
-        base/base.h \
         base/rmaps_private.h
 
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_close.c \
+        base/rmaps_base_select.c \
         base/rmaps_base_map_job.c \
         base/rmaps_base_get_job_map.c \
-        base/rmaps_base_support_fns.c \
-        base/rmaps_base_open.c \
-        base/rmaps_base_select.c
+        base/rmaps_base_support_fns.c
+endif

@@ -33,6 +33,9 @@
 
 BEGIN_C_DECLS
 
+ORTE_DECLSPEC int orte_ras_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * globals that might be needed
  */
@@ -51,11 +54,11 @@ ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
 /*
  * function definitions
  */
-ORTE_DECLSPEC int orte_ras_base_open(void);
 ORTE_DECLSPEC int orte_ras_base_select(void);
 ORTE_DECLSPEC int orte_ras_base_finalize(void);
 ORTE_DECLSPEC int orte_ras_base_close(void);
 
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

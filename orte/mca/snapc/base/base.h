@@ -23,7 +23,6 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "orte/mca/rml/rml.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/snapc/snapc.h"
@@ -33,6 +32,18 @@
  */
 
 BEGIN_C_DECLS
+
+/**
+ * Initialize the SNAPC MCA framework
+ *
+ * @retval ORTE_SUCCESS Upon success
+ * @retval ORTE_ERROR   Upon failures
+ * 
+ * This function is invoked during orte_init();
+ */
+ORTE_DECLSPEC int orte_snapc_base_open(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 
 /*
  * Commands for command line tool and SnapC interaction
@@ -71,16 +82,6 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
     void orte_snapc_base_global_snapshot_construct(orte_snapc_base_global_snapshot_t *obj);
     void orte_snapc_base_global_snapshot_destruct( orte_snapc_base_global_snapshot_t *obj);
 
-    /**
-     * Initialize the SNAPC MCA framework
-     *
-     * @retval ORTE_SUCCESS Upon success
-     * @retval ORTE_ERROR   Upon failures
-     * 
-     * This function is invoked during orte_init();
-     */
-    ORTE_DECLSPEC int orte_snapc_base_open(void);
-    
     /**
      * Select an available component.
      *
@@ -165,6 +166,8 @@ ORTE_DECLSPEC extern orte_snapc_coord_type_t orte_snapc_coord_type;
                                                                    char *global_snapshot_handle,
                                                                    int seq_num,
                                                                    int ckpt_status);
+
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 

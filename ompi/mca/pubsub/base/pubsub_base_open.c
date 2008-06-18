@@ -33,7 +33,13 @@
  * Globals
  */
 OMPI_DECLSPEC int  ompi_pubsub_base_output  = -1;
-OMPI_DECLSPEC ompi_pubsub_base_module_t ompi_pubsub;
+OMPI_DECLSPEC ompi_pubsub_base_module_t ompi_pubsub={
+    NULL,
+    ompi_pubsub_base_null_publish,
+    ompi_pubsub_base_null_unpublish,
+    ompi_pubsub_base_null_lookup,
+    NULL
+};
 opal_list_t ompi_pubsub_base_components_available;
 ompi_pubsub_base_component_t ompi_pubsub_base_selected_component;
 

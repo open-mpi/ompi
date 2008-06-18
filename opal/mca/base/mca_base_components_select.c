@@ -114,7 +114,7 @@ int mca_base_select(const char *type_name, int output_id,
         mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
                                   components_available,
                                   NULL);
-        return OPAL_ERROR;
+        return OPAL_ERR_NOT_FOUND;
     }
 
     opal_output_verbose(5, output_id,

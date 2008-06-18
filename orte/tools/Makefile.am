@@ -21,6 +21,14 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 SUBDIRS += \
+	tools/wrappers
+
+DIST_SUBDIRS += \
+	tools/wrappers
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
+SUBDIRS += \
 	tools/orted \
 	tools/orterun \
 	tools/orte-clean \
@@ -40,4 +48,5 @@ if WANT_FT
 SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-restart
+endif
 endif

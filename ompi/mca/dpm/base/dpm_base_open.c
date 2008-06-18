@@ -33,7 +33,19 @@
  * Globals
  */
 OMPI_DECLSPEC int  ompi_dpm_base_output  = -1;
-OMPI_DECLSPEC ompi_dpm_base_module_t ompi_dpm;
+OMPI_DECLSPEC ompi_dpm_base_module_t ompi_dpm = {
+    NULL,
+    ompi_dpm_base_null_connect_accept,
+    ompi_dpm_base_null_disconnect,
+    ompi_dpm_base_null_spawn,
+    ompi_dpm_base_null_dyn_init,
+    ompi_dpm_base_null_dyn_finalize,
+    ompi_dpm_base_null_mark_dyncomm,
+    ompi_dpm_base_null_open_port,
+    ompi_dpm_base_null_parse_port,
+    ompi_dpm_base_null_close_port,
+    NULL
+};
 opal_list_t ompi_dpm_base_components_available;
 ompi_dpm_base_component_t ompi_dpm_base_selected_component;
 
