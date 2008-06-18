@@ -32,6 +32,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/arch.h"
+#include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
 
@@ -42,8 +43,8 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_hnp =               */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_hnp_uri =           */   NULL,
     /*  .hnp_pid =              */    0,
-    /*  ,app_num =              */   -1,
-    /*  ,universe_size =        */   -1,
+    /*  .app_num =              */   -1,
+    /*  .universe_size =        */   -1,
     /*  .num_procs =            */   1,
     /*  .local_rank =           */   UINT8_MAX,
     /*  .node_rank =            */   UINT8_MAX,

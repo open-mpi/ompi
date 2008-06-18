@@ -216,7 +216,7 @@ static int show_help(const char *filename, const char *topic,
                      const char *output, orte_process_name_t *sender)
 {
     int rc;
-    tuple_list_item_t *tli;
+    tuple_list_item_t *tli = NULL;
     orte_namelist_t *pnli;
     time_t now = time(NULL);
 
