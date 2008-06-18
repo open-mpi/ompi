@@ -55,6 +55,7 @@ ORTE_DECLSPEC extern bool mca_grpcomm_base_selected;
 ORTE_DECLSPEC extern opal_list_t mca_grpcomm_base_components_available;
 ORTE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 
 /*
  * Base functions
@@ -72,10 +73,11 @@ ORTE_DECLSPEC   int orte_grpcomm_base_modex(opal_list_t *procs);
 ORTE_DECLSPEC   int orte_grpcomm_base_purge_proc_attrs(void);
 ORTE_DECLSPEC   int orte_grpcomm_base_modex_init(void);
 ORTE_DECLSPEC   void orte_grpcomm_base_modex_finalize(void);
+ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *modex_reqd);
+ORTE_DECLSPEC   int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
+                                                           opal_buffer_t *rbuf);
 
-/*
- * external API functions will be documented in the mca/grpcomm/grpcomm.h file
- */
+#endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
 #endif

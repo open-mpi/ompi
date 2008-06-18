@@ -120,6 +120,26 @@ int ompi_proc_init(void)
                 proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
             }
             proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+int ompi_proc_set_arch(void)
+{
+    ompi_proc_t *proc = NULL;
+    opal_list_item_t *item = NULL;
+    
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    
+    for( item  = opal_list_get_first(&ompi_proc_list);
+        item != opal_list_get_end(&ompi_proc_list);
+        item  = opal_list_get_next(item)) {
+        proc = (ompi_proc_t*)item;
+        
+        if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
             proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->proc_arch != orte_process_info.arch) {
@@ -132,14 +152,16 @@ int ompi_proc_init(void)
                                true, orte_process_info.nodename, 
                                proc->proc_hostname == NULL ? "<hostname unavailable>" :
                                proc->proc_hostname);
+                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
-            } 
+            }
         }
     }
-
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     return OMPI_SUCCESS;
 }
+
 
 int ompi_proc_finalize (void)
 {

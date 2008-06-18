@@ -27,24 +27,23 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/threads/condition.h"
-#include "opal/util/bit_ops.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/dss/dss.h"
-
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/mca/odls/odls_types.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "opal/util/bit_ops.h"
+
+#include "opal/class/opal_hash_table.h"
 #include "orte/util/proc_info.h"
+#include "opal/dss/dss.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
+#include "orte/mca/ess/ess.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "orte/orted/orted.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/grpcomm/base/base.h"
-#include "grpcomm_basic.h"
+#include "grpcomm_bad.h"
 
 
 /* Static API's */
@@ -58,7 +57,7 @@ static int barrier(void);
 static int modex(opal_list_t *procs);
 
 /* Module def */
-orte_grpcomm_base_module_t orte_grpcomm_basic_module = {
+orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
     init,
     finalize,
     xcast,
@@ -108,7 +107,7 @@ static int xcast(orte_jobid_t job,
     orte_daemon_cmd_flag_t command;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:xcast sent to job %s tag %ld",
+                         "%s grpcomm:bad:xcast sent to job %s tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), (long)tag));
     
@@ -224,7 +223,7 @@ static int barrier(void)
     struct timeval ompistart, ompistop;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:basic entering barrier",
+                         "%s grpcomm:bad entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (orte_timing && ORTE_PROC_MY_NAME->vpid == 0) {
@@ -254,7 +253,7 @@ static int barrier(void)
     OBJ_DESTRUCT(&buf);
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:basic barrier sent",
+                         "%s grpcomm:bad barrier sent",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* now receive the release. Be sure to do this in
@@ -271,7 +270,7 @@ static int barrier(void)
     ORTE_PROGRESSED_WAIT(barrier_recvd, 0, 1);
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:basic received barrier release",
+                         "%s grpcomm:bad received barrier release",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (orte_timing) {
@@ -339,7 +338,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     orte_grpcomm_coll_t coll_type=ORTE_GRPCOMM_ALLGATHER;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:basic entering allgather",
+                         "%s grpcomm:bad entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (orte_timing && ORTE_PROC_MY_NAME->vpid == 0) {
@@ -375,7 +374,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     OBJ_DESTRUCT(&coll);
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:basic allgather buffer sent",
+                         "%s grpcomm:bad allgather buffer sent",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* setup the buffer that will recv the results */
@@ -445,11 +444,12 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:basic allgather completed",
+                         "%s grpcomm:bad allgather completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return ORTE_SUCCESS;
 }
+
 
 /***   MODEX SECTION ***/
 static int modex(opal_list_t *procs)
@@ -460,10 +460,10 @@ static int modex(opal_list_t *procs)
     orte_process_name_t proc_name;
     int rc;
     int32_t arch;
-    bool modex_reqd = false;
+    bool modex_reqd;  /* going to ignore this anyway */
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:basic: modex entered",
+                         "%s grpcomm:bad: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* setup the buffer that will actually be sent */
@@ -476,7 +476,7 @@ static int modex(opal_list_t *procs)
         goto cleanup;
     }
     
-    /* decide if we need to add the architecture to the modex */
+    /* add our architecture - we always send it in this module! */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -488,73 +488,71 @@ static int modex(opal_list_t *procs)
         goto cleanup;
     }
     
-    if (modex_reqd) {
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                             "%s grpcomm:basic:modex: executing allgather",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        /* exchange the buffer with the list of peers (if provided) or all my peers */
-        if (NULL == procs) {
-            if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        } else {
-            if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s grpcomm:bad:modex: executing allgather",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* exchange the buffer with the list of peers (if provided) or all my peers */
+    if (NULL == procs) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
-        
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                             "%s grpcomm:basic:modex: processing modex info",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        /* process the results */
-        /* extract the number of procs that put data in the buffer */
+    } else {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
+                         "%s grpcomm:bad:modex: processing modex info",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* process the results */
+    /* extract the number of procs that put data in the buffer */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:bad:modex: received %ld data bytes from %ld procs",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), (long)num_procs));
+    
+    /* if the buffer doesn't have any more data, ignore it */
+    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
+        goto cleanup;
+    }
+    
+    /* otherwise, process it */
+    for (i=0; i < num_procs; i++) {
+        /* unpack the process name */
         cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                             "%s grpcomm:basic:modex: received %ld data bytes from %ld procs",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (long)(rbuf.pack_ptr - rbuf.unpack_ptr), (long)num_procs));
-        
-        /* if the buffer doesn't have any more data, ignore it */
-        if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
+        /* unpack its architecture */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         
-        /* otherwise, process it */
-        for (i=0; i < num_procs; i++) {
-            /* unpack the process name */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            /* unpack its architecture */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            /* update the arch in the ESS */
-            if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            /* update the modex database */
-            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
+        /* update the arch in the ESS */
+        if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* update the modex database */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
     }
     
@@ -563,7 +561,7 @@ cleanup:
     OBJ_DESTRUCT(&rbuf);
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:basic: modex completed",
+                         "%s grpcomm:bad: modex completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return rc;

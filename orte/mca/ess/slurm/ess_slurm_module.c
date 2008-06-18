@@ -54,6 +54,7 @@ static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
 static uint8_t proc_get_local_rank(orte_process_name_t *proc);
 static uint8_t proc_get_node_rank(orte_process_name_t *proc);
+static int update_arch(orte_process_name_t *proc, uint32_t arch);
 
 
 orte_ess_base_module_t orte_ess_slurm_module = {
@@ -65,6 +66,7 @@ orte_ess_base_module_t orte_ess_slurm_module = {
     proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
+    update_arch,
     NULL /* ft_event */
 };
 
@@ -228,6 +230,25 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
                          nids[node]->arch));
     
     return nids[node]->arch;
+}
+
+static int update_arch(orte_process_name_t *proc, uint32_t arch)
+{
+    
+    int32_t node;
+    orte_nid_t **nids;
+    
+    node = pmap[proc->vpid].node;
+    nids = (orte_nid_t**)nidmap.addr;
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:slurm: updating proc %s to arch %0x",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         arch));
+    
+    nids[node]->arch = arch;
+    return ORTE_SUCCESS;
 }
 
 static uint8_t proc_get_local_rank(orte_process_name_t *proc)

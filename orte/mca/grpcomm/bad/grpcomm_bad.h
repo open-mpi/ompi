@@ -17,8 +17,8 @@
  * $HEADER$
  *
  */
-#ifndef GRPCOMM_BASIC_H
-#define GRPCOMM_BASIC_H
+#ifndef GRPCOMM_BAD_H
+#define GRPCOMM_BAD_H
 
 #include "orte_config.h"
 #include "orte/types.h"
@@ -34,17 +34,17 @@ BEGIN_C_DECLS
 /*
  * Component open / close
  */
-int orte_grpcomm_basic_open(void);
-int orte_grpcomm_basic_close(void);
-int orte_grpcomm_basic_component_query(mca_base_module_t **module, int *priority);
+int orte_grpcomm_bad_open(void);
+int orte_grpcomm_bad_close(void);
+int orte_grpcomm_bad_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
  * Grpcomm interfaces
  */
 
-ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_basic_component;
-extern orte_grpcomm_base_module_t orte_grpcomm_basic_module;
+ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_bad_component;
+extern orte_grpcomm_base_module_t orte_grpcomm_bad_module;
 
 END_C_DECLS
 
