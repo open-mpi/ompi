@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -32,9 +32,8 @@ static const int ompi_stdio_seek_end = SEEK_END;
 #pragma ident OMPI_IDENT_STRING
 #elif OMPI_CXX_USE_IDENT
 #ident OMPI_IDENT_STRING
-#else
-static const char ident[] = OMPI_IDENT_STRING;
 #endif
+const char ompi_libcxx_version_string[] = OMPI_IDENT_STRING;
 
 #include "ompi/errhandler/errhandler.h"
 
