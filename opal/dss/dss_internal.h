@@ -263,10 +263,10 @@ extern opal_data_type_t opal_dss_num_reg_types;
     /*
      * Specialized functions
      */
-    int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src, 
+OPAL_DECLSPEC    int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src, 
                              int32_t num_vals, opal_data_type_t type);
 
-    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst, 
+OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst, 
                                int32_t *num_vals, opal_data_type_t type);
 
     /*
