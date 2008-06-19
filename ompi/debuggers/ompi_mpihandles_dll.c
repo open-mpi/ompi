@@ -3,6 +3,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights resereved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,14 +67,38 @@ struct mpidbg_name_map_t *mpidbg_request_name_map = NULL;
 enum mpidbg_status_capabilities_t mpidbg_status_capabilities = 0;
 struct mpidbg_name_map_t *mpidbg_status_name_map = NULL;
 
-/* Temporary workaround for making Totalview to load these symbols in
-   the library when this is compiled with the Sun Studio C compiler */
 #if defined(__SUNPRO_C)
-bool opal_uses_threads;
-bool opal_mutex_check_locks;
-volatile int32_t opal_progress_thread_count;
+/*
+ * These symbols are defined here because of the different way compilers
+ * may handle extern definitions. The particular case that is causing 
+ * problems is when there is an extern variable that is accessed in a 
+ * static inline function. For example, here is the code we often see in 
+ * a header file.
+ * 
+ * extern int request_complete;
+ * static inline check_request(void) {
+ *    request_complete = 1;
+ * }
+ *
+ * If this code exists in a header file and gets included in a source 
+ * file, then some compilers expect to have request_complete defined 
+ * somewhere even if request_complete is never referenced and 
+ * check_request is never called. Other compilers do not need them defined 
+ * if they are never referenced in the source file. Therefore, to handle 
+ * cases like the above with compilers that require the symbol (like 
+ * Sun Studio) we add in these definitions here.
+ */
+size_t ompi_request_completed;
+opal_condition_t ompi_request_cond;
+size_t ompi_request_waiting;
+opal_mutex_t ompi_request_lock;
+opal_mutex_t opal_event_lock;
+uint32_t opal_progress_recursion_depth_counter;
 int opal_progress_spin_count;
-#endif
+volatile int32_t opal_progress_thread_count;
+bool opal_mutex_check_locks;
+bool opal_uses_threads;
+#endif /* defined(__SUNPRO_C) */
 
 /*---------------------------------------------------------------------*/
 
