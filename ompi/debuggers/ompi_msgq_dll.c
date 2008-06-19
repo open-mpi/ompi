@@ -561,7 +561,7 @@ static int rebuild_communicator_list (mqs_process *proc)
 
     DEBUG(VERBOSE_COMM,("rebuild_communicator_list called "
                         "(commlist_base %llx, array offset %ld array size %d)\n",
-                        (long long)p_info->commlist_base,
+                        (long long)extra->commlist_base,
                         (long)i_info->opal_pointer_array_t.offset.addr,
                         i_info->opal_pointer_array_t.size));
     /**
@@ -1061,7 +1061,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         if( extra->current_communicator->comm_ptr == req_comm ) break;
         DEBUG(VERBOSE_REQ,("unmatched request (0x%llx) req_comm = %llx current_com = %llx\n",
                            (long long)current_item, (long long)req_comm,
-                           (long long)p_info->current_communicator->comm_ptr));
+                           (long long)extra->current_communicator->comm_ptr));
     }
 
     res->extra_text[0][0] = 0; res->extra_text[1][0] = 0; res->extra_text[2][0] = 0;
