@@ -36,6 +36,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/threads.h"
 #include "opal/util/argv.h"
+#include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/num_procs.h"
 #include "opal/util/show_help.h"
@@ -43,14 +44,14 @@
 #include "opal/event/event.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/util/session_dir.h"
-#include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+
+#if !ORTE_DISABLE_FULL_SUPPORT
+#include "orte/mca/routed/routed.h"
+#endif
 
 #include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
@@ -294,13 +295,23 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         gettimeofday(&ompistart, NULL);
     }
     
-    /* Setup ORTE stage 1, note that we are not infrastructre  */
+    /* Setup ORTE - note that we are not a tool  */
     
     if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
         error = "ompi_mpi_init: orte_init failed";
         goto error;
     }
     orte_setup = true;
+    
+    if (!ORTE_DISABLE_FULL_SUPPORT) {
+        /* warmup the OOB routes.  Do this here because
+         it will go much faster before the event library is switched
+         into non-blocking mode */
+        if (OMPI_SUCCESS != (ret = orte_routed.warmup_routes())) {
+            error = "orte_routed_warmup_routes() failed";
+            goto error;
+        }
+    }
     
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
@@ -598,14 +609,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        ompi_show_all_mca_params(ompi_mpi_comm_world.c_my_rank, 
                                 nprocs, 
                                 orte_process_info.nodename);
-    }
-
-    /* wire up the oob interface, if requested.  Do this here because
-       it will go much faster before the event library is switched
-       into non-blocking mode */
-    if (OMPI_SUCCESS != (ret = ompi_init_preconnect_oob())) {
-        error = "ompi_mpi_do_preconnect_oob() failed";
-        goto error;
     }
 
     /* Do we need to wait for a debugger? */

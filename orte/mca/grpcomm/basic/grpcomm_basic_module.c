@@ -476,10 +476,15 @@ static int modex(opal_list_t *procs)
         goto cleanup;
     }
     
-    /* decide if we need to add the architecture to the modex */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
+    /* decide if we need to add the architecture to the modex. Check
+     * first to see if hetero is enabled - if not, then we clearly
+     * don't need to exchange arch's as they are all identical
+     */
+    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     }
     
     /* pack the entries we have received */

@@ -47,9 +47,8 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     char *nodename;
     opal_buffer_t buf;
     int step;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     int32_t *arch;
-#endif
+    bool homo;
     
     /* setup a buffer for tmp use */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -229,17 +228,42 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     opal_dss.pack(&buf, vpids, num_nodes, ORTE_VPID);
     free(vpids);
     
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    /* allocate space for the node arch */
-    arch = (int32_t*)malloc(num_nodes * 4);
-    /* transfer the data from the nodes */
-    for (i=0; i < num_nodes; i++) {
-        arch[i] = nodes[i]->arch;
+    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+        /* check to see if all reported archs are the same */
+        homo = true;
+        for (i=0; i < num_nodes; i++) {
+            if (arch[i] != arch[0]) {
+                homo = false;
+                break;
+            }
+        }
+        if (homo) {
+            /* if everything is homo, just set that
+             * flag - no need to send everything
+             */
+            num_digs = 0;
+            opal_dss.pack(&buf, &num_digs, 1, OPAL_UINT8);
+        } else {
+            /* it isn't homo, so we have to pass the
+             * archs to the daemons
+             */
+            num_digs = 1;
+            opal_dss.pack(&buf, &num_digs, 1, OPAL_UINT8);
+           /* allocate space for the node arch */
+            arch = (int32_t*)malloc(num_nodes * 4);
+            /* transfer the data from the nodes */
+            for (i=0; i < num_nodes; i++) {
+                arch[i] = nodes[i]->arch;
+            }
+            /* pack the values */
+            opal_dss.pack(&buf, arch, num_nodes, OPAL_INT32);
+            free(arch);
+        }
+    } else {
+        /* pack a flag indicating that the archs are the same */
+        num_digs = 0;
+        opal_dss.pack(&buf, &num_digs, 1, OPAL_UINT8);
     }
-    /* pack the values */
-    opal_dss.pack(&buf, arch, num_nodes, OPAL_INT32);
-    free(arch);
-#endif
     
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
@@ -259,9 +283,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
     orte_nid_t **nd;
     uint8_t incdec;
     int32_t index, step;
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     int32_t *arch;
-#endif
     opal_buffer_t buf;
 
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
@@ -427,20 +449,25 @@ vpids:
         orte_process_info.num_procs = num_daemons;
     }
     
-    
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    /* allocate space for the node arch */
-    arch = (int32_t*)malloc(num_nodes * 4);
-    /* unpack the values */
-    n=num_nodes;
-    opal_dss.unpack(&buf, arch, &n, OPAL_INT32);
-    /* transfer the data to the nodes */
-    nd = (orte_nid_t**)nodes->addr;
-    for (i=0; i < num_nodes; i++) {
-        nd[i]->arch = arch[i];
+    /* unpack a flag to see if we are in a homogeneous
+     * scenario - could be that no hetero is supported,
+     * or could be that things just are homo anyway
+     */
+    n=1;
+    opal_dss.unpack(&buf, &num_digs, &n, OPAL_UINT8);
+    if (0 != num_digs) {
+        /* hetero situation - get the archs */
+        arch = (int32_t*)malloc(num_nodes * 4);
+        /* unpack the values */
+        n=num_nodes;
+        opal_dss.unpack(&buf, arch, &n, OPAL_INT32);
+        /* transfer the data to the nodes */
+        nd = (orte_nid_t**)nodes->addr;
+        for (i=0; i < num_nodes; i++) {
+            nd[i]->arch = arch[i];
+        }
+        free(arch);
     }
-    free(arch);
-#endif
  
     if (0 < opal_output_get_verbosity(orte_debug_output)) {
         nd = (orte_nid_t**)nodes->addr;

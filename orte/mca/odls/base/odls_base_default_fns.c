@@ -236,7 +236,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
     /* update the routing tree */
-    orte_routed.update_routing_tree();
+    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
     
     /* unpack the #bytes of daemon wireup info in the message */
     cnt=1;

@@ -47,6 +47,7 @@ static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
+static int warmup_routes(void);
 
 #if OPAL_ENABLE_FT == 1
 static int direct_ft_event(int state);
@@ -60,6 +61,7 @@ orte_routed_module_t orte_routed_direct_module = {
     update_route,
     get_route,
     init_routes,
+    warmup_routes,
     route_lost,
     route_is_defined,
     update_routing_tree,
@@ -560,6 +562,60 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndata)
             return ORTE_SUCCESS;
         }
     }
+}
+
+static int warmup_routes(void)
+{
+    struct iovec inmsg[1], outmsg[1];
+    int i, world_size, world_rank, ret;
+    orte_process_name_t proc;
+    
+    /* if I am a daemon, tool, or HNP, do nothing */
+    if (orte_process_info.daemon ||
+        orte_process_info.hnp ||
+        orte_process_info.tool) {
+        return ORTE_SUCCESS;
+    }
+    
+    /* I am an application process. In this case, we
+     * do a semi-intelligent messaging scheme to
+     * force the sockets to be opened
+     */
+    world_size = orte_process_info.num_procs;
+    world_rank = ORTE_PROC_MY_NAME->vpid;
+    proc.jobid = ORTE_PROC_MY_NAME->jobid;
+    for (i = 1 ; i <= world_size / 2 ; i ++) {
+        proc.vpid = (world_rank + i) % world_size;
+        
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                             "%s routed_direct_warmup: sending to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc)));
+
+        /* sends do not wait for a match */
+        ret = orte_rml.send(&proc,
+                            outmsg,
+                            1,
+                            ORTE_RML_TAG_WIREUP,
+                            0);
+        if (ret < 0) return ret;
+        
+        proc.vpid = (world_rank - i + world_size) % world_size;
+        
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                             "%s routed_direct_warmup: recv from %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc)));
+
+        ret = orte_rml.recv(&proc,
+                            inmsg,
+                            1,
+                            ORTE_RML_TAG_WIREUP,
+                            0);
+        if (ret < 0) return ret;
+    }
+    
+    return ORTE_SUCCESS;
 }
 
 static int route_lost(const orte_process_name_t *route)

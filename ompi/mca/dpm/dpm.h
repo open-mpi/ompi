@@ -49,12 +49,11 @@ BEGIN_C_DECLS
 #define OMPI_RML_TAG_COMM_CID_INTRA                 OMPI_RML_TAG_BASE+4
 #define OMPI_RML_TAG_XOOB                           OMPI_RML_TAG_BASE+5
 #define OMPI_RML_TAG_SM_BACK_FILE_CREATED           OMPI_RML_TAG_BASE+6
-#define OMPI_RML_TAG_WIREUP                         OMPI_RML_TAG_BASE+7
-#define OMPI_CRCP_COORD_BOOKMARK_TAG                OMPI_RML_TAG_BASE+8
-#define OMPI_COMM_JOIN_TAG                          OMPI_RML_TAG_BASE+9
+#define OMPI_CRCP_COORD_BOOKMARK_TAG                OMPI_RML_TAG_BASE+7
+#define OMPI_COMM_JOIN_TAG                          OMPI_RML_TAG_BASE+8
 
 /* support for shared memory collectives */
-#define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED     OMPI_RML_TAG_BASE+10
+#define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED     OMPI_RML_TAG_BASE+9
 
 #define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
 
