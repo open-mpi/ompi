@@ -542,17 +542,18 @@ static int modex(opal_list_t *procs)
                 goto cleanup;
             }
             
-            /* unpack its architecture */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            /* update the arch in the ESS */
-            if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
+            if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+                /* unpack its architecture */
+                cnt=1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                /* update the arch in the ESS */
+                if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
             }
             
             /* update the modex database */
