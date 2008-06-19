@@ -62,7 +62,7 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
     sg->length = seg->seg_len + sizeof(mca_btl_openib_header_t) +
         (rdma ? sizeof(mca_btl_openib_footer_t) : 0) + frag->coalesced_length;
 
-    sr_desc->send_flags = ib_send_flags(sg->length, ep);
+    sr_desc->send_flags = ib_send_flags(sg->length, &(ep->qps[qp]));
 
     if(ep->nbo)
         BTL_OPENIB_HEADER_HTON(*frag->hdr);

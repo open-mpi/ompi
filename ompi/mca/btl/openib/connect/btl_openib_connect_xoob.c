@@ -371,6 +371,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     struct ibv_qp_init_attr qp_init_attr;
     struct ibv_qp_attr attr;
     int ret;
+    size_t req_inline;
 
     mca_btl_openib_module_t *openib_btl =
         (mca_btl_openib_module_t*)endpoint->endpoint_btl;
@@ -391,19 +392,22 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     /* no need recv queue; receives are posted to srq */
     qp_init_attr.cap.max_recv_wr = 0;
     qp_init_attr.cap.max_send_wr = send_wr;
-
-    qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
+    qp_init_attr.cap.max_inline_data = req_inline =
+        mca_btl_openib_component.ib_max_inline_data;
+    qp_init_attr.cap.max_send_sge = 1;
     /* this one is ignored by driver */
     qp_init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     qp_init_attr.qp_type = IBV_QPT_XRC;
     qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
     *qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr);
-
+    endpoint->qps[0].ib_inline_max =
+        qp_init_attr.cap.max_inline_data < req_inline ?
+        qp_init_attr.cap.max_inline_data : req_inline;
     if (NULL == *qp) {
         BTL_ERROR(("Error creating QP, errno says: %s", strerror(errno)));
         return OMPI_ERROR;
     }
-    openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data;
+
     attr.qp_state = IBV_QPS_INIT;
     attr.pkey_index = openib_btl->pkey_index;
     attr.port_num = openib_btl->port_num;

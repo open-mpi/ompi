@@ -172,7 +172,7 @@ struct mca_btl_openib_component_t {
 
     uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
 
-    uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ */
+    uint32_t ib_max_inline_data; /**< Max size of inline data */
     uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
     uint32_t ib_pkey_val;
     uint32_t ib_psn;
@@ -373,8 +373,6 @@ struct mca_btl_openib_module_t {
     int32_t num_peers;
 
     opal_mutex_t ib_lock;              /**< module level lock */
-
-    size_t ib_inline_max; /**< max size of inline send*/
 
     size_t eager_rdma_frag_size;                /**< length of eager frag */
     volatile int32_t eager_rdma_channels;  /**< number of open RDMA channels */

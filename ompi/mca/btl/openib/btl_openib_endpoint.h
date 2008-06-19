@@ -138,6 +138,7 @@ typedef struct mca_btl_openib_endpoint_qp_t {
                                      available */
     int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
     mca_btl_openib_send_control_frag_t *credit_frag;
+    size_t ib_inline_max;          /**< max size of inline send*/
     union {
         mca_btl_openib_endpoint_srq_qp_t srq_qp;
         mca_btl_openib_endpoint_pp_qp_t pp_qp;
@@ -403,10 +404,10 @@ static inline int check_endpoint_state(mca_btl_openib_endpoint_t *ep,
 }
 
 static inline __opal_attribute_always_inline__ int
-ib_send_flags(uint32_t size, mca_btl_openib_endpoint_t *ep)
+ib_send_flags(uint32_t size, mca_btl_openib_endpoint_qp_t *qp)
 {
     return IBV_SEND_SIGNALED |
-        ((size <= ep->endpoint_btl->ib_inline_max) ? IBV_SEND_INLINE : 0);
+        ((size <= qp->ib_inline_max) ? IBV_SEND_INLINE : 0);
 }
 END_C_DECLS
 
