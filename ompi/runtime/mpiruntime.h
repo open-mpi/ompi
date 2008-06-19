@@ -109,7 +109,6 @@ int ompi_mpi_abort(struct ompi_communicator_t* comm,
  * Do a preconnect of MPI connections (i.e., force connections to
  * be made if they will be made).
  */
-int ompi_init_preconnect_oob(void);
 int ompi_init_preconnect_mpi(void);
 
 END_C_DECLS

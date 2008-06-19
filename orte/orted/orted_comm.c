@@ -437,6 +437,11 @@ static int process_commands(orte_process_name_t* sender,
     /* now process the command locally */
     switch(command) {
 
+        /****    NULL    ****/
+        case ORTE_DAEMON_NULL_CMD:
+            ret = ORTE_SUCCESS;
+            break;
+            
         /****    KILL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_KILL_LOCAL_PROCS:
             /* unpack the jobid */

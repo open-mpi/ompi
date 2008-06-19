@@ -25,9 +25,6 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/mca/dpm/dpm.h"
 
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-
 int
 ompi_init_preconnect_mpi(void)
 {
@@ -84,80 +81,3 @@ ompi_init_preconnect_mpi(void)
 
     return ret;
 }
-
-    
-int
-ompi_init_preconnect_oob(void)
-{
-    int param, ret, value = 0;
-    size_t world_size, next, prev, i, j, world_rank, simultaneous;
-    ompi_proc_t **procs;
-    struct iovec inmsg[1], outmsg[1];
-
-    param = mca_base_param_find("mpi", NULL, "preconnect_oob");
-    if (OMPI_ERROR == param) return OMPI_SUCCESS;
-    ret = mca_base_param_lookup_int(param, &value);
-    if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
-    if (0 == value) {
-        param = mca_base_param_find("mpi", NULL, "preconnect_all");
-        if (OMPI_ERROR == param) return OMPI_SUCCESS;
-        ret = mca_base_param_lookup_int(param, &value);
-        if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
-    }
-    if (0 == value) return OMPI_SUCCESS;
-
-    param = mca_base_param_find("mpi", NULL, "preconnect_oob_simultaneous");
-    if (OMPI_ERROR == param) return OMPI_SUCCESS;
-    ret = mca_base_param_lookup_int(param, &value);
-    if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
-    simultaneous = (value < 1) ? 1 : value;
-
-    procs = ompi_proc_world(&world_size);
-
-    inmsg[0].iov_base = outmsg[0].iov_base = NULL;
-    inmsg[0].iov_len = outmsg[0].iov_len = 0;
-
-    /* proc_world and ompi_comm_world should have the same proc list... */
-    if ((int) world_size != ompi_comm_size(MPI_COMM_WORLD)) {
-        return OMPI_ERR_NOT_FOUND;
-    } else if (ompi_proc_local() !=
-               procs[ompi_comm_rank(MPI_COMM_WORLD)]) {
-        return OMPI_ERR_NOT_FOUND;
-    }
-    world_rank = (size_t) ompi_comm_rank(MPI_COMM_WORLD);
-
-    /* Each iteration, every process sends to its neighbor i hops to
-       the right and receives from its neighbor i hops to the left.
-       This limits any "flooding" effect that can occur with other
-       connection algorithms, which can overwhelm the out-of-band
-       connection system, leading to poor performance and hangs. */
-    if (world_size < simultaneous) {
-        simultaneous = world_size;
-    }
-    for (i = 1 ; i <= world_size / 2 ; i += simultaneous) {
-        for (j = 0 ; j < simultaneous ; ++j) {
-            next = (world_rank + (i + j )) % world_size;
-                    
-            /* sends do not wait for a match */
-            ret = orte_rml.send(&procs[next]->proc_name,
-                                outmsg,
-                                1,
-                                OMPI_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        }
-        for (j = 0 ; j < simultaneous ; ++j) {
-            prev = (world_rank - (i + j) + world_size) % world_size;
-                    
-            ret = orte_rml.recv(&procs[prev]->proc_name,
-                                inmsg,
-                                1,
-                                OMPI_RML_TAG_WIREUP,
-                                0);
-            if (ret < 0) return ret;
-        }
-    }
-    
-    return OMPI_SUCCESS;
-}
-    
