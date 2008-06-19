@@ -222,10 +222,10 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
         mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
 
-    CHECK(reg_int("ib_sg_list_size", "Size of IB segment list "
+    CHECK(reg_int("ib_max_inline_data", "Maximal size of inline data segment "
                   "(must be >= 1)",
-                  4, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.ib_sg_list_size = (uint32_t) ival;
+                  128, &ival, REGINT_GE_ZERO));
+    mca_btl_openib_component.ib_max_inline_data = (uint32_t) ival;
 
     CHECK(reg_int("ib_pkey_ix", "InfiniBand pkey index "
                   "(must be >= 0)",

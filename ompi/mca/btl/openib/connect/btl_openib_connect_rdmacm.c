@@ -198,6 +198,24 @@ static void rdmacm_cleanup(rdmacm_contents_t *local,
     }
 }
 
+/* Returns max inlne size for qp #N */
+static int max_inline_size(int qp)
+{
+    if (mca_btl_openib_component.qp_infos[qp].size <=
+            mca_btl_openib_component.ib_max_inline_data) {
+        /* If qp message size is smaller that max inline -
+         * we should enable inline messages */
+        return mca_btl_openib_component.qp_infos[qp].size;
+    } else if (mca_btl_openib_component.rdma_qp == qp || 0 == qp) {
+        /* If qp message size is bigger that max inline -
+         * we should enable inline messages
+         * only for RDMA QP (for PUT/GET fin messages) and for the first qp */
+        return mca_btl_openib_component.ib_max_inline_data;
+    }
+    /* Otherway it is no reason for inline */
+    return 0;
+}
+
 static int rdmacm_setup_qp(rdmacm_contents_t *local,
                            mca_btl_openib_endpoint_t *endpoint,
                            struct rdma_cm_id *id,
@@ -207,6 +225,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
     struct ibv_qp *qp;
     struct ibv_srq *srq = NULL;
     int credits = 0, reserved = 0, max_recv_wr, max_send_wr;
+    size_t req_inline;
 
     if (qpnum == mca_btl_openib_component.credits_qp) {
         int i;
@@ -233,7 +252,8 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
     attr.srq = srq;
     attr.cap.max_recv_wr = max_recv_wr;
     attr.cap.max_send_wr = max_send_wr;
-    attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
+    attr.cap.max_inline_data = req_inline = max_inline_size(qpnum);
+    attr.cap.max_send_sge = 1;
     attr.cap.max_recv_sge = 1; /* we do not use SG list */
 
     qp = ibv_create_qp(local->openib_btl->hca->ib_pd, &attr);
@@ -243,12 +263,10 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
     }
 
     endpoint->qps[qpnum].qp->lcl_qp = qp;
+    endpoint->qps[qpnum].ib_inline_max =
+        attr.cap.max_inline_data < req_inline ?
+        attr.cap.max_inline_data : req_inline;
     id->qp = qp;
-
-    /* After creating the qp, the driver will write the max_inline_data
-     * in the attributes.  Update the btl with this data.
-     */
-    local->openib_btl->ib_inline_max = attr.cap.max_inline_data;
 
     return 0;
 
