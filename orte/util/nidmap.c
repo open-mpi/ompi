@@ -231,8 +231,8 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
         /* check to see if all reported archs are the same */
         homo = true;
-        for (i=0; i < num_nodes; i++) {
-            if (arch[i] != arch[0]) {
+        for (i=1; i < num_nodes; i++) {
+            if (nodes[i]->arch != nodes[0]->arch) {
                 homo = false;
                 break;
             }
