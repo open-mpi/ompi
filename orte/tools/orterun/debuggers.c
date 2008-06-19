@@ -75,7 +75,7 @@ struct MPIR_PROCDESC {
 
 struct MPIR_PROCDESC *MPIR_proctable = NULL;
 int MPIR_proctable_size = 0;
-bool MPIR_being_debugged = false;
+int MPIR_being_debugged = 0;
 volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
 volatile int MPIR_partial_attach_ok = 1;
