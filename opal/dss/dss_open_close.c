@@ -54,9 +54,7 @@ opal_dss_t opal_dss = {
     opal_dss_register,
     opal_dss_lookup_data_type,
     opal_dss_dump_data_types,
-    opal_dss_dump,
-    opal_dss_pack_buffer,
-    opal_dss_unpack_buffer
+    opal_dss_dump
 };
 
 /**
