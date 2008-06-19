@@ -61,6 +61,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/util/show_help.h"
 
 #include "debuggers.h"
@@ -461,6 +462,12 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
         dump();
     }
 
+    /* wait for all procs to have reported their contact info - this
+     * ensures that (a) they are all into mpi_init, and (b) the system
+     * has the contact info to successfully send a message to rank=0
+     */
+    ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
+    
     (void) MPIR_Breakpoint();
     
     /* send a message to rank=0 to release it */
