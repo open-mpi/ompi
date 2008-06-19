@@ -345,7 +345,8 @@ int orterun(int argc, char *argv[])
     orte_process_info.hnp = true;
 
     /* Setup MCA params */
-
+    orte_register_params();
+    
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);

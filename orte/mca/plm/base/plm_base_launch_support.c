@@ -483,6 +483,7 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     pid_t pid;
     orte_job_t *jdata;
     orte_proc_t **procs;
+    orte_process_name_t proc;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -517,6 +518,9 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     }
     procs = (orte_proc_t**)(jdata->procs->addr);
     
+    /* setup the process name */
+    proc.jobid = jobid;
+    
     /* the daemon will report the vpid, state, and pid of each
      * process it launches - we need the pid in particular so
      * that any debuggers can attach to the process
@@ -547,6 +551,23 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
             ORTE_ERROR_LOG(rc);
             app_launch_failed = true;
             goto CLEANUP;
+        }
+        
+        /* it is possible for a race condition to exist when the HNP does not have
+         * local procs whereby the HNP will need to communicate to a remote
+         * proc before it decodes the launch message itself and sets all the routes.
+         * This has been seen in cases where no local procs are launched and
+         * a debugger needs to attach to the job.
+         * To support that situation, go ahead and update the route here
+         */
+        proc.vpid = vpid;
+        /* if the sender is me, the route is direct to avoid infinite loops. We
+         * know the jobid is the same since the sender was another daemon
+         */
+        if (mev->sender.vpid == ORTE_PROC_MY_NAME->vpid) {
+            orte_routed.update_route(&proc, &proc);
+        } else {
+            orte_routed.update_route(&proc, &mev->sender);
         }
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
