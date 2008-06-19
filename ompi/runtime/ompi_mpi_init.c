@@ -303,15 +303,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     orte_setup = true;
     
-    if (!ORTE_DISABLE_FULL_SUPPORT) {
-        /* warmup the OOB routes.  Do this here because
-         it will go much faster before the event library is switched
-         into non-blocking mode */
-        if (OMPI_SUCCESS != (ret = orte_routed.warmup_routes())) {
-            error = "orte_routed_warmup_routes() failed";
-            goto error;
-        }
+#if !ORTE_DISABLE_FULL_SUPPORT
+    /* warmup the OOB routes.  Do this here because
+     it will go much faster before the event library is switched
+     into non-blocking mode */
+    if (OMPI_SUCCESS != (ret = orte_routed.warmup_routes())) {
+        error = "orte_routed_warmup_routes() failed";
+        goto error;
     }
+#endif
     
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
