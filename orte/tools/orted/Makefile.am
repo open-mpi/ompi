@@ -17,6 +17,7 @@
 # $HEADER$
 #
 
+if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orted
@@ -34,3 +35,5 @@ orted_SOURCES = orted.c
 #  libraries on the computes 
 orted_LDFLAGS =
 orted_LDADD = $(top_builddir)/orte/libopen-rte.la
+
+endif # !ORTE_DISABLE_FULL_SUPPORT

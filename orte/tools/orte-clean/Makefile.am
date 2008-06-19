@@ -17,6 +17,7 @@
 # $HEADER$
 #
 
+if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-clean
@@ -29,3 +30,5 @@ endif # OMPI_INSTALL_BINARIES
 
 orte_clean_SOURCES = orte-clean.c
 orte_clean_LDADD = $(top_builddir)/orte/libopen-rte.la
+
+endif # !ORTE_DISABLE_FULL_SUPPORT

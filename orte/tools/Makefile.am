@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,35 +18,23 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from orte/Makefile.am
+# This makefile.am does not stand on its own - it is included from
+# orte/Makefile.am
 
 SUBDIRS += \
-	tools/wrappers
-
-DIST_SUBDIRS += \
-	tools/wrappers
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-SUBDIRS += \
-	tools/orted \
-	tools/orterun \
-	tools/orte-clean \
-	tools/orte-ps \
-	tools/wrappers
-
-DIST_SUBDIRS += \
-	tools/orted \
-	tools/orterun \
-	tools/orte-ps \
-	tools/orte-clean \
 	tools/orte-checkpoint \
+	tools/orte-clean \
+	tools/orte-ps \
 	tools/orte-restart \
+	tools/orted \
+	tools/orterun \
 	tools/wrappers
 
-if WANT_FT
-SUBDIRS += \
+DIST_SUBDIRS += \
 	tools/orte-checkpoint \
-	tools/orte-restart
-endif
-endif
+	tools/orte-clean \
+	tools/orte-ps \
+	tools/orte-restart \
+	tools/orted \
+	tools/orterun \
+	tools/wrappers
