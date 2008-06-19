@@ -546,15 +546,6 @@ typedef char* (*opal_dss_lookup_data_type_fn_t)(opal_data_type_t type);
  */
 typedef void (*opal_dss_dump_data_types_fn_t)(int output);
 
-/* utility funtions for specialized packing and unpacking. 
- * These are useful for creating pack/unpack functions for user
- * defined types. these are NOT for general purpose use  */
-typedef int (*opal_dss_pack_buffer_fn_t)(opal_buffer_t *buffer, const void *src,
-                                         int32_t num_values, opal_data_type_t type);
-typedef int (*opal_dss_unpack_buffer_fn_t)(opal_buffer_t *buffer, void *dest,
-                                           int32_t *num_values,
-                                           opal_data_type_t type);
-
 
 /**
  * Base structure for the DSS
@@ -581,8 +572,6 @@ struct opal_dss_t {
     opal_dss_lookup_data_type_fn_t  lookup_data_type;
     opal_dss_dump_data_types_fn_t   dump_data_types;
     opal_dss_dump_fn_t              dump;
-    opal_dss_pack_buffer_fn_t       pack_buffer;
-    opal_dss_unpack_buffer_fn_t     unpack_buffer;
 };
 typedef struct opal_dss_t opal_dss_t;
 
