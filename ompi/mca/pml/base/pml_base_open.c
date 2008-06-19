@@ -139,7 +139,7 @@ int mca_pml_base_open(void)
                                        "Specify a specific PML to use", 
                                        false, false, "", &default_pml);
         
-        if(0 == strlen(default_pml)){ 
+        if( (0 == strlen(default_pml)) || (default_pml[0] == '^') ) { 
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else { 
