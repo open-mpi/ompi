@@ -17,6 +17,7 @@
 # $HEADER$
 #
 
+if !ORTE_DISABLE_FULL_SUPPORT
 if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 if WANT_INSTALL_HEADERS
 
@@ -54,3 +55,5 @@ ortecc.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
 ortec++.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f ortec++.1
 	sed -e 's/@COMMAND@/ortec++/g' -e 's/@PROJECT@/OpenRTE/g' -e 's/@PROJECT_SHORT@/ORTE/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > ortec++.1
+
+endif # !ORTE_DISABLE_FULL_SUPPORT

@@ -17,6 +17,8 @@
 # $HEADER$
 #
 
+if !ORTE_DISABLE_FULL_SUPPORT
+if WANT_FT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-checkpoint
@@ -41,3 +43,6 @@ ompi-checkpoint.1: $(top_srcdir)/orte/tools/orte-checkpoint/orte-checkpoint.1
 
 distclean-local:
 	rm -f ompi-checkpoint.1
+
+endif # WANT_FT
+endif # !ORTE_DISABLE_FULL_SUPPORT

@@ -17,6 +17,8 @@
 # $HEADER$
 #
 
+if !ORTE_DISABLE_FULL_SUPPORT
+if WANT_FT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-restart
@@ -41,3 +43,6 @@ ompi-restart.1: $(top_srcdir)/orte/tools/orte-restart/orte-restart.1
 
 distclean-local:
 	rm -f ompi-restart.1
+
+endif # WANT_FT
+endif # ORTE_DISABLE_FULL_SUPPORT

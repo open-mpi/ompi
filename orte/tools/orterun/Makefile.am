@@ -26,6 +26,7 @@
 
 CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
+if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orterun
@@ -44,3 +45,5 @@ orterun_SOURCES = \
         debuggers.c
  
 orterun_LDADD = $(top_builddir)/orte/libopen-rte.la
+
+endif # !ORTE_DISABLE_FULL_SUPPORT
