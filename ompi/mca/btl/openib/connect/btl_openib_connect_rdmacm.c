@@ -443,7 +443,7 @@ static int handle_connect_request(rdmacm_contents_t *local,
     BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x port %d",
                  endpoint->endpoint_state, local->ipaddr, message->ipaddr, rem_port));
 
-    if ((local->ipaddr > message->ipaddr && local->tcp_port > rem_port) ||
+    if ((local->ipaddr == message->ipaddr && local->tcp_port > rem_port) ||
         local->ipaddr > message->ipaddr) {
         int race = 1;
 
@@ -819,7 +819,7 @@ static int finish_connect(rdmacm_contents_t *local, int num)
     return 0;
 
 out1:
-    ibv_destroy_qp(local->endpoint->qps[num].qp->lcl_qp);
+    ibv_destroy_qp(local->id[num]->qp);
 out:
     rdmacm_cleanup(local, local->id[num], num);
 
@@ -926,6 +926,7 @@ static void *rdmacm_event_dispatch(int fd, int flags, void *context)
         data = malloc(event->param.conn.private_data_len);
         if (NULL == data) {
            BTL_ERROR(("error mallocing memory"));
+           /* JMS need to propagate an error up to BTL or PML somehow */
            return NULL;
         }
         memcpy(data, event->param.conn.private_data, event->param.conn.private_data_len);
@@ -938,6 +939,7 @@ static void *rdmacm_event_dispatch(int fd, int flags, void *context)
         BTL_ERROR(("Error rdma_event_handler -- %s, status = %d",
                     rdma_event_str(ecopy.event),
                     ecopy.status));
+        /* JMS need to propagate an error up to BTL or PML somehow */
     }
 
     if (NULL != data)
