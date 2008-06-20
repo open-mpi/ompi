@@ -616,6 +616,13 @@ static bool route_is_defined(const orte_process_name_t *target)
 
 static int update_routing_tree(void)
 {
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+    
     /* nothing to do here as the routing tree is fixed */
     return ORTE_SUCCESS;
 }
@@ -625,11 +632,17 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
 {
     orte_namelist_t *nm;
     
-    /* for anyone other than the HNP, the linear routing
-     * does not go anywhere - we don't relay - and our
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return ORTE_VPID_INVALID;
+    }
+    
+    /* if I am a daemon, I have no children and my
      * parent is the HNP
      */
-    if (!orte_process_info.hnp) {
+    if (orte_process_info.daemon) {
         return ORTE_PROC_MY_HNP->vpid;
     }
     
@@ -652,6 +665,14 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 {
     int rc;
     
+    /* if I am anything other than the HNP, this
+     * is a meaningless command as I cannot get
+     * the requested info
+     */
+    if (!orte_process_info.hnp) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+    
     /* if we are not using static ports, then we need to share the
      * comm info - otherwise, just return
      */
@@ -659,7 +680,7 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(job, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;

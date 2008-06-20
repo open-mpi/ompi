@@ -681,6 +681,13 @@ static int update_routing_tree(void)
 {
     opal_list_item_t *item;
     
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+    
     /* clear the list of children if any are already present */
     while (NULL != (item = opal_list_remove_first(&my_children))) {
         OBJ_RELEASE(item);
@@ -699,6 +706,13 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
 {
     opal_list_item_t *item;
     orte_namelist_t *nm, *child;
+    
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return ORTE_VPID_INVALID;
+    }
     
     /* the binomial routing tree always goes to our children,
      * for any job
@@ -723,6 +737,14 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 {
     int rc;
     
+    /* if I am anything other than the HNP, this
+     * is a meaningless command as I cannot get
+     * the requested info
+     */
+    if (!orte_process_info.hnp) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+    
     /* if we are not using static ports, then we need to share the
      * comm info - otherwise, just return
      */
@@ -730,7 +752,7 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(job, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;
