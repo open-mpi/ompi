@@ -710,6 +710,10 @@ static void hca_construct(mca_btl_openib_hca_t *hca)
     hca->xrc_fd = -1;
 #endif
     hca->qps = NULL;
+#if OMPI_HAVE_THREADS
+    mca_btl_openib_component.async_pipe[0] = 
+        mca_btl_openib_component.async_pipe[1] = -1;
+#endif
     OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&hca->send_free_control, ompi_free_list_t);
 }
@@ -734,7 +738,8 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
     }
 #endif
     /* signaling to async_tread to stop poll for this hca */
-    if(mca_btl_openib_component.use_async_event_thread) {
+    if (mca_btl_openib_component.use_async_event_thread &&
+        -1 != mca_btl_openib_component.async_pipe[1]) {
         int hca_to_remove;
         hca_to_remove = -(hca->ib_dev_context->async_fd);
         if (write(mca_btl_openib_component.async_pipe[1], &hca_to_remove,
