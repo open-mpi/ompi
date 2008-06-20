@@ -22,6 +22,11 @@
 
 #set -x
 
+# Just to make sure that local setup doesn't interfere with what we're
+# doing here in this script
+unalias test sort cut xargs echo 2> /dev/null
+unset GREP_COLORS
+
 ##############################################################################
 #
 # User-definable parameters (search path and minimum supported versions)
@@ -985,7 +990,7 @@ process_framework() {
             # it into form we like
             component_list=
             component_list_sort $mca_no_config_env_file
-            component_list_define="m4_define(mca_${framework}_no_config_component_list, ["
+            component_list_define="m4_define([mca_${framework}_no_config_component_list], ["
             component_list_define_first="1"
             for component in $component_list ; do
                 if test "$component_list_define_first" = "1"; then
@@ -1001,7 +1006,7 @@ process_framework() {
             # make list of components that are "m4 configure"
             component_list=
             component_list_sort $mca_m4_config_env_file
-            component_list_define="m4_define(mca_${framework}_m4_config_component_list, ["
+            component_list_define="m4_define([mca_${framework}_m4_config_component_list], ["
             component_list_define_first="1"
             for component in $component_list ; do
                 if test "$component_list_define_first" = "1"; then
@@ -1030,7 +1035,7 @@ process_project() {
     done
 
     # make list of frameworks for this project
-    framework_list_define="m4_define(mca_${project}_framework_list, ["
+    framework_list_define="m4_define([mca_${project}_framework_list], ["
     framework_list_define_first="1"
     for framework in $framework_list ; do
         if test "$framework_list_define_first" = "1"; then
@@ -1117,7 +1122,7 @@ EOF
 
     # create the m4 defines for the list of projects.  The list of
     # frameworks for each project is already created and in the file.
-    project_list_define="m4_define(mca_project_list, ["
+    project_list_define="m4_define([mca_project_list], ["
     project_list_define_first="1"
     for project in $project_list ; do
         if test "$project_list_define_first" = "1"; then
