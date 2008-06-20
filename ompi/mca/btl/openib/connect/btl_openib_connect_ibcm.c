@@ -2243,6 +2243,7 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
 
         if (OMPI_SUCCESS != rc) {
             OPAL_OUTPUT((-1, "An error occurred handling an IBCM event.  Bad things are likely to happen."));
+            /* JMS need to propagate an error up to BTL or PML somehow */
         }
     }
 
