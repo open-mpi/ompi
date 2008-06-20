@@ -220,6 +220,9 @@ namespace MPI {
 
     // JMS To be deleted when the all the STL is removed from these bindings
     extern opal_mutex_t *mpi_map_mutex;
+
+    // Version string
+    extern const char ompi_libcxx_version_string[];
 }
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
