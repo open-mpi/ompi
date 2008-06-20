@@ -670,6 +670,13 @@ static bool route_is_defined(const orte_process_name_t *target)
 
 static int update_routing_tree(void)
 {
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+    
     /* nothing to do here as the routing tree is fixed */
     return ORTE_SUCCESS;
 }
@@ -679,11 +686,17 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
 {
     orte_namelist_t *nm;
     
-    /* for anyone other than the HNP, the direct routing
-     * does not go anywhere - we don't relay - and our
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return ORTE_VPID_INVALID;
+    }
+    
+    /* if I am a daemon, I have no children and my
      * parent is the HNP
      */
-    if (!orte_process_info.hnp) {
+    if (orte_process_info.daemon) {
         return ORTE_PROC_MY_HNP->vpid;
     }
     
@@ -702,11 +715,19 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
     return ORTE_VPID_INVALID;
 }
 
-static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
+static int get_wireup_info(orte_jobid_t jobid, opal_buffer_t *buf)
 {
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
+    /* if I am anything other than the HNP, this
+     * is a meaningless command as I cannot get
+     * the requested info
+     */
+    if (!orte_process_info.hnp) {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(jobid, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;
