@@ -224,7 +224,7 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("ib_max_inline_data", "Maximal size of inline data segment "
                   "(must be >= 1)",
-                  128, &ival, REGINT_GE_ZERO));
+                  64, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (uint32_t) ival;
 
     CHECK(reg_int("ib_pkey_ix", "InfiniBand pkey index "
