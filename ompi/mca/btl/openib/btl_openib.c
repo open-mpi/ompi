@@ -318,6 +318,17 @@ int mca_btl_openib_add_procs(
         int remote_matching_port;
 
         opal_output(-1, "add procs: adding proc %d", i);
+
+        /* Most current iWARP adapters (June 2008) cannot handle
+           talking to other processes on the same host (!) -- so mark
+           them as unreachable (need to use sm).  So for the moment,
+           we'll just mark any local peer on an iWARP NIC as
+           unreachable.  See trac ticket #1352. */
+        if (IBV_TRANSPORT_IWARP == openib_btl->hca->ib_dev->transport_type &&
+            0 != (ompi_proc->proc_flags && OMPI_PROC_FLAG_LOCAL)) {
+            continue;
+        }
+
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
