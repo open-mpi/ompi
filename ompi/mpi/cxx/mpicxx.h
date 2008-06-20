@@ -218,9 +218,6 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/info.h"
 #endif
 
-    // JMS To be deleted when the all the STL is removed from these bindings
-    extern opal_mutex_t *mpi_map_mutex;
-
     // Version string
     extern const char ompi_libcxx_version_string[];
 }

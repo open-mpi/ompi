@@ -28,8 +28,6 @@
 #include "ompi/datatype/datatype.h"
 #include "opal/threads/mutex.h"
 
-opal_mutex_t *MPI::mpi_map_mutex;
-
 extern "C"
 void ompi_mpi_cxx_throw_exception(int *errcode)
 {
@@ -88,14 +86,6 @@ MPI::InitializeIntercepts()
 #endif
     ompi_mpi_errors_throw_exceptions.eh_win_fn = 
         ompi_mpi_cxx_win_throw_excptn_fctn;
-
-    MPI::mpi_map_mutex = OBJ_NEW(opal_mutex_t);
-}
-
-void
-MPI::FinalizeIntercepts()
-{
-    OBJ_RELEASE(MPI::mpi_map_mutex);
 }
 
 
