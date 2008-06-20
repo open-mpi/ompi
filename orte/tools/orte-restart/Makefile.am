@@ -17,6 +17,10 @@
 # $HEADER$
 #
 
+# Bug in AM 1.10.1: need to list man pages because dist_man_MANS is
+# not picked up inside of an AM_CONDITIONAL
+EXTRA_DIST = orte-restart.1 ompi-restart.1
+
 if !ORTE_DISABLE_FULL_SUPPORT
 if WANT_FT
 if OMPI_INSTALL_BINARIES
