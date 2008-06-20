@@ -367,7 +367,7 @@ int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*) btl; 
     mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)descriptor; 
-    size_t i;
+    int i;
 
     frag->btl = tcp_btl;
     frag->endpoint = endpoint;
@@ -378,7 +378,7 @@ int mca_btl_tcp_send( struct mca_btl_base_module_t* btl,
     frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;
     frag->iov[0].iov_len = sizeof(frag->hdr);
     frag->hdr.size = 0;
-    for(i=0; i<frag->base.des_src_cnt; i++) {
+    for( i = 0; i < (int)frag->base.des_src_cnt; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+1].iov_len = frag->segments[i].seg_len;
         frag->iov[i+1].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
