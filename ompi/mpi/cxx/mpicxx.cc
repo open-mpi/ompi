@@ -33,7 +33,9 @@ static const int ompi_stdio_seek_end = SEEK_END;
 #elif OMPI_CXX_USE_IDENT
 #ident OMPI_IDENT_STRING
 #endif
-const char ompi_libcxx_version_string[] = OMPI_IDENT_STRING;
+namespace MPI {
+    const char ompi_libcxx_version_string[] = OMPI_IDENT_STRING;
+}
 
 #include "ompi/errhandler/errhandler.h"
 
