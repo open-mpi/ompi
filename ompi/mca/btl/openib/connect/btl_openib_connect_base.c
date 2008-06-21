@@ -74,7 +74,10 @@ int ompi_btl_openib_connect_base_register(void)
 
     /* Make an MCA parameter to select which connect module to use */
     for (i = 0; NULL != all[i]; ++i) {
-        opal_argv_append_nosize(&temp, all[i]->cbc_name);
+        /* The CPC name "empty" is reserved for "fake" CPC modules */
+        if (0 != strcmp(all[i]->cbc_name, "empty")) {
+            opal_argv_append_nosize(&temp, all[i]->cbc_name);
+        }
     }
     all_cpc_names = opal_argv_join(temp, ',');
     opal_argv_free(temp);
