@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,12 +56,17 @@ int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen)
       }
    }
 
-   /* Simple.  Copy over the entire name (including all blanks at the
-      end) because a) the user must have passed us a string of at
-      least length MPI_MAX_OBJECT_LEN, and b) if this is a call from
-      Fortran, the string may require null padding on the right.  */
+    /* Note that MPI-2.1 requires:
+       - terminating the string with a \0
+       - name[*resultlen] == '\0'
+       - and therefore (*resultlen) cannot be > (MPI_MAX_OBJECT_NAME-1)
 
+       The Fortran API version will pad to the right if necessary.
+
+       Note that type->name is guaranteed to be \0-terminated and
+       able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
+       name+\0). */
    *resultlen = (int)strlen(type->name);
-   strncpy(type_name, type->name, MPI_MAX_OBJECT_NAME);
+   strcpy(type_name, type->name);
    return MPI_SUCCESS;
 }

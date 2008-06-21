@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,12 +60,21 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
 #ifdef USE_MUTEX_FOR_COMMS
     OPAL_THREAD_LOCK(&(comm->c_lock));
 #endif
+    /* Note that MPI-2.1 requires:
+       - terminating the string with a \0
+       - name[*resultlen] == '\0'
+       - and therefore (*resultlen) cannot be > (MPI_MAX_OBJECT_NAME-1)
+
+       The Fortran API version will pad to the right if necessary. 
+
+       Note that comm->c_name is guaranteed to be \0-terminated and
+       able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
+       name+\0). */
     if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
-        strncpy ( name, comm->c_name, MPI_MAX_OBJECT_NAME );
-        *length = (int)strlen( comm->c_name );
-    }
-    else {
-        memset ( name, 0, MPI_MAX_OBJECT_NAME );
+        strcpy(name, comm->c_name);
+        *length = (int) strlen(comm->c_name);
+    } else {
+        name[0] = '\0';
         *length = 0;
     }
 #ifdef USE_MUTEX_FOR_COMMS
