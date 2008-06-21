@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -40,6 +40,21 @@ Trunk (not on release branches yet)
   threading support)
   --> Expected: ???
 
+- Various enhancements to the openib BTL:
+  - Added btl_openib_if_[in|ex]clude MCA parameters for
+    including/excluding comma-delimited lists of HCAs and ports.
+  - Added IB CM and RDMA CM support, includng
+    btl_openib_cpc_[in|ex]clude MCA parameters
+  - Added NUMA support to only use "near" network adapters
+  - Added "Bucket SRQ" (BSRQ) support to better utilize registered
+    memory, including btl_openib_receive_queues MCA parameter
+  - Added ConnectX XRC support (and integrated with BSRQ)
+  - Added btl_openib_ib_max_inline_data MCA parameter
+  - Added iWARP support
+  - Revamped flow control mechansisms to be more efficient
+  --> Expected: 1.3
+- Added NUMA support to the shared memory BTL.
+  --> Expected: 1.3
 - Add Valgrind-based memory checking for MPI-semantic checks.
   --> Expected: 1.3
 - Add support for some optional Fortran datatypes (MPI_LOGICAL1,
@@ -55,9 +70,6 @@ Trunk (not on release branches yet)
 - Add RDMA capable one-sided component (called rdma), which
   can be used with BTL components that expose a full one-sided
   interface.
-  --> Expected: 1.3
-- Added btl_openib_if_[in|ex]clude MCA parameters for
-  including/excluding comma-delimited lists of HCAs and ports.
   --> Expected: 1.3
 - Add the optional datatype MPI_REAL2. As this is added to the "end of"
   predefined datatypes in the fortran header files, there will not be
