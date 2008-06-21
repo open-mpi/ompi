@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,7 +72,7 @@ void mpi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr,
                               int name_len)
 {
     int c_err, ret;
-    char c_name[MPI_MAX_PROCESSOR_NAME + 1];
+    char c_name[MPI_MAX_PROCESSOR_NAME];
     OMPI_SINGLE_NAME_DECL(resultlen);
 
     *ierr = OMPI_INT_2_FINT(MPI_Get_processor_name(c_name, 

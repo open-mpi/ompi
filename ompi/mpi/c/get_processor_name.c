@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,9 +38,6 @@ static const char FUNC_NAME[] = "MPI_Get_processor_name";
 
 int MPI_Get_processor_name(char *name, int *resultlen) 
 {
-    char tmp[MPI_MAX_PROCESSOR_NAME];
-    int len;
-
     OPAL_CR_NOOP_PROGRESS();
 
     if ( MPI_PARAM_CHECK) {
@@ -54,29 +51,20 @@ int MPI_Get_processor_name(char *name, int *resultlen)
                                           FUNC_NAME);
         }
     }
-    
-    /* A simple implementation of this function using gethostname*/
-    gethostname (tmp, MPI_MAX_PROCESSOR_NAME);
-    len = (int)strlen (tmp);
-    /* Pre-clearing the resulting string is not strictly necessary,
-       but since MPI says that the buffer must be at least
-       MPI_MAX_PROCESSOR_NAME bytes long, it does seem social to zero
-       out past *resultlen.  If nothing else, it makes the intel
-       Fortran MPI_GET_PROCESSOR_NAME tests print out a bit nicer
-       (because it prints out the whole string, not just the first
-       *resultlen characters, so it prints empty space rather than
-       garbage) */
-    memset(name, ' ', MPI_MAX_PROCESSOR_NAME);
-    strncpy ( name, tmp, len);
 
-    if ( MPI_MAX_PROCESSOR_NAME > len ) {
-        *resultlen = len;
-        name[len] = '\0';
-    }
-    else {
-        *resultlen = MPI_MAX_PROCESSOR_NAME-1;
-        name[MPI_MAX_PROCESSOR_NAME-1] = '\0';
-    }
+    /* A simple implementation of this function using gethostname.
+
+       Note that MPI-2.1 requires:
+       - terminating the string with a \0
+       - name[*resultlen] == '\0'
+       - and therefore (*resultlen) cannot be > (MPI_MAX_PROCESSOR_NAME-1)
+
+       Guard against gethostname() returning a *really long* hostname
+       and not null-terminating the string.  The Fortran API version
+       will pad to the right if necessary. */
+    gethostname(name, MPI_MAX_PROCESSOR_NAME - 1);
+    name[MPI_MAX_PROCESSOR_NAME - 1] = '\0';
+    *resultlen = (int) strlen(name);
 
     return MPI_SUCCESS;
 }

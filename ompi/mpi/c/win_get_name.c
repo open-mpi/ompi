@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,6 +49,16 @@ int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen)
 
     OPAL_CR_ENTER_LIBRARY();
 
+    /* Note that MPI-2.1 requires:
+       - terminating the string with a \0
+       - name[*resultlen] == '\0'
+       - and therefore (*resultlen) cannot be > (MPI_MAX_OBJECT_NAME-1)
+
+       The Fortran API version will pad to the right if necessary.
+
+       Note that win->name is guaranteed to be \0-terminated and
+       able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
+       name+\0).  ompi_win_get_name() does the Right things. */
     ret = ompi_win_get_name(win, win_name, resultlen);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }
