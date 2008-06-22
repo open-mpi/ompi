@@ -180,6 +180,9 @@ static inline int ompi_cb_fifo_init(int size_of_fifo,
     fifo->head = (ompi_cb_fifo_ctl_t*)head_mpool->mpool_alloc(head_mpool,
             sizeof(ompi_cb_fifo_ctl_t), getpagesize(), 0, NULL);
 
+    if ( NULL == fifo->head ){
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     /* head address in a receiver address space */
     fifo->recv_head = (ompi_cb_fifo_ctl_t*)((char*)fifo->head - offset);
 
