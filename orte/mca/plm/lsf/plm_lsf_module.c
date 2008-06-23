@@ -282,7 +282,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     }
 
     /* setup environment */
-    env = opal_argv_copy(environ);
+    env = opal_argv_copy(orte_launch_environ);
 
     if (mca_plm_lsf_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {

@@ -328,7 +328,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
 
     /* setup environment */
-    env = opal_argv_copy(environ);
+    env = opal_argv_copy(orte_launch_environ);
     
     /* add the nodelist */
     var = mca_base_param_environ_variable("orte", "alps", "nodelist");

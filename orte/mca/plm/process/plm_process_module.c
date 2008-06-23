@@ -780,7 +780,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
             set_handler_default(SIGCHLD);
             
             /* setup environment */
-            env = opal_argv_copy(environ);
+            env = opal_argv_copy(orte_launch_environ);
             
             /* exec the daemon */
             if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
