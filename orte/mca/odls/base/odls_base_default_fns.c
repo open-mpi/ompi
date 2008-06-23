@@ -29,6 +29,10 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
 #include <signal.h>
 
 #include "opal/util/opal_environ.h"
@@ -495,6 +499,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     char *full_search;
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char **argvptr;
+    char dir[MAXPATHLEN];
 
     /* check the system limits - if we are at our max allowed children, then
      * we won't be allowed to do this anyway, so we may as well abort now.
@@ -526,6 +531,22 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         /* do not ERROR_LOG - it will be reported elsewhere */
         return rc;
     }
+
+    /* The prior function will have done a chdir() to jump us to
+     * wherever the app is to be executed. This could be either where
+     * the user specified (via -wdir), or to the user's home directory
+     * on this node if nothing was provided. It seems that chdir doesn't
+     * adjust the $PWD enviro variable when it changes the directory. This
+     * can cause a user to get a different response when doing getcwd vs
+     * looking at the enviro variable. To keep this consistent, we explicitly
+     * ensure that the PWD enviro variable matches the CWD we moved to.
+     *
+     * NOTE: if a user's program does a chdir(), then $PWD will once
+     * again not match getcwd! This is beyond our control - we are only
+     * ensuring they start out matching.
+     */
+    getcwd(dir, sizeof(dir));
+    opal_setenv("PWD", dir, true, environ_copy);
 
     /* Search for the OMPI_exec_path and PATH settings in the environment. */
     for (argvptr = *environ_copy; *argvptr != NULL; argvptr++) { 
