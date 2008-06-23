@@ -289,6 +289,11 @@ int orte_grpcomm_base_set_proc_attr(const char *attr_name,
     
     OPAL_THREAD_LOCK(&mutex);
     
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:set_proc_attr: setting attribute %s data size %lu",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         attr_name, size));
+
     /* Pack the attribute name information into the local buffer */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(modex_buffer, &attr_name, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
