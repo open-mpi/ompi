@@ -28,14 +28,22 @@ AC_DEFUN([OMPI_CHECK_SLURM],[
     if test "$with_slurm" = "no" ; then
         ompi_check_slurm_happy="no"
     elif test "$with_slurm" = "" ; then
-        # unless user asked, only build slurm component on
-        # linux systems.
+        # unless user asked, only build slurm component on linux, AIX,
+        # and OS X systems (these are the platforms that SLURM
+        # supports)
         case $host in
-            *-linux*|*-aix*)
+            *-linux*|*-aix*|*-apple-darwin*)
                 ompi_check_slurm_happy="yes"
                 ;;
             *)
-                ompi_check_slurm_happy="no"
+                AC_MSG_CHECKING([for SLURM srun in PATH])
+                OMPI_WHICH([srun], [OMPI_CHECK_SLURM_SRUN])
+                if test "$OMPI_CHECK_SLURM_SRUN" = ""; then
+                    ompi_check_slurm_happy="no"
+                else
+                    ompi_check_slurm_happy="yes"
+                fi
+                AC_MSG_RESULT([$ompi_check_slurm_happy])
                 ;;
         esac
     else 
