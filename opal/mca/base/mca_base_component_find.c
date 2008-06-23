@@ -23,12 +23,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #if OMPI_WANT_LIBLTDL
 #include "opal/libltdl/ltdl.h"
 #endif
 
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -132,6 +134,7 @@ int mca_base_component_find(const char *directory, const char *type,
                             bool open_dso_components)
 {
     int i;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
 
     /* Find all the components that were statically linked in */
@@ -167,6 +170,30 @@ int mca_base_component_find(const char *directory, const char *type,
                             type);
     }
 #endif
+
+    /* Ensure that *all* requested components exist.  Print a warning
+       and abort if they do not. */
+    for (i = 0; NULL != requested_component_names && 
+             NULL != requested_component_names[i]; ++i) {
+        for (item = opal_list_get_first(found_components);
+             opal_list_get_end(found_components) != item; 
+             item = opal_list_get_next(item)) {
+            cli = (mca_base_component_list_item_t*) item;
+            if (0 == strcmp(requested_component_names[i], 
+                            cli->cli_component->mca_component_name)) {
+                break;
+            }
+        }
+
+        if (opal_list_get_end(found_components) == item) {
+            char h[HOST_NAME_MAX];
+            gethostname(h, sizeof(h));
+            opal_show_help("help-mca-base.txt", 
+                           "find-available:not-valid", true,
+                           h, type, requested_component_names[i]);
+            return OPAL_ERR_NOT_FOUND;
+        }
+    }
 
     /* All done */
 
