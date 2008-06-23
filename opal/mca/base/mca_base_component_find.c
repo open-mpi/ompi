@@ -24,6 +24,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 
 #if OMPI_WANT_LIBLTDL
 #include "opal/libltdl/ltdl.h"
@@ -186,7 +189,7 @@ int mca_base_component_find(const char *directory, const char *type,
         }
 
         if (opal_list_get_end(found_components) == item) {
-            char h[HOST_NAME_MAX];
+            char h[MAXHOSTNAMELEN];
             gethostname(h, sizeof(h));
             opal_show_help("help-mca-base.txt", 
                            "find-available:not-valid", true,
