@@ -86,7 +86,7 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                        SMPLOCK "cmpxchgl %1,%2   \n\t"
                                "sete     %0      \n\t"
                        : "=qm" (ret)
-                       : "q"(newval), "m"(*((volatile long*)addr)), "a"(oldval)
+                       : "q"(newval), "m"(*addr), "a"(oldval)
                        : "memory");
 
    return (int)ret;
