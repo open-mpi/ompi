@@ -545,7 +545,7 @@ static void ssh_child(int argc, char **argv,
     sigset_t sigs;
 
     /* setup environment */
-    env = opal_argv_copy(environ);
+    env = opal_argv_copy(orte_launch_environ);
     
     /* ensure that only the ssh plm is selected on the remote daemon */
     var = mca_base_param_environ_variable("plm", NULL, NULL);

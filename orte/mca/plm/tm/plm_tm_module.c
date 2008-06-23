@@ -230,7 +230,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     bin_base = opal_basename(opal_install_dirs.bindir);
 
     /* setup environment */
-    env = opal_argv_copy(environ);
+    env = opal_argv_copy(orte_launch_environ);
 
     /* add our umask -- see big note in orted.c */
     current_umask = umask(0);
