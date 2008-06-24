@@ -428,20 +428,12 @@ typedef long long bool;
  * and would want to talk to the outside world... On other platforms
  * (like Windows) we fail to detect them correctly.
  */
-#ifndef __WINDOWS__
-#ifndef HAVE_HTONL
+#if !defined(__WINDOWS__) && !defined(HAVE_UNIX_BYTESWAP)
 static inline uint32_t htonl(uint32_t hostvar) { return hostvar; }
-#endif
-#ifndef HAVE_NTOHL
 static inline uint32_t ntohl(uint32_t netvar) { return netvar; }
-#endif
-#ifndef HAVE_HTONS
 static inline uint16_t htons(uint16_t hostvar) { return hostvar; }
-#endif
-#ifndef HAVE_NTOHS
 static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #endif
-#endif  /* WINDOWS */
 
 /*
  * Define __func__-preprocessor directive if the compiler does not
