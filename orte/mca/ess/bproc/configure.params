@@ -20,3 +20,9 @@
 #
 
 PARAM_CONFIG_FILES="Makefile"
+
+#
+# Set the config priority so that, if we can build,
+# only BPROC component(s) will build
+
+PARAM_CONFIG_PRIORITY=30

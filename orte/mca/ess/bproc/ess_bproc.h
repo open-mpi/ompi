@@ -16,33 +16,20 @@
  * $HEADER$
  */
 
-#ifndef ORTE_SDS_BPROC_H
-#define ORTE_SDS_BPROC_H
+#ifndef ORTE_ESS_BPROC_H
+#define ORTE_ESS_BPROC_H
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-    /*
-     * Module open / close
-     */
-    int orte_sds_bproc_component_open(void);
-    int orte_sds_bproc_component_close(void);
-    orte_sds_base_module_t* orte_sds_bproc_component_init(int *priority);
+/*
+ * Module open / close
+ */
+int orte_ess_bproc_component_open(void);
+int orte_ess_bproc_component_close(void);
+int orte_ess_bproc_component_query(mca_base_module_t **module, int *priority);
 
-    /*
-     * Startup / Shutdown
-     */
-    int orte_sds_bproc_finalize(void);
+ORTE_MODULE_DECLSPEC extern orte_ess_base_component_t mca_ess_bproc_component;
 
-    /*
-     * Module functions
-     */
-    int orte_sds_bproc_set_name(void);
+END_C_DECLS
 
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-#endif /* ORTE_SDS_BPROC_H */
+#endif /* ORTE_ESS_BPROC_H */

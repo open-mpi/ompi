@@ -421,12 +421,44 @@ static bool proc_is_local(orte_process_name_t *proc)
     
 }
 
+/* the daemon's vpid does not necessairly correlate
+ * to the node's index in the node array since
+ * some nodes may not have a daemon on them. Thus,
+ * we have to search for the daemon in the array.
+ * Fortunately, this is rarely done
+ */
+static int32_t find_daemon_node(orte_vpid_t vpid)
+{
+    int32_t i;
+    orte_nid_t **nids;
+    
+    nids = (orte_nid_t**)nidmap.addr;
+    for (i=0; i < nidmap.size; i++) {
+        if (NULL == nids[i]) {
+            break;
+        }
+        if (vpid == nids[i]->daemon) {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
 static char* proc_get_hostname(orte_process_name_t *proc)
 {
     int32_t node;
     orte_nid_t **nids;
     
-    node = pmap[proc->vpid].node;
+    if (ORTE_PROC_MY_DAEMON->jobid == proc->jobid) {
+        /* looking for the daemon's hostname */
+        node = find_daemon_node(proc->vpid);
+        if (0 > node) {
+            return NULL;
+        }
+    } else {
+        node = pmap[proc->vpid].node;
+    }
     nids = (orte_nid_t**)nidmap.addr;
     return nids[node]->name;
 }
@@ -436,7 +468,15 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     int32_t node;
     orte_nid_t **nids;
     
-    node = pmap[proc->vpid].node;
+    if (ORTE_PROC_MY_DAEMON->jobid == proc->jobid) {
+        /* looking for the daemon's arch */
+        node = find_daemon_node(proc->vpid);
+        if (0 > node) {
+            return 0;
+        }
+    } else {
+        node = pmap[proc->vpid].node;
+    }
     nids = (orte_nid_t**)nidmap.addr;
     return nids[node]->arch;
 }
