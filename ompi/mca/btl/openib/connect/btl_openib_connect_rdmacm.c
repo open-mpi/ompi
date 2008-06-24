@@ -37,6 +37,7 @@
 #include "btl_openib_endpoint.h"
 #include "connect/connect.h"
 #include "btl_openib_iwarp.h"
+#include "orte/util/show_help.h"
 
 /* JMS to be removed: see #1264 */
 #undef event
@@ -264,9 +265,15 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
     }
 
     endpoint->qps[qpnum].qp->lcl_qp = qp;
-    endpoint->qps[qpnum].ib_inline_max =
-        attr.cap.max_inline_data < req_inline ?
-        attr.cap.max_inline_data : req_inline;
+    if (attr.cap.max_inline_data < req_inline) {
+        endpoint->qps[qpnum].ib_inline_max = attr.cap.max_inline_data;
+        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+                       "inline truncated", orte_process_info.nodename,
+                       ibv_get_device_name(local->openib_btl->hca->ib_dev),
+                       req_inline, attr.cap.max_inline_data);
+    } else {
+        endpoint->qps[qpnum].ib_inline_max = req_inline;
+    }
     id->qp = qp;
 
     return 0;

@@ -37,6 +37,7 @@
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_proc.h"
 #include "connect/connect.h"
+#include "orte/util/show_help.h"
 
 typedef enum {
     ENDPOINT_CONNECT_REQUEST,
@@ -458,9 +459,16 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
         return OMPI_ERROR; 
     }
     endpoint->qps[qp].qp->lcl_qp = my_qp;
-    endpoint->qps[qp].ib_inline_max =
-        init_attr.cap.max_inline_data < req_inline ?
-        init_attr.cap.max_inline_data : req_inline;
+
+    if (init_attr.cap.max_inline_data < req_inline) {
+        endpoint->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
+        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+                       "inline truncated", orte_process_info.nodename,
+                       ibv_get_device_name(openib_btl->hca->ib_dev),
+                       req_inline, init_attr.cap.max_inline_data);
+    } else {
+        endpoint->qps[qp].ib_inline_max = req_inline;
+    }
     
     attr.qp_state        = IBV_QPS_INIT;
     attr.pkey_index      = openib_btl->pkey_index;

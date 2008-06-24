@@ -25,6 +25,7 @@
 #include "btl_openib_xrc.h"
 #include "btl_openib_async.h"
 #include "connect/connect.h"
+#include "orte/util/show_help.h"
 
 static void xoob_component_register(void);
 static int xoob_component_query(mca_btl_openib_module_t *openib_btl, 
@@ -400,12 +401,19 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     qp_init_attr.qp_type = IBV_QPT_XRC;
     qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
     *qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr);
-    endpoint->qps[0].ib_inline_max =
-        qp_init_attr.cap.max_inline_data < req_inline ?
-        qp_init_attr.cap.max_inline_data : req_inline;
     if (NULL == *qp) {
         BTL_ERROR(("Error creating QP, errno says: %s", strerror(errno)));
         return OMPI_ERROR;
+    }
+
+    if (qp_init_attr.cap.max_inline_data < req_inline) {
+        endpoint->qps[0].ib_inline_max = qp_init_attr.cap.max_inline_data;
+        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+                       "inline truncated", orte_process_info.nodename,
+                       ibv_get_device_name(openib_btl->hca->ib_dev),
+                       req_inline, qp_init_attr.cap.max_inline_data);
+    } else {
+        endpoint->qps[0].ib_inline_max = req_inline;
     }
 
     attr.qp_state = IBV_QPS_INIT;
