@@ -393,7 +393,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     qp_init_attr.cap.max_recv_wr = 0;
     qp_init_attr.cap.max_send_wr = send_wr;
     qp_init_attr.cap.max_inline_data = req_inline =
-        mca_btl_openib_component.ib_max_inline_data;
+        openib_btl->hca->max_inline_data;
     qp_init_attr.cap.max_send_sge = 1;
     /* this one is ignored by driver */
     qp_init_attr.cap.max_recv_sge = 1; /* we do not use SG list */

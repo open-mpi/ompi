@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -222,10 +222,11 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
         mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
 
-    CHECK(reg_int("ib_max_inline_data", "Maximal size of inline data segment "
-                  "(must be >= 1)",
-                  64, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_max_inline_data = (uint32_t) ival;
+    CHECK(reg_int("ib_max_inline_data", "Maximum size of inline data segment "
+                  "(-1 = use per-device devaults, 0 = run-time probe to discover max value, "
+                  "otherwise must be >= 1)",
+                  -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
+    mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
 
     CHECK(reg_int("ib_pkey_ix", "InfiniBand pkey index "
                   "(must be >= 0)",

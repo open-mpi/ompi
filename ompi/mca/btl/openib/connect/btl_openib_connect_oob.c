@@ -404,18 +404,17 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
 
 
 /* Returns max inlne size for qp #N */
-static int max_inline_size(int qp)
+static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
 {
-    if (mca_btl_openib_component.qp_infos[qp].size <=
-            mca_btl_openib_component.ib_max_inline_data) {
-        /* If qp message size is smaller that max inline -
+    if (mca_btl_openib_component.qp_infos[qp].size <= hca->max_inline_data) {
+        /* If qp message size is smaller than max_inline_data,
          * we should enable inline messages */
         return mca_btl_openib_component.qp_infos[qp].size;
     } else if (mca_btl_openib_component.rdma_qp == qp || 0 == qp) {
-        /* If qp message size is bigger that max inline -
-         * we should enable inline messages
-         * only for RDMA QP (for PUT/GET fin messages) and for the first qp */
-        return mca_btl_openib_component.ib_max_inline_data;
+        /* If qp message size is bigger that max_inline_data, we
+         * should enable inline messages only for RDMA QP (for PUT/GET
+         * fin messages) and for the first qp */
+        return hca->max_inline_data;
     }
     /* Otherway it is no reason for inline */
     return 0;
@@ -441,7 +440,8 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     init_attr.send_cq = openib_btl->hca->ib_cq[BTL_OPENIB_LP_CQ];
     init_attr.recv_cq = openib_btl->hca->ib_cq[qp_cq_prio(qp)];
     init_attr.srq     = srq;
-    init_attr.cap.max_inline_data = req_inline = max_inline_size(qp);
+    init_attr.cap.max_inline_data = req_inline = 
+        max_inline_size(qp, openib_btl->hca);
     init_attr.cap.max_send_sge = 1;
     init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,12 +27,13 @@ typedef struct ompi_btl_openib_ini_values_t {
     bool use_eager_rdma_set;
 
     char *receive_queues;
+
+    uint32_t max_inline_data;
+    bool max_inline_data_set;
 } ompi_btl_openib_ini_values_t;
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
     /**
      * Read in the INI files containing HCA params
@@ -51,7 +52,6 @@ extern "C" {
      */
     int ompi_btl_openib_ini_finalize(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif
