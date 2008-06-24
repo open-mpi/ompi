@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -396,6 +396,12 @@ static int parse_line(parsed_section_values_t *sv)
         value = NULL;
     }
 
+    else if (0 == strcasecmp(key_buffer, "max_inline_data")) {
+        /* Single value */
+        sv->values.max_inline_data = (uint32_t) intify(value);
+        sv->values.max_inline_data_set = true;
+    }
+
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -482,6 +488,9 @@ static void reset_values(ompi_btl_openib_ini_values_t *v)
     v->use_eager_rdma_set = false;
 
     v->receive_queues = NULL;
+
+    v->max_inline_data = 0;
+    v->max_inline_data_set = false;
 }
 
 
@@ -526,6 +535,16 @@ static int save_section(parsed_section_values_t *s)
                     if (s->values.use_eager_rdma_set) {
                         h->values.use_eager_rdma = s->values.use_eager_rdma;
                         h->values.use_eager_rdma_set = true;
+                    }
+
+                    if (NULL != s->values.receive_queues) {
+                        h->values.receive_queues = 
+                            strdup(s->values.receive_queues);
+                    }
+
+                    if (s->values.max_inline_data_set) {
+                        h->values.max_inline_data = s->values.max_inline_data;
+                        h->values.max_inline_data_set = true;
                     }
 
                     found = true;

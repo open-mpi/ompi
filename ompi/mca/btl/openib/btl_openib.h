@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -172,7 +172,7 @@ struct mca_btl_openib_component_t {
 
     uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
 
-    uint32_t ib_max_inline_data; /**< Max size of inline data */
+    int32_t ib_max_inline_data; /**< Max size of inline data */
     uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
     uint32_t ib_pkey_val;
     uint32_t ib_psn;
@@ -321,7 +321,10 @@ typedef struct mca_btl_openib_hca_t {
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
     /**< frags for control massages */
     ompi_free_list_t send_free_control;
+    /* QP types and attributes that will be used on this HCA */
     mca_btl_openib_hca_qp_t *qps;
+    /* Maximum value supported by this HCA for max_inline_data */
+    uint32_t max_inline_data;
 } mca_btl_openib_hca_t;
 OBJ_CLASS_DECLARATION(mca_btl_openib_hca_t);
 
