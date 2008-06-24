@@ -753,7 +753,32 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal sysconf syslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal sysconf syslog regcmp regexec regfree _NSGetEnviron socketpair strncpy_s _strdup usleep mkfifo])
+
+# On some hosts, htonl is a define, so the AC_CHECK_FUNC will get
+# confused.  On others, it's in the standard library, but stubbed with
+# the magic glibc foo as not implemented.  and on other systems, it's
+# just not there.  This covers all cases.
+AC_CACHE_CHECK([for htonl define],
+  [ompi_cv_htonl_define],
+  [AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif],[
+#ifndef ntohl
+#error "ntohl not defined"
+#endif
+])], [ompi_cv_htonl_define=yes], [ompi_cv_htonl_define=no])])
+AC_CHECK_FUNC([htonl], [ompi_have_htonl=yes], [ompi_have_htonl=no])
+AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
+    [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1], 
+        [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
