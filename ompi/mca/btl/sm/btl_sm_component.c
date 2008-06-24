@@ -346,26 +346,6 @@ btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
         opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
 }
 
-static int process_pending_send(struct mca_btl_base_endpoint_t *ep)
-{
-    btl_sm_pending_send_item_t *si;
-    void *data;
-    opal_list_item_t *i = opal_list_remove_first(&ep->pending_sends);
-    int rc;
-
-    if(NULL == i) return OMPI_ERROR;
-
-    si = (btl_sm_pending_send_item_t*)i;
-
-    data = si->data;
-    OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, i);
-
-    MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, data,
-            true, rc);
-
-    return rc;
-}
-
 int mca_btl_sm_component_progress(void)
 {
     /* local variables */
@@ -376,6 +356,7 @@ int mca_btl_sm_component_progress(void)
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
     int peer_smp_rank;
     int rc = 0;
+    bool useless;
 
     /* poll each fifo */
     for(peer_smp_rank = 0; peer_smp_rank < mca_btl_sm_component.num_smp_procs;
@@ -384,7 +365,7 @@ int mca_btl_sm_component_progress(void)
             continue;
 
         fifo = &(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
-
+      recheck_peer:
         /* if fifo is not yet setup - continue - not data has been sent*/
         if(OMPI_CB_FREE == fifo->tail){
             continue;
@@ -395,7 +376,9 @@ int mca_btl_sm_component_progress(void)
             opal_atomic_lock(fifo->tail_lock);
         }
 
-        hdr = (mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail(fifo);
+        hdr = (mca_btl_sm_hdr_t*)ompi_cb_fifo_read_from_tail(&fifo->tail->cb_fifo,
+                                                             fifo->tail->cb_overflow,
+                                                             &useless );
 
         /* release thread lock */
         if(opal_using_threads()) {
@@ -424,7 +407,7 @@ int mca_btl_sm_component_progress(void)
                 Frag.base.des_dst_cnt = 1;
                 Frag.base.des_dst = &(Frag.segment);
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
-                        reg->cbdata);
+                            reg->cbdata);
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
@@ -449,10 +432,7 @@ int mca_btl_sm_component_progress(void)
                 if( btl_ownership ) {
                     MCA_BTL_SM_FRAG_RETURN(frag);
                 }
-                if(opal_list_get_size(&endpoint->pending_sends)) {
-                    process_pending_send(endpoint);
-                }
-                break;
+                goto recheck_peer;
             }
             default:
                 /* unknown */
