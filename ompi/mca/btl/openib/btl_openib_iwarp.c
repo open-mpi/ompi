@@ -43,14 +43,22 @@ typedef struct rdma_addr_list rdma_addr_list_t;
 
 static OBJ_CLASS_INSTANCE(rdma_addr_list_t, opal_list_item_t, 
                           NULL, NULL);
-static opal_list_t myaddrs;
+static opal_list_t *myaddrs = NULL;
 
 uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
 {
     opal_list_item_t *item;
 
-    for (item = opal_list_get_first(&myaddrs);
-         item != opal_list_get_end(&myaddrs);
+    /* In the off chance that the user forces non-rdmacm cpc and iwarp, the list
+     * will be uninitialized.  Return 0 to prevent crashes, and the lack of it
+     * actually working will be caught at a later stage.
+     */
+    if (NULL == myaddrs) {
+        return 0;
+    }
+
+    for (item = opal_list_get_first(myaddrs);
+         item != opal_list_get_end(myaddrs);
          item = opal_list_get_next(item)) {
         struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
         if (!strcmp(addr->dev_name, ib_dev->name)) {
@@ -65,8 +73,8 @@ uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t por
 {
     opal_list_item_t *item;
 
-    for (item = opal_list_get_first(&myaddrs);
-         item != opal_list_get_end(&myaddrs);
+    for (item = opal_list_get_first(myaddrs);
+         item != opal_list_get_end(myaddrs);
          item = opal_list_get_next(item)) {
         struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
         if (!strcmp(addr->dev_name, verbs->device->name) && 
@@ -163,7 +171,7 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     BTL_VERBOSE(("adding addr %s dev %s port %d to rdma_addr_list", 
                  myaddr->addr_str, myaddr->dev_name, myaddr->dev_port));
 
-    opal_list_append(&myaddrs, &(myaddr->super));
+    opal_list_append(myaddrs, &(myaddr->super));
 
 out3:
     rdma_destroy_id(cm_id);
@@ -177,7 +185,13 @@ int mca_btl_openib_build_rdma_addr_list(void)
 {
     int rc = OMPI_SUCCESS, i;
 
-    OBJ_CONSTRUCT(&myaddrs, opal_list_t);
+    myaddrs = OBJ_NEW(opal_list_t);
+    if (NULL == myaddrs) {
+        BTL_ERROR(("malloc failed!"));
+        return OMPI_ERROR;
+    }
+
+    OBJ_CONSTRUCT(myaddrs, opal_list_t);
 
     for (i = opal_ifbegin(); i >= 0; i = opal_ifnext(i)) {
         struct sockaddr ipaddr;
@@ -200,13 +214,17 @@ void mca_btl_openib_free_rdma_addr_list(void)
 {
     opal_list_item_t *item;
 
-    if (0 != opal_list_get_size(&myaddrs)) {
-        for (item = opal_list_get_first(&myaddrs);
-             item != opal_list_get_end(&myaddrs);
+    if (0 != opal_list_get_size(myaddrs)) {
+        for (item = opal_list_get_first(myaddrs);
+             item != opal_list_get_end(myaddrs);
              item = opal_list_get_next(item)) {
-            opal_list_remove_item(&myaddrs, item);
+            struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
+            opal_list_remove_item(myaddrs, item);
+            OBJ_RELEASE(addr);
         }
     }
+
+    OBJ_RELEASE(myaddrs);
 }
 #else
 uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) 
