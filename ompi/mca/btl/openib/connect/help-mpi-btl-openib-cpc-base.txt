@@ -27,3 +27,14 @@ Host:                         %s
 btl_openib_cpc_%s value: %s
 Invalid name:                 %s
 All possible valid names:     %s
+#
+[inline truncated]
+WARNING: The btl_openib_ib_max_inline_data MCA parameter was used to
+specify how much inline data should be used, but a device reduced this
+value.  This is not an error; it simply means that your run will use
+a smaller inline data value than was requested.
+
+  Local host:           %s
+  Local device:         %s
+  Requested value:      %d
+  Value used by device: %d
