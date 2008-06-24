@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -154,6 +155,8 @@ int
 ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                              bool enable_mpi_threads)
 {
+    size_t aligned_size;
+
     /* we can run with either threads or not threads (may not be able
        to do win locks)... */
     mca_osc_pt2pt_component.p2p_c_have_progress_threads = 
@@ -188,10 +191,13 @@ ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                         OBJ_CLASS(ompi_osc_pt2pt_longreq_t),
                         1, -1, 1);
 
+    /* adjust size to be multiple of ompi_ptr_t to avoid alignment issues*/
+    aligned_size = sizeof(ompi_osc_pt2pt_buffer_t) + 
+        (sizeof(ompi_osc_pt2pt_buffer_t) % sizeof(ompi_ptr_t)) + 
+        mca_osc_pt2pt_component.p2p_c_eager_size;
     OBJ_CONSTRUCT(&mca_osc_pt2pt_component.p2p_c_buffers, opal_free_list_t);
     opal_free_list_init(&mca_osc_pt2pt_component.p2p_c_buffers,
-                        mca_osc_pt2pt_component.p2p_c_eager_size +
-                        sizeof(ompi_osc_pt2pt_buffer_t),
+                        aligned_size,
                         OBJ_CLASS(ompi_osc_pt2pt_buffer_t),
                         1, -1, 1);
 
