@@ -33,15 +33,9 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
-static bool orte_params_set=false;
-
 int orte_register_params(void)
 {
     int value;
-    
-    if (orte_params_set) {
-        return ORTE_SUCCESS;
-    }
     
     mca_base_param_reg_int_name("orte", "base_help_aggregate",
                                 "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
@@ -52,7 +46,11 @@ int orte_register_params(void)
     mca_base_param_reg_string_name("orte", "tmpdir_base",
                                    "Base of the session directory tree",
                                    false, false, NULL,  &(orte_process_info.tmpdir_base));
-    
+   
+    mca_base_param_reg_string_name("orte", "no_session_dirs",
+                                   "Prohibited locations for session directories (multiple locations separated by ',', default=NULL)",
+                                   false, false, NULL,  &orte_prohibited_session_dirs);
+
 #if !ORTE_DISABLE_FULL_SUPPORT
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch (default verbosity: 1)",
@@ -148,9 +146,12 @@ int orte_register_params(void)
                                 false, false, (int) false, &value);
     orte_xml_output = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("orte", "hetero_apps",
+                                "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries (default: false)",
+                                false, false, (int) false, &value);
+    orte_hetero_apps = OPAL_INT_TO_BOOL(value);
+    
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
-    /* All done */
-    orte_params_set = true;
     return ORTE_SUCCESS;
 }

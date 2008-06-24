@@ -45,7 +45,7 @@
 #include <pwd.h>
 #endif  /* HAVE_PWD_H */
 
-#include "orte/util/show_help.h"
+#include "opal/util/argv.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
@@ -53,6 +53,7 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/runtime.h"
@@ -261,6 +262,30 @@ orte_session_dir_get_name(char **fulldirpath,
         prefix = strdup(opal_tmp_directory());
     }
     
+    /* BEFORE doing anything else, check to see if this prefix is
+     * allowed by the system
+     */
+    if (NULL != orte_prohibited_session_dirs) {
+        char **list;
+        int i, len;
+        /* break the string into tokens - it should be
+         * separated by ','
+         */
+        list = opal_argv_split(orte_prohibited_session_dirs, ',');
+        len = opal_argv_count(list);
+        /* cycle through the list */
+        for (i=0; i < len; i++) {
+            /* check if prefix matches */
+            if (0 == strncmp(prefix, list[i], strlen(list[i]))) {
+                /* this is a prohibited location */
+                orte_show_help("help-orte-runtime.txt",
+                               "orte:session:dir:prohibited",
+                               true, prefix, orte_prohibited_session_dirs);
+                return ORTE_ERR_FATAL;
+            }
+        }
+        opal_argv_free(list);  /* done with this */
+    }
     /*
      * Construct the absolute final path, if requested
      */
@@ -332,6 +357,13 @@ int orte_session_dir(bool create,
                                                           hostid, 
                                                           batchid, job,
                                                           proc) ) ) {
+        if (ORTE_ERR_FATAL == rtn) {
+            /* this indicates we definitely need to abort, so
+             * don't try the NULL prefix
+             */
+            return_code = ORTE_ERR_SILENT;
+            goto cleanup;
+        }
         return_code = rtn;
         /*
          * If the first attempt at the path creation failed, try with a null
