@@ -72,7 +72,7 @@ mca_btl_sm_t mca_btl_sm = {
         mca_btl_sm_prepare_src,
         NULL,
         mca_btl_sm_send,
-        mca_btl_sm_sendi,  /* send immediate */
+        NULL /*mca_btl_sm_sendi*/,  /* send immediate */
         NULL,  /* put */
         NULL,  /* get */
         mca_btl_base_dump,
