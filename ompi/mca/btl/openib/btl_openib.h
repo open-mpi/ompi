@@ -184,7 +184,7 @@ struct mca_btl_openib_component_t {
     uint32_t ib_rnr_retry;
     uint32_t ib_max_rdma_dst_ops;
     uint32_t ib_service_level;
-    uint32_t use_eager_rdma;
+    int32_t use_eager_rdma;
     int32_t eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     int32_t eager_rdma_num;
     int32_t max_eager_rdma;

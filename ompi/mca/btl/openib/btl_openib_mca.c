@@ -223,7 +223,8 @@ int btl_openib_register_mca_params(void)
         mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
 
     CHECK(reg_int("ib_max_inline_data", "Maximum size of inline data segment "
-                  "(-1 = use per-device devaults, 0 = run-time probe to discover max value, "
+                  "(-1 = use device default, "
+                  "0 = run-time probe to discover max value, "
                   "otherwise must be >= 1)",
                   -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
@@ -365,13 +366,11 @@ int btl_openib_register_mca_params(void)
     }
     mca_btl_openib_component.ib_service_level = (uint32_t) ival;
 
-    CHECK(reg_int("use_eager_rdma", "Use RDMA for eager messages",
-                  1, &ival, 0));
-    mca_btl_openib_component.use_eager_rdma = (uint32_t) (ival != 0);
-#if OMPI_ENABLE_PROGRESS_THREADS == 1
-    /* Fast rdma path isn't supported by PROGRESS_THREAD */
-    mca_btl_openib_component.use_eager_rdma = 0;
-#endif
+    CHECK(reg_int("use_eager_rdma", "Use RDMA for eager messages "
+                  "(-1 = use device default, 0 = do not use eager RDMA, "
+                  "1 = use eager RDMA)",
+                  -1, &ival, 0));
+    mca_btl_openib_component.use_eager_rdma = (int32_t) ival;
 
     CHECK(reg_int("eager_rdma_threshold",
                   "Use RDMA for short messages after this number of "

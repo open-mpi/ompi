@@ -877,9 +877,8 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
     hca->endpoints = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(hca->endpoints, 10, INT_MAX, 10);
     opal_pointer_array_add(&mca_btl_openib_component.hcas, hca);
-    if(mca_btl_openib_component.max_eager_rdma > 0 &&
-            mca_btl_openib_component.use_eager_rdma &&
-            hca->use_eager_rdma) {
+    if (mca_btl_openib_component.max_eager_rdma > 0 &&
+        hca->use_eager_rdma) {
         hca->eager_rdma_buffers =
             calloc(mca_btl_openib_component.max_eager_rdma * hca->btls,
                     sizeof(mca_btl_openib_endpoint_t*));
@@ -1558,10 +1557,20 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
     }
 
-    /* If "use eager rdma" was set, then enable it on this HCA */
-    if (values.use_eager_rdma_set) {
+    /* Should we use RDMA for short / eager messages?  First check MCA
+       param, then check INI file values. */
+    if (mca_btl_openib_component.use_eager_rdma >= 0) {
+        hca->use_eager_rdma = mca_btl_openib_component.use_eager_rdma;
+    } else if (values.use_eager_rdma_set) {
         hca->use_eager_rdma = values.use_eager_rdma;
     }
+    /* Eager RDMA is not currently supported with progress threads */
+    if (hca->use_eager_rdma && OMPI_ENABLE_PROGRESS_THREADS) {
+        hca->use_eager_rdma = 0;
+        orte_show_help("help-mpi-btl-openib.txt", 
+                       "eager RDMA and progress threads", true);
+    }
+    opal_output(0, "Using eager rdma: %d\n", hca->use_eager_rdma);
 
 #if HAVE_XRC
     /* if user configured to run with XRC qp and the device doesn't

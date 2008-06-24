@@ -537,3 +537,11 @@ support) will be disabled.
 
 Host:           %s
 Device:         %s
+#
+[eager RDMA and progress threads]
+WARNING: The openib BTL was directed to use "eager RDMA" for short
+messages, but the openib BTL was compiled with progress threads
+support.  Short eager RDMA is not yet supported with progress threads;
+its use has been disabled in this job.  
+
+This is a warning only; you job will attempt to continue.
