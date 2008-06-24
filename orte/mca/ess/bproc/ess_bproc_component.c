@@ -23,25 +23,26 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
-#include "orte/orte_constants.h"
-#include "orte/mca/sds/sds.h"
-#include "orte/mca/sds/bproc/sds_bproc.h"
 #include "opal/mca/base/mca_base_param.h"
 
-extern orte_sds_base_module_t orte_sds_bproc_module;
+#include "orte/mca/ess/ess.h"
+#include "ess_bproc.h"
+
+extern orte_ess_base_module_t orte_ess_bproc_module;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-orte_sds_base_component_t mca_sds_bproc_component = {
+orte_ess_base_component_t mca_ess_bproc_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a sds v1.0.0 component (which also
+        /* Indicate that we are a ess v1.0.0 component (which also
            implies a specific MCA version) */
-        ORTE_SDS_BASE_VERSION_1_0_0,
+        ORTE_ESS_BASE_VERSION_1_0_0,
 
         /* Component name and version */
         "bproc",
@@ -50,47 +51,37 @@ orte_sds_base_component_t mca_sds_bproc_component = {
         ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
-        orte_sds_bproc_component_open,
-        orte_sds_bproc_component_close
+        orte_ess_bproc_component_open,
+        orte_ess_bproc_component_close,
+        orte_ess_bproc_component_query
     },
 
     /* Next the MCA v1.0.0 component meta data */
     {
-        /* Whether the component is checkpointable or not */
-        true
-    },
-
-    /* Initialization / querying functions */
-    orte_sds_bproc_component_init
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    }
 };
 
 
-int
-orte_sds_bproc_component_open(void)
+int orte_ess_bproc_component_open(void)
 {
     return ORTE_SUCCESS;
 }
 
 
-orte_sds_base_module_t *
-orte_sds_bproc_component_init(int *priority)
+int orte_ess_bproc_component_query(mca_base_module_t **module, int *priority)
 {
-    int id;
-    char *mode;
-
-    /* okay, not seed/singleton attempt another approach */
-    id = mca_base_param_register_string("ns", "nds", NULL, NULL, NULL);
-    mca_base_param_lookup_string(id, &mode);
-
-    if (NULL == mode || 0 != strcmp("bproc", mode)) { return NULL; }
-
+    /* if we can build, we are undoubtedly in a bproc environment,
+     * so set a reasonable priority
+     */
     *priority = 20;
-    return &orte_sds_bproc_module;
+    *module = (mca_base_module_t*)&orte_ess_bproc_module;
+    return ORTE_SUCCESS;
 }
 
 
-int
-orte_sds_bproc_component_close(void)
+int orte_ess_bproc_component_close(void)
 {
     return ORTE_SUCCESS;
 }
