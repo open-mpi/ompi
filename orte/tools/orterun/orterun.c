@@ -137,6 +137,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
 
+    /* hetero apps */
+    { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
+        NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries" },
+    
     /* select XML output */
     { "orte", "xml", "output", '\0', NULL, "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -346,7 +351,7 @@ int orterun(int argc, char *argv[])
 
     /* Setup MCA params */
     orte_register_params();
-    
+
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);

@@ -52,6 +52,7 @@
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC extern bool orte_help_want_aggregate;
+ORTE_DECLSPEC extern char *orte_prohibited_session_dirs;
 
 #define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
 
@@ -330,6 +331,8 @@ ORTE_DECLSPEC extern bool orte_xml_output;
 ORTE_DECLSPEC extern int orte_debug_verbosity;
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
+ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
+ORTE_DECLSPEC extern bool orte_hetero_apps;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;

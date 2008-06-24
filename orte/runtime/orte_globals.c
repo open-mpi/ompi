@@ -55,6 +55,8 @@ bool orte_keep_fqdn_hostnames = false;
 bool orte_xml_output;
 int orted_debug_failure;
 int orted_debug_failure_delay;
+bool orte_homogeneous_nodes = false;
+bool orte_hetero_apps = false;
 
 int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;

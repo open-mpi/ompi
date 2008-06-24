@@ -28,4 +28,16 @@ Open MPI developer):
 
   %s failed
   --> Returned value %s (%d) instead of ORTE_SUCCESS
+#
+#
+[orte:session:dir:prohibited]
+The specified location for the temporary directories required by Open MPI
+is on the list of prohibited locations:
 
+Location given: %s
+Prohibited locations: %s
+
+If you believe this is in error, please contact your system administrator
+to have the list of prohibited locations changed. Otherwise, please identify
+a different location to be used (use -h to see the cmd line option), or
+simply let the system pick a default location.

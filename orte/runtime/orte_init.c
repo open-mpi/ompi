@@ -49,6 +49,7 @@ bool orte_initialized = false;
 bool orte_finalizing = false;
 bool orte_debug_flag = false;
 int orte_debug_verbosity;
+char *orte_prohibited_session_dirs = NULL;
 
 orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
@@ -131,9 +132,11 @@ int orte_init(char flags)
     return ORTE_SUCCESS;
     
 error:
-    orte_show_help("help-orte-runtime",
-                   "orte_init:startup:internal-failure",
-                   true, error, ORTE_ERROR_NAME(ret), ret);
+    if (ORTE_ERR_SILENT != ret) {
+        orte_show_help("help-orte-runtime",
+                       "orte_init:startup:internal-failure",
+                       true, error, ORTE_ERROR_NAME(ret), ret);
+    }
 
     return ret;
 }
