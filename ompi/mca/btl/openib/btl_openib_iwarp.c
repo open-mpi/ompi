@@ -214,7 +214,7 @@ void mca_btl_openib_free_rdma_addr_list(void)
 {
     opal_list_item_t *item;
 
-    if (0 != opal_list_get_size(myaddrs)) {
+    if (NULL != myaddrs && 0 != opal_list_get_size(myaddrs)) {
         for (item = opal_list_get_first(myaddrs);
              item != opal_list_get_end(myaddrs);
              item = opal_list_get_next(item)) {
@@ -222,9 +222,8 @@ void mca_btl_openib_free_rdma_addr_list(void)
             opal_list_remove_item(myaddrs, item);
             OBJ_RELEASE(addr);
         }
+       OBJ_RELEASE(myaddrs);
     }
-
-    OBJ_RELEASE(myaddrs);
 }
 #else
 uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) 
