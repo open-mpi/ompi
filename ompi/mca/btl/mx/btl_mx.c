@@ -376,8 +376,9 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
             return OMPI_ERROR;
     }
 
-    frag->endpoint  = endpoint;
-    frag->type      = MCA_BTL_MX_SEND;
+    frag->endpoint         = endpoint;
+    frag->type             = MCA_BTL_MX_SEND;
+    descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     do {
         mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
@@ -453,6 +454,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
             opal_output( 0, "mx_ibuffered failed with error %d (%s)\n",
                          mx_return, mx_strerror(mx_return) );
+            frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
             return OMPI_ERROR;
         }
         if( mx_result ) {
@@ -475,7 +477,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         }
     }
 #endif
-    if( 4096 > total_length ) {
+    if( 2048 > total_length ) {
         mx_status_t mx_status;
         uint32_t mx_result;
 
