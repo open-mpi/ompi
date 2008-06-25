@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University.
+ * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
@@ -51,6 +51,7 @@ char * opal_crs_base_snapshot_dir = NULL;
  */
 int opal_crs_base_open(void)
 {
+    int ret, exit_status = OPAL_SUCCESS;
     int value;
     char *str_value = NULL;
 
@@ -86,20 +87,23 @@ int opal_crs_base_open(void)
                                    false, false,
                                    NULL, &str_value);
     
+    /* Open up all available components */
+    if (OPAL_SUCCESS != (ret = mca_base_components_open("crs", 
+                                                        opal_crs_base_output, 
+                                                        mca_crs_base_static_components,
+                                                        &opal_crs_base_components_available,
+                                                        true)) ) {
+        if( OPAL_ERR_NOT_FOUND == ret &&
+            NULL != str_value &&
+            0 == strncmp(str_value, "none", strlen("none")) ) {
+            exit_status = OPAL_SUCCESS;
+        } else {
+            exit_status = OPAL_ERROR;
+        }
+    }
+
     if( NULL != str_value ) {
         free(str_value);
     }
-
-    /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_components_open("crs", 
-                                 opal_crs_base_output, 
-                                 mca_crs_base_static_components,
-                                 &opal_crs_base_components_available,
-                                 true)) {
-        return OPAL_ERROR;
-    }
-
-    
-    return OPAL_SUCCESS;
+    return exit_status;
 }
