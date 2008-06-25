@@ -338,6 +338,7 @@ int mca_btl_elan_component_progress( void )
             OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
         }
         /* If there are any pending sends check their completion */
+      recheck_send_list:
         if( !opal_list_is_empty( &(elan_btl->send_list) ) && !OPAL_THREAD_TRYLOCK(&elan_btl->elan_lock) ) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->send_list) );
             if( (NULL != frag) && elan_poll(frag->elan_event, 0) ) {
@@ -352,10 +353,12 @@ int mca_btl_elan_component_progress( void )
                 if( btl_ownership ) {
                     MCA_BTL_ELAN_FRAG_RETURN(frag);
                 }
+                goto recheck_send_list;
             } else {
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
             }
         }
+      recheck_rdma_list:
         /* If any RDMA have been posted, check their status */
         if( !opal_list_is_empty( &(elan_btl->rdma_list) ) && !OPAL_THREAD_TRYLOCK(&elan_btl->elan_lock) ) {
             mca_btl_elan_frag_t* frag = (mca_btl_elan_frag_t*)opal_list_get_first( &(elan_btl->rdma_list) );
@@ -371,6 +374,7 @@ int mca_btl_elan_component_progress( void )
                 if( btl_ownership ) {
                     MCA_BTL_ELAN_FRAG_RETURN(frag);
                 }
+                goto recheck_rdma_list;
             } else {
                 OPAL_THREAD_UNLOCK(&elan_btl->elan_lock);
             }

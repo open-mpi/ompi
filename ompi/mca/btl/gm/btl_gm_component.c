@@ -607,8 +607,7 @@ int mca_btl_gm_component_progress()
                     reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
                     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
                 } else { 
-                    btl->error_cb(&btl->super, 
-                                  MCA_BTL_ERROR_FLAGS_FATAL);
+                    btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
                     return 0;
                 }
                 MCA_BTL_GM_FRAG_POST(btl,frag);
@@ -634,8 +633,7 @@ int mca_btl_gm_component_progress()
                     
                     MCA_BTL_GM_FRAG_POST(btl,frag);
                 } else { 
-                    btl->error_cb(&btl->super, 
-                                  MCA_BTL_ERROR_FLAGS_FATAL);
+                    btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
                     return 0;
                 }
                 count++;
