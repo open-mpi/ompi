@@ -594,6 +594,7 @@ int mca_btl_mx_component_progress(void)
         mca_btl_mx_module_t* mx_btl = mca_btl_mx_component.mx_btls[i];
         uint32_t mx_result = 0;
 
+      recheck_device:
         mx_return = mx_ipeek( mx_btl->mx_endpoint, &mx_request, &mx_result );
         if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) {
             opal_output( 0, "mca_btl_mx_component_progress: mx_ipeek() failed with status %d (%s)\n",
@@ -616,6 +617,7 @@ int mca_btl_mx_component_progress(void)
          * are supposed to do next.
          */
         frag = mx_status.context;
+        num_progressed++;
         if( NULL != frag ) {
             if( MCA_BTL_MX_SEND == frag->type ) {  /* it's a send */
                 int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
@@ -627,6 +629,7 @@ int mca_btl_mx_component_progress(void)
                 if( btl_ownership ) {
                     MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
                 }
+                goto recheck_device;
             } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
                 mca_btl_active_message_callback_t* reg;
                 mx_segment_t mx_segment;
@@ -651,7 +654,6 @@ int mca_btl_mx_component_progress(void)
                 }
             }
         }
-        num_progressed++;
     }
     return num_progressed;
 }
