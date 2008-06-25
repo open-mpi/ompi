@@ -1570,7 +1570,6 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         orte_show_help("help-mpi-btl-openib.txt", 
                        "eager RDMA and progress threads", true);
     }
-    opal_output(0, "Using eager rdma: %d\n", hca->use_eager_rdma);
 
 #if HAVE_XRC
     /* if user configured to run with XRC qp and the device doesn't
