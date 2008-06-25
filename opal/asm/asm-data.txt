@@ -126,3 +126,4 @@ SPARCV9_64	default-.text-.globl-:--.L-#-1-0-1-1-0	sparcv9-64-solaris
 # means that we can use the same code either way.  Woo hoo!
 
 MIPS	default-.text-.globl-:--L--1-1-1-1-0	mips-irix
+MIPS	default-.text-.globl-:--L--1-1-1-1-0	mips64el
