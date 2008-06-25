@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
@@ -124,11 +124,11 @@ int mca_base_components_open(const char *type_name, int output_id,
     }
 
     /* Find and load requested components */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS != (ret = 
         mca_base_component_find(NULL, type_name, static_components,
                                 requested_component_names, include_mode, 
-                                &components_found, open_dso_components)) {
-        return OPAL_ERROR;
+                                &components_found, open_dso_components)) ) {
+        return ret;
     }
 
 #if (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1)
