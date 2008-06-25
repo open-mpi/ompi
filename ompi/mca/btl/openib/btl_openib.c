@@ -319,6 +319,7 @@ int mca_btl_openib_add_procs(
 
         opal_output(-1, "add procs: adding proc %d", i);
 
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
         /* Most current iWARP adapters (June 2008) cannot handle
            talking to other processes on the same host (!) -- so mark
            them as unreachable (need to use sm).  So for the moment,
@@ -328,6 +329,7 @@ int mca_btl_openib_add_procs(
             0 != (ompi_proc->proc_flags && OMPI_PROC_FLAG_LOCAL)) {
             continue;
         }
+#endif
 
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
