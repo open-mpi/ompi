@@ -41,6 +41,7 @@
 #include "orte/util/proc_info.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_locks.h"
 
 /*
  * Whether we have completed orte_init or we are in orte_finalize
@@ -80,6 +81,12 @@ int orte_init(char flags)
     /* ensure we know the tool setting for when we finalize */
     if ((flags & ORTE_TOOL) || (flags & ORTE_TOOL_WITH_NAME)) {
         orte_process_info.tool = true;
+    }
+
+    /* setup the locks */
+    if (ORTE_SUCCESS != (ret = orte_locks_init())) {
+        error = "orte_locks_init";
+        goto error;
     }
     
     if (orte_process_info.hnp) {
