@@ -31,7 +31,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_locks.h"
 #include "orte/runtime/runtime_internals.h"
 
 #include "orte/mca/ess/base/base.h"
@@ -40,12 +39,6 @@ int orte_ess_base_std_prolog(void)
 {
     int ret;
     char *error = NULL;
-
-    /* setup the locks */
-    if (ORTE_SUCCESS != (ret = orte_locks_init())) {
-        error = "orte_locks_init";
-        goto error;
-    }
     
     /* Initialize the ORTE data type support */
     if (ORTE_SUCCESS != (ret = orte_dt_init())) {
