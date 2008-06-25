@@ -1,6 +1,6 @@
 START_FILE
 
-#include <asm.h>
+#include <sys/asm.h>
 #include <regdef.h>
 	
 	TEXT
