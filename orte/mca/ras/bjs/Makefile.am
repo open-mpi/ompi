@@ -35,9 +35,9 @@ endif
 AM_CPPFLAGS= $(ras_bjs_CPPFLAGS)
 
 proxy_SOURCES = \
-    ras_bjs.c \
     ras_bjs.h \
-    ras_bjs_component.c
+    ras_bjs_component.c \
+    ras_bjs.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)

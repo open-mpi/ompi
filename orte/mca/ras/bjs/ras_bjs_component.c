@@ -17,115 +17,65 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
+
 #include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "orte/util/proc_info.h"
-#include "opal/util/output.h"
+
 #include "ras_bjs.h"
 
 /*
  * Local functions
  */
 
-static int orte_ras_bjs_open(void);
-static int orte_ras_bjs_close(void);
-static orte_ras_base_module_t* orte_ras_bjs_init(int* priority);
+static int ras_bjs_open(void);
+static int ras_bjs_component_query(mca_base_module_t **module, int *priority);
 
 
-orte_ras_bjs_component_t mca_ras_bjs_component = {
+orte_ras_base_component_t mca_ras_bjs_component = {
     {
-      /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
-
-      {
-        /* Indicate that we are a ras v1.3.0 component (which also
-           implies a specific MCA version) */
-
-        ORTE_RAS_BASE_VERSION_1_3_0,
-
+        /* Indicate that we are a ras v2.0.0 component (which also
+         implies a specific MCA version) */
+        
+        ORTE_RAS_BASE_VERSION_2_0_0,
+        
         "bjs", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
         ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_ras_bjs_open,  /* component open  */
-        orte_ras_bjs_close  /* component close */
-      },
-
-      /* Next the MCA v1.0.0 component meta data */
-      {
-        /* Whether the component is checkpointable or not */
-        false
-      },
-
-      orte_ras_bjs_init
+        
+        /* Component open and close functions */
+        
+        ras_bjs_open,  /* component open  */
+        NULL,  /* component close */
+        ras_bjs_component_query
+    },
+    
+    /* Next the MCA v1.0.0 component meta data */
+    {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     }
 };
 
 
 /**
- *  Convience functions to lookup MCA parameter values.
- */
-
-static  int orte_ras_bjs_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("ras","bjs",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
-
-static char* orte_ras_bjs_param_register_string(
-    const char * a, const char *b, const char *c,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string(a, b, c, NULL, default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-
-/**
   * component open/close/init function
   */
-static int orte_ras_bjs_open(void)
+static int ras_bjs_open(void)
 {
-    mca_ras_bjs_component.debug = orte_ras_bjs_param_register_int("debug",1);
-    mca_ras_bjs_component.priority = orte_ras_bjs_param_register_int("priority",75);
-    /* JMS To be changed post-beta to LAM's C/N command line notation */
-    mca_ras_bjs_component.schedule_policy = 
-        orte_ras_bjs_param_register_string("ras", "base", "schedule_policy", "slot");
     return ORTE_SUCCESS;
 }
 
 
-static orte_ras_base_module_t *orte_ras_bjs_init(int* priority)
+static int ras_bjs_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are not an HNP, then we must not be selected */
-    if (!orte_process_info.seed) {
-        return NULL;
-    }
-    
-#if 0
     if(getenv("NODES") == NULL) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERR_NOT_AVAILABLE;
     }
-#endif
-    *priority = mca_ras_bjs_component.priority;
-    return &orte_ras_bjs_module;
-}
 
-/**
- *  Close all subsystems.
- */
-
-static int orte_ras_bjs_close(void)
-{
+    *priority = 10;
+    *module = (mca_base_module_t *) &orte_ras_bjs_module;
     return ORTE_SUCCESS;
 }
-
 
