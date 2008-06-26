@@ -353,6 +353,16 @@ mca_pml_base_pml_check_selected(const char *my_pml,
         return OMPI_SUCCESS;
     }
 
+    /* the remote pml returned should never be NULL if an error
+     * wasn't returned, but just to be safe, and since the check
+     * is fast...let's be sure
+     */
+    if (NULL == remote_pml) {
+        opal_output_verbose( 10, mca_pml_base_output,
+                            "check:select: got a NULL pml from rank=0");
+        return OMPI_ERR_UNREACH;
+    }
+    
     opal_output_verbose( 10, mca_pml_base_output,
                         "check:select: checking my pml %s against rank=0 pml %s",
                         my_pml, remote_pml);
@@ -365,12 +375,12 @@ mca_pml_base_pml_check_selected(const char *my_pml,
                         ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
                         my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
                         procs[0]->proc_hostname,
-                        (NULL == remote_pml) ? "NULL" : remote_pml);
+                        remote_pml);
         } else {
             opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
                         ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
                         my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
-                        (NULL == remote_pml) ? "NULL" : remote_pml);
+                        remote_pml);
         }
         free(remote_pml); /* cleanup before returning */
         return OMPI_ERR_UNREACH;
