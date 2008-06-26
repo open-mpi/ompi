@@ -64,18 +64,40 @@ static bool server_setup=false;
 
 static void setup_server(void)
 {
+    opal_buffer_t buf;
+    orte_rml_cmd_flag_t cmd=ORTE_RML_UPDATE_CMD; /* irrelevant - will be ignored */
+    int rc;
+    
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: setting up server at URI %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == mca_pubsub_orte_component.server_uri) ? "NULL" : mca_pubsub_orte_component.server_uri));
     
+    /* flag setup as completed so we only pass through here once */
+    server_setup = true;
+
     if (NULL == mca_pubsub_orte_component.server_uri) {
         /* if the contact info for the server is NULL, then there
-         * is nothing to do
+         * is nothing we can do - there is no path to the server
          */
-        server_setup = true;
+        mca_pubsub_orte_component.server_found = false;
         return;
     }
+    
+    /* init the route to the server - init_routes wants a buffer
+     * passed to it, so we have to package the server's contact
+     * info into a buffer
+     */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    opal_dss.pack(&buf, &cmd, 1, ORTE_RML_CMD);
+    opal_dss.pack(&buf, &mca_pubsub_orte_component.server_uri, 1, OPAL_STRING);
+    if (ORTE_SUCCESS != (rc = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, &buf))) {
+        ORTE_ERROR_LOG(rc);
+        mca_pubsub_orte_component.server_found = false;
+        OBJ_DESTRUCT(&buf);
+        return;
+    }
+    OBJ_DESTRUCT(&buf);
     
     /* extract the server's name */
     orte_rml_base_parse_uris(mca_pubsub_orte_component.server_uri, &mca_pubsub_orte_component.server, NULL);
@@ -83,9 +105,6 @@ static void setup_server(void)
     /* flag the server as found */
     mca_pubsub_orte_component.server_found = true;
 
-    /* flag setup as completed */
-    server_setup = true;
-    
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: server %s setup",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
