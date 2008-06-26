@@ -40,6 +40,8 @@ typedef struct opened_component_t {
   mca_pml_base_component_t *om_component;
 } opened_component_t;
 
+static bool modex_reqd=false;
+
 /**
  * Function for selecting one component from all those that are
  * available.
@@ -53,7 +55,7 @@ typedef struct opened_component_t {
 int mca_pml_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
-    int i, priority = 0, best_priority = 0;
+    int i, priority = 0, best_priority = 0, num_pml = 0;
     opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
@@ -111,6 +113,9 @@ int mca_pml_base_select(bool enable_progress_threads,
                                  component->pmlm_version.mca_component_name );
             continue;
         }
+
+        /* this is a pml that could be considered */
+        num_pml++;
 
         /* Init component to get its priority */
         opal_output_verbose( 10, mca_pml_base_output, 
@@ -178,6 +183,13 @@ int mca_pml_base_select(bool enable_progress_threads,
     opal_output_verbose( 10, mca_pml_base_output,
                          "selected %s best priority %d\n", 
                          best_component->pmlm_version.mca_component_name, best_priority);
+    
+    /* if more than one PML could be considered, then we still need the
+     * modex since we cannot know which one will be selected on all procs
+     */
+    if (1 < num_pml) {
+        modex_reqd = true;
+    }
     
     /* Finalize all non-selected components */
 
@@ -276,7 +288,9 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
 
     /* register winner in the modex */
-    mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
+    if (modex_reqd && 0 == ORTE_PROC_MY_NAME->vpid) {
+        mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
+    }
 
     /* All done */
 
@@ -307,37 +321,60 @@ mca_pml_base_pml_check_selected(const char *my_pml,
                                 ompi_proc_t **procs,
                                 size_t nprocs)
 {
-    size_t i, size;
+    size_t size;
     int ret;
     char *remote_pml;
 
-    for (i = 0 ; i < nprocs ; ++i) {
-        if (ompi_proc_local() == procs[i]) continue;
-
-        ret = ompi_modex_recv(&pml_base_component,
-                                      procs[i],
-                                      (void**) &remote_pml, &size);
-        /* if modex isn't implemented, then just assume all is well... */
-        if (OMPI_ERR_NOT_IMPLEMENTED == ret) return OMPI_SUCCESS;
-        if (OMPI_SUCCESS != ret) return ret;
-        if ((size != strlen(my_pml) + 1) ||
-            (0 != strcmp(my_pml, remote_pml))) {
-            if (procs[i]->proc_hostname) {
-                opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                            ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
-                            my_pml, ORTE_NAME_PRINT(&procs[i]->proc_name),
-                            procs[i]->proc_hostname, remote_pml);
-            } else {
-                opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
-                            ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
-                            my_pml, ORTE_NAME_PRINT(&procs[i]->proc_name),
-                            remote_pml);
-            }
-            return OMPI_ERR_UNREACH;
-        }
-
-        free(remote_pml);
+    /* if no modex was required by the PML, then
+     * we can assume success
+     */
+    if (!modex_reqd) {
+        opal_output_verbose( 10, mca_pml_base_output,
+                            "check:select: modex not reqd");
+        return OMPI_SUCCESS;
+    }
+    
+    /* if we are rank=0, then we can also assume success */
+    if (0 == ORTE_PROC_MY_NAME->vpid) {
+        opal_output_verbose( 10, mca_pml_base_output,
+                            "check:select: rank=0");
+        return OMPI_SUCCESS;
+    }
+    
+    /* get the name of the PML module selected by rank=0 */
+    ret = ompi_modex_recv(&pml_base_component,
+                          procs[0],
+                          (void**) &remote_pml, &size);
+    
+    /* if modex isn't implemented, then just assume all is well... */
+    if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
+        opal_output_verbose( 10, mca_pml_base_output,
+                            "check:select: modex not implemented");
+        return OMPI_SUCCESS;
     }
 
+    opal_output_verbose( 10, mca_pml_base_output,
+                        "check:select: checking my pml %s against rank=0 pml %s",
+                        my_pml, remote_pml);
+    
+    /* if that module doesn't match my own, return an error */
+    if ((size != strlen(my_pml) + 1) ||
+        (0 != strcmp(my_pml, remote_pml))) {
+        if (procs[0]->proc_hostname) {
+            opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
+                        ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
+                        my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
+                        procs[0]->proc_hostname,
+                        (NULL == remote_pml) ? "NULL" : remote_pml);
+        } else {
+            opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
+                        ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
+                        my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
+                        (NULL == remote_pml) ? "NULL" : remote_pml);
+        }
+        return OMPI_ERR_UNREACH;
+    }
+    
+    free(remote_pml);
     return OMPI_SUCCESS;
 }
