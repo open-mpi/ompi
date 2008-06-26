@@ -908,7 +908,7 @@ static int fill_path_record(ibcm_module_t *m,
     /* Global attributes */
     path_rec->dgid.global.subnet_prefix = 
         path_rec->sgid.global.subnet_prefix = 
-        m->btl->port_info.subnet_id;
+        hton64(m->btl->port_info.subnet_id);
     path_rec->dgid.global.interface_id = hton64(remote_msg->mm_port_guid);
     path_rec->sgid.global.interface_id = hton64(local_msg->mm_port_guid);
     path_rec->dlid = htons(endpoint->rem_info.rem_lid);
@@ -1065,7 +1065,7 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
 {
     struct ib_cm_req_param *cm_req;
     ibcm_request_t *req = OBJ_NEW(ibcm_request_t);
-    BTL_VERBOSE(("allocated cached req id: %p", (void*)req));
+    BTL_VERBOSE(("allocated cached req id: 0x%" PRIx64, (void*)req));
         
     if (NULL == req) {
         return NULL;
@@ -1079,6 +1079,7 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
         OBJ_RELEASE(req);
         return NULL;
     }
+    BTL_VERBOSE(("created CM ID 0x%" PRIx64, &(req->super.cm_id)));
     
     /* This data is constant for all the QP's */
     req->path_rec = *path_rec;
@@ -1103,6 +1104,29 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
     req->private_data.ireqd_ep_index = endpoint->index;
 
     return req;
+}
+
+
+static void print_req(struct ib_cm_req_param *cm_req)
+{
+    BTL_VERBOSE(("cm_req->primary_path: 0x%" PRIx64, cm_req->primary_path));
+    BTL_VERBOSE(("cm_req->alternate_path: 0x%" PRIx64, cm_req->alternate_path));
+    BTL_VERBOSE(("cm_req->service_id: 0x016%" PRIx64, cm_req->service_id));
+    BTL_VERBOSE(("cm_req->qp_num: %d", cm_req->qp_num));
+    BTL_VERBOSE(("cm_req->qp_type: %d", cm_req->qp_type));
+    BTL_VERBOSE(("cm_req->starting_psn: %d", cm_req->starting_psn));
+    BTL_VERBOSE(("cm_req->private_data: %" PRIx64, cm_req->private_data));
+    BTL_VERBOSE(("cm_req->private_data_len: %d", cm_req->private_data_len));
+    BTL_VERBOSE(("cm_req->peer_to_peer: %d", cm_req->peer_to_peer));
+    BTL_VERBOSE(("cm_req->responder_resources: %d", cm_req->responder_resources));
+    BTL_VERBOSE(("cm_req->initiator_depth: %d", cm_req->initiator_depth));
+    BTL_VERBOSE(("cm_req->remote_cm_response_timeout: %d", cm_req->remote_cm_response_timeout));
+    BTL_VERBOSE(("cm_req->flow_control: %d", cm_req->flow_control));
+    BTL_VERBOSE(("cm_req->local_cm_response_timeout: %d", cm_req->local_cm_response_timeout));
+    BTL_VERBOSE(("cm_req->retry_count: %d", cm_req->retry_count));
+    BTL_VERBOSE(("cm_req->rnr_retry_count: %d", cm_req->rnr_retry_count));
+    BTL_VERBOSE(("cm_req->max_cm_retries: %d", cm_req->max_cm_retries));
+    BTL_VERBOSE(("cm_req->srq: %d", cm_req->srq));
 }
  
 static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
@@ -1228,7 +1252,14 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
             BTL_VERBOSE(("sending connect request %d of %d (id %p)",
                         i, mca_btl_openib_component.num_qps,
                          (void*)req->super.cm_id));
-            if (0 != ib_cm_send_req(req->super.cm_id, cm_req)) {
+            if (mca_btl_base_verbose > 0) {
+                print_req(cm_req);
+            }
+            if (0 != (rc = ib_cm_send_req(req->super.cm_id, cm_req))) {
+                BTL_VERBOSE(("Got nonzero return from ib_cm_send_req: %d, errno %d", rc, errno));
+                if (-1 == rc) {
+                    perror("Errno is ");
+                }
                 rc = OMPI_ERR_UNREACH;
                 goto err;
             }
@@ -1263,19 +1294,26 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
 
         req->private_data.ireqd_request = req;
         req->private_data.ireqd_qp_index = 0;
+        if (mca_btl_base_verbose > 0) {
+            print_req(cm_req);
+        }
 
         /* Send the request */
         if (0 != (rc = ib_cm_send_req(req->super.cm_id, cm_req))) {
-            return OMPI_ERR_UNREACH;
+            BTL_VERBOSE(("Got nonzero return from ib_cm_send_req: %d", rc));
+            rc = OMPI_ERR_UNREACH;
+            goto err;
         }
 
         /* Save the request on the global "pending requests" list */
         opal_list_append(&ibcm_pending_requests, &(req->super.super));
     }
 
+    BTL_VERBOSE(("connect request send successfully"));
     return OMPI_SUCCESS;
 
  err:
+    BTL_VERBOSE(("error!"));
     if (NULL != ie && NULL != ie->ie_cm_id_cache) {
         free(ie->ie_cm_id_cache);
         ie->ie_cm_id_cache = NULL;
@@ -1853,6 +1891,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         }
         cbdata->cscd_cpc = (ompi_btl_openib_connect_base_module_t *) imodule;
         cbdata->cscd_endpoint = endpoint;
+        BTL_VERBOSE(("starting connect in other direction"));
         ompi_btl_openib_fd_schedule(callback_start_connect, cbdata);
         
         return OMPI_SUCCESS;
