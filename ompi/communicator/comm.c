@@ -1445,8 +1445,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
          * structure. The base component functions are free to change
          * it as they deem fit */
 
-        new_comm->c_topo_comm->mtc_periods_or_edges = (int *)
-        malloc (sizeof(int) * ndims_or_nnodes);
+        new_comm->c_topo_comm->mtc_periods_or_edges =
+            (int*) malloc (sizeof(int) * ndims_or_nnodes);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
             ompi_comm_free (&new_comm);
             *comm_topo = new_comm;
@@ -1638,55 +1638,58 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 }
 
 static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
-                                 ompi_communicator_t *newcomm) {
+                                 ompi_communicator_t *newcomm) 
+{
+    mca_topo_base_comm_t *oldt = oldcomm->c_topo_comm;
+    mca_topo_base_comm_t *newt = newcomm->c_topo_comm;
 
+    /* pointers for the rest of the information have been set
+       up.... simply allocate enough space and copy all the
+       information from the previous one */
 
-    int index = 
-    
-    (oldcomm->c_topo_comm->mtc_dims_or_index[oldcomm->c_topo_comm->mtc_ndims_or_nnodes-1] > 0)? 
-    oldcomm->c_topo_comm->mtc_dims_or_index[oldcomm->c_topo_comm->mtc_ndims_or_nnodes-1] : 
-    -oldcomm->c_topo_comm->mtc_dims_or_index[oldcomm->c_topo_comm->mtc_ndims_or_nnodes-1]; 
-                
-    /* pointers for the rest of the information have been set up .... simply
-       allocate enough space and copy all the information from the previous one */
-
-    newcomm->c_topo_comm->mtc_ndims_or_nnodes = oldcomm->c_topo_comm->mtc_ndims_or_nnodes;
-    newcomm->c_topo_comm->mtc_reorder = oldcomm->c_topo_comm->mtc_reorder;
-
-    newcomm->c_topo_comm->mtc_dims_or_index = (int *)malloc(sizeof(int)*
-                                                     newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
-
-    if (NULL == newcomm->c_topo_comm->mtc_dims_or_index) {
+    newt->mtc_ndims_or_nnodes = oldt->mtc_ndims_or_nnodes;
+    newt->mtc_reorder = oldt->mtc_reorder;
+    newt->mtc_dims_or_index = 
+        (int *)malloc(sizeof(int) * newt->mtc_ndims_or_nnodes);
+    if (NULL == newt->mtc_dims_or_index) {
         return OMPI_ERROR;
     }
+    memcpy (newt->mtc_dims_or_index, oldt->mtc_dims_or_index,
+            newt->mtc_ndims_or_nnodes * sizeof(int));
 
-    memcpy (newcomm->c_topo_comm->mtc_dims_or_index, 
-            oldcomm->c_topo_comm->mtc_dims_or_index ,
-            newcomm->c_topo_comm->mtc_ndims_or_nnodes * sizeof(int));
-
-    newcomm->c_topo_comm->mtc_periods_or_edges = (int *)
-                 malloc (sizeof(int)*index);
-    if (NULL == newcomm->c_topo_comm->mtc_periods_or_edges) {
-        return OMPI_ERROR;
-    }
-
-    memcpy (newcomm->c_topo_comm->mtc_periods_or_edges, 
-            oldcomm->c_topo_comm->mtc_periods_or_edges, 
-            sizeof(int) * index );
-
+    /* Note that the length of the mtc_periods_or_edges array is
+       different depending whether it's a cartesian or graph */
     if (OMPI_COMM_IS_CART(oldcomm)) {
-        newcomm->c_topo_comm->mtc_coords = (int *)malloc(sizeof(int)*
-                                                  newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
-
-        if (NULL == newcomm->c_topo_comm->mtc_coords) {
+        newt->mtc_periods_or_edges =
+            (int*) malloc (sizeof(int) * oldt->mtc_ndims_or_nnodes);
+        if (NULL == newt->mtc_periods_or_edges) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        
+        newt->mtc_coords =
+            (int *)malloc(sizeof(int)*
+                          newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
+        if (NULL == newt->mtc_coords) {
             return OMPI_ERROR;
         }
+        memcpy(newt->mtc_periods_or_edges, oldt->mtc_periods_or_edges, 
+               sizeof(int) * oldt->mtc_ndims_or_nnodes);
 
-        memcpy (newcomm->c_topo_comm->mtc_coords,
-                oldcomm->c_topo_comm->mtc_coords,
-                sizeof(int) * newcomm->c_topo_comm->mtc_ndims_or_nnodes);
+        memcpy (newt->mtc_coords, oldt->mtc_coords,
+                sizeof(int) * newt->mtc_ndims_or_nnodes);
     } else {
-        newcomm->c_topo_comm->mtc_coords = NULL;
+        int index = oldt->mtc_dims_or_index[oldt->mtc_ndims_or_nnodes-1];
+        index = (index > 0) ? index : -index;
+        newt->mtc_periods_or_edges =
+            (int*) malloc (sizeof(int)*index);
+        if (NULL == newt->mtc_periods_or_edges) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        
+        memcpy(newt->mtc_periods_or_edges, oldt->mtc_periods_or_edges, 
+               sizeof(int) * index );
+
+        newt->mtc_coords = NULL;
     }
 
     return OMPI_SUCCESS;
