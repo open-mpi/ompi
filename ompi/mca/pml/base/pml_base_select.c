@@ -372,6 +372,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
                         my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
                         (NULL == remote_pml) ? "NULL" : remote_pml);
         }
+        free(remote_pml); /* cleanup before returning */
         return OMPI_ERR_UNREACH;
     }
     
