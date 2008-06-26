@@ -500,16 +500,28 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
     if (IBV_TRANSPORT_IWARP == hca->ib_dev->transport_type) {
         subnet_id = mca_btl_openib_get_iwarp_subnet_id(hca->ib_dev);
+        BTL_VERBOSE(("my iWARP subnet_id is %016" PRIx64, subnet_id));
     } else {
-        ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
+        memset(&gid, 0, sizeof(gid));
+        if (0 != ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid)) {
+            BTL_ERROR(("ibv_query_gid failed (%s:%d)\n",
+                       ibv_get_device_name(hca->ib_dev), port_num));
+            return OMPI_ERR_NOT_FOUND;
+        }
         subnet_id = ntoh64(gid.global.subnet_prefix);
+        BTL_VERBOSE(("my IB subnet_id for HCA %s port %d is %016" PRIx64, 
+                     ibv_get_device_name(hca->ib_dev), port_num, subnet_id));
     }
 #else
-    ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
+    if (0 != ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid)) {
+        BTL_ERROR(("ibv_query_gid failed (%s:%d)\n",
+                   ibv_get_device_name(hca->ib_dev), port_num));
+        return OMPI_ERR_NOT_FOUND;
+    }
     subnet_id = ntoh64(gid.global.subnet_prefix);
+    BTL_VERBOSE(("my IB-only subnet_id for HCA %s port %d is %016" PRIx64, 
+                 ibv_get_device_name(hca->ib_dev), port_num, subnet_id));
 #endif
-
-    BTL_VERBOSE(("my subnet_id is %016x", subnet_id));
 
     if(mca_btl_openib_component.ib_num_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
