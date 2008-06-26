@@ -21,30 +21,17 @@
  * Takes care of the component stuff for the MCA.
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "odls_bproc.h"
 
-/* instance the child list object */
-static void odls_bproc_child_constructor(odls_bproc_child_t *ptr)
-{
-    ptr->name = NULL;
-    ptr->app_idx = -1;
-    ptr->alive = false;
-}
-static void odls_bproc_child_destructor(odls_bproc_child_t *ptr)
-{
-    if (NULL != ptr->name) free(ptr->name);
-}
-OBJ_CLASS_INSTANCE(odls_bproc_child_t,
-                   opal_list_item_t,
-                   odls_bproc_child_constructor,
-                   odls_bproc_child_destructor);
+extern orte_odls_base_module_t orte_odls_bproc_module;
 
 /**
  * The bproc component data structure used to store all the relevent data
@@ -65,17 +52,14 @@ orte_odls_bproc_component_t mca_odls_bproc_component = {
         ORTE_RELEASE_VERSION,
         /* Component open and close functions */
         orte_odls_bproc_component_open,
-        orte_odls_bproc_component_close
+        orte_odls_bproc_component_close,
+        orte_odls_bproc_component_query
     },
     /* Next the MCA v1.0.0 component meta data */
     {
-        /* Whether the component is checkpointable or not */
-        false
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    /* Initialization / querying functions */
-    orte_odls_bproc_init,
-    orte_odls_bproc_finalize
-    }
 };
 
 /**
@@ -84,42 +68,26 @@ orte_odls_bproc_component_t mca_odls_bproc_component = {
  */
 int orte_odls_bproc_component_open(void)
 {
-    /* initialize globals */
-    OBJ_CONSTRUCT(&mca_odls_bproc_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_odls_bproc_component.cond, opal_condition_t);
-    OBJ_CONSTRUCT(&mca_odls_bproc_component.children, opal_list_t);
-
-    /* lookup parameters */
-    mca_base_param_reg_int(&mca_odls_bproc_component.super.version, 
-                           "priority", NULL, false, false, 100,
-                           &mca_odls_bproc_component.priority);
-    mca_base_param_reg_int(&mca_odls_bproc_component.super.version, 
-                           "debug", "If > 0 prints library debugging information",
-                           false, false, 0, &mca_odls_bproc_component.debug);
     return ORTE_SUCCESS;
 }
 
 /**
- * Initializes the module. We do not want to run unless we are not the seed,
- * bproc is running, and we are not on the master node.
+ * Initializes the module.
  */
-orte_odls_base_module_t *orte_odls_bproc_init(int *priority)
+int orte_odls_bproc_component_query(mca_base_module_t **module, int *priority)
 {
     int ret;
     struct bproc_version_t version;
 
-    /* the base open/select logic protects us against operation when
-     * we are NOT in a daemon, so we don't have to check that here
-     */
-        
     /* check to see if BProc is running here */
     ret = bproc_version(&version);
     if (ret != 0) {
         return NULL;
     }
 
-    *priority = mca_odls_bproc_component.priority;
-    return &orte_odls_bproc_module;
+    *priority = 30;
+    *module = (mca_base_module_t *)&orte_odls_bproc_module;
+    return ORTE_SUCCESS;
 }
 
 /**
@@ -127,8 +95,10 @@ orte_odls_base_module_t *orte_odls_bproc_init(int *priority)
  */
 int orte_odls_bproc_component_close(void)
 {
-    OBJ_DESTRUCT(&mca_odls_bproc_component.lock);
-    OBJ_DESTRUCT(&mca_odls_bproc_component.cond);
-    OBJ_DESTRUCT(&mca_odls_bproc_component.children);
+    /* cleanup state */
+    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.children))) {
+        OBJ_RELEASE(item);
+    }
+    
     return ORTE_SUCCESS;
 }

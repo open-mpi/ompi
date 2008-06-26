@@ -21,63 +21,66 @@
  * See odls_bproc.h for an overview of how it works.
  */
 #include "orte_config.h"
+#include "orte/constants.h"
+
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#include <pty.h>
+#endif
 #include <dirent.h>
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/runtime/opal_progress.h"
-#include "opal/threads/condition.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
+#include "opal/dss/dss.h"
 
-#include "orte/dss/dss.h"
-#include "orte/util/sys_info.h"
-#include "orte/orte_constants.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
-#include "orte/mca/ns/base/base.h"
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/univ_info.h"
 
+#include "orte/mca/odls/base/odls_private.h"
 #include "odls_bproc.h"
+
+static int orte_odls_bproc_launch_local_procs(opal_buffer_t *data);
+static int orte_odls_bproc_kill_local_procs(orte_jobid_t job, bool set_state);
+static int orte_odls_bproc_signal_local_procs(const orte_process_name_t *proc, int32_t signal);
 
 /**
  * Initialization of the bproc_orted module with all the needed function pointers
  */
 orte_odls_base_module_t orte_odls_bproc_module = {
-    orte_odls_bproc_subscribe_launch_data,
-    orte_odls_bproc_get_add_procs_data,
+    orte_odls_base_default_get_add_procs_data,
     orte_odls_bproc_launch_local_procs,
     orte_odls_bproc_kill_local_procs,
-    orte_odls_bproc_signal_local_procs
+    orte_odls_bproc_signal_local_procs,
+    orte_odls_base_default_deliver_message,
+    orte_odls_base_default_require_sync,
+    orte_odls_base_default_collect_data
 };
 
 static int odls_bproc_make_dir(char *directory);
 static char * odls_bproc_get_base_dir_name(int proc_rank, orte_jobid_t jobid,
-                                                orte_std_cntr_t app_context);
+                                           orte_std_cntr_t app_context);
 static void odls_bproc_delete_dir_tree(char * path);
 static int odls_bproc_remove_dir(void);
 static void odls_bproc_send_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata);
+                               opal_buffer_t* buffer, int tag, void* cbdata);
 static int odls_bproc_setup_stdio(orte_process_name_t *proc_name, 
-                                       int proc_rank, orte_jobid_t jobid,
-                                       orte_std_cntr_t app_context, bool connect_stdin);
+                                  int proc_rank, orte_jobid_t jobid,
+                                  orte_std_cntr_t app_context, bool connect_stdin);
 
-
-int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
+/* Local globals */
+static char *user = NULL;
+static char *frontend = NULL;
 
 /**
  * Creates the passed directory. If the directory already exists, it and its
@@ -115,39 +118,36 @@ static char *
  odls_bproc_get_base_dir_name(int proc_rank, orte_jobid_t jobid,
                                    orte_std_cntr_t app_context)
 {
-    char *path = NULL, *user = NULL, *job = NULL;
+    char *path = NULL, *job = NULL;
     int rc;
 
-    /* ensure that system info is set */
-    orte_sys_info();
-
-    if (NULL == orte_universe_info.name) {  /* error condition */
-        ORTE_ERROR_LOG(ORTE_ERROR);
-        return NULL;
-    }
-
-    rc = orte_ns.convert_jobid_to_string(&job, jobid);
+    rc = orte_util_convert_jobid_to_string(&job, jobid);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return NULL;
     }
 
-    /* get the username set by the bproc pls. We need to get it from here
+    /* get the username set by the bproc plm. We need to get it from here
      * because on many bproc systems the method we use to get the username
-     * from the system on the backend fails and we only get the uid. */
-    rc = mca_base_param_register_string("pls", "bproc", "username", NULL,
-                                        orte_system_info.user);
-    mca_base_param_lookup_string(rc,&user);
+     * from the system on the backend fails and we only get the uid
+     */
+    mca_base_param_reg_string_name("orte", "plm_bproc_username",
+                                   "Name of the user on the remote node",
+                                   false, false, NULL, &user);
 
-    if (0 > asprintf(&path, OPAL_PATH_SEP"tmp"OPAL_PATH_SEP"openmpi-bproc-%s"OPAL_PATH_SEP"%s"OPAL_PATH_SEP"%s-%d"OPAL_PATH_SEP"%d",
-                     user, orte_universe_info.name,
-                     job, (int) app_context, proc_rank)) {
+    if (0 > asprintf(&frontend, OPAL_PATH_SEP"%s"OPAL_PATH_SEP"openmpi-bproc-%s",
+                     orte_process_info.tmpdir_base, user)) {
         ORTE_ERROR_LOG(ORTE_ERROR);
         path = NULL;
     }
-    if(0 < mca_odls_bproc_component.debug) {
-        opal_output(0, "odls bproc io setup. Path: %s\n", path);
+        
+    if (0 > asprintf(&path, "%s"OPAL_PATH_SEP"%s-%d"OPAL_PATH_SEP"%d",
+                     frontend, job, (int) app_context, proc_rank)) {
+        ORTE_ERROR_LOG(ORTE_ERROR);
+        path = NULL;
     }
+    OPAL_OUTPUT_VERBOSE((0, orte_odls_globals.output,
+                         "odls bproc io setup. Path: %s\n", path));
     free(user);
     free(job);
     return path;
@@ -199,26 +199,6 @@ odls_bproc_delete_dir_tree(char * path)
 static int
 odls_bproc_remove_dir()
 {
-    char *frontend = NULL, *user = NULL, *filename = NULL;
-    int id;
-
-    /* get the username set by the bproc pls. We need to get it from here
-     * because on many bproc systems the method we use to get the username
-     * from the system on the backend fails and we only get the uid. */
-    id = mca_base_param_register_string("pls", "bproc", "username", NULL,
-                                        orte_system_info.user);
-    mca_base_param_lookup_string(id,&user);
-    asprintf(&filename, "openmpi-bproc-%s", user );
-    if( NULL == filename ) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERROR;
-    }
-    frontend = opal_os_path(false, "tmp", filename, NULL );
-    free(filename);  /* Always free the filename */
-    if (NULL == frontend) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERROR;
-    }
     /* we do our best to clean up the directory tree, but we ignore errors*/
     odls_bproc_delete_dir_tree(frontend);
     free(frontend);
@@ -236,7 +216,7 @@ odls_bproc_remove_dir()
  */
 static void
 odls_bproc_send_cb(int status, orte_process_name_t * peer,
-                                    orte_buffer_t* buffer, int tag, void* cbdata)
+                                    opal_buffer_t* buffer, int tag, void* cbdata)
 {
     OBJ_RELEASE(buffer);
 }
@@ -430,119 +410,22 @@ cleanup:
 }
 
 
-/* this entire function gets called within a GPR compound command,
- * so the subscription actually doesn't get done until the orted
- * executes the compound command
- */
-int orte_odls_bproc_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc)
-{
-    char *segment;
-    orte_gpr_value_t *values[1];
-    orte_gpr_subscription_t *subs, sub=ORTE_GPR_SUBSCRIPTION_EMPTY;
-    orte_gpr_trigger_t *trigs, trig=ORTE_GPR_TRIGGER_EMPTY;
-    char* keys[] = {
-        ORTE_PROC_NAME_KEY,
-        ORTE_PROC_APP_CONTEXT_KEY,
-        ORTE_NODE_NAME_KEY,
-    };
-    int num_keys = 3;
-    int i, rc;
-    
-    /* get the job segment name */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* attach ourselves to the "standard" orted trigger */
-    if (ORTE_SUCCESS !=
-        (rc = orte_schema.get_std_trigger_name(&(trig.name),
-                                               ORTED_LAUNCH_STAGE_GATE_TRIGGER, job))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
-    
-    /* ask for return of all data required for launching local processes */
-    subs = &sub;
-    sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
-                                                                    ORTED_LAUNCH_STG_SUB,
-                                                                    job))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(trig.name);
-        return rc;
-    }
-    sub.cnt = 1;
-    sub.values = values;
-    
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
-                                                    segment, num_keys, 0))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        free(sub.name);
-        free(trig.name);
-        return rc;
-    }
-    for (i=0; i < num_keys; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[i]),
-                                                         keys[i], ORTE_UNDEF, NULL))) {
-            ORTE_ERROR_LOG(rc);
-            free(segment);
-            free(sub.name);
-            free(trig.name);
-            OBJ_RELEASE(values[0]);
-            return rc;
-        }
-    }
-    
-    sub.cbfunc = cbfunc;
-    
-    trigs = &trig; 
-    
-    /* do the subscription */
-    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    free(segment);
-    free(sub.name);
-    free(trig.name);
-    OBJ_RELEASE(values[0]);
-    
-    return rc;
-}
-
 /**
  * Setup io for the current node, then tell orterun we are ready for the actual
  * processes.
  * @retval ORTE_SUCCESS
  * @retval error
  */
-int
-orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ)
+int orte_odls_bproc_launch_local_procs(opal_buffer_t *data)
 {
-    odls_bproc_child_t *child;
+    orte_odls_child_t *child;
     opal_list_item_t* item;
-    orte_gpr_value_t *value, **values;
-    orte_gpr_keyval_t *kval;
-    char *node_name;
     int rc;
-    orte_std_cntr_t i, j, kv, kv2, *sptr;
     int src = 0;
-    orte_buffer_t *ack;
+    opal_buffer_t *ack;
     bool connect_stdin;
     orte_jobid_t jobid;
     int cycle = 0;
-
-    /* first, retrieve the job number we are to launch from the
-     * returned data - we can extract the jobid directly from the
-     * subscription name we created
-     */
-    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_std_trigger_name(&jobid, data->target))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
 
     /**
      * hack for bproc4, change process group so that we do not receive signals
@@ -550,76 +433,26 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
      * process to intercept the signal
     */
     setpgid(0,0);
-
-    /* loop through the returned data to find the global info and
-     * the info for processes going onto this node
-     */
-    values = (orte_gpr_value_t**)(data->values)->addr;
-    for (j=0, i=0; i < data->cnt && j < (data->values)->size; j++) {  /* loop through all returned values */
-        if (NULL != values[j]) {
-            i++;
-            value = values[j];
-            /* this must have come from one of the process containers, so it must
-            * contain data for a proc structure - see if it belongs to this node
-            */
-            for (kv=0; kv < value->cnt; kv++) {
-                kval = value->keyvals[kv];
-                if (strcmp(kval->key, ORTE_NODE_NAME_KEY) == 0) {
-                    /* Most C-compilers will bark if we try to directly compare the string in the
-                    * kval data area against a regular string, so we need to "get" the data
-                    * so we can access it */
-                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&node_name, kval->value, ORTE_STRING))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                    /* if this is our node...must also protect against a zero-length string  */
-                    if (NULL != node_name && 0 == strcmp(node_name, orte_system_info.nodename)) {
-                        /* ...harvest the info into a new child structure */
-                        child = OBJ_NEW(odls_bproc_child_t);
-                        for (kv2 = 0; kv2 < value->cnt; kv2++) {
-                            kval = value->keyvals[kv2];
-                            if(strcmp(kval->key, ORTE_PROC_NAME_KEY) == 0) {
-                                /* copy the name into the child object */
-                                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(child->name), kval->value->data, ORTE_NAME))) {
-                                    ORTE_ERROR_LOG(rc);
-                                    return rc;
-                                }
-                                continue;
-                            }
-                            if(strcmp(kval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-                                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, kval->value, ORTE_STD_CNTR))) {
-                                    ORTE_ERROR_LOG(rc);
-                                    return rc;
-                                }
-                                child->app_idx = *sptr;  /* save the index into the app_context objects */
-                                continue;
-                            }
-                        } /* kv2 */
-                        /* protect operation on the global list of children */
-                        OPAL_THREAD_LOCK(&mca_odls_bproc_component.mutex);
-                        opal_list_append(&mca_odls_bproc_component.children, &child->super);
-                        opal_condition_signal(&mca_odls_bproc_component.cond);
-                        OPAL_THREAD_UNLOCK(&mca_odls_bproc_component.mutex);
-
-                    }
-                }
-            } /* for kv */
-        } /* for j */
+    
+    /* construct the list of children we are to launch */
+    if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &jobid))) {
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                             "%s odls:bproc:launch:local failed to construct child list on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+        goto cleanup;
     }
-
-    /* set up the io files for our children */
-    for(item =  opal_list_get_first(&mca_odls_bproc_component.children);
-        item != opal_list_get_end(&mca_odls_bproc_component.children);
+    
+   /* set up the io files for our children */
+    for(item =  opal_list_get_first(&orte_odls_globals.children);
+        item != opal_list_get_end(&orte_odls_globals.children);
         item =  opal_list_get_next(item)) {
-        child = (odls_bproc_child_t *) item;
-        if(0 < mca_odls_bproc_component.debug) {
-            opal_output(0, "orte_odls_bproc_launch: setting up io for "
-                            "[%lu,%lu,%lu] proc rank %lu\n",
-                            ORTE_NAME_ARGS((child->name)),
-                            child->name->vpid);
-        }
+        child = (orte_odls_child_t *) item;
+        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
+                             "%s odls:bproc:launch:local setting up io for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name)));
         /* only setup to forward stdin if it is rank 0, otherwise connect
-            * to /dev/null */
+         * to /dev/null
+         */
         if(0 == child->name->vpid) {
             connect_stdin = true;
         } else {
@@ -638,7 +471,7 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     }
 
     /* message to indicate that we are ready */
-    ack = OBJ_NEW(orte_buffer_t);
+    ack = OBJ_NEW(opal_buffer_t);
     rc = orte_dss.pack(ack, &src, 1, ORTE_INT);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);

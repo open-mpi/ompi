@@ -21,10 +21,11 @@
  */
 /**
  * @file:
- * Part of the bproc launcher. See pls_bproc.h for an overview of how it works.
+ * Part of the bproc launcher. See plm_bproc.h for an overview of how it works.
  */
 
 #include "orte_config.h"
+
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
@@ -60,72 +61,60 @@
 #include "opal/util/trace.h"
 
 #include "orte/dss/dss.h"
-#include "orte/util/sys_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/sds/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/ras/ras.h"
-#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/schema/schema_types.h"
-#include "orte/mca/smr/smr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"
 
-#include "orte/mca/pls/base/pls_private.h"
-#include "pls_bproc.h"
+#include "orte/mca/plm/base/plm_private.h"
+#include "plm_bproc.h"
 
 static bool daemons_launched;
 static bool bynode;
 
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
-int orte_pls_bproc_launch_threaded(orte_jobid_t);
-#endif
+static int plm_tm_init(void);
+static int plm_tm_launch_job(orte_job_t *jdata);
+static int plm_tm_terminate_job(orte_jobid_t jobid);
+static int plm_tm_terminate_orteds(void);
+static int plm_tm_signal_job(orte_jobid_t jobid, int32_t signal);
+static int plm_tm_finalize(void);
 
+static int plm_tm_connect(void);
+static int plm_tm_disconnect(void);
 
 /**
  * Initialization of the bproc module with all the needed function pointers
  */
-orte_pls_base_module_t orte_pls_bproc_module = {
-#if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
-    orte_pls_bproc_launch_threaded,
-#else
-    orte_pls_bproc_launch,
-#endif
-    orte_pls_bproc_terminate_job,
-    orte_pls_bproc_terminate_orteds,
-    orte_pls_bproc_terminate_proc,
-    orte_pls_bproc_signal_job,
-    orte_pls_bproc_signal_proc,
-    orte_pls_bproc_cancel_operation,
-    orte_pls_bproc_finalize
+orte_plm_base_module_t orte_plm_tm_module = {
+    plm_bproc_init,
+    orte_plm_base_set_hnp_name,
+    plm_bproc_launch_job,
+    NULL,
+    plm_bproc_terminate_job,
+    plm_bproc_terminate_orteds,
+    plm_bproc_signal_job,
+    plm_bproc_finalize
 };
 
 
-static int orte_pls_bproc_node_list(orte_job_map_t *map,
-                                    int *node_array, int * num_nodes,
-                                    int num_procs);
-static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
-                                   int node_rank, int app_context);
-static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data);
-static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data);
-#ifdef MCA_pls_bproc_scyld
-/* compatibility functions for scyld bproc and pre 3.2.0 LANL bproc */
-static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
-                              struct bproc_io_t *io, int iolen, const char *cmd,
-                              char * const argv[], char * envp[]);
-static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
-                           char * const argv[], char * envp[]);
-#endif
-static void orte_pls_bproc_setup_env(char *** env);
-static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp);
-static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
-                                     orte_vpid_t vpid_start, int app_context);
+/**
+ * Init the module
+ */
+static int plm_bproc_init(void)
+{
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
+}
+
 
 /**
  * Creates a list of nodes from a job map that should participate in the next launch cycle.
@@ -134,10 +123,11 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
  * @param num_nodes a pointer to the place where we will store the number of nodes in the array
  * @param num_procs the number of processes that a node must have to be placed on the list
  */
-static int orte_pls_bproc_node_list(orte_job_map_t *map, int *node_array, int *num_nodes, int num_procs)
+static int bproc_node_list(orte_job_map_t *map, int *node_array, int *num_nodes, int num_procs)
 {
     opal_list_item_t *item;
-    orte_mapped_node_t *node;
+    orte_node_t **nodes;
+    orte_std_cntr_t i;
     
     OPAL_TRACE(1);
     
@@ -146,15 +136,13 @@ static int orte_pls_bproc_node_list(orte_job_map_t *map, int *node_array, int *n
     memset((void*)node_array, -1, sizeof(int) * map->num_nodes);
 
     /* build the node list */
-    for(item = opal_list_get_first(&map->nodes);
-        item != opal_list_get_end(&map->nodes);
-        item = opal_list_get_next(item)) {
-        node = (orte_mapped_node_t*)item;
-        
-        if (node->num_procs >= num_procs) {
-            node_array[(*num_nodes)++] = atoi(node->nodename);
+    nodes = (orte_node_t**)map->nodes->addr;
+    for (i=0; i < map->num_nodes; i++) {
+        if (nodes[i]->num_procs >= num_procs) {
+            node_array[(*num_nodes)++] = atoi(nodes[i]->name);
         }
     }
+
     return ORTE_SUCCESS;
 }
 
@@ -168,21 +156,12 @@ static int orte_pls_bproc_node_list(orte_job_map_t *map, int *node_array, int *n
  * @retval ORTE_SUCCESS
  * @retval error
  */
-static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
-                                   int node_rank, int app_context) {
+static int bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
+                          int node_rank, int app_context) {
     char *frontend = NULL, *path = NULL, *job = NULL;
     int rc, i;
 
     OPAL_TRACE(1);
-    
-    /* ensure that system info is set */
-    orte_sys_info();
-    if (NULL == orte_system_info.user) { /* error condition */
-        return ORTE_ERROR;
-    }
-    if (NULL == orte_universe_info.name) {  /* error condition */
-        return ORTE_ERROR;
-    }
 
     rc = orte_ns.convert_jobid_to_string(&job, jobid);
     if(ORTE_SUCCESS != rc) {
@@ -204,7 +183,7 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto cleanup;
         }
-        if (mca_pls_bproc_component.debug) {
+        if (mca_plm_bproc_component.debug) {
             opal_output(0, "mpirun bproc io setup. Path: %s\n", path);
         }
         io[i].fd = i;
@@ -245,7 +224,7 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
  * @param status tells why the process died
  * @param data a pointer to the process's name
  */
-static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
+static void orte_plm_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
     orte_process_name_t * proc = (orte_process_name_t*) data;
     int rc;
     
@@ -270,7 +249,7 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
  * @param status tells why the daemon died
  * @param data a pointer to the node the daemon was on
  */
-static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data) {
+static void orte_plm_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data) {
 
     OPAL_TRACE(1);
      
@@ -295,19 +274,19 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
             ORTE_ERROR_LOG(rc);
         }
     }
-    OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
-    if(0 < mca_pls_bproc_component.num_daemons) {
-        mca_pls_bproc_component.num_daemons--;
+    OPAL_THREAD_LOCK(&mca_plm_bproc_component.lock);
+    if(0 < mca_plm_bproc_component.num_daemons) {
+        mca_plm_bproc_component.num_daemons--;
     }
-    opal_condition_signal(&mca_pls_bproc_component.condition);
-    OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
-    if(0 < mca_pls_bproc_component.debug) {
-        opal_output(0, "in orte_pls_bproc_waitpid_daemon_cb, %d daemons left\n",
-                    mca_pls_bproc_component.num_daemons);
+    opal_condition_signal(&mca_plm_bproc_component.condition);
+    OPAL_THREAD_UNLOCK(&mca_plm_bproc_component.lock);
+    if(0 < mca_plm_bproc_component.debug) {
+        opal_output(0, "in orte_plm_bproc_waitpid_daemon_cb, %d daemons left\n",
+                    mca_plm_bproc_component.num_daemons);
     }
 }
 
-#ifdef MCA_pls_bproc_scyld
+#ifdef MCA_plm_bproc_scyld
 /**
  * compatibility function for scyld bproc and pre 3.2.0 LANL bproc. See the
  * bproc documentation for details
@@ -331,12 +310,12 @@ static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
             opal_setenv("BPROC_RANK", rank, true, &envp);
             bproc_execmove_io(nodes[i], io, iolen, cmd, argv, envp);
             /* if we get here, there was an error */
-            opal_show_help("help-pls-bproc.txt", "bproc-vexecmove-launch", true,
+            opal_show_help("help-plm-bproc.txt", "bproc-vexecmove-launch", true,
                            cmd, nodes[i], errno);
             ORTE_ERROR_LOG(ORTE_ERROR);
             exit(-1);
         } else if(-1 == pids[i]) {
-            opal_show_help("help-pls-bproc.txt", "bproc-vexecmove-fork", true,
+            opal_show_help("help-plm-bproc.txt", "bproc-vexecmove-fork", true,
                            errno);
             ORTE_ERROR_LOG(ORTE_ERROR);
             return -1;
@@ -359,7 +338,7 @@ static int bproc_vexecmove(int nnodes, int *nodes, int *pids, const char *cmd,
  * Sets up the passed environment for processes launched by the bproc launcher.
  * @param env a pointer to the environment to setup
  */
-static void orte_pls_bproc_setup_env(char *** env)
+static void orte_plm_bproc_setup_env(char *** env)
 {
     char ** merged;
     char * var;
@@ -386,7 +365,7 @@ static void orte_pls_bproc_setup_env(char *** env)
 
     /* make sure the username used to create the bproc directory is the same on
      * the backend as the frontend */
-    var = mca_base_param_environ_variable("pls","bproc","username");
+    var = mca_base_param_environ_variable("plm","bproc","username");
     opal_setenv(var, orte_system_info.user, true, env);
     free(var);
 
@@ -435,7 +414,7 @@ static void orte_pls_bproc_setup_env(char *** env)
  * @retval ORTE_SUCCESS
  * @retval error
  */
-static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
+static int orte_plm_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     int * daemon_list = NULL;
     int num_daemons = 0;
     int rc, i;
@@ -450,15 +429,15 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     orte_std_cntr_t idx;
     struct stat buf;
     opal_list_t daemons;
-    orte_pls_daemon_info_t *dmn;
+    orte_plm_daemon_info_t *dmn;
     opal_list_item_t *item;
     struct timeval joblaunchstart, launchstart, launchstop;
 
     OPAL_TRACE(1);
     
-    if (orte_pls_base.timing) {
+    if (orte_plm_base.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
-            opal_output(0, "pls_bproc: could not obtain start time");
+            opal_output(0, "plm_bproc: could not obtain start time");
         }
     }
     
@@ -514,7 +493,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     }
     
     /* setup the daemon environment */
-    orte_pls_bproc_setup_env(envp);
+    orte_plm_bproc_setup_env(envp);
 
     /* direct the daemons to drop contact files so the local procs
      * can learn how to contact them - this is used for routing
@@ -528,7 +507,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
      * push that value into their environment */
     stride = 1;
     asprintf(&param, "%ld", (long)stride);
-    var = mca_base_param_environ_variable("pls", "bproc", "stride");
+    var = mca_base_param_environ_variable("plm", "bproc", "stride");
     opal_setenv(var, param, true, envp);
     free(param);
     free(var);
@@ -542,10 +521,10 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     }
 
     argc = 0;
-    opal_argv_append(&argc, &argv, mca_pls_bproc_component.orted);
+    opal_argv_append(&argc, &argv, mca_plm_bproc_component.orted);
     /* check for debug flags */
 #if 0
-    if (mca_pls_bproc_component.debug) {
+    if (mca_plm_bproc_component.debug) {
          opal_argv_append(&argc, &argv, "--debug");
          opal_argv_append(&argc, &argv, "--debug-daemons");
     }
@@ -567,20 +546,20 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     opal_argv_append(&argc, &argv, "--no-daemonize");
 
     /* find orted */
-    if(0 == stat(mca_pls_bproc_component.orted, &buf)) {
-        orted_path = strdup(mca_pls_bproc_component.orted);
+    if(0 == stat(mca_plm_bproc_component.orted, &buf)) {
+        orted_path = strdup(mca_plm_bproc_component.orted);
     } else {
-        orted_path = opal_path_findv(mca_pls_bproc_component.orted, 0, environ, NULL);
+        orted_path = opal_path_findv(mca_plm_bproc_component.orted, 0, environ, NULL);
         if(NULL == orted_path) {
-            orted_path = opal_os_path( false, opal_install_dirs.bindir, mca_pls_bproc_component.orted, NULL );
+            orted_path = opal_os_path( false, opal_install_dirs.bindir, mca_plm_bproc_component.orted, NULL );
             if( (NULL != orted_path) || (0 != stat(orted_path, &buf)) ) {
                 char *path = getenv("PATH");
                 if (NULL == path) {
                     path = ("PATH is empty!");
                 }
-                opal_show_help("help-pls-bproc.txt", "no-orted", true,
-                               mca_pls_bproc_component.orted,
-                               mca_pls_bproc_component.orted, path, opal_install_dirs.bindir);
+                opal_show_help("help-plm-bproc.txt", "no-orted", true,
+                               mca_plm_bproc_component.orted,
+                               mca_plm_bproc_component.orted, path, opal_install_dirs.bindir);
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
@@ -588,50 +567,50 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
         }
     }
 
-    if(0 < mca_pls_bproc_component.debug) {
+    if(0 < mca_plm_bproc_component.debug) {
         opal_output(0, "PLS_BPROC DEBUG: launching %d daemons. cmd: %s ",
                     num_daemons, orted_path);
     }
 
     /* launch the daemons */
-    if (orte_pls_base.timing) {
+    if (orte_plm_base.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
-            opal_output(0, "pls_bproc: could not obtain start time");
+            opal_output(0, "plm_bproc: could not obtain start time");
         }
     }
 
-    if (mca_pls_bproc_component.do_not_launch) {
+    if (mca_plm_bproc_component.do_not_launch) {
         for (i=0; i < num_daemons; i++) pids[i] = i+1;
         rc = num_daemons;
     } else {
         rc = bproc_vexecmove(num_daemons, daemon_list, pids, orted_path, argv, *envp);
     }
     
-    if (orte_pls_base.timing) {
+    if (orte_plm_base.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
-             opal_output(0, "pls_bproc: could not obtain stop time");
+             opal_output(0, "plm_bproc: could not obtain stop time");
          } else {
-             opal_output(0, "pls_bproc: daemon launch time is %ld usec",
+             opal_output(0, "plm_bproc: daemon launch time is %ld usec",
                          (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
                          (launchstop.tv_usec - launchstart.tv_usec));
          }
     }
     
     if(rc != num_daemons) {
-        opal_show_help("help-pls-bproc.txt", "daemon-launch-number", true,
+        opal_show_help("help-plm-bproc.txt", "daemon-launch-number", true,
                        num_daemons, rc, orted_path);
         rc = ORTE_ERROR;
         goto cleanup;
     }
     
-    if(0 < mca_pls_bproc_component.debug) {
+    if(0 < mca_plm_bproc_component.debug) {
         opal_output(0, "PLS_BPROC DEBUG: %d daemons launched. First pid: %d\n",
                     rc, *pids);
     }
 
     for(i = 0; i < num_daemons; i++) {
         if(0 >= pids[i]) {
-            opal_show_help("help-pls-bproc.txt", "daemon-launch-bad-pid", true,
+            opal_show_help("help-plm-bproc.txt", "daemon-launch-bad-pid", true,
                            daemon_list[i], pids[i], errno, orted_path);
             rc = ORTE_ERROR;
             ORTE_ERROR_LOG(rc);
@@ -642,13 +621,13 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 goto cleanup;
             }
-            rc = orte_pls_bproc_set_node_pid(ORTE_PROC_MY_NAME->cellid, param, map->job, pids[i]);
+            rc = orte_plm_bproc_set_node_pid(ORTE_PROC_MY_NAME->cellid, param, map->job, pids[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
 
-            dmn = OBJ_NEW(orte_pls_daemon_info_t);
+            dmn = OBJ_NEW(orte_plm_daemon_info_t);
             rc = orte_ns.create_process_name(&(dmn->name), ORTE_PROC_MY_NAME->cellid, 0,
                                              daemon_vpid_start + i);
             if(ORTE_SUCCESS != rc) {
@@ -665,7 +644,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     }
     
     /* store the daemon info */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_store_active_daemons(&daemons))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -673,9 +652,9 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
      * daemon info so that short-lived apps don't cause mpirun to
      * try and terminate the orteds before we record them
      */
-    if (!mca_pls_bproc_component.do_not_launch) {
+    if (!mca_plm_bproc_component.do_not_launch) {
         for (i=0; i < num_daemons; i++) {
-            rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb,
+            rc = orte_wait_cb(pids[i], orte_plm_bproc_waitpid_daemon_cb,
                               &daemon_list[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
@@ -705,17 +684,17 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
             
             if(-1 == src[0]) {
                 /* one of the daemons has failed to properly launch. The error is sent
-                * by orte_pls_bproc_waitpid_daemon_cb  */
+                * by orte_plm_bproc_waitpid_daemon_cb  */
                 if(-1 == src[1]) { /* did not die on a signal */
-                    opal_show_help("help-pls-bproc.txt", "daemon-died-no-signal", true,
+                    opal_show_help("help-plm-bproc.txt", "daemon-died-no-signal", true,
                                    src[2], src[3]);
                 } else { /* died on a signal */
-                    opal_show_help("help-pls-bproc.txt", "daemon-died-signal", true,
+                    opal_show_help("help-plm-bproc.txt", "daemon-died-signal", true,
                                    src[2], src[3], src[1]);
                 }
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
-                orte_pls_bproc_terminate_job(map->job, &orte_abort_timeout, NULL);
+                orte_plm_bproc_terminate_job(map->job, &orte_abort_timeout, NULL);
                 goto cleanup;
             }
         }
@@ -724,11 +703,11 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     /* indicate that the daemons have now launched */
     daemons_launched = true;
 
-    if (orte_pls_base.timing) {
+    if (orte_plm_base.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
-            opal_output(0, "pls_bproc: could not obtain stop time");
+            opal_output(0, "plm_bproc: could not obtain stop time");
         } else {
-            opal_output(0, "pls_bproc: total job launch time is %ld usec",
+            opal_output(0, "plm_bproc: total job launch time is %ld usec",
                         (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
                         (launchstop.tv_usec - joblaunchstart.tv_usec));
         }
@@ -754,7 +733,7 @@ cleanup:
 
 
 static int
-orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg) 
+orte_plm_bproc_node_failed(orte_gpr_notify_message_t *msg) 
 {
     orte_jobid_t job;
     
@@ -778,10 +757,10 @@ orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
     orte_schema.extract_jobid_from_std_trigger_name(&job, msg->target);
     
     /* terminate all jobs in the in the job family */
-    orte_pls_bproc_terminate_job(job, &orte_abort_timeout, NULL);
+    orte_plm_bproc_terminate_job(job, &orte_abort_timeout, NULL);
     
     /* kill the daemons */
-    orte_pls_bproc_terminate_job(0, &orte_abort_timeout, NULL);
+    orte_plm_bproc_terminate_job(0, &orte_abort_timeout, NULL);
     
     /* shouldn't ever get here.. */
     exit(1);
@@ -803,7 +782,7 @@ orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
  * @retval ORTE_SUCCESS
  * @retval error
  */
-static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
+static int orte_plm_bproc_launch_app(orte_job_map_t* map, int num_slots,
                                      orte_vpid_t vpid_start, int app_context) {
     int *node_array, num_nodes, cycle;
     int rc, i, j, stride;
@@ -822,7 +801,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
 
     /* set up app context */
     asprintf(&param, "%d", app_context);
-    var = mca_base_param_environ_variable("pls", "bproc", "app_context");
+    var = mca_base_param_environ_variable("plm", "bproc", "app_context");
     opal_setenv(var, param, true, &env);
     free(param);
     free(var);
@@ -850,7 +829,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     }
     /* and push that value into the process' environment */
     asprintf(&param, "%ld", (long)stride);
-    var = mca_base_param_environ_variable("pls", "bproc", "stride");
+    var = mca_base_param_environ_variable("plm", "bproc", "stride");
     opal_setenv(var, param, true, &env);
     free(param);
     free(var);
@@ -883,20 +862,20 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     i = 1;
     num_processes = map->vpid_range;
     
-    rc = orte_pls_bproc_node_list(map, node_array, &num_nodes, i);
+    rc = orte_plm_bproc_node_list(map, node_array, &num_nodes, i);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    opal_output_verbose(1, orte_pls_base.pls_output,
+    opal_output_verbose(1, orte_plm_base.plm_output,
                         "launching app %s", map->apps[app_context]->app);
 
     while(0 != num_nodes) {
-        if (0 < mca_pls_bproc_component.debug) {
-            opal_output_verbose(1, orte_pls_base.pls_output,
+        if (0 < mca_plm_bproc_component.debug) {
+            opal_output_verbose(1, orte_plm_base.plm_output,
                                 "\tlaunching cycle %d", i);
             for (dbg=0; dbg<num_nodes; dbg++) {
-                opal_output_verbose(1, orte_pls_base.pls_output,
+                opal_output_verbose(1, orte_plm_base.plm_output,
                                     "\t\tlaunching on node %d", node_array[dbg]);
             }
         }
@@ -909,13 +888,13 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
             goto cleanup;
         }
 
-        rc = orte_pls_bproc_setup_io(map->job, bproc_io, i - 1, app_context);
+        rc = orte_plm_bproc_setup_io(map->job, bproc_io, i - 1, app_context);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if(0 < mca_pls_bproc_component.debug) {
-            opal_output(0, "pls_bproc: launching %d processes:", num_nodes);
+        if(0 < mca_plm_bproc_component.debug) {
+            opal_output(0, "plm_bproc: launching %d processes:", num_nodes);
         }
 
         /* allocate space for bproc to return the pids */
@@ -926,7 +905,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
             goto cleanup;
         }
         
-        if (mca_pls_bproc_component.do_not_launch) {
+        if (mca_plm_bproc_component.do_not_launch) {
             for (j=0; j < num_nodes; j++) pids[j] = j+1;
             rc = num_nodes;
         } else {
@@ -935,12 +914,12 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                                     map->apps[app_context]->argv, env);
         }
         
-        if(0 < mca_pls_bproc_component.debug) {
-            opal_output(0, "pls_bproc: %d processes launched. First pid: %d",
+        if(0 < mca_plm_bproc_component.debug) {
+            opal_output(0, "plm_bproc: %d processes launched. First pid: %d",
                         rc, *pids);
         }
         if(rc != num_nodes) {
-            opal_show_help("help-pls-bproc.txt", "proc-launch-number", true,
+            opal_show_help("help-plm-bproc.txt", "proc-launch-number", true,
                            num_nodes, rc, map->apps[app_context]->app);
             rc = ORTE_ERROR;
             goto cleanup;
@@ -948,7 +927,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
         
         for(j = 0; j < num_nodes; j++) {
             if(0 >= pids[j]) {
-                opal_show_help("help-pls-bproc.txt", "proc-launch-bad-pid", true,
+                opal_show_help("help-plm-bproc.txt", "proc-launch-bad-pid", true,
                                node_array[j], pids[j], errno, map->apps[app_context]->app);
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
@@ -960,13 +939,13 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                orte_pls_bproc_set_proc_pid(proc_name, pids[j], node_array[j]);
+                orte_plm_bproc_set_proc_pid(proc_name, pids[j], node_array[j]);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                if (!mca_pls_bproc_component.do_not_launch) {
-                    rc = orte_wait_cb(pids[j], orte_pls_bproc_waitpid_cb, proc_name);
+                if (!mca_plm_bproc_component.do_not_launch) {
+                    rc = orte_wait_cb(pids[j], orte_plm_bproc_waitpid_cb, proc_name);
                     if(ORTE_SUCCESS != rc) {
                         ORTE_ERROR_LOG(rc);
                         goto cleanup;
@@ -998,7 +977,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
             }
         }
         
-        rc = orte_pls_bproc_node_list(map, node_array, &num_nodes, i);
+        rc = orte_plm_bproc_node_list(map, node_array, &num_nodes, i);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -1017,7 +996,7 @@ cleanup:
 }
 
 /**
- * The main bproc launcher. See pls_bproc.h for a high level overview of how
+ * The main bproc launcher. See plm_bproc.h for a high level overview of how
  * the bproc launching works.
  * Here we:
  * -# Launch the deamons on the backend nodes.
@@ -1029,7 +1008,7 @@ cleanup:
  * @retval ORTE_SUCCESS
  * @retval error
  */
-int orte_pls_bproc_launch(orte_jobid_t jobid) {
+int orte_plm_bproc_launch(orte_jobid_t jobid) {
     orte_job_map_t* map;
     orte_mapped_node_t *map_node;
     orte_vpid_t vpid_launch;
@@ -1044,8 +1023,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
 
     OPAL_TRACE(1);
     
-    /* make sure the pls_bproc receive function has been started */
-    if (ORTE_SUCCESS != (rc = orte_pls_bproc_comm_start())) {
+    /* make sure the plm_bproc receive function has been started */
+    if (ORTE_SUCCESS != (rc = orte_plm_bproc_comm_start())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -1126,7 +1105,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     while (NULL != (ras_node = (orte_ras_node_t*)opal_list_remove_first(&nodelist))) {
         if (num_slots != ras_node->node_slots) {
             /* mismatch - error out */
-            opal_show_help("help-pls-bproc.txt", "mismatched-slots", true);
+            opal_show_help("help-plm-bproc.txt", "mismatched-slots", true);
             ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
             rc = ORTE_ERR_NOT_SUPPORTED;
             goto cleanup;
@@ -1136,8 +1115,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     OBJ_DESTRUCT(&nodelist);
     
     
-    if(0 < mca_pls_bproc_component.debug) {
-        opal_output(0, "pls_bproc: --- starting to launch procs ---");
+    if(0 < mca_plm_bproc_component.debug) {
+        opal_output(0, "plm_bproc: --- starting to launch procs ---");
     }
 
     /* save the daemon environment */
@@ -1145,19 +1124,19 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
 
     /* for each application context, setup its env */
     for(i=0; i < map->num_apps; i++) {
-        orte_pls_bproc_setup_env(&map->apps[i]->env);
+        orte_plm_bproc_setup_env(&map->apps[i]->env);
     }
     
     /* tell the smr which nodes to monitor so we can be notified 
        when the node's state changes, useful for aborting when 
         a bproc node up and dies */
-    if (ORTE_SUCCESS != (rc = orte_smr.begin_monitoring(map, orte_pls_bproc_node_failed, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_smr.begin_monitoring(map, orte_plm_bproc_node_failed, NULL))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     
     /* launch the daemons on all nodes which have processes assigned to them */
-    rc = orte_pls_bproc_launch_daemons(map, &daemon_env);
+    rc = orte_plm_bproc_launch_daemons(map, &daemon_env);
     opal_argv_free(daemon_env);
 
     if(ORTE_SUCCESS != rc) {
@@ -1174,7 +1153,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
             goto cleanup;
         }
 
-        rc = orte_pls_bproc_launch_app(map, num_slots, vpid_launch, context);
+        rc = orte_plm_bproc_launch_app(map, num_slots, vpid_launch, context);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -1187,7 +1166,7 @@ cleanup:
 
     OBJ_RELEASE(map);
 
-    if (mca_pls_bproc_component.do_not_launch) {
+    if (mca_plm_bproc_component.do_not_launch) {
         /* indicate that we failed to launch, but do so silently */
         return ORTE_ERR_SILENT;
     }
@@ -1197,25 +1176,25 @@ cleanup:
 
 /**
  * Terminate all processes associated with this job */
-int orte_pls_bproc_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs) {
+int orte_plm_bproc_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs) {
     pid_t* pids;
     orte_std_cntr_t i, num_pids;
     int rc;
     
     OPAL_TRACE(1);
     
-    if(0 < mca_pls_bproc_component.debug) {
-        opal_output(0, "orte_pls_bproc: terminating job %ld", jobid);
+    if(0 < mca_plm_bproc_component.debug) {
+        opal_output(0, "orte_plm_bproc: terminating job %ld", jobid);
     }
     
     /* kill application process */
-    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pids(jobid, &pids, &num_pids, attrs)))
+    if(ORTE_SUCCESS != (rc = orte_plm_bproc_get_proc_pids(jobid, &pids, &num_pids, attrs)))
         return rc;
     for(i=0; i<num_pids; i++) {
-        if(mca_pls_bproc_component.debug) {
-            opal_output(0, "orte_pls_bproc: killing proc: %d\n", pids[i]);
+        if(mca_plm_bproc_component.debug) {
+            opal_output(0, "orte_plm_bproc: killing proc: %d\n", pids[i]);
         }
-        kill(pids[i], mca_pls_bproc_component.terminate_sig);
+        kill(pids[i], mca_plm_bproc_component.terminate_sig);
     }
     if(NULL != pids)
         free(pids);
@@ -1227,7 +1206,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid, struct timeval *timeout, op
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
+int orte_plm_bproc_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1237,13 +1216,13 @@ int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout,
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
 
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(&daemons, timeout))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -1258,15 +1237,15 @@ CLEANUP:
 /**
  * Terminate a specific process.
  */
-int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
+int orte_plm_bproc_terminate_proc(const orte_process_name_t* proc_name) {
     int rc;
     pid_t pid;
 
     OPAL_TRACE(1);
     
-    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_plm_bproc_get_proc_pid(proc_name, &pid)))
         return rc;
-    if(kill(pid, mca_pls_bproc_component.terminate_sig) != 0) {
+    if(kill(pid, mca_plm_bproc_component.terminate_sig) != 0) {
         switch(errno) {
             case EINVAL:
                 return ORTE_ERR_BAD_PARAM;
@@ -1284,7 +1263,7 @@ int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
 /**
  * Signal all processes associated with this job
  */
-int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs) {
+int orte_plm_bproc_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs) {
     pid_t* pids;
     orte_std_cntr_t i, num_pids;
     int rc;
@@ -1292,11 +1271,11 @@ int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *a
     OPAL_TRACE(1);
     
     /* signal application process */
-    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pids(jobid, &pids, &num_pids, attrs)))
+    if(ORTE_SUCCESS != (rc = orte_plm_bproc_get_proc_pids(jobid, &pids, &num_pids, attrs)))
         return rc;
     for(i=0; i<num_pids; i++) {
-        if(mca_pls_bproc_component.debug) {
-            opal_output(0, "orte_pls_bproc: signaling proc: %d\n", pids[i]);
+        if(mca_plm_bproc_component.debug) {
+            opal_output(0, "orte_plm_bproc: signaling proc: %d\n", pids[i]);
         }
         kill(pids[i], (int)signal);
     }
@@ -1310,13 +1289,13 @@ int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *a
 /**
  * Signal a specific process.
  */
-int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t signal) {
+int orte_plm_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t signal) {
     int rc;
     pid_t pid;
 
     OPAL_TRACE(1);
     
-    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_plm_bproc_get_proc_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, (int)signal) != 0) {
         switch(errno) {
@@ -1336,13 +1315,13 @@ int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t sig
 /**
  * Cancel an operation involving comm to an orted
  */
-int orte_pls_bproc_cancel_operation(void)
+int orte_plm_bproc_cancel_operation(void)
 {
     int rc;
     
     OPAL_TRACE(1);
     
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_cancel_operation())) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -1353,7 +1332,7 @@ int orte_pls_bproc_cancel_operation(void)
 /**
  * Module cleanup
  */
-int orte_pls_bproc_finalize(void)
+int orte_plm_bproc_finalize(void)
 {
    return ORTE_SUCCESS;
 }
@@ -1365,16 +1344,16 @@ int orte_pls_bproc_finalize(void)
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 
-struct orte_pls_bproc_stack_t {
+struct orte_plm_bproc_stack_t {
     opal_condition_t cond;
     opal_mutex_t mutex;
     bool complete;
     orte_jobid_t jobid;
     int rc;
 };
-typedef struct orte_pls_bproc_stack_t orte_pls_bproc_stack_t;
+typedef struct orte_plm_bproc_stack_t orte_plm_bproc_stack_t;
 
-static void orte_pls_bproc_stack_construct(orte_pls_bproc_stack_t* stack)
+static void orte_plm_bproc_stack_construct(orte_plm_bproc_stack_t* stack)
 {
     OBJ_CONSTRUCT(&stack->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&stack->cond, opal_condition_t);
@@ -1382,40 +1361,40 @@ static void orte_pls_bproc_stack_construct(orte_pls_bproc_stack_t* stack)
     stack->complete = false;
 }
 
-static void orte_pls_bproc_stack_destruct(orte_pls_bproc_stack_t* stack)
+static void orte_plm_bproc_stack_destruct(orte_plm_bproc_stack_t* stack)
 {
     OBJ_DESTRUCT(&stack->mutex);
     OBJ_DESTRUCT(&stack->cond);
 }
 
 static OBJ_CLASS_INSTANCE(
-    orte_pls_bproc_stack_t,
+    orte_plm_bproc_stack_t,
     opal_object_t,
-    orte_pls_bproc_stack_construct,
-    orte_pls_bproc_stack_destruct);
+    orte_plm_bproc_stack_construct,
+    orte_plm_bproc_stack_destruct);
 
 
-static void orte_pls_bproc_launch_cb(int fd, short event, void* args)
+static void orte_plm_bproc_launch_cb(int fd, short event, void* args)
 {
 
-    orte_pls_bproc_stack_t *stack = (orte_pls_bproc_stack_t*)args;
-    stack->rc = orte_pls_bproc_launch(stack->jobid);
+    orte_plm_bproc_stack_t *stack = (orte_plm_bproc_stack_t*)args;
+    stack->rc = orte_plm_bproc_launch(stack->jobid);
     OPAL_THREAD_LOCK(&stack->mutex);
     stack->complete = true;
     opal_condition_signal(&stack->cond);
     OPAL_THREAD_UNLOCK(&stack->mutex);
 }
 
-int orte_pls_bproc_launch_threaded(orte_jobid_t jobid)
+int orte_plm_bproc_launch_threaded(orte_jobid_t jobid)
 {
     struct timeval tv = { 0, 0 };
     struct opal_event event;
-    struct orte_pls_bproc_stack_t stack;
+    struct orte_plm_bproc_stack_t stack;
 
-    OBJ_CONSTRUCT(&stack, orte_pls_bproc_stack_t);
+    OBJ_CONSTRUCT(&stack, orte_plm_bproc_stack_t);
 
     stack.jobid = jobid;
-    opal_evtimer_set(&event, orte_pls_bproc_launch_cb, &stack);
+    opal_evtimer_set(&event, orte_plm_bproc_launch_cb, &stack);
     opal_evtimer_add(&event, &tv);
 
     OPAL_THREAD_LOCK(&stack.mutex);

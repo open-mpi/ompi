@@ -32,9 +32,9 @@ endif
 
 sources = \
     plm_bproc.h \
+    plm_bproc_component.c \
     plm_bproc.c \
-    plm_bproc_state.c \
-    plm_bproc_component.c
+    plm_bproc_state.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)

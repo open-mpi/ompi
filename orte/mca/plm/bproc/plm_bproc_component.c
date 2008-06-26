@@ -22,73 +22,65 @@
  * Takes care of the component stuff for the MCA.
  */
 #include "orte_config.h"
-#include "orte/mca/errmgr/errmgr.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "pls_bproc.h"
+
+#include "plm_bproc.h"
+
+/*
+ * Public string showing the plm ompi_bproc component version number
+ */
+const char *mca_plm_bproc_component_version_string =
+"Open MPI bproc plm MCA component version " ORTE_VERSION;
+
+static int plm_bproc_open(void);
+static int plm_bproc_close(void);
+static int orte_plm_bproc_component_query(mca_base_module_t **module, int *priority);
 
 /**
  * The bproc component data structure used to store all the relevent data about
  * this component.
  */
-orte_pls_bproc_component_t mca_pls_bproc_component = {
+orte_plm_bproc_component_t mca_plm_bproc_component = {
     {
         {
-        ORTE_PLS_BASE_VERSION_1_3_0,
-        "bproc", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_pls_bproc_component_open,  /* component open */
-        orte_pls_bproc_component_close /* component close */
+            ORTE_PLM_BASE_VERSION_1_0_0,
+            "bproc", /* MCA component name */
+            ORTE_MAJOR_VERSION,  /* MCA component major version */
+            ORTE_MINOR_VERSION,  /* MCA component minor version */
+            ORTE_RELEASE_VERSION,  /* MCA component release version */
+            
+            /* Component open and close functions */
+            plm_bproc_open,
+            plm_bproc_close,
+            orte_plm_bproc_component_query
         },
         {
-        false /* checkpoint / restart */
-        },
-        orte_pls_bproc_init    /* component init */ 
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
     }
 };
 
 /**
- * Opens the pls_bproc component, setting all the needed mca parameters and 
+ * Opens the plm_bproc component, setting all the needed mca parameters and 
  * finishes setting up the component struct.
  */
-int orte_pls_bproc_component_open(void) {
-    int rc;
+static int plm_bproc_component_open(void) {
+    mca_base_component_t *c = &mca_plm_bproc_component.super.base_version;
     
     /* init parameters */
-    mca_base_component_t *c = &mca_pls_bproc_component.super.pls_version;
-    mca_base_param_reg_int(c, "priority", NULL, false, false, 100,
-                           &mca_pls_bproc_component.priority);
-    mca_base_param_reg_int(c, "debug",
-                           "If > 0 prints library debugging information",
-                           false, false, 0, &mca_pls_bproc_component.debug);
-    mca_base_param_reg_int(c, "terminate_sig",
-                           "Signal sent to processes to terminate them", false,
-                           false, 9, &mca_pls_bproc_component.terminate_sig);
-    mca_base_param_reg_string(c, "orted", "Path to where orted is installed",
-                           false, false, "orted", &mca_pls_bproc_component.orted);
-    mca_base_param_reg_int(c, "nolaunch", NULL, false, false, (int)false,
-                           &rc);
-    if ((int)false == rc) {
-        mca_pls_bproc_component.do_not_launch = false;
-    } else {
-        mca_pls_bproc_component.do_not_launch = true;
-    }
-
-    mca_pls_bproc_component.recv_issued = false;
-    OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
-    
+     mca_base_param_reg_string(c, "orted", "Path to where orted is installed",
+                           false, false, "orted", &mca_plm_bproc_component.orted);
+   
     return ORTE_SUCCESS;
 }
 
 /**
- * Closes the pls_bproc component
+ * Closes the plm_bproc component
  */
-int orte_pls_bproc_component_close(void) {
-    OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
-    OBJ_DESTRUCT(&mca_pls_bproc_component.condition);
+static int plm_bproc_component_close(void) {
     return ORTE_SUCCESS;
 }
 
@@ -96,28 +88,26 @@ int orte_pls_bproc_component_close(void) {
  * Initializes the module. We do not want to run unless we are the seed, bproc
  * is running, and we are the master node.
  */
-orte_pls_base_module_t* orte_pls_bproc_init(int *priority) {
+static int orte_plm_bproc_component_query(mca_base_module_t **module, int *priority)
+{
     int ret;
     struct bproc_version_t version;
  
-    /* are we the seed */
-    if(orte_process_info.seed == false)
-        return NULL;
-
-    /* okay, we are in an HNP - now check to see if BProc is running here */
-    if (!mca_pls_bproc_component.do_not_launch) {
-        ret =  bproc_version(&version);
-        if (ret != 0) {
-            return NULL;
-        }
+    /* see if BProc is running here */
+    ret =  bproc_version(&version);
+    if (ret != 0) {
+        *module = NULL;
+        return ORTE_ERR_NOT_AVAILABLE;
     }
-    
+     
     /* only launch from the master node */
     if (bproc_currnode() != BPROC_NODE_MASTER) {
-        return NULL;
+        *module = NULL;
+        return ORTE_ERR_NOT_AVAILABLE;
     }
 
-    *priority = mca_pls_bproc_component.priority;
-    return &orte_pls_bproc_module;
+    *priority = 20;
+    *module = (mca_base_module_t *) &orte_plm_bproc_module;
+    return ORTE_SUCCESS;
 }
 

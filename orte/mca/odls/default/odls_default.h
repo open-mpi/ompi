@@ -19,8 +19,8 @@
  * @file:
  */
 
-#ifndef ORTE_ODLS_H
-#define ORTE_ODLS_H
+#ifndef ORTE_ODLS_DEFAULT_H
+#define ORTE_ODLS_DEFAULT_H
 
 #include "orte_config.h"
 
