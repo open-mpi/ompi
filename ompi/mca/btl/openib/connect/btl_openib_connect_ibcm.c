@@ -525,8 +525,6 @@ static uint32_t ibcm_pid;
 static opal_list_t ibcm_cm_listeners;
 static opal_list_t ibcm_pending_requests;
 static opal_list_t ibcm_pending_replies;
-#define MAX_LAST_RESORT_BTL 10
-mca_btl_openib_module_t *last_resort_btl[MAX_LAST_RESORT_BTL];
 
 /*******************************************************************
  * Component
@@ -569,7 +567,7 @@ static void ibcm_component_register(void)
 static int ibcm_component_query(mca_btl_openib_module_t *btl, 
                                 ompi_btl_openib_connect_base_module_t **cpc)
 {
-    int rc, i;
+    int rc;
     modex_msg_t *msg;
     ibcm_module_t *m = NULL;
     opal_list_item_t *item;
@@ -602,17 +600,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         OBJ_CONSTRUCT(&ibcm_cm_listeners, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_requests, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_replies, opal_list_t);
-        memset(last_resort_btl, 0, sizeof(last_resort_btl));
         initialized = true;
-    }
-
-    /* Cache this for some situations where we can't find a BTL.  If
-       it's already full, that's fine. */
-    for (i = 0; i < MAX_LAST_RESORT_BTL; ++i) {
-        if (NULL == last_resort_btl[i]) {
-            last_resort_btl[i] = NULL;
-            break;
-        }
     }
 
     /* Allocate the module struct.  Use calloc so that it's safe to
@@ -1465,16 +1453,7 @@ static int ibcm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 static int ibcm_module_finalize(mca_btl_openib_module_t *btl,
                                 ompi_btl_openib_connect_base_module_t *cpc)
 {
-    int i;
     ibcm_module_t *m = (ibcm_module_t *) cpc;
-
-    /* Remove this BTL from the last_resort_btl array */
-    for (i = 0; i < MAX_LAST_RESORT_BTL; ++i) {
-        if (btl == last_resort_btl[i]) {
-            last_resort_btl[i] = NULL;
-            break;
-        }
-    }
 
     /* If we previously successfully initialized, then destroy
        everything */
@@ -1632,40 +1611,6 @@ static void *callback_start_connect(void *context)
                  (void*)cbdata->cscd_endpoint->endpoint_remote_cpc_data->cbm_modex_message));
     ibcm_module_start_connect(cbdata->cscd_cpc, cbdata->cscd_endpoint);
     free(cbdata);
-
-    return NULL;
-}
-
-/*
- * Callback (from main thread) when the endpoint connection has failed
- */
-static void *callback_connection_failed(void *context)
-{
-    mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t*) context;
-    mca_btl_openib_module_t *btl = NULL;
-
-    if (NULL != endpoint) {
-        btl = endpoint->endpoint_btl;
-    } else {
-        /* If we don't have/couldn't find a matching BTL to raise an
-           error, then raise an error on *any* BTL that we can find. */
-        int i;
-        for (i = 0; i < MAX_LAST_RESORT_BTL; ++i) {
-            if (NULL != last_resort_btl[i]) {
-                btl = last_resort_btl[i];
-            }
-        }
-    }
-
-    /* If we didn't find a BTL, then just bail :-( */
-    if (NULL == btl) {
-        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
-                       "cannot raise btl error", orte_process_info.nodename);
-        exit(1);
-    }
-
-    /* Invoke the callback to the upper layer */
-    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL);
 
     return NULL;
 }
@@ -1951,7 +1896,8 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
+                                endpoint);
     return rc;
 }
  
@@ -2067,7 +2013,8 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
  error:
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
+                                endpoint);
     return rc;
 }
 
@@ -2113,7 +2060,8 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
  error:
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
+                                endpoint);
     return rc;
 }
 
@@ -2198,7 +2146,7 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
                  reason));
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(callback_connection_failed, NULL);
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, NULL);
     return OMPI_ERR_NOT_FOUND;
 }
 
@@ -2230,7 +2178,8 @@ static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, 
+                                endpoint);
     return OMPI_SUCCESS;
 }
 
@@ -2261,7 +2210,8 @@ static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, 
+                                endpoint);
     return OMPI_SUCCESS;
 }
 

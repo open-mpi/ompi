@@ -786,6 +786,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
     /* Get data. */
     if ( OMPI_SUCCESS != xoob_receive_connect_data(&rem_info, &requested_lid, &message_type, buffer)) {
         BTL_ERROR(("Failed to read data\n"));
+        mca_btl_openib_endpoint_invoke_error(NULL);
         return;
     }
 
@@ -802,18 +803,21 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_REQUEST."
                             " Failed to find endpoint with subnet %d and LID %d",
                             rem_info.rem_subnet_id,requested_lid));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
             /* prepost data on receiver site */
             if (OMPI_SUCCESS != mca_btl_openib_endpoint_post_recvs(ib_endpoint)) {
                 BTL_ERROR(("Failed to post on XRC SRQs"));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             /* we should create qp and send the info + srq to requestor */
             rc = xoob_reply_first_connect(ib_endpoint, &rem_info);
             if (OMPI_SUCCESS != rc) {
                 BTL_ERROR(("error in endpoint reply start connect"));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             /* enable pooling for this btl */
@@ -830,17 +834,20 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_XRC_REQUEST."
                             " Failed to find endpoint with subnet %d and LID %d",
                             rem_info.rem_subnet_id,requested_lid));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             if (OMPI_SUCCESS == xoob_recv_qp_connect(ib_endpoint, &rem_info)) {
                 if (OMPI_SUCCESS != mca_btl_openib_endpoint_post_recvs(ib_endpoint)) {
                     BTL_ERROR(("Failed to post on XRC SRQs"));
+                    mca_btl_openib_endpoint_invoke_error(ib_endpoint);
                     return;
                 }
                 OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
                 rc = xoob_send_connect_data(ib_endpoint, ENDPOINT_XOOB_CONNECT_XRC_RESPONSE);
                 if (OMPI_SUCCESS != rc) {
                     BTL_ERROR(("error in endpoint reply start connect"));
+                    mca_btl_openib_endpoint_invoke_error(ib_endpoint);
                     return;
                 }
                 OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
@@ -850,6 +857,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 rc = xoob_send_connect_data(ib_endpoint, ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE);
                 if (OMPI_SUCCESS != rc) {
                     BTL_ERROR(("error in endpoint reply start connect"));
+                    mca_btl_openib_endpoint_invoke_error(ib_endpoint);
                     return;
                 }
                 OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
@@ -866,6 +874,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_RESPONSE."
                             " Failed to find endpoint with subnet %d and LID %d",
                             rem_info.rem_subnet_id,rem_info.rem_lid));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
@@ -880,6 +889,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                         ib_endpoint->rem_info.rem_lid,ib_endpoint->rem_info.rem_subnet_id));
             if (OMPI_SUCCESS != xoob_send_qp_connect(ib_endpoint, &rem_info)) {
                 BTL_ERROR(("Failed to connect  endpoint\n"));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             mca_btl_openib_endpoint_connected(ib_endpoint);
@@ -895,6 +905,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_XRC_RESPONSE."
                             " Failed to find endpoint with subnet %d and LID %d",
                             rem_info.rem_subnet_id,rem_info.rem_lid));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
@@ -915,6 +926,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE."
                             " Failed to find endpoint with subnet %d and LID %d",
                             rem_info.rem_subnet_id,rem_info.rem_lid));
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             xoob_restart_connect(ib_endpoint);
