@@ -28,7 +28,6 @@
  * globals
  */
 bool opal_dss_initialized = false;
-bool opal_dss_debug = false;
 int opal_dss_verbose = -1;  /* by default disabled */
 int opal_dss_initial_size;
 int opal_dss_threshold_size;
@@ -147,9 +146,7 @@ int opal_dss_open(void)
 
     enviro_val = getenv("OPAL_dss_debug");
     if (NULL != enviro_val) {  /* debug requested */
-        opal_dss_debug = true;
-    } else {
-        opal_dss_debug = false;
+        opal_dss_verbose = 0;
     }
 
     /** set the default buffer type. If we are in debug mode, then we default
