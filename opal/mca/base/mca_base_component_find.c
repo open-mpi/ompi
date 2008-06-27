@@ -182,7 +182,7 @@ int mca_base_component_find(const char *directory, const char *type,
 
     /* Ensure that *all* requested components exist.  Print a warning
        and abort if they do not. */
-    for (i = 0; NULL != requested_component_names && 
+    for (i = 0; include_mode && NULL != requested_component_names && 
              NULL != requested_component_names[i]; ++i) {
         for (item = opal_list_get_first(found_components);
              opal_list_get_end(found_components) != item; 
