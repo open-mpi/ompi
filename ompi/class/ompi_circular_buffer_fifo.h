@@ -18,7 +18,9 @@
 
 #ifndef _OMPI_CIRCULAR_BUFFER_FIFO
 #define _OMPI_CIRCULAR_BUFFER_FIFO
+#ifdef HAVE_UNISTD_H
 #include <unistd.h> /* for getpagesize() */
+#endif
 
 #include "ompi/constants.h"
 #include "opal/sys/cache.h"

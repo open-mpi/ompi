@@ -21,7 +21,9 @@
 #include "orte/util/show_help.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include "opal/include/opal/align.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/maffinity_types.h"
