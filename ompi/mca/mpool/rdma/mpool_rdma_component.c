@@ -27,7 +27,9 @@
 #include "mpool_rdma.h"
 #include "orte/util/proc_info.h"
 #include "ompi/runtime/params.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
