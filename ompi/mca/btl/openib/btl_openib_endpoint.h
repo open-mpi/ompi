@@ -251,6 +251,13 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t*,
                                   struct mca_btl_openib_proc_modex_t *remote_proc_info,
                                   ompi_btl_openib_connect_base_module_data_t *remote_cpc_data);
 
+/*
+ * Invoke an error on the btl associated with an endpoint.  If we
+ * don't have an endpoint, then just use the first one on the
+ * component list of BTLs.
+ */
+void *mca_btl_openib_endpoint_invoke_error(void *endpoint);
+
 static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
         const int num_post)
 {
