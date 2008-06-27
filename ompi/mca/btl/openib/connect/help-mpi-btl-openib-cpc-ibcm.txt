@@ -33,3 +33,11 @@ request.  This should not happen.  Your MPI job is likely to hang or
 crash; sorry.
 
 Host: %s
+#
+[cannot raise btl error]
+
+The InfiniBand Connection Manager (IBCM) failed in some way, but is
+unable to find a way to raise an error properly.  This should not
+happen.  Your MPI job is likely to crash or hang, sorry.
+
+  Local host: %s
