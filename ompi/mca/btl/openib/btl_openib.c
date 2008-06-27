@@ -343,7 +343,7 @@ int mca_btl_openib_add_procs(
         rem_subnet_id_port_cnt = 0;
         BTL_VERBOSE(("got %d port_infos ", ib_proc->proc_port_count));
         for (j = 0; j < (int) ib_proc->proc_port_count; j++){
-            BTL_VERBOSE(("got a subnet %016x",
+            BTL_VERBOSE(("got a subnet %016" PRIx64,
                          ib_proc->proc_ports[j].pm_port_info.subnet_id));
             if (ib_proc->proc_ports[j].pm_port_info.subnet_id ==
                 openib_btl->port_info.subnet_id) {
