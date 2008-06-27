@@ -23,7 +23,7 @@
  * the IBTA doc.  The general connection scheme described in chapter
  * is a UD-based state-transition protcol that utilizes on a 3 way
  * handshake:
- *                                                                              
+ *
  * 1. active side creates local side of the QP and sends connect
  *    request to remote peer.
  * 2. passive side receives the request, makes its local side of QP,
@@ -74,7 +74,7 @@
  *
  * The IBCM software in OFED has some points that are worth bearing,
  * as they influenced the design and implementation of this CPC:
- *                                                                              
+ *
  * - IBCM is actually quite intelligent about timeouts and
  *   retransmissions; it will try to retransmit each request/reply/RTU
  *   several times before reporting the failure up to the ULP (i.e.,
@@ -525,6 +525,8 @@ static uint32_t ibcm_pid;
 static opal_list_t ibcm_cm_listeners;
 static opal_list_t ibcm_pending_requests;
 static opal_list_t ibcm_pending_replies;
+#define MAX_LAST_RESORT_BTL 10
+mca_btl_openib_module_t *last_resort_btl[MAX_LAST_RESORT_BTL];
 
 /*******************************************************************
  * Component
@@ -567,7 +569,7 @@ static void ibcm_component_register(void)
 static int ibcm_component_query(mca_btl_openib_module_t *btl, 
                                 ompi_btl_openib_connect_base_module_t **cpc)
 {
-    int rc;
+    int rc, i;
     modex_msg_t *msg;
     ibcm_module_t *m = NULL;
     opal_list_item_t *item;
@@ -600,7 +602,17 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         OBJ_CONSTRUCT(&ibcm_cm_listeners, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_requests, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_replies, opal_list_t);
+        memset(last_resort_btl, 0, sizeof(last_resort_btl));
         initialized = true;
+    }
+
+    /* Cache this for some situations where we can't find a BTL.  If
+       it's already full, that's fine. */
+    for (i = 0; i < MAX_LAST_RESORT_BTL; ++i) {
+        if (NULL == last_resort_btl[i]) {
+            last_resort_btl[i] = NULL;
+            break;
+        }
     }
 
     /* Allocate the module struct.  Use calloc so that it's safe to
@@ -1453,7 +1465,16 @@ static int ibcm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 static int ibcm_module_finalize(mca_btl_openib_module_t *btl,
                                 ompi_btl_openib_connect_base_module_t *cpc)
 {
+    int i;
     ibcm_module_t *m = (ibcm_module_t *) cpc;
+
+    /* Remove this BTL from the last_resort_btl array */
+    for (i = 0; i < MAX_LAST_RESORT_BTL; ++i) {
+        if (btl == last_resort_btl[i]) {
+            last_resort_btl[i] = NULL;
+            break;
+        }
+    }
 
     /* If we previously successfully initialized, then destroy
        everything */
@@ -1616,6 +1637,40 @@ static void *callback_start_connect(void *context)
 }
 
 /*
+ * Callback (from main thread) when the endpoint connection has failed
+ */
+static void *callback_connection_failed(void *context)
+{
+    mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t*) context;
+    mca_btl_openib_module_t *btl = NULL;
+
+    if (NULL != endpoint) {
+        btl = endpoint->endpoint_btl;
+    } else {
+        /* If we don't have/couldn't find a matching BTL to raise an
+           error, then raise an error on *any* BTL that we can find. */
+        int i;
+        for (i = 0; i < MAX_LAST_RESORT_BTL; ++i) {
+            if (NULL != last_resort_btl[i]) {
+                btl = last_resort_btl[i];
+            }
+        }
+    }
+
+    /* If we didn't find a BTL, then just bail :-( */
+    if (NULL == btl) {
+        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+                       "cannot raise btl error", orte_process_info.nodename);
+        exit(1);
+    }
+
+    /* Invoke the callback to the upper layer */
+    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL);
+
+    return NULL;
+}
+
+/*
  * Passive has received a connection request from a active
  */
 static int request_received(ibcm_listen_cm_id_t *cmh, 
@@ -1773,7 +1828,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
                                     endpoint);
         if (OMPI_SUCCESS != (rc = qp_create_all(endpoint, imodule))) {
             rej_reason = REJ_PASSIVE_SIDE_ERROR;
-            BTL_VERBOSE(("qp_create_all failed -- reject"));
+            BTL_ERROR(("qp_create_all failed -- reject"));
             goto reject;
         }
         ie->ie_qps_created = true;
@@ -1791,7 +1846,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     /* Connect this QP to the peer */
     if (OMPI_SUCCESS != (rc = qp_to_rtr(qp_index,
                                         event->cm_id, endpoint))) {
-        BTL_VERBOSE(("failed to connect qp"));
+        BTL_ERROR(("failed to connect qp"));
         rej_reason = REJ_PASSIVE_SIDE_ERROR;
         goto reject;
     }
@@ -1819,7 +1874,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
                                     sizeof(ibcm_base_cm_id_t*));
         if (NULL == ie->ie_cm_id_cache) {
             rej_reason = REJ_PASSIVE_SIDE_ERROR;
-            BTL_VERBOSE(("malloc failed -- reject"));
+            BTL_ERROR(("malloc failed -- reject"));
             goto reject;
         }
     }
@@ -1827,7 +1882,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     /* Save the CM ID on the endpoint for destruction later */
     ie->ie_cm_id_cache[qp_index] = OBJ_NEW(ibcm_base_cm_id_t);
     if (NULL == ie->ie_cm_id_cache[qp_index]) {
-        BTL_VERBOSE(("malloc failed"));
+        BTL_ERROR(("malloc failed"));
         rej_reason = REJ_PASSIVE_SIDE_ERROR;
         goto reject;
     }
@@ -1838,7 +1893,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     if (NULL == req) {
         rej_reason = REJ_PASSIVE_SIDE_ERROR;
         rc = OMPI_ERR_OUT_OF_RESOURCE;
-        BTL_VERBOSE(("OBJ_NEW failed -- reject"));
+        BTL_ERROR(("OBJ_NEW failed -- reject"));
         goto reject;
     }
     rep->super.cm_id = event->cm_id;
@@ -1861,18 +1916,14 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     rep->private_data.irepd_ep_index = endpoint->index;
 
     if (0 != (rc = ib_cm_send_rep(event->cm_id, &(rep->cm_rep)))) {
-        /* JMS */
-        BTL_VERBOSE(("failed to send reply for qp index %d",
-                     qp_index));
+        BTL_ERROR(("failed to send reply for qp index %d", qp_index));
         OBJ_RELEASE(rep);
         rej_reason = REJ_PASSIVE_SIDE_ERROR;
-        BTL_VERBOSE(("failed to send request -- reject"));
         goto reject;
     }
     opal_list_append(&ibcm_pending_replies, &(rep->super.super));
     
-    BTL_VERBOSE(("sent reply for qp index %d",
-                 qp_index));
+    BTL_VERBOSE(("sent reply for qp index %d", qp_index));
     return OMPI_SUCCESS;
 
  reject:
@@ -1886,16 +1937,21 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
        connection going the other direction. */
     if (REJ_WRONG_DIRECTION == rej_reason) {
         callback_start_connect_data_t *cbdata = malloc(sizeof(*cbdata));
-        if (NULL == cbdata) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+        if (NULL != cbdata) {
+            cbdata->cscd_cpc = 
+                (ompi_btl_openib_connect_base_module_t *) imodule;
+            cbdata->cscd_endpoint = endpoint;
+            BTL_VERBOSE(("starting connect in other direction"));
+            ompi_btl_openib_fd_schedule(callback_start_connect, cbdata);
+            
+            return OMPI_SUCCESS;
         }
-        cbdata->cscd_cpc = (ompi_btl_openib_connect_base_module_t *) imodule;
-        cbdata->cscd_endpoint = endpoint;
-        BTL_VERBOSE(("starting connect in other direction"));
-        ompi_btl_openib_fd_schedule(callback_start_connect, cbdata);
-        
-        return OMPI_SUCCESS;
+        BTL_ERROR(("malloc failed"));
     }
+
+    /* Communicate to the upper layer that the connection on this
+       endpoint has failed */
+    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
     return rc;
 }
  
@@ -1922,8 +1978,8 @@ static ibcm_base_cm_id_t *find_cm_id(struct ib_cm_id *cm_id,
    opal_list_item_t *item;
    ibcm_base_cm_id_t *req;
 
-   for (item = opal_list_get_first(&ibcm_pending_requests);
-         item != opal_list_get_end(&ibcm_pending_requests);
+   for (item = opal_list_get_first(list);
+         item != opal_list_get_end(list);
          item = opal_list_get_next(item)) {
         req = (ibcm_base_cm_id_t*) item;
         if (req->cm_id == cm_id) {
@@ -1959,13 +2015,13 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     if (OMPI_SUCCESS != (rc = qp_to_rtr(p->irepd_qp_index,
                                         event->cm_id, endpoint))) {
         BTL_VERBOSE(("failed move to RTR"));
-        return rc;
+        goto error;
     }
 
     if (OMPI_SUCCESS != (rc = qp_to_rts(p->irepd_qp_index,
                                         event->cm_id, endpoint))) {
         BTL_VERBOSE(("failed move to RTS"));
-        return rc;
+        goto error;
     }
 
     /* Now that all the qp's are created locally, post some receive
@@ -1978,7 +2034,7 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         if (OMPI_SUCCESS != 
             (rc = mca_btl_openib_endpoint_post_recvs(endpoint))) {
             BTL_VERBOSE(("failed to post recv buffers"));
-            return rc;
+            goto error;
         }
         ie->ie_recv_buffers_posted = true;
     }
@@ -1988,7 +2044,8 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     rtu_data.irtud_qp_index = p->irepd_qp_index;
     if (0 != ib_cm_send_rtu(event->cm_id, &rtu_data, sizeof(rtu_data))) {
         BTL_VERBOSE(("failed to send RTU"));
-        return OMPI_ERR_IN_ERRNO;
+        rc = OMPI_ERR_IN_ERRNO;
+        goto error;
     }
 
     /* Remove the pending request because we won't need to handle
@@ -2006,6 +2063,12 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     }
 
     return OMPI_SUCCESS;
+
+ error:
+    /* Communicate to the upper layer that the connection on this
+       endpoint has failed */
+    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    return rc;
 }
 
 /*
@@ -2027,7 +2090,7 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
                                         event->cm_id, endpoint))) {
         BTL_VERBOSE(("failed move to RTS (index %d)",
                      p->irtud_qp_index));
-        return rc;
+        goto error;
     }
 
     /* Remove the pending reply because we won't need to handle errors
@@ -2046,6 +2109,12 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
 
     BTL_VERBOSE(("all done"));
     return OMPI_SUCCESS;
+
+ error:
+    /* Communicate to the upper layer that the connection on this
+       endpoint has failed */
+    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
+    return rc;
 }
 
 
@@ -2127,12 +2196,16 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     BTL_VERBOSE(("got unexpected reject type: %d",
                  reason));
+    /* Communicate to the upper layer that the connection on this
+       endpoint has failed */
+    ompi_btl_openib_fd_schedule(callback_connection_failed, NULL);
     return OMPI_ERR_NOT_FOUND;
 }
 
 static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 {
-    ibcm_request_t *req;
+    mca_btl_openib_endpoint_t *endpoint = NULL;
+
     BTL_VERBOSE(("request error!"));
 
     if (IBV_WC_RESP_TIMEOUT_ERR != event->param.send_status) {
@@ -2140,50 +2213,55 @@ static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
                        "unhandled error", true,
                        "request", orte_process_info.nodename, 
                        event->param.send_status);
-        return OMPI_ERROR;
+    } else {
+        ibcm_request_t *req;
+        BTL_ERROR(("Got timeout in IBCM request (CM ID: %p)", 
+                   (void*)event->cm_id));
+        req = (ibcm_request_t*) find_cm_id(event->cm_id, 
+                                           &ibcm_pending_requests);
+        if (NULL == req) {
+            orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
+                           "timeout not found", true,
+                           "request", orte_process_info.nodename);
+        } else {
+            endpoint = req->endpoint;
+        }
     }
 
-    BTL_VERBOSE(("Got timeout in IBCM request (CM ID: %p)", 
-                 (void*)event->cm_id));
-    req = (ibcm_request_t*) find_cm_id(event->cm_id, 
-                                       &ibcm_pending_requests);
-    if (NULL == req) {
-        orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
-                       "timeout not found", true,
-                       "request", orte_process_info.nodename);
-        return OMPI_ERR_NOT_FOUND;
-    }
-
-    /* JMS need to barf this connection request appropriately */
+    /* Communicate to the upper layer that the connection on this
+       endpoint has failed */
+    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
     return OMPI_SUCCESS;
 }
 
 
 static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 {
-    ibcm_reply_t *rep;
-    BTL_VERBOSE(("reply error!"));
+    mca_btl_openib_endpoint_t *endpoint = NULL;
 
     if (IBV_WC_RESP_TIMEOUT_ERR != event->param.send_status) {
         orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
                        "unhandled error", true,
                        "reply", orte_process_info.nodename, 
                        event->param.send_status);
-        return OMPI_ERROR;
+    } else {
+        ibcm_reply_t *rep;
+        BTL_ERROR(("Got timeout in IBCM reply (id: %p)",
+                   (void*)event->cm_id));
+        rep = (ibcm_reply_t*) find_cm_id(event->cm_id, 
+                                         &ibcm_pending_replies);
+        if (NULL == rep) {
+            orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
+                           "timeout not found", true,
+                           "reply", orte_process_info.nodename);
+        } else {
+            endpoint = rep->endpoint;
+        }
     }
 
-    BTL_VERBOSE(("Got timeout in IBCM reply (id: %p) -- aborting because resend is not written yet...",
-                 (void*)event->cm_id));
-    rep = (ibcm_reply_t*) find_cm_id(event->cm_id, 
-                                     &ibcm_pending_replies);
-    if (NULL == rep) {
-        orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
-                       "timeout not found", true,
-                       "reply", orte_process_info.nodename);
-        return OMPI_ERR_NOT_FOUND;
-    }
-
-    /* JMS need to barf this connection request appropriately */
+    /* Communicate to the upper layer that the connection on this
+       endpoint has failed */
+    ompi_btl_openib_fd_schedule(callback_connection_failed, endpoint);
     return OMPI_SUCCESS;
 }
 
@@ -2274,7 +2352,9 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
 
         if (OMPI_SUCCESS != rc) {
             BTL_VERBOSE(("An error occurred handling an IBCM event.  Bad things are likely to happen."));
-            /* JMS need to propagate an error up to BTL or PML somehow */
+            /* If we needed to abort (i.e., call the BTL error_cb()
+               function), the dispatch function would have done that
+               already */
         }
     }
 
