@@ -635,6 +635,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     rc = opal_dss.unpack(buffer, &message_type, &cnt, OPAL_UINT8);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
+        mca_btl_openib_endpoint_invoke_error(NULL);
         return;
     }
     
@@ -642,6 +643,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     rc = opal_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, OPAL_UINT64);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
+        mca_btl_openib_endpoint_invoke_error(NULL);
         return;
     }
     
@@ -650,12 +652,14 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         rc = opal_dss.unpack(buffer, &lcl_qp, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            mca_btl_openib_endpoint_invoke_error(NULL);
             return;
         }
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
         rc = opal_dss.unpack(buffer, &lcl_lid, &cnt, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            mca_btl_openib_endpoint_invoke_error(NULL);
             return;
         }
     }
@@ -673,6 +677,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                                  OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
             BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
@@ -680,6 +685,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                                  OPAL_UINT32);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
+                mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
         }
@@ -688,18 +694,21 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         rc = opal_dss.unpack(buffer, &rem_info.rem_lid, &cnt, OPAL_UINT16);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            mca_btl_openib_endpoint_invoke_error(NULL);
             return;
         }
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &rem_info.rem_mtu, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            mca_btl_openib_endpoint_invoke_error(NULL);
             return;
         }
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &rem_info.rem_index, &cnt, OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
+            mca_btl_openib_endpoint_invoke_error(NULL);
             return;
         }
     }
@@ -769,6 +778,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         
         if (!found) {
             BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
+            mca_btl_openib_endpoint_invoke_error(NULL);
             return; 
         }
         
@@ -791,6 +801,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             
             if (OMPI_SUCCESS != rc) {
                 BTL_ERROR(("error in endpoint reply start connect"));
+                mca_btl_openib_endpoint_invoke_error(ib_endpoint);
                 break;
             }
             
@@ -805,6 +816,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             set_remote_info(ib_endpoint, &rem_info);
             if (OMPI_SUCCESS != (rc = qp_connect_all(ib_endpoint))) {
                 BTL_ERROR(("endpoint connect error: %d", rc)); 
+                mca_btl_openib_endpoint_invoke_error(ib_endpoint);
                 break;
             }
            
@@ -836,6 +848,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
 
         default :
             BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
+            mca_btl_openib_endpoint_invoke_error(ib_endpoint);
         }
         OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
         break;

@@ -924,3 +924,39 @@ unlock_rdma_local:
             endpoint->eager_rdma_local.base.pval, NULL);
     endpoint->eager_rdma_local.frags = NULL;
 }
+
+/*
+ * Invoke an error on the btl associated with an endpoint.  If we
+ * don't have an endpoint, then just use the first one on the
+ * component list of BTLs.
+ */
+void *mca_btl_openib_endpoint_invoke_error(void *context)
+{
+    mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t*) context;
+    mca_btl_openib_module_t *btl;
+
+    if (NULL == endpoint) {
+        int i;
+        for (i = 0; i < mca_btl_openib_component.ib_num_btls; ++i) {
+            if (NULL != mca_btl_openib_component.openib_btls[i]) {
+                btl = mca_btl_openib_component.openib_btls[i];
+                break;
+            }
+        }
+    } else {
+        btl = endpoint->endpoint_btl;
+    }
+
+    /* If we didn't find a BTL, then just bail :-( */
+    if (NULL == btl) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                       "cannot raise btl error", orte_process_info.nodename);
+        exit(1);
+    }
+
+    /* Invoke the callback to the upper layer */
+    btl->error_cb(&(btl->super), MCA_BTL_ERROR_FLAGS_FATAL);
+
+    /* Will likely never get here */
+    return NULL;
+}
