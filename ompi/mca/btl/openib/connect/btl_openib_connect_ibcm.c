@@ -506,6 +506,7 @@ typedef struct {
 static void ibcm_component_register(void);
 static int ibcm_component_query(mca_btl_openib_module_t *btl, 
                                 ompi_btl_openib_connect_base_module_t **cpc);
+static int ibcm_component_finalize(void);
 
 static int ibcm_endpoint_init(struct mca_btl_base_endpoint_t *endpoint);
 static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
@@ -535,8 +536,67 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_ibcm = {
     ibcm_component_register,
     NULL,
     ibcm_component_query,
-    NULL
+    ibcm_component_finalize
 };
+
+/*--------------------------------------------------------------------*/
+
+#define ENABLE_TIMERS (OMPI_ENABLE_DEBUG && 0)
+
+#if ENABLE_TIMERS 
+#include MCA_timer_IMPLEMENTATION_HEADER
+
+enum {
+    QUERY,
+    START_CONNECT,
+    QP_TO_RTR, 
+    QP_TO_RTS,
+    REQUEST_RECEIVED,
+    REPLY_RECEIVED,
+    RTU_RECEIVED,
+    REJECT_RECEIVED,
+    CM_GET_EVENT,
+    CM_ACK_EVENT,
+    MAXTIMER
+};
+static double timer_tmp[MAXTIMER];
+static double timers[MAXTIMER];
+
+static void print_timers(void)
+{
+    opal_output(0, "ibcm timer[QUERY] = %g", timers[QUERY]);
+    opal_output(0, "ibcm timer[START_CONNECT] = %g", timers[START_CONNECT]);
+    opal_output(0, "ibcm timer[QP_TO_RTR] = %g", timers[QP_TO_RTR]);
+    opal_output(0, "ibcm timer[QP_TO_RTS] = %g", timers[QP_TO_RTS]);
+    opal_output(0, "ibcm timer[REQUEST_RECEIVED] = %g", timers[REQUEST_RECEIVED]);
+    opal_output(0, "ibcm timer[REPLY_RECEIVED] = %g", timers[REPLY_RECEIVED]);
+    opal_output(0, "ibcm timer[RTU_RECEIVED] = %g", timers[RTU_RECEIVED]);
+    opal_output(0, "ibcm timer[REJECT_RECEIVED] = %g", timers[REJECT_RECEIVED]);
+    opal_output(0, "ibcm timer[CM_GET_EVENT] = %g", timers[CM_GET_EVENT]);
+    opal_output(0, "ibcm timer[CM_ACK_EVENT] = %g", timers[CM_ACK_EVENT]);
+}
+
+static inline double gettime(void) __opal_attribute_always_inline__;
+static inline double gettime(void)
+{
+    double wtime;
+#if OPAL_TIMER_USEC_NATIVE
+    wtime = ((double) opal_timer_base_get_usec()) / 1000000.0;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+#endif
+    return wtime;
+}
+
+#define TIMER_START(x) timer_tmp[(x)] = gettime();
+#define TIMER_STOP(x) timers[(x)] = (gettime() - timer_tmp[(x)]);
+#else
+#define TIMER_START(x)
+#define TIMER_STOP(x)
+#endif
 
 /*--------------------------------------------------------------------*/
 
@@ -601,12 +661,24 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         OBJ_CONSTRUCT(&ibcm_pending_requests, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_replies, opal_list_t);
         initialized = true;
+
+#if ENABLE_TIMERS
+        {
+            int i;
+            for (i = 0; i < MAXTIMER; ++i) {
+                timer_tmp[i] = timers[i] = 0.0;
+            }
+        }
+#endif
     }
+
+    TIMER_START(QUERY);
 
     /* Allocate the module struct.  Use calloc so that it's safe to
        finalize the module if something goes wrong. */
     m = calloc(1, sizeof(*m) + sizeof(*msg));
     if (NULL == m) {
+        BTL_ERROR(("malloc failed!"));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto error;
     }
@@ -631,8 +703,8 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
 
         cmh = OBJ_NEW(ibcm_listen_cm_id_t);
         if (NULL == cmh) {
+            BTL_ERROR(("malloc failed!"));
             rc = OMPI_ERR_OUT_OF_RESOURCE;
-            BTL_VERBOSE(("system error (malloc failed)"));
             goto error;
         }
 
@@ -648,7 +720,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             /* We can't open the device for some reason (can't read,
                can't write, doesn't exist, ...etc.); IBCM is not setup
                on this node. */
-            BTL_VERBOSE(("failed to open IB CM device: %s", filename));
+            BTL_ERROR(("failed to open IB CM device: %s", filename));
             free(filename);
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
@@ -664,19 +736,38 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
                platform.  So print an optional message and return
                ERR_NOT_SUPPORTED (i.e., gracefully fail). */
             OBJ_RELEASE(cmh);
-            BTL_VERBOSE(("failed to open IB CM device"));
+            BTL_ERROR(("failed to open IB CM device"));
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
 
-        if (0 != ib_cm_create_id(cmh->cm_device, 
-                                 &cmh->listen_cm_id, NULL) ||
-            0 != ib_cm_listen(cmh->listen_cm_id, ibcm_pid, 0)) {
+        if (0 != (rc = ib_cm_create_id(cmh->cm_device, 
+                                       &cmh->listen_cm_id, NULL))) {
             /* Same rationale as above */
             OBJ_RELEASE(cmh);
-            BTL_VERBOSE(("failed to initialize IB CM handles"));
+            BTL_ERROR(("failed to ib_cm_create_id: rc=%d, errno=%d", rc, errno));
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
+        }
+
+        {
+            /* JMS: This crude loop is only here while we're trying to
+               figure out why ib_cm_listen() fails a bunch of the
+               time... */
+            int i;
+            for (i = 0; i < 10; ++i) {
+                if (0 == (rc = ib_cm_listen(cmh->listen_cm_id, ibcm_pid, 0))) {
+                    break;
+                }
+                usleep(1);
+            }
+            if (0 != rc) {
+                /* Same rationale as above */
+                OBJ_RELEASE(cmh);
+                BTL_ERROR(("failed to ib_cm_listen 10 times: rc=%d, errno=%d", rc, errno));
+                rc = OMPI_ERR_NOT_SUPPORTED;
+                goto error;
+            }
         }
         opal_list_append(&ibcm_cm_listeners, &(cmh->super));
     } else {
@@ -687,6 +778,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     imli = OBJ_NEW(ibcm_module_list_item_t);
     if (NULL == imli) {
         OBJ_RELEASE(cmh);
+        BTL_ERROR(("malloc failed!"));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto error;
     }
@@ -706,7 +798,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
        different formula).  Query for the Nth GID (N = MCA param) on
        the port. */
     if (ibcm_gid_table_index > btl->ib_port_attr.gid_tbl_len) {
-        BTL_VERBOSE(("desired GID table index (%d) is larger than the actual table size (%d) on device %s",
+        BTL_ERROR(("desired GID table index (%d) is larger than the actual table size (%d) on device %s",
                      ibcm_gid_table_index,
                      btl->ib_port_attr.gid_tbl_len,
                      ibv_get_device_name(btl->hca->ib_dev)));
@@ -716,7 +808,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     rc = ibv_query_gid(btl->hca->ib_dev_context, btl->port_num, ibcm_gid_table_index, 
                        &gid);
     if (0 != rc) {
-        BTL_VERBOSE(("system error (ibv_query_gid failed)"));
+        BTL_ERROR(("system error (ibv_query_gid failed)"));
         rc = OMPI_ERR_UNREACH;
         goto error;
     }
@@ -739,6 +831,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     *cpc = (ompi_btl_openib_connect_base_module_t *) m;
     BTL_VERBOSE(("available for use on %s",
                  ibv_get_device_name(btl->hca->ib_dev)));
+    TIMER_STOP(QUERY);
     return OMPI_SUCCESS;
 
  error:
@@ -1015,6 +1108,7 @@ static int ibcm_endpoint_init(struct mca_btl_base_endpoint_t *endpoint)
     ibcm_endpoint_t *ie = endpoint->endpoint_local_cpc_data = 
         calloc(1, sizeof(ibcm_endpoint_t));
     if (NULL == ie) {
+        BTL_ERROR(("malloc failed!"));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1141,6 +1235,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
     struct ibv_sa_path_rec path_rec;
     bool do_initiate;
 
+    TIMER_START(START_CONNECT);
     BTL_VERBOSE(("endpoint %p (lid %d, ep index %d)", 
                  (void*)endpoint, endpoint->endpoint_btl->port_info.lid,
                  endpoint->index));
@@ -1209,8 +1304,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         ie->ie_cm_id_cache = calloc(ie->ie_cm_id_cache_size,
                                     sizeof(ibcm_base_cm_id_t*));
         if (NULL == ie->ie_cm_id_cache) {
-            BTL_VERBOSE(("failed to malloc %d active device ids",
-                         ie->ie_cm_id_cache_size));
+            BTL_ERROR(("malloc failed!"));
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto err;
         }
@@ -1222,6 +1316,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
             /* Allocate a CM ID cache object */
             ie->ie_cm_id_cache[i] = OBJ_NEW(ibcm_base_cm_id_t);
             if (NULL == ie->ie_cm_id_cache[i]) {
+                BTL_ERROR(("malloc failed!"));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto err;
             }
@@ -1229,6 +1324,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
             /* Initialize the request-common fields */
             req = alloc_request(m, msg, &path_rec, endpoint);
             if (NULL == req) {
+                BTL_ERROR(("malloc failed!"));
                 rc = OMPI_ERR_OUT_OF_RESOURCE;
                 goto err;
             }
@@ -1278,6 +1374,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         /* Initialize the request-common fields */
         req = alloc_request(m, msg, &path_rec, endpoint);
         if (NULL == req) {
+            BTL_ERROR(("malloc failed!"));
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto err;
         }
@@ -1309,7 +1406,9 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         opal_list_append(&ibcm_pending_requests, &(req->super.super));
     }
 
+    opal_progress_event_users_increment();
     BTL_VERBOSE(("connect request send successfully"));
+    TIMER_STOP(START_CONNECT);
     return OMPI_SUCCESS;
 
  err:
@@ -1466,6 +1565,16 @@ static int ibcm_module_finalize(mca_btl_openib_module_t *btl,
 
 /*--------------------------------------------------------------------*/
 
+static int ibcm_component_finalize(void)
+{
+#if ENABLE_TIMERS
+    print_timers();
+#endif
+    return OMPI_SUCCESS;
+}
+
+/*--------------------------------------------------------------------*/
+
 /*
  * We have received information about the remote peer's QP; move the
  * local QP through INIT to RTR.
@@ -1478,6 +1587,8 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
     struct ibv_qp *qp = endpoint->qps[qp_index].qp->lcl_qp;
     mca_btl_openib_module_t *btl = endpoint->endpoint_btl;
     enum ibv_mtu mtu;
+
+    TIMER_START(QP_TO_RTR);
 
     /* IB CM does not negotiate the MTU for us, so we have to figure
        it out ourselves.  Luckly, we know what the MTU is of the other
@@ -1545,6 +1656,7 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
     }
     
     /* All done */
+    TIMER_STOP(QP_TO_RTR);
     return OMPI_SUCCESS;
 }
 
@@ -1554,25 +1666,29 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
 static int qp_to_rts(int qp_index, struct ib_cm_id *cm_id,
                      mca_btl_openib_endpoint_t *endpoint)
 {
-    int attr_mask;
+    int rc, attr_mask;
     struct ibv_qp_attr attr;
     struct ibv_qp *qp = endpoint->qps[qp_index].qp->lcl_qp;
+
+    TIMER_START(QP_TO_RTS);
 
     /* Setup attributes */
     memset(&attr, 0, sizeof(attr));
     attr.qp_state = IBV_QPS_RTS;
-    if (0 != ib_cm_init_qp_attr(cm_id, &attr, &attr_mask)) {
-        BTL_ERROR(("error initializing IB CM qp attr RTS"));
+    if (0 != (rc = ib_cm_init_qp_attr(cm_id, &attr, &attr_mask))) {
+        BTL_ERROR(("error initializing IB CM qp attr RTS; rc=%d, errno=%d",
+                   rc, errno));
         return OMPI_ERROR;
     }
-    if (0 != ibv_modify_qp(qp, &attr, attr_mask)) {
-        BTL_ERROR(("error modifing QP (index %d) to RTS errno says %s",
-                   qp_index, strerror(errno)));
+    if (0 != (rc = ibv_modify_qp(qp, &attr, attr_mask))) {
+        BTL_ERROR(("error modifing QP (index %d) to RTS errno says %s; rc=%d, errno=%d",
+                   qp_index, strerror(errno), rc, errno));
         return OMPI_ERROR; 
     }
     
     /* All done */
     BTL_VERBOSE(("successfully set RTS"));
+    TIMER_STOP(QP_TO_RTS);
     return OMPI_SUCCESS;
 }
 
@@ -1637,6 +1753,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     ibcm_module_t *imodule = NULL;
     ibcm_reply_t *rep;
 
+    TIMER_START(REQUEST_RECEIVED);
     BTL_VERBOSE(("remote qp index %d, remote guid 0x%" PRIx64 ", remote qkey %u, remote qpn %d, remote psn %d",
                 qp_index,
                 ntoh64(req->primary_path->dgid.global.interface_id),
@@ -1788,10 +1905,10 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         event->param.req_rcvd.starting_psn;
     endpoint->rem_info.rem_index = active_private_data->ireqd_ep_index;
 
-    /* Connect this QP to the peer */
-    if (OMPI_SUCCESS != (rc = qp_to_rtr(qp_index,
-                                        event->cm_id, endpoint))) {
-        BTL_ERROR(("failed to connect qp"));
+    /* Move QP to RTR.  Note that you have to do this *before* posting
+       receive buffers. */
+    if (OMPI_SUCCESS != (rc = qp_to_rtr(qp_index, event->cm_id, endpoint))) {
+        BTL_VERBOSE(("failed move to RTR (index %d)", qp_index));
         rej_reason = REJ_PASSIVE_SIDE_ERROR;
         goto reject;
     }
@@ -1824,6 +1941,35 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         }
     }
 
+    /* Move QP to RTS.  Note that it is important to do this now
+       (vs. doing it when the RTU is received, as shown in the IBCM
+       example cmpost.c application) because of a nasty race condition
+       due to OMPI's use of multiple QPs for each endpoint.
+
+       Consider a trivial MPI app that calls MPI_INIT, MPI_BARRIER,
+       MPI_FINALIZE.  In this case, MPI process A will initiate a
+       connection to MPI process B.  All BSRQ QPs will be opened A->B
+       (assume that A->B is the "right" direction to initiate).  A
+       will then send 1 message to B, probably across the "smallest"
+       QP, and then close all 4 QPs.
+
+       It is possible that the QP disconnect requests will arrive at B
+       before B has transitioned all of its endpoint QPs to RTS.
+       Remember that the disconnect requests will be handled by the
+       IBCM kernel module, which will move the QP's ID to a state
+       where it is illegal to transition to RTS.  Hence, when MPI
+       process B finally processes the RTU / tries to move the QP to
+       RTS: ka-boom (note that we saw this happen in practice; this is
+       not a theoretical race condition).
+
+       So just avoid the whole mess by transitioning to RTS now, when
+       we can guarantee that it's legal to do so. */
+    if (OMPI_SUCCESS != (rc = qp_to_rts(qp_index, event->cm_id, endpoint))) {
+        BTL_VERBOSE(("failed move to RTS (index %d)", qp_index));
+        rej_reason = REJ_PASSIVE_SIDE_ERROR;
+        goto reject;
+    }
+
     /* Save the CM ID on the endpoint for destruction later */
     ie->ie_cm_id_cache[qp_index] = OBJ_NEW(ibcm_base_cm_id_t);
     if (NULL == ie->ie_cm_id_cache[qp_index]) {
@@ -1837,6 +1983,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     rep = OBJ_NEW(ibcm_reply_t);
     if (NULL == req) {
         rej_reason = REJ_PASSIVE_SIDE_ERROR;
+        BTL_ERROR(("malloc failed!"));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         BTL_ERROR(("OBJ_NEW failed -- reject"));
         goto reject;
@@ -1868,6 +2015,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     }
     opal_list_append(&ibcm_pending_replies, &(rep->super.super));
     
+    TIMER_STOP(REQUEST_RECEIVED);
     BTL_VERBOSE(("sent reply for qp index %d", qp_index));
     return OMPI_SUCCESS;
 
@@ -1889,6 +2037,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
             BTL_VERBOSE(("starting connect in other direction"));
             ompi_btl_openib_fd_schedule(callback_start_connect, cbdata);
             
+            TIMER_STOP(REQUEST_RECEIVED);
             return OMPI_SUCCESS;
         }
         BTL_ERROR(("malloc failed"));
@@ -1896,6 +2045,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
+    TIMER_STOP(REQUEST_RECEIVED);
     ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
                                 endpoint);
     return rc;
@@ -1949,6 +2099,7 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     ibcm_endpoint_t *ie;
     ibcm_rtu_data_t rtu_data;
 
+    TIMER_START(REPLY_RECEIVED);
     BTL_VERBOSE(("got reply! (qp index %d) endpoint: %p",
                  p->irepd_qp_index, (void*) endpoint));
 
@@ -1957,13 +2108,15 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         event->param.rep_rcvd.starting_psn;
     endpoint->rem_info.rem_index = p->irepd_ep_index;
 
-    /* Move the QP to RTR and RTS */
+    /* Move the QP to RTR.  Note that you have to do this *before*
+       posting receives. */
     if (OMPI_SUCCESS != (rc = qp_to_rtr(p->irepd_qp_index,
                                         event->cm_id, endpoint))) {
         BTL_VERBOSE(("failed move to RTR"));
         goto error;
     }
 
+    /* Move the QP to RTS */
     if (OMPI_SUCCESS != (rc = qp_to_rts(p->irepd_qp_index,
                                         event->cm_id, endpoint))) {
         BTL_VERBOSE(("failed move to RTS"));
@@ -1971,11 +2124,11 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     }
 
     /* Now that all the qp's are created locally, post some receive
-       buffers, setup credits, etc.  The openib posts the buffers for
-       all QPs at once, so be sure to only do this for the *first*
-       reply that is received on an endpoint.  For all other replies
-       received on an endpoint, we can safely assume that the receive
-       buffers have already been posted. */
+       buffers, setup credits, etc.  The post_recvs() call posts the
+       buffers for all QPs at once, so be sure to only do this for the
+       *first* reply that is received on an endpoint.  For all other
+       replies received on an endpoint, we can safely assume that the
+       receive buffers have already been posted. */
     if (!ie->ie_recv_buffers_posted) {
         if (OMPI_SUCCESS != 
             (rc = mca_btl_openib_endpoint_post_recvs(endpoint))) {
@@ -2008,6 +2161,7 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         ompi_btl_openib_fd_schedule(callback_set_endpoint_connected, endpoint);
     }
 
+    TIMER_STOP(REPLY_RECEIVED);
     return OMPI_SUCCESS;
 
  error:
@@ -2024,21 +2178,13 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 static int ready_to_use_received(ibcm_listen_cm_id_t *h,
                                  struct ib_cm_event *event)
 {
-    int rc;
     ibcm_rtu_data_t *p = (ibcm_rtu_data_t*) event->private_data;
     ibcm_reply_t *reply = p->irtud_reply;
     mca_btl_openib_endpoint_t *endpoint = reply->endpoint;
     ibcm_endpoint_t *ie = (ibcm_endpoint_t*) endpoint->endpoint_local_cpc_data;
 
+    TIMER_START(RTU_RECEIVED);
     BTL_VERBOSE(("got RTU! (index %d)", p->irtud_qp_index));
-
-    /* Move the QP to RTS */
-    if (OMPI_SUCCESS != (rc = qp_to_rts(p->irtud_qp_index,
-                                        event->cm_id, endpoint))) {
-        BTL_VERBOSE(("failed move to RTS (index %d)",
-                     p->irtud_qp_index));
-        goto error;
-    }
 
     /* Remove the pending reply because we won't need to handle errors
        for it */
@@ -2055,14 +2201,8 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
     }
 
     BTL_VERBOSE(("all done"));
+    TIMER_STOP(RTU_RECEIVED);
     return OMPI_SUCCESS;
-
- error:
-    /* Communicate to the upper layer that the connection on this
-       endpoint has failed */
-    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
-                                endpoint);
-    return rc;
 }
 
 
@@ -2091,6 +2231,7 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     ibcm_reject_reason_t *rej_reason = 
         (ibcm_reject_reason_t *) event->param.rej_rcvd.ari;
 
+    TIMER_START(REJECT_RECEIVED);
     BTL_VERBOSE(("reject received: reason %d, official reason: %d",
                  reason, *rej_reason));
 
@@ -2139,6 +2280,7 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
             OBJ_RELEASE(request);
         }
 
+        TIMER_STOP(REJECT_RECEIVED);
         return OMPI_SUCCESS;
     }
 
@@ -2239,7 +2381,9 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
     ibcm_listen_cm_id_t *cmh = (ibcm_listen_cm_id_t*) context;
     struct ib_cm_event *e = NULL;
 
+    TIMER_START(CM_GET_EVENT);
     rc = ib_cm_get_event(cmh->cm_device, &e);
+    TIMER_STOP(CM_GET_EVENT);
     if (0 == rc && NULL != e) {
         want_ack = true;
         switch (e->event) {
@@ -2297,7 +2441,9 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
         }
 
         if (want_ack) {
+            TIMER_START(CM_ACK_EVENT);
             ib_cm_ack_event(e);
+            TIMER_STOP(CM_ACK_EVENT);
         }
 
         if (OMPI_SUCCESS != rc) {
