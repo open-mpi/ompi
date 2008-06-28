@@ -99,12 +99,12 @@ typedef mca_topo_base_component_1_0_0_t mca_topo_base_component_t;
  * ******************************************************************
  * *********************** information structure  *******************
  * Note for component authors:
- * If you find that this is not the most convinient form of representing
- * your topology, then please feel free to define your own structure in 
- * which this structure is the first element. That way, type casting can 
- * used to communicate between 2 different topo components. Note that this 
- * representation must be filled up no matter what the actual topo
- * structure might be
+ * If you find that this is not the most convinient form of
+ * representing your topology, then please feel free to define your
+ * own structure in which this struct is the first element. That way,
+ * type casting can be used to communicate between 2 different topo
+ * components. Note that this representation must be filled up no
+ * matter what the actual topo structure might be.
  * ******************************************************************
  */ 
 
@@ -115,9 +115,9 @@ struct mca_topo_base_comm_1_0_0_t {
      * is cached on so that if required another component can create the
      * topology again when comm_dup fails to pick the same component */
 
-     int mtc_ndims_or_nnodes; /**< Number of cart dimensions */
-     int *mtc_dims_or_index; /**< Cart dimensions */
-     int *mtc_periods_or_edges; /**< whether this was a periodic cart */
+     int mtc_ndims_or_nnodes; /**< Number of cart dimensions or graph nodes */
+     int *mtc_dims_or_index; /**< Cart dimensions or graph indices */
+     int *mtc_periods_or_edges; /**< whether this was a periodic cart or graph */
      bool mtc_reorder; /**< Whether the re-ordering is allowed */
 
     /* The second section is used by the unity component since it does not 
