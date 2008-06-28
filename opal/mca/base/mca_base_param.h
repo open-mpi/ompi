@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,6 +79,26 @@ typedef enum {
     /** Maximum parameter type. */
     MCA_BASE_PARAM_TYPE_MAX
 } mca_base_param_type_t;
+
+
+/**
+ * Source of an MCA parameter's value
+ */
+typedef enum {
+    /** The default value */
+    MCA_BASE_PARAM_SOURCE_DEFAULT,
+    /** The value came from the environment (or command line!) */
+    MCA_BASE_PARAM_SOURCE_ENV,
+    /** The value came from a file */
+    MCA_BASE_PARAM_SOURCE_FILE,
+    /** The value came from a keyval */
+    MCA_BASE_PARAM_SOURCE_KEYVAL,
+    /** The value came a "set" API call */
+    MCA_BASE_PARAM_SOURCE_OVERRIDE,
+
+    /** Maximum source type */
+    MCA_BASE_PARAM_SOURCE_MAX
+} mca_base_param_source_t;
 
 
 /**
@@ -490,6 +511,21 @@ extern "C" {
     OPAL_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
                                                       struct opal_hash_table_t *attrs, 
                                                       char **value);
+
+    /**
+     * Lookup the source of an MCA parameter's value
+     *
+     * @param index [in] Index of MCA parameter to set
+     * @param value [in] The integer value to set
+     *
+     * @retval OPAL_ERROR If the parameter was not found.
+     * @retval OPAL_SUCCESS Upon success.
+     *
+     * This function looks up to see where the value of an MCA
+     * parameter came from.
+     */
+    OPAL_DECLSPEC bool mca_base_param_lookup_source(int index, 
+                                                    mca_base_param_source_t *source);
 
     /**
      * Sets an "override" value for an integer MCA parameter.
