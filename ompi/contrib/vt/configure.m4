@@ -22,34 +22,45 @@
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([OMPI_contrib_vt_CONFIG],[
+    contrib_vt_args="--disable-option-checking 'MPICC=$CC' --with-openmpi '--with-mpi-inc-dir=$top_ompi_builddir/ompi/include' --with-mpi-status-size=5 --disable-config-titles --disable-config-summary"
+
+    contrib_vt_skip=no
+    eval "set x $ac_configure_args"; shift
+    for contrib_vt_arg
+    do
+        if test "$contrib_vt_skip" = "yes"; then
+            contrib_vt_skip=no
+        else
+            case $contrib_vt_arg in
+            -with-contrib-vt-flags | --with-contrib-vt-flags)
+                contrib_vt_skip=yes
+                ;;
+            -with-contrib-vt-flags=* | --with-contrib-vt-flags=*)
+                ;;
+            -with-platform | --with-platform)
+                contrib_vt_skip=yes
+                ;;
+            -with-platform=* | --with-platform=*)
+                ;;
+            *)
+                case $contrib_vt_arg in
+                *\'*) contrib_vt_arg=`echo "$contrib_vt_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+                esac
+                contrib_vt_args="$contrib_vt_args '$contrib_vt_arg'"
+                ;;
+            esac
+        fi
+    done
+
     AC_ARG_WITH([contrib-vt-flags],
                 [AC_HELP_STRING([--with-contrib-vt-flags=FLAGS],
                                 [Pass FLAGS to the VampirTrace distribution configuration script])])
-
-    AS_IF([test -n "$with_contrib_vt_flags" -a "$with_contrib_vt_flags" != "no"],
-          [contrib_vt_flags="$with_contrib_vt_flags $contrib_vt_flags"],
-          [contrib_vt_flags=])
-
-    AS_IF([test "$enable_binaries" = "no"],
-        [contrib_vt_flags="$contrib_vt_flags --disable-binaries"])
-
-    AS_IF([test -n "$prefix" -a "$prefix" != "NONE"],
-          [contrib_vt_flags="$contrib_vt_flags --prefix=$prefix"])
-
-    AS_IF([test "$cross_compiling" = "yes"],
-        [AS_IF([test ! -z $build], [contrib_vt_flags="$contrib_vt_flags --build=$build"])
-         AS_IF([test ! -z $host], [contrib_vt_flags="$contrib_vt_flags --host=$host"])
-         AS_IF([test ! -z $target], [contrib_vt_flags="$contrib_vt_flags --target=$target"])])
-
-    AS_IF([test "$enable_mpi_io" != "no"],
-        [contrib_vt_flags="$contrib_vt_flags --enable-mpi-io"],
-        [contrib_vt_flags="$contrib_vt_flags --disable-mpi-io"])
-
-    contrib_vt_flags="MPICC="'"'"$CC"'"'" --with-openmpi --with-mpi-inc-dir="'"'"$top_ompi_builddir/ompi/include"'"'" --with-mpi-status-size=5 --disable-config-titles --disable-config-summary $contrib_vt_flags"
+    AS_IF([test "$with_contrib_vt_flags" != "yes" -a "$with_contrib_vt_flags" != "no"],
+          [contrib_vt_args="$contrib_vt_args $with_contrib_vt_flags"])
 
     # Run VampirTrace's configure and see if it succeeded
     OMPI_CONFIG_SUBDIR([ompi/contrib/vt/vt],
-                       [$contrib_vt_flags], 
+                       [$contrib_vt_args], 
                        [contrib_vt_happy=1], [contrib_vt_happy=0])
 
     # If VampirTrace configured itself successfully, setup OMPI-specific
