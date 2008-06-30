@@ -28,6 +28,7 @@ my @globals = qw/.libs
 .dirstamp
 *.dSYM
 *.S
+*.loT
 .DS_Store
 stamp-h[1-9]
 configure

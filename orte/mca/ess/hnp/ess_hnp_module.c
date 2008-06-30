@@ -481,7 +481,8 @@ static int rte_finalize(void)
  * a shared file system simultaneously...ouch!).
  *
  * However, the HNP is only ONE process, so we can do it
- * here as the core file might prove useful.
+ * here as the core file might prove useful. Do so -only-
+ * if indicated by the report flag!
  */
 static void rte_abort(int status, bool report)
 {
@@ -502,7 +503,12 @@ static void rte_abort(int status, bool report)
      */
     orte_proc_info_finalize();
     
-    /* Now abort */
-    abort();
+    /* Now exit/abort */
+    if (report) {
+        abort();
+    }
+    
+    /* otherwise, just exit */
+    exit(status);
 }
 

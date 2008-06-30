@@ -105,6 +105,7 @@ int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst, int32_t *num_vals,
         }
         /* if the data types don't match, then return an error */
         if (type != local_type) {
+            opal_output(0, "OPAL dss:unpack: got type %d when expecting type %d", local_type, type);
             return OPAL_ERR_PACK_MISMATCH;
         }
     }
