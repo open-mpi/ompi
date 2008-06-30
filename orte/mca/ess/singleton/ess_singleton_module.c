@@ -93,7 +93,8 @@ static orte_vpid_t nprocs;
 static int rte_init(char flags)
 {
     int rc;
-
+    orte_nid_t *node;
+    
     /* run the prolog */
     if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
         ORTE_ERROR_LOG(rc);
@@ -164,13 +165,27 @@ static int rte_init(char flags)
     opal_pointer_array_init(&nidmap, 1,
                             INT32_MAX, 8);
     
-    /* if one was provided, build my nidmap */
-    if (ORTE_SUCCESS != (rc = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                          &nidmap, &pmap, &nprocs))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
+    /* we cannot use the std nidmap construction in the ess/base because
+     * the daemon couldn't pass us the info! Since we are a singleton, we
+     * already -know- the info, so we will construct it ourselves
+     */
+    
+    /* create a nidmap entry for this node */
+    node = (orte_nid_t*)malloc(sizeof(orte_nid_t));
+    node->name = strdup(orte_process_info.nodename);
+    node->daemon = 0;  /* the HNP co-occupies our node */
+    node->arch = orte_process_info.arch;
+    opal_pointer_array_set_item(&nidmap, 0, node);
+    nprocs = 1;
+    
+    /* likewise, we need to construct our own pidmap. Again, since we are
+     * a singleton, this is rather trivial
+     */
+    pmap = (orte_pmap_t*)malloc(sizeof(orte_pmap_t));
+    pmap[0].local_rank = 0;
+    pmap[0].node_rank = 0;
+    pmap[0].node = 0;
+    
     return ORTE_SUCCESS;
 }
 
