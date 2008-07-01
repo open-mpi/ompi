@@ -48,7 +48,6 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     opal_buffer_t buf;
     int step;
     int32_t *arch;
-    bool homo;
     
     /* setup a buffer for tmp use */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -230,14 +229,14 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
     
     if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
         /* check to see if all reported archs are the same */
-        homo = true;
+        orte_homogeneous_nodes = true;
         for (i=1; i < num_nodes; i++) {
             if (nodes[i]->arch != nodes[0]->arch) {
-                homo = false;
+                orte_homogeneous_nodes = false;
                 break;
             }
         }
-        if (homo) {
+        if (orte_homogeneous_nodes) {
             /* if everything is homo, just set that
              * flag - no need to send everything
              */
@@ -455,8 +454,13 @@ vpids:
      */
     n=1;
     opal_dss.unpack(&buf, &num_digs, &n, OPAL_UINT8);
-    if (0 != num_digs) {
-        /* hetero situation - get the archs */
+    if (0 == num_digs) {
+        /* homo situation */
+        orte_homogeneous_nodes = true;
+    } else {
+        /* hetero situation */
+        orte_homogeneous_nodes = false;
+        /* get the archs */
         arch = (int32_t*)malloc(num_nodes * 4);
         /* unpack the values */
         n=num_nodes;
