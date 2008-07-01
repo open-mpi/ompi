@@ -481,12 +481,51 @@ static int modex(opal_list_t *procs)
      * don't need to exchange arch's as they are all identical
      */
     if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+        /* Case 1: If different apps in this job were built differently - e.g., some
+         * are built 32-bit while others are built 64-bit - then we need to modex
+         * regardless of any other consideration. The user is reqd to tell us via a
+         * cmd line option if this situation exists, which will result in an mca param
+         * being set for us, so all we need to do is check for the global boolean
+         * that corresponds to that param
+         */
+        if (orte_hetero_apps) {
+            modex_reqd = true;
+        }
+        /* Case 2: the nodes are homo and our arch matches the one seen by my daemon. In
+         * this case, we are actually operating homogeneous even though hetero
+         * is supported, so no modex info is required
+         */
+        if (orte_homogeneous_nodes &&
+            orte_process_info.arch == orte_ess.proc_get_arch(ORTE_PROC_MY_DAEMON)) {
+            modex_reqd = false;
+        }
+        /* Case 2: the nodes are hetero, but the orted and app binaries were built
+         * the same - i.e., either they are both 32-bit, or they are both 64-bit, but
+         * no mixing of the two. In this case, we include the info in the modex
+         */
+         else if (!orte_homogeneous_nodes) {
+            modex_reqd = true;
+        }
+        /* Case 3: the nodes are homo, but the orted and app binaries were built
+         * differently - i.e., one is built 32-bit, and the other is built 64-bit.
+         * There are two sub-cases here, so we consider them separately
+         *
+         * Case 3(a): all apps were built the same. In this case, we can just
+         * use our own arch and do not need to modex. Since by default we fill-in
+         * the local nidmap with our own arch, we don't need to do anything here
+         */
+         else if (orte_homogeneous_nodes && orte_hetero_apps) {
+             modex_reqd = true;
+         }
+    }
+    
+    if (modex_reqd) {
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
-        }
+        }        
     }
-    
+
     /* pack the entries we have received */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf, &modex_reqd))) {
         ORTE_ERROR_LOG(rc);
@@ -543,6 +582,10 @@ static int modex(opal_list_t *procs)
             }
             
             if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+                /* are the nodes hetero? */
+                if (orte_homogeneous_nodes) {
+                    goto unpack_entries;
+                }
                 /* unpack its architecture */
                 cnt=1;
                 if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
@@ -556,6 +599,7 @@ static int modex(opal_list_t *procs)
                 }
             }
             
+        unpack_entries:
             /* update the modex database */
             if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
                 ORTE_ERROR_LOG(rc);
