@@ -52,7 +52,6 @@ char *orte_rmaps_rank_file_path = NULL;
 static const char *orte_rmaps_rank_file_name_cur = NULL;
 static opal_mutex_t orte_rmaps_rank_file_mutex;
 char *orte_rmaps_rank_file_slot_list;
-static orte_std_cntr_t orte_rmaps_rank_file_num_alloc = 0;
 
 /*
  * Local variable
@@ -71,14 +70,14 @@ static int map_app_by_user_map(
     int rc = ORTE_SUCCESS;
     opal_list_item_t *next;
     orte_node_t *node;
-    orte_std_cntr_t round_cnt;
+    orte_std_cntr_t round_cnt, num_alloc = 0;
 
     OPAL_TRACE(2);
     if ( NULL == orte_rmaps_rank_file_path ) {
         return ORTE_SUCCESS;
     }
 
-    while (orte_rmaps_rank_file_num_alloc < app->num_procs) {
+    while (num_alloc < app->num_procs) {
     /** see if any nodes remain unused and available. We need to do this check
     * each time since we may remove nodes from the list (as they become fully
     * used) as we cycle through the loop */
@@ -93,7 +92,7 @@ static int map_app_by_user_map(
     * we may need to prune the nodes list removing overused nodes.
     * Wrap around to beginning if we are at the end of the list */
     round_cnt=0;
-    if ( -1 != rankmap[vpid_start + orte_rmaps_rank_file_num_alloc].rank) {
+    if ( -1 != rankmap[vpid_start + num_alloc].rank) {
         do {
             if (opal_list_get_end(nodes) == opal_list_get_next(cur_node_item)) {
                 next = opal_list_get_first(nodes);
@@ -105,17 +104,17 @@ static int map_app_by_user_map(
                 node = (orte_node_t*) cur_node_item;
                 cur_node_item = next;
                 if ( round_cnt == 2 ) {
-                    orte_show_help("help-rmaps_rank_file.txt","bad-host", true,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].node_name);
+                    orte_show_help("help-rmaps_rank_file.txt","bad-host", true,rankmap[num_alloc+vpid_start].node_name);
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                     return ORTE_ERR_BAD_PARAM; 
                 }
-        } while ( strcmp(node->name, rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name));
-        node->slot_list = strdup(rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].slot_list);
+        } while ( strcmp(node->name, rankmap[num_alloc + vpid_start].node_name));
+        node->slot_list = strdup(rankmap[num_alloc+vpid_start].slot_list);
         if (mca_rmaps_rank_file_component.debug) {
            opal_output(0, "rank_file RMAPS component: [%s:%d]->slot_list=%s\n",
-                   rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].node_name,rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, node->slot_list);
+                   rankmap[num_alloc + vpid_start].node_name,rankmap[num_alloc+vpid_start].rank, node->slot_list);
         }
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[orte_rmaps_rank_file_num_alloc+vpid_start].rank, app->idx,
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[num_alloc+vpid_start].rank, app->idx,
             nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
             * really isn't an error - we just need to break from the loop
@@ -128,7 +127,7 @@ static int map_app_by_user_map(
             }
         }
     }
-        ++orte_rmaps_rank_file_num_alloc;
+        ++num_alloc;
     }
     return ORTE_SUCCESS;
 }
@@ -148,6 +147,7 @@ static int map_app_by_node(
     int rc = ORTE_SUCCESS;
     opal_list_item_t *next;
     orte_node_t *node;
+    orte_std_cntr_t num_alloc = 0;
 
     OPAL_TRACE(2);
     
@@ -168,9 +168,9 @@ static int map_app_by_node(
        list, oversubscription is automatically taken care of via this logic.
         */
 
-    while (orte_rmaps_rank_file_num_alloc < app->num_procs) {
-        if ( -1 != rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].rank) {
-            ++orte_rmaps_rank_file_num_alloc;
+    while (num_alloc < app->num_procs) {
+        if ( -1 != rankmap[num_alloc + vpid_start].rank) {
+            ++num_alloc;
             continue;
         }
         /** see if any nodes remain unused and available. We need to do this check
@@ -200,7 +200,7 @@ static int map_app_by_node(
                 strcpy(node->slot_list, orte_mca_rmaps_rank_file_slot_list);
             }
         }
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + orte_rmaps_rank_file_num_alloc, app->idx,
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
                                              nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
@@ -212,7 +212,7 @@ static int map_app_by_node(
                 return rc;
             }
         }
-        ++orte_rmaps_rank_file_num_alloc;
+        ++num_alloc;
         cur_node_item = next;
     }
 
@@ -230,7 +230,7 @@ static int map_app_by_slot(
     opal_list_t* nodes )
 {
     int rc = ORTE_SUCCESS;
-    orte_std_cntr_t i, num_slots_to_take;
+    orte_std_cntr_t i, num_slots_to_take, num_alloc = 0;
     orte_node_t *node;
     opal_list_item_t *next;
 
@@ -242,7 +242,7 @@ static int map_app_by_slot(
        have reached their soft limit and the user directed us to "no oversubscribe".
        If we still have processes that haven't been mapped yet, then it's an
        "out of resources" error. */
-    while ( orte_rmaps_rank_file_num_alloc < app->num_procs) {
+    while ( num_alloc < app->num_procs) {
         /** see if any nodes remain unused and available. We need to do this check
         * each time since we may remove nodes from the list (as they become fully
         * used) as we cycle through the loop */
@@ -300,8 +300,8 @@ static int map_app_by_slot(
         }
 
         for( i = 0; i < num_slots_to_take; ++i) {
-            if ( -1 != rankmap[orte_rmaps_rank_file_num_alloc + vpid_start].rank) {
-                ++orte_rmaps_rank_file_num_alloc;
+            if ( -1 != rankmap[num_alloc + vpid_start].rank) {
+                ++num_alloc;
                 continue;
             }
             if ( NULL != orte_mca_rmaps_rank_file_slot_list){
@@ -310,7 +310,7 @@ static int map_app_by_slot(
                     strcpy(node->slot_list, orte_mca_rmaps_rank_file_slot_list);
                 }
             }
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + orte_rmaps_rank_file_num_alloc, app->idx,
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
                                                  nodes, jdata->map->oversubscribe, true))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
@@ -323,12 +323,12 @@ static int map_app_by_slot(
                 }
             }
             /* Update the number of procs allocated */
-            ++orte_rmaps_rank_file_num_alloc;
+            ++num_alloc;
 
             /** if all the procs have been mapped OR we have fully used up this node, then
              * break from the loop
              */
-            if(orte_rmaps_rank_file_num_alloc == app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
+            if(num_alloc == app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
                 break;
             }
         }
