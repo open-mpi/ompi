@@ -123,8 +123,8 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
-    { "orted", "spin", NULL, 'd', NULL, "spin", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+    { NULL, NULL, NULL, 's', NULL, "spin", 0,
+      &orted_spin_flag, OPAL_CMD_LINE_TYPE_BOOL,
       "Have the orted spin until we can connect a debugger to it" },
 
     { NULL, NULL, NULL, '\0', NULL, "debug-failure", 1,
