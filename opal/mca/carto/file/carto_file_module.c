@@ -171,7 +171,7 @@ static int opal_carto_file_parse(const char *cartofile)
                 case OPAL_CARTO_FILE_NAME:
                     node = (opal_carto_base_node_t *)malloc(sizeof(opal_carto_base_node_t));
                     node->node_type = strdup(carto_file_value.sval);
-                    if (0 == strcmp("slot",node->node_type)) {
+                    if (0 == strcmp("socket",node->node_type)) {
                         node->is_cpu = true;
                     }
                     else {
