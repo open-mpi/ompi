@@ -58,11 +58,11 @@ base as of this writing (19 September 2007):
   may include support for all the devices (etc.) that you expect,
   especially if their support headers / libraries are installed in
   non-standard locations.  Network interconnects are an easy example
-  to discuss -- Myrinet and InfiniBand, for example, both have
-  supplemental headers and libraries that must be found before Open
-  MPI can build support for them.  You must specify where these files
-  are with the appropriate options to configure.  See the listing of
-  configure command-line switches, below, for more details.
+  to discuss -- Myrinet and OpenFabrics networks, for example, both
+  have supplemental headers and libraries that must be found before
+  Open MPI can build support for them.  You must specify where these
+  files are with the appropriate options to configure.  See the
+  listing of configure command-line switches, below, for more details.
 
 - The Open MPI installation must be in your PATH on all nodes (and
   potentially LD_LIBRARY_PATH, if libmpi is a shared library), unless
@@ -221,9 +221,6 @@ base as of this writing (19 September 2007):
   be included in a future release of Open MPI (see the OFED 1.2
   distribution for details).
 
-- iWARP support is not yet included in the Open MPI OpenFabrics
-  support.
-
 - The Fortran 90 MPI bindings can now be built in one of three sizes
   using --with-mpi-f90-size=SIZE (see description below).  These sizes
   reflect the number of MPI functions included in the "mpi" Fortran 90
@@ -274,7 +271,7 @@ base as of this writing (19 September 2007):
     combination with each other (per OS constraints; e.g., there are
     reports that the GM and OpenFabrics kernel drivers do not operate
     well together):
-    - InfiniBand: OpenFabrics
+    - OpenFabrics: InfiniBand and iWARP
     - Loopback (send-to-self)
     - Myrinet: GM and MX
     - Portals
@@ -371,7 +368,7 @@ for a full list); a summary of the more commonly used ones follows:
 --with-openib=<directory>
   Specify the directory where the OpenFabrics (previously known as
   OpenIB) libraries and header files are located.  This enables
-  OpenFabrics support in Open MPI.
+  OpenFabrics support in Open MPI (both InfiniBand and iWARP).
 
 --with-openib-libdir=<directory>
   Look in directory for the OpenFabrics libraries.  By default, Open
