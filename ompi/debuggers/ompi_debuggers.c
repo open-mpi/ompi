@@ -76,6 +76,7 @@ OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_MSGQ_DLL;
 OMPI_DECLSPEC char **mpidbg_dll_locations = NULL;
 OMPI_DECLSPEC char **mpimsgq_dll_locations = NULL;
 
+OMPI_DECLSPEC int MPIR_being_debugged = 0;
 OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
     sizeof(short),
     sizeof(int),
@@ -169,7 +170,7 @@ static void check(char *dir, char *file, char **locations)
  * MPIR_debug_gate.
  *
  * Note that neither of these schemes use MPIR_being_debugged; it
- * doesn't seem useful to us.
+ * doesn't seem useful to us. --> JMS this may change
  */
 void ompi_wait_for_debugger(void)
 {
@@ -187,7 +188,9 @@ void ompi_wait_for_debugger(void)
 
     /* Add in environment variables for other launchers, such as yod,
        srun, ...etc. */
-    if (NULL != getenv("yod_you_are_being_debugged")) {
+    if (1 == MPIR_being_debugged) {
+        debugger = 1;
+    } else if (NULL != getenv("yod_you_are_being_debugged")) {
         debugger = 1;
     }
     
