@@ -331,18 +331,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Setup process affinity */
-    if (OMPI_SUCCESS != (ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid))) {
-        error = "opal_paffinity_base_slot_list_set: error slot_list assigning";
-        goto error;
-    } else {
-        /* If we were able to set processor affinity, try setting
-           up memory affinity */
+    if ( OPAL_SUCCESS == (ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid))) {
+        /* If we were able to set processor affinity, try setting up memory affinity */
         if (OPAL_SUCCESS == opal_maffinity_base_open() &&
                 OPAL_SUCCESS == opal_maffinity_base_select()) {
             ompi_mpi_maffinity_setup = true;
         }
     }
-
+    if ( OPAL_ERROR == ret ){
+        error = "opal_paffinity_base_slot_list_set: error slot_list assigning";
+        goto error;
+    }
+    
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc
      * init.
