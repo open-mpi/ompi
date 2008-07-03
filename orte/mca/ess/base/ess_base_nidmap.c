@@ -23,6 +23,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_value_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -34,7 +35,7 @@
 
 int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
                                opal_pointer_array_t *nidmap,
-                               orte_pmap_t **pmap, orte_vpid_t *num_procs)
+                               opal_value_array_t *pmap, orte_vpid_t *num_procs)
 {
     int rc;
     opal_byte_object_t *bo;
@@ -79,3 +80,81 @@ int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
                          
     return ORTE_SUCCESS;
 }
+
+orte_pmap_t* orte_ess_base_lookup_pmap(opal_pointer_array_t *jobmap, orte_process_name_t *proc)
+{
+    int i;
+    orte_jmap_t **jmaps;
+    orte_pmap_t *pmap;
+    
+    jmaps = (orte_jmap_t**)jobmap->addr;
+    for (i=0; i < jobmap->size && NULL != jmaps[i]; i++) {
+        if (proc->jobid == jmaps[i]->job) {
+            pmap = (orte_pmap_t*)opal_value_array_get_item(&jmaps[i]->pmap, proc->vpid);
+            return pmap;
+        }
+    }
+    
+    return NULL;
+}
+
+/* the daemon's vpid does not necessarily correlate
+ * to the node's index in the node array since
+ * some nodes may not have a daemon on them. Thus,
+ * we have to search for the daemon in the array.
+ * Fortunately, this is rarely done
+ */
+static orte_nid_t* find_daemon_node(opal_pointer_array_t *nidmap,
+                                    orte_process_name_t *proc)
+{
+    int32_t i;
+    orte_nid_t **nids;
+    
+    nids = (orte_nid_t**)nidmap->addr;
+    for (i=0; i < nidmap->size && NULL != nids[i]; i++) {
+        if (nids[i]->daemon == proc->vpid) {
+            return nids[i];
+        }
+    }
+    
+    return NULL;
+}
+
+orte_nid_t* orte_ess_base_lookup_nid(opal_pointer_array_t *nidmap,
+                                     opal_pointer_array_t *jobmap,
+                                     orte_process_name_t *proc)
+{
+    orte_nid_t *nid;
+    orte_nid_t **nids;
+    orte_pmap_t *pmap;
+    
+    if (ORTE_PROC_IS_DAEMON(proc->jobid)) {
+        if (ORTE_JOB_FAMILY(proc->jobid) !=
+            ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+            return NULL;
+        }
+        /* looking for a daemon in my family */
+        if (NULL == (nid = find_daemon_node(nidmap, proc))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        }
+        return nid;
+    }
+    
+    /* looking for an application proc */
+    if (NULL == (pmap = orte_ess_base_lookup_pmap(jobmap, proc))) {
+        opal_output(0, "proc: %s not found", ORTE_NAME_PRINT(proc));
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return NULL;
+    }
+    
+    if (nidmap->size < pmap->node ||
+        pmap->node < 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        return NULL;
+    }
+    
+    nids = (orte_nid_t**)nidmap->addr;
+    return nids[pmap->node];
+}
+

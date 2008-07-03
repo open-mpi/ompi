@@ -290,13 +290,16 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
 
 typedef struct {
+    /* base object */
+    opal_object_t super;
     /* nodename */
     char *name;
-    /* vpid of daemon on this node */
+    /* vpid of this job family's daemon on this node */
     orte_vpid_t daemon;
     /* arch of node */
     uint32_t arch;
 } orte_nid_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
 
 typedef struct {
     /* index to node */
@@ -306,6 +309,16 @@ typedef struct {
     /* node rank */
     uint8_t node_rank;
 } orte_pmap_t;
+
+typedef struct {
+    /* base object */
+    opal_object_t super;
+    /* jobid */
+    orte_jobid_t job;
+    /* array of data for procs */
+    opal_value_array_t pmap;
+} orte_jmap_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 

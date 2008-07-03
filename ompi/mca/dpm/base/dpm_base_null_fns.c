@@ -70,11 +70,6 @@ int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag)
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-char* ompi_dpm_base_null_parse_port (char *port_name, orte_rml_tag_t *tag)
-{
-    return NULL;
-}
-
 int ompi_dpm_base_null_close_port(char *port_name)
 {
     return OMPI_ERR_NOT_SUPPORTED;

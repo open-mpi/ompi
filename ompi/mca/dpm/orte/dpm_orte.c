@@ -38,6 +38,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_data_server.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
@@ -51,6 +52,18 @@
 /* Local static variables */
 static opal_mutex_t ompi_dpm_port_mutex;
 static orte_rml_tag_t next_tag;
+static bool recv_completed;
+static opal_buffer_t *cabuf=NULL;
+static orte_process_name_t carport;
+
+/* Local static functions */
+static void recv_cb(int status, orte_process_name_t* sender,
+                    opal_buffer_t *buffer,
+                    orte_rml_tag_t tag, void *cbdata);
+static void process_cb(int fd, short event, void *data);
+static int parse_port_name(char *port_name,
+                           orte_process_name_t *rproc,
+                           orte_rml_tag_t *tag);
 
 /* API functions */
 static int init(void);
@@ -65,7 +78,6 @@ static int spawn(int count, char **array_of_commands,
                  char *port_name);
 static int dyn_init(void);
 static int open_port(char *port_name, orte_rml_tag_t given_tag);
-static char *parse_port (char *port_name, orte_rml_tag_t *tag);
 static int close_port(char *port_name);
 static int finalize(void);
 
@@ -81,7 +93,6 @@ ompi_dpm_base_module_t ompi_dpm_orte_module = {
     ompi_dpm_base_dyn_finalize,
     ompi_dpm_base_mark_dyncomm,
     open_port,
-    parse_port,
     close_port,
     finalize
 };
@@ -98,11 +109,6 @@ static int init(void)
     return OMPI_SUCCESS;
 }
 
-static int get_rport (orte_process_name_t *port,
-                      int send_first, struct ompi_proc_t *proc,
-                      orte_rml_tag_t tag, orte_process_name_t *rport);
-
-
 static int connect_accept ( ompi_communicator_t *comm, int root,
                             char *port_string, bool send_first,
                             ompi_communicator_t **newcomm )
@@ -116,7 +122,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
-    orte_process_name_t port, *rport=NULL, tmp_port_name;
+    orte_process_name_t port;
     orte_rml_tag_t tag=ORTE_RML_TAG_INVALID;
     opal_buffer_t *nbuf=NULL, *nrbuf=NULL;
     ompi_proc_t **proc_list=NULL, **new_proc_list;
@@ -139,30 +145,13 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
      * set us up to communicate with it
      */
     if (NULL != port_string && 0 < strlen(port_string)) {
-        char *rml_uri;
-        /* separate the string into the RML URI and tag */
-        rml_uri = parse_port(port_string, &tag);
-        /* extract the process name from the rml_uri */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &port, NULL))) {
-            free(rml_uri);
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* update the local hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
-            ORTE_ERROR_LOG(rc);
-            free(rml_uri);
-            return rc;
-        }
-        /* update the route as "direct" - the selected routed
-         * module will handle this appropriate to its methods
+        /* separate the string into the RML URI and tag - this function performs
+         * whatever route initialization is required by the selected routed module
          */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&port, &port))) {
+        if (ORTE_SUCCESS != (rc = parse_port_name(port_string, &port, &tag))) {
             ORTE_ERROR_LOG(rc);
-            free(rml_uri);
             return rc;
         }
-        free(rml_uri);
     }
     
     /* tell the progress engine to tick the event library more
@@ -170,12 +159,21 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     opal_progress_event_users_increment();
 
     if ( rank == root ) {
-        /* The process receiving first does not have yet the contact
-           information of the remote process. Therefore, we have to
-           exchange that.
-        */
-
-        if(!OMPI_GROUP_IS_DENSE(group)) { 
+        /* Generate the message buffer containing the number of processes and the list of
+         participating processes */
+        nbuf = OBJ_NEW(opal_buffer_t);
+        if (NULL == nbuf) {
+            return OMPI_ERROR;
+        }
+        
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(nbuf, &size, 1, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
+        
+        if(OMPI_GROUP_IS_DENSE(group)) {
+            ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
+        } else {
             proc_list = (ompi_proc_t **) calloc (group->grp_proc_count, 
                                                  sizeof (ompi_proc_t *));
             for(i=0 ; i<group->grp_proc_count ; i++)
@@ -185,48 +183,15 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                                  "%s dpm:orte:connect_accept adding %s to proc list",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_list[i]->proc_name)));
-        }
-
-        if ( OMPI_COMM_JOIN_TAG != tag ) {
-            if(OMPI_GROUP_IS_DENSE(group)){
-                rc = get_rport(&port,send_first,
-                               group->grp_proc_pointers[rank], tag,
-                               &tmp_port_name);
-            }
-            else {
-                rc = get_rport(&port,send_first,
-                               proc_list[rank], tag,
-                               &tmp_port_name);
-            }
-            if (OMPI_SUCCESS != rc) {
-                return rc;
-            }
-            rport = &tmp_port_name;
-        } else {
-            rport = &port;
-        }
-
-        /* Generate the message buffer containing the number of processes and the list of
-           participating processes */
-        nbuf = OBJ_NEW(opal_buffer_t);
-        if (NULL == nbuf) {
-            return OMPI_ERROR;
-        }
-
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(nbuf, &size, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            goto exit;
-        }
-
-        if(OMPI_GROUP_IS_DENSE(group)) {
-            ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
-        }
-        else {
             ompi_proc_pack(proc_list, size, nbuf);
         }
         
-        nrbuf = OBJ_NEW(opal_buffer_t);
-        if (NULL == nrbuf ) {
+        if (NULL != cabuf) {
+            OBJ_RELEASE(cabuf);
+        }
+        
+        cabuf = OBJ_NEW(opal_buffer_t);
+        if (NULL == cabuf ) {
             rc = OMPI_ERROR;
             goto exit;
         }
@@ -236,19 +201,41 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
                                  "%s dpm:orte:connect_accept sending first to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(rport)));
-            rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
-            rc = orte_rml.recv_buffer(rport, nrbuf, tag, 0);
+                                 ORTE_NAME_PRINT(&port)));
+            rc = orte_rml.send_buffer(&port, nbuf, tag, 0);
+            /* setup to recv */
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                 "%s dpm:orte:connect_accept waiting for response",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            recv_completed = false;
+            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
+                                         ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
+            /* wait for response */
+            ORTE_PROGRESSED_WAIT(recv_completed, 0, 1);
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                 "%s dpm:orte:connect_accept got data from %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&carport)));
+            
         } else {
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
-                                 "%s dpm:orte:connect_accept recving first from %s",
+                                 "%s dpm:orte:connect_accept recving first",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            /* setup to recv */
+            recv_completed = false;
+            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, tag,
+                                         ORTE_RML_NON_PERSISTENT, recv_cb, NULL);
+            /* wait for response */
+            ORTE_PROGRESSED_WAIT(recv_completed, 0, 1);
+            /* now send our info */
+            OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                                 "%s dpm:orte:connect_accept sending info to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(rport)));
-            rc = orte_rml.recv_buffer(rport, nrbuf, tag, 0);
-            rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
+                                 ORTE_NAME_PRINT(&carport)));
+            rc = orte_rml.send_buffer(&carport, nbuf, tag, 0);
         }
 
-        if (ORTE_SUCCESS != (rc = opal_dss.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unload(cabuf, &rnamebuf, &rnamebuflen))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
@@ -262,6 +249,9 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     rnamebuflen_int = (int)rnamebuflen;
 
     /* bcast the buffer-length to all processes in the local comm */
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept bcast buffer length",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm,
                                   comm->c_coll.coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
@@ -283,6 +273,9 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
        adds processes, which were not known yet to our
        process pool.
     */
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept bcast proc list",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen_int, MPI_BYTE, root, comm,
                                   comm->c_coll.coll_bcast_module);
     if ( OMPI_SUCCESS != rc ) {
@@ -309,6 +302,10 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm:orte:connect_accept unpacked %d new procs",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), new_proc_len));
+    
     /* If we added new procs, we need to do the modex and then call
        PML add_procs */
     if (new_proc_len > 0) {
@@ -419,7 +416,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                              comm,                    /* old communicator */
                              NULL,                    /* bridge comm */
                              &root,                   /* local leader */
-                             rport,                   /* remote leader */
+                             &carport,                /* remote leader */
                              OMPI_COMM_CID_INTRA_OOB, /* mode */
                              send_first );            /* send or recv first */
     if ( OMPI_SUCCESS != rc ) {
@@ -431,7 +428,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                               comm,                    /* old communicator */
                               NULL,                    /* bridge comm */
                               &root,                   /* local leader */
-                              rport,                   /* remote leader */
+                              &carport,                /* remote leader */
                               OMPI_COMM_CID_INTRA_OOB, /* mode */
                               send_first,              /* send or recv first */
                               0);                      /* sync_flag */
@@ -475,89 +472,6 @@ static void disconnect(ompi_communicator_t *comm)
     ompi_dpm_base_disconnect_waitall(1, &dobj);
     
 }
-
-
-/**********************************************************************/
-/**********************************************************************/
-/**********************************************************************/
-/*
- * This routine is necessary, since in the connect/accept case, the processes
- * executing the connect operation have the OOB contact information of the
- * leader of the remote group, however, the processes executing the
- * accept get their own port_name = OOB contact information passed in as
- * an argument. This is however useless.
- *
- * Therefore, the two root processes exchange this information at this
- * point.
- *
- */
-static int get_rport(orte_process_name_t *port, int send_first,
-                     ompi_proc_t *proc, orte_rml_tag_t tag, 
-                     orte_process_name_t *rport_name)
-{
-    int rc;
-    orte_std_cntr_t num_vals;
-
-    if ( send_first ) {
-        opal_buffer_t *sbuf;
-        
-        OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                             "%s dpm:orte:get_rport sending to %s tag %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(port), (int)tag));
-                            
-        sbuf = OBJ_NEW(opal_buffer_t);
-        if (NULL == sbuf) {
-            return OMPI_ERROR;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(sbuf);
-            return rc;
-        }
-
-        rc = orte_rml.send_buffer(port, sbuf, tag, 0);
-        OBJ_RELEASE(sbuf);
-        if ( 0 > rc ) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        *rport_name = *port;
-    } else {
-        opal_buffer_t *rbuf;
-
-        OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                             "%s dpm:orte:get_rport waiting to recv on tag %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)tag));
-        
-        rbuf = OBJ_NEW(opal_buffer_t);
-        if (NULL == rbuf) {
-            return ORTE_ERROR;
-        }
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, tag, 0))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(rbuf);
-            return rc;
-        }
-
-        num_vals = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, rport_name, &num_vals, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(rbuf);
-            return rc;
-        }
-        OBJ_RELEASE(rbuf);
-        
-        OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_output,
-                             "%s dpm:orte:get_rport recv'd name %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(rport_name)));
-    }
-
-    return OMPI_SUCCESS;
-}
-
 
 static int spawn(int count, char **array_of_commands,
                  char ***array_of_argv,
@@ -787,76 +701,121 @@ static int spawn(int count, char **array_of_commands,
     return OMPI_SUCCESS;
 }
 
-/* optionally can provide a tag to be used - otherwise, we supply the
+/*
+ * The port_name is constructed to support the ability
+ * to route messages between different jobs. Messages
+ * between job families are routed via their respective HNPs
+ * to reduce connection count and to support connect/accept.
+ * Thus, the port_name consists of three fields:
+ * (a) the contact info of the process opening the port. This
+ *     is provided in case the routed module wants to communicate
+ *     directly between the procs.
+ * (b) the tag of the port. The reason for adding the tag is
+ *     to make the port unique for multi-threaded scenarios.
+ * (c) the contact info for the job's HNP. This will be
+ *     used to route messages between job families
+ *
+ * Construction of the port name is done here - as opposed to
+ * in the routed module itself - because two mpiruns using different
+ * routed modules could exchange the port name (via pubsub). The
+ * format of the port name must, therefore, be universal.
+ *
+ * Optionally can provide a tag to be used - otherwise, we supply the
  * next dynamically assigned tag
  */
 static int open_port(char *port_name, orte_rml_tag_t given_tag)
 {
-    char *rml_uri, *ptr, tag[12];
-    int rc;
+    char *rml_uri=NULL;
+    int rc, len;
+    char tag[12];
     
     OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
 
-    /*
-     * The port_name is equal to the OOB-contact information
-     * and an RML tag. The reason for adding the tag is
-     * to make the port unique for multi-threaded scenarios.
-     */
+    if (NULL == orte_process_info.my_hnp_uri) {
+        rc = ORTE_ERR_NOT_AVAILABLE;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
     
     if (NULL == (rml_uri = orte_rml.get_contact_info())) {
-        rc = OMPI_ERR_NOT_AVAILABLE;
+        rc = ORTE_ERROR;
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     
     if (ORTE_RML_TAG_INVALID == given_tag) {
-        snprintf(tag, 12, "%d", (int)next_tag);
+        snprintf(tag, 12, "%d", next_tag);
         next_tag++;
     } else {
-        /* use the given tag */
-        snprintf(tag, 12, "%d", (int)given_tag);
+        snprintf(tag, 12, "%d", given_tag);
     }
     
-    /* if the overall port name is too long, we try to truncate the rml uri */
-    rc = 0;
-    while ((strlen(rml_uri)+strlen(tag)) > (MPI_MAX_PORT_NAME-2)) {
-        /* if we have already tried several times, punt! */
-        if (4 < rc) {
-            free(rml_uri);
-            rc = OMPI_ERROR;
-            goto cleanup;
-        }
-        /* find the trailing uri and truncate there */
-        ptr = strrchr(rml_uri, ';');
-        *ptr = '\0';
-        ++rc;
+    
+    len = strlen(orte_process_info.my_hnp_uri) + strlen(rml_uri) + strlen(tag);
+    
+    /* if the overall port name is too long, we abort */
+    if (len > (MPI_MAX_PORT_NAME-1)) {
+        rc = OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+        goto cleanup;
     }
     
-    snprintf (port_name, MPI_MAX_PORT_NAME, "%s:%s", rml_uri, tag);
-    
-    free ( rml_uri );
+    /* assemble the port name */
+    snprintf(port_name, MPI_MAX_PORT_NAME, "%s+%s:%s", orte_process_info.my_hnp_uri, rml_uri, tag);
     rc = OMPI_SUCCESS;
 
 cleanup:
+    if (NULL != rml_uri) {
+        free(rml_uri);
+    }
+    
     OPAL_THREAD_UNLOCK(&ompi_dpm_port_mutex);
     return rc;
 }
 
-/* takes a port_name and separates it into the RML URI
- * and the tag
- */
-static char *parse_port (char *port_name, orte_rml_tag_t *tag)
+
+/* HANDLE ACK MESSAGES FROM AN HNP */
+static bool ack_recvd;
+
+static void release_ack(int fd, short event, void *data)
 {
-    char *tmp_string, *ptr;
-    
-    /* copy the RML uri so we can return a malloc'd value
-     * that can later be free'd
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    ack_recvd = true;
+    OBJ_RELEASE(mev);
+}
+
+static void recv_ack(int status, orte_process_name_t* sender,
+                     opal_buffer_t* buffer, orte_rml_tag_t tag,
+                     void* cbdata)
+{
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release above - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
      */
-    tmp_string = strdup(port_name);
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, release_ack);    
+}
+
+
+static int parse_port_name(char *port_name,
+                           orte_process_name_t *rproc,
+                           orte_rml_tag_t *tag)
+{
+    char *tmpstring=NULL, *ptr, *rml_uri=NULL;
+    orte_rml_cmd_flag_t cmd = ORTE_RML_UPDATE_CMD;
+    int rc;
+    opal_buffer_t route;
+    
+    /* don't mangle the port name */
+    tmpstring = strdup(port_name);
     
     /* find the ':' demarking the RML tag we added to the end */
-    if (NULL == (ptr = strrchr(tmp_string, ':'))) {
-        free(tmp_string);
-        return NULL;
+    if (NULL == (ptr = strrchr(tmpstring, ':'))) {
+        rc = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
     
     /* terminate the port_name at that location */
@@ -866,14 +825,95 @@ static char *parse_port (char *port_name, orte_rml_tag_t *tag)
     /* convert the RML tag */
     sscanf(ptr,"%d", (int*)tag);
     
-    /* see if the length of the RML uri is too long - if so,
-     * truncate it
-     */
-    if (strlen(tmp_string) > MPI_MAX_PORT_NAME) {
-        tmp_string[MPI_MAX_PORT_NAME] = '\0';
+    /* now split out the second field - the uri of the remote proc */
+    if (NULL == (ptr = strchr(tmpstring, '+'))) {
+        rc = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
     }
+    *ptr = '\0';
+    ptr++;
+    
+    /* save that info */
+    rml_uri = strdup(ptr);
+    
+    /* extract the originating proc's name */
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(ptr, rproc, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* if this proc is part of my job family, then I need to
+     * update my RML contact hash table and my routes
+     */
+    if (ORTE_JOB_FAMILY(rproc->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                             "%s dpm_parse_port: same job family - updating route",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
-    return tmp_string;
+        /* set the contact info into the hash table */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(rproc, rproc))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        goto cleanup;
+    }
+    
+    /* the proc must be part of another job family. In this case, we
+     * will route any messages to the proc through our HNP. We need
+     * to update the HNP, though, so it knows how to reach the
+     * HNP of the rproc's job family
+     */
+    /* pack a cmd so the buffer can be unpacked correctly */
+    OBJ_CONSTRUCT(&route, opal_buffer_t);
+    opal_dss.pack(&route, &cmd, 1, ORTE_RML_CMD);
+    
+    /* pack the HNP uri */
+    opal_dss.pack(&route, &tmpstring, 1, OPAL_STRING);
+    
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm_parse_port: %s in diff job family - sending update to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(rproc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
+    
+    if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &route,
+                                       ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&route);
+        goto cleanup;
+    }
+    
+    /* wait right here until the HNP acks the update to ensure that
+     * any subsequent messaging can succeed
+     */
+    ack_recvd = false;
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
+                                 ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
+    
+    ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
+    OBJ_DESTRUCT(&route);
+    
+    OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
+                         "%s dpm_parse_port: ack recvd",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* our get_route function automatically routes all messages for
+     * other job families via the HNP, so nothing more to do here
+     */
+    rc = ORTE_SUCCESS;
+    
+cleanup:
+    /* release the tmp storage */
+    if (NULL != tmpstring) {
+        free(tmpstring);
+    }
+    if (NULL != rml_uri) {
+        free(rml_uri);
+    }
+    return rc;
 }
 
 static int close_port(char *port_name)
@@ -941,3 +981,37 @@ static int finalize(void)
 }
 
 
+static void recv_cb(int status, orte_process_name_t* sender,
+                    opal_buffer_t *buffer,
+                    orte_rml_tag_t tag, void *cbdata)
+{
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release when processed - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_cb);
+    
+    
+}
+static void process_cb(int fd, short event, void *data)
+{
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    
+    /* copy the payload to the global buffer */
+    opal_dss.copy_payload(cabuf, mev->buffer);
+    
+    /* flag the identity of the remote proc */
+    carport.jobid = mev->sender.jobid;
+    carport.vpid = mev->sender.vpid;
+    
+    /* release the event */
+    OBJ_RELEASE(mev);
+    
+    /* flag complete */
+    recv_completed = true;
+}

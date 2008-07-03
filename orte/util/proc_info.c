@@ -44,12 +44,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_hnp_uri =           */   NULL,
     /*  .hnp_pid =              */    0,
     /*  .app_num =              */   -1,
-    /*  .universe_size =        */   -1,
     /*  .num_procs =            */   1,
-    /*  .local_rank =           */   UINT8_MAX,
-    /*  .node_rank =            */   UINT8_MAX,
-    /*  .num_local_procs =      */   0,
-    /*  .local_procs =          */   NULL,
     /*  .nodename =             */   NULL,
     /*  .arch =                 */   0,
     /*  .pid =                  */   0,
@@ -122,11 +117,6 @@ int orte_proc_info(void)
                                 true, false, -1, &tmp);
     orte_process_info.app_num = tmp;
     
-    mca_base_param_reg_int_name("orte", "universe_size",
-                                "Total number of process slots allocated to this job",
-                                true, false, -1, &tmp);
-    orte_process_info.universe_size = tmp;
-
     /* get the process id */
     orte_process_info.pid = getpid();
 

@@ -453,6 +453,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
         if (isnew) {
             newprocs[newprocs_len++] = plist[i];
             
+            /* update all the values */
             plist[i]->proc_arch = new_arch;
             
             /* if arch is different than mine, create a new convertor for this proc */

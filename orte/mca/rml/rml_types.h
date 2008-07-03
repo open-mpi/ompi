@@ -73,7 +73,7 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_BARRIER                17
 
 #define ORTE_RML_TAG_INIT_ROUTES            18
-#define ORTE_RML_TAG_UPDATE_ROUTES          19
+#define ORTE_RML_TAG_UPDATE_ROUTE_ACK       19
 #define ORTE_RML_TAG_SYNC                   20
 
 /* For FileM Base */

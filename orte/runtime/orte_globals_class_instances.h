@@ -283,6 +283,57 @@ OBJ_CLASS_INSTANCE(orte_proc_t,
                    orte_proc_construct,
                    orte_proc_destruct);
 
+static void orte_nid_construct(orte_nid_t *ptr)
+{
+    ptr->name = NULL;
+    ptr->daemon = ORTE_VPID_INVALID;
+    ptr->arch = orte_process_info.arch;
+}
+
+static void orte_nid_destruct(orte_nid_t *ptr)
+{
+    if (NULL != ptr->name) {
+        free(ptr->name);
+    }
+}
+
+OBJ_CLASS_INSTANCE(orte_nid_t,
+                   opal_object_t,
+                   orte_nid_construct,
+                   orte_nid_destruct);
+
+static void orte_pmap_construct(orte_pmap_t *ptr)
+{
+    ptr->node = -1;
+    ptr->local_rank = 0;
+    ptr->node_rank = 0;
+}
+
+OBJ_CLASS_INSTANCE(orte_pmap_t,
+                   opal_object_t,
+                   orte_pmap_construct,
+                   NULL);
+
+
+static void orte_jmap_construct(orte_jmap_t *ptr)
+{
+    ptr->job = ORTE_JOBID_INVALID;
+    OBJ_CONSTRUCT(&ptr->pmap, opal_value_array_t);
+    opal_value_array_init(&ptr->pmap, sizeof(orte_pmap_t));
+}
+
+static void orte_jmap_destruct(orte_jmap_t *ptr)
+{
+    OBJ_DESTRUCT(&ptr->pmap);
+}
+
+OBJ_CLASS_INSTANCE(orte_jmap_t,
+                   opal_object_t,
+                   orte_jmap_construct,
+                   orte_jmap_destruct);
+
+
+
 static void orte_job_map_construct(orte_job_map_t* map)
 {
     map->policy = ORTE_RMAPS_BYSLOT;    /* default to byslot mapping as per orterun options */

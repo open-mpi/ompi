@@ -49,11 +49,6 @@ static int warmup_routes(void);
 static int binomial_ft_event(int state);
 #endif
 
-static orte_process_name_t *lifeline=NULL;
-static orte_process_name_t my_parent;
-static int num_children;
-static opal_list_t my_children;
-
 orte_routed_module_t orte_routed_binomial_module = {
     init,
     finalize,
@@ -79,6 +74,11 @@ static opal_hash_table_t        vpid_wildcard_list;
 static orte_process_name_t      wildcard_route;
 static opal_condition_t         cond;
 static opal_mutex_t             lock;
+static orte_process_name_t      *lifeline=NULL;
+static orte_process_name_t      my_parent;
+static int                      num_children;
+static opal_list_t              my_children;
+static bool                     ack_recvd;
 
 
 static int init(void)
@@ -131,9 +131,9 @@ static int finalize(void)
     }
     
     /* don't destruct the routes until *after* we send the
-        * sync as the oob will be asking us how to route
-        * the message!
-        */
+     * sync as the oob will be asking us how to route
+     * the message!
+     */
     rc = opal_hash_table_get_first_key_uint64(&peer_list,
                                               &key, &value, &node);
     while(OPAL_SUCCESS == rc) {
@@ -166,11 +166,19 @@ static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route)
 { 
     int rc;
-    orte_process_name_t * route_copy;
+    orte_process_name_t *route_copy;
     
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
         return ORTE_ERR_BAD_PARAM;
+    }
+
+    /* if I am an application process, we don't update the route since
+     * we automatically route everything through the local daemon
+     */
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        return ORTE_SUCCESS;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
@@ -180,27 +188,48 @@ static int update_route(orte_process_name_t *target,
                          ORTE_NAME_PRINT(route)));
 
 
-    /* if I am an application process, we don't update the route unless
-     * the conditions dictate it. This is done to avoid creating large
-     * hash tables when they aren't needed
+    /* if this is from a different job family, then I need to
+     * track how to send messages to it
      */
-    if (!orte_process_info.hnp && !orte_process_info.daemon &&
-        !orte_process_info.tool) {
-        /* if the route is the daemon, then do nothing - we already route
-         * everything through the daemon anyway
+    if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        
+        /* if I am a daemon, then I will automatically route
+         * anything to this job family via my HNP - so nothing to do
+         * here, just return
          */
-        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route,
-                                                        ORTE_PROC_MY_DAEMON)) {
+        if (orte_process_info.daemon) {
             return ORTE_SUCCESS;
         }
         
-        /* if this is for my own job family, then do nothing - we -always- route
-         * our own job family through the daemons
+        OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                             "%s routed_binomial_update: diff job family routing job %s --> %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(target->jobid), 
+                             ORTE_NAME_PRINT(route)));
+        
+        /* see if this target is already present - it will have a wildcard vpid,
+         * so we have to look for it with that condition
          */
-        if (ORTE_JOB_FAMILY(target->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+                                              ORTE_JOB_FAMILY(target->jobid),
+                                              (void**)&route_copy);
+        if (ORTE_SUCCESS == rc && NULL != route_copy) {
+            /* target already present - no need for duplicate entry */
             return ORTE_SUCCESS;
         }
+        
+        /* not there, so add the route FOR THE JOB FAMILY*/
+        route_copy = malloc(sizeof(orte_process_name_t));
+        *route_copy = *route;
+        rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+                                              ORTE_JOB_FAMILY(target->jobid), route_copy);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
     }
+    
+    /* THIS CAME FROM OUR OWN JOB FAMILY... */
     
     route_copy = malloc(sizeof(orte_process_name_t));
     *route_copy = *route;
@@ -236,12 +265,49 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_process_name_t *ret;
     int rc;
 
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+    
     /* if it is me, then the route is just direct */
     if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
         ret = target;
         goto found;
     }
     
+    /* if I am an application process, always route via my local daemon */
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        ret = ORTE_PROC_MY_DAEMON;
+        goto found;
+    }
+
+    /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
+    if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* if I am a daemon, route this via the HNP */
+        if (orte_process_info.daemon) {
+            ret = ORTE_PROC_MY_HNP;
+            goto found;
+        }
+        
+        /* if I am the HNP or a tool, then I stored a route to
+         * this job family, so look it up
+         */
+        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+                                              ORTE_JOB_FAMILY(target->jobid), (void**)&ret);
+        if (ORTE_SUCCESS == rc) {
+            /* got a good result - return it */
+            goto found;
+        }
+        /* not found - so we have no route */
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+     
+    /* THIS CAME FROM OUR OWN JOB FAMILY... */
+
     /* check exact matches */
     rc = opal_hash_table_get_value_uint64(&peer_list,
                                           orte_util_hash_name(target), (void**)&ret);
@@ -262,7 +328,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     ret = &wildcard_route;
 
  found:
-
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_binomial_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -336,6 +401,31 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     
     return ORTE_SUCCESS;
 }
+
+/* HANDLE ACK MESSAGES FROM AN HNP */
+static void release_ack(int fd, short event, void *data)
+{
+    orte_message_event_t *mev = (orte_message_event_t*)data;
+    ack_recvd = true;
+    OBJ_RELEASE(mev);
+}
+
+static void recv_ack(int status, orte_process_name_t* sender,
+                     opal_buffer_t* buffer, orte_rml_tag_t tag,
+                     void* cbdata)
+{
+    /* don't process this right away - we need to get out of the recv before
+     * we process the message as it may ask us to do something that involves
+     * more messaging! Instead, setup an event so that the message gets processed
+     * as soon as we leave the recv.
+     *
+     * The macro makes a copy of the buffer, which we release above - the incoming
+     * buffer, however, is NOT released here, although its payload IS transferred
+     * to the message buffer for later processing
+     */
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, release_ack);    
+}
+
 
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
@@ -483,14 +573,65 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                  "%s routed_binomial: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
-            /* send the buffer to the proper tag on the daemon */
+            /* if this is for my job family, then we send the buffer
+             * to the proper tag on the daemon
+             */
+            if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) == ORTE_JOB_FAMILY(job)) {
+                /* send the buffer to the proper tag on the daemon */
+                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, ndat,
+                                                   ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                /* wait right here until the daemon acks the update to ensure that
+                 * any subsequent messaging can succeed
+                 */
+                ack_recvd = false;
+                rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
+                                             ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
+                
+                ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
+                
+                OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                                     "%s routed_binomial_init_routes: ack recvd",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                
+                /* we already have defined our routes to everyone to
+                 * be through the local daemon, so nothing further to do
+                 */
+                return ORTE_SUCCESS;
+            }
+            
+            /* if this is for a different job family, then we route via our HNP
+             * to minimize connection counts to entities such as ompi-server, so
+             * start by sending the contact info to the HNP for update
+             */
+            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                                 "%s routed_binomial_init_routes: diff job family - sending update to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
+            
             if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, ndat,
                                                ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            /* we already have defined our routes to everyone to
-             * be through the local daemon, so nothing further to do
+            
+            /* wait right here until the HNP acks the update to ensure that
+             * any subsequent messaging can succeed
+             */
+            ack_recvd = false;
+            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
+                                         ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
+            
+            ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
+            
+            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                                 "%s routed_binomial_init_routes: ack recvd",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
+            /* our get_route function automatically routes all messages for
+             * other job families via the HNP, so nothing more to do here
              */
             return ORTE_SUCCESS;
         }
@@ -731,7 +872,6 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
     /* return my parent's vpid */
     return my_parent.vpid;
 }
-
 
 static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 {

@@ -289,8 +289,21 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
                          "%s decode:nidmap decoding nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* if there are any entries already in the node array, clear it out */
+    if (0 < nodes->size) {
+        /* unfortunately, the opal function "remove_all" doesn't release
+         * the memory pointed to by the elements in the array, so we need
+         * to release those first
+         */
+        nd = (orte_nid_t**)nodes->addr;
+        for (i=0; i < nodes->size && NULL != nd[i]; i++) {
+            OBJ_RELEASE(nd[i]);
+        }
+        /* now use the opal function to reset the internal pointers */
+        opal_pointer_array_remove_all(nodes);
+    }
+    
     /* xfer the byte object to a buffer for unpacking */
-    /* load it into a buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     opal_dss.load(&buf, bo->bytes, bo->size);
     
@@ -302,26 +315,14 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
                          "%s decode:nidmap decoding %d nodes with %d already loaded",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes, nodes->lowest_free));
     
-    /* is this greater than the number of entries in nodes? if so, then
-     * we will update the node array. if not, then we can return now
-     */
-    if (num_nodes <= nodes->lowest_free) {
-        /* nothing more to do */
-        return ORTE_SUCCESS;
-    }
-    
-    /* set the size of the nidmap storage so we minimize
-     * realloc's
-     */
+    /* set the size of the nidmap storage so we minimize realloc's */
     opal_pointer_array_set_size(nodes, num_nodes);
     
     /* create the struct for the HNP's node */
-    node = (orte_nid_t*)malloc(sizeof(orte_nid_t));
-    node->name = NULL;
-    /* default the arch to our arch so that non-hetero
+    node = OBJ_NEW(orte_nid_t);
+    /* the arch defaults to our arch so that non-hetero
      * case will yield correct behavior
      */
-    node->arch = orte_process_info.arch;
     opal_pointer_array_set_item(nodes, 0, node);
     
     /* unpack the name of the HNP's node */
@@ -371,7 +372,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
         index = 1;
         while (1) {
             for (i=lastnode; i != endrange; i += step) {
-                node = (orte_nid_t*)malloc(sizeof(orte_nid_t));
+                node = OBJ_NEW(orte_nid_t);
                 /* allocate space for the nodename */
                 node->name = (char*)malloc(namelen);
                 memset(node->name, 0, namelen);
@@ -382,11 +383,9 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
                     loc++;
                 }
                 strncat(node->name, digits, num_digs);
-                node->daemon = ORTE_VPID_INVALID;
-                /* default the arch to our arch so that non-hetero
+                /* the arch defaults to our arch so that non-hetero
                  * case will yield correct behavior
                  */
-                node->arch = orte_process_info.arch;
                 opal_pointer_array_set_item(nodes, index, node);
                 index++;
             }
@@ -395,7 +394,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
             opal_dss.unpack(&buf, &lastnode, &n, OPAL_INT32);
             /* if that is -1, then it flags no more ranges */
             if (-1 == lastnode) {
-                goto vpids;
+                goto process_daemons;
             }
             n=1;
             opal_dss.unpack(&buf, &endrange, &n, OPAL_INT32);
@@ -410,13 +409,10 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
          * unpack the raw nodename
          */
         for (i=1; i < num_nodes; i++) {
-            node = (orte_nid_t*)malloc(sizeof(orte_nid_t));
-            node->name = NULL;
-            node->daemon = ORTE_VPID_INVALID;
-            /* default the arch to our arch so that non-hetero
+            node = OBJ_NEW(orte_nid_t);
+            /* the arch defaults to our arch so that non-hetero
              * case will yield correct behavior
              */
-            node->arch = orte_process_info.arch;
             opal_pointer_array_set_item(nodes, i, node);
             
             /* unpack the node's name */
@@ -425,16 +421,16 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo, opal_pointer_array_t *nodes
         }
     }
     
-vpids:
-    /* unpack the daemon vpids */
+process_daemons:
+    /* unpack the daemon names */
     vpids = (orte_vpid_t*)malloc(num_nodes * sizeof(orte_vpid_t));
     n=num_nodes;
     opal_dss.unpack(&buf, vpids, &n, ORTE_VPID);
-    nd = (orte_nid_t**)nodes->addr;
     /* transfer the data to the nidmap, counting the number of
      * daemons in the system
      */
     num_daemons = 0;
+    nd = (orte_nid_t**)nodes->addr;
     for (i=0; i < num_nodes; i++) {
         nd[i]->daemon = vpids[i];
         if (ORTE_VPID_INVALID != vpids[i]) {
@@ -560,13 +556,13 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
 
 
 int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
-                            orte_pmap_t **procs, int8_t **app_idx,
+                            opal_value_array_t *procs, int8_t **app_idx,
                             char ***slot_str)
 {
     orte_vpid_t i, num_procs;
-    orte_pmap_t *pmap;
+    orte_pmap_t pmap;
     int32_t *nodes;
-    int8_t *tmp;
+    int8_t *local_rank, *node_rank, *idx;
     int8_t flag;
     char **slots;
     orte_std_cntr_t n;
@@ -583,39 +579,38 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     *nprocs = num_procs;
     
     /* allocate memory for the procs array */
-    pmap = (orte_pmap_t*)malloc(num_procs * sizeof(orte_pmap_t));
-    *procs = pmap;
-    
+    opal_value_array_set_size(procs, num_procs);
+
     /* allocate memory for the node info */
     nodes = (int32_t*)malloc(num_procs * 4);
-
     /* unpack it in one shot */
     n=num_procs;
     opal_dss.unpack(&buf, nodes, &n, OPAL_INT32);
-    /* store it */
-    for (i=0; i < num_procs; i++) {
-        pmap[i].node = nodes[i];
-    }
-    free(nodes);
 
     /* allocate memory for local ranks */
-    tmp = (int8_t*)malloc(num_procs);
-
+    local_rank = (int8_t*)malloc(num_procs);
     /* unpack them in one shot */
     n=num_procs;
-    opal_dss.unpack(&buf, tmp, &n, OPAL_UINT8);
-    /* store them */
-    for (i=0; i < num_procs; i++) {
-        pmap[i].local_rank = tmp[i];
-    }
+    opal_dss.unpack(&buf, local_rank, &n, OPAL_UINT8);
 
+    /* allocate memory for node ranks */
+    node_rank = (int8_t*)malloc(num_procs);
     /* unpack node ranks in one shot */
     n=num_procs;
-    opal_dss.unpack(&buf, tmp, &n, OPAL_UINT8);
-    /* store it */
+    opal_dss.unpack(&buf, node_rank, &n, OPAL_UINT8);
+    
+    /* store the data */
     for (i=0; i < num_procs; i++) {
-        pmap[i].node_rank = tmp[i];
+        pmap.node = nodes[i];
+        pmap.local_rank = local_rank[i];
+        pmap.node_rank = node_rank[i];
+        opal_value_array_set_item(procs, i, &pmap);
     }
+    
+    /* release data */
+    free(nodes);
+    free(local_rank);
+    free(node_rank);
     
     /* only daemons/HNPs need the rest of the data, so if
      * we aren't one of those, we are done!
@@ -626,12 +621,14 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
         return ORTE_SUCCESS;
     }
     
+    /* allocate memory for app_idx */
+    idx = (int8_t*)malloc(num_procs);
     /* unpack app_idx in one shot */
     n=num_procs;
-    opal_dss.unpack(&buf, tmp, &n, OPAL_INT8);
+    opal_dss.unpack(&buf, idx, &n, OPAL_INT8);
     /* hand the array back to the caller */
-    *app_idx = tmp;
-    
+    *app_idx = idx;
+
     /* unpack flag to indicate if slot_strings are present */
     n=1;
     opal_dss.unpack(&buf, &flag, &n, OPAL_INT8);

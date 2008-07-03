@@ -54,12 +54,7 @@ struct orte_proc_info_t {
     char *my_hnp_uri;                   /**< Contact info for my hnp */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
-    orte_std_cntr_t universe_size;      /**< the size of the universe we are in */
     orte_vpid_t num_procs;              /**< number of processes in this job */
-    uint8_t local_rank;                 /**< local rank on this node */
-    uint8_t node_rank;                  /**< local rank on this node */
-    orte_std_cntr_t num_local_procs;    /**< total number of procs on this node */
-    char *local_procs;                  /**< comma-delimited list of local procs */
     char *nodename;                     /**< string name for this node */
     uint32_t arch;                      /**< arch for this node */
     pid_t pid;                          /**< Local process ID for this process */

@@ -82,7 +82,7 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     NULL, /* don't need a proc_get_arch fn */
     NULL, /* don't need a proc_get_local_rank fn */
     NULL, /* don't need a proc_get_node_rank fn */
-    NULL, /* don't need to update_arch */
+    NULL, /* don't need to update_nidmap */
     NULL /* ft_event */
 };
 
