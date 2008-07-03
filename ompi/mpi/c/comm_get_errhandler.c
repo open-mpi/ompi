@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,6 +36,8 @@ static const char FUNC_NAME[] = "MPI_Comm_get_errhandler";
 
 int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
+    MPI_Errhandler tmp;
+
     /* Error checking */
     MEMCHECKER(
         memchecker_comm(comm);
@@ -56,10 +58,16 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     }
   }
 
-  /* Retain the errhandler, corresponding to object refcount
-     decrease in errhandler_free.c. */
-  OBJ_RETAIN(comm->error_handler);
-  *errhandler = comm->error_handler;
+  /* On 64 bits environments we have to make sure the reading of the
+     error_handler became atomic. */
+  do {
+      tmp = comm->error_handler;
+  } while (!OPAL_ATOMIC_CMPSET(&(comm->error_handler), tmp, tmp));
+
+  /* Retain the errhandler, corresponding to object refcount decrease
+     in errhandler_free.c. */
+  *errhandler = tmp;
+  OBJ_RETAIN(tmp);
 
   /* All done */
 

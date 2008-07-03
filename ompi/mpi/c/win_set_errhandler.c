@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +35,7 @@ static const char FUNC_NAME[] = "MPI_Win_set_errhandler";
 
 int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler) 
 {
+    MPI_Errhandler tmp;
 
     OPAL_CR_NOOP_PROGRESS();
 
@@ -50,12 +52,21 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
         }
     }
 
-    /* Ditch the old errhandler, and decrement its refcount */
-    OBJ_RELEASE(win->error_handler);
+    /* Ditch the old errhandler, and decrement its refcount.  On 64
+       bits environments we have to make sure the reading of the
+       error_handler became atomic. */
+    do {
+        tmp = win->error_handler;
+    } while (!OPAL_ATOMIC_CMPSET(&(win->error_handler), tmp, tmp));
+    OBJ_RELEASE(tmp);
 
-    /* We have a valid comm and errhandler, so increment its refcount */
+    /* Now set the new errhandler and increase its refcount */
+    do {
+        win->error_handler = errhandler;
+    } while (!OPAL_ATOMIC_CMPSET(&(errhandler), win->error_handler, 
+                                 win->error_handler));
     win->error_handler = errhandler;
-    OBJ_RETAIN(win->error_handler);
+    OBJ_RETAIN(errhandler);
 
     /* All done */
     return MPI_SUCCESS;
