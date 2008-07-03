@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +35,8 @@ static const char FUNC_NAME[] = "MPI_Win_get_errhandler";
 
 int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler) 
 {
+    MPI_Errhandler tmp;
+
     OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
@@ -46,6 +49,12 @@ int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
                                           FUNC_NAME);
         }
     }
+
+    /* On 64 bits environments we have to make sure the reading of the
+       error_handler became atomic. */
+    do {
+        tmp = win->error_handler;
+    } while (!OPAL_ATOMIC_CMPSET(&(win->error_handler), tmp, tmp));
 
     /* Retain the errhandler, corresponding to object refcount
        decrease in errhandler_free.c. */

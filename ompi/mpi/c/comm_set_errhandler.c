@@ -34,6 +34,8 @@ static const char FUNC_NAME[] = "MPI_Comm_set_errhandler";
 
 int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler) 
 {
+    MPI_Errhandler tmp;
+
     /* Error checking */
     MEMCHECKER(
         memchecker_comm(comm);
@@ -57,14 +59,22 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
         }
     }
 
-    /* Ditch the old errhandler, and decrement its refcount */
+    /* Ditch the old errhandler, and decrement its refcount.  On 64
+       bits environments we have to make sure the reading of the
+       error_handler became atomic. */
+    do {
+        tmp = comm->error_handler;
+    } while (!OPAL_ATOMIC_CMPSET(&(comm->error_handler), tmp, tmp));
+    OBJ_RELEASE(tmp);
 
-    OBJ_RELEASE(comm->error_handler);
+    /* Now set the new errhandler and increase its refcount */
 
-    /* We have a valid comm and errhandler, so increment its refcount */
-
+    do {
+        comm->error_handler = errhandler;
+    } while (!OPAL_ATOMIC_CMPSET(&(errhandler), comm->error_handler, 
+                                 comm->error_handler));
     comm->error_handler = errhandler;
-    OBJ_RETAIN(comm->error_handler);
+    OBJ_RETAIN(errhandler);
 
     /* All done */
   
