@@ -21,49 +21,49 @@
 /**
  * @file#this is a comment
 # Node declaration   Node type (Free string)   Node name (Free string)
-# (Reserve word)     (slot is a reserve word   (free string)
-#                     for CPU slot)
+# (Reserve word)     (socket is a reserve word   (free string)
+#                     for CPU socket)
 #=======================================================================
-  NODE               Memory                    mem0
-  NODE               Memory                    mem1
-  NODE               Memory                    mem2
-  NODE               Memory                    mem3
+  EDGE               Memory                    mem0
+  EDGE               Memory                    mem1
+  EDGE               Memory                    mem2
+  EDGE               Memory                    mem3
 #
-  NODE               slot                      slot0
-  NODE               slot                      slot1
-  NODE               slot                      slot2
-  NODE               slot                      slot3
+  EDGE               socket                      socket0
+  EDGE               socket                      socket1
+  EDGE               socket                      socket2
+  EDGE               socket                      socket3
 #
-  NODE               Infiniband                mthca0
-  NODE               Infiniband                mthca1
+  EDGE               Infiniband                mthca0
+  EDGE               Infiniband                mthca1
 #
-  NODE               Ethernet                  eth0
-  NODE               Ethernet                  eth1
+  EDGE               Ethernet                  eth0
+  EDGE               Ethernet                  eth1
 #
 #
 # Connection decleration  From node   To node:weight   To node:weight   ......
 # (Reserve word)          (declered   (declered        (declered
 #                          above)      above)           above)
 #===============================================================================================
-  CONNECTION              mem0        slot0:0
-  CONNECTION              mem3        slot3:0
+  BRANCH              mem0        socket0:0
+  BRANCH              mem3        socket3:0
 #
-  CONNECTION              slot0       mem0:0           slot1:1           slot2:1 mthca0:1 eth0:1
-  CONNECTION              slot1       slot0:1          slot3:1
-  CONNECTION              slot2       slot1:1          slot3:1
-  CONNECTION              slot3       mem3:0           slot1:1           slot2:1 mthca1:1 eth1:1
+  BRANCH              socket0       mem0:0           socket1:1           socket2:1 mthca0:1 eth0:1
+  BRANCH              socket1       socket0:1        socket3:1
+  BRANCH              socket2       socket1:1        socket3:1
+  BRANCH              socket3       mem3:0           socket1:1           socket2:1 mthca1:1 eth1:1
 #
 #
-  CONNECTION              mthca0      slot0:1
-  CONNECTION              mthca1      slot3:1
+  BRANCH              mthca0      socket0:1
+  BRANCH              mthca1      socket3:1
 #
-  CONNECTION              eth0        slot0:1
-  CONNECTION              eth1        slot3:1
+  BRANCH              eth0        socket0:1
+  BRANCH              eth1        socket3:1
 
 #Bi-Directional connection
 #
-  CON_BI_DIR              slot1       mem1:0
-  CON_BI_DIR              slot2       mem2:0
+  BRANCH_BI_DIR              socket1       mem1:0
+  BRANCH_BI_DIR              socket2       mem2:0
 #
 # end of carto file.
 

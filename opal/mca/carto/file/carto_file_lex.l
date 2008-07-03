@@ -80,13 +80,13 @@ WHITE       [\f\t\v ]
 
 
 
-NODE               { carto_file_value.sval = yytext;
+EDGE               { carto_file_value.sval = yytext;
                      return OPAL_CARTO_FILE_NODE_DECELERATION; }
 
-CONNECTION         { carto_file_value.sval = yytext;
+BRANCH             { carto_file_value.sval = yytext;
                      return OPAL_CARTO_FILE_CONNECTION_DECELERATION; }
 
-CON_BI_DIR         { carto_file_value.sval = yytext;
+BRANCH_BI_DIR         { carto_file_value.sval = yytext;
                      return OPAL_CARTO_FILE_BIDIRECTION_CONNECTION; }
 
 [0-9]              { carto_file_value.ival = atol(yytext); 
