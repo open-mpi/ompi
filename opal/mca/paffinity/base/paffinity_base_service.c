@@ -343,13 +343,13 @@ int opal_paffinity_base_slot_list_set(long rank)
     if (rc >= 0) {
         if (OPAL_SUCCESS == mca_base_param_lookup_string(rc, &slot_str)) {
             if (NULL == slot_str) {
-                return OPAL_SUCCESS;
+                return OPAL_ERR_BAD_PARAM;
             }
         }
-    }else{
-        return OPAL_SUCCESS;
     }
-
+   if (0 == strcmp("", slot_str)){
+       return OPAL_ERR_BAD_PARAM;
+   }
         opal_output_verbose(5, opal_paffinity_base_output, "paffinity slot assignment: slot_list == %s", slot_str);
         
         item = opal_argv_split (slot_str, ',');
