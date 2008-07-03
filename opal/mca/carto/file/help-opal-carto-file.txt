@@ -27,27 +27,27 @@ File %s: No such file or directory
 #
 
 [expected node type]
-File: %s line: %d expected node type (free string). received %s
+File: %s line: %d expected Edge type (free string). received %s
 #
 
 [expected node name]
-File: %s line: %d expected Node name (free string). received %s
+File: %s line: %d expected Edge name (free string). received %s
 #
 
 [expected Connection]
-File: %s line: %d expected Node connection (node name:weight). received %s
+File: %s line: %d expected Edge branch (edge name:weight). received %s
 #
 
 [expected deceleration]
-File: %s line: %d expected Node deceleration (NODE) or connection deceleration (CONNECTION). received %s
+File: %s line: %d expected Edge declaration (EDGE) or branch declaration (BRANCH). received %s
 #
 
 [incorrect connection]
-File: %s line: %d - %s - incorrect connection
+File: %s line: %d - %s - incorrect branch
 #
 
 [vertex not found]
-File: %s line: %d - Node %s is not in the graph
+File: %s line: %d - Edge %s is not in the graph
 #
 
 [unknown token]
