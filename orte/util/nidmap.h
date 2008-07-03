@@ -32,6 +32,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_value_array.h"
 #include "opal/dss/dss_types.h"
 
 #include "orte/runtime/orte_globals.h"
@@ -48,7 +49,7 @@ ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr, opal_point
 
 ORTE_DECLSPEC int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr, orte_vpid_t *num_procs,
-                                          orte_pmap_t **procs, int8_t **app_idx,
+                                          opal_value_array_t *procs, int8_t **app_idx,
                                           char ***slot_str);
 
 

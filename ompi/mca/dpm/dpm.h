@@ -116,11 +116,6 @@ typedef void (*ompi_dpm_base_module_mark_dyncomm_fn_t)(ompi_communicator_t *comm
 typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, orte_rml_tag_t tag);
 
 /*
- * Parse a port name to get the contact info and tag
- */
-typedef char* (*ompi_dpm_base_module_parse_port_fn_t)(char *port_name, orte_rml_tag_t *tag);
-
-/*
  * Close a port
  */
 typedef int (*ompi_dpm_base_module_close_port_fn_t)(char *port_name);
@@ -150,8 +145,6 @@ struct ompi_dpm_base_module_1_0_0_t {
     ompi_dpm_base_module_mark_dyncomm_fn_t      mark_dyncomm;
     /* open port */
     ompi_dpm_base_module_open_port_fn_t         open_port;
-    /* parse port */
-    ompi_dpm_base_module_parse_port_fn_t        parse_port;
     /* close port */
     ompi_dpm_base_module_close_port_fn_t        close_port;
     /* finalize */

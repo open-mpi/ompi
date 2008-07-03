@@ -1174,7 +1174,8 @@ static int parse_locals(int argc, char* argv[])
          * of an ORTE-standard string. Note that this is NOT a standard
          * uri as it starts with the process name!
          */
-        if (0 == strncmp(orterun_globals.ompi_server, "file", strlen("file"))) {
+        if (0 == strncmp(orterun_globals.ompi_server, "file", strlen("file")) ||
+            0 == strncmp(orterun_globals.ompi_server, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
             

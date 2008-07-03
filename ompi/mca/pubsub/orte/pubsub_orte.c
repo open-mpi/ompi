@@ -91,16 +91,22 @@ static void setup_server(void)
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     opal_dss.pack(&buf, &cmd, 1, ORTE_RML_CMD);
     opal_dss.pack(&buf, &mca_pubsub_orte_component.server_uri, 1, OPAL_STRING);
-    if (ORTE_SUCCESS != (rc = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, &buf))) {
+    /* extract the server's name so we have its jobid */
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(mca_pubsub_orte_component.server_uri,
+                                                       &mca_pubsub_orte_component.server, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        mca_pubsub_orte_component.server_found = false;
+        return;
+    }
+    /* init routes to the server's job */
+    if (ORTE_SUCCESS != (rc = orte_routed.init_routes(mca_pubsub_orte_component.server.jobid, &buf))) {
         ORTE_ERROR_LOG(rc);
         mca_pubsub_orte_component.server_found = false;
         OBJ_DESTRUCT(&buf);
         return;
     }
     OBJ_DESTRUCT(&buf);
-    
-    /* extract the server's name */
-    orte_rml_base_parse_uris(mca_pubsub_orte_component.server_uri, &mca_pubsub_orte_component.server, NULL);
 
     /* flag the server as found */
     mca_pubsub_orte_component.server_found = true;

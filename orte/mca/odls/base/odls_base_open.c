@@ -72,7 +72,6 @@ orte_odls_base_module_t orte_odls;
 static void orte_odls_child_constructor(orte_odls_child_t *ptr)
 {
     ptr->name = NULL;
-    ptr->local_rank = ORTE_VPID_INVALID;
     ptr->pid = 0;
     ptr->app_idx = -1;
     ptr->alive = false;
@@ -105,7 +104,8 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->total_slots_alloc = 0;
     ptr->num_procs = 0;
     ptr->num_local_procs = 0;
-    ptr->procmap = NULL;
+    OBJ_CONSTRUCT(&ptr->procmap, opal_value_array_t);
+    opal_value_array_init(&ptr->procmap, sizeof(orte_pmap_t));
     ptr->pmap = NULL;
     OBJ_CONSTRUCT(&ptr->collection_bucket, opal_buffer_t);
     OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
@@ -127,9 +127,7 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
         }
     }
     
-    if (NULL != ptr->procmap) {
-        free(ptr->procmap);
-    }
+    OBJ_DESTRUCT(&ptr->procmap);
     
     if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
         free(ptr->pmap->bytes);

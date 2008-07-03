@@ -543,12 +543,24 @@ static int modex(opal_list_t *procs)
             goto cleanup;
         }
         
-        /* update the arch in the ESS */
-        if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
+        /* update the arch in the ESS
+         * RHC: DO NOT UPDATE ARCH IF THE PROC IS NOT IN OUR JOB. THIS IS A TEMPORARY
+         * FIX TO COMPENSATE FOR A PROBLEM IN THE CONNECT/ACCEPT CODE WHERE WE EXCHANGE
+         * INFO INCLUDING THE ARCH, BUT THEN DO A MODEX THAT ALSO INCLUDES THE ARCH. WE
+         * CANNOT UPDATE THE ARCH FOR JOBS OUTSIDE OUR OWN AS THE ESS HAS NO INFO ON
+         * THOSE PROCS/NODES - AND DOESN'T NEED IT AS THE MPI LAYER HAS ALREADY SET
+         * ITSELF UP AND DOES NOT NEED ESS SUPPORT FOR PROCS IN THE OTHER JOB
+         *
+         * EVENTUALLY, WE WILL SUPPORT THE ESS HAVING INFO ON OTHER JOBS FOR
+         * FAULT TOLERANCE PURPOSES - BUT NOT RIGHT NOW
+         */
+        if (proc_name.jobid == ORTE_PROC_MY_NAME->jobid) {
+            if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
         }
-        
+            
         /* update the modex database */
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
             ORTE_ERROR_LOG(rc);
