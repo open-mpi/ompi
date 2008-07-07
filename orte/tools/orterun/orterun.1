@@ -127,6 +127,11 @@ Synonym for \fI-np\fP.
 .
 .
 .TP
+.B -cf \f |--cartofile <arg0>\fP.
+Provide a cartography file.
+.
+.
+.TP
 .B -debug\fR,\fP --debug
 Invoke the user-level debugger indicated by the \fIorte_base_user_debugger\fP
 MCA parameter.
@@ -514,7 +519,56 @@ on host a. And runs one copy of the executable
 on hosts b and c.
 .
 .
+.SS Providing cartofile
 .
+The cartofile suplies an information of the the host structure and connection among the host components i.e memory nodes,CPUs, Ethernet and inifiniband ports. The information stored as a graph in the cartofile. This graph contains the names and types of EDGEs, connecting BRANCHes and distance among them. See the fallowing example of the cartofile:
+
+. 
+ #Node declaration Node type (Free string) Node name
+ #(Reserve word)   (socket is a reserve    (free string)
+ #                 word for CPU socket)
+ #=====================================================
+ EDGE                Memory                      mem0
+ EDGE                Memory                      mem3
+ #
+ EDGE                socket                      socket0
+ EDGE                socket                      socket1
+ EDGE                socket                      socket2
+ EDGE                socket                      socket3
+ # 
+ EDGE                Infiniband                  mthca0
+ EDGE                Infiniband                  mthca1
+ #
+ EDGE                Ethernet                    eth0
+ EDGE                Ethernet                    eth1
+ #
+ #
+ #Connection        From node   To node:weight   To node:weight
+ #declaration       (declared   (declared        (declared
+ #(Reserve word)    above)      above)           above)
+ #========================================================================
+ BRANCH             mem0        socket0:0
+ BRANCH             mem3        socket3:0
+ #
+ BRANCH             socket0     mem0:0           socket1:1      socket2:1 mthca0:1 eth0:1
+ BRANCH             socket1     socket0:1        socket3:1
+ BRANCH             socket2     socket1:1        socket3:1
+ BRANCH             socket3     mem3:0           socket1:1      socket2:1 mthca1:1 eth1:1
+ # 
+ BRANCH             mthca0      socket0:1
+ BRANCH             mthca1      socket3:1
+ #
+ BRANCH             eth0        socket0:1
+ BRANCH             eth1        socket3:1
+ 
+ #Bi-Directional connection
+ #
+ BRANCH_BI_DIR      socket1       mem1:0
+ BRANCH_BI_DIR      socket2       mem3:0
+ # 
+ #end of cartofile
+
+ . 
 .SS No Local Launch
 .
 Using the \fB--nolocal\fR option to orterun tells the system to not
