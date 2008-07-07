@@ -398,6 +398,8 @@ static int rte_ft_event(int state)
     char * procid_str = NULL;
     char * jobid_str  = NULL;
     orte_nid_t **nids = NULL;
+    orte_jmap_t *jmap = NULL;
+    orte_jmap_t **jmaps = NULL;
     int32_t i;
 
     /******** Checkpoint Prep ********/
@@ -475,7 +477,7 @@ static int rte_ft_event(int state)
          */
 
         /*
-         * Clear nidmap
+         * Clear nidmap and jmap
          */
         nids = (orte_nid_t**)nidmap.addr;
         for (i=0; i < nidmap.size; i++) {
@@ -488,8 +490,12 @@ static int rte_ft_event(int state)
             }
         }
         OBJ_DESTRUCT(&nidmap);
-        free(pmap);
-        pmap = NULL;
+
+        jmaps = (orte_jmap_t**)jobmap.addr;
+        for (i=0; i < jobmap.size && NULL != jmaps[i]; i++) {
+            OBJ_RELEASE(jmaps[i]);
+        }
+        OBJ_DESTRUCT(&jobmap);
 
         /*
          * - Reset Contact information
@@ -618,14 +624,20 @@ static int rte_ft_event(int state)
         }
 
         /*
-         * Refresh nidmap structure
+         * Refresh nidmap and jmaps structures
          */
         OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
         opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
 
+        OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
+        opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
+        jmap = OBJ_NEW(orte_jmap_t);
+        jmap->job = ORTE_PROC_MY_NAME->jobid;
+        opal_pointer_array_add(&jobmap, jmap);
+
         /* if one was provided, build my nidmap */
         if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                              &nidmap, &pmap, &nprocs))) {
+                                                              &nidmap, &jmap->pmap, &nprocs))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
