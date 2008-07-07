@@ -38,15 +38,16 @@
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 
 /* Local functions and data */
-#define HIER_MAXPROTOCOL 5
+#define HIER_MAXPROTOCOL 6
 #define HIER_MAX_PROTNAMELEN 7
 static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
 
-/* Commments: need to add ofud, udapl, portals and sctp into this list! */
-static char hier_prot[HIER_MAXPROTOCOL][HIER_MAX_PROTNAMELEN]={"0","tcp","mx","openib","sm"};
+/* Commments: need to add ofud, portals and sctp into this list! */
+static char hier_prot[HIER_MAXPROTOCOL][HIER_MAX_PROTNAMELEN]={"0","tcp","udapl","mx","openib","sm"};
 
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  int component_level,
@@ -90,13 +91,20 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
     if (OMPI_COMM_IS_INTER(comm)) {
         return NULL;
     }
-
+    
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_hierarch_priority_param;
     if (0 >= mca_coll_hierarch_priority_param) {
 	return NULL;
     }
+
+    /* This module only works with ob1 pml respectively btl's. Opt out
+       of we use cm/mtl's. */
+    if ( strcmp ( mca_pml_base_selected_component.pmlm_version.mca_component_name, "ob1")) {
+	return NULL;
+    }
+
 
     size = ompi_comm_size(comm);
     if (size < 3) {
@@ -159,7 +167,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
     if( TWO_LEVELS == detection_alg ) {
 	mca_coll_hierarch_max_protocol = 2;
 	if ( mca_coll_hierarch_verbose_param ) {
-	    printf("Switching to two level hierarchy detection\n");
+	    printf("Using two level hierarchy detection\n");
 	}
     }
 
@@ -201,8 +209,14 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 	     * maxncount[1] should be zero.
 	     */
 	    if ( mca_coll_hierarch_verbose_param ) {
-		printf("%s:%d: everybody talks with %s. No need to continue\n", 
-		       comm->c_name, rank, hier_prot[level]);
+		if ( ALL_LEVELS == detection_alg ) {
+		    printf("%s:%d: everybody talks with %s. No need to continue\n", 
+			   comm->c_name, rank, hier_prot[level]);
+		}
+		else if ( TWO_LEVELS == detection_alg ) {
+		    printf("%s:%d: everybody talks with sm. No need to continue\n",
+			   comm->c_name, rank );
+		}
 	    }
 	    goto exit;
 	}

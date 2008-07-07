@@ -44,7 +44,7 @@ int mca_coll_hierarch_priority_param=0;
 int mca_coll_hierarch_verbose_param=0;
 int mca_coll_hierarch_use_rdma_param=0;   
 int mca_coll_hierarch_ignore_sm_param=0;   
-int mca_coll_hierarch_detection_alg_param=0;
+int mca_coll_hierarch_detection_alg_param=2;
 
 /*
  * Local function
