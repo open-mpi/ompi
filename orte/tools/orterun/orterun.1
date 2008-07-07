@@ -236,6 +236,11 @@ Suppress informative messages from orterun during application execution.
 .
 .
 .TP
+.B -rf \f |--rankfile <arg0>\fP.
+Provide a rankfile file.
+.
+.
+.TP
 .B --tmpdir \fR<dir>\fP
 Set the root for the session directory tree for mpirun only.
 .
@@ -517,6 +522,27 @@ Runs one copy of the executable
 on host a. And runs one copy of the executable
 .I uptime
 on hosts b and c.
+.
+.
+.SS Specifying Ranks
+.
+Rankfile came to provide Open MPI a file with the location of each MPI_COMM_WORLD rank. The syntax of the rankfile as follows:
+ rank i=host_j slot=x
+
+    \fBshell$\fP cat my-rankfile
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1,1:0-2
+
+    \fBshell$\fP mpirun --hostfile my-hostfile -np 4 --rankfile my-rankfile a.out
+    
+This means that
+ a. rank 1 will run on host1 bounded to socket1:core0 and socket1:core1
+ b. rank 0 will run on host2 bounded to any core on socket0
+ c. rank 2 will run on host4 bounded to CPU#1 and CPU#2
+ d. rank 3 will run on host3 bounded to socket0:core1 and socket1:core0, socket1:core1, socket1:core2
+. 
 .
 .
 .SS Providing cartofile

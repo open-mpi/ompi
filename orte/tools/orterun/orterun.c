@@ -199,6 +199,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a cartography file" },
 
+    { "rmaps_rank", "file", "path", '\0', "rf", "rankfile", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Provide a rankfile file" },
+
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
     { NULL, NULL, NULL, 'x', NULL, NULL, 1,
