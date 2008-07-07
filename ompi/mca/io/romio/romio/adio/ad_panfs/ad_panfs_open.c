@@ -133,8 +133,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                 char* slash;
                 struct stat stat_buf;
                 int err;
-/*                char *value, *path, *file_name_ptr; */
-                char *path;
+                char *value, *path, *file_name_ptr;
 
                 /* Check that the file does not exist before
                  * trying to create it.  The ioctl itself should
@@ -279,11 +278,6 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                         MPI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid1_5_parity_stripe.layout_visit_policy);
                         MPI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
-                        break;
-                    case PAN_FS_CLIENT_LAYOUT_TYPE__INVALID:
-                    case PAN_FS_CLIENT_LAYOUT_TYPE__DEFAULT:
-                    case PAN_FS_CLIENT_LAYOUT_TYPE__RAID10:
-	                MPI_Info_set(fd->info, "panfs_layout_type", "PAN_FS_CLIENT_LAYOUT_TYPE__INVALID");
                         break;
                 }
             }
