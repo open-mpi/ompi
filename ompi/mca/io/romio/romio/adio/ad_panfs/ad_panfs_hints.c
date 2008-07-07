@@ -6,13 +6,13 @@
  *   See COPYRIGHT notice in top-level directory.
  */
 
-#include "opal/mca/base/mca_base_param.h"
 #include "ad_panfs.h"
 #include <pan_fs_client_cw_mode.h>
+#include "opal/mca/base/mca_base_param.h"
 
 void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
-/*    static char myname[] = "ADIOI_PANFS_SETINFO"; */
+    static char myname[] = "ADIOI_PANFS_SETINFO";
     char* value;
     int flag, tmp_val = -1;
     unsigned long int concurrent_write = 0; 
@@ -43,7 +43,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 concurrent_write = strtoul(value,NULL,10);
                 tmp_val = concurrent_write;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)concurrent_write) {
+                if (tmp_val != concurrent_write) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_concurrent_write\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
@@ -56,7 +56,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 layout_type = strtoul(value,NULL,10);
                 tmp_val = layout_type;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)layout_type) {
+                if (tmp_val != layout_type) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_type\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
@@ -69,7 +69,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 layout_stripe_unit = strtoul(value,NULL,10);
                 tmp_val = layout_stripe_unit;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)layout_stripe_unit) {
+                if (tmp_val != layout_stripe_unit) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_stripe_unit\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
@@ -82,7 +82,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 layout_parity_stripe_width = strtoul(value,NULL,10);
                 tmp_val = layout_parity_stripe_width;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)layout_parity_stripe_width) {
+                if (tmp_val != layout_parity_stripe_width) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_parity_stripe_width\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
@@ -95,7 +95,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 layout_parity_stripe_depth = strtoul(value,NULL,10);
                 tmp_val = layout_parity_stripe_depth;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)layout_parity_stripe_depth) {
+                if (tmp_val != layout_parity_stripe_depth) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_parity_stripe_depth\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
@@ -108,7 +108,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 layout_total_num_comps = strtoul(value,NULL,10);
                 tmp_val = layout_total_num_comps;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)layout_total_num_comps) {
+                if (tmp_val != layout_total_num_comps) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_total_num_comps\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
@@ -121,7 +121,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                 layout_visit_policy = strtoul(value,NULL,10);
                 tmp_val = layout_visit_policy;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);
-                if (tmp_val != (int)layout_visit_policy) {
+                if (tmp_val != layout_visit_policy) {
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_visit_policy\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
