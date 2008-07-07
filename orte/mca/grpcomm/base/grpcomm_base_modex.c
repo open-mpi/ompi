@@ -331,7 +331,13 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
     modex_attr_data_t *attr_data;
     
     proc_data = modex_lookup_orte_proc(&proc);
-    if (NULL == proc_data) return ORTE_ERR_NOT_FOUND;
+    if (NULL == proc_data) {
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                             "%s grpcomm:get_proc_attr: no modex entry for proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc)));
+        return ORTE_ERR_NOT_FOUND;
+    }
     
     OPAL_THREAD_LOCK(&proc_data->modex_lock);
     
@@ -342,8 +348,9 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
     if ((NULL == attr_data) ||
         (attr_data->attr_data_size == 0)) {
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                             "%s grpcomm:get_proc_attr: no attr avail or zero byte size",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             "%s grpcomm:get_proc_attr: no attr avail or zero byte size for proc %s attribute %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc), attribute_name));
         *val = NULL;
         *size = 0;
     } else {

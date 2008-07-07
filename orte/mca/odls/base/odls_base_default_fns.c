@@ -205,6 +205,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     opal_byte_object_t *bo;
     int32_t numbytes;
     orte_nid_t *node;
+    orte_pmap_t *pmap;
     opal_buffer_t alert;
     opal_list_item_t *item;
     orte_namelist_t *nm;
@@ -367,12 +368,18 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
         /* ident this proc's node */
-        node = (orte_nid_t*)orte_daemonmap.addr[jobdat->procmap[j].node];
+        pmap = opal_value_array_get_item(&jobdat->procmap, j);
+        if (pmap->node < 0 || pmap->node >= orte_daemonmap.size) {
+            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+            rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+            goto REPORT_ERROR;
+        }
+        node = (orte_nid_t*)orte_daemonmap.addr[pmap->node];
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:constructing child list - checking proc %s on node %d with daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j),
-                             jobdat->procmap[j].node, ORTE_VPID_PRINT(node->daemon)));
+                             pmap->node, ORTE_VPID_PRINT(node->daemon)));
 
         /* does this data belong to us? */
         if (ORTE_PROC_MY_NAME->vpid == node->daemon) {
@@ -391,7 +398,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                 goto REPORT_ERROR;
             }
             child->app_idx = app_idx[j];  /* save the index into the app_context objects */
-            child->local_rank = jobdat->procmap[j].local_rank;  /* save the local_rank */
             if (NULL != slot_str && NULL != slot_str[j]) {
                 child->slot_list = strdup(slot_str[j]);
             }
@@ -413,8 +419,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                  item != opal_list_get_end(&daemon_tree);
                  item = opal_list_get_next(item)) {
                 nm = (orte_namelist_t*)item;
-                if ((int)nm->name.vpid == jobdat->procmap[j].node ||
-                    nm->name.vpid == ORTE_VPID_WILDCARD) {
+                if (nm->name.vpid == node->daemon) {
                     /* add to the count for collectives */
                     jobdat->num_participating++;
                     /* remove this node from the tree so we don't count it again */
@@ -427,7 +432,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             /* set the routing info through the other daemon - we need to do this
              * prior to launch as the procs may want to communicate right away
              */
-            daemon.vpid = jobdat->procmap[j].node;
+            daemon.vpid = node->daemon;
             if (ORTE_SUCCESS != (rc = orte_routed.update_route(&proc, &daemon))) {
                 ORTE_ERROR_LOG(rc);
                 goto REPORT_ERROR;
@@ -439,6 +444,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     if (0 < jobdat->num_local_procs) {
         jobdat->num_participating++;
     }
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:construct:child: num_participating %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jobdat->num_participating));
     
     if (NULL != app_idx) {
         free(app_idx);
@@ -652,20 +661,15 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     free(param);
     free(param2);
     
-    /* set the universe size in the environment */
-    param = mca_base_param_environ_variable("orte","universe","size");
-    asprintf(&param2, "%ld", (long)total_slots_alloc);
-    opal_setenv(param, param2, true, environ_copy);
-    free(param);
-
     /* although the total_slots_alloc is the universe size, users
      * would appreciate being given a public environmental variable
      * that also represents this value - something MPI specific - so
-     * do that here.
+     * do that here. Also required by the ompi_attributes code!
      *
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
+    asprintf(&param2, "%ld", (long)total_slots_alloc);
     opal_setenv("OMPI_UNIVERSE_SIZE", param2, true, environ_copy);
     free(param2);
     
@@ -759,6 +763,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     opal_buffer_t alert;
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
+    orte_pmap_t *pmap;
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -983,21 +988,15 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
         free(vpid_str);  /* done with this now */
         
-        asprintf(&value, "%lu", (unsigned long) child->local_rank);
-        if(NULL == (param = mca_base_param_environ_variable("orte","ess","local_rank"))) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        opal_setenv(param, value, true, &app->env);
-        free(param);
         /* users would appreciate being given a public environmental variable
-         * that also represents this value - something MPI specific - so
+         * that also represents the local rank value - something MPI specific - so
          * do that here.
          *
          * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
          * We know - just live with it
          */
+        pmap = (orte_pmap_t*)opal_value_array_get_item(&jobdat->procmap, child->name->vpid);
+        asprintf(&value, "%lu", (unsigned long) pmap->local_rank);
         opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
 
@@ -1299,6 +1298,7 @@ static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
 static void setup_singleton_jobdat(orte_jobid_t jobid)
 {
     orte_odls_job_t *jobdat;
+    orte_pmap_t pmap;
     int32_t one32;
     int8_t one8;
     opal_buffer_t buffer;
@@ -1308,10 +1308,10 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     jobdat->jobid = jobid;
     jobdat->num_procs = 1;
     jobdat->num_local_procs = 1;
-    jobdat->procmap = (orte_pmap_t*)malloc(sizeof(orte_pmap_t));
-    jobdat->procmap[0].node = ORTE_PROC_MY_NAME->vpid;
-    jobdat->procmap[0].local_rank = 0;
-    jobdat->procmap[0].node_rank = opal_list_get_size(&orte_odls_globals.children);
+    pmap.node = 0; /* since it is a singleton, it must be on the first node in array */
+    pmap.local_rank = 0;
+    pmap.node_rank = opal_list_get_size(&orte_odls_globals.children);
+    opal_value_array_set_item(&jobdat->procmap, 0, &pmap);
     /* also need to setup a pidmap for it */
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID); /* num_procs */

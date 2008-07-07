@@ -61,6 +61,10 @@ ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
     (((n) >> 16) & 0x0000ffff)
 
 
+/* a macro for identifying that a proc is a daemon */
+#define ORTE_PROC_IS_DAEMON(n)  \
+    !((n) & 0x0000ffff)
+
 /* List of names for general use */
 struct orte_namelist_t {
     opal_list_item_t item;      /**< Allows this item to be placed on a list */

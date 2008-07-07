@@ -48,14 +48,5 @@ int orte_ess_env_get(void)
     }
     orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
     
-    /* it is okay for this param not to be found - for example, we don't bother
-     * to set it for orteds - so just set it to an invalid value which indicates
-     * it wasn't found if it isn't there
-     */
-    mca_base_param_reg_int_name("orte", "ess_local_rank",
-                                "Used to discover the local rank of a process on a node",
-                                true, false, (int)ORTE_VPID_INVALID, &num_procs);
-    orte_process_info.local_rank = (orte_vpid_t)num_procs;
-    
     return ORTE_SUCCESS;
 }

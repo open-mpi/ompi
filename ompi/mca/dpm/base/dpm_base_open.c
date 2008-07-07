@@ -42,7 +42,6 @@ OMPI_DECLSPEC ompi_dpm_base_module_t ompi_dpm = {
     ompi_dpm_base_null_dyn_finalize,
     ompi_dpm_base_null_mark_dyncomm,
     ompi_dpm_base_null_open_port,
-    ompi_dpm_base_null_parse_port,
     ompi_dpm_base_null_close_port,
     NULL
 };

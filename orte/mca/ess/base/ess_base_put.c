@@ -76,13 +76,6 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     opal_setenv("OMPI_COMM_WORLD_SIZE", value, true, env);
     free(value);
 
-    asprintf(&value, "%ld", (long) num_local_procs);
-    if(NULL == (param = mca_base_param_environ_variable("orte","ess","num_local_procs"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(param, value, true, env);
-    free(param);
     /* users would appreciate being given a public environmental variable
      * that also represents this value - something MPI specific - so
      * do that here.
@@ -90,6 +83,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
      * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
      * We know - just live with it
      */
+    asprintf(&value, "%ld", (long) num_local_procs);
     opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", value, true, env);
     free(value);
     

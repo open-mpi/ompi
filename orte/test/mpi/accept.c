@@ -21,6 +21,7 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
     printf("Hello, World, I am %d of %d\n", rank, size);
+    fflush(stdout);
     
     MPI_Info_create(&info);
     MPI_Info_set(info, "ompi_global_scope", "true");

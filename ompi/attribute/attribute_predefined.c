@@ -81,6 +81,10 @@
 
 #include "ompi_config.h"
 
+#if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
 #include "mpi.h"
 
 #include "ompi/attribute/attribute.h"
@@ -105,6 +109,8 @@ static int set_f(int keyval, MPI_Fint value);
 int ompi_attr_create_predefined(void)
 {
     int ret;
+    char *univ_size;
+    int usize;
 
     /* Create all the keyvals */
 
@@ -158,10 +164,11 @@ int ompi_attr_create_predefined(void)
 
     /* If the universe size is set, then use it. Otherwise default
      * to the size of MPI_COMM_WORLD */
-    if(orte_process_info.universe_size > 0) {
-        ret = set_f(MPI_UNIVERSE_SIZE, orte_process_info.universe_size);
-    } else {
+    univ_size = getenv("OMPI_UNIVERSE_SIZE");
+    if (NULL == univ_size || (usize = strtol(univ_size, NULL, 0)) <= 0) {
         ret = set_f(MPI_UNIVERSE_SIZE, ompi_comm_size(MPI_COMM_WORLD));
+    } else {
+        ret = set_f(MPI_UNIVERSE_SIZE, usize);
     }
     if (OMPI_SUCCESS != ret) {
         return ret;
