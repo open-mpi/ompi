@@ -5,9 +5,6 @@
  *   See COPYRIGHT notice in top-level directory.
  */
 
-#include "ompi_config.h"
-#include "opal/mca/base/mca_base_param.h"
-
 #include "adio.h"
 #include "adio_extern.h"
 
@@ -23,11 +20,6 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     char *value;
     int flag, intval, tmp_val, nprocs=0, nprocs_is_valid = 0, len;
     static char myname[] = "ADIOI_GEN_SETINFO";
-    int ompi_parallel_opts = 0;
-
-    mca_base_param_lookup_int(mca_base_param_find("io", "romio", 
-                                                  "enable_parallel_optimizations"),
-                              &ompi_parallel_opts);
 
     if (fd->info == MPI_INFO_NULL) MPI_Info_create(&(fd->info));
     info = fd->info;
@@ -45,10 +37,6 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
      * previously initialized
      */
     if (!fd->hints->initialized) {
-        if (ompi_parallel_opts != 0) {
-            MPI_Info_set(info, "ompi_enable_parallel_optimizations", "true");
-        }
-
 	/* buffer size for collective I/O */
 	MPI_Info_set(info, "cb_buffer_size", ADIOI_CB_BUFFER_SIZE_DFLT); 
 	fd->hints->cb_buffer_size = atoi(ADIOI_CB_BUFFER_SIZE_DFLT);
@@ -58,14 +46,8 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	 */
 	MPI_Info_set(info, "romio_cb_read", "automatic"); 
 	fd->hints->cb_read = ADIOI_HINT_AUTO;
-
-        if (ompi_parallel_opts != 0) {
-            MPI_Info_set(info, "romio_cb_write", "enable"); 
-            fd->hints->cb_write = ADIOI_HINT_ENABLE;
-        } else {
-            MPI_Info_set(info, "romio_cb_write", "automatic"); 
-            fd->hints->cb_write = ADIOI_HINT_AUTO;
-        }
+        MPI_Info_set(info, "romio_cb_write", "automatic"); 
+        fd->hints->cb_write = ADIOI_HINT_AUTO;
 
 	fd->hints->cb_config_list = NULL;
 
@@ -294,13 +276,7 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		MPI_Info_set(info, "cb_nodes", value);
 		fd->hints->cb_nodes = intval;
 	    }
-
-        } else {
-            /* OMPI: allow run-time override of cb_nodes during collective calls */
-            if (ompi_parallel_opts != 0) {
-                MPI_Info_set(info, "ompi_cb_nodes_runtime_override", "true");
-            }
-        }
+	}
 
 	MPI_Info_get(users_info, "ind_wr_buffer_size", MPI_MAX_INFO_VAL, 
 		     value, &flag);

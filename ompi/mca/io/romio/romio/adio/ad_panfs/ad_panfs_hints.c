@@ -23,15 +23,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     unsigned long int layout_total_num_comps = 0;
     pan_fs_client_layout_visit_t layout_visit_policy  = PAN_FS_CLIENT_LAYOUT_VISIT__ROUND_ROBIN;
     int gen_error_code;
-    int ompi_parallel_opts = 0;
 
     *error_code = MPI_SUCCESS;
 
     if (fd->info == MPI_INFO_NULL) {
-        mca_base_param_lookup_int(mca_base_param_find("io", "romio", 
-                                                      "enable_parallel_optimizations"),
-                                  &ompi_parallel_opts);
-    
 	    /* This must be part of the open call. can set striping parameters 
          * if necessary. 
          */ 
@@ -53,12 +48,6 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
 	            MPI_Info_set(fd->info, "panfs_concurrent_write", value); 
-            } else if (ompi_parallel_opts != 0) {
-                /* ------------------------------------------------------------------------ */
-                /* OMPI: User hints supplied, but not panfs_concurrent_write:               */
-                /* OMPI: Make panfs_concurrent_write == 1 the default                       */
-                /* ------------------------------------------------------------------------ */
-                MPI_Info_set(fd->info, "panfs_concurrent_write", "1");
             }
 
             MPI_Info_get(users_info, "panfs_layout_type", MPI_MAX_INFO_VAL, 
@@ -141,12 +130,6 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 
 	        ADIOI_Free(value);
 
-        } else if (ompi_parallel_opts) {
-            /* ------------------------------------------------------------------------ */
-            /* OMPI: No user hints supplied.                                            */
-            /* OMPI: Make panfs_concurrent_write == 1 the default                       */
-            /* ------------------------------------------------------------------------ */
-            MPI_Info_set(fd->info, "panfs_concurrent_write", "1");
         }
     }
 

@@ -11,8 +11,6 @@
 #include "mpe.h"
 #endif
 
-#include "limits.h"
-
 /* prototypes of functions used for collective writes only. */
 static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
                          datatype, int nprocs, int myrank, 
@@ -78,17 +76,8 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
     ADIO_Offset *offset_list = NULL, *st_offsets = NULL, *fd_start = NULL,
 	*fd_end = NULL, *end_offsets = NULL;
     int *buf_idx = NULL, *len_list = NULL;
-    char value[MPI_MAX_INFO_VAL];
-    int info_flag, ompi_parallel_opts = 0;
-    unsigned long long min_pe_request = ULONG_MAX;
-    unsigned long long max_pe_request =         0;
-    unsigned long long min_rd_request = ULONG_MAX;
-    unsigned long long max_rd_request =         0;
     int old_error, tmp_error;
 
-    MPI_Info_get(fd->info, "ompi_enable_parallel_optimizations", MPI_MAX_INFO_VAL, value, 
-                 &info_flag);
-    if (info_flag) ompi_parallel_opts = 1;
 
 #ifdef PROFILE
 	MPE_Log_event(13, 0, "start computation");
@@ -118,77 +107,14 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
 	/* each process communicates its start and end offsets to other 
 	   processes. The result is an array each of start and end offsets stored
 	   in order of process rank. */ 
-
+    
 	st_offsets = (ADIO_Offset *) ADIOI_Malloc(nprocs*sizeof(ADIO_Offset));
 	end_offsets = (ADIO_Offset *) ADIOI_Malloc(nprocs*sizeof(ADIO_Offset));
 
-        if (ompi_parallel_opts) {
-            /* OMPI: reduce the collectives calls from 2 to 1, to improve scaling */
-            ADIO_Offset *stend_offsets, min_rd_st_offset, max_rd_end_offset, total_rd_size;
-            ADIO_Offset my_offsets[2];
-            int nprocs_for_creq;
-
-            stend_offsets = (ADIO_Offset *) ADIOI_Malloc(2*nprocs*sizeof(ADIO_Offset));
-            my_offsets[0] = start_offset;
-            my_offsets[1] = end_offset;
-
-            MPI_Allgather(my_offsets, 2, ADIO_OFFSET, stend_offsets, 2, ADIO_OFFSET, fd->comm);
-            min_rd_st_offset  = stend_offsets[0];
-            max_rd_end_offset = stend_offsets[1]; 
-            for (i=0; i<nprocs; i++) 
-                {
-                    st_offsets [i]    = stend_offsets[i*2  ];
-                    end_offsets[i]    = stend_offsets[i*2+1]; 
-                    min_rd_st_offset  = ADIOI_MIN(st_offsets [i],min_rd_st_offset);
-                    max_rd_end_offset = ADIOI_MAX(end_offsets[i],max_rd_end_offset);
-                    min_pe_request    = ADIOI_MIN((ADIO_Offset) min_pe_request,end_offsets[i]-st_offsets[i]+1);
-                    max_pe_request    = ADIOI_MAX((ADIO_Offset) max_pe_request,end_offsets[i]-st_offsets[i]+1);
-                }
-            min_rd_request    = ADIOI_MIN((ADIO_Offset) min_rd_request, max_rd_end_offset-min_rd_st_offset+1);
-            max_rd_request    = ADIOI_MAX((ADIO_Offset) max_rd_request, max_rd_end_offset-min_rd_st_offset+1);
-            ADIOI_Free(stend_offsets);
-
-            MPI_Info_get(fd->info, "ompi_cb_nodes_runtime_override", MPI_MAX_INFO_VAL, value, 
-                         &info_flag);
-            if (info_flag) {
-                /* ------------------------------------------------------------------ */
-                /* OMPI: swh@lanl.gov (Steve Hodson):                                 */
-                /* If user has not specified cb_nodes then calculate it as follows:   */
-                /* 1)nprocs_for_coll depends initially on the collective request size.*/
-                /*   For larger requests the denominator is directly proportional to  */
-                /*   the number of times the collective buffer is reused per request. */
-                /* 2)nprocs_for_coll limited to 1/4      the number of processes      */
-                /* 3)nprocs_for_coll is at least to 1/32 the number of processes      */
-                /* 4)nprocs_for_coll limited to range 1-32. Need at least 1,          */
-                /*   but don't exceed expected number of disks in use at a time       */
-                /* 5)nprocs_for_coll even workaround                                  */
-                /* 6)nprocs_for_coll at least 2 for more than 15 processes,           */
-                /*   regardless of how small collective request is.                   */
-                /* Caveat:                                                            */
-                /* The preceeding recipe was arrived at empirically for the           */
-                /* Panasas file system on Flash. Applicability to other file systems  */
-                /* needs to be demonstrated.                                          */
-                /* Caution: Care must be taken below to make sure that nprocs_for_coll*/ 
-                /* NEVER exceeds the default aggregator configuration list build once */
-                /* in open: ADIOI_cb_config_list_parse. Since nprocs_for_coll is      */
-                /* usually less that this number, only a subset of the previously     */
-                /* allocated aggregators will be used.                                */
-                /* ------------------------------------------------------------------ */
-                total_rd_size   = max_rd_end_offset - min_rd_st_offset + 1;
-                nprocs_for_creq = (int)(total_rd_size / ( 8 * 1024 * 1024 ));
-                nprocs_for_coll = ADIOI_MIN(nprocs_for_creq, nprocs/ 4);
-                nprocs_for_coll = ADIOI_MAX(nprocs_for_coll, nprocs/32);
-                nprocs_for_coll = ADIOI_MAX(nprocs_for_coll,  1);
-                nprocs_for_coll = ADIOI_MIN(nprocs_for_coll, 32);
-                if (nprocs_for_coll > 1 && nprocs_for_coll%2 ) nprocs_for_coll--;
-                if ( nprocs > 15 ) nprocs_for_coll = ADIOI_MAX(nprocs_for_coll, 2 );
-            }
-        } else {
-            MPI_Allgather(&start_offset, 1, ADIO_OFFSET, st_offsets, 1,
-                          ADIO_OFFSET, fd->comm);
-            MPI_Allgather(&end_offset, 1, ADIO_OFFSET, end_offsets, 1,
-                          ADIO_OFFSET, fd->comm);
-        }
+	MPI_Allgather(&start_offset, 1, ADIO_OFFSET, st_offsets, 1,
+		      ADIO_OFFSET, fd->comm);
+	MPI_Allgather(&end_offset, 1, ADIO_OFFSET, end_offsets, 1,
+		      ADIO_OFFSET, fd->comm);
 
 	/* are the accesses of different processes interleaved? */
 	for (i=1; i<nprocs; i++)
