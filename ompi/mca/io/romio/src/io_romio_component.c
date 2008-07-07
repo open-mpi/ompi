@@ -141,11 +141,6 @@ static int open_component(void)
                                "Delete priority of the io romio component",
                                false, false, 10, NULL);
 
-    mca_base_param_reg_int(&mca_io_romio_component.io_version,
-                           "enable_parallel_optimizations",
-                           "Enable set of Open MPI-added options to improve collective file i/o performance",
-                           false, false, 0, NULL);
-
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_romio_mutex, opal_mutex_t);
 
