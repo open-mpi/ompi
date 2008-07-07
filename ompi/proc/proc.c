@@ -73,10 +73,6 @@ void ompi_proc_construct(ompi_proc_t* proc)
 
     /* initialize this pointer to NULL */
     proc->proc_hostname = NULL;
-    
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
-    opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 }
 
 
@@ -91,9 +87,6 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     /* DO NOT FREE THE HOSTNAME FIELD AS THIS POINTS
      * TO AN AREA ALLOCATED/FREE'D ELSEWHERE
      */
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
-    opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     OBJ_DESTRUCT(&proc->proc_lock);
 }
 
@@ -108,6 +101,8 @@ int ompi_proc_init(void)
     /* create proc structures and find self */
     for( i = 0; i < orte_process_info.num_procs; i++ ) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
+        opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
+
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
         proc->proc_name.vpid = i;
         if (i == ORTE_PROC_MY_NAME->vpid) {
@@ -165,19 +160,14 @@ int ompi_proc_set_arch(void)
 
 int ompi_proc_finalize (void)
 {
-    ompi_proc_t *proc, *nextproc, *endproc;
+    ompi_proc_t *proc;
 
-    proc      = (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
-    nextproc  = (ompi_proc_t*)opal_list_get_next(proc);
-    endproc   = (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
-
-    OBJ_RELEASE(proc);
-    while ( nextproc != endproc ) {
-        proc = nextproc;
-        nextproc = (ompi_proc_t *)opal_list_get_next(proc);
+    /* remove all procs from list and destroy */
+    while (NULL != (proc = (ompi_proc_t*) opal_list_remove_first(&ompi_proc_list))) {
         OBJ_RELEASE(proc);
     }
     OBJ_DESTRUCT(&ompi_proc_list);
+    OBJ_DESTRUCT(&ompi_proc_lock);
 
     return OMPI_SUCCESS;
 }
@@ -210,6 +200,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     /* allocate an array */
     procs = (ompi_proc_t**) malloc(count * sizeof(ompi_proc_t*));
     if (NULL == procs) {
+        OPAL_THREAD_UNLOCK(&ompi_proc_lock);
         return NULL;
     }
 
@@ -219,6 +210,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, &my_name)) {
+            OBJ_RETAIN(proc);
             procs[count++] = proc;
         }
     }
@@ -392,6 +384,7 @@ ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
         *isnew = true;
         rproc = OBJ_NEW(ompi_proc_t);
         if (NULL != rproc) {
+            opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
             rproc->proc_name = *name;
         }
         /* caller had better fill in the rest of the proc, or there's
