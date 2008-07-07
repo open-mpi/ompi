@@ -172,67 +172,34 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
      */
     /* pvfs2 handles opens specially, so it is actually more efficent for that
      * file system if we skip this optimization */
-    /* NFS handles opens especially poorly, so we cannot use this optimization
-     * on that FS */
-    if (fd->file_system == ADIO_NFS) {
-        /* no optimizations for NFS: */
-        if ((access_mode & ADIO_CREATE) && (access_mode & ADIO_EXCL)) {
-            /* the open should fail if the file exists. Only *1* process should
-               check this. Otherwise, if all processes try to check and the file
-               does not exist, one process will create the file and others who
-               reach later will return error. */
-            if(rank == fd->hints->ranklist[0]) {
-                fd->access_mode = access_mode;
-                (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-                MPI_Bcast(error_code, 1, MPI_INT, \
-                        fd->hints->ranklist[0], fd->comm);
-                /* if no error, close the file and reopen normally below */
-                if (*error_code == MPI_SUCCESS) {
-                    (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
-                }
-            } else {
-                MPI_Bcast(error_code, 1, MPI_INT,
-                        fd->hints->ranklist[0], fd->comm);
-            }
-            if (*error_code != MPI_SUCCESS) {
-                goto fn_exit;
-            } else {
-                /* turn off EXCL for real open */
-                access_mode = access_mode ^ ADIO_EXCL;
-            }
-        }
-    } else {
+    if (access_mode & ADIO_CREATE && fd->file_system != ADIO_PVFS2) {
+       if(rank == fd->hints->ranklist[0]) {
+	   /* remove delete_on_close flag if set */
+	   if (access_mode & ADIO_DELETE_ON_CLOSE)
+	       fd->access_mode = access_mode ^ ADIO_DELETE_ON_CLOSE;
+	   else 
+	       fd->access_mode = access_mode;
+	       
+	   (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
+	   MPI_Bcast(error_code, 1, MPI_INT, \
+		     fd->hints->ranklist[0], fd->comm);
+	   /* if no error, close the file and reopen normally below */
+	   if (*error_code == MPI_SUCCESS) 
+	       (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
 
-        /* the actual optimized create on one, open on all */
-        if (access_mode & ADIO_CREATE && fd->file_system != ADIO_PVFS2) {
-            if(rank == fd->hints->ranklist[0]) {
-                /* remove delete_on_close flag if set */
-                if (access_mode & ADIO_DELETE_ON_CLOSE)
-                    fd->access_mode = access_mode ^ ADIO_DELETE_ON_CLOSE;
-                else 
-                    fd->access_mode = access_mode;
+	   fd->access_mode = access_mode; /* back to original */
+       }
+       else MPI_Bcast(error_code, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
 
-                (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-                MPI_Bcast(error_code, 1, MPI_INT, \
-                        fd->hints->ranklist[0], fd->comm);
-                /* if no error, close the file and reopen normally below */
-                if (*error_code == MPI_SUCCESS) 
-                    (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
-
-                fd->access_mode = access_mode; /* back to original */
-            }
-            else MPI_Bcast(error_code, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
-
-            if (*error_code != MPI_SUCCESS) {
-                goto fn_exit;
-            } 
-            else {
-                /* turn off CREAT (and EXCL if set) for real multi-processor open */
-                access_mode ^= ADIO_CREATE; 
-                if (access_mode & ADIO_EXCL)
-                    access_mode ^= ADIO_EXCL;
-            }
-        }
+       if (*error_code != MPI_SUCCESS) {
+           goto fn_exit;
+       } 
+       else {
+           /* turn off CREAT (and EXCL if set) for real multi-processor open */
+           access_mode ^= ADIO_CREATE; 
+	   if (access_mode & ADIO_EXCL)
+		   access_mode ^= ADIO_EXCL;
+       }
     }
 
     /* if we are doing deferred open, non-aggregators should return now */
