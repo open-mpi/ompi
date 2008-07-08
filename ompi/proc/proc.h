@@ -119,6 +119,19 @@ OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
  */
 OMPI_DECLSPEC int ompi_proc_init(void);
 
+/**
+ * Set the arch of each proc in the ompi_proc_list
+ *
+ * In some environments, MPI procs are required to exchange their
+ * arch via a modex operation during mpi_init. In other environments,
+ * the arch is determined by other mechanisms and provided to the
+ * proc directly. To support both mechanisms, we provide a separate
+ * function to set the arch of the procs -after- the modex operation
+ * has completed in mpi_init.
+ *
+ * @retval OMPI_SUCCESS Archs successfully set
+ * @retval OMPI_ERROR   Archs could not be initialized
+ */
 OMPI_DECLSPEC int ompi_proc_set_arch(void);
 
 /**
@@ -142,8 +155,9 @@ OMPI_DECLSPEC int ompi_proc_finalize(void);
  * MPI_COMM_WORLD.
  *
  * @note The reference count of each process in the array is
- * incremented and the caller is responsible for releasing each
- * process in the array, as well as freeing the array.
+ * NOT incremented - the caller is responsible for ensuring the
+ * correctness of the reference count once they are done with
+ * the array.
  *
  * @param[in] size     Number of processes in the ompi_proc_t array
  *
