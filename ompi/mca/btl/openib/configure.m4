@@ -22,7 +22,7 @@
 # MCA_btl_openib_POST_CONFIG([should_build])
 # ------------------------------------------
 AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
-    AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1" -a "x$ompi_want_connectx_xrc" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 -a "x$btl_openib_have_rdmacm" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_ibcm], [test $1 -eq 1 -a "x$btl_openib_have_ibcm" = "x1"])
 ])
@@ -56,13 +56,13 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
 
 
     AS_IF([test "$btl_openib_happy" = "yes"],
-          [if test "x$btl_openib_have_xrc" = "x1" -a "x$ompi_want_connectx_xrc" = "x1"; then
+          [if test "x$btl_openib_have_xrc" = "x1"; then
               cpcs="$cpcs xoob"
           fi
-          if test "x$btl_openib_have_rdma_cm" = "x1"; then
-              cpcs="$cpcs rdma_cm"
+          if test "x$btl_openib_have_rdmacm" = "x1"; then
+              cpcs="$cpcs rdmacm"
           fi
-          if test "x$btl_openib_have_ib_cm" = "x1"; then
+          if test "x$btl_openib_have_ibcm" = "x1"; then
               cpcs="$cpcs ibcm"
           fi
           AC_MSG_CHECKING([which openib btl cpcs will be built])
