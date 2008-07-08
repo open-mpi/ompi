@@ -381,9 +381,6 @@ int orterun(int argc, char *argv[])
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    /* save the environment for launch purposes */
-    orte_launch_environ = opal_argv_copy(environ);
-        
 #if OPAL_ENABLE_FT == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
@@ -405,6 +402,9 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
+    
+    /* save the environment for launch purposes */
+    orte_launch_environ = opal_argv_copy(environ);
     
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
@@ -1462,7 +1462,18 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     app->env = opal_argv_copy(*app_env);
     for (i = 0; NULL != environ[i]; ++i) {
         if (0 == strncmp("OMPI_", environ[i], 5)) {
-            opal_argv_append_nosize(&app->env, environ[i]);
+            /* check for duplicate in app->env - this
+             * would have been placed there by the
+             * cmd line processor. By convention, we
+             * always let the cmd line override the
+             * environment
+             */
+            param = strdup(environ[i]);
+            value = strchr(param, '=');
+            *value = '\0';
+            value++;
+            opal_setenv(param, value, false, &app->env);
+            free(param);
         }
     }
 
