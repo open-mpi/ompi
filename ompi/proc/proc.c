@@ -87,6 +87,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     /* DO NOT FREE THE HOSTNAME FIELD AS THIS POINTS
      * TO AN AREA ALLOCATED/FREE'D ELSEWHERE
      */
+    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
+    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
     OBJ_DESTRUCT(&proc->proc_lock);
 }
 
@@ -112,6 +115,7 @@ int ompi_proc_init(void)
             proc->proc_arch = orte_process_info.arch;
         } else {
             if (orte_ess.proc_is_local(&proc->proc_name)) {
+                /* flag all local procs */
                 proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
             }
             proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
@@ -122,6 +126,15 @@ int ompi_proc_init(void)
 }
 
 
+/* in some cases, all MPI procs are required to do a modex so they
+ * can (at the least) exchange their architecture. Since we cannot
+ * know in advance if this was required, we provide a separate function
+ * to set the arch (instead of doing it inside of ompi_proc_init) that
+ * can be called after the modex completes in ompi_mpi_init. Thus, we
+ * know that - regardless of how the arch is known, whether via modex
+ * or dropped in from a local daemon - the arch can be set correctly
+ * at this time
+ */
 int ompi_proc_set_arch(void)
 {
     ompi_proc_t *proc = NULL;
@@ -160,12 +173,31 @@ int ompi_proc_set_arch(void)
 
 int ompi_proc_finalize (void)
 {
-    ompi_proc_t *proc;
+    opal_list_item_t *item;
 
-    /* remove all procs from list and destroy */
-    while (NULL != (proc = (ompi_proc_t*) opal_list_remove_first(&ompi_proc_list))) {
-        OBJ_RELEASE(proc);
+    /* remove all items from list and destroy them. Since we cannot know
+     * the reference count of the procs for certain, it is possible that
+     * a single OBJ_RELEASE won't drive the count to zero, and hence will
+     * not release the memory. Accordingly, we cycle through the list here,
+     * calling release on each item.
+     *
+     * This will cycle until it forces the reference count of each item
+     * to zero, thus causing the destructor to run - which will remove
+     * the item from the list!
+     *
+     * We cannot do this under the thread lock as the destructor will
+     * call it when removing the item from the list. However, this function
+     * is ONLY called from MPI_Finalize, and all threads are prohibited from
+     * calling an MPI function once ANY thread has called MPI_Finalize. Of
+     * course, multiple threads are allowed to call MPI_Finalize, so this
+     * function may get called multiple times by various threads. We believe
+     * it is thread safe to do so...though it may not -appear- to be so
+     * without walking through the entire list/destructor sequence.
+     */
+    while (opal_list_get_end(&ompi_proc_list) != (item = opal_list_get_first(&ompi_proc_list))) {
+        OBJ_RELEASE(item);
     }
+    /* now destruct the list and thread lock */
     OBJ_DESTRUCT(&ompi_proc_list);
     OBJ_DESTRUCT(&ompi_proc_lock);
 
@@ -210,7 +242,20 @@ ompi_proc_t** ompi_proc_world(size_t *size)
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc->proc_name, &my_name)) {
-            OBJ_RETAIN(proc);
+            /* DO NOT RETAIN THIS OBJECT - the reference count on this
+             * object will be adjusted by external callers. The intent
+             * here is to allow the reference count to drop to zero if
+             * the app no longer desires to communicate with this proc.
+             * For example, the proc may call comm_disconnect on all
+             * communicators involving this proc. In such cases, we want
+             * the proc object to be removed from the list. By not incrementing
+             * the reference count here, we allow this to occur.
+             *
+             * We don't implement that yet, but we are still safe for now as
+             * the OBJ_NEW in ompi_proc_init owns the initial reference
+             * count which cannot be released until ompi_proc_finalize is
+             * called.
+             */
             procs[count++] = proc;
         }
     }
@@ -236,6 +281,12 @@ ompi_proc_t** ompi_proc_all(size_t* size)
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
+        /* We know this isn't consistent with the behavior in ompi_proc_world,
+         * but we are leaving the RETAIN for now because the code using this function
+         * assumes that the results need to be released when done. It will
+         * be cleaned up later as the "fix" will impact other places in
+         * the code
+         */
         OBJ_RETAIN(proc);
         procs[count++] = proc;
     }
@@ -251,6 +302,12 @@ ompi_proc_t** ompi_proc_self(size_t* size)
     if (NULL == procs) {
         return NULL;
     }
+    /* We know this isn't consistent with the behavior in ompi_proc_world,
+     * but we are leaving the RETAIN for now because the code using this function
+     * assumes that the results need to be released when done. It will
+     * be cleaned up later as the "fix" will impact other places in
+     * the code
+     */
     OBJ_RETAIN(ompi_proc_local_proc);
     *procs = ompi_proc_local_proc;
     *size = 1;
@@ -337,6 +394,19 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
     int i, rc;
     
     OPAL_THREAD_LOCK(&ompi_proc_lock);
+    
+    /* cycle through the provided array, packing the OMPI level
+     * data for each proc. This data may or may not be included
+     * in any subsequent modex operation, so we include it here
+     * to ensure completion of a connect/accept handshake. See
+     * the ompi/mca/dpm framework for an example of where and how
+     * this info is used.
+     *
+     * Eventually, we will review the procedures that call this
+     * function to see if duplication of communication can be
+     * reduced. For now, just go ahead and pack the info so it
+     * can be sent.
+     */
     for (i=0; i<proclistsize; i++) {
         rc = opal_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
         if(rc != ORTE_SUCCESS) {
@@ -380,6 +450,9 @@ ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
         }
     }
     
+    /* if we didn't find this proc in the list, create a new
+     * proc_t and append it to the list
+     */
     if (NULL == rproc) {
         *isnew = true;
         rproc = OBJ_NEW(ompi_proc_t);
@@ -418,6 +491,9 @@ ompi_proc_unpack(opal_buffer_t* buf,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
+    /* cycle through the array of provided procs and unpack
+     * their info - as packed by ompi_proc_pack
+     */
     for ( i=0; i<proclistsize; i++ ){
         orte_std_cntr_t count=1;
         orte_process_name_t new_name;
@@ -442,8 +518,13 @@ ompi_proc_unpack(opal_buffer_t* buf,
             return rc;
         }
         
+        /* see if this proc is already on our ompi_proc_list */
         plist[i] = ompi_proc_find_and_add(&new_name, &isnew);
         if (isnew) {
+            /* if not, then it was added, so update the values
+             * in the proc_t struct with the info that was passed
+             * to us
+             */
             newprocs[newprocs_len++] = plist[i];
             
             /* update all the values */
@@ -469,6 +550,12 @@ ompi_proc_unpack(opal_buffer_t* buf,
             
             /* Save the hostname */
             plist[i]->proc_hostname = new_hostname;
+            
+            /* eventually, we will update the orte/mca/ess framework's data
+             * to contain the info for the new proc. For now, we ignore
+             * this step since the MPI layer already has all the info
+             * it requires
+             */
         }
     }
     
