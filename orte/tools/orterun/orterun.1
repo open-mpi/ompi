@@ -171,6 +171,11 @@ Provide a hostfile to use.
 .
 .
 .TP
+.B -loadbalance\fR,\fP --loadbalance
+Uniform distribution of ranks across all nodes by Round Robin mapper.
+.
+.
+.TP
 .B -machinefile\fR,\fP --machinefile \fR<machinefile>\fP
 Synonym for \fI-hostfile\fP.
 .
@@ -459,6 +464,16 @@ Runs one copy of the the executable
 .I a.out
 on each slot on a given node before running the executable on other available
 nodes.
+.
+.
+.SS Loadbalance rank allocation
+.
+Uniform distribution of the ranks on all nodes when using Round Robin mapper while retaining byslot rank associations.
+
+ ex :               byslot    bynode   loadbalance
+        node0:      0,1,2,3   0,3,6    0,1,2   
+        node1:      4,5,6     1,4      3,4
+        node2:                2,5      5,6
 .
 .
 .
