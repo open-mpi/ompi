@@ -31,72 +31,11 @@
 #include "opal/mca/crs/base/base.h"
 #include "opal/runtime/opal_cr.h"
 
-/*
- * Instantiate the public struct with all of our public information
- * and pointer to our public functions in it
- */
-static opal_crs_base_component_t none_component = {
-    /* Handle the general mca_component_t struct containing 
-     *  meta information about the component itself
-     */
-    {
-        OPAL_CRS_BASE_VERSION_1_0_0,
-        /* Component name and version */
-        "none",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
-            
-        /* Component open and close functions */
-        opal_crs_base_none_open,
-        opal_crs_base_none_close,
-        opal_crs_base_none_query
-    },
-
-    /* Next the MCA v1.0.0 component meta data */
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
-        
-    /* Verbosity level */
-    0,
-    /* opal_output handler */
-    -1,
-    /* Default priority */
-    0
-};
-
-static opal_crs_base_module_t none_module = {
-    /** Initialization Function */
-    opal_crs_base_none_module_init,
-    /** Finalization Function */
-    opal_crs_base_none_module_finalize,
-
-    /** Checkpoint interface */
-    opal_crs_base_none_checkpoint,
-
-    /** Restart Command Access */
-    opal_crs_base_none_restart,
-
-    /** Disable checkpoints */
-    opal_crs_base_none_disable_checkpoint,
-    /** Enable checkpoints */
-    opal_crs_base_none_enable_checkpoint,
-
-    /** Prelaunch */
-    opal_crs_base_none_prelaunch,
-
-    /** Register thread */
-    opal_crs_base_none_reg_thread
-};
-
 int opal_crs_base_select(void)
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_crs_base_component_t *best_component = NULL;
     opal_crs_base_module_t *best_module = NULL;
-    char *include_list = NULL;
     int int_value = 0;
 
     /*
@@ -123,28 +62,6 @@ int opal_crs_base_select(void)
     }
 
     /*
-     * Register the framework MCA param and look up include list
-     */
-    mca_base_param_reg_string_name("crs", NULL,
-                                   "Which CRS component to use (empty = auto-select)",
-                                   false, false,
-                                   NULL, &include_list);
-
-    if(NULL != include_list && 0 == strncmp(include_list, "none", strlen("none")) ){ 
-        opal_output_verbose(10, opal_crs_base_output,
-                            "crs:select: Using %s component",
-                            include_list);
-        best_component = &none_component;
-        best_module    = &none_module;
-        /* JJH: Todo: Check if none is in the list */
-        /* Close all components since none will be used */
-        mca_base_components_close(0, /* Pass 0 to keep this from closing the output handle */
-                                  &opal_crs_base_components_available,
-                                  NULL);
-        goto skip_select;
-    }
-
-    /*
      * Select the best component
      */
     if( OPAL_SUCCESS != mca_base_select("crs", opal_crs_base_output,
@@ -156,7 +73,6 @@ int opal_crs_base_select(void)
         goto cleanup;
     }
 
- skip_select:
     /* Save the winner */
     opal_crs_base_selected_component = *best_component;
     opal_crs = *best_module;
@@ -170,10 +86,5 @@ int opal_crs_base_select(void)
     }
 
  cleanup:
-    if( NULL != include_list ) {
-        free(include_list);
-        include_list = NULL;
-    }
-
     return exit_status;
 }

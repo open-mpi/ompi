@@ -81,6 +81,15 @@ extern "C" {
     int opal_crs_self_disable_checkpoint(void);
     int opal_crs_self_enable_checkpoint(void);
 
+    int opal_crs_self_prelaunch(int32_t rank,
+                                char *base_snapshot_dir,
+                                char **app,
+                                char **cwd,
+                                char ***argv,
+                                char ***env);
+
+    int opal_crs_self_reg_thread(void);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
