@@ -30,12 +30,37 @@
 AC_DEFUN([OMPI_CHECK_OPENIB],[
     OMPI_VAR_SCOPE_PUSH([$1_msg])
 
+    #
+    # Openfabrics support
+    #
     AC_ARG_WITH([openib],
         [AC_HELP_STRING([--with-openib(=DIR)],
              [Build OpenFabrics support, searching for libraries in DIR])])
     AC_ARG_WITH([openib-libdir],
        [AC_HELP_STRING([--with-openib-libdir=DIR],
              [Search for OpenFabrics libraries in DIR])])
+
+    #
+    # ConnectX XRC support
+    #
+    AC_ARG_ENABLE([connectx-xrc],
+        [AC_HELP_STRING([--enable-openib-connectx-xrc],
+                        [Enable ConnectX XRC support. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
+                        [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
+    #
+    # Openfabrics IBCM
+    #
+    AC_ARG_ENABLE([openib-ibcm],
+        [AC_HELP_STRING([--enable-openib-ibcm],
+                        [Enable Open Fabrics IBCM support in openib BTL (default: enabled)])], 
+                        [enable_openib_ibcm="$enableval"], [enable_openib_ibcm="yes"])
+    #
+    # Openfabrics RDMACM
+    #
+    AC_ARG_ENABLE([openib-rdmacm],
+        [AC_HELP_STRING([--enable-openib-rdmacm],
+                        [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])],
+                        [enable_openib_rdmacm="$enableval"], [enable_openib_rdmacm="yes"])
 
     AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
           [ompi_check_openib_dir="$with_openib"])
@@ -103,6 +128,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
+    $1_have_xrc=0
     $1_have_rdmacm=0
     $1_have_ibcm=0
 
@@ -117,23 +143,27 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                             [#include <infiniband/verbs.h>])
 
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
-           AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
+           if test "$enable_connectx_xrc" = "yes"; then
+               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
+           fi
 
            # Do we have a recent enough RDMA CM?  Need to have the
            # rdma_get_peer_addr (inline) function (originally appeared
            # in OFED v1.3).
-           AC_CHECK_HEADERS([rdma/rdma_cma.h],
-               [AC_CHECK_LIB([rdmacm], [rdma_create_id],
-                   [AC_MSG_CHECKING([for rdma_get_peer_addr])
-                    $1_msg=no
-                    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
-]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
-                                      [$1_have_rdmacm=1 
-                                       $1_msg=yes])
-                    AC_MSG_RESULT([$$1_msg])])])
+           if test "$enable_openib_rdmacm" = "yes"; then
+                 AC_CHECK_HEADERS([rdma/rdma_cma.h],
+                     [AC_CHECK_LIB([rdmacm], [rdma_create_id],
+                         [AC_MSG_CHECKING([for rdma_get_peer_addr])
+                         $1_msg=no
+                         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
+                                 ]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
+                             [$1_have_rdmacm=1 
+                             $1_msg=yes])
+                         AC_MSG_RESULT([$$1_msg])])])
 
-           if test "1" = "$$1_have_rdmacm"; then
-                $1_LIBS="-lrdmacm $$1_LIBS"
+                 if test "1" = "$$1_have_rdmacm"; then
+                 $1_LIBS="-lrdmacm $$1_LIBS"
+                 fi
            fi
 
            # Do we have IB CM? (note that OFED IB CM depends on RDMA
@@ -141,16 +171,40 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            # argument to AC_CHECK_ LIB).  Note that we only want IBCM
            # starting with OFED 1.2 or so, so check for
            # ib_cm_open_device (introduced in libibcm 1.0/OFED 1.2).
-           AC_CHECK_HEADERS([infiniband/cm.h],
-               [AC_CHECK_LIB([ibcm], [ib_cm_open_device],
-                   [$1_have_ibcm=1
-                    $1_LIBS="-libcm $$1_LIBS"])])
+           if test "$enable_openib_ibcm" = "yes"; then
+               AC_CHECK_HEADERS([infiniband/cm.h],
+                   [AC_CHECK_LIB([ibcm], [ib_cm_open_device],
+                       [$1_have_ibcm=1
+                       $1_LIBS="-libcm $$1_LIBS"])])
+           fi
           ])
 
+    AC_MSG_CHECKING([if ConnectX XRC support is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_CONNECTX_XRC], [$$1_have_xrc],
+        [Enable features required for ConnectX XRC support])
+    if test "1" = "$$1_have_xrc"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+    
+    AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMACM], [$$1_have_rdmacm],
         [Whether RDMA CM is available or not])
+    if test "1" = "$$1_have_rdmacm"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+
+    AC_MSG_CHECKING([if OpenFabrics IBCM support is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_IBCM], [$$1_have_ibcm],
         [Whether IB CM is available or not])
+    if test "1" = "$$1_have_ibcm"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
