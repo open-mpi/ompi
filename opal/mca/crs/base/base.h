@@ -82,33 +82,6 @@ extern "C" {
     OPAL_DECLSPEC extern char * opal_crs_base_snapshot_dir;
 
     /**
-     * 'None' component functions
-     * These are to be used when no component is selected.
-     * They just return success, and empty strings as necessary.
-     */
-    int opal_crs_base_none_open(void);
-    int opal_crs_base_none_close(void);
-    int opal_crs_base_none_query(mca_base_module_t **module, int *priority);
-
-    int opal_crs_base_none_module_init(void);
-    int opal_crs_base_none_module_finalize(void);
-
-    int opal_crs_base_none_checkpoint(    pid_t pid, opal_crs_base_snapshot_t *sanpshot, opal_crs_state_type_t *state);
-
-    int opal_crs_base_none_restart(    opal_crs_base_snapshot_t *snapshot, bool spawn_child, pid_t *child_pid);
-
-    int opal_crs_base_none_disable_checkpoint(void);
-    int opal_crs_base_none_enable_checkpoint(void);
-    
-    OPAL_DECLSPEC int opal_crs_base_none_prelaunch(int32_t rank,
-                                                   char *base_snapshot_dir,
-                                                   char **app,
-                                                   char **cwd,
-                                                   char ***argv,
-                                                   char ***env);
-    OPAL_DECLSPEC int opal_crs_base_none_reg_thread(void);
-
-    /**
      * Some utility functions
      */
     OPAL_DECLSPEC char * opal_crs_base_state_str(opal_crs_state_type_t state);

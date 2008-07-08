@@ -64,7 +64,7 @@ static opal_crs_base_module_t blcr_module = {
     opal_crs_blcr_enable_checkpoint,
 
     /** Prelaunch */
-    opal_crs_base_none_prelaunch,
+    opal_crs_blcr_prelaunch,
 
     /** Register Thread */
     opal_crs_blcr_reg_thread
@@ -203,6 +203,25 @@ int opal_crs_blcr_module_init(void)
     
     return OPAL_SUCCESS;
 }
+
+int opal_crs_blcr_prelaunch(int32_t rank,
+                            char *base_snapshot_dir,
+                            char **app,
+                            char **cwd,
+                            char ***argv,
+                            char ***env)
+{
+    char * tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
+                "0", true, env);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    return OPAL_SUCCESS;
+}
+
 int opal_crs_blcr_reg_thread(void)
 {
     cr_client_id_t loc_client_id;
