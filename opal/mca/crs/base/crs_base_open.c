@@ -85,7 +85,7 @@ int opal_crs_base_open(void)
     mca_base_param_reg_string_name("crs", NULL,
                                    "Which CRS component to use (empty = auto-select)",
                                    false, false,
-                                   NULL, &str_value);
+                                   "none", &str_value);
     
     /* Open up all available components */
     if (OPAL_SUCCESS != (ret = mca_base_components_open("crs", 

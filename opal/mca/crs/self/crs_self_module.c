@@ -63,10 +63,10 @@ static opal_crs_base_module_t loc_module = {
     opal_crs_self_enable_checkpoint,
 
     /** Prelaunch */
-    opal_crs_base_none_prelaunch,
+    opal_crs_self_prelaunch,
 
     /** Register Thread */
-    opal_crs_base_none_reg_thread
+    opal_crs_self_reg_thread
 };
 
 /*
@@ -476,6 +476,29 @@ int opal_crs_self_enable_checkpoint(void)
 
     mca_crs_self_component.can_checkpoint = true;
 
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_self_prelaunch(int32_t rank,
+                            char *base_snapshot_dir,
+                            char **app,
+                            char **cwd,
+                            char ***argv,
+                            char ***env)
+{
+    char * tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
+                "0", true, env);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    return OPAL_SUCCESS;
+}
+
+int opal_crs_self_reg_thread(void)
+{
     return OPAL_SUCCESS;
 }
 
