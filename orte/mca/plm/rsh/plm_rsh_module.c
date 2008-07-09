@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -549,7 +550,7 @@ static void ssh_child(int argc, char **argv,
     
     /* ensure that only the ssh plm is selected on the remote daemon */
     var = mca_base_param_environ_variable("plm", NULL, NULL);
-    opal_setenv(var, "ssh", true, &env);
+    opal_setenv(var, "rsh", true, &env);
     free(var);
     
     /* We don't need to sense an oversubscribed condition and set the sched_yield
