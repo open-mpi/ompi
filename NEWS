@@ -117,6 +117,8 @@ Trunk (not on release branches yet)
 1.2.7 (not released yet)
 -----
 
+- Fix a bug where command-line MCA parameters were not overriding
+  MCA parameters set from environment variables.  See ticket #1380.
 - Fix a bug in the AMD64 atomics assembly.  Thanks to Gabriele Fatigati
   for the bug report and bugfix.  See ticket #1351.
 - Fix a gather and scatter bug on intercommunicators when the datatype
@@ -125,7 +127,7 @@ Trunk (not on release branches yet)
   See tickets #1324 and #1329.
 - Have openib BTL (OpenFabrics support) check for the presence of
   /sys/class/infiniband before allowing itself to be used.  This check
-  prevents spurrious "OMPI did not find RDMA hardware!" notices on
+  prevents spurious "OMPI did not find RDMA hardware!" notices on
   systems that have the software drivers installed, but no
   corresponding hardware.  See tickets #1321 and #1305.
 - Added vendor IDs for some ConnectX openib HCAs. See ticket #1311.
