@@ -457,7 +457,7 @@ ompi_proc_find_and_add(const orte_process_name_t * name, bool* isnew)
         *isnew = true;
         rproc = OBJ_NEW(ompi_proc_t);
         if (NULL != rproc) {
-            opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
+            opal_list_append(&ompi_proc_list, (opal_list_item_t*)rproc);
             rproc->proc_name = *name;
         }
         /* caller had better fill in the rest of the proc, or there's
