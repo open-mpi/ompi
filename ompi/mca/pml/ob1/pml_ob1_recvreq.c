@@ -912,6 +912,8 @@ static mca_pml_ob1_recv_frag_t *recv_req_match_wild(
         /* loop over messages from the current proc */
         if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
             *p = &proc[i];
+            req->req_recv.req_base.req_proc = proc->ompi_proc;
+            prepare_recv_req_converter(req);
             return frag; /* match found */
         }
     }
@@ -958,18 +960,13 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
         frag = recv_req_match_wild(req, &proc);
         queue = &comm->wild_receives;
-        if(proc)
-            req->req_recv.req_base.req_proc = proc->ompi_proc;
     } else {
         proc = &comm->procs[req->req_recv.req_base.req_peer];
         req->req_recv.req_base.req_proc = proc->ompi_proc;
         frag = recv_req_match_specific_proc(req, proc);
         queue = &proc->specific_receives;
         /* wild cardrecv will be prepared on match */ 
-        if((0 != req->req_recv.req_base.req_datatype->size) &&
-                (0 != req->req_recv.req_base.req_count)) {
-            prepare_recv_req_converter(req);
-        }
+        prepare_recv_req_converter(req);
     }
 
     if(OPAL_UNLIKELY(NULL == frag)) {

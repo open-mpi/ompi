@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -38,8 +38,8 @@ struct mca_pml_ob1_recv_request_t {
     ompi_ptr_t req_send;
     int32_t req_lock;
     size_t  req_pipeline_depth;
-    size_t  req_bytes_received;
-    size_t  req_bytes_delivered;
+    size_t  req_bytes_received;  /**< amount of data transferred into the user buffer */
+    size_t  req_bytes_delivered; /**< local size of the data as suggested by the user */
     size_t  req_rdma_offset;
     size_t  req_send_offset;
     uint32_t req_rdma_cnt;
@@ -166,9 +166,9 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
         recvreq->req_recv.req_base.req_pml_complete = true;
         recvreq->req_recv.req_base.req_ompi.req_status._count =
             (int)recvreq->req_bytes_received;
-        if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {
+        if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_delivered) {
             recvreq->req_recv.req_base.req_ompi.req_status._count =
-                (int)recvreq->req_bytes_delivered;
+                (int)recvreq->req_recv.req_bytes_packed;
             recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
                 MPI_ERR_TRUNCATE;
         }
@@ -197,15 +197,17 @@ extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
-    ompi_convertor_copy_and_prepare_for_recv(
-            req->req_recv.req_base.req_proc->proc_convertor,
-            req->req_recv.req_base.req_datatype,
-            req->req_recv.req_base.req_count,
-            req->req_recv.req_base.req_addr,
-            0,
-            &req->req_recv.req_base.req_convertor);
-    ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
-            &req->req_bytes_delivered);
+    if( req->req_recv.req_base.req_datatype->size | req->req_recv.req_base.req_count ) {
+        ompi_convertor_copy_and_prepare_for_recv(
+                req->req_recv.req_base.req_proc->proc_convertor,
+                req->req_recv.req_base.req_datatype,
+                req->req_recv.req_base.req_count,
+                req->req_recv.req_base.req_addr,
+                0,
+                &req->req_recv.req_base.req_convertor);
+        ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
+                &req->req_bytes_delivered);
+    }
  }
 
 #define MCA_PML_OB1_RECV_REQUEST_MATCHED(request, hdr) \
@@ -220,10 +222,12 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
     opal_atomic_wmb();
 
     if(req->req_recv.req_bytes_packed > 0) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
             /* non wildcard prepared during post recv */
             prepare_recv_req_converter(req);
         }
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT */
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
                 &req->req_recv.req_base, PERUSE_RECV);
     }
