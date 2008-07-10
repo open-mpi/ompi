@@ -441,6 +441,7 @@ void opal_output_finalize(void)
         if (verbose_stream != -1) {
             opal_output_close(verbose_stream);
         }
+        free(verbose.lds_prefix);
         verbose_stream = -1;
 
         free (output_prefix);
