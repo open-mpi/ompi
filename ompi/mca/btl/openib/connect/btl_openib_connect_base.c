@@ -106,6 +106,7 @@ int ompi_btl_openib_connect_base_register(void)
     /* If we have an "include" list, then find all those CPCs and put
        them in available[] */
     if (NULL != cpc_include) {
+        mca_btl_openib_component.cpc_explicitly_defined = true;
         temp = opal_argv_split(cpc_include, ',');
         for (save = j = 0; NULL != temp[j]; ++j) {
             for (i = 0; NULL != all[i]; ++i) {
@@ -133,6 +134,7 @@ int ompi_btl_openib_connect_base_register(void)
     /* Otherwise, if we have an "exclude" list, take all the CPCs that
        are not in that list and put them in available[] */
     else if (NULL != cpc_exclude) {
+        mca_btl_openib_component.cpc_explicitly_defined = true;
         temp = opal_argv_split(cpc_exclude, ',');
         /* First: error check -- ensure that all the names are valid */
         for (j = 0; NULL != temp[j]; ++j) {
