@@ -465,8 +465,31 @@ int orte_iof_svc_sub_forward(
         int rc;
 
         if (NULL != pub->pub_endpoint) {
-            opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
-            rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
+            /* Here's a fun case: if the HNP launches VPID 0 on the
+               same node as itself, then the HNP's stdin will both be
+               published *and* subscribed.  So when something appears
+               on the HNP stdin, it gets RML sent from the HNP to
+               itself (yeah, I know, it's weird -- but there were
+               reasons for doing that ;-) ), ends up going through:
+
+               - orte_iof_svc_proxy_recv (RML callback function)
+               - orte_iov_svc_proxy_msg (dispatch to handle incoming msg)
+               - orte_iof_svc_sub_forward (this function, to forward
+                 the message to its destination(s))
+
+               STDIN from the HNP to a local VPID 0 is the only case
+               where the message will find an endpoint with both a pub
+               and sub on it, so we want to be sure to forward it only
+               *once*.  Outside of this loop, we'll forward it to
+               sub->sub_endpoint.  So if the pub->pub_endpoint is the
+               same as the sub->sub_endpoint, then skip it here --
+               we'll forward it after this loop.  Without this check,
+               we'd forward it twice (resulting in
+               https://svn.open-mpi.org/trac/ompi/ticket/1135). */
+            if (pub->pub_endpoint != sub->sub_endpoint) {
+                opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
+                rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
+            }
         } else {
             /* forward */
             orte_iof_base_frag_t* frag;
