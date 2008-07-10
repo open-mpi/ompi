@@ -720,7 +720,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             /* We can't open the device for some reason (can't read,
                can't write, doesn't exist, ...etc.); IBCM is not setup
                on this node. */
-            BTL_ERROR(("failed to open IB CM device: %s", filename));
+            if (mca_btl_openib_component.cpc_explicitly_defined) {
+                BTL_ERROR(("failed to open IB CM device: %s", filename));
+            }
             free(filename);
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;

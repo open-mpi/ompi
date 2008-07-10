@@ -135,6 +135,7 @@ int btl_openib_component_open(void)
     mca_btl_openib_component.openib_btls = NULL;
     OBJ_CONSTRUCT(&mca_btl_openib_component.hcas, opal_pointer_array_t);
     mca_btl_openib_component.hcas_count = 0;
+    mca_btl_openib_component.cpc_explicitly_defined = false;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
