@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
     ret = errno;
     orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                    "opal_cmd_line_create", __FILE__, __LINE__, NULL);
+    opal_finalize_util();
     exit(ret);
   }
 
@@ -137,6 +138,8 @@ int main(int argc, char *argv[])
   
   if( OMPI_SUCCESS != mca_base_open() ) {
       orte_show_help("help-ompi_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
+      OBJ_RELEASE(cmd_line);
+      opal_finalize_util();
       exit(1);
   }
   mca_base_cmd_line_setup(cmd_line);
@@ -155,6 +158,9 @@ int main(int argc, char *argv[])
       char *usage = opal_cmd_line_get_usage_msg(cmd_line);
       orte_show_help("help-ompi_info.txt", "usage", true, usage);
       free(usage);
+      mca_base_close();
+      OBJ_RELEASE(cmd_line);
+      opal_finalize_util();
       exit(cmd_error ? 1 : 0);
   }
 
