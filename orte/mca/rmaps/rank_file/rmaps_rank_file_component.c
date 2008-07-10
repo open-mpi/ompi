@@ -74,7 +74,6 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
   */
 static int orte_rmaps_rank_file_open(void)
 {
-    int index, paffinity_alone = 0;
     mca_rmaps_rank_file_component.priority = 0;
     
     mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.base_version,
@@ -85,24 +84,6 @@ static int orte_rmaps_rank_file_open(void)
         mca_rmaps_rank_file_component.priority = 100;
     }
 
-    index = mca_base_param_find("opal", NULL, "paffinity_slot_list");
-    if (index >= 0) {
-        if (OPAL_SUCCESS == mca_base_param_lookup_string(index, &orte_mca_rmaps_rank_file_slot_list)) {
-            if (NULL != orte_mca_rmaps_rank_file_slot_list) {
-                mca_rmaps_rank_file_component.priority = 100;
-            }
-        }
-    }
-
-    index = mca_base_param_find("opal", NULL, "paffinity_alone");
-    if (index >= 0) { 
-        if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &paffinity_alone)) {
-            if ( 100 == mca_rmaps_rank_file_component.priority && paffinity_alone ){
-                 opal_output(0, "WARNING: paffinity_alone cannot be set with paffinity_slot_list or rank_file\nTherefore mca_rmaps_rank_file_component.priority set to 0\n");
-                mca_rmaps_rank_file_component.priority = 0;
-            }
-        }
-    }
     return ORTE_SUCCESS;
 }
 

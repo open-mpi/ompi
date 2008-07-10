@@ -340,16 +340,20 @@ int opal_paffinity_base_slot_list_set(long rank)
     int item_cnt, socket_core_cnt, rc;
 
     rc = mca_base_param_find("opal", NULL, "paffinity_slot_list");
-    if (rc >= 0) {
-        if (OPAL_SUCCESS == mca_base_param_lookup_string(rc, &slot_str)) {
-            if (NULL == slot_str) {
-                return OPAL_ERR_BAD_PARAM;
-            }
+    /* If there was not slot list specified, return a specific error
+       code indicating that */
+    if (rc <= 0) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    if (OPAL_SUCCESS == mca_base_param_lookup_string(rc, &slot_str)) {
+        if (NULL == slot_str) {
+            return OPAL_ERR_BAD_PARAM;
         }
     }
-   if (0 == strcmp("", slot_str)){
-       return OPAL_ERR_BAD_PARAM;
-   }
+    if (0 == strcmp("", slot_str)){
+        return OPAL_ERR_BAD_PARAM;
+    }
         opal_output_verbose(5, opal_paffinity_base_output, "paffinity slot assignment: slot_list == %s", slot_str);
         
         item = opal_argv_split (slot_str, ',');
