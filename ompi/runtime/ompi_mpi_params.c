@@ -47,6 +47,7 @@ int ompi_debug_show_mpi_alloc_mem_leaks = 0;
 bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
+bool ompi_mpi_paffinity_alone = false;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
@@ -228,10 +229,11 @@ int ompi_mpi_register_params(void)
                        true);
     }
 
-    /* Paffinity alone -- make mpi_paffinity_alone a synonym for
-       opal_paffinity_alone */
-    index = mca_base_param_find("opal", NULL, "paffinity_alone");
-    mca_base_param_reg_syn_name(index, "mpi", "paffinity_alone", false);
+    mca_base_param_reg_int_name("mpi", "paffinity_alone",
+                                "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
+                                false, false, 
+                                (int) ompi_mpi_paffinity_alone, &value);
+    ompi_mpi_paffinity_alone = OPAL_INT_TO_BOOL(value);
 
     /* Sparse group storage support */
 
