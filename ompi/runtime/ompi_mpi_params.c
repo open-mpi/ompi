@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -58,7 +58,7 @@ bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
 int ompi_mpi_register_params(void)
 {
-    int value;
+    int index, value;
 
     /* Whether we want MPI API function parameter checking or not */
 
@@ -227,6 +227,11 @@ int ompi_mpi_register_params(void)
                        "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
     }
+
+    /* Paffinity alone -- make mpi_paffinity_alone a synonym for
+       opal_paffinity_alone */
+    index = mca_base_param_find("opal", NULL, "paffinity_alone");
+    mca_base_param_reg_syn_name(index, "mpi", "paffinity_alone", false);
 
     /* Sparse group storage support */
 

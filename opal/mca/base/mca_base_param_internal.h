@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,6 +78,15 @@ struct mca_base_param_t {
     /** Full parameter name, in case it is not
        <type>_<component>_<param> */
     char *mbp_full_name;
+
+    /** List of synonym names for this parameter.  This *must* be a
+        pointer (vs. a plain opal_list_t) because we copy this whole
+        struct into a new param for permanent storage
+        (opal_vale_array_append_item()), and the internal pointers in
+        the opal_list_t will be invalid when that happens.  Hence, we
+        simply keep a pointer to an external opal_list_t.  Synonyms
+        are uncommon enough that this is not a big performance hit. */
+    opal_list_t *mbp_synonyms;
     
     /** Whether this is internal (not meant to be seen / modified by
         users) or not */
@@ -85,6 +95,12 @@ struct mca_base_param_t {
         was registered (e.g., when true, useful for reporting values,
         like the value of the GM library that was linked against) */
     bool mbp_read_only;
+    /** Whether this MCA parameter (*and* all of its synonyms) is
+        deprecated or not */
+    bool mbp_deprecated;
+    /** Whether the warning message for the deprecated MCA param has
+        been shown already or not */
+    bool mbp_deprecated_warning_shown;
     /** Help message associated with this parameter */
     char *mbp_help_msg;
 
