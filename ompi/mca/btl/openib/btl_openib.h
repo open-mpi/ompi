@@ -238,6 +238,7 @@ struct mca_btl_openib_component_t {
 #endif
     int rdma_qp;
     int credits_qp; /* qp used for software flow control */
+    bool cpc_explicitly_defined;
     /**< free list of frags only; used for pining user memory */
     ompi_free_list_t send_user_free;
     /**< free list of frags only; used for pining user memory */
