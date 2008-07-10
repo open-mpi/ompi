@@ -29,7 +29,6 @@
  *
  * - Creating MCA parameters
  * -# Register a parameter, get an index back
- * -# Optionally associate that index with an attribute keyval
  * - Using MCA parameters
  * -# Lookup a "normal" parameter value on a specific index, or
  * -# Lookup an attribute parameter on a specific index and
@@ -41,8 +40,6 @@
  *
  * - An "override" location that is only available to be set via the
  *   mca_base_param API.
- * - If the parameter has an MPI attribute keyval associated with it,
- *   see if there is a value assigned that can be used.
  * - Look for an environment variable corresponding to the MCA
  *   parameter.
  * - See if a file contains the MCA parameter (MCA parameter files are
@@ -91,8 +88,6 @@ typedef enum {
     MCA_BASE_PARAM_SOURCE_ENV,
     /** The value came from a file */
     MCA_BASE_PARAM_SOURCE_FILE,
-    /** The value came from a keyval */
-    MCA_BASE_PARAM_SOURCE_KEYVAL,
     /** The value came a "set" API call */
     MCA_BASE_PARAM_SOURCE_OVERRIDE,
 
@@ -474,31 +469,6 @@ extern "C" {
                                                   bool deprecated);
 
     /**
-     * Associate a communicator/datatype/window keyval with an MCA
-     * parameter.
-     *
-     * @param index The index of the parameter to use.
-     * @param keyval The keyval to associate it with.
-     *
-     * @returns OPAL_SUCCESS Upon success.
-     * @returns OPAL_ERROR If the index value is invalid.
-     *
-     * For an index value that was previously returned by
-     * mca_base_param_register_int() or
-     * mca_base_param_register_string(), the corresponding MCA parameter
-     * can be associated with a communicator, datatype, or window
-     * attribute keyval.  
-     *
-     * After using this function, you can use any of the four lookup
-     * functions (mca_base_param_lookup_int(),
-     * mca_base_param_lookup_string(), mca_base_param_kv_lookup_int(),
-     * and mca_base_param_kv_lookup_string()), but only the "kv"
-     * versions will cross reference and attempt to find parameter
-     * values on attributes.
-     */
-    OPAL_DECLSPEC int mca_base_param_kv_associate(int index, int keyval);
-
-    /**
      * Look up an integer MCA parameter.
      *
      * @param index Index previous returned from
@@ -515,30 +485,6 @@ extern "C" {
      * return value from mca_base_param_register_int().
      */
     OPAL_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
-    
-    /**
-     * Look up an integer MCA parameter, to include looking in
-     * attributes.
-     *
-     * @param index Index previous returned from
-     * mca_base_param_register_int().
-     * @param attrs Object containing attributes to be searched.
-     * @param value Pointer to int where the parameter value will
-     * be stored.
-     *
-     * @return OPAL_ERROR Upon failure.  The contents of value are
-     * undefined.
-     * @return OPAL_SUCCESS Upon success.  value will be filled with the
-     * parameter's current value.
-     *
-     * This function is identical to mca_base_param_lookup_int() except
-     * that it looks in attributes \em first to find the parameter
-     * value.  The function mca_base_param_kv_associate() must have been
-     * called first to associate a keyval with the index.
-     */
-    OPAL_DECLSPEC int mca_base_param_kv_lookup_int(int index,
-                                                   struct opal_hash_table_t *attrs, 
-                                                   int *value);
     
     /**
      * Look up a string MCA parameter.
@@ -564,29 +510,6 @@ extern "C" {
      * return value from mca_base_param_register_string().
      */
     OPAL_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
-
-    /**
-     * Look up a string MCA parameter, to include looking in attributes.
-     *
-     * @param index [in] Index previous returned from
-     * mca_base_param_register_string().
-     * @param attrs [in] Object containing attributes to be searched.
-     * @param value [out] Pointer to (char *) where the parameter value
-     * will be stored.
-     *
-     * @return OPAL_ERROR Upon failure.  The contents of value are
-     * undefined.
-     * @return OPAL_SUCCESS Upon success.  value will be filled with the
-     * parameter's current value.
-     *
-     * This function is identical to mca_base_param_lookup_string()
-     * except that it looks in attributes \em first to find the
-     * parameter value.  The function mca_base_param_kv_associate() must
-     * have been called first to associate a keyval with the index.
-     */
-    OPAL_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
-                                                      struct opal_hash_table_t *attrs, 
-                                                      char **value);
 
     /**
      * Lookup the source of an MCA parameter's value

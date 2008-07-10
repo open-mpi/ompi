@@ -104,8 +104,6 @@ struct mca_base_param_t {
     /** Help message associated with this parameter */
     char *mbp_help_msg;
 
-    /** Keyval value for MPI attribute parameters */
-    int mbp_keyval;
     /** Environment variable name */
     char *mbp_env_var_name;
 

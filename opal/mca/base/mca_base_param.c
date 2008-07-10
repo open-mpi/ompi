@@ -35,11 +35,6 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
-#if 0
-/* JMS commented out for now -- see lookup_keyvals() below for an
-   explanation */
-#include "ompi/attribute/attribute.h"
-#endif
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
@@ -124,9 +119,6 @@ static bool param_set_override(size_t index,
                                mca_base_param_type_t type);
 static bool lookup_override(mca_base_param_t *param,
                             mca_base_param_storage_t *storage);
-static bool lookup_keyvals(mca_base_param_t *param,
-                           mca_base_param_storage_t *storage,
-                           opal_hash_table_t *attrs);
 static bool lookup_env(mca_base_param_t *param,
                        mca_base_param_storage_t *storage);
 static bool lookup_file(mca_base_param_t *param,
@@ -482,36 +474,6 @@ int mca_base_param_reg_syn_name(int index_orig,
 }
 
 /*
- * Associate a keyval with a parameter index
- */
-int mca_base_param_kv_associate(int index, int keyval)
-{
-  size_t len;
-  mca_base_param_t *array;
-
-  if (!initialized) {
-    return OPAL_ERROR;
-  }
-
-  len = opal_value_array_get_size(&mca_base_params);
-  if (((size_t) index) > len) {
-    return OPAL_ERROR;
-  }
-
-  /* We have a valid entry (remember that we never delete MCA
-     parameters, so if the index is >0 and <len, it must be good), so
-     save the keyval */
-
-  array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-  array[index].mbp_keyval = keyval;
-
-  /* All done */
-
-  return OPAL_SUCCESS;
-}
-
-
-/*
  * Look up an integer MCA parameter.
  */
 int mca_base_param_lookup_int(int index, int *value)
@@ -519,22 +481,6 @@ int mca_base_param_lookup_int(int index, int *value)
   mca_base_param_storage_t storage;
   
   if (param_lookup(index, &storage, NULL, NULL)) {
-    *value = storage.intval;
-    return OPAL_SUCCESS;
-  }
-  return OPAL_ERROR;
-}
-
-
-/*
- * Look up an integer MCA parameter, including in attributes
- */
-int mca_base_param_kv_lookup_int(int index, opal_hash_table_t *attrs, 
-                                 int *value)
-{
-  mca_base_param_storage_t storage;
-  
-  if (param_lookup(index, &storage, attrs, NULL)) {
     *value = storage.intval;
     return OPAL_SUCCESS;
   }
@@ -564,22 +510,6 @@ int mca_base_param_lookup_string(int index, char **value)
   mca_base_param_storage_t storage;
   
   if (param_lookup(index, &storage, NULL, NULL)) {
-    *value = storage.stringval;
-    return OPAL_SUCCESS;
-  }
-  return OPAL_ERROR;
-}
-
-
-/*
- * Look up a string MCA parameter, including in attributes.
- */
-int mca_base_param_kv_lookup_string(int index, opal_hash_table_t *attrs, 
-                                    char **value)
-{
-  mca_base_param_storage_t storage;
-  
-  if (param_lookup(index, &storage, attrs, NULL)) {
     *value = storage.stringval;
     return OPAL_SUCCESS;
   }
@@ -1303,12 +1233,10 @@ static int param_register(const char *type_name,
       mca_base_param_init();
   }
 
-  /* Create a parameter entry.  If a keyval is to be used, it will be
-     registered elsewhere.  We simply assign -1 here. */
+  /* Create a parameter entry */
 
   OBJ_CONSTRUCT(&param, mca_base_param_t);
   param.mbp_type = type;
-  param.mbp_keyval = -1;
   param.mbp_internal = internal;
   param.mbp_read_only = read_only;
   if (NULL != help_msg) {
@@ -1793,7 +1721,6 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
 
     if (array[index].mbp_read_only) {
         if (lookup_override(&array[index], storage) ||
-             lookup_keyvals(&array[index], storage, attrs) ||
              lookup_env(&array[index], storage) ||
              lookup_file(&array[index], storage)) {
             opal_show_help("help-mca-param.txt", "read-only-param-set",
@@ -1807,8 +1734,6 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
     } else {
         if (lookup_override(&array[index], storage)) {
             source = MCA_BASE_PARAM_SOURCE_OVERRIDE;
-        } else if (lookup_keyvals(&array[index], storage, attrs)) {
-            source = MCA_BASE_PARAM_SOURCE_KEYVAL;
         } else if (lookup_env(&array[index], storage)) {
             source = MCA_BASE_PARAM_SOURCE_ENV;
         } else if (lookup_file(&array[index], storage)) {
@@ -1879,57 +1804,6 @@ static bool lookup_override(mca_base_param_t *param,
     /* Don't have an override */
 
     return false;
-}
-
-
-/*
- * Lookup a param in the set of attributes/keyvals
- */
-static bool lookup_keyvals(mca_base_param_t *param,
-                           mca_base_param_storage_t *storage,
-                           opal_hash_table_t *attrs)
-{
-#if 1
-    /* JMS: Comment this out for now, because it drags in all of
-       libmpi.  This is undesirable for programs like mpirun, etc.
-       Need a better solution for this -- perhaps a registration kind
-       of thing...? */
-    return false;
-#else
-  int err, flag;
-
-  /* If this param has a keyval and we were provided with a hash
-     table, look it up and see if we can find a value */
-
-  if (-1 != param->mbp_keyval) {
-
-    /* Use the stringval member of the union because it's definitely
-       big enough to handle both (int) and (char*) */
-
-    err = ompi_attr_get(attrs, param->mbp_keyval, 
-                        &storage->stringval, &flag);
-    if (OPAL_SUCCESS == err && 1 == flag) {
-
-      /* Because of alignment weirdness between (void*) and int, we
-         must grab the lower sizeof(int) bytes from the (char*) in
-         stringval, in case sizeof(int) != sizeof(char*). */
-
-      if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
-        storage->intval = *((int *) (storage->stringval +
-                                     sizeof(void *) - sizeof(int)));
-      }
-
-      /* Nothing to do for string -- we already have the value loaded
-         in the right place */
-
-      return true;
-    }
-  }
-
-  /* Either this param has not keyval or we didn't find the keyval */
-
-  return false;
-#endif
 }
 
 
@@ -2150,7 +2024,6 @@ static void param_constructor(mca_base_param_t *p)
     p->mbp_full_name = NULL;
     p->mbp_help_msg = NULL;
 
-    p->mbp_keyval = -1;
     p->mbp_env_var_name = NULL;
 
     p->mbp_default_value.stringval = NULL;
