@@ -123,6 +123,17 @@ struct mca_base_param_info_t {
     /** Full, assembled parameter name */
     char *mbpp_full_name;
 
+    /** Is this value deprecated? */
+    bool mbpp_deprecated;
+
+    /** Array of pointers of synonyms of this parameter */
+    struct mca_base_param_info_t **mbpp_synonyms;
+    /** Length of mbpp_synonyms array */
+    int mbpp_synonyms_len;
+    /** Back pointer to another mca_base_param_info_t that *this*
+        param is a synonym of (or NULL) */
+    struct mca_base_param_info_t *mbpp_synonym_parent;
+
     /** Is this value changable? */
     bool mbpp_read_only;
     /** Help message associated with this parameter */
@@ -170,8 +181,8 @@ extern "C" {
     /**
      * Register an integer MCA parameter.
      *
-     * @param component [in] Pointer to the componet for which the
-     * parameter is being registered (string), or NULL.
+     * @param component [in] Pointer to the component for which the
+     * parameter is being registered.
      * @param param_name [in] The name of the parameter being
      * registered (string).
      * @param help_msg [in] A string describing the use and valid
@@ -269,7 +280,7 @@ extern "C" {
      *
      * Note that the type should always be a framework or a level name
      * (e.g., "btl" or "mpi") -- it should not include the component
-     * name, even if the componet is the base of a framework.  Hence,
+     * name, even if the component is the base of a framework.  Hence,
      * "btl_base" is not a valid type name.  Specifically, registering
      * a parameter with an unrecognized type is not an error, but
      * ompi_info has a hard-coded list of frameworks and levels;
@@ -292,8 +303,8 @@ extern "C" {
     /**
      * Register a string MCA parameter.
      *
-     * @param component [in] Pointer to the componet for which the
-     * parameter is being registered (string), or NULL.
+     * @param component [in] Pointer to the component for which the
+     * parameter is being registered.
      * @param param_name [in] The name of the parameter being
      * registered (string).
      * @param help_msg [in] A string describing the use and valid
@@ -377,7 +388,7 @@ extern "C" {
      *
      * Note that the type should always be a framework or a level name
      * (e.g., "btl" or "mpi") -- it should not include the component
-     * name, even if the componet is the base of a framework.  Hence,
+     * name, even if the component is the base of a framework.  Hence,
      * "btl_base" is not a valid type name.  Specifically, registering
      * a parameter with an unrecognized type is not an error, but
      * ompi_info has a hard-coded list of frameworks and levels;
@@ -396,6 +407,71 @@ extern "C" {
                                                      bool read_only,
                                                      const char *default_value,
                                                      char **current_value);
+
+    /**
+     * Register a synonym name for an MCA parameter.
+     *
+     * @param original_index [in] The index of the original parameter to
+     * create a synonym for.
+     * @param syn_component [in] Pointer to the component for which the
+     * synonym is being registered.
+     * @param syn_param_name [in] Parameter name of the synonym to be
+     * created (string)
+     * @param deprecated If true, a warning will be shown if this
+     * synonym is used to set the parameter's value (unless the
+     * warnings are silenced)
+     *
+     * @returns OPAL_SUCCESS Upon success.
+     * @returns OPAL_ERR_BAD_PARAM If the index value is invalid.
+     * @returns OPAL_ERROR Otherwise
+     * 
+     * Upon success, this function creates a synonym MCA parameter
+     * that will be treated almost exactly like the original.  The
+     * type (int or string) is irrelevant; this function simply
+     * creates a new name that by which the same parameter value is
+     * accessible.  
+     *
+     * Note that the original parameter name has precendence over all
+     * synonyms.  For example, consider the case if parameter is
+     * originally registered under the name "A" and is later
+     * registered with synonyms "B" and "C".  If the user sets values
+     * for both MCA parameter names "A" and "B", the value associated
+     * with the "A" name will be used and the value associated with
+     * the "B" will be ignored (and will not even be visible by the
+     * mca_base_param_*() API).  If the user sets values for both MCA
+     * parameter names "B" and "C" (and does *not* set a value for
+     * "A"), it is undefined as to which value will be used.
+     */
+    OPAL_DECLSPEC int mca_base_param_reg_syn(int orignal_index, 
+                                             const mca_base_component_t *syn_component,
+                                             const char *syn_param_name, 
+                                             bool deprecated);
+
+    /**
+     * Register an MCA parameter synonym that is not associated with a
+     * component.
+     *
+     * @param original_index [in] The index of the original parameter to
+     * create a synonym for.
+     * @param type [in] Although this synonym is not associated with
+     * a component, it still must have a string type name that will
+     * act as a prefix (string).
+     * @param syn_param_name [in] Parameter name of the synonym to be
+     * created (string)
+     * @param deprecated If true, a warning will be shown if this
+     * synonym is used to set the parameter's value (unless the
+     * warnings are silenced)
+     *
+     * Essentially the same as mca_base_param_reg_syn(), but using a
+     * type name instead of a component.
+     *
+     * See mca_base_param_reg_int_name() for guidence on type string
+     * values.
+     */
+    OPAL_DECLSPEC int mca_base_param_reg_syn_name(int orignal_index, 
+                                                  const char *syn_type,
+                                                  const char *syn_param_name, 
+                                                  bool deprecated);
 
     /**
      * Associate a communicator/datatype/window keyval with an MCA

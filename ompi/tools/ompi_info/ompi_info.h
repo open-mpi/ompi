@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+// Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -91,7 +91,8 @@ namespace ompi_info {
   extern const std::string path_pkgincludedir;
 
   void do_params(bool want_all, bool want_internal);
-  void show_mca_params(const std::string& type, const std::string& component, 
+  void show_mca_params(opal_list_t *info,
+                       const std::string& type, const std::string& component, 
                        bool want_internal);
 
   void do_path(bool want_all, opal_cmd_line_t *cmd_line);

@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+// Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -87,6 +87,7 @@ void ompi_info::do_params(bool want_all, bool want_internal)
   string type, component;
   bool found;
   ompi_info::type_vector_t::size_type i;
+  opal_list_t *info;
 
   ompi_info::open_components();
 
@@ -102,11 +103,14 @@ void ompi_info::do_params(bool want_all, bool want_internal)
     }
   }
 
+  // Get a dump of all the MCA params
+  mca_base_param_dump(&info, want_internal);
+
   // Show the params
 
   if (want_all) {
     for (i = 0; i < mca_types.size(); ++i) {
-      show_mca_params(mca_types[i], component_all, want_internal);
+      show_mca_params(info, mca_types[i], component_all, want_internal);
     }
   } else {
     for (i = 0; i < count; ++i) {
@@ -127,23 +131,25 @@ void ompi_info::do_params(bool want_all, bool want_internal)
           exit(1);
       }
 
-      show_mca_params(type, component, want_internal);
+      show_mca_params(info, type, component, want_internal);
     }
   }
+
+  // Release all the MCA param memory
+  mca_base_param_dump_release(info);
 }
 
 
-void ompi_info::show_mca_params(const string& type, const string& component, 
+void ompi_info::show_mca_params(opal_list_t *info,
+                                const string& type, const string& component, 
                                 bool want_internal)
 {
-    opal_list_t *info;
     opal_list_item_t *i;
     mca_base_param_info_t *p;
     char *value_string, empty[] = "\0";
     string message, content, tmp;
-    int value_int;
+    int value_int, j;
 
-    mca_base_param_dump(&info, want_internal);
     for (i = opal_list_get_first(info); i != opal_list_get_last(info);
          i = opal_list_get_next(i)) {
         p = (mca_base_param_info_t*) i;
@@ -192,12 +198,35 @@ void ompi_info::show_mca_params(const string& type, const string& component,
                         "value: " : "current value: ";
                     
                     if (strlen(value_string) == 0) {
-                        content += "<none>)";
+                        content += "<none>";
                     } else {
                         content += "\"";
                         content += value_string;
-                        content += "\")";
+                        content += "\"";
                     }
+
+                    // Is this parameter deprecated?
+                    if (p->mbpp_deprecated) {
+                        content += ", deprecated";
+                    }
+
+                    // Does this parameter have any synonyms?
+                    if (p->mbpp_synonyms_len > 0) {
+                        content += ", synonyms: ";
+                        for (j = 0; j < p->mbpp_synonyms_len; ++j) {
+                            if (j > 0) {
+                                content += ", ";
+                            }
+                            content += p->mbpp_synonyms[j]->mbpp_full_name;
+                        }
+                    }
+
+                    // Is this parameter a synonym of something else?
+                    else if (NULL != p->mbpp_synonym_parent) {
+                        content += ", synonym of: ";
+                        content += p->mbpp_synonym_parent->mbpp_full_name;
+                    }
+                    content += ")";
                     out(message, message, content);
 
                     // If we have a help message, output it
@@ -244,6 +273,30 @@ void ompi_info::show_mca_params(const string& type, const string& component,
                         content = p->mbpp_help_msg;
                         out(message, message, content);
                     }
+
+                    // Is this parameter deprecated?
+                    message = tmp;
+                    message += "deprecated";
+                    content = p->mbpp_deprecated ? "yes" : "no";
+                    out(message, message, content);
+
+                    // Does this parameter have any synonyms?
+                    if (p->mbpp_synonyms_len > 0) {
+                        for (j = 0; j < p->mbpp_synonyms_len; ++j) {
+                            message = tmp;
+                            message += "synonym:name";
+                            content = p->mbpp_synonyms[j]->mbpp_full_name;
+                            out(message, message, content);
+                        }
+                    }
+
+                    // Is this parameter a synonym of something else?
+                    else if (NULL != p->mbpp_synonym_parent) {
+                        message = tmp;
+                        message += "synonym_of:name";
+                        content = p->mbpp_synonym_parent->mbpp_full_name;
+                        out(message, message, content);
+                    }
                 }
                 
                 // If we allocated the string, then free it
@@ -254,10 +307,6 @@ void ompi_info::show_mca_params(const string& type, const string& component,
             }
         }
     }
-
-    /* Release the memory */
-
-    mca_base_param_dump_release(info);
 }
 
 
