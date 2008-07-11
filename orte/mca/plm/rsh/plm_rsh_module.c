@@ -81,7 +81,6 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ras/ras_types.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -866,7 +865,7 @@ cleanup:
  */
 int orte_plm_rsh_launch(orte_job_t *jdata)
 {
-    orte_job_map_t *map = NULL;
+    orte_job_map_t *map;
     int node_name_index1;
     int node_name_index2;
     int proc_vpid_index;
