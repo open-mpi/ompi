@@ -82,7 +82,15 @@ specified.
 not found, try searching the local scope for name resolution.
 
 .SH NAME SCOPE
-RHC fill in here :-)
+Open MPI supports two name scopes: \fIglobal\fP and \fIlocal\fP. Local scope
+values are placed in a data store located on the mpirun of the calling
+process' job, while global scope values reside on a central server. Calls
+to MPI_Unpublish_name must correctly specify the scope to be used in
+finding the value to be removed. The function will return an error if
+the specified service name is not found on the indicated location.
+.sp
+For a more detailed description of scoping rules, please see the MPI_Publish_name
+man page.
 
 .SH ERRORS
 .ft R

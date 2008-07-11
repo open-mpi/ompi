@@ -102,12 +102,21 @@ Key                   Type      Description
 ---                   ----      -----------
 
 host                  char *    Host on which the process should be spawned.
+                                See the \fIorte_host\fP man page for an
+                                explanation of how this will be used.
+hostfile              char *    Hostfile containing the hosts on which
+                                the processes are to be spawned. See
+                                the \fIorte_hostfile\fP man page for an
+                                explanation of how this will be used.
 wdir                  char *    Directory where the executable is located.
 ompi_prefix           char *    Same as the --prefix command line argument
                                 to mpirun.
 ompi_non_mpi          bool      If set to true, launching a non-MPI
                                 application; the returned communicator
-                                will be MPI_COMM_NULL.
+                                will be MPI_COMM_NULL. Failure to set
+                                this flag when launching a non-MPI
+                                application will cause both the child
+                                and parent jobs to "hang".
 .fi
 
 \fIbool\fP info keys are actually strings but are evaluated as
