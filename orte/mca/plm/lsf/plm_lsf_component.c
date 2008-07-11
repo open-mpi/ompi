@@ -29,9 +29,9 @@
 #include <lsf/lsbatch.h>
 
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 
+#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -95,7 +95,6 @@ orte_plm_lsf_component_t mca_plm_lsf_component = {
 
 static int plm_lsf_open(void)
 {
-    int tmp, value;
     mca_base_component_t *comp = &mca_plm_lsf_component.super.base_version;
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
@@ -106,15 +105,6 @@ static int plm_lsf_open(void)
                               false, false, "orted",
                               &mca_plm_lsf_component.orted);
 
-    tmp = mca_base_param_reg_int_name("orte", "timing",
-                                      "Request that critical timing loops be measured",
-                                      false, false, 0, &value);
-    if (value != 0) {
-        mca_plm_lsf_component.timing = true;
-    } else {
-        mca_plm_lsf_component.timing = false;
-    }
-    
     return ORTE_SUCCESS;
 }
 
@@ -131,7 +121,7 @@ static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priorit
     /* check if lsf is running here */
     if (NULL == getenv("LSB_JOBID") || lsb_init("ORTE launcher") < 0) {
         /* nope, not here */
-        opal_output_verbose(10, orte_plm_base.plm_output,
+        opal_output_verbose(10, orte_plm_globals.output,
                             "plm:lsf: NOT available for selection");
         *module = NULL;
         return ORTE_ERROR:

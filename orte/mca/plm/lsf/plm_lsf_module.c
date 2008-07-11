@@ -55,12 +55,12 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/argv.h"
-#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/util/show_help.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_wait.h"
@@ -88,7 +88,7 @@ static int plm_lsf_finalize(void);
 /*
  * Global variable
  */
-orte_plm_base_module_1_3_0_t orte_plm_lsf_module = {
+orte_plm_base_module_t orte_plm_lsf_module = {
     plm_lsf_init,
     orte_plm_base_set_hnp_name,
     plm_lsf_launch_job,
@@ -130,7 +130,6 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     int argc;
     int rc;
     char** env = NULL;
-    char* var;
     char **nodelist_argv;
     int nodelist_argc;
     char *vpid_string;
@@ -147,7 +146,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     /* default to declaring the daemons failed*/
     failed_job = ORTE_PROC_MY_NAME->jobid;
 
-    if (mca_plm_lsf_component.timing) {
+    if (orte_timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
             opal_output(0, "plm_lsf: could not obtain job start time");
         }        
@@ -257,8 +256,8 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the SLURM plm) */
     cur_prefix = NULL;
-    for (i=0; i < map->num_apps; i++) {
-        char * app_prefix_dir = map->apps[i]->prefix_dir;
+    for (i=0; i < jdata->num_apps; i++) {
+        char * app_prefix_dir = apps[i]->prefix_dir;
          /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
@@ -284,7 +283,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
 
-    if (mca_plm_lsf_component.timing) {
+    if (orte_timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
             opal_output(0, "plm_lsf: could not obtain start time");
         }        
@@ -306,7 +305,10 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != 
         (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        ORTE_ERROR_LOG(rc);
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:lsf: daemon launch failed for job %s on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
@@ -314,14 +316,17 @@ launch_apps:
     /* daemons succeeded - any failure now would be from apps */
     failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
-        ORTE_ERROR_LOG(rc);
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:lsf: launch of apps failed for job %s on error %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
     /* declare the launch a success */
     failed_launch = false;
     
-    if (mca_plm_lsf_component.timing) {
+    if (orte_timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
              opal_output(0, "plm_lsf: could not obtain stop time");
          } else {
@@ -340,9 +345,6 @@ launch_apps:
     }
 
 cleanup:
-    if (NULL != map) {
-        OBJ_RELEASE(map);
-    }
     if (NULL != argv) {
         opal_argv_free(argv);
     }
