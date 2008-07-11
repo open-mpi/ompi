@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- *
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,14 +70,6 @@ int opal_register_params(void)
         mca_base_param_reg_string_name("opal", "signal", 
                                        "If a signal is received, display the stack trace frame",
                                        false, false, string, NULL);
-        
-        mca_base_param_reg_string_name("opal","paffinity_slot_list",
-                                       "Used to set list of slots to be bind to",
-                                       false,false, NULL, NULL);
-
-        mca_base_param_reg_int_name("opal", "paffinity_alone",
-                                    "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
-                                    false, false, (int)false, 0);
         free(string);
     }
 

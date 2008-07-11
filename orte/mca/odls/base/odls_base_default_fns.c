@@ -756,8 +756,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_app_context_t *app, **apps;
     orte_std_cntr_t num_apps;
     orte_odls_child_t *child=NULL;
-    int i, num_processors, int_value;
-    bool want_processor, oversubscribed;
+    int i, num_processors;
+    bool oversubscribed;
     int rc=ORTE_SUCCESS, ret;
     bool launch_failed=true;
     opal_buffer_t alert;
@@ -811,55 +811,21 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
     }
     
-    /* setup for processor affinity. If there are enough physical processors on this node, then
-     * we indicate which processor each process should be assigned to, IFF the user has requested
-     * processor affinity be used - the paffinity subsystem will make that final determination. All
-     * we do here is indicate that we should do the definitions just in case paffinity is active
-     */
-    if (OPAL_SUCCESS != opal_get_num_processors(&num_processors)) {
-        /* if we cannot find the number of local processors, then default to conservative
-         * settings
+    if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
+        /* if the #procs > #processors, declare us oversubscribed. This
+         * covers the case where the user didn't tell us anything about the
+         * number of available slots, so we defaulted to a value of 1
          */
-        want_processor = false;  /* default to not being a hog */
         oversubscribed = true;
-        
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:launch could not get number of processors - using conservative settings",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
     } else {
-        
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:launch got %ld processors",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)num_processors));
-        
-        /* grab a processor if we can */
-        if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
-            want_processor = false;
-        } else {
-            want_processor = true;
-        }
-        
-        if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
-            /* if the #procs > #processors, declare us oversubscribed regardless
-             * of what the mapper claimed - the user may have told us something
-             * incorrect
-             */
-            oversubscribed = true;
-        } else {
-            /* likewise, if there are more processors here than we were told,
-             * declare us to not be oversubscribed so we can be aggressive. This
-             * covers the case where the user didn't tell us anything about the
-             * number of available slots, so we defaulted to a value of 1
-             */
-            oversubscribed = false;
-        }
+        /* otherwise, declare us to not be oversubscribed so we can be aggressive */
+        oversubscribed = false;
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:launch oversubscribed set to %s want_processor set to %s",
+                         "%s odls:launch oversubscribed set to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         oversubscribed ? "true" : "false", want_processor ? "true" : "false"));
+                         oversubscribed ? "true" : "false"));
     
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
@@ -1000,30 +966,12 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
 
-        {   /* unset paffinity_slot_list environment */
-            param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
-            opal_unsetenv(param, &app->env);
-            free(param);
-        }
         if ( NULL != child->slot_list ) {
             param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
             asprintf(&value, "%s", child->slot_list);
             opal_setenv(param, value, true, &app->env);
             free(param);
             free(value);
-        } else if (want_processor) { /* setting paffinity_alone */
-            int parameter = mca_base_param_find("opal", NULL, "paffinity_alone");
-            if ( parameter >=0 ) {
-                int_value = 0;
-                mca_base_param_lookup_int(parameter, &int_value);
-                if ( int_value ){
-                    param = mca_base_param_environ_variable("opal", NULL, "paffinity_slot_list");
-                    asprintf(&value, "%lu", (unsigned long) proc_rank);
-                    opal_setenv(param, value, true, &app->env);
-                    free(value);
-                    free(param);
-                }
-            }
         }
 
         /* must unlock prior to fork to keep things clean in the

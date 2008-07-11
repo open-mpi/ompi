@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,6 +66,10 @@ int opal_paffinity_base_open(void)
     }
 
     opal_paffinity_base_components_opened_valid = false;
+        
+    mca_base_param_reg_string_name("opal", "paffinity_base_slot_list",
+                                   "Used to set list of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files)",
+                                   true, false, NULL, NULL);
 
     /* Open up all available components */
 

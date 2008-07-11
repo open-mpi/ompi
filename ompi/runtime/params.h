@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -94,8 +94,13 @@ OMPI_DECLSPEC extern bool ompi_mpi_show_mca_params;
 OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
 
 /**
- * If this value is true, we can check process binding to CPU 
+ * If this value is true, assume that this ORTE job is the only job
+ * running on the nodes that have been allocated to it, and bind
+ * processes to the processor ID corresponding to their node local
+ * rank (if you COMM_SPAWN on to empty processors on the same node,
+ * the NLR will start at N, not 0).
  */
+OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
 
 /**
  * Whether we should keep the string hostnames of all the MPI

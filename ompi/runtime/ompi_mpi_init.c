@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -48,6 +48,7 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/ess/ess.h"
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/routed/routed.h"
@@ -245,6 +246,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     int num_processors;
 #endif
     bool orte_setup = false;
+    bool paffinity_enabled = false;
 
     /* Setup enough to check get/set MCA params */
 
@@ -330,17 +332,47 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Setup process affinity */
-    if ( OPAL_SUCCESS == (ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid))) {
-        /* If we were able to set processor affinity, try setting up memory affinity */
+    /* Setup process affinity.  First check to see if a slot list was
+       specified.  If so, use it.  If no slot list was specified,
+       that's not an error -- just fall through and try the next
+       paffinity scheme. */
+    ret = opal_paffinity_base_slot_list_set((long)ORTE_PROC_MY_NAME->vpid);
+    if (OPAL_SUCCESS == ret) {
+        paffinity_enabled = true;
+    } 
+    /* If an error occurred in the slot list setup (other than "there
+       was not slot list specified"), bail. */
+    else if (OPAL_ERR_NOT_FOUND != ret) {
+        error = "opal_paffinity_base_slot_list_set() returned an error";
+        goto error;
+    }
+    /* It's an error if multiple paffinity schemes were specified */
+    if (paffinity_enabled && ompi_mpi_paffinity_alone) {
+        ret = OMPI_ERR_BAD_PARAM;
+        error = "Multiple processor affinity schemes specified (can only specify one)";
+        goto error;
+    } 
+    /* Otherwise, if mpi_paffinity_alone was set, use that scheme */
+    else if (ompi_mpi_paffinity_alone) {
+        opal_paffinity_base_cpu_set_t mask;
+        OPAL_PAFFINITY_CPU_ZERO(mask);
+        OPAL_PAFFINITY_CPU_SET(orte_ess.get_node_rank(ORTE_PROC_MY_NAME),
+                               mask);
+        ret = opal_paffinity_base_set(mask);
+        if (OPAL_SUCCESS != ret) {
+            error = "Setting processor affinity failed";
+            goto error;
+        }
+        paffinity_enabled = true;
+    }
+
+    /* If we were able to set processor affinity, try setting up
+       memory affinity */
+    if (paffinity_enabled) {
         if (OPAL_SUCCESS == opal_maffinity_base_open() &&
-                OPAL_SUCCESS == opal_maffinity_base_select()) {
+            OPAL_SUCCESS == opal_maffinity_base_select()) {
             ompi_mpi_maffinity_setup = true;
         }
-    }
-    if ( OPAL_ERROR == ret ){
-        error = "opal_paffinity_base_slot_list_set: error slot_list assigning";
-        goto error;
     }
     
     /* initialize datatypes. This step should be done early as it will
