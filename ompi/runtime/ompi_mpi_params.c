@@ -59,7 +59,7 @@ bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
 int ompi_mpi_register_params(void)
 {
-    int index, value;
+    int value;
 
     /* Whether we want MPI API function parameter checking or not */
 
