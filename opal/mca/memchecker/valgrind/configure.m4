@@ -49,8 +49,7 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
                  [AC_MSG_WARN([valgrind.h not found])
                   AC_MSG_WARN([Cannot compile this component])])])
 
-    CPPFLAGS="$ompi_check_memchecker_valgrind_save_CPPFLAGS"
 
     AS_IF([test "$ompi_check_valgrind_happy" = "yes"],
-          [$1], [$2])
+          [$1])
 ])dnl
