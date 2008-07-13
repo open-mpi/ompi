@@ -42,6 +42,7 @@ static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_pol
 static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll);
 static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, int index);
 static const char *openib_event_to_str (enum ibv_event_type event);
+static int send_command_comp(int in);
 
 /* Function converts event to string (name)
  * Open Fabris don't have function that do this job :(
@@ -139,6 +140,16 @@ static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_pol
     return OMPI_SUCCESS;
 }
 
+/* Send command completion to main thread */
+static int send_command_comp(int in) 
+{
+    if (write(mca_btl_openib_component.async_comp_pipe[1], &in, sizeof(int)) < 0) {
+        BTL_ERROR(("Write failed [%d]",errno));
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
+
 /* Function handle async thread commands */
 static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll)
 {
@@ -176,6 +187,9 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
         hcas_poll->async_pollfd[hcas_poll->active_poll_size].events = POLLIN;
         hcas_poll->async_pollfd[hcas_poll->active_poll_size].revents = 0;
         hcas_poll->active_poll_size++;
+        if (OMPI_SUCCESS != send_command_comp(fd)) {
+            return OMPI_ERROR;
+        }
     } else if (fd < 0) {
         bool fd_found = false;
         /* Removing HCA from poll */
@@ -200,6 +214,9 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
             }
         }
         hcas_poll->active_poll_size--;
+        if (OMPI_SUCCESS != send_command_comp(-(fd))) {
+            return OMPI_ERROR;
+        }
     } else {
         /* Got 0 - command to close the thread */
         BTL_VERBOSE(("Async event thread exit"));
@@ -371,6 +388,22 @@ void* btl_openib_async_thread(void * async)
         }
     }
     return PTHREAD_CANCELED;
+}
+
+int btl_openib_async_command_done(int exp) 
+{
+    int comp;
+    if (read(mca_btl_openib_component.async_comp_pipe[0], &comp,
+                sizeof(int)) < 0){
+        BTL_ERROR(("Failed to read from pipe"));
+        return OMPI_ERROR;
+    }
+    if (exp != comp){
+        BTL_ERROR(("Get wrong completion on async command. Waiting for %d and got %d",
+                    exp, comp));
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
 }
 
 static void apm_update_attr(struct ibv_qp_attr *attr, enum ibv_qp_attr_mask *mask)

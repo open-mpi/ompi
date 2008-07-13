@@ -15,6 +15,7 @@
 
 void*      btl_openib_async_thread(void *one_hca);
 void       mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep);
+int        btl_openib_async_command_done(int exp);
 #if HAVE_XRC
 void       mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t *ep);
 #endif

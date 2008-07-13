@@ -196,6 +196,7 @@ struct mca_btl_openib_component_t {
 #if OMPI_HAVE_THREADS
     int32_t fatal_counter;           /**< Counts number on fatal events that we got on all hcas */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
+    int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
     uint32_t use_async_event_thread; /**< Use the async event handler */
 #endif
