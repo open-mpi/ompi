@@ -1015,6 +1015,8 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
         close(mca_btl_openib_component.async_pipe[0]);
         close(mca_btl_openib_component.async_pipe[1]);
+        close(mca_btl_openib_component.async_comp_pipe[0]);
+        close(mca_btl_openib_component.async_comp_pipe[1]);
     }
 #endif
 

@@ -474,6 +474,12 @@ static int start_async_event_thread(void)
         return OMPI_ERROR;
     }
 
+    if(pipe(mca_btl_openib_component.async_comp_pipe)) {
+        BTL_ERROR(("Failed to create comp pipe for communication with "
+                    "main thread"));
+        return OMPI_ERROR;
+    }
+
     /* Starting async event thread for the component */
     if(pthread_create(&mca_btl_openib_component.async_thread, NULL,
                 (void*(*)(void*))btl_openib_async_thread, NULL)) {
@@ -726,6 +732,8 @@ static void hca_construct(mca_btl_openib_hca_t *hca)
 #if OMPI_HAVE_THREADS
     mca_btl_openib_component.async_pipe[0] = 
         mca_btl_openib_component.async_pipe[1] = -1;
+    mca_btl_openib_component.async_comp_pipe[0] = 
+        mca_btl_openib_component.async_comp_pipe[1] = -1;
 #endif
     OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&hca->send_free_control, ompi_free_list_t);
@@ -761,6 +769,10 @@ static void hca_destruct(mca_btl_openib_hca_t *hca)
             BTL_ERROR(("Failed to write to pipe"));
             goto hca_error;
         }
+        /* wait for ok from thread */
+        if (OMPI_SUCCESS != btl_openib_async_command_done(hca_to_remove)){
+            goto hca_error;
+        } 
     }
 #endif
 
@@ -854,6 +866,11 @@ static int prepare_hca_for_use(mca_btl_openib_hca_t *hca)
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
             return OMPI_ERROR;
         }
+        /* wait for ok from thread */
+        if (OMPI_SUCCESS != 
+                btl_openib_async_command_done(hca->ib_dev_context->async_fd)){
+            return OMPI_ERROR;
+        } 
     }
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* Prepare data for thread, but not starting it */
