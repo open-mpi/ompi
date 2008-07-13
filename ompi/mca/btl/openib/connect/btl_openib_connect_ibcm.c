@@ -766,7 +766,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             if (0 != rc) {
                 /* Same rationale as above */
                 OBJ_RELEASE(cmh);
-                BTL_ERROR(("failed to ib_cm_listen 10 times: rc=%d, errno=%d", rc, errno));
+                if (mca_btl_openib_component.cpc_explicitly_defined) {
+                    BTL_ERROR(("failed to ib_cm_listen 10 times: rc=%d, errno=%d", rc, errno));
+                }
                 rc = OMPI_ERR_NOT_SUPPORTED;
                 goto error;
             }
