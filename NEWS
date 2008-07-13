@@ -40,6 +40,9 @@ Trunk (not on release branches yet)
   threading support)
   --> Expected: ???
 
+1.3
+---
+
 - Various enhancements to the openib BTL:
   - Added btl_openib_if_[in|ex]clude MCA parameters for
     including/excluding comma-delimited lists of HCAs and ports.
@@ -52,66 +55,47 @@ Trunk (not on release branches yet)
   - Added btl_openib_ib_max_inline_data MCA parameter
   - Added iWARP support
   - Revamped flow control mechansisms to be more efficient
-  --> Expected: 1.3
 - Added NUMA support to the shared memory BTL.
-  --> Expected: 1.3
 - Add Valgrind-based memory checking for MPI-semantic checks.
-  --> Expected: 1.3
 - Add support for some optional Fortran datatypes (MPI_LOGICAL1,
   MPI_LOGICAL2, MPI_LOGICAL4 and MPI_LOGICAL8)
-  --> Expected: 1.3
 - Remove use of STL from C++ bindings.
-  --> Expected: 1.3
 - Added support for Platform/LSF job launchers.  Must be Platform LSF
   v7.0.2 or later.
-  --> Expected 1.3
 - Updated ROMIO with the version from MPICH2 1.0.5p4
-  --> Expected: 1.3
-- Add RDMA capable one-sided component (called rdma), which
+- Added RDMA capable one-sided component (called rdma), which
   can be used with BTL components that expose a full one-sided
   interface.
-  --> Expected: 1.3
-- Add the optional datatype MPI_REAL2. As this is added to the "end of"
+- Added the optional datatype MPI_REAL2. As this is added to the "end of"
   predefined datatypes in the fortran header files, there will not be
   any compatibility issues.
-  --> Expected 1.3
-- Add Portable Linux Processor Affinity (PLPA) for Linux
-  --> Expected: 1.3
+- Added Portable Linux Processor Affinity (PLPA) for Linux.
 - Release tarballs now use Autoconf 2.61 and Automake 1.10.
-  --> Expected: 1.3
 - Addition of a finer symbols export control via the visibiliy feature
   offered by some compilers.
-  --> Expected: 1.3
 - Added checkpoint/restart process fault tolerance support. Initially
   support a LAM/MPI-like protocol.
-  --> Expected: 1.3
 - Removed "mvapi" BTL; all InfiniBand support now uses the OpenFabrics
   driver stacks.
-  --> Expected: 1.3
 - Added more stringent MPI API parameter checking to help user-level
   debugging.
-  --> Expected: 1.3
 - The ptmalloc2 memory manager component is now by default built as
   a standalone library named libopenmpi-malloc.  Users wanting to
   use leave_pinned with ptmalloc2 will now need to link the library
   into their application explicitly.  All other users will use the
   libc-provided allocator instead of Open MPI's ptmalloc2.  This change
   may be overriden with the configure option enable-ptmalloc2-internal
-  --> Expected: 1.3
 - The leave_pinned options will now default to using mallopt on
   Linux in the cases where ptmalloc2 was not linked in.  mallopt
   will also only be available if munmap can be intercepted (the
   default whenever Open MPI is not compiled with --without-memory-
   manager.
-  --> Expected: 1.3
 - Open MPI will now complain and refuse to use leave_pinned if
   no memory intercept / mallopt option is available.
-  --> Expected: 1.3
 - Add option of using Perl-based wrapper compilers instead of the
   C-based wrapper compilers.  The Perl-based version does not
   have the features of the C-based version, but does work better
   in cross-compile environments.
-  --> Expected: 1.3
 
 
 1.2.7 (not released yet)
