@@ -339,7 +339,7 @@ int opal_paffinity_base_slot_list_set(long rank)
     char **socket_core;
     int item_cnt, socket_core_cnt, rc;
 
-    rc = mca_base_param_find("opal", NULL, "paffinity_slot_list");
+    rc = mca_base_param_find("opal", NULL, "paffinity_base_slot_list");
     /* If there was not slot list specified, return a specific error
        code indicating that */
     if (rc <= 0) {
@@ -348,7 +348,7 @@ int opal_paffinity_base_slot_list_set(long rank)
 
     if (OPAL_SUCCESS == mca_base_param_lookup_string(rc, &slot_str)) {
         if (NULL == slot_str) {
-            return OPAL_ERR_BAD_PARAM;
+            return OPAL_ERR_NOT_FOUND;
         }
     }
     if (0 == strcmp("", slot_str)){
