@@ -69,7 +69,7 @@ int opal_paffinity_base_open(void)
         
     mca_base_param_reg_string_name("opal", "paffinity_base_slot_list",
                                    "Used to set list of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files)",
-                                   true, false, NULL, NULL);
+                                   false, false, NULL, NULL);
 
     /* Open up all available components */
 
