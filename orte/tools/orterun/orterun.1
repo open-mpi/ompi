@@ -225,7 +225,8 @@ complete as soon as successful launch occurs.
 .
 .TP
 .B -path\fR,\fP --path \fR<path>\fP
-<path> that will be used when attempting to locate requested executables.
+<path> that will be used when attempting to locate the requested
+executables.  This is used prior to using the local PATH setting.
 .
 .
 .TP
@@ -657,9 +658,12 @@ specified, then the file is assumed to be an executable program.
 .
 .SS Locating Files
 .
-If \fIno\fP relative or absolute path is specified for a file, Open MPI
-will look for files by searching the directories in the user's PATH environment
-variable as defined on the source node(s).
+If no relative or absolute path is specified for a file, Open
+MPI will first look for files by searching the directories specified
+by the \fI--path\fP option.  If there is no \fI--path\fP option set or
+if the file is not found at the \fI--path\fP location, then Open MPI
+will search the user's PATH environment variable as defined on the
+source node(s).
 .PP
 If a relative directory is specified, it must be relative to the initial
 working directory determined by the specific starter used. For example when
