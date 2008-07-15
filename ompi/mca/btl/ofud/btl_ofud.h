@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -60,6 +60,12 @@ struct mca_btl_ud_component_t {
 
     uint32_t max_btls;  /**< Maximum number of BTL modules */
     uint32_t num_btls;  /**< Number of available/initialized BTL modules */
+
+    char* if_include;
+    char** if_include_list;
+    char* if_exclude;
+    char** if_exclude_list;
+    char** if_list;
 
     struct mca_btl_ud_module_t* ud_btls;    /**< array of available BTLs */
 
