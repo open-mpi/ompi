@@ -27,6 +27,7 @@ int mca_vprotocol_base_open(char *vprotocol_include_list)
 {
     OBJ_CONSTRUCT(&mca_vprotocol_base_components_available, opal_list_t);
     mca_vprotocol_base_include_list = vprotocol_include_list;
+    if(mca_vprotocol_base_include_list[0] == 0) return OMPI_SUCCESS;
     return mca_base_components_open("vprotocol", 0, 
                                     mca_vprotocol_base_static_components, 
                                     &mca_vprotocol_base_components_available, 
