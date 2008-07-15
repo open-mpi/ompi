@@ -635,6 +635,11 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     ibcm_module_list_item_t *imli;
     union ibv_gid gid;
 
+    if (!mca_btl_openib_component.cpc_explicitly_defined) {
+        BTL_VERBOSE(("ibcm CPC is experimental feature and it is disabled by default"));
+        rc = OMPI_ERR_NOT_SUPPORTED;
+        goto error;
+    }
     /* If we do not have struct ibv_device.transport_device, then
        we're in an old version of OFED that is IB only (i.e., no
        iWarp), so we can safely assume that we can use this CPC. */
@@ -720,9 +725,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             /* We can't open the device for some reason (can't read,
                can't write, doesn't exist, ...etc.); IBCM is not setup
                on this node. */
-            if (mca_btl_openib_component.cpc_explicitly_defined) {
-                BTL_ERROR(("failed to open IB CM device: %s", filename));
-            }
+            BTL_ERROR(("failed to open IB CM device: %s", filename));
             free(filename);
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
@@ -766,9 +769,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             if (0 != rc) {
                 /* Same rationale as above */
                 OBJ_RELEASE(cmh);
-                if (mca_btl_openib_component.cpc_explicitly_defined) {
-                    BTL_ERROR(("failed to ib_cm_listen 10 times: rc=%d, errno=%d", rc, errno));
-                }
+                BTL_ERROR(("failed to ib_cm_listen 10 times: rc=%d, errno=%d", rc, errno));
                 rc = OMPI_ERR_NOT_SUPPORTED;
                 goto error;
             }
