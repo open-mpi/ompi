@@ -34,11 +34,6 @@ Trunk (not on release branches yet)
 - Added Microsoft Windows support.  See README.WINDOWS file for
   details.
   --> Expected: ???
-- Addition of "dr" (data reliability) PML.
-  --> Expected: ???
-- Added threaded progress for the openib BTL (waiting on other
-  threading support)
-  --> Expected: ???
 
 1.3
 ---
