@@ -477,8 +477,8 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
         port_cnt = get_port_list(ib_dev,
                 ib_dev_attr.phys_port_cnt, allowed_ports);
 
-        /* Note ports are 1 based hence j = 1 */
-        for(j = 1; j <= port_cnt; j++) {
+        /* Note ports are 1 based, but j goes over the array of ports */
+        for(j = 0; j < port_cnt; j++) {
             struct ibv_port_attr ib_port_attr;
 
             k = allowed_ports[j];
