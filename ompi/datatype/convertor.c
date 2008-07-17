@@ -417,6 +417,33 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
 }
 
 /**
+ * Compute the remote size.
+ */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#define OMPI_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
+{                                                                         \
+    if( OPAL_UNLIKELY(0 != bdt_mask) ) {                                  \
+        ompi_convertor_master_t* master;                                  \
+        int i;                                                            \
+        convertor->flags ^= CONVERTOR_HOMOGENEOUS;                        \
+        bdt_mask = datatype->bdt_used;                                    \
+        master = convertor->master;                                       \
+        convertor->remote_size = 0;                                       \
+        for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {                  \
+            if( bdt_mask & ((uint64_t)1 << i) ) {                         \
+                convertor->remote_size += (datatype->btypes[i] *          \
+                                           master->remote_sizes[i]);      \
+            }                                                             \
+        }                                                                 \
+        convertor->remote_size *= convertor->count;                       \
+        convertor->use_desc = &(datatype->desc);                          \
+    }                                                                     \
+}
+#else
+#define OMPI_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT */
+
+/**
  * This macro will initialize a convertor based on a previously created
  * convertor. The idea is the move outside these function the heavy
  * selection of architecture features for the convertors. I consider
@@ -427,6 +454,15 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     {                                                                   \
         uint64_t bdt_mask;                                              \
                                                                         \
+        /* If the data is empty we just mark the convertor as           \
+         * completed. With this flag set the pack and unpack functions  \
+         * will not do anything.                                        \
+         */                                                             \
+        if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
+            convertor->flags |= CONVERTOR_COMPLETED;                    \
+            convertor->local_size = convertor->remote_size = 0;         \
+            return OMPI_SUCCESS;                                        \
+        }                                                               \
         bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
         /* Compute the local in advance */                              \
         convertor->local_size = count * datatype->size;                 \
@@ -442,18 +478,8 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         /* By default consider the optimized description */             \
         convertor->use_desc = &(datatype->opt_desc);                    \
                                                                         \
-        /* If the data is empty we just mark the convertor as           \
-         * completed. With this flag set the pack and unpack functions  \
-         * will not do anything.                                        \
-         */                                                             \
-        if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
-            convertor->flags |= CONVERTOR_COMPLETED;                    \
-            convertor->remote_size = 0;                                 \
-            return OMPI_SUCCESS;                                        \
-        }                                                               \
-                                                                        \
+        convertor->remote_size = convertor->local_size;                 \
         if( OPAL_LIKELY(convertor->remoteArch == ompi_mpi_local_arch) ) { \
-            convertor->remote_size = convertor->local_size;             \
             if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) == DT_FLAG_NO_GAPS ) { \
                 return OMPI_SUCCESS;                                    \
             }                                                           \
@@ -463,24 +489,8 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             }                                                           \
         }                                                               \
                                                                         \
-        if( OPAL_LIKELY(0 == bdt_mask) ) {                              \
-            convertor->remote_size = convertor->local_size;             \
-        } else {                                                        \
-            ompi_convertor_master_t* master;                            \
-            int i;                                                      \
-            convertor->flags ^= CONVERTOR_HOMOGENEOUS;                  \
-            bdt_mask = datatype->bdt_used;                              \
-            master = convertor->master;                                 \
-            convertor->remote_size = 0;                                 \
-            for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {            \
-                if( bdt_mask & ((uint64_t)1 << i) ) {                   \
-                    convertor->remote_size += (datatype->btypes[i] *    \
-                                               master->remote_sizes[i]);\
-                }                                                       \
-            }                                                           \
-            convertor->remote_size *= convertor->count;                 \
-            convertor->use_desc = &(datatype->desc);                    \
-        }                                                               \
+        OMPI_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype,        \
+                                            bdt_mask );                 \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \

@@ -49,7 +49,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
  * @param src (IN)           Source rank w/in the communicator.
  * @param tag (IN)           User defined tag.
  * @param comm (IN)          Communicator.
- * @param persistent (IN)    Is this a ersistent request.
+ * @param persistent (IN)    Is this a persistent request.
  */
 #define MCA_PML_BASE_RECV_REQUEST_INIT(                                  \
     request,                                                             \
