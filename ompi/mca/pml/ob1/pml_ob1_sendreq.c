@@ -559,7 +559,6 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     des->des_cbdata = sendreq;
     des->des_cbfunc = mca_pml_ob1_match_completion_free;
 
-
     /* send */
     rc = mca_bml_base_send_status(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MATCH);
     if( OPAL_LIKELY( rc >= 0 ) ) {

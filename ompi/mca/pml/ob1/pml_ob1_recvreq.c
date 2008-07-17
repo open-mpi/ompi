@@ -184,7 +184,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
     if( OPAL_LIKELY(status == OMPI_SUCCESS) ) {
         MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( des->des_dst, des->des_dst_cnt,
-                0, bytes_received );
+                                            0, bytes_received );
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 
@@ -552,7 +552,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
     
     bytes_received -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
-    recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
+    recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
     recvreq->req_rdma_offset = bytes_received;
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
     mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
@@ -591,7 +591,6 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
     }
 }
 
-
 /*
  * Update the recv request status to reflect the number of bytes
  * received and actually delivered to the application. 
@@ -602,9 +601,7 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
                                               mca_btl_base_segment_t* segments,
                                               size_t num_segments )
 {
-    size_t bytes_received = 0;
-    size_t bytes_delivered = 0;
-    size_t data_offset = 0;
+    size_t bytes_received = 0, bytes_delivered = 0, data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     bool complete; 
 
@@ -640,9 +637,12 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
                                recvreq->req_recv.req_base.req_datatype);
                );
     
-    OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
-    complete = recv_request_pml_complete_check(recvreq);
-    assert(complete);
+    /*
+     * No need for atomic here, as we know there is only one fragment
+     * for this request.
+     */
+    recvreq->req_bytes_received += bytes_received;
+    recv_request_pml_complete(recvreq);
 }
 
 
@@ -793,7 +793,7 @@ int mca_pml_ob1_recv_request_schedule_once(
         hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_PUT;
         hdr->hdr_common.hdr_flags =
             (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0;
-        hdr->hdr_req = recvreq->req_send;
+        hdr->hdr_req = recvreq->remote_req_send;
         hdr->hdr_des.pval = dst;
         hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
         hdr->hdr_seg_cnt = dst->des_dst_cnt;
@@ -853,7 +853,7 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
      */
     if(req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
-                                 &(req->req_recv.req_base), PERUSE_RECV);
+                                &(req->req_recv.req_base), PERUSE_RECV);
     }
 }
 
@@ -862,9 +862,9 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
  *  it places the request in the appropriate matched receive list. This
  *  function has to be called with the communicator matching lock held.
 */
-static mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
-        const mca_pml_ob1_recv_request_t *req,
-        mca_pml_ob1_comm_proc_t *proc)
+static mca_pml_ob1_recv_frag_t*
+recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
+                              mca_pml_ob1_comm_proc_t *proc )
 {
     opal_list_t* unexpected_frags = &proc->unexpected_frags;
     opal_list_item_t *i;
@@ -874,14 +874,24 @@ static mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
     if(opal_list_get_size(unexpected_frags) == 0)
         return NULL;
 
-    for (i =  opal_list_get_first(unexpected_frags);
-         i != opal_list_get_end(unexpected_frags);
-         i =  opal_list_get_next(i)) {
-        frag = (mca_pml_ob1_recv_frag_t*)i;
-
-        if(frag->hdr.hdr_match.hdr_tag == tag ||
-                (OMPI_ANY_TAG == tag && frag->hdr.hdr_match.hdr_tag >= 0))
-            return frag;
+    if( OMPI_ANY_TAG == tag ) {
+        for (i =  opal_list_get_first(unexpected_frags);
+             i != opal_list_get_end(unexpected_frags);
+             i =  opal_list_get_next(i)) {
+            frag = (mca_pml_ob1_recv_frag_t*)i;
+            
+            if( frag->hdr.hdr_match.hdr_tag >= 0 )
+                return frag;
+        }
+    } else {
+        for (i =  opal_list_get_first(unexpected_frags);
+             i != opal_list_get_end(unexpected_frags);
+             i =  opal_list_get_next(i)) {
+            frag = (mca_pml_ob1_recv_frag_t*)i;
+            
+            if( frag->hdr.hdr_match.hdr_tag == tag )
+                return frag;
+        }
     }
 
     return NULL;
@@ -891,21 +901,20 @@ static mca_pml_ob1_recv_frag_t *recv_req_match_specific_proc(
  * this routine is used to try and match a wild posted receive - where
  * wild is determined by the value assigned to the source process
 */
-
-static mca_pml_ob1_recv_frag_t *recv_req_match_wild(
-        mca_pml_ob1_recv_request_t* req, mca_pml_ob1_comm_proc_t **p)
+static mca_pml_ob1_recv_frag_t*
+recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
+                     mca_pml_ob1_comm_proc_t **p)
 {
     mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t* proc = comm->procs;
-    size_t proc_count = comm->num_procs;
-    size_t i;
+    size_t proc_count = comm->num_procs, i;
 
     /*
      * Loop over all the outstanding messages to find one that matches.
      * There is an outer loop over lists of messages from each
      * process, then an inner loop over the messages from the
      * process.
-    */
+     */
     for (i = 0; i < proc_count; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
@@ -940,7 +949,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     req->req_rdma_idx = 0;
     req->req_pending = false;
     req->req_ack_sent = false;
-    req->req_match_received = false;
 
     MCA_PML_BASE_RECV_START(&req->req_recv.req_base);
 
@@ -954,7 +962,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     /* assign sequence number */
     req->req_recv.req_base.req_sequence = comm->recv_sequence++;
-
 
     /* attempt to match posted recv */
     if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
@@ -975,6 +982,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
         append_recv_req_to_queue(queue, req);
+        req->req_match_received = false;
         OPAL_THREAD_UNLOCK(&comm->matching_lock);
     } else {
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
@@ -991,7 +999,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                     &(req->req_recv.req_base), PERUSE_RECV);
 
             opal_list_remove_item(&proc->unexpected_frags,
-                    (opal_list_item_t*)frag);
+                                  (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
@@ -1008,10 +1016,8 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                 mca_pml_ob1_recv_request_progress_rget(req, frag->btl, frag->segments,
                                                        frag->num_segments);
                 break;
-            case MCA_PML_OB1_HDR_TYPE_FRAG:
-                mca_pml_ob1_recv_request_progress_frag(req, frag->btl, frag->segments,
-                                                       frag->num_segments);
-                break;
+            default:
+                assert(0);
             }
             
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
