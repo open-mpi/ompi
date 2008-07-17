@@ -912,7 +912,7 @@ static mca_pml_ob1_recv_frag_t *recv_req_match_wild(
         /* loop over messages from the current proc */
         if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
             *p = &proc[i];
-            req->req_recv.req_base.req_proc = proc->ompi_proc;
+            req->req_recv.req_base.req_proc = proc[i].ompi_proc;
             prepare_recv_req_converter(req);
             return frag; /* match found */
         }
