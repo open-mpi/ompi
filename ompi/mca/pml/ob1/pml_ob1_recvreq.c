@@ -595,7 +595,6 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
  * Update the recv request status to reflect the number of bytes
  * received and actually delivered to the application. 
  */
-
 void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvreq,
                                               mca_btl_base_module_t* btl,
                                               mca_btl_base_segment_t* segments,
@@ -603,7 +602,6 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
 {
     size_t bytes_received = 0, bytes_delivered = 0, data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
-    bool complete; 
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
@@ -893,7 +891,6 @@ recv_req_match_specific_proc( const mca_pml_ob1_recv_request_t *req,
                 return frag;
         }
     }
-
     return NULL;
 }
 
@@ -967,6 +964,17 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     if(req->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
         frag = recv_req_match_wild(req, &proc);
         queue = &comm->wild_receives;
+#if !OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        /* As we are in a homogeneous environment we know that all remote
+         * architectures are exactly the same as the local one. Therefore,
+         * we can safely construct the convertor based on the proc
+         * information of rank 0.
+         */
+        if( NULL == frag ) {
+            req->req_recv.req_base.req_proc = ompi_proc_local_proc;
+            prepare_recv_req_converter(req);
+        }
+#endif  /* !OMPI_ENABLE_HETEROGENEOUS_SUPPORT */
     } else {
         proc = &comm->procs[req->req_recv.req_base.req_peer];
         req->req_recv.req_base.req_proc = proc->ompi_proc;
