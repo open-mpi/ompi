@@ -230,8 +230,8 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
     mca_pml_ob1_free_rdma_resources(sendreq);
 
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+        sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
     }
 
     OPAL_THREAD_LOCK(&ompi_request_lock);

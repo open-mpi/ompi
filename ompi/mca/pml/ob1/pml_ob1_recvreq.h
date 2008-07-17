@@ -35,7 +35,7 @@ BEGIN_C_DECLS
 
 struct mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    ompi_ptr_t req_send;
+    ompi_ptr_t remote_req_send;
     int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;  /**< amount of data transferred into the user buffer */
@@ -208,13 +208,13 @@ static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
         ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
                 &req->req_bytes_delivered);
     }
- }
+}
 
 #define MCA_PML_OB1_RECV_REQUEST_MATCHED(request, hdr) \
     recv_req_matched(request, hdr)
 
 static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
-        mca_pml_ob1_match_hdr_t *hdr)
+                                    mca_pml_ob1_match_hdr_t *hdr)
 {
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
@@ -238,14 +238,13 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
  *
  */
 
-#define MCA_PML_OB1_RECV_REQUEST_UNPACK(                                          \
-    request,                                                                      \
-    segments,                                                                     \
-    num_segments,                                                                 \
-    seg_offset,                                                                   \
-    data_offset,                                                                  \
-    bytes_received,                                                               \
-    bytes_delivered)                                                              \
+#define MCA_PML_OB1_RECV_REQUEST_UNPACK( request,                                 \
+                                         segments,                                \
+                                         num_segments,                            \
+                                         seg_offset,                              \
+                                         data_offset,                             \
+                                         bytes_received,                          \
+                                         bytes_delivered)                         \
 do {                                                                              \
     bytes_delivered = 0;                                                          \
     if(request->req_recv.req_bytes_packed > 0) {                                  \
@@ -261,7 +260,8 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - offset;               \
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + offset); \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)                         \
+                    ((unsigned char*)segment->seg_addr.pval + offset);            \
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
@@ -279,52 +279,6 @@ do {                                                                            
     }                                                                             \
 } while (0)
 
-
-/**
- *
- */
-
-#define MCA_PML_OB1_RECV_REQUEST_UNPACK_ALL(                                      \
-    request,                                                                      \
-    segments,                                                                     \
-    num_segments,                                                                 \
-    seg_offset,                                                                   \
-    data_offset,                                                                  \
-    bytes_received,                                                               \
-    bytes_delivered)                                                              \
-do {                                                                              \
-    bytes_delivered = 0;                                                          \
-    if(request->req_recv.req_bytes_packed > 0) {                                  \
-        struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
-        uint32_t iov_count = 0;                                                   \
-        size_t max_data = bytes_received;                                         \
-        size_t n, offset = seg_offset;                                            \
-        mca_btl_base_segment_t* segment = segments;                               \
-                                                                                  \
-        OPAL_THREAD_LOCK(&request->lock);                                         \
-        for( n = 0; n < num_segments; n++, segment++ ) {                          \
-            if(offset >= segment->seg_len) {                                      \
-                offset -= segment->seg_len;                                       \
-            } else {                                                              \
-                iov[iov_count].iov_len = segment->seg_len - offset;               \
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + offset); \
-                iov_count++;                                                      \
-            }                                                                     \
-        }                                                                         \
-        PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
-                                      &(recvreq->req_recv.req_base),              \
-                                      bytes_received,                             \
-                                      PERUSE_RECV);                               \
-        ompi_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
-                                     &data_offset );                              \
-        ompi_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
-                               iov,                                               \
-                               &iov_count,                                        \
-                               &max_data );                                       \
-        bytes_delivered = max_data;                                               \
-        OPAL_THREAD_UNLOCK(&request->lock);                                       \
-    }                                                                             \
-} while (0)
 
 /**
  *

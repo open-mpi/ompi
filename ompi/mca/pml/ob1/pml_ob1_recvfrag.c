@@ -97,12 +97,13 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
     if(OPAL_UNLIKELY(NULL == comm_ptr)) {
-         /* This is a special case. A message for a not yet existing communicator can
-          * happens, but right now we segfault. Instead, and until we find a better
-          * solution, just drop the message. However, in the near future we should
-          * store this fragment in a global list, and deliver it to the right
-          * communicator once it get created.
-          */
+        /* This is a special case. A message for a not yet existing
+         * communicator can happens, but right now we
+         * segfault. Instead, and until we find a better solution,
+         * just drop the message. However, in the near future we
+         * should store this fragment in a global list, and deliver
+         * it to the right communicator once it get created.
+         */
         opal_output( 0, "Dropped message for the non-existing communicator %d\n",
                      (int)hdr->hdr_ctx );
         return;
@@ -112,55 +113,52 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     /* source sequence number */
     proc = &comm->procs[hdr->hdr_src];
  
-    /**
-     * We generate the MSG_ARRIVED event as soon as the PML is aware of a matching
-      * fragment arrival. Independing if it is received on the correct order or not.
-      * This will allow the tools to figure out if the messages are not received in the
-      * correct order (if multiple network interfaces).
-      */
+    /* We generate the MSG_ARRIVED event as soon as the PML is aware
+     * of a matching fragment arrival. Independing if it is received
+     * on the correct order or not. This will allow the tools to
+     * figure out if the messages are not received in the correct
+     * order (if multiple network interfaces).
+     */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
  
     /* get next expected message sequence number - if threaded
-     * run, lock to make sure that if another thread is processing 
-      * a frag from the same message a match is made only once.
-      * Also, this prevents other posted receives (for a pair of
-      * end points) from being processed, and potentially "loosing"
-      * the fragment.
-      */
+     * run, lock to make sure that if another thread is processing
+     * a frag from the same message a match is made only once.
+     * Also, this prevents other posted receives (for a pair of
+     * end points) from being processed, and potentially "loosing"
+     * the fragment.
+     */
     OPAL_THREAD_LOCK(&comm->matching_lock);
     
      /* get sequence number of next message that can be processed */
     if(OPAL_UNLIKELY((((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence)) ||
                      (opal_list_get_size(&proc->frags_cant_match) > 0 ) ||
                      (num_segments > 1))) {
-           goto slow_path;
+        goto slow_path;
     }
     
-    /*
-      * This is the sequence number we were expecting,
-      * so we can try matching it to already posted
-      * receives.
-      */
+    /* This is the sequence number we were expecting, so we can try
+     * matching it to already posted receives.
+     */
     
     /* We're now expecting the next sequence number. */
     proc->expected_sequence++;
-        
-    /**
-      * We generate the SEARCH_POSTED_QUEUE only when the message is received
-      * in the correct sequence. Otherwise, we delay the event generation until
-      * we reach the correct sequence number.
-      */
+
+    /* We generate the SEARCH_POSTED_QUEUE only when the message is
+     * received in the correct sequence. Otherwise, we delay the event
+     * generation until we reach the correct sequence number.
+     */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
                             hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     
     match = match_one(btl, hdr, segment, num_segments, comm_ptr, proc, frag);
     
-    /**
-      * The match is over. We generate the SEARCH_POSTED_Q_END here, before going
-      * into the mca_pml_ob1_check_cantmatch_for_match so we can make a difference
-      * for the searching time for all messages.
-      */
+    /* The match is over. We generate the SEARCH_POSTED_Q_END here,
+     * before going into the mca_pml_ob1_check_cantmatch_for_match so
+     * we can make a difference for the searching time for all
+     * messages.
+     */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     
@@ -466,13 +464,13 @@ static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
         if(MCA_PML_REQUEST_PROBE == match->req_recv.req_base.req_type) {
             /* complete the probe */
             mca_pml_ob1_recv_request_matched_probe(match, btl, segments,
-                    num_segments);
+                                                   num_segments);
             /* attempt to match actual request */
             continue;
         }
 
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
-                &(match->req_recv.req_base), PERUSE_RECV);
+                                &(match->req_recv.req_base), PERUSE_RECV);
         break;
     } while(true);
 
@@ -485,9 +483,9 @@ static mca_pml_ob1_recv_frag_t *check_cantmatch_for_match(
     /* local parameters */
     mca_pml_ob1_recv_frag_t *frag;
 
-        /* search the list for a fragment from the send with sequence
-         * number next_msg_seq_expected
-         */
+    /* search the list for a fragment from the send with sequence
+     * number next_msg_seq_expected
+     */
     for(frag = (mca_pml_ob1_recv_frag_t *) 
             opal_list_get_first(&proc->frags_cant_match);
         frag != (mca_pml_ob1_recv_frag_t *)
