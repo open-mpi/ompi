@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -281,7 +281,13 @@ AC_DEFUN([OMPI_SETUP_CC],[
         -O[0-9])   co_found=1 ;;
         -xO)       co_found=1 ;;
         -xO[0-9])  co_found=1 ;;
-        -fast) co_found=1 ;;
+        -fast)     co_found=1 ;;
+
+        # The below Sun Studio flags require or
+        # trigger -xO optimization
+        -xvector*)     co_found=1 ;;
+        -xdepend=yes)  co_found=1 ;;
+
       esac
       if test "$co_found" = "0" ; then
         CFLAGS_WITHOUT_OPTFLAGS="$CFLAGS_WITHOUT_OPTFLAGS $co_word"
