@@ -41,8 +41,9 @@
 #include "opal/util/num_procs.h"
 #include "opal/util/sys_limits.h"
 #include "opal/class/opal_pointer_array.h"
-
 #include "opal/dss/dss.h"
+#include "opal/mca/paffinity/base/base.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -638,13 +639,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
     free(param);
     
-    /* setup yield schedule and processor affinity
-     * We default here to always setting the affinity processor if we want
-     * it. The processor affinity system then determines
-     * if processor affinity is enabled/requested - if so, it then uses
-     * this value to select the process to which the proc is "assigned".
-     * Otherwise, the paffinity subsystem just ignores this value anyway
-     */
+    /* setup yield schedule */
     if (oversubscribed) {
         param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
         opal_setenv(param, "1", false, environ_copy);
@@ -756,7 +751,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_app_context_t *app, **apps;
     orte_std_cntr_t num_apps;
     orte_odls_child_t *child=NULL;
-    int i, num_processors;
+    int i, num_processors, max_processor_id;
     bool oversubscribed;
     int rc=ORTE_SUCCESS, ret;
     bool launch_failed=true;
@@ -811,15 +806,22 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
     }
     
-    if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
-        /* if the #procs > #processors, declare us oversubscribed. This
-         * covers the case where the user didn't tell us anything about the
-         * number of available slots, so we defaulted to a value of 1
+    if (ORTE_SUCCESS != opal_paffinity_base_get_processor_info(&num_processors, &max_processor_id)) {
+        /* if we cannot find the number of local processors, we have no choice
+         * but to default to conservative settings
          */
         oversubscribed = true;
     } else {
-        /* otherwise, declare us to not be oversubscribed so we can be aggressive */
-        oversubscribed = false;
+        if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
+            /* if the #procs > #processors, declare us oversubscribed. This
+             * covers the case where the user didn't tell us anything about the
+             * number of available slots, so we defaulted to a value of 1
+             */
+            oversubscribed = true;
+        } else {
+            /* otherwise, declare us to not be oversubscribed so we can be aggressive */
+            oversubscribed = false;
+        }
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
