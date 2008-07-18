@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -41,6 +42,12 @@ for co_word in $co_arg; do
     -xO)       co_found=1 ;;
     -xO[0-9])  co_found=1 ;;
     -fast) co_found=1 ;;
+
+    # The below Sun Studio flags require or
+    # trigger -xO optimization
+    -xvector*)     co_found=1 ;;
+    -xdepend=yes)  co_found=1 ;;
+
     esac
 done
 
