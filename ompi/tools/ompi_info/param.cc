@@ -149,6 +149,7 @@ void ompi_info::show_mca_params(opal_list_t *info,
     char *value_string, empty[] = "\0";
     string message, content, tmp;
     int value_int, j;
+    mca_base_param_source_t source;
 
     for (i = opal_list_get_first(info); i != opal_list_get_last(info);
          i = opal_list_get_next(i)) {
@@ -159,6 +160,12 @@ void ompi_info::show_mca_params(opal_list_t *info,
                 NULL == p->mbpp_component_name ||
                 (NULL != p->mbpp_component_name &&
                  component == p->mbpp_component_name)) {
+
+                // Find the source of the value
+                if (OPAL_SUCCESS != 
+                    mca_base_param_lookup_source(p->mbpp_index, &source)) {
+                    continue;
+                }
 
                 // Make a string for the default value.  Invoke a
                 // lookup because it may transform the string ("~/" ->
@@ -203,6 +210,25 @@ void ompi_info::show_mca_params(opal_list_t *info,
                         content += "\"";
                         content += value_string;
                         content += "\"";
+                    }
+
+                    // Indicate where the param was set from
+                    content += ", data source: ";
+                    switch(source) {
+                    case MCA_BASE_PARAM_SOURCE_DEFAULT:
+                        content += "default value";
+                        break;
+                    case MCA_BASE_PARAM_SOURCE_ENV:
+                        content += "environment";
+                        break;
+                    case MCA_BASE_PARAM_SOURCE_FILE:
+                        content += "file";
+                        break;
+                    case MCA_BASE_PARAM_SOURCE_OVERRIDE:
+                        content += "API override";
+                        break;
+                    default:
+                        break;
                     }
 
                     // Is this parameter deprecated?
@@ -258,6 +284,28 @@ void ompi_info::show_mca_params(opal_list_t *info,
                     content = value_string;
                     out(message, message, content);
 
+                    // Indicate where the param was set from
+
+                    message = tmp;
+                    message += "data_source";
+                    switch(source) {
+                    case MCA_BASE_PARAM_SOURCE_DEFAULT:
+                        content = "default value";
+                        break;
+                    case MCA_BASE_PARAM_SOURCE_ENV:
+                        content = "environment";
+                        break;
+                    case MCA_BASE_PARAM_SOURCE_FILE:
+                        content = "file";
+                        break;
+                    case MCA_BASE_PARAM_SOURCE_OVERRIDE:
+                        content = "API override";
+                        break;
+                    default:
+                        break;
+                    }
+                    out(message, message, content);
+                    
                     // Output whether it's read only or writable
 
                     message = tmp;
