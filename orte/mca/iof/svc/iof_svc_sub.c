@@ -457,6 +457,8 @@ int orte_iof_svc_sub_forward(
     bool *forward)
 {
     opal_list_item_t* item;
+    bool forwarded = false;
+
     for(item  = opal_list_get_first(&sub->sub_forward);
         item != opal_list_get_end(&sub->sub_forward);
         item =  opal_list_get_next(item)) {
@@ -480,16 +482,13 @@ int orte_iof_svc_sub_forward(
                STDIN from the HNP to a local VPID 0 is the only case
                where the message will find an endpoint with both a pub
                and sub on it, so we want to be sure to forward it only
-               *once*.  Outside of this loop, we'll forward it to
-               sub->sub_endpoint.  So if the pub->pub_endpoint is the
-               same as the sub->sub_endpoint, then skip it here --
-               we'll forward it after this loop.  Without this check,
-               we'd forward it twice (resulting in
+               *once*.  So if we forward it here, then skip forwarding
+               to the sub_endpoint (after this loop).  Without this
+               check, we'd forward it twice (resulting in
                https://svn.open-mpi.org/trac/ompi/ticket/1135). */
-            if (pub->pub_endpoint != sub->sub_endpoint) {
-                opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
-                rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
-            }
+            forwarded = true;
+            opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to pub local endpoint");
+            rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
         } else {
             /* forward */
             orte_iof_base_frag_t* frag;
@@ -517,7 +516,7 @@ int orte_iof_svc_sub_forward(
         }
         *forward = true;
     }
-    if (NULL != sub->sub_endpoint) {
+    if (NULL != sub->sub_endpoint && !forwarded) {
         opal_output_verbose(1, orte_iof_base.iof_output, "sub_forward: forwarding to sub local endpoint");
         *forward = true;
         return orte_iof_base_endpoint_forward(sub->sub_endpoint,src,hdr,data); 
