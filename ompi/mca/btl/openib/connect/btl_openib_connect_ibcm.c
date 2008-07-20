@@ -257,6 +257,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <infiniband/cm.h>
+#include <asm/byteorder.h>
 
 #include "opal/util/if.h"
 #include "opal/util/error.h"
@@ -285,7 +286,7 @@ typedef struct {
         an IB CM request arrives */
     uint64_t mm_port_guid;
     /** The service ID that we're listening on */
-    uint32_t mm_service_id;
+    uint64_t mm_service_id;
     /** The LID that we're sitting on; it also identifies the source
         endpoint when an IB CM request arrives */
     uint16_t mm_lid;
@@ -304,7 +305,7 @@ struct ibcm_request_t;
  */
 typedef struct {
     struct ibcm_request_t *ireqd_request;
-    uint32_t ireqd_pid;
+    uint64_t ireqd_pid;
     uint32_t ireqd_ep_index;
     uint8_t ireqd_qp_index;
 } ibcm_req_data_t;
@@ -357,6 +358,8 @@ typedef struct {
     struct ib_cm_device *cm_device;
     /* The listening handle */
     struct ib_cm_id *listen_cm_id;
+    /* Connection identifier parametres */
+    struct ib_cm_attr_param param;
 
     /* List of ibcm_module_t's that use this handle */
     opal_list_t ibcm_modules;
@@ -522,7 +525,6 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context);
 static bool initialized = false;
 static int ibcm_priority = 40;
 static int ibcm_gid_table_index = 0;
-static uint32_t ibcm_pid;
 static opal_list_t ibcm_cm_listeners;
 static opal_list_t ibcm_pending_requests;
 static opal_list_t ibcm_pending_replies;
@@ -624,6 +626,14 @@ static void ibcm_component_register(void)
 
 /*--------------------------------------------------------------------*/
 
+/* The IB_CM_ASSIGN_SERVICE_ID value passed to ib_cm_listen function asks, 
+ * from IBCM , to assign service_id.
+ * The value was taken from IBCM kernel level 
+ */
+#ifndef IB_CM_ASSIGN_SERVICE_ID
+#define IB_CM_ASSIGN_SERVICE_ID __cpu_to_be64(0x0200000000000000ULL)
+#endif
+
 static int ibcm_component_query(mca_btl_openib_module_t *btl, 
                                 ompi_btl_openib_connect_base_module_t **cpc)
 {
@@ -661,7 +671,6 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     /* Do some setup only once -- the first time this query function
        is invoked */
     if (!initialized) {
-        ibcm_pid = (uint32_t) getpid();
         OBJ_CONSTRUCT(&ibcm_cm_listeners, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_requests, opal_list_t);
         OBJ_CONSTRUCT(&ibcm_pending_replies, opal_list_t);
@@ -719,8 +728,8 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
            calling ib_cm_open_device().  The "+6" accounts for
            "uverbs". */
         asprintf(&filename, "/dev/infiniband/ucm%s",
-                 btl->hca->ib_dev_context->device->dev_name + 6);
-	rc = open(filename, O_RDWR);
+                btl->hca->ib_dev_context->device->dev_name + 6);
+        rc = open(filename, O_RDWR);
         if (rc < 0) {
             /* We can't open the device for some reason (can't read,
                can't write, doesn't exist, ...etc.); IBCM is not setup
@@ -755,25 +764,21 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             goto error;
         }
 
-        {
-            /* JMS: This crude loop is only here while we're trying to
-               figure out why ib_cm_listen() fails a bunch of the
-               time... */
-            int i;
-            for (i = 0; i < 10; ++i) {
-                if (0 == (rc = ib_cm_listen(cmh->listen_cm_id, ibcm_pid, 0))) {
-                    break;
-                }
-                usleep(1);
-            }
-            if (0 != rc) {
-                /* Same rationale as above */
-                OBJ_RELEASE(cmh);
-                BTL_ERROR(("failed to ib_cm_listen 10 times: rc=%d, errno=%d", rc, errno));
-                rc = OMPI_ERR_NOT_SUPPORTED;
-                goto error;
-            }
+        if (0 != (rc = ib_cm_listen(cmh->listen_cm_id, IB_CM_ASSIGN_SERVICE_ID, 0))) {
+            /* Same rationale as above */ 
+            OBJ_RELEASE(cmh); 
+            BTL_ERROR(("failed to ib_cm_listen : rc=%d, errno=%d", rc, errno)); 
+            rc = OMPI_ERR_NOT_SUPPORTED; 
+            goto error; 
+        } 
+
+        if (0 != (rc = ib_cm_attr_id(cmh->listen_cm_id, &(cmh->param)))) {
+            OBJ_RELEASE(cmh);
+            BTL_ERROR(("failed to ib_cm_attr_id: rc=%d, errno=%d", rc, errno));
+            rc = OMPI_ERR_NOT_SUPPORTED;
+            goto error;
         }
+
         opal_list_append(&ibcm_cm_listeners, &(cmh->super));
     } else {
         /* We found an existing IB CM handle -- bump up the refcount */
@@ -820,7 +825,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     msg->mm_port_guid = ntoh64(gid.global.interface_id);
     msg->mm_lid = btl->lid;
     msg->mm_port_num = btl->port_num;
-    msg->mm_service_id = ibcm_pid;
+    msg->mm_service_id = cmh->param.service_id;
     m->cpc.data.cbm_modex_message_len = sizeof(*msg);
 
     m->cpc.cbm_endpoint_init = ibcm_endpoint_init;
@@ -1142,15 +1147,16 @@ static bool i_initiate(ibcm_module_t *m,
         (modex_msg_t*) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     uint64_t my_port_guid = ntoh64(m->btl->hca->ib_dev_attr.node_guid) + 
         m->btl->port_num;
+    uint64_t service_id = m->cmh->param.service_id;
     
     BTL_VERBOSE(("i_initiate: my guid (%0" PRIx64 "), msg guid (%0" PRIx64 ")",
                  my_port_guid, msg->mm_port_guid));
-    BTL_VERBOSE(("i_initiate: my pid (%d), msg pid (%d)",
-                 ibcm_pid, msg->mm_service_id));
+    BTL_VERBOSE(("i_initiate: my service id (%d), msg service id (%d)",
+                 service_id, msg->mm_service_id));
 
     return
         (my_port_guid == msg->mm_port_guid &&
-         ibcm_pid < msg->mm_service_id) ? true : 
+         service_id < msg->mm_service_id) ? true : 
         (my_port_guid < msg->mm_port_guid) ? true : false;
 }
 
@@ -1199,7 +1205,7 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
     cm_req->local_cm_response_timeout = 20;
     cm_req->max_cm_retries = 5;
     
-    req->private_data.ireqd_pid = ibcm_pid;
+    req->private_data.ireqd_pid = m->cmh->param.service_id;
     req->private_data.ireqd_ep_index = endpoint->index;
 
     return req;
