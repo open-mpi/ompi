@@ -119,9 +119,9 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
     {
         MCA_OOB_BASE_VERSION_1_0_0,
         "tcp", /* MCA module name */
-        1,  /* MCA component major version */
-        0,  /* MCA component minor version */
-        0,  /* MCA component release version */
+        ORTE_MAJOR_VERSION,
+        ORTE_MINOR_VERSION,
+        ORTE_RELEASE_VERSION,
         mca_oob_tcp_component_open,  /* component open */
         mca_oob_tcp_component_close /* component close */
     },
