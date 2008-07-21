@@ -37,9 +37,9 @@ mca_allocator_base_component_t mca_allocator_basic_component = {
     MCA_ALLOCATOR_BASE_VERSION_1_0_0,
                                                                                                          
     "basic", /* MCA module name */
-    ORTE_MAJOR_VERSION,
-    ORTE_MINOR_VERSION,
-    ORTE_RELEASE_VERSION,
+    OMPI_MAJOR_VERSION,
+    OMPI_MINOR_VERSION,
+    OMPI_RELEASE_VERSION,
     mca_allocator_basic_component_open,  /* module open */
     mca_allocator_basic_component_close  /* module close */
   },
