@@ -865,7 +865,7 @@ cleanup:
  */
 int orte_plm_rsh_launch(orte_job_t *jdata)
 {
-    orte_job_map_t *map;
+    orte_job_map_t *map = NULL;
     int node_name_index1;
     int node_name_index2;
     int proc_vpid_index;
