@@ -19,7 +19,11 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 dist_pkgdata_DATA += util/hostfile/help-hostfile.txt \
-	util/dash_host/help-dash-host.txt
+                     util/dash_host/help-dash-host.txt
+
+man_MANS = util/hostfile/orte_hosts.7
+
+EXTRA_DIST = $(man_MANS)
 
 AM_LFLAGS = -Porte_util_hostfile_
 LEX_OUTPUT_ROOT = lex.orte_util_hostfile_

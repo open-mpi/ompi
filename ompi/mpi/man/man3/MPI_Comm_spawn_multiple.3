@@ -1,6 +1,6 @@
 .\"Copyright 2006, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Comm_spawn_multiple 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Comm_spawn_multiple 3OpenMPI "July 2008" "Open MPI 1.3" " "
 .SH NAME
 \fBMPI_Comm_spawn_multiple\fP \- Spawns multiple binaries, or the same binary with multiple sets of arguments. 
 
@@ -105,20 +105,30 @@ Error codes are treated as for MPI_Comm_spawn.
 
  
 .SH INFO ARGUMENTS
-The following keys for \fIinfo\fP are recognized in Open MPI 1.2. (The reserved values mentioned in Section 5.3.4 of the MPI-2 standard are not implemented.)
+The following keys for \fIinfo\fP are recognized in Open MPI 1.3. (The reserved values mentioned in Section 5.3.4 of the MPI-2 standard are not implemented.)
 .sp
 .sp
 .nf
 Key                   Type      Description
 ---                   ----      -----------
 
-host                  char *    Host on which the process should be spawned.
+host                  char *    Comma-deliminated list of hosts upon which
+                                the process(es) should be spawned.
+                                See the \fIorte_hosts\fP man page for an
+                                explanation of how this will be used.
+hostfile              char *    Hostfile containing the hosts on which
+                                the process(es) are to be spawned. See
+                                the \ fIorte_hosts\fP man page for an
+                                explanation of how this will be used.
 wdir                  char *    Directory where the executable is located.
 ompi_prefix           char *    Same as the --prefix command line argument
                                 to mpirun.
 ompi_non_mpi          bool      If set to true, launching a non-MPI
                                 application; the returned communicator
-                                will be MPI_COMM_NULL.
+                                will be MPI_COMM_NULL. Failure to set
+                                this flag when launching a non-MPI
+                                application will cause both the child
+                                and parent jobs to "hang".
 .fi
 
 .sp 
@@ -137,7 +147,7 @@ to true, but others are set to false (or are unset), MPI_ERR_INFO will
 be returned.
   
 .sp
-Note that in Open MPI 1.2, the first array location in \fIarray_of_info\fP is applied to all the commands in \fIarray_of_commands\fP. 
+Note that in Open MPI 1.e, the first array location in \fIarray_of_info\fP is applied to all the commands in \fIarray_of_commands\fP. 
 
 .SH NOTES
 The argument \fIcount\fP is interpreted by MPI only at the root, as is \fIarray_of_argv\fP. Since the leading dimension of \fIarray_of_argv\fP is \fIcount\fP, a nonpositive value of \fIcount\fP at a nonroot node could theoretically cause a runtime bounds check error, even though \fIarray_of_argv\fP should be ignored by the subroutine. If this happens, you should explicitly supply a reasonable value of \fIcount\fP on the nonroot nodes. 
