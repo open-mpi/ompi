@@ -1,0 +1,69 @@
+.\"
+.\" Copyright (c) 2008	Los Alamos National Security, LLC  All rights reserved.
+.\"
+.\" Man page for ORTE's Hostfile functionality
+.\" 
+.\" .TH name     section center-footer   left-footer  center-header
+.TH     ORTE_HOSTS  7       "July 2008" "OpenRTE"   "OPENRTE HOSTS OVERVIEW"
+.\" **************************
+.\"    Name Section
+.\" **************************
+.SH NAME
+.
+OpenRTE Hostfile and HOST Behavior \- Overview of OpenRTE's support for user-supplied hostfiles and comma-delimited lists of hosts
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+.PP
+OpenRTE supports several levels of user-specified host lists based on an established
+precedence order. Users can specify a \fIdefault hostfile\fP that contains a list of
+nodes available to all app_contexts given on the command line. Only \fIone\fP default
+hostfile can be provided for any job. In addition, users
+can specify a \fIhostfile\fP that contains a list of nodes to be used for a specific
+app_context, or can provide a comma-delimited list of nodes to be used for that
+app_context via the \fI-host\fP command line option.
+.sp
+The precedence order applied to these various options depends to some extent on
+the local environment. The following table illustrates how host and hostfile directives
+work together to define the set of hosts upon which a job will execute
+in the absence of a resource manager (RM):
+.sp
+.nf
+ default
+ hostfile      host        hostfile       Result
+----------    ------      ----------      -----------------------------------------
+ unset        unset          unset        Job is co-located with mpirun
+ unset         set           unset        Host defines resource list for the job
+ unset        unset           set         Hostfile defines resource list for the job
+ unset         set            set         Hostfile defines resource list for the job,
+                                          then host filters the list to define the final
+                                          set of nodes available to each application
+                                          within the job
+  set         unset          unset        Default hostfile defines resource list for the job
+  set          set           unset        Default hostfile defines resource list for the job,
+                                          then host filters the list to define the final
+                                          set of nodes available to each application
+                                          within the job
+  set          set            set         Default hostfile defines resource list for the job,
+                                          then hostfile filters the list, and then host filters
+                                          the list to define the final set of nodes available
+                                          to each application within the job
+.fi
+.sp
+This changes somewhat in the presence of a RM as that entity specifies the
+initial allocation of nodes. In this case, the default hostfile, hostfile and host
+directives are all used to filter the RM's specification so that a user can utilize different
+portions of the allocation for different jobs. This is done according to the same precedence
+order as in the prior table, with the RM providing the initial pool of nodes.
+.sp
+.
+.\" **************************
+.\"    See Also Section
+.\" **************************
+.
+.SH SEE ALSO
+  orterun(1)
+.
