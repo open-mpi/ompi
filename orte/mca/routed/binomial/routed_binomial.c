@@ -34,6 +34,7 @@
 
 static int init(void);
 static int finalize(void);
+static int delete_route(orte_process_name_t *proc);
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route);
 static orte_process_name_t get_route(orte_process_name_t *target);
@@ -52,6 +53,7 @@ static int binomial_ft_event(int state);
 orte_routed_module_t orte_routed_binomial_module = {
     init,
     finalize,
+    delete_route,
     update_route,
     get_route,
     init_routes,
@@ -162,6 +164,116 @@ static int finalize(void)
     return ORTE_SUCCESS;
 }
 
+static int delete_route(orte_process_name_t *proc)
+{
+    int rc;
+    orte_process_name_t *route_copy;
+    
+    if (proc->jobid == ORTE_JOBID_INVALID ||
+        proc->vpid == ORTE_VPID_INVALID) {
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
+    /* if I am an application process, I don't have any routes
+     * so there is nothing for me to do
+     */
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
+        return ORTE_SUCCESS;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                         "%s routed_binomial_delete_route for %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+    
+    
+    /* if this is from a different job family, then I need to
+     * look it up appropriately
+     */
+    if (ORTE_JOB_FAMILY(proc->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        
+        /* if I am a daemon, then I will automatically route
+         * anything to this job family via my HNP - so I have nothing
+         * in my routing table and thus have nothing to do
+         * here, just return
+         */
+        if (orte_process_info.daemon) {
+            return ORTE_SUCCESS;
+        }
+        
+        /* see if this proc is present - it will have a wildcard vpid,
+         * so we have to look for it with that condition
+         */
+        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+                                              ORTE_JOB_FAMILY(proc->jobid),
+                                              (void**)&route_copy);
+        if (ORTE_SUCCESS == rc && NULL != route_copy) {
+            /* proc is present - remove the data */
+            free(route_copy);
+            rc = opal_hash_table_remove_value_uint32(&vpid_wildcard_list,
+                                                     ORTE_JOB_FAMILY(proc->jobid));
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
+        }
+        
+        /* not present - nothing to do */
+        return ORTE_SUCCESS;
+    }
+    
+    /* THIS CAME FROM OUR OWN JOB FAMILY... */
+    
+    /* treat vpid wildcards separately so they go onto the correct list */
+    if (proc->jobid != ORTE_JOBID_WILDCARD &&
+        proc->vpid == ORTE_VPID_WILDCARD) {
+        /* see if this target is already present - it will have a wildcard vpid,
+         * so we have to look for it on that list
+         */
+        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+                                              proc->jobid,
+                                              (void**)&route_copy);
+        if (ORTE_SUCCESS == rc && NULL != route_copy) {
+            /* proc is present - remove the data */
+            free(route_copy);
+            rc = opal_hash_table_remove_value_uint32(&vpid_wildcard_list, proc->jobid);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
+        }
+        /* not already present - nothing to do */
+        return ORTE_SUCCESS;
+    }
+    
+    /* check for an exact match */
+    if (proc->jobid != ORTE_JOBID_WILDCARD &&
+        proc->vpid != ORTE_VPID_WILDCARD) {
+        /* see if this route already exists in our table */
+        rc = opal_hash_table_get_value_uint64(&peer_list,
+                                              orte_util_hash_name(proc),
+                                              (void**)&route_copy);
+        
+        if (ORTE_SUCCESS == rc && NULL != route_copy) {
+            /* proc is present - remove the data */
+            free(route_copy);
+            rc = opal_hash_table_remove_value_uint64(&peer_list, orte_util_hash_name(proc));
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
+        }
+        /* not already present - nothing to do */
+        return ORTE_SUCCESS;
+    }
+    
+    /* this must be a process that doesn't match any of the
+     * prior conditions - sorry!
+     */
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route)
 { 
@@ -214,8 +326,16 @@ static int update_route(orte_process_name_t *target,
                                               ORTE_JOB_FAMILY(target->jobid),
                                               (void**)&route_copy);
         if (ORTE_SUCCESS == rc && NULL != route_copy) {
-            /* target already present - no need for duplicate entry */
-            return ORTE_SUCCESS;
+            /* target already present - update the route info
+             * in case it has changed
+             */
+            *route_copy = *route;
+            rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+                                                  ORTE_JOB_FAMILY(target->jobid), route_copy);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
         }
         
         /* not there, so add the route FOR THE JOB FAMILY*/
@@ -231,11 +351,63 @@ static int update_route(orte_process_name_t *target,
     
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
     
-    route_copy = malloc(sizeof(orte_process_name_t));
-    *route_copy = *route;
-    /* exact match */
+    /* treat vpid wildcards separately so they go onto the correct list */
+    if (target->jobid != ORTE_JOBID_WILDCARD &&
+        target->vpid == ORTE_VPID_WILDCARD) {
+        /* see if this target is already present - it will have a wildcard vpid,
+         * so we have to look for it on that list
+         */
+        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+                                              target->jobid,
+                                              (void**)&route_copy);
+        if (ORTE_SUCCESS == rc && NULL != route_copy) {
+            /* target already present - update the route info
+             * in case it has changed
+             */
+            *route_copy = *route;
+            rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+                                                  target->jobid, route_copy);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
+        }
+        
+        /* not already present, so let's add it */
+        route_copy = malloc(sizeof(orte_process_name_t));
+        *route_copy = *route;
+        rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+                                              target->jobid, route_copy);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+    
+    /* check for an exact match */
     if (target->jobid != ORTE_JOBID_WILDCARD &&
         target->vpid != ORTE_VPID_WILDCARD) {
+        /* see if this route already exists in our table */
+        rc = opal_hash_table_get_value_uint64(&peer_list,
+                                              orte_util_hash_name(target),
+                                              (void**)&route_copy);
+        
+        if (ORTE_SUCCESS == rc && NULL != route_copy) {
+            /* target already present - update the route info
+             * in case it has changed
+             */
+            *route_copy = *route;
+            rc = opal_hash_table_set_value_uint64(&peer_list,
+                                                  orte_util_hash_name(target), route_copy);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
+        }
+        
+        /* not present - add it to the table */
+        route_copy = malloc(sizeof(orte_process_name_t));
+        *route_copy = *route;
         rc = opal_hash_table_set_value_uint64(&peer_list,
                                               orte_util_hash_name(target), route_copy);
         if (ORTE_SUCCESS != rc) {
@@ -244,18 +416,9 @@ static int update_route(orte_process_name_t *target,
         return rc;
     }
 
-    /* vpid wildcard */
-    if (target->jobid != ORTE_JOBID_WILDCARD &&
-        target->vpid == ORTE_VPID_WILDCARD) {
-        rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
-                                              target->jobid, route_copy);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-    free(route_copy);
-
+    /* this must be a process that doesn't match any of the
+     * prior conditions - sorry!
+     */
     return ORTE_ERR_NOT_SUPPORTED;
 }
 

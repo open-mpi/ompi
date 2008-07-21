@@ -45,6 +45,7 @@ static orte_process_name_t  *lifeline=NULL;
 /* API functions */
 static int init(void);
 static int finalize(void);
+static int delete_route(orte_process_name_t *proc);
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route);
 static orte_process_name_t get_route(orte_process_name_t *target);
@@ -63,6 +64,7 @@ static int direct_ft_event(int state);
 orte_routed_module_t orte_routed_direct_module = {
     init,
     finalize,
+    delete_route,
     update_route,
     get_route,
     init_routes,
@@ -141,6 +143,51 @@ static int finalize(void)
 }
 
 
+static int delete_route(orte_process_name_t *proc)
+{
+    orte_process_name_t *route_copy;
+    int rc;
+    
+    if (proc->jobid == ORTE_JOBID_INVALID ||
+        proc->vpid == ORTE_VPID_INVALID) {
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
+    /* if this isn't from a different job family, then there is
+     * nothing for us to do as all routes are direct - nothing
+     * is in the routing table
+     */
+    if (ORTE_JOB_FAMILY(proc->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        return ORTE_SUCCESS;
+    }
+    
+    /* if I am -not- the HNP or a tool, then I will automatically route
+     * anything to this job family via my HNP - so nothing to do
+     * here since nothing is in my routing table
+     */
+    if (!orte_process_info.hnp && !orte_process_info.tool) {
+        return ORTE_SUCCESS;
+    }
+
+    /* must need to look it up */
+    rc = opal_hash_table_get_value_uint32(&peer_list,
+                                          ORTE_JOB_FAMILY(proc->jobid),
+                                          (void**)&route_copy);
+    if (ORTE_SUCCESS == rc && NULL != route_copy) {
+        /* proc is present - remove the data */
+        free(route_copy);
+        rc = opal_hash_table_remove_value_uint32(&peer_list,
+                                                 ORTE_JOB_FAMILY(proc->jobid));
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }            
+        return rc;
+    }
+    
+    /* wasn't here - nothing to do */
+    return ORTE_SUCCESS;
+}
+
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route)
 {
@@ -176,8 +223,16 @@ static int update_route(orte_process_name_t *target,
                                               ORTE_JOB_FAMILY(target->jobid),
                                               (void**)&route_copy);
         if (ORTE_SUCCESS == rc && NULL != route_copy) {
-            /* target already present - no need for duplicate entry */
-            return ORTE_SUCCESS;
+            /* target already present - update the route info
+             * in case it has changed
+             */
+            *route_copy = *route;
+            rc = opal_hash_table_set_value_uint32(&peer_list,
+                                                  ORTE_JOB_FAMILY(target->jobid), route_copy);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }            
+            return rc;
         }
         
         /* not there, so add the route FOR THE JOB FAMILY*/
