@@ -1816,7 +1816,7 @@ static bool lookup_env(mca_base_param_t *param,
     char *env = NULL;
     opal_list_item_t *item;
     syn_info_t *si;
-    char *deprecated_name;
+    char *deprecated_name = NULL;
     bool print_deprecated_warning = false;
 
     /* Look for the primary param name */
@@ -1880,7 +1880,7 @@ static bool lookup_file(mca_base_param_t *param,
 {
     bool found = false;
     syn_info_t *si;
-    char *deprecated_name;
+    char *deprecated_name = NULL;
     opal_list_item_t *item;
     mca_base_param_file_value_t *fv;
     bool print_deprecated_warning = false;
