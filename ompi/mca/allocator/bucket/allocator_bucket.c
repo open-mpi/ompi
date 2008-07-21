@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,9 +116,9 @@ mca_allocator_base_component_t mca_allocator_bucket_component = {
     MCA_ALLOCATOR_BASE_VERSION_1_0_0,
 
     "bucket", /* MCA module name */
-    1,  /* MCA module major version */
-    0,  /* MCA module minor version */
-    0,  /* MCA module release version */
+    OMPI_MAJOR_VERSION,
+    OMPI_MINOR_VERSION,
+    OMPI_RELEASE_VERSION,
     mca_allocator_bucket_module_open,  /* module open */
     mca_allocator_bucket_module_close  /* module close */
   },
