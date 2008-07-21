@@ -94,6 +94,15 @@ typedef int (*orte_routed_module_init_fn_t)(void);
 typedef int (*orte_routed_module_finalize_fn_t)(void);
 
 
+/*
+ * Delete route
+ *
+ * Delete the route to the specified proc from the routing table. Note
+ * that wildcards are supported to remove routes from, for example, all
+ * procs in a given job
+ */
+typedef int (*orte_routed_module_delete_route_fn_t)(orte_process_name_t *proc);
+
 /**
  * Update route table with new information
  *
@@ -229,6 +238,7 @@ struct orte_routed_module_t {
     orte_routed_module_init_fn_t                    initialize;
     orte_routed_module_finalize_fn_t                finalize;
     /* API functions */
+    orte_routed_module_delete_route_fn_t            delete_route;
     orte_routed_module_update_route_fn_t            update_route;
     orte_routed_module_get_route_fn_t               get_route;
     orte_routed_module_init_routes_fn_t             init_routes;
