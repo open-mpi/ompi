@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,9 +37,9 @@ mca_allocator_base_component_t mca_allocator_basic_component = {
     MCA_ALLOCATOR_BASE_VERSION_1_0_0,
                                                                                                          
     "basic", /* MCA module name */
-    1,  /* MCA module major version */
-    0,  /* MCA module minor version */
-    0,  /* MCA module release version */
+    ORTE_MAJOR_VERSION,
+    ORTE_MINOR_VERSION,
+    ORTE_RELEASE_VERSION,
     mca_allocator_basic_component_open,  /* module open */
     mca_allocator_basic_component_close  /* module close */
   },
