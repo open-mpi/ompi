@@ -285,7 +285,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     }
     if (orte_xml_output) {
         /* need to create the output in XML format */
-        asprintf(output, "%s<host name=\"%s\" slots=\"%d\" max_slots=\"%d\"/>\n", pfx2,
+        asprintf(output, "%s<host name=\"%s\" slots=\"%d\" max_slots=\"%d\"\n", pfx2,
                  (NULL == src->name) ? "UNKNOWN" : src->name,
                  (int)src->slots, (int)src->slots_max);
         free(pfx2);
