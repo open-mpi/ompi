@@ -443,7 +443,7 @@ static int handle_connect_request(rdmacm_contents_t *local,
     endpoint = rdmacm_find_endpoint(local, event->id, rem_port);
     if (NULL == endpoint) {
         BTL_ERROR(("Failed to find endpoint"));
-        return -1;
+        goto out;
     }
 
     message = endpoint->endpoint_remote_cpc_data->cbm_modex_message;
@@ -701,7 +701,6 @@ static int start_connect(rdmacm_contents_t *local, int num)
 
 out:
     rdmacm_cleanup(local, local->id[num], num);
-
     return -1;
 }
 
@@ -907,6 +906,18 @@ static int rdma_event_handler(struct rdma_cm_event *event)
     return rc;
 }
 
+static inline void rdmamcm_event_error(struct rdma_cm_event *event)
+{
+    mca_btl_base_endpoint_t *endpoint = NULL;
+
+    if (event->id->context) {
+        endpoint = ((id_contexts_t *)event->id->context)->local->endpoint;
+    }
+
+    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, 
+                                endpoint);
+}
+
 static void *rdmacm_event_dispatch(int fd, int flags, void *context)
 {
     struct rdma_cm_event *event, ecopy;
@@ -917,7 +928,7 @@ static void *rdmacm_event_dispatch(int fd, int flags, void *context)
     rc = rdma_get_cm_event(event_channel, &event);
     if (0 != rc) {
         BTL_ERROR(("rdma_get_cm_event error %d", rc));
-        return NULL;
+        goto err;
     }
 
     /* If the incomming event is not acked in a sufficient amount of
@@ -934,8 +945,7 @@ static void *rdmacm_event_dispatch(int fd, int flags, void *context)
         data = malloc(event->param.conn.private_data_len);
         if (NULL == data) {
            BTL_ERROR(("error mallocing memory"));
-           /* JMS need to propagate an error up to BTL or PML somehow */
-           return NULL;
+           goto err;
         }
         memcpy(data, event->param.conn.private_data, event->param.conn.private_data_len);
         ecopy.param.conn.private_data = data;
@@ -947,12 +957,19 @@ static void *rdmacm_event_dispatch(int fd, int flags, void *context)
         BTL_ERROR(("Error rdma_event_handler -- %s, status = %d",
                     rdma_event_str(ecopy.event),
                     ecopy.status));
-        /* JMS need to propagate an error up to BTL or PML somehow */
+
+        if (NULL != data)
+            free(data);
+
+        goto err;
     }
 
     if (NULL != data)
         free(data);
 
+    return NULL;
+err:
+    rdmamcm_event_error(&ecopy);
     return NULL;
 }
 
