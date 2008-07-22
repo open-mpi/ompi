@@ -3,7 +3,7 @@
 .\"                         University Research and Technology
 .\"                         Corporation.  All rights reserved.
 .\"
-.\" Copyright 2007, Sun Microsystems, Inc.
+.\" Copyright (c) 2007-2008 Sun Microsystems, Inc.
 .\"
 .TH orte-clean 1 "March 2007" "Open MPI 1.2" "OPEN MPI COMMANDS "
 .SH NAME
@@ -18,9 +18,9 @@ from Open MPI jobs.
 .SH SYNOPSIS
 .ft R
 .nf 
-orte-clean [--verbose]
+orte-clean [--verbose] [--debug]
 .br
-mpirun --pernode [--host | --hostfile \fIfile\fP] orte-clean [--verbose]
+mpirun --pernode [--host | --hostfile \fIfile\fP] orte-clean [--verbose] [--debug]
 .sp
 
 
@@ -33,7 +33,11 @@ mpirun --pernode [--host | --hostfile \fIfile\fP] orte-clean [--verbose]
 mode and print out the universes that are getting cleaned up 
 as well as processes that are being killed.
 .sp
-
+.ft R
+[-d | --debug] This argument will run the command in debug
+mode and print out lots of details about what the command is 
+doing.  This is intended for developer use only.
+.sp
 .\" **************************
 .\"    Description Section
 .\" **************************
