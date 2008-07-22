@@ -40,9 +40,9 @@ mca_pml_base_component_1_0_0_t mca_pml_v_component =
   {
     MCA_PML_BASE_VERSION_1_0_0, /* Indicate that we are a pml v1.0.0 component (which also implies a specific MCA version) */
     "v", /* MCA component name */
-    1,   /* MCA component major version */
-    0,   /* MCA component minor version */
-    0,   /* MCA component release version */
+    OMPI_MAJOR_VERSION,  /* MCA component major version */
+    OMPI_MINOR_VERSION,  /* MCA component minor version */
+    OMPI_RELEASE_VERSION,  /* MCA component release version */
     mca_pml_v_component_open,
     mca_pml_v_component_close
   },

@@ -40,9 +40,9 @@ mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component =
          a specific MCA version) */
       MCA_VPROTOCOL_BASE_VERSION_1_0_0,
       "pessimist", /* MCA component name */
-      1,  /* MCA component major version */
-      0,  /* MCA component minor version */
-      0,  /* MCA component release version */
+      OMPI_MAJOR_VERSION,  /* MCA component major version */
+      OMPI_MINOR_VERSION,  /* MCA component minor version */
+      OMPI_RELEASE_VERSION,  /* MCA component release version */
       mca_vprotocol_pessimist_component_open,  /* component open */
       mca_vprotocol_pessimist_component_close  /* component close */
     },
