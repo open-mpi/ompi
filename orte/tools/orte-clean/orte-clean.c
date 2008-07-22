@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -18,7 +18,6 @@
  * 
  * $HEADER$
  */
-
 #include "orte_config.h"
 #include "orte/constants.h"
 
@@ -57,6 +56,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/basename.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -74,7 +74,6 @@
 /******************
  * Local Functions
  ******************/
-static int orte_clean_init(void);
 static int parse_args(int argc, char *argv[]);
 #if !defined(__WINDOWS__)
 static void kill_procs(void);
@@ -86,6 +85,7 @@ static void kill_procs(void);
 typedef struct {
     bool help;
     bool verbose;
+    bool debug;
 } orte_clean_globals_t;
 
 orte_clean_globals_t orte_clean_globals;
@@ -102,6 +102,12 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       0,
       &orte_clean_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Generate verbose output" },
+
+    { NULL, NULL, NULL, 
+      'd', NULL, "debug", 
+      0,
+      &orte_clean_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
+      "Extra debug output for developers to ensure that orte-clean is working" },
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -120,18 +126,44 @@ opal_cmd_line_init_t cmd_line_opts[] = {
 int
 main(int argc, char *argv[])
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret = ORTE_SUCCESS;
+    char *tmp_env_var;
 
-    /***************
-     * Initialize
-     ***************/
+    /* This is needed so we can print the help message */
+    if (ORTE_SUCCESS != (ret = opal_init_util())) {
+        return ret;
+    }
+
     if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
         return ret;
     }
-    if (ORTE_SUCCESS != (ret = orte_clean_init())) {
-        exit_status = ret;
-        goto cleanup;
+
+#if OPAL_ENABLE_FT == 1
+    /* Disable the checkpoint notification routine for this
+     * tool. As we will never need to checkpoint this tool.
+     * Note: This must happen before opal_init().
+     */
+    opal_cr_set_enabled(false);
+    
+    /* Select the none component, since we don't actually use a checkpointer */
+    tmp_env_var = mca_base_param_env_var("crs");
+    opal_setenv(tmp_env_var,
+                "none",
+                true, &environ);
+    free(tmp_env_var);
+    tmp_env_var = NULL;
+
+    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
+    opal_setenv(tmp_env_var,
+                "1", true, NULL);
+    free(tmp_env_var);
+#endif
+    tmp_env_var = NULL; /* Silence compiler warning */
+
+    if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL_WITH_NAME))) {
+        return ret;
     }
+
     /*
      * Clean out all session directories - we don't have to protect
      * our own session directory because (since we are a tool) we
@@ -150,8 +182,7 @@ main(int argc, char *argv[])
 
     orte_finalize();
 
- cleanup:
-    return exit_status;
+    return ORTE_SUCCESS;
 }
 /*
  * Parse the command line arguments using the functions command
@@ -160,10 +191,7 @@ main(int argc, char *argv[])
 static int parse_args(int argc, char *argv[]) {
     int ret;
     opal_cmd_line_t cmd_line;
-    orte_clean_globals_t tmp = { false, false };
-    char * tmp_env_var = NULL;
-
-    /* Parse the command line options */
+    orte_clean_globals_t tmp = { false, false, false };
 
     /* NOTE: There is a bug in the PGI 6.2 series that causes the
        compiler to choke when copying structs containing bool members
@@ -175,12 +203,6 @@ static int parse_args(int argc, char *argv[]) {
      */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
-
-    tmp_env_var = mca_base_param_env_var("opal_cr_is_tool");
-    opal_setenv(tmp_env_var,
-                "1", true, NULL);
-    free(tmp_env_var);
-    tmp_env_var = NULL;
 
     /**
      * Now start parsing our specific arguments
@@ -198,35 +220,6 @@ static int parse_args(int argc, char *argv[]) {
     OBJ_DESTRUCT(&cmd_line);
 
     return ORTE_SUCCESS;
-}
-
-static int orte_clean_init(void) {
-    int exit_status = ORTE_SUCCESS, ret;
-    char * tmp_env_var = NULL;
-
-#if OPAL_ENABLE_FT == 1
-    /* Disable the checkpoint notification routine for this
-     * tool. As we will never need to checkpoint this tool.
-     * Note: This must happen before opal_init().
-     */
-    opal_cr_set_enabled(false);
-    
-    /* Select the none component, since we don't actually use a checkpointer */
-    tmp_env_var = mca_base_param_env_var("crs");
-    opal_setenv(tmp_env_var,
-                "none",
-                true, &environ);
-    free(tmp_env_var);
-#endif
-    tmp_env_var = NULL; /* Silence compiler warning */
-
-    if (ORTE_SUCCESS != (ret = orte_init(ORTE_TOOL_WITH_NAME))) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
- cleanup:
-    return exit_status;
 }
 
 #if !defined(__WINDOWS__)
@@ -260,15 +253,17 @@ static char *orte_getline(FILE *fp)
 static
 void kill_procs(void) {
     int ortedpid;
+    char *fullprocname;
     char *procname;
     char *pidstr;
     char *user;
     int procpid;
     FILE *psfile;
-    char *inputline, *tmpline;
+    char *inputline;
     char *this_user;
     int uid;
-	struct passwd *pwdent;
+    struct passwd *pwdent;
+    char *separator = " \t";  /* output can be delimited by space or tab */
     
     /*
      * This is the command that is used to get the information about
@@ -300,7 +295,7 @@ void kill_procs(void) {
      */
     ortedpid = getppid();
 
-	/* get the name of the user */
+    /* get the name of the user */
     uid = getuid();
 #ifdef HAVE_GETPWUID
     pwdent = getpwuid(uid);
@@ -342,42 +337,33 @@ void kill_procs(void) {
     free(inputline);  /* dump the header line */
     
     while (NULL != (inputline = orte_getline(psfile))) {
-        
-        /* the user name is at the end of the line, with a space
-         * preceeding it - extract that field
-         */
-        user = strrchr(inputline, ' ');
-        *user = '\0';  /* null terminate the remainder of the line */
-        user++;  /* increment to point to the beginning of the user name */
-        
-        /* if we are not the user, dump this input */
-        if (0 != strcmp(user, this_user)) {
+
+        /* The three fields are typically seperated by spaces */
+        fullprocname = strtok(inputline, separator);
+        pidstr = strtok(NULL, separator);
+        user = strtok(NULL, separator);
+
+        if (orte_clean_globals.debug) {
+            fprintf(stdout, "\norte-clean: user(pid)=%s, me=%s\n", 
+                    user, this_user);
+        }
+
+        /* If the user is not us, and the user is not root, then skip
+         * further checking.  If the user is root, then continue on as
+         * we want root to kill off everybody. */
+        if ((0 != strcmp(user, this_user)) && (0 != strcmp("root", this_user))) {
             /* not us */
             free(inputline);
             continue;
         }
-         /* copy just the first part so we can search
-         * from the back of the string
-         */
-        tmpline = strdup(inputline);
-        
-        /* parse the truncated line for the procname and pid */
-        pidstr = strrchr(tmpline, ' ');
-        *pidstr = '\0';  /* NULL terminate the front of the line */
-        pidstr++;
+
         procpid = atoi(pidstr);
-        
-        /* since we null-terminated inputline at the end of the
-         * procname field, we can now search that field to
-         * separate out the base command name in case they
-         * have a bunch of path stuff at the start
-         */
-        if (NULL == (procname = strrchr(tmpline, '/'))) {
-            procname = tmpline;  /* no path in command name */
-        } else {
-            procname++;  /* move past the / */
+        procname = opal_basename(fullprocname);
+        if (orte_clean_globals.debug) {
+            fprintf(stdout, "orte-clean: fullname=%s, basename=%s, pid=%d\n", 
+                    fullprocname, procname, procpid);
         }
-        
+
         /*
          * Look for any orteds that are not our parent and attempt to
          * kill them.  We currently do not worry whether we are the
@@ -433,7 +419,7 @@ void kill_procs(void) {
             }
         }
         free(inputline);
-        free(tmpline);
+	free(procname);
     }
     free(this_user);
     return;
