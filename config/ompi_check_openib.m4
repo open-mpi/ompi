@@ -172,7 +172,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            # starting with OFED 1.2 or so, so check for
            # ib_cm_open_device (introduced in libibcm 1.0/OFED 1.2).
            if test "$enable_openib_ibcm" = "yes"; then
-               AC_CHECK_HEADERS([infiniband/cm.h asm/byteorder.h],
+               AC_CHECK_HEADERS([infiniband/cm.h],
                    [AC_CHECK_LIB([ibcm], [ib_cm_open_device],
                        [$1_have_ibcm=1
                        $1_LIBS="-libcm $$1_LIBS"])])

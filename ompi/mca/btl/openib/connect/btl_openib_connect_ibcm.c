@@ -257,7 +257,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <infiniband/cm.h>
-#include <asm/byteorder.h>
 
 #include "opal/util/if.h"
 #include "opal/util/error.h"
@@ -631,7 +630,7 @@ static void ibcm_component_register(void)
  * The value was taken from IBCM kernel level 
  */
 #ifndef IB_CM_ASSIGN_SERVICE_ID
-#define IB_CM_ASSIGN_SERVICE_ID __cpu_to_be64(0x0200000000000000ULL)
+#define IB_CM_ASSIGN_SERVICE_ID hton64(0x0200000000000000ULL)
 #endif
 
 static int ibcm_component_query(mca_btl_openib_module_t *btl, 
