@@ -75,6 +75,7 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
 static int orte_rmaps_rank_file_open(void)
 {
     mca_rmaps_rank_file_component.priority = 0;
+    int index = 0;
     
     mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.base_version,
                               "path",
@@ -83,6 +84,15 @@ static int orte_rmaps_rank_file_open(void)
     if (NULL != orte_rmaps_rank_file_path) {
         mca_rmaps_rank_file_component.priority = 100;
     }
+    
+    index = mca_base_param_find("opal", NULL, "paffinity_base_slot_list"); 
+    if (index >= 0) { 
+        if (OPAL_SUCCESS == mca_base_param_lookup_string(index, &orte_mca_rmaps_rank_file_slot_list)) { 
+            if (NULL != orte_mca_rmaps_rank_file_slot_list) { 
+                mca_rmaps_rank_file_component.priority = 100; 
+            } 
+        } 
+    } 
 
     return ORTE_SUCCESS;
 }
