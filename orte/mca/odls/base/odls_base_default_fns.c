@@ -968,14 +968,16 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
 
+        param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
         if ( NULL != child->slot_list ) {
-            param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
             asprintf(&value, "%s", child->slot_list);
             opal_setenv(param, value, true, &app->env);
-            free(param);
             free(value);
+        } else {
+            opal_unsetenv(param,  &app->env);
         }
-
+        free(param);
+         
         /* must unlock prior to fork to keep things clean in the
          * event library
          */
