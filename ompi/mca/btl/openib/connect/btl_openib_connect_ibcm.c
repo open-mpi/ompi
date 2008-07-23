@@ -90,7 +90,7 @@
  *   tell IBCM (among other things) when the first message arrives on
  *   a QP when the RTU has not yet been received.  This can happen, of
  *   course, since IBCM traffic is UD.
- * - Also, note that IBCM "listener" IDs are per HCA, not per port.  
+ * - Also, note that IBCM "listener" IDs are per DEVICE, not per port.  
  * - CM ID's are persistent throughout the life of a QP.  If you
  *   destroy a CM ID (ib_cm_destroy_id), the IBCM system will tear
  *   down the connection.  So the CM ID you get when receiving a
@@ -135,15 +135,15 @@
  * is how we distinguish between multiple MPI processes listening via
  * IBCM on the same host.
  *
- * Since IBCM listners are per HCA (vs. per port), we maintain a list
+ * Since IBCM listners are per DEVICE (vs. per port), we maintain a list
  * of existing listeners.  When a new query comes in, we check the
- * list to see if the HCA connected to this BTL module already has a
+ * list to see if the DEVICE connected to this BTL module already has a
  * listener.  If it does, we OBJ_RETAIN it and move on.  Otherwise, we
  * create a new one.  When CPC modules are destroyed, we simply
  * OBJ_RELEASE the listener object; the destructor takes care of all
  * the actual cleanup.
  *
- * Note that HCAs are capable of having multiple GIDs.  OMPI defaults
+ * Note that DEVICEs are capable of having multiple GIDs.  OMPI defaults
  * to using the 0th GID, but the MCA param
  * btl_openib_connect_ibcm_gid_index allows the user to choose a
  * different one.
@@ -347,7 +347,7 @@ typedef enum {
 
 /*
  * Need to maintain a list of IB CM listening handles since they are
- * per *HCA*, and openib BTL modules are per *LID*.
+ * per *DEVICE*, and openib BTL modules are per *LID*.
  */
 typedef struct {
     opal_list_item_t super;
@@ -654,7 +654,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
        we're in an old version of OFED that is IB only (i.e., no
        iWarp), so we can safely assume that we can use this CPC. */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-    if (IBV_TRANSPORT_IB != btl->hca->ib_dev->transport_type) {
+    if (IBV_TRANSPORT_IB != btl->device->ib_dev->transport_type) {
         BTL_VERBOSE(("ibcm CPC only supported on InfiniBand"));
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto error;
@@ -705,7 +705,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
          item != opal_list_get_end(&ibcm_cm_listeners);
          item = opal_list_get_next(item)) {
         cmh = (ibcm_listen_cm_id_t*) item;
-        if (cmh->ib_context == btl->hca->ib_dev_context) {
+        if (cmh->ib_context == btl->device->ib_dev_context) {
             break;
         }
     }
@@ -728,8 +728,8 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
            calling ib_cm_open_device().  The "+6" accounts for
            "uverbs". */
         asprintf(&filename, "/dev/infiniband/ucm%s",
-                btl->hca->ib_dev_context->device->dev_name + 6);
-        rc = open(filename, O_RDWR);
+                 btl->device->ib_dev_context->device->dev_name + 6);
+	rc = open(filename, O_RDWR);
         if (rc < 0) {
             /* We can't open the device for some reason (can't read,
                can't write, doesn't exist, ...etc.); IBCM is not setup
@@ -742,8 +742,8 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         close(rc);
         free(filename);
 
-        cmh->ib_context = btl->hca->ib_dev_context;
-        cmh->cm_device = ib_cm_open_device(btl->hca->ib_dev_context);
+        cmh->ib_context = btl->device->ib_dev_context;
+        cmh->cm_device = ib_cm_open_device(btl->device->ib_dev_context);
         if (NULL == cmh->cm_device) {
             /* If we fail to open the IB CM device, it's not an error
                -- it's likely that IBCM simply isn't supported on this
@@ -804,18 +804,18 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
 
     /* Note that the LID is already included in the main modex message
        -- it is not ibcm-specific.  Also, don't assume that the port
-       GUID is node_guid+port_number (e.g., QLogic HCAs use a
+       GUID is node_guid+port_number (e.g., QLogic DEVICEs use a
        different formula).  Query for the Nth GID (N = MCA param) on
        the port. */
     if (ibcm_gid_table_index > btl->ib_port_attr.gid_tbl_len) {
         BTL_ERROR(("desired GID table index (%d) is larger than the actual table size (%d) on device %s",
                      ibcm_gid_table_index,
                      btl->ib_port_attr.gid_tbl_len,
-                     ibv_get_device_name(btl->hca->ib_dev)));
+                     ibv_get_device_name(btl->device->ib_dev)));
         rc = OMPI_ERR_UNREACH;
         goto error;
     }
-    rc = ibv_query_gid(btl->hca->ib_dev_context, btl->port_num, ibcm_gid_table_index, 
+    rc = ibv_query_gid(btl->device->ib_dev_context, btl->port_num, ibcm_gid_table_index, 
                        &gid);
     if (0 != rc) {
         BTL_ERROR(("system error (ibv_query_gid failed)"));
@@ -840,7 +840,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     /* All done */
     *cpc = (ompi_btl_openib_connect_base_module_t *) m;
     BTL_VERBOSE(("available for use on %s",
-                 ibv_get_device_name(btl->hca->ib_dev)));
+                 ibv_get_device_name(btl->device->ib_dev)));
     TIMER_STOP(QUERY);
     return OMPI_SUCCESS;
 
@@ -848,10 +848,10 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     ibcm_module_finalize(btl, (ompi_btl_openib_connect_base_module_t *) m);
     if (OMPI_ERR_NOT_SUPPORTED == rc) {
         BTL_VERBOSE(("unavailable for use on %s; skipped",
-                     ibv_get_device_name(btl->hca->ib_dev)));
+                     ibv_get_device_name(btl->device->ib_dev)));
     } else {
         BTL_VERBOSE(("unavailable for use on %s; fatal error %d (%s)",
-                     ibv_get_device_name(btl->hca->ib_dev), rc, 
+                     ibv_get_device_name(btl->device->ib_dev), rc, 
                      opal_strerror(rc)));
     }
     return rc;
@@ -862,9 +862,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
  *******************************************************************/
 
 /* Returns max inlne size for qp #N */
-static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
+static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
 {
-    if (mca_btl_openib_component.qp_infos[qp].size <= hca->max_inline_data) {
+    if (mca_btl_openib_component.qp_infos[qp].size <= device->max_inline_data) {
         /* If qp message size is smaller than max_inline_data,
          * we should enable inline messages */
         return mca_btl_openib_component.qp_infos[qp].size;
@@ -872,7 +872,7 @@ static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
         /* If qp message size is bigger that max_inline_data, we
          * should enable inline messages only for RDMA QP (for PUT/GET
          * fin messages) and for the first qp */
-        return hca->max_inline_data;
+        return device->max_inline_data;
     }
     /* Otherway it is no reason for inline */
     return 0;
@@ -894,11 +894,11 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     memset(&init_attr, 0, sizeof(init_attr));
 
     init_attr.qp_type = IBV_QPT_RC;
-    init_attr.send_cq = openib_btl->hca->ib_cq[BTL_OPENIB_LP_CQ];
-    init_attr.recv_cq = openib_btl->hca->ib_cq[qp_cq_prio(qp)];
+    init_attr.send_cq = openib_btl->device->ib_cq[BTL_OPENIB_LP_CQ];
+    init_attr.recv_cq = openib_btl->device->ib_cq[qp_cq_prio(qp)];
     init_attr.srq = srq;
     init_attr.cap.max_inline_data = req_inline = 
-        max_inline_size(qp, openib_btl->hca);
+        max_inline_size(qp, openib_btl->device);
     init_attr.cap.max_send_sge = 1;
     init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {
@@ -908,7 +908,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     }
     init_attr.cap.max_send_wr = max_send_wr;
 
-    my_qp = ibv_create_qp(openib_btl->hca->ib_pd, &init_attr); 
+    my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr); 
     if (NULL == my_qp) { 
         BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
         return OMPI_ERROR; 
@@ -918,7 +918,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
         endpoint->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", orte_process_info.nodename,
-                       ibv_get_device_name(openib_btl->hca->ib_dev),
+                       ibv_get_device_name(openib_btl->device->ib_dev),
                        req_inline, init_attr.cap.max_inline_data);
     } else {
         endpoint->qps[qp].ib_inline_max = req_inline;
@@ -1048,7 +1048,7 @@ static int fill_path_record(ibcm_module_t *m,
     path_rec->pkey = mca_btl_openib_component.ib_pkey_val;
     if (0 == path_rec->pkey) {
         uint16_t pkey;
-        ibv_query_pkey(endpoint->endpoint_btl->hca->ib_dev_context, 
+        ibv_query_pkey(endpoint->endpoint_btl->device->ib_dev_context, 
                        endpoint->endpoint_btl->port_num, 0, &pkey);
         path_rec->pkey = ntohs(pkey);
     }
@@ -1145,7 +1145,7 @@ static bool i_initiate(ibcm_module_t *m,
 {
     modex_msg_t *msg = 
         (modex_msg_t*) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
-    uint64_t my_port_guid = ntoh64(m->btl->hca->ib_dev_attr.node_guid) + 
+    uint64_t my_port_guid = ntoh64(m->btl->device->ib_dev_attr.node_guid) + 
         m->btl->port_num;
     uint64_t service_id = m->cmh->param.service_id;
     
@@ -1605,8 +1605,8 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
        it out ourselves.  Luckly, we know what the MTU is of the other
        port (from its modex message), so we can figure out the highest
        MTU that we have in common. */
-    mtu = (btl->hca->mtu < endpoint->rem_info.rem_mtu) ?
-        btl->hca->mtu : endpoint->rem_info.rem_mtu;
+    mtu = (btl->device->mtu < endpoint->rem_info.rem_mtu) ?
+        btl->device->mtu : endpoint->rem_info.rem_mtu;
 
     BTL_VERBOSE(("Set MTU to IBV value %d (%s bytes)", mtu,
                  (mtu == IBV_MTU_256) ? "256" :

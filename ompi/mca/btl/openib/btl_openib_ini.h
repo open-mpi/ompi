@@ -36,12 +36,12 @@ typedef struct ompi_btl_openib_ini_values_t {
 BEGIN_C_DECLS
 
     /**
-     * Read in the INI files containing HCA params
+     * Read in the INI files containing device params
      */
     int ompi_btl_openib_ini_init(void);
 
     /**
-     * Query the read-in params for a given HCA
+     * Query the read-in params for a given device
      */
     int ompi_btl_openib_ini_query(uint32_t vendor_id,
                                   uint32_t vendor_part_id,

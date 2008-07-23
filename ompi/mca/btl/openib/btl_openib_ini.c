@@ -34,7 +34,7 @@
 
 static const char *ini_filename = NULL;
 static bool initialized = false;
-static opal_list_t hcas;
+static opal_list_t devices;
 static char *key_buffer = NULL;
 static size_t key_buffer_len = 0;
 
@@ -64,7 +64,7 @@ typedef struct parsed_section_values_t {
  * - There is a super of opal_list_item_t so that we can have a list
  *   of these
  */
-typedef struct hca_values_t {
+typedef struct device_values_t {
     opal_list_item_t super;
 
     char *section_name;
@@ -72,15 +72,15 @@ typedef struct hca_values_t {
     uint32_t vendor_part_id;
 
     ompi_btl_openib_ini_values_t values;
-} hca_values_t;
+} device_values_t;
 
-static void hca_values_constructor(hca_values_t *s);
-static void hca_values_destructor(hca_values_t *s);
+static void device_values_constructor(device_values_t *s);
+static void device_values_destructor(device_values_t *s);
 
-OBJ_CLASS_INSTANCE(hca_values_t,
+OBJ_CLASS_INSTANCE(device_values_t,
                    opal_list_item_t,
-                   hca_values_constructor,
-                   hca_values_destructor);
+                   device_values_constructor,
+                   device_values_destructor);
 
 
 /*
@@ -97,7 +97,7 @@ static inline void show_help(const char *topic);
 
 
 /*
- * Read the INI files for HCA-specific values and save them in
+ * Read the INI files for device-specific values and save them in
  * internal data structures for later lookup.
  */
 int ompi_btl_openib_ini_init(void)
@@ -105,16 +105,16 @@ int ompi_btl_openib_ini_init(void)
     int ret = OMPI_ERR_NOT_FOUND;
     char *colon;
 
-    OBJ_CONSTRUCT(&hcas, opal_list_t);
+    OBJ_CONSTRUCT(&devices, opal_list_t);
 
-    colon = strchr(mca_btl_openib_component.hca_params_file_names, ':');
+    colon = strchr(mca_btl_openib_component.device_params_file_names, ':');
     if (NULL == colon) {
         /* If we've only got 1 file (i.e., no colons found), parse it
            and be done */
-        ret = parse_file(mca_btl_openib_component.hca_params_file_names);
+        ret = parse_file(mca_btl_openib_component.device_params_file_names);
     } else {
         /* Otherwise, loop over all the files and parse them */
-        char *orig = strdup(mca_btl_openib_component.hca_params_file_names);
+        char *orig = strdup(mca_btl_openib_component.device_params_file_names);
         char *str = orig;
 
         while (NULL != (colon = strchr(str, ':'))) {
@@ -146,14 +146,14 @@ int ompi_btl_openib_ini_init(void)
 
 
 /*
- * The component found an HCA and is querying to see if an INI file
+ * The component found a device and is querying to see if an INI file
  * specified any parameters for it.
  */
 int ompi_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
                               ompi_btl_openib_ini_values_t *values)
 {
     int ret;
-    hca_values_t *h;
+    device_values_t *h;
     opal_list_item_t *item;
 
     if (!initialized) {
@@ -169,11 +169,11 @@ int ompi_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
 
     reset_values(values);
 
-    /* Iterate over all the saved hcas */
-    for (item = opal_list_get_first(&hcas);
-         item != opal_list_get_end(&hcas);
+    /* Iterate over all the saved devices */
+    for (item = opal_list_get_first(&devices);
+         item != opal_list_get_end(&devices);
          item = opal_list_get_next(item)) {
-        h = (hca_values_t*) item;
+        h = (device_values_t*) item;
         if (vendor_id == h->vendor_id &&
             vendor_part_id == h->vendor_part_id) {
             /* Found it! */
@@ -205,12 +205,12 @@ int ompi_btl_openib_ini_finalize(void)
     opal_list_item_t *item;
 
     if (initialized) {
-        for (item = opal_list_remove_first(&hcas);
+        for (item = opal_list_remove_first(&devices);
              NULL != item;
-             item = opal_list_remove_first(&hcas)) {
+             item = opal_list_remove_first(&devices)) {
             OBJ_RELEASE(item);
         }
-        OBJ_DESTRUCT(&hcas);
+        OBJ_DESTRUCT(&devices);
         initialized = true;
     }
 
@@ -424,9 +424,9 @@ static int parse_line(parsed_section_values_t *sv)
 
 
 /*
- * Construct an hca_values_t and set all of its values to known states
+ * Construct an device_values_t and set all of its values to known states
  */
-static void hca_values_constructor(hca_values_t *s)
+static void device_values_constructor(device_values_t *s)
 {
     s->section_name = NULL;
     s->vendor_id = 0;
@@ -436,9 +436,9 @@ static void hca_values_constructor(hca_values_t *s)
 
 
 /*
- * Destruct an hca_values_t and free any memory that it has
+ * Destruct an device_values_t and free any memory that it has
  */
-static void hca_values_destructor(hca_values_t *s)
+static void device_values_destructor(device_values_t *s)
 {
     if (NULL != s->section_name) {
         free(s->section_name);
@@ -504,7 +504,7 @@ static int save_section(parsed_section_values_t *s)
 {
     int i, j;
     opal_list_item_t *item;
-    hca_values_t *h;
+    device_values_t *h;
     bool found;
 
     /* Is the parsed section valid? */
@@ -519,11 +519,11 @@ static int save_section(parsed_section_values_t *s)
         for (j = 0; j < s->vendor_part_ids_len; ++j) {
             found = false;
 
-            /* Iterate over all the saved hcas */
-            for (item = opal_list_get_first(&hcas);
-                 item != opal_list_get_end(&hcas);
+            /* Iterate over all the saved devices */
+            for (item = opal_list_get_first(&devices);
+                 item != opal_list_get_end(&devices);
                  item = opal_list_get_next(item)) {
-                h = (hca_values_t*) item;
+                h = (device_values_t*) item;
                 if (s->vendor_ids[i] == h->vendor_id &&
                     s->vendor_part_ids[j] == h->vendor_part_id) {
                     /* Found a match.  Update any newly-set values. */
@@ -555,7 +555,7 @@ static int save_section(parsed_section_values_t *s)
             /* Did we find/update it in the exising list?  If not,
                create a new one. */
             if (!found) {
-                h = OBJ_NEW(hca_values_t);
+                h = OBJ_NEW(device_values_t);
                 h->section_name = strdup(s->name);
                 h->vendor_id = s->vendor_ids[i];
                 h->vendor_part_id = s->vendor_part_ids[j];
@@ -568,7 +568,7 @@ static int save_section(parsed_section_values_t *s)
                 if (NULL != h->values.receive_queues) {
                     h->values.receive_queues = strdup(s->values.receive_queues);
                 }
-                opal_list_append(&hcas, &h->super);
+                opal_list_append(&devices, &h->super);
             }
         }
     }

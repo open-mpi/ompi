@@ -11,9 +11,9 @@
 # support (the openib BTL).
 #
 [no valid ip]
-It appears that a OpenFabrics device does not have an IP address
+It appears that an OpenFabrics device does not have an IP address
 associated with it.  The OpenFabrics RDMA CM connection scheme
 *requires* IP addresses to be setup in order to function properly.
 
-Host:   %s
-Device: %s
+  Local host:   %s
+  Local device: %s

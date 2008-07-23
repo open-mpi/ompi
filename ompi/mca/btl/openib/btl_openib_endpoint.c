@@ -324,13 +324,13 @@ endpoint_init_qp_srq(mca_btl_openib_endpoint_qp_t *ep_qp, const int qp)
 static void
 endpoint_init_qp_xrc(mca_btl_base_endpoint_t *ep, const int qp)
 {
-    int max = ep->endpoint_btl->hca->ib_dev_attr.max_qp_wr -
+    int max = ep->endpoint_btl->device->ib_dev_attr.max_qp_wr -
         (mca_btl_openib_component.use_eager_rdma ?
          mca_btl_openib_component.max_eager_rdma : 0);
     mca_btl_openib_endpoint_qp_t *ep_qp = &ep->qps[qp];
     ep_qp->qp = ep->ib_addr->qp;
     ep_qp->qp->sd_wqe += mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
-    /* make sure that we don't overrun maximum supported by hca */
+    /* make sure that we don't overrun maximum supported by device */
     if (ep_qp->qp->sd_wqe > max)
         ep_qp->qp->sd_wqe =  max;
     ep_qp->qp->users++;
@@ -373,7 +373,7 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
     int qp;
 
     ep->endpoint_btl = btl;
-    ep->use_eager_rdma = btl->hca->use_eager_rdma &
+    ep->use_eager_rdma = btl->device->use_eager_rdma &
         mca_btl_openib_component.use_eager_rdma;
     ep->subnet_id = btl->port_info.subnet_id;
     ep->endpoint_local_cpc = local_cpc;
@@ -510,7 +510,7 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     /* unregister xrc recv qp */
 #if HAVE_XRC
     if (0 != endpoint->xrc_recv_qp_num) {
-        if(ibv_unreg_xrc_rcv_qp(endpoint->endpoint_btl->hca->xrc_domain,
+        if(ibv_unreg_xrc_rcv_qp(endpoint->endpoint_btl->device->xrc_domain,
                     endpoint->xrc_recv_qp_num)) {
             BTL_ERROR(("Failed to unregister XRC recv QP:%d\n", endpoint->xrc_recv_qp_num));
         }
@@ -590,7 +590,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
 #endif
 
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
-    endpoint->endpoint_btl->hca->non_eager_rdma_endpoints++;
+    endpoint->endpoint_btl->device->non_eager_rdma_endpoints++;
 
     /* The connection is correctly setup. Now we can decrease the
        event trigger. */
@@ -766,9 +766,9 @@ static void mca_btl_openib_endpoint_eager_rdma_connect_cb(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    mca_btl_openib_hca_t *hca = endpoint->endpoint_btl->hca;
-    OPAL_THREAD_ADD32(&hca->non_eager_rdma_endpoints, -1);
-    assert(hca->non_eager_rdma_endpoints >= 0);
+    mca_btl_openib_device_t *device = endpoint->endpoint_btl->device;
+    OPAL_THREAD_ADD32(&device->non_eager_rdma_endpoints, -1);
+    assert(device->non_eager_rdma_endpoints >= 0);
     MCA_BTL_IB_FRAG_RETURN(descriptor);
 }
 
@@ -900,17 +900,17 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
             buf);
 
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == OMPI_SUCCESS) {
-        mca_btl_openib_hca_t *hca = endpoint->endpoint_btl->hca;
+        mca_btl_openib_device_t *device = endpoint->endpoint_btl->device;
         mca_btl_openib_endpoint_t **p;
         OBJ_RETAIN(endpoint);
         assert(((opal_object_t*)endpoint)->obj_reference_count == 2);
         do {
-            p = &hca->eager_rdma_buffers[hca->eager_rdma_buffers_count];
+            p = &device->eager_rdma_buffers[device->eager_rdma_buffers_count];
         } while(!opal_atomic_cmpset_ptr(p, NULL, endpoint));
 
         OPAL_THREAD_ADD32(&openib_btl->eager_rdma_channels, 1);
         /* from this point progress function starts to poll new buffer */
-        OPAL_THREAD_ADD32(&hca->eager_rdma_buffers_count, 1);
+        OPAL_THREAD_ADD32(&device->eager_rdma_buffers_count, 1);
         return;
     }
 

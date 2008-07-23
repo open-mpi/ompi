@@ -278,9 +278,9 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
             return rc;
         }
 
-        BTL_VERBOSE(("Send pack mtu = %d", endpoint->endpoint_btl->hca->mtu));
+        BTL_VERBOSE(("Send pack mtu = %d", endpoint->endpoint_btl->device->mtu));
         BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
-        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
+        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->device->mtu, 1,
                 OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -388,19 +388,19 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr));
     memset(&attr, 0, sizeof(struct ibv_qp_attr));
 
-    qp_init_attr.send_cq = qp_init_attr.recv_cq = openib_btl->hca->ib_cq[prio];
+    qp_init_attr.send_cq = qp_init_attr.recv_cq = openib_btl->device->ib_cq[prio];
 
     /* no need recv queue; receives are posted to srq */
     qp_init_attr.cap.max_recv_wr = 0;
     qp_init_attr.cap.max_send_wr = send_wr;
     qp_init_attr.cap.max_inline_data = req_inline =
-        openib_btl->hca->max_inline_data;
+        openib_btl->device->max_inline_data;
     qp_init_attr.cap.max_send_sge = 1;
     /* this one is ignored by driver */
     qp_init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     qp_init_attr.qp_type = IBV_QPT_XRC;
-    qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
-    *qp = ibv_create_qp(openib_btl->hca->ib_pd, &qp_init_attr);
+    qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
+    *qp = ibv_create_qp(openib_btl->device->ib_pd, &qp_init_attr);
     if (NULL == *qp) {
         BTL_ERROR(("Error creating QP, errno says: %s", strerror(errno)));
         return OMPI_ERROR;
@@ -410,7 +410,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
         endpoint->qps[0].ib_inline_max = qp_init_attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", orte_process_info.nodename,
-                       ibv_get_device_name(openib_btl->hca->ib_dev),
+                       ibv_get_device_name(openib_btl->device->ib_dev),
                        req_inline, qp_init_attr.cap.max_inline_data);
     } else {
         endpoint->qps[0].ib_inline_max = req_inline;
@@ -457,8 +457,8 @@ static int xoob_send_qp_connect(mca_btl_openib_endpoint_t *endpoint, mca_btl_ope
 
     memset(&attr, 0, sizeof(attr));
     attr.qp_state           = IBV_QPS_RTR;
-    attr.path_mtu = (openib_btl->hca->mtu < endpoint->rem_info.rem_mtu) ?
-        openib_btl->hca->mtu : rem_info->rem_mtu;
+    attr.path_mtu = (openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
+        openib_btl->device->mtu : rem_info->rem_mtu;
     attr.dest_qp_num        = rem_info->rem_qps->rem_qp_num;
     attr.rq_psn             = rem_info->rem_qps->rem_psn;
     attr.max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops;
@@ -529,7 +529,7 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
 
     memset(&qp_init_attr, 0, sizeof(struct ibv_qp_init_attr));
     /* Only xrc_domain is required, all other are ignored */
-    qp_init_attr.xrc_domain = openib_btl->hca->xrc_domain;
+    qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
     ret = ibv_create_xrc_rcv_qp(&qp_init_attr, &endpoint->xrc_recv_qp_num);
     if (ret) {
         BTL_ERROR(("Error creating XRC recv QP[%x], errno says: %s [%d]",
@@ -542,7 +542,7 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
     attr.pkey_index = openib_btl->pkey_index;
     attr.port_num = openib_btl->port_num;
     attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
-    ret = ibv_modify_xrc_rcv_qp(openib_btl->hca->xrc_domain,
+    ret = ibv_modify_xrc_rcv_qp(openib_btl->device->xrc_domain,
             endpoint->xrc_recv_qp_num,
             &attr,
             IBV_QP_STATE|
@@ -558,8 +558,8 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
 
     memset(&attr, 0, sizeof(struct ibv_qp_attr));
     attr.qp_state           = IBV_QPS_RTR;
-    attr.path_mtu = (openib_btl->hca->mtu < endpoint->rem_info.rem_mtu) ?
-        openib_btl->hca->mtu : rem_info->rem_mtu;
+    attr.path_mtu = (openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
+        openib_btl->device->mtu : rem_info->rem_mtu;
     attr.dest_qp_num        = rem_info->rem_qps->rem_qp_num;
     attr.rq_psn             = rem_info->rem_qps->rem_psn;
     attr.max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops;
@@ -570,7 +570,7 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
     attr.ah_attr.src_path_bits = openib_btl->src_path_bits;
     attr.ah_attr.port_num      = openib_btl->port_num;
     attr.ah_attr.static_rate   = 0;
-    ret = ibv_modify_xrc_rcv_qp(openib_btl->hca->xrc_domain,
+    ret = ibv_modify_xrc_rcv_qp(openib_btl->device->xrc_domain,
             endpoint->xrc_recv_qp_num,
             &attr,
             IBV_QP_STATE|
@@ -603,7 +603,7 @@ static int xoob_recv_qp_connect(mca_btl_openib_endpoint_t *endpoint, mca_btl_ope
         (mca_btl_openib_module_t*)endpoint->endpoint_btl;
 
     BTL_VERBOSE(("Connecting Recv QP\n"));
-    ret = ibv_reg_xrc_rcv_qp(openib_btl->hca->xrc_domain, rem_info->rem_qps->rem_qp_num);
+    ret = ibv_reg_xrc_rcv_qp(openib_btl->device->xrc_domain, rem_info->rem_qps->rem_qp_num);
     if (ret) { /* failed to regester the qp, so it is already die and we should create new one */
        /* Return NOT READY !!!*/
         BTL_ERROR(("Failed to register qp_num: %d , get error: %s (%d)\n. Replying with RNR",
@@ -951,7 +951,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     if (mca_btl_openib_component.num_xrc_qps <= 0) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: xoob CPC only supported with XRC receive queues; skipped on device %s",
-                            ibv_get_device_name(openib_btl->hca->ib_dev));
+                            ibv_get_device_name(openib_btl->device->ib_dev));
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
@@ -992,7 +992,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
 
     opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: xoob CPC available for use on %s",
-                        ibv_get_device_name(openib_btl->hca->ib_dev));
+                        ibv_get_device_name(openib_btl->device->ib_dev));
     return OMPI_SUCCESS;
 }
 

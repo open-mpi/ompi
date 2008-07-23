@@ -10,21 +10,13 @@
 # This is the US/English help file for Open MPI's OpenFabrics IB CM
 # support (the openib BTL).
 #
-[ib_cm function error]
-An InfiniBand Connection Manager (IBCM) function received an unexpected
-error.  Your MPI job is likely to hang or crash; sorry.
-
-Host:     %s
-Function: %s
-Error:    %d (%s)
-#
 [unhandled error]
 The InfiniBand Connection Manager (IBCM) received an unexpected error
 when it attempted to send a connection %s.  Your MPI job is
 likely to hang or crash; sorry.
 
-Host:       %s
-Error code: %d
+  Local host: %s
+  Error code: %d
 #
 [timeout not found]
 The InfiniBand Connection Manager (IBCM) timed out when sending a
@@ -32,6 +24,7 @@ connection %s, but Open MPI was unable to find a matching send
 request.  This should not happen.  Your MPI job is likely to hang or
 crash; sorry.
 
+  Local host: %s
 Host: %s
 #
 [cannot raise btl error]

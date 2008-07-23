@@ -113,24 +113,24 @@ struct mca_btl_openib_qp_info_t {
 typedef enum {
     BTL_OPENIB_RQ_SOURCE_DEFAULT,
     BTL_OPENIB_RQ_SOURCE_MCA,
-    BTL_OPENIB_RQ_SOURCE_HCA_INI,
-    BTL_OPENIB_RQ_SOURCE_HCA_MAX
+    BTL_OPENIB_RQ_SOURCE_DEVICE_INI,
+    BTL_OPENIB_RQ_SOURCE_MAX
 } btl_openib_receive_queues_source_t;
 
 struct mca_btl_openib_component_t {
     mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */
 
     int                                ib_max_btls;
-    /**< maximum number of hcas available to the IB component */
+    /**< maximum number of devices available to openib component */
 
     int                                ib_num_btls;
-    /**< number of hcas available to the IB component */
+    /**< number of devices available to the openib component */
 
     struct mca_btl_openib_module_t             **openib_btls;
     /**< array of available BTLs */
 
-    opal_pointer_array_t hcas; /**< array of available hcas */
-    int hcas_count;
+    opal_pointer_array_t devices; /**< array of available devices */
+    int devices_count;
 
     int ib_free_list_num;
     /**< initial size of free lists */
@@ -194,7 +194,7 @@ struct mca_btl_openib_component_t {
     int32_t apm_ports;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 #if OMPI_HAVE_THREADS
-    int32_t fatal_counter;           /**< Counts number on fatal events that we got on all hcas */
+    int32_t fatal_counter;           /**< Counts number on fatal events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
@@ -210,20 +210,20 @@ struct mca_btl_openib_component_t {
     /* Whether we got a non-default value of btl_openib_receive_queues */
     btl_openib_receive_queues_source_t receive_queues_source;
 
-    /** Colon-delimited list of filenames for HCA parameters */
-    char *hca_params_file_names;
+    /** Colon-delimited list of filenames for device parameters */
+    char *device_params_file_names;
 
     /** Whether we're in verbose mode or not */
     bool verbose;
 
-    /** Whether we want a warning if no HCA-specific parameters are
+    /** Whether we want a warning if no device-specific parameters are
         found in INI files */
-    bool warn_no_hca_params_found;
+    bool warn_no_device_params_found;
     /** Whether we want a warning if non default GID prefix is not configured
         on multiport setup */
     bool warn_default_gid_prefix;
     /** Whether we want a warning if the user specifies a non-existent
-        HCA and/or port via btl_openib_if_[in|ex]clude MCA params */
+        device and/or port via btl_openib_if_[in|ex]clude MCA params */
     bool warn_nonexistent_if;
     /** Dummy argv-style list; a copy of names from the
         if_[in|ex]clude list that we use for error checking (to ensure
@@ -279,35 +279,35 @@ typedef struct mca_btl_openib_modex_message_t {
         (hdr).lid = htons((hdr).lid); \
     } while (0)
 
-typedef struct mca_btl_openib_hca_qp_t {
+typedef struct mca_btl_openib_device_qp_t {
     ompi_free_list_t send_free;     /**< free lists of send buffer descriptors */
     ompi_free_list_t recv_free;     /**< free lists of receive buffer descriptors */
-} mca_btl_openib_hca_qp_t;
+} mca_btl_openib_device_qp_t;
 
 struct mca_btl_base_endpoint_t;
 
-typedef struct mca_btl_openib_hca_t {
+typedef struct mca_btl_openib_device_t {
     opal_object_t super;
     struct ibv_device *ib_dev;  /* the ib device */
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-    struct ibv_comp_channel *ib_channel; /* Channel event for the HCA */
+    struct ibv_comp_channel *ib_channel; /* Channel event for the device */
     opal_thread_t thread;                /* Progress thread */
     volatile bool progress;              /* Progress status */
 #endif
-    opal_mutex_t hca_lock;          /* hca level lock */
+    opal_mutex_t device_lock;          /* device level lock */
     struct ibv_context *ib_dev_context;
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
     struct ibv_cq *ib_cq[2];
     uint32_t cq_size[2];
     mca_mpool_base_module_t *mpool;
-    /* MTU for this HCA */
+    /* MTU for this device */
     uint32_t mtu;
-    /* Whether this HCA supports eager RDMA */
+    /* Whether this device supports eager RDMA */
     uint8_t use_eager_rdma;
-    uint8_t btls;              /** < number of btls using this HCA */
+    uint8_t btls;              /** < number of btls using this device */
     opal_pointer_array_t *endpoints;
-    opal_pointer_array_t *hca_btls;
+    opal_pointer_array_t *device_btls;
     uint16_t hp_cq_polls;
     uint16_t eager_rdma_polls;
     bool pollme;
@@ -323,12 +323,12 @@ typedef struct mca_btl_openib_hca_t {
     struct mca_btl_base_endpoint_t **eager_rdma_buffers;
     /**< frags for control massages */
     ompi_free_list_t send_free_control;
-    /* QP types and attributes that will be used on this HCA */
-    mca_btl_openib_hca_qp_t *qps;
-    /* Maximum value supported by this HCA for max_inline_data */
+    /* QP types and attributes that will be used on this device */
+    mca_btl_openib_device_qp_t *qps;
+    /* Maximum value supported by this device for max_inline_data */
     uint32_t max_inline_data;
-} mca_btl_openib_hca_t;
-OBJ_CLASS_DECLARATION(mca_btl_openib_hca_t);
+} mca_btl_openib_device_t;
+OBJ_CLASS_DECLARATION(mca_btl_openib_device_t);
 
 struct mca_btl_openib_module_pp_qp_t {
     int32_t dummy;
@@ -367,7 +367,7 @@ struct mca_btl_openib_module_t {
     /** Number of elements in the cpcs array */
     uint8_t num_cpcs;
 
-    mca_btl_openib_hca_t *hca;
+    mca_btl_openib_device_t *device;
     uint8_t port_num;                  /**< ID of the PORT */
     uint16_t pkey_index;
     struct ibv_port_attr ib_port_attr;
