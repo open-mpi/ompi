@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2008 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * $COPYRIGHT$
  *
@@ -40,7 +40,7 @@ static int return_status = OMPI_ERROR;
 
 static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_poll);
 static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll);
-static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, int index);
+static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *hcas_poll, int index);
 static const char *openib_event_to_str (enum ibv_event_type event);
 static int send_command_comp(int in);
 
@@ -93,12 +93,12 @@ static const char *openib_event_to_str (enum ibv_event_type event)
     }
 }
 /* QP to endpoint */
-static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib_hca_t *hca)
+static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib_device_t *device)
 {
     mca_btl_openib_endpoint_t *ep;
     int  ep_i, qp_i;
-    for(ep_i = 0; ep_i < opal_pointer_array_get_size(hca->endpoints); ep_i++) {
-        ep = opal_pointer_array_get_item(hca->endpoints, ep_i);
+    for(ep_i = 0; ep_i < opal_pointer_array_get_size(device->endpoints); ep_i++) {
+        ep = opal_pointer_array_get_item(device->endpoints, ep_i);
         for(qp_i = 0; qp_i < mca_btl_openib_component.num_qps; qp_i++) {
             if (qp == ep->qps[qp_i].qp->lcl_qp)
                 return ep;
@@ -109,12 +109,12 @@ static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib
 
 #if HAVE_XRC
 /* XRC recive QP to endpoint */
-static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_hca_t *hca)
+static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_device_t *device)
 {
     mca_btl_openib_endpoint_t *ep;
     int  ep_i;
-    for(ep_i = 0; ep_i < opal_pointer_array_get_size(hca->endpoints); ep_i++) {
-        ep = opal_pointer_array_get_item(hca->endpoints, ep_i);
+    for(ep_i = 0; ep_i < opal_pointer_array_get_size(device->endpoints); ep_i++) {
+        ep = opal_pointer_array_get_item(device->endpoints, ep_i);
         if (qp_num == ep->xrc_recv_qp_num)
             return ep;
     }
@@ -123,20 +123,20 @@ static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_open
 #endif
 
 /* Function inits mca_btl_openib_async_poll */
-static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *hcas_poll)
+static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *devices_poll)
 {
-    hcas_poll->active_poll_size = 1;
-    hcas_poll->poll_size = 4;
-    hcas_poll->async_pollfd = malloc(sizeof(struct pollfd) * hcas_poll->poll_size);
-    if (NULL == hcas_poll->async_pollfd) {
+    devices_poll->active_poll_size = 1;
+    devices_poll->poll_size = 4;
+    devices_poll->async_pollfd = malloc(sizeof(struct pollfd) * devices_poll->poll_size);
+    if (NULL == devices_poll->async_pollfd) {
         BTL_ERROR(("Failed malloc: %s:%d"
                     , __FILE__, __LINE__));
         return OMPI_ERROR;
     }
     /* Creating comunication channel with the main thread */
-    hcas_poll->async_pollfd[0].fd = mca_btl_openib_component.async_pipe[0];
-    hcas_poll->async_pollfd[0].events = POLLIN;
-    hcas_poll->async_pollfd[0].revents = 0;
+    devices_poll->async_pollfd[0].fd = mca_btl_openib_component.async_pipe[0];
+    devices_poll->async_pollfd[0].events = POLLIN;
+    devices_poll->async_pollfd[0].revents = 0;
     return OMPI_SUCCESS;
 }
 
@@ -151,60 +151,60 @@ static int send_command_comp(int in)
 }
 
 /* Function handle async thread commands */
-static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll)
+static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_poll)
 {
     struct pollfd *async_pollfd_tmp;
     int fd,flags,j;
     /* Got command from main thread */
-    if (read(hcas_poll->async_pollfd[0].fd, &fd, sizeof(int)) < 0) {
+    if (read(devices_poll->async_pollfd[0].fd, &fd, sizeof(int)) < 0) {
         BTL_ERROR(("Read failed [%d]",errno));
         return OMPI_ERROR;
     }
     BTL_VERBOSE(("GOT event from -> %d",fd));
     if (fd > 0) {
-        BTL_VERBOSE(("Adding HCA [%d] to async event poll[%d]"
-                    ,fd,hcas_poll->active_poll_size));
+        BTL_VERBOSE(("Adding device [%d] to async event poll[%d]",
+                     fd, devices_poll->active_poll_size));
         flags = fcntl(fd, F_GETFL);
         if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
             BTL_ERROR(("Failed to change file descriptor of async event"));
             return OMPI_ERROR;
         }
-        if ((hcas_poll->active_poll_size + 1) > hcas_poll->poll_size) {
-            hcas_poll->poll_size+=hcas_poll->poll_size;
-            async_pollfd_tmp = malloc(sizeof(struct pollfd) * hcas_poll->poll_size);
+        if ((devices_poll->active_poll_size + 1) > devices_poll->poll_size) {
+            devices_poll->poll_size+=devices_poll->poll_size;
+            async_pollfd_tmp = malloc(sizeof(struct pollfd) * devices_poll->poll_size);
             if (NULL == async_pollfd_tmp) {
                 BTL_ERROR(("Failed malloc: %s:%d"
                             "Fatal error, stoping asyn event thread"
                             , __FILE__, __LINE__));
                 return OMPI_ERROR;
             }
-            memcpy (async_pollfd_tmp,hcas_poll->async_pollfd,
-                    sizeof(struct pollfd) * (hcas_poll->active_poll_size));
-            free(hcas_poll->async_pollfd);
-            hcas_poll->async_pollfd = async_pollfd_tmp;
+            memcpy (async_pollfd_tmp,devices_poll->async_pollfd,
+                    sizeof(struct pollfd) * (devices_poll->active_poll_size));
+            free(devices_poll->async_pollfd);
+            devices_poll->async_pollfd = async_pollfd_tmp;
         }
-        hcas_poll->async_pollfd[hcas_poll->active_poll_size].fd = fd;
-        hcas_poll->async_pollfd[hcas_poll->active_poll_size].events = POLLIN;
-        hcas_poll->async_pollfd[hcas_poll->active_poll_size].revents = 0;
-        hcas_poll->active_poll_size++;
+        devices_poll->async_pollfd[devices_poll->active_poll_size].fd = fd;
+        devices_poll->async_pollfd[devices_poll->active_poll_size].events = POLLIN;
+        devices_poll->async_pollfd[devices_poll->active_poll_size].revents = 0;
+        devices_poll->active_poll_size++;
         if (OMPI_SUCCESS != send_command_comp(fd)) {
             return OMPI_ERROR;
         }
     } else if (fd < 0) {
         bool fd_found = false;
-        /* Removing HCA from poll */
+        /* Removing device from poll */
         fd = -(fd);
-        BTL_VERBOSE(("Removing HCA [%d] from async event poll [%d]"
-                    ,fd,hcas_poll->active_poll_size));
-        if (hcas_poll->active_poll_size > 1) {
-            for (j=0; (j < hcas_poll->active_poll_size || !fd_found); j++) {
-                if (hcas_poll->async_pollfd[j].fd == fd) {
-                    hcas_poll->async_pollfd[j].fd =
-                        hcas_poll->async_pollfd[hcas_poll->active_poll_size-1].fd;
-                    hcas_poll->async_pollfd[j].events =
-                        hcas_poll->async_pollfd[hcas_poll->active_poll_size-1].events;
-                    hcas_poll->async_pollfd[j].revents =
-                        hcas_poll->async_pollfd[hcas_poll->active_poll_size-1].revents;
+        BTL_VERBOSE(("Removing device [%d] from async event poll [%d]",
+                     fd, devices_poll->active_poll_size));
+        if (devices_poll->active_poll_size > 1) {
+            for (j=0; (j < devices_poll->active_poll_size || !fd_found); j++) {
+                if (devices_poll->async_pollfd[j].fd == fd) {
+                    devices_poll->async_pollfd[j].fd =
+                        devices_poll->async_pollfd[devices_poll->active_poll_size-1].fd;
+                    devices_poll->async_pollfd[j].events =
+                        devices_poll->async_pollfd[devices_poll->active_poll_size-1].events;
+                    devices_poll->async_pollfd[j].revents =
+                        devices_poll->async_pollfd[devices_poll->active_poll_size-1].revents;
                     fd_found = true;
                 }
             }
@@ -213,39 +213,39 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *hcas_poll
                 return OMPI_ERROR;
             }
         }
-        hcas_poll->active_poll_size--;
+        devices_poll->active_poll_size--;
         if (OMPI_SUCCESS != send_command_comp(-(fd))) {
             return OMPI_ERROR;
         }
     } else {
         /* Got 0 - command to close the thread */
         BTL_VERBOSE(("Async event thread exit"));
-        free(hcas_poll->async_pollfd);
+        free(devices_poll->async_pollfd);
         return_status = OMPI_SUCCESS;
         pthread_exit(&return_status);
     }
     return OMPI_SUCCESS;
 }
 
-/* Function handle async hca events */
-static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, int index)
+/* Function handle async device events */
+static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_poll, int index)
 {
     int j;
-    mca_btl_openib_hca_t *hca = NULL;
+    mca_btl_openib_device_t *device = NULL;
     struct ibv_async_event event;
     bool xrc_event = false;
     int event_type;
 
-    /* We need to find correct hca and process this event */
+    /* We need to find correct device and process this event */
     for (j=0; j < mca_btl_openib_component.ib_num_btls; j++) {
-        if (mca_btl_openib_component.openib_btls[j]->hca->ib_dev_context->async_fd ==
-                hcas_poll->async_pollfd[index].fd ) {
-            hca = mca_btl_openib_component.openib_btls[j]->hca;
+        if (mca_btl_openib_component.openib_btls[j]->device->ib_dev_context->async_fd ==
+                devices_poll->async_pollfd[index].fd ) {
+            device = mca_btl_openib_component.openib_btls[j]->device;
             break;
         }
     }
-    if (NULL != hca) {
-        if (ibv_get_async_event((struct ibv_context *)hca->ib_dev_context,&event) < 0) {
+    if (NULL != device) {
+        if (ibv_get_async_event((struct ibv_context *)device->ib_dev_context,&event) < 0) {
             if (EWOULDBLOCK == errno) {
                 /* No event found ?
                  * It was handled by somebody other */
@@ -272,17 +272,17 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
                     BTL_ERROR(("Trying to find additional path..."));
                     if (!xrc_event) 
                         mca_btl_openib_load_apm(event.element.qp,
-                                qp2endpoint(event.element.qp, hca));
+                                qp2endpoint(event.element.qp, device));
 #if HAVE_XRC
                     else
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
-                                xrc_qp2endpoint(event.element.xrc_qp_num, hca));
+                                xrc_qp2endpoint(event.element.xrc_qp_num, device));
 #endif
                 }
                 break;
             case IBV_EVENT_DEVICE_FATAL:
                 /* Set the flag to fatal */
-                hca->got_fatal_event = true;
+                device->got_fatal_event = true;
                 /* It is not critical to protect the counter */
                 OPAL_THREAD_ADD32(&mca_btl_openib_component.fatal_counter, 1);
             case IBV_EVENT_CQ_ERR:
@@ -316,32 +316,32 @@ static int btl_openib_async_hcah(struct mca_btl_openib_async_poll *hcas_poll, in
         }
         ibv_ack_async_event(&event);
     } else {
-        /* the hca == NULL , we failed to locate the HCA
+        /* the device == NULL , we failed to locate the devide
          * this failure should not never happed */
-        BTL_ERROR(("Failed to find HCA with FD %d."
-                    "Fatal error, stoping asyn event thread"
-                    ,hcas_poll->async_pollfd[index].fd));
+        BTL_ERROR(("Failed to find device with FD %d."
+                   "Fatal error, stoping asyn event thread",
+                   devices_poll->async_pollfd[index].fd));
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
 }
 
 /* This Async event thread is handling all async event of
- * all btls/hcas in openib component
+ * all btls/devices in openib component
  */
 void* btl_openib_async_thread(void * async)
 {
     int rc;
     int i;
-    struct mca_btl_openib_async_poll hcas_poll;
+    struct mca_btl_openib_async_poll devices_poll;
 
-    if (OMPI_SUCCESS != btl_openib_async_poll_init(&hcas_poll)) {
+    if (OMPI_SUCCESS != btl_openib_async_poll_init(&devices_poll)) {
         BTL_ERROR(("Fatal error, stoping asyn event thread"));
         pthread_exit(&return_status);
     }
 
     while(1) {
-        rc = poll(hcas_poll.async_pollfd, hcas_poll.active_poll_size, -1);
+        rc = poll(devices_poll.async_pollfd, devices_poll.active_poll_size, -1);
         if (rc < 0) {
             if (errno != EINTR) {
                 BTL_ERROR(("Poll failed.Fatal error, stoping asyn event thread"));
@@ -351,8 +351,8 @@ void* btl_openib_async_thread(void * async)
                 continue;
             }
         }
-        for(i = 0; i < hcas_poll.active_poll_size; i++) {
-            switch (hcas_poll.async_pollfd[i].revents) {
+        for(i = 0; i < devices_poll.active_poll_size; i++) {
+            switch (devices_poll.async_pollfd[i].revents) {
                 case 0:
                     /* no events */
                     break;
@@ -360,16 +360,16 @@ void* btl_openib_async_thread(void * async)
                     /* Processing our event */
                     if (0 == i) {
                         /* 0 poll we use for comunication with main thread */
-                        if (OMPI_SUCCESS != btl_openib_async_commandh(&hcas_poll)) {
-                            free(hcas_poll.async_pollfd);
+                        if (OMPI_SUCCESS != btl_openib_async_commandh(&devices_poll)) {
+                            free(devices_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process."
                                         "Fatal error, stoping asyn event thread"));
                             pthread_exit(&return_status);
                         }
                     } else {
-                        /* We get hca event */
-                        if (btl_openib_async_hcah(&hcas_poll, i)) {
-                            free(hcas_poll.async_pollfd);
+                        /* We get device event */
+                        if (btl_openib_async_deviceh(&devices_poll, i)) {
+                            free(devices_poll.async_pollfd);
                             BTL_ERROR(("Failed to process async thread process."
                                         "Fatal error, stoping asyn event thread"));
                             pthread_exit(&return_status);
@@ -381,8 +381,8 @@ void* btl_openib_async_thread(void * async)
                      * this case should not never happend */
                     BTL_ERROR(("Got unexpected event %d."
                                 "Fatal error, stoping asyn event thread"
-                                ,hcas_poll.async_pollfd[i].revents));
-                    free(hcas_poll.async_pollfd);
+                                ,devices_poll.async_pollfd[i].revents));
+                    free(devices_poll.async_pollfd);
                     pthread_exit(&return_status);
             }
         }
@@ -514,7 +514,7 @@ void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t 
     assert (NULL != ep);
     btl = ep->endpoint_btl;
 
-    if (ibv_query_xrc_rcv_qp(btl->hca->xrc_domain, qp_num, &attr, mask, &qp_init_attr))
+    if (ibv_query_xrc_rcv_qp(btl->device->xrc_domain, qp_num, &attr, mask, &qp_init_attr))
         BTL_ERROR(("Failed to ibv_query_qp, qp num: %d", qp_num));
 
     if (mca_btl_openib_component.apm_lmc &&
@@ -531,7 +531,7 @@ void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t 
         }
     }
 
-    ibv_modify_xrc_rcv_qp(btl->hca->xrc_domain, qp_num, &attr, mask);
+    ibv_modify_xrc_rcv_qp(btl->device->xrc_domain, qp_num, &attr, mask);
     /* Maybe the qp already was modified by other process - ignoring error */
 }
 #endif

@@ -27,7 +27,7 @@ dist_amca_param_DATA = btl-openib-benchmark
 dist_pkgdata_DATA = \
         help-mpi-btl-openib.txt \
         connect/help-mpi-btl-openib-cpc-base.txt \
-        mca-btl-openib-hca-params.ini
+        mca-btl-openib-device-params.ini
 
 sources = \
     btl_openib.c \

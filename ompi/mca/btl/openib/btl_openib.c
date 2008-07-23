@@ -131,9 +131,9 @@ static inline struct ibv_cq *ibv_create_cq_compat(struct ibv_context *context,
 #endif
 }
 
-static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
+static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
 {
-    uint32_t cq_size = hca->cq_size[cq];
+    uint32_t cq_size = device->cq_size[cq];
 
     /* make sure we don't exceed the maximum CQ size and that we
      * don't size the queue smaller than otherwise requested
@@ -141,47 +141,47 @@ static int adjust_cq(mca_btl_openib_hca_t *hca, const int cq)
      if(cq_size < mca_btl_openib_component.ib_cq_size[cq])
         cq_size = mca_btl_openib_component.ib_cq_size[cq];
 
-    if(cq_size > (uint32_t)hca->ib_dev_attr.max_cqe)
-        cq_size = hca->ib_dev_attr.max_cqe;
+    if(cq_size > (uint32_t)device->ib_dev_attr.max_cqe)
+        cq_size = device->ib_dev_attr.max_cqe;
 
-    if(NULL == hca->ib_cq[cq]) {
-        hca->ib_cq[cq] = ibv_create_cq_compat(hca->ib_dev_context, cq_size,
+    if(NULL == device->ib_cq[cq]) {
+        device->ib_cq[cq] = ibv_create_cq_compat(device->ib_dev_context, cq_size,
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-                hca, hca->ib_channel,
+                device, device->ib_channel,
 #else
                 NULL, NULL,
 #endif
                 0);
 
-        if (NULL == hca->ib_cq[cq]) {
+        if (NULL == device->ib_cq[cq]) {
             show_init_error(__FILE__, __LINE__, "ibv_create_cq",
-                        ibv_get_device_name(hca->ib_dev));
+                        ibv_get_device_name(device->ib_dev));
             return OMPI_ERROR;
         }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-        if(ibv_req_notify_cq(hca->ib_cq[cq], 0)) {
+        if(ibv_req_notify_cq(device->ib_cq[cq], 0)) {
             show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
-                            ibv_get_device_name(hca->ib_dev));
+                            ibv_get_device_name(device->ib_dev));
             return OMPI_ERROR;
         }
 
-        OPAL_THREAD_LOCK(&hca->hca_lock);
-        if (!hca->progress) {
+        OPAL_THREAD_LOCK(&device->device_lock);
+        if (!device->progress) {
             int rc;
-            hca->progress = true;
-            if(OPAL_SUCCESS != (rc = opal_thread_start(&hca->thread))) {
+            device->progress = true;
+            if(OPAL_SUCCESS != (rc = opal_thread_start(&device->thread))) {
                 BTL_ERROR(("Unable to create progress thread, retval=%d", rc));
                 return rc;
             }
         }
-        OPAL_THREAD_UNLOCK(&hca->hca_lock);
+        OPAL_THREAD_UNLOCK(&device->device_lock);
 #endif
     }
 #ifdef HAVE_IBV_RESIZE_CQ
     else if (cq_size > mca_btl_openib_component.ib_cq_size[cq]){
         int rc;
-        rc = ibv_resize_cq(hca->ib_cq[cq], cq_size);
+        rc = ibv_resize_cq(device->ib_cq[cq], cq_size);
         /* For ConnectX the resize CQ is not implemented and verbs returns -ENOSYS
          * but should return ENOSYS. So it is reason for abs */
         if(rc && ENOSYS != abs(rc)) {
@@ -214,18 +214,18 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
 #if HAVE_XRC
             if(BTL_OPENIB_QP_TYPE_XRC(qp)) {
                 openib_btl->qps[qp].u.srq_qp.srq =
-                    ibv_create_xrc_srq(openib_btl->hca->ib_pd,
-                            openib_btl->hca->xrc_domain,
-                            openib_btl->hca->ib_cq[qp_cq_prio(qp)], &attr);
+                    ibv_create_xrc_srq(openib_btl->device->ib_pd,
+                            openib_btl->device->xrc_domain,
+                            openib_btl->device->ib_cq[qp_cq_prio(qp)], &attr);
             } else
 #endif
             {
                openib_btl->qps[qp].u.srq_qp.srq =
-                   ibv_create_srq(openib_btl->hca->ib_pd, &attr);
+                   ibv_create_srq(openib_btl->device->ib_pd, &attr);
             }
             if (NULL == openib_btl->qps[qp].u.srq_qp.srq) {
                 show_init_error(__FILE__, __LINE__, "ibv_create_srq",
-                                ibv_get_device_name(openib_btl->hca->ib_dev));
+                                ibv_get_device_name(openib_btl->device->ib_dev));
                 return OMPI_ERROR;
             }
         }
@@ -238,7 +238,7 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
 {
     uint32_t send_cqes, recv_cqes;
     int rc = OMPI_SUCCESS, qp;
-    mca_btl_openib_hca_t *hca = openib_btl->hca;
+    mca_btl_openib_device_t *device = openib_btl->device;
 
     /* figure out reasonable sizes for completion queues */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
@@ -250,15 +250,15 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
                 mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
             recv_cqes = send_cqes;
         }
-        openib_btl->hca->cq_size[qp_cq_prio(qp)] += recv_cqes;
-        openib_btl->hca->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
+        openib_btl->device->cq_size[qp_cq_prio(qp)] += recv_cqes;
+        openib_btl->device->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
     }
 
-    rc = adjust_cq(hca, BTL_OPENIB_HP_CQ);
+    rc = adjust_cq(device, BTL_OPENIB_HP_CQ);
     if (OMPI_SUCCESS != rc)
         goto out;
 
-    rc = adjust_cq(hca, BTL_OPENIB_LP_CQ);
+    rc = adjust_cq(device, BTL_OPENIB_LP_CQ);
     if (OMPI_SUCCESS != rc)
         goto out;
 
@@ -325,7 +325,7 @@ int mca_btl_openib_add_procs(
            them as unreachable (need to use sm).  So for the moment,
            we'll just mark any local peer on an iWARP NIC as
            unreachable.  See trac ticket #1352. */
-        if (IBV_TRANSPORT_IWARP == openib_btl->hca->ib_dev->transport_type &&
+        if (IBV_TRANSPORT_IWARP == openib_btl->device->ib_dev->transport_type &&
             0 != (ompi_proc->proc_flags && OMPI_PROC_FLAG_LOCAL)) {
             continue;
         }
@@ -448,7 +448,7 @@ int mca_btl_openib_add_procs(
             continue;
         }
 
-        endpoint->index = opal_pointer_array_add(openib_btl->hca->endpoints, (void*)endpoint);
+        endpoint->index = opal_pointer_array_add(openib_btl->device->endpoints, (void*)endpoint);
         if( 0 > endpoint->index ) {
             OBJ_RELEASE(endpoint);
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
@@ -491,10 +491,10 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
     for (i=0 ; i < (int) nprocs ; i++) {
         mca_btl_base_endpoint_t* del_endpoint = peers[i];
         for(ep_index=0;
-            ep_index < opal_pointer_array_get_size(openib_btl->hca->endpoints);
+            ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
             ep_index++) {
             endpoint =
-                opal_pointer_array_get_item(openib_btl->hca->endpoints,
+                opal_pointer_array_get_item(openib_btl->device->endpoints,
                         ep_index);
             if(!endpoint || endpoint->endpoint_btl != openib_btl) {
                 continue;
@@ -502,7 +502,7 @@ int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl,
             if (endpoint == del_endpoint) {
                 BTL_VERBOSE(("in del_procs %d, setting another endpoint to null",
                              ep_index));
-                opal_pointer_array_set_item(openib_btl->hca->endpoints,
+                opal_pointer_array_set_item(openib_btl->device->endpoints,
                         ep_index, NULL);
                 assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
                 mca_btl_openib_proc_remove(procs[i], endpoint);
@@ -536,7 +536,7 @@ ib_frag_alloc(mca_btl_openib_module_t *btl, size_t size, uint8_t order,
 
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
          if(mca_btl_openib_component.qp_infos[qp].size >= size) {
-             OMPI_FREE_LIST_GET(&btl->hca->qps[qp].send_free, item, rc);
+             OMPI_FREE_LIST_GET(&btl->device->qps[qp].send_free, item, rc);
              if(item)
                  break;
          }
@@ -948,9 +948,9 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
     /* Release all QPs */
     for(ep_index=0;
-            ep_index < opal_pointer_array_get_size(openib_btl->hca->endpoints);
+            ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
             ep_index++) {
-        endpoint=opal_pointer_array_get_item(openib_btl->hca->endpoints,
+        endpoint=opal_pointer_array_get_item(openib_btl->device->endpoints,
                 ep_index);
         if(!endpoint) {
             BTL_VERBOSE(("In finalize, got another null endpoint"));
@@ -958,9 +958,9 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
         if(endpoint->endpoint_btl != openib_btl)
             continue;
-        for(i = 0; i < openib_btl->hca->eager_rdma_buffers_count; i++) {
-            if(openib_btl->hca->eager_rdma_buffers[i] == endpoint) {
-                openib_btl->hca->eager_rdma_buffers[i] = NULL;
+        for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
+            if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
+                openib_btl->device->eager_rdma_buffers[i] = NULL;
                 OBJ_RELEASE(endpoint);
             }
         }
@@ -992,9 +992,9 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
     }
 
-    /* Release HCA if it is no more users */
-    if(!(--openib_btl->hca->btls)) {
-        OBJ_RELEASE(openib_btl->hca);
+    /* Release device if there are no more users */
+    if(!(--openib_btl->device->btls)) {
+        OBJ_RELEASE(openib_btl->device);
     }
 
 #if OMPI_HAVE_THREADS

@@ -118,10 +118,10 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
        transport_type member, then we must be < OFED v1.2, and
        therefore we must be IB. */   
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-    if (IBV_TRANSPORT_IB != btl->hca->ib_dev->transport_type) {
+    if (IBV_TRANSPORT_IB != btl->device->ib_dev->transport_type) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: oob CPC only supported on InfiniBand; skipped on device %s",
-                            ibv_get_device_name(btl->hca->ib_dev));
+                            ibv_get_device_name(btl->device->ib_dev));
         return OMPI_ERR_NOT_SUPPORTED;
     }
 #endif
@@ -169,7 +169,7 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
 
     opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: oob CPC available for use on %s",
-                        ibv_get_device_name(btl->hca->ib_dev));
+                        ibv_get_device_name(btl->device->ib_dev));
     return OMPI_SUCCESS;
 }
 
@@ -280,8 +280,8 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
     for (i = 0; i < mca_btl_openib_component.num_qps; i++) {
         struct ibv_qp_attr attr;
         struct ibv_qp* qp = endpoint->qps[i].qp->lcl_qp;
-        enum ibv_mtu mtu = (openib_btl->hca->mtu < endpoint->rem_info.rem_mtu) ?
-            openib_btl->hca->mtu : endpoint->rem_info.rem_mtu;
+        enum ibv_mtu mtu = (openib_btl->device->mtu < endpoint->rem_info.rem_mtu) ?
+            openib_btl->device->mtu : endpoint->rem_info.rem_mtu;
 
         memset(&attr, 0, sizeof(attr));
         attr.qp_state           = IBV_QPS_RTR;
@@ -405,9 +405,9 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint)
 
 
 /* Returns max inlne size for qp #N */
-static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
+static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
 {
-    if (mca_btl_openib_component.qp_infos[qp].size <= hca->max_inline_data) {
+    if (mca_btl_openib_component.qp_infos[qp].size <= device->max_inline_data) {
         /* If qp message size is smaller than max_inline_data,
          * we should enable inline messages */
         return mca_btl_openib_component.qp_infos[qp].size;
@@ -415,7 +415,7 @@ static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
         /* If qp message size is bigger that max_inline_data, we
          * should enable inline messages only for RDMA QP (for PUT/GET
          * fin messages) and for the first qp */
-        return hca->max_inline_data;
+        return device->max_inline_data;
     }
     /* Otherway it is no reason for inline */
     return 0;
@@ -438,11 +438,11 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     memset(&attr, 0, sizeof(attr));
 
     init_attr.qp_type = IBV_QPT_RC;
-    init_attr.send_cq = openib_btl->hca->ib_cq[BTL_OPENIB_LP_CQ];
-    init_attr.recv_cq = openib_btl->hca->ib_cq[qp_cq_prio(qp)];
+    init_attr.send_cq = openib_btl->device->ib_cq[BTL_OPENIB_LP_CQ];
+    init_attr.recv_cq = openib_btl->device->ib_cq[qp_cq_prio(qp)];
     init_attr.srq     = srq;
     init_attr.cap.max_inline_data = req_inline = 
-        max_inline_size(qp, openib_btl->hca);
+        max_inline_size(qp, openib_btl->device);
     init_attr.cap.max_send_sge = 1;
     init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {
@@ -452,7 +452,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     }
     init_attr.cap.max_send_wr  = max_send_wr;
 
-    my_qp = ibv_create_qp(openib_btl->hca->ib_pd, &init_attr); 
+    my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr); 
     
     if (NULL == my_qp) { 
         BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
@@ -464,7 +464,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
         endpoint->qps[qp].ib_inline_max = init_attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true, orte_process_info.nodename,
-                       ibv_get_device_name(openib_btl->hca->ib_dev),
+                       ibv_get_device_name(openib_btl->device->ib_dev),
                        req_inline, init_attr.cap.max_inline_data);
     } else {
         endpoint->qps[qp].ib_inline_max = req_inline;
@@ -567,7 +567,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
             return rc;
         }
         BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
-        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1,
+        rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->device->mtu, 1,
                 OPAL_UINT32);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);

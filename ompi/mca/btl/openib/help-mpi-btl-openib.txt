@@ -23,9 +23,9 @@
 #
 [ini file:file not found]
 The Open MPI OpenFabrics (openib) BTL component was unable to find or
-read an INI file that was requested via the btl_openib_hca_param_files
-MCA parameter.  Please check this file and/or modify the
-btl_openib_hca_param_files MCA parameter:
+read an INI file that was requested via the
+btl_openib_device_param_files MCA parameter.  Please check this file
+and/or modify the btl_openib_evice_param_files MCA parameter:
 
     %s
 #
@@ -87,20 +87,22 @@ At line %d, the field named:
 
 This field, and any other unrecognized fields, will be skipped.
 #
-[no hca params found]
-WARNING: No HCA parameters were found for the HCA that Open MPI
+[no device params found]
+WARNING: No preset parameters were found for the device that Open MPI
 detected:
 
-    Hostname:           %s
-    HCA vendor ID:      0x%04x
-    HCA vendor part ID: %d
+  Local host:            %s
+  Device name:           %s
+  Device vendor ID:      0x%04x
+  Device vendor part ID: %d
 
-Default HCA parameters will be used, which may result in lower
+Default device parameters will be used, which may result in lower
 performance.  You can edit any of the files specified by the
-btl_openib_hca_param_files MCA parameter to set values for your HCA.
+btl_openib_device_param_files MCA parameter to set values for your
+device.
 
 NOTE: You can turn off this warning by setting the MCA parameter
-      btl_openib_warn_no_hca_params_found to 0.
+      btl_openib_warn_no_device_params_found to 0.
 #
 [init-fail-no-mem]
 The OpenFabrics (openib) BTL failed to initialize while trying to
@@ -109,11 +111,11 @@ memlock limits are set too low.  For most HPC installations, the
 memlock limits should be set to "unlimited".  The failure occured
 here:
 
-    Host:          %s
-    OMPI source:   %s:%d
-    Function:      %s()
-    Device:        %s
-    Memlock limit: %s
+  Local host:    %s
+  OMPI source:   %s:%d
+  Function:      %s()
+  Device:        %s
+  Memlock limit: %s
 
 You may need to consult with your system administrator to get this
 problem fixed.  This FAQ entry on the Open MPI web site may also be
@@ -130,11 +132,11 @@ attempting to use a feature that is not supported on your hardware
 btl_openib_receive_queues MCA parameter with a device that does not
 support it?).  The failure occured here:
 
-    Host:        %s
-    OMPI source: %s:%d
-    Function:    %s()
-    Error:       %s (errno=%d)
-    Device:      %s
+  Local host:  %s
+  OMPI source: %s:%d
+  Function:    %s()
+  Error:       %s (errno=%d)
+  Device:      %s
 
 You may need to consult with your system administrator to get this
 problem fixed.
@@ -158,9 +160,9 @@ particular host from the job can sometimes resolve this issue.
 Below is some information about the host that raised the error and the
 peer to which it was connected:
 
-    Local host:   %s
-    Local device: %s
-    Peer host:    %s
+  Local host:   %s
+  Local device: %s
+  Peer host:    %s
 
 You may need to consult with your system administrator to get this
 problem fixed.
@@ -178,9 +180,9 @@ particular host from the job can sometimes resolve this issue.
 Below is some information about the host that raised the error and the
 peer to which it was connected:
 
-    Local host:   %s
-    Local device: %s
-    Peer host:    %s
+  Local host:   %s
+  Local device: %s
+  Peer host:    %s
 
 You may need to consult with your system administrator to get this
 problem fixed.
@@ -214,26 +216,23 @@ respect to the retry count:
 Below is some information about the host that raised the error and the
 peer to which it was connected:
 
-    Local host:   %s
-    Local device: %s
-    Peer host:    %s
+  Local host:   %s
+  Local device: %s
+  Peer host:    %s
 
 You may need to consult with your system administrator to get this
 problem fixed.
 #
 [no active ports found]
-WARNING: There is at least one IB HCA found on host '%s', but there are
-no active ports detected. This is most certainly not what you wanted.
-Check your cables and SM configuration.
+WARNING: There is at least one OpenFabrics device found on host '%s',
+but there are no active ports detected. This is most certainly not
+what you wanted.  Check your cables, SM configuration, etc.
 #
-[error in hca init]
-WARNING: There was an error initializing an OpenFabrics NIC/HCA.
+[error in device init]
+WARNING: There was an error initializing an OpenFabrics device.
 
-Hostname: %s
-Device:   %s
-#
-[error in hca init]
-WARNING: There were errors during IB HCA initialization on host '%s'.
+  Local host:   %s
+  Local device: %s
 #
 [default subnet prefix]
 WARNING: There are more than one active ports on host '%s', but the
@@ -266,13 +265,12 @@ Wrong buffer alignment %d configured on host '%s'. Should be bigger
 than zero and power of two. Use default %d instead.
 #
 [of error event] 
-The OpenFabrics stack has reported a network error event
-Open MPI will try to continue, but your job may end up failing.
+The OpenFabrics stack has reported a network error event.  Open MPI
+will try to continue, but your job may end up failing.
 
-Host:              %s
-MPI process PID:   %d
-Error number:      %d
-Error description: %s
+  Local host:        %s
+  MPI process PID:   %d
+  Error number:      %d (%s)
 
 This error may indicate connectivity problems within the fabric;
 please contact your system administrator.
@@ -281,9 +279,9 @@ please contact your system administrator.
 The OpenFabrics stack has reported an unknown network error event.
 Open MPI will try to continue, but the job may end up failing.
 
-Host:              %s
-MPI process PID:   %d
-Error number:      %d
+  Local host:        %s
+  MPI process PID:   %d
+  Error number:      %d
 
 This error may indicate that you are using an OpenFabrics library
 version that is not currently supported by Open MPI.  You might try
@@ -301,7 +299,8 @@ For reference, the values that you specified are:
   btl_openib_if_exclude: %s
 #
 [nonexistent port]
-WARNING: One or more nonexistent HCAs/ports were specified:
+WARNING: One or more nonexistent OpenFabrics devices/ports were
+specified:
 
   Host:                 %s
   MCA parameter:        mca_btl_if_%sclude
@@ -314,15 +313,15 @@ setting the btl_openib_warn_nonexistent_if MCA parameter to 0.
 WARNING: An invalid MCA parameter value was found for the OpenFabrics
 (openib) BTL.
 
-Problem:    %s
-Resolution: %s
+  Problem:    %s
+  Resolution: %s
 #
 [no qps in receive_queues]
 WARNING: No queue pairs were defined in the btl_openib_receive_queues
 MCA parameter.  At least one queue pair must be defined.  The
 OpenFabrics (openib) BTL will therefore be deactivated for this run.
 
-Host: %s
+  Local host: %s
 #
 [invalid qp type in receive_queues]
 WARNING: An invalid queue pair type was specified in the
@@ -332,9 +331,9 @@ will be deactivated for this run.
 Valid queue pair types are "P" for per-peer and "S" for shared receive
 queue.
 
-Host: %s
-btl_openib_receive_queues: %s
-Bad specification: %s
+  Local host: %s
+  btl_openib_receive_queues: %s
+  Bad specification: %s
 #
 [invalid pp qp specification]
 WARNING: An invalid per-peer receive queue specification was detected
@@ -360,8 +359,8 @@ Per-peer receive queues require between 1 and 5 parameters:
   - Defaulting to ((256 * 2) - 1) / 16 = 31; this many buffers are
     reserved for explicit credit messages
 
-Host: %s
-Bad queue specification: %s
+  Local host: %s
+  Bad queue specification: %s
 #
 [invalid srq specification]
 WARNING: An invalid shared receive queue specification was detected as
@@ -384,8 +383,8 @@ Shared receive queues can take between 2 and 4 parameters:
   - A sender will not send to a peer unless it has less than 32
     outstanding sends to that peer.
 
-Host: %s
-Bad queue specification: %s
+  Local host: %s
+  Bad queue specification: %s
 #
 [rd_num must be > rd_low]
 WARNING: The number of buffers for a queue pair specified via the
@@ -393,8 +392,8 @@ btl_openib_receive_queues MCA parameter must be greater than the low
 buffer count watermark.  The OpenFabrics (openib) BTL will therefore
 be deactivated for this run.
 
-Host: %s
-Bad queue specification: %s
+  Local host: %s
+  Bad queue specification: %s
 #
 [biggest qp size is too small]
 WARNING: The largest queue pair buffer size specified in the
@@ -404,9 +403,9 @@ that no queue is large enough to receive the largest possible incoming
 message fragment.  The OpenFabrics (openib) BTL will therefore be
 deactivated for this run.
 
-Host: %s
-Largest buffer size: %d
-Maximum send fragment size: %d
+  Local host: %s
+  Largest buffer size: %d
+  Maximum send fragment size: %d
 #
 [biggest qp size is too big]
 WARNING: The largest queue pair buffer size specified in the
@@ -416,12 +415,11 @@ means that memory will be wasted because the largest possible incoming
 message fragment will not fill a buffer allocated for incoming
 fragments.
 
-Host: %s
-Largest buffer size: %d
-Maximum send fragment size: %d
+  Local host: %s
+  Largest buffer size: %d
+  Maximum send fragment size: %d
 #
 [freelist too small]
-
 WARNING: The maximum freelist size that was specified was too small
 for the requested receive queue sizes.  The maximum freelist size must
 be at least equal to the sum of the largest number of buffers posted
@@ -429,9 +427,9 @@ to a single queue plus the corresponding number of reserved/credit
 buffers for that queue.  It is suggested that the maximum be quite a
 bit larger than this for performance reasons.
 
-Host: %s
-Specified freelist size: %d
-Minimum required freelist size: %d
+  Local host: %s
+  Specified freelist size: %d
+  Minimum required freelist size: %d
 #
 [XRC with PP or SRQ]
 WARNING: An invalid queue pair type was specified in the
@@ -442,8 +440,8 @@ Note that XRC ("X") queue pairs cannot be used with per-peer ("P") and
 SRQ ("S") queue pairs.  This restriction may be removed in future
 versions of Open MPI.
 
-Host: %s
-btl_openib_receive_queues: %s
+  Local host: %s
+  btl_openib_receive_queues: %s
 #
 [XRC with BTLs per LID]
 WARNING: An invalid queue pair type was specified in the
@@ -453,9 +451,9 @@ will be deactivated for this run.
 XRC ("X") queue pairs can not be used when (btls_per_lid > 1).  This
 restriction may be removed in future versions of Open MPI.
 
-Host: %s
-btl_openib_receive_queues: %s
-btls_per_lid: %d
+  Local host: %s
+  btl_openib_receive_queues: %s
+  btls_per_lid: %d
 #
 [XRC on device without XRC support]
 WARNING: You configured the OpenFabrics (openib) BTL to run with %d
@@ -463,7 +461,7 @@ XRC queues.  The device %s does not have XRC capabilities; the
 OpenFabrics btl will ignore this device.  If no devices are found with
 XRC capabilities, the OpenFabrics BTL will be disabled.
 
-Host: %s
+  Local host: %s
 #
 [No XRC support]
 WARNING: The Open MPI build was compiled without XRC support, but XRC
@@ -471,8 +469,8 @@ WARNING: The Open MPI build was compiled without XRC support, but XRC
 parameter.  The OpenFabrics (openib) BTL will therefore be deactivated
 for this run.
 
-Host: %s
-btl_openib_receive_queues: %s
+  Local host: %s
+  btl_openib_receive_queues: %s
 #
 [XRC with wrong OOB]
 WARNING: You must use the "xoob" OpenFabrics (openib) connection
@@ -482,20 +480,20 @@ from btl_openib_receive_queues or ensure to use the "xoob" connection
 manager by setting btl_openib_connect to "xoob".  The OpenFabrics BTL
 will therefore be deactivated for this run.
 
-Host: %s
-num_xrc_qps: %d
+  Local host:        %s
+  Number of XRC RQs: %d
 #
 [SRQ or PP with wrong OOB]
 WARNING: You must use the "oob" OpenFabrics (openib) connection
-manager when PP("P") or SRQ ("S") queues are specified in the
-btl_openib_receive_queues MCA parameter.  Either remove the P or S queues
-from btl_openib_receive_queues or ensure to use the "oob" connection
-manager by setting btl_openib_connect to "oob".  The OpenFabrics BTL
-will therefore be deactivated for this run.
+manager when PP ("P") or SRQ ("S") queues are specified in the
+btl_openib_receive_queues MCA parameter.  Either remove the P or S
+queues from btl_openib_receive_queues or ensure to use the "oob"
+connection manager by setting btl_openib_connect to "oob".  The
+OpenFabrics BTL will therefore be deactivated for this run.
 
-Host: %s
-num_srq_qps: %d
-num_pp_qps: %d
+  Local host:      %s
+  Number of SRQs:  %d
+  Number of PPRQs: %d
 #
 [non optimal rd_win]
 WARNING: rd_win specification is non optimal. For maximum performance it is
@@ -510,8 +508,8 @@ APM support will be disabled.
 Can not provide %d alternative paths with LMC bit configured to %d.
 #
 [apm not enough ports]
-WARNING: For APM over ports ompi require at least 2 active ports and only single
-active port was found. Disabling APM over ports
+WARNING: For APM over ports ompi require at least 2 active ports and
+only single active port was found. Disabling APM over ports
 #
 [conflicting receive_queues]
 Open MPI detected two different sets of OpenFabrics receives queues on
@@ -519,24 +517,24 @@ the same host (in the openib BTL).  Open MPI currently only supports
 one set of OF receive queues in an MPI job, even if you have different
 types of OpenFabrics adapters on the same host.
 
-Host:      %s
-Adapter 1: %s (vendor 0x%x, part ID %d)
-Queues:    %s
-Adapter 2: %s (vendor 0x%x, part ID %d)
-Queues:    %s
+  Local host:      %s
+  Adapter 1: %s (vendor 0x%x, part ID %d)
+  Queues:    %s
+  Adapter 2: %s (vendor 0x%x, part ID %d)
+  Queues:    %s
 
 Note that these receive queues values may have come from the Open MPI
 adapter default settings file:
 
-    %s/mca-btl-openib-hca-params.ini
+    %s/mca-btl-openib-device-params.ini
 #
 [failed load cpc]
 No OpenFabrics connection schemes reported that they were able to be
 used on a specific device.  As such, the openib BTL (OpenFabrics
 support) will be disabled.
 
-Host:           %s
-Device:         %s
+  Local host:   %s
+  Local device: %s
 #
 [eager RDMA and progress threads]
 WARNING: The openib BTL was directed to use "eager RDMA" for short

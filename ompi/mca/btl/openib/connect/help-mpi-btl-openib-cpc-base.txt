@@ -15,18 +15,18 @@ No OpenFabrics connection schemes reported that they were able to be
 used on a specific port.  As such, the openib BTL (OpenFabrics
 support) will be disabled for this port.
 
-Host:           %s
-Device:         %s
-CPCs attempted: %s
+  Local host:           %s
+  Local device:         %s
+  CPCs attempted:       %s
 #
 [cpc name not found]
 An invalid CPC name was specified via the btl_openib_cpc_%s MCA 
 parameter.
 
-Host:                         %s
-btl_openib_cpc_%s value: %s
-Invalid name:                 %s
-All possible valid names:     %s
+  Local host:                   %s
+  btl_openib_cpc_%s value: %s
+  Invalid name:                 %s
+  All possible valid names:     %s
 #
 [inline truncated]
 WARNING: The btl_openib_ib_max_inline_data MCA parameter was used to
