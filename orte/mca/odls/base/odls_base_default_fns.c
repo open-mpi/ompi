@@ -824,8 +824,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:launch oversubscribed set to %s",
+                         "%s odls:launch found %d processors for %d children and set oversubscribed to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         num_processors, (int)opal_list_get_size(&orte_odls_globals.children),
                          oversubscribed ? "true" : "false"));
     
     /* setup to report the proc state to the HNP */
