@@ -60,13 +60,6 @@
 #include "orte/runtime/orte_wait.h"
 
 
-#ifdef HAVE_WAITPID
-
-static volatile int cb_enabled = true;
-static opal_mutex_t mutex;
-static opal_list_t pending_pids;
-static opal_list_t registered_cb;
-
 /*********************************************************************
 *
 * Wait Object Declarations
@@ -100,6 +93,12 @@ OBJ_CLASS_INSTANCE(orte_message_event_t,
                    message_event_constructor,
                    message_event_destructor);
 
+#ifdef HAVE_WAITPID
+
+static volatile int cb_enabled = true;
+static opal_mutex_t mutex;
+static opal_list_t pending_pids;
+static opal_list_t registered_cb;
 
 /*********************************************************************
  *
@@ -710,26 +709,6 @@ static volatile int cb_enabled = true;
 static opal_mutex_t mutex;
 static opal_list_t pending_pids;
 static opal_list_t registered_cb;
-
-
-/*********************************************************************
-*
-* Wait Object Declarations
-*
-********************************************************************/
-static void message_event_destructor(orte_message_event_t *ev)
-{
-    OBJ_RELEASE(ev->buffer);
-}
-
-static void message_event_constructor(orte_message_event_t *ev)
-{
-    ev->buffer = OBJ_NEW(opal_buffer_t);
-}
-OBJ_CLASS_INSTANCE(orte_message_event_t,
-                   opal_object_t,
-                   message_event_constructor,
-                   message_event_destructor);
 
 typedef struct {
     opal_list_item_t super;
