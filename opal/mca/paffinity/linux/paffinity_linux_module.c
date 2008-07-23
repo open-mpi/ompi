@@ -67,6 +67,22 @@ static const opal_paffinity_base_module_1_1_0_t loc_module = {
     NULL
 };
 
+/* Trivial helper function to convert system error codes to OPAL_ERR_*
+   codes */
+static int convert(int ret) 
+{
+    switch(ret) {
+    case 0:
+        return OPAL_SUCCESS;
+    case ENOSYS:
+        return OPAL_ERR_NOT_SUPPORTED;
+    case EINVAL:
+        return OPAL_ERR_BAD_PARAM;
+    default:
+        return OPAL_ERROR;
+    }
+}
+
 int opal_paffinity_linux_component_query(mca_base_module_t **module, int *priority)
 {
     int param;
@@ -157,26 +173,52 @@ static int linux_module_get(opal_paffinity_base_cpu_set_t *mask)
 
 static int linux_module_map_to_processor_id(int socket, int core, int *processor_id)
 {
-   return opal_paffinity_linux_plpa_map_to_processor_id(socket, core, processor_id);
+    int ret = opal_paffinity_linux_plpa_map_to_processor_id(socket, core, 
+                                                            processor_id);
+    return convert(ret);
 }
 
 static int linux_module_map_to_socket_core(int processor_id, int *socket, int *core)
 {
-   return opal_paffinity_linux_plpa_map_to_socket_core(processor_id, socket, core);
+    int ret = opal_paffinity_linux_plpa_map_to_socket_core(processor_id, 
+                                                           socket, core);
+    return convert(ret);
 }
 
 static int linux_module_get_processor_info(int *num_processors, int *max_processor_id)
 {
-   return opal_paffinity_linux_plpa_get_processor_info(num_processors, max_processor_id);
+    int ret = opal_paffinity_linux_plpa_get_processor_info(num_processors, 
+                                                           max_processor_id);
+
+    /* If we're on a kernel that does not support the topology
+       functionality, PLPA will return ENOSYS and not try to calculate
+       the number of processors or max processor.  In this case, just
+       call sysconf() and assume that the max_processor_id equals the
+       number of processors. */
+    if (ENOSYS == ret) {
+        ret = sysconf(_SC_NPROCESSORS_ONLN);
+        if (ret > 0) {
+            *num_processors = *max_processor_id = ret;
+            return OPAL_SUCCESS;
+        } else {
+            return OPAL_ERR_IN_ERRNO;
+        }
+    } else {
+        return convert(ret);
+    }
 }
 
 static int linux_module_get_socket_info(int *num_sockets, int *max_socket_num)
 {
-   return opal_paffinity_linux_plpa_get_socket_info(num_sockets, max_socket_num);
+    int ret = opal_paffinity_linux_plpa_get_socket_info(num_sockets, 
+                                                        max_socket_num);
+    return convert(ret);
 }
 
 static int linux_module_get_core_info(int socket, int *num_cores, int *max_core_num)
 {
-   return opal_paffinity_linux_plpa_get_core_info(socket, num_cores, max_core_num);
+    int ret = opal_paffinity_linux_plpa_get_core_info(socket, num_cores, 
+                                                      max_core_num);
+    return convert(ret);
 }
 
