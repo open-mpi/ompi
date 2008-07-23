@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -124,7 +126,7 @@ static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priorit
         opal_output_verbose(10, orte_plm_globals.output,
                             "plm:lsf: NOT available for selection");
         *module = NULL;
-        return ORTE_ERROR:
+        return ORTE_ERROR;
     }
     
     *priority = mca_plm_lsf_component.priority;
