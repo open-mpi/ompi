@@ -38,7 +38,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
-#include "opal/util/num_procs.h"
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/event/event.h"
@@ -756,43 +755,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        that code. */
     opal_progress_event_users_decrement();
 
-    /* see if the user specified yield_when_idle - if so, use it */
+    /* see if yield_when_idle was specified - if so, use it */
     param = mca_base_param_find("mpi", NULL, "yield_when_idle");
     mca_base_param_lookup_int(param, &value);
     if (value < 0) {
-        /* TEMPORARY FIX - RIGHT NOW, WE DO NOT HAVE ACCESS TO
-         * INFO ON THE NUMBER OF LOCAL PROCS. THE ORTED IS SETTING
-         * THE MCA PARAM (OR THE PLS WILL, DEPENDING ON SYSTEM) SO
-         * THE FOLLOWING CODE WILL **NEVER** BE EXECUTED *EXCEPT*
-         * POSSIBLY BY SINGLETONS IN THE ABSENCE OF AN ENVIRO MCA PARAM
-         */
-#if 0
-        /* nope - so let's figure out what we can/should do...
-         * first, get the number of processors - if we can't then
-         * we can't do anything but set conservative values
-         */
-        if (OPAL_SUCCESS == opal_get_num_processors(&num_processors)) {
-            /* got the num_processors - compare that to the number of
-             * local procs in this job to decide if we are oversubscribed
-             */
-            if (ompi_proc_local_proc->num_local_procs > num_processors) {
-                /* oversubscribed - better yield */
-                opal_progress_set_yield_when_idle(true);
-            } else {
-                /* not oversubscribed - go ahead and be a hog! */
-                opal_progress_set_yield_when_idle(false);
-            }
-        } else {
-            /* couldn't get num_processors - be conservative */
-            opal_progress_set_yield_when_idle(true);
-        }
-#endif
-        /* always just default to conservative */
+        /* if no info is provided, just default to conservative */
         opal_progress_set_yield_when_idle(true);
     } else {
-        /* yep, they specified it - so set idle accordingly */
+        /* info was provided, so set idle accordingly */
         opal_progress_set_yield_when_idle(value == 0 ? false : true);
     }
+    
     param = mca_base_param_find("mpi", NULL, "event_tick_rate");
     mca_base_param_lookup_int(param, &value);
     /* negative value means use default - just don't do anything */

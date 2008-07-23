@@ -42,7 +42,6 @@ headers = \
         malloc.h \
 	net.h \
         numtostr.h \
-        num_procs.h \
         opal_environ.h \
         opal_getcwd.h \
 	opal_pty.h \
@@ -76,7 +75,6 @@ libopalutil_la_SOURCES = \
         malloc.c \
 	net.c \
         numtostr.c \
-        num_procs.c \
         opal_environ.c \
         opal_getcwd.c \
 	opal_pty.c \

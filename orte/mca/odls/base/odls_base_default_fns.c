@@ -38,7 +38,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
-#include "opal/util/num_procs.h"
 #include "opal/util/sys_limits.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
@@ -639,7 +638,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
     free(param);
     
-    /* setup yield schedule */
+    /* setup yield schedule - do not override any user-supplied directive! */
     if (oversubscribed) {
         param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
         opal_setenv(param, "1", false, environ_copy);
