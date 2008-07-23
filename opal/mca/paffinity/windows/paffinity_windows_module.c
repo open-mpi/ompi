@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -41,7 +41,7 @@ static int windows_module_get_core_info(int socket, int *num_cores, int *max_cor
 static SYSTEM_INFO sys_info;
 
 /*
- * Linux paffinity module 
+ * Windows paffinity module 
  */
 static const opal_paffinity_base_module_1_1_0_t loc_module = {
     /* Initialization function */
@@ -134,7 +134,8 @@ static int windows_module_map_to_socket_core(int processor_id, int *socket, int 
 
 static int windows_module_get_processor_info(int *num_processors, int *max_processor_id)
 {
-    return OPAL_ERR_NOT_SUPPORTED;
+    *num_processors = *max_processor_id = sys_info.dwNumberOfProcessors;
+    return OPAL_SUCCESS;
 }
 
 static int windows_module_get_socket_info(int *num_sockets, int *max_socket_num)      
