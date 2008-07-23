@@ -8,10 +8,11 @@ enable_mem_debug=no
 enable_mem_profile=no
 enable_debug_symbols=no
 enable_binaries=yes
-with_devel_headers=no
+with_devel_headers=yes
 enable_heterogeneous=yes
 enable_debug=no
 enable_shared=yes
+with_wrapper_cflags=-I/opt/panfs/include
+with_io_romio_flags=--with-file-system=ufs+nfs+panfs
 with_slurm=no
 enable_memchecker=no
-enable_io_romio=no

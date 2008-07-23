@@ -1,11 +1,9 @@
-with_threads=no
 enable_dlopen=no
 enable_pty_support=no
 with_tm=/opt/PBS
 LDFLAGS=-L/opt/PBS/lib64
 with_openib=/opt/ofed
 with_openbi_libdir=/opt/ofed/lib64
-with_io_romio_flags=--with-file-system=ufs+nfs
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
@@ -27,3 +25,4 @@ enable_mpi_f90=no
 enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
 enable_mca_no_build=pml-dr,pml-crcp2,crcp,filem
+enable_io_romio=no
