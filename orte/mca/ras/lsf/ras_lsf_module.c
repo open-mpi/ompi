@@ -17,7 +17,7 @@
  * $HEADER$
  */
 #include "orte_config.h"
-#include "orte/orte_constants.h"
+#include "orte/constants.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -30,6 +30,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_lsf.h"
@@ -38,7 +39,7 @@
 /*
  * Local functions
  */
-static int allocate(orte_jobid_t job, opal_list_t *nodes);
+static int allocate(opal_list_t *nodes);
 static int finalize(void);
 
 
@@ -51,7 +52,7 @@ orte_ras_base_module_t orte_ras_lsf_module = {
 };
 
 
-static int allocate(orte_jobid_t job, opal_list_t *nodes)
+static int allocate(opal_list_t *nodes)
 {
     char **nodelist;
     orte_node_t *node;
@@ -70,7 +71,7 @@ static int allocate(orte_jobid_t job, opal_list_t *nodes)
         /* is this a repeat of the current node? */
         if (NULL != node && 0 == strcmp(nodelist[i], node->name)) {
             /* it is a repeat - just bump the slot count */
-            ++node->node_slots;
+            ++node->slots;
             continue;
         }
         

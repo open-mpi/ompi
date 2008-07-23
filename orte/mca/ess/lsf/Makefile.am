@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(pls_lsf_CPPFLAGS)
+AM_CPPFLAGS = $(ess_lsf_CPPFLAGS)
 
 sources = \
         ess_lsf.h \
