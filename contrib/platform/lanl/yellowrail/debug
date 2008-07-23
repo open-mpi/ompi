@@ -1,8 +1,10 @@
 enable_dlopen=no
 enable_pty_support=no
 with_tm=/opt/PBS
+with_wrapper_cflags=-I/opt/panfs/include
 LDFLAGS=-L/opt/PBS/lib64
 with_openib=/opt/ofed
+with_io_romio_flags=--with-file-system=ufs+nfs+panfs
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
@@ -16,4 +18,3 @@ enable_shared=yes
 enable_static=no
 with_slurm=no
 enable_memchecker=no
-enable_io_romio=no
