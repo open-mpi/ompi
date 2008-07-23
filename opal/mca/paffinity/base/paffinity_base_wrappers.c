@@ -70,27 +70,8 @@ int opal_paffinity_base_map_to_socket_core(int processor_id, int *socket, int *c
 
 int opal_paffinity_base_get_processor_info(int *num_processors, int *max_processor_id)
 {
-    int rc;
-    
     if (!opal_paffinity_base_selected) {
-        /* since no module was available, we do the best we can
-         * with a POSIX-standard query
-         */
-        if (0 > (rc = sysconf(_SC_NPROCESSORS_ONLN))) {
-            /* system was unable to provide a number, so return
-             * an error and set the values to something negative
-             */
-            *num_processors = *max_processor_id = -1;
-            return OPAL_ERR_NOT_FOUND;
-        }
-        /* rc will contain a guess at the number of processors
-         * that are currently online - return that value
-         */
-        *num_processors = *max_processor_id = rc;
-        /* since we found something and it is the best we can do,
-         * return success
-         */
-        return OPAL_SUCCESS;
+        return OPAL_ERR_NOT_FOUND;
     }
     return opal_paffinity_base_module->paff_get_processor_info(num_processors, max_processor_id);
 }
