@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,6 +36,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "ompi/mca/mpool/mpool.h"
+#include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
@@ -65,11 +67,11 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     void* user_data,
     struct mca_mpool_base_resources_t* resources) 
 {
-    
     mca_mpool_base_component_t* component = NULL; 
     mca_mpool_base_module_t* module = NULL; 
     opal_list_item_t* item;
     mca_mpool_base_selected_module_t *sm;
+    int use_mem_hooks, disable_mallopt;
 
     for (item = opal_list_get_first(&mca_mpool_base_components);
          item != opal_list_get_end(&mca_mpool_base_components);
@@ -102,11 +104,27 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
        still need to register a callback to handle the case of the
        user calling mmap/munmap on his own. */ 
     if (opal_list_get_size(&mca_mpool_base_modules) == 1) { 
-        if (mca_mpool_base_use_mem_hooks) {
+
+        /* Lookup the current value of the MCA params and see if any
+           other entity in the code base requested mem hooks */
+        mca_base_param_lookup_int(mca_mpool_base_use_mem_hooks_index,
+                                  &use_mem_hooks);
+        mca_base_param_lookup_int(mca_mpool_base_disable_mallopt_index,
+                                  &disable_mallopt);
+
+        /* force mem hooks if leave_pinned or leave_pinned_pipeline is
+           enabled (note that either of these leave_pinned variables
+           may have been set by a user MCA param or elsewhere in the
+           code base) */
+        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+            use_mem_hooks = 1;
+        }
+
+        if (use_mem_hooks) {
             if (0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
                 opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
                 OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
-            } else if (mca_mpool_base_mallopt_disable_free &&
+            } else if (!disable_mallopt &&
                        0 != (OPAL_MEMORY_MUNMAP_SUPPORT & opal_mem_hooks_support_level())) {
                 opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
                 OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
@@ -122,6 +140,10 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
                                orte_process_info.nodename);
                 return NULL;
             }
+
+            /* Set this to true so that mpool_base_close knows to
+               cleanup */
+            mca_mpool_base_used_mem_hooks = 1;
         }
     }
     return module; 

@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,7 +67,7 @@ int mca_mpool_base_close(void)
                             &mca_mpool_base_components, NULL);
 
   /* deregister memory free callback */
-  if( (modules_length > 0) && mca_mpool_base_use_mem_hooks && 
+  if( (modules_length > 0) && mca_mpool_base_used_mem_hooks && 
      0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
       opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
       OBJ_DESTRUCT(&mca_mpool_base_mem_cb_array);

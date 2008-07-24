@@ -31,16 +31,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <malloc.h>
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
 #include "opal/include/opal/align.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "orte/util/show_help.h"
 #include "opal/sys/timer.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
+#include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/carto/carto.h"
 #include "opal/mca/carto/base/base.h"
@@ -48,6 +49,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
@@ -1926,6 +1928,8 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_frag_init_data_t *init_data;
     struct dev_distance *dev_sorted;
     int distance;
+    int index, value;
+    mca_base_param_source_t source;
 
     /* initialization */
     *num_btl_modules = 0;
@@ -1959,6 +1963,44 @@ btl_openib_component_init(int *num_btl_modules,
     /* Init CPC components */
     if (OMPI_SUCCESS != (ret = ompi_btl_openib_connect_base_init())) {
         goto no_btls;
+    }
+
+    /* If we have a memory manager available, unless the user
+       explicitly set mpi_leave_pinned==0 or
+       mpi_leave_pinned_pipeline==0, then set mpi_leave_pinned to 1.
+
+       We have a memory manager if:
+       - we have both FREE and MUNMAP support
+       - we have MUNMAP support and the linux mallopt */
+    value = opal_mem_hooks_support_level();
+    if (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
+         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) ||
+        (0 != (OPAL_MEMORY_MUNMAP_SUPPORT & value) &&
+         OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT)) {
+        ret = 0;
+        index = mca_base_param_find("mpi", NULL, "leave_pinned");
+        if (index >= 0) {
+            if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
+                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source)) {
+                if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
+                    ++ret;
+                }
+            }
+        }
+        index = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");
+        if (index >= 0) {
+            if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
+                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source)) {
+                if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
+                    ++ret;
+                }
+            }
+        }
+        /* If we were good on both parameters, then set leave_pinned=1 */
+        if (2 == ret) {
+            ompi_mpi_leave_pinned = 1;
+            ompi_mpi_leave_pinned_pipeline = 0;
+        }
     }
 
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, ompi_free_list_t);
