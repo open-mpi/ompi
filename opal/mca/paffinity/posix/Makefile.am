@@ -17,27 +17,27 @@
 #
 
 sources = \
-        paffinity_osx.h \
-        paffinity_osx_component.c \
-        paffinity_osx_module.c
+        paffinity_posix.h \
+        paffinity_posix_component.c \
+        paffinity_posix_module.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_paffinity_osx_DSO
+if OMPI_BUILD_paffinity_posix_DSO
 component_noinst =
-component_install = mca_paffinity_osx.la
+component_install = mca_paffinity_posix.la
 else
-component_noinst = libmca_paffinity_osx.la
+component_noinst = libmca_paffinity_posix.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_paffinity_osx_la_SOURCES = $(sources)
-mca_paffinity_osx_la_LDFLAGS = -module -avoid-version
+mca_paffinity_posix_la_SOURCES = $(sources)
+mca_paffinity_posix_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_paffinity_osx_la_SOURCES =$(sources)
-libmca_paffinity_osx_la_LDFLAGS = -module -avoid-version
+libmca_paffinity_posix_la_SOURCES =$(sources)
+libmca_paffinity_posix_la_LDFLAGS = -module -avoid-version
