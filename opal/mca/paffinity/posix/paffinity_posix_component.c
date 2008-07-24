@@ -27,25 +27,25 @@
 
 #include "opal/constants.h"
 #include "opal/mca/paffinity/paffinity.h"
-#include "paffinity_osx.h"
+#include "paffinity_posix.h"
 
 /*
- * Public string showing the paffinity ompi_osx component version number
+ * Public string showing the paffinity ompi_posix component version number
  */
-const char *opal_paffinity_osx_component_version_string =
-    "OPAL osx paffinity MCA component version " OPAL_VERSION;
+const char *opal_paffinity_posix_component_version_string =
+    "OPAL posix paffinity MCA component version " OPAL_VERSION;
 
 /*
  * Local function
  */
-static int osx_open(void);
+static int posix_open(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-const opal_paffinity_base_component_1_1_0_t mca_paffinity_osx_component = {
+const opal_paffinity_base_component_1_1_0_t mca_paffinity_posix_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -58,16 +58,16 @@ const opal_paffinity_base_component_1_1_0_t mca_paffinity_osx_component = {
 
         /* Component name and version */
 
-        "osx",
+        "posix",
         OPAL_MAJOR_VERSION,
         OPAL_MINOR_VERSION,
         OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
 
-        osx_open,
+        posix_open,
         NULL,
-        opal_paffinity_osx_component_query
+        opal_paffinity_posix_component_query
     },
     /* Next the MCA v1.0.0 component meta data */
     {
@@ -77,7 +77,7 @@ const opal_paffinity_base_component_1_1_0_t mca_paffinity_osx_component = {
 };
 
 
-static int osx_open(void)
+static int posix_open(void)
 {
     return OPAL_SUCCESS;
 }
