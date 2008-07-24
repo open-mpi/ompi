@@ -399,22 +399,6 @@ AC_DEFINE_UNQUOTED([OMPI_WANT_PRETTY_PRINT_STACKTRACE],
                    [if want pretty-print stack trace feature])
 
 #
-# Do we want deprecated executable names ?
-# 
-AC_MSG_CHECKING(if want deprecated executable names)
-AC_ARG_ENABLE(deprecated-executable-names,
-    AC_HELP_STRING([--enable-deprecated-executable-names], [make sym links to deprecated OMPI executables (e.g., hcc, hcp, hf77, wipe) (default: disabled)]))
-if test "$enable_deprecated_executable_names" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_DEN=1
-else
-    AC_MSG_RESULT([no])
-    WANT_DEN=0
-fi
-
-AM_CONDITIONAL(WANT_DEPRECATED_EXECUTABLE_NAMES, test "$WANT_DEN" = "1")
-
-#
 # Do we want to enable peruse interface?
 #
  
