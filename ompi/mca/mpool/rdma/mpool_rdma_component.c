@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -26,7 +26,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "mpool_rdma.h"
 #include "orte/util/proc_info.h"
-#include "ompi/runtime/params.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -96,9 +95,6 @@ static int mca_mpool_rdma_open(void)
             false, false, 0, &val);
 
     mca_mpool_rdma_component.print_stats = val?true:false;
-
-    mca_mpool_rdma_component.leave_pinned = (int) 
-        (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline);
 
     return OMPI_SUCCESS;
 }

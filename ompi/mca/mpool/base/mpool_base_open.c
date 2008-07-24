@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +31,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/memoryhooks/memory.h"
-#include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/constants.h"
@@ -49,11 +48,13 @@
  */
 int mca_mpool_base_output = -1;
 
+/* whether we actually used the mem hooks or not */
+int mca_mpool_base_used_mem_hooks = 0;
 /* should we attempt to use the available memory hooks */
-int mca_mpool_base_use_mem_hooks = 0; 
+int mca_mpool_base_use_mem_hooks_index;
 /* should we attempt to use mallopt to disable free() returning memory
    to OS? */
-int mca_mpool_base_mallopt_disable_free = 0;
+int mca_mpool_base_disable_mallopt_index;
 
 uint32_t mca_mpool_base_page_size; 
 uint32_t mca_mpool_base_page_size_log;
@@ -70,8 +71,7 @@ int mca_mpool_base_open(void)
     /* Open up all available components - and populate the
        mca_mpool_base_components list */
     
-    int use_mem_hooks;
-    int no_mallopt;
+    int i;
     
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
@@ -88,53 +88,32 @@ int mca_mpool_base_open(void)
      * check for use_mem_hooks (for diagnostics/testing) 
      * however if leave_pinned is set we force this to be enabled
      */
-    mca_base_param_reg_int_name("mpool", 
-                                "base_use_mem_hooks", 
-                                "use memory hooks for deregistering freed memory",
-                                false, 
-                                false, 
-                                0,
-                                &mca_mpool_base_use_mem_hooks); 
-    
-    mca_base_param_reg_int_name("mpool", 
-                                "use_mem_hooks", 
-                                "(deprecated, use mpool_base_use_mem_hooks)",
-                                false, 
-                                false, 
-                                0,
-                                &use_mem_hooks); 
-    
-    mca_mpool_base_use_mem_hooks = use_mem_hooks || mca_mpool_base_use_mem_hooks;
+    mca_mpool_base_use_mem_hooks_index = 
+        mca_base_param_reg_int_name("mpool", 
+                                    "base_use_mem_hooks", 
+                                    "Use memory hooks for deregistering freed memory",
+                                    false, 
+                                    false, 
+                                    0,
+                                    NULL);
+    mca_base_param_reg_syn_name(i, "mpool", "use_mem_hooks", true);
 
-    
+    mca_mpool_base_disable_mallopt_index =
+        mca_base_param_reg_int_name("mpool", 
+                                    "base_disable_mallopt",
+                                    "Do not use mallopt to disable returning memory to "
+                                    "the OS when leave_pinned is active and no memory "
+                                    "components are found (this value is only changable on Linux systems that support mallopt()).",
+                                    false, 
 #if OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT
-    mca_base_param_reg_int_name("mpool", 
-                                "base_disable_mallopt",
-                                "do not use mallopt to disable returning memory to "
-                                "the OS when leave_pinned is active and no memory "
-                                "components are found.",
-                                false, 
-                                false, 
-                                0,
-                                &no_mallopt);
+                                    false, 
+                                    0,
 #else
-    no_mallopt = 1;
+                                    true,
+                                    1,
 #endif
+                                    NULL);
 
-    /* force mem hooks if leave_pinned or leave_pinned_pipeline is enabled */
-    if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
-        mca_mpool_base_use_mem_hooks = 1;
-    }
-
-    /* enable mallopt if we're using leave pinned, there is support
-       for intercepting munmap, and the user didn't tell us not to use
-       mallopt */
-    if ((ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) &&
-        (0 != (OPAL_MEMORY_MUNMAP_SUPPORT & opal_mem_hooks_support_level())) &&
-        0 == no_mallopt) {
-        mca_mpool_base_mallopt_disable_free = 1;        
-    }
-    
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
     mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 
