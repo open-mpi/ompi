@@ -1881,7 +1881,7 @@ static bool lookup_file(mca_base_param_t *param,
     bool found = false;
     syn_info_t *si;
     char *deprecated_name = NULL;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *in_item;
     mca_base_param_file_value_t *fv;
     bool print_deprecated_warning = false;
 
@@ -1915,10 +1915,10 @@ static bool lookup_file(mca_base_param_t *param,
                    !opal_list_is_empty(param->mbp_synonyms)) {
             /* Check all the synonyms on this parameter and see if the
                file value matches */
-            for (item = opal_list_get_first(param->mbp_synonyms);
-                 opal_list_get_end(param->mbp_synonyms) != item;
-                 item = opal_list_get_next(item)) {
-                si = (syn_info_t*) item;
+            for (in_item = opal_list_get_first(param->mbp_synonyms);
+                 opal_list_get_end(param->mbp_synonyms) != in_item;
+                 in_item = opal_list_get_next(in_item)) {
+                si = (syn_info_t*) in_item;
                 if (0 == strcmp(fv->mbpfv_param, si->si_full_name)) {
                     found = true;
                     if ((si->si_deprecated && 
