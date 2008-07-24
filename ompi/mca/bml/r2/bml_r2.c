@@ -154,21 +154,16 @@ static int btl_bandwidth_compare(const void *v1, const void *v2)
  *
  */
 
-int mca_bml_r2_add_procs(
-                         size_t nprocs, 
-                         struct ompi_proc_t** procs, 
-                         struct mca_bml_base_endpoint_t** bml_endpoints, 
-                         struct ompi_bitmap_t* reachable
-                         )
+int mca_bml_r2_add_procs( size_t nprocs, 
+                          struct ompi_proc_t** procs, 
+                          struct mca_bml_base_endpoint_t** bml_endpoints, 
+                          struct ompi_bitmap_t* reachable )
 {
-    size_t p;
-    int rc;
-    size_t p_index;
+    size_t p, p_index, n_new_procs = 0;
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
     struct ompi_proc_t** new_procs = NULL; 
-    size_t n_new_procs = 0;
-    int ret = OMPI_SUCCESS;
     struct ompi_proc_t *unreach_proc = NULL;
+    int rc, ret = OMPI_SUCCESS;
 
     if(0 == nprocs) {
         return OMPI_SUCCESS;
@@ -238,8 +233,6 @@ int mca_bml_r2_add_procs(
                 mca_bml_base_btl_t* bml_btl; 
                 size_t size;
                 
-                btl_inuse++;
-
                 if(NULL == bml_endpoint) { 
                     /* allocate bml specific proc data */
                     bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
@@ -326,6 +319,8 @@ int mca_bml_r2_add_procs(
                  */
                 bml_endpoint->btl_flags_or |= bml_btl->btl_flags;
                 bml_endpoint->btl_flags_and &= bml_btl->btl_flags;
+                /* This BTL is in use, allow the progress registration */
+                btl_inuse++;
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
