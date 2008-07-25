@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -209,6 +211,19 @@ static void internal_waitpid_callback(int fd, short event, void *arg);
  * Interface Functions
  *
  ********************************************************************/
+
+void
+orte_wait_disable(void)
+{
+    opal_event_del(&handler);
+}
+
+void
+orte_wait_enable(void)
+{
+    opal_event_add(&handler, NULL);
+}
+
 int
 orte_wait_init(void)
 {

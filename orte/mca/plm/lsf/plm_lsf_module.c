@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -12,6 +12,8 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -289,6 +291,13 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
         }        
     }
     
+    /* lsb_launch tampers with SIGCHLD.
+     * After the call to lsb_launch, the signal handler for SIGCHLD is NULL.
+     * So, we disable the SIGCHLD handler of libevent for the duration of 
+     * the call to lsb_launch
+     */
+    orte_wait_disable();
+    
     /* exec the daemon(s). Do NOT wait for lsb_launch to complete as
      * it only completes when the processes it starts - in this case,
      * the orteds - complete. We need to go ahead and return so
@@ -299,8 +308,10 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_FAILED_TO_START);
         opal_output(0, "lsb_launch failed: %d", rc);
         rc = ORTE_ERR_FAILED_TO_START;
+        orte_wait_enable();  /* re-enable our SIGCHLD handler */
         goto cleanup;
     }
+    orte_wait_enable();  /* re-enable our SIGCHLD handler */
     
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != 

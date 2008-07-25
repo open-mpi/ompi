@@ -2,13 +2,15 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Institut National de Recherche en Informatique
+ *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,6 +49,15 @@ BEGIN_C_DECLS
 
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
+
+/**
+ * Disable / re-Enable SIGCHLD handler
+ *
+ * These functions have to be used after orte_wait_init was called.
+ */
+
+ORTE_DECLSPEC void orte_wait_enable(void);
+ORTE_DECLSPEC void orte_wait_disable(void);
 
 /**
  * Wait for process terminiation
