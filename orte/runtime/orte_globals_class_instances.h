@@ -180,7 +180,6 @@ OBJ_CLASS_INSTANCE(orte_job_t,
 static void orte_node_construct(orte_node_t* node)
 {
     node->name = NULL;
-    node->allocate = false;
     node->index = -1;
     node->daemon = NULL;
     node->daemon_launched = false;

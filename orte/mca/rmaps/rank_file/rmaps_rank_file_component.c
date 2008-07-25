@@ -74,8 +74,9 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
   */
 static int orte_rmaps_rank_file_open(void)
 {
-    mca_rmaps_rank_file_component.priority = 0;
     int index = 0;
+    
+    mca_rmaps_rank_file_component.priority = 0;
     
     mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.base_version,
                               "path",

@@ -127,8 +127,6 @@ typedef struct {
     orte_std_cntr_t index;
     /** String node name */
     char *name;
-    /* whether or not this node is available for allocation */
-    bool allocate;
     /* daemon on this node */
     struct orte_proc_t *daemon;
     /* whether or not this daemon has been launched */

@@ -61,6 +61,12 @@ int orte_ras_base_allocate(orte_job_t *jdata)
                              "%s ras:base:allocate allocation already read",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
+        /* loop through the global node pool and set the
+         * number of allocated slots to the difference
+         * between slots and slots_in_use. Note that
+         * oversubscription will still allow procs to
+         * be mapped up to slots_max
+         */
         return ORTE_SUCCESS;
     }
     

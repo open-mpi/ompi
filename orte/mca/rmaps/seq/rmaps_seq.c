@@ -32,6 +32,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/trace.h"
 #include "opal/util/argv.h"
+#include "opal/util/if.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -106,6 +107,26 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         } else {
             node_list = default_node_list;
         }
+        
+        /* check for nolocal and remove the head node, if required */
+        if (map->policy & ORTE_RMAPS_NO_USE_LOCAL) {
+            for (item  = opal_list_get_first(node_list);
+                 item != opal_list_get_end(node_list);
+                 item  = opal_list_get_next(item) ) {
+                node = (orte_node_t*)item;
+                /* need to check ifislocal because the name in the
+                 * hostfile may not have been FQDN, while name returned
+                 * by gethostname may have been (or vice versa)
+                 */
+                if (0 == strcmp(node->name, orte_process_info.nodename) ||
+                    opal_ifislocal(node->name)) {
+                    opal_list_remove_item(node_list, item);
+                    OBJ_RELEASE(item);  /* "un-retain" it */
+                    break;
+                }
+            }
+        }
+            
         if (NULL == node_list || 0 == (num_nodes = (orte_std_cntr_t)opal_list_get_size(node_list))) {
             orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:no-available-resources",
@@ -174,7 +195,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 if (NULL == nodes[j]) {
                     break;  /* nodes are left aligned, so stop when we hit a null */
                 } 
-                if (nodes[j]->allocate && 0 == strcmp(nd->name, nodes[j]->name)) {
+                if (0 == strcmp(nd->name, nodes[j]->name)) {
                     node = nodes[j];
                     break;
                 }

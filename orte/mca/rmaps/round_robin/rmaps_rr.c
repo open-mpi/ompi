@@ -312,9 +312,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             if (NULL == nodes[i]) {
                 break;  /* nodes are left aligned, so stop when we hit a null */
             } 
-            if (nodes[i]->allocate) {
-                num_nodes++;
-            }
+            num_nodes++;
         }
         /* compute the balance */
         res = ((float)ppn / num_nodes);
@@ -449,14 +447,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 goto error;
             }
         } else if (0 == app->num_procs) {
-            /** set the num_procs to equal the number of slots on these mapped nodes - if
-            user has specified "-bynode", then set it to the number of nodes
-            */
-            if (map->policy & ORTE_RMAPS_BYNODE) {
-                app->num_procs = num_nodes;
-            } else if (map->policy & ORTE_RMAPS_BYSLOT) {
-                app->num_procs = num_slots;
-            } else if (map->policy & ORTE_RMAPS_BYUSER) {
+            if (map->policy & ORTE_RMAPS_BYUSER) {
                 /* we can't handle this - it should have been set when we got
                  * the map info. If it wasn't, then we can only error out
                  */
@@ -465,6 +456,8 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
+            /** set the num_procs to equal the number of slots on these mapped nodes */
+            app->num_procs = num_slots;
         }
         
         /** track the total number of processes we mapped */

@@ -292,8 +292,8 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         return ORTE_SUCCESS;
     }
     
-    asprintf(&tmp, "\n%sData for node: Name: %s\tAllocate: %s\n%s\tLaunch id: %ld\tArch: %0x\tState: %0x",
-             pfx2, src->name, (src->allocate) ? "Yes" : "No",
+    asprintf(&tmp, "\n%sData for node: Name: %s\t%s\tLaunch id: %ld\tArch: %0x\tState: %0x",
+             pfx2, src->name,
              pfx2, (long)src->launch_id,
              src->arch, src->state);
     
