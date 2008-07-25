@@ -50,6 +50,9 @@ Trunk (not on release branches yet)
   - Added btl_openib_ib_max_inline_data MCA parameter
   - Added iWARP support
   - Revamped flow control mechansisms to be more efficient
+  - "mpi_leave_pinned=1" is now the default when possible,
+    automatically improving performance for large messages when
+    application buffers are re-used
 - Added NUMA support to the shared memory BTL.
 - Add Valgrind-based memory checking for MPI-semantic checks.
 - Add support for some optional Fortran datatypes (MPI_LOGICAL1,
