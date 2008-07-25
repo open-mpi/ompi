@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -39,15 +40,37 @@ else
 f77_base_lib =
 endif
 
+# Note that the ordering of "." in SUBDIRS is important: the C++, F77,
+# and F90 bindings are all in standalone .la files that depend on
+# libmpi.la.  So we must fully build libmpi.la first (which includes
+# the C bindings and some "base" f77 glue functionality in mpi/f77).
+
+# NOTE: A handful of files in mpi/f77 must be included in libmpi.la.
+# But we wanted to keep all the Fortran sources together in the same
+# directory, so we itemized those sources in a separate
+# Makefile_f77base.include that is included in this Makefile.am.  This
+# included file makes a convenience LT library that is then sucked
+# into libmpi.la (those sources must be compiled with special
+# CPPFLAGS; we can't just add the raw sources to libmpi_la_SOURCES,
+# unfortunately).
+
+# The end of the result is that libmpi.la -- including a few sources
+# from mpi/f77 -- is fully built before the C++, F77, and F90 bindings
+# are built.  Therefore, the C++, F77 and F90 bindings libraries can
+# all link against libmpi.la.
+
 SUBDIRS = \
 	include \
 	datatype \
         debuggers \
 	etc \
-        mpi \
+        mpi/c \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
+        mpi/cxx \
+        mpi/f77 \
+        mpi/f90 \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
 	$(OMPI_CONTRIB_SUBDIRS)
 
@@ -94,6 +117,7 @@ include_HEADERS =
 nobase_ompi_HEADERS = 
 dist_pkgdata_DATA =
 libmpi_la_SOURCES += $(headers)
+man_MANS =
 
 # Conditionally install the header files
 
@@ -119,3 +143,6 @@ include request/Makefile.am
 include runtime/Makefile.am
 include win/Makefile.am
 include tools/Makefile.am
+include mpi/Makefile.am
+include mpi/f77/Makefile_f77base.include
+include mpi/man/man3/Makefile.extra
