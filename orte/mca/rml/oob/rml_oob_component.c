@@ -352,7 +352,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                         ORTE_NAME_PRINT(&hdr->origin),
                         ORTE_NAME_PRINT(&hdr->destination),
                         hdr->tag);
-            opal_backtrace_print((FILE*)stderr);
+            opal_backtrace_print(stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
         }
 
@@ -362,7 +362,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                         ORTE_NAME_PRINT(&hdr->origin),
                         ORTE_NAME_PRINT(&hdr->destination),
                         hdr->tag);
-            opal_backtrace_print((FILE*)stderr);
+            opal_backtrace_print(stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
         }
 
@@ -456,7 +456,7 @@ rml_oob_recv_route_callback(int status,
                     ORTE_NAME_PRINT(&origin),
                     ORTE_NAME_PRINT(&hdr->destination),
                     hdr->tag);
-        opal_backtrace_print((FILE*)stderr);
+        opal_backtrace_print(stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
     }
 
@@ -466,7 +466,7 @@ rml_oob_recv_route_callback(int status,
                     ORTE_NAME_PRINT(&origin),
                     ORTE_NAME_PRINT(&hdr->destination),
                     hdr->tag);
-        opal_backtrace_print((FILE*)stderr);
+        opal_backtrace_print(stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
     }
 
