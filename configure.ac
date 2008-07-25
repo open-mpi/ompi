@@ -1314,7 +1314,6 @@ AC_CONFIG_FILES([
     ompi/datatype/Makefile
     ompi/debuggers/Makefile
 
-    ompi/mpi/Makefile
     ompi/mpi/c/Makefile
     ompi/mpi/c/profile/Makefile
     ompi/mpi/cxx/Makefile
