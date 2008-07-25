@@ -23,6 +23,7 @@
 #include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/backtrace/backtrace.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/routed.h"
@@ -346,20 +347,22 @@ rml_oob_queued_progress(int fd, short event, void *arg)
         next = orte_routed.get_route(&hdr->destination);
         if (next.vpid == ORTE_VPID_INVALID) {
             opal_output(0,
-                        "%s tried routing message from %s to %s:%d, can't find route",
+                        "%s:queued progress tried routing message from %s to %s:%d, can't find route",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&hdr->origin),
                         ORTE_NAME_PRINT(&hdr->destination),
                         hdr->tag);
+            opal_backtrace_print((FILE*)stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
         }
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
-            opal_output(0, "%s trying to get message from %s to %s:%d, routing loop",
+            opal_output(0, "%s:queued progress trying to get message from %s to %s:%d, routing loop",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&hdr->origin),
                         ORTE_NAME_PRINT(&hdr->destination),
                         hdr->tag);
+            opal_backtrace_print((FILE*)stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
         }
 
@@ -448,20 +451,22 @@ rml_oob_recv_route_callback(int status,
 
     next = orte_routed.get_route(&hdr->destination);
     if (next.vpid == ORTE_VPID_INVALID) {
-        opal_output(0, "%s tried routing message from %s to %s:%d, can't find route",
+        opal_output(0, "%s:route_callback tried routing message from %s to %s:%d, can't find route",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&origin),
                     ORTE_NAME_PRINT(&hdr->destination),
                     hdr->tag);
+        opal_backtrace_print((FILE*)stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
     }
 
     if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
-        opal_output(0, "%s trying to get message from %s to %s:%d, routing loop",
+        opal_output(0, "%s:route_callback trying to get message from %s to %s:%d, routing loop",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&origin),
                     ORTE_NAME_PRINT(&hdr->destination),
                     hdr->tag);
+        opal_backtrace_print((FILE*)stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
     }
 
