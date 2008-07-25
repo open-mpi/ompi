@@ -62,6 +62,9 @@ int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;
 char **orte_launch_environ;
 opal_pointer_array_t orte_daemonmap;
+
+bool orte_hnp_is_allocated = false;
+
 char **orted_cmd_line=NULL;
 int orte_exit, orteds_exit;
 int orte_exit_status = 0;
