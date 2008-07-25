@@ -60,13 +60,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         if (NULL == nodes[i]) {
             break;  /* nodes are left aligned, so stop when we hit a null */
         } 
-        if (nodes[i]->allocate) {
-            /* retain a copy for our use in case the item gets
-             * destructed along the way
-             */
-            OBJ_RETAIN(nodes[i]);
-            opal_list_append(allocated_nodes, &nodes[i]->super);
-        }
+        /* retain a copy for our use in case the item gets
+         * destructed along the way
+         */
+        OBJ_RETAIN(nodes[i]);
+        opal_list_append(allocated_nodes, &nodes[i]->super);
     }
 
     /** check that anything is here */
@@ -139,11 +137,12 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              item != opal_list_get_end(allocated_nodes);
              item  = opal_list_get_next(item) ) {
             node = (orte_node_t*)item;
-            /* by this time, we have adjusted all local node
-             * names to be our node name, so we don't need
-             * to keep checking for that condition
+            /* need to check ifislocal because the name in the
+             * hostfile may not have been FQDN, while name returned
+             * by gethostname may have been (or vice versa)
              */
-            if (0 == strcmp(node->name, orte_process_info.nodename)) {
+            if (0 == strcmp(node->name, orte_process_info.nodename) ||
+                opal_ifislocal(node->name)) {
                 opal_list_remove_item(allocated_nodes, item);
                 OBJ_RELEASE(item);  /* "un-retain" it */
                 break;

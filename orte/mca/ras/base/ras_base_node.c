@@ -113,8 +113,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             /* use the local name for our node - don't trust what
              * we got from an RM
              */
-            /* set the node to available for use */
-            hnp_node->allocate = true;
             /* update the total slots in the job */
             jdata->total_slots_alloc += hnp_node->slots;
             /* don't keep duplicate copy */
@@ -125,8 +123,9 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  "%s ras:base:node_insert node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));
-            /* set node to available for use */
-            node->allocate = true;
+            /* allocate all the available slots */
+            node->slots_alloc = node->slots;
+            /* insert it into the array */
             node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
             if (ORTE_SUCCESS > (rc = node->index)) {
                 ORTE_ERROR_LOG(rc);
