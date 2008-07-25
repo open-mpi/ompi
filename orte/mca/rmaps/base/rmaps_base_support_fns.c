@@ -56,7 +56,14 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     /* create a working list of nodes */
     nodes = (orte_node_t**)orte_node_pool->addr;
-    for (i=0; i < orte_node_pool->size; i++) {
+    
+    /* if the hnp was allocated, include it */
+    if (orte_hnp_is_allocated) {
+        OBJ_RETAIN(nodes[0]);
+        opal_list_append(allocated_nodes, &nodes[0]->super);
+    }
+    
+    for (i=1; i < orte_node_pool->size; i++) {
         if (NULL == nodes[i]) {
             break;  /* nodes are left aligned, so stop when we hit a null */
         } 
@@ -133,20 +140,19 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
      * from the list
      */
     if (policy & ORTE_RMAPS_NO_USE_LOCAL) {
-        for (item  = opal_list_get_first(allocated_nodes);
-             item != opal_list_get_end(allocated_nodes);
-             item  = opal_list_get_next(item) ) {
-            node = (orte_node_t*)item;
-            /* need to check ifislocal because the name in the
-             * hostfile may not have been FQDN, while name returned
-             * by gethostname may have been (or vice versa)
-             */
-            if (0 == strcmp(node->name, orte_process_info.nodename) ||
-                opal_ifislocal(node->name)) {
-                opal_list_remove_item(allocated_nodes, item);
-                OBJ_RELEASE(item);  /* "un-retain" it */
-                break;
-            }
+        /* we don't need to check through the entire list as
+         * the head node - if it is on the list at all - will
+         * always be in the first position
+         */
+        node = (orte_node_t*)opal_list_get_first(allocated_nodes);
+        /* need to check ifislocal because the name in the
+         * hostfile may not have been FQDN, while name returned
+         * by gethostname may have been (or vice versa)
+         */
+        if (0 == strcmp(node->name, orte_process_info.nodename) ||
+            opal_ifislocal(node->name)) {
+            opal_list_remove_item(allocated_nodes, item);
+            OBJ_RELEASE(item);  /* "un-retain" it */
         }
         /** check that anything is left! */
         if (0 == opal_list_get_size(allocated_nodes)) {
@@ -156,7 +162,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
 
-        
     /* remove all nodes that are already at max usage, and
      * compute the total number of available slots while
      * we do so

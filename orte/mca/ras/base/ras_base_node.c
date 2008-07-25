@@ -103,6 +103,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (long)node->slots));
             
+            /* flag that hnp has been allocated */
+            orte_hnp_is_allocated = true;
             /* adjust the total slots in the job */
             jdata->total_slots_alloc -= hnp_node->slots;
             /* copy the allocation data to that node's info */
