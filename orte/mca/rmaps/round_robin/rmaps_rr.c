@@ -464,10 +464,10 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         jdata->num_procs += app->num_procs;
 
         /* Make assignments */
-        if (map->policy == ORTE_RMAPS_BYUSER) {
+        if (map->policy & ORTE_RMAPS_BYUSER) {
             rc = ORTE_ERR_NOT_IMPLEMENTED;
             goto error;
-        } else if (map->policy == ORTE_RMAPS_BYNODE) {
+        } else if (map->policy & ORTE_RMAPS_BYNODE) {
             rc = map_app_by_node(app, jdata, vpid_start, &node_list);
         } else {
             rc = map_app_by_slot(app, jdata, vpid_start, &node_list);
