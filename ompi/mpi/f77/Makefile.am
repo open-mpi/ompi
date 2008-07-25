@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -46,35 +46,18 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 #
 
 lib_LTLIBRARIES =
-libmpi_f77_la_LIBADD =
-noinst_LTLIBRARIES =
+libmpi_f77_la_LIBADD = $(top_builddir)/ompi/libmpi.la
 
 # Are we building the F77 bindings at all?
 if OMPI_WANT_F77_BINDINGS
 # If yes, then we need to build the installable library and the glue
 # convenience library that will be sucked up into the main libmpi.
 lib_LTLIBRARIES += libmpi_f77.la
-noinst_LTLIBRARIES += libmpi_f77_base.la
 # Do we need to suck in the convenience library from the lower
 # directory?
 if WANT_PMPI_F77_BINDINGS_LAYER
 libmpi_f77_la_LIBADD += profile/libmpi_f77_pmpi.la
-else
-# Is this else conditional really necessary?  There *used* to be an AM
-# bug that forced this; is it still there?  (there is no harm in
-# having this extra statement; I just don't know if it's *necessary*
-# anymore)
-libmpi_f77_la_LIBADD += 
 endif
-
-else
-
-# No, we are not building the F77 bindings at all.  Ditto on the
-# comment above about whether we really need these statements or
-# not...
-lib_LTLIBRARIES +=
-libmpi_f77_la_LIBADD += 
-noinst_LTLIBRARIES +=
 endif
 
 headers = \
@@ -84,17 +67,6 @@ headers = \
     fint_2_int.h \
     prototypes_mpi.h \
     f77_strings.h
-
-#
-# libmpi_f77.la is always build because it contains some non-profilied
-# functions.
-#
-libmpi_f77_base_la_SOURCES   = \
-        attr_fn_f.c \
-        conversion_fn_null_f.c \
-        f90_accessors.c \
-        strings.c \
-        test_constants_f.c
 
 #
 # These files are only built and added to libmpi_f77.la in certain cases.
