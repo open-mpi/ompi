@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +22,3 @@ noinst_LTLIBRARIES = libmca_timer_darwin.la
 libmca_timer_darwin_la_SOURCES = \
     timer_darwin.h \
     timer_darwin_component.c
-
-EXTRA_DIST = \
-    $(doc_DATA)
