@@ -23,6 +23,7 @@
 # $2: e-mail address for destination
 # $3: SVN root
 # $4: dest dir
+# $5: version string for error e-mails, eg. trunk, v1.2, etc. (optional)
 #
 
 scratch_root="$1"
@@ -54,6 +55,15 @@ if test -z "$scratch_root" -o -z "$email" -o -z "$svnroot" \
     -o -z "$destdir"; then
     echo "Must specify scratch root directory, e-mail address, SVN root, and destination directory"
     exit 1
+fi
+
+# Get a version string to use if there is an error.
+# It will get replaced upon succesful "make distcheck" with the real version.
+# Extract (from the SVN root) a version string if one wasn't supplied.
+if test -n "$5"; then
+    version="$5"
+else
+    version=`basename $svnroot`
 fi
 
 # send a mail
