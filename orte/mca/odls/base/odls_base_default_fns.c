@@ -1878,6 +1878,11 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
          */
         if (ORTE_SUCCESS != (rc = orte_wait_cb_cancel(child->pid))) {
             /* no need to error_log this - it just means that the pid is already gone */
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:kill_local_proc child %s wait_cb_cancel failed",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+            
             goto MOVEON;
         }
         
@@ -1915,8 +1920,15 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
                                true, orte_process_info.nodename, child->pid);
             }
         }
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:kill_local_proc child %s killed",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
         child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;  /* we may have sent it, but that's what happened */
-        goto RECORD;
+        /* let this fall through to record the proc as "not alive" even
+         * if child_died failed. We did our best, so as far as we are
+         * concerned, this child is dead
+         */
         
 MOVEON:
         /* set the process to "not alive" */
@@ -1927,7 +1939,6 @@ RECORD:
         if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
             ORTE_ERROR_LOG(rc);
         }
-        goto CLEANUP;
     }
     
     /* if set_state, alert the HNP to what happened */
