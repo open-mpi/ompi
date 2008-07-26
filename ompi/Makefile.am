@@ -79,7 +79,10 @@ DIST_SUBDIRS = \
 	datatype \
 	debuggers \
 	etc \
-	mpi \
+        mpi/c \
+        mpi/cxx \
+        mpi/f77 \
+        mpi/f90 \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
 	$(OMPI_CONTRIB_DIST_SUBDIRS)
