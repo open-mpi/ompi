@@ -6,9 +6,6 @@
  */
 
 #include "ad_pfs.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 void ADIOI_PFS_WriteContig(ADIO_File fd, void *buf, int count, 
 			   MPI_Datatype datatype, int file_ptr_type,
@@ -23,41 +20,17 @@ void ADIOI_PFS_WriteContig(ADIO_File fd, void *buf, int count,
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
         if (fd->fp_sys_posn != offset) {
-#ifdef PROFILE
-	    MPE_Log_event(11, 0, "start seek");
-#endif
             lseek(fd->fd_sys, offset, SEEK_SET);
-#ifdef PROFILE
-	    MPE_Log_event(12, 0, "end seek");
-#endif
 	}
-#ifdef PROFILE
-	MPE_Log_event(5, 0, "start write");
-#endif
         err = _cwrite(fd->fd_sys, buf, len);
-#ifdef PROFILE
-	MPE_Log_event(6, 0, "end write");
-#endif
         fd->fp_sys_posn = offset + err;
          /* individual file pointer not updated */        
     }
     else { /* write from curr. location of ind. file pointer */
         if (fd->fp_sys_posn != fd->fp_ind) {
-#ifdef PROFILE
-	    MPE_Log_event(11, 0, "start seek");
-#endif
             lseek(fd->fd_sys, fd->fp_ind, SEEK_SET);
-#ifdef PROFILE
-	    MPE_Log_event(12, 0, "end seek");
-#endif
 	}
-#ifdef PROFILE
-	MPE_Log_event(5, 0, "start write");
-#endif
         err = _cwrite(fd->fd_sys, buf, len);
-#ifdef PROFILE
-	MPE_Log_event(6, 0, "end write");
-#endif
         fd->fp_ind += err;
         fd->fp_sys_posn = fd->fp_ind;
     }

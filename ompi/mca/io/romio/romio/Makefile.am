@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +19,9 @@
 
 include $(top_srcdir)/Makefile.options
 
-SUBDIRS = include adio mpi-io 
+# Left out common/dataloop -- it's not enabled in MPICH2-1.0.7.
+
+SUBDIRS = include adio mpi-io
 DIST_SUBDIRS = $(SUBDIRS) doc util
 
 EXTRA_DIST = README COPYRIGHT README_OMPI

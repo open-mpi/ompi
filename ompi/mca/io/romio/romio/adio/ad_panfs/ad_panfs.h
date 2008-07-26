@@ -6,8 +6,8 @@
  *   See COPYRIGHT notice in top-level directory.
  */
 
-#ifndef AD_UNIX_INCLUDE
-#define AD_UNIX_INCLUDE
+#ifndef AD_PANFS_INCLUDE
+#define AD_PANFS_INCLUDE
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -25,28 +25,32 @@ typedef struct adiocb adiocb_t;
 #endif
 #endif
 
-int ADIOI_PANFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
-		    int wr, void *handle);
-
 void ADIOI_PANFS_Open(ADIO_File fd, int *error_code);
-void ADIOI_PANFS_IwriteContig(ADIO_File fd, void *buf, int count, 
-			      MPI_Datatype datatype, int file_ptr_type,
-			      ADIO_Offset offset, ADIO_Request *request, int
-			      *error_code);   
-void ADIOI_PANFS_IreadContig(ADIO_File fd, void *buf, int count, 
-			     MPI_Datatype datatype, int file_ptr_type,
-			     ADIO_Offset offset, ADIO_Request *request, int
-			     *error_code);   
-int ADIOI_PANFS_ReadDone(ADIO_Request *request, ADIO_Status *status, int
-			 *error_code);
-int ADIOI_PANFS_WriteDone(ADIO_Request *request, ADIO_Status *status, int
-			  *error_code);
-void ADIOI_PANFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int
-			      *error_code); 
-void ADIOI_PANFS_WriteComplete(ADIO_Request *request, ADIO_Status *status,
-			       int *error_code); 
-void ADIOI_PANFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int
-		       *error_code); 
 void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
+void ADIOI_PANFS_ReadContig(ADIO_File fd, void *buf, int count, 
+			  MPI_Datatype datatype, int file_ptr_type,
+			  ADIO_Offset offset, ADIO_Status *status,
+			  int *error_code);
+void ADIOI_PANFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
+void ADIOI_PANFS_WriteContig(ADIO_File fd, void *buf, int count, 
+			   MPI_Datatype datatype, int file_ptr_type,
+			   ADIO_Offset offset, ADIO_Status *status,
+			   int *error_code);
+
+/* Delay 1 ms */
+#define AD_PANFS_RETRY_DELAY 1000
+
+#define AD_PANFS_RETRY(_op_,_rc_) \
+{ \
+    _rc_ = (_op_); \
+    while(_rc_ == -1 && errno == EAGAIN) \
+    { \
+        if(usleep(AD_PANFS_RETRY_DELAY) == -1) \
+        { \
+            break; \
+        } \
+        _rc_ = (_op_); \
+    } \
+}
 
 #endif

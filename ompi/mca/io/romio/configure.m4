@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,12 +29,14 @@ AC_DEFUN([MCA_io_romio_POST_CONFIG], [
 # MCA_io_romio_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_io_romio_CONFIG],[
+    OMPI_VAR_SCOPE_PUSH([io_romio_flags io_romio_flags_define io_romio_happy io_romio_save_LIBS])
     AC_ARG_ENABLE([io-romio],
                   [AC_HELP_STRING([--disable-io-romio],
                                   [Disable the ROMIO MPI-IO component])])
     AC_ARG_WITH([io-romio-flags], 
                 [AC_HELP_STRING([--with-io-romio-flags=FLAGS],
                                 [Pass FLAGS to the ROMIO distribution configuration script])])
+    AC_DEFINE_UNQUOTED([MCA_io_romio_USER_CONFIGURE_FLAGS], ["$with_io_romio_flags"], [Set of user-defined configure flags given to ROMIOs configure script via --with-io-romio-flags])
     AC_MSG_CHECKING([if want ROMIO component])
     AS_IF([test "$enable_io_romio" = "no"],
            [AC_MSG_RESULT([no])
@@ -73,7 +76,10 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                        [AS_IF([test ! -z $build], [io_romio_flags="$io_romio_flags --build=$build"])
                         AS_IF([test ! -z $host], [io_romio_flags="$io_romio_flags --host=$host"])
                         AS_IF([test ! -z $target], [io_romio_flags="$io_romio_flags --target=$target"])])
-                   io_romio_flags="$io_romio_flags CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi"
+                   io_romio_flags_define="$io_romio_flags CFLAGS='$CFLAGS' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi --disable-aio"
+                   AC_DEFINE_UNQUOTED([MCA_io_romio_COMPLETE_CONFIGURE_FLAGS], ["$io_romio_flags_define"], [Complete set of command line arguments given to ROMIOs configure script])
+
+                   io_romio_flags="$io_romio_flags CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi --disable-aio"
 
                    ompi_show_subtitle "Configuring ROMIO distribution"
                    OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
@@ -98,4 +104,5 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                                 [AC_MSG_ERROR([ROMIO distribution did not configure successfully])],
                                 [AC_MSG_WARN([ROMIO distribution did not configure successfully])])
                           $2])])])
+    OMPI_VAR_SCOPE_POP
 ])

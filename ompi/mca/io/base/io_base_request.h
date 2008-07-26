@@ -114,8 +114,8 @@ extern "C" {
      *
      * For optimization reasons, \em no error checking is performed.
      */
-    void mca_io_base_request_free(ompi_file_t *file,
-                                  mca_io_base_request_t *req);
+    OMPI_DECLSPEC void mca_io_base_request_free(ompi_file_t *file,
+                                                mca_io_base_request_t *req);
 
 
     /*
@@ -135,12 +135,12 @@ extern "C" {
     /**
      *
      */
-    void mca_io_base_request_progress_add(void);
+    OMPI_DECLSPEC void mca_io_base_request_progress_add(void);
 
     /**
      *
      */
-    void mca_io_base_request_progress_del(void);
+    OMPI_DECLSPEC void mca_io_base_request_progress_del(void);
 
     /**
      * Finalize the request progress code

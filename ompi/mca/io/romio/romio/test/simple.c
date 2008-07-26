@@ -10,6 +10,14 @@
 
 #define SIZE (65536)
 
+static void handle_error(int errcode, char *str)
+{
+	char msg[MPI_MAX_ERROR_STRING];
+	int resultlen;
+	MPI_Error_string(errcode, msg, &resultlen);
+	fprintf(stderr, "%s: %s\n", str, msg);
+	MPI_Abort(MPI_COMM_WORLD, 1);
+}
 /* Each process writes to separate files and reads them back. 
    The file name is taken as a command-line argument, and the process rank 
    is appended to it. */ 
@@ -18,7 +26,7 @@ int main(int argc, char **argv)
 {
     int *buf, i, rank, nints, len;
     char *filename, *tmp;
-    int  errs = 0, toterrs;
+    int  errs = 0, toterrs, errcode;
     MPI_File fh;
     MPI_Status status;
 
@@ -60,18 +68,28 @@ int main(int argc, char **argv)
     strcpy(tmp, filename);
     sprintf(filename, "%s.%d", tmp, rank);
 
-    MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
-		   MPI_INFO_NULL, &fh);
-    MPI_File_write(fh, buf, nints, MPI_INT, &status);
-    MPI_File_close(&fh);
+    errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open(1)");
+
+    errcode = MPI_File_write(fh, buf, nints, MPI_INT, &status);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_write");
+
+    errcode = MPI_File_close(&fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_clode (1)");
 
     /* reopen the file and read the data back */
 
     for (i=0; i<nints; i++) buf[i] = 0;
-    MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
-                  MPI_INFO_NULL, &fh);
-    MPI_File_read(fh, buf, nints, MPI_INT, &status);
-    MPI_File_close(&fh);
+    errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open(2)");
+
+    errcode = MPI_File_read(fh, buf, nints, MPI_INT, &status);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_read");
+
+    errcode = MPI_File_close(&fh);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close(2)");
 
     /* check if the data read is correct */
     for (i=0; i<nints; i++) {

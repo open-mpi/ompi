@@ -14,18 +14,6 @@ void ADIOI_NTFS_IreadContig(ADIO_File fd, void *buf, int count,
     int err;
     static char myname[] = "ADIOI_NTFS_IreadContig";
 
-    (*request) = ADIOI_Malloc_request();
-    if ((*request) == NULL)
-    {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-	    myname, __LINE__, MPI_ERR_IO,
-	    "**nomem", "**nomem %s", "ADIOI_Request");
-	return;
-    }
-    (*request)->optype = ADIOI_READ;
-    (*request)->fd = fd;
-    (*request)->datatype = datatype;
-
     MPI_Type_size(datatype, &typesize);
     len = count * typesize;
 
@@ -33,14 +21,11 @@ void ADIOI_NTFS_IreadContig(ADIO_File fd, void *buf, int count,
     {
 	offset = fd->fp_ind;
     }
-    err = ADIOI_NTFS_aio(fd, buf, len, offset, 0, &((*request)->handle));
+    err = ADIOI_NTFS_aio(fd, buf, len, offset, 0, request);
     if (file_ptr_type == ADIO_INDIVIDUAL)
     {
 	fd->fp_ind += len;
     }
-
-    (*request)->queued = 1;
-    ADIOI_Add_req_to_list(request);
 
     /* --BEGIN ERROR HANDLING-- */
     if (err != MPI_SUCCESS)
@@ -54,5 +39,4 @@ void ADIOI_NTFS_IreadContig(ADIO_File fd, void *buf, int count,
     *error_code = MPI_SUCCESS;
 
     fd->fp_sys_posn = -1;   /* set it to null. */
-    fd->async_count++;
 }

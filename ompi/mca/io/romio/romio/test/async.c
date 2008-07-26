@@ -14,6 +14,16 @@
    reads them back. The file name is taken as a command-line argument,
    and the process rank is appended to it.*/ 
 
+void handle_error(int errcode, char *str);
+
+void handle_error(int errcode, char *str) 
+{
+	char msg[MPI_MAX_ERROR_STRING];
+	int resultlen;
+	MPI_Error_string(errcode, msg, &resultlen);
+	fprintf(stderr, "%s: %s\n", str, msg);
+	MPI_Abort(MPI_COMM_WORLD, 1);
+}
 int main(int argc, char **argv)
 {
     int *buf, i, rank, nints, len;
@@ -22,6 +32,7 @@ int main(int argc, char **argv)
     MPI_File fh;
     MPI_Status status;
     MPIO_Request request;
+    int errcode = 0;
 
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -61,10 +72,16 @@ int main(int argc, char **argv)
     strcpy(tmp, filename);
     sprintf(filename, "%s.%d", tmp, rank);
 
-    MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
-                  MPI_INFO_NULL, &fh);
+    errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
+    if (errcode != MPI_SUCCESS) {
+	    handle_error(errcode, "MPI_File_open");
+    }
     MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
-    MPI_File_iwrite(fh, buf, nints, MPI_INT, &request);
+    errcode = MPI_File_iwrite(fh, buf, nints, MPI_INT, &request);
+    if (errcode != MPI_SUCCESS) {
+	    handle_error(errcode, "MPI_File_iwrite");
+    }
 #ifdef MPIO_USES_MPI_REQUEST
     MPI_Wait( &request, &status );
 #else    
@@ -75,10 +92,17 @@ int main(int argc, char **argv)
     /* reopen the file and read the data back */
 
     for (i=0; i<nints; i++) buf[i] = 0;
-    MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
-                  MPI_INFO_NULL, &fh);
+    errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
+    if (errcode != MPI_SUCCESS) {
+	    handle_error(errcode, "MPI_File_open");
+    }
+
     MPI_File_set_view(fh, 0, MPI_INT, MPI_INT, "native", MPI_INFO_NULL);
-    MPI_File_iread(fh, buf, nints, MPI_INT, &request);
+    errcode = MPI_File_iread(fh, buf, nints, MPI_INT, &request);
+    if (errcode != MPI_SUCCESS) {
+	    handle_error(errcode, "MPI_File_open");
+    }
 #ifdef MPIO_USES_MPI_REQUEST
     MPI_Wait( &request, &status );
 #else

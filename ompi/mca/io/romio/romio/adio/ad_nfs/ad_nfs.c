@@ -22,8 +22,10 @@ struct ADIOI_Fns_struct ADIO_NFS_operations = {
     ADIOI_NFS_ReadStrided, /* ReadStrided */
     ADIOI_NFS_WriteStrided, /* WriteStrided */
     ADIOI_GEN_Close, /* Close */
-    ADIOI_NFS_IreadContig, /* IreadContig */
-    ADIOI_NFS_IwriteContig, /* IwriteContig */
+    /* Even with lockd running and NFS mounted 'noac', we have been unable to
+     * gaurantee correct behavior over NFS with asyncronous I/O operations */
+    ADIOI_FAKE_IreadContig, /* IreadContig */
+    ADIOI_FAKE_IwriteContig, /* IwriteContig */
     ADIOI_NFS_ReadDone, /* ReadDone */
     ADIOI_NFS_WriteDone, /* WriteDone */
     ADIOI_NFS_ReadComplete, /* ReadComplete */

@@ -220,8 +220,8 @@ int mca_io_base_request_alloc(ompi_file_t *file,
 /*
  * Free a module-specific IO MPI_Request
  */
-void mca_io_base_request_free(ompi_file_t *file,
-                              mca_io_base_request_t *req)
+OMPI_DECLSPEC void mca_io_base_request_free(ompi_file_t *file,
+                                            mca_io_base_request_t *req)
 {
     /* Put the request back on the per-module freelist, since it's
        been initialized for that module */
@@ -295,7 +295,7 @@ mca_io_base_request_progress_init(void)
 }
 
 
-void
+OMPI_DECLSPEC void
 mca_io_base_request_progress_add(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
@@ -319,7 +319,7 @@ mca_io_base_request_progress_add(void)
 }
 
 
-void
+OMPI_DECLSPEC void
 mca_io_base_request_progress_del(void)
 {
     OPAL_THREAD_ADD32(&mca_io_base_request_num_pending, -1);

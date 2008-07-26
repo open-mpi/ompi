@@ -8,7 +8,8 @@ USER_CFLAGS = @CPPFLAGS@ @USER_CFLAGS@ $(INCLUDE_DIR)
 USER_FFLAGS = @CPPFLAGS@ @USER_FFLAGS@ $(INCLUDE_DIR)
 CTESTS = simple perf async coll_test coll_perf misc file_info excl large_array \
      atomicity noncontig i_noncontig noncontig_coll split_coll shared_fp \
-     large_file psimple error status noncontig_coll2
+     large_file psimple error status noncontig_coll2 aggregation1 aggregation2 \
+     async-multiple ordered_fp
 FTESTS = fcoll_test fperf fmisc pfcoll_test 
 srcdir=@srcdir@
 

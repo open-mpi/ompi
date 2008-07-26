@@ -272,7 +272,7 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		MPI_Comm_size(fd->comm, &nprocs);
 		nprocs_is_valid = 1;
 	    }
-	    if (intval < nprocs) {
+	    if (intval <= nprocs) {
 		MPI_Info_set(info, "cb_nodes", value);
 		fd->hints->cb_nodes = intval;
 	    }

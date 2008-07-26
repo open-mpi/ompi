@@ -7,9 +7,6 @@
 
 #include "adio.h"
 #include "adio_extern.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 /* prototypes of functions used for collective reads only. */
 static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
@@ -77,10 +74,6 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
     int bufsize, size;
-#endif
-
-#ifdef PROFILE
-        MPE_Log_event(13, 0, "start computation");
 #endif
 
     MPI_Comm_size(fd->comm, &nprocs);
@@ -570,10 +563,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 
     MPI_Comm_rank(fd->comm, &rank);
 
-#ifdef PROFILE
-        MPE_Log_event(14, 0, "end computation");
-#endif
-
     for (m=0; m<ntimes; m++) {
        /* read buf of size coll_bufsize (or less) */
        /* go through all others_req and check if any are satisfied
@@ -612,9 +601,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
                        minus what was satisfied in previous iteration
              req_size = size corresponding to req_off */
 
-#ifdef PROFILE
-        MPE_Log_event(13, 0, "start computation");
-#endif
 	size = (int) (ADIOI_MIN(coll_bufsize, end_loc-st_loc+1-done)); 
 	real_off = off - for_curr_iter;
 	real_size = size + for_curr_iter;
@@ -678,9 +664,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 	for (i=0; i<nprocs; i++)
 	    if (count[i]) flag = 1;
 
-#ifdef PROFILE
-        MPE_Log_event(14, 0, "end computation");
-#endif
 	if (flag) {
 	    ADIO_ReadContig(fd, read_buf+for_curr_iter, size, MPI_BYTE,
 			    ADIO_EXPLICIT_OFFSET, off, &status, error_code);
@@ -689,9 +672,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 	
 	for_curr_iter = for_next_iter;
 	
-#ifdef PROFILE
-        MPE_Log_event(7, 0, "start communication");
-#endif
 	ADIOI_R_Exchange_data(fd, buf, flat_buf, offset_list, len_list,
 			    send_size, recv_size, count, 
        			    start_pos, partial_send, recd_from_proc, nprocs,
@@ -701,9 +681,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 			    others_req, 
                             m, buftype_extent, buf_idx); 
 
-#ifdef PROFILE
-        MPE_Log_event(8, 0, "end communication");
-#endif
 
 	if (for_next_iter) {
 	    tmp_buf = (char *) ADIOI_Malloc(for_next_iter);
@@ -719,9 +696,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
     }
 
     for (i=0; i<nprocs; i++) count[i] = send_size[i] = 0;
-#ifdef PROFILE
-        MPE_Log_event(7, 0, "start communication");
-#endif
     for (m=ntimes; m<max_ntimes; m++) 
 /* nothing to send, but check for recv. */
 	ADIOI_R_Exchange_data(fd, buf, flat_buf, offset_list, len_list,
@@ -732,9 +706,6 @@ static void ADIOI_Read_and_exch(ADIO_File fd, void *buf, MPI_Datatype
 			    min_st_offset, fd_size, fd_start, fd_end,
 			    others_req, m,
                             buftype_extent, buf_idx); 
-#ifdef PROFILE
-        MPE_Log_event(8, 0, "end communication");
-#endif
 
     if (ntimes) ADIOI_Free(read_buf);
     ADIOI_Free(curr_offlen_ptr);

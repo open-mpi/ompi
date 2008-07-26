@@ -257,6 +257,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	break;
 
     case MPI_COMBINER_HVECTOR: 
+    case MPI_COMBINER_HVECTOR_INTEGER: 
 	top_count = ints[0];
         MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
 			      &old_ntypes, &old_combiner); 
@@ -371,7 +372,59 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	}
 	break;
 
+    case MPI_COMBINER_INDEXED_BLOCK:
+	top_count = ints[0];
+        MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
+			      &old_ntypes, &old_combiner); 
+        ADIOI_Datatype_iscontig(types[0], &old_is_contig);
+	MPI_Type_extent(types[0], &old_extent);
+
+	prev_index = *curr_index;
+	if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig))
+	    ADIOI_Flatten(types[0], flat,
+			 st_offset+ints[1+1]*old_extent, curr_index);
+
+	if (prev_index == *curr_index) {
+/* simplest case, indexed type made up of basic or contiguous types */
+	    j = *curr_index;
+	    for (i=j; i<j+top_count; i++) {
+		flat->indices[i]   = st_offset + ints[1+1+i-j]*old_extent;
+		flat->blocklens[i] = (int) (ints[1]*old_extent);
+	    }
+	    *curr_index = i;
+	}
+	else {
+/* vector of noncontiguous derived types */
+
+	    j = *curr_index;
+	    num = *curr_index - prev_index;
+
+/* The noncontiguous types have to be replicated blocklens[i] times
+   and then strided. Replicate the first one. */
+	    for (m=1; m<ints[1]; m++) {
+		for (i=0; i<num; i++) {
+		    flat->indices[j]   = flat->indices[j-num] + old_extent;
+		    flat->blocklens[j] = flat->blocklens[j-num];
+		    j++;
+		}
+	    }
+	    *curr_index = j;
+
+/* Now repeat with strides. */
+	    num = *curr_index - prev_index;
+	    for (i=1; i<top_count; i++) {
+		for (m=0; m<num; m++) {
+		    flat->indices[j]   = flat->indices[j-num] + (ints[2+i]-ints[1+i])*old_extent;
+		    flat->blocklens[j] = flat->blocklens[j-num];
+		    j++;
+		}
+	    }
+	    *curr_index = j;
+	}
+	break;
+
     case MPI_COMBINER_HINDEXED: 
+    case MPI_COMBINER_HINDEXED_INTEGER:
 	top_count = ints[0];
         MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
 			      &old_ntypes, &old_combiner); 
@@ -433,6 +486,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	break;
 
     case MPI_COMBINER_STRUCT: 
+    case MPI_COMBINER_STRUCT_INTEGER: 
 	top_count = ints[0];
 	for (n=0; n<top_count; n++) {
 	    MPI_Type_get_envelope(types[n], &old_nints, &old_nadds,
@@ -608,6 +662,7 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 
     case MPI_COMBINER_VECTOR:
     case MPI_COMBINER_HVECTOR:
+    case MPI_COMBINER_HVECTOR_INTEGER: 
         top_count = ints[0];
         MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
                               &old_ntypes, &old_combiner); 
@@ -642,6 +697,7 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 
     case MPI_COMBINER_INDEXED: 
     case MPI_COMBINER_HINDEXED:
+    case MPI_COMBINER_HINDEXED_INTEGER:
         top_count = ints[0];
         MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
                               &old_ntypes, &old_combiner); 
@@ -674,7 +730,39 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 	}
 	break;
 
+    case MPI_COMBINER_INDEXED_BLOCK:
+        top_count = ints[0];
+        MPI_Type_get_envelope(types[0], &old_nints, &old_nadds,
+                              &old_ntypes, &old_combiner); 
+	ADIOI_Datatype_iscontig(types[0], &old_is_contig);
+
+	prev_index = *curr_index;
+	if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig))
+	    count = ADIOI_Count_contiguous_blocks(types[0], curr_index);
+	else count = 1;
+
+	if (prev_index == *curr_index) {
+/* simplest case, indexed type made up of basic or contiguous types */
+	    count = top_count;
+	    *curr_index += count;
+	}
+	else {
+/* indexed type made up of noncontiguous derived types */
+	    basic_num = *curr_index - prev_index;
+
+/* The noncontiguous types have to be replicated blocklens[i] times
+   and then strided. */
+	    *curr_index += (ints[1]-1) * basic_num;
+	    count *= ints[1];
+
+/* Now repeat with strides. */
+	    *curr_index += (top_count-1) * count;
+	    count *= top_count;
+	}
+	break;
+
     case MPI_COMBINER_STRUCT: 
+    case MPI_COMBINER_STRUCT_INTEGER: 
         top_count = ints[0];
 	count = 0;
 	for (n=0; n<top_count; n++) {
@@ -703,7 +791,7 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
 	break;
     default:
 	/* TODO: FIXME */
-	FPRINTF(stderr, "Error: Unsupported datatype passed to ADIOI_Count_contiguous_blocks\n");
+	FPRINTF(stderr, "Error: Unsupported datatype passed to ADIOI_Count_contiguous_blocks, combiner = %d\n", combiner);
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
 

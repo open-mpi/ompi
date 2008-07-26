@@ -27,7 +27,13 @@ void ADIOI_GEN_WriteContig(ADIO_File fd, void *buf, int count,
     }
 
     if (fd->fp_sys_posn != offset) {
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	err = lseek(fd->fd_sys, offset, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
 	/* --BEGIN ERROR HANDLING-- */
 	if (err == -1) {
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -41,7 +47,13 @@ void ADIOI_GEN_WriteContig(ADIO_File fd, void *buf, int count,
 	/* --END ERROR HANDLING-- */
     }
     
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
     err = write(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
     /* --BEGIN ERROR HANDLING-- */
     if (err == -1) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS,

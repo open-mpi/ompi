@@ -64,6 +64,7 @@ int ADIOI_Set_lock(FDTYPE fd, int cmd, int type, ADIO_Offset offset, int whence,
 
     if (!ret_val)
     {
+    char errMsg[ADIOI_NTFS_ERR_MSG_MAX];
 	/*
 	FPRINTF(stderr, "File locking failed in ADIOI_Set_lock.\n");
 	MPI_Abort(MPI_COMM_WORLD, 1);
@@ -80,8 +81,9 @@ int ADIOI_Set_lock(FDTYPE fd, int cmd, int type, ADIO_Offset offset, int whence,
 	    }
 	    ret_val = GetLastError();
 	}
+    ADIOI_NTFS_Strerror(ret_val, errMsg, ADIOI_NTFS_ERR_MSG_MAX);
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__,
-	    MPI_ERR_IO, "**io", "**io %s", ADIOI_NTFS_Strerror(ret_val));
+	    MPI_ERR_IO, "**io", "**io %s", errMsg);
     }
     CloseHandle(Overlapped.hEvent);
 
@@ -118,6 +120,7 @@ int ADIOI_Set_lock(FDTYPE fd, int cmd, int type, ADIO_Offset offset, int whence,
     lock.l_len	  = len;
 #endif
 
+    errno = 0;
     do {
 	err = fcntl(fd, cmd, &lock);
     } while (err && (errno == EINTR));
@@ -125,7 +128,20 @@ int ADIOI_Set_lock(FDTYPE fd, int cmd, int type, ADIO_Offset offset, int whence,
     if (err && (errno != EBADF)) {
 	/* FIXME: This should use the error message system, 
 	   especially for MPICH2 */
-	FPRINTF(stderr, "File locking failed in ADIOI_Set_lock. If the file system is NFS, you need to use NFS version 3, ensure that the lockd daemon is running on all the machines, and mount the directory with the 'noac' option (no attribute caching).\n");
+	FPRINTF(stderr, "File locking failed in ADIOI_Set_lock(fd %X,cmd %s/%X,type %s/%X,whence %X) with return value %X and errno %X.\n"
+                  "If the file system is NFS, you need to use NFS version 3, ensure that the lockd daemon is running on all the machines, and mount the directory with the 'noac' option (no attribute caching).\n",
+          fd,
+          ((cmd == F_GETLK   )? "F_GETLK" :
+          ((cmd == F_SETLK   )? "F_SETLK" :
+          ((cmd == F_SETLKW  )? "F_SETLKW" : "UNEXPECTED"))),
+          cmd, 
+          ((type == F_RDLCK   )? "F_RDLCK" :
+          ((type == F_WRLCK   )? "F_WRLCK" :
+          ((type == F_UNLCK   )? "F_UNLOCK" : "UNEXPECTED"))),
+          type, 
+          whence, err, errno);
+  perror("ADIOI_Set_lock:");
+  FPRINTF(stderr,"ADIOI_Set_lock:offset %llu, length %llu\n",(unsigned long long)offset, (unsigned long long)len);
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
@@ -154,7 +170,23 @@ int ADIOI_Set_lock64(FDTYPE fd, int cmd, int type, ADIO_Offset offset,
     } while (err && (errno == EINTR));
 
     if (err && (errno != EBADF)) {
-	FPRINTF(stderr, "File locking failed in ADIOI_Set_lock64\n");
+	FPRINTF(stderr, "File locking failed in ADIOI_Set_lock64(fd %X,cmd %s/%X,type %s/%X,whence %X) with return value %X and errno %X.\n"
+                  "If the file system is NFS, you need to use NFS version 3, ensure that the lockd daemon is running on all the machines, and mount the directory with the 'noac' option (no attribute caching).\n",
+          fd,
+          ((cmd == F_GETLK   )? "F_GETLK" :
+          ((cmd == F_SETLK   )? "F_SETLK" :
+          ((cmd == F_SETLKW  )? "F_SETLKW" :
+          ((cmd == F_GETLK64 )? "F_GETLK64" :
+          ((cmd == F_SETLK64 )? "F_SETLK64" :
+          ((cmd == F_SETLKW64)? "F_SETLKW64" : "UNEXPECTED")))))),
+          cmd, 
+          ((type == F_RDLCK   )? "F_RDLCK" :
+          ((type == F_WRLCK   )? "F_WRLCK" :
+          ((type == F_UNLCK   )? "F_UNLOCK" : "UNEXPECTED"))),
+          type, 
+          whence, err, errno);
+  perror("ADIOI_Set_lock64:");
+  FPRINTF(stderr,"ADIOI_Set_lock:offset %llu, length %llu\n",(unsigned long long)offset, (unsigned long long)len);
 	MPI_Abort(MPI_COMM_WORLD, 1);
     }
 

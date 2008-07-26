@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +19,7 @@
 # Portions taken from original ROMIO Makefile*
 #
 
-EXTRA_DIST = users-guide.bbl users-guide.ps.gz users-guide.tex source-guide.tex README
+EXTRA_DIST = users-guide.pdf users-guide.tex source-guide.tex README romio.bib
 
 all:
 	latex users-guide.tex

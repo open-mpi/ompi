@@ -7,9 +7,6 @@
 
 #include "ad_piofs.h"
 #include "adio_extern.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 void ADIOI_PIOFS_WriteContig(ADIO_File fd, void *buf, int count, 
                      MPI_Datatype datatype, int file_ptr_type,
@@ -25,41 +22,17 @@ void ADIOI_PIOFS_WriteContig(ADIO_File fd, void *buf, int count,
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
 	if (fd->fp_sys_posn != offset) {
-#ifdef PROFILE
-            MPE_Log_event(11, 0, "start seek");
-#endif
 	    llseek(fd->fd_sys, offset, SEEK_SET);
-#ifdef PROFILE
-            MPE_Log_event(12, 0, "end seek");
-#endif
 	}
-#ifdef PROFILE
-        MPE_Log_event(5, 0, "start write");
-#endif
 	err = write(fd->fd_sys, buf, len);
-#ifdef PROFILE
-        MPE_Log_event(6, 0, "end write");
-#endif
 	fd->fp_sys_posn = offset + err;
 	/* individual file pointer not updated */        
     }
     else { /* write from curr. location of ind. file pointer */
 	if (fd->fp_sys_posn != fd->fp_ind) {
-#ifdef PROFILE
-            MPE_Log_event(11, 0, "start seek");
-#endif
 	    llseek(fd->fd_sys, fd->fp_ind, SEEK_SET);
-#ifdef PROFILE
-            MPE_Log_event(12, 0, "end seek");
-#endif
 	}
-#ifdef PROFILE
-        MPE_Log_event(5, 0, "start write");
-#endif
 	err = write(fd->fd_sys, buf, len);
-#ifdef PROFILE
-        MPE_Log_event(6, 0, "end write");
-#endif
 	fd->fp_ind += err;
 	fd->fp_sys_posn = fd->fp_ind;
     }
@@ -255,18 +228,8 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
                 if (fwr_size) { 
                     /* TYPE_UB and TYPE_LB can result in 
                        fwr_size = 0. save system call in such cases */ 
-#ifdef PROFILE
-		    MPE_Log_event(11, 0, "start seek");
-#endif
 		    llseek(fd->fd_sys, off, SEEK_SET);
-#ifdef PROFILE
-		    MPE_Log_event(12, 0, "end seek");
-		    MPE_Log_event(5, 0, "start write");
-#endif
 		    err = write(fd->fd_sys, ((char *) buf) + i, fwr_size);
-#ifdef PROFILE
-		    MPE_Log_event(6, 0, "end write");
-#endif
 		    if (err == -1) err_flag = 1;
 		}
 		i += fwr_size;
@@ -304,18 +267,8 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    while (num < bufsize) {
 		size = ADIOI_MIN(fwr_size, bwr_size);
 		if (size) {
-#ifdef PROFILE
-		    MPE_Log_event(11, 0, "start seek");
-#endif
 		    llseek(fd->fd_sys, off, SEEK_SET);
-#ifdef PROFILE
-		    MPE_Log_event(12, 0, "end seek");
-		    MPE_Log_event(5, 0, "start write");
-#endif
 		    err = write(fd->fd_sys, ((char *) buf) + indx, size);
-#ifdef PROFILE
-		    MPE_Log_event(6, 0, "end write");
-#endif
 		    if (err == -1) err_flag = 1;
 		}
 

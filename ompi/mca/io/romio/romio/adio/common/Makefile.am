@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,6 +18,10 @@
 #
 
 include $(top_srcdir)/Makefile.options
+
+# Deliberately did not include async_list.c and req_malloc.c because
+# MPICH2-1.0.7 doesn't compile async_list.c and req_malloc.c is only
+# required for MPIX_Grequest stuff (which is MPICH2-specific).
 
 noinst_LTLIBRARIES = libadio_common.la
 libadio_common_la_SOURCES = \
@@ -53,20 +58,21 @@ libadio_common_la_SOURCES = \
         ad_wait_fake.c \
         ad_write.c \
         ad_write_coll.c \
+        ad_write_nolock.c \
         ad_write_str.c \
         ad_write_str_naive.c \
         adi_close.c \
-        async_list.c \
         byte_offset.c \
         cb_config_list.c \
         eof_offset.c \
         error.c \
         flatten.c \
         get_fp_posn.c \
+        greq_fns.c \
         iscontig.c \
         lock.c \
         malloc.c \
-        req_malloc.c \
         shfp_fname.c \
         status_setb.c \
-        strfns.c
+        strfns.c \
+        system_hints.c

@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,4 +24,7 @@ libadio_panfs_la_SOURCES = \
         ad_panfs.c \
         ad_panfs.h \
         ad_panfs_hints.c \
-        ad_panfs_open.c
+        ad_panfs_open.c \
+        ad_panfs_read.c \
+        ad_panfs_resize.c \
+        ad_panfs_write.c

@@ -60,7 +60,7 @@ Trunk (not on release branches yet)
 - Remove use of STL from C++ bindings.
 - Added support for Platform/LSF job launchers.  Must be Platform LSF
   v7.0.2 or later.
-- Updated ROMIO with the version from MPICH2 1.0.5p4
+- Updated ROMIO with the version from MPICH2 1.0.7
 - Added RDMA capable one-sided component (called rdma), which
   can be used with BTL components that expose a full one-sided
   interface.

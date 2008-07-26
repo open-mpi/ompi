@@ -7,14 +7,11 @@
 
 #include "adio.h"
 #include "adio_extern.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 /* prototypes of functions used for collective writes only. */
 static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
-                         datatype, int nprocs, int myrank, 
-                         int interleave_count, ADIOI_Access
+                         datatype, int nprocs, int myrank,
+			 ADIOI_Access
                          *others_req, ADIO_Offset *offset_list,
                          int *len_list, int contig_access_count, ADIO_Offset
                          min_st_offset, ADIO_Offset fd_size,
@@ -78,10 +75,6 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
     int *buf_idx = NULL, *len_list = NULL;
     int old_error, tmp_error;
 
-
-#ifdef PROFILE
-	MPE_Log_event(13, 0, "start computation");
-#endif
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
@@ -198,7 +191,6 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
 
 /* exchange data and write in sizes of no more than coll_bufsize. */
     ADIOI_Exch_and_write(fd, buf, datatype, nprocs, myrank,
-                        interleave_count,
                         others_req, offset_list,
 			len_list, contig_access_count, min_st_offset,
 			fd_size, fd_start, fd_end, buf_idx, error_code);
@@ -219,6 +211,9 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
 
      /* optimization: if only one process performing i/o, we can perform
      * a less-expensive Bcast  */
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_postwrite_a, 0, NULL );
+#endif
     if (fd->hints->cb_nodes == 1) 
 	    MPI_Bcast(error_code, 1, MPI_INT, 
 			    fd->hints->ranklist[0], fd->comm);
@@ -227,6 +222,9 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
 	    MPI_Allreduce(&tmp_error, error_code, 1, MPI_INT, 
 			    MPI_MAX, fd->comm);
     }
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_postwrite_b, 0, NULL );
+#endif
 
     if ( (old_error != MPI_SUCCESS) && (old_error != MPI_ERR_IO) )
 	    *error_code = old_error;
@@ -274,9 +272,9 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
  * code is created and returned in error_code.
  */
 static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
-				 datatype, int nprocs, int myrank,
-				 int interleave_count, 
-                                 ADIOI_Access
+				 datatype, int nprocs, 
+				 int myrank,
+				 ADIOI_Access
 				 *others_req, ADIO_Offset *offset_list,
 				 int *len_list, int contig_access_count,
 				 ADIO_Offset
@@ -293,7 +291,6 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
    array to a file, where each local array is 8Mbytes, requiring
    at least another 8Mbytes of temp space is unacceptable. */
 
-    /* TODO: 'hole' not used outside of ADIOI_W_Exchange_data */
     int hole, i, j, m, size=0, ntimes, max_ntimes, buftype_is_contig;
     ADIO_Offset st_loc=-1, end_loc=-1, off, done, req_off;
     char *write_buf=NULL;
@@ -396,16 +393,13 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
    common, let me do the simplest thing possible here: Each process
    completes all pending nonblocking operations before completing. */
 
-    ADIOI_Complete_async(error_code);
+    /*ADIOI_Complete_async(error_code);
     if (*error_code != MPI_SUCCESS) return;
     MPI_Barrier(fd->comm);
+    */
 
     done = 0;
     off = st_loc;
-
-#ifdef PROFILE
-	MPE_Log_event(14, 0, "end computation");
-#endif
 
     for (m=0; m < ntimes; m++) {
        /* go through all others_req and check which will be satisfied
@@ -425,9 +419,6 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
 
 	/* first calculate what should be communicated */
 
-#ifdef PROFILE
-	MPE_Log_event(13, 0, "start computation");
-#endif
 	for (i=0; i < nprocs; i++) count[i] = recv_size[i] = 0;
 
 	size = (int) (ADIOI_MIN(coll_bufsize, end_loc-st_loc+1-done)); 
@@ -487,10 +478,6 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
 	    }
 	}
 	
-#ifdef PROFILE
-	MPE_Log_event(14, 0, "end computation");
-	MPE_Log_event(7, 0, "start communication");
-#endif
 	ADIOI_W_Exchange_data(fd, buf, write_buf, flat_buf, offset_list, 
                             len_list, send_size, recv_size, off, size, count, 
                             start_pos, partial_recv, 
@@ -501,38 +488,23 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
                             done_to_proc, &hole, m, buftype_extent, buf_idx,
 			    error_code); 
         if (*error_code != MPI_SUCCESS) return;
-#ifdef PROFILE
-	MPE_Log_event(8, 0, "end communication");
-#endif
 
 	flag = 0;
 	for (i=0; i<nprocs; i++)
 	    if (count[i]) flag = 1;
 
 	if (flag) {
-            /* no interleaving means we might have to recompute size in the
-	     * case where hints have steered us into this path even though we
-	     * are non-overlapped.  However, if there is a "hole" inbetween
-	     * regions, we'll do a read-modify-write and W_Exchange_data will
-	     * have read in excess data */
-	    if(!interleave_count && !hole) {
-	        for (size=0, i=0; i<contig_access_count; i++)
-		    size += len_list[i];
-	    }
 	    ADIO_WriteContig(fd, write_buf, size, MPI_BYTE, ADIO_EXPLICIT_OFFSET, 
                         off, &status, error_code);
 	    if (*error_code != MPI_SUCCESS) return;
 	}
 
-        off += (int) (ADIOI_MIN(coll_bufsize, end_loc-st_loc+1-done)); 
+	off += size;
 	done += size;
     }
 
     for (i=0; i<nprocs; i++) count[i] = recv_size[i] = 0;
-#ifdef PROFILE
-	MPE_Log_event(7, 0, "start communication");
-#endif
-    for (m=ntimes; m<max_ntimes; m++) 
+    for (m=ntimes; m<max_ntimes; m++) {
 	/* nothing to recv, but check for send. */
 	ADIOI_W_Exchange_data(fd, buf, write_buf, flat_buf, offset_list, 
                             len_list, send_size, recv_size, off, size, count, 
@@ -544,9 +516,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
                             curr_to_proc, done_to_proc, &hole, m, 
                             buftype_extent, buf_idx, error_code); 
         if (*error_code != MPI_SUCCESS) return;
-#ifdef PROFILE
-	MPE_Log_event(8, 0, "end communication");
-#endif
+    }
 
     if (ntimes) ADIOI_Free(write_buf);
     ADIOI_Free(curr_offlen_ptr);
@@ -588,7 +558,7 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
     MPI_Request *requests, *send_req;
     MPI_Datatype *recv_types;
     MPI_Status *statuses, status;
-    int *srt_len, sum;
+    int *srt_len, sum, sum_recv;
     ADIO_Offset *srt_off;
     static char myname[] = "ADIOI_W_EXCHANGE_DATA";
 
@@ -654,6 +624,20 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
 	    *hole = 1;
 	    break;
 	}
+    /* In some cases (see John Bent ROMIO REQ # 835), an odd interaction
+     * between aggregation, nominally contiguous regions, and cb_buffer_size
+     * should be handled with a read-modify-write (otherwise we will write out
+     * more data than we receive from everyone else (inclusive), so override
+     * hole detection
+     */
+    if (*hole == 0) {
+        sum_recv=0;
+        for (i=0; i<nprocs; i++) {
+	   sum_recv += recv_size[i];
+	   sum_recv += partial_recv[i];
+        }
+        if (size > sum_recv) *hole = 1;
+    }
 
     ADIOI_Free(srt_off);
     ADIOI_Free(srt_len);

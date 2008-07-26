@@ -8,11 +8,11 @@
 #include "adio.h"
 #include "adio_extern.h"
 
-int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
 		     int rank, int darg, int order, MPI_Aint orig_extent,
 		     MPI_Datatype type_old, MPI_Datatype *type_new,
 		     MPI_Aint *st_offset);
-int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
 		      int rank, int darg, int order, MPI_Aint orig_extent,
 		      MPI_Datatype type_old, MPI_Datatype *type_new,
 		      MPI_Aint *st_offset);
@@ -146,7 +146,7 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 /* Returns MPI_SUCCESS on success, an MPI error code on failure.  Code above
  * needs to call MPIO_Err_return_xxx.
  */
-int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
 		     int rank, int darg, int order, MPI_Aint orig_extent,
 		     MPI_Datatype type_old, MPI_Datatype *type_new,
 		     MPI_Aint *st_offset) 
@@ -208,7 +208,7 @@ int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
 /* Returns MPI_SUCCESS on success, an MPI error code on failure.  Code above
  * needs to call MPIO_Err_return_xxx.
  */
-int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
+static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
 		      int rank, int darg, int order, MPI_Aint orig_extent,
 		      MPI_Datatype type_old, MPI_Datatype *type_new,
 		      MPI_Aint *st_offset) 

@@ -36,6 +36,10 @@ void MPIO_File_free(MPI_File *mpi_fh)
     *mpi_fh = MPI_FILE_NULL;
 }
 
+extern ADIO_File *ADIOI_Ftable;
+extern int ADIOI_Ftable_ptr;
+extern int ADIOI_Ftable_max;
+
 MPI_File MPIO_File_f2c(MPI_Fint fh)
 {
 #ifndef INT_LT_POINTER
