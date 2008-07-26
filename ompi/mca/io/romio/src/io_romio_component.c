@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 #include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
+#define ROMIO_VERSION_STRING "from MPICH2 v1.0.7 with additional compilation/bug patches from romio-maint@mcs.anl.gov"
 
 /*
  * Private functions
@@ -73,10 +75,10 @@ opal_list_t mca_io_romio_pending_requests;
 
 
 /*
- * Public string showing the coll ompi_demo component version number
+ * Public string showing this component's version number
  */
 const char *mca_io_romio_component_version_string =
-  "OMPI/MPI ROMIO io MCA component version " OMPI_VERSION;
+"OMPI/MPI ROMIO io MCA component version " OMPI_VERSION ", " ROMIO_VERSION_STRING;
 
 
 mca_io_base_component_1_0_0_t mca_io_romio_component = {
@@ -140,6 +142,22 @@ static int open_component(void)
                                "delete_priority", 
                                "Delete priority of the io romio component",
                                false, false, 10, NULL);
+
+    mca_base_param_reg_string(&mca_io_romio_component.io_version,
+                              "version", 
+                              "Version of ROMIO",
+                              false, true, ROMIO_VERSION_STRING, NULL);
+
+    mca_base_param_reg_string(&mca_io_romio_component.io_version,
+                              "user_configure_params", 
+                              "User-specified command line parameters passed to ROMIO's configure script",
+                              false, true, 
+                              MCA_io_romio_USER_CONFIGURE_FLAGS, NULL);
+    mca_base_param_reg_string(&mca_io_romio_component.io_version,
+                              "complete_configure_params", 
+                              "Complete set of command line parameters passed to ROMIO's configure script",
+                              false, true, 
+                              MCA_io_romio_COMPLETE_CONFIGURE_FLAGS, NULL);
 
     /* Create the mutex */
     OBJ_CONSTRUCT(&mca_io_romio_mutex, opal_mutex_t);
@@ -257,7 +275,7 @@ static int progress()
 {
     opal_list_item_t *item, *next;
     int ret, flag, count;
-    ROMIO_PREFIX(MPIO_Request) romio_rq;
+    MPI_Request romio_rq;
     mca_io_base_request_t *ioreq;
 
     /* Troll through all pending requests and try to progress them.
@@ -272,8 +290,8 @@ static int progress()
 
         ioreq = (mca_io_base_request_t*) item;
         romio_rq = ((mca_io_romio_request_t *) item)->romio_rq;
-        ret = ROMIO_PREFIX(MPIO_Test)(&romio_rq, &flag, 
-                                      &(((ompi_request_t *) item)->req_status));
+        ret = MPI_Test(&romio_rq, &flag, 
+                       &(((ompi_request_t *) item)->req_status));
         if ((0 != ret) || (0 != flag)) {
             ioreq->super.req_status.MPI_ERROR = ret;
             ++count;

@@ -32,7 +32,13 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
 	if (*error_code != MPI_SUCCESS) return;
 	*shared_fp = 0;
 	ADIOI_WRITE_LOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	err = read(fd->shared_fp_fd->fd_sys, shared_fp, sizeof(ADIO_Offset));
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
         /* if the file is empty, the above read may return error
            (reading beyond end of file). In that case, shared_fp = 0, 
            set above, is the correct value. */
@@ -40,10 +46,22 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
     else {
 	ADIOI_WRITE_LOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
 
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	err = lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
 	if (err == 0) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	    err = read(fd->shared_fp_fd->fd_sys, shared_fp,
 		       sizeof(ADIO_Offset));
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	}
 	if (err == -1) {
 	    ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
@@ -57,9 +75,21 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
 
     new_fp = *shared_fp + incr;
 
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
     err = lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
     if (err == 0) {
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
 	err = write(fd->shared_fp_fd->fd_sys, &new_fp, sizeof(ADIO_Offset));
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
     }
     ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
     if (err == -1) {

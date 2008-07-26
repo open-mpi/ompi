@@ -15,6 +15,9 @@
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 #ifdef HAVE_AIO_H
 #include <aio.h>
 #endif
@@ -29,7 +32,7 @@
 #endif
 
 int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
-                  int wr, void *handle);
+                  int wr, MPI_Request *request);
 
 #ifdef SX4
 #define lseek llseek

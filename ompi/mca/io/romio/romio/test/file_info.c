@@ -8,6 +8,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* #undef INFO_DEBUG */
+
 /* Set verbose to 0 only if you want no information about any failure */
 static int verbose = 1;
 
@@ -62,7 +64,7 @@ int main(int argc, char **argv)
     for (i=0; i<nkeys; i++) {
 	MPI_Info_get_nthkey(info_used, i, key);
 	MPI_Info_get(info_used, key, MPI_MAX_INFO_VAL-1, value, &flag);
-#if 0
+#ifdef INFO_DEBUG
 	if (!mynod) 
 	    fprintf(stderr, "Process %d, Default:  key = %s, value = %s\n", mynod, 
                 key, value);
@@ -72,10 +74,10 @@ int main(int argc, char **argv)
 	    /* no check */
 	}
 	else if (!strcmp("cb_buffer_size", key)) {
-	    if (atoi(value) != 4194304) {
+	    if (atoi(value) != 16777216) {
 		errs++;
 		if (verbose) fprintf(stderr, "cb_buffer_size is %d; should be %d\n",
-				     atoi(value), 4194304);
+				     atoi(value), 16777216);
 	    }
 	}
 	else if (!strcmp("romio_cb_read", key)) {
@@ -151,6 +153,7 @@ int main(int argc, char **argv)
 	    if (verbose) fprintf(stderr, "unexpected key %s (not counted as an error)\n", key);
 	}
     }
+    MPI_Info_free(&info_used);
 
     MPI_File_close(&fh);
     
@@ -224,7 +227,7 @@ int main(int argc, char **argv)
     for (i=0; i<nkeys; i++) {
 	MPI_Info_get_nthkey(info_used, i, key);
 	MPI_Info_get(info_used, key, MPI_MAX_INFO_VAL-1, value, &flag);
-#if 0
+#ifdef INFO_DEBUG	
 	if (!mynod) fprintf(stderr, "Process %d, key = %s, value = %s\n", mynod, 
                 key, value);
 #endif

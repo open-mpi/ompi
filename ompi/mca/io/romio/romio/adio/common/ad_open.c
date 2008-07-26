@@ -14,6 +14,9 @@
 static int is_aggregator(int rank, ADIO_File fd);
 static int uses_generic_read(ADIO_File fd);
 static int uses_generic_write(ADIO_File fd);
+static int build_cb_config_list(ADIO_File fd, 
+	MPI_Comm orig_comm, MPI_Comm comm, 
+	int rank, int procs, int *error_code);
 
 MPI_File ADIO_Open(MPI_Comm orig_comm,
 		   MPI_Comm comm, char *filename, int file_system,
@@ -24,12 +27,10 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 {
     MPI_File mpi_fh;
     ADIO_File fd;
-    ADIO_cb_name_array array;
     int orig_amode_excl, orig_amode_wronly, err, rank, procs;
-    char *value;
     static char myname[] = "ADIO_OPEN";
-    int rank_ct, max_error_code;
-    int *tmp_ranklist;
+    int  max_error_code;
+    MPI_Info dupinfo;
     MPI_Comm aggregator_comm = MPI_COMM_NULL; /* just for deferred opens */
 
     *error_code = MPI_SUCCESS;
@@ -66,6 +67,8 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 
     fd->err_handler = ADIOI_DFLT_ERR_HANDLER;
 
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &procs);
 /* create and initialize info object */
     fd->hints = (ADIOI_Hints *)ADIOI_Malloc(sizeof(struct ADIOI_Hints_struct));
     if (fd->hints == NULL) {
@@ -75,7 +78,19 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
     fd->hints->ranklist = NULL;
     fd->hints->initialized = 0;
     fd->info = MPI_INFO_NULL;
-    ADIO_SetInfo(fd, info, &err);
+
+    if (info == MPI_INFO_NULL) 
+	*error_code = MPI_Info_create(&dupinfo);
+    else
+	*error_code = MPI_Info_dup(info, &dupinfo);
+    if (*error_code != MPI_SUCCESS)
+	goto fn_exit;
+
+    ADIOI_process_system_hints(dupinfo);
+    ADIO_SetInfo(fd, dupinfo, &err);
+    *error_code = MPI_Info_free(&dupinfo);
+    if (*error_code != MPI_SUCCESS)
+	goto fn_exit;
 
      /* deferred open: 
      * we can only do this optimization if 'fd->hints->deferred_open' is set
@@ -93,51 +108,15 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 	     * always use the propper communicator */
 	    fd->hints->deferred_open = 0;
 
-/* gather the processor name array if we don't already have it */
 
-/* this has to be done here so that we can cache the name array in both
- * the dup'd communicator (in case we want it later) and the original
- * communicator
- */
-    ADIOI_cb_gather_name_array(orig_comm, comm, &array);
-
-/* parse the cb_config_list and create a rank map on rank 0 */
-    MPI_Comm_rank(comm, &rank);
-    if (rank == 0) {
-	MPI_Comm_size(comm, &procs);
-	tmp_ranklist = (int *) ADIOI_Malloc(sizeof(int) * procs);
-	if (tmp_ranklist == NULL) {
-	    /* NEED TO HANDLE ENOMEM ERRORS */
-	}
-
-	rank_ct = ADIOI_cb_config_list_parse(fd->hints->cb_config_list, 
-					     array, tmp_ranklist,
-					     fd->hints->cb_nodes);
-
-	/* store the ranklist using the minimum amount of memory */
-	if (rank_ct > 0) {
-	    fd->hints->ranklist = (int *) ADIOI_Malloc(sizeof(int) * rank_ct);
-	    memcpy(fd->hints->ranklist, tmp_ranklist, sizeof(int) * rank_ct);
-	}
-	ADIOI_Free(tmp_ranklist);
-	fd->hints->cb_nodes = rank_ct;
-	/* TEMPORARY -- REMOVE WHEN NO LONGER UPDATING INFO FOR FS-INDEP. */
-	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-	ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", rank_ct);
-	MPI_Info_set(fd->info, "cb_nodes", value);
-	ADIOI_Free(value);
+    /* on BlueGene, the cb_config_list is built when hints are processed. No
+     * one else does that right now */
+    if (fd->hints->ranklist == NULL) {
+	build_cb_config_list(fd, orig_comm, comm, rank, procs, error_code);
+	if (*error_code != MPI_SUCCESS) 
+	    goto fn_exit;
     }
-
-    ADIOI_cb_bcast_rank_map(fd);
-    if (fd->hints->cb_nodes <= 0) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__, MPI_ERR_IO,
-					   "**ioagnomatch", 0);
-	fd = ADIO_FILE_NULL;
-        goto fn_exit;
-    }
-
-
+    
      /* deferred open: if we are an aggregator, create a new communicator.
       * we'll use this aggregator communicator for opens and closes.
       * otherwise, we have a NULL communicator until we try to do independent
@@ -172,6 +151,37 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
      */
     /* pvfs2 handles opens specially, so it is actually more efficent for that
      * file system if we skip this optimization */
+    /* NFS handles opens especially poorly, so we cannot use this optimization
+     * on that FS */
+    if (fd->file_system == ADIO_NFS) {
+        /* no optimizations for NFS: */
+	if ((access_mode & ADIO_CREATE) && (access_mode & ADIO_EXCL)) {
+	  /* the open should fail if the file exists. Only *1* process should
+	   check this. Otherwise, if all processes try to check and the file
+	   does not exist, one process will create the file and others who
+	   reach later will return error. */
+	    if(rank == fd->hints->ranklist[0]) {
+                fd->access_mode = access_mode;
+                (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
+                MPI_Bcast(error_code, 1, MPI_INT, \
+                                fd->hints->ranklist[0], fd->comm);
+                /* if no error, close the file and reopen normally below */
+                if (*error_code == MPI_SUCCESS)
+                        (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
+	    }
+	    else MPI_Bcast(error_code, 1, MPI_INT, 
+			    fd->hints->ranklist[0], fd->comm); 
+	    if (*error_code != MPI_SUCCESS) {
+		    goto fn_exit;
+	    }
+	    else {
+	        /* turn off EXCL for real open */
+	        access_mode = access_mode ^ ADIO_EXCL;
+           }
+        }
+    } else {
+
+	    /* the actual optimized create on one, open on all */
     if (access_mode & ADIO_CREATE && fd->file_system != ADIO_PVFS2) {
        if(rank == fd->hints->ranklist[0]) {
 	   /* remove delete_on_close flag if set */
@@ -200,6 +210,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 	   if (access_mode & ADIO_EXCL)
 		   access_mode ^= ADIO_EXCL;
        }
+    }
     }
 
     /* if we are doing deferred open, non-aggregators should return now */
@@ -320,3 +331,58 @@ static int uses_generic_write(ADIO_File fd)
     }
     return 0;
 }
+
+static int build_cb_config_list(ADIO_File fd, 
+	MPI_Comm orig_comm, MPI_Comm comm, 
+	int rank, int procs, int *error_code)
+{
+    ADIO_cb_name_array array;
+    int *tmp_ranklist;
+    int rank_ct;
+    char *value;
+    static char myname[] = "ADIO_OPEN cb_config_list";
+
+    /* gather the processor name array if we don't already have it */
+    /* this has to be done early in ADIO_Open so that we can cache the name
+     * array in both the dup'd communicator (in case we want it later) and the
+     * original communicator */
+    ADIOI_cb_gather_name_array(orig_comm, comm, &array);
+
+/* parse the cb_config_list and create a rank map on rank 0 */
+    if (rank == 0) {
+	tmp_ranklist = (int *) ADIOI_Malloc(sizeof(int) * procs);
+	if (tmp_ranklist == NULL) {
+	    /* NEED TO HANDLE ENOMEM ERRORS */
+	}
+
+	rank_ct = ADIOI_cb_config_list_parse(fd->hints->cb_config_list, 
+					     array, tmp_ranklist,
+					     fd->hints->cb_nodes);
+
+	/* store the ranklist using the minimum amount of memory */
+	if (rank_ct > 0) {
+	    fd->hints->ranklist = (int *) ADIOI_Malloc(sizeof(int) * rank_ct);
+	    memcpy(fd->hints->ranklist, tmp_ranklist, sizeof(int) * rank_ct);
+	}
+	ADIOI_Free(tmp_ranklist);
+	fd->hints->cb_nodes = rank_ct;
+	/* TEMPORARY -- REMOVE WHEN NO LONGER UPDATING INFO FOR FS-INDEP. */
+	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
+	ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", rank_ct);
+	MPI_Info_set(fd->info, "cb_nodes", value);
+	ADIOI_Free(value);
+    }
+
+    ADIOI_cb_bcast_rank_map(fd);
+    if (fd->hints->cb_nodes <= 0) {
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**ioagnomatch", 0);
+	fd = ADIO_FILE_NULL;
+    }
+    return 0;
+}
+
+/* 
+ * vim: ts=8 sts=4 sw=4 noexpandtab 
+ */

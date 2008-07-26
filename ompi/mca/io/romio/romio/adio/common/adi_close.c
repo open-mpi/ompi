@@ -11,9 +11,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 
 void ADIOI_GEN_Close(ADIO_File fd, int *error_code)
@@ -21,18 +18,22 @@ void ADIOI_GEN_Close(ADIO_File fd, int *error_code)
     int err, derr=0;
     static char myname[] = "ADIOI_GEN_CLOSE";
 
-#ifdef PROFILE
-    MPE_Log_event(9, 0, "start close");
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_close_a, 0, NULL );
 #endif
-
     err = close(fd->fd_sys);
-    if (fd->fd_direct >= 0) {
-	derr = close(fd->fd_direct);
-    }
-
-#ifdef PROFILE
-    MPE_Log_event(10, 0, "end close");
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_close_b, 0, NULL );
 #endif
+    if (fd->fd_direct >= 0) {
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_close_a, 0, NULL );
+#endif
+	derr = close(fd->fd_direct);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_close_b, 0, NULL );
+#endif
+    }
 
     fd->fd_sys    = -1;
     fd->fd_direct = -1;

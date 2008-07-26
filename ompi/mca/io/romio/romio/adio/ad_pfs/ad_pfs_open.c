@@ -6,9 +6,6 @@
  */
 
 #include "ad_pfs.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
 {
@@ -39,15 +36,9 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
     MPI_Comm_size(MPI_COMM_WORLD, &np_total);
     MPI_Comm_size(fd->comm, &np_comm);
 
-#ifdef PROFILE
-    MPE_Log_event(1, 0, "start open");
-#endif
     if (np_total == np_comm) 
 	fd->fd_sys = _gopen(fd->filename, amode, M_ASYNC, perm);
     else fd->fd_sys = open(fd->filename, amode, perm);
-#ifdef PROFILE
-    MPE_Log_event(2, 0, "end open");
-#endif
     fd->fd_direct = -1;
 
     if (fd->fd_sys != -1) {

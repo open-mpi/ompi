@@ -9,6 +9,8 @@
 void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status,
 			    int *error_code)
 {
+	return;
+#if 0
 #ifdef ROMIO_HAVE_WORKING_AIO
     int err;
     static char myname[] = "ADIOI_NFS_READCOMPLETE";
@@ -121,6 +123,7 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status,
     *request = ADIO_REQUEST_NULL;
     *error_code = MPI_SUCCESS;
 #endif    
+#endif
 }
 
 

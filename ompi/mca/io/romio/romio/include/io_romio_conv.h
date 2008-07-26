@@ -106,24 +106,11 @@
 #define MPI_File_f2c ROMIO_PREFIX(MPI_File_f2c)
 #define MPI_File_c2f ROMIO_PREFIX(MPI_File_c2f)
 
-#if defined(MPIO_Test)
-#undef MPIO_Test
-#endif
-#define MPIO_Test ROMIO_PREFIX(MPIO_Test)
-#if defined(MPIO_Wait)
-#undef MPIO_Wait
-#endif
-#define MPIO_Wait ROMIO_PREFIX(MPIO_Wait)
-
 #define MPIO_Request_c2f ROMIO_PREFIX(MPIO_Request_c2f)
 #define MPIO_Request_f2c ROMIO_PREFIX(MPIO_Request_f2c)
 
 /* Conversion of MPI_File and MPIO_Request */
 #define MPI_File ROMIO_PREFIX(MPI_File)
-#if defined(MPIO_Request)
-#undef MPIO_Request
-#endif
-#define MPIO_Request ROMIO_PREFIX(MPIO_Request)
 
 /* Open MPI's mpi.h #define's MPI_FILE_NULL, so we need to undef it
    here and allow it to be re-assigned to whatever ROMIO wants */

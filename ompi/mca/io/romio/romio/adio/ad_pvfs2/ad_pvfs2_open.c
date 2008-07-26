@@ -30,7 +30,7 @@ typedef struct open_status_s open_status;
      * handle to everyone else in the communicator
      */
 static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
-	                 int nr_datafiles, int strip_size,
+	                 int nr_datafiles, PVFS_size strip_size,
                          ADIOI_PVFS2_fs *pvfs2_fs, 
 			 open_status *o_status)
 {
@@ -82,9 +82,15 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
             }
 
             /* Perform file creation */
+#ifdef HAVE_PVFS2_CREATE_WITHOUT_LAYOUT
             ret = PVFS_sys_create(resp_getparent.basename, 
 		    resp_getparent.parent_ref, attribs, 
 		    &(pvfs2_fs->credentials), dist, &resp_create); 
+#else 
+            ret = PVFS_sys_create(resp_getparent.basename, 
+		    resp_getparent.parent_ref, attribs, 
+		    &(pvfs2_fs->credentials), dist, NULL, &resp_create); 
+#endif
 
 	    /* if many creates are happening in this directory, the earlier
 	     * sys_lookup may have returned ENOENT, but the sys_create could
@@ -175,6 +181,9 @@ void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code)
     ADIOI_PVFS2_makecredentials(&(pvfs2_fs->credentials));
 
     /* one process resolves name and will later bcast to others */
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_open_a, 0, NULL );
+#endif
     if (rank == fd->hints->ranklist[0] && fd->fs_ptr == NULL) {
 	/* given the filename, figure out which pvfs filesystem it is on */
 	ret = PVFS_util_resolve(fd->filename, &cur_fs, 
@@ -194,6 +203,9 @@ void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code)
 	pvfs2_fs->object_ref = o_status.object_ref;
 	fd->fs_ptr = pvfs2_fs;
     }
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_open_b, 0, NULL );
+#endif
 
     /* broadcast status and (possibly valid) object reference */
     MPI_Address(&o_status.error, &offsets[0]);

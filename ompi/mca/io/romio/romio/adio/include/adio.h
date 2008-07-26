@@ -253,20 +253,7 @@ typedef struct ADIOI_FileD {
 
 typedef struct ADIOI_FileD *ADIO_File;
 
-struct ADIOI_RequestD {
-    int cookie;              /* for error checking */
-    void *handle;        /* return handle */
-    int optype;          /* ADIOI_READ or ADIOI_WRITE */
-    ADIO_File fd;        /* associated file descriptor */
-    MPI_Datatype datatype;  /* datatype for read/write operation */
-    int queued;          /* 1 = request still queued in the system, 
-                            0 = request already dequeued */
-    int nbytes;          /* no. of bytes read/written in async I/O operation */
-    struct ADIOI_Async *ptr_in_async_list;  /* pointer to location in list of 
-					   asynchronous requests */
-};
-
-typedef struct ADIOI_RequestD *ADIO_Request;
+typedef MPI_Request ADIO_Request;
 
 /* fcntl structure */
 typedef struct {
@@ -313,6 +300,9 @@ typedef struct {
 #define ADIO_PVFS2               160   /* PVFS2: 2nd generation PVFS */
 #define ADIO_PANFS               161   /* Panasas FS */
 #define ADIO_GRIDFTP             162   /* Globus GridFTP */
+#define ADIO_LUSTRE              163   /* Lustre */
+#define ADIO_BGL                 164   /* IBM BGL */
+#define ADIO_BGLOCKLESS          165   /* IBM BGL (lock-free) */
 
 #define ADIO_SEEK_SET            SEEK_SET
 #define ADIO_SEEK_CUR            SEEK_CUR
@@ -434,6 +424,10 @@ int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 			 const char specific_msg[], ... );
 int MPIO_Err_return_file(MPI_File mpi_fh, int error_code);
 int MPIO_Err_return_comm(MPI_Comm mpi_comm, int error_code);
+
+/* request managment helper functions */
+void MPIO_Completed_request_create(MPI_File *fh, MPI_Offset nbytes,
+		int * error_code, MPI_Request *request);
 
 #include "adioi.h"
 #include "adioi_fs_proto.h"

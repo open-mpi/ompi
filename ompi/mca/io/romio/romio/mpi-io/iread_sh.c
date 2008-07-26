@@ -40,111 +40,17 @@ Output Parameters:
 #ifdef HAVE_MPI_GREQUEST
 #include "mpiu_greq.h"
 
-#if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
-typedef struct iread_shared_args
-{
-    MPI_File file;
-    void *buf;
-    int count;
-    MPI_Datatype datatype;
-    MPIO_Request request;
-    MPI_Status *status;
-} iread_shared_args;
-
-static DWORD WINAPI iread_shared_thread(LPVOID lpParameter)
-{
-    int error_code;
-    iread_shared_args *args = (iread_shared_args *)lpParameter;
-
-    error_code = MPI_File_read_shared(args->file, args->buf, args->count, args->datatype, args->status);
-    /* ROMIO-1 doesn't do anything with status.MPI_ERROR */
-    args->status->MPI_ERROR = error_code;
-
-    MPI_Grequest_complete(args->request);
-    ADIOI_Free(args);
-    return 0;
-}
-#endif
 
 int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count, 
-			  MPI_Datatype datatype, MPIO_Request *request)
-{
-    int error_code=MPI_SUCCESS;
-    ADIO_File fh;
-    MPI_Status *status;
-#if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
-    iread_shared_args *args;
-    HANDLE hThread;
-#endif
-
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
-
-    fh = MPIO_File_resolve(mpi_fh);
-
-    status = (MPI_Status *) ADIOI_Malloc(sizeof(MPI_Status));
-
-#if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
-    /* kick off the request */
-    MPI_Grequest_start(MPIU_Greq_query_fn, MPIU_Greq_free_fn, 
-	MPIU_Greq_cancel_fn, status, request);
-
-    args = (iread_shared_args*) ADIOI_Malloc(sizeof(iread_shared_args));
-    args->file = mpi_fh;
-    args->buf = buf;
-    args->count = count;
-    args->datatype = datatype;
-    args->status = status;
-    args->request = *request;
-    hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)iread_shared_thread, args, 0, NULL);
-    if (hThread == NULL)
-    {
-	error_code = GetLastError();
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-	    "MPI_File_iread_shared", __LINE__, MPI_ERR_OTHER,
-	    "**fail", "**fail %d", error_code);
-	error_code = MPIO_Err_return_file(fh, error_code);
-	return error_code;
-    }
-    CloseHandle(hThread);
-
-#else
-
-    /* for now, no threads or anything fancy. 
-    * just call the blocking version */
-    error_code = MPI_File_read_shared(mpi_fh, buf, count, datatype,
-	status); 
-    /* ROMIO-1 doesn't do anything with status.MPI_ERROR */
-    status->MPI_ERROR = error_code;
-
-    /* --BEGIN ERROR HANDLING-- */
-    if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(mpi_fh, error_code);
-    /* --END ERROR HANDLING-- */
-
-    /* kick off the request */
-    MPI_Grequest_start(MPIU_Greq_query_fn, MPIU_Greq_free_fn, 
-	MPIU_Greq_cancel_fn, status, request);
-
-    /* but we did all the work already */
-    MPI_Grequest_complete(*request);
-    /* passed the buck to the blocking version...*/
-#endif
-
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
-    return error_code;
-}
-#else
-int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count, 
-                          MPI_Datatype datatype, MPIO_Request *request)
+			  MPI_Datatype datatype, MPI_Request *request)
 {
     int error_code, bufsize, buftype_is_contig, filetype_is_contig;
     ADIO_File fh;
     static char myname[] = "MPI_FILE_IREAD_SHARED";
     int datatype_size, incr;
-    ADIO_Status status;
+    MPI_Status status;
     ADIO_Offset off, shared_fp;
+    MPI_Offset nbytes=0;
 
     MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
@@ -195,13 +101,6 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
             /* to maintain strict atomicity semantics with other concurrent
               operations, lock (exclusive) and call blocking routine */
 
-            *request = ADIOI_Malloc_request();
-            (*request)->optype = ADIOI_READ;
-            (*request)->fd = fh;
-            (*request)->datatype = datatype;
-            (*request)->queued = 0;
-	    (*request)->handle = 0;
-
             if (fh->file_system != ADIO_NFS)
 	    {
                 ADIOI_WRITE_LOCK(fh, off, SEEK_SET, bufsize);
@@ -214,10 +113,10 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
 	    {
                 ADIOI_UNLOCK(fh, off, SEEK_SET, bufsize);
 	    }
-
-            fh->async_count++;
-            /* status info. must be linked to the request structure, so that
-               it can be accessed later from a wait */
+	    if (error_code == MPI_SUCCESS){
+		    nbytes = count * datatype_size;
+	    }
+	    MPIO_Completed_request_create(&fh, nbytes, &error_code, request);
         }
     }
     else

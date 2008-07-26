@@ -181,6 +181,16 @@ $mpirun -np 4 ./async -fname $FILENAME
 CleanExe async
 #
 OutTime
+testfiles="$testfiles async-multi.out"
+\rm -f async-multi.out
+MakeExe async-multiple
+\rm -f $FILENAME*
+echo '**** Testing async-multiple.c ****'
+$mpirun -np 4 ./async-multiple -fname $FILENAME
+# CheckOutput async-multiple
+CleanExe async-multiple
+#
+OutTime
 if [ $subset_only -eq 0 ] ; then 
 	testfiles="$testfiles atomicity.out"
 	\rm -f atomicity.out
@@ -263,7 +273,22 @@ echo '**** Testing noncontig_coll2.c ****'
 $mpirun -np 4 ./noncontig_coll2 -fname $FILENAME
 # CheckOutput noncontig_coll2
 CleanExe noncontig_coll2
+echo '**** Testing aggregation1 ****'
+$mpirun -np 4 ./aggregation1 -h -fname $FILENAME
+# CheckOutput aggregation1
+CleanExe aggregation1
+echo '**** Testing aggregation2 ****'
+$mpirun -np 4 ./aggregation2 $FILENAME
+# CheckOutput aggregation2
+CleanExe aggregation2
 #
+#echo '**** Testing write_all_test (run 1)****'
+#$mpirun -np 4 ./write_all_test -nzp 2 -zplace 2 -nzw 2 -naw 2 -size 100 \
+#	-offm 8 -hints romio_cb_write enable -fname $FILENAME
+#echo '**** Testing write_all_test (run 2)****'
+#$mpirun -np 4 ./write_all_test -nzp 2 -zplace 2 -nzw 2 -naw 2 -size 100 \
+#	-offm 4 -hints romio_cb_write enable -fname $FILENAME
+#CleanExe write_all_test
 OutTime
 if [ $subset_only -eq 0 ] ; then 
 	testfiles="$testfiles misc.out"
@@ -286,6 +311,15 @@ if [ $subset_only -eq 0 ] ; then
 	$mpirun -np 4 ./shared_fp -fname $FILENAME
 	# CheckOutput shared_fp
 	CleanExe shared_fp
+	#
+	OutTime
+	testfiles="$testfiles ordered_fp.out"
+	\rm -f ordered_fp.out
+	MakeExe ordered_fp
+	\rm -f $FILENAME*
+	echo '**** Testing ordered_fp.c ****'
+	$mpirun -np 4 ./ordered_fp -fname $FILENAME
+	CleanExe ordered_fp
 	#
 	OutTime
 fi

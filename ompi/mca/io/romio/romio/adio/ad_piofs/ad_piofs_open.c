@@ -6,9 +6,6 @@
  */
 
 #include "ad_piofs.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 void ADIOI_PIOFS_Open(ADIO_File fd, int *error_code)
 {
@@ -38,15 +35,8 @@ void ADIOI_PIOFS_Open(ADIO_File fd, int *error_code)
     if (fd->access_mode & ADIO_EXCL)
 	amode = amode | O_EXCL;
 
-#ifdef PROFILE
-    MPE_Log_event(1, 0, "start open");
-#endif
     fd->fd_sys = open(fd->filename, amode, perm);
     fd->fd_direct = -1;
-
-#ifdef PROFILE
-    MPE_Log_event(2, 0, "end open");
-#endif
 
     llseek(fd->fd_sys, 0, SEEK_SET);
 /* required to initiate use of 64-bit offset */

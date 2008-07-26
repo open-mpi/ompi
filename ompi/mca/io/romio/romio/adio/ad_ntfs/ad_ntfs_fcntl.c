@@ -22,12 +22,14 @@ void ADIOI_NTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *e
 	    dwTemp = DWORDHIGH(fd->fp_sys_posn);
 	    if (SetFilePointer(fd->fd_sys, DWORDLOW(fd->fp_sys_posn), &dwTemp, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 	    {
+        char errMsg[ADIOI_NTFS_ERR_MSG_MAX];
 		err = GetLastError();
+        ADIOI_NTFS_Strerror(err, errMsg, ADIOI_NTFS_ERR_MSG_MAX);
 		if (err != NO_ERROR)
 		{
 		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 			myname, __LINE__, MPI_ERR_IO,
-			"**io", "**io %s", ADIOI_NTFS_Strerror(err));
+			"**io", "**io %s", errMsg);
 		    return;
 		}
 	    }
@@ -35,11 +37,13 @@ void ADIOI_NTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *e
 	/* --BEGIN ERROR HANDLING-- */
 	if (fcntl_struct->fsize == INVALID_SET_FILE_POINTER)
 	{
+        char errMsg[ADIOI_NTFS_ERR_MSG_MAX];
 	    dwTemp = GetLastError();
+        ADIOI_NTFS_Strerror(dwTemp, errMsg, ADIOI_NTFS_ERR_MSG_MAX);
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
 					       MPIR_ERR_RECOVERABLE, myname,
 					       __LINE__, MPI_ERR_IO, "**io",
-					       "**io %s", ADIOI_NTFS_Strerror(dwTemp));
+					       "**io %s", errMsg);
 	    return;
 	}
 	/* --END ERROR HANDLING-- */

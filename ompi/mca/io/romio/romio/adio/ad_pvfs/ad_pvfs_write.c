@@ -27,16 +27,42 @@ void ADIOI_PVFS_WriteContig(ADIO_File fd, void *buf, int count,
     len = datatype_size * count;
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
-	if (fd->fp_sys_posn != offset)
+	if (fd->fp_sys_posn != offset) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    pvfs_lseek64(fd->fd_sys, offset, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
 	err = pvfs_write(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
 	fd->fp_sys_posn = offset + err;
 	/* individual file pointer not updated */        
     }
     else { /* write from curr. location of ind. file pointer */
-	if (fd->fp_sys_posn != fd->fp_ind)
+	if (fd->fp_sys_posn != fd->fp_ind) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
 	err = pvfs_write(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
 	fd->fp_ind += err;
 	fd->fp_sys_posn = fd->fp_ind;
     }
@@ -130,9 +156,23 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	/* seek to the right spot in the file */
 	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
 	    off = fd->disp + etype_size * offset;
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    pvfs_lseek64(fd->fd_sys, off, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
 	}
-	else off = pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+	else {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
+            off = pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
 
 	/* loop through all the flattened pieces.  combine into buffer until
 	 * no more will fit, then write.
@@ -144,9 +184,15 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    for (i=0; i<flat_buf->count; i++) {
 		if (flat_buf->blocklens[i] > combine_buf_remain && combine_buf != combine_buf_ptr) {
 		    /* there is data in the buffer; write out the buffer so far */
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
 		    err = pvfs_write(fd->fd_sys,
 				     combine_buf,
 				     fd->hints->ind_wr_buffer_size - combine_buf_remain);
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
 		    if (err == -1) err_flag = 1;
 
 		    /* reset our buffer info */
@@ -159,9 +205,15 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 		    /* special case: blocklen is as big as or bigger than the combine buf;
 		     * write directly
 		     */
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
 		    err = pvfs_write(fd->fd_sys,
 				     ((char *) buf) + j*buftype_extent + flat_buf->indices[i],
 				     flat_buf->blocklens[i]);
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
 		    if (err == -1) err_flag = 1;
 		    off += flat_buf->blocklens[i]; /* keep up with the final file offset too */
 		}
@@ -179,9 +231,15 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 
 	if (combine_buf_ptr != combine_buf) {
 	    /* data left in buffer to write */
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
 	    err = pvfs_write(fd->fd_sys,
 			     combine_buf,
 			     fd->hints->ind_wr_buffer_size - combine_buf_remain);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
 	    if (err == -1) err_flag = 1;
 	}
 
@@ -264,17 +322,19 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
                 if (fwr_size) { 
                     /* TYPE_UB and TYPE_LB can result in 
                        fwr_size = 0. save system call in such cases */ 
-#ifdef PROFILE
-		    MPE_Log_event(11, 0, "start seek");
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
 #endif
 		    pvfs_lseek64(fd->fd_sys, off, SEEK_SET);
-#ifdef PROFILE
-		    MPE_Log_event(12, 0, "end seek");
-		    MPE_Log_event(5, 0, "start write");
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
 #endif
 		    err = pvfs_write(fd->fd_sys, ((char *) buf) + i, fwr_size);
-#ifdef PROFILE
-		    MPE_Log_event(6, 0, "end write");
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
 #endif
 		    if (err == -1) err_flag = 1;
 		}
@@ -313,17 +373,19 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    while (num < bufsize) {
 		size = ADIOI_MIN(fwr_size, bwr_size);
 		if (size) {
-#ifdef PROFILE
-		    MPE_Log_event(11, 0, "start seek");
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
 #endif
 		    pvfs_lseek64(fd->fd_sys, off, SEEK_SET);
-#ifdef PROFILE
-		    MPE_Log_event(12, 0, "end seek");
-		    MPE_Log_event(5, 0, "start write");
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
 #endif
 		    err = pvfs_write(fd->fd_sys, ((char *) buf) + indx, size);
-#ifdef PROFILE
-		    MPE_Log_event(6, 0, "end write");
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
 #endif
 		    if (err == -1) err_flag = 1;
 		}
@@ -473,9 +535,23 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	
 	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
 	    off = fd->disp + etype_size * offset;
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
 	}
-	else off = pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+	else {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
+            off = pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
 
 	file_list_count = 1;
 	file_offsets = off;

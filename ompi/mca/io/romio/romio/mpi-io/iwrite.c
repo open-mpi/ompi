@@ -39,106 +39,13 @@ Output Parameters:
 @*/
 #ifdef HAVE_MPI_GREQUEST
 #include "mpiu_greq.h"
-
-#if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
-typedef struct iwrite_args
-{
-    MPI_File file;
-    void *buf;
-    int count;
-    MPI_Datatype datatype;
-    MPIO_Request request;
-    MPI_Status *status;
-} iwrite_args;
-
-static DWORD WINAPI iwrite_thread(LPVOID lpParameter)
-{
-    int error_code;
-    iwrite_args *args = (iwrite_args *)lpParameter;
-
-    error_code = MPI_File_write(args->file, args->buf, args->count, args->datatype, args->status);
-    /* ROMIO-1 doesn't do anything with status.MPI_ERROR */
-    args->status->MPI_ERROR = error_code;
-
-    MPI_Grequest_complete(args->request);
-    ADIOI_Free(args);
-    return 0;
-}
 #endif
 
 int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count, 
-		    MPI_Datatype datatype, MPIO_Request *request)
+		    MPI_Datatype datatype, MPI_Request *request)
 {
     int error_code=MPI_SUCCESS;
-    MPI_Status *status;
-#if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
-    iwrite_args *args;
-    HANDLE hThread;
-#endif
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
-
-    status = (MPI_Status *) ADIOI_Malloc(sizeof(MPI_Status));
-
-#if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
-    /* kick off the request */
-    MPI_Grequest_start(MPIU_Greq_query_fn, MPIU_Greq_free_fn, 
-	MPIU_Greq_cancel_fn, status, request);
-
-    args = (iwrite_args*) ADIOI_Malloc(sizeof(iwrite_args));
-    args->file = mpi_fh;
-    args->buf = buf;
-    args->count = count;
-    args->datatype = datatype;
-    args->status = status;
-    args->request = *request;
-    hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)iwrite_thread, args, 0, NULL);
-    if (hThread == NULL)
-    {
-	error_code = GetLastError();
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-	    "MPI_File_iwrite", __LINE__, MPI_ERR_OTHER,
-	    "**fail", "**fail %d", error_code);
-	error_code = MPIO_Err_return_file(args->file, error_code);
-	return error_code;
-    }
-    CloseHandle(hThread);
-
-#else
-
-    /* for now, no threads or anything fancy. 
-    * just call the blocking version */
-    error_code = MPI_File_write(mpi_fh, buf, count, datatype, status); 
-    /* ROMIO-1 doesn't do anything with status.MPI_ERROR */
-    status->MPI_ERROR = error_code;
-
-    /* --BEGIN ERROR HANDLING-- */
-    if (error_code != MPI_SUCCESS)
-	error_code = MPIO_Err_return_file(mpi_fh, error_code);
-    /* --END ERROR HANDLING-- */
-
-    /* kick off the request */
-    MPI_Grequest_start(MPIU_Greq_query_fn, MPIU_Greq_free_fn, 
-	MPIU_Greq_cancel_fn, status, request);
-
-    /* but we did all the work already */
-    MPI_Grequest_complete(*request);
-#endif
-
-    /* FIXME: Shouldn't status be freed before leaving this function */
-
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
-
-    /* passed the buck to the blocking version...*/
-    return error_code;
-}
-#else
-int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count, 
-		    MPI_Datatype datatype, MPIO_Request *request)
-{
-    int error_code;
     static char myname[] = "MPI_FILE_IWRITE";
 
 #ifdef MPI_hpux
@@ -147,6 +54,9 @@ int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count,
     HPMP_IO_START(fl_xmpi, BLKMPIFILEIWRITE, TRDTSYSTEM, mpi_fh, datatype,
 		  count);
 #endif /* MPI_hpux */
+
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
+    MPIR_Nest_incr();
 
     error_code = MPIOI_File_iwrite(mpi_fh, (MPI_Offset) 0, ADIO_INDIVIDUAL,
 				   buf, count, datatype, myname, request);
@@ -162,10 +72,7 @@ int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count,
 
     return error_code;
 }
-#endif
 
-
-#ifndef HAVE_MPI_GREQUEST
 /* prevent multiple definitions of this routine */
 #ifdef MPIO_BUILD_PROFILING
 int MPIOI_File_iwrite(MPI_File mpi_fh,
@@ -175,13 +82,14 @@ int MPIOI_File_iwrite(MPI_File mpi_fh,
 		      int count,
 		      MPI_Datatype datatype,
 		      char *myname,
-		      MPIO_Request *request)
+		      MPI_Request *request)
 {
     int error_code, bufsize, buftype_is_contig, filetype_is_contig;
     int datatype_size;
     ADIO_Status status;
     ADIO_Offset off;
     ADIO_File fh;
+    MPI_Offset nbytes=0;
 
     MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
@@ -232,14 +140,6 @@ int MPIOI_File_iwrite(MPI_File mpi_fh,
 	else {
             /* to maintain strict atomicity semantics with other concurrent
               operations, lock (exclusive) and call blocking routine */
-
-            *request = ADIOI_Malloc_request();
-            (*request)->optype = ADIOI_WRITE;
-            (*request)->fd = fh;
-            (*request)->datatype = datatype;
-            (*request)->queued = 0;
-	    (*request)->handle = 0;
-
             if ((fh->file_system != ADIO_PIOFS) && 
               (fh->file_system != ADIO_NFS) && (fh->file_system != ADIO_PVFS)
 	      && (fh->file_system != ADIO_PVFS2))
@@ -256,11 +156,11 @@ int MPIOI_File_iwrite(MPI_File mpi_fh,
 	    {
                 ADIOI_UNLOCK(fh, off, SEEK_SET, bufsize);
 	    }
-
-            fh->async_count++;
-            /* status info. must be linked to the request structure, so that it
-               can be accessed later from a wait */
-
+	    if (error_code == MPI_SUCCESS) {
+		nbytes = count * datatype_size;
+	    }
+	    
+	    MPIO_Completed_request_create(&fh, nbytes, &error_code, request);
 	}
     }
     else {
@@ -273,5 +173,4 @@ fn_exit:
 
     return error_code;
 }
-#endif
 #endif

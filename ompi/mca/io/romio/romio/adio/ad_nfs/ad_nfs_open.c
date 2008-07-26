@@ -32,11 +32,24 @@ void ADIOI_NFS_Open(ADIO_File fd, int *error_code)
     if (fd->access_mode & ADIO_EXCL)
 	amode = amode | O_EXCL;
 
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_open_a, 0, NULL );
+#endif
     fd->fd_sys = open(fd->filename, amode, perm);
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_open_b, 0, NULL );
+#endif
     fd->fd_direct = -1;
 
-    if ((fd->fd_sys != -1) && (fd->access_mode & ADIO_APPEND))
+    if ((fd->fd_sys != -1) && (fd->access_mode & ADIO_APPEND)) {
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
         fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+    }
 
     if (fd->fd_sys == -1) {
 	/* Check for special error codes for those MPI error 

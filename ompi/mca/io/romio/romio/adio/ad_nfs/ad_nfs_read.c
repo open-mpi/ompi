@@ -19,24 +19,50 @@ void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count,
     len = datatype_size * count;
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
-	if (fd->fp_sys_posn != offset)
+	if (fd->fp_sys_posn != offset) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    lseek(fd->fd_sys, offset, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
 	if (fd->atomicity)
 	    ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
 	else ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	err = read(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 	fd->fp_sys_posn = offset + err;
 	/* individual file pointer not updated */        
     }
     else {  /* read from curr. location of ind. file pointer */
 	offset = fd->fp_ind;
-	if (fd->fp_sys_posn != fd->fp_ind)
+	if (fd->fp_sys_posn != fd->fp_ind) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    lseek(fd->fd_sys, fd->fp_ind, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
 	if (fd->atomicity)
 	    ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
 	else ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	err = read(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 	fd->fp_ind += err;
 	fd->fp_sys_posn = fd->fp_ind;
@@ -60,6 +86,46 @@ void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count,
 
 
 
+#ifdef ADIOI_MPE_LOGGING
+#define ADIOI_BUFFERED_READ \
+{ \
+    if (req_off >= readbuf_off + readbuf_len) { \
+	readbuf_off = req_off; \
+	readbuf_len = (int) (ADIOI_MIN(max_bufsize, end_offset-readbuf_off+1));\
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL ); \
+	lseek(fd->fd_sys, readbuf_off, SEEK_SET);\
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL ); \
+        if (!(fd->atomicity)) ADIOI_READ_LOCK(fd, readbuf_off, SEEK_SET, readbuf_len);\
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL ); \
+        err = read(fd->fd_sys, readbuf, readbuf_len);\
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL ); \
+        if (!(fd->atomicity)) ADIOI_UNLOCK(fd, readbuf_off, SEEK_SET, readbuf_len);\
+        if (err == -1) err_flag = 1; \
+    } \
+    while (req_len > readbuf_off + readbuf_len - req_off) { \
+	partial_read = (int) (readbuf_off + readbuf_len - req_off); \
+	tmp_buf = (char *) ADIOI_Malloc(partial_read); \
+	memcpy(tmp_buf, readbuf+readbuf_len-partial_read, partial_read); \
+	ADIOI_Free(readbuf); \
+	readbuf = (char *) ADIOI_Malloc(partial_read + max_bufsize); \
+	memcpy(readbuf, tmp_buf, partial_read); \
+	ADIOI_Free(tmp_buf); \
+	readbuf_off += readbuf_len-partial_read; \
+	readbuf_len = (int) (partial_read + ADIOI_MIN(max_bufsize, \
+				       end_offset-readbuf_off+1)); \
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL ); \
+	lseek(fd->fd_sys, readbuf_off+partial_read, SEEK_SET);\
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL ); \
+        if (!(fd->atomicity)) ADIOI_READ_LOCK(fd, readbuf_off+partial_read, SEEK_SET, readbuf_len-partial_read);\
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL ); \
+        err = read(fd->fd_sys, readbuf+partial_read, readbuf_len-partial_read);\
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL ); \
+        if (!(fd->atomicity)) ADIOI_UNLOCK(fd, readbuf_off+partial_read, SEEK_SET, readbuf_len-partial_read);\
+        if (err == -1) err_flag = 1; \
+    } \
+    memcpy((char *)buf + userbuf_off, readbuf+req_off-readbuf_off, req_len); \
+}
+#else
 #define ADIOI_BUFFERED_READ \
 { \
     if (req_off >= readbuf_off + readbuf_len) { \
@@ -90,6 +156,7 @@ void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count,
     } \
     memcpy((char *)buf + userbuf_off, readbuf+req_off-readbuf_off, req_len); \
 }
+#endif
 
 
 void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
@@ -160,9 +227,21 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
         if (fd->atomicity)
             ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	lseek(fd->fd_sys, readbuf_off, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
         if (!(fd->atomicity)) ADIOI_READ_LOCK(fd, readbuf_off, SEEK_SET, readbuf_len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
         err = read(fd->fd_sys, readbuf, readbuf_len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
         if (!(fd->atomicity)) ADIOI_UNLOCK(fd, readbuf_off, SEEK_SET, readbuf_len);
         if (err == -1) err_flag = 1;
 
@@ -274,9 +353,21 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	readbuf = (char *) ADIOI_Malloc(max_bufsize);
 	readbuf_len = (int) (ADIOI_MIN(max_bufsize, end_offset-readbuf_off+1));
 
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	lseek(fd->fd_sys, offset, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
         if (!(fd->atomicity)) ADIOI_READ_LOCK(fd, offset, SEEK_SET, readbuf_len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
         err = read(fd->fd_sys, readbuf, readbuf_len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
         if (!(fd->atomicity)) ADIOI_UNLOCK(fd, offset, SEEK_SET, readbuf_len);
 
         if (err == -1) err_flag = 1;

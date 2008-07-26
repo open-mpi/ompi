@@ -13,10 +13,7 @@
 void ADIO_End(int *error_code)
 {
     ADIOI_Flatlist_node *curr, *next;
-    ADIOI_Malloc_async *tmp;
-    ADIOI_Malloc_req *tmp1;
     ADIOI_Datarep *datarep, *datarep_next;
-    static char myname[] = "ADIO_END";
     
 /*    FPRINTF(stderr, "reached end\n"); */
 
@@ -31,39 +28,8 @@ void ADIO_End(int *error_code)
     }
     ADIOI_Flatlist = NULL;
 
-    /* --BEGIN ERROR HANDLING-- */
-    if (ADIOI_Async_list_head) {
-	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					   MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__,
-					   MPI_ERR_IO,
-					   "Error: outstanding nonblocking I/O operations", 0);
-	return;
-    }
-    /* --END ERROR HANDLING-- */
-
-/* free list of available ADIOI_Async_nodes. */
-    while (ADIOI_Malloc_async_head) {
-	ADIOI_Free(ADIOI_Malloc_async_head->ptr);
-	tmp = ADIOI_Malloc_async_head;
-	ADIOI_Malloc_async_head = ADIOI_Malloc_async_head->next;
-	ADIOI_Free(tmp);
-    }
-    ADIOI_Async_avail_head = ADIOI_Async_avail_tail = NULL;
-    ADIOI_Malloc_async_head = ADIOI_Malloc_async_tail = NULL;
-
-/* free all available request objects */
-    while (ADIOI_Malloc_req_head) {
-	ADIOI_Free(ADIOI_Malloc_req_head->ptr);
-	tmp1 = ADIOI_Malloc_req_head;
-	ADIOI_Malloc_req_head = ADIOI_Malloc_req_head->next;
-	ADIOI_Free(tmp1);
-    }
-    ADIOI_Malloc_req_head = ADIOI_Malloc_req_tail = NULL;
-
-/* free file, request, and info tables used for Fortran interface */
+/* free file and info tables used for Fortran interface */
     if (ADIOI_Ftable) ADIOI_Free(ADIOI_Ftable);
-    if (ADIOI_Reqtable) ADIOI_Free(ADIOI_Reqtable);
 #ifndef HAVE_MPI_INFO
     if (MPIR_Infotable) ADIOI_Free(MPIR_Infotable);
 #endif

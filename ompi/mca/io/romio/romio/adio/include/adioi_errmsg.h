@@ -62,6 +62,7 @@ MPI_ERR_IO
     MPIR_ERR_FILETYPE  "Filetype must be constructed out of one or more etypes"
     MPIR_ERR_NO_TESTFS "ROMIO has not been configured to use the TESTFS file system"
     MPIR_ERR_DEFERRED "independent IO attempted even though no_indep_rw hint given"
+    MPIR_ERR_NO_BGL "ROMIO has not been configured to use the BGL file system"
 
 MPI_ERR_COMM
     MPIR_ERR_COMM_NULL (null communicator. from MPICH)
