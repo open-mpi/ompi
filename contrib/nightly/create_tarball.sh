@@ -81,11 +81,7 @@ send_error_mail() {
             cat "$file" >> "$outfile"
         fi
     done
-    if test -n "$version"; then
-        Mail -s "=== CREATE FAILURE ($version) ===" "$email" < "$outfile"
-    else
-        Mail -s "=== CREATE FAILURE ===" "$email" < "$outfile"
-    fi
+    Mail -s "=== CREATE FAILURE ($version) ===" "$email" < "$outfile"
     rm -f "$outfile"
 }
 
@@ -119,7 +115,7 @@ do_command() {
     if test "$st" != "0"; then
         cat > "$logdir/15-error.txt" <<EOF
 
-ERROR: Command returned a non-zero exist status
+ERROR: Command returned a non-zero exist status ($version):
        $cmd
 
 Start time: $start_time
