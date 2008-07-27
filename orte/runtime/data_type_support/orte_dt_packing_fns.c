@@ -309,7 +309,7 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* do not pack the allocate flag, daemon name, or launch id */
+        /* do not pack the daemon name or launch id */
         
         /* pack the number of procs on the node */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,

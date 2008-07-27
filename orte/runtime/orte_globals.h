@@ -127,8 +127,6 @@ typedef struct {
     orte_std_cntr_t index;
     /** String node name */
     char *name;
-    /* whether or not this node is available for allocation */
-    bool allocate;
     /* daemon on this node */
     struct orte_proc_t *daemon;
     /* whether or not this daemon has been launched */
@@ -349,6 +347,8 @@ ORTE_DECLSPEC extern bool orte_hetero_apps;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;
+
+ORTE_DECLSPEC extern bool orte_hnp_is_allocated;
 
 ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern int orte_exit, orteds_exit;

@@ -331,7 +331,7 @@ int orte_dt_unpack_node(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* do not unpack the allocate flag, daemon name, or launch id */
+        /* do not unpack the daemon name or launch id */
         
         /* unpack the number of procs on the node */
         n = 1;
