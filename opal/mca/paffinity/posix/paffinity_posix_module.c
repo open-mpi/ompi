@@ -33,41 +33,44 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/util/output.h"
 
-#include "paffinity_osx.h"
+#include "paffinity_posix.h"
 
 /*
  * Local functions
  */
-static int osx_module_init(void);
-static int osx_module_set(opal_paffinity_base_cpu_set_t cpumask);
-static int osx_module_get(opal_paffinity_base_cpu_set_t *cpumask);
-static int osx_module_finalize(void);
-static int osx_module_map_to_processor_id(int socket, int core, int *processor_id);
-static int osx_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int osx_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int osx_module_get_socket_info(int *num_sockets, int *max_socket_num);
-static int osx_module_get_core_info(int socket, int *num_cores, int *max_core_num);
+static int posix_module_init(void);
+static int posix_module_set(opal_paffinity_base_cpu_set_t cpumask);
+static int posix_module_get(opal_paffinity_base_cpu_set_t *cpumask);
+static int posix_module_finalize(void);
+static int posix_module_map_to_processor_id(int socket, int core, int *processor_id);
+static int posix_module_map_to_socket_core(int processor_id, int *socket, int *core);
+static int posix_module_get_processor_info(int *num_processors, int *max_processor_id);
+static int posix_module_get_socket_info(int *num_sockets, int *max_socket_num);
+static int posix_module_get_core_info(int socket, int *num_cores, int *max_core_num);
 
 /*
  * Solaris paffinity module
  */
 static const opal_paffinity_base_module_1_1_0_t loc_module = {
     /* Initialization function */
-    osx_module_init,
+    posix_module_init,
 
     /* Module function pointers */
-    osx_module_set,
-    osx_module_get,
-    osx_module_map_to_processor_id,
-    osx_module_map_to_socket_core,
-    osx_module_get_processor_info,
-    osx_module_get_socket_info,
-    osx_module_get_core_info,
-    osx_module_finalize
+    posix_module_set,
+    posix_module_get,
+    posix_module_map_to_processor_id,
+    posix_module_map_to_socket_core,
+    posix_module_get_processor_info,
+    posix_module_get_socket_info,
+    posix_module_get_core_info,
+    posix_module_finalize
 };
 
-int opal_paffinity_osx_component_query(mca_base_module_t **module, int *priority)
+int opal_paffinity_posix_component_query(mca_base_module_t **module, int *priority)
 {
+    /* set this priority really low so we will be overridden by any
+     * other component such as linux or solaris if they can build
+     */
     *priority = 2;
     *module = (mca_base_module_t *)&loc_module;
     
@@ -75,36 +78,36 @@ int opal_paffinity_osx_component_query(mca_base_module_t **module, int *priority
 }
 
 /* do nothing here. both mpirun and processes would run init(), but
- * only processes would run the osx_module_set function */
-static int osx_module_init(void)
+ * only processes would run the posix_module_set function */
+static int posix_module_init(void)
 {
     return OPAL_SUCCESS;
 }
 
 /* this gives us a cpumask which tells which CPU to bind */
-static int osx_module_set(opal_paffinity_base_cpu_set_t cpumask)
+static int posix_module_set(opal_paffinity_base_cpu_set_t cpumask)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 /* This get function returns the CPU id that's currently binded,
  * and then sets the cpumask. */
-static int osx_module_get(opal_paffinity_base_cpu_set_t *cpumask) 
+static int posix_module_get(opal_paffinity_base_cpu_set_t *cpumask) 
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int osx_module_map_to_processor_id(int socket, int core, int *processor_id)
+static int posix_module_map_to_processor_id(int socket, int core, int *processor_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int osx_module_map_to_socket_core(int processor_id, int *socket, int *core)
+static int posix_module_map_to_socket_core(int processor_id, int *socket, int *core)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int osx_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int posix_module_get_processor_info(int *num_processors, int *max_processor_id)
 {
     int rc;
     
@@ -124,18 +127,18 @@ static int osx_module_get_processor_info(int *num_processors, int *max_processor
     return OPAL_SUCCESS;
 }
 
-static int osx_module_get_socket_info(int *num_sockets, int *max_socket_num)
+static int posix_module_get_socket_info(int *num_sockets, int *max_socket_num)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int osx_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int posix_module_get_core_info(int socket, int *num_cores, int *max_core_num)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 
-static int osx_module_finalize(void)
+static int posix_module_finalize(void)
 {
     return OPAL_SUCCESS;
 }

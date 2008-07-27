@@ -811,7 +811,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         oversubscribed = true;
     } else {
-        if (opal_list_get_size(&orte_odls_globals.children) > (size_t)num_processors) {
+        /* don't typecast the num_processors to a size_t as the value could be < 0!
+         * Instead, force the opal_list_get_size value to be an int as we surely
+         * won't have a #children bigger than that!
+         */
+        if ((int)opal_list_get_size(&orte_odls_globals.children) > num_processors) {
             /* if the #procs > #processors, declare us oversubscribed. This
              * covers the case where the user didn't tell us anything about the
              * number of available slots, so we defaulted to a value of 1

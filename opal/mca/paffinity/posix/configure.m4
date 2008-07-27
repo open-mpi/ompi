@@ -19,9 +19,9 @@
 # $HEADER$
 #
 
-# MCA_paffinity_osx_CONFIG([action-if-found], [action-if-not-found])
+# MCA_paffinity_posix_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_paffinity_osx_CONFIG],[
+AC_DEFUN([MCA_paffinity_posix_CONFIG],[
     #check to see if we have <unistd.h>
     AC_CHECK_HEADER([unistd.h], [happy=yes], [happy=no])
 

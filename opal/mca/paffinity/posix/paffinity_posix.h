@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_PAFFINITY_OSX_EXPORT_H
-#define MCA_PAFFINITY_OSX_EXPORT_H
+#ifndef MCA_PAFFINITY_POSIX_EXPORT_H
+#define MCA_PAFFINITY_POSIX_EXPORT_H
 
 #include "opal_config.h"
 
@@ -31,11 +31,11 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OPAL_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t mca_paffinity_osx_component;
+OPAL_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t mca_paffinity_posix_component;
 
 /* query function */
-int opal_paffinity_osx_component_query(mca_base_module_t **module, int *priority);
+int opal_paffinity_posix_component_query(mca_base_module_t **module, int *priority);
 
 END_C_DECLS
 
-#endif /* MCA_PAFFINITY_OSX_EXPORT_H */
+#endif /* MCA_PAFFINITY_POSIX_EXPORT_H */
