@@ -89,9 +89,9 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, void *buf, int count,
 	/* seek to the right spot in the file */
 	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
 	    off = fd->disp + etype_size * offset;
-	    lseek64(fd->fd_sys, off, SEEK_SET);
+	    lseek(fd->fd_sys, off, SEEK_SET);
 	}
-	else off = lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+	else off = lseek(fd->fd_sys, fd->fp_ind, SEEK_SET);
 
 	/* loop through all the flattened pieces.  combine into buffer until
 	 * no more will fit, then write.
