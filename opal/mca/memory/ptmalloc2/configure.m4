@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -37,7 +38,7 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
     AM_CONDITIONAL([OMPI_WANT_EXTERNAL_PTMALLOC2],
        [test "$enable_ptmalloc2_internal" != "yes"])
     AC_MSG_CHECKING([if ptmalloc2 should be part of libopen-pal])
-    AS_IF([test "$enable_ptmalloc2_internal" == "yes"],
+    AS_IF([test "$enable_ptmalloc2_internal" = "yes"],
           [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
 
 

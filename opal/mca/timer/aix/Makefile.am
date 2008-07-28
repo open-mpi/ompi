@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,6 +23,3 @@ libmca_timer_aix_la_SOURCES = \
     timer_aix.h \
     timer_aix_component.c
 libmca_timer_aix_la_LIBADD = $(timer_aix_LIBS)
-
-EXTRA_DIST = \
-    $(doc_DATA)
