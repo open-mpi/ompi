@@ -31,7 +31,7 @@ extern "C" {
 /**
  * Globally exported variable
  */
-OPAL_DECLSPEC extern const opal_memchecker_base_component_1_0_0_t
+OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t
     mca_memchecker_valgrind_component;
 
 /**

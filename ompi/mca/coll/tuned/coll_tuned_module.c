@@ -33,7 +33,7 @@
 #include "coll_tuned_dynamic_file.h"
 #include "coll_tuned_forced.h"
 
-static int tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+static int tuned_module_enable(mca_coll_base_module_t *module,
 			       struct ompi_communicator_t *comm);
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
@@ -54,7 +54,7 @@ int ompi_coll_tuned_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_tuned_module_t *tuned_module;
@@ -148,7 +148,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
  * Init module on the communicator
  */
 static int
-tuned_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+tuned_module_enable(mca_coll_base_module_t *module,
 		    struct ompi_communicator_t *comm)
 {
     int size;

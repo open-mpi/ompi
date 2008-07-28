@@ -35,7 +35,7 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
                                             void* rbuf, int rcount,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     int line = -1, err = 0;
     int rank, size, step;
@@ -90,7 +90,7 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
                                          void* rbuf, int rcount,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
-					 struct mca_coll_base_module_1_1_0_t *module)
+					 mca_coll_base_module_t *module)
 {
     int i, k, line = -1;
     int rank, size;
@@ -254,7 +254,7 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
                                                void* rbuf, int rcount,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module,
+					       mca_coll_base_module_t *module,
                                                int max_outstanding_reqs)
 {
     int line, error;
@@ -403,7 +403,7 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
                                              void* rbuf, int rcount,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     int line = -1, err = 0;
     int rank;
@@ -474,7 +474,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
                                                 void* rbuf, int rcount,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
-						struct mca_coll_base_module_1_1_0_t *module)
+						mca_coll_base_module_t *module)
 {
     int i;
     int rank;
@@ -678,7 +678,7 @@ int ompi_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
                                              void* rbuf, int rcount,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -707,7 +707,7 @@ int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
                                            void* rbuf, int rcount,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
-					   struct mca_coll_base_module_1_1_0_t *module,
+					   mca_coll_base_module_t *module,
                                            int algorithm, int faninout, int segsize, 
                                            int max_requests)
 {

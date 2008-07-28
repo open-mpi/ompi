@@ -50,7 +50,7 @@
  * general idea.
  */
 int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
-                              struct mca_coll_base_module_1_1_0_t *module)
+                              mca_coll_base_module_t *module)
 {
     int rank, buffer_set;
     mca_coll_sm_comm_t *data;

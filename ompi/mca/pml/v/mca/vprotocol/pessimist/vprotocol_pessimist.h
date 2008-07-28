@@ -46,7 +46,7 @@ typedef struct mca_vprotocol_pessimist_module_t {
 } mca_vprotocol_pessimist_module_t;
 
 OMPI_DECLSPEC extern mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist;
-OMPI_DECLSPEC extern mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component;
+OMPI_DECLSPEC extern mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component;
 
 int mca_vprotocol_pessimist_enable(bool enable);
 int mca_vprotocol_pessimist_dump(struct ompi_communicator_t* comm, int verbose);

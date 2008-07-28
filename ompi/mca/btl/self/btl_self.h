@@ -43,7 +43,7 @@ extern "C" {
  * Shared Memory (SELF) BTL module.
  */
 struct mca_btl_self_component_t {
-    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */
+    mca_btl_base_component_2_0_0_t super;  /**< base BTL component */
     int free_list_num;                     /**< initial size of free lists */
     int free_list_max;                     /**< maximum size of free lists */
     int free_list_inc;                     /**< number of elements to alloc when growing free lists */

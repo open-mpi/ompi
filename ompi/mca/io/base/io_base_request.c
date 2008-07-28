@@ -69,7 +69,7 @@ int mca_io_base_request_create_freelist(void)
 {
     opal_list_item_t *p;
     const mca_base_component_t *component;
-    const mca_io_base_component_1_0_0_t *v100;
+    const mca_io_base_component_2_0_0_t *v100;
     size_t size = 0;
     int i, init, incr;
 
@@ -87,7 +87,7 @@ int mca_io_base_request_create_freelist(void)
         if (component->mca_type_major_version == 1 &&
             component->mca_type_minor_version == 0 &&
             component->mca_type_release_version == 0) {
-            v100 = (mca_io_base_component_1_0_0_t *) component;
+            v100 = (mca_io_base_component_2_0_0_t *) component;
             if (v100->io_request_bytes > size) {
                 size = v100->io_request_bytes;
             }

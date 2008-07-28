@@ -40,7 +40,7 @@ int
 mca_coll_basic_bcast_lin_intra(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int i;
     int size;
@@ -112,7 +112,7 @@ int
 mca_coll_basic_bcast_log_intra(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int i;
     int size;
@@ -210,7 +210,7 @@ int
 mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int i;
     int rsize;
@@ -261,7 +261,7 @@ int
 mca_coll_basic_bcast_log_inter(void *buff, int count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

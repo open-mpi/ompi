@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,7 +47,7 @@ struct mca_base_open_only_dummy_component_t {
     /** MCA base component */
     mca_base_component_t version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t data;
+    mca_base_component_data_t data;
 };
 typedef struct mca_base_open_only_dummy_component_t mca_base_open_only_dummy_component_t;
 
@@ -295,7 +296,7 @@ static int open_components(const char *type_name, int output_id,
     const mca_base_component_t *component;
     mca_base_component_list_item_t *cli;
     bool called_open;
-    bool opened;
+    bool opened, registered;
     
     /* Announce */
     
@@ -312,11 +313,44 @@ static int open_components(const char *type_name, int output_id,
         cli = (mca_base_component_list_item_t *) item;
         component = cli->cli_component;
         
-        opened = called_open = false;
+        registered = opened = called_open = false;
         opal_output_verbose(10, output_id, 
                             "mca: base: components_open: found loaded component %s",
                             component->mca_component_name);
-        
+
+        /* Call the component's MCA parameter registration function */
+        if (NULL == component->mca_register_component_params) {
+            registered = true;
+            opal_output_verbose(10, output_id, 
+                                "mca: base: components_open: "
+                                "component %s has no register function",
+                                component->mca_component_name);
+        } else {
+            if (MCA_SUCCESS == component->mca_register_component_params()) {
+                registered = true;
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open: "
+                                    "component %s register function successful",
+                                    component->mca_component_name);
+            } else {
+                /* We may end up displaying this twice, but it may go
+                   to separate streams.  So better to be redundant
+                   than to not display the error in the stream where
+                   it was expected. */
+                
+                if (show_errors) {
+                    opal_output(0, "mca: base: components_open: "
+                                "component %s / %s register function failed",
+                                component->mca_type_name,
+                                component->mca_component_name);
+                }
+                opal_output_verbose(10, output_id, 
+                                    "mca: base: components_open: "
+                                    "component %s register function failed",
+                                    component->mca_component_name);
+            }
+        }
+
         if (NULL == component->mca_open_component) {
             opened = true; 
             opal_output_verbose(10, output_id, 

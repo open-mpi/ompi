@@ -111,28 +111,26 @@ typedef struct orte_plm_base_module_1_0_0_t orte_plm_base_module_t;
 
 
 /**
- * plm component v1.0.0
+ * plm component
  */
-struct orte_plm_base_component_1_0_0_t {
+struct orte_plm_base_component_2_0_0_t {
     /** component version */
     mca_base_component_t base_version;
     /** component data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 /** Convenience typedef */
-typedef struct orte_plm_base_component_1_0_0_t orte_plm_base_component_1_0_0_t;
+typedef struct orte_plm_base_component_2_0_0_t orte_plm_base_component_2_0_0_t;
 /** Convenience typedef */
-typedef orte_plm_base_component_1_0_0_t orte_plm_base_component_t;
+typedef orte_plm_base_component_2_0_0_t orte_plm_base_component_t;
 
 
 /**
- * Macro for use in modules that are of type plm v1.0.0
+ * Macro for use in modules that are of type plm
  */
-#define ORTE_PLM_BASE_VERSION_1_0_0 \
-/* plm v1.0 is chained to MCA v1.0 */ \
-MCA_BASE_VERSION_1_0_0, \
-/* plm v1.0 */ \
-"plm", 1, 0, 0
+#define ORTE_PLM_BASE_VERSION_2_0_0 \
+MCA_BASE_VERSION_2_0_0, \
+"plm", 2, 0, 0
 
 /* Global structure for accessing PLM functions */
 ORTE_DECLSPEC extern orte_plm_base_module_t orte_plm;  /* holds selected module's function pointers */

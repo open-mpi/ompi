@@ -118,7 +118,7 @@ typedef enum {
 } btl_openib_receive_queues_source_t;
 
 struct mca_btl_openib_component_t {
-    mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */
+    mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
 
     int                                ib_max_btls;
     /**< maximum number of devices available to openib component */

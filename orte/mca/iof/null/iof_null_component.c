@@ -44,10 +44,7 @@ orte_iof_null_component_t mca_iof_null_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a iof v1.0.0 component (which also
-           implies a specific MCA version) */
-
-        ORTE_IOF_BASE_VERSION_1_0_0,
+        ORTE_IOF_BASE_VERSION_2_0_0,
 
         "null", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -56,8 +53,6 @@ orte_iof_null_component_t mca_iof_null_component = {
         orte_iof_null_open,  /* component open  */
         NULL
       },
-
-      /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT

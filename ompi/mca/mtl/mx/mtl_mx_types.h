@@ -54,7 +54,7 @@ typedef struct mca_mtl_mx_module_t mca_mtl_mx_module_t;
 extern mca_mtl_mx_module_t ompi_mtl_mx;
 
 struct mca_mtl_mx_component_t{ 
-    mca_mtl_base_component_1_0_0_t          super;  /**< base MTL component */ 
+    mca_mtl_base_component_2_0_0_t          super;  /**< base MTL component */ 
 };
 typedef struct mca_mtl_mx_component_t mca_mtl_mx_component_t;
 

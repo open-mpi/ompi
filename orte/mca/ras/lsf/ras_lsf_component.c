@@ -52,12 +52,11 @@ orte_ras_base_component_t mca_ras_lsf_component = {
         orte_ras_lsf_open,  /* component open  */
         orte_ras_lsf_close, /* component close */
         orte_ras_lsf_component_query
-    },
-    
-    /* Next the MCA v1.0.0 component meta data */
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
+      },
+      {
+          /* The component is checkpoint ready */
+          MCA_BASE_METADATA_PARAM_CHECKPOINT
+      }
     }
 };
 

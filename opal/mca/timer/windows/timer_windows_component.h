@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-OPAL_DECLSPEC extern const opal_timer_base_component_1_0_0_t mca_timer_windows_component;
+OPAL_DECLSPEC extern const opal_timer_base_component_2_0_0_t mca_timer_windows_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -39,7 +39,7 @@ extern "C" {
     /**
      * Globally exported variable
      */
-    OPAL_DECLSPEC extern const opal_maffinity_base_component_1_0_0_t
+    OPAL_DECLSPEC extern const opal_maffinity_base_component_2_0_0_t
         mca_maffinity_libnuma_component;
 
 

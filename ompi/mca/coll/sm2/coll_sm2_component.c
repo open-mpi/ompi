@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -66,17 +67,14 @@ static inline int mca_coll_sm2_param_register_int(
 
 mca_coll_sm2_component_t mca_coll_sm2_component = {
 
-    /* First, fill in the super (mca_coll_base_component_1_1_0_t) */
+    /* First, fill in the super */
 
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
         
         {
-            /* Indicate that we are a coll v1.1.0 component (which
-               also implies a specific MCA version) */
-
-            MCA_COLL_BASE_VERSION_1_1_0,
+            MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
 
@@ -90,9 +88,6 @@ mca_coll_sm2_component_t mca_coll_sm2_component = {
             sm2_open,
             sm2_close,
         },
-        
-        /* Next the MCA v1.1.0 component meta data */
-
         {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE

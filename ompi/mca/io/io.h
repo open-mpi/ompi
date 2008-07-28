@@ -67,15 +67,15 @@ typedef enum mca_io_base_version_t mca_io_base_version_t;
 
 
 /*
- * Macro for use in components that are of type io v1.0.0
+ * Macro for use in components that are of type io
  * 1-1 mapping of all MPI-IO functions
  */
-#define MCA_IO_BASE_VERSION_1_0_0 \
-  MCA_BASE_VERSION_1_0_0, \
-  "io", 1, 0, 0
+#define MCA_IO_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "io", 2, 0, 0
 
 /*
- * Component v1.0.0
+ * Component
  */
 
 struct mca_io_base_module_1_0_0_t;
@@ -110,9 +110,9 @@ typedef int (*mca_io_base_component_register_datarep_fn_t)(
 
 
 /* IO component version and interface functions. */
-struct mca_io_base_component_1_0_0_t {
+struct mca_io_base_component_2_0_0_t {
     mca_base_component_t io_version;
-    mca_base_component_data_1_0_0_t io_data;
+    mca_base_component_data_t io_data;
 
     /** Additional bytes that this module needs to be allocated when
         an MPI_Request (ompi_request_t) is allocated. */
@@ -131,14 +131,14 @@ struct mca_io_base_component_1_0_0_t {
 
     mca_io_base_component_register_datarep_fn_t io_register_datarep;
 };
-typedef struct mca_io_base_component_1_0_0_t mca_io_base_component_1_0_0_t;
+typedef struct mca_io_base_component_2_0_0_t mca_io_base_component_2_0_0_t;
 
 
 /*
  * All component versions
  */
 union mca_io_base_components_t {
-    mca_io_base_component_1_0_0_t v1_0_0;
+    mca_io_base_component_2_0_0_t v1_0_0;
 };
 typedef union mca_io_base_components_t mca_io_base_components_t;
 

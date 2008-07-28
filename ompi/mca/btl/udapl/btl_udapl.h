@@ -53,7 +53,7 @@ extern "C" {
  */
 
 struct mca_btl_udapl_component_t {
-    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */ 
+    mca_btl_base_component_2_0_0_t super;  /**< base BTL component */ 
     
     int32_t udapl_verbosity; /**< report out level, see
                                 "Report Out from uDAPL BTL" below for details. */

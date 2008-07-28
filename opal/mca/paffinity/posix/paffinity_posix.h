@@ -31,7 +31,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OPAL_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t mca_paffinity_posix_component;
+OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t mca_paffinity_posix_component;
 
 /* query function */
 int opal_paffinity_posix_component_query(mca_base_module_t **module, int *priority);

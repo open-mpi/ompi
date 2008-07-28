@@ -110,10 +110,7 @@ mca_allocator_base_component_t mca_allocator_bucket_component = {
      about the module itself */
 
   {
-    /* Indicate that we are a allocator v1.0.0 module (which also implies a
-       specific MCA version) */
-
-    MCA_ALLOCATOR_BASE_VERSION_1_0_0,
+    MCA_ALLOCATOR_BASE_VERSION_2_0_0,
 
     "bucket", /* MCA module name */
     OMPI_MAJOR_VERSION,
@@ -122,9 +119,6 @@ mca_allocator_base_component_t mca_allocator_bucket_component = {
     mca_allocator_bucket_module_open,  /* module open */
     mca_allocator_bucket_module_close  /* module close */
   },
-  
-  /* Next the MCA v1.0.0 module meta data */
-
   {
       /* The component is checkpoint ready */
       MCA_BASE_METADATA_PARAM_CHECKPOINT

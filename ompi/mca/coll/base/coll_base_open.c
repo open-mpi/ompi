@@ -54,7 +54,7 @@ int mca_coll_base_associative = 1;
 bool mca_coll_base_components_opened_valid = false;
 opal_list_t mca_coll_base_components_opened;
 
-OBJ_CLASS_INSTANCE(mca_coll_base_module_1_1_0_t, opal_object_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t, NULL, NULL);
 
 /*
  * Function for finding and opening either all MCA components, or the one

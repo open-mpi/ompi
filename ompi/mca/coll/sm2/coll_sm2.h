@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,7 +66,7 @@ BEGIN_C_DECLS
      */
     struct mca_coll_sm2_component_t {
         /** Base coll component */
-        mca_coll_base_component_1_1_0_t super;
+        mca_coll_base_component_2_0_0_t super;
 
         /** MCA parameter: Priority of this component */
         int sm2_priority;
@@ -352,7 +353,7 @@ BEGIN_C_DECLS
         /* end debug */
     struct mca_coll_sm2_module_t {
         /* base structure */
-        mca_coll_base_module_1_1_0_t super;
+        mca_coll_base_module_t super;
 
         /* size */
         int comm_size;
@@ -565,7 +566,7 @@ BEGIN_C_DECLS
     /* query to see if the module is available for use on the given
      * communicator, and if so, what it's priority is.
      */
-    struct mca_coll_base_module_1_1_0_t *
+    mca_coll_base_module_t *
     mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority);
 
     /* setup an multi-nomial tree - for each node in the tree
@@ -581,12 +582,12 @@ BEGIN_C_DECLS
     /* non-blocking barrier - init function */
     int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
             mca_coll_sm2_nb_request_process_private_mem_t *request,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     /* non-blocking barrier - completion function */
     int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
             mca_coll_sm2_nb_request_process_private_mem_t *request,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     /* allocate working buffer */
     sm_work_buffer_t *alloc_sm2_shared_buffer(mca_coll_sm2_module_t *module);
@@ -604,17 +605,17 @@ BEGIN_C_DECLS
             struct ompi_datatype_t *dtype,
             struct ompi_op_t *op,
             struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     int mca_coll_sm2_allreduce_intra_reducescatter_allgather(
             void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
             struct ompi_op_t *op, struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, 
             int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
             struct ompi_communicator_t *comm, 
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     /**
      * Shared memory blocking reduce
@@ -622,17 +623,17 @@ BEGIN_C_DECLS
     int mca_coll_sm2_reduce_intra(void *sbuf, void *rbuf, int count,
             struct ompi_datatype_t *dtype, struct ompi_op_t *op,
             int root, struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf, 
             int count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
             int root, struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     int mca_coll_sm2_reduce_intra_fanin(void *sbuf, void *rbuf, int count,
             struct ompi_datatype_t *dtype, struct ompi_op_t *op,
             int root, struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     /**
      * Shared memory blocking broadcast.
@@ -640,21 +641,21 @@ BEGIN_C_DECLS
     int mca_coll_sm2_bcast_intra(void *buf, int count,
             struct ompi_datatype_t *dtype, int root,
             struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     /**
       * Shared memory blocking barrier
       */
     int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     int mca_coll_sm2_barrier_intra_fanin_fanout( 
             struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
     int mca_coll_sm2_barrier_intra_recursive_doubling(
             struct ompi_communicator_t *comm,
-            struct mca_coll_base_module_1_1_0_t *module);
+            mca_coll_base_module_t *module);
 
 END_C_DECLS
 

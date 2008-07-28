@@ -34,7 +34,7 @@ mca_io_base_register_datarep(char *datarep,
 {
     opal_list_item_t *p;
     const mca_base_component_t *component;
-    const mca_io_base_component_1_0_0_t *v100;
+    const mca_io_base_component_2_0_0_t *v100;
     int tmp, ret = OMPI_SUCCESS;
 
     /* Find the maximum additional number of bytes required by all io
@@ -50,7 +50,7 @@ mca_io_base_register_datarep(char *datarep,
         if (component->mca_type_major_version == 1 &&
             component->mca_type_minor_version == 0 &&
             component->mca_type_release_version == 0) {
-            v100 = (mca_io_base_component_1_0_0_t *) component;
+            v100 = (mca_io_base_component_2_0_0_t *) component;
 
             /* return first non-good error-code */
             tmp = v100->io_register_datarep(datarep, read_fn, write_fn, 

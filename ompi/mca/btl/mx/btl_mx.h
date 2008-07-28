@@ -55,7 +55,7 @@ BEGIN_C_DECLS
  */
 
 struct mca_btl_mx_component_t {
-    mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */ 
+    mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */ 
     
     int32_t                                 mx_num_btls;
     int32_t                                 mx_max_btls;

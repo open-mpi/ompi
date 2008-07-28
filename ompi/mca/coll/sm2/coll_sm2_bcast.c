@@ -29,7 +29,7 @@ static
 int mca_coll_sm2_fanout(void *buf, int count,
         struct ompi_datatype_t *dtype,  int root,
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
@@ -218,7 +218,7 @@ Error:
 int mca_coll_sm2_bcast_intra(void *buf, int count,
         struct ompi_datatype_t *dtype, int root,
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc;

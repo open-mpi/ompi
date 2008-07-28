@@ -28,7 +28,7 @@
 
 BEGIN_C_DECLS
 
-OMPI_MODULE_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_cm_component;
+OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_cm_component;
 
 struct mca_mtl_request_t;
 

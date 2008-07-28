@@ -36,7 +36,7 @@
 int mca_coll_demo_bcast_intra(void *buff, int count,
                               struct ompi_datatype_t *datatype, int root,
                               struct ompi_communicator_t *comm,
-                              struct mca_coll_base_module_1_1_0_t *module)
+                              mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo bcast_intra");
@@ -56,7 +56,7 @@ int mca_coll_demo_bcast_intra(void *buff, int count,
 int mca_coll_demo_bcast_inter(void *buff, int count,
                               struct ompi_datatype_t *datatype, int root,
                               struct ompi_communicator_t *comm,
-                              struct mca_coll_base_module_1_1_0_t *module)
+                              mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo bcast_inter");

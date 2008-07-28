@@ -43,7 +43,7 @@
 int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_count,
                                     ompi_datatype_t* datatype, ompi_op_t* op,
                                     int root, ompi_communicator_t* comm,
-				    struct mca_coll_base_module_1_1_0_t *module,
+				    mca_coll_base_module_t *module,
                                     ompi_coll_tree_t* tree, int count_by_segment,
                                     int max_outstanding_reqs )
 {
@@ -346,7 +346,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                                         ompi_datatype_t* datatype, 
                                         ompi_op_t* op, int root, 
                                         ompi_communicator_t* comm,
-					struct mca_coll_base_module_1_1_0_t *module,
+					mca_coll_base_module_t *module,
                                         uint32_t segsize, int fanout,
                                         int max_outstanding_reqs )
 {
@@ -376,7 +376,7 @@ int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                            int count, ompi_datatype_t* datatype,
                                            ompi_op_t* op, int root,
                                            ompi_communicator_t* comm,
-					   struct mca_coll_base_module_1_1_0_t *module,
+					   mca_coll_base_module_t *module,
                                            uint32_t segsize,
                                            int max_outstanding_reqs  )
 {
@@ -407,7 +407,7 @@ int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
                                          int count, ompi_datatype_t* datatype,
                                          ompi_op_t* op, int root,
                                          ompi_communicator_t* comm, 
-					 struct mca_coll_base_module_1_1_0_t *module,
+					 mca_coll_base_module_t *module,
                                          uint32_t segsize, 
                                          int max_outstanding_reqs  )
 {
@@ -438,7 +438,7 @@ int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
                                            int count, ompi_datatype_t* datatype,
                                            ompi_op_t* op, int root,
                                            ompi_communicator_t* comm, 
-					   struct mca_coll_base_module_1_1_0_t *module,
+					   mca_coll_base_module_t *module,
                                            uint32_t segsize,
                                            int max_outstanding_reqs  )
 {
@@ -477,7 +477,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                                   ompi_datatype_t* datatype,
                                                   ompi_op_t* op, int root,
                                                   ompi_communicator_t* comm, 
-						  struct mca_coll_base_module_1_1_0_t *module,
+						  mca_coll_base_module_t *module,
                                                   uint32_t segsize,
                                                   int max_outstanding_reqs  )
 {
@@ -597,7 +597,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                           struct ompi_op_t *op,
                                           int root,
 					  struct ompi_communicator_t *comm,
-					  struct mca_coll_base_module_1_1_0_t *module)
+					  mca_coll_base_module_t *module)
 {
     int i, rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
@@ -783,7 +783,7 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op, int root,
                                            struct ompi_communicator_t *comm,
-					   struct mca_coll_base_module_1_1_0_t *module)
+					   mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -828,7 +828,7 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op, int root,
                                          struct ompi_communicator_t *comm,
-					 struct mca_coll_base_module_1_1_0_t *module,
+					 mca_coll_base_module_t *module,
                                          int algorithm, int faninout, 
                                          int segsize, int max_requests )
 {

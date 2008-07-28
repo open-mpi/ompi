@@ -100,7 +100,7 @@ typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
 
 extern mca_mtl_portals_module_t ompi_mtl_portals;
 
-OMPI_DECLSPEC mca_mtl_base_component_1_0_0_t mca_mtl_portals_component;
+OMPI_DECLSPEC mca_mtl_base_component_2_0_0_t mca_mtl_portals_component;
 
 
 struct ompi_mtl_portals_event_t {

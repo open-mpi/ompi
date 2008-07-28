@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ static int init_query(const mca_base_component_t *ls,
                       mca_base_component_priority_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_1_1_0(const mca_base_component_t *ls, 
+static int init_query_2_0_0(const mca_base_component_t *ls, 
                             mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
@@ -157,10 +158,10 @@ static int init_query(const mca_base_component_t *m,
   /* This component has already been successfully opened.  So now query
      it. */
 
-  if (1 == m->mca_type_major_version &&
-      1 == m->mca_type_minor_version &&
+  if (2 == m->mca_type_major_version &&
+      0 == m->mca_type_minor_version &&
       0 == m->mca_type_release_version) {
-    ret = init_query_1_1_0(m, entry, enable_progress_threads,
+    ret = init_query_2_0_0(m, entry, enable_progress_threads,
                            enable_mpi_threads);
   } else {
     /* Unrecognized coll API version */
@@ -197,13 +198,13 @@ static int init_query(const mca_base_component_t *m,
 /*
  * Query a specific component, coll v1.0.0
  */
-static int init_query_1_1_0(const mca_base_component_t *component, 
+static int init_query_2_0_0(const mca_base_component_t *component, 
                             mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    mca_coll_base_component_1_1_0_t *coll = 
-	(mca_coll_base_component_1_1_0_t *) component;
+    mca_coll_base_component_2_0_0_t *coll = 
+	(mca_coll_base_component_2_0_0_t *) component;
 
     return coll->collm_init_query(enable_progress_threads,
                                   enable_mpi_threads);

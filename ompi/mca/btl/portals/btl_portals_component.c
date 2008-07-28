@@ -41,10 +41,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
       /* First, the mca_base_module_t struct containing meta
          information about the module itself */
       {
-        /* Indicate that we are a pml v1.0.0 module (which also
-           implies a specific MCA version) */
-
-        MCA_BTL_BASE_VERSION_1_0_1,
+        MCA_BTL_BASE_VERSION_2_0_0,
 
         "portals", /* MCA module name */
         OMPI_MAJOR_VERSION,  /* MCA module major version */
@@ -53,9 +50,6 @@ mca_btl_portals_component_t mca_btl_portals_component = {
         mca_btl_portals_component_open,  /* module open */
         mca_btl_portals_component_close  /* module close */
       },
-      
-      /* Next the MCA v1.0.0 module meta data */
-      
       {
           /* The component is not checkpoint ready */
           MCA_BASE_METADATA_PARAM_NONE

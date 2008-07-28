@@ -27,7 +27,7 @@ extern "C" {
 /*
  * PML module functions.
  */
-extern mca_pml_base_component_1_0_0_t mca_pml_cm_component;
+extern mca_pml_base_component_2_0_0_t mca_pml_cm_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

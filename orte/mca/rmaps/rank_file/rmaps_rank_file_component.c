@@ -48,10 +48,7 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a rmaps v1.3.0 component (which also
-           implies a specific MCA version) */
-
-        ORTE_RMAPS_BASE_VERSION_1_3_0,
+        ORTE_RMAPS_BASE_VERSION_2_0_0,
 
         "rank_file", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -61,7 +58,6 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
         orte_rmaps_rank_file_close, /* component close */
         orte_rmaps_rank_file_query  /* component query */
       },
-      /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT

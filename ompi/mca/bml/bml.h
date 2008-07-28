@@ -431,13 +431,13 @@ typedef int (*mca_bml_base_module_progress_fn_t)(void);
  *  and component open/close/init functions.
  */
 
-struct mca_bml_base_component_1_0_0_t {
+struct mca_bml_base_component_2_0_0_t {
   mca_base_component_t bml_version;
-  mca_base_component_data_1_0_0_t bml_data;
+  mca_base_component_data_t bml_data;
   mca_bml_base_component_init_fn_t bml_init;
 };
-typedef struct mca_bml_base_component_1_0_0_t mca_bml_base_component_1_0_0_t;
-typedef struct mca_bml_base_component_1_0_0_t mca_bml_base_component_t;
+typedef struct mca_bml_base_component_2_0_0_t mca_bml_base_component_2_0_0_t;
+typedef struct mca_bml_base_component_2_0_0_t mca_bml_base_component_t;
 
 
 /*
@@ -609,12 +609,10 @@ struct mca_bml_base_module_t {
 typedef struct mca_bml_base_module_t mca_bml_base_module_t;
 
 /*
- * Macro for use in modules that are of type bml v1.0.0
+ * Macro for use in modules that are of type bml
  */
-#define MCA_BML_BASE_VERSION_1_0_0 \
-  /*  v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* bml v1.0 */ \
-  "bml", 1, 0, 0
+#define MCA_BML_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "bml", 2, 0, 0
 
 #endif /* OMPI_MCA_BML_H */

@@ -379,14 +379,14 @@ mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TA
  *  and component open/close/init functions.
  */
 
-struct mca_btl_base_component_1_0_1_t {
+struct mca_btl_base_component_2_0_0_t {
   mca_base_component_t btl_version;
-  mca_base_component_data_1_0_0_t btl_data;
+  mca_base_component_data_t btl_data;
   mca_btl_base_component_init_fn_t btl_init;
   mca_btl_base_component_progress_fn_t btl_progress;
 };
-typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_1_t;
-typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
+typedef struct mca_btl_base_component_2_0_0_t mca_btl_base_component_2_0_0_t;
+typedef struct mca_btl_base_component_2_0_0_t mca_btl_base_component_t;
 
 /*  add the 1_0_0_t typedef for source compatibility 
  *  we can do this safely because 1_0_0 components are the same as 
@@ -396,7 +396,8 @@ typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
  *  just like the new one so long as we check the component version 
  *  prior to invoking the new interface function.
  */
-typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_0_t;
+typedef struct mca_btl_base_component_2_0_0_t mca_btl_base_component_1_0_1_t;
+typedef struct mca_btl_base_component_2_0_0_t mca_btl_base_component_1_0_0_t;
 
 
 
@@ -789,12 +790,18 @@ struct mca_btl_base_module_t {
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 /*
+ * Macro for use in modules that are of type btl v2.0.1
+ */
+#define MCA_BTL_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "btl", 2, 0, 0
+
+/*
  * Macro for use in modules that are of type btl v1.0.1
+ *  alows older btl sources to compile..
  */
 #define MCA_BTL_BASE_VERSION_1_0_1 \
-  /* coll v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* btl v1.0 */ \
+  MCA_BASE_VERSION_2_0_0, \
   "btl", 1, 0, 1
 
 
@@ -803,9 +810,7 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
  *  alows older btl sources to compile..
  */
 #define MCA_BTL_BASE_VERSION_1_0_0 \
-  /* coll v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* btl v1.0 */ \
+  MCA_BASE_VERSION_2_0_0, \
   "btl", 1, 0, 0
 
 END_C_DECLS

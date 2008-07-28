@@ -53,7 +53,7 @@
 int mca_coll_sm_bcast_intra(void *buff, int count, 
                             struct ompi_datatype_t *datatype, int root, 
                             struct ompi_communicator_t *comm,
-                            struct mca_coll_base_module_1_1_0_t *module)
+                            mca_coll_base_module_t *module)
 {
     struct iovec iov;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;

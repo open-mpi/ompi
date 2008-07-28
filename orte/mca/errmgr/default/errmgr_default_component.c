@@ -50,7 +50,7 @@
  */
 mca_errmgr_base_component_t mca_errmgr_default_component = {
     {
-    ORTE_ERRMGR_BASE_VERSION_1_3_0,
+    ORTE_ERRMGR_BASE_VERSION_2_0_0,
 
     "default", /* MCA component name */
     ORTE_MAJOR_VERSION,  /* MCA component major version */

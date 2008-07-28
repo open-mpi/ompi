@@ -66,9 +66,7 @@ orte_plm_tm_component_t mca_plm_tm_component = {
            about the component itself */
 
         {
-            /* Indicate that we are a plm v1.0.0 component (which also
-               implies a specific MCA version) */
-            ORTE_PLM_BASE_VERSION_1_0_0,
+            ORTE_PLM_BASE_VERSION_2_0_0,
 
             /* Component name and version */
             "tm",
@@ -81,8 +79,6 @@ orte_plm_tm_component_t mca_plm_tm_component = {
             plm_tm_close,
             orte_plm_tm_component_query
         },
-
-        /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
@@ -101,7 +97,7 @@ static int plm_tm_open(void)
                               false, false, "orted",
                               &mca_plm_tm_component.orted);
     mca_base_param_reg_int(comp, "want_path_check",
-                           "Whether the launching process should check for the plm_tm_orted executable in the PATH before launching (the TM API does not give an idication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
+                           "Whether the launching process should check for the plm_tm_orted executable in the PATH before launching (the TM API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
                            false, false, (int) true, &tmp);
     mca_plm_tm_component.want_path_check = OPAL_INT_TO_BOOL(tmp);
     

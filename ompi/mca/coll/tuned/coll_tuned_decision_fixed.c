@@ -42,7 +42,7 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op,
                                            struct ompi_communicator_t *comm,
-					   struct mca_coll_base_module_1_1_0_t *module)
+					   mca_coll_base_module_t *module)
 {
     size_t dsize, block_dsize;
     int comm_size = ompi_comm_size(comm);
@@ -95,7 +95,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                              void* rbuf, int rcount, 
                                              struct ompi_datatype_t *rdtype, 
                                              struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     int communicator_size;
     size_t dsize, block_dsize;
@@ -164,7 +164,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_fixed(void *sbuf, int *scounts, int *sdi
                                               void *rbuf, int *rcounts, int *rdisps,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
-                                              struct mca_coll_base_module_1_1_0_t *module)
+                                              mca_coll_base_module_t *module)
 {
     /* For starters, just keep the original algorithm. */
     return ompi_coll_tuned_alltoallv_intra_basic_linear(sbuf, scounts, sdisps, sdtype, 
@@ -181,7 +181,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_fixed(void *sbuf, int *scounts, int *sdi
  *	Returns:	- MPI_SUCCESS or error code (passed from the barrier implementation)
  */
 int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     int communicator_size = ompi_comm_size(comm);
 
@@ -221,7 +221,7 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
 int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
                                           struct ompi_communicator_t *comm,
-					  struct mca_coll_base_module_1_1_0_t *module)
+					  mca_coll_base_module_t *module)
 {
     /* Decision function based on MX results for 
     messages up to 36MB and communicator sizes up to 64 nodes */
@@ -342,7 +342,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                             int count, struct ompi_datatype_t* datatype,
                                             struct ompi_op_t* op, int root,
                                             struct ompi_communicator_t* comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     int communicator_size, segsize = 0;
     size_t message_size, dsize;
@@ -457,7 +457,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op,
                                                     struct ompi_communicator_t *comm,
-						    struct mca_coll_base_module_1_1_0_t *module)
+						    mca_coll_base_module_t *module)
 {
    int comm_size, i, pow2;
    size_t total_message_size, dsize;
@@ -511,7 +511,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
                                               void* rbuf, int rcount, 
                                               struct ompi_datatype_t *rdtype, 
                                               struct ompi_communicator_t *comm,
-                                              struct mca_coll_base_module_1_1_0_t *module)
+                                              mca_coll_base_module_t *module)
 {
    int communicator_size, pow2_size;
    size_t dsize, total_dsize;
@@ -606,7 +606,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
                                                int *rdispls,
                                                struct ompi_datatype_t *rdtype, 
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module)
+					       mca_coll_base_module_t *module)
 {
     int i;
     int communicator_size, pow2_size;
@@ -669,7 +669,7 @@ int ompi_coll_tuned_gather_intra_dec_fixed(void *sbuf, int scount,
 					   struct ompi_datatype_t *rdtype, 
 					   int root,
                                            struct ompi_communicator_t *comm,
-					   struct mca_coll_base_module_1_1_0_t *module)
+					   mca_coll_base_module_t *module)
 {
     const int large_segment_size = 32768;
     const int small_segment_size = 1024;
@@ -739,7 +739,7 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(void *sbuf, int scount,
 					    void* rbuf, int rcount, 
 					    struct ompi_datatype_t *rdtype, 
 					    int root, struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     const size_t small_block_size = 300;
     const int small_comm_size = 10;

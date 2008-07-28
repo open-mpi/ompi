@@ -113,24 +113,23 @@ typedef int (*opal_carto_base_module_finalize_fn_t)(void);
 
 
 /**
- * Structure for carto v1.1.0 components.
- * Chained to MCA v1.0.0
+ * Structure for carto components.
  */
-struct opal_carto_base_component_1_0_0_t {
+struct opal_carto_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 /**
  * Convenience typedef
  */
-typedef struct opal_carto_base_component_1_0_0_t opal_carto_base_component_1_0_0_t;
-typedef struct opal_carto_base_component_1_0_0_t opal_carto_base_component_t;
+typedef struct opal_carto_base_component_2_0_0_t opal_carto_base_component_2_0_0_t;
+typedef struct opal_carto_base_component_2_0_0_t opal_carto_base_component_t;
 
 
 /**
- * Structure for carto v1.0.0 modules
+ * Structure for carto modules
  */
 struct opal_carto_base_module_1_0_0_t {
     /** Module initialization function */
@@ -156,12 +155,10 @@ typedef struct opal_carto_base_module_1_0_0_t opal_carto_base_module_t;
 
 
 /*
- * Macro for use in components that are of type carto v1.1.0
+ * Macro for use in components that are of type carto
  */
-#define OPAL_CARTO_BASE_VERSION_1_0_0 \
-    /* carto v1.1 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* carto v1.0 */ \
-    "carto", 1, 0, 0
+#define OPAL_CARTO_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "carto", 2, 0, 0
 
 #endif /* OPAL_CARTO_H */

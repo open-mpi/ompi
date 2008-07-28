@@ -38,7 +38,7 @@ BEGIN_C_DECLS
 /**
  * Globally exported variable
  */
-OPAL_DECLSPEC extern const opal_carto_base_component_1_0_0_t
+OPAL_DECLSPEC extern const opal_carto_base_component_2_0_0_t
 mca_carto_auto_detect_component;
 
 

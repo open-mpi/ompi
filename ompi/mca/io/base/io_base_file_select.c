@@ -61,7 +61,7 @@ static avail_io_t *check_one_component(ompi_file_t *file,
 
 static avail_io_t *query(const mca_base_component_t *component, 
                          ompi_file_t *file);
-static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *io_component, 
+static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *io_component, 
                                ompi_file_t *file);
 
 static void unquery(avail_io_t *avail, ompi_file_t *file);
@@ -365,14 +365,14 @@ static avail_io_t *check_one_component(ompi_file_t *file,
 static avail_io_t *query(const mca_base_component_t *component, 
                          ompi_file_t *file)
 {
-    const mca_io_base_component_1_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_100;
 
     /* io v1.0.0 */
 
     if (1 == component->mca_major_version &&
         0 == component->mca_minor_version &&
         0 == component->mca_release_version) {
-        ioc_100 = (mca_io_base_component_1_0_0_t *) component;
+        ioc_100 = (mca_io_base_component_2_0_0_t *) component;
         
         return query_1_0_0(ioc_100, file);
     }
@@ -383,7 +383,7 @@ static avail_io_t *query(const mca_base_component_t *component,
 }
 
 
-static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *component,
+static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *component,
                                ompi_file_t *file)
 {
     int priority;
@@ -415,7 +415,7 @@ static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *component,
 
 static void unquery(avail_io_t *avail, ompi_file_t *file)
 {
-    const mca_io_base_component_1_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_100;
 
     switch(avail->ai_version) {
     case MCA_IO_BASE_V_1_0_0:

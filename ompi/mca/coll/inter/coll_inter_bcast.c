@@ -40,7 +40,7 @@ int
 mca_coll_inter_bcast_inter(void *buff, int count,
                            struct ompi_datatype_t *datatype, int root,
                            struct ompi_communicator_t *comm,
-                           struct mca_coll_base_module_1_1_0_t *module)
+                           mca_coll_base_module_t *module)
 {
     int rsize;
     int rank;

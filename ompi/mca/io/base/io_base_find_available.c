@@ -195,8 +195,8 @@ static int init_query_1_0_0(const mca_base_component_t *component,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    mca_io_base_component_1_0_0_t *io = 
-	(mca_io_base_component_1_0_0_t *) component;
+    mca_io_base_component_2_0_0_t *io = 
+	(mca_io_base_component_2_0_0_t *) component;
 
     return io->io_init_query(enable_progress_threads,
                              enable_mpi_threads);

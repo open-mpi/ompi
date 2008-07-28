@@ -46,10 +46,7 @@ mca_mpool_rdma_component_t mca_mpool_rdma_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a mpool v1.0.0 component (which also
-           implies a specific MCA version) */
-
-          MCA_MPOOL_BASE_VERSION_1_0_0,
+          MCA_MPOOL_BASE_VERSION_2_0_0,
 
           "rdma", /* MCA component name */
           OMPI_MAJOR_VERSION,  /* MCA component major version */
@@ -58,9 +55,6 @@ mca_mpool_rdma_component_t mca_mpool_rdma_component = {
           mca_mpool_rdma_open,  /* component open  */
           NULL
       },
-
-      /* Next the MCA v1.0.0 component meta data */
-
       {
           /* The component is not checkpoint ready */
           MCA_BASE_METADATA_PARAM_NONE

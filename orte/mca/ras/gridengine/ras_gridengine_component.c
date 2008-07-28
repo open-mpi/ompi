@@ -51,9 +51,6 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a ras v2.0.0 component (which also
-           implies a specific MCA version) */
-
         ORTE_RAS_BASE_VERSION_2_0_0,
         "gridengine",                /* MCA component name */
         ORTE_MAJOR_VERSION,          /* MCA component major version */
@@ -63,8 +60,6 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
         orte_ras_gridengine_close,    /* component close */
         orte_ras_gridengine_component_query
       },
-
-      /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT

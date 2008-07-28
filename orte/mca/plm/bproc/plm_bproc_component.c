@@ -45,7 +45,7 @@ static int orte_plm_bproc_component_query(mca_base_module_t **module, int *prior
 orte_plm_bproc_component_t mca_plm_bproc_component = {
     {
         {
-            ORTE_PLM_BASE_VERSION_1_0_0,
+            ORTE_PLM_BASE_VERSION_2_0_0,
             "bproc", /* MCA component name */
             ORTE_MAJOR_VERSION,  /* MCA component major version */
             ORTE_MINOR_VERSION,  /* MCA component minor version */

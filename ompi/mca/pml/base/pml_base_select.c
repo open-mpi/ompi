@@ -300,11 +300,11 @@ int mca_pml_base_select(bool enable_progress_threads,
 /* need a "commonly" named PML structure so everything ends up in the
    same modex field */
 static mca_base_component_t pml_base_component = {
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     "pml",
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     "base",
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     NULL,
     NULL
 };

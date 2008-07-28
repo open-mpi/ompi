@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,33 +54,25 @@ static int sm_close(void);
 
 mca_coll_sm_component_t mca_coll_sm_component = {
 
-    /* First, fill in the super (mca_coll_base_component_1_1_0_t) */
+    /* First, fill in the super */
 
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
         
         {
-            /* Indicate that we are a coll v1.1.0 component (which
-               also implies a specific MCA version) */
-
-            MCA_COLL_BASE_VERSION_1_1_0,
+            MCA_COLL_BASE_VERSION_2_0_0,
 
             /* Component name and version */
-
             "sm",
             OMPI_MAJOR_VERSION,
             OMPI_MINOR_VERSION,
             OMPI_RELEASE_VERSION,
 
             /* Component open and close functions */
-
             sm_open,
             sm_close,
         },
-        
-        /* Next the MCA v1.1.0 component meta data */
-
         {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE
@@ -322,6 +315,6 @@ mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
 
 
 OBJ_CLASS_INSTANCE(mca_coll_sm_module_t,
-                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_base_module_t,
                    mca_coll_sm_module_construct,
                    mca_coll_sm_module_destruct);

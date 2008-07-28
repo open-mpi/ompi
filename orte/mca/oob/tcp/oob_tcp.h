@@ -188,7 +188,7 @@ typedef enum { OOB_TCP_EVENT, OOB_TCP_LISTEN_THREAD } mca_oob_tcp_listen_type_t;
  *  OOB TCP Component
 */
 struct mca_oob_tcp_component_t {
-    mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
+    mca_oob_base_component_2_0_0_t super;    /**< base OOB component */
     char*              tcp_include;          /**< list of ip interfaces to include */
     char*              tcp_exclude;          /**< list of ip interfaces to exclude */
     opal_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */

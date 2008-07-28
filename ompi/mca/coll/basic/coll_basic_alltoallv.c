@@ -40,7 +40,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                                void *rbuf, int *rcounts, int *rdisps,
                                struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int i;
     int size;
@@ -161,7 +161,7 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
                                int *rcounts, int *rdisps,
                                struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int i;
     int rsize;

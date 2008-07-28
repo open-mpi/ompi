@@ -57,7 +57,7 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
 
 static avail_io_t *query(const mca_base_component_t *component,
                          char *filename, struct ompi_info_t *info);
-static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *io_component, 
+static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *io_component, 
                                char *filename, struct ompi_info_t *info);
 
 static void unquery(avail_io_t *avail, char *filename, struct ompi_info_t *info);
@@ -313,14 +313,14 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
 static avail_io_t *query(const mca_base_component_t *component, 
                          char *filename, struct ompi_info_t *info)
 {
-    const mca_io_base_component_1_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_100;
 
     /* io v1.0.0 */
 
     if (1 == component->mca_major_version &&
         0 == component->mca_minor_version &&
         0 == component->mca_release_version) {
-        ioc_100 = (mca_io_base_component_1_0_0_t *) component;
+        ioc_100 = (mca_io_base_component_2_0_0_t *) component;
         
         return query_1_0_0(ioc_100, filename, info);
     }
@@ -331,7 +331,7 @@ static avail_io_t *query(const mca_base_component_t *component,
 }
 
 
-static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *component,
+static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *component,
                                char *filename, struct ompi_info_t *info)
 {
     bool usable;
@@ -364,7 +364,7 @@ static avail_io_t *query_1_0_0(const mca_io_base_component_1_0_0_t *component,
 
 static void unquery(avail_io_t *avail, char *filename, struct ompi_info_t *info)
 {
-    const mca_io_base_component_1_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_100;
 
     switch(avail->ai_version) {
     case MCA_IO_BASE_V_1_0_0:
@@ -389,7 +389,7 @@ static void unquery(avail_io_t *avail, char *filename, struct ompi_info_t *info)
  */
 static int delete_file(avail_io_t *avail, char *filename, struct ompi_info_t *info)
 {
-    const mca_io_base_component_1_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_100;
 
     switch(avail->ai_version) {
     case MCA_IO_BASE_V_1_0_0:

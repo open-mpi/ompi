@@ -49,13 +49,13 @@ typedef struct mca_oob_1_0_0_t mca_oob_t;
 
 typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(int  *priority);
 
-struct mca_oob_base_component_1_0_0_t {
+struct mca_oob_base_component_2_0_0_t {
    mca_base_component_t oob_base;
-   mca_base_component_data_1_0_0_t oob_data;
+   mca_base_component_data_t oob_data;
    mca_oob_base_component_init_fn_t oob_init;
 };
-typedef struct mca_oob_base_component_1_0_0_t mca_oob_base_component_1_0_0_t;
-typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
+typedef struct mca_oob_base_component_2_0_0_t mca_oob_base_component_2_0_0_t;
+typedef mca_oob_base_component_2_0_0_t mca_oob_base_component_t;
 
 
 
@@ -181,13 +181,11 @@ struct mca_oob_1_0_0_t {
 };
 
 /**
- * Macro for use in components that are of type oob v1.0.0
+ * Macro for use in components that are of type oob
  */
-#define MCA_OOB_BASE_VERSION_1_0_0 \
-  /* oob v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* oob v1.0 */ \
-  "oob", 1, 0, 0
+#define MCA_OOB_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "oob", 2, 0, 0
 
 /*
  * BWB - FIX ME - This is the first module on the list. This is here

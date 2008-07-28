@@ -45,13 +45,13 @@ typedef int (*mca_vprotocol_base_component_finalize_fn_t)(void);
 
 /* The MCA type for class instance
  */
-typedef struct mca_vprotocol_base_component_1_0_0_t {
+typedef struct mca_vprotocol_base_component_2_0_0_t {
     mca_base_component_t pmlm_version;
-    mca_base_component_data_1_0_0_t pmlm_data;
+    mca_base_component_data_t pmlm_data;
     mca_vprotocol_base_component_init_fn_t pmlm_init;
     mca_vprotocol_base_component_finalize_fn_t pmlm_finalize;
-} mca_vprotocol_base_component_1_0_0_t;
-typedef mca_vprotocol_base_component_1_0_0_t mca_vprotocol_base_component_t;
+} mca_vprotocol_base_component_2_0_0_t;
+typedef mca_vprotocol_base_component_2_0_0_t mca_vprotocol_base_component_t;
 
 /* The base module of the component
  */

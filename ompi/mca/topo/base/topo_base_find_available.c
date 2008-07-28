@@ -162,7 +162,7 @@ static int init_query_1_0_0(const mca_base_component_t *component,
                             bool enable_progress_threads,
                             bool enable_mpi_threads) 
 {
-    mca_topo_base_component_1_0_0_t *topo = (mca_topo_base_component_1_0_0_t *) component;
+    mca_topo_base_component_2_0_0_t *topo = (mca_topo_base_component_2_0_0_t *) component;
     
     return topo->topom_init_query(enable_progress_threads,
                                   enable_mpi_threads);

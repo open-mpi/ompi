@@ -27,14 +27,12 @@
 
 /*
  * ******************************************************************
- * ********** Use in components that are of type topo v1.0.0 ********
+ * ********** Use in components that are of type topo v2.0.0 ********
  * ******************************************************************
  */
-#define MCA_TOPO_BASE_VERSION_1_0_0 \
-  /* topo v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* topo v1.0 */ \
-  "topo", 1, 0, 0
+#define MCA_TOPO_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "topo", 2, 0, 0
 /*
  * ******************************************************************
  * **************************** Macro ends **************************
@@ -76,19 +74,19 @@ typedef int (*mca_topo_base_component_comm_unquery_1_0_0_fn_t)
 
 /*
  * ****************** component struct ******************************
- * Structure for topo v1.0.0 components.This is chained to MCA v1.0.0
+ * Structure for topo v2.0.0 components.This is chained to MCA v2.0.0
  * ****************** component struct ******************************
  */  
-struct mca_topo_base_component_1_0_0_t {
+struct mca_topo_base_component_2_0_0_t {
     mca_base_component_t topom_version;
-    mca_base_component_data_1_0_0_t topom_data;
+    mca_base_component_data_t topom_data;
 
     mca_topo_base_component_init_query_1_0_0_fn_t topom_init_query;
     mca_topo_base_component_comm_query_1_0_0_fn_t topom_comm_query;
     mca_topo_base_component_comm_unquery_1_0_0_fn_t topom_comm_unquery;
 };
-typedef struct mca_topo_base_component_1_0_0_t mca_topo_base_component_1_0_0_t;       
-typedef mca_topo_base_component_1_0_0_t mca_topo_base_component_t;
+typedef struct mca_topo_base_component_2_0_0_t mca_topo_base_component_2_0_0_t;       
+typedef mca_topo_base_component_2_0_0_t mca_topo_base_component_t;
 
 /*
  * ******************************************************************

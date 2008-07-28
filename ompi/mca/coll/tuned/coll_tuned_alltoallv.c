@@ -37,7 +37,7 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
                                          void* rbuf, int *rcounts, int *rdisps,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
-                                         struct mca_coll_base_module_1_1_0_t *module)
+                                         mca_coll_base_module_t *module)
 {
     int line = -1, err = 0;
     int rank, size, step;
@@ -114,7 +114,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
                                             void *rbuf, int *rcounts, int *rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
-                                            struct mca_coll_base_module_1_1_0_t *module)
+                                            mca_coll_base_module_t *module)
 {
     int i, size, rank, err;
     char *psnd, *prcv;
@@ -254,7 +254,7 @@ int ompi_coll_tuned_alltoallv_intra_do_forced(void *sbuf, int *scounts, int *sdi
                                               void* rbuf, int *rcounts, int *rdisps, 
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
-                                              struct mca_coll_base_module_1_1_0_t *module)
+                                              mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -293,7 +293,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(void *sbuf, int *scounts, int *sdisp
                                             void* rbuf, int *rcounts, int *rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
-                                            struct mca_coll_base_module_1_1_0_t *module,
+                                            mca_coll_base_module_t *module,
                                             int algorithm)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,

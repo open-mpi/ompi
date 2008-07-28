@@ -93,7 +93,7 @@ typedef int (*orte_odls_base_module_collect_data_fn_t)(orte_process_name_t *proc
 
 
 /**
- * pls module version 1.3.0
+ * pls module version
  */
 struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_get_add_procs_data_fn_t           get_add_procs_data;
@@ -111,28 +111,26 @@ typedef struct orte_odls_base_module_1_3_0_t orte_odls_base_module_1_3_0_t;
 typedef struct orte_odls_base_module_1_3_0_t orte_odls_base_module_t;
 
 /**
- * odls component v1.3.0
+ * odls component
  */
-struct orte_odls_base_component_1_3_0_t {
+struct orte_odls_base_component_2_0_0_t {
     /** component version */
     mca_base_component_t version;
     /** component data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 /** Convenience typedef */
-typedef struct orte_odls_base_component_1_3_0_t orte_odls_base_component_1_3_0_t;
+typedef struct orte_odls_base_component_2_0_0_t orte_odls_base_component_2_0_0_t;
 /** Convenience typedef */
-typedef orte_odls_base_component_1_3_0_t orte_odls_base_component_t;
+typedef orte_odls_base_component_2_0_0_t orte_odls_base_component_t;
 
 
 /**
- * Macro for use in modules that are of type odls v1.3.0
+ * Macro for use in modules that are of type odls
  */
-#define ORTE_ODLS_BASE_VERSION_1_3_0 \
-  /* odls v1.3 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* odls v1.3 */ \
-  "odls", 1, 3, 0
+#define ORTE_ODLS_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "odls", 2, 0, 0
 
 /* Global structure for accessing ODLS functions
 */

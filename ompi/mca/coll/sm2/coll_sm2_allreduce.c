@@ -30,7 +30,7 @@ int mca_coll_sm2_allreduce_intra_fanin_fanout(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
-                                struct mca_coll_base_module_1_1_0_t *module)
+                                mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
@@ -575,7 +575,7 @@ static
 int mca_coll_sm2_allreduce_intra_fanin_fanout_pipeline
     (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
      struct ompi_op_t *op, struct ompi_communicator_t *comm,
-     struct mca_coll_base_module_1_1_0_t *module)
+     mca_coll_base_module_t *module)
 {
 
     /* local variables */
@@ -769,7 +769,7 @@ static
 int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf, 
         int count, struct ompi_datatype_t *dtype, 
         struct ompi_op_t *op, struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
@@ -1165,7 +1165,7 @@ Error:
 int mca_coll_sm2_allreduce_intra_reducescatter_allgather(void *sbuf, void *rbuf, 
         int count, struct ompi_datatype_t *dtype, 
         struct ompi_op_t *op, struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local varibles */
     int i,rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
@@ -1547,7 +1547,7 @@ static
 int mca_coll_sm2_allreduce_intra_recursive_doubling(void *sbuf, void *rbuf, 
         int count, struct ompi_datatype_t *dtype, 
         struct ompi_op_t *op, struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc=OMPI_SUCCESS,n_dts_per_buffer,n_data_segments,stripe_number;
@@ -1875,7 +1875,7 @@ int mca_coll_sm2_allreduce_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, 
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
-                                struct mca_coll_base_module_1_1_0_t *module)
+                                mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc;

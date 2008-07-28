@@ -58,7 +58,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
                                              struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -106,7 +106,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
                                                void* rbuf, int rcount, 
                                                struct ompi_datatype_t *rdtype, 
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module)
+					       mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -158,7 +158,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(void *sbuf, int *scounts, int *s
                                                 void* rbuf, int *rcounts, int *rdisps,
                                                 struct ompi_datatype_t *rdtype, 
                                                 struct ompi_communicator_t *comm,
-                                                struct mca_coll_base_module_1_1_0_t *module)
+                                                mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -193,7 +193,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(void *sbuf, int *scounts, int *s
  *    Returns:    - MPI_SUCCESS or error code (passed from the barrier implementation)
  */
 int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
-					      struct mca_coll_base_module_1_1_0_t *module)
+					      mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -231,7 +231,7 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
 int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
                                             struct ompi_datatype_t *datatype, int root,
                                             struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -279,7 +279,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
                                               int count, struct ompi_datatype_t* datatype,
                                               struct ompi_op_t* op, int root,
                                               struct ompi_communicator_t* comm,
-					      struct mca_coll_base_module_1_1_0_t *module)
+					      mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -334,7 +334,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(void *sbuf, void *rbuf,
                                                      struct ompi_datatype_t *dtype,
                                                      struct ompi_op_t *op,
                                                      struct ompi_communicator_t *comm,
-						     struct mca_coll_base_module_1_1_0_t *module)
+						     mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -389,7 +389,7 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount,
                                                 void* rbuf, int rcount, 
                                                 struct ompi_datatype_t *rdtype, 
                                                 struct ompi_communicator_t *comm,
-						struct mca_coll_base_module_1_1_0_t *module)
+						mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -449,7 +449,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(void *sbuf, int scount,
                                                  int *rdispls,
                                                  struct ompi_datatype_t *rdtype, 
                                                  struct ompi_communicator_t *comm,
-						 struct mca_coll_base_module_1_1_0_t *module)
+						 mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -504,7 +504,7 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount,
 					     struct ompi_datatype_t *rdtype, 
 					     int root,
 					     struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -528,7 +528,7 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(void *sbuf, int scount,
 					      void* rbuf, int rcount, 
 					      struct ompi_datatype_t *rdtype, 
 					      int root, struct ompi_communicator_t *comm,
-					      struct mca_coll_base_module_1_1_0_t *module)
+					      mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;

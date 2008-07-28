@@ -48,7 +48,7 @@ orte_snapc_full_component_t mca_snapc_full_component = {
          *  meta information about the component itfull
          */
         {
-            ORTE_SNAPC_BASE_VERSION_1_0_0,
+            ORTE_SNAPC_BASE_VERSION_2_0_0,
             /* Component name and version */
             "full",
             OMPI_MAJOR_VERSION,
@@ -60,8 +60,6 @@ orte_snapc_full_component_t mca_snapc_full_component = {
             snapc_full_close,
             orte_snapc_full_component_query
         },
-
-        /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT

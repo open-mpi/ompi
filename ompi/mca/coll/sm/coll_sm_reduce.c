@@ -34,14 +34,14 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                           struct ompi_datatype_t *dtype, 
                           struct ompi_op_t *op, 
                           int root, struct ompi_communicator_t *comm,
-                          struct mca_coll_base_module_1_1_0_t *module);
+                          mca_coll_base_module_t *module);
 #define WANT_REDUCE_NO_ORDER 0
 #if WANT_REDUCE_NO_ORDER
 static int reduce_no_order(void *sbuf, void* rbuf, int count, 
                            struct ompi_datatype_t *dtype, 
                            struct ompi_op_t *op, 
                            int root, struct ompi_communicator_t *comm,
-                           struct mca_coll_base_module_1_1_0_t *module);
+                           mca_coll_base_module_t *module);
 #endif
 
 /*
@@ -63,7 +63,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
                              struct ompi_datatype_t *dtype, 
                              struct ompi_op_t *op, 
                              int root, struct ompi_communicator_t *comm,
-                             struct mca_coll_base_module_1_1_0_t *module)
+                             mca_coll_base_module_t *module)
 {
     size_t size;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
@@ -146,7 +146,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                           struct ompi_datatype_t *dtype, 
                           struct ompi_op_t *op, 
                           int root, struct ompi_communicator_t *comm,
-                          struct mca_coll_base_module_1_1_0_t *module)
+                          mca_coll_base_module_t *module)
 {
     struct iovec iov;
     mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
@@ -502,7 +502,7 @@ static int reduce_no_order(void *sbuf, void* rbuf, int count,
                            struct ompi_datatype_t *dtype, 
                            struct ompi_op_t *op, 
                            int root, struct ompi_communicator_t *comm,
-                           struct mca_coll_base_module_1_1_0_t *module)
+                           mca_coll_base_module_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

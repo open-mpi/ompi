@@ -45,26 +45,21 @@ static int file_open(void);
  * and pointers to our public functions in it
  */
 
-const opal_carto_base_component_1_0_0_t mca_carto_file_component = {
+const opal_carto_base_component_2_0_0_t mca_carto_file_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
     {
-        /* Indicate that we are a carto v1.1.0 component (which also
-           implies a specific MCA version) */
-        
-        OPAL_CARTO_BASE_VERSION_1_0_0,
+        OPAL_CARTO_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-
         "file",
         OPAL_MAJOR_VERSION,
         OPAL_MINOR_VERSION,
         OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
-
         file_open,
         NULL,
         opal_carto_file_component_query

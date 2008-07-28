@@ -23,28 +23,25 @@
 #include "opal/mca/base/base.h"
 
 /**
- * Structure for memcpy v1.0.0 components.
- * Chained to MCA v1.0.0
+ * Structure for memcpy components.
  */
-struct opal_memcpy_base_component_1_0_0_t {
+struct opal_memcpy_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t memcpyc_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t memcpyc_data;
+    mca_base_component_data_t memcpyc_data;
 };
 
 /**
  * Convenience typedef
  */
-typedef struct opal_memcpy_base_component_1_0_0_t opal_memcpy_base_component_1_0_0_t;
+typedef struct opal_memcpy_base_component_2_0_0_t opal_memcpy_base_component_2_0_0_t;
 
 /*
- * Macro for use in components that are of type memcpy v1.0.0
+ * Macro for use in components that are of type memcpy
  */
-#define OPAL_MEMCPY_BASE_VERSION_1_0_0 \
-    /* memcpy v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* memcpy v1.0 */ \
-    "memcpy", 1, 0, 0
+#define OPAL_MEMCPY_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "memcpy", 2, 0, 0
 
 #endif /* OPAL_MCA_MEMCPY_MEMCPY_H */
