@@ -733,7 +733,7 @@ uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, o
             /**
              * if the distance from the first vertex in the queue to the I
              * vertex in the queue plus the distance of the first vertex in
-             * the queue from the referenced vertex is smaller then the
+             * the queue from the referenced vertex is smaller than the
              * distance of the I vertex from the referenced vertex, assign
              * the lower distance to the I vertex.
              */
