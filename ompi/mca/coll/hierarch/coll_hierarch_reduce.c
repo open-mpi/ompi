@@ -41,7 +41,7 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype, 
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm, 
-			       struct mca_coll_base_module_1_1_0_t *module)
+			       mca_coll_base_module_t *module)
 {
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;

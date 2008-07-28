@@ -40,7 +40,7 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
                               void *rbuf, int rcount,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
-                              struct mca_coll_base_module_1_1_0_t *module)
+                              mca_coll_base_module_t *module)
 {
     int i;
     int rank;
@@ -163,7 +163,7 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
                               void *rbuf, int rcount,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
-                              struct mca_coll_base_module_1_1_0_t *module)
+                              mca_coll_base_module_t *module)
 {
     int i;
     int rank;

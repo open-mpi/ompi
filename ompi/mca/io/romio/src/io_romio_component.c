@@ -81,14 +81,12 @@ const char *mca_io_romio_component_version_string =
 "OMPI/MPI ROMIO io MCA component version " OMPI_VERSION ", " ROMIO_VERSION_STRING;
 
 
-mca_io_base_component_1_0_0_t mca_io_romio_component = {
+mca_io_base_component_2_0_0_t mca_io_romio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
     {
-        /* Indicate that we are a io v1.0.0 component (which also implies a
-           specific MCA version) */
-        MCA_IO_BASE_VERSION_1_0_0,
+        MCA_IO_BASE_VERSION_2_0_0,
         "romio",
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
@@ -96,9 +94,6 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
         open_component,
         close_component,
     },
-
-    /* Next the MCA v1.0.0 component meta data */
-
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

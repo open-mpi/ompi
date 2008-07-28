@@ -54,7 +54,7 @@ static int setup_rdma(ompi_osc_rdma_module_t *module);
 ompi_osc_rdma_component_t mca_osc_rdma_component = {
     { /* ompi_osc_base_component_t */
         { /* ompi_base_component_t */
-            OMPI_OSC_BASE_VERSION_1_0_0,
+            OMPI_OSC_BASE_VERSION_2_0_0,
             "rdma",
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */

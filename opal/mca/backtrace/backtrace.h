@@ -53,28 +53,25 @@ OPAL_DECLSPEC int opal_backtrace_buffer(char*** messages, int *len);
 
 
 /**
- * Structure for backtrace v1.0.0 components.
- * Chained to MCA v1.0.0
+ * Structure for backtrace components.
  */
-struct opal_backtrace_base_component_1_0_0_t {
+struct opal_backtrace_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t backtracec_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t backtracec_data;
+    mca_base_component_data_t backtracec_data;
 };
 /**
  * Convenience typedef
  */
-typedef struct opal_backtrace_base_component_1_0_0_t opal_backtrace_base_component_1_0_0_t;
+typedef struct opal_backtrace_base_component_2_0_0_t opal_backtrace_base_component_2_0_0_t;
 
 /*
- * Macro for use in components that are of type backtrace v1.0.0
+ * Macro for use in components that are of type backtrace
  */
-#define OPAL_BACKTRACE_BASE_VERSION_1_0_0 \
-    /* backtrace v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* backtrace v1.0 */ \
-    "backtrace", 1, 0, 0
+#define OPAL_BACKTRACE_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "backtrace", 2, 0, 0
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -390,6 +390,7 @@ static int open_component(component_file_item_t *target_file,
   mca_base_component_list_item_t *mitem;
   dependency_item_t *ditem;
   size_t len;
+  int vl = show_errors ? 0 : 40;
 
   opal_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name);
@@ -442,11 +443,7 @@ static int open_component(component_file_item_t *target_file,
 #endif
   if (NULL == component_handle) {
     err = strdup(lt_dlerror());
-    if (0 != show_errors) {
-        opal_output(0, "mca: base: component_find: unable to open %s %s: %s (ignored)", 
-                    target_file->type, target_file->name, err);
-    }
-    opal_output_verbose(40, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
+    opal_output_verbose(vl, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
                         target_file->filename, err);
     free(err);
     target_file->status = FAILED_TO_LOAD;
@@ -479,14 +476,9 @@ static int open_component(component_file_item_t *target_file,
 
   component_struct = (mca_base_component_t*)lt_dlsym(component_handle, struct_name);
   if (NULL == component_struct) {
-    if (0 != show_errors) {
-        opal_output(0, "mca: base: component_find: \"%s\" does not appear to be a valid "
-                       "%s MCA dynamic component (ignored)", 
-                       target_file->basename, target_file->type);
-    }
-    opal_output_verbose(40, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
-                       "%s MCA dynamic component (ignored)", 
-                       target_file->basename, target_file->type);
+    opal_output_verbose(vl, 0, "mca: base: component_find: \"%s\" does not appear to be a valid "
+                        "%s MCA dynamic component (ignored)", 
+                        target_file->basename, target_file->type);
     free(mitem);
     free(struct_name);
     lt_dlclose(component_handle);
@@ -495,8 +487,28 @@ static int open_component(component_file_item_t *target_file,
     return OPAL_ERR_BAD_PARAM;
   }
 
-  /* We found the public struct.  Save it, and register this component to
-     be closed later. */
+  /* We found the public struct.  Make sure its MCA major.minor
+     version is the same as ours. */
+  if (!(MCA_BASE_VERSION_MAJOR == component_struct->mca_major_version &&
+        MCA_BASE_VERSION_MINOR == component_struct->mca_minor_version)) {
+      opal_output_verbose(vl, 0, "mca: base: component_find: %s \"%s\" uses an MCA interface that is not recognized (component MCA v%d.%d.%d != supported MCA v%d.%d.%d) -- ignored",
+                          target_file->type, target_file->basename, 
+                          component_struct->mca_major_version,
+                          component_struct->mca_minor_version,
+                          component_struct->mca_release_version,
+                          MCA_BASE_VERSION_MAJOR,
+                          MCA_BASE_VERSION_MINOR,
+                          MCA_BASE_VERSION_RELEASE);
+    free(mitem);
+    free(struct_name);
+    lt_dlclose(component_handle);
+    target_file->status = FAILED_TO_LOAD;
+    free_dependency_list(&dependencies);
+    return OPAL_ERR_BAD_PARAM;
+  }
+
+  /* Alles gut.  Save the component struct, and register this
+     component to be closed later. */
 
   mitem->cli_component = component_struct;
   opal_list_append(found_components, (opal_list_item_t *) mitem);

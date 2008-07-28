@@ -196,7 +196,7 @@ typedef int (*orte_ras_base_module_allocate_fn_t)(opal_list_t *nodes);
 typedef int (*orte_ras_base_module_finalize_fn_t)(void);
 
 /**
- * ras module version 2.0
+ * ras module
  */
 struct orte_ras_base_module_2_0_0_t {
     /** Allocation function pointer */
@@ -215,13 +215,13 @@ typedef orte_ras_base_module_2_0_0_t orte_ras_base_module_t;
 
 /**
  * Component init / selection
- * ras component version 2.0.0
+ * ras component
  */
 struct orte_ras_base_component_2_0_0_t {
     /** Base MCA structure */
     mca_base_component_t base_version;
     /** Base MCA data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 /** Convenience typedef */
 typedef struct orte_ras_base_component_2_0_0_t orte_ras_base_component_2_0_0_t;
@@ -230,12 +230,10 @@ typedef orte_ras_base_component_2_0_0_t orte_ras_base_component_t;
 
 
 /**
- * Macro for use in components that are of type ras v2.0.0
+ * Macro for use in components that are of type ras
  */
 #define ORTE_RAS_BASE_VERSION_2_0_0 \
-  /* ras v2.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* ras v2.0 */ \
+  MCA_BASE_VERSION_2_0_0, \
   "ras", 2, 0, 0
 
 

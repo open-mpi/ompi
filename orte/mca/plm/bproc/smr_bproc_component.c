@@ -39,10 +39,7 @@ orte_smr_bproc_component_t mca_smr_bproc_component = {
       /* First, the mca_base_module_t struct containing meta
          information about the module itself */
       {
-        /* Indicate that we are a bproc smr v1.3.0 module (which also
-           implies a specific MCA version) */
-
-        ORTE_SMR_BASE_VERSION_1_3_0,
+        ORTE_SMR_BASE_VERSION_2_0_0,
 
         "bproc", /* MCA module name */
         ORTE_MAJOR_VERSION,  /* MCA module major version */
@@ -51,13 +48,9 @@ orte_smr_bproc_component_t mca_smr_bproc_component = {
         orte_smr_bproc_open,  /* component open */
         orte_smr_bproc_close  /* component close */
       },
-
-      /* Next the MCA v1.0.0 module meta data */
-
       {
-        /* Whether the module is checkpointable or not */
-
-        false
+          /* Component is not known to be checkpointable */
+          MCA_BASE_METADATA_PARAM_NONE
       },
 
       orte_smr_bproc_init

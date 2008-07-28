@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 University of Houston. All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,32 +57,24 @@ static int hierarch_open(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_1_1_0_t mca_coll_hierarch_component = {
+const mca_coll_base_component_2_0_0_t mca_coll_hierarch_component = {
 
   /* First, the mca_component_t struct containing meta information
      about the component itself */
 
   {
-    /* Indicate that we are a coll v1.1.0 component (which also implies a
-       specific MCA version) */
-
-    MCA_COLL_BASE_VERSION_1_1_0,
+    MCA_COLL_BASE_VERSION_2_0_0,
 
     /* Component name and version */
-
     "hierarch",
     OMPI_MAJOR_VERSION,
     OMPI_MINOR_VERSION,
     OMPI_RELEASE_VERSION,
 
     /* Component open and close functions */
-
     hierarch_open,
     NULL
   },
-
-  /* Next the MCA v1.0.0 component meta data */
-
   {
       /* The component is checkpoint ready */
       MCA_BASE_METADATA_PARAM_CHECKPOINT
@@ -185,6 +178,6 @@ mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
 
 
 OBJ_CLASS_INSTANCE(mca_coll_hierarch_module_t,
-                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_base_module_t,
                    mca_coll_hierarch_module_construct,
                    mca_coll_hierarch_module_destruct);

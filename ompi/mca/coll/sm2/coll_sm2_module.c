@@ -41,7 +41,7 @@
 /*
  * Local functions
  */
-static int sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+static int sm2_module_enable(mca_coll_base_module_t *module,
         struct ompi_communicator_t *comm);
 
 #if 0
@@ -665,7 +665,7 @@ Error:
  * communicator, and if so, what it's priority is.  This is where
  * the backing shared-memory file is created.
  */
-struct mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     /* local variables */
@@ -1214,7 +1214,7 @@ CLEANUP:
  * Init module on the communicator
  */
 static int
-sm2_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+sm2_module_enable(mca_coll_base_module_t *module,
                          struct ompi_communicator_t *comm)
 {
     /* local variables */
@@ -1249,7 +1249,7 @@ int progress_nb_barrier(mca_coll_sm2_module_t *module)
     
         rc=mca_coll_sm2_nbbarrier_intra_progress(module->module_comm,
                 &(module->barrier_request[barrier_index]),
-                (struct mca_coll_base_module_1_1_0_t *)module);
+                (mca_coll_base_module_t *)module);
         if( OMPI_SUCCESS != rc ) {
             return rc;
         }
@@ -1356,7 +1356,7 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
         /* start non-blocking barrier */
         request=&(module->barrier_request[barrier_index]);
         rc=mca_coll_sm2_nbbarrier_intra(module->module_comm,
-                request,(mca_coll_base_module_1_1_0_t *)module);
+                request,(mca_coll_base_module_t *)module);
         if( OMPI_SUCCESS !=rc ) {
             return rc;
         }
@@ -1373,6 +1373,6 @@ int free_sm2_shared_buffer(mca_coll_sm2_module_t *module)
 
 
 OBJ_CLASS_INSTANCE(mca_coll_sm2_module_t,
-                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_base_module_t,
                    mca_coll_sm2_module_construct,
                    mca_coll_sm2_module_destruct);

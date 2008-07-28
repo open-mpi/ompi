@@ -24,10 +24,8 @@ static mca_rcache_base_module_t* mca_rcache_vma_component_init( void );
 mca_rcache_vma_component_t mca_rcache_vma_component = {
     {
         {
-            /* Indicate that we are a rcache v1.0.0 component (which also
-               implies a specific MCA version) */
-        
-            MCA_RCACHE_BASE_VERSION_1_0_0,
+            MCA_RCACHE_BASE_VERSION_2_0_0,
+
             "vma", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
@@ -35,9 +33,6 @@ mca_rcache_vma_component_t mca_rcache_vma_component = {
             mca_rcache_vma_component_open,  /* component open  */
             NULL
         },
-    
-        /* Next the MCA v1.0.0 component meta data */
-    
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT

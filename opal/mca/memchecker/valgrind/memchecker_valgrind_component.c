@@ -42,31 +42,25 @@ static int valgrind_close(void);
  * and pointers to our public functions in it
  */
 
-const opal_memchecker_base_component_1_0_0_t mca_memchecker_valgrind_component = {
+const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a memchecker v1.0.0 component (which also
-           implies a specific MCA version) */
-        
-        OPAL_MEMCHECKER_BASE_VERSION_1_0_0,
+        OPAL_MEMCHECKER_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-
         "valgrind",
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
 
         /* Component open and close functions */
-
         valgrind_open,
         valgrind_close,
         opal_memchecker_valgrind_component_query
 
     },
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* Valgrind does not offer functionality to save the state  */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

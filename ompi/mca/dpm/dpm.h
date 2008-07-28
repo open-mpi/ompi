@@ -126,7 +126,7 @@ typedef int (*ompi_dpm_base_module_close_port_fn_t)(char *port_name);
 typedef int (*ompi_dpm_base_module_finalize_fn_t)(void);
 
 /**
-* Structure for DPM v1.0.0 modules
+* Structure for DPM modules
  */
 struct ompi_dpm_base_module_1_0_0_t {
     /** Initialization Function */
@@ -157,25 +157,23 @@ OMPI_DECLSPEC extern ompi_dpm_base_module_t ompi_dpm;
 
 
 /**
- * Structure for DPM v1.0.0 components.
+ * Structure for DPM components.
  */
-struct ompi_dpm_base_component_1_0_0_t {
+struct ompi_dpm_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
-typedef struct ompi_dpm_base_component_1_0_0_t ompi_dpm_base_component_1_0_0_t;
-typedef struct ompi_dpm_base_component_1_0_0_t ompi_dpm_base_component_t;
+typedef struct ompi_dpm_base_component_2_0_0_t ompi_dpm_base_component_2_0_0_t;
+typedef struct ompi_dpm_base_component_2_0_0_t ompi_dpm_base_component_t;
 
 /**
- * Macro for use in components that are of type CRCP v1.0.0
+ * Macro for use in components that are of type DPM
  */
-#define OMPI_DPM_BASE_VERSION_1_0_0 \
-    /* DPM v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* DPM v1.0 */ \
-    "dpm", 1, 0, 0
+#define OMPI_DPM_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "dpm", 2, 0, 0
 
 
 END_C_DECLS

@@ -31,14 +31,14 @@
  * Globals
  */
 bool opal_maffinity_base_selected = false;
-const opal_maffinity_base_component_1_0_0_t *opal_maffinity_base_component = NULL;
+const opal_maffinity_base_component_2_0_0_t *opal_maffinity_base_component = NULL;
 const opal_maffinity_base_module_1_0_0_t *opal_maffinity_base_module = NULL;
 
 
 int opal_maffinity_base_select(void)
 {
     int ret, exit_status = OPAL_SUCCESS;
-    opal_maffinity_base_component_1_0_0_t *best_component = NULL;
+    opal_maffinity_base_component_2_0_0_t *best_component = NULL;
     opal_maffinity_base_module_1_0_0_t *best_module = NULL;
 
     /*

@@ -27,7 +27,7 @@ extern "C" {
 /*
  * PML module functions.
  */
-OMPI_MODULE_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_dr_component;
+OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_dr_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

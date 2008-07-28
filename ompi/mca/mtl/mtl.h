@@ -91,13 +91,13 @@ typedef struct mca_mtl_base_module_t*
                                     bool enable_mpi_threads);
 
 
-struct mca_mtl_base_component_1_0_0_t {
+struct mca_mtl_base_component_2_0_0_t {
   mca_base_component_t mtl_version;
-  mca_base_component_data_1_0_0_t mtl_data;
+  mca_base_component_data_t mtl_data;
   mca_mtl_base_component_init_fn_t mtl_init;
 };
-typedef struct mca_mtl_base_component_1_0_0_t mca_mtl_base_component_1_0_0_t;
-typedef struct mca_mtl_base_component_1_0_0_t mca_mtl_base_component_t;
+typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_2_0_0_t;
+typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;
 
 
 /**
@@ -382,13 +382,11 @@ struct mca_mtl_base_module_t {
 typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 
 /*
- * Macro for use in modules that are of type mtl v1.0.0
+ * Macro for use in modules that are of type mtl
  */
-#define MCA_MTL_BASE_VERSION_1_0_0 \
-  /* coll v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* mtl v1.0 */ \
-  "mtl", 1, 0, 0
+#define MCA_MTL_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "mtl", 2, 0, 0
 
 /*
  * macro for doing direct call / call through struct

@@ -45,25 +45,19 @@ orte_ras_base_component_t mca_ras_alps_component = {
        information about the component itself */
 
     {
-        /* Indicate that we are a ras v2.0.0 component (which also
-           implies a specific MCA version) */
-        
         ORTE_RAS_BASE_VERSION_2_0_0,
         
         /* Component name and version */
-        
         "alps",
         ORTE_MAJOR_VERSION,
         ORTE_MINOR_VERSION,
         ORTE_RELEASE_VERSION,
         
         /* Component open and close functions */
-        
         ras_alps_open,
         NULL,
         orte_ras_alps_component_query
     },
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

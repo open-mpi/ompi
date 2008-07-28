@@ -96,7 +96,7 @@ extern char *carto_file_path;
 /**
  * Globally exported variable
  */
-OPAL_DECLSPEC extern const opal_carto_base_component_1_0_0_t
+OPAL_DECLSPEC extern const opal_carto_base_component_2_0_0_t
 mca_carto_file_component;
 
 

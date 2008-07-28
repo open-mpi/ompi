@@ -91,7 +91,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
                                            int *rdispls, 
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
-					   struct mca_coll_base_module_1_1_0_t *module)
+					   mca_coll_base_module_t *module)
 {
    int line = -1, err = 0;
    int rank, size;
@@ -231,7 +231,7 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
                                           void* rbuf, int *rcounts, int *rdisps,
                                           struct ompi_datatype_t *rdtype,
                                           struct ompi_communicator_t *comm,
-					  struct mca_coll_base_module_1_1_0_t *module)
+					  mca_coll_base_module_t *module)
 {
     int line = -1;
     int rank, size;
@@ -364,7 +364,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
                                                   void* rbuf, int *rcounts, int *rdispls,
                                                   struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
-						  struct mca_coll_base_module_1_1_0_t *module)
+						  mca_coll_base_module_t *module)
 {
     int line = -1;
     int rank, size;
@@ -515,7 +515,7 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
                                                int *rdispls,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module)
+					       mca_coll_base_module_t *module)
 {
     int line = -1, err = 0;
     int rank;
@@ -601,7 +601,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
                                                int *disps,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module)
+					       mca_coll_base_module_t *module)
 {
     int i, size, rank ;
     int err;
@@ -742,7 +742,7 @@ int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
                                                int *rdispls,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module)
+					       mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -793,7 +793,7 @@ int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
                                              int *rdispls, 
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module,
+					     mca_coll_base_module_t *module,
                                              int algorithm, int faninout, 
                                              int segsize)
 {

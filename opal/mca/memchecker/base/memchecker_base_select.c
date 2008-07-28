@@ -25,7 +25,7 @@
  * Globals
  */
 bool opal_memchecker_base_selected = false;
-const opal_memchecker_base_component_1_0_0_t *opal_memchecker_base_component = NULL;
+const opal_memchecker_base_component_2_0_0_t *opal_memchecker_base_component = NULL;
 const opal_memchecker_base_module_1_0_0_t *opal_memchecker_base_module = NULL;
 
 
@@ -33,7 +33,7 @@ int opal_memchecker_base_select(void)
 {
 #if OMPI_WANT_MEMCHECKER
     int ret, exit_status = OPAL_SUCCESS;
-    opal_memchecker_base_component_1_0_0_t *best_component = NULL;
+    opal_memchecker_base_component_2_0_0_t *best_component = NULL;
     opal_memchecker_base_module_1_0_0_t *best_module = NULL;
 
     /*

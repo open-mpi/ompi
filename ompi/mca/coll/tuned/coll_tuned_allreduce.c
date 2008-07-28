@@ -46,7 +46,7 @@ ompi_coll_tuned_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module)
+					       mca_coll_base_module_t *module)
 {
     int err;
     int rank;
@@ -122,7 +122,7 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
                                                   struct ompi_datatype_t *dtype,
                                                   struct ompi_op_t *op,
                                                   struct ompi_communicator_t *comm,
-						  struct mca_coll_base_module_1_1_0_t *module) 
+						  mca_coll_base_module_t *module) 
 {
    int ret, line;
    int rank, size, adjsize, remote, distance;
@@ -338,7 +338,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
                                      struct ompi_communicator_t *comm,
-				     struct mca_coll_base_module_1_1_0_t *module) 
+				     mca_coll_base_module_t *module) 
 {
    int ret, line;
    int rank, size, k, recv_from, send_to;
@@ -616,7 +616,7 @@ ompi_coll_tuned_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
-					       struct mca_coll_base_module_1_1_0_t *module,
+					       mca_coll_base_module_t *module,
                                                uint32_t segsize) 
 {
    int ret, line;
@@ -882,7 +882,7 @@ ompi_coll_tuned_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
                                              struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     int err;
     int rank;
@@ -978,7 +978,7 @@ int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
                                               struct ompi_datatype_t *dtype,
                                               struct ompi_op_t *op,
                                               struct ompi_communicator_t *comm,
-					      struct mca_coll_base_module_1_1_0_t *module)
+					      mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -1008,7 +1008,7 @@ int ompi_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
                                             struct ompi_datatype_t *dtype,
                                             struct ompi_op_t *op,
                                             struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module,
+					    mca_coll_base_module_t *module,
                                             int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d", 

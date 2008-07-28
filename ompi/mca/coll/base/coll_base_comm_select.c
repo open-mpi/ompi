@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Lawrence Livermore National Security, LLC.  All
  *                         rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,7 +50,7 @@ struct avail_coll_t {
     opal_list_item_t super;
 
     int ac_priority;
-    mca_coll_base_module_1_1_0_t *ac_module;
+    mca_coll_base_module_2_0_0_t *ac_module;
 };
 typedef struct avail_coll_t avail_coll_t;
 
@@ -62,15 +63,15 @@ static opal_list_t *check_components(opal_list_t *components,
                                      char **names, int num_names);
 static int check_one_component(ompi_communicator_t *comm, 
                                const mca_base_component_t *component,
-                               mca_coll_base_module_1_1_0_t **module);
+                               mca_coll_base_module_2_0_0_t **module);
 
 static int query(const mca_base_component_t *component, 
                  ompi_communicator_t *comm, int *priority,
-                 mca_coll_base_module_1_1_0_t **module);
+                 mca_coll_base_module_2_0_0_t **module);
 
-static int query_1_1_0(const mca_coll_base_component_1_1_0_t *coll_component, 
+static int query_2_0_0(const mca_coll_base_component_2_0_0_t *coll_component, 
                        ompi_communicator_t *comm, int *priority,
-                       mca_coll_base_module_1_1_0_t **module);
+                       mca_coll_base_module_2_0_0_t **module);
 
 /*
  * Stuff for the OBJ interface
@@ -233,7 +234,7 @@ static opal_list_t *check_components(opal_list_t *components,
     int i, priority;
     const mca_base_component_t *component;
     opal_list_item_t *item, *item2;
-    mca_coll_base_module_1_1_0_t *module;
+    mca_coll_base_module_2_0_0_t *module;
     bool want_to_check;
     opal_list_t *selectable;
     avail_coll_t *avail, *avail2;
@@ -313,7 +314,7 @@ static opal_list_t *check_components(opal_list_t *components,
  */
 static int check_one_component(ompi_communicator_t *comm, 
                                const mca_base_component_t *component,
-                               mca_coll_base_module_1_1_0_t **module)
+                               mca_coll_base_module_2_0_0_t **module)
 {
     int err;
     int priority = -1;
@@ -347,18 +348,16 @@ static int check_one_component(ompi_communicator_t *comm,
  */
 static int query(const mca_base_component_t *component, 
                  ompi_communicator_t *comm, 
-                 int *priority, mca_coll_base_module_1_1_0_t **module)
+                 int *priority, mca_coll_base_module_2_0_0_t **module)
 {
-    /* coll v1.1.0 */
-
     *module = NULL;
-    if (1 == component->mca_type_major_version &&
-        1 == component->mca_type_minor_version &&
+    if (2 == component->mca_type_major_version &&
+        0 == component->mca_type_minor_version &&
         0 == component->mca_type_release_version) {
-        const mca_coll_base_component_1_1_0_t *coll100 = 
-            (mca_coll_base_component_1_1_0_t *) component;
+        const mca_coll_base_component_2_0_0_t *coll100 = 
+            (mca_coll_base_component_2_0_0_t *) component;
 
-        return query_1_1_0(coll100, comm, priority, module);
+        return query_2_0_0(coll100, comm, priority, module);
     } 
 
     /* Unknown coll API version -- return error */
@@ -367,11 +366,11 @@ static int query(const mca_base_component_t *component,
 }
 
 
-static int query_1_1_0(const mca_coll_base_component_1_1_0_t *component,
+static int query_2_0_0(const mca_coll_base_component_2_0_0_t *component,
                        ompi_communicator_t *comm, int *priority,
-                       mca_coll_base_module_1_1_0_t **module)
+                       mca_coll_base_module_2_0_0_t **module)
 {
-    mca_coll_base_module_1_1_0_t *ret;
+    mca_coll_base_module_2_0_0_t *ret;
 
     /* There's currently no need for conversion */
 

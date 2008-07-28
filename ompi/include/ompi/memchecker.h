@@ -235,7 +235,7 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->c_coll.coll_scatter, sizeof(mca_coll_base_module_scatter_fn_t));
     opal_memchecker_base_isdefined (&comm->c_coll.coll_scatterv, sizeof(mca_coll_base_module_scatterv_fn_t));
 
-    opal_memchecker_base_isdefined (&comm->c_coll_selected_component, sizeof(const mca_coll_base_component_1_0_0_t *));
+    opal_memchecker_base_isdefined (&comm->c_coll_selected_component, sizeof(const mca_coll_base_component_2_0_0_t *));
     opal_memchecker_base_isdefined (&comm->c_coll_selected_module, sizeof(const mca_coll_base_module_1_0_0_t *));
     /* Somehow, this often shows up in petsc with comm_dup'ed communicators*/
     /* opal_memchecker_base_isdefined (&comm->c_coll_selected_data, sizeof(struct mca_coll_base_comm_t *)); */

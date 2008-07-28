@@ -39,7 +39,7 @@ int mca_coll_demo_scatter_intra(void *sbuf, int scount,
                                 struct ompi_datatype_t *rdtype,
                                 int root, 
                                 struct ompi_communicator_t *comm,
-                                struct mca_coll_base_module_1_1_0_t *module)
+                                mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scatter_intra");
@@ -63,7 +63,7 @@ int mca_coll_demo_scatter_inter(void *sbuf, int scount,
                                 struct ompi_datatype_t *rdtype,
                                 int root, 
                                 struct ompi_communicator_t *comm,
-                                struct mca_coll_base_module_1_1_0_t *module)
+                                mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo scatter_inter");

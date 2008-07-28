@@ -51,7 +51,7 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
          *  meta information about the component itrsh
          */
         {
-            ORTE_FILEM_BASE_VERSION_1_0_0,
+            ORTE_FILEM_BASE_VERSION_2_0_0,
             /* Component name and version */
             "rsh",
             OMPI_MAJOR_VERSION,
@@ -63,8 +63,6 @@ orte_filem_rsh_component_t mca_filem_rsh_component = {
             filem_rsh_close,
             orte_filem_rsh_component_query
         },
-
-        /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT

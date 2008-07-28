@@ -132,10 +132,10 @@ typedef struct mca_allocator_base_module_t*
  * The data structure provided by each component to the framework which
  * describes the component.
  */
-struct mca_allocator_base_component_1_0_0_t {
+struct mca_allocator_base_component_2_0_0_t {
     mca_base_component_t allocator_version; 
     /**< The version of the component */
-    mca_base_component_data_1_0_0_t allocator_data; 
+    mca_base_component_data_t allocator_data; 
     /**< The component metadata */
     mca_allocator_base_component_init_fn_t allocator_init; 
     /**< The component initialization function. */
@@ -144,16 +144,14 @@ struct mca_allocator_base_component_1_0_0_t {
 /**
  * Convenience typedef.
  */
-typedef struct mca_allocator_base_component_1_0_0_t mca_allocator_base_component_t;
+typedef struct mca_allocator_base_component_2_0_0_t mca_allocator_base_component_t;
 
 /**
- * Macro for use in components that are of type allocator v1.0.0
+ * Macro for use in components that are of type allocator
  */
-#define MCA_ALLOCATOR_BASE_VERSION_1_0_0 \
-  /* allocator v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* allocator v1.0 */ \
-  "allocator", 1, 0, 0
+#define MCA_ALLOCATOR_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "allocator", 2, 0, 0
 
 /**
  * The output integer used for the mca base

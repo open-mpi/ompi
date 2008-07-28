@@ -210,13 +210,13 @@ typedef int (*opal_crs_base_module_reg_thread_fn_t)
      (void);
 
 /**
- * Structure for CRS v1.0.0 components.
+ * Structure for CRS components.
  */
-struct opal_crs_base_component_1_0_0_t {
+struct opal_crs_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 
     /** Verbosity Level */
     int verbose;
@@ -225,11 +225,11 @@ struct opal_crs_base_component_1_0_0_t {
     /** Default Priority */
     int priority;
 };
-typedef struct opal_crs_base_component_1_0_0_t opal_crs_base_component_1_0_0_t;
-typedef struct opal_crs_base_component_1_0_0_t opal_crs_base_component_t;
+typedef struct opal_crs_base_component_2_0_0_t opal_crs_base_component_2_0_0_t;
+typedef struct opal_crs_base_component_2_0_0_t opal_crs_base_component_t;
 
 /**
- * Structure for CRS v1.0.0 modules
+ * Structure for CRS modules
  */
 struct opal_crs_base_module_1_0_0_t {
     /** Initialization Function */
@@ -260,13 +260,11 @@ typedef struct opal_crs_base_module_1_0_0_t opal_crs_base_module_t;
 OPAL_DECLSPEC extern opal_crs_base_module_t opal_crs;
 
 /**
- * Macro for use in components that are of type CRS v1.0.0
+ * Macro for use in components that are of type CRS
  */
-#define OPAL_CRS_BASE_VERSION_1_0_0 \
-    /* CRS v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* CRS v1.0 */ \
-    "crs", 1, 0, 0
+#define OPAL_CRS_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "crs", 2, 0, 0
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

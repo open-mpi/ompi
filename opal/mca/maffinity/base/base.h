@@ -130,7 +130,7 @@ extern bool opal_maffinity_base_selected;
 /**
  * Global component struct for the selected component
  */
-OPAL_DECLSPEC extern const opal_maffinity_base_component_1_0_0_t 
+OPAL_DECLSPEC extern const opal_maffinity_base_component_2_0_0_t 
 *opal_maffinity_base_component;
 /**
  * Global module struct for the selected module

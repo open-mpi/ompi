@@ -41,7 +41,7 @@ mca_coll_inter_allgatherv_inter(void *sbuf, int scount,
                                 void *rbuf, int *rcounts, int *disps,
                                 struct ompi_datatype_t *rdtype,
                                 struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int i, rank, size, size_local, total=0, err;
     int *count=NULL,*displace=NULL;

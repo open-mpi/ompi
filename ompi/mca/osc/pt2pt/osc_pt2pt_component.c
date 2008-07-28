@@ -47,7 +47,7 @@ static void* component_thread_fn(opal_object_t *obj);
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
     { /* ompi_osc_base_component_t */
         { /* ompi_base_component_t */
-            OMPI_OSC_BASE_VERSION_1_0_0,
+            OMPI_OSC_BASE_VERSION_2_0_0,
             "pt2pt",
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */

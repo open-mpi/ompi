@@ -22,13 +22,11 @@
 #include "opal/mca/timer/solaris/timer_solaris.h"
 
 
-const opal_timer_base_component_1_0_0_t mca_timer_solaris_component = {
+const opal_timer_base_component_2_0_0_t mca_timer_solaris_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a timer v1.0.0 component (which also
-           implies a specific MCA version) */
-        OPAL_TIMER_BASE_VERSION_1_0_0,
+        OPAL_TIMER_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "solaris",
@@ -40,8 +38,6 @@ const opal_timer_base_component_1_0_0_t mca_timer_solaris_component = {
         NULL,
         NULL
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

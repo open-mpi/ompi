@@ -199,7 +199,7 @@ extern "C" {
     /**
      * Global component struct for the selected component
      */
-    OPAL_DECLSPEC extern const opal_paffinity_base_component_1_1_0_t 
+    OPAL_DECLSPEC extern const opal_paffinity_base_component_2_0_0_t 
         *opal_paffinity_base_component;
     /**
      * Global module struct for the selected module

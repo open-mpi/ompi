@@ -51,7 +51,7 @@ extern "C" {
  */
 
 struct mca_btl_gm_component_t {
-    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */ 
+    mca_btl_base_component_2_0_0_t super;  /**< base BTL component */ 
     
     size_t  gm_num_btls; /**< number of hcas available to the GM component */
     size_t  gm_max_btls; /**< maximum number of supported hcas */

@@ -59,7 +59,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
-                                    struct mca_coll_base_module_1_1_0_t *module)
+                                    mca_coll_base_module_t *module)
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
     ptrdiff_t true_lb, true_extent, lb, extent, buf_size;
@@ -356,7 +356,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
-                                    struct mca_coll_base_module_1_1_0_t *module)
+                                    mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize;
     int totalcounts, tcount;

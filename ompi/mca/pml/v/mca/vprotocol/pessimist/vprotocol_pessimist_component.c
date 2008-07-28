@@ -31,14 +31,13 @@ static int _sender_based_size;
 static int _event_buffer_size;
 static char *_mmap_file_name;
 
-mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component = 
+mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component = 
 {
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
     {
-      /* Indicate that we are a vprotocol v1.0.0 component (which also implies
-         a specific MCA version) */
-      MCA_VPROTOCOL_BASE_VERSION_1_0_0,
+      MCA_VPROTOCOL_BASE_VERSION_2_0_0,
+
       "pessimist", /* MCA component name */
       OMPI_MAJOR_VERSION,  /* MCA component major version */
       OMPI_MINOR_VERSION,  /* MCA component minor version */
@@ -46,11 +45,9 @@ mca_vprotocol_base_component_1_0_0_t mca_vprotocol_pessimist_component =
       mca_vprotocol_pessimist_component_open,  /* component open */
       mca_vprotocol_pessimist_component_close  /* component close */
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
-      /* Whether the component is checkpointable or not */
-      false
+        /* component is not checkpointable */
+        MCA_BASE_METADATA_PARAM_NONE
     },
 
     mca_vprotocol_pessimist_component_init,  /* component init */

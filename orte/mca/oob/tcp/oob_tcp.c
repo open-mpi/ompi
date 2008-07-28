@@ -117,7 +117,7 @@ int mca_oob_tcp_output_handle = 0;
 mca_oob_tcp_component_t mca_oob_tcp_component = {
   {
     {
-        MCA_OOB_BASE_VERSION_1_0_0,
+        MCA_OOB_BASE_VERSION_2_0_0,
         "tcp", /* MCA module name */
         ORTE_MAJOR_VERSION,
         ORTE_MINOR_VERSION,

@@ -146,14 +146,14 @@ typedef int (*mca_pml_base_component_finalize_fn_t)(void);
  * PML component version and interface functions.
  */
 
-struct mca_pml_base_component_1_0_0_t {
+struct mca_pml_base_component_2_0_0_t {
    mca_base_component_t pmlm_version;
-   mca_base_component_data_1_0_0_t pmlm_data;
+   mca_base_component_data_t pmlm_data;
    mca_pml_base_component_init_fn_t pmlm_init;
    mca_pml_base_component_finalize_fn_t pmlm_finalize;
 };
-typedef struct mca_pml_base_component_1_0_0_t mca_pml_base_component_1_0_0_t;
-typedef mca_pml_base_component_1_0_0_t mca_pml_base_component_t;
+typedef struct mca_pml_base_component_2_0_0_t mca_pml_base_component_2_0_0_t;
+typedef mca_pml_base_component_2_0_0_t mca_pml_base_component_t;
 
 
 /**
@@ -531,13 +531,11 @@ typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
 
 /*
- * Macro for use in components that are of type pml v1.0.0
+ * Macro for use in components that are of type pml
  */
-#define MCA_PML_BASE_VERSION_1_0_0 \
-  /* pml v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* pml v1.0 */ \
-  "pml", 1, 0, 0
+#define MCA_PML_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "pml", 2, 0, 0
 
     /*
      * macro for doing direct call / call through struct

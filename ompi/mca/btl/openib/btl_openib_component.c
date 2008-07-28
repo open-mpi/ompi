@@ -99,10 +99,7 @@ mca_btl_openib_component_t mca_btl_openib_component = {
            about the component itself */
 
         {
-            /* Indicate that we are a pml v1.0.0 component (which also implies a
-               specific MCA version) */
-
-            MCA_BTL_BASE_VERSION_1_0_1,
+            MCA_BTL_BASE_VERSION_2_0_0,
 
             "openib", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
@@ -111,9 +108,6 @@ mca_btl_openib_component_t mca_btl_openib_component = {
             btl_openib_component_open,  /* component open */
             btl_openib_component_close  /* component close */
         },
-
-        /* Next the MCA v1.0.0 component meta data */
-
         {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE

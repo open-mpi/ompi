@@ -40,9 +40,7 @@ extern orte_ess_base_module_t orte_ess_hnp_module;
  */
 orte_ess_base_component_t mca_ess_hnp_component = {
     {
-        /* Indicate that we are a ess v1.0.0 component (which also
-           implies a specific MCA version) */
-        ORTE_ESS_BASE_VERSION_1_0_0,
+        ORTE_ESS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "hnp",
@@ -55,7 +53,6 @@ orte_ess_base_component_t mca_ess_hnp_component = {
         orte_ess_hnp_component_close,
         orte_ess_hnp_component_query
     },
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

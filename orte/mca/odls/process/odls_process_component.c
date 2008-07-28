@@ -40,25 +40,18 @@ orte_odls_base_component_t mca_odls_process_component = {
     /* First, the mca_component_t struct containing meta information
     about the component itself */
     {
-        /* Indicate that we are a odls v1.3.0 component (which also
-        implies a specific MCA version) */
-        
-        ORTE_ODLS_BASE_VERSION_1_3_0,
+        ORTE_ODLS_BASE_VERSION_2_0_0,
         /* Component name and version */
-
         "process",
         ORTE_MAJOR_VERSION,
         ORTE_MINOR_VERSION,
         ORTE_RELEASE_VERSION,
 
         /* Component open and close functions */
-
         orte_odls_process_component_open,
         orte_odls_process_component_close,
         orte_odls_process_component_query
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

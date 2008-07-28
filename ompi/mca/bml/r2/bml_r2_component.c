@@ -27,15 +27,14 @@
 #include "bml_r2.h"
 
 
-mca_bml_base_component_1_0_0_t mca_bml_r2_component = {
+mca_bml_base_component_2_0_0_t mca_bml_r2_component = {
 
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
     {
-        /* Indicate that we are a bml v1.0.0 component (which also implies
-         a specific MCA version) */
-        MCA_BML_BASE_VERSION_1_0_0,
+        MCA_BML_BASE_VERSION_2_0_0,
+
         "r2", /* MCA component name */
         OMPI_MAJOR_VERSION,  /* MCA component major version */
         OMPI_MINOR_VERSION,  /* MCA component minor version */
@@ -43,8 +42,6 @@ mca_bml_base_component_1_0_0_t mca_bml_r2_component = {
         mca_bml_r2_component_open,  /* component open */
         mca_bml_r2_component_close  /* component close */
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

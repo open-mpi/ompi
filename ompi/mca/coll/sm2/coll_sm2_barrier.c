@@ -56,7 +56,7 @@ extern int debug_print;
 /* non-blocking barrier - init function */
 int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
         mca_coll_sm2_nb_request_process_private_mem_t *request,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
 
     /* since completion must be in-order for the sm collective buffer allocation
@@ -118,7 +118,7 @@ int mca_coll_sm2_nbbarrier_intra(struct ompi_communicator_t *comm,
 /* non-blocking barrier - completion function */
 int mca_coll_sm2_nbbarrier_intra_progress(struct ompi_communicator_t *comm,
         mca_coll_sm2_nb_request_process_private_mem_t *request,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
 
     /* local variables */
@@ -316,7 +316,7 @@ DONE:
  */
 int mca_coll_sm2_barrier_intra_fanin_fanout(
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc=OMPI_SUCCESS,bar_buff_index;
@@ -494,7 +494,7 @@ Error:
  */
 int mca_coll_sm2_barrier_intra_recursive_doubling( 
         struct ompi_communicator_t *comm,
-        struct mca_coll_base_module_1_1_0_t *module)
+        mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc=OMPI_SUCCESS;
@@ -691,7 +691,7 @@ Error:
  * Shared memory blocking barrier
  */
 int mca_coll_sm2_barrier_intra( struct ompi_communicator_t *comm,
-                                struct mca_coll_base_module_1_1_0_t *module)
+                                mca_coll_base_module_t *module)
 {
     /* local variables */
     int rc;

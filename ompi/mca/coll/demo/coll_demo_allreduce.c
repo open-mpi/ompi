@@ -37,7 +37,7 @@ int mca_coll_demo_allreduce_intra(void *sbuf, void *rbuf, int count,
                                   struct ompi_datatype_t *dtype, 
                                   struct ompi_op_t *op,
                                   struct ompi_communicator_t *comm,
-                                  struct mca_coll_base_module_1_1_0_t *module)
+                                  mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo allreduce_intra");
@@ -58,7 +58,7 @@ int mca_coll_demo_allreduce_inter(void *sbuf, void *rbuf, int count,
                                   struct ompi_datatype_t *dtype,
                                   struct ompi_op_t *op,
                                   struct ompi_communicator_t *comm,
-                                  struct mca_coll_base_module_1_1_0_t *module)
+                                  mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, mca_coll_base_output, "In demo allreduce_inter");

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,7 +71,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  */  
 
 int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
-                               struct mca_base_component_t *preferred) 
+                               mca_base_component_t *preferred) 
 {
     int priority; 
     int best_priority; 

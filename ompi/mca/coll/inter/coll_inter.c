@@ -90,7 +90,7 @@ int mca_coll_inter_init_query(bool allow_inter_user_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     int size, rsize;
@@ -148,7 +148,7 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
  * Init module on the communicator
  */
 int
-mca_coll_inter_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+mca_coll_inter_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
     int size, rank;

@@ -112,7 +112,7 @@ int mca_coll_demo_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_demo_module_t *demo_module;
@@ -177,7 +177,7 @@ mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
     } while (0)
 
 int
-mca_coll_demo_module_enable(mca_coll_base_module_1_1_0_t *module,
+mca_coll_demo_module_enable(mca_coll_base_module_t *module,
                             struct ompi_communicator_t *comm)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;

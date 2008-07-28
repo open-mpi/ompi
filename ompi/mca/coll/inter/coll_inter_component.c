@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,35 +53,27 @@ static int inter_open(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_1_1_0_t mca_coll_inter_component = {
+const mca_coll_base_component_2_0_0_t mca_coll_inter_component = {
 
   /* First, the mca_component_t struct containing meta information
      about the component itself */
 
   {
-    /* Indicate that we are a coll v1.0.0 component (which also implies a
-       specific MCA version) */
-
-    MCA_COLL_BASE_VERSION_1_1_0,
+    MCA_COLL_BASE_VERSION_2_0_0,
 
     /* Component name and version */
-
     "inter",
     OMPI_MAJOR_VERSION,
     OMPI_MINOR_VERSION,
     OMPI_RELEASE_VERSION,
 
     /* Component open and close functions */
-
     inter_open,
     NULL
   },
-
-  /* Next the MCA v1.0.0 component meta data */
-
   {
-   /* Whether the component is checkpointable or not */
-   true
+      /* This component is checkpointable */
+      MCA_BASE_METADATA_PARAM_CHECKPOINT
   },
 
   /* Initialization / querying functions */
@@ -125,6 +118,6 @@ mca_coll_inter_module_destruct(mca_coll_inter_module_t *module)
 
 
 OBJ_CLASS_INSTANCE(mca_coll_inter_module_t,
-                   mca_coll_base_module_1_1_0_t,
+                   mca_coll_base_module_t,
                    mca_coll_inter_module_construct,
                    mca_coll_inter_module_destruct);

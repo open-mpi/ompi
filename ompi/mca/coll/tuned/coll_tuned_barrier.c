@@ -51,7 +51,7 @@
  *
  */
 int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
-					     struct mca_coll_base_module_1_1_0_t *module)
+					     mca_coll_base_module_t *module)
 {
     int rank, size;
     int err=0, line=0;
@@ -123,7 +123,7 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
  */
 
 int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *comm,
-						    struct mca_coll_base_module_1_1_0_t *module)
+						    mca_coll_base_module_t *module)
 {
     int rank, size, adjsize;
     int err, line;
@@ -207,7 +207,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
  */
 
 int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
-					struct mca_coll_base_module_1_1_0_t *module)
+					mca_coll_base_module_t *module)
 {
     int rank, size;
     int distance, to, from;
@@ -246,7 +246,7 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
  */
 /* special case for two processes */
 int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     int remote, err;
 
@@ -279,7 +279,7 @@ int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm,
 /* copied function (with appropriate renaming) starts here */
 
 static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
-						      struct mca_coll_base_module_1_1_0_t *module)
+						      mca_coll_base_module_t *module)
 {
     int i, err;
     int size = ompi_comm_size(comm);
@@ -344,7 +344,7 @@ static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t
  * we go up the tree and back down the tree.  
  */
 int ompi_coll_tuned_barrier_intra_tree(struct ompi_communicator_t *comm,
-                                       struct mca_coll_base_module_1_1_0_t *module)
+                                       mca_coll_base_module_t *module)
 {
     int rank, size, depth;
     int err, jump, partner;
@@ -444,7 +444,7 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
 
 
 int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
-					    struct mca_coll_base_module_1_1_0_t *module)
+					    mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -472,7 +472,7 @@ int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm,
 
 
 int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm,
-					   struct mca_coll_base_module_1_1_0_t *module,
+					   mca_coll_base_module_t *module,
 					   int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));

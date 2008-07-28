@@ -40,7 +40,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
 				      struct ompi_datatype_t *rdtype,
 				      int root,
 				      struct ompi_communicator_t *comm,
-				      struct mca_coll_base_module_1_1_0_t *module)
+				      mca_coll_base_module_t *module)
 {
     int line = -1;
     int i;
@@ -214,7 +214,7 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
                                          struct ompi_datatype_t *rdtype,
                                          int root, 
                                          struct ompi_communicator_t *comm,
-					 struct mca_coll_base_module_1_1_0_t *module,
+					 mca_coll_base_module_t *module,
                                          int first_segment_size)
 {
     int i;
@@ -368,7 +368,7 @@ ompi_coll_tuned_gather_intra_basic_linear(void *sbuf, int scount,
 					  struct ompi_datatype_t *rdtype,
 					  int root,
 					  struct ompi_communicator_t *comm,
-					  struct mca_coll_base_module_1_1_0_t *module)
+					  mca_coll_base_module_t *module)
 {
     int i;
     int err;
@@ -492,7 +492,7 @@ ompi_coll_tuned_gather_intra_do_forced(void *sbuf, int scount,
 				       struct ompi_datatype_t *rdtype,
 				       int root,
 				       struct ompi_communicator_t *comm,
-				       struct mca_coll_base_module_1_1_0_t *module)
+				       mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -538,7 +538,7 @@ ompi_coll_tuned_gather_intra_do_this(void *sbuf, int scount,
 				     struct ompi_datatype_t *rdtype,
 				     int root,
 				     struct ompi_communicator_t *comm,
-				     struct mca_coll_base_module_1_1_0_t *module,
+				     mca_coll_base_module_t *module,
 				     int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,

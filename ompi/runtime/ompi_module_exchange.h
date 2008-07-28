@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,6 +51,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+
+#include "opal/mca/mca.h"
 
 #include "orte/types.h"
 
@@ -102,7 +105,7 @@ BEGIN_C_DECLS
  * @retval OMPI_SUCCESS On success
  * @retval OMPI_ERROR   An unspecified error occurred
  */
-OMPI_DECLSPEC int ompi_modex_send(struct mca_base_component_t *source_component, 
+OMPI_DECLSPEC int ompi_modex_send(mca_base_component_t *source_component, 
                                   const void *buffer, size_t size);
 
 
@@ -165,7 +168,7 @@ OMPI_DECLSPEC int ompi_modex_send_string(const char* key,
  * @retval OMPI_ERR_OUT_OF_RESOURCE No memory could be allocated for the
  *                       buffer.
  */
-OMPI_DECLSPEC int ompi_modex_recv(struct mca_base_component_t *dest_component,
+OMPI_DECLSPEC int ompi_modex_recv(mca_base_component_t *dest_component,
                                   struct ompi_proc_t *source_proc,
                                   void **buffer, size_t *size);
 

@@ -45,10 +45,7 @@ mca_mtl_mx_component_t mca_mtl_mx_component = {
          * information about the component itself */
         
         {
-            /* Indicate that we are a mtl v1.0.0 component (which also implies
-             *          a specific MCA version) */
-            
-            MCA_MTL_BASE_VERSION_1_0_0,
+            MCA_MTL_BASE_VERSION_2_0_0,
             
             "mx", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
@@ -57,9 +54,6 @@ mca_mtl_mx_component_t mca_mtl_mx_component = {
             ompi_mtl_mx_component_open,  /* component open */
             ompi_mtl_mx_component_close  /* component close */
         },
-        
-        /* Next the MCA v1.0.0 component meta data */
-        
         {
             /* The component is not checkpoint ready */
             MCA_BASE_METADATA_PARAM_NONE

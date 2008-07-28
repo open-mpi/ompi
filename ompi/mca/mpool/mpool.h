@@ -146,20 +146,20 @@ typedef int (*mca_mpool_base_module_ft_event_fn_t)(int state);
  * mpool component descriptor. Contains component version information
  * and open/close/init functions.
  */
-struct mca_mpool_base_component_1_0_0_t {
+struct mca_mpool_base_component_2_0_0_t {
   mca_base_component_t mpool_version;        /**< version */
-  mca_base_component_data_1_0_0_t mpool_data;/**< metadata */
+  mca_base_component_data_t mpool_data;/**< metadata */
 
   mca_mpool_base_component_init_fn_t mpool_init;    /**< init function */
 };
 /**
  * Convenience typedef.
  */
-typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_1_0_0_t;
+typedef struct mca_mpool_base_component_2_0_0_t mca_mpool_base_component_2_0_0_t;
 /**
   * Convenience typedef
   */
-typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_t;
+typedef struct mca_mpool_base_component_2_0_0_t mca_mpool_base_component_t;
 
 /**
  *  mpool module descriptor. Contains the interface functions exported
@@ -243,13 +243,11 @@ OMPI_DECLSPEC int mca_mpool_base_insert(
 OMPI_DECLSPEC int mca_mpool_base_remove(void * base); 
 
 /**
- * Macro for use in components that are of type mpool v1.0.0
+ * Macro for use in components that are of type mpool
  */
-#define MCA_MPOOL_BASE_VERSION_1_0_0 \
-  /* mpool v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* mpool v1.0 */ \
-  "mpool", 1, 0, 0
+#define MCA_MPOOL_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "mpool", 2, 0, 0
 
 #endif /* MCA_MPOOL_H */
 

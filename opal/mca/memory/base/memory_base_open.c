@@ -40,7 +40,7 @@
  * Globals
  */
 opal_list_t opal_memory_base_components_opened;
-opal_memory_base_component_1_0_0_t *opal_memory_active_component = NULL;
+opal_memory_base_component_2_0_0_t *opal_memory_active_component = NULL;
 
 /*
  * Function for finding and opening either all MCA components, or the one
@@ -62,7 +62,7 @@ int opal_memory_base_open(void)
         mca_base_component_list_item_t *item;
         item = (mca_base_component_list_item_t*) 
             opal_list_get_first(&opal_memory_base_components_opened);
-        opal_memory_active_component = (opal_memory_base_component_1_0_0_t*)
+        opal_memory_active_component = (opal_memory_base_component_2_0_0_t*)
             item->cli_component;
     }
 

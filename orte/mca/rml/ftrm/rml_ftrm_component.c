@@ -41,9 +41,7 @@ orte_rml_component_t mca_rml_ftrm_component = {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
       {
-        /* Indicate that we are a rml v1.0.0 component (which also
-           implies a specific MCA version) */
-        ORTE_RML_BASE_VERSION_1_0_0,
+        ORTE_RML_BASE_VERSION_2_0_0,
 
         "ftrm", /* MCA component name */
         ORTE_MAJOR_VERSION,    /* MCA component major version */
@@ -53,8 +51,6 @@ orte_rml_component_t mca_rml_ftrm_component = {
         orte_rml_ftrm_open,    /* component open */
         orte_rml_ftrm_close,   /* component close */
       },
-
-      /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT

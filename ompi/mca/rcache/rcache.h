@@ -62,15 +62,15 @@ typedef void (*mca_rcache_base_module_finalize_fn_t)(
  * open/close/init functions 
  */ 
 
-struct mca_rcache_base_component_1_0_0_t{ 
+struct mca_rcache_base_component_2_0_0_t{ 
     mca_base_component_t rcache_version;      /**< version */ 
-    mca_base_component_data_1_0_0_t rcache_data; /**<metadata */ 
+    mca_base_component_data_t rcache_data; /**<metadata */ 
     mca_rcache_base_component_init_fn_t rcache_init; /**<init function */ 
 }; 
 
-typedef struct mca_rcache_base_component_1_0_0_t mca_rcache_base_component_1_0_0_t; 
+typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_2_0_0_t; 
 
-typedef struct mca_rcache_base_component_1_0_0_t mca_rcache_base_component_t; 
+typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_t; 
 
 
 /**
@@ -88,13 +88,11 @@ struct mca_rcache_base_module_t {
 typedef struct mca_rcache_base_module_t mca_rcache_base_module_t;
 
 /**
- * Macro for use in components that are of type rcache v1.0.0
+ * Macro for use in components that are of type rcache
  */
-#define MCA_RCACHE_BASE_VERSION_1_0_0 \
-  /* rcache v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* rcache v1.0 */ \
-  "rcache", 1, 0, 0
+#define MCA_RCACHE_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "rcache", 2, 0, 0
 
 #endif /* MCA_RCACHE_H */
 

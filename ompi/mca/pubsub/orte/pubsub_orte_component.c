@@ -31,10 +31,7 @@ ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
            information about the component itself */
 
         {
-          /* Indicate that we are a pubsub v1.0.0 component (which also implies
-             a specific MCA version) */
-
-          OMPI_PUBSUB_BASE_VERSION_1_0_0,
+          OMPI_PUBSUB_BASE_VERSION_2_0_0,
         
           "orte", /* MCA component name */
           OMPI_MAJOR_VERSION,  /* MCA component major version */
@@ -44,8 +41,6 @@ ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
           pubsub_orte_component_close, /* component close */
           pubsub_orte_component_query  /* component query */
         },
-
-        /* Next the MCA v1.0.0 component meta data */
         {
             /* This component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
