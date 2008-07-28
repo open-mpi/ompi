@@ -97,7 +97,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
          */
-        if (0 == strcmp(node->name, hnp_node->name) || opal_ifislocal(node->name)) {
+        if (opal_ifislocal(node->name)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert updating HNP info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -109,9 +109,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             jdata->total_slots_alloc -= hnp_node->slots;
             /* copy the allocation data to that node's info */
             hnp_node->slots = node->slots;
-            hnp_node->slots_alloc = node->slots_alloc;
             hnp_node->slots_max = node->slots_max;
             hnp_node->launch_id = node->launch_id;
+            /* default allocate all the slots - may be modified later
+             * as a result of filtering actions in mapper
+             */
+            hnp_node->slots_alloc = node->slots;
             /* use the local name for our node - don't trust what
              * we got from an RM
              */
@@ -125,7 +128,9 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
                                  "%s ras:base:node_insert node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));
-            /* allocate all the available slots */
+            /* default allocate all the slots - may be modified later
+             * as a result of filtering actions in mapper
+             */
             node->slots_alloc = node->slots;
             /* insert it into the array */
             node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
