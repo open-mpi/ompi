@@ -190,11 +190,8 @@ static int map_app_by_node(
         }
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
-        if ( NULL != orte_mca_rmaps_rank_file_slot_list){
-            node->slot_list = (char*) malloc(64*sizeof(char));
-            if ( NULL != node->slot_list ) {
-                strcpy(node->slot_list, orte_mca_rmaps_rank_file_slot_list);
-            }
+        if ( NULL != orte_rmaps_base.slot_list ) {
+            node->slot_list = strdup(orte_rmaps_base.slot_list);
         }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
                                              nodes, jdata->map->oversubscribe, true))) {
@@ -300,11 +297,8 @@ static int map_app_by_slot(
                 ++num_alloc;
                 continue;
             }
-            if ( NULL != orte_mca_rmaps_rank_file_slot_list){
-                node->slot_list = (char*) malloc(64*sizeof(char));
-                if ( NULL != node->slot_list ) {
-                    strcpy(node->slot_list, orte_mca_rmaps_rank_file_slot_list);
-                }
+            if ( NULL != orte_rmaps_base.slot_list ) {
+                node->slot_list = strdup(orte_rmaps_base.slot_list);
             }
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
                                                  nodes, jdata->map->oversubscribe, true))) {
