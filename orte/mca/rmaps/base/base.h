@@ -71,6 +71,8 @@ typedef struct {
     bool display_map;
     /* balance load across nodes */
     bool loadbalance;
+    /* slot list, if provided by user */
+    char *slot_list;
 } orte_rmaps_base_t;
 
 /**

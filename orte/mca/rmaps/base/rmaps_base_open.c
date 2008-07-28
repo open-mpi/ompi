@@ -127,6 +127,11 @@ int orte_rmaps_base_open(void)
         }
     }
     
+    /* did the user provide a slot list? */
+    param = mca_base_param_reg_string_name("rmaps", "base_slot_list",
+                                           "List of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files) [default=NULL]",
+                                           false, false, NULL, &orte_rmaps_base.slot_list);
+
     /* Should we schedule on the local node or not? */
 
     mca_base_param_reg_int_name("rmaps", "base_no_schedule_local",

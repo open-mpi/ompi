@@ -23,11 +23,12 @@
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/ras/ras_types.h"
+#include "orte/util/show_help.h"
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
@@ -74,8 +75,6 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
   */
 static int orte_rmaps_rank_file_open(void)
 {
-    int index = 0;
-    
     mca_rmaps_rank_file_component.priority = 0;
     
     mca_base_param_reg_string(&mca_rmaps_rank_file_component.super.base_version,
@@ -86,15 +85,10 @@ static int orte_rmaps_rank_file_open(void)
         mca_rmaps_rank_file_component.priority = 100;
     }
     
-    index = mca_base_param_find("opal", NULL, "paffinity_base_slot_list"); 
-    if (index >= 0) { 
-        if (OPAL_SUCCESS == mca_base_param_lookup_string(index, &orte_mca_rmaps_rank_file_slot_list)) { 
-            if (NULL != orte_mca_rmaps_rank_file_slot_list) { 
-                mca_rmaps_rank_file_component.priority = 100; 
-            } 
-        } 
+    if (NULL != orte_rmaps_base.slot_list) { 
+        mca_rmaps_rank_file_component.priority = 100; 
     } 
-
+    
     return ORTE_SUCCESS;
 }
 
