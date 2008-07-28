@@ -279,10 +279,10 @@ static int map_app_by_slot(
 
 
         if (0 == node->slots_inuse ||
-            node->slots_inuse >= node->slots) {
-            num_slots_to_take = (node->slots == 0) ? 1 : node->slots;
+            node->slots_inuse >= node->slots_alloc) {
+            num_slots_to_take = (node->slots_alloc == 0) ? 1 : node->slots_alloc;
         } else {
-            num_slots_to_take = node->slots - node->slots_inuse;
+            num_slots_to_take = node->slots_alloc - node->slots_inuse;
         }
         
         /* check if we are in npernode mode - if so, then set the num_slots_to_take
