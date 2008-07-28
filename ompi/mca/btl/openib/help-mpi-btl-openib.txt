@@ -497,7 +497,7 @@ OpenFabrics BTL will therefore be deactivated for this run.
 #
 [non optimal rd_win]
 WARNING: rd_win specification is non optimal. For maximum performance it is
-advisable to configure rd_win smaller than (rd_num - rd_low), but currently
+advisable to configure rd_win bigger than (rd_num - rd_low), but currently
 rd_win = %d and (rd_num - rd_low) = %d.
 #
 [apm without lmc]
