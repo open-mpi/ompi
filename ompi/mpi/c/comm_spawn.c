@@ -120,8 +120,11 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
 error:
     OPAL_CR_EXIT_LIBRARY();
 
-    /* close the port again. Nothing has to be done for that at the moment.*/
-
+    /* close the port */
+    if (rank == root && !non_mpi) {
+        ompi_dpm.close_port(port_name);
+    }
+    
     /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
         for ( i=0; i < maxprocs; i++ ) {
