@@ -162,8 +162,12 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
 
 error:
     OPAL_CR_EXIT_LIBRARY();
-    /* close the port again. Nothing has to be done for that at the moment.*/
-
+    
+    /* close the port */
+    if (rank == root && !non_mpi) {
+        ompi_dpm.close_port(port_name);
+    }
+    
     /* set array of errorcodes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
         for ( i=0; i < newcomp->c_remote_group->grp_proc_count; i++ ) {
