@@ -106,7 +106,7 @@ common global key is ``{\tt cpu}''.  This key takes an integer value
 and indicates to Open MPI how many CPUs are available for Open MPI to use.  If
 the key is not present, the value of 1 is assumed.  This number does
 {\em not} need to reflect the physical number of CPUs -- it can be
-smaller then, equal to, or greater than the number of physical CPUs in
+smaller than, equal to, or greater than the number of physical CPUs in
 the machine.  It is solely used as a shorthand notation for
 \icmd{mpirun}'s ``C'' notation, meaning ``launch one process per CPU
 as specified in the boot schema file.''  For example, in the following
