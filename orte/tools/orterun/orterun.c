@@ -543,7 +543,7 @@ int orterun(int argc, char *argv[])
     opal_signal_add(&sigusr2_handler, NULL);
 #endif  /* __WINDOWS__ */
     
-    /* setup for debugging, if we are doing so */
+    /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
 
     /* setup an event we can wait for that will tell
@@ -562,7 +562,7 @@ int orterun(int argc, char *argv[])
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
     
-    /* complete debugger interface, if we are debugging */
+    /* complete debugger interface */
     orte_debugger_init_after_spawn(jdata);
     
     /* now wait until the termination event fires */
