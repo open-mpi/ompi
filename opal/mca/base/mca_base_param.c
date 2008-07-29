@@ -760,8 +760,6 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
                 !opal_list_is_empty(array[i].mbp_synonyms)) {
                 p->mbpp_synonyms_len = 
                     (int) opal_list_get_size(array[i].mbp_synonyms);
-                printf("*** dumping %d synonyms, too\n",
-                       p->mbpp_synonyms_len);
                 p->mbpp_synonyms = malloc(sizeof(mca_base_param_info_t*) *
                                           p->mbpp_synonyms_len);
                 if (NULL == p->mbpp_synonyms) {
