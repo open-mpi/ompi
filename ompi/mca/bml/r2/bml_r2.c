@@ -221,8 +221,10 @@ int mca_bml_r2_add_procs( size_t nprocs,
 
         rc = btl->btl_add_procs(btl, n_new_procs, new_procs, btl_endpoints, reachable);
         if(OMPI_SUCCESS != rc) {
-            free(btl_endpoints);
-            return rc;
+            /* This BTL has troubles adding the nodes. Let's continue maybe some other BTL
+             * can take care of this task.
+             */
+            continue;
         }
 
         /* for each proc that is reachable - add the endpoint to the bml_endpoints array(s) */
@@ -265,7 +267,6 @@ int mca_bml_r2_add_procs( size_t nprocs,
                         if(btl_endpoints[p] != NULL) {
                             btl->btl_del_procs(btl, 1, &proc, &btl_endpoints[p]);
                         }
-                        btl_inuse--;
                         continue;
                     }
                 }
