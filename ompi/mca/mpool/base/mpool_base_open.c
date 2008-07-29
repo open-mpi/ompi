@@ -71,8 +71,6 @@ int mca_mpool_base_open(void)
     /* Open up all available components - and populate the
        mca_mpool_base_components list */
     
-    int i;
-    
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
                                &mca_mpool_base_components, true)) {
@@ -96,7 +94,8 @@ int mca_mpool_base_open(void)
                                     false, 
                                     0,
                                     NULL);
-    mca_base_param_reg_syn_name(i, "mpool", "use_mem_hooks", true);
+    mca_base_param_reg_syn_name(mca_mpool_base_use_mem_hooks_index,
+                                "mpool", "use_mem_hooks", true);
 
     mca_mpool_base_disable_mallopt_index =
         mca_base_param_reg_int_name("mpool", 
