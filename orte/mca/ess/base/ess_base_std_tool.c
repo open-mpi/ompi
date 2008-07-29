@@ -99,8 +99,7 @@ int orte_ess_base_tool_setup(void)
     if (ORTE_SUCCESS != (ret = orte_session_dir_get_name(NULL,
                                    &orte_process_info.tmpdir_base,
                                    &orte_process_info.top_session_dir,
-                                   orte_process_info.nodename, NULL,
-                                   NULL, NULL))) {
+                                   orte_process_info.nodename, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "define session dir names";
         goto error;
