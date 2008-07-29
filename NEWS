@@ -29,6 +29,7 @@ version 1.0.
 1.2.7 (not released yet)
 -----
 
+- Remove a spurious warning message generated in/by ROMIO. See Ticket #1421.
 - Fix a bug where command-line MCA parameters were not overriding
   MCA parameters set from environment variables.  See ticket #1380.
 - Fix a bug in the AMD64 atomics assembly.  Thanks to Gabriele Fatigati
