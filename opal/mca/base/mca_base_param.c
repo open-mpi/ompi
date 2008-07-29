@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,11 +35,6 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
-#if 0
-/* JMS commented out for now -- see lookup_keyvals() below for an
-   explanation */
-#include "ompi/attribute/attribute.h"
-#endif
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
@@ -49,13 +45,39 @@
 #include "opal/util/opal_environ.h"
 
 /*
+ * Local types
+ */
+
+typedef struct {
+    /* Base class */
+    opal_list_item_t super;
+    
+    /* String of the type name or NULL */
+    char *si_type_name;
+    /* String of the component name */
+    char *si_component_name;
+    /* String of the param name */
+    char *si_param_name;
+    /* Full name of the synonym */
+    char *si_full_name;
+    /* Name of the synonym's corresponding environment variable */
+    char *si_env_var_name;
+
+    /* Whether this synonym is a deprecated name or not */
+    bool si_deprecated;
+    /* Whether we've shown a warning that this synonym has been
+       displayed or not */
+    bool si_deprecated_warning_shown;
+} syn_info_t;
+
+
+/*
  * Public variables
  *
  * This variable is public, but not advertised in mca_base_param.h.
  * It's only public so that the file parser can see it.
  */
 opal_list_t mca_base_param_file_values;
-
 
 /*
  * local variables
@@ -86,16 +108,17 @@ static int param_register(const char *type_name,
                           mca_base_param_storage_t *file_value,
                           mca_base_param_storage_t *override_value,
                           mca_base_param_storage_t *current_value);
+static int syn_register(int index_orig, const char *syn_type_name,
+                        const char *syn_component_name,
+                        const char *syn_param_name, bool deprecated);
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
-                         opal_hash_table_t *attrs);
+                         opal_hash_table_t *attrs,
+                         mca_base_param_source_t *source);
 static bool param_set_override(size_t index, 
                                mca_base_param_storage_t *storage,
                                mca_base_param_type_t type);
 static bool lookup_override(mca_base_param_t *param,
                             mca_base_param_storage_t *storage);
-static bool lookup_keyvals(mca_base_param_t *param,
-                           mca_base_param_storage_t *storage,
-                           opal_hash_table_t *attrs);
 static bool lookup_env(mca_base_param_t *param,
                        mca_base_param_storage_t *storage);
 static bool lookup_file(mca_base_param_t *param,
@@ -110,7 +133,8 @@ static void fv_constructor(mca_base_param_file_value_t *p);
 static void fv_destructor(mca_base_param_file_value_t *p);
 static void info_constructor(mca_base_param_info_t *p);
 static void info_destructor(mca_base_param_info_t *p);
-
+static void syn_info_constructor(syn_info_t *si);
+static void syn_info_destructor(syn_info_t *si);
 
 /*
  * Make the class instance for mca_base_param_t
@@ -121,6 +145,8 @@ OBJ_CLASS_INSTANCE(mca_base_param_file_value_t, opal_list_item_t,
                    fv_constructor, fv_destructor);
 OBJ_CLASS_INSTANCE(mca_base_param_info_t, opal_list_item_t,
                    info_constructor, info_destructor);
+OBJ_CLASS_INSTANCE(syn_info_t, opal_list_item_t,
+                   syn_info_constructor, syn_info_destructor);
 
 /*
  * Set it up
@@ -422,35 +448,30 @@ int mca_base_param_register_string(const char *type_name,
     return ret;
 }
 
+
 /*
- * Associate a keyval with a parameter index
+ * Register a synonym name for an existing MCA parameter
  */
-int mca_base_param_kv_associate(int index, int keyval)
+int mca_base_param_reg_syn(int index_orig,
+                           const mca_base_component_t *syn_component,
+                           const char *syn_param_name, bool deprecated)
 {
-  size_t len;
-  mca_base_param_t *array;
-
-  if (!initialized) {
-    return OPAL_ERROR;
-  }
-
-  len = opal_value_array_get_size(&mca_base_params);
-  if (((size_t) index) > len) {
-    return OPAL_ERROR;
-  }
-
-  /* We have a valid entry (remember that we never delete MCA
-     parameters, so if the index is >0 and <len, it must be good), so
-     save the keyval */
-
-  array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-  array[index].mbp_keyval = keyval;
-
-  /* All done */
-
-  return OPAL_SUCCESS;
+    return syn_register(index_orig,
+                        syn_component->mca_type_name,
+                        syn_component->mca_component_name,
+                        syn_param_name, deprecated);
 }
 
+/*
+ * Register a synonym name for an existing MCA parameter
+ */
+int mca_base_param_reg_syn_name(int index_orig,
+                                const char *syn_type_name,
+                                const char *syn_param_name, bool deprecated)
+{
+    return syn_register(index_orig, syn_type_name, NULL,
+                        syn_param_name, deprecated);
+}
 
 /*
  * Look up an integer MCA parameter.
@@ -459,23 +480,7 @@ int mca_base_param_lookup_int(int index, int *value)
 {
   mca_base_param_storage_t storage;
   
-  if (param_lookup(index, &storage, NULL)) {
-    *value = storage.intval;
-    return OPAL_SUCCESS;
-  }
-  return OPAL_ERROR;
-}
-
-
-/*
- * Look up an integer MCA parameter, including in attributes
- */
-int mca_base_param_kv_lookup_int(int index, opal_hash_table_t *attrs, 
-                                 int *value)
-{
-  mca_base_param_storage_t storage;
-  
-  if (param_lookup(index, &storage, attrs)) {
+  if (param_lookup(index, &storage, NULL, NULL)) {
     *value = storage.intval;
     return OPAL_SUCCESS;
   }
@@ -504,23 +509,7 @@ int mca_base_param_lookup_string(int index, char **value)
 {
   mca_base_param_storage_t storage;
   
-  if (param_lookup(index, &storage, NULL)) {
-    *value = storage.stringval;
-    return OPAL_SUCCESS;
-  }
-  return OPAL_ERROR;
-}
-
-
-/*
- * Look up a string MCA parameter, including in attributes.
- */
-int mca_base_param_kv_lookup_string(int index, opal_hash_table_t *attrs, 
-                                    char **value)
-{
-  mca_base_param_storage_t storage;
-  
-  if (param_lookup(index, &storage, attrs)) {
+  if (param_lookup(index, &storage, NULL, NULL)) {
     *value = storage.stringval;
     return OPAL_SUCCESS;
   }
@@ -543,6 +532,19 @@ int mca_base_param_set_string(int index, char *value)
 
 
 /*
+ * Lookup the source of an MCA param's value
+ */
+bool mca_base_param_lookup_source(int index, mca_base_param_source_t *source)
+{
+    mca_base_param_storage_t storage;
+  
+    if (param_lookup(index, &storage, NULL, source)) {
+        return OPAL_SUCCESS;
+    }
+    return OPAL_ERROR;
+}
+
+/*
  * Unset a parameter
  */
 int mca_base_param_unset(int index)
@@ -555,7 +557,7 @@ int mca_base_param_unset(int index)
     }
 
     len = opal_value_array_get_size(&mca_base_params);
-    if (((size_t) index) > len) {
+    if (index < 0 || ((size_t) index) > len) {
         return OPAL_ERROR;
     }
 
@@ -713,9 +715,11 @@ int mca_base_param_set_internal(int index, bool internal)
  */
 int mca_base_param_dump(opal_list_t **info, bool internal)
 {
-    size_t i, len;
-    mca_base_param_info_t *p;
+    size_t i, j, len;
+    mca_base_param_info_t *p, *q;
     mca_base_param_t *array;
+    opal_list_item_t *item;
+    syn_info_t *si;
 
     /* Check for bozo cases */
     
@@ -733,18 +737,65 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
     len = opal_value_array_get_size(&mca_base_params);
     array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
-        if(array[i].mbp_internal == internal || internal) {
+        if (array[i].mbp_internal == internal || internal) {
             p = OBJ_NEW(mca_base_param_info_t);
+            if (NULL == p) {
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
             p->mbpp_index = (int)i;
             p->mbpp_type_name = array[i].mbp_type_name;
             p->mbpp_component_name = array[i].mbp_component_name;
             p->mbpp_param_name = array[i].mbp_param_name;
             p->mbpp_full_name = array[i].mbp_full_name;
+            p->mbpp_deprecated = array[i].mbp_deprecated;
             p->mbpp_read_only = array[i].mbp_read_only;
             p->mbpp_type = array[i].mbp_type;
             p->mbpp_help_msg = array[i].mbp_help_msg;
-            
+
+            /* Save this entry to the list */
             opal_list_append(*info, (opal_list_item_t*) p);
+
+            /* If this param has synonyms, add them too */
+            if (NULL != array[i].mbp_synonyms &&
+                !opal_list_is_empty(array[i].mbp_synonyms)) {
+                p->mbpp_synonyms_len = 
+                    (int) opal_list_get_size(array[i].mbp_synonyms);
+                p->mbpp_synonyms = malloc(sizeof(mca_base_param_info_t*) *
+                                          p->mbpp_synonyms_len);
+                if (NULL == p->mbpp_synonyms) {
+                    p->mbpp_synonyms_len = 0;
+                    return OPAL_ERR_OUT_OF_RESOURCE;
+                }
+                
+                for (j = 0, item = opal_list_get_first(array[i].mbp_synonyms);
+                     opal_list_get_end(array[i].mbp_synonyms) != item;
+                     ++j, item = opal_list_get_next(item)) {
+                    si = (syn_info_t*) item;
+                    q = OBJ_NEW(mca_base_param_info_t);
+                    if (NULL == q) {
+                        return OPAL_ERR_OUT_OF_RESOURCE;
+                    }
+                    q->mbpp_index = (int)i;
+                    q->mbpp_type_name = si->si_type_name;
+                    q->mbpp_component_name = si->si_component_name;
+                    q->mbpp_param_name = si->si_param_name;
+                    q->mbpp_full_name = si->si_full_name;
+                    q->mbpp_deprecated = si->si_deprecated ||
+                        array[i].mbp_deprecated;
+                    q->mbpp_read_only = array[i].mbp_read_only;
+                    q->mbpp_type = array[i].mbp_type;
+                    q->mbpp_help_msg = array[i].mbp_help_msg;
+
+                    /* Let this one point to the original */
+                    q->mbpp_synonym_parent = p;
+
+                    /* Let the original point to this one */
+                    p->mbpp_synonyms[j] = q;
+
+                    /* Save this entry to the list */
+                    opal_list_append(*info, (opal_list_item_t*) q);
+                }
+            }
         }
     }
 
@@ -781,7 +832,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
         }
 
         if (array[i].mbp_internal == internal || internal) {
-            if (param_lookup(i, &storage, NULL)) {
+            if (param_lookup(i, &storage, NULL, NULL)) {
                 if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type) {
                     asprintf(&str, "%s=%d", array[i].mbp_env_var_name, 
                              storage.intval);
@@ -1180,12 +1231,10 @@ static int param_register(const char *type_name,
       mca_base_param_init();
   }
 
-  /* Create a parameter entry.  If a keyval is to be used, it will be
-     registered elsewhere.  We simply assign -1 here. */
+  /* Create a parameter entry */
 
   OBJ_CONSTRUCT(&param, mca_base_param_t);
   param.mbp_type = type;
-  param.mbp_keyval = -1;
   param.mbp_internal = internal;
   param.mbp_read_only = read_only;
   if (NULL != help_msg) {
@@ -1215,7 +1264,7 @@ static int param_register(const char *type_name,
       }
   }
 
-  param.mbp_env_var_name = NULL;
+  /* Build up the full name */
   len = 16;
   if (NULL != type_name) {
       len += strlen(type_name);
@@ -1444,7 +1493,7 @@ static int param_register(const char *type_name,
       /* Finally, if we have a lookup value, look it up */
       
       if (NULL != current_value) {
-          if (!param_lookup(i, current_value, NULL)) {
+          if (!param_lookup(i, current_value, NULL, NULL)) {
               return OPAL_ERR_NOT_FOUND;
           }
       }
@@ -1455,8 +1504,10 @@ static int param_register(const char *type_name,
     }
   }
 
-  /* Add it to the array */
-
+  /* Add it to the array.  Note that we copy the mca_param_t by value,
+     so the entire contents of the struct is copied.  The synonym list
+     will always be empty at this point, so there's no need for an
+     extra RETAIN or RELEASE. */
   if (OPAL_SUCCESS != 
       (ret = opal_value_array_append_item(&mca_base_params, &param))) {
     return ret;
@@ -1466,7 +1517,7 @@ static int param_register(const char *type_name,
   /* Finally, if we have a lookup value, look it up */
 
   if (NULL != current_value) {
-      if (!param_lookup(ret, current_value, NULL)) {
+      if (!param_lookup(ret, current_value, NULL, NULL)) {
           return OPAL_ERR_NOT_FOUND;
       }
   }
@@ -1474,6 +1525,124 @@ static int param_register(const char *type_name,
   /* All done */
 
   return ret;
+}
+
+
+/*
+ * Back-end for registering a synonym
+ */
+static int syn_register(int index_orig, const char *syn_type_name,
+                        const char *syn_component_name,
+                        const char *syn_param_name, bool deprecated)
+{
+    size_t len;
+    syn_info_t *si;
+    mca_base_param_t *array;
+
+    if (!initialized) {
+        return OPAL_ERROR;
+    }
+
+    /* Sanity check index param */
+    len = opal_value_array_get_size(&mca_base_params);
+    if (index_orig < 0 || ((size_t) index_orig) > len) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    /* Make the synonym info object */
+    si = OBJ_NEW(syn_info_t);
+    if (NULL == si) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Note that the following logic likely could have been combined
+       into more compact code.  However, keeping it separate made it
+       much easier to read / maintain (IMHO).  This is not a high
+       performance section of the code, so a premium was placed on
+       future readability / maintenance. */
+
+    /* Save the function parameters */
+    si->si_deprecated = deprecated;
+    if (NULL != syn_type_name) {
+        si->si_type_name = strdup(syn_type_name);
+        if (NULL == si->si_type_name) {
+            OBJ_RELEASE(si);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    }
+
+    if (NULL != syn_component_name) {
+        si->si_component_name = strdup(syn_component_name);
+        if (NULL == si->si_component_name) {
+            OBJ_RELEASE(si);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    }
+
+    if (NULL != syn_param_name) {
+        si->si_param_name = strdup(syn_param_name);
+        if (NULL == si->si_param_name) {
+            OBJ_RELEASE(si);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+    }
+
+    /* Build up the full name */
+    len = 16;
+    if (NULL != syn_type_name) {
+        len += strlen(syn_type_name);
+    }
+    if (NULL != syn_component_name) {
+        len += strlen(syn_component_name);
+    }
+    if (NULL != syn_param_name) {
+        len += strlen(syn_param_name);
+    }
+    si->si_full_name = (char*) malloc(len);
+    if (NULL == si->si_full_name) {
+        OBJ_RELEASE(si);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* Copy the name over in parts */
+    si->si_full_name[0] = '\0';
+    if (NULL != syn_type_name) {
+        strncat(si->si_full_name, syn_type_name, len);
+    }
+    if (NULL != syn_component_name) {
+        if ('\0' != si->si_full_name[0]) {
+            strcat(si->si_full_name, "_");
+        }
+        strcat(si->si_full_name, syn_component_name);
+    }
+    if (NULL != syn_param_name) {
+        if ('\0' != si->si_full_name[0]) {
+            strcat(si->si_full_name, "_");
+        }
+        strcat(si->si_full_name, syn_param_name);
+    }
+    
+    /* Create the environment name */
+    len = strlen(si->si_full_name) + strlen(mca_prefix) + 16;
+    si->si_env_var_name = (char*) malloc(len);
+    if (NULL == si->si_env_var_name) {
+        OBJ_RELEASE(si);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    snprintf(si->si_env_var_name, len, "%s%s", mca_prefix, 
+             si->si_full_name);
+    
+    /* Find the param entry; add this syn_info to its list of
+       synonyms */
+    array = OPAL_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    if (NULL == array[index_orig].mbp_synonyms) {
+        array[index_orig].mbp_synonyms = OBJ_NEW(opal_list_t);
+    }
+    opal_list_append(array[index_orig].mbp_synonyms, &(si->super));
+  
+    /* All done */
+
+    return OPAL_SUCCESS;
 }
 
 
@@ -1518,12 +1687,13 @@ static bool param_set_override(size_t index,
  * Lookup a parameter in multiple places
  */
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
-                         opal_hash_table_t *attrs)
+                         opal_hash_table_t *attrs,
+                         mca_base_param_source_t *source_param)
 {
     size_t size;
     mca_base_param_t *array;
     char *p, *q;
-    bool found;
+    mca_base_param_source_t source = MCA_BASE_PARAM_SOURCE_MAX;
 
     /* Lookup the index and see if it's valid */
 
@@ -1549,21 +1719,31 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
 
     if (array[index].mbp_read_only) {
         if (lookup_override(&array[index], storage) ||
-             lookup_keyvals(&array[index], storage, attrs) ||
              lookup_env(&array[index], storage) ||
              lookup_file(&array[index], storage)) {
             opal_show_help("help-mca-param.txt", "read-only-param-set",
                            true, array[index].mbp_full_name);
         }
-        found = lookup_default(&array[index], storage);
+
+        /* First look at the "real" name of this param */
+        if (lookup_default(&array[index], storage)) {
+            source = MCA_BASE_PARAM_SOURCE_DEFAULT;
+        }
     } else {
-        found = (lookup_override(&array[index], storage) ||
-                 lookup_keyvals(&array[index], storage, attrs) ||
-                 lookup_env(&array[index], storage) ||
-                 lookup_file(&array[index], storage) ||
-                 lookup_default(&array[index], storage));
+        if (lookup_override(&array[index], storage)) {
+            source = MCA_BASE_PARAM_SOURCE_OVERRIDE;
+        } else if (lookup_env(&array[index], storage)) {
+            source = MCA_BASE_PARAM_SOURCE_ENV;
+        } else if (lookup_file(&array[index], storage)) {
+            source = MCA_BASE_PARAM_SOURCE_FILE;
+        } else if (lookup_default(&array[index], storage)) {
+            source = MCA_BASE_PARAM_SOURCE_DEFAULT;
+        }
     }
-    if (found) {
+    if (MCA_BASE_PARAM_SOURCE_MAX != source) {
+        if (NULL != source_param) {
+            *source_param = source;
+        }
         
         /* If we're returning a string, replace all instances of "~/"
            with the user's home directory */
@@ -1626,78 +1806,67 @@ static bool lookup_override(mca_base_param_t *param,
 
 
 /*
- * Lookup a param in the set of attributes/keyvals
- */
-static bool lookup_keyvals(mca_base_param_t *param,
-                           mca_base_param_storage_t *storage,
-                           opal_hash_table_t *attrs)
-{
-#if 1
-    /* JMS: Comment this out for now, because it drags in all of
-       libmpi.  This is undesirable for programs like mpirun, etc.
-       Need a better solution for this -- perhaps a registration kind
-       of thing...? */
-    return false;
-#else
-  int err, flag;
-
-  /* If this param has a keyval and we were provided with a hash
-     table, look it up and see if we can find a value */
-
-  if (-1 != param->mbp_keyval) {
-
-    /* Use the stringval member of the union because it's definitely
-       big enough to handle both (int) and (char*) */
-
-    err = ompi_attr_get(attrs, param->mbp_keyval, 
-                        &storage->stringval, &flag);
-    if (OPAL_SUCCESS == err && 1 == flag) {
-
-      /* Because of alignment weirdness between (void*) and int, we
-         must grab the lower sizeof(int) bytes from the (char*) in
-         stringval, in case sizeof(int) != sizeof(char*). */
-
-      if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
-        storage->intval = *((int *) (storage->stringval +
-                                     sizeof(void *) - sizeof(int)));
-      }
-
-      /* Nothing to do for string -- we already have the value loaded
-         in the right place */
-
-      return true;
-    }
-  }
-
-  /* Either this param has not keyval or we didn't find the keyval */
-
-  return false;
-#endif
-}
-
-
-/*
  * Lookup a param in the environment
  */
 static bool lookup_env(mca_base_param_t *param,
                        mca_base_param_storage_t *storage)
 {
-  char *env;
+    char *env = NULL;
+    opal_list_item_t *item;
+    syn_info_t *si;
+    char *deprecated_name = NULL;
+    bool print_deprecated_warning = false;
 
-  if (NULL != param->mbp_env_var_name &&
-      NULL != (env = getenv(param->mbp_env_var_name))) {
-    if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
-      storage->intval = (int)strtol(env,(char**)NULL,0);
-    } else if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type) {
-      storage->stringval = strdup(env);
+    /* Look for the primary param name */
+    if (NULL != param->mbp_env_var_name) {
+        env = getenv(param->mbp_env_var_name);
+        print_deprecated_warning = 
+            param->mbp_deprecated & !param->mbp_deprecated_warning_shown;
+        deprecated_name = param->mbp_full_name;
+        /* Regardless of whether we want to show the deprecated
+           warning or not, we can skip this check the next time
+           through on this parameter */
+        param->mbp_deprecated_warning_shown = true;
+    }
+    
+    /* If we didn't find the primary name, look in all the synonyms */
+    if (NULL == env && NULL != param->mbp_synonyms && 
+        !opal_list_is_empty(param->mbp_synonyms)) {
+        for (item = opal_list_get_first(param->mbp_synonyms);
+             NULL == env && opal_list_get_end(param->mbp_synonyms) != item;
+             item = opal_list_get_next(item)) {
+            si = (syn_info_t*) item;
+            env = getenv(si->si_env_var_name);
+            if (NULL != env && 
+                ((si->si_deprecated && 
+                  !si->si_deprecated_warning_shown) ||
+                 (param->mbp_deprecated &&
+                  !param->mbp_deprecated_warning_shown))) {
+                print_deprecated_warning = 
+                    si->si_deprecated_warning_shown = 
+                    param->mbp_deprecated_warning_shown = true;
+                deprecated_name = si->si_full_name;
+            }
+        }
     }
 
-    return true;
-  }
+    /* If we found it, react */
+    if (NULL != env) {
+        if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
+            storage->intval = (int)strtol(env,(char**)NULL,0);
+        } else if (MCA_BASE_PARAM_TYPE_STRING == param->mbp_type) {
+            storage->stringval = strdup(env);
+        }
 
-  /* Didn't find it */
-
-  return false;
+        if (print_deprecated_warning) {
+            opal_show_help("help-mca-param.txt", "deprecated mca param env",
+                           true, deprecated_name);
+        }
+        return true;
+    }
+    
+    /* Didn't find it */
+    return false;
 }
 
 
@@ -1707,8 +1876,12 @@ static bool lookup_env(mca_base_param_t *param,
 static bool lookup_file(mca_base_param_t *param,
                         mca_base_param_storage_t *storage)
 {
-    opal_list_item_t *item;
+    bool found = false;
+    syn_info_t *si;
+    char *deprecated_name = NULL;
+    opal_list_item_t *item, *in_item;
     mca_base_param_file_value_t *fv;
+    bool print_deprecated_warning = false;
 
     /* See if we previously found a match from a file.  If so, just
        return that */
@@ -1725,10 +1898,46 @@ static bool lookup_file(mca_base_param_t *param,
          opal_list_get_end(&mca_base_param_file_values) != item;
          item = opal_list_get_next(item)) {
         fv = (mca_base_param_file_value_t *) item;
+        /* If it doesn't match the parameter's real name, check its
+           synonyms */
         if (0 == strcmp(fv->mbpfv_param, param->mbp_full_name)) {
+            found = true;
+            print_deprecated_warning = 
+                param->mbp_deprecated & !param->mbp_deprecated_warning_shown;
+            deprecated_name = param->mbp_full_name;
+            /* Regardless of whether we want to show the deprecated
+               warning or not, we can skip this check the next time
+               through on this parameter */
+            param->mbp_deprecated_warning_shown = true;
+        } else if (NULL != param->mbp_synonyms && 
+                   !opal_list_is_empty(param->mbp_synonyms)) {
+            /* Check all the synonyms on this parameter and see if the
+               file value matches */
+            for (in_item = opal_list_get_first(param->mbp_synonyms);
+                 opal_list_get_end(param->mbp_synonyms) != in_item;
+                 in_item = opal_list_get_next(in_item)) {
+                si = (syn_info_t*) in_item;
+                if (0 == strcmp(fv->mbpfv_param, si->si_full_name)) {
+                    found = true;
+                    if ((si->si_deprecated && 
+                         !si->si_deprecated_warning_shown) ||
+                        (param->mbp_deprecated && 
+                         !param->mbp_deprecated_warning_shown)) {
+                        print_deprecated_warning = 
+                            si->si_deprecated_warning_shown = 
+                            param->mbp_deprecated_warning_shown = true;
+                        deprecated_name = si->si_full_name;
+                    }
+                }
+            }
+        }
+
+        /* Did we find it? */
+        if (found) {
             if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
                 if (NULL != fv->mbpfv_value) {
-                    param->mbp_file_value.intval = (int)strtol(fv->mbpfv_value,(char**)NULL,0);
+                    param->mbp_file_value.intval = 
+                        (int)strtol(fv->mbpfv_value,(char**)NULL,0);
                 } else {
                     param->mbp_file_value.intval = 0;
                 }
@@ -1745,6 +1954,13 @@ static bool lookup_file(mca_base_param_t *param,
             opal_list_remove_item(&mca_base_param_file_values, 
                                   (opal_list_item_t *) fv);
             OBJ_RELEASE(fv);
+
+            /* Print the deprecated warning, if applicable */
+            if (print_deprecated_warning) {
+                opal_show_help("help-mca-param.txt",
+                               "deprecated mca param file",
+                               true, deprecated_name);
+            }
 
             return set(param->mbp_type, storage, &param->mbp_file_value);
         }
@@ -1797,6 +2013,8 @@ static void param_constructor(mca_base_param_t *p)
     p->mbp_type = MCA_BASE_PARAM_TYPE_MAX;
     p->mbp_internal = false;
     p->mbp_read_only = false;
+    p->mbp_deprecated = false;
+    p->mbp_deprecated_warning_shown = false;
 
     p->mbp_type_name = NULL;
     p->mbp_component_name = NULL;
@@ -1804,7 +2022,6 @@ static void param_constructor(mca_base_param_t *p)
     p->mbp_full_name = NULL;
     p->mbp_help_msg = NULL;
 
-    p->mbp_keyval = -1;
     p->mbp_env_var_name = NULL;
 
     p->mbp_default_value.stringval = NULL;
@@ -1812,6 +2029,8 @@ static void param_constructor(mca_base_param_t *p)
     p->mbp_file_value.stringval = NULL;
     p->mbp_override_value_set = false;
     p->mbp_override_value.stringval = NULL;
+
+    p->mbp_synonyms = NULL;
 }
 
 
@@ -1820,6 +2039,8 @@ static void param_constructor(mca_base_param_t *p)
  */
 static void param_destructor(mca_base_param_t *p)
 {
+    opal_list_item_t *item;
+
     if (NULL != p->mbp_type_name) {
         free(p->mbp_type_name);
     }
@@ -1851,7 +2072,20 @@ static void param_destructor(mca_base_param_t *p)
             free(p->mbp_override_value.stringval);
         }
     }
+
+    /* Destroy any synonyms that are on the list */
+    if (NULL != p->mbp_synonyms) {
+        for (item = opal_list_remove_first(p->mbp_synonyms);
+             NULL != item; item = opal_list_remove_first(p->mbp_synonyms)) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_RELEASE(p->mbp_synonyms);
+    }
+
+#if OMPI_ENABLE_DEBUG
+    /* Cheap trick to reset everything to NULL */
     param_constructor(p);
+#endif
 }
 
 
@@ -1883,14 +2117,51 @@ static void info_constructor(mca_base_param_info_t *p)
     p->mbpp_param_name = NULL;
     p->mbpp_full_name = NULL;
 
+    p->mbpp_deprecated = false;
+
+    p->mbpp_synonyms = NULL;
+    p->mbpp_synonyms_len = 0;
+    p->mbpp_synonym_parent = NULL;
+
     p->mbpp_read_only = false;
     p->mbpp_help_msg = NULL;
 }
 
 static void info_destructor(mca_base_param_info_t *p)
 {
+    if (NULL != p->mbpp_synonyms) {
+        free(p->mbpp_synonyms);
+    }
     /* No need to free any of the strings -- the pointers were copied
        by value from their corresponding parameter registration */
 
     info_constructor(p);
+}
+
+static void syn_info_constructor(syn_info_t *si)
+{
+    si->si_type_name = si->si_component_name = si->si_param_name =
+        si->si_full_name = si->si_env_var_name = NULL;
+    si->si_deprecated = si->si_deprecated_warning_shown = false;
+}
+
+static void syn_info_destructor(syn_info_t *si)
+{
+    if (NULL != si->si_type_name) {
+        free(si->si_type_name);
+    }
+    if (NULL != si->si_component_name) {
+        free(si->si_component_name);
+    }
+    if (NULL != si->si_param_name) {
+        free(si->si_param_name);
+    }
+    if (NULL != si->si_full_name) {
+        free(si->si_full_name);
+    }
+    if (NULL != si->si_env_var_name) {
+        free(si->si_env_var_name);
+    }
+
+    syn_info_constructor(si);
 }

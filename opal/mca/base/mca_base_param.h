@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +29,6 @@
  *
  * - Creating MCA parameters
  * -# Register a parameter, get an index back
- * -# Optionally associate that index with an attribute keyval
  * - Using MCA parameters
  * -# Lookup a "normal" parameter value on a specific index, or
  * -# Lookup an attribute parameter on a specific index and
@@ -40,8 +40,6 @@
  *
  * - An "override" location that is only available to be set via the
  *   mca_base_param API.
- * - If the parameter has an MPI attribute keyval associated with it,
- *   see if there is a value assigned that can be used.
  * - Look for an environment variable corresponding to the MCA
  *   parameter.
  * - See if a file contains the MCA parameter (MCA parameter files are
@@ -81,6 +79,24 @@ typedef enum {
 
 
 /**
+ * Source of an MCA parameter's value
+ */
+typedef enum {
+    /** The default value */
+    MCA_BASE_PARAM_SOURCE_DEFAULT,
+    /** The value came from the environment (or command line!) */
+    MCA_BASE_PARAM_SOURCE_ENV,
+    /** The value came from a file */
+    MCA_BASE_PARAM_SOURCE_FILE,
+    /** The value came a "set" API call */
+    MCA_BASE_PARAM_SOURCE_OVERRIDE,
+
+    /** Maximum source type */
+    MCA_BASE_PARAM_SOURCE_MAX
+} mca_base_param_source_t;
+
+
+/**
  * Struct for holding name/type info.  Used in mca_base_param_dump(),
  * below.
  */
@@ -101,6 +117,17 @@ struct mca_base_param_info_t {
     char *mbpp_param_name;
     /** Full, assembled parameter name */
     char *mbpp_full_name;
+
+    /** Is this value deprecated? */
+    bool mbpp_deprecated;
+
+    /** Array of pointers of synonyms of this parameter */
+    struct mca_base_param_info_t **mbpp_synonyms;
+    /** Length of mbpp_synonyms array */
+    int mbpp_synonyms_len;
+    /** Back pointer to another mca_base_param_info_t that *this*
+        param is a synonym of (or NULL) */
+    struct mca_base_param_info_t *mbpp_synonym_parent;
 
     /** Is this value changable? */
     bool mbpp_read_only;
@@ -149,8 +176,8 @@ extern "C" {
     /**
      * Register an integer MCA parameter.
      *
-     * @param component [in] Pointer to the componet for which the
-     * parameter is being registered (string), or NULL.
+     * @param component [in] Pointer to the component for which the
+     * parameter is being registered.
      * @param param_name [in] The name of the parameter being
      * registered (string).
      * @param help_msg [in] A string describing the use and valid
@@ -248,7 +275,7 @@ extern "C" {
      *
      * Note that the type should always be a framework or a level name
      * (e.g., "btl" or "mpi") -- it should not include the component
-     * name, even if the componet is the base of a framework.  Hence,
+     * name, even if the component is the base of a framework.  Hence,
      * "btl_base" is not a valid type name.  Specifically, registering
      * a parameter with an unrecognized type is not an error, but
      * ompi_info has a hard-coded list of frameworks and levels;
@@ -271,8 +298,8 @@ extern "C" {
     /**
      * Register a string MCA parameter.
      *
-     * @param component [in] Pointer to the componet for which the
-     * parameter is being registered (string), or NULL.
+     * @param component [in] Pointer to the component for which the
+     * parameter is being registered.
      * @param param_name [in] The name of the parameter being
      * registered (string).
      * @param help_msg [in] A string describing the use and valid
@@ -356,7 +383,7 @@ extern "C" {
      *
      * Note that the type should always be a framework or a level name
      * (e.g., "btl" or "mpi") -- it should not include the component
-     * name, even if the componet is the base of a framework.  Hence,
+     * name, even if the component is the base of a framework.  Hence,
      * "btl_base" is not a valid type name.  Specifically, registering
      * a parameter with an unrecognized type is not an error, but
      * ompi_info has a hard-coded list of frameworks and levels;
@@ -377,29 +404,69 @@ extern "C" {
                                                      char **current_value);
 
     /**
-     * Associate a communicator/datatype/window keyval with an MCA
-     * parameter.
+     * Register a synonym name for an MCA parameter.
      *
-     * @param index The index of the parameter to use.
-     * @param keyval The keyval to associate it with.
+     * @param original_index [in] The index of the original parameter to
+     * create a synonym for.
+     * @param syn_component [in] Pointer to the component for which the
+     * synonym is being registered.
+     * @param syn_param_name [in] Parameter name of the synonym to be
+     * created (string)
+     * @param deprecated If true, a warning will be shown if this
+     * synonym is used to set the parameter's value (unless the
+     * warnings are silenced)
      *
      * @returns OPAL_SUCCESS Upon success.
-     * @returns OPAL_ERROR If the index value is invalid.
+     * @returns OPAL_ERR_BAD_PARAM If the index value is invalid.
+     * @returns OPAL_ERROR Otherwise
+     * 
+     * Upon success, this function creates a synonym MCA parameter
+     * that will be treated almost exactly like the original.  The
+     * type (int or string) is irrelevant; this function simply
+     * creates a new name that by which the same parameter value is
+     * accessible.  
      *
-     * For an index value that was previously returned by
-     * mca_base_param_register_int() or
-     * mca_base_param_register_string(), the corresponding MCA parameter
-     * can be associated with a communicator, datatype, or window
-     * attribute keyval.  
-     *
-     * After using this function, you can use any of the four lookup
-     * functions (mca_base_param_lookup_int(),
-     * mca_base_param_lookup_string(), mca_base_param_kv_lookup_int(),
-     * and mca_base_param_kv_lookup_string()), but only the "kv"
-     * versions will cross reference and attempt to find parameter
-     * values on attributes.
+     * Note that the original parameter name has precendence over all
+     * synonyms.  For example, consider the case if parameter is
+     * originally registered under the name "A" and is later
+     * registered with synonyms "B" and "C".  If the user sets values
+     * for both MCA parameter names "A" and "B", the value associated
+     * with the "A" name will be used and the value associated with
+     * the "B" will be ignored (and will not even be visible by the
+     * mca_base_param_*() API).  If the user sets values for both MCA
+     * parameter names "B" and "C" (and does *not* set a value for
+     * "A"), it is undefined as to which value will be used.
      */
-    OPAL_DECLSPEC int mca_base_param_kv_associate(int index, int keyval);
+    OPAL_DECLSPEC int mca_base_param_reg_syn(int orignal_index, 
+                                             const mca_base_component_t *syn_component,
+                                             const char *syn_param_name, 
+                                             bool deprecated);
+
+    /**
+     * Register an MCA parameter synonym that is not associated with a
+     * component.
+     *
+     * @param original_index [in] The index of the original parameter to
+     * create a synonym for.
+     * @param type [in] Although this synonym is not associated with
+     * a component, it still must have a string type name that will
+     * act as a prefix (string).
+     * @param syn_param_name [in] Parameter name of the synonym to be
+     * created (string)
+     * @param deprecated If true, a warning will be shown if this
+     * synonym is used to set the parameter's value (unless the
+     * warnings are silenced)
+     *
+     * Essentially the same as mca_base_param_reg_syn(), but using a
+     * type name instead of a component.
+     *
+     * See mca_base_param_reg_int_name() for guidence on type string
+     * values.
+     */
+    OPAL_DECLSPEC int mca_base_param_reg_syn_name(int orignal_index, 
+                                                  const char *syn_type,
+                                                  const char *syn_param_name, 
+                                                  bool deprecated);
 
     /**
      * Look up an integer MCA parameter.
@@ -418,30 +485,6 @@ extern "C" {
      * return value from mca_base_param_register_int().
      */
     OPAL_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
-    
-    /**
-     * Look up an integer MCA parameter, to include looking in
-     * attributes.
-     *
-     * @param index Index previous returned from
-     * mca_base_param_register_int().
-     * @param attrs Object containing attributes to be searched.
-     * @param value Pointer to int where the parameter value will
-     * be stored.
-     *
-     * @return OPAL_ERROR Upon failure.  The contents of value are
-     * undefined.
-     * @return OPAL_SUCCESS Upon success.  value will be filled with the
-     * parameter's current value.
-     *
-     * This function is identical to mca_base_param_lookup_int() except
-     * that it looks in attributes \em first to find the parameter
-     * value.  The function mca_base_param_kv_associate() must have been
-     * called first to associate a keyval with the index.
-     */
-    OPAL_DECLSPEC int mca_base_param_kv_lookup_int(int index,
-                                                   struct opal_hash_table_t *attrs, 
-                                                   int *value);
     
     /**
      * Look up a string MCA parameter.
@@ -469,27 +512,19 @@ extern "C" {
     OPAL_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
 
     /**
-     * Look up a string MCA parameter, to include looking in attributes.
+     * Lookup the source of an MCA parameter's value
      *
-     * @param index [in] Index previous returned from
-     * mca_base_param_register_string().
-     * @param attrs [in] Object containing attributes to be searched.
-     * @param value [out] Pointer to (char *) where the parameter value
-     * will be stored.
+     * @param index [in] Index of MCA parameter to set
+     * @param value [in] The integer value to set
      *
-     * @return OPAL_ERROR Upon failure.  The contents of value are
-     * undefined.
-     * @return OPAL_SUCCESS Upon success.  value will be filled with the
-     * parameter's current value.
+     * @retval OPAL_ERROR If the parameter was not found.
+     * @retval OPAL_SUCCESS Upon success.
      *
-     * This function is identical to mca_base_param_lookup_string()
-     * except that it looks in attributes \em first to find the
-     * parameter value.  The function mca_base_param_kv_associate() must
-     * have been called first to associate a keyval with the index.
+     * This function looks up to see where the value of an MCA
+     * parameter came from.
      */
-    OPAL_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
-                                                      struct opal_hash_table_t *attrs, 
-                                                      char **value);
+    OPAL_DECLSPEC bool mca_base_param_lookup_source(int index, 
+                                                    mca_base_param_source_t *source);
 
     /**
      * Sets an "override" value for an integer MCA parameter.
