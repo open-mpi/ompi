@@ -392,10 +392,11 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
 /**
  * Initialization of data structures for running under a debugger
  * using the MPICH/TotalView parallel debugger interface. This stage
- * of initialization must occur after stage2 of spawn and is invoked
- * via a callback.
+ * of initialization must occur after spawn
  * 
- * @param jobid  The jobid returned by spawn.
+ * NOTE: We -always- perform this step to ensure that any debugger
+ * that attaches to us post-launch of the application can get a
+ * completed proctable
  */
 void orte_debugger_init_after_spawn(orte_job_t *jdata)
 {
@@ -405,11 +406,6 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
     opal_buffer_t buf;
     orte_process_name_t rank0;
     int rc;
-    
-    if (!MPIR_being_debugged) {
-        /* not being debugged */
-        return;
-    }
     
     if (MPIR_proctable) {
         /* already initialized */
@@ -462,22 +458,27 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
         dump();
     }
 
-    /* wait for all procs to have reported their contact info - this
-     * ensures that (a) they are all into mpi_init, and (b) the system
-     * has the contact info to successfully send a message to rank=0
+    /* if we are being launched under a debugger, then we must wait
+     * for it to be ready to go and do some things to start the job
      */
-    ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
-    
-    (void) MPIR_Breakpoint();
-    
-    /* send a message to rank=0 to release it */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t); /* don't need anything in this */
-    rank0.jobid = jdata->jobid;
-    rank0.vpid = 0;
-    if (0 > (rc = orte_rml.send_buffer(&rank0, &buf, ORTE_RML_TAG_DEBUGGER_RELEASE, 0))) {
-        opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+    if (MPIR_being_debugged) {
+        /* wait for all procs to have reported their contact info - this
+         * ensures that (a) they are all into mpi_init, and (b) the system
+         * has the contact info to successfully send a message to rank=0
+         */
+        ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
+        
+        (void) MPIR_Breakpoint();
+        
+        /* send a message to rank=0 to release it */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t); /* don't need anything in this */
+        rank0.jobid = jdata->jobid;
+        rank0.vpid = 0;
+        if (0 > (rc = orte_rml.send_buffer(&rank0, &buf, ORTE_RML_TAG_DEBUGGER_RELEASE, 0))) {
+            opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+        }
+        OBJ_DESTRUCT(&buf);
     }
-    OBJ_DESTRUCT(&buf);
 }
 
 
