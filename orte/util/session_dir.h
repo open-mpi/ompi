@@ -112,13 +112,8 @@ BEGIN_C_DECLS
  * @param batchid Batch job name, used in batch scheduling
  *                systems. NULL indicates that the default of "0" is
  *                to be used.
- * @param job String version of the jobid for which a session
- *                directory is to be created/found. NULL indicates
- *                that only the universe directory is to be
- *                created/found.
- * @param vpid String version of the vpid for which a session
- *                directory is to be created/found. NULL indicates
- *                that only the job directory is to be created/found.
+ * @param proc    Pointer to a process name for which the session
+ *                dir name is desired
  *
  * @retval ORTE_SUCCESS The directory was found and/or created with
  *                the proper permissions.
@@ -126,7 +121,7 @@ BEGIN_C_DECLS
  *                "false") or created (if create is "true").
  */
 ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *hostid, 
-                     char *batchid, char *job, char *vpid);
+                     char *batchid, orte_process_name_t *proc);
 
 /*
  * Construct the session directory name from the input parameters.
@@ -137,7 +132,7 @@ ORTE_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
                                             char **frontend,
                                             char *hostid,
                                             char *batchid, 
-                                            char *job, char *proc);
+                                            orte_process_name_t *proc);
 
 /** The orte_session_dir_finalize() function performs a cleanup of the
  * session directory tree. It first removes the session directory for
