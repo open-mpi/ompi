@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
+#include <stdlib.h>
 
 /* maybe give romio access to the globalconfig struct */
 /* keyval hack to both tell us if we've already initialized pvfs2 and also

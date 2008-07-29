@@ -56,8 +56,14 @@ void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
 	offset = fd->fp_ind;
     }
 
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
     ret = PVFS_sys_read(pvfs_fs->object_ref, file_req, offset, buf, 
 			mem_req, &(pvfs_fs->credentials), &resp_io);
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
     /* --BEGIN ERROR HANDLING-- */
     if (ret != 0 ) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -140,7 +146,7 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
     if (!filetype_is_contig) {
 	flat_file = ADIOI_Flatlist;
 	while (flat_file->type != fd->filetype) flat_file = flat_file->next;
-	if (flat_file->count == 1)
+	if (flat_file->count == 1 && !buftype_is_contig)
 	    filetype_is_contig = 1;
     }
 
@@ -214,9 +220,15 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 		    err_flag = PVFS_Request_contiguous(file_lengths, 
 			    PVFS_BYTE, &file_req);
 		    if (err_flag < 0) break;
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 		    err_flag = PVFS_sys_read(pvfs_fs->object_ref, file_req, 
 			    file_offsets, PVFS_BOTTOM, mem_req, 
 			    &(pvfs_fs->credentials), &resp_io);
+#ifdef ADIOI_MPE_LOGGING
+                    MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 		    /* --BEGIN ERROR HANDLING-- */
 		    if (err_flag != 0) {
 			*error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -284,11 +296,11 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	    n_filetypes++;
 	    for (i=0; i<flat_file->count; i++) {
 	        if (disp + flat_file->indices[i] + 
-		    (ADIO_Offset) n_filetypes*filetype_extent +
+		    ((ADIO_Offset) n_filetypes)*filetype_extent +
 		    flat_file->blocklens[i]  >= offset) {
 		    st_index = i;
 		    frd_size = (int) (disp + flat_file->indices[i] + 
-				      (ADIO_Offset) n_filetypes*filetype_extent
+				    ((ADIO_Offset) n_filetypes)*filetype_extent
 				      + flat_file->blocklens[i] - offset);
 		    flag = 1;
 		    break;
@@ -315,7 +327,7 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	}
 	
 	/* abs. offset in bytes in the file */
-	offset = disp + (ADIO_Offset) n_filetypes*filetype_extent + 
+	offset = disp + ((ADIO_Offset) n_filetypes)*filetype_extent + 
 	    abs_off_in_filetype;
     } /* else [file_ptr_type != ADIO_INDIVIDUAL] */
 
@@ -340,7 +352,11 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	/* determine how many blocks in file to read */
 	f_data_read = ADIOI_MIN(st_frd_size, bufsize);
 	total_blks_to_read = 1;
-	j++;
+	if (j < (flat_file->count-1)) j++;
+	else {
+	    j = 0;
+	    n_filetypes++;
+	}
 	while (f_data_read < bufsize) {
 	    f_data_read += flat_file->blocklens[j];
 	    total_blks_to_read++;
@@ -383,7 +399,8 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	    }
 	    for (k=0; k<MAX_ARRAY_SIZE; k++) {
 	        if (i || k) {
-		    file_offsets[k] = disp + n_filetypes*filetype_extent
+		    file_offsets[k] = disp + 
+			((ADIO_Offset)n_filetypes)*filetype_extent
 		      + flat_file->indices[j];
 		    file_lengths[k] = flat_file->blocklens[j];
 		    mem_lengths += file_lengths[k];
@@ -424,9 +441,15 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	    /* PVFS_Request_hindexed already expresses the offsets into the
 	     * file, so we should not pass in an offset if we are using
 	     * hindexed for the file type */
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	    err_flag = PVFS_sys_read(pvfs_fs->object_ref, file_req, 0, 
 				     mem_offsets, mem_req,
 				     &(pvfs_fs->credentials), &resp_io);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	    /* --BEGIN ERROR HANDLING-- */
 	    if (err_flag != 0) {
 		*error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -455,8 +478,9 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	    }
 	    for (k=0; k<extra_blks; k++) {
 	        if(i || k) {
-		    file_offsets[k] = disp + n_filetypes*filetype_extent +
-		      flat_file->indices[j];
+		    file_offsets[k] = disp + 
+			((ADIO_Offset)n_filetypes)*filetype_extent +
+			flat_file->indices[j];
 		    if (k == (extra_blks - 1)) {
 		        file_lengths[k] = bufsize - (int32_t) mem_lengths
 			  - (int32_t) mem_offsets + (int32_t)  buf;
@@ -497,8 +521,14 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	    /* --END ERROR HANDLING-- */
 
 	    /* as above, use 0 for 'offset' when using hindexed file type */
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	    err_flag = PVFS_sys_read(pvfs_fs->object_ref, file_req, 0, 
 		    mem_offsets, mem_req, &(pvfs_fs->credentials), &resp_io);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	    /* --BEGIN ERROR HANDLING-- */
 	    if (err_flag != 0) {
 		*error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -848,8 +878,8 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 		k = (k + 1)%flat_buf->count;
 	    } /* for (i=0; i<mem_list_count; i++) */
 	    for (i=0; i<file_list_count; i++) {
-	        file_offsets[i] = disp + flat_file->indices[j] + n_filetypes *
-		    filetype_extent;
+	        file_offsets[i] = disp + flat_file->indices[j] + 
+		    ((ADIO_Offset)n_filetypes) * filetype_extent;
 	        if (!i) {
 		    file_lengths[0] = frd_size;
 		    file_offsets[0] += flat_file->blocklens[j] - frd_size;
@@ -899,8 +929,14 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
 	    /* --END ERROR HANDLING-- */
 
 	    /* offset will be expressed in memory and file datatypes */
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	    err_flag = PVFS_sys_read(pvfs_fs->object_ref, file_req, 0, 
 		    PVFS_BOTTOM, mem_req, &(pvfs_fs->credentials), &resp_io);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	    /* --BEGIN ERROR HANDLING-- */
 	    if (err_flag != 0) {
 		*error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -924,7 +960,16 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
     ADIOI_Free(file_lengths);
     
     /* Other ADIO routines will convert absolute bytes into counts of datatypes */
-    if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind += total_bytes_read;
+    /* when incrementing fp_ind, need to also take into account the file type:
+     * consider an N-element 1-d subarray with a lb and ub: ( |---xxxxx-----|
+     * if we wrote N elements, offset needs to point at beginning of type, not
+     * at empty region at offset N+1) */
+    if (file_ptr_type == ADIO_INDIVIDUAL) {
+	/* this is closer, but still incorrect for the cases where a small
+	 * amount of a file type is "leftover" after a write */
+	fd->fp_ind = disp + flat_file->indices[j] + 
+	    ((ADIO_Offset)n_filetypes)*filetype_extent;
+    }
     if (err_flag == 0) *error_code = MPI_SUCCESS;
 
 error_state:

@@ -6,9 +6,6 @@
 
 #include "adio.h"
 #include "adio_extern.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 #undef AGG_DEBUG
 
@@ -127,6 +124,10 @@ void ADIOI_Calc_file_domains(ADIO_Offset *st_offsets, ADIO_Offset
 /* Divide the I/O workload among "nprocs_for_coll" processes. This is
    done by (logically) dividing the file into file domains (FDs); each
    process may directly access only its own file domain. */
+
+	/* XXX: one idea: tweak the file domains so that no fd is smaller than
+	 * a threshold (one presumably well-suited to a file system).  We don't
+	 * do that, but this routine would be the place for it */
 
     ADIO_Offset min_st_offset, max_end_offset, *fd_start, *fd_end, fd_size;
     int i;
@@ -367,7 +368,7 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
 
     int *count_others_req_per_proc, count_others_req_procs;
     int i, j;
-    MPI_Request *send_requests, *recv_requests;
+    MPI_Request *requests;
     MPI_Status *statuses;
     ADIOI_Access *others_req;
 
@@ -399,47 +400,40 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
     
 /* now send the calculated offsets and lengths to respective processes */
 
-    send_requests = (MPI_Request *)
-	ADIOI_Malloc(2*(count_my_req_procs+1)*sizeof(MPI_Request)); 
-    recv_requests = (MPI_Request *)
-	ADIOI_Malloc(2*(count_others_req_procs+1)*sizeof(MPI_Request)); 
+    requests = (MPI_Request *)
+	ADIOI_Malloc(1+2*(count_my_req_procs+count_others_req_procs)*sizeof(MPI_Request)); 
 /* +1 to avoid a 0-size malloc */
 
     j = 0;
     for (i=0; i<nprocs; i++) {
 	if (others_req[i].count) {
 	    MPI_Irecv(others_req[i].offsets, others_req[i].count, 
-                      ADIO_OFFSET, i, i+myrank, fd->comm, &recv_requests[j]);
+                      ADIO_OFFSET, i, i+myrank, fd->comm, &requests[j]);
 	    j++;
 	    MPI_Irecv(others_req[i].lens, others_req[i].count, 
-                      MPI_INT, i, i+myrank+1, fd->comm, &recv_requests[j]);
+                      MPI_INT, i, i+myrank+1, fd->comm, &requests[j]);
 	    j++;
 	}
     }
 
-    j = 0;
     for (i=0; i < nprocs; i++) {
 	if (my_req[i].count) {
 	    MPI_Isend(my_req[i].offsets, my_req[i].count, 
-                      ADIO_OFFSET, i, i+myrank, fd->comm, &send_requests[j]);
+                      ADIO_OFFSET, i, i+myrank, fd->comm, &requests[j]);
 	    j++;
 	    MPI_Isend(my_req[i].lens, my_req[i].count, 
-                      MPI_INT, i, i+myrank+1, fd->comm, &send_requests[j]);
+                      MPI_INT, i, i+myrank+1, fd->comm, &requests[j]);
 	    j++;
 	}
     }
 
-    statuses = (MPI_Status *) ADIOI_Malloc((1 + 2* \
-                   ADIOI_MAX(count_my_req_procs,count_others_req_procs)) * \
-                       sizeof(MPI_Status));
-/* +1 to avoid a 0-size malloc */
+    if (j) {
+	statuses = (MPI_Status *) ADIOI_Malloc(j * sizeof(MPI_Status));
+	MPI_Waitall(j, requests, statuses);
+	ADIOI_Free(statuses);
+    }
 
-    MPI_Waitall(2*count_my_req_procs, send_requests, statuses);
-    MPI_Waitall(2*count_others_req_procs, recv_requests, statuses);
-
-    ADIOI_Free(send_requests);
-    ADIOI_Free(recv_requests);	    
-    ADIOI_Free(statuses);
+    ADIOI_Free(requests);
     ADIOI_Free(count_others_req_per_proc);
 
     *count_others_req_procs_ptr = count_others_req_procs;

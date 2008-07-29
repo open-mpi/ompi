@@ -6,18 +6,6 @@
  */
 
 extern ADIOI_Flatlist_node *ADIOI_Flatlist;
-extern ADIOI_Async_node *ADIOI_Async_list_head, *ADIOI_Async_list_tail; 
-/* list of outstanding asynchronous requests */
-
-extern ADIOI_Async_node *ADIOI_Async_avail_head, *ADIOI_Async_avail_tail;
-/* list of available (already malloced) nodes for the async list */
-extern ADIOI_Malloc_async *ADIOI_Malloc_async_head, *ADIOI_Malloc_async_tail;
-/* list of malloced areas in memory, which must be freed in ADIO_End */
-
-extern ADIOI_Req_node *ADIOI_Req_avail_head, *ADIOI_Req_avail_tail;
-    /* list of available (already malloced) request objects */
-extern ADIOI_Malloc_req *ADIOI_Malloc_req_head, *ADIOI_Malloc_req_tail;
-    /* list of malloced areas for requests, which must be freed in ADIO_End */
 
 extern ADIOI_Datarep *ADIOI_Datarep_head;
 
@@ -30,7 +18,7 @@ extern int ADIOI_Reqtable_ptr, ADIOI_Reqtable_max;
 extern MPI_Info *MPIR_Infotable;
 extern int MPIR_Infotable_ptr, MPIR_Infotable_max;
 #endif
-#ifdef ROMIO_XFS
+#if defined(ROMIO_XFS) || defined(ROMIO_LUSTRE)
 extern int ADIOI_Direct_read, ADIOI_Direct_write;
 #endif
 

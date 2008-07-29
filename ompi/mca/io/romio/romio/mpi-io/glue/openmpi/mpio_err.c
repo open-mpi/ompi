@@ -35,7 +35,6 @@ int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
 	    va_end(Argp);
 	}
-	FPRINTF(stderr, "%s", buf);
 	ADIOI_Free(buf);
     }
 

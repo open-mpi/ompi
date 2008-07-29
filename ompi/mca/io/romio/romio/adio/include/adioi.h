@@ -23,32 +23,6 @@
 
 #ifndef ADIOI_INCLUDE
 #define ADIOI_INCLUDE
-
-/* each pending nonblocking request is stored on a linked list */
-typedef struct ADIOI_Async {
-    ADIO_Request *request;
-    struct ADIOI_Async *prev, *next;
-} ADIOI_Async_node;
-
-/* list to keep track of memory regions that have been malloced 
-   for above async list */
-typedef struct ADIOI_Malloc_async_ptr {
-    ADIOI_Async_node *ptr;  /* ptr to malloced region */
-    struct ADIOI_Malloc_async_ptr *next;
-} ADIOI_Malloc_async;
-
-/* used to malloc request objects in bulk */
-typedef struct ADIOI_Req_n {
-    struct ADIOI_RequestD reqd;
-    struct ADIOI_Req_n *next;
-} ADIOI_Req_node;
-
-/* used to keep track of the malloced requests that need to be freed */
-typedef struct ADIOI_Malloc_req_ptr {
-    ADIOI_Req_node *ptr;  /* ptr to malloced region */
-    struct ADIOI_Malloc_req_ptr *next;
-} ADIOI_Malloc_req;
-
 /* used to keep track of hint/info values.
  * Note that there are a lot of int-sized values in here...they are
  * used as int-sized entities other places as well.  This would be a 
@@ -124,6 +98,31 @@ typedef struct ADIOI_Fl_node {
     struct ADIOI_Fl_node *next;  /* pointer to next node */
 } ADIOI_Flatlist_node;
 
+#ifdef ROMIO_PVFS2
+#include <pvfs2.h>
+#endif
+typedef struct ADIOI_AIO_req_str {
+	/* very wierd: if this MPI_Request is a pointer, some C++ compilers
+	 * will clobber it when the MPICH2 C++ bindings are used */
+	MPI_Request req;
+	MPI_Offset nbytes;
+	/* should probably make this a union */
+#ifdef ROMIO_HAVE_WORKING_AIO
+	struct aiocb *aiocbp;
+#endif
+#ifdef ROMIO_PVFS2
+	PVFS_sys_op_id op_id;
+	PVFS_sysresp_io resp_io;
+	PVFS_Request file_req;
+	PVFS_Request mem_req;
+#endif
+#ifdef ROMIO_NTFS
+    /* Ptr to Overlapped struct */
+    LPOVERLAPPED    lpOvl;
+    /* Ptr to file handle */
+	HANDLE fd;
+#endif
+} ADIOI_AIO_Request;
 
 struct ADIOI_Fns_struct {
     void (*ADIOI_xxx_Open) (ADIO_File fd, int *error_code);
@@ -184,13 +183,13 @@ struct ADIOI_Fns_struct {
 #define ADIOI_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ADIOI_MAX(a, b) ((a) > (b) ? (a) : (b))
 
-#define ADIOI_PREALLOC_BUFSZ      4194304    /* buffer size used to 
+#define ADIOI_PREALLOC_BUFSZ      16777216    /* buffer size used to 
                                                 preallocate disk space */
 
 
 /* default values for some hints */
-    /* buffer size for collective I/O = 4MB */
-#define ADIOI_CB_BUFFER_SIZE_DFLT         "4194304"
+    /* buffer size for collective I/O = 16 MB */
+#define ADIOI_CB_BUFFER_SIZE_DFLT         "16777216"
     /* buffer size for data sieving in independent reads = 4MB */
 #define ADIOI_IND_RD_BUFFER_SIZE_DFLT     "4194304"
     /* buffer size for data sieving in independent writes = 512KB. default is
@@ -292,13 +291,7 @@ void ADIOI_Flatten(MPI_Datatype type, ADIOI_Flatlist_node *flat,
 		  ADIO_Offset st_offset, int *curr_index);  
 void ADIOI_Delete_flattened(MPI_Datatype datatype);
 int ADIOI_Count_contiguous_blocks(MPI_Datatype type, int *curr_index);
-ADIOI_Async_node *ADIOI_Malloc_async_node(void);
-void ADIOI_Free_async_node(ADIOI_Async_node *node);
-void ADIOI_Add_req_to_list(ADIO_Request *request);
 void ADIOI_Complete_async(int *error_code);
-void ADIOI_Del_req_from_list(ADIO_Request *request);
-struct ADIOI_RequestD *ADIOI_Malloc_request(void);
-void ADIOI_Free_request(ADIOI_Req_node *node);
 void *ADIOI_Malloc_fn(size_t size, int lineno, char *fname);
 void *ADIOI_Calloc_fn(size_t nelem, size_t elsize, int lineno, char *fname);
 void *ADIOI_Realloc_fn(void *ptr, size_t size, int lineno, char *fname);
@@ -308,6 +301,8 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset);
 void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset);
 void ADIOI_Get_byte_offset(ADIO_File fd, ADIO_Offset offset,
 			   ADIO_Offset *disp);
+void ADIOI_process_system_hints(MPI_Info info);
+
 
 void ADIOI_GEN_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 		     int *error_code);
@@ -318,7 +313,7 @@ void ADIOI_GEN_ReadContig(ADIO_File fd, void *buf, int count,
 			  ADIO_Offset offset, ADIO_Status *status,
 			  int *error_code);
 int ADIOI_GEN_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
-		  int wr, void *handle);
+		  int wr, MPI_Request *request);
 void ADIOI_GEN_IreadContig(ADIO_File fd, void *buf, int count, 
 			   MPI_Datatype datatype, int file_ptr_type,
 			   ADIO_Offset offset, ADIO_Request *request,
@@ -347,6 +342,11 @@ int ADIOI_GEN_IODone(ADIO_Request *request, ADIO_Status *status,
 		     int *error_code);
 void ADIOI_GEN_IOComplete(ADIO_Request *request, ADIO_Status *status,
 			  int *error_code);
+int ADIOI_GEN_aio_poll_fn(void *extra_state, ADIO_Status *status);
+int ADIOI_GEN_aio_wait_fn(int count, void **array_of_states, double timeout, 
+		ADIO_Status *status);
+int ADIOI_GEN_aio_query_fn(void *extra_state, ADIO_Status *status);
+int ADIOI_GEN_aio_free_fn(void *extra_state);
 void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
                        MPI_Datatype buftype, int file_ptr_type,
                        ADIO_Offset offset, ADIO_Status *status, int
@@ -356,6 +356,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, void *buf, int count,
                        ADIO_Offset offset, ADIO_Status *status, int
                        *error_code);
 void ADIOI_GEN_WriteStrided_naive(ADIO_File fd, void *buf, int count,
+                       MPI_Datatype datatype, int file_ptr_type,
+                       ADIO_Offset offset, ADIO_Status *status, int
+                       *error_code);
+void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, void *buf, int count,
                        MPI_Datatype datatype, int file_ptr_type,
                        ADIO_Offset offset, ADIO_Status *status, int
                        *error_code);
@@ -493,7 +497,6 @@ int MPIOI_File_write_all_end(MPI_File fh,
 			     void *buf,
 			     char *myname,
 			     MPI_Status *status);
-#ifndef HAVE_MPI_GREQUEST
 int MPIOI_File_iwrite(MPI_File fh,
 		      MPI_Offset offset,
 		      int file_ptr_type,
@@ -501,7 +504,7 @@ int MPIOI_File_iwrite(MPI_File fh,
 		      int count,
 		      MPI_Datatype datatype,
 		      char *myname,
-		      MPIO_Request *request);
+		      MPI_Request *request);
 int MPIOI_File_iread(MPI_File fh,
 		     MPI_Offset offset,
 		     int file_ptr_type,
@@ -509,8 +512,7 @@ int MPIOI_File_iread(MPI_File fh,
 		     int count,
 		     MPI_Datatype datatype,
 		     char *myname,
-		     MPIO_Request *request);
-#endif
+		     MPI_Request *request);
 
 
 
@@ -547,12 +549,27 @@ int MPIOI_File_iread(MPI_File fh,
 
 #else
 
+#ifdef ADIOI_MPE_LOGGING
+#   define ADIOI_WRITE_LOCK(fd, offset, whence, len) do { \
+        MPE_Log_event( ADIOI_MPE_writelock_a, 0, NULL ); \
+        ADIOI_Set_lock((fd)->fd_sys, F_SETLKW, F_WRLCK, offset, whence, len); \
+        MPE_Log_event( ADIOI_MPE_writelock_b, 0, NULL ); } while( 0 )
+#   define ADIOI_READ_LOCK(fd, offset, whence, len) \
+        MPE_Log_event( ADIOI_MPE_readlock_a, 0, NULL ); do { \
+        ADIOI_Set_lock((fd)->fd_sys, F_SETLKW, F_RDLCK, offset, whence, len); \
+        MPE_Log_event( ADIOI_MPE_readlock_b, 0, NULL ); } while( 0 )
+#   define ADIOI_UNLOCK(fd, offset, whence, len) do { \
+        MPE_Log_event( ADIOI_MPE_unlock_a, 0, NULL ); \
+        ADIOI_Set_lock((fd)->fd_sys, F_SETLK, F_UNLCK, offset, whence, len); \
+        MPE_Log_event( ADIOI_MPE_unlock_b, 0, NULL ); } while( 0 )
+#else
 #   define ADIOI_WRITE_LOCK(fd, offset, whence, len) \
           ADIOI_Set_lock((fd)->fd_sys, F_SETLKW, F_WRLCK, offset, whence, len)
 #   define ADIOI_READ_LOCK(fd, offset, whence, len) \
           ADIOI_Set_lock((fd)->fd_sys, F_SETLKW, F_RDLCK, offset, whence, len)
 #   define ADIOI_UNLOCK(fd, offset, whence, len) \
           ADIOI_Set_lock((fd)->fd_sys, F_SETLK, F_UNLCK, offset, whence, len)
+#endif
 
 #endif
 
@@ -603,6 +620,31 @@ int ADIOI_Snprintf( char *str, size_t size, const char *format, ... )
 #endif
 
 #include "adioi_error.h"
+
+/*  MPE logging variables  */
+
+#ifdef ADIOI_MPE_LOGGING
+#include "mpe.h"
+
+int  ADIOI_MPE_open_a;
+int  ADIOI_MPE_open_b;
+int  ADIOI_MPE_read_a;
+int  ADIOI_MPE_read_b;
+int  ADIOI_MPE_write_a;
+int  ADIOI_MPE_write_b;
+int  ADIOI_MPE_lseek_a;
+int  ADIOI_MPE_lseek_b;
+int  ADIOI_MPE_close_a;
+int  ADIOI_MPE_close_b;
+int  ADIOI_MPE_writelock_a;
+int  ADIOI_MPE_writelock_b;
+int  ADIOI_MPE_readlock_a;
+int  ADIOI_MPE_readlock_b;
+int  ADIOI_MPE_unlock_a;
+int  ADIOI_MPE_unlock_b;
+int  ADIOI_MPE_postwrite_a;
+int  ADIOI_MPE_postwrite_b;
+#endif
 
 #endif
 

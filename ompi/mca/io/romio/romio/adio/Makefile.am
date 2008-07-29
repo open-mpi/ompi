@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,6 +21,22 @@ include $(top_srcdir)/Makefile.options
 
 # Conditionals whether to build each subdir or not
 
+if BUILD_BGL
+BGL_DIR = ad_bgl
+BGL_LIB = ad_bgl/libadio_bgl.la
+else
+BGL_DIR =
+BGL_LIB =
+endif
+
+if BUILD_BGLOCKLESS
+BGLOCKLESS_DIR = ad_bglockless
+BGLOCKLESS_LIB = ad_bglockless/libadio_bglockless.la
+else
+BGLOCKLESS_DIR =
+BGLOCKLESS_LIB =
+endif
+
 if BUILD_GRIDFTP
 GRIDFTP_DIR = ad_gridftp
 GRIDFTP_LIB = ad_gridftp/libadio_gridftp.la
@@ -28,12 +45,21 @@ GRIDFTP_DIR =
 GRIDFTP_LIB =
 endif
 
-if BUILD_HFS
-HFS_DIR = ad_hfs
-HFS_LIB = ad_hfs/libadio_hfs.la
+# 8 July 2008: romio-maint@mcs.anl.gov says that this is deprecated
+#if BUILD_HFS
+#HFS_DIR = ad_hfs
+#HFS_LIB = ad_hfs/libadio_hfs.la
+#else
+#HFS_DIR =
+#HFS_LIB =
+#endif
+
+if BUILD_LUSTRE
+LUSTRE_DIR = ad_lustre
+LUSTRE_LIB = ad_lustre/libadio_lustre.la
 else
-HFS_DIR =
-HFS_LIB =
+LUSTRE_DIR =
+LUSTRE_LIB =
 endif
 
 if BUILD_NFS
@@ -69,13 +95,14 @@ PFS_DIR =
 PFS_LIB =
 endif
 
-if BUILD_PIOFS
-PIOFS_DIR = ad_piofs
-PIOFS_LIB = ad_piofs/libadio_piofs.la
-else
-PIOFS_DIR =
-PIOFS_LIB =
-endif
+# 8 July 2008: romio-maint@mcs.anl.gov says that this is deprecated
+#if BUILD_PIOFS
+#PIOFS_DIR = ad_piofs
+#PIOFS_LIB = ad_piofs/libadio_piofs.la
+#else
+#PIOFS_DIR =
+#PIOFS_LIB =
+#endif
 
 if BUILD_PVFS
 PVFS_DIR = ad_pvfs
@@ -126,21 +153,20 @@ XFS_LIB =
 endif
 
 SUBDIRS = common include \
-	$(GRIDFTP_DIR) $(HFS_DIR) $(NFS_DIR) $(NTFS_DIR) $(PANFS_DIR) \
-	$(PFS_DIR) $(PIOFS_DIR) $(PVFS_DIR) $(PVFS2_DIR) $(SFS_DIR) \
+	$(BG_DIR) $(BGLOCKLESS_DIR) \
+	$(GRIDFTP_DIR) $(LUSTRE_DIR) $(NFS_DIR) $(NTFS_DIR) $(PANFS_DIR) \
+	$(PFS_DIR) $(PVFS_DIR) $(PVFS2_DIR) $(SFS_DIR) \
 	$(TESTFS_DIR) $(UFS_DIR) $(XFS_DIR)
 DIST_SUBDIRS = common include \
-        ad_gridftp ad_hfs ad_nfs ad_ntfs ad_panfs ad_pfs ad_piofs ad_pvfs \
-	ad_pvfs2 ad_sfs ad_testfs ad_ufs ad_xfs
+        ad_bgl ad_bglockless ad_gridftp ad_lustre ad_nfs ad_ntfs \
+        ad_panfs ad_pfs ad_pvfs	ad_pvfs2 ad_sfs ad_testfs ad_ufs ad_xfs
 
 # Library
 noinst_LTLIBRARIES = libadio.la
 libadio_la_SOURCES =
 libadio_la_LIBADD = \
         common/libadio_common.la \
-        $(GRIDFTP_LIB) $(HFS_LIB) $(NFS_LIB) $(NTFS_LIB) $(PANFS_LIB) \
-        $(PFS_LIB) $(PIOFS_LIB) $(PVFS_LIB) $(PVFS2_LIB) $(SFS_LIB) \
+	$(BG_LIB) $(BGLOCKLESS_LIB) \
+        $(GRIDFTP_LIB) $(LUSTRE_LIB) $(NFS_LIB) $(NTFS_LIB) $(PANFS_LIB) \
+        $(PFS_LIB) $(PVFS_LIB) $(PVFS2_LIB) $(SFS_LIB) \
         $(TESTFS_LIB) $(UFS_LIB) $(XFS_LIB)
-libadio_la_DEPENDENCIES = \
-        $(libadio_la_LIBADD)
-

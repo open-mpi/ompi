@@ -8,7 +8,6 @@
 
 #include "ad_panfs.h"
 #include <pan_fs_client_cw_mode.h>
-#include "opal/mca/base/mca_base_param.h"
 
 void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
@@ -117,7 +116,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 
             MPI_Info_get(users_info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL, 
                  value, &flag);
-            if (flag && (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE)) {
+            if (flag && (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE || layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID10)) {
                 layout_visit_policy = strtoul(value,NULL,10);
                 tmp_val = layout_visit_policy;
                 MPI_Bcast(&tmp_val, 1, MPI_INT, 0, fd->comm);

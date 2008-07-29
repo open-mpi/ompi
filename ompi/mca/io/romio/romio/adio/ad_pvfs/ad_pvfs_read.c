@@ -27,16 +27,42 @@ void ADIOI_PVFS_ReadContig(ADIO_File fd, void *buf, int count,
     len = datatype_size * count;
 
     if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
-	if (fd->fp_sys_posn != offset)
+	if (fd->fp_sys_posn != offset) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    pvfs_lseek64(fd->fd_sys, offset, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	err = pvfs_read(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	fd->fp_sys_posn = offset + err;
 	/* individual file pointer not updated */        
     }
     else {  /* read from curr. location of ind. file pointer */
-	if (fd->fp_sys_posn != fd->fp_ind)
+	if (fd->fp_sys_posn != fd->fp_ind) {
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	    pvfs_lseek64(fd->fd_sys, fd->fp_ind, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+            MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
+#endif
 	err = pvfs_read(fd->fd_sys, buf, len);
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
+#endif
 	fd->fp_ind += err; 
 	fd->fp_sys_posn = fd->fp_ind;
     }         

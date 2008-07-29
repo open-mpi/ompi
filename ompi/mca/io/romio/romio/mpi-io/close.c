@@ -62,7 +62,9 @@ int MPI_File_close(MPI_File *mpi_fh)
 	deleted while others are still accessing it. */ 
         MPI_Barrier((fh)->comm);
 	if ((fh)->shared_fp_fd != ADIO_FILE_NULL) {
+	    MPI_File *mpi_fh_shared = &(fh->shared_fp_fd);
 	    ADIO_Close((fh)->shared_fp_fd, &error_code);
+    	    MPIO_File_free(mpi_fh_shared);
 	    /* --BEGIN ERROR HANDLING-- */
 	    if (error_code != MPI_SUCCESS) goto fn_fail;
 	    /* --END ERROR HANDLING-- */

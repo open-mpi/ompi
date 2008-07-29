@@ -6,50 +6,30 @@
 
 #include "ad_nfs.h"
 
+#include "../../mpi-io/mpioimpl.h"
+#include "../../mpi-io/mpioprof.h"
+#include "mpiu_greq.h"
+
+#include <string.h>
+
+#ifdef ROMIO_HAVE_WORKING_AIO
+static MPIX_Grequest_class ADIOI_GEN_greq_class = 0;
+/* this routine is nearly identical to ADIOI_GEN_IwriteContig, except we lock
+ * around I/O */
 void ADIOI_NFS_IwriteContig(ADIO_File fd, void *buf, int count, 
                 MPI_Datatype datatype, int file_ptr_type,
                 ADIO_Offset offset, ADIO_Request *request, int *error_code)  
 {
     int len, typesize;
-#ifndef ROMIO_HAVE_WORKING_AIO
-    ADIO_Status status;
-#else
     int aio_errno = 0;
     static char myname[] = "ADIOI_NFS_IWRITECONTIG";
-#endif
-
-    *request = ADIOI_Malloc_request();
-    (*request)->optype = ADIOI_WRITE;
-    (*request)->fd = fd;
-    (*request)->datatype = datatype;
 
     MPI_Type_size(datatype, &typesize);
     len = count * typesize;
 
-#ifndef ROMIO_HAVE_WORKING_AIO
-    /* HP, FreeBSD, Linux */
-    /* no support for nonblocking I/O. Use blocking I/O. */
-
-    ADIOI_NFS_WriteContig(fd, buf, len, MPI_BYTE, file_ptr_type, offset,
-			  &status,
-			  error_code);  
-    (*request)->queued = 0;
-#ifdef HAVE_STATUS_SET_BYTES
-    if (*error_code == MPI_SUCCESS) {
-	MPI_Get_elements(&status, MPI_BYTE, &len);
-	(*request)->nbytes = len;
-    }
-#endif
-
-    fd->fp_sys_posn = -1;
-
-#else
     if (file_ptr_type == ADIO_INDIVIDUAL) offset = fd->fp_ind;
-    aio_errno = ADIOI_NFS_aio(fd, buf, len, offset, 1, &((*request)->handle));
+    aio_errno = ADIOI_NFS_aio(fd, buf, len, offset, 1, request);
     if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind += len;
-
-    (*request)->queued = 1;
-    ADIOI_Add_req_to_list(request);
 
     fd->fp_sys_posn = -1;
 
@@ -60,11 +40,9 @@ void ADIOI_NFS_IwriteContig(ADIO_File fd, void *buf, int count,
 	/* --END ERROR HANDLING-- */
     }
     else *error_code = MPI_SUCCESS;
-#endif
-
-    fd->async_count++;
+    return;
 }
-
+#endif
 
 /* This function is for implementation convenience. It is not user-visible.
  * It takes care of the differences in the interface for nonblocking I/O
@@ -74,21 +52,22 @@ void ADIOI_NFS_IwriteContig(ADIO_File fd, void *buf, int count,
  */
 #ifdef ROMIO_HAVE_WORKING_AIO
 int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
-		  int wr, void *handle)
+		  int wr, MPI_Request *request)
 {
     int err=-1, fd_sys;
     int error_code, this_errno;
 
     struct aiocb *aiocbp;
-    
+    ADIOI_AIO_Request *aio_req;
+
     fd_sys = fd->fd_sys;
 
+    aio_req = (ADIOI_AIO_Request*)ADIOI_Calloc(sizeof(ADIOI_AIO_Request), 1);
     aiocbp = (struct aiocb *) ADIOI_Calloc(sizeof(struct aiocb), 1);
     aiocbp->aio_offset = offset;
     aiocbp->aio_buf    = buf;
     aiocbp->aio_nbytes = len;
 
-    /* This madness is mostly here to deal with IBM AIO implementation */
 #ifdef ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_WHENCE
     aiocbp->aio_whence = SEEK_SET;
 #endif
@@ -112,7 +91,7 @@ int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     if (wr) ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
     else ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
 
-#ifdef ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_FILDES
+#ifndef ROMIO_HAVE_AIO_CALLS_NEED_FILEDES
     if (wr) err = aio_write(aiocbp);
     else err = aio_read(aiocbp);
 #else
@@ -128,43 +107,23 @@ int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 	if (this_errno == EAGAIN) {
         /* exceeded the max. no. of outstanding requests.
            complete all previous async. requests and try again. */
-
-	    ADIOI_Complete_async(&error_code);
-	    if (error_code != MPI_SUCCESS) return -EIO;
-
-	    while (err == -1 && this_errno == EAGAIN) {
-
-		if (wr) ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
-		else ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
-
-#ifdef ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_FILDES
-		if (wr) err = aio_write(aiocbp);
-		else err = aio_read(aiocbp);
-#else
-		/* Broken IBM interface */
-		if (wr) err = aio_write(fd_sys, aiocbp);
-		else err = aio_read(fd_sys, aiocbp);
-#endif
-		this_errno = errno;
-		ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
-
-		if (err == -1 && this_errno == EAGAIN) {
-		    /* sleep and try again */
-		    sleep(1);
-		}
-		else if (err == -1) {
-		    /* real error */
-		    return -errno;
-		}
-	    }
-        }
-	else {
+	    ADIO_WriteContig(fd, buf, len, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
+			    offset, NULL, &error_code);
+	    MPIO_Completed_request_create(&fd, len, &error_code, request);
+	    return 0;
+	} else {
 	    return -this_errno;
 	}
     }
-
-    *((struct aiocb **) handle) = aiocbp;
-
+    aio_req->aiocbp = aiocbp;
+    if (ADIOI_GEN_greq_class == 0) {
+	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn, 
+			    ADIOI_GEN_aio_free_fn, MPIU_Greq_cancel_fn, 
+			    ADIOI_GEN_aio_poll_fn, ADIOI_GEN_aio_wait_fn, 
+			    &ADIOI_GEN_greq_class);
+    }
+    MPIX_Grequest_class_allocate(ADIOI_GEN_greq_class, aio_req, request);
+    memcpy(&(aio_req->req), request, sizeof(MPI_Request));
     return 0;
 }
 #endif

@@ -162,8 +162,8 @@ the commands provided by the file system to access the file, for example,
 {\tt ls}, {\tt mv}, {\tt cp}, {\tt rm}, {\tt ftp}.
 
 Please read the limitations of this version of ROMIO that are listed
-in Section~\ref{sec:limit} of this document (e.g., {\tt MPIO\_Request}
-object, restriction to homogeneous environments). 
+in Section~\ref{sec:limit} of this document (e.g., restriction to homogeneous
+environments). 
 
 \subsection{ROMIO Optimizations}
 \label{sec:opt}
@@ -229,7 +229,7 @@ Determines when ROMIO will choose to perform data sieving.
 Valid values are \texttt{enable}, \texttt{disable}, or \texttt{automatic}.
 Default value is \texttt{automatic}.  In \texttt{automatic} mode ROMIO
 may choose to enable or disable data sieving based on heuristics.
-\item \texttt{romio\_ds\_write} -- Currently this hint is ignored.
+\item \texttt{romio\_ds\_write} -- Same as above, only for writes.
 \end{itemize}
 
 The following hints control the two-phase (collective buffering)
@@ -404,6 +404,33 @@ If ROMIO doesn't understand a hint, or if the value is invalid, the hint
 will be ignored. The values of hints being used by ROMIO for a file
 can be obtained at any time via {\tt MPI\_File\_get\_info}.
 
+\subsubsection{Systemwide Hints}
+\label{sec:system_hints}
+
+A site administrator with knowledge of the storage and networking capabilities
+of a machine might be able to come up with a set of hint values that work
+better for that machine than the ROMIO default values.  As an extention to the
+standard, ROMIO will consult a ``hints file''.  This file provides an
+additional mechanism for setting MPI-IO hints, albeit in a ROMIO-specific
+manner.  The hints file contains a list of hints and their values.  ROMIO will
+use these initial hint settings, though programs are free to override any of
+them.
+
+The format of the hints file is a list of hints and their values, one per line.
+A \# character in the first column indicates a comment, and ROMIO will ignore
+the entire line.  Here's an example:
+
+\begin{verbatim}
+# this is a comment describing the following setting
+cb_nodes 32
+# these nodes happen to have the best connection to storage
+cb_config_list n01,n11,n21,n31,n41
+\end{verbatim}
+
+ROMIO will look for these hints in the file \texttt{/etc/romio-hints}.  A user
+can set the environment variable \texttt{ROMIO\_HINTS} to the name of a file
+which ROMIO will use instead.   
+
 \subsection{Using ROMIO on NFS}
 
 It is worth first mentioning that in no way do we encourage the use
@@ -550,7 +577,7 @@ barrier or similar operation to ensure the set size has completed.
 \section{Installation Instructions}
 Since ROMIO is included in MPICH, LAM, HP MPI, SGI MPI, and NEC MPI, you don't
 need to install it separately if you are using any of these MPI
-implementations. If you are using some other MPI, you
+implementations.  If you are using some other MPI, you
 can configure and build ROMIO as follows: 
 
 Untar the tar file as
@@ -608,7 +635,8 @@ followed by {\tt make}.
 
 32-bit systems running linux kernel version 2.4.0 or newer and glibc
 version 2.2.0 or newer can support files greater than 2 GBytes in size.
-This support is not automatic, however.  
+This support is currently automaticly detected and enabled.  We document the
+manual steps should the automatic detection not work for some reason.
 
 The two macros {\tt\_FILE\_OFFSET\_BITS=64} and
 {\tt\_LARGEFILE64\_SOURCE} tell gnu libc it's ok to support large files
@@ -705,16 +733,6 @@ revision 1.2.1 or later, all MPI-IO functions return only two possible
 error codes---{\tt MPI\_SUCCESS} on success and {\tt MPI\_ERR\_UNKNOWN}
 on failure.
 
-\item All nonblocking I/O functions use a ROMIO-defined {\tt MPIO\_Request}
-object instead of the usual {\tt MPI\_Request} object. Accordingly, two
-functions, {\tt MPIO\_Test} and {\tt MPIO\_Wait}, are provided to test
-and wait on these {\tt MPIO\_Request} objects. They have the same
-semantics as {\tt MPI\_Test} and {\tt MPI\_Wait}.\\
-\hspace*{.4in} {\tt int MPIO\_Test(MPIO\_Request *request, int *flag, MPI\_Status *status);}\\
-\hspace*{.4in} {\tt int MPIO\_Wait(MPIO\_Request *request, MPI\_Status *status);}\\
-The usual functions {\tt MPI\_Test}, {\tt MPI\_Wait}, {\tt MPI\_Testany},
-and so forth, will not work for nonblocking I/O. 
-
 \item This version works only on a homogeneous cluster of machines,
 and only the ``native'' file data representation is supported.
 
@@ -768,23 +786,15 @@ mpif.h} of an older version of MPICH.
 %
 % MAILING LIST
 %
-\section{ROMIO Users Mailing List}
-Please register your copy of ROMIO with us by sending e-mail
-to {\tt majordomo@mcs.anl.gov} with the message
-
-{\tt subscribe romio-users}
-
-{\noindent This} will enable us to notify you of new releases of ROMIO
-as well as bug fixes.
-
-
+% this mailing list has been dead for a while
 %
 % REPORTING BUGS
 %
 \section{Reporting Bugs}
 If you have trouble, first check the users guide. Then check if there
-is a list of known bugs and patches on the ROMIO web page at {\tt http://www.mcs.anl.gov/romio}.
-Finally, if you still have problems, send a detailed message containing:\\
+is a list of known bugs and patches on the ROMIO web page at {\tt
+http://www.mcs.anl.gov/romio}.  Finally, if you still have problems, send a
+detailed message containing:\\
 \hspace*{.2in}$\bullet$ the type of system (often {\tt uname -a}),\\
 \hspace*{.2in}$\bullet$ the output of {\tt configure},\\
 \hspace*{.2in}$\bullet$ the output of {\tt make}, and \\
@@ -992,7 +1002,14 @@ and \texttt{pfs\_svr\_buf} (on PFS only).
 
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{plain}
-%\bibliography{/home/beumer/THAKUR/TM234/papers}
-\bibliography{/home/thakur/tex/bib/papers}
+%% these are the "full" bibliography databases
+%\bibliography{/homes/thakur/tex/bib/papers,/homes/robl/projects/papers/pario}
+% this is the pared-down one containing only those references used in
+% users-guide.tex
+% to regenerate, uncomment the full databases above, then run 
+%   ~gropp/bin/citetags users-guide.tex | sort | uniq | \
+%        ~gropp/bin/citefind - /homes/thakur/tex/bib/papers.bib \
+%                      /homes/robl/projects/papers/pario
+\bibliography{romio}
 
 \end{document}

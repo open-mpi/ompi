@@ -48,7 +48,7 @@ OMPI_DECLSPEC extern mca_io_base_component_1_0_0_t mca_io_romio_component;
  */
 struct mca_io_romio_request_t {
     mca_io_base_request_t super;
-    ROMIO_PREFIX (MPIO_Request) romio_rq;
+    MPI_Request romio_rq;
 };
 typedef struct mca_io_romio_request_t mca_io_romio_request_t;
 

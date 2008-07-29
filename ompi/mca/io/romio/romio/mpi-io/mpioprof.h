@@ -206,5 +206,10 @@
 #undef MPI_Status_set_cancelled
 #define MPI_Status_set_cancelled PMPI_Status_set_cancelled
 
+#undef MPIX_Grequest_start
+#define MPIX_Grequest_start PMPIX_Grequest_start
+#undef MPIX_Grequest_class_create
+#define MPIX_Grequest_class_create PMPIX_Grequest_class_create
+
 #endif
 #endif

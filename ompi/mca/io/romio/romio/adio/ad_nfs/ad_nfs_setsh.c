@@ -47,8 +47,20 @@ void ADIOI_NFS_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, int *error_code)
     if (*error_code != MPI_SUCCESS) return;
 
     ADIOI_WRITE_LOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
     lseek(fd->shared_fp_fd->fd_sys, 0, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
+#endif
     err = write(fd->shared_fp_fd->fd_sys, &offset, sizeof(ADIO_Offset));
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_write_b, 0, NULL );
+#endif
     ADIOI_UNLOCK(fd->shared_fp_fd, 0, SEEK_SET, sizeof(ADIO_Offset));
 
     if (err == -1) {

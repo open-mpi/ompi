@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,6 +24,13 @@
 include $(top_srcdir)/Makefile.options
 
 SUBDIRS = glue/openmpi
+
+# Intentionally do *not* include iotest.c and iowait.c.  Since we're
+# using MPI_HAS_GREQUEST, ROMIO makes MPIO_Test and MPIO_Wait be just
+# plain vanilla [P]MPI_Test and [P]MPI_WAIT, which we already have
+# defined at the top MPI layer (you can get duplicate symbol errors
+# this way).  And due to OMPI/ROMIO integration, we don't need
+# MPIO_Test and MPIO_Wait, anyway.
 
 noinst_LTLIBRARIES = libmpi-io.la
 libmpi_io_la_SOURCES = \
@@ -40,8 +48,6 @@ libmpi_io_la_SOURCES = \
         get_posn_sh.c \
         get_size.c \
         get_view.c \
-        iotest.c \
-        iowait.c \
         iread_at.c \
         iread.c \
         iread_sh.c \
@@ -85,5 +91,4 @@ libmpi_io_la_SOURCES = \
         write_sh.c \
 	register_datarep.c \
 	mpiu_greq.c \
-	mpiu_greq.h \
 	mpich2_fileutil.c

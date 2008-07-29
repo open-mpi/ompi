@@ -15,9 +15,22 @@ void ADIOI_PVFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 
     switch(flag) {
     case ADIO_FCNTL_GET_FSIZE:
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	fcntl_struct->fsize = pvfs_lseek64(fd->fd_sys, 0, SEEK_END);
-	if (fd->fp_sys_posn != -1) 
+#ifdef ADIOI_MPE_LOGGING
+        MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+	if (fd->fp_sys_posn != -1) {
+#ifdef ADIOI_MPE_LOGGING
+             MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
+#endif
 	     pvfs_lseek64(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
+#ifdef ADIOI_MPE_LOGGING
+             MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
+#endif
+        }
 	if (fcntl_struct->fsize == -1) {
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
 					       MPIR_ERR_RECOVERABLE, myname,

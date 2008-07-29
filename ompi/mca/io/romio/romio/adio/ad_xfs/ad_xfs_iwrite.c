@@ -117,7 +117,7 @@ int ADIOI_XFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
         /* exceeded the max. no. of outstanding requests.
 	   complete all previous async. requests and try again. */
 
-	    ADIOI_Complete_async(&error_code);
+	    /* ADIOI_Complete_async(&error_code); */
 	    if (error_code != MPI_SUCCESS) return -EIO;
 
 	    if (wr) err = aio_write64(aiocbp);

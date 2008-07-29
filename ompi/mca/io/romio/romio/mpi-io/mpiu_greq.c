@@ -31,14 +31,14 @@ int MPIU_Greq_query_fn(void *extra_state, MPI_Status *status)
     MPI_Status_set_cancelled(status, 0);
     MPIR_Nest_decr();
 
-    /* the MPI_Status structure is a convienent place to stash the return
-    * code of the blocking operation */
-    return ((MPI_Status*)extra_state)->MPI_ERROR;
+    return MPI_SUCCESS;
 }
 
 int MPIU_Greq_free_fn(void *extra_state)
 {
+    /* frees the memory allocated in MPIO_Completed_request_create */
     ADIOI_Free(extra_state);
+	
     return MPI_SUCCESS;
 }
 int MPIU_Greq_cancel_fn(void *extra_state, int complete)

@@ -6,9 +6,6 @@
 
 #include "adio.h"
 #include "adio_extern.h"
-#ifdef PROFILE
-#include "mpe.h"
-#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
