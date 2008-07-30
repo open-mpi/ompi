@@ -38,7 +38,7 @@ static int init_query(const mca_base_component_t *m,
                       mca_base_component_priority_list_item_t *entry,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_1_0_0(const mca_base_component_t *component,
+static int init_query_2_0_0(const mca_base_component_t *component,
                             mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
@@ -123,10 +123,10 @@ static int init_query(const mca_base_component_t *m,
                         m->mca_component_name);
 
     /* This component has been successfully opened, now try to query it */
-    if (1 == m->mca_type_major_version &&
+    if (2 == m->mca_type_major_version &&
         0 == m->mca_type_minor_version &&
         0 == m->mca_type_release_version) {
-        ret = init_query_1_0_0(m, entry, enable_progress_threads,
+        ret = init_query_2_0_0(m, entry, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* unrecognised API version */
@@ -157,7 +157,7 @@ static int init_query(const mca_base_component_t *m,
 }
 
 
-static int init_query_1_0_0(const mca_base_component_t *component,
+static int init_query_2_0_0(const mca_base_component_t *component,
                             mca_base_component_priority_list_item_t *entry,
                             bool enable_progress_threads,
                             bool enable_mpi_threads) 
