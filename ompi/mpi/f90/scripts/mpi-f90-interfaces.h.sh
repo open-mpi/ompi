@@ -1120,7 +1120,7 @@ subroutine ${procedure}(comm, maxdims, dims, periods, coords&
   integer, intent(in) :: comm
   integer, intent(in) :: maxdims
   integer, dimension(*), intent(out) :: dims
-  integer, dimension(*), intent(out) :: periods
+  logical, dimension(*), intent(out) :: periods
   integer, dimension(*), intent(out) :: coords
   integer, intent(out) :: ierr
 end subroutine ${procedure}
