@@ -90,36 +90,35 @@ orte_plm_xgrid_make_nodes(orte_job_t *jdata)
     apps = (orte_app_context_t**)jdata->apps->addr;
     for(i = 0 ; i < jdata->num_apps ; i++) {
         app = apps[i];
-	if (0 == app->num_procs) return ORTE_ERR_NOT_SUPPORTED;
-	num_nodes += app->num_procs;
+        if (0 == app->num_procs) return ORTE_ERR_NOT_SUPPORTED;
+        num_nodes += app->num_procs;
     }
 
     /* Create node entries for the orteds we're going to spawn. */
     if (ORTE_SUCCESS != (rc = orte_pointer_array_set_size(orte_node_pool, num_nodes))) {
         ORTE_ERROR_LOG(rc);
-	return rc;
+        return rc;
     }
     for (i = 0 ; i < num_nodes ; ++i) {
-	orte_node_t *node = OBJ_NEW(orte_node_t);
-	if (NULL == node) {
-	    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	    rc = ORTE_ERR_OUT_OF_RESOURCE;
-	    return rc;
-	}
-	asprintf(&node->name, "ompi-xgrid-node-%d", node_counter++);
-	node->state = ORTE_NODE_STATE_UP;
-	node->slots_inuse = 0;
-	node->slots_max = 0;
-	node->slots = 1;
-	node->allocate = true;
-	if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&node->index, 
-							 orte_node_pool, 
-							 (void*)node))) {
-	    ORTE_ERROR_LOG(rc);
-	    return rc;
-	}
-	/* update the total slots in the job */
-	jdata->total_slots_alloc += node->slots;
+        orte_node_t *node = OBJ_NEW(orte_node_t);
+        if (NULL == node) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            return rc;
+        }
+        asprintf(&node->name, "ompi-xgrid-node-%d", node_counter++);
+        node->state = ORTE_NODE_STATE_UP;
+        node->slots_inuse = 0;
+        node->slots_max = 0;
+        node->slots = 1;
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&node->index, 
+                                                         orte_node_pool, 
+                                                         (void*)node))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* update the total slots in the job */
+        jdata->total_slots_alloc += node->slots;
     }
     jdata->oversubscribe_override = true;
 
