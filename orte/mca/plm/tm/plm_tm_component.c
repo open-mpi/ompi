@@ -92,10 +92,6 @@ static int plm_tm_open(void)
     int tmp;
     mca_base_component_t *comp = &mca_plm_tm_component.super.base_version;
 
-    mca_base_param_reg_string(comp, "orted",
-                              "Command to use to start proxy orted",
-                              false, false, "orted",
-                              &mca_plm_tm_component.orted);
     mca_base_param_reg_int(comp, "want_path_check",
                            "Whether the launching process should check for the plm_tm_orted executable in the PATH before launching (the TM API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
                            false, false, (int) true, &tmp);

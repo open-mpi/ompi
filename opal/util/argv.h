@@ -35,9 +35,8 @@
 #include <sys/types.h>
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
   /**
    * Append a string (by value) to an new or existing NULL-terminated
    * argv array.
@@ -165,6 +164,8 @@ OPAL_DECLSPEC  int opal_argv_count(char **argv);
    */
 OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter) __opal_attribute_malloc__;
 
+OPAL_DECLSPEC char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __opal_attribute_malloc__;
+
   /**
    * Return the number of bytes consumed by an argv array.
    *
@@ -240,8 +241,7 @@ OPAL_DECLSPEC  int opal_argv_delete(int *argc, char ***argv,
      * target).
      */
 OPAL_DECLSPEC  int opal_argv_insert(char ***target, int start, char **source);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+
+END_C_DECLS
 
 #endif /* OPAL_ARGV_H */

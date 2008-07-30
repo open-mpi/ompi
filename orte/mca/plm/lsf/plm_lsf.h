@@ -30,9 +30,7 @@ BEGIN_C_DECLS
 
 struct orte_plm_lsf_component_t {
     orte_plm_base_component_t super;
-    int priority;
     bool timing;
-    char *orted;
 };
 typedef struct orte_plm_lsf_component_t orte_plm_lsf_component_t;
 

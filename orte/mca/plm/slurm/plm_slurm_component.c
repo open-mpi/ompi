@@ -91,15 +91,6 @@ static int plm_slurm_open(void)
 {
     mca_base_component_t *comp = &mca_plm_slurm_component.super.base_version;
 
-    mca_base_param_reg_int(comp, "priority", "Default selection priority",
-                           false, false, 75, 
-                           &mca_plm_slurm_component.priority);
-
-    mca_base_param_reg_string(comp, "orted",
-                              "Command to use to start proxy orted",
-                              false, false, "orted",
-                              &mca_plm_slurm_component.orted);
-
     mca_base_param_reg_string(comp, "args",
                               "Custom arguments to srun",
                               false, false, NULL,
@@ -113,10 +104,10 @@ static int orte_plm_slurm_component_query(mca_base_module_t **module, int *prior
     /* Are we running under a SLURM job? */
 
     if (NULL != getenv("SLURM_JOBID")) {
-        *priority = mca_plm_slurm_component.priority;
+        *priority = 75;
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slrum: available for selection", 
+                             "%s plm:slurm: available for selection", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
         *module = (mca_base_module_t *)&orte_plm_slurm_module;
@@ -131,10 +122,6 @@ static int orte_plm_slurm_component_query(mca_base_module_t **module, int *prior
 
 static int plm_slurm_close(void)
 {
-    if (NULL != mca_plm_slurm_component.orted) {
-        free(mca_plm_slurm_component.orted);
-    }
-
     if (NULL != mca_plm_slurm_component.custom_args) {
         free(mca_plm_slurm_component.custom_args);
     }

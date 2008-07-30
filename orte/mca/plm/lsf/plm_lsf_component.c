@@ -93,16 +93,6 @@ orte_plm_lsf_component_t mca_plm_lsf_component = {
 
 static int plm_lsf_open(void)
 {
-    mca_base_component_t *comp = &mca_plm_lsf_component.super.base_version;
-
-    mca_base_param_reg_int(comp, "priority", "Default selection priority",
-                           false, false, 75, &mca_plm_lsf_component.priority);
-
-    mca_base_param_reg_string(comp, "orted",
-                              "Command to use to start proxy orted",
-                              false, false, "orted",
-                              &mca_plm_lsf_component.orted);
-
     return ORTE_SUCCESS;
 }
 
@@ -125,7 +115,7 @@ static int orte_plm_lsf_component_query(mca_base_module_t **module, int *priorit
         return ORTE_ERROR;
     }
     
-    *priority = mca_plm_lsf_component.priority;
+    *priority = 75;
     *module = (mca_base_module_t *) &orte_plm_lsf_module;
     return ORTE_SUCCESS;
 }

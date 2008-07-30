@@ -29,7 +29,6 @@ struct orte_plm_ccp_component_t {
     int debug;
     int verbose;
     bool want_path_check;
-    char *orted;
     char **checked_paths;
     bool timing;
 };

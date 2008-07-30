@@ -147,6 +147,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
     
+    /* Specify the launch agent to be used */
+    { "orte", "launch", "agent", '\0', NULL, "launch-agent", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Command used to start processes on remote nodes (default: orted)" },
+    
     /* Preload the binary on the remote machine */
     { NULL, NULL, NULL, 's', NULL, "preload-binary", 0,
       &orterun_globals.preload_binary, OPAL_CMD_LINE_TYPE_BOOL,

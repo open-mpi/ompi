@@ -350,6 +350,7 @@ ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;
 
 ORTE_DECLSPEC extern bool orte_hnp_is_allocated;
 
+ORTE_DECLSPEC extern char *orte_launch_agent;
 ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern int orte_exit, orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;

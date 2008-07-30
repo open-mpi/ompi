@@ -270,6 +270,62 @@ char *opal_argv_join(char **argv, int delimiter)
 
 
 /*
+ * Join all the elements of an argv array from within a
+ * specified range into a single newly-allocated string.
+ */
+char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter)
+{
+    char **p;
+    char *pp;
+    char *str;
+    size_t str_len = 0;
+    size_t i;
+    
+    /* Bozo case */
+    
+    if (NULL == argv || NULL == argv[0] || (int)start > opal_argv_count(argv)) {
+        return strdup("");
+    }
+    
+    /* Find the total string length in argv including delimiters.  The
+     last delimiter is replaced by the NULL character. */
+    
+    for (p = &argv[start], i=start; *p && i < end; ++p, ++i) {
+        str_len += strlen(*p) + 1;
+    }
+    
+    /* Allocate the string. */
+    
+    if (NULL == (str = (char*) malloc(str_len)))
+        return NULL;
+    
+    /* Loop filling in the string. */
+    
+    str[--str_len] = '\0';
+    p = &argv[start];
+    pp = *p;
+    
+    for (i = 0; i < str_len; ++i) {
+        if ('\0' == *pp) {
+            
+            /* End of a string, fill in a delimiter and go to the next
+             string. */
+            
+            str[i] = (char) delimiter;
+            ++p;
+            pp = *p;
+        } else {
+            str[i] = *pp++;
+        }
+    }
+    
+    /* All done */
+    
+    return str;
+}
+
+
+/*
  * Return the number of bytes consumed by an argv array.
  */
 size_t opal_argv_len(char **argv)

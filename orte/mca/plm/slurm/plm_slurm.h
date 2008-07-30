@@ -26,22 +26,18 @@
 
 BEGIN_C_DECLS
 
-    struct orte_plm_slurm_component_t {
-        orte_plm_base_component_t super;
-        int priority;
-        char *orted;
-        char *custom_args;
-    };
-    typedef struct orte_plm_slurm_component_t orte_plm_slurm_component_t;
+struct orte_plm_slurm_component_t {
+    orte_plm_base_component_t super;
+    char *custom_args;
+};
+typedef struct orte_plm_slurm_component_t orte_plm_slurm_component_t;
 
-    /*
-     * Globally exported variable
-     */
-    
-    ORTE_MODULE_DECLSPEC extern orte_plm_slurm_component_t 
-        mca_plm_slurm_component;
-    ORTE_DECLSPEC extern orte_plm_base_module_t
-        orte_plm_slurm_module;
+/*
+ * Globally exported variable
+ */
+
+ORTE_MODULE_DECLSPEC extern orte_plm_slurm_component_t mca_plm_slurm_component;
+ORTE_DECLSPEC extern orte_plm_base_module_t orte_plm_slurm_module;
 
 END_C_DECLS
 

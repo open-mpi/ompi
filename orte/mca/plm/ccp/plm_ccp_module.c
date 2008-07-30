@@ -209,8 +209,9 @@ GETMAP:
     }
     
     /* add the daemon command (as specified by user) */
-    argv = opal_argv_split(mca_plm_ccp_component.orted, ' ');
-    argc = opal_argv_count(argv);
+    argc = 0;
+    argv = NULL;
+    orte_plm_base_setup_orted_cmd(&argc, &argv);
 
     opal_argv_append(&argc, &argv, "--no-daemonize");
 
