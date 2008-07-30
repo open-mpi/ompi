@@ -381,6 +381,22 @@ int orterun(int argc, char *argv[])
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
+    {
+        char *stupid;
+        stupid = opal_argv_join(orted_cmd_line, ',');
+        fprintf(stderr, "orted cmd line: %s\n", stupid);
+        free(stupid);
+        exit(0);
+    }
+    
+    /* save the environment for launch purposes. This MUST be
+     * done so that we can pass it to any local procs we
+     * spawn - otherwise, those local procs won't see any
+     * non-MCA envars were set in the enviro prior to calling
+     * orterun
+     */
+    orte_launch_environ = opal_argv_copy(environ);
+    
 #if OPAL_ENABLE_FT == 1
     /* Disable OPAL CR notifications for this tool */
     opal_cr_set_enabled(false);
@@ -402,9 +418,6 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
-    
-    /* save the environment for launch purposes */
-    orte_launch_environ = opal_argv_copy(environ);
     
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
@@ -1354,6 +1367,83 @@ static int parse_locals(int argc, char* argv[])
 }
 
 
+static int capture_cmd_line_params(int argc, int start, char **argv)
+{
+    int i, j, k;
+    bool ignore;
+    char *no_dups[] = {
+        "grpcomm",
+        "odls",
+        "rml",
+        "routed",
+        NULL
+    };
+    
+    for (i = 0; i < (argc-start); ++i) {
+        if (0 == strcmp("-mca",  argv[i]) ||
+            0 == strcmp("--mca", argv[i]) ) {
+            /* It would be nice to avoid increasing the length
+             * of the orted cmd line by removing any non-ORTE
+             * params. However, this raises a problem since
+             * there could be OPAL directives that we really
+             * -do- want the orted to see - it's only the OMPI
+             * related directives we could ignore. This becomes
+             * a very complicated procedure, however, since
+             * the OMPI mca params are not cleanly separated - so
+             * filtering them out is nearly impossible.
+             *
+             * see if this is already present so we at least can
+             * avoid growing the cmd line with duplicates
+             */
+            ignore = false;
+            if (NULL != orted_cmd_line) {
+                for (j=0; NULL != orted_cmd_line[j]; j++) {
+                    if (0 == strcmp(argv[i+1], orted_cmd_line[j])) {
+                        /* already here - if the value is the same,
+                         * we can quitely ignore the fact that they
+                         * provide it more than once. However, some
+                         * frameworks are known to have problems if the
+                         * value is different. We don't have a good way
+                         * to know this, but we at least make a crude
+                         * attempt here to protect ourselves.
+                         */
+                        if (0 == strcmp(argv[i+2], orted_cmd_line[j+1])) {
+                            /* values are the same */
+                            ignore = true;
+                            break;
+                        } else {
+                            /* values are different - see if this is a problem */
+                            for (k=0; NULL != no_dups[k]; k++) {
+                                if (0 == strcmp(no_dups[k], argv[i+1])) {
+                                    /* print help message
+                                     * and abort as we cannot know which one is correct
+                                     */
+                                    orte_show_help("help-orterun.txt", "orterun:conflicting-params",
+                                                   true, orterun_basename, argv[i+1],
+                                                   argv[i+2], orted_cmd_line[j+1]);
+                                    return ORTE_ERR_BAD_PARAM;
+                                }
+                            }
+                            /* this passed muster - just ignore it */
+                            ignore = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!ignore) {
+                opal_argv_append_nosize(&orted_cmd_line, argv[i]);
+                opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
+                opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
+            }
+            i += 2;
+        }
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+
 /*
  * This function takes a "char ***app_env" parameter to handle the
  * specific case:
@@ -1398,15 +1488,11 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
      * Only pick up '-mca foo bar' on this pass.
      */
     if (NULL != orterun_globals.appfile) {
-        for (i = 0; i < argc; ++i) {
-            if (0 == strcmp("-mca",  argv[i]) ||
-                0 == strcmp("--mca", argv[i]) ) {
-                opal_argv_append_nosize(&orted_cmd_line, argv[i]);
-                opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
-                opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
-            }
+        if (ORTE_SUCCESS != (rc = capture_cmd_line_params(argc, 0, argv))) {
+            goto cleanup;
         }
     }
+    
     /* Parse application command line options. */
 
     init_globals();
@@ -1447,16 +1533,10 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
      *   mpirun -np 2 -mca foo bar ./my-app -mca bip bop
      * We want to pick up '-mca foo bar' but not '-mca bip bop'
      */
-    for (i = 0; i < (argc - count); ++i) {
-        if (0 == strcmp("-mca",  argv[i]) ||
-            0 == strcmp("--mca", argv[i]) ) {
-            opal_argv_append_nosize(&orted_cmd_line, argv[i]);
-            opal_argv_append_nosize(&orted_cmd_line, argv[i+1]);
-            opal_argv_append_nosize(&orted_cmd_line, argv[i+2]);
-            i += 2;
-        }
+    if (ORTE_SUCCESS != (rc = capture_cmd_line_params(argc, count, argv))) {
+        goto cleanup;
     }
-
+    
     /* Grab all OMPI_* environment variables */
 
     app->env = opal_argv_copy(*app_env);

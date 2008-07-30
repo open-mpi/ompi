@@ -366,3 +366,18 @@ uri in a file, and then giving %s that filename.
 [orterun:multiple-hostfiles]
 Error: More than one hostfile was passed for a single application context, which
 is not supported at this time.
+#
+[orterun:conflicting-params]
+%s has detected multiple instances of an MCA param being specified on
+the command line, with conflicting values:
+
+MCA param: %s
+Value 1: %s
+Value 2: %s
+
+This MCA param does not support multiple values, and the system is unable
+to identify which value was intended. If this was done in error, please
+re-issue the command with only one value. You may wish to review the
+output from ompi_info for guidance on accepted values for this param.
+
+

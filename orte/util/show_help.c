@@ -267,7 +267,7 @@ static int show_help(const char *filename, const char *topic,
     } 
     /* Not already displayed */
     else if (ORTE_ERR_NOT_FOUND == rc) {
-        opal_output(0, output);
+        fprintf(stderr, "%s", output);
         if (!show_help_timer_set) {
             show_help_time_last_displayed = now;
         }
@@ -416,7 +416,7 @@ int orte_show_help(const char *filename, const char *topic,
          * Ensure we suppress the opal_output warnings for this case, then
          * re-enable them when we are done
          */
-        opal_output(0, output);
+        fprintf(stderr, "%s", output);
         goto CLEANUP;
     }
     

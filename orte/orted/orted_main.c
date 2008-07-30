@@ -245,7 +245,12 @@ int orte_daemon(int argc, char *argv[])
         exit(1);
     }
 
-    /* save the environment for use when launching application processes */
+    /* save the environment for launch purposes. This MUST be
+     * done so that we can pass it to any local procs we
+     * spawn - otherwise, those local procs won't see any
+     * non-MCA envars that were set in the enviro when the
+     * orted was executed - e.g., by .csh
+     */
     orte_launch_environ = opal_argv_copy(environ);
     
     
