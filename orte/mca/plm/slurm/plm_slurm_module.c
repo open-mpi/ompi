@@ -135,7 +135,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     char **argv = NULL;
     int argc;
     int rc;
-    char *tmp, **tmpv;
+    char *tmp;
     char** env = NULL;
     char* var;
     char *nodelist_flat;
@@ -274,11 +274,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
      */
 
     /* add the daemon command (as specified by user) */
-    tmpv = opal_argv_split(mca_plm_slurm_component.orted, ' ');
-    for (i = 0; NULL != tmpv && NULL != tmpv[i]; ++i) {
-        opal_argv_append(&argc, &argv, tmpv[i]);
-    }
-    opal_argv_free(tmpv);
+    orte_plm_base_setup_orted_cmd(&argc, &argv);
     
    /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,

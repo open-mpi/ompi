@@ -222,7 +222,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
      */
 
     /* add the daemon command (as specified by user) */
-    opal_argv_append(&argc, &argv, mca_plm_lsf_component.orted);
+    orte_plm_base_setup_orted_cmd(&argc, &argv);
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv,

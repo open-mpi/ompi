@@ -700,6 +700,27 @@ static int orte_plm_base_report_launched(orte_jobid_t job)
     return ORTE_SUCCESS;
 }
 
+int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
+{
+    int i, loc;
+    char **tmpv;
+    
+    /* set default location */
+    loc = -1;
+    /* split the command apart in case it is multi-word */
+    tmpv = opal_argv_split(orte_launch_agent, ' ');
+    for (i = 0; NULL != tmpv && NULL != tmpv[i]; ++i) {
+        if (0 == strcmp(tmpv[i], "orted")) {
+            loc = i;
+        }
+        opal_argv_append(argc, argv, tmpv[i]);
+    }
+    opal_argv_free(tmpv);
+    
+    return loc;
+}
+
+
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
                                           int *proc_vpid_index,

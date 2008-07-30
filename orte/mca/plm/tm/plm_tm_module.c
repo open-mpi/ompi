@@ -137,7 +137,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     char **env = NULL;
     char *var;
     char **argv = NULL;
-    int argc;
+    int argc = 0;
     int rc;
     bool connected = false;
     orte_std_cntr_t launched = 0, i; 
@@ -199,8 +199,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     }
 
     /* add the daemon command (as specified by user) */
-    argv = opal_argv_split(mca_plm_tm_component.orted, ' ');
-    argc = opal_argv_count(argv);
+    orte_plm_base_setup_orted_cmd(&argc, &argv);
 
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",

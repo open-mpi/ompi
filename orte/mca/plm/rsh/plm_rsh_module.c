@@ -343,8 +343,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 static int setup_launch(int *argcptr, char ***argvptr,
                         char *nodename,
                         int *node_name_index1, int *node_name_index2,
-                        int *local_exec_index,
-                        int *proc_vpid_index, char **lib_base, char **bin_base,
+                        int *proc_vpid_index, char *prefix_dir,
                         bool *remote_sh, bool *remote_csh)
 {
     struct passwd *p;
@@ -353,6 +352,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char *param;
     orte_plm_rsh_shell_t shell;
     bool local_sh = false, local_csh = false;
+    char *lib_base, *bin_base;
+    int orted_argc;
+    char **orted_argv;
+    char *orted_cmd, *orted_prefix, *final_cmd;
+    int orted_index;
     int rc;
 
     /* What is our local shell? */
@@ -428,6 +432,36 @@ static int setup_launch(int *argcptr, char ***argvptr,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          *remote_csh, *remote_sh));
     
+    /* Figure out the basenames for the libdir and bindir.  This
+     requires some explanation:
+     
+     - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
+     
+     - After a discussion on the devel-core mailing list, the
+     developers decided that we should use the local directory
+     basenames as the basis for the prefix on the remote note.
+     This does not handle a few notable cases (e.g., if the
+     libdir/bindir is not simply a subdir under the prefix, if the
+     libdir/bindir basename is not the same on the remote node as
+     it is here on the local node, etc.), but we decided that
+     --prefix was meant to handle "the common case".  If you need
+     something more complex than this, a) edit your shell startup
+     files to set PATH/LD_LIBRARY_PATH properly on the remove
+     node, or b) use some new/to-be-defined options that
+     explicitly allow setting the bindir/libdir on the remote
+     node.  We decided to implement these options (e.g.,
+     --remote-bindir and --remote-libdir) to orterun when it
+     actually becomes a problem for someone (vs. a hypothetical
+     situation).
+     
+     Hence, for now, we simply take the basename of this install's
+     libdir and bindir and use it to append this install's prefix
+     and use that on the remote node.
+     */
+    
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
+    
     /*
      * Build argv array
      */
@@ -436,9 +470,127 @@ static int setup_launch(int *argcptr, char ***argvptr,
     *node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
     
-    /* add the daemon command (as specified by user) */
-    *local_exec_index = argc;
-    opal_argv_append(&argc, &argv, mca_plm_rsh_component.orted);
+    /* now get the orted cmd - as specified by user - into our tmp array.
+     * The function returns the location where the actual orted command is
+     * located - usually in the final spot, but someone could
+     * have added options. For example, it should be legal for them to use
+     * "orted --debug-devel" so they get debug output from the orteds, but
+     * not from mpirun. Also, they may have a customized version of orted
+     * that takes arguments in addition to the std ones we already support
+     */
+    orted_argc = 0;
+    orted_argv = NULL;
+    orted_index = orte_plm_base_setup_orted_cmd(&orted_argc, &orted_argv);
+    
+    /* look at the returned orted cmd argv to check several cases:
+     *
+     * - only "orted" was given. This is the default and thus most common
+     *   case. In this situation, there is nothing we need to do
+     *
+     * - something was given that doesn't include "orted" - i.e., someone
+     *   has substituted their own daemon. There isn't anything we can
+     *   do here, so we want to avoid adding prefixes to the cmd
+     *
+     * - something was given that precedes "orted". For example, someone
+     *   may have specified "valgrind [options] orted". In this case, we
+     *   need to separate out that "orted_prefix" section so it can be
+     *   treated separately below
+     *
+     * - something was given that follows "orted". An example was given above.
+     *   In this case, we need to construct the effective "orted_cmd" so it
+     *   can be treated properly below
+     *
+     * Obviously, the latter two cases can be combined - just to make it
+     * even more interesting! Gotta love rsh/ssh...
+     */
+    if (0 == orted_index) {
+        /* this is the default scenario, but there could be options specified
+         * so we need to account for that possibility
+         */
+        orted_cmd = opal_argv_join(orted_argv, ' ');
+        orted_prefix = NULL;
+    } else if (0 > orted_index) {
+        /* no "orted" was included */
+        orted_cmd = NULL;
+        orted_prefix = opal_argv_join(orted_argv, ' ');
+    } else {
+        /* okay, so the "orted" cmd is somewhere in this array, with
+         * something preceding it and perhaps things following it.
+         */
+        orted_prefix = opal_argv_join_range(orted_argv, 0, orted_index, ' ');
+        orted_cmd = opal_argv_join_range(orted_argv, orted_index, opal_argv_count(orted_argv), ' ');
+    }
+    opal_argv_free(orted_argv);  /* done with this */
+    
+    /* we now need to assemble the actual cmd that will be executed - this depends
+     * upon whether or not a prefix directory is being used
+     */
+    if (NULL != prefix_dir) {
+        /* if we have a prefix directory, we need to set the PATH and
+         * LD_LIBRARY_PATH on the remote node, and prepend just the orted_cmd
+         * with the prefix directory
+         */
+        char *opal_prefix = getenv("OPAL_PREFIX");
+        if (remote_sh) {
+            /* if there is nothing preceding orted, then we can just
+             * assemble the cmd with the orted_cmd at the end. Otherwise,
+             * we have to insert the orted_prefix in the right place
+             */
+            asprintf (&final_cmd,
+                      "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
+                      "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                      "%s %s/%s/%s",
+                      (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
+                      (opal_prefix != NULL ? opal_prefix : ""),
+                      (opal_prefix != NULL ? " ;" : ""),
+                      prefix_dir, bin_base,
+                      prefix_dir, lib_base,
+                      (orted_prefix != NULL ? orted_prefix : ""),
+                      prefix_dir, bin_base,
+                      orted_cmd);
+        } else if (remote_csh) {
+            /* [t]csh is a bit more challenging -- we
+             have to check whether LD_LIBRARY_PATH
+             is already set before we try to set it.
+             Must be very careful about obeying
+             [t]csh's order of evaluation and not
+             using a variable before it is defined.
+             See this thread for more details:
+             http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
+            /* if there is nothing preceding orted, then we can just
+             * assemble the cmd with the orted_cmd at the end. Otherwise,
+             * we have to insert the orted_prefix in the right place
+             */
+            asprintf (&final_cmd,
+                      "%s%s%s set path = ( %s/%s $path ) ; "
+                      "if ( $?LD_LIBRARY_PATH == 1 ) "
+                      "set OMPI_have_llp ; "
+                      "if ( $?LD_LIBRARY_PATH == 0 ) "
+                      "setenv LD_LIBRARY_PATH %s/%s ; "
+                      "if ( $?OMPI_have_llp == 1 ) "
+                      "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
+                      "%s %s/%s/%s",
+                      (opal_prefix != NULL ? "setenv OPAL_PREFIX " : ""),
+                      (opal_prefix != NULL ? opal_prefix : ""),
+                      (opal_prefix != NULL ? " ;" : ""),
+                      prefix_dir, bin_base,
+                      prefix_dir, lib_base,
+                      prefix_dir, lib_base,
+                      (orted_prefix != NULL ? orted_prefix : ""),
+                      prefix_dir, bin_base,
+                      orted_cmd);
+        }
+    } else {
+        /* no prefix directory, so just aggregate the result */
+        asprintf(&final_cmd, "%s %s",
+                 (orted_prefix != NULL ? orted_prefix : ""),
+                 (orted_cmd != NULL ? orted_cmd : ""));
+    }
+    /* now add the final cmd to the argv array */
+    opal_argv_append(&argc, &argv, final_cmd);
+    free(final_cmd);  /* done with this */
+    if (NULL != orted_prefix) free(orted_prefix);
+    if (NULL != orted_cmd) free(orted_cmd);
     
     /* if we are not tree launching or debugging, tell the daemon
      * to daemonize so we can launch the next group
@@ -492,36 +644,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
         if (NULL != param) free(param);
     }
     
-    /* Figure out the basenames for the libdir and bindir.  This
-     requires some explanation:
-     
-     - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
-     
-     - After a discussion on the devel-core mailing list, the
-     developers decided that we should use the local directory
-     basenames as the basis for the prefix on the remote note.
-     This does not handle a few notable cases (e.g., if the
-     libdir/bindir is not simply a subdir under the prefix, if the
-     libdir/bindir basename is not the same on the remote node as
-     it is here on the local node, etc.), but we decided that
-     --prefix was meant to handle "the common case".  If you need
-     something more complex than this, a) edit your shell startup
-     files to set PATH/LD_LIBRARY_PATH properly on the remove
-     node, or b) use some new/to-be-defined options that
-     explicitly allow setting the bindir/libdir on the remote
-     node.  We decided to implement these options (e.g.,
-     --remote-bindir and --remote-libdir) to orterun when it
-     actually becomes a problem for someone (vs. a hypothetical
-     situation).
-     
-     Hence, for now, we simply take the basename of this install's
-     libdir and bindir and use it to append this install's prefix
-     and use that on the remote node.
-     */
-    
-    *lib_base = opal_basename(opal_install_dirs.libdir);
-    *bin_base = opal_basename(opal_install_dirs.bindir);
-    
     /* all done */
     *argcptr = argc;
     *argvptr = argv;
@@ -531,8 +653,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
 /* actually ssh the child */
 static void ssh_child(int argc, char **argv,
                       orte_vpid_t vpid, int proc_vpid_index,
-                      int local_exec_index, char *prefix_dir,
-                      char *bin_base, char *lib_base,
                       bool remote_sh, bool remote_csh)
 {
     char** env;
@@ -565,49 +685,6 @@ static void ssh_child(int argc, char **argv,
      */
     exec_argv = argv;
     exec_path = strdup(mca_plm_rsh_component.agent_path);
-    
-    if (NULL != prefix_dir) {
-        char *opal_prefix = getenv("OPAL_PREFIX");
-        if (remote_sh) {
-            asprintf (&argv[local_exec_index],
-                      "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
-                      "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
-                      "%s/%s/%s",
-                      (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
-                      (opal_prefix != NULL ? opal_prefix : ""),
-                      (opal_prefix != NULL ? " ;" : ""),
-                      prefix_dir, bin_base,
-                      prefix_dir, lib_base,
-                      prefix_dir, bin_base,
-                      mca_plm_rsh_component.orted);
-        } else if (remote_csh) {
-            /* [t]csh is a bit more challenging -- we
-             have to check whether LD_LIBRARY_PATH
-             is already set before we try to set it.
-             Must be very careful about obeying
-             [t]csh's order of evaluation and not
-             using a variable before it is defined.
-             See this thread for more details:
-             http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
-            asprintf (&argv[local_exec_index],
-                      "%s%s%s set path = ( %s/%s $path ) ; "
-                      "if ( $?LD_LIBRARY_PATH == 1 ) "
-                      "set OMPI_have_llp ; "
-                      "if ( $?LD_LIBRARY_PATH == 0 ) "
-                      "setenv LD_LIBRARY_PATH %s/%s ; "
-                      "if ( $?OMPI_have_llp == 1 ) "
-                      "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
-                      "%s/%s/%s",
-                      (opal_prefix != NULL ? "setenv OPAL_PREFIX " : ""),
-                      (opal_prefix != NULL ? opal_prefix : ""),
-                      (opal_prefix != NULL ? " ;" : ""),
-                      prefix_dir, bin_base,
-                      prefix_dir, lib_base,
-                      prefix_dir, lib_base,
-                      prefix_dir, bin_base,
-                      mca_plm_rsh_component.orted);
-        }
-    }
     
     /* pass the vpid */
     rc = orte_util_convert_vpid_to_string(&var, vpid);
@@ -702,13 +779,11 @@ static int remote_spawn(opal_buffer_t *launch)
     int node_name_index1;
     int node_name_index2;
     int proc_vpid_index;
-    int local_exec_index;
     char **argv = NULL;
     char *prefix;
     int argc;
     int rc;
     bool remote_sh = false, remote_csh = false; 
-    char *lib_base = NULL, *bin_base = NULL;
     bool failed_launch = true;
     pid_t pid;
     orte_std_cntr_t n;
@@ -753,8 +828,7 @@ static int remote_spawn(opal_buffer_t *launch)
     
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1, &node_name_index2,
-                                           &local_exec_index, &proc_vpid_index, &lib_base, &bin_base,
-                                           &remote_sh, &remote_csh))) {
+                                           &proc_vpid_index, prefix, &remote_sh, &remote_csh))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -800,8 +874,7 @@ static int remote_spawn(opal_buffer_t *launch)
             
             /* do the ssh launch - this will exit if it fails */
             ssh_child(argc, argv, vpid,
-                      proc_vpid_index, local_exec_index, prefix, bin_base,
-                      lib_base, remote_sh, remote_csh);
+                      proc_vpid_index, remote_sh, remote_csh);
             
         } else { /* father */
             OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
@@ -824,14 +897,7 @@ static int remote_spawn(opal_buffer_t *launch)
 
     failed_launch = false;
     
-cleanup:
-    if (NULL != lib_base) {
-        free(lib_base);
-    }
-    if (NULL != bin_base) {
-        free(bin_base);
-    }
-    
+cleanup:    
     if (NULL != argv) {
         opal_argv_free(argv);
     }
@@ -869,13 +935,11 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     int node_name_index1;
     int node_name_index2;
     int proc_vpid_index;
-    int local_exec_index;
     char **argv = NULL;
     char *prefix_dir;
     int argc;
     int rc;
     bool remote_sh = false, remote_csh = false; 
-    char *lib_base = NULL, *bin_base = NULL;
     bool failed_launch = true;
     orte_app_context_t **apps;
     orte_node_t **nodes;
@@ -972,8 +1036,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, nodes[0]->name, &node_name_index1, &node_name_index2,
-                                           &local_exec_index, &proc_vpid_index, &lib_base, &bin_base,
-                                           &remote_sh, &remote_csh))) {
+                                           &proc_vpid_index, prefix_dir, &remote_sh, &remote_csh))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -1100,8 +1163,7 @@ launch:
             
             /* do the ssh launch - this will exit if it fails */
             ssh_child(argc, argv, nodes[nnode]->daemon->name.vpid,
-                      proc_vpid_index, local_exec_index, prefix_dir, bin_base,
-                      lib_base, remote_sh, remote_csh);
+                      proc_vpid_index, remote_sh, remote_csh);
             
             
         } else { /* father */
@@ -1167,13 +1229,6 @@ launch_apps:
     failed_launch = false;
     
  cleanup:
-    if (NULL != lib_base) {
-        free(lib_base);
-    }
-    if (NULL != bin_base) {
-        free(bin_base);
-    }
-
     if (NULL != argv) {
         opal_argv_free(argv);
     }

@@ -103,11 +103,6 @@ static int plm_alps_open(void)
                            false, false, 75, 
                            &mca_plm_alps_component.priority);
 
-    mca_base_param_reg_string(comp, "orted",
-                              "Command to use to start proxy orted",
-                              false, false, "orted",
-                              &mca_plm_alps_component.orted);
-
     mca_plm_alps_component.timing = orte_timing;
     
     mca_base_param_reg_string(comp, "args",
@@ -129,10 +124,6 @@ static int orte_plm_alps_component_query(mca_base_module_t **module, int *priori
 
 static int plm_alps_close(void)
 {
-    if (NULL != mca_plm_alps_component.orted) {
-        free(mca_plm_alps_component.orted);
-    }
-
     if (NULL != mca_plm_alps_component.custom_args) {
         free(mca_plm_alps_component.custom_args);
     }

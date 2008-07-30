@@ -97,10 +97,6 @@ static int plm_ccp_open(void)
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, &mca_plm_ccp_component.priority);
 
-    mca_base_param_reg_string(comp, "orted",
-                              "Command to use to start proxy orted",
-                              false, false, "orted",
-                              &mca_plm_ccp_component.orted);
     mca_base_param_reg_int(comp, "want_path_check",
                            "Whether the launching process should check for the plm_ccp_orted executable in the PATH before launching (the CCP API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
                            false, false, (int) true, &tmp);
