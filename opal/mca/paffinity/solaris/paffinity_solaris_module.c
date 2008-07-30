@@ -184,6 +184,9 @@ static int solaris_module_get_processor_info(int *num_processors, int *max_proce
      * an inclusive list. e.g. If cpuid_max=31, cpuid would be 0-31 */
     cpuid_max = sysconf(_SC_CPUID_MAX);
 
+    /* clear out num_processors to make sure we get the correct count */
+    *num_processors = 0;
+
     /* Because not all CPU ID in cpuid_max are actually valid,
      * and CPU ID may also not be contiguous. Therefore we
      * need to run through processor_info to ensure the validity.
@@ -191,7 +194,7 @@ static int solaris_module_get_processor_info(int *num_processors, int *max_proce
     for (currid=0; currid<=cpuid_max; currid++) {
         if (0 == processor_info(currid, &pinfo)) {
             if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
-                 *num_processors++;
+                 (*num_processors)++;
                  *max_processor_id = currid;
             }
         }
