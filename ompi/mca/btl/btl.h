@@ -796,23 +796,6 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
   MCA_BASE_VERSION_2_0_0, \
   "btl", 2, 0, 0
 
-/*
- * Macro for use in modules that are of type btl v1.0.1
- *  alows older btl sources to compile..
- */
-#define MCA_BTL_BASE_VERSION_1_0_1 \
-  MCA_BASE_VERSION_2_0_0, \
-  "btl", 1, 0, 1
-
-
-/*
- * Macro for use in modules that are of type btl v1.0.0
- *  alows older btl sources to compile..
- */
-#define MCA_BTL_BASE_VERSION_1_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "btl", 1, 0, 0
-
 END_C_DECLS
 
 #endif /* OMPI_MCA_BTL_H */
