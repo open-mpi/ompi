@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,10 +17,4 @@
 # $HEADER$
 #
 
-SUBDIRS = c cxx f77 f90
-
-dist_pkgdata_DATA = help-mpi-api.txt
-
-man_MANS =
-include man/man3/Makefile.extra
-EXTRA_DIST = $(man_MANS)
+dist_pkgdata_DATA += mpi/help-mpi-api.txt

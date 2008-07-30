@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -41,6 +41,8 @@ if OMPI_PROVIDE_MPI_FILE_INTERFACE
 libmpi_cxx_la_SOURCES += \
 	file.cc
 endif
+
+libmpi_cxx_la_LIBADD = $(top_builddir)/ompi/libmpi.la
 
 headers = \
 	mpicxx.h \
