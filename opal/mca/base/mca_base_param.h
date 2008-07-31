@@ -517,7 +517,7 @@ extern "C" {
      * @param index [in] Index of MCA parameter to set
      * @param source [out] Enum value indicating source
      * @param source_file [out] If value came from source, name of the file
-     * that set it
+     * that set it.  The caller should not modify or free this string.
      *
      * @retval OPAL_ERROR If the parameter was not found.
      * @retval OPAL_SUCCESS Upon success.
