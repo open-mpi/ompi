@@ -75,7 +75,16 @@ int orte_register_params(void)
     if (orte_debug_daemons_file_flag) {
         orte_debug_daemons_flag = true;
     }
-    
+
+    /* See comment in orte/tools/orterun/debuggers.c about this MCA
+       param (this param is internal) */
+    mca_base_param_reg_int_name("orte",
+                                "in_parallel_debugger",
+                                "Whether the application is being debugged "
+                                "in a parallel debugger (default: false)",
+                                true, false, 0, &value);
+    orte_in_parallel_debugger = OPAL_INT_TO_BOOL(value);
+
     mca_base_param_reg_int_name("orte", "do_not_launch",
                                 "Perform all necessary operations to prepare to launch the application, but do not actually launch it",
                                 false, false, (int)false, &value);

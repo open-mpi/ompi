@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights resereved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,9 +18,12 @@
  * $HEADER$
  */
 
-/**
+/*
  * MPI portion of debugger support: initially based on the
  * TotalView/Etnus API for debuggers to attach to MPI jobs.
+ *
+ * There is a lengthy explanation of how OMPI handles parallel
+ * debuggers attaching to MPI jobs in orte/tools/orterun/debuggers.c.
  */
 
 #include "ompi_config.h"
@@ -67,6 +70,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/runtime/orte_globals.h"
 
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
@@ -76,7 +80,6 @@ OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_MSGQ_DLL;
 OMPI_DECLSPEC char **mpidbg_dll_locations = NULL;
 OMPI_DECLSPEC char **mpimsgq_dll_locations = NULL;
 
-OMPI_DECLSPEC int MPIR_being_debugged = 0;
 OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
     sizeof(short),
     sizeof(int),
@@ -109,7 +112,8 @@ OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_inclusion = NULL;
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_inclusion = NULL;
 
-OMPI_DECLSPEC volatile int MPIR_debug_gate=0;
+OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
+OMPI_DECLSPEC volatile int MPIR_being_debugged = 0;
 
 /* Check for a file in few direct ways for portability */
 static void check(char *dir, char *file, char **locations) 
@@ -145,32 +149,8 @@ static void check(char *dir, char *file, char **locations)
 
 /*
  * Wait for a debugger if asked.  We support two ways of waiting for
- * attaching debuggers:
- *
-
- * 1. If using orterun: MPI processes will have the
- * ompi_mpi_being_debugged MCA param set to true.  The HNP will call
- * MPIR_Breakpoint() and then RML send a message to VPID 0 (MCW rank
- * 0) when it returns (MPIR_Breakpoint() doesn't return until the
- * debugger has attached to all relevant processes).  Meanwhile, VPID
- * 0 blocks waiting for the RML message.  All other VPIDs immediately
- * call the grpcomm barrier (and therefore block until the debugger
- * attaches).  Once VPID 0 receives the RML message, we know that the
- * debugger has attached to all processes that it cares about, and
- * VPID 0 then joins the grpcomm barrier, allowing the job to
- * continue.  This scheme has the side effect of nicely supporting
- * partial attaches by parallel debuggers (i.e., attaching to only
- * some of the MPI processes; not necessarily all of them).
- *
- * 2. If not using orterun: in this case, ORTE_DISABLE_FULL_SUPPORT
- * will be true, and we know that there will not be an RML message
- * sent to VPID 0.  So we have to look for a magic environment
- * variable from the launcher to know if the jobs will be attached by
- * a debugger (e.g., set by yod, srun, ...etc.), and if so, spin on
- * MPIR_debug_gate.
- *
- * Note that neither of these schemes use MPIR_being_debugged; it
- * doesn't seem useful to us. --> JMS this may change
+ * attaching debuggers -- see big comment in
+ * orte/tools/orterun/debuggers.c explaning the two scenarios.
  */
 void ompi_wait_for_debugger(void)
 {
@@ -178,19 +158,18 @@ void ompi_wait_for_debugger(void)
     char *a, *b, **dirs;
     opal_buffer_t buf;
 
-    /* are we being debugged by a TotalView-like debugger? */
-    mca_base_param_reg_int_name("ompi",
-                                "mpi_being_debugged",
-                                "Whether the MPI application "
-                                "is being debugged (default: false)",
-                                false, false, (int) false,
-                                &debugger);
+    /* See lengthy comment in orte/tools/orterun/debuggers.c about
+       orte_in_parallel_debugger */
+    debugger = orte_in_parallel_debugger;
 
     /* Add in environment variables for other launchers, such as yod,
        srun, ...etc. */
     if (1 == MPIR_being_debugged) {
         debugger = 1;
     } else if (NULL != getenv("yod_you_are_being_debugged")) {
+        debugger = 1;
+    }
+    if (1 == MPIR_being_debugged) {
         debugger = 1;
     }
     
@@ -254,5 +233,3 @@ void ompi_wait_for_debugger(void)
         }
     }
 }    
-
-
