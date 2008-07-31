@@ -150,6 +150,7 @@ void ompi_info::show_mca_params(opal_list_t *info,
     string message, content, tmp;
     int value_int, j;
     mca_base_param_source_t source;
+    char *src_file;
 
     for (i = opal_list_get_first(info); i != opal_list_get_last(info);
          i = opal_list_get_next(i)) {
@@ -163,7 +164,7 @@ void ompi_info::show_mca_params(opal_list_t *info,
 
                 // Find the source of the value
                 if (OPAL_SUCCESS != 
-                    mca_base_param_lookup_source(p->mbpp_index, &source)) {
+                    mca_base_param_lookup_source(p->mbpp_index, &source, &src_file)) {
                     continue;
                 }
 
@@ -222,7 +223,9 @@ void ompi_info::show_mca_params(opal_list_t *info,
                         content += "environment";
                         break;
                     case MCA_BASE_PARAM_SOURCE_FILE:
-                        content += "file";
+                        content += "file [";
+                        content += src_file;
+                        content += "]";
                         break;
                     case MCA_BASE_PARAM_SOURCE_OVERRIDE:
                         content += "API override";

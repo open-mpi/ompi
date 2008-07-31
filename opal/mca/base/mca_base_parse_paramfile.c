@@ -31,8 +31,12 @@
 
 static void save_value(const char *name, const char *value);
 
+static char * file_being_read;
+
 int mca_base_parse_paramfile(const char *paramfile)
 {
+    file_being_read = (char*)paramfile;
+    
     return opal_util_keyval_parse(paramfile, save_value);
 }
 
@@ -58,6 +62,7 @@ static void save_value(const char *name, const char *value)
             } else {
                 fv->mbpfv_value = NULL;
             }
+            fv->mbpfv_file = strdup(file_being_read);
             return;
         }
     }
@@ -72,6 +77,7 @@ static void save_value(const char *name, const char *value)
         } else {
             fv->mbpfv_value = NULL;
         }
+        fv->mbpfv_file = strdup(file_being_read);
         opal_list_append(&mca_base_param_file_values, (opal_list_item_t*) fv);
     }
 }

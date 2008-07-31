@@ -57,9 +57,15 @@ bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 
+static bool show_default_mca_params = false;
+static bool show_file_mca_params = false;
+static bool show_enviro_mca_params = false;
+static bool show_override_mca_params = false;
+
 int ompi_mpi_register_params(void)
 {
     int value;
+    char *param;
 
     /* Whether we want MPI API function parameter checking or not */
 
@@ -132,11 +138,27 @@ int ompi_mpi_register_params(void)
                                 &ompi_debug_show_mpi_alloc_mem_leaks);
 
     /* Whether or not to print all MCA parameters in MPI_INIT */
-    mca_base_param_reg_int_name("mpi", "show_mca_params",
-                                "Whether to show all MCA parameter value during MPI_INIT or not (good for reproducability of MPI jobs)",
-                                false, false, 
-                                (int) ompi_mpi_show_mca_params, &value);
-    ompi_mpi_show_mca_params = OPAL_INT_TO_BOOL(value);
+    mca_base_param_reg_string_name("mpi", "show_mca_params",
+                                   "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
+                                   "for debug purposes). Accepted values are all, default, file, api, and enviro",
+                                   false, false, NULL,  &param);
+    if (NULL != param) {
+        ompi_mpi_show_mca_params = true;
+        if (0 == strcmp(param, "all")) {
+            show_default_mca_params = true;
+            show_file_mca_params = true;
+            show_enviro_mca_params = true;
+            show_override_mca_params = true;
+        } else if (0 == strcmp(param, "default")) {
+            show_default_mca_params = true;
+        } else if (0 == strcmp(param, "file")) {
+            show_file_mca_params = true;
+        } else if (0 == strcmp(param, "enviro")) {
+            show_enviro_mca_params = true;
+        } else if (0 == strcmp(param, "api")) {
+            show_override_mca_params = true;
+        }
+    }
 
     /* File to use when dumping the parameters */
     mca_base_param_reg_string_name("mpi", "show_mca_params_file",
@@ -262,64 +284,131 @@ int ompi_mpi_register_params(void)
 }
 
 int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
-   opal_list_t *info;
-   opal_list_item_t *i;
-   mca_base_param_info_t *item;
-   char *value_string;
-   int value_int;
-   FILE *fp = NULL;
-   time_t timestamp;
-
-   if (rank != 0) {
-      return OMPI_SUCCESS;
-   }
-
-   timestamp = time(NULL);
-
-   /* Open the file if one is specified */
-   if (0 != strlen(ompi_mpi_show_mca_params_file)) {
-      if ( NULL == (fp = fopen(ompi_mpi_show_mca_params_file, "w")) ) {
-         opal_output(0, "Unable to open file <%s> to write MCA parameters", ompi_mpi_show_mca_params_file);
-         return OMPI_ERR_FILE_OPEN_FAILURE;
-      }
-      fprintf(fp, "#\n");
-      fprintf(fp, "# This file was automatically generated on %s", ctime(&timestamp));
-      fprintf(fp, "# by MPI_COMM_WORLD rank %d (out of a total of %d) on %s\n", rank, requested, nodename );
-      fprintf(fp, "#\n");
-   }
-
-   mca_base_param_dump(&info, false);
-   for (i =  opal_list_get_first(info); 
-        i != opal_list_get_last(info);
-        i =  opal_list_get_next(i)) {
-      item = (mca_base_param_info_t*) i;
-
-      /* Get the parameter name, and convert it to a printable string */
-      if (MCA_BASE_PARAM_TYPE_STRING == item->mbpp_type) {
-         mca_base_param_lookup_string(item->mbpp_index, &value_string);
-         if (NULL == value_string) {
-            value_string = strdup("");
-         }
-      } else {
-         mca_base_param_lookup_int(item->mbpp_index, &value_int);
-         asprintf(&value_string, "%d", value_int);
-      }
-
-      /* Print the parameter */
-      if (0 != strlen(ompi_mpi_show_mca_params_file)) {
-         fprintf(fp, "%s=%s\n", item->mbpp_full_name, value_string);
-      } else {
-         opal_output(0, "%s=%s", item->mbpp_full_name, value_string);
-      }
-
-      free(value_string);
-   }
-
-   /* Close file, cleanup allocated memory*/
-   if (0 != strlen(ompi_mpi_show_mca_params_file)) {
-      fclose(fp);
-   }
-   mca_base_param_dump_release(info);
-
-   return OMPI_SUCCESS;
+    opal_list_t *info;
+    opal_list_item_t *i;
+    mca_base_param_info_t *item;
+    char *value_string;
+    int value_int;
+    FILE *fp = NULL;
+    time_t timestamp;
+    mca_base_param_source_t source;
+    char *src_file;
+    char *src_string;
+    
+    if (rank != 0) {
+        return OMPI_SUCCESS;
+    }
+    
+    timestamp = time(NULL);
+    
+    /* Open the file if one is specified */
+    if (0 != strlen(ompi_mpi_show_mca_params_file)) {
+        if ( NULL == (fp = fopen(ompi_mpi_show_mca_params_file, "w")) ) {
+            opal_output(0, "Unable to open file <%s> to write MCA parameters", ompi_mpi_show_mca_params_file);
+            return OMPI_ERR_FILE_OPEN_FAILURE;
+        }
+        fprintf(fp, "#\n");
+        fprintf(fp, "# This file was automatically generated on %s", ctime(&timestamp));
+        fprintf(fp, "# by MPI_COMM_WORLD rank %d (out of a total of %d) on %s\n", rank, requested, nodename );
+        fprintf(fp, "#\n");
+    }
+    
+    mca_base_param_dump(&info, false);
+    for (i =  opal_list_get_first(info); 
+         i != opal_list_get_last(info);
+         i =  opal_list_get_next(i)) {
+        item = (mca_base_param_info_t*) i;
+        
+        /* get the source - where the param was last set */
+        if (OPAL_SUCCESS != 
+            mca_base_param_lookup_source(item->mbpp_index, &source, &src_file)) {
+            continue;
+        }
+        
+        /* is this a default value and we are not displaying
+         * defaults, ignore this one
+         */
+        if (MCA_BASE_PARAM_SOURCE_DEFAULT == source && !show_default_mca_params) {
+            continue;
+        }
+        
+        /* is this a file value and we are not displaying files,
+         * ignore it
+         */
+        if (MCA_BASE_PARAM_SOURCE_FILE == source && !show_file_mca_params) {
+            continue;
+        }
+        
+        /* is this an enviro value and we are not displaying enviros,
+         * ignore it
+         */
+        if (MCA_BASE_PARAM_SOURCE_ENV == source && !show_enviro_mca_params) {
+            continue;
+        }
+        
+        /* is this an API value and we are not displaying APIs,
+         * ignore it
+         */
+        if (MCA_BASE_PARAM_SOURCE_OVERRIDE == source && !show_override_mca_params) {
+            continue;
+        }
+        
+        /* Get the parameter name, and convert it to a printable string */
+        if (MCA_BASE_PARAM_TYPE_STRING == item->mbpp_type) {
+            mca_base_param_lookup_string(item->mbpp_index, &value_string);
+            if (NULL == value_string) {
+                value_string = strdup("");
+            }
+        } else {
+            mca_base_param_lookup_int(item->mbpp_index, &value_int);
+            asprintf(&value_string, "%d", value_int);
+        }
+        
+        switch(source) {
+            case MCA_BASE_PARAM_SOURCE_DEFAULT:
+                src_string = "default value";
+                break;
+            case MCA_BASE_PARAM_SOURCE_ENV:
+                src_string = "environment";
+                break;
+            case MCA_BASE_PARAM_SOURCE_FILE:
+                src_string = "file";
+                break;
+            case MCA_BASE_PARAM_SOURCE_OVERRIDE:
+                src_string = "API override";
+                break;
+            default:
+                src_string = NULL;
+                break;
+        }
+        
+        /* Print the parameter */
+        if (0 != strlen(ompi_mpi_show_mca_params_file)) {
+            if (NULL == src_file) {
+                fprintf(fp, "%s=%s (%s)\n", item->mbpp_full_name, value_string,
+                        (NULL != src_string ? src_string : "unknown"));
+            } else {
+                fprintf(fp, "%s=%s (%s:%s)\n", item->mbpp_full_name, value_string,
+                        (NULL != src_string ? src_string : "unknown"), src_file);
+            }
+        } else {
+            if (NULL == src_file) {
+                opal_output(0, "%s=%s (%s)\n", item->mbpp_full_name, value_string,
+                            (NULL != src_string ? src_string : "unknown"));
+            } else {
+                opal_output(0, "%s=%s (%s:%s)\n", item->mbpp_full_name, value_string,
+                            (NULL != src_string ? src_string : "unknown"), src_file);
+            }
+        }
+        
+        free(value_string);
+    }
+    
+    /* Close file, cleanup allocated memory*/
+    if (0 != strlen(ompi_mpi_show_mca_params_file)) {
+        fclose(fp);
+    }
+    mca_base_param_dump_release(info);
+    
+    return OMPI_SUCCESS;
 }

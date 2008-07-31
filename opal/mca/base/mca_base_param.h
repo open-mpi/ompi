@@ -515,7 +515,9 @@ extern "C" {
      * Lookup the source of an MCA parameter's value
      *
      * @param index [in] Index of MCA parameter to set
-     * @param value [in] The integer value to set
+     * @param source [out] Enum value indicating source
+     * @param source_file [out] If value came from source, name of the file
+     * that set it
      *
      * @retval OPAL_ERROR If the parameter was not found.
      * @retval OPAL_SUCCESS Upon success.
@@ -524,7 +526,8 @@ extern "C" {
      * parameter came from.
      */
     OPAL_DECLSPEC bool mca_base_param_lookup_source(int index, 
-                                                    mca_base_param_source_t *source);
+                                                    mca_base_param_source_t *source,
+                                                    char **source_file);
 
     /**
      * Sets an "override" value for an integer MCA parameter.

@@ -113,7 +113,8 @@ static int syn_register(int index_orig, const char *syn_type_name,
                         const char *syn_param_name, bool deprecated);
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
                          opal_hash_table_t *attrs,
-                         mca_base_param_source_t *source);
+                         mca_base_param_source_t *source,
+                         char **source_file);
 static bool param_set_override(size_t index, 
                                mca_base_param_storage_t *storage,
                                mca_base_param_type_t type);
@@ -122,7 +123,8 @@ static bool lookup_override(mca_base_param_t *param,
 static bool lookup_env(mca_base_param_t *param,
                        mca_base_param_storage_t *storage);
 static bool lookup_file(mca_base_param_t *param,
-                        mca_base_param_storage_t *storage);
+                        mca_base_param_storage_t *storage,
+                        char **source_file);
 static bool lookup_default(mca_base_param_t *param,
                            mca_base_param_storage_t *storage);
 static bool set(mca_base_param_type_t type,
@@ -480,7 +482,7 @@ int mca_base_param_lookup_int(int index, int *value)
 {
   mca_base_param_storage_t storage;
   
-  if (param_lookup(index, &storage, NULL, NULL)) {
+  if (param_lookup(index, &storage, NULL, NULL, NULL)) {
     *value = storage.intval;
     return OPAL_SUCCESS;
   }
@@ -509,7 +511,7 @@ int mca_base_param_lookup_string(int index, char **value)
 {
   mca_base_param_storage_t storage;
   
-  if (param_lookup(index, &storage, NULL, NULL)) {
+  if (param_lookup(index, &storage, NULL, NULL, NULL)) {
     *value = storage.stringval;
     return OPAL_SUCCESS;
   }
@@ -534,11 +536,11 @@ int mca_base_param_set_string(int index, char *value)
 /*
  * Lookup the source of an MCA param's value
  */
-bool mca_base_param_lookup_source(int index, mca_base_param_source_t *source)
+bool mca_base_param_lookup_source(int index, mca_base_param_source_t *source, char **source_file)
 {
     mca_base_param_storage_t storage;
   
-    if (param_lookup(index, &storage, NULL, source)) {
+    if (param_lookup(index, &storage, NULL, source, source_file)) {
         return OPAL_SUCCESS;
     }
     return OPAL_ERROR;
@@ -832,7 +834,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
         }
 
         if (array[i].mbp_internal == internal || internal) {
-            if (param_lookup(i, &storage, NULL, NULL)) {
+            if (param_lookup(i, &storage, NULL, NULL, NULL)) {
                 if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type) {
                     asprintf(&str, "%s=%d", array[i].mbp_env_var_name, 
                              storage.intval);
@@ -1493,7 +1495,7 @@ static int param_register(const char *type_name,
       /* Finally, if we have a lookup value, look it up */
       
       if (NULL != current_value) {
-          if (!param_lookup(i, current_value, NULL, NULL)) {
+          if (!param_lookup(i, current_value, NULL, NULL, NULL)) {
               return OPAL_ERR_NOT_FOUND;
           }
       }
@@ -1517,7 +1519,7 @@ static int param_register(const char *type_name,
   /* Finally, if we have a lookup value, look it up */
 
   if (NULL != current_value) {
-      if (!param_lookup(ret, current_value, NULL, NULL)) {
+      if (!param_lookup(ret, current_value, NULL, NULL, NULL)) {
           return OPAL_ERR_NOT_FOUND;
       }
   }
@@ -1688,13 +1690,19 @@ static bool param_set_override(size_t index,
  */
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
                          opal_hash_table_t *attrs,
-                         mca_base_param_source_t *source_param)
+                         mca_base_param_source_t *source_param,
+                         char **source_file)
 {
     size_t size;
     mca_base_param_t *array;
     char *p, *q;
     mca_base_param_source_t source = MCA_BASE_PARAM_SOURCE_MAX;
 
+    /* default the value */
+    if (NULL != source_file) {
+        *source_file = NULL;
+    }
+    
     /* Lookup the index and see if it's valid */
 
     if (!initialized) {
@@ -1720,7 +1728,7 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
     if (array[index].mbp_read_only) {
         if (lookup_override(&array[index], storage) ||
              lookup_env(&array[index], storage) ||
-             lookup_file(&array[index], storage)) {
+             lookup_file(&array[index], storage, source_file)) {
             opal_show_help("help-mca-param.txt", "read-only-param-set",
                            true, array[index].mbp_full_name);
         }
@@ -1734,7 +1742,7 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
             source = MCA_BASE_PARAM_SOURCE_OVERRIDE;
         } else if (lookup_env(&array[index], storage)) {
             source = MCA_BASE_PARAM_SOURCE_ENV;
-        } else if (lookup_file(&array[index], storage)) {
+        } else if (lookup_file(&array[index], storage, source_file)) {
             source = MCA_BASE_PARAM_SOURCE_FILE;
         } else if (lookup_default(&array[index], storage)) {
             source = MCA_BASE_PARAM_SOURCE_DEFAULT;
@@ -1874,7 +1882,8 @@ static bool lookup_env(mca_base_param_t *param,
  * Lookup a param in the files
  */
 static bool lookup_file(mca_base_param_t *param,
-                        mca_base_param_storage_t *storage)
+                        mca_base_param_storage_t *storage,
+                        char **source_file)
 {
     bool found = false;
     syn_info_t *si;
@@ -1887,6 +1896,9 @@ static bool lookup_file(mca_base_param_t *param,
        return that */
 
     if (param->mbp_file_value_set) {
+        if (NULL != source_file) {
+            *source_file = param->mbp_source_file;
+        }
         return set(param->mbp_type, storage, &param->mbp_file_value);
     }
 
@@ -1944,6 +1956,9 @@ static bool lookup_file(mca_base_param_t *param,
             } else {
                 param->mbp_file_value.stringval = fv->mbpfv_value;
                 fv->mbpfv_value = NULL;
+            }
+            if (NULL != fv->mbpfv_file) {
+                param->mbp_source_file = strdup(fv->mbpfv_file);
             }
             param->mbp_file_value_set = true;
 
@@ -2027,6 +2042,7 @@ static void param_constructor(mca_base_param_t *p)
     p->mbp_default_value.stringval = NULL;
     p->mbp_file_value_set = false;
     p->mbp_file_value.stringval = NULL;
+    p->mbp_source_file = NULL;
     p->mbp_override_value_set = false;
     p->mbp_override_value.stringval = NULL;
 
@@ -2063,9 +2079,13 @@ static void param_destructor(mca_base_param_t *p)
         if (NULL != p->mbp_default_value.stringval) {
             free(p->mbp_default_value.stringval);
         }
-        if (p->mbp_file_value_set &&
-            NULL != p->mbp_file_value.stringval) {
-            free(p->mbp_file_value.stringval);
+        if (p->mbp_file_value_set) {
+            if (NULL != p->mbp_file_value.stringval) {
+                free(p->mbp_file_value.stringval);
+            }
+            if (NULL != p->mbp_source_file) {
+                free(p->mbp_source_file);
+            }
         }
         if (p->mbp_override_value_set && 
             NULL != p->mbp_override_value.stringval) {
@@ -2093,6 +2113,7 @@ static void fv_constructor(mca_base_param_file_value_t *f)
 {
     f->mbpfv_param = NULL;
     f->mbpfv_value = NULL;
+    f->mbpfv_file = NULL;
 }
 
 
@@ -2103,6 +2124,9 @@ static void fv_destructor(mca_base_param_file_value_t *f)
     }
     if (NULL != f->mbpfv_value) {
         free(f->mbpfv_value);
+    }
+    if (NULL != f->mbpfv_file) {
+        free(f->mbpfv_file);
     }
     fv_constructor(f);
 }
