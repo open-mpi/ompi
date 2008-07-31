@@ -381,14 +381,6 @@ int orterun(int argc, char *argv[])
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    {
-        char *stupid;
-        stupid = opal_argv_join(orted_cmd_line, ',');
-        fprintf(stderr, "orted cmd line: %s\n", stupid);
-        free(stupid);
-        exit(0);
-    }
-    
     /* save the environment for launch purposes. This MUST be
      * done so that we can pass it to any local procs we
      * spawn - otherwise, those local procs won't see any
