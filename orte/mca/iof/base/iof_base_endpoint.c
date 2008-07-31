@@ -417,7 +417,8 @@ int orte_iof_base_endpoint_create(
     */
     if ( ! ((ORTE_IOF_SOURCE == mode && ORTE_IOF_STDIN == tag && 0 == fd) ||
             (ORTE_IOF_SINK == mode && ORTE_IOF_STDOUT == tag && 1 == fd) ||
-            (ORTE_IOF_SINK == mode && ORTE_IOF_STDERR == tag && 2 == fd))) {
+            (ORTE_IOF_SINK == mode && ORTE_IOF_STDERR == tag && 2 == fd) ||
+            (ORTE_IOF_SINK == mode && ORTE_IOF_INTERNAL == tag))) {
         if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
             opal_output_verbose(1, orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                         __FILE__, __LINE__, errno);
@@ -535,14 +536,15 @@ void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
     }
 
     /* Special case: if we're a sink and one of the special streams
-       (stdout or stderr), don't close anything because we don't want
-       to *actually* close stdout or stderr just because a remote
-       process closes theirs (but we do if a remote source/stdin
-       closes theirs, for example). */
+       (stdout, stderr, or internal), don't close anything because we
+       don't want to *actually* close stdout or stderr just because a
+       remote process closes theirs (but we do if a remote
+       source/stdin closes theirs, for example). */
 
     if (ORTE_IOF_SINK == endpoint->ep_mode && 
         (ORTE_IOF_STDOUT == endpoint->ep_tag ||
-         ORTE_IOF_STDERR == endpoint->ep_tag)) {
+         ORTE_IOF_STDERR == endpoint->ep_tag ||
+         ORTE_IOF_INTERNAL == endpoint->ep_tag)) {
         return;
     }
 
