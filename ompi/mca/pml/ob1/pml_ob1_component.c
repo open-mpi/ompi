@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -141,12 +141,8 @@ static int mca_pml_ob1_component_open(void)
         return OMPI_ERROR;
     }
 
-    mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
-    mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
-
     mca_pml_ob1.enabled = false; 
     return mca_bml_base_open(); 
-    
 }
 
 
@@ -179,6 +175,12 @@ mca_pml_ob1_component_init( int* priority,
                                           enable_mpi_threads)) {
         return NULL;
     }
+
+    /* Set this here (vs in component_open()) because
+       ompi_mpi_leave_pinned* may have been set after MCA params were
+       read (e.g., by the openib btl) */
+    mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
+    mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
 
     /* As our own progress function does nothing except calling the BML
      * progress, let's modify the progress function pointer in our structure

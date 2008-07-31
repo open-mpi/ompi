@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -95,15 +96,12 @@ OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size;
 OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size_log;
 
 /* only used within base -- no need to DECLSPEC */
-extern int mca_mpool_base_use_mem_hooks; 
-extern int mca_mpool_base_mallopt_disable_free;
-
+extern int mca_mpool_base_used_mem_hooks;
+extern int mca_mpool_base_use_mem_hooks_index;
+extern int mca_mpool_base_disable_mallopt_index;
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
 #endif /* MCA_MEM_BASE_H */
-
-
-

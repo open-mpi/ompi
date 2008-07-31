@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  *
@@ -37,6 +37,7 @@
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
+#include "ompi/runtime/params.h"
 
 /*
  *  Initializes the mpool module.
@@ -67,6 +68,12 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
     OBJ_CONSTRUCT(&mpool->gc_list, opal_list_t);
     mpool->stat_cache_hit = mpool->stat_cache_miss = mpool->stat_evicted = 0;
     mpool->stat_cache_found = mpool->stat_cache_notfound = 0;
+
+    /* Set this here (vs in component.c) because
+       ompi_mpi_leave_pinned* may have been set after MCA params were
+       read (e.g., by the openib btl) */
+    mca_mpool_rdma_component.leave_pinned = (int) 
+        (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline);
 }
 
 static inline int dereg_mem(mca_mpool_base_module_t *mpool,
