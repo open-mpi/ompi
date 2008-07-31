@@ -23,11 +23,12 @@
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/ras/ras_types.h"
+#include "orte/util/show_help.h"
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
@@ -81,7 +82,7 @@ static int orte_rmaps_rank_file_open(void)
                               "path",
                               "The path to the rank mapping file",
                               false, false, NULL, &orte_rmaps_rank_file_path);
-    if (NULL != orte_rmaps_rank_file_path) {
+    if (NULL != orte_rmaps_rank_file_path || NULL != orte_rmaps_base.slot_list) {
         mca_rmaps_rank_file_component.priority = 100;
     }
 

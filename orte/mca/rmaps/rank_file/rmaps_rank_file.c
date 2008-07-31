@@ -110,10 +110,6 @@ static int map_app_by_user_map(
                 }
         } while ( strcmp(node->name, rankmap[num_alloc + vpid_start].node_name));
         node->slot_list = strdup(rankmap[num_alloc+vpid_start].slot_list);
-        if (mca_rmaps_rank_file_component.debug) {
-           opal_output(0, "rank_file RMAPS component: [%s:%d]->slot_list=%s\n",
-                   rankmap[num_alloc + vpid_start].node_name,rankmap[num_alloc+vpid_start].rank, node->slot_list);
-        }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[num_alloc+vpid_start].rank, app->idx,
             nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
@@ -194,11 +190,8 @@ static int map_app_by_node(
         }
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
-        if ( NULL != orte_mca_rmaps_rank_file_slot_list){
-            node->slot_list = (char*) malloc(64*sizeof(char));
-            if ( NULL != node->slot_list ) {
-                strcpy(node->slot_list, orte_mca_rmaps_rank_file_slot_list);
-            }
+        if ( NULL != orte_rmaps_base.slot_list ) {
+            node->slot_list = strdup(orte_rmaps_base.slot_list);
         }
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
                                              nodes, jdata->map->oversubscribe, true))) {
@@ -291,7 +284,7 @@ static int map_app_by_slot(
         } else {
             num_slots_to_take = node->slots - node->slots_inuse;
         }
-        
+
         /* check if we are in npernode mode - if so, then set the num_slots_to_take
          * to the num_per_node
          */
@@ -304,11 +297,8 @@ static int map_app_by_slot(
                 ++num_alloc;
                 continue;
             }
-            if ( NULL != orte_mca_rmaps_rank_file_slot_list){
-                node->slot_list = (char*) malloc(64*sizeof(char));
-                if ( NULL != node->slot_list ) {
-                    strcpy(node->slot_list, orte_mca_rmaps_rank_file_slot_list);
-                }
+            if ( NULL != orte_rmaps_base.slot_list ) {
+                node->slot_list = strdup(orte_rmaps_base.slot_list);
             }
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
                                                  nodes, jdata->map->oversubscribe, true))) {
@@ -377,7 +367,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     vpid_start = 0;
 
     /* cycle through the app_contexts, mapping them sequentially */
-             for(i=0; i < jdata->num_apps; i++) {
+      for(i=0; i < jdata->num_apps; i++) {
         app = apps[i];
 
         /* if the number of processes wasn't specified, then we know there can be only
@@ -439,16 +429,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
         }
 
         if (map->pernode && map->npernode == 1) {
-            /* there are three use-cases that we need to deal with:
-            * (a) if -np was not provided, then we just use the number of nodes
-            * (b) if -np was provided AND #procs > #nodes, then error out
-            * (c) if -np was provided AND #procs <= #nodes, then launch
-            *     the specified #procs one/node. In this case, we just
-            *     leave app->num_procs alone
-            */
-            if (0 == app->num_procs) {
-                app->num_procs = num_nodes;
-            } else if (app->num_procs > num_nodes) {
+            if (app->num_procs > num_nodes) {
                 orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:per-node-and-too-many-procs",
                                true, app->num_procs, num_nodes, NULL);
                 rc = ORTE_ERR_SILENT;
@@ -465,30 +446,12 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-            /* there are three use-cases that we need to deal with:
-            * (a) if -np was not provided, then we just use the n/node * #nodes
-            * (b) if -np was provided AND #procs > (n/node * #nodes), then error out
-            * (c) if -np was provided AND #procs <= (n/node * #nodes), then launch
-            *     the specified #procs n/node. In this case, we just
-            *     leave app->num_procs alone
-            */
-            if (0 == app->num_procs) {
-                /* set the num_procs to equal the specified num/node * the number of nodes */
-                app->num_procs = map->npernode * num_nodes;
-            } else if (app->num_procs > (map->npernode * num_nodes)) {
+            if (app->num_procs > (map->npernode * num_nodes)) {
                 orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:n-per-node-and-too-many-procs",
                                true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-        } else if (0 == app->num_procs) {
-                /* we can't handle this - it should have been set when we got
-                 * the map info. If it wasn't, then we can only error out
-                 */
-                orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:no-np-and-user-map",
-                               true, app->num_procs, map->npernode, num_nodes, num_slots, NULL);
-                rc = ORTE_ERR_SILENT;
-                goto error;
         }
         /** track the total number of processes we mapped */
         jdata->num_procs += app->num_procs;
@@ -589,6 +552,11 @@ static int orte_rmaps_rank_file_parse(const char *rankfile, int np)
        goto unlock;
    }
 
+   if ( 0 == np ) {
+        orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:no-np-and-user-map", true, NULL);
+        return ORTE_ERR_BAD_PARAM;
+   }
+   
     while (!orte_rmaps_rank_file_done) {
         token = orte_rmaps_rank_file_lex();
         switch (token) {
