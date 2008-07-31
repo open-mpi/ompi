@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -162,9 +162,9 @@ OPAL_DECLSPEC  int opal_argv_count(char **argv);
    *
    * It is the callers responsibility to free the returned string.
    */
-OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter) __opal_attribute_malloc__;
+OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
-OPAL_DECLSPEC char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __opal_attribute_malloc__;
+OPAL_DECLSPEC char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
    * Return the number of bytes consumed by an argv array.
@@ -189,7 +189,7 @@ OPAL_DECLSPEC  size_t opal_argv_len(char **argv);
    * Specifically, the output argv will be an array of the same length
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
-OPAL_DECLSPEC  char **opal_argv_copy(char **argv) __opal_attribute_malloc__;
+OPAL_DECLSPEC  char **opal_argv_copy(char **argv) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
     /**
      * Delete one or more tokens from the middle of an argv.

@@ -130,7 +130,7 @@ static int split_shorts(opal_cmd_line_t *cmd,
                         int *output_argc, char ***output_argv, 
                         int *num_args_used, bool ignore_unknown);
 static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
-                                      const char *option_name);
+                                      const char *option_name) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 static void set_dest(cmd_line_option_t *option, char *sval);
 static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ]);
 static int qsort_callback(const void *a, const void *b);

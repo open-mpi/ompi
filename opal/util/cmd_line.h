@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -416,7 +416,7 @@ extern "C" {
      *
      * The returned string must be freed by the caller.
      */
-    OPAL_DECLSPEC char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd);
+    OPAL_DECLSPEC char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
     /**
      * Test if a given option was taken on the parsed command line.
@@ -438,7 +438,7 @@ extern "C" {
      * Otherwise, it will return false.
      */
     OPAL_DECLSPEC bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd, 
-                                              const char *opt);
+                                              const char *opt) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
     /**
      * Return the number of arguments parsed on a OPAL command line handle.
@@ -451,7 +451,7 @@ extern "C" {
      * Arguments are added to the handle via the opal_cmd_line_parse()
      * function.
      */
-    OPAL_DECLSPEC int opal_cmd_line_get_argc(opal_cmd_line_t *cmd);
+    OPAL_DECLSPEC int opal_cmd_line_get_argc(opal_cmd_line_t *cmd) __opal_attribute_unused__;
 
     /**
      * Return a string argument parsed on a OPAL command line handle.
@@ -494,7 +494,7 @@ extern "C" {
      * handle, or opal_cmd_line_parse() was not invoked on this handle.
      */
     OPAL_DECLSPEC int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, 
-                                               const char *opt);
+                                               const char *opt) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
     /**
      * Return a specific parameter for a specific instance of a option
@@ -556,7 +556,7 @@ extern "C" {
      * to opal_argv_free()) by the caller.
      */
     OPAL_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, 
-                                             char ***tailv);
+                                             char ***tailv) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
