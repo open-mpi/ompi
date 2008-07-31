@@ -1975,7 +1975,8 @@ btl_openib_component_init(int *num_btl_modules,
         index = mca_base_param_find("mpi", NULL, "leave_pinned");
         if (index >= 0) {
             if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
-                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source)) {
+                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
+                                                             NULL)) {
                 if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
                     ++ret;
                 }
@@ -1984,7 +1985,8 @@ btl_openib_component_init(int *num_btl_modules,
         index = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");
         if (index >= 0) {
             if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
-                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source)) {
+                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source, 
+                                                             NULL)) {
                 if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
                     ++ret;
                 }
