@@ -299,7 +299,9 @@ void ompi_info::show_mca_params(opal_list_t *info,
                         content = "environment";
                         break;
                     case MCA_BASE_PARAM_SOURCE_FILE:
-                        content = "file";
+                        content = "file [";
+                        content += src_file;
+                        content += "]";
                         break;
                     case MCA_BASE_PARAM_SOURCE_OVERRIDE:
                         content = "API override";
