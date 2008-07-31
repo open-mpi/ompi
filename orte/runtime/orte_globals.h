@@ -371,6 +371,10 @@ ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 
+/* See comment in orte/tools/orterun/debuggers.c about this MCA
+   param */
+ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

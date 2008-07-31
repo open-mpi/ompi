@@ -565,7 +565,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "orte_grpcomm_modex failed";
         goto error;
     }
-    
+
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
         opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
