@@ -128,10 +128,6 @@ int orte_plm_rsh_component_open(void)
                            "Disable the launcher to use qrsh when under the SGE parallel environment",
                            false, false, false, &tmp);
     mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);  
-    mca_base_param_reg_string(c, "orted",
-                              "The command name that the rsh plm component will invoke for the ORTE daemon",
-                              false, false, "orted", 
-                              &mca_plm_rsh_component.orted);
     
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rsh plm component",
@@ -146,11 +142,12 @@ int orte_plm_rsh_component_open(void)
                            false, false, 1, &tmp);
     mca_plm_rsh_component.assume_same_shell = OPAL_INT_TO_BOOL(tmp);
 
-    mca_base_param_reg_string(c, "agent",
+    tmp = mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
-                              false, false, "ssh : rsh",
-                              &mca_plm_rsh_component.agent_param);
-
+                              false, false, "ssh : rsh", NULL);
+    mca_base_param_reg_syn_name(tmp, "pls", "rsh_agent", true);
+    mca_base_param_lookup_string(tmp, &mca_plm_rsh_component.agent_param);
+    
     mca_base_param_reg_int(c, "tree_spawn",
                            "If set to 1, launch via a tree-based topology",
                            false, false, (int)false, &tmp);
@@ -266,9 +263,6 @@ int orte_plm_rsh_component_close(void)
     OBJ_DESTRUCT(&mca_plm_rsh_component.lock);
     OBJ_DESTRUCT(&mca_plm_rsh_component.cond);
     OBJ_DESTRUCT(&mca_plm_rsh_component.children);
-    if (NULL != mca_plm_rsh_component.orted) {
-        free(mca_plm_rsh_component.orted);
-    }
     if (NULL != mca_plm_rsh_component.agent_param) {
         free(mca_plm_rsh_component.agent_param);
     }
