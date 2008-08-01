@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -33,9 +34,12 @@ AC_DEFUN([OMPI_SAVE_VERSION], [
     AC_SUBST($1[_WANT_SVN])
     AC_SUBST($1[_SVN_R])
     AC_SUBST($1[_VERSION])
+    AC_SUBST($1[_RELEASE_DATE])
 
     AC_MSG_CHECKING([$2 version])
     AC_MSG_RESULT([$]$1[_VERSION])
+    AC_MSG_CHECKING([$2 release date])
+    AC_MSG_RESULT([$]$1[_RELEASE_DATE])
     AC_MSG_CHECKING([$2 Subversion repository version])
     AC_MSG_RESULT([$]$1[_SVN_R])
 
@@ -49,6 +53,8 @@ AC_DEFUN([OMPI_SAVE_VERSION], [
         [Greek - alpha, beta, etc - release number of ]$2)
     AC_DEFINE_UNQUOTED($1[_VERSION], ["$]$1[_RELEASE_VERSION"],
         [Complete release number of ]$2)
+    AC_DEFINE_UNQUOTED($1[_RELEASE_DATE], ["$]$1[_RELEASE_DATE"],
+        [Release date of ]$2)
 
     AC_CONFIG_FILES([$4])
 ])dnl

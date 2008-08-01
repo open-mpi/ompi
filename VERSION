@@ -1,3 +1,6 @@
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
 # the version number below are combined to form a single version
@@ -35,3 +38,7 @@ want_svn=1
 # of svn_r in this file is replaced with the output of "svnversion".
 
 svn_r=-1
+
+# The date when this release was created
+
+date="Unreleased developer copy"

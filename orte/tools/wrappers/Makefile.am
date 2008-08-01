@@ -17,6 +17,9 @@
 # $HEADER$
 #
 
+man_pages = ortecc.1 ortec++.1
+EXTRA_DIST = $(man_pages)
+
 if !ORTE_DISABLE_FULL_SUPPORT
 if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 if WANT_INSTALL_HEADERS
@@ -27,9 +30,7 @@ nodist_pkgdata_DATA = \
 
 if OMPI_INSTALL_BINARIES
 
-dist_man_MANS = \
-	ortecc.1 \
-	ortec++.1
+man_MANS = $(man_pages)
 
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
@@ -46,14 +47,14 @@ endif # WANT_INSTALL_HEADERS
 endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 
 maintainer-clean-local:
-	rm -f ortecc.1 ortec++.1
+	rm -f $(man_pages)
 
 ortecc.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f ortecc.1
-	sed -e 's/@COMMAND@/ortecc/g' -e 's/@PROJECT@/OpenRTE/g' -e 's/@PROJECT_SHORT@/ORTE/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > ortecc.1
+	sed -e 's/#COMMAND#/ortecc/g' -e 's/#PROJECT#/OpenRTE/g' -e 's/#PROJECT_SHORT#/ORTE/g' -e 's/#LANGUAGE#/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > ortecc.1
 
 ortec++.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f ortec++.1
-	sed -e 's/@COMMAND@/ortec++/g' -e 's/@PROJECT@/OpenRTE/g' -e 's/@PROJECT_SHORT@/ORTE/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > ortec++.1
+	sed -e 's/#COMMAND#/ortec++/g' -e 's/#PROJECT#/OpenRTE/g' -e 's/#PROJECT_SHORT#/ORTE/g' -e 's/#LANGUAGE#/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > ortec++.1
 
 endif # !ORTE_DISABLE_FULL_SUPPORT
