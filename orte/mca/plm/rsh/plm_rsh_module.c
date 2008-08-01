@@ -394,9 +394,10 @@ static int setup_launch(int *argcptr, char ***argvptr,
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: local csh: %d, local sh: %d",
+                         "%s plm:rsh: local csh: %s, local sh: %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         local_csh, local_sh));
+                         (local_csh ? "TRUE" : "FALSE"),
+                         (local_sh ? "TRUE" : "FALSE")));
     
     /* What is our remote shell? */
     if (mca_plm_rsh_component.assume_same_shell) {
@@ -548,7 +549,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       (orted_prefix != NULL ? orted_prefix : ""),
                       prefix_dir, bin_base,
                       orted_cmd);
-        } else if (remote_csh) {
+        } else if (*remote_csh) {
             /* [t]csh is a bit more challenging -- we
              have to check whether LD_LIBRARY_PATH
              is already set before we try to set it.
