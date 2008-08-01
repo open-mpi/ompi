@@ -1,0 +1,960 @@
+.\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.\"
+.\" Man page for ORTE's orterun command
+.\" 
+.\" .TH name     section center-footer   left-footer  center-header
+.TH     MPIRUN  1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.\" **************************
+.\"    Name Section
+.\" **************************
+.SH NAME
+.
+orterun, mpirun, mpiexec \- Execute serial and parallel jobs in Open MPI.
+
+.B Note:
+\fImpirun\fP, \fImpiexec\fP, and \fIorterun\fP are all exact synonyms for each
+other.  Using any of the names will result in exactly identical behavior.
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.PP
+Single Process Multiple Data (SPMD) Model:
+
+.B mpirun
+[ options ] 
+.B <program>
+[ <args> ]
+.P
+
+Multiple Instruction Multiple Data (MIMD) Model:
+
+.B mpirun
+[ global_options ]
+       [ local_options1 ]
+.B <program1>
+[ <args1> ] :
+       [ local_options2 ]
+.B <program2>
+[ <args2> ] : 
+       ... : 
+       [ local_optionsN ]
+.B <programN>
+[ <argsN> ]
+.P
+
+Note that in both models, invoking \fImpirun\fR via an absolute path
+name is equivalent to specifying the \fI--prefix\fR option with a
+\fI<dir>\fR value equivalent to the directory where \fImpirun\fR
+resides, minus its last subdirectory.  For example:
+
+    \fBshell$\fP /usr/local/bin/mpirun ...
+
+is equivalent to
+
+    \fBshell$\fP mpirun --prefix /usr/local
+
+.
+.\" **************************
+.\"    Quick Summary Section
+.\" **************************
+.SH QUICK SUMMARY
+.
+If you are simply looking for how to run an MPI application, you
+probably want to use a command line of the following form:
+
+    \fBshell$\fP mpirun [ -np X ] [ --hostfile <filename> ]  <program>
+
+This will run X copies of \fI<program>\fR in your current run-time
+environment (if running under a supported resource manager, Open MPI's
+\fImpirun\fR will usually automatically use the corresponding resource manager
+process starter, as opposed to, for example, \fIrsh\fR or \fIssh\fR,
+which require the use of a hostfile, or will default to running all X
+copies on the localhost), scheduling (by default) in a round-robin fashion by
+CPU slot.  See the rest of this page for more details.
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.I mpirun
+will send the name of the directory where it was invoked on the local
+node to each of the remote nodes, and attempt to change to that
+directory.  See the "Current Working Directory" section below for further
+details.
+.\"
+.\" Start options listing
+.\"    Indent 10 chacters from start of first column to start of second column
+.TP 10
+.B <args>
+Pass these run-time arguments to every new process.  These must always
+be the last arguments to \fImpirun\fP. If an app context file is used,
+\fI<args>\fP will be ignored.
+.
+.
+.TP
+.B <program>
+The program executable. This is identified as the first non-recognized argument
+to mpirun.
+.
+.
+.TP
+.B -aborted\fR,\fP --aborted \fR<#>\fP
+Set the maximum number of aborted processes to display.
+.
+.
+.TP
+.B --app \fR<appfile>\fP
+Provide an appfile, ignoring all other command line options.
+.
+.
+.TP
+.B -bynode\fR,\fP --bynode
+Allocate (map) the processes by node in a round-robin scheme.
+.
+.
+.TP
+.B -byslot\fR,\fP --byslot
+Allocate (map) the processes by slot in a round-robin scheme. This is the
+default.
+.
+.
+.TP
+.B -c \fR<#>\fP
+Synonym for \fI-np\fP.
+.
+.
+.TP
+.B -cf \f |--cartofile <arg0>\fP.
+Provide a cartography file.
+.
+.
+.TP
+.B -debug\fR,\fP --debug
+Invoke the user-level debugger indicated by the \fIorte_base_user_debugger\fP
+MCA parameter.
+.
+.
+.TP
+.B -debugger\fR,\fP --debugger
+Sequence of debuggers to search for when \fI--debug\fP is used (i.e.
+a synonym for \fIorte_base_user_debugger\fP MCA parameter).
+.
+.
+.TP
+.B -gmca\fR,\fP --gmca \fR<key> <value>\fP
+Pass global MCA parameters that are applicable to all contexts. \fI<key>\fP is
+the parameter name; \fI<value>\fP is the parameter value.
+.
+.
+.TP
+.B -h\fR,\fP --help
+Display help for this command
+.
+.
+.TP
+.B -H \fR<host1,host2,...,hostN>\fP
+Synonym for \fI-host\fP.
+.
+.
+.TP
+.B -host\fR,\fP --host \fR<host1,host2,...,hostN>\fP
+List of hosts on which to invoke processes.
+.
+.
+.TP
+.B -hostfile\fR,\fP --hostfile \fR<hostfile>\fP
+Provide a hostfile to use. 
+.\" JJH - Should have man page for how to format a hostfile properly.
+.
+.
+.TP
+.B -loadbalance\fR,\fP --loadbalance
+Uniform distribution of ranks across all nodes by Round Robin mapper.
+.
+.
+.TP
+.B -machinefile\fR,\fP --machinefile \fR<machinefile>\fP
+Synonym for \fI-hostfile\fP.
+.
+.
+.TP
+.B -mca\fR,\fP --mca <key> <value>
+Send arguments to various MCA modules.  See the "MCA" section, below.
+.
+.
+.TP
+.B -n\fR,\fP --n \fR<#>\fP
+Synonym for \fI-np\fP.
+.
+.
+.TP
+.B -nolocal\fR,\fP --nolocal
+Do not run any copies of the launched application on the same node as
+orterun is running.  This option will override listing the localhost
+with \fB--host\fR or any other host-specifying mechanism.
+.
+.
+.TP
+.B -nooversubscribe\fR,\fP --nooversubscribe
+Do not oversubscribe any nodes; error (without starting any processes)
+if the requested number of processes would cause oversubscription.
+This option implicitly sets "max_slots" equal to the "slots" value for
+each node.
+.
+.
+.TP
+.B -np \fR<#>\fP
+Run this many copies of the program on the given nodes.  This option
+indicates that the specified file is an executable program and not an
+application context. If no value is provided for the number of copies to
+execute (i.e., neither the "-np" nor its synonyms are provided on the command
+line), Open MPI will automatically execute a copy of the program on
+each process slot (see below for description of a "process slot"). This
+feature, however, can only be used in the SPMD model and will return an
+error (without beginning execution of the application) otherwise. 
+.
+.
+.TP
+.B -nw\fR,\fP --nw
+Launch the processes and do not wait for their completion. mpirun will
+complete as soon as successful launch occurs.
+.
+.
+.TP
+.B -path\fR,\fP --path \fR<path>\fP
+<path> that will be used when attempting to locate the requested
+executables.  This is used prior to using the local PATH setting.
+.
+.
+.TP
+.B --prefix \fR<dir>\fP
+Prefix directory that will be used to set the \fIPATH\fR and
+\fILD_LIBRARY_PATH\fR on the remote node before invoking Open MPI or
+the target process.  See the "Remote Execution" section, below.
+.
+.
+.TP
+.B -q\fR,\fP --quiet
+Suppress informative messages from orterun during application execution.
+.
+.
+.TP
+.B -rf \f |--rankfile <arg0>\fP.
+Provide a rankfile file.
+.
+.
+.TP
+.B --tmpdir \fR<dir>\fP
+Set the root for the session directory tree for mpirun only.
+.
+.
+.TP
+.B -tv\fR,\fP --tv
+Launch processes under the TotalView debugger.
+Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
+.
+.
+.TP
+.B --universe \fR<username@hostname:universe_name>\fP
+For this application, set the universe name as:
+     username@hostname:universe_name
+.
+.
+.TP
+.B -v\fR,\fP --verbose
+Be verbose
+.TP
+.B -V\fR,\fP --version
+Print version number.  If no other arguments are given, this will also
+cause orterun to exit.
+.
+.
+.TP
+.B -wd \fR<dir>\fP
+Synonym for \fI-wdir\fP.
+.
+.
+.TP
+.B -wdir \fR<dir>\fP
+Change to the directory <dir> before the user's program executes.
+See the "Current Working Directory" section for notes on relative paths.
+.B Note:
+If the \fI-wdir\fP option appears both on the command line and in an
+application context, the context will take precedence over the command
+line.
+.
+.
+.TP
+.B -x \fR<env>\fP
+Export the specified environment variables to the remote nodes before
+executing the program.  Existing environment variables can be
+specified (see the Examples section, below), or new variable names
+specified with corresponding values.  The parser for the \fI-x\fP
+option is not very sophisticated; it does not even understand quoted
+values.  Users are advised to set variables in the environment, and
+then use \fI-x\fP to export (not define) them.
+.
+.
+.P
+The following options are useful for developers; they are not generally
+useful to most ORTE and/or MPI users:
+.
+.TP
+.B -d\fR,\fP --debug-devel
+Enable debugging of the OpenRTE (the run-time layer in Open MPI).
+This is not generally useful for most users.
+.
+.
+.TP
+.B --debug-daemons
+Enable debugging of any OpenRTE daemons used by this application.
+.
+.
+.TP
+.B --debug-daemons-file
+Enable debugging of any OpenRTE daemons used by this application, storing
+output in files.
+.
+.
+.TP
+.B --no-daemonize
+Do not detach OpenRTE daemons used by this application.
+.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+One invocation of \fImpirun\fP starts an MPI application running under Open
+MPI. If the application is single process multiple data (SPMD), the application
+can be specified on the \fImpirun\fP command line.
+
+If the application is multiple instruction multiple data (MIMD), comprising of
+multiple programs, the set of programs and argument can be specified in one of
+two ways: Extended Command Line Arguments, and Application Context.
+.PP
+An application context describes the MIMD program set including all arguments
+in a separate file.
+.\"See appcontext(5) for a description of the application context syntax.
+This file essentially contains multiple \fImpirun\fP command lines, less the
+command name itself.  The ability to specify different options for different
+instantiations of a program is another reason to use an application context.
+.PP
+Extended command line arguments allow for the description of the application
+layout on the command line using colons (\fI:\fP) to separate the specification
+of programs and arguments. Some options are globally set across all specified
+programs (e.g. --hostfile), while others are specific to a single program
+(e.g. -np).
+.
+.
+.
+.SS Process Slots
+.
+Open MPI uses "slots" to represent a potential location for a process.
+Hence, a node with 2 slots means that 2 processes can be launched on
+that node. For performance, the community typically equates a "slot"
+with a physical CPU, thus ensuring that any process assigned to that
+slot has a dedicated processor. This is not, however, a requirement for
+the operation of Open MPI.
+.PP
+Slots can be specified in hostfiles after the hostname.  For example:
+.
+.TP 4
+host1.example.com slots=4
+Indicates that there are 4 process slots on host1.
+.
+.PP
+If no slots value is specified, then Open MPI will automatically assign
+a default value of "slots=1" to that host.
+.
+.PP
+When running under resource managers (e.g., SLURM, Torque, etc.), Open
+MPI will obtain both the hostnames and the number of slots directly
+from the resource manger.  For example, if running under a SLURM job,
+Open MPI will automatically receive the hosts that SLURM has allocated
+to the job as well as how many slots on each node that SLURM says
+are usable - in most high-performance environments, the slots will
+equate to the number of processors on the node.
+.
+.PP
+When deciding where to launch processes, Open MPI will first fill up
+all available slots before oversubscribing (see "Location
+Nomenclature", below, for more details on the scheduling algorithms
+available).  Unless told otherwise, Open MPI will arbitrarily
+oversubscribe nodes.  For example, if the only node available is the
+localhost, Open MPI will run as many processes as specified by the
+-n (or one of its variants) command line option on the
+localhost (although they may run quite slowly, since they'll all be
+competing for CPU and other resources).
+.
+.PP
+Limits can be placed on oversubscription with the "max_slots"
+attribute in the hostfile.  For example:
+.
+.TP 4
+host2.example.com slots=4 max_slots=6
+Indicates that there are 4 process slots on host2.  Further, Open MPI
+is limited to launching a maximum of 6 processes on host2.
+.
+.TP
+host3.example.com slots=2 max_slots=2
+Indicates that there are 2 process slots on host3 and that no
+oversubscription is allowed (similar to the \fI--nooversubscribe\fR
+option).
+.
+.TP
+host4.example.com max_slots=2
+Shorthand; same as listing "slots=2 max_slots=2".
+.
+.
+.PP
+Note that Open MPI's support for resource managers does not currently
+set the "max_slots" values for hosts.  If you wish to prevent
+oversubscription in such scenarios, use the \fI--nooversubscribe\fR
+option.
+.
+.PP
+In scenarios where the user wishes to launch an application across
+all available slots by not providing a "-n" option on the mpirun
+command line, Open MPI will launch a process on each process slot
+for each host within the provided environment. For example, if a
+hostfile has been provided, then Open MPI will spawn processes
+on each identified host up to the "slots=x" limit if oversubscription
+is not allowed. If oversubscription is allowed (the default), then
+Open MPI will spawn processes on each host up to the "max_slots=y" limit
+if that value is provided. In all cases, the "-bynode" and "-byslot"
+mapping directives will be enforced to ensure proper placement of
+process ranks.
+.
+.
+.
+.SS Location Nomenclature
+.
+As described above, \fImpirun\fP can specify arbitrary locations in
+the current Open MPI universe.  Locations can be specified either by
+CPU or by node.
+
+.B Note:
+This nomenclature does not force Open MPI to bind processes to CPUs --
+specifying a location "by CPU" is really a convenience mechanism for
+SMPs that ultimately maps down to a specific node.
+.PP
+Specifying locations by node will launch one copy of an executable per
+specified node.
+Using the \fI--bynode\fP option tells Open MPI to use all available nodes.
+Using the \fI--byslot\fP option tells Open MPI to use all slots on an available
+node before allocating resources on the next available node.
+For example:
+.
+.TP 4
+mpirun --bynode -np 4 a.out
+Runs one copy of the the executable
+.I a.out
+on all available nodes in the Open MPI universe.  MPI_COMM_WORLD rank 0
+will be on node0, rank 1 will be on node1, etc. Regardless of how many slots
+are available on each of the nodes.
+.
+.
+.TP
+mpirun --byslot -np 4 a.out
+Runs one copy of the the executable
+.I a.out
+on each slot on a given node before running the executable on other available
+nodes.
+.
+.
+.SS Loadbalance rank allocation
+.
+Uniform distribution of the ranks on all nodes when using Round Robin mapper while retaining byslot rank associations.
+
+ ex :               byslot    bynode   loadbalance
+        node0:      0,1,2,3   0,3,6    0,1,2   
+        node1:      4,5,6     1,4      3,4
+        node2:                2,5      5,6
+.
+.
+.
+.SS Specifying Hosts
+.
+Hosts can be specified in a number of ways. The most common of which is in a
+\&'hostfile' or 'machinefile'. If our hostfile contain the following information:
+.
+.
+
+   \fBshell$\fP cat my-hostfile
+   node00 slots=2
+   node01 slots=2
+   node02 slots=2
+
+.
+.
+.TP
+mpirun --hostfile my-hostfile -np 3 a.out
+This will run one copy of the executable
+.I a.out
+on hosts node00,node01, and node02.
+.
+.
+.PP
+Another method for specifying hosts is directly on the command line. Here can
+can include and exclude hosts from the set of hosts to run on. For example:
+.
+.
+.TP
+mpirun -np 3 --host a a.out
+Runs three copies of the executable
+.I a.out
+on host a.
+.
+.
+.TP
+mpirun -np 3 --host a,b,c a.out
+Runs one copy of the executable
+.I a.out
+on hosts a, b, and c.
+.
+.
+.TP
+mpirun -np 3 --hostfile my-hostfile --host node00 a.out
+Runs three copies of the executable
+.I a.out
+on host node00.
+.
+.
+.TP
+mpirun -np 3 --hostfile my-hostfile --host node10 a.out
+This will prompt an error since node10 is not in my-hostfile; mpirun will
+abort.
+.
+.
+.TP
+shell$ mpirun -np 1 --host a hostname : -np 2 --host b,c uptime
+Runs one copy of the executable
+.I hostname
+on host a. And runs one copy of the executable
+.I uptime
+on hosts b and c.
+.
+.
+.SS Specifying Ranks
+.
+Rankfile came to provide Open MPI a file with the location of each MPI_COMM_WORLD rank. The syntax of the rankfile as follows:
+ rank i=host_j slot=x
+
+    \fBshell$\fP cat my-rankfile
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1,1:0-2
+
+    \fBshell$\fP mpirun --hostfile my-hostfile -np 4 --rankfile my-rankfile a.out
+    
+This means that
+ a. rank 1 will run on host1 bounded to socket1:core0 and socket1:core1
+ b. rank 0 will run on host2 bounded to any core on socket0
+ c. rank 2 will run on host4 bounded to CPU#1 and CPU#2
+ d. rank 3 will run on host3 bounded to socket0:core1 and socket1:core0, socket1:core1, socket1:core2
+. 
+.
+.
+.SS Providing cartofile
+.
+The cartofile suplies an information of the the host structure and connection among the host components i.e memory nodes,CPUs, Ethernet and inifiniband ports. The information stored as a graph in the cartofile. This graph contains the names and types of EDGEs, connecting BRANCHes and distance among them. See the fallowing example of the cartofile:
+
+. 
+ #Node declaration Node type (Free string) Node name
+ #(Reserve word)   (socket is a reserve    (free string)
+ #                 word for CPU socket)
+ #=====================================================
+ EDGE                Memory                      mem0
+ EDGE                Memory                      mem3
+ #
+ EDGE                socket                      socket0
+ EDGE                socket                      socket1
+ EDGE                socket                      socket2
+ EDGE                socket                      socket3
+ # 
+ EDGE                Infiniband                  mthca0
+ EDGE                Infiniband                  mthca1
+ #
+ EDGE                Ethernet                    eth0
+ EDGE                Ethernet                    eth1
+ #
+ #
+ #Connection        From node   To node:weight   To node:weight
+ #declaration       (declared   (declared        (declared
+ #(Reserve word)    above)      above)           above)
+ #========================================================================
+ BRANCH             mem0        socket0:0
+ BRANCH             mem3        socket3:0
+ #
+ BRANCH             socket0     mem0:0           socket1:1      socket2:1 mthca0:1 eth0:1
+ BRANCH             socket1     socket0:1        socket3:1
+ BRANCH             socket2     socket1:1        socket3:1
+ BRANCH             socket3     mem3:0           socket1:1      socket2:1 mthca1:1 eth1:1
+ # 
+ BRANCH             mthca0      socket0:1
+ BRANCH             mthca1      socket3:1
+ #
+ BRANCH             eth0        socket0:1
+ BRANCH             eth1        socket3:1
+ 
+ #Bi-Directional connection
+ #
+ BRANCH_BI_DIR      socket1       mem1:0
+ BRANCH_BI_DIR      socket2       mem3:0
+ # 
+ #end of cartofile
+
+ . 
+.SS No Local Launch
+.
+Using the \fB--nolocal\fR option to orterun tells the system to not
+launch any of the application processes on the same node that orterun
+is running.  While orterun typically blocks and consumes few system
+resources, this option can be helpful for launching very large jobs
+where orterun may actually need to use noticable amounts of memory
+and/or processing time.  \fB--nolocal\fR allows orteun to run without
+sharing the local node with the launched applications, and likewise
+allows the launched applications to run unhindered by orterun's system
+usage.
+.PP
+Note that \fB--nolocal\fR will override any other specification to
+launch the application on the local node.  It will disqualify the
+localhost from being capable of running any processes in the
+application.
+.
+.
+.TP
+shell$ mpirun -np 1 --host localhost --nolocal hostname
+This example will result in an error because orterun will not find
+anywhere to launch the application.
+.
+.
+.
+.SS No Oversubscription
+.
+Using the \fI--nooversubscribe\fR option causes Open MPI to implicitly
+set the "max_slots" value to be the same as the "slots" value for each
+node.  This can be especially helpful when running jobs under a
+resource manager because Open MPI currently only sets the "slots"
+value for each node that it obtains from the resource manager.
+.
+.
+.
+.SS Application Context or Executable Program?
+.
+To distinguish the two different forms, \fImpirun\fP
+looks on the command line for \fI--app\fP option.  If
+it is specified, then the file named on the command line is
+assumed to be an application context.  If it is not
+specified, then the file is assumed to be an executable program.
+.
+.
+.
+.SS Locating Files
+.
+If no relative or absolute path is specified for a file, Open
+MPI will first look for files by searching the directories specified
+by the \fI--path\fP option.  If there is no \fI--path\fP option set or
+if the file is not found at the \fI--path\fP location, then Open MPI
+will search the user's PATH environment variable as defined on the
+source node(s).
+.PP
+If a relative directory is specified, it must be relative to the initial
+working directory determined by the specific starter used. For example when
+using the rsh or ssh starters, the initial directory is $HOME by default. Other
+starters may set the initial directory to the current working directory from
+the invocation of \fImpirun\fP. 
+.
+.
+.
+.SS Current Working Directory
+.
+The \fI\-wdir\fP mpirun option (and its synonym, \fI\-wd\fP) allows
+the user to change to an arbitrary directory before the program is
+invoked.  It can also be used in application context files to specify
+working directories on specific nodes and/or for specific
+applications.
+.PP
+If the \fI\-wdir\fP option appears both in a context file and on the
+command line, the context file directory will override the command
+line value.
+.PP
+If the \fI-wdir\fP option is specified, Open MPI will attempt to
+change to the specified directory on all of the remote nodes. If this
+fails, \fImpirun\fP will abort.
+.PP
+If the \fI-wdir\fP option is \fBnot\fP specified, Open MPI will send
+the directory name where \fImpirun\fP was invoked to each of the
+remote nodes. The remote nodes will try to change to that
+directory. If they are unable (e.g., if the directory does not exit on
+that node), then Open MPI will use the default directory determined by
+the starter.
+.PP
+All directory changing occurs before the user's program is invoked; it
+does not wait until \fIMPI_INIT\fP is called.  
+.
+.
+.
+.SS Standard I/O
+.
+Open MPI directs UNIX standard input to /dev/null on all processes
+except the MPI_COMM_WORLD rank 0 process. The MPI_COMM_WORLD rank 0 process
+inherits standard input from \fImpirun\fP.
+.B Note:
+The node that invoked \fImpirun\fP need not be the same as the node where the
+MPI_COMM_WORLD rank 0 process resides. Open MPI handles the redirection of
+\fImpirun\fP's standard input to the rank 0 process.
+.PP
+Open MPI directs UNIX standard output and error from remote nodes to the node
+that invoked \fImpirun\fP and prints it on the standard output/error of
+\fImpirun\fP.
+Local processes inherit the standard output/error of \fImpirun\fP and transfer
+to it directly.
+.PP
+Thus it is possible to redirect standard I/O for Open MPI applications by
+using the typical shell redirection procedure on \fImpirun\fP.
+
+      \fBshell$\fP mpirun -np 2 my_app < my_input > my_output
+
+Note that in this example \fIonly\fP the MPI_COMM_WORLD rank 0 process will
+receive the stream from \fImy_input\fP on stdin.  The stdin on all the other
+nodes will be tied to /dev/null.  However, the stdout from all nodes will
+be collected into the \fImy_output\fP file. 
+.
+.
+.
+.SS Signal Propagation
+.
+When orterun receives a SIGTERM and SIGINT, it will attempt to kill
+the entire job by sending all processes in the job a SIGTERM, waiting
+a small number of seconds, then sending all processes in the job a
+SIGKILL.
+.
+SIGUSR1 and SIGUSR2 signals received by orterun are propagated to
+all processes in the job.  Other signals are not currently propagated
+by orterun.
+.
+.
+.SS Process Termination / Signal Handling
+.
+During the run of an MPI application, if any rank dies abnormally
+(either exiting before invoking \fIMPI_FINALIZE\fP, or dying as the result of a
+signal), \fImpirun\fP will print out an error message and kill the rest of the
+MPI application.
+.PP
+User signal handlers should probably avoid trying to cleanup MPI state
+(Open MPI is, currently, neither thread-safe nor async-signal-safe).
+For example, if a segmentation fault occurs in \fIMPI_SEND\fP (perhaps because
+a bad buffer was passed in) and a user signal handler is invoked, if this user
+handler attempts to invoke \fIMPI_FINALIZE\fP, Bad Things could happen since
+Open MPI was already "in" MPI when the error occurred.  Since \fImpirun\fP
+will notice that the process died due to a signal, it is probably not
+necessary (and safest) for the user to only clean up non-MPI state.
+.
+.
+.
+.SS Process Environment
+.
+Processes in the MPI application inherit their environment from the
+Open RTE daemon upon the node on which they are running.  The
+environment is typically inherited from the user's shell.  On remote
+nodes, the exact environment is determined by the boot MCA module
+used.  The \fIrsh\fR launch module, for example, uses either
+\fIrsh\fR/\fIssh\fR to launch the Open RTE daemon on remote nodes, and
+typically executes one or more of the user's shell-setup files before
+launching the Open RTE daemon.  When running dynamically linked
+applications which require the \fILD_LIBRARY_PATH\fR environment
+variable to be set, care must be taken to ensure that it is correctly
+set when booting Open MPI.
+.PP
+See the "Remote Execution" section for more details.
+.
+.
+.SS Remote Execution
+.
+Open MPI requires that the \fIPATH\fR environment variable be set to
+find executables on remote nodes (this is typically only necessary in
+\fIrsh\fR- or \fIssh\fR-based environments -- batch/scheduled
+environments typically copy the current environment to the execution
+of remote jobs, so if the current environment has \fIPATH\fR and/or
+\fILD_LIBRARY_PATH\fR set properly, the remote nodes will also have it
+set properly).  If Open MPI was compiled with shared library support,
+it may also be necessary to have the \fILD_LIBRARY_PATH\fR environment
+variable set on remote nodes as well (especially to find the shared
+libraries required to run user MPI applications).
+.PP
+However, it is not always desirable or possible to edit shell
+startup files to set \fIPATH\fR and/or \fILD_LIBRARY_PATH\fR.  The
+\fI--prefix\fR option is provided for some simple configurations where
+this is not possible.
+.PP
+The \fI--prefix\fR option takes a single argument: the base directory
+on the remote node where Open MPI is installed.  Open MPI will use
+this directory to set the remote \fIPATH\fR and \fILD_LIBRARY_PATH\fR
+before executing any Open MPI or user applications.  This allows
+running Open MPI jobs without having pre-configued the \fIPATH\fR and
+\fILD_LIBRARY_PATH\fR on the remote nodes.
+.PP
+Open MPI adds the basename of the current
+node's "bindir" (the directory where Open MPI's executables are
+installed) to the prefix and uses that to set the \fIPATH\fR on the
+remote node.  Similarly, Open MPI adds the basename of the current
+node's "libdir" (the directory where Open MPI's libraries are
+installed) to the prefix and uses that to set the
+\fILD_LIBRARY_PATH\fR on the remote node.  For example:
+.TP 15
+Local bindir:
+/local/node/directory/bin
+.TP
+Local libdir:
+/local/node/directory/lib64
+.PP
+If the following command line is used:
+
+    \fBshell$\fP mpirun --prefix /remote/node/directory
+
+Open MPI will add "/remote/node/directory/bin" to the \fIPATH\fR
+and "/remote/node/directory/lib64" to the \fLD_LIBRARY_PATH\fR on the
+remote node before attempting to execute anything.
+.PP
+Note that \fI--prefix\fR can be set on a per-context basis, allowing
+for different values for different nodes.
+.PP
+The \fI--prefix\fR option is not sufficient if the installation paths
+on the remote node are different than the local node (e.g., if "/lib"
+is used on the local node, but "/lib64" is used on the remote node),
+or if the installation paths are something other than a subdirectory
+under a common prefix.  
+.PP
+Note that executing \fImpirun\fR via an absolute pathname is
+equivalent to specifying \fI--prefix\fR without the last subdirectory
+in the absolute pathname to \fImpirun\fR.  For example:
+
+    \fBshell$\fP /usr/local/bin/mpirun ...
+
+is equivalent to
+
+    \fBshell$\fP mpirun --prefix /usr/local
+.
+.
+.
+.SS Exported Environment Variables
+.
+All environment variables that are named in the form OMPI_* will automatically
+be exported to new processes on the local and remote nodes.
+The \fI\-x\fP option to \fImpirun\fP can be used to export specific environment
+variables to the new processes.  While the syntax of the \fI\-x\fP
+option allows the definition of new variables, note that the parser
+for this option is currently not very sophisticated - it does not even
+understand quoted values.  Users are advised to set variables in the
+environment and use \fI\-x\fP to export them; not to define them.
+.
+.
+.
+.SS MCA (Modular Component Architecture)
+.
+The \fI-mca\fP switch allows the passing of parameters to various MCA modules.
+.\" Open MPI's MCA modules are described in detail in ompimca(7).
+MCA modules have direct impact on MPI programs because they allow tunable
+parameters to be set at run time (such as which BTL communication device driver
+to use, what parameters to pass to that BTL, etc.).
+.PP
+The \fI-mca\fP switch takes two arguments: \fI<key>\fP and \fI<value>\fP.
+The \fI<key>\fP argument generally specifies which MCA module will receive the value.
+For example, the \fI<key>\fP "btl" is used to select which BTL to be used for
+transporting MPI messages.  The \fI<value>\fP argument is the value that is
+passed.
+For example: 
+.
+.TP 4
+mpirun -mca btl tcp,self -np 1 foo
+Tells Open MPI to use the "tcp" and "self" BTLs, and to run a single copy of
+"foo" an allocated node.
+.
+.TP
+mpirun -mca btl self -np 1 foo
+Tells Open MPI to use the "self" BTL, and to run a single copy of "foo" an
+allocated node.
+.\" And so on.  Open MPI's BTL MCA modules are described in ompimca_btl(7).
+.PP
+The \fI-mca\fP switch can be used multiple times to specify different
+\fI<key>\fP and/or \fI<value>\fP arguments.  If the same \fI<key>\fP is
+specified more than once, the \fI<value>\fPs are concatenated with a comma
+(",") separating them.
+.PP
+.B Note:
+The \fI-mca\fP switch is simply a shortcut for setting environment variables.
+The same effect may be accomplished by setting corresponding environment
+variables before running \fImpirun\fP.
+The form of the environment variables that Open MPI sets are:
+
+      OMPI_<key>=<value>
+.PP
+Note that the \fI-mca\fP switch overrides any previously set environment
+variables.  Also note that unknown \fI<key>\fP arguments are still set as
+environment variable -- they are not checked (by \fImpirun\fP) for correctness.
+Illegal or incorrect \fI<value>\fP arguments may or may not be reported -- it
+depends on the specific MCA module.
+.
+.\" **************************
+.\"    Examples Section
+.\" **************************
+.SH EXAMPLES
+Be sure to also see the examples in the "Location Nomenclature" section, above.
+.
+.TP 4
+mpirun -np 1 prog1
+Load and execute prog1 on one node.  Search the user's $PATH for the
+executable file on each node.
+.
+.
+.TP
+mpirun -np 8 --byslot prog1
+Run 8 copies of prog1 wherever Open MPI wants to run them.
+.
+.
+.TP
+mpirun -np 4 -mca btl ib,tcp,self prog1
+Run 4 copies of prog1 using the "ib", "tcp", and "self" BTL's for the transport
+of MPI messages.
+.
+.\" **************************
+.\"    Diagnostics Section
+.\" **************************
+.
+.\" .SH DIAGNOSTICS
+.\".TP 4
+.\"Error Msg:
+.\"Description
+.
+.\" **************************
+.\"    Return Value Section
+.\" **************************
+.
+.SH RETURN VALUE
+.
+\fImpirun\fP returns 0 if all ranks started by \fImpirun\fP exit after calling
+MPI_FINALIZE.  A non-zero value is returned if an internal error occurred in
+mpirun, or one or more ranks exited before calling MPI_FINALIZE.  If an
+internal error occurred in mpirun, the corresponding error code is returned.
+In the event that one or more ranks exit before calling MPI_FINALIZE, the
+return value of the rank of the process that \fImpirun\fP first notices died
+before calling MPI_FINALIZE will be returned.  Note that, in general, this will
+be the first rank that died but is not guaranteed to be so.
+.PP
+However, note that if the \fI-nw\fP switch is used, the return value from
+mpirun does not indicate the exit status of the ranks.
+.
+.\" **************************
+.\"    See Also Section
+.\" **************************
+.
+.\" .SH SEE ALSO
+.\" orted(1)

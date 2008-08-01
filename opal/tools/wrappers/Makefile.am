@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,14 +20,17 @@
 
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
-EXTRA_DIST = generic_wrapper.1
+real_man_pages = generic_wrapper.1 opal_wrapper.1
+EXTRA_DIST = $(real_man_pages) $(real_man_pages:1.=.1in)
+
+include $(top_srcdir)/Makefile.man-page-rules
 
 if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = opal_wrapper
 
-dist_man_MANS = opal_wrapper.1
+man_MANS = opal_wrapper.1
 
 dist_pkgdata_DATA = help-opal-wrapper.txt
 
@@ -37,7 +41,7 @@ nodist_pkgdata_DATA = \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
 
-dist_man_MANS += opalcc.1 opalc++.1
+man_MANS += opalcc.1 opalc++.1
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
@@ -56,12 +60,13 @@ opal_wrapper_SOURCES = opal_wrapper.c
 opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal.la
 
 maintainer-clean-local:
-	rm -f opalcc.1 opalc++.1
+	rm -f $(real_man_pages) opalcc.1 opalc++.1
 
 opalcc.1: generic_wrapper.1
 	rm -f opalcc.1
-	sed -e 's/@COMMAND@/opalcc/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
+	sed -e 's/#COMMAND#/opalcc/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
 
 opalc++.1: generic_wrapper.1
 	rm -f opalc++.1
-	sed -e 's/@COMMAND@/opalc++/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1
+	sed -e 's/#COMMAND#/opalc++/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1
+

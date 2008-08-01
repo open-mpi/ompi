@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -38,13 +39,18 @@ AM_CPPFLAGS = \
             -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\"" \
             -DOMPI_F90_BUILD_SIZE="\"@OMPI_F90_BUILD_SIZE@\""
 
+include $(top_srcdir)/Makefile.man-page-rules
+
+man_pages = ompi_info.1
+EXTRA_DIST = $(man_pages) $(man_pages:.1=.1in)
+
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = ompi_info
 
 dist_pkgdata_DATA = help-ompi_info.txt
 
-dist_man_MANS = ompi_info.1
+man_MANS = $(man_pages)
 
 endif
 
@@ -59,3 +65,6 @@ ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
+
+maintainer-clean-local:
+	rm -f $(man_pages)

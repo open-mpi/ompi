@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,12 +27,17 @@
 
 CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
+include $(top_srcdir)/Makefile.man-page-rules
+
+man_pages = orterun.1
+EXTRA_DIST = $(man_pages) $(man_pages:.1=.1in)
+
 if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orterun
 
-dist_man_MANS = orterun.1
+dist_man_MANS = $(man_pages)
 
 dist_pkgdata_DATA = help-orterun.txt
 
@@ -47,3 +53,6 @@ orterun_SOURCES = \
 orterun_LDADD = $(top_builddir)/orte/libopen-rte.la
 
 endif # !ORTE_DISABLE_FULL_SUPPORT
+
+maintainer-clean-local:
+	rm -f $(man_pages)

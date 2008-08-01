@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,9 +18,12 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.man-page-rules
+
 # Bug in AM 1.10.1: need to list man pages because dist_man_MANS is
 # not picked up inside of an AM_CONDITIONAL
-EXTRA_DIST = orte-restart.1
+man_pages = orte-restart.1 ompi-restart.1
+EXTRA_DIST = $(man_pages) orte-restart.1in
 
 if !ORTE_DISABLE_FULL_SUPPORT
 if WANT_FT
@@ -27,7 +31,7 @@ if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-restart
 
-dist_man_MANS = orte-restart.1 ompi-restart.1
+man_MANS = $(man_pages)
 
 dist_pkgdata_DATA = help-orte-restart.txt
 
@@ -42,11 +46,11 @@ endif # OMPI_INSTALL_BINARIES
 orte_restart_SOURCES = orte-restart.c
 orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la
 
+endif # WANT_FT
+endif # ORTE_DISABLE_FULL_SUPPORT
+
 ompi-restart.1: $(top_srcdir)/orte/tools/orte-restart/orte-restart.1
 	cp -f $(top_srcdir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
 
-distclean-local:
-	rm -f ompi-restart.1
-
-endif # WANT_FT
-endif # ORTE_DISABLE_FULL_SUPPORT
+maintainer-clean-local:
+	rm -f $(man_pages)

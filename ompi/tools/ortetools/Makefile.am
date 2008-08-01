@@ -17,14 +17,13 @@
 # $HEADER$
 #
 
+man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1
+EXTRA_DIST = $(man_pages)
+
 if OMPI_INSTALL_BINARIES
 if !ORTE_DISABLE_FULL_SUPPORT
 
-dist_man_MANS =\
-        mpirun.1 \
-        mpiexec.1 \
-        ompi-ps.1 \
-        ompi-clean.1
+man_MANS = $(man_pages)
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
@@ -41,17 +40,26 @@ uninstall-local:
 endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
+$(top_srcdir)/orte/tools/orterun/orterun.1:
+	(cd $(top_srcdir)/orte/tools/orterun ; make orterun.1)
+
 mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1
 	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpirun.1
 
 mpiexec.1: $(top_srcdir)/orte/tools/orterun/orterun.1
 	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpiexec.1
 
+$(top_srcdir)/orte/tools/orte-ps/orte-ps.1:
+	(cd $(top_srcdir)/orte/tools/orte-ps ; make orte-ps.1)
+
 ompi-ps.1: $(top_srcdir)/orte/tools/orte-ps/orte-ps.1
 	cp -f $(top_srcdir)/orte/tools/orte-ps/orte-ps.1 ompi-ps.1
+
+$(top_srcdir)/orte/tools/orte-clean/orte-clean.1:
+	(cd $(top_srcdir)/orte/tools/orte-clean ; make orte-clean.1)
 
 ompi-clean.1: $(top_srcdir)/orte/tools/orte-clean/orte-clean.1
 	cp -f $(top_srcdir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
 
-distclean-local:
-	rm -f mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1
+maintainer-clean-local:
+	rm -f $(man_pages)
