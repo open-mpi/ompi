@@ -531,7 +531,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
          * with the prefix directory
          */
         char *opal_prefix = getenv("OPAL_PREFIX");
-        if (remote_sh) {
+        if (*remote_sh) {
             /* if there is nothing preceding orted, then we can just
              * assemble the cmd with the orted_cmd at the end. Otherwise,
              * we have to insert the orted_prefix in the right place
