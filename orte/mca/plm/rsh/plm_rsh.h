@@ -73,7 +73,6 @@ struct orte_plm_rsh_component_t {
     char** agent_argv;
     int agent_argc;
     char* agent_path;
-    char* orted;
     bool tree_spawn;
     opal_list_t children;
     orte_std_cntr_t num_children;
