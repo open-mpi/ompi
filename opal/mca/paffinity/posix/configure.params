@@ -20,3 +20,9 @@
 #
 
 PARAM_CONFIG_FILES="Makefile"
+
+#
+# Set the config priority so that we only build
+# if nobody else can
+
+PARAM_CONFIG_PRIORITY=10

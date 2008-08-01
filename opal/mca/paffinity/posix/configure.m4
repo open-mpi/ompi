@@ -22,18 +22,18 @@
 # MCA_paffinity_posix_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_paffinity_posix_CONFIG],[
-    OMPI_VAR_SCOPE_PUSH([happy])
+    OMPI_VAR_SCOPE_PUSH([paff_posix_happy])
     # Check to see if we have <unistd.h>
-    AC_CHECK_HEADER([unistd.h], [happy=yes], [happy=no])
+    AC_CHECK_HEADER([unistd.h], [paff_posix_happy=yes], [paff_posix_happy=no])
 
     # Check to see if we have _SC_NPROCESSORS_ONLN
-    AS_IF([test "$happy" = "yes"],
+    AS_IF([test "$paff_posix_happy" = "yes"],
           [AC_MSG_CHECKING([for _SC_NPROCESSORS_ONLN])
            AS_IF([test "$OMPI_HAVE__SC_NPROCESSORS_ONLN" = "1"],
-                 [happy=yes], [happy=no])
-           AC_MSG_RESULT([(cached) $happy])])
+                 [paff_posix_happy=yes], [paff_posix_happy=no])
+           AC_MSG_RESULT([(cached) $paff_posix_happy])])
 
-    AS_IF([test "$happy" = "yes"], [$1], [$2])
+    AS_IF([test "$paff_posix_happy" = "yes"], [$1], [$2])
     OMPI_VAR_SCOPE_POP
 ])dnl
 
