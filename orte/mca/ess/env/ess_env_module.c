@@ -395,8 +395,6 @@ static int env_set_name(void)
 static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    char * procid_str = NULL;
-    char * jobid_str  = NULL;
     orte_nid_t **nids = NULL;
     orte_jmap_t *jmap = NULL;
     orte_jmap_t **jmaps = NULL;
@@ -566,20 +564,11 @@ static int rte_ft_event(int state)
         /*
          * Session directory re-init
          */
-        if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobid_str, ORTE_PROC_MY_NAME->jobid))) {
-            exit_status = ret;
-        }
-
-        if (ORTE_SUCCESS != (ret = orte_util_convert_vpid_to_string(&procid_str, ORTE_PROC_MY_NAME->vpid))) {
-            exit_status = ret;
-        }
-
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                                     orte_process_info.tmpdir_base,
                                                     orte_process_info.nodename,
                                                     NULL, /* Batch ID -- Not used */
-                                                    jobid_str,
-                                                    procid_str))) {
+                                                    ORTE_PROC_MY_NAME))) {
             exit_status = ret;
         }
 
@@ -651,10 +640,6 @@ static int rte_ft_event(int state)
     }
 
  cleanup:
-    if (NULL != jobid_str) {
-        free(jobid_str);
-        jobid_str = NULL;
-    }
 
     return exit_status;
 }
