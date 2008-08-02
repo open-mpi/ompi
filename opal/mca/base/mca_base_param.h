@@ -118,7 +118,7 @@ struct mca_base_param_info_t {
     /** Full, assembled parameter name */
     char *mbpp_full_name;
 
-    /** Is this value deprecated? */
+    /** Is this parameter deprecated? */
     bool mbpp_deprecated;
 
     /** Array of pointers of synonyms of this parameter */
@@ -129,7 +129,9 @@ struct mca_base_param_info_t {
         param is a synonym of (or NULL) */
     struct mca_base_param_info_t *mbpp_synonym_parent;
 
-    /** Is this value changable? */
+    /** Is this parameter internal? */
+    bool mbpp_internal;
+    /** Is this parameter changable? */
     bool mbpp_read_only;
     /** Help message associated with this parameter */
     char *mbpp_help_msg;

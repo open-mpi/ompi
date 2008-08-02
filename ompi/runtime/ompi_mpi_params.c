@@ -31,6 +31,7 @@
 #include "ompi/datatype/datatype.h"
 #include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/argv.h"
 
 /*
  * Global variables
@@ -140,23 +141,40 @@ int ompi_mpi_register_params(void)
     /* Whether or not to print all MCA parameters in MPI_INIT */
     mca_base_param_reg_string_name("mpi", "show_mca_params",
                                    "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
-                                   "for debug purposes). Accepted values are all, default, file, api, and enviro",
+                                   "for debug purposes). Accepted values are all, default, file, api, and enviro - or a comma "
+                                   "delimited combination of them",
                                    false, false, NULL,  &param);
     if (NULL != param) {
+        char **args;
+        int i;
+        
         ompi_mpi_show_mca_params = true;
-        if (0 == strcmp(param, "all")) {
+        args = opal_argv_split(param, ',');
+        if (NULL == args) {
+            opal_output(0, "WARNING: could not parse mpi_show_mca_params request - defaulting to show \"all\"");
             show_default_mca_params = true;
             show_file_mca_params = true;
             show_enviro_mca_params = true;
             show_override_mca_params = true;
-        } else if (0 == strcmp(param, "default")) {
-            show_default_mca_params = true;
-        } else if (0 == strcmp(param, "file")) {
-            show_file_mca_params = true;
-        } else if (0 == strcmp(param, "enviro")) {
-            show_enviro_mca_params = true;
-        } else if (0 == strcmp(param, "api")) {
-            show_override_mca_params = true;
+        } else {
+            for (i=0; NULL != args[i]; i++) {
+                if (0 == strcasecmp(args[i], "all")  || 0 == strcmp(args[i], "1")) {
+                    show_default_mca_params = true;
+                    show_file_mca_params = true;
+                    show_enviro_mca_params = true;
+                    show_override_mca_params = true;
+                } else if (0 == strcasecmp(args[i], "default")) {
+                    show_default_mca_params = true;
+                } else if (0 == strcasecmp(args[i], "file")) {
+                    show_file_mca_params = true;
+                } else if (0 == strcasecmp(args[i], "enviro") || 
+                           0 == strcasecmp(args[i], "env")) {
+                    show_enviro_mca_params = true;
+                } else if (0 == strcasecmp(args[i], "api")) {
+                    show_override_mca_params = true;
+                }
+            }
+            opal_argv_free(args);
         }
     }
 
@@ -318,6 +336,11 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
          i != opal_list_get_last(info);
          i =  opal_list_get_next(i)) {
         item = (mca_base_param_info_t*) i;
+
+        /* If this is an internal param, don't print it */
+        if (item->mbpp_internal) {
+            continue;
+        }
         
         /* get the source - where the param was last set */
         if (OPAL_SUCCESS != 
