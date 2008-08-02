@@ -61,6 +61,12 @@ ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
     (((n) >> 16) & 0x0000ffff)
 
 
+/* a macro for extracting the local jobid from the jobid - i.e.,
+ * the non-mpirun-specific id field of the jobid
+ */
+#define ORTE_LOCAL_JOBID(n) \
+    ( (n) & 0x0000ffff)
+
 /* a macro for identifying that a proc is a daemon */
 #define ORTE_PROC_IS_DAEMON(n)  \
     !((n) & 0x0000ffff)

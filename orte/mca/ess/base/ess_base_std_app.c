@@ -59,7 +59,6 @@ int orte_ess_base_app_setup(void)
 {
     int ret;
     char *error = NULL;
-    char *jobid_str, *procid_str;
 
     /* Setup the communication infrastructure */
     
@@ -120,38 +119,19 @@ int orte_ess_base_app_setup(void)
     }
     
     /* setup my session directory */
-    if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobid_str, ORTE_PROC_MY_NAME->jobid))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_convert_jobid_to_string";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_util_convert_vpid_to_string(&procid_str, ORTE_PROC_MY_NAME->vpid))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_convert_vpid_to_string";
-        goto error;
-    }
-    
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                         "%s setting up session dir with\n\ttmpdir: %s\n\thost %s\n\tjobid %s\n\tprocid %s",
+                         "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_process_info.nodename, jobid_str, procid_str));
+                         orte_process_info.nodename));
     
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                                 orte_process_info.tmpdir_base,
                                                 orte_process_info.nodename, NULL,
-                                                jobid_str, procid_str))) {
-        if (jobid_str != NULL) free(jobid_str);
-        if (procid_str != NULL) free(procid_str);
+                                                ORTE_PROC_MY_NAME))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_session_dir";
         goto error;
-    }
-    if (NULL != jobid_str) {
-        free(jobid_str);
-    }
-    if (NULL != procid_str) {
-        free(procid_str);
     }
     
     /* Once the session directory location has been established, set

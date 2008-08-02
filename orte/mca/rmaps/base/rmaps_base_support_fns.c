@@ -144,7 +144,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
          * the head node - if it is on the list at all - will
          * always be in the first position
          */
-        node = (orte_node_t*)opal_list_get_first(allocated_nodes);
+        item = opal_list_get_first(allocated_nodes);
+        node = (orte_node_t*)item;
         /* need to check ifislocal because the name in the
          * hostfile may not have been FQDN, while name returned
          * by gethostname may have been (or vice versa)
