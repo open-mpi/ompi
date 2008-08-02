@@ -118,8 +118,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                  * hostfile may not have been FQDN, while name returned
                  * by gethostname may have been (or vice versa)
                  */
-                if (0 == strcmp(node->name, orte_process_info.nodename) ||
-                    opal_ifislocal(node->name)) {
+                if (opal_ifislocal(node->name)) {
                     opal_list_remove_item(node_list, item);
                     OBJ_RELEASE(item);  /* "un-retain" it */
                     break;

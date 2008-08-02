@@ -494,13 +494,20 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
             node_from_file = (orte_node_t*)item1;
             /* since the name in the hostfile might not match
              * our local name, and yet still be intended to match,
-             * we have to check for localhost and local interfaces
+             * we have to check for local interfaces
              */
             if (0 == strcmp(node_from_file->name, node_from_list->name) ||
-                (0 == strcmp(node_from_list->name, orte_process_info.nodename) &&
-                 (0 == strcmp(node_from_file->name, "localhost") || 
-                  opal_ifislocal(node_from_file->name)))) {
+                (opal_ifislocal(node_from_list->name) &&
+                 opal_ifislocal(node_from_file->name))) {
                 node_found = true;
+                /* if the slot count here is less than the
+                 * total slots avail on this node, set it
+                 * to the specified count - this allows people
+                 * to subdivide an allocation
+                 */
+                if (node_from_file->slots < node_from_list->slots) {
+                    node_from_list->slots_alloc = node_from_file->slots;
+                }
                 opal_list_remove_item(&newnodes, item1);
                 OBJ_RELEASE( item1 );
                 break;

@@ -149,8 +149,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
          * hostfile may not have been FQDN, while name returned
          * by gethostname may have been (or vice versa)
          */
-        if (0 == strcmp(node->name, orte_process_info.nodename) ||
-            opal_ifislocal(node->name)) {
+        if (opal_ifislocal(node->name)) {
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         }
@@ -163,7 +162,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
 
     /* remove all nodes that are already at max usage, and
-     * compute the total number of available slots while
+     * compute the total number of allocated slots while
      * we do so
      */
     num_slots = 0;
@@ -179,7 +178,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else { /** otherwise, add the slots for our job to the total */
-            num_slots += node->slots;
+            num_slots += node->slots_alloc;
         }
 
         /** go on to next item */
