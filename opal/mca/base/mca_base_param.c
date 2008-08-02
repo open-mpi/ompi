@@ -750,6 +750,7 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
             p->mbpp_param_name = array[i].mbp_param_name;
             p->mbpp_full_name = array[i].mbp_full_name;
             p->mbpp_deprecated = array[i].mbp_deprecated;
+            p->mbpp_internal = array[i].mbp_internal;
             p->mbpp_read_only = array[i].mbp_read_only;
             p->mbpp_type = array[i].mbp_type;
             p->mbpp_help_msg = array[i].mbp_help_msg;
@@ -784,6 +785,7 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
                     q->mbpp_full_name = si->si_full_name;
                     q->mbpp_deprecated = si->si_deprecated ||
                         array[i].mbp_deprecated;
+                    q->mbpp_internal = array[i].mbp_internal;
                     q->mbpp_read_only = array[i].mbp_read_only;
                     q->mbpp_type = array[i].mbp_type;
                     q->mbpp_help_msg = array[i].mbp_help_msg;
