@@ -31,7 +31,7 @@ AC_DEFUN([OMPI_CHECK_XGRID],[
 
   AS_IF([test "$with_xgrid" != "no"],
     [OMPI_LANG_LINK_WITH_C([Objective C],
-       [AC_CACHE_CHECK([for XGridFoundation Framework],
+       [AC_CACHE_CHECK([for XgridFoundation Framework],
           [ompi_cv_check_xgrid_foundation],
           [_OMPI_CHECK_XGRID([ompi_cv_check_xgrid_foundation="yes"],
              [ompi_cv_check_xgrid_foundation="no"])])
@@ -42,7 +42,7 @@ AC_DEFUN([OMPI_CHECK_XGRID],[
     [ompi_check_xgrid_happy="no"])
 
     AS_IF([test "$ompi_check_xgrid_happy" = "yes"], 
-          [$1_LDFLAGS="$$1_LDFLAGS -framework XGridFoundation -framework Foundation"
+          [$1_LDFLAGS="$$1_LDFLAGS -framework XgridFoundation -framework Foundation"
            $2], [$3])
 ])
 
@@ -52,7 +52,7 @@ AC_DEFUN([OMPI_CHECK_XGRID],[
 AC_DEFUN([_OMPI_CHECK_XGRID],[
   AC_LANG_PUSH(Objective C)
   ompi_check_xgrid_save_LDFLAGS="$LDFLAGS"
-  LDFLAGS="$LDFLAGS -framework XGridFoundation -framework Foundation"
+  LDFLAGS="$LDFLAGS -framework XgridFoundation -framework Foundation"
   AC_TRY_LINK([#import <Foundation/Foundation.h>
 #import <XgridFoundation/XgridFoundation.h>
 #import <Foundation/NSString.h>
