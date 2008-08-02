@@ -114,6 +114,8 @@ struct mca_base_param_t {
     bool mbp_file_value_set;
     /** Value of the parameter found in a file */
     mca_base_param_storage_t mbp_file_value;
+    /** File the value came from */
+    char *mbp_source_file;
 
     /** Whether or not we have an override value */
     bool mbp_override_value_set;
@@ -148,6 +150,8 @@ struct mca_base_param_file_value_t {
     char *mbpfv_param;
     /** Parameter value */
     char *mbpfv_value;
+    /** File it came from */
+    char *mbpfv_file;
 };
 /**
  * \internal
