@@ -31,7 +31,6 @@ struct orte_plm_alps_component_t {
     int priority;
     int debug;
     bool timing;
-    char *orted;
     char *custom_args;
 };
 typedef struct orte_plm_alps_component_t orte_plm_alps_component_t;

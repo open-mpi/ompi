@@ -151,6 +151,11 @@ int orte_register_params(void)
                                 false, false, (int) false, &value);
     orte_hetero_apps = OPAL_INT_TO_BOOL(value);
     
+    /* allow specification of the launch agent */
+    mca_base_param_reg_string_name("orte", "launch_agent",
+                                   "Command used to start processes on remote nodes (default: orted)",
+                                   false, false, "orted", &orte_launch_agent);
+    
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;

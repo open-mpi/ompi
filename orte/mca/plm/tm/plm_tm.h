@@ -30,7 +30,6 @@ BEGIN_C_DECLS
 struct orte_plm_tm_component_t {
     orte_plm_base_component_t super;
     bool want_path_check;
-    char *orted;
     char **checked_paths;
 };
 typedef struct orte_plm_tm_component_t orte_plm_tm_component_t;

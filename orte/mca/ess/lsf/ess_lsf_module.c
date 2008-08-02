@@ -35,6 +35,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/class/opal_pointer_array.h"
 
+#include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -309,55 +310,38 @@ static int lsf_set_name(void)
 {
     int rc;
     int id;
-    char* name_string = NULL;
     int lsf_nodeid;
-
-    /* start by getting our jobid, and vpid (which is the
-       starting vpid for the list of daemons) */
-    id = mca_base_param_register_string("orte", "ess", "name", NULL, NULL);
-    mca_base_param_lookup_string(id, &name_string);
-
-    if (name_string != NULL) {
-        if (ORTE_SUCCESS != 
-            (rc = orte_util_convert_string_to_process_name(&ORTE_PROC_MY_NAME, name_string))) {
-            ORTE_ERROR_LOG(rc);
-            free(name_string);
-            return rc;
-        }
-        free(name_string);
-    } else {
-        orte_jobid_t jobid;
-        orte_vpid_t vpid;
-        char* jobid_string;
-        char* vpid_string;
+    orte_jobid_t jobid;
+    orte_vpid_t vpid;
+    char* jobid_string;
+    char* vpid_string;
       
-        id = mca_base_param_register_string("orte", "ess", "jobid", NULL, NULL);
-        mca_base_param_lookup_string(id, &jobid_string);
-        if (NULL == jobid_string) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (ORTE_SUCCESS != 
-            (rc = orte_util_convert_string_to_jobid(&jobid, jobid_string))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
-        
-        id = mca_base_param_register_string("orte", "ess", "vpid", NULL, NULL);
-        mca_base_param_lookup_string(id, &vpid_string);
-        if (NULL == vpid_string) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        if (ORTE_SUCCESS !=
-            (rc = orte_util_convert_string_to_vpid(&vpid, vpid_string))) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
-        }
-
-        ORTE_PROC_MY_NAME->jobid;
-        ORTE_PROC_MY_NAME->vpid = vpid;
+    id = mca_base_param_register_string("orte", "ess", "jobid", NULL, NULL);
+    mca_base_param_lookup_string(id, &jobid_string);
+    if (NULL == jobid_string) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
     }
+    if (ORTE_SUCCESS != 
+        (rc = orte_util_convert_string_to_jobid(&jobid, jobid_string))) {
+        ORTE_ERROR_LOG(rc);
+        return(rc);
+    }
+    
+    id = mca_base_param_register_string("orte", "ess", "vpid", NULL, NULL);
+    mca_base_param_lookup_string(id, &vpid_string);
+    if (NULL == vpid_string) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    if (ORTE_SUCCESS !=
+        (rc = orte_util_convert_string_to_vpid(&vpid, vpid_string))) {
+        ORTE_ERROR_LOG(rc);
+        return(rc);
+    }
+    
+    ORTE_PROC_MY_NAME->jobid = jobid;
+    ORTE_PROC_MY_NAME->vpid = vpid;
     
     /* fix up the base name and make it the "real" name */
     lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
