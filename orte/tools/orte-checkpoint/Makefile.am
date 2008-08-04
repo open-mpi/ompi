@@ -49,8 +49,8 @@ orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la
 endif # WANT_FT
 endif # !ORTE_DISABLE_FULL_SUPPORT
 
-ompi-checkpoint.1: $(top_srcdir)/orte/tools/orte-checkpoint/orte-checkpoint.1
-	cp -f $(top_srcdir)/orte/tools/orte-checkpoint/orte-checkpoint.1 ompi-checkpoint.1
+ompi-checkpoint.1: $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1
+	cp -f $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1 ompi-checkpoint.1
 
 maintainer-clean-local:
 	rm -f $(man_pages)

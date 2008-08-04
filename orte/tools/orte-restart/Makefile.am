@@ -49,8 +49,8 @@ orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la
 endif # WANT_FT
 endif # ORTE_DISABLE_FULL_SUPPORT
 
-ompi-restart.1: $(top_srcdir)/orte/tools/orte-restart/orte-restart.1
-	cp -f $(top_srcdir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
+ompi-restart.1: $(top_builddir)/orte/tools/orte-restart/orte-restart.1
+	cp -f $(top_builddir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
 
 maintainer-clean-local:
 	rm -f $(man_pages)
