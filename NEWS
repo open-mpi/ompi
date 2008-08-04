@@ -35,7 +35,7 @@ Trunk (not on release branches yet)
   details.
   --> Expected: ???
 
-1.3
+1.3 (not released yet)
 ---
 
 - Various enhancements to the openib BTL:
@@ -99,6 +99,9 @@ Trunk (not on release branches yet)
 1.2.7 (not released yet)
 -----
 
+- Fix F90 binding for MPI_CART_GET.  Thanks to Scott Beardsley for
+  bringing it to our attention. See ticket #1429.
+- Remove a spurious warning message generated in/by ROMIO. See ticket #1421.
 - Fix a bug where command-line MCA parameters were not overriding
   MCA parameters set from environment variables.  See ticket #1380.
 - Fix a bug in the AMD64 atomics assembly.  Thanks to Gabriele Fatigati
