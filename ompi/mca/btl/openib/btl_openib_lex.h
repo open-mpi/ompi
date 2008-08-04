@@ -35,6 +35,10 @@
 
 #include <stdio.h>
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 int btl_openib_ini_yylex(void);
 int btl_openib_ini_init_buffer(FILE *file);
 
@@ -65,5 +69,9 @@ enum {
 
     BTL_OPENIB_INI_PARSE_MAX
 };
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

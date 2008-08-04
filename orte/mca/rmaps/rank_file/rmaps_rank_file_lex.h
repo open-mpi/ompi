@@ -35,6 +35,10 @@
 
 #include <stdio.h>
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 typedef union {
     int ival;
     char* sval;
@@ -71,5 +75,10 @@ int orte_rmaps_rank_file_wrap(void);
 #define ORTE_RANKFILE_NEWLINE        13
 #define ORTE_RANKFILE_IPV6           14
 #define ORTE_RANKFILE_SLOT           15
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif
 
