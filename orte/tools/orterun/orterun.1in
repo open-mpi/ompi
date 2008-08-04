@@ -219,12 +219,6 @@ error (without beginning execution of the application) otherwise.
 .
 .
 .TP
-.B -nw\fR,\fP --nw
-Launch the processes and do not wait for their completion. mpirun will
-complete as soon as successful launch occurs.
-.
-.
-.TP
 .B -path\fR,\fP --path \fR<path>\fP
 <path> that will be used when attempting to locate the requested
 executables.  This is used prior to using the local PATH setting.
@@ -948,9 +942,6 @@ In the event that one or more ranks exit before calling MPI_FINALIZE, the
 return value of the rank of the process that \fImpirun\fP first notices died
 before calling MPI_FINALIZE will be returned.  Note that, in general, this will
 be the first rank that died but is not guaranteed to be so.
-.PP
-However, note that if the \fI-nw\fP switch is used, the return value from
-mpirun does not indicate the exit status of the ranks.
 .
 .\" **************************
 .\"    See Also Section
