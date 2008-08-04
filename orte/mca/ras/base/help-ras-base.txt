@@ -1,3 +1,4 @@
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -15,24 +16,20 @@
 # 
 # $HEADER$
 #
+# This is the US/English general help file for the RAS base.
+#
+[ras-base:no-allocation]
+We were unable to find an allocation for this job as required by
+setting the "allocation required" flag. Please ensure you have
+the necessary allocation before executing again.
 
-dist_pkgdata_DATA += base/help-ras-base.txt
+If you wish to execute without a provided allocation (e.g., by
+providing a user-specified hostfile), please ensure that the "allocation
+required" flag is not set. This flag can be set in several forms, so
+please check that none of the following exist:
 
-headers += \
-        base/base.h
+MCA param file: orte_allocation_required = 1
+Environment: OMPI_MCA_orte_allocation_required=1
+Cmd line: -mca orte_allocation_required 1
 
-libmca_ras_la_SOURCES += \
-        base/ras_base_open.c
 
-if !ORTE_DISABLE_FULL_SUPPORT
-
-headers += \
-        base/ras_private.h
-
-libmca_ras_la_SOURCES += \
-        base/ras_base_close.c \
-        base/ras_base_select.c \
-        base/ras_base_allocate.c \
-        base/ras_base_node.c
- 
-endif
