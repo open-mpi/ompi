@@ -113,7 +113,7 @@ maintainer-clean-local:
 	rm -f $(man_pages)
 
 $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1:
-	(cd $(top_srcdir)/opal/tools/wrappers ; make generic_wrapper.1)
+	(cd $(top_srcdir)/opal/tools/wrappers && $(MAKE) $(AM_MAKEFLAGS) generic_wrapper.1)
 
 mpicc.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicc.1
