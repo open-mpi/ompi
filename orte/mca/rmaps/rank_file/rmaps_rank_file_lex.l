@@ -26,16 +26,22 @@
 #endif
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * local functions
  */
-
 int orte_rmaps_rank_file_wrap(void)
 {
     orte_rmaps_rank_file_done = true;
     return 1;
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * global variables
