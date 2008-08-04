@@ -76,6 +76,11 @@ and non-zero values are true).  If the string value is
 (case-insensitive) "yes" or "true", the boolean is true.  If the
 string value is (case-insensitive) "no" or "false", the boolean is
 false.  All other string values are unrecognized, and therefore false.
+.PP
+If no info key is provided, the function will first check to see if a
+global server has been specified and is available. If so, then the
+publish function will default to global scope first, followed by local. Otherwise,
+the data will default to publish with local scope.
 
 .SH NAME SCOPE
 Open MPI supports two name scopes: \fIglobal\fP and \fIlocal\fP. Local scope will

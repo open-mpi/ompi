@@ -80,6 +80,11 @@ specified.
 .TP 4
 \fIglobal,local\fP: Search the global scope for name resolution.  If
 not found, try searching the local scope for name resolution.
+.PP
+If no info key is provided, the search will first check to see if a
+global server has been specified and is available. If so, then the
+search will default to global scope first, followed by local. Otherwise,
+the search will default to local.
 
 .SH NAME SCOPE
 Open MPI supports two name scopes: \fIglobal\fP and \fIlocal\fP. Local scope
