@@ -380,4 +380,14 @@ to identify which value was intended. If this was done in error, please
 re-issue the command with only one value. You may wish to review the
 output from ompi_info for guidance on accepted values for this param.
 
+[orterun:server-not-found]
+%s was instructed to wait for the requested ompi-server, but was unable to
+establish contact with the server during the specified wait time:
 
+Server uri:  %s
+Timeout time: %ld
+
+Error received: %s
+
+Please check to ensure that the requested server matches the actual server
+information, and that the server is in operation.

@@ -199,6 +199,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "ompi-server", "ompi-server", 1,
       &orterun_globals.ompi_server, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info" },
+    { NULL, NULL, NULL, '\0', "wait-for-server", "wait-for-server", 0,
+      &orterun_globals.wait_for_server, OPAL_CMD_LINE_TYPE_BOOL,
+      "If ompi-server is not already running, wait until it is detected (default: false)" },
+    { NULL, NULL, NULL, '\0', "server-wait-time", "server-wait-time", 1,
+      &orterun_globals.server_wait_timeout, OPAL_CMD_LINE_TYPE_INT,
+      "Time in seconds to wait for ompi-server (default: 10 sec)" },
     
     { "carto", "file", "path", '\0', "cf", "cartofile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -419,6 +425,27 @@ int orterun(int argc, char *argv[])
         return rc;
     }    
     
+    /** setup callbacks for abort signals - from this point
+     * forward, we need to abort in a manner that allows us
+     * to cleanup
+     */
+    opal_signal_set(&term_handler, SIGTERM,
+                    abort_signal_callback, &term_handler);
+    opal_signal_add(&term_handler, NULL);
+    opal_signal_set(&int_handler, SIGINT,
+                    abort_signal_callback, &int_handler);
+    opal_signal_add(&int_handler, NULL);
+    
+#ifndef __WINDOWS__
+    /** setup callbacks for signals we should foward */
+    opal_signal_set(&sigusr1_handler, SIGUSR1,
+                    signal_forward_callback, &sigusr1_handler);
+    opal_signal_add(&sigusr1_handler, NULL);
+    opal_signal_set(&sigusr2_handler, SIGUSR2,
+                    signal_forward_callback, &sigusr2_handler);
+    opal_signal_add(&sigusr2_handler, NULL);
+#endif  /* __WINDOWS__ */
+    
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
     
@@ -528,25 +555,29 @@ int orterun(int argc, char *argv[])
         opal_dss.pack(&buf, &ompi_server, 1, OPAL_STRING);
         orte_rml_base_update_contact_info(&buf);
         OBJ_DESTRUCT(&buf);        
+        /* check if we are to wait for the server to start - resolves
+         * a race condition that can occur when the server is run
+         * as a background job - e.g., in scripts
+         */
+        if (orterun_globals.wait_for_server) {
+            /* ping the server */
+            struct timeval timeout;
+            timeout.tv_sec = orterun_globals.server_wait_timeout;
+            timeout.tv_usec = 0;
+            if (ORTE_SUCCESS != (rc = orte_rml.ping(ompi_server, &timeout))) {
+                /* try it one more time */
+                if (ORTE_SUCCESS != (rc = orte_rml.ping(ompi_server, &timeout))) {
+                    /* okay give up */
+                    orte_show_help("help-orterun.txt", "orterun:server-not-found", true,
+                                   orterun_basename, ompi_server,
+                                   (long)orterun_globals.server_wait_timeout,
+                                   ORTE_ERROR_NAME(rc));
+                    orte_exit_status = ORTE_ERROR_DEFAULT_EXIT_CODE;
+                    goto DONE;
+                }
+            }
+        }
     }
-    
-    /** setup callbacks for abort signals */
-    opal_signal_set(&term_handler, SIGTERM,
-                    abort_signal_callback, &term_handler);
-    opal_signal_add(&term_handler, NULL);
-    opal_signal_set(&int_handler, SIGINT,
-                    abort_signal_callback, &int_handler);
-    opal_signal_add(&int_handler, NULL);
-
-#ifndef __WINDOWS__
-    /** setup callbacks for signals we should foward */
-    opal_signal_set(&sigusr1_handler, SIGUSR1,
-                    signal_forward_callback, &sigusr1_handler);
-    opal_signal_add(&sigusr1_handler, NULL);
-    opal_signal_set(&sigusr2_handler, SIGUSR2,
-                    signal_forward_callback, &sigusr2_handler);
-    opal_signal_add(&sigusr2_handler, NULL);
-#endif  /* __WINDOWS__ */
     
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
@@ -1062,6 +1093,8 @@ static int init_globals(void)
         orterun_globals.wdir =        NULL;
         orterun_globals.path =        NULL;
         orterun_globals.ompi_server = NULL;
+        orterun_globals.wait_for_server = false;
+        orterun_globals.server_wait_timeout = 10;
     }
 
     /* Reset the other fields every time */
