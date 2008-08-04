@@ -64,9 +64,9 @@ maintainer-clean-local:
 
 opalcc.1: generic_wrapper.1
 	rm -f opalcc.1
-	sed -e 's/#COMMAND#/opalcc/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
+	sed -e 's/#COMMAND#/opalcc/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
 
 opalc++.1: generic_wrapper.1
 	rm -f opalc++.1
-	sed -e 's/#COMMAND#/opalc++/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1
+	sed -e 's/#COMMAND#/opalc++/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1
 

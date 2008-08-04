@@ -40,26 +40,26 @@ uninstall-local:
 endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
-$(top_srcdir)/orte/tools/orterun/orterun.1:
-	(cd $(top_srcdir)/orte/tools/orterun && $(MAKE) $(AM_MAKEFLAGS) orterun.1)
+$(top_builddir)/orte/tools/orterun/orterun.1:
+	(cd $(top_builddir)/orte/tools/orterun && $(MAKE) $(AM_MAKEFLAGS) orterun.1)
 
-mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1
-	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpirun.1
+mpirun.1: $(top_builddir)/orte/tools/orterun/orterun.1
+	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 mpirun.1
 
-mpiexec.1: $(top_srcdir)/orte/tools/orterun/orterun.1
-	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpiexec.1
+mpiexec.1: $(top_builddir)/orte/tools/orterun/orterun.1
+	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 mpiexec.1
 
-$(top_srcdir)/orte/tools/orte-ps/orte-ps.1:
-	(cd $(top_srcdir)/orte/tools/orte-ps && $(MAKE) $(AM_MAKEFLAGS) orte-ps.1)
+$(top_builddir)/orte/tools/orte-ps/orte-ps.1:
+	(cd $(top_builddir)/orte/tools/orte-ps && $(MAKE) $(AM_MAKEFLAGS) orte-ps.1)
 
-ompi-ps.1: $(top_srcdir)/orte/tools/orte-ps/orte-ps.1
-	cp -f $(top_srcdir)/orte/tools/orte-ps/orte-ps.1 ompi-ps.1
+ompi-ps.1: $(top_builddir)/orte/tools/orte-ps/orte-ps.1
+	cp -f $(top_builddir)/orte/tools/orte-ps/orte-ps.1 ompi-ps.1
 
-$(top_srcdir)/orte/tools/orte-clean/orte-clean.1:
-	(cd $(top_srcdir)/orte/tools/orte-clean && $(MAKE) $(AM_MAKEFLAGS) orte-clean.1)
+$(top_builddir)/orte/tools/orte-clean/orte-clean.1:
+	(cd $(top_builddir)/orte/tools/orte-clean && $(MAKE) $(AM_MAKEFLAGS) orte-clean.1)
 
-ompi-clean.1: $(top_srcdir)/orte/tools/orte-clean/orte-clean.1
-	cp -f $(top_srcdir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
+ompi-clean.1: $(top_builddir)/orte/tools/orte-clean/orte-clean.1
+	cp -f $(top_builddir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
 
 maintainer-clean-local:
 	rm -f $(man_pages)
