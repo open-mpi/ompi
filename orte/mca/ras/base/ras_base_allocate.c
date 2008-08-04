@@ -29,6 +29,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wakeup.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/proc_info.h"
@@ -110,6 +111,15 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         }
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
+    } else if (orte_allocation_required) {
+        /* if nothing was found, and an allocation is
+         * required, then error out
+         */
+        OBJ_DESTRUCT(&nodes);
+        orte_show_help("help-ras-base.txt", "ras-base:no-allocation", true);
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        orte_wakeup();
+        return ORTE_ERROR;
     }
     
     

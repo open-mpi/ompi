@@ -64,6 +64,7 @@ char **orte_launch_environ;
 opal_pointer_array_t orte_daemonmap;
 
 bool orte_hnp_is_allocated = false;
+bool orte_allocation_required;
 
 char *orte_launch_agent;
 char **orted_cmd_line=NULL;
