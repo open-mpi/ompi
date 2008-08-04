@@ -10,14 +10,14 @@
 # $HEADER$
 #
 
-TESTS = checksum position
+TESTS = checksum position ddt_test
 
 check_PROGRAMS = $(TESTS) to_self ddt_pack
 
 # This test currently not built because of #1242.
-#ddt_test_SOURCES = ddt_test.c
-#ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-#ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
+ddt_test_SOURCES = ddt_test.c
+ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
 
 ddt_pack_SOURCES = ddt_pack.c
 ddt_pack_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
