@@ -26,7 +26,7 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
-1.2.7 (not released yet)
+1.2.7
 -----
 
 - Fix F90 binding for MPI_CART_GET.  Thanks to Scott Beardsley for
