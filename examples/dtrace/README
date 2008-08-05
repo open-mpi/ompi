@@ -1,4 +1,4 @@
-Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 			Use is subject to license terms.
 
 This document discusses how to use the Solaris Dynamic Tracing utility (DTrace)
@@ -127,7 +127,7 @@ similar to the following.
 #!/bin/sh 
 # partrace.sh - a helper script to dtrace Open MPI jobs from the 
 #		start of the job.  
-dtrace -s $1 -c $2 -o $2.$OMPI_MCA_ns_nds_vpid.trace
+dtrace -s $1 -c $2 -o $2.$OMPI_COMM_WORLD_RANK.trace
 
 Type the following command to run the partrace.sh shell script:
 
