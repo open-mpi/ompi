@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,6 +39,57 @@
  *     non-zero by the debugger.
  *
  * This file implements (a).
+ *
+ **************************************************************************
+ *
+ * Note that we have presently tested both TotalView and DDT parallel
+ * debuggers.  They both nominally subscribe to the Etnus attaching
+ * interface, but there are differences between the two.
+ *
+ * TotalView: user launches "totalview mpirun -a ...<mpirun args>...".
+ * TV launches mpirun.  mpirun launches the application and then calls
+ * MPIR_Breakpoint().  This is the signal to TV that it's a parallel
+ * MPI job.  TV then reads the proctable in mpirun and attaches itself
+ * to all the processes (it takes care of launching itself on the
+ * remote nodes).  Upon attaching to all the MPI processes, the
+ * variable MPIR_being_debugged is set to 1.  When it has finished
+ * attaching itself to all the MPI processes that it wants to,
+ * MPIR_Breakpoint() returns.
+ *
+ * DDT: user launches "ddt bin -np X <mpi app name>".  DDT fork/exec's
+ * mpirun to launch ddt-debugger on the back-end nodes via "mpirun -np
+ * X ddt-debugger" (not the lack of other arguments -- we can't pass
+ * anything to mpirun).  This app will eventually fork/exec the MPI
+ * app.  DDT does not current set MPIR_being_debugged in the MPI app.
+ *
+ **************************************************************************
+ *
+ * We support two ways of waiting for attaching debuggers.  The
+ * implementation spans this file and ompi/debuggers/ompi_debuggers.c.
+ *
+ * 1. If using orterun: MPI processes will have the
+ * orte_in_parallel_debugger MCA param set to true (because not all
+ * debuggers consistently set MPIR_being_debugged in both the launcher
+ * and in the MPI procs).  The HNP will call MPIR_Breakpoint() and
+ * then RML send a message to VPID 0 (MCW rank 0) when it returns
+ * (MPIR_Breakpoint() doesn't return until the debugger has attached
+ * to all relevant processes).  Meanwhile, VPID 0 blocks waiting for
+ * the RML message.  All other VPIDs immediately call the grpcomm
+ * barrier (and therefore block until the debugger attaches).  Once
+ * VPID 0 receives the RML message, we know that the debugger has
+ * attached to all processes that it cares about, and VPID 0 then
+ * joins the grpcomm barrier, allowing the job to continue.  This
+ * scheme has the side effect of nicely supporting partial attaches by
+ * parallel debuggers (i.e., attaching to only some of the MPI
+ * processes; not necessarily all of them).
+ *
+ * 2. If not using orterun: in this case, ORTE_DISABLE_FULL_SUPPORT
+ * will be true, and we know that there will not be an RML message
+ * sent to VPID 0.  So we have to look for a magic environment
+ * variable from the launcher to know if the jobs will be attached by
+ * a debugger (e.g., set by yod, srun, ...etc.), and if so, spin on
+ * MPIR_debug_gate.  These environment variable names must be
+ * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
  */
 
 #include <stdio.h>
@@ -307,7 +358,7 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 {
     int i, id;
     char **new_argv = NULL;
-    char *value, **lines;
+    char *value, **lines, *env_name;
 
     /* Get the orte_base_debug MCA parameter and search for a debugger
        that can run */
@@ -346,7 +397,18 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     opal_argv_free(lines);
 
     /* We found one */
+    /* Set an MCA param so that everyone knows that they are being
+       launched under a debugger; not all debuggers are consistent
+       about setting MPIR_being_debugged in both the launcher and the
+       MPI processes */
+    env_name = mca_base_param_environ_variable("orte", 
+                                               "in_parallel_debugger", NULL);
+    if (NULL != env_name) {
+        opal_setenv(env_name, "1", true, &environ);
+        free(env_name);
+    }
 
+    /* Launch the debugger */
     execvp(new_argv[0], new_argv);
     value = opal_argv_join(new_argv, ' ');
     orte_show_help("help-orterun.txt", "debugger-exec-failed",
@@ -365,11 +427,11 @@ void orte_run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  */
 void orte_debugger_init_before_spawn(orte_job_t *jdata)
 {
-    char *s;
+    char *env_name;
     orte_app_context_t **apps;
     orte_std_cntr_t i;
 
-    if (!MPIR_being_debugged) {
+    if (!MPIR_being_debugged && !orte_in_parallel_debugger) {
         /* not being debugged */
         return;
     }
@@ -378,14 +440,15 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
         opal_output(0, "Info: Spawned by a debugger");
     }
     
-    apps = (orte_app_context_t**)jdata->apps->addr;
     /* tell the procs they are being debugged */
-    s = mca_base_param_environ_variable("ompi", "mpi_being_debugged", NULL);
+    apps = (orte_app_context_t**)jdata->apps->addr;
+    env_name = mca_base_param_environ_variable("orte", 
+                                               "in_parallel_debugger", NULL);
     
     for (i=0; i < jdata->num_apps; i++) {
-        opal_setenv(s, "1", true, &apps[i]->env);
+        opal_setenv(env_name, "1", true, &apps[i]->env);
     }
-    free(s);
+    free(env_name);
 }
 
 
@@ -406,7 +469,7 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
     opal_buffer_t buf;
     orte_process_name_t rank0;
     int rc;
-    
+
     if (MPIR_proctable) {
         /* already initialized */
         return;
