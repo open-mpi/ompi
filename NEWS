@@ -58,7 +58,7 @@ version 1.0.
 -----
 
 - Fix a bug in the inter-allgather for asymmetric inter-communicators.
-  Thanks to Martin Audet fro the bug report. See ticket #1247.
+  Thanks to Martin Audet for the bug report. See ticket #1247.
 - Fix a bug in the openib BTL when setting the CQ depth.  Thanks
   to Jon Mason for the bug report and fix.  See ticket #1245.
 - On Mac OS X Leopard, the execinfo component will be used for
