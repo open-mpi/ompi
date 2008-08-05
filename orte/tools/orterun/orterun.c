@@ -82,7 +82,6 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_locks.h"
 
@@ -317,6 +316,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
  */
 static void job_completed(int trigpipe, short event, void *arg);
 static void terminated(int trigpipe, short event, void *arg);
+static void timeout_callback(int fd, short ign, void *arg);
 static void abort_signal_callback(int fd, short flags, void *arg);
 static void abort_exit_callback(int fd, short event, void *arg);
 static void signal_forward_callback(int fd, short event, void *arg);
@@ -625,21 +625,14 @@ static void job_completed(int trigpipe, short event, void *arg)
     orte_job_state_t exit_state;
     orte_job_t *daemons;
     
-    /* flag that we are here to avoid doing it twice */
-    if (!opal_atomic_trylock(&orte_job_complete_lock)) { /* returns 1 if already locked */
-        return;
-    }
-
     /* if the abort exit event is set, delete it */
     if (NULL != abort_exit_event) {
         opal_evtimer_del(abort_exit_event);
         free(abort_exit_event);
     }
     
-    /* close the trigger pipe */
-    if (0 <= trigpipe) {
-        close(trigpipe);
-    }
+    /* cleanup the trigger */
+    OBJ_DESTRUCT(&orte_exit);
     
     exit_state = jdata->state;
 
@@ -690,7 +683,7 @@ static void job_completed(int trigpipe, short event, void *arg)
         }
         ORTE_DETECT_TIMEOUT(&timeout_ev, daemons->num_procs,
                             orte_timeout_usec_per_proc,
-                            orte_max_timeout, terminated);
+                            orte_max_timeout, timeout_callback);
     }
     
     /* now wait to hear it has been done */
@@ -718,15 +711,8 @@ static void terminated(int trigpipe, short event, void *arg)
     orte_proc_t **procs;
     orte_vpid_t i;
     
-    /* flag that we are here to avoid doing it twice */
-    if (!opal_atomic_trylock(&orte_terminate_lock)) { /* returns 1 if already locked */
-        return;
-    }
-
-    /* close the trigger pipe so it cannot be called again */
-    if (0 <= trigpipe) {
-        close(trigpipe);
-    }
+    /* cleanup the trigger */
+    OBJ_DESTRUCT(&orteds_exit);
     
     /* clear the event timer */
     if (NULL != timeout_ev) {
@@ -948,10 +934,10 @@ static void dump_aborted_procs(void)
 
 static void timeout_callback(int fd, short ign, void *arg)
 {
-    /* just call terminated so we don't loop back into
-     * trying to kill things
+    /* fire the trigger that takes us to terminated so we don't
+     * loop back into trying to kill things
      */
-    terminated(-1, 0, NULL);
+    orte_trigger_event(&orteds_exit);
 }
 
 static void abort_exit_callback(int fd, short ign, void *arg)
@@ -984,16 +970,13 @@ static void abort_exit_callback(int fd, short ign, void *arg)
              * need to explicitly wake ourselves up to exit
              */
             ORTE_UPDATE_EXIT_STATUS(ret);
-            orte_wakeup();
+            orte_trigger_event(&orte_exit);
         }
         /* give ourselves a time limit on how long to wait
          * for the job to die, just in case we can't make it go
          * away for some reason. Don't send us directly back
-         * to job_completed, though, as that function expects
-         * to be triggered via orte_wakeup - we could get into
-         * race conditions, and the timeout won't provide
-         * that function with the orte_exit pipe fd so it can
-         * be closed
+         * to job_completed, though, as that function may be
+         * what has failed
          */
         ORTE_DETECT_TIMEOUT(&abort_exit_event, jdata->num_procs,
                             orte_timeout_usec_per_proc,

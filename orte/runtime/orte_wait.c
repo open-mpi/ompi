@@ -48,13 +48,14 @@
 #endif
 
 #include "opal/dss/dss_types.h"
-#include "orte/util/show_help.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/sys/atomic.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -94,6 +95,24 @@ OBJ_CLASS_INSTANCE(orte_message_event_t,
                    opal_object_t,
                    message_event_constructor,
                    message_event_destructor);
+
+
+static void trigger_event_destructor(orte_trigger_event_t *trig)
+{
+    if (0 <= trig->channel) {
+        close(trig->channel);
+    }
+}
+
+static void trigger_event_constructor(orte_trigger_event_t *trig)
+{
+    trig->channel = -1;
+    opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
+}
+OBJ_CLASS_INSTANCE(orte_trigger_event_t,
+                   opal_object_t,
+                   trigger_event_constructor,
+                   trigger_event_destructor);
 
 #ifdef HAVE_WAITPID
 
@@ -458,7 +477,7 @@ orte_wait_cb_enable()
 }
 
 
-int orte_wait_event(opal_event_t **event, int *trig,
+int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
                     void (*cbfunc)(int, short, void*))
 {
     int p[2];
@@ -471,8 +490,11 @@ int orte_wait_event(opal_event_t **event, int *trig,
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
     
+    /* setup the trigger and its associated lock */
+    OBJ_CONSTRUCT(trig, orte_trigger_event_t);
+    
     /* pass back the write end of the pipe */
-    *trig = p[1];
+    trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
     opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
@@ -485,11 +507,15 @@ int orte_wait_event(opal_event_t **event, int *trig,
 }
 
 
-void orte_trigger_event(int trig)
+void orte_trigger_event(orte_trigger_event_t *trig)
 {
     int data=1;
     
-    write(trig, &data, sizeof(int));
+    if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
+        return;
+    }
+    
+    write(trig->channel, &data, sizeof(int));
     opal_progress();
 }
 
@@ -792,11 +818,15 @@ orte_wait_finalize(void)
     return ORTE_SUCCESS;
 }
 
-void orte_trigger_event(int trig)
+void orte_trigger_event(orte_trigger_event_t *trig)
 {
     int data=1;
     
-    write(trig, &data, sizeof(int));
+    if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
+        return;
+    }
+        
+    write(trig->channel, &data, sizeof(int));
     opal_progress();
 }
 
@@ -1100,8 +1130,7 @@ orte_wait_cb_enable(void)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-void
-orte_trigger_event(int trig)
+void orte_trigger_event(orte_trigger_event_t *trig)
 {
 }
 

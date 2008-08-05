@@ -74,7 +74,6 @@
 #include "orte/util/show_help.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"

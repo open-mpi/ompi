@@ -43,7 +43,6 @@
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/snapc.h"
 #endif
-#include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_locks.h"
@@ -299,7 +298,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
 WAKEUP:
     /* set orterun's exit code and wakeup so it can exit */
     ORTE_UPDATE_EXIT_STATUS(status);
-    orte_wakeup();
+    orte_trigger_event(&orte_exit);
 }
 
 static void process_orted_launch_report(int fd, short event, void *data)
@@ -1035,9 +1034,8 @@ CHECK_ALL_JOBS:
             jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
             if (jdata->num_terminated >= jdata->num_procs) {
                 /* orteds are done! */
-                int data=1;
                 jdata->state = ORTE_JOB_STATE_TERMINATED;
-                write(orteds_exit, &data, sizeof(int));
+                orte_trigger_event(&orteds_exit);
                 return;
             }
         }
@@ -1067,7 +1065,7 @@ CHECK_ALL_JOBS:
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:check_job_completed all jobs terminated - waking up",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        orte_wakeup();
+        orte_trigger_event(&orte_exit);
     }
     
 }

@@ -38,14 +38,21 @@
 
 #include "opal/dss/dss.h"
 #include "opal/class/opal_list.h"
-#include "orte/util/show_help.h"
+#include "opal/sys/atomic.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
+
+typedef struct {
+    opal_object_t super;
+    int channel;
+    opal_atomic_lock_t lock;
+} orte_trigger_event_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_trigger_event_t);
 
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
@@ -99,17 +106,18 @@ ORTE_DECLSPEC int orte_wait_cb_enable(void);
 /**
  * Setup to wait for an event
  *
- * This function is used to setup a pipe that can be used elsewhere
+ * This function is used to setup a trigger event that can be used elsewhere
  * in the code base where we want to wait for some event to
  * happen. For example, orterun uses this function to setup an event
  * that is used to notify orterun of abnormal and normal termination
  * so it can wakeup and exit cleanly.
  *
- * The event will be defined so that a write to the provided trigger
- * pipe will cause the event to trigger and callback to the provided
+ * The event will be defined so that firing the provided trigger
+ * will cause the event to trigger and callback to the provided
  * function
  */
-ORTE_DECLSPEC int orte_wait_event(opal_event_t **event, int *trig,
+ORTE_DECLSPEC int orte_wait_event(opal_event_t **event,
+                                  orte_trigger_event_t *trig,
                                   void (*cbfunc)(int, short, void*));
 
 /**
@@ -136,9 +144,9 @@ ORTE_DECLSPEC int orte_wait_event(opal_event_t **event, int *trig,
  * Trigger a defined event
  *
  * This function will trigger a previously-defined event - as setup
- * by orte_wait_event - by sending a message to the provided pipe
+ * by orte_wait_event - by firing the provided trigger
  */
-ORTE_DECLSPEC void orte_trigger_event(int trig);
+ORTE_DECLSPEC void orte_trigger_event(orte_trigger_event_t *trig);
 
 /**
  * Setup an event to process a message

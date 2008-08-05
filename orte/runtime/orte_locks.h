@@ -38,7 +38,6 @@ ORTE_DECLSPEC extern opal_atomic_lock_t orte_finalize_lock;
 ORTE_DECLSPEC extern opal_atomic_lock_t orted_exit_lock;
 
 /* for HNPs */
-ORTE_DECLSPEC extern opal_atomic_lock_t orte_wakeup_lock;
 ORTE_DECLSPEC extern opal_atomic_lock_t orte_job_complete_lock;
 ORTE_DECLSPEC extern opal_atomic_lock_t orte_terminate_lock;
 ORTE_DECLSPEC extern opal_atomic_lock_t orte_abort_inprogress_lock;
