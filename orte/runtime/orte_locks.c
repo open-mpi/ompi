@@ -29,7 +29,6 @@ opal_atomic_lock_t orte_finalize_lock;
 opal_atomic_lock_t orted_exit_lock;
 
 /* for HNPs */
-opal_atomic_lock_t orte_wakeup_lock;
 opal_atomic_lock_t orte_job_complete_lock;
 opal_atomic_lock_t orte_terminate_lock;
 opal_atomic_lock_t orte_abort_inprogress_lock;
@@ -44,7 +43,6 @@ int orte_locks_init(void)
     opal_atomic_init(&orted_exit_lock, OPAL_ATOMIC_UNLOCKED);
 
     /* for HNPs */
-    opal_atomic_init(&orte_wakeup_lock, OPAL_ATOMIC_UNLOCKED);
     opal_atomic_init(&orte_job_complete_lock, OPAL_ATOMIC_UNLOCKED);
     opal_atomic_init(&orte_terminate_lock, OPAL_ATOMIC_UNLOCKED);
     opal_atomic_init(&orte_abort_inprogress_lock, OPAL_ATOMIC_UNLOCKED);

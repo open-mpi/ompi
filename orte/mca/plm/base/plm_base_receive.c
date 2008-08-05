@@ -45,7 +45,6 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/plm/plm_types.h"
@@ -279,7 +278,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     
     /* see if an error occurred - if so, wakeup so we can exit */
     if (ORTE_SUCCESS != rc) {
-        orte_wakeup();
+        orte_trigger_event(&orte_exit);
     }
 }
 

@@ -64,7 +64,6 @@
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_wakeup.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"

@@ -68,7 +68,8 @@ bool orte_allocation_required;
 
 char *orte_launch_agent;
 char **orted_cmd_line=NULL;
-int orte_exit, orteds_exit;
+
+orte_trigger_event_t orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
 bool orte_shutdown_in_progress = false;

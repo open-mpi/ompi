@@ -94,6 +94,7 @@ char *log_path = NULL;
 static opal_event_t *orted_exit_event;
 
 static void shutdown_callback(int fd, short flags, void *arg);
+static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short event, void *arg);
 static void clean_fail(int fd, short flags, void *arg);
 
@@ -402,10 +403,10 @@ int orte_daemon(int argc, char *argv[])
      * after ourselves. 
      */
     opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
-                   shutdown_callback, NULL);
+                   shutdown_signal, NULL);
     opal_event_add(&term_handler, NULL);
     opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
-                   shutdown_callback, NULL);
+                   shutdown_signal, NULL);
     opal_event_add(&int_handler, NULL);
 
 #ifndef __WINDOWS__
@@ -666,15 +667,19 @@ static void clean_fail(int fd, short flags, void *arg)
     exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
+static void shutdown_signal(int fd, short flags, void *arg)
+{
+    /* trigger the call to shutdown callback to protect
+     * against race conditions - the trigger event will
+     * check the one-time lock
+     */
+    orte_trigger_event(&orte_exit);
+}
+
 static void shutdown_callback(int fd, short flags, void *arg)
 {
     int ret;
     
-    /* protect against multiple calls */
-    if (!opal_atomic_trylock(&orted_exit_lock)) { /* returns 1 if already locked */
-        return;
-    }
-
     if (NULL != arg) {
         /* it's the singleton pipe...  remove that handler */
         opal_event_del(&pipe_handler);
