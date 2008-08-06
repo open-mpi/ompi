@@ -180,14 +180,6 @@ static OBJ_CLASS_INSTANCE(pending_pids_item_t, opal_list_item_t, NULL, NULL);
 static OBJ_CLASS_INSTANCE(registered_cb_item_t, opal_list_item_t, NULL, NULL);
 
 static void 
-trigger_event_destructor(orte_trigger_event_t *trig)
-{
-    if (0 <= trig->channel) {
-        close(trig->channel);
-    }
-}
-
-static void 
 trigger_event_constructor(orte_trigger_event_t *trig)
 {
     trig->channel = -1;
@@ -198,7 +190,7 @@ trigger_event_constructor(orte_trigger_event_t *trig)
 OBJ_CLASS_INSTANCE(orte_trigger_event_t,
                    opal_object_t,
                    trigger_event_constructor,
-                   trigger_event_destructor);
+                   NULL);
 
 /*********************************************************************
  *
@@ -516,6 +508,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
     }
     
     write(trig->channel, &data, sizeof(int));
+    close(trig->channel);
     opal_progress();
 }
 
@@ -873,6 +866,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
     }
         
     write(trig->channel, &data, sizeof(int));
+    close(trig->channel);
     opal_progress();
 }
 
