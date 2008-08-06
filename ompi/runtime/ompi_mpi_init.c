@@ -118,23 +118,29 @@ opal_thread_t *ompi_mpi_main_thread = NULL;
 
 bool ompi_mpi_maffinity_setup = false;
 
-bool ompi_do_not_warn_on_fork;
+bool ompi_warn_on_fork;
 
 static bool fork_warning_issued = false;
+static bool atfork_called = false;
 
-static void warn_fork(void)
+#if HAVE_PTHREAD_H
+static void warn_fork_cb(void)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
-        orte_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true);
+        orte_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
+                       orte_process_info.nodename, getpid(),
+                       ompi_mpi_comm_world.c_my_rank);
         fork_warning_issued = true;
     }
 }
+#endif
 
 void ompi_warn_fork(void)
 {
 #if HAVE_PTHREAD_H
-    if (!ompi_do_not_warn_on_fork) {
-        pthread_atfork(warn_fork, NULL, NULL);
+    if (ompi_warn_on_fork && !atfork_called) {
+        pthread_atfork(warn_fork_cb, NULL, NULL);
+        atfork_called = true;
     }
 #endif
 }

@@ -61,7 +61,7 @@ OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
 OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
 
 /** Do we want to be warned on fork or not? */
-OMPI_DECLSPEC extern bool ompi_do_not_warn_on_fork;
+OMPI_DECLSPEC extern bool ompi_warn_on_fork;
 
 /** In ompi_mpi_init: a list of all memory associated with calling
     MPI_REGISTER_DATAREP so that we can free it during

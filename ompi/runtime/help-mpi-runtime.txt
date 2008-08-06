@@ -77,8 +77,18 @@ In order to operate in a heterogeneous environment, please reconfigure
 Open MPI with --enable-heterogeneous.
 #
 [mpi_init:warn-fork]
-The program has executed an operation involving a call to "fork". Open MPI
-is currently operating in a condition that could result in memory corruption
-issues in this situation - for example, use of the OpenIB BTL. Use of fork
-is therefore not recommended in this situation.
+An MPI process has executed an operation involving a call to the
+"fork()" system call to create a child process.  Open MPI is currently
+operating in a condition that could result in memory corruption or
+other system errors; your MPI job may hang, crash, or produce silent
+data corruption.  The use of fork() (or system() or other calls that
+create child processes) is strongly discouraged.  
 
+The process that invoked fork was:
+
+  Local host:          %s (PID %d)
+  MPI_COMM_WORLD rank: %d
+
+If you are *absolutely sure* that your application will successfully
+and correctly survive a call to fork(), you may disable this warning
+by setting the mpi_warn_on_fork MCA parameter to 0.
