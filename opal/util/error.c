@@ -185,6 +185,7 @@ opal_error_register(const char *project, int err_base, int err_max,
         if (0 == converters[i].init) {
             converters[i].init = 1;
             strncpy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
+            converters[i].project[MAX_CONVERTER_PROJECT_LEN-1] = '\0';
             converters[i].err_base = err_base;
             converters[i].err_max = err_max;
             converters[i].converter = converter;
