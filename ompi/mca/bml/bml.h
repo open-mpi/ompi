@@ -105,8 +105,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_btl_array_t);
  * @param array (IN)
  * @param size (IN)
  */
-int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t*, size_t);
-
 static inline size_t mca_bml_base_btl_array_get_size(mca_bml_base_btl_array_t* array)
 {
     return array->arr_size;
