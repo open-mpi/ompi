@@ -413,13 +413,12 @@ int mca_btl_sm_component_progress(void)
             case MCA_BTL_SM_FRAG_ACK:
             {
                 int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
-                struct mca_btl_base_endpoint_t* endpoint;
                 int btl_ownership;
 
                 frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
                             (~(MCA_BTL_SM_FRAG_TYPE_MASK |
                             MCA_BTL_SM_FRAG_STATUS_MASK))));
-                endpoint = frag->endpoint;
+
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
                     /* completion callback */
