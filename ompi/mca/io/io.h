@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +41,7 @@ struct mca_io_base_request_t;
 /*
  * Forward declarations of things declared in this file
  */
-struct mca_io_base_module_1_0_0_t;
+struct mca_io_base_module_2_0_0_t;
 union mca_io_base_modules_t;
 
 
@@ -49,14 +50,14 @@ union mca_io_base_modules_t;
  *
  * The IO component is being designed to ensure that it can
  * simultaneously support multiple component versions in a single
- * executable.  This is because ROMIO will always be v1.x that
+ * executable.  This is because ROMIO will always be v2.x that
  * supports pretty much a 1-to-1 MPI-API-to-module-function mapping,
- * but we plan to have a v2.x series that will be "something
+ * but we plan to have a v3.x series that will be "something
  * different" (as yet undefined).
  */
 enum mca_io_base_version_t {
     MCA_IO_BASE_V_NONE,
-    MCA_IO_BASE_V_1_0_0,
+    MCA_IO_BASE_V_2_0_0,
 
     MCA_IO_BASE_V_MAX
 };
@@ -78,11 +79,11 @@ typedef enum mca_io_base_version_t mca_io_base_version_t;
  * Component
  */
 
-struct mca_io_base_module_1_0_0_t;
+struct mca_io_base_module_2_0_0_t;
 typedef int (*mca_io_base_component_init_query_fn_t)
     (bool enable_progress_threads, bool enable_mpi_threads);
-typedef const struct mca_io_base_module_1_0_0_t *
-    (*mca_io_base_component_file_query_1_0_0_fn_t)
+typedef const struct mca_io_base_module_2_0_0_t *
+    (*mca_io_base_component_file_query_2_0_0_fn_t)
     (struct ompi_file_t *file, struct mca_io_base_file_t **private_data, 
      int *priority);
 typedef int (*mca_io_base_component_file_unquery_fn_t)
@@ -120,7 +121,7 @@ struct mca_io_base_component_2_0_0_t {
     size_t io_request_bytes;
 
     mca_io_base_component_init_query_fn_t io_init_query;
-    mca_io_base_component_file_query_1_0_0_fn_t io_file_query;
+    mca_io_base_component_file_query_2_0_0_fn_t io_file_query;
     mca_io_base_component_file_unquery_fn_t io_file_unquery;
 
     mca_io_base_component_file_delete_query_fn_t io_delete_query;
@@ -138,13 +139,13 @@ typedef struct mca_io_base_component_2_0_0_t mca_io_base_component_2_0_0_t;
  * All component versions
  */
 union mca_io_base_components_t {
-    mca_io_base_component_2_0_0_t v1_0_0;
+    mca_io_base_component_2_0_0_t v2_0_0;
 };
 typedef union mca_io_base_components_t mca_io_base_components_t;
 
 
 /*
- * Module v1.0.0
+ * Module v2.0.0
  */
 
 /**
@@ -340,7 +341,7 @@ typedef int (*mca_io_base_module_file_get_atomicity_fn_t)
     (struct ompi_file_t *fh, int *flag);
 typedef int (*mca_io_base_module_file_sync_fn_t)(struct ompi_file_t *fh);
 
-struct mca_io_base_module_1_0_0_t {
+struct mca_io_base_module_2_0_0_t {
 
     /** Once-per-process request initializtion function */
 
@@ -421,14 +422,14 @@ struct mca_io_base_module_1_0_0_t {
     mca_io_base_module_file_get_atomicity_fn_t        io_module_file_get_atomicity;
     mca_io_base_module_file_sync_fn_t                 io_module_file_sync;
 };
-typedef struct mca_io_base_module_1_0_0_t mca_io_base_module_1_0_0_t;
+typedef struct mca_io_base_module_2_0_0_t mca_io_base_module_2_0_0_t;
 
 
 /*
  * All module versions
  */
 union mca_io_base_modules_t {
-    mca_io_base_module_1_0_0_t v1_0_0;
+    mca_io_base_module_2_0_0_t v2_0_0;
 };
 typedef union mca_io_base_modules_t mca_io_base_modules_t;
 

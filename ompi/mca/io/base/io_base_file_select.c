@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -61,7 +62,7 @@ static avail_io_t *check_one_component(ompi_file_t *file,
 
 static avail_io_t *query(const mca_base_component_t *component, 
                          ompi_file_t *file);
-static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *io_component, 
+static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component, 
                                ompi_file_t *file);
 
 static void unquery(avail_io_t *avail, ompi_file_t *file);
@@ -223,7 +224,7 @@ int mca_io_base_file_select(ompi_file_t *file,
   
     opal_output_verbose(10, mca_io_base_output,
                         "io:base:file_select: Selected io module %s", 
-                        selected.ai_component.v1_0_0.io_version.mca_component_name);
+                        selected.ai_component.v2_0_0.io_version.mca_component_name);
   
     return OMPI_SUCCESS;
 }
@@ -365,16 +366,16 @@ static avail_io_t *check_one_component(ompi_file_t *file,
 static avail_io_t *query(const mca_base_component_t *component, 
                          ompi_file_t *file)
 {
-    const mca_io_base_component_2_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_200;
 
-    /* io v1.0.0 */
+    /* io v2.0.0 */
 
-    if (1 == component->mca_major_version &&
+    if (2 == component->mca_major_version &&
         0 == component->mca_minor_version &&
         0 == component->mca_release_version) {
-        ioc_100 = (mca_io_base_component_2_0_0_t *) component;
+        ioc_200 = (mca_io_base_component_2_0_0_t *) component;
         
-        return query_1_0_0(ioc_100, file);
+        return query_2_0_0(ioc_200, file);
     }
 
     /* Unknown io API version -- return error */
@@ -383,25 +384,25 @@ static avail_io_t *query(const mca_base_component_t *component,
 }
 
 
-static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *component,
+static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
                                ompi_file_t *file)
 {
     int priority;
     avail_io_t *avail;
-    const mca_io_base_module_1_0_0_t *module;
+    const mca_io_base_module_2_0_0_t *module;
     struct mca_io_base_file_t *module_data;
 
-    /* Query v1.0.0 */
+    /* Query v2.0.0 */
 
     avail = NULL;
     module_data = NULL;
     module = component->io_file_query(file, &module_data, &priority);
     if (NULL != module) {
         avail = OBJ_NEW(avail_io_t);
-        avail->ai_version = MCA_IO_BASE_V_1_0_0;
+        avail->ai_version = MCA_IO_BASE_V_2_0_0;
         avail->ai_priority = priority;
-        avail->ai_component.v1_0_0 = *component;
-        avail->ai_module.v1_0_0 = *module;
+        avail->ai_component.v2_0_0 = *component;
+        avail->ai_module.v2_0_0 = *module;
         avail->ai_module_data = module_data;
     }
 
@@ -415,12 +416,12 @@ static avail_io_t *query_1_0_0(const mca_io_base_component_2_0_0_t *component,
 
 static void unquery(avail_io_t *avail, ompi_file_t *file)
 {
-    const mca_io_base_component_2_0_0_t *ioc_100;
+    const mca_io_base_component_2_0_0_t *ioc_200;
 
     switch(avail->ai_version) {
-    case MCA_IO_BASE_V_1_0_0:
-        ioc_100 = &(avail->ai_component.v1_0_0);
-        ioc_100->io_file_unquery(file, avail->ai_module_data);
+    case MCA_IO_BASE_V_2_0_0:
+        ioc_200 = &(avail->ai_component.v2_0_0);
+        ioc_200->io_file_unquery(file, avail->ai_module_data);
         break;
 
     default:
@@ -438,12 +439,12 @@ static void unquery(avail_io_t *avail, ompi_file_t *file)
  */
 static int module_init(ompi_file_t *file)
 {
-    const mca_io_base_module_1_0_0_t *iom_100;
+    const mca_io_base_module_2_0_0_t *iom_200;
 
     switch(file->f_io_version) {
-    case MCA_IO_BASE_V_1_0_0:
-        iom_100 = &(file->f_io_selected_module.v1_0_0);
-        return iom_100->io_module_file_open(file->f_comm, file->f_filename,
+    case MCA_IO_BASE_V_2_0_0:
+        iom_200 = &(file->f_io_selected_module.v2_0_0);
+        return iom_200->io_module_file_open(file->f_comm, file->f_filename,
                                             file->f_amode, file->f_info,
                                             file);
         break;
