@@ -158,7 +158,6 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
 {
     int i;
     int size;
-    int rank;
     int err;
     char *psnd;
     char *prcv;
@@ -168,7 +167,6 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
 
     /* Initialize. */
     size = ompi_comm_remote_size(comm);
-    rank = ompi_comm_rank(comm);
 
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
