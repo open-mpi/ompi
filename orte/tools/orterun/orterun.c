@@ -364,6 +364,10 @@ int orterun(int argc, char *argv[])
         exit(1);
     }
     
+    /* setup the exit triggers */
+    OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
+    OBJ_CONSTRUCT(&orteds_exit, orte_trigger_event_t);
+
     /* flag that I am the HNP */
     orte_process_info.hnp = true;
 
@@ -631,9 +635,6 @@ static void job_completed(int trigpipe, short event, void *arg)
         free(abort_exit_event);
     }
     
-    /* cleanup the trigger */
-    OBJ_DESTRUCT(&orte_exit);
-    
     exit_state = jdata->state;
 
     if (ORTE_JOB_STATE_TERMINATED != exit_state) {
@@ -699,6 +700,10 @@ DONE:
     /* cleanup our data server */
     orte_data_server_finalize();
     
+    /* cleanup the triggers */
+    OBJ_DESTRUCT(&orte_exit);
+    OBJ_DESTRUCT(&orteds_exit);
+
     orte_finalize();
     free(orterun_basename);
     exit(rc);
@@ -710,9 +715,6 @@ static void terminated(int trigpipe, short event, void *arg)
     orte_job_t *daemons;
     orte_proc_t **procs;
     orte_vpid_t i;
-    
-    /* cleanup the trigger */
-    OBJ_DESTRUCT(&orteds_exit);
     
     /* clear the event timer */
     if (NULL != timeout_ev) {
@@ -779,6 +781,10 @@ finish:
 
     /* cleanup our data server */
     orte_data_server_finalize();
+    
+    /* cleanup the triggers */
+    OBJ_DESTRUCT(&orte_exit);
+    OBJ_DESTRUCT(&orteds_exit);
     
     orte_finalize();
     free(orterun_basename);
@@ -995,7 +1001,10 @@ static void abort_exit_callback(int fd, short ign, void *arg)
          * during finalize
          */
         OBJ_RELEASE(jdata);
-        
+        /* cleanup the triggers */
+        OBJ_DESTRUCT(&orte_exit);
+        OBJ_DESTRUCT(&orteds_exit);
+
         orte_finalize();
         free(orterun_basename);
         ORTE_UPDATE_EXIT_STATUS(1);
