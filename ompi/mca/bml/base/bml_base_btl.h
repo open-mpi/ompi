@@ -23,7 +23,6 @@
 
 #include "opal/mca/mca.h"
 
-#include "ompi/mca/bml/bml.h"
 #include "orte/util/show_help.h" 
 
 /*
