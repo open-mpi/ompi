@@ -410,7 +410,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     int *results=NULL, *sorted=NULL; 
     int *rresults=NULL, *rsorted=NULL; 
     int rc=OMPI_SUCCESS;
-    ompi_communicator_t *newcomp;
+    ompi_communicator_t *newcomp = NULL;
     int *lranks=NULL, *rranks=NULL;
     
     ompi_comm_allgatherfct *allgatherfct=NULL;
@@ -622,7 +622,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 
     /* Step 4: if we are not part of the comm, free the struct   */
     /* --------------------------------------------------------- */
-    if ( MPI_UNDEFINED == color ) {
+    if ( NULL != newcomp && MPI_UNDEFINED == color ) {
         ompi_comm_free ( &newcomp );
     }
 
