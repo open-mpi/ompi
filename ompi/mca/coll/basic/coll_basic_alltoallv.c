@@ -165,7 +165,6 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
 {
     int i;
     int rsize;
-    int rank;
     int err;
     char *psnd;
     char *prcv;
@@ -179,7 +178,6 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
     /* Initialize. */
 
     rsize = ompi_comm_remote_size(comm);
-    rank = ompi_comm_rank(comm);
 
     ompi_ddt_type_extent(sdtype, &sndextent);
     ompi_ddt_type_extent(rdtype, &rcvextent);
