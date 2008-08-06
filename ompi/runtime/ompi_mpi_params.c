@@ -275,11 +275,11 @@ int ompi_mpi_register_params(void)
                                 (int) ompi_mpi_paffinity_alone, &value);
     ompi_mpi_paffinity_alone = OPAL_INT_TO_BOOL(value);
 
-    mca_base_param_reg_int_name("mpi", "do_not_warn_on_fork",
-                                "If nonzero, do not warn if program forks under conditions that could cause memory corruption issues",
+    mca_base_param_reg_int_name("mpi", "warn_on_fork",
+                                "If nonzero, issue a warning if program forks under conditions that could cause system errors",
                                 false, false, 
-                                (int) false, &value);
-    ompi_do_not_warn_on_fork = OPAL_INT_TO_BOOL(value);
+                                (int) true, &value);
+    ompi_warn_on_fork = OPAL_INT_TO_BOOL(value);
     
     /* Sparse group storage support */
 
