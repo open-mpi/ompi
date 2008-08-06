@@ -967,15 +967,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         OBJ_RELEASE(endpoint);
     }
 
-    /* Finalize the CPC modules on this openib module */
-    for (i = 0; i < openib_btl->num_cpcs; ++i) {
-        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
-            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
-        }
-        free(openib_btl->cpcs[i]);
-    }
-    free(openib_btl->cpcs);
-
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
@@ -992,33 +983,19 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
     }
 
+    /* Finalize the CPC modules on this openib module */
+    for (i = 0; i < openib_btl->num_cpcs; ++i) {
+        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
+            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+        }
+        free(openib_btl->cpcs[i]);
+    }
+    free(openib_btl->cpcs);
+
     /* Release device if there are no more users */
     if(!(--openib_btl->device->btls)) {
         OBJ_RELEASE(openib_btl->device);
     }
-
-#if OMPI_HAVE_THREADS
-    if (mca_btl_openib_component.use_async_event_thread &&
-            0 == mca_btl_openib_component.ib_num_btls &&
-            mca_btl_openib_component.async_thread != 0) {
-        /* signaling to async_tread to stop */
-        int async_command=0;
-        if(write(mca_btl_openib_component.async_pipe[1], &async_command,
-                    sizeof(int)) < 0) {
-            BTL_ERROR(("Failed to communicate with async event thread"));
-            rc = OMPI_ERROR;
-        } else {
-            if(pthread_join(mca_btl_openib_component.async_thread, NULL)) {
-                BTL_ERROR(("Failed to stop OpenIB async event thread"));
-                rc = OMPI_ERROR;
-            }
-        }
-        close(mca_btl_openib_component.async_pipe[0]);
-        close(mca_btl_openib_component.async_pipe[1]);
-        close(mca_btl_openib_component.async_comp_pipe[0]);
-        close(mca_btl_openib_component.async_comp_pipe[1]);
-    }
-#endif
 
     OBJ_DESTRUCT(&openib_btl->ib_lock);
     free(openib_btl);
