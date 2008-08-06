@@ -34,7 +34,6 @@
 #include <synch.h>
 #endif
 
-#include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"
 
