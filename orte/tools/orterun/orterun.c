@@ -367,7 +367,7 @@ int orterun(int argc, char *argv[])
     /* setup the exit triggers */
     OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
     OBJ_CONSTRUCT(&orteds_exit, orte_trigger_event_t);
-
+    
     /* flag that I am the HNP */
     orte_process_info.hnp = true;
 
@@ -700,10 +700,6 @@ DONE:
     /* cleanup our data server */
     orte_data_server_finalize();
     
-    /* cleanup the triggers */
-    OBJ_DESTRUCT(&orte_exit);
-    OBJ_DESTRUCT(&orteds_exit);
-
     orte_finalize();
     free(orterun_basename);
     exit(rc);
@@ -781,10 +777,6 @@ finish:
 
     /* cleanup our data server */
     orte_data_server_finalize();
-    
-    /* cleanup the triggers */
-    OBJ_DESTRUCT(&orte_exit);
-    OBJ_DESTRUCT(&orteds_exit);
     
     orte_finalize();
     free(orterun_basename);
@@ -1001,9 +993,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
          * during finalize
          */
         OBJ_RELEASE(jdata);
-        /* cleanup the triggers */
-        OBJ_DESTRUCT(&orte_exit);
-        OBJ_DESTRUCT(&orteds_exit);
 
         orte_finalize();
         free(orterun_basename);
