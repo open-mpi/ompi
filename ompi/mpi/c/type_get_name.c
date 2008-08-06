@@ -67,6 +67,6 @@ int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen)
        able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
        name+\0). */
    *resultlen = (int)strlen(type->name);
-   strcpy(type_name, type->name);
+   strncpy(type_name, type->name, MPI_MAX_OBJECT_NAME);
    return MPI_SUCCESS;
 }
