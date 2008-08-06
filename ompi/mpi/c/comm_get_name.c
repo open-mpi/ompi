@@ -71,7 +71,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
        able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
        name+\0). */
     if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
-        strcpy(name, comm->c_name);
+        strncpy(name, comm->c_name, MPI_MAX_OBJECT_NAME);
         *length = (int) strlen(comm->c_name);
     } else {
         name[0] = '\0';
