@@ -60,6 +60,9 @@ OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
     it down during MPI_FINALIZE)? */
 OMPI_DECLSPEC extern bool ompi_mpi_maffinity_setup;
 
+/** Do we want to be warned on fork or not? */
+OMPI_DECLSPEC extern bool ompi_do_not_warn_on_fork;
+
 /** In ompi_mpi_init: a list of all memory associated with calling
     MPI_REGISTER_DATAREP so that we can free it during
     MPI_FINALIZE. */
@@ -67,6 +70,8 @@ OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
 
 /** version string of ompi */
 OMPI_DECLSPEC extern const char ompi_version_string[];
+
+OMPI_DECLSPEC void ompi_warn_fork(void);
 
 /**
  * Initialize the Open MPI MPI environment

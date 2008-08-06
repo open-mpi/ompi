@@ -52,6 +52,7 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
@@ -63,6 +64,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/mpiruntime.h"
 
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
@@ -1898,6 +1900,7 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
     return devs;
 }
 
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -2255,6 +2258,12 @@ btl_openib_component_init(int *num_btl_modules,
         opal_argv_free(mca_btl_openib_component.if_exclude_list);
         mca_btl_openib_component.if_exclude_list = NULL;
     }
+    
+    /* setup the fork warning message as we are sensitive
+     * to memory corruption issues when fork is called
+     */
+    ompi_warn_fork();
+    
     return btls;
 
  no_btls:
