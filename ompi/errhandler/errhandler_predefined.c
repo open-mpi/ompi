@@ -156,6 +156,7 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
                           char *name, int *error_code, 
                           va_list arglist)
 {
+    int len;
     char *arg;
     char str[MPI_MAX_PROCESSOR_NAME * 2];
 
@@ -173,9 +174,18 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
            corruption by the time we're invoked, so just do it on the
            stack */
         str[0] = '\0';
-        strcat(str, type);
-        strcat(str, " ");
-        strcat(str, name);
+        len = sizeof(str) - 1;
+        strncat(str, type, len);
+
+        len -= strlen(type);
+        if (len > 0) {
+            strncat(str, " ", len);
+
+            --len;
+            if (len > 0) {
+                strncat(str, name, len);
+            }
+        }
         out("*** on %s", str);
     } else if (!ompi_mpi_initialized) {
         out("*** before MPI was initialized\n", NULL);
