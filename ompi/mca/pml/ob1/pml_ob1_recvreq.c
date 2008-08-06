@@ -417,7 +417,7 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
                                              size_t num_segments )
 {
     size_t bytes_received = 0;
-    size_t bytes_delivered = 0;
+    size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
     size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
@@ -543,7 +543,7 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
                                              size_t num_segments )
 {
     size_t bytes_received = 0;
-    size_t bytes_delivered = 0;
+    size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
     size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
@@ -600,7 +600,9 @@ void mca_pml_ob1_recv_request_progress_match( mca_pml_ob1_recv_request_t* recvre
                                               mca_btl_base_segment_t* segments,
                                               size_t num_segments )
 {
-    size_t bytes_received = 0, bytes_delivered = 0, data_offset = 0;
+    size_t bytes_received = 0;
+    size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
+    size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
