@@ -48,6 +48,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/notifier/base/base.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -200,6 +201,18 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
 
+    /* setup the notifier system */
+    if (ORTE_SUCCESS != (ret = orte_notifier_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_notifer_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_notifier_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_notifer_select";
+        goto error;
+    }
+    
     return ORTE_SUCCESS;
     
 error:
@@ -212,6 +225,8 @@ error:
 
 int orte_ess_base_app_finalize(void)
 {
+    orte_notifier_base_close();
+    
     orte_cr_finalize();
     
 #if OPAL_ENABLE_FT == 1
