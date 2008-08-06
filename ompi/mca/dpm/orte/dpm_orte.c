@@ -378,7 +378,8 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
 
     new_group_pointer=ompi_group_allocate(rsize);
     if( NULL == new_group_pointer ) {
-      return MPI_ERR_GROUP;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     /* put group elements in the list */
