@@ -89,7 +89,6 @@ orte_ess_base_module_t orte_ess_singleton_module = {
 
 static opal_pointer_array_t nidmap;
 static opal_pointer_array_t jobmap;
-static orte_vpid_t nprocs;
 
 static int rte_init(char flags)
 {
@@ -174,7 +173,6 @@ static int rte_init(char flags)
     node->daemon = 0;  /* the HNP co-occupies our node */
     node->arch = orte_process_info.arch;
     opal_pointer_array_set_item(&nidmap, 0, node);
-    nprocs = 1;
     
     /* likewise, we need to construct our own jobmap. Again, since we are
      * a singleton, this is rather trivial
