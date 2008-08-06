@@ -166,7 +166,6 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
                               mca_coll_base_module_t *module)
 {
     int i;
-    int rank;
     int size;
     int err;
     int nreqs;
@@ -185,7 +184,6 @@ mca_coll_basic_alltoall_inter(void *sbuf, int scount,
     /* Initialize. */
 
     size = ompi_comm_remote_size(comm);
-    rank = ompi_comm_rank(comm);
 
     err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
     if (OMPI_SUCCESS != err) {
