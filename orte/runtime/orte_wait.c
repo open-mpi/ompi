@@ -90,29 +90,12 @@ static void message_event_constructor(orte_message_event_t *ev)
 #if OMPI_ENABLE_DEBUG
     ev->file = NULL;
 #endif
-            }
+}
+
 OBJ_CLASS_INSTANCE(orte_message_event_t,
                    opal_object_t,
                    message_event_constructor,
                    message_event_destructor);
-
-
-static void trigger_event_destructor(orte_trigger_event_t *trig)
-{
-    if (0 <= trig->channel) {
-        close(trig->channel);
-    }
-}
-
-static void trigger_event_constructor(orte_trigger_event_t *trig)
-{
-    trig->channel = -1;
-    opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
-}
-OBJ_CLASS_INSTANCE(orte_trigger_event_t,
-                   opal_object_t,
-                   trigger_event_constructor,
-                   trigger_event_destructor);
 
 #ifdef HAVE_WAITPID
 
@@ -196,6 +179,26 @@ static OBJ_CLASS_INSTANCE(pending_pids_item_t, opal_list_item_t, NULL, NULL);
 
 static OBJ_CLASS_INSTANCE(registered_cb_item_t, opal_list_item_t, NULL, NULL);
 
+static void 
+trigger_event_destructor(orte_trigger_event_t *trig)
+{
+    if (0 <= trig->channel) {
+        close(trig->channel);
+    }
+}
+
+static void 
+trigger_event_constructor(orte_trigger_event_t *trig)
+{
+    trig->channel = -1;
+    opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
+}
+
+
+OBJ_CLASS_INSTANCE(orte_trigger_event_t,
+                   opal_object_t,
+                   trigger_event_constructor,
+                   trigger_event_destructor);
 
 /*********************************************************************
  *
@@ -746,10 +749,22 @@ internal_waitpid_callback(int fd, short event, void *arg)
 
 #elif defined(__WINDOWS__)
 
+/*********************************************************************
+ *
+ * Local Variables
+ *
+ ********************************************************************/
+
 static volatile int cb_enabled = true;
 static opal_mutex_t mutex;
 static opal_list_t pending_pids;
 static opal_list_t registered_cb;
+
+/*********************************************************************
+ *
+ * Local Class Declarations
+ *
+ ********************************************************************/
 
 typedef struct {
     opal_list_item_t super;
@@ -760,6 +775,13 @@ typedef struct {
     int status;
 } opal_process_handle_t;
 
+
+/*********************************************************************
+ *
+ * Local Class Definitions
+ *
+ ********************************************************************/
+
 static void opal_process_handle_construct( opal_object_t* obj )
 {
     opal_process_handle_t* handle = (opal_process_handle_t*)obj;
@@ -769,6 +791,7 @@ static void opal_process_handle_construct( opal_object_t* obj )
     handle->callback          = NULL;
     handle->data              = NULL;
 }
+
 static void opal_process_handle_destruct( opal_object_t* obj )
 {
     opal_process_handle_t* handle = (opal_process_handle_t*)obj;
@@ -786,6 +809,32 @@ static void opal_process_handle_destruct( opal_object_t* obj )
 
 static OBJ_CLASS_INSTANCE( opal_process_handle_t, opal_list_item_t,
                            opal_process_handle_construct, opal_process_handle_destruct );
+
+static void 
+trigger_event_destructor(orte_trigger_event_t *trig)
+{
+    if (0 <= trig->channel) {
+        close(trig->channel);
+    }
+}
+
+static void 
+trigger_event_constructor(orte_trigger_event_t *trig)
+{
+    trig->channel = -1;
+    opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
+}
+
+OBJ_CLASS_INSTANCE(orte_trigger_event_t,
+                   opal_object_t,
+                   trigger_event_constructor,
+                   trigger_event_destructor);
+
+/*********************************************************************
+ *
+ * Interface Functions
+ *
+ ********************************************************************/
 
 int
 orte_wait_init(void)
@@ -1024,7 +1073,7 @@ orte_wait_cb_enable(void)
 }
 
 
-int orte_wait_event(opal_event_t **event, int *trig,
+int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
                     void (*cbfunc)(int, short, void*))
 {
     int p[2];
@@ -1037,8 +1086,11 @@ int orte_wait_event(opal_event_t **event, int *trig,
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
     
+    /* setup the trigger and its associated lock */
+    OBJ_CONSTRUCT(trig, orte_trigger_event_t);
+    
     /* pass back the write end of the pipe */
-    *trig = p[1];
+    trig->channel = p[1];
     
     /* define the event to fire when someone writes to the pipe */
     opal_event_set(*event, p[0], OPAL_EV_READ, cbfunc, NULL);
