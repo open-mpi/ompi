@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,8 +63,8 @@ int MPI_File_read_all_begin(MPI_File fh, void *buf, int count,
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {
-    case MCA_IO_BASE_V_1_0_0:
-        rc = fh->f_io_selected_module.v1_0_0.
+    case MCA_IO_BASE_V_2_0_0:
+        rc = fh->f_io_selected_module.v2_0_0.
             io_module_file_read_all_begin(fh, buf, count, datatype);
         break;
 

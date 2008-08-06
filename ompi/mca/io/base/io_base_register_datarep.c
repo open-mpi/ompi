@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +35,7 @@ mca_io_base_register_datarep(char *datarep,
 {
     opal_list_item_t *p;
     const mca_base_component_t *component;
-    const mca_io_base_component_2_0_0_t *v100;
+    const mca_io_base_component_2_0_0_t *v200;
     int tmp, ret = OMPI_SUCCESS;
 
     /* Find the maximum additional number of bytes required by all io
@@ -46,14 +47,14 @@ mca_io_base_register_datarep(char *datarep,
         component = ((mca_base_component_priority_list_item_t *) 
                      p)->super.cli_component;
 
-        /* Only know how to handle v1.0.0 components for now */
-        if (component->mca_type_major_version == 1 &&
+        /* Only know how to handle v2.0.0 components for now */
+        if (component->mca_type_major_version == 2 &&
             component->mca_type_minor_version == 0 &&
             component->mca_type_release_version == 0) {
-            v100 = (mca_io_base_component_2_0_0_t *) component;
+            v200 = (mca_io_base_component_2_0_0_t *) component;
 
             /* return first non-good error-code */
-            tmp = v100->io_register_datarep(datarep, read_fn, write_fn, 
+            tmp = v200->io_register_datarep(datarep, read_fn, write_fn, 
                                             extent_fn, state);
             ret = (ret == OMPI_SUCCESS) ? tmp : ret;
         }

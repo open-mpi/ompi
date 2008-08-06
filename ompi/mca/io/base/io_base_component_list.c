@@ -103,10 +103,10 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
         citem->component = *comp;
 
         c = (mca_base_component_t *) (&citem->component);
-        if (1 == c->mca_type_major_version &&
+        if (2 == c->mca_type_major_version &&
             0 == c->mca_type_minor_version &&
             0 == c->mca_type_release_version) {
-            citem->version = MCA_IO_BASE_V_1_0_0;
+            citem->version = MCA_IO_BASE_V_2_0_0;
         } else {
             citem->version = MCA_IO_BASE_V_NONE;
         }
@@ -185,8 +185,8 @@ int mca_io_base_component_run_progress(void)
         citem = (component_item_t *) item;
 
         switch (citem->version) {
-        case MCA_IO_BASE_V_1_0_0:
-            ret = citem->component.v1_0_0.io_progress();
+        case MCA_IO_BASE_V_2_0_0:
+            ret = citem->component.v2_0_0.io_progress();
             if (ret > 0) {
                 count += ret;
             }

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,7 +70,7 @@ int mca_io_base_request_create_freelist(void)
 {
     opal_list_item_t *p;
     const mca_base_component_t *component;
-    const mca_io_base_component_2_0_0_t *v100;
+    const mca_io_base_component_2_0_0_t *v200;
     size_t size = 0;
     int i, init, incr;
 
@@ -82,14 +83,14 @@ int mca_io_base_request_create_freelist(void)
         component = ((mca_base_component_priority_list_item_t *) 
                      p)->super.cli_component;
 
-        /* Only know how to handle v1.0.0 components for now */
+        /* Only know how to handle v2.0.0 components for now */
 
-        if (component->mca_type_major_version == 1 &&
+        if (component->mca_type_major_version == 2 &&
             component->mca_type_minor_version == 0 &&
             component->mca_type_release_version == 0) {
-            v100 = (mca_io_base_component_2_0_0_t *) component;
-            if (v100->io_request_bytes > size) {
-                size = v100->io_request_bytes;
+            v200 = (mca_io_base_component_2_0_0_t *) component;
+            if (v200->io_request_bytes > size) {
+                size = v200->io_request_bytes;
             }
         }
     }
@@ -157,7 +158,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
         /* Call the per-use init function, if it exists */
 
         switch (file->f_io_version) {
-        case MCA_IO_BASE_V_1_0_0:
+        case MCA_IO_BASE_V_2_0_0:
 
             /* These can be set once for this request since this
                request will always be used with the same module (and
@@ -169,15 +170,15 @@ int mca_io_base_request_alloc(ompi_file_t *file,
             (*req)->req_ver = file->f_io_version;
             (*req)->free_called = false;
             (*req)->super.req_free =
-                file->f_io_selected_module.v1_0_0.io_module_request_free;
+                file->f_io_selected_module.v2_0_0.io_module_request_free;
             (*req)->super.req_cancel =
-                file->f_io_selected_module.v1_0_0.io_module_request_cancel;
+                file->f_io_selected_module.v2_0_0.io_module_request_cancel;
 
             /* Call the module's once-per process init, if it
                exists */
 
             func = 
-                file->f_io_selected_module.v1_0_0.io_module_request_once_init;
+                file->f_io_selected_module.v2_0_0.io_module_request_once_init;
             if (NULL != func) {
                 if (OMPI_SUCCESS != 
                     (err = func(&file->f_io_selected_module, *req))) {

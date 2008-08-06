@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +35,7 @@ int MPIR_Status_set_bytes(ompi_status_public_t *status,
 /*
  * The ROMIO module operations
  */
-mca_io_base_module_1_0_0_t mca_io_romio_module = {
+mca_io_base_module_2_0_0_t mca_io_romio_module = {
 
     /* Once-per-process request init / finalize functions */
 
