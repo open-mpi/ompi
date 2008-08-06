@@ -27,6 +27,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
+#if HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
@@ -114,6 +117,27 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 opal_thread_t *ompi_mpi_main_thread = NULL;
 
 bool ompi_mpi_maffinity_setup = false;
+
+bool ompi_do_not_warn_on_fork;
+
+static bool fork_warning_issued = false;
+
+static void warn_fork(void)
+{
+    if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
+        orte_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true);
+        fork_warning_issued = true;
+    }
+}
+
+void ompi_warn_fork(void)
+{
+#if HAVE_PTHREAD_H
+    if (!ompi_do_not_warn_on_fork) {
+        pthread_atfork(warn_fork, NULL, NULL);
+    }
+#endif
+}
 
 /*
  * These variables are here, rather than under ompi/mpi/c/foo.c

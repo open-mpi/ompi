@@ -75,3 +75,10 @@ Node: %s
 
 In order to operate in a heterogeneous environment, please reconfigure
 Open MPI with --enable-heterogeneous.
+#
+[mpi_init:warn-fork]
+The program has executed an operation involving a call to "fork". Open MPI
+is currently operating in a condition that could result in memory corruption
+issues in this situation - for example, use of the OpenIB BTL. Use of fork
+is therefore not recommended in this situation.
+
