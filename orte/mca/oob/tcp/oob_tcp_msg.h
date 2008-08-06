@@ -32,7 +32,6 @@
 #include "orte/util/show_help.h"
 
 #include "orte/mca/oob/oob.h"
-#include "oob_tcp_peer.h"
 #include "oob_tcp_hdr.h"
 
 BEGIN_C_DECLS
