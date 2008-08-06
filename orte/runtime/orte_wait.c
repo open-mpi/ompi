@@ -493,9 +493,6 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
     
-    /* setup the trigger and its associated lock */
-    OBJ_CONSTRUCT(trig, orte_trigger_event_t);
-    
     /* pass back the write end of the pipe */
     trig->channel = p[1];
     
@@ -1085,9 +1082,6 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
 
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
-    
-    /* setup the trigger and its associated lock */
-    OBJ_CONSTRUCT(trig, orte_trigger_event_t);
     
     /* pass back the write end of the pipe */
     trig->channel = p[1];
