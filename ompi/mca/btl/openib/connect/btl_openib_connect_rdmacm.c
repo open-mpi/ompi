@@ -451,7 +451,7 @@ static int handle_connect_request(rdmacm_contents_t *local,
     BTL_VERBOSE(("ep state = %d, local ipaddr = %x, remote ipaddr = %x port %d",
                  endpoint->endpoint_state, local->ipaddr, message->ipaddr, rem_port));
 
-    if ((local->ipaddr == message->ipaddr && local->tcp_port > rem_port) ||
+    if ((local->ipaddr == message->ipaddr && local->tcp_port < rem_port) ||
         local->ipaddr > message->ipaddr) {
         int race = 1;
 
