@@ -534,6 +534,7 @@ int mca_pml_ob1_ft_event( int state )
             opal_output(0,
                         "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
                         ret);
+            free (procs);
             return ret;
         }
     }
