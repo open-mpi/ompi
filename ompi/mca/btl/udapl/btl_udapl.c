@@ -285,7 +285,12 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     res.deregister_mem = udapl_dereg_mr;
     btl->super.btl_mpool = mca_mpool_base_module_create(
             mca_btl_udapl_component.udapl_mpool_name, &btl->super, &res);
-
+    if (NULL == btl->super.btl_mpool) {
+        BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_INFORM,
+            ("WARNING: Failed to create mpool."));
+        goto failure;
+    }
+ 
     /* initialize objects */
     OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_max, ompi_free_list_t);
