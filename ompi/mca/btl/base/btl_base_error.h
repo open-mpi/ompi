@@ -34,7 +34,7 @@
 OMPI_DECLSPEC extern int mca_btl_base_verbose;
 
 OMPI_DECLSPEC extern int mca_btl_base_err(const char*, ...);
-extern int mca_btl_base_out(const char*, ...);
+OMPI_DECLSPEC extern int mca_btl_base_out(const char*, ...);
 
 #define BTL_OUTPUT(args)                                     \
 do {                                                         \
