@@ -83,10 +83,6 @@ AC_DEFUN([MCA_memory_malloc_solaris_CONFIG],[
 
         AC_SUBST(memory_malloc_solaris_LIBS)
 
-        AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
-              [memory_base_found=1
-                $1], [$2])
-
     ;;
     *)
         AC_MSG_RESULT([no])
@@ -95,6 +91,10 @@ AC_DEFUN([MCA_memory_malloc_solaris_CONFIG],[
                 memory_malloc_solaris_should_use=0])
     ;;
     esac 
+
+    AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
+          [memory_base_found=1
+           $1], [$2])
 
     OMPI_VAR_SCOPE_POP
 ])
