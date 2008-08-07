@@ -156,13 +156,38 @@ int btl_openib_component_open(void)
 
 static int btl_openib_component_close(void)
 {
+    int rc = OMPI_SUCCESS;
+
+#if OMPI_HAVE_THREADS
+    /* Tell the async thread to shutdown */
+    if (mca_btl_openib_component.use_async_event_thread &&
+        0 != mca_btl_openib_component.async_thread) {
+        int async_command = 0;
+        if (write(mca_btl_openib_component.async_pipe[1], &async_command,
+                  sizeof(int)) < 0) {
+            BTL_ERROR(("Failed to communicate with async event thread"));
+            rc = OMPI_ERROR;
+        } else {
+            if (pthread_join(mca_btl_openib_component.async_thread, NULL)) {
+                BTL_ERROR(("Failed to stop OpenIB async event thread"));
+                rc = OMPI_ERROR;
+            }
+        }
+        close(mca_btl_openib_component.async_pipe[0]);
+        close(mca_btl_openib_component.async_pipe[1]);
+        close(mca_btl_openib_component.async_comp_pipe[0]);
+        close(mca_btl_openib_component.async_comp_pipe[1]);
+    }
+#endif
+
     ompi_btl_openib_connect_base_finalize();
     ompi_btl_openib_fd_finalize();
     ompi_btl_openib_ini_finalize();
     if (NULL != mca_btl_openib_component.receive_queues) {
         free(mca_btl_openib_component.receive_queues);
     }
-    return OMPI_SUCCESS;
+
+    return rc;
 }
 
 static bool check_basics(void)
