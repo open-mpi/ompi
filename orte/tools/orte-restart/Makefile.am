@@ -20,10 +20,8 @@
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-# Bug in AM 1.10.1: need to list man pages because dist_man_MANS is
-# not picked up inside of an AM_CONDITIONAL
 man_pages = orte-restart.1 ompi-restart.1
-EXTRA_DIST = $(man_pages) orte-restart.1in
+EXTRA_DIST = orte-restart.1in
 
 if !ORTE_DISABLE_FULL_SUPPORT
 if WANT_FT
@@ -31,7 +29,12 @@ if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-restart
 
-man_MANS = $(man_pages)
+nodist_man_MANS = $(man_pages)
+
+# Ensure that the man pages are rebuilt if the opal_config.h file
+# changes; a "good enough" way to know if configure was run again (and
+# therefore the release date or version may have changed)
+$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_pkgdata_DATA = help-orte-restart.txt
 
@@ -52,5 +55,5 @@ endif # ORTE_DISABLE_FULL_SUPPORT
 ompi-restart.1: $(top_builddir)/orte/tools/orte-restart/orte-restart.1
 	cp -f $(top_builddir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
 
-maintainer-clean-local:
+distclean-local:
 	rm -f $(man_pages)

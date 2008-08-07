@@ -18,12 +18,11 @@
 #
 
 man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1
-EXTRA_DIST = $(man_pages)
 
 if OMPI_INSTALL_BINARIES
 if !ORTE_DISABLE_FULL_SUPPORT
 
-man_MANS = $(man_pages)
+nodist_man_MANS = $(man_pages)
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
@@ -61,5 +60,5 @@ $(top_builddir)/orte/tools/orte-clean/orte-clean.1:
 ompi-clean.1: $(top_builddir)/orte/tools/orte-clean/orte-clean.1
 	cp -f $(top_builddir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
 
-maintainer-clean-local:
+distclean-local:
 	rm -f $(man_pages)

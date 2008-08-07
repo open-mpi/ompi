@@ -18,7 +18,6 @@
 #
 
 man_pages = ortecc.1 ortec++.1
-EXTRA_DIST = $(man_pages)
 
 if !ORTE_DISABLE_FULL_SUPPORT
 if !OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
@@ -46,7 +45,7 @@ endif # OMPI_INSTALL_BINARIES
 endif # WANT_INSTALL_HEADERS
 endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 
-maintainer-clean-local:
+distclean-local:
 	rm -f $(man_pages)
 
 ortecc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1

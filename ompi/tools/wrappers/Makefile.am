@@ -18,7 +18,6 @@
 #
 
 man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
-EXTRA_DIST = $(man_pages)
 
 if OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 
@@ -109,7 +108,7 @@ endif # OMPI_WANT_SHELL_WRAPPER_COMPILERS
 # Man page generation / handling
 #
 ########################################################
-maintainer-clean-local:
+distclean-local:
 	rm -f $(man_pages)
 
 $(top_builddir)/opal/tools/wrappers/generic_wrapper.1:

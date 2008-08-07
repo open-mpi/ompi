@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -125,26 +126,39 @@ fi
 #
 # Do svn up and all that
 #
-echo "*** Removing old VERSION files..."
-find . -name VERSION -exec rm -f {} \; -print
+echo "*** Removing old VERSION file..."
+rm -f VERSION
 
-echo "*** Running svn up..."
-svn up
-if test ! "$?" = "0"; then
-    echo "SVN update failed.  Aborting"
-    exit 1
+if test -d .svn; then
+    echo "*** Running svn up..."
+    svn up
+    if test ! "$?" = "0"; then
+        echo "SVN update failed.  Aborting"
+        exit 1
+    fi
+elif test -d .hg; then
+    echo "*** Running hg up..."
+    hg revert VERSION
+    hg up
+    if test ! "$?" = "0"; then
+        echo "SVN update failed.  Aborting"
+        exit 1
+    fi
 fi
 
 #
-# Ditch "svn" from all version numbers
+# Ditch "svn/hg" from all version numbers
 #
 echo "*** Removing svn version numbers..."
 svn_r="r`svnversion .`"
-version_files="`find . -name VERSION`"
+version_files=VERSION
+release_date=`date '+%b %d, %Y'`
 for file in $version_files; do
     echo " - $file"
     sed -e 's/^want_svn=.*/want_svn=0/' \
-        -e 's/^svn_r=.*/'svn_r=$svn_r/ $file > $file.new
+        -e 's/^svn_r=.*/'svn_r=$svn_r/ \
+        -e "s/^date=.*/date=\"$release_date\"/" \
+        $file > $file.new
     cp -f $file.new $file
     rm $file.new
 done

@@ -30,14 +30,19 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orterun.1
-EXTRA_DIST = $(man_pages) $(man_pages:.1=.1in)
+EXTRA_DIST = $(man_pages:.1=.1in)
 
 if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orterun
 
-dist_man_MANS = $(man_pages)
+nodist_man_MANS = $(man_pages)
+
+# Ensure that the man pages are rebuilt if the opal_config.h file
+# changes; a "good enough" way to know if configure was run again (and
+# therefore the release date or version may have changed)
+$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_pkgdata_DATA = help-orterun.txt
 
@@ -54,5 +59,5 @@ orterun_LDADD = $(top_builddir)/orte/libopen-rte.la
 
 endif # !ORTE_DISABLE_FULL_SUPPORT
 
-maintainer-clean-local:
+distclean-local:
 	rm -f $(man_pages)
