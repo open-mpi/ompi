@@ -35,7 +35,7 @@ static int open_component(void);
 static int close_component(void);
 static int init_query(bool enable_progress_threads,
                       bool enable_mpi_threads);
-static const struct mca_io_base_module_1_0_0_t *
+static const struct mca_io_base_module_2_0_0_t *
   file_query(struct ompi_file_t *file, 
              struct mca_io_base_file_t **private_data,
              int *priority);
@@ -191,7 +191,7 @@ static int init_query(bool enable_progress_threads,
 }
 
 
-static const struct mca_io_base_module_1_0_0_t *
+static const struct mca_io_base_module_2_0_0_t *
 file_query(struct ompi_file_t *file, 
            struct mca_io_base_file_t **private_data,
            int *priority)
