@@ -56,7 +56,7 @@ typedef int (*orte_ess_base_module_finalize_fn_t)(void);
  * function should create an appropriate file to alert the local
  * orted that termination was abnormal.
  */
-typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report);
+typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report) __opal_attribute_noreturn__;
 
 /**
  * Determine if a process is local to me
