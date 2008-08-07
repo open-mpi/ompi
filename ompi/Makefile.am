@@ -127,7 +127,7 @@ include_HEADERS =
 nobase_ompi_HEADERS = 
 dist_pkgdata_DATA =
 libmpi_la_SOURCES += $(headers)
-dist_man_MANS =
+nodist_man_MANS =
 
 # Conditionally install the header files
 
@@ -156,5 +156,20 @@ include mpi/Makefile.am
 include mpi/f77/base/Makefile.include
 include mpi/man/man3/Makefile.extra
 
-maintainer-clean-local:
-	rm -f $(dist_man_MANS)
+# Ensure that the man page directory exists before we try to make man
+# page files (because ompi/mpi/man/man3 has no config.status-generated
+# Makefile)
+dir_stamp = $(top_builddir)/$(subdir)/mpi/man/man3/.dir-stamp
+
+# Also ensure that the man pages are rebuilt if the opal_config.h file
+# changes (e.g., configure was run again, meaning that the release
+# date or version may have changed)
+$(nodist_man_MANS): $(dir_stamp) $(top_builddir)/opal/include/opal_config.h
+
+$(dir_stamp):
+	$(mkdir_p) `dirname $@`
+	touch "$@"
+
+# Remove the generated man pages
+distclean-local:
+	rm -f $(nodist_man_MANS) $(dir_stamp)

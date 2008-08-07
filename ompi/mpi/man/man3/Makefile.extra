@@ -318,5 +318,5 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Wtime.3 \
         mpi/man/man3/OpenMPI.3
 
-dist_man_MANS += $(mpi_api_man_pages)
-EXTRA_DIST += $(mpi_api_man_pages)
+nodist_man_MANS += $(mpi_api_man_pages)
+EXTRA_DIST += $(mpi_api_man_pages:.3=.3in)

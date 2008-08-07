@@ -21,7 +21,7 @@
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
 real_man_pages = generic_wrapper.1 opal_wrapper.1
-EXTRA_DIST = $(real_man_pages) $(real_man_pages:1.=.1in)
+EXTRA_DIST = $(real_man_pages:.1=.1in)
 
 include $(top_srcdir)/Makefile.man-page-rules
 
@@ -30,7 +30,7 @@ if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = opal_wrapper
 
-man_MANS = opal_wrapper.1
+nodist_man_MANS = opal_wrapper.1
 
 dist_pkgdata_DATA = help-opal-wrapper.txt
 
@@ -41,7 +41,7 @@ nodist_pkgdata_DATA = \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
 
-man_MANS += opalcc.1 opalc++.1
+nodist_man_MANS += opalcc.1 opalc++.1
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
@@ -59,8 +59,10 @@ endif # OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 opal_wrapper_SOURCES = opal_wrapper.c
 opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal.la
 
-maintainer-clean-local:
-	rm -f $(real_man_pages) opalcc.1 opalc++.1
+# Ensure that the man pages are rebuilt if the opal_config.h file
+# changes; a "good enough" way to know if configure was run again (and
+# therefore the release date or version may have changed)
+$(real_man_pages): $(top_builddir)/opal/include/opal_config.h
 
 opalcc.1: generic_wrapper.1
 	rm -f opalcc.1
@@ -70,3 +72,5 @@ opalc++.1: generic_wrapper.1
 	rm -f opalc++.1
 	sed -e 's/#COMMAND#/opalc++/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1
 
+distclean-local:
+	rm -f $(real_man_pages) opalcc.1 opalc++.1

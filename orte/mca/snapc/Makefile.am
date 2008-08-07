@@ -32,8 +32,13 @@ headers = snapc.h
 libmca_snapc_la_SOURCES += $(headers)
 
 # Manual pages
-dist_man_MANS = orte_snapc.7
-EXTRA_DIST =  $(dist_man_MANS:.7=.7in)
+nodist_man_MANS = orte_snapc.7
+EXTRA_DIST = $(nodist_man_MANS:.7=.7in)
+
+# Ensure that the man pages are rebuilt if the opal_config.h file
+# changes; a "good enough" way to know if configure was run again (and
+# therefore the release date or version may have changed)
+$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
@@ -47,3 +52,4 @@ include base/Makefile.am
 
 distclean-local:
 	rm -f base/static-components.h
+	rm -f $(nodist_man_MANS)

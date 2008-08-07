@@ -42,7 +42,7 @@ AM_CPPFLAGS = \
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = ompi_info.1
-EXTRA_DIST = $(man_pages) $(man_pages:.1=.1in)
+EXTRA_DIST = $(man_pages:.1=.1in)
 
 if OMPI_INSTALL_BINARIES
 
@@ -50,7 +50,12 @@ bin_PROGRAMS = ompi_info
 
 dist_pkgdata_DATA = help-ompi_info.txt
 
-man_MANS = $(man_pages)
+nodist_man_MANS = $(man_pages)
+
+# Ensure that the man pages are rebuilt if the opal_config.h file
+# changes; a "good enough" way to know if configure was run again (and
+# therefore the release date or version may have changed)
+$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 endif
 
@@ -66,5 +71,5 @@ ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
 
-maintainer-clean-local:
+distclean-local:
 	rm -f $(man_pages)
