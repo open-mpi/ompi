@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      University of Houston. All rights reserved.
+ * Copyright (c) 2007-2008 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -130,9 +130,9 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
         }
         newcomm->c_flags |= OMPI_COMM_INTER;
         if ( OMPI_COMM_IS_INTRA(oldcomm) ) {
-            ompi_comm_dup(oldcomm, &newcomm->c_local_comm,1);
+            ompi_comm_dup(oldcomm, &newcomm->c_local_comm,0);
         } else {
-            ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm,1);
+            ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm,0);
         }
     }
     else { 
