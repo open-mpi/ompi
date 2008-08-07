@@ -141,7 +141,7 @@ elif test -d .hg; then
     hg revert VERSION
     hg up
     if test ! "$?" = "0"; then
-        echo "SVN update failed.  Aborting"
+        echo "HG update failed.  Aborting"
         exit 1
     fi
 fi
