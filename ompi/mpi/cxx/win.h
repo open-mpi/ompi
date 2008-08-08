@@ -54,7 +54,7 @@ public:
 
 #else
 
-  Win() { }
+  Win() : mpi_win(MPI_WIN_NULL) { }
   // copy
   Win(const Win& data) : mpi_win(data.mpi_win) { }
 
