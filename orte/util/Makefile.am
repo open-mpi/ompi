@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,12 +19,20 @@
 
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
+include $(top_srcdir)/Makefile.man-page-rules
+
 dist_pkgdata_DATA += util/hostfile/help-hostfile.txt \
                      util/dash_host/help-dash-host.txt
 
-man_MANS = util/hostfile/orte_hosts.7
+nodist_man_MANS = util/hostfile/orte_hosts.7
 
-EXTRA_DIST = $(man_MANS)
+# We are using $(am_dirstamp) instead of creating our own dirstamp since there
+# is src code in util/hostfile directory is created.  The automake process
+# creates the $(am_dirstamp), we found the use of this in the generated Makefile
+# in the util/Makefile
+$(nodist_man_MANS): util/hostfile/$(am__dirstamp) $(top_builddir)/opal/include/opal_config.h
+
+EXTRA_DIST = $(nodist_man_MANS:.1=.1in)
 
 AM_LFLAGS = -Porte_util_hostfile_
 LEX_OUTPUT_ROOT = lex.orte_util_hostfile_
@@ -63,3 +72,7 @@ libopen_rte_la_SOURCES += \
         util/comm/comm.c \
         util/nidmap.c
 endif
+
+# Remove the generated man pages
+distclean-local:
+	rm -f $(nodist_man_MANS)
