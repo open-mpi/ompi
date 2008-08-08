@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +30,6 @@
 #include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
-#include "ompi/mca/bml/base/bml_base_endpoint.h" 
 
 #include "ompi/types.h"
 #include "ompi/class/ompi_free_list.h"

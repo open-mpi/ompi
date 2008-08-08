@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,7 +21,6 @@
 
 #include "opal/sys/atomic.h"
 #include "ompi/mca/bml/bml.h"
-#include "bml_base_endpoint.h"
 #include "ompi/mca/pml/pml.h" 
 
 
