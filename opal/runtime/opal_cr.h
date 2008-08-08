@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,9 +24,6 @@
  */
 
 #include "opal/mca/crs/crs.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/threads.h"
-#include "opal/threads/condition.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/util/output.h"
