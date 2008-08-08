@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,7 +22,6 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/bml/base/bml_base_endpoint.h"
 #include "ompi/mca/bml/base/bml_base_btl.h"
 
 int mca_bml_base_ft_event(int state)
