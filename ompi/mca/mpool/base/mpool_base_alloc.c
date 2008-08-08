@@ -155,7 +155,7 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
                 continue;
             }
             mpool_requested = true;
-            ompi_info_get(info, key, MPI_MAX_INFO_VAL+1, value, &flag);
+            ompi_info_get(info, key, MPI_MAX_INFO_VAL, value, &flag);
             if ( !flag ) {
                 continue;
             }
