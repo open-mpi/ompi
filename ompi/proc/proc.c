@@ -488,6 +488,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
     /* free this on the way out */
     newprocs = (ompi_proc_t **) calloc (proclistsize, sizeof (ompi_proc_t *));
     if (NULL == newprocs) {
+        free(plist);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
@@ -505,16 +506,22 @@ ompi_proc_unpack(opal_buffer_t* buf,
         rc = opal_dss.unpack(buf, &new_name, &count, ORTE_NAME);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
+            free(plist);
+            free(newprocs);
             return rc;
         }
         rc = opal_dss.unpack(buf, &new_arch, &count, OPAL_UINT32);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
+            free(plist);
+            free(newprocs);
             return rc;
         }
         rc = opal_dss.unpack(buf, &new_hostname, &count, OPAL_STRING);
         if (rc != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(rc);
+            free(plist);
+            free(newprocs);
             return rc;
         }
         
@@ -541,6 +548,8 @@ ompi_proc_unpack(opal_buffer_t* buf,
                                true, orte_process_info.nodename, 
                                new_hostname == NULL ? "<hostname unavailable>" :
                                new_hostname);
+                free(plist);
+                free(newprocs);
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
