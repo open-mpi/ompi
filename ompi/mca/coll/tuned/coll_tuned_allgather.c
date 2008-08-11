@@ -765,9 +765,10 @@ ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca
                                 "allgather_algorithm",
                                 "Which allgather algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 bruck, 3 recursive doubling, 4 ring, 5 neighbor exchange, 6: two proc only.",
                                 false, false, 0, NULL);
+    assert (mca_param_indices->algorithm_param_index >= 0);
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, 
                               &(requested_alg));
-    if( requested_alg > max_alg ) {
+    if( 0 > requested_alg || requested_alg > max_alg ) {
        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
           opal_output( 0, "Allgather algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                        requested_alg, max_alg );

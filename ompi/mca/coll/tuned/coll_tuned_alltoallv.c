@@ -234,8 +234,9 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
                                  "Can be locked down to choice of: 0 ignore, "
                                  "1 basic linear, 2 pairwise.",
                                  false, false, 0, NULL);
+    assert (mca_param_indices->algorithm_param_index >= 0);
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
-    if (requested_alg > max_alg) {
+    if (0 > requested_alg || requested_alg > max_alg) {
         if (0 == ompi_comm_rank( MPI_COMM_WORLD)) {
             opal_output(0, "Alltoallv algorithm #%d is not available (range [0..%d]). "
                         "Switching back to ignore(0)\n",

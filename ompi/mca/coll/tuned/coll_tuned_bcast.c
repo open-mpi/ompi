@@ -736,8 +736,9 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
                                  "bcast_algorithm",
                                  "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: binomial tree.",
                                  false, false, 0, NULL);
+    assert (mca_param_indices->algorithm_param_index >= 0);
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
-    if( requested_alg > max_alg ) {
+    if( 0 > requested_alg || requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
             opal_output( 0, "Broadcast algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
                          requested_alg, max_alg );
