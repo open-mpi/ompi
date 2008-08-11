@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -552,8 +552,9 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
     tmpbuf  = (int *) malloc ( count * sizeof(int));
     rdisps  = (int *) calloc ( rsize, sizeof(int));
     rcounts = (int *) calloc ( rsize, sizeof(int) );
-    if ( NULL == tmpbuf || NULL == rdisps || NULL == rcounts ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if ( OPAL_UNLIKELY (NULL == tmpbuf || NULL == rdisps || NULL == rcounts)) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
     
     /* Execute the inter-allreduce: the result of our group will
@@ -666,7 +667,8 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     local_rank = ompi_comm_rank ( comm );
     tmpbuf     = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
-        return MPI_ERR_INTERN;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     /* Intercomm_create */
@@ -764,7 +766,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     local_rank = ompi_comm_rank ( comm );
     tmpbuf     = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
-        return MPI_ERR_INTERN;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     /* comm is an intra-communicator */
