@@ -87,7 +87,7 @@ directory.  See the "Current Working Directory" section below for further
 details.
 .\"
 .\" Start options listing
-.\"    Indent 10 chacters from start of first column to start of second column
+.\"    Indent 10 characters from start of first column to start of second column
 .TP 10
 .B <args>
 Pass these run-time arguments to every new process.  These must always
@@ -464,7 +464,8 @@ nodes.
 .
 .SS Loadbalance rank allocation
 .
-Uniform distribution of the ranks on all nodes when using Round Robin mapper while retaining byslot rank associations.
+Uniform distribution of the ranks on all nodes when using Round Robin mapper 
+while retaining byslot rank associations.
 
  ex :               byslot    bynode   loadbalance
         node0:      0,1,2,3   0,3,6    0,1,2   
@@ -537,7 +538,8 @@ on hosts b and c.
 .
 .SS Specifying Ranks
 .
-Rankfile came to provide Open MPI a file with the location of each MPI_COMM_WORLD rank. The syntax of the rankfile as follows:
+Rankfile came to provide Open MPI a file with the location of each MPI_COMM_WORLD rank. 
+The syntax of the rankfile as follows:
  rank i=host_j slot=x
 
     \fBshell$\fP cat my-rankfile
@@ -552,13 +554,17 @@ This means that
  a. rank 1 will run on host1 bounded to socket1:core0 and socket1:core1
  b. rank 0 will run on host2 bounded to any core on socket0
  c. rank 2 will run on host4 bounded to CPU#1 and CPU#2
- d. rank 3 will run on host3 bounded to socket0:core1 and socket1:core0, socket1:core1, socket1:core2
+ d. rank 3 will run on host3 bounded to socket0:core1 and socket1:core0, socket1:core1, \
+    socket1:core2
 . 
 .
 .
 .SS Providing cartofile
 .
-The cartofile suplies an information of the the host structure and connection among the host components i.e memory nodes,CPUs, Ethernet and inifiniband ports. The information stored as a graph in the cartofile. This graph contains the names and types of EDGEs, connecting BRANCHes and distance among them. See the fallowing example of the cartofile:
+The cartofile supplies an information of the the host structure and connection among the host 
+components, i.e., memory nodes, CPUs, Ethernet and Infiniband ports. The information stored as 
+a graph in the cartofile. This graph contains the names and types of EDGEs, connecting BRANCHes 
+and distance among them. See the following example of the cartofile:
 
 . 
  #Node declaration Node type (Free string) Node name
@@ -793,7 +799,7 @@ The \fI--prefix\fR option takes a single argument: the base directory
 on the remote node where Open MPI is installed.  Open MPI will use
 this directory to set the remote \fIPATH\fR and \fILD_LIBRARY_PATH\fR
 before executing any Open MPI or user applications.  This allows
-running Open MPI jobs without having pre-configued the \fIPATH\fR and
+running Open MPI jobs without having pre-configured the \fIPATH\fR and
 \fILD_LIBRARY_PATH\fR on the remote nodes.
 .PP
 Open MPI adds the basename of the current
@@ -896,6 +902,10 @@ variables.  Also note that unknown \fI<key>\fP arguments are still set as
 environment variable -- they are not checked (by \fImpirun\fP) for correctness.
 Illegal or incorrect \fI<value>\fP arguments may or may not be reported -- it
 depends on the specific MCA module.
+.PP
+To find the available component types under the MCA architecture, or to find the
+available parameters for a specific component, use the \fIompi_info\fP command.
+See the \fIompi_info(1)\fP man page for detailed information on the command.
 .
 .\" **************************
 .\"    Examples Section
@@ -918,6 +928,16 @@ Run 8 copies of prog1 wherever Open MPI wants to run them.
 mpirun -np 4 -mca btl ib,tcp,self prog1
 Run 4 copies of prog1 using the "ib", "tcp", and "self" BTL's for the transport
 of MPI messages.
+.
+.
+.TP
+mpirun -np 4 -mca btl tcp,sm,self 
+.br
+--mca btl_tcp_if_include ce0 prog1
+.br
+Run 4 copies of prog1 using the "tcp", "sm" and "self" BTLs for the transport of 
+MPI messages, with TCP using only the ce0 interface to communicate.  Note that 
+other BTLs have similar if_include MCA parameters.
 .
 .\" **************************
 .\"    Diagnostics Section
