@@ -88,6 +88,7 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
         ++count;
     }
     if (2 != count) {
+        free(cxx_extra_state);
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                       "MPI::Datatype::Create_keyval");
     }
