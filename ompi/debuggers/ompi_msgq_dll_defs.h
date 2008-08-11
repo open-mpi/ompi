@@ -79,10 +79,10 @@ typedef struct {
     mqs_taddr_t upper_bound;
     mqs_tword_t header_space;
     mqs_taddr_t free_list;
-    mqs_tword_t fl_elem_class;         /* opal_class_t* */
+    mqs_tword_t fl_frag_class;         /* opal_class_t* */
     mqs_tword_t fl_mpool;              /* struct mca_mpool_base_module_t* */
-    mqs_tword_t fl_elem_size;          /* size_t */
-    mqs_tword_t fl_alignment;          /* size_t */
+    mqs_tword_t fl_frag_size;          /* size_t */
+    mqs_tword_t fl_frag_alignment;     /* size_t */
     mqs_tword_t fl_num_per_alloc;      /* size_t */
     mqs_tword_t fl_num_allocated;      /* size_t */
     mqs_tword_t fl_num_initial_alloc;  /* size_t */
