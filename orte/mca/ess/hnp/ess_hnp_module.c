@@ -35,6 +35,7 @@
 
 #include "opal/util/os_path.h"
 #include "opal/util/malloc.h"
+#include "opal/util/basename.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -92,7 +93,7 @@ static int rte_init(char flags)
 {
     int ret;
     char *error = NULL;
-    char *contact_path;
+    char *contact_path, *jobfam_dir;
     orte_job_t *jdata;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -271,8 +272,9 @@ static int rte_init(char flags)
                                      "output-", NULL, NULL);
 
     /* save my contact info in a file for others to find */
-    contact_path = opal_os_path(false, orte_process_info.job_session_dir,
-                "contact.txt", NULL);
+    jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+    contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+    free(jobfam_dir);
     
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s writing contact file %s",
