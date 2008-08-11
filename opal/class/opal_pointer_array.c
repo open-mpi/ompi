@@ -183,6 +183,9 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
             table->number_free++;
         }
     } else {
+        if (NULL == table->addr[index]) {
+            table->number_free--;
+        }
         /* Reset lowest_free if required */
         if ( index == table->lowest_free ) {
             int i;
