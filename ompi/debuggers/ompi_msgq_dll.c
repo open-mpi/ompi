@@ -115,7 +115,7 @@
 #define VERBOSE_REQ      0x00000010
 #define VERBOSE_REQ_DUMP 0x00000020
 
-#define VERBOSE 0x00000000
+#define VERBOSE 0xFFFFFFFF
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if(LEVEL & VERBOSE) { printf WHAT; }
 #else
@@ -840,10 +840,10 @@ static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
     printf( "position->upper_bound                  = 0x%llx\n", (long long)position->upper_bound );
     printf( "position->header_space                 = %llx\n", (long long)position->header_space );
     printf( "position->free_list                    = 0x%llx\n", (long long)position->free_list );
-    printf( "position->fl_elem_class                = 0x%llx\n", (long long)position->fl_elem_class );
+    printf( "position->fl_frag_class                = 0x%llx\n", (long long)position->fl_frag_class );
     printf( "position->fl_mpool                     = 0x%llx\n", (long long)position->fl_mpool );
-    printf( "position->fl_elem_size                 = %llx\n", (long long)position->fl_elem_size );
-    printf( "position->fl_alignment                 = %llx\n", (long long)position->fl_alignment );
+    printf( "position->fl_frag_size                 = %llx\n", (long long)position->fl_frag_size );
+    printf( "position->fl_frag_alignment            = %llx\n", (long long)position->fl_frag_alignment );
     printf( "position->fl_num_per_alloc             = %llx\n", (long long)position->fl_num_per_alloc );
     printf( "position->fl_num_allocated             = %llx\n", (long long)position->fl_num_allocated );
     printf( "position->fl_num_initial_alloc         = %llx\n", (long long)position->fl_num_initial_alloc );
@@ -859,14 +859,14 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
 
     position->free_list = free_list;
 
-    position->fl_elem_size =
-        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
+    position->fl_frag_size =
+        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_frag_size,
                            p_info );
-    position->fl_alignment =
-        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
+    position->fl_frag_alignment =
+        ompi_fetch_size_t( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_frag_alignment,
                            p_info );
-    position->fl_elem_class =
-        ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_class,
+    position->fl_frag_class =
+        ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_frag_class,
                             p_info );
     position->fl_mpool =
         ompi_fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_mpool,
@@ -879,13 +879,13 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
                            p_info );
 
     if( 0 == position->fl_mpool ) {
-        position->header_space = position->fl_elem_size;
+        position->header_space = position->fl_frag_size;
     } else {
         DEBUG(VERBOSE_GENERAL, ("BLAH !!! (CORRECT ME)\n"));
-        position->header_space = position->fl_elem_size;
+        position->header_space = position->fl_frag_size;
     }
     position->header_space = OPAL_ALIGN( position->header_space,
-                                         position->fl_alignment, mqs_taddr_t );
+                                         position->fl_frag_alignment, mqs_taddr_t );
 
     /**
      * Work around the strange ompi_free_list_t way to allocate elements. The first chunk is
@@ -900,12 +900,12 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
         if( 0 == position->fl_num_initial_alloc )
             position->fl_num_initial_alloc = position->fl_num_per_alloc;
     }
-    DEBUG(VERBOSE_LISTS,("ompi_free_list_t fl_elem_size = %lld fl_header_space = %lld\n"
-                         "                 fl_alignment = %lld fl_num_per_alloc = %lld\n"
+    DEBUG(VERBOSE_LISTS,("ompi_free_list_t fl_frag_size = %lld fl_header_space = %lld\n"
+                         "                 fl_frag_alignment = %lld fl_num_per_alloc = %lld\n"
                          "                 fl_num_allocated = %lld fl_num_initial_alloc = %lld\n"
                          "                 header_space = %lld\n",
-                         (long long)position->fl_elem_size, (long long)position->header_space,
-                         (long long)position->fl_alignment, (long long)position->fl_num_per_alloc,
+                         (long long)position->fl_frag_size, (long long)position->header_space,
+                         (long long)position->fl_frag_alignment, (long long)position->fl_num_per_alloc,
                          (long long)position->fl_num_allocated, (long long)position->fl_num_initial_alloc,
                          (long long)position->header_space));
 
@@ -925,7 +925,7 @@ static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
          */
         active_allocation += i_info->ompi_free_list_item_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
-                                        position->fl_alignment, mqs_taddr_t );
+                                        position->fl_frag_alignment, mqs_taddr_t );
         /**
          * Now let's try to compute the upper bound ...
          */
@@ -971,7 +971,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
          */
         active_allocation += i_info->ompi_free_list_item_t.size;
         active_allocation = OPAL_ALIGN( active_allocation,
-                                        position->fl_alignment, mqs_taddr_t );
+                                        position->fl_frag_alignment, mqs_taddr_t );
         /**
          * Now let's try to compute the upper bound ...
          */

@@ -100,10 +100,10 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_free_list_t.type = qh_type;
         i_info->ompi_free_list_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_free_list_t.offset.fl_elem_class = mqs_field_offset(qh_type, "fl_elem_class");
+        i_info->ompi_free_list_t.offset.fl_frag_class = mqs_field_offset(qh_type, "fl_frag_class");
         i_info->ompi_free_list_t.offset.fl_mpool = mqs_field_offset(qh_type, "fl_mpool");
-        i_info->ompi_free_list_t.offset.fl_elem_size = mqs_field_offset(qh_type, "fl_elem_size");
-        i_info->ompi_free_list_t.offset.fl_alignment = mqs_field_offset(qh_type, "fl_alignment");
+        i_info->ompi_free_list_t.offset.fl_frag_size = mqs_field_offset(qh_type, "fl_frag_size");
+        i_info->ompi_free_list_t.offset.fl_frag_alignment = mqs_field_offset(qh_type, "fl_frag_alignment");
         i_info->ompi_free_list_t.offset.fl_allocations = mqs_field_offset(qh_type, "fl_allocations");
         i_info->ompi_free_list_t.offset.fl_max_to_alloc = mqs_field_offset(qh_type, "fl_max_to_alloc");
         i_info->ompi_free_list_t.offset.fl_num_per_alloc = mqs_field_offset(qh_type, "fl_num_per_alloc");
