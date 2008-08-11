@@ -515,7 +515,7 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_TRACE], [$opal_want_trace],
 # Minimal RTE support
 #
 AC_MSG_CHECKING([if want full RTE support])
-AC_ARG_WITH([rte],
+AC_ARG_WITH([rte-support],
     [AC_HELP_STRING([--without-rte-support],
                     [Build without RTE support for systems that do not require it (default: full RTE support built)])])
 if test "$with_rte_support" = "no"; then
