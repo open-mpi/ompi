@@ -17,6 +17,7 @@
 # $HEADER$
 #
 
+man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
 
 if OMPI_WANT_SCRIPT_WRAPPER_COMPILERS
 
@@ -50,12 +51,7 @@ else # OMPI_WANT_SHELL_WRAPPER_COMPILERS
 
 if OMPI_INSTALL_BINARIES
 
-dist_man_MANS = \
-	mpicc.1 \
-	mpic++.1 \
-	mpicxx.1 \
-	mpif77.1 \
-	mpif90.1
+man_MANS = $(man_pages)
 
 dist_pkgdata_DATA = \
         mpicc-wrapper-data.txt \
@@ -112,25 +108,28 @@ endif # OMPI_WANT_SHELL_WRAPPER_COMPILERS
 # Man page generation / handling
 #
 ########################################################
-maintainer-clean-local:
-	rm -f mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
+distclean-local:
+	rm -f $(man_pages)
 
-mpicc.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
+$(top_builddir)/opal/tools/wrappers/generic_wrapper.1:
+	(cd $(top_builddir)/opal/tools/wrappers && $(MAKE) $(AM_MAKEFLAGS) generic_wrapper.1)
+
+mpicc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicc.1
-	sed -e 's/@COMMAND@/mpicc/g' -e 's/@PROJECT@/Open MPI/g' -e 's/@PROJECT_SHORT@/OMPI/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > mpicc.1
+	sed -e 's/#COMMAND#/mpicc/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicc.1
 
-mpic++.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
+mpic++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpic++.1
-	sed -e 's/@COMMAND@/mpic++/g' -e 's/@PROJECT@/Open MPI/g' -e 's/@PROJECT_SHORT@/OMPI/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > mpic++.1
+	sed -e 's/#COMMAND#/mpic++/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpic++.1
 
-mpicxx.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
+mpicxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicxx.1
-	sed -e 's/@COMMAND@/mpicxx/g' -e 's/@PROJECT@/Open MPI/g' -e 's/@PROJECT_SHORT@/OMPI/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
+	sed -e 's/#COMMAND#/mpicxx/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
 
-mpif77.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
+mpif77.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpif77.1
-	sed -e 's/@COMMAND@/mpif77/g' -e 's/@PROJECT@/Open MPI/g' -e 's/@PROJECT_SHORT@/OMPI/g' -e 's/@LANGUAGE@/Fortran 77/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > mpif77.1
+	sed -e 's/#COMMAND#/mpif77/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran 77/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpif77.1
 
-mpif90.1: $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1
+mpif90.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpif90.1
-	sed -e 's/@COMMAND@/mpif90/g' -e 's/@PROJECT@/Open MPI/g' -e 's/@PROJECT_SHORT@/OMPI/g' -e 's/@LANGUAGE@/Fortran 90/g' < $(top_srcdir)/opal/tools/wrappers/generic_wrapper.1 > mpif90.1
+	sed -e 's/#COMMAND#/mpif90/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran 90/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpif90.1

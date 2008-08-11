@@ -10,6 +10,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -135,6 +136,8 @@ void ompi_info::show_ompi_version(const string& scope)
                        OMPI_WANT_SVN, OMPI_SVN_R));
   out("Open MPI SVN revision", type_ompi + ":version:svn",
       OMPI_SVN_R);
+  out("Open MPI release date", type_ompi + ":version:release_date", 
+      OMPI_RELEASE_DATE);
 
   out("Open RTE", type_orte + ":version:full",
       make_version_str(scope, 
@@ -144,6 +147,8 @@ void ompi_info::show_ompi_version(const string& scope)
                        ORTE_WANT_SVN, ORTE_SVN_R));
   out("Open RTE SVN revision", type_orte + ":version:svn",
       ORTE_SVN_R);
+  out("Open RTE release date", type_orte + ":version:release_date", 
+      ORTE_RELEASE_DATE);
 
   out("OPAL", type_opal + ":version:full",
       make_version_str(scope, 
@@ -153,6 +158,8 @@ void ompi_info::show_ompi_version(const string& scope)
                        OPAL_WANT_SVN, OPAL_SVN_R));
   out("OPAL SVN revision", type_opal + ":version:svn",
       OPAL_SVN_R);
+  out("OPAL release date", type_opal + ":version:release_date", 
+      OPAL_RELEASE_DATE);
   out("Ident string", "ident", OPAL_IDENT_STRING);
 }
 

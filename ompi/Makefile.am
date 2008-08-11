@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -68,15 +69,15 @@ endif
 SUBDIRS = \
 	include \
 	datatype \
-        debuggers \
+	debuggers \
 	etc \
-        mpi/c \
+	mpi/c \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
-        . \
-        mpi/cxx \
-        mpi/f77 \
-        mpi/f90 \
+	. \
+	mpi/cxx \
+	mpi/f77 \
+	mpi/f90 \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
 	$(OMPI_CONTRIB_SUBDIRS)
 
@@ -85,10 +86,10 @@ DIST_SUBDIRS = \
 	datatype \
 	debuggers \
 	etc \
-        mpi/c \
-        mpi/cxx \
-        mpi/f77 \
-        mpi/f90 \
+	mpi/c \
+	mpi/cxx \
+	mpi/f77 \
+	mpi/f90 \
 	$(MCA_ompi_FRAMEWORKS_SUBDIRS) \
 	$(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
 	$(OMPI_CONTRIB_DIST_SUBDIRS)
@@ -99,21 +100,21 @@ lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = \
 	datatype/libdatatype.la \
-        debuggers/libdebuggers.la \
-        mpi/c/libmpi_c.la \
+	debuggers/libdebuggers.la \
+	mpi/c/libmpi_c.la \
 	$(c_mpi_lib) \
 	$(c_pmpi_lib) \
-        $(f77_base_lib) \
+	$(f77_base_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
 	$(OMPI_LIBMPI_EXTRA_LIBS) \
 	$(top_ompi_builddir)/orte/libopen-rte.la
 libmpi_la_DEPENDENCIES = \
 	datatype/libdatatype.la \
-        debuggers/libdebuggers.la \
-        mpi/c/libmpi_c.la \
+	debuggers/libdebuggers.la \
+	mpi/c/libmpi_c.la \
 	$(c_mpi_lib) \
 	$(c_pmpi_lib) \
-        $(f77_base_lib) \
+	$(f77_base_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/orte/libopen-rte.la
 libmpi_la_LDFLAGS = \
@@ -126,7 +127,7 @@ include_HEADERS =
 nobase_ompi_HEADERS = 
 dist_pkgdata_DATA =
 libmpi_la_SOURCES += $(headers)
-man_MANS =
+nodist_man_MANS =
 
 # Conditionally install the header files
 
@@ -138,7 +139,6 @@ ompidir = $(includedir)
 endif
 
 include class/Makefile.am
-
 include attribute/Makefile.am
 include communicator/Makefile.am
 include errhandler/Makefile.am
@@ -155,3 +155,21 @@ include tools/Makefile.am
 include mpi/Makefile.am
 include mpi/f77/base/Makefile.include
 include mpi/man/man3/Makefile.extra
+
+# Ensure that the man page directory exists before we try to make man
+# page files (because ompi/mpi/man/man3 has no config.status-generated
+# Makefile)
+dir_stamp = $(top_builddir)/$(subdir)/mpi/man/man3/.dir-stamp
+
+# Also ensure that the man pages are rebuilt if the opal_config.h file
+# changes (e.g., configure was run again, meaning that the release
+# date or version may have changed)
+$(nodist_man_MANS): $(dir_stamp) $(top_builddir)/opal/include/opal_config.h
+
+$(dir_stamp):
+	$(mkdir_p) `dirname $@`
+	touch "$@"
+
+# Remove the generated man pages
+distclean-local:
+	rm -f $(nodist_man_MANS) $(dir_stamp)

@@ -35,6 +35,7 @@ dnl
 #  prefix_GREEK_VERSION
 #  prefix_WANT_SVN
 #  prefix_SVN_R
+#  prefix_RELEASE_DATE
 m4_define([OMPI_GET_VERSION],[
     : ${ompi_ver_need_svn=1}
     : ${srcdir=.}
@@ -51,6 +52,7 @@ m4_define([OMPI_GET_VERSION],[
 	s/^greek/$2_GREEK_VERSION/
 	s/^want_svn/$2_WANT_SVN/
 	s/^svn_r/$2_SVN_R/
+	s/^date/$2_RELEASE_DATE/
 	t print
 	b
 	: print
