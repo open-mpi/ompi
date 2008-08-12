@@ -88,7 +88,7 @@ public:
 
 #else
 
-  File() { }
+  File() : mpi_file(MPI_FILE_NULL) { }
   // copy
   File(const File& data) : mpi_file(data.mpi_file) { }
 
