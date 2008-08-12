@@ -36,10 +36,14 @@
 
 #include "orte/mca/plm/base/plm_private.h"
 
-void orte_plm_base_heartbeat(int fd, short event, void *data)
+#define HEARTBEAT_CK    2
+
+void orte_plm_base_heartbeat(int fd, short event, void *arg)
 {
     opal_buffer_t buf;
     orte_plm_cmd_flag_t command = ORTE_PLM_HEARTBEAT_CMD;
+    opal_event_t *tmp = (opal_event_t*)arg;
+    struct timeval now;
     int rc;
     
     /* setup the buffer */
@@ -58,13 +62,13 @@ void orte_plm_base_heartbeat(int fd, short event, void *data)
     }
     
     /* reset the timer */
-    ORTE_TIMER_EVENT(orte_heartbeat_rate, orte_plm_base_heartbeat);
+    now.tv_sec = orte_heartbeat_rate;
+    now.tv_usec = 0;
+    opal_evtimer_add(tmp, &now);
     
 CLEANUP:
     OBJ_DESTRUCT(&buf);
 }
-
-#define HEARTBEAT_CK    2
 
 /* this function automatically gets periodically called
  * by the event library so we can check on the state
@@ -77,6 +81,8 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     orte_job_t *daemons;
     struct timeval timeout;
     bool died = false;
+    opal_event_t *tmp = (opal_event_t*)arg;
+    struct timeval now;
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:base:check_heartbeat",
@@ -122,7 +128,9 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     }
     
     /* reset the timer */
-    ORTE_TIMER_EVENT(HEARTBEAT_CK*orte_heartbeat_rate, check_heartbeat);
+    now.tv_sec = HEARTBEAT_CK*orte_heartbeat_rate;
+    now.tv_usec = 0;
+    opal_evtimer_add(tmp, &now);
 }
 
 void orte_plm_base_start_heart(void)
