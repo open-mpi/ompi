@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
