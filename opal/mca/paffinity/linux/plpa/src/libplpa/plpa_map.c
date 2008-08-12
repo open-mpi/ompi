@@ -172,7 +172,7 @@ static void clear_cache(void)
 static void load_cache(const char *sysfs_mount)
 {
     int i, j, k, invalid_entry, fd;
-    char path[PATH_MAX], buf[8];
+    char path[PATH_MAX], buf[8] = "\0\0\0\0\0\0\0\0";
     PLPA_NAME(cpu_set_t) *cores_on_sockets;
     int found;
 
