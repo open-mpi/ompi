@@ -135,39 +135,37 @@ typedef int (*orte_errmgr_base_module_register_cb_fn_t)(orte_jobid_t job,
 typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...);
 
 /*
- * Ver 1.0.0
+ * 
  */
-struct orte_errmgr_base_module_1_3_0_t {
+struct orte_errmgr_base_module_2_3_0_t {
     orte_errmgr_base_module_proc_aborted_fn_t           proc_aborted;
     orte_errmgr_base_module_incomplete_start_fn_t       incomplete_start;
     orte_errmgr_base_module_register_cb_fn_t            register_callback;
     orte_errmgr_base_module_abort_fn_t                  abort;
 };
 
-typedef struct orte_errmgr_base_module_1_3_0_t orte_errmgr_base_module_1_3_0_t;
-typedef orte_errmgr_base_module_1_3_0_t orte_errmgr_base_module_t;
+typedef struct orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_2_3_0_t;
+typedef orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_t;
 
 /*
  * ERRMGR Component
  * the standard component data structure
  */
-struct mca_errmgr_base_component_1_3_0_t {
+struct mca_errmgr_base_component_2_0_0_t {
     mca_base_component_t base_version;
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
-typedef struct mca_errmgr_base_component_1_3_0_t mca_errmgr_base_component_1_3_0_t;
-typedef mca_errmgr_base_component_1_3_0_t mca_errmgr_base_component_t;
+typedef struct mca_errmgr_base_component_2_0_0_t mca_errmgr_base_component_2_0_0_t;
+typedef mca_errmgr_base_component_2_0_0_t mca_errmgr_base_component_t;
 
 
 
 /*
- * Macro for use in components that are of type errmgr v1.0.0
+ * Macro for use in components that are of type errmgr
  */
-#define ORTE_ERRMGR_BASE_VERSION_1_3_0 \
-  /* errmgr v1.3 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* errmgr v1.3 */ \
-  "errmgr", 1, 3, 0
+#define ORTE_ERRMGR_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "errmgr", 2, 0, 0
 
 /* Global structure for accessing error manager functions
  */

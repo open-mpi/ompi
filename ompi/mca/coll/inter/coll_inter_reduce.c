@@ -41,7 +41,7 @@ mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op,
                             int root, struct ompi_communicator_t *comm,
-                            struct mca_coll_base_module_1_1_0_t *module)
+                            mca_coll_base_module_t *module)
 {
     int rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;

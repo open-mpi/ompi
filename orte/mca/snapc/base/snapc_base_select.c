@@ -32,7 +32,7 @@ static orte_snapc_base_component_t none_component = {
      *  meta information about the component itself
      */
     {
-        ORTE_SNAPC_BASE_VERSION_1_0_0,
+        ORTE_SNAPC_BASE_VERSION_2_0_0,
         /* Component name and version */
         "none",
         OMPI_MAJOR_VERSION,
@@ -44,8 +44,6 @@ static orte_snapc_base_component_t none_component = {
         orte_snapc_base_none_close,
         orte_snapc_base_none_query
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

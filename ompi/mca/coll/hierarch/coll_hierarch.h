@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 University of Houston. All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +38,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_1_1_0_t mca_coll_hierarch_component;
+OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t mca_coll_hierarch_component;
 
 extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
@@ -60,7 +61,7 @@ extern int mca_coll_hierarch_detection_alg_param;
 */
 
 struct mca_coll_hierarch_module_t {
-    struct mca_coll_base_module_1_1_0_t super;
+    mca_coll_base_module_t super;
 
     struct ompi_communicator_t        *hier_comm; /* link back to the attached comm */ 
     struct ompi_communicator_t       *hier_lcomm; /* low level communicator */
@@ -200,11 +201,11 @@ int mca_coll_hierarch_get_all_lleaders ( int rank, mca_coll_hierarch_module_t *h
  */
 int mca_coll_hierarch_init_query(bool allow_hierarch_user_threads,
 				 bool have_hidden_threads);
-struct mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority );
 
 
-int mca_coll_hierarch_module_enable( struct mca_coll_base_module_1_1_0_t *module, 
+int mca_coll_hierarch_module_enable( mca_coll_base_module_t *module, 
 				     struct ompi_communicator_t *comm);
 
 int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm);
@@ -214,25 +215,25 @@ int mca_coll_hierarch_allgather_intra(void *sbuf, int scount,
 				      void *rbuf, int rcount, 
 				      struct ompi_datatype_t *rdtype, 
 				      struct ompi_communicator_t *comm, 
-				      struct mca_coll_base_module_1_1_0_t *module );
+				      mca_coll_base_module_t *module );
 int mca_coll_hierarch_allgatherv_intra(void *sbuf, int scount, 
 				       struct ompi_datatype_t *sdtype, 
 				       void * rbuf, int *rcounts, 
 				       int *disps, 
 				       struct ompi_datatype_t *rdtype, 
 				       struct ompi_communicator_t *comm,
-				       struct mca_coll_base_module_1_1_0_t *module);
+				       mca_coll_base_module_t *module);
 int mca_coll_hierarch_allreduce_intra(void *sbuf, void *rbuf, int count, 
 				      struct ompi_datatype_t *dtype, 
 				      struct ompi_op_t *op, 
 				      struct ompi_communicator_t *comm, 
-				      struct mca_coll_base_module_1_1_0_t *module);
+				      mca_coll_base_module_t *module);
 int mca_coll_hierarch_alltoall_intra(void *sbuf, int scount, 
 				     struct ompi_datatype_t *sdtype, 
 				     void* rbuf, int rcount, 
 				     struct ompi_datatype_t *rdtype, 
 				     struct ompi_communicator_t *comm, 
-				     struct mca_coll_base_module_1_1_0_t *module);
+				     mca_coll_base_module_t *module);
 int mca_coll_hierarch_alltoallv_intra(void *sbuf, int *scounts, 
 				      int *sdisps, 
 				      struct ompi_datatype_t *sdtype, 
@@ -240,7 +241,7 @@ int mca_coll_hierarch_alltoallv_intra(void *sbuf, int *scounts,
 				      int *rdisps, 
 				      struct ompi_datatype_t *rdtype, 
 				      struct ompi_communicator_t *comm, 
-				      struct mca_coll_base_module_1_1_0_t *module);
+				      mca_coll_base_module_t *module);
 int mca_coll_hierarch_alltoallw_intra(void *sbuf, int *scounts, 
 				      int *sdisps, 
 				      struct ompi_datatype_t **sdtypes, 
@@ -248,14 +249,14 @@ int mca_coll_hierarch_alltoallw_intra(void *sbuf, int *scounts,
 				      int *rdisps, 
 				      struct ompi_datatype_t **rdtypes, 
 				      struct ompi_communicator_t *comm,
-				      struct mca_coll_base_module_1_1_0_t *module);
+				      mca_coll_base_module_t *module);
 int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm, 
-				    struct mca_coll_base_module_1_1_0_t *module);
+				    mca_coll_base_module_t *module);
 int mca_coll_hierarch_bcast_intra(void *buff, int count, 
 				  struct ompi_datatype_t *datatype,
 				  int root, 
 				  struct ompi_communicator_t *comm, 
-				  struct mca_coll_base_module_1_1_0_t *module);
+				  mca_coll_base_module_t *module);
 int mca_coll_hierarch_exscan_intra(void *sbuf, void *rbuf, int count, 
 				   struct ompi_datatype_t *dtype, 
 				   struct ompi_op_t *op, 
@@ -266,42 +267,42 @@ int mca_coll_hierarch_gather_intra(void *sbuf, int scount,
 				   struct ompi_datatype_t *rdtype, 
 				   int root, 
 				   struct ompi_communicator_t *comm, 
-				   struct mca_coll_base_module_1_1_0_t *module);
+				   mca_coll_base_module_t *module);
 int mca_coll_hierarch_gatherv_intra(void *sbuf, int scount, 
 				    struct ompi_datatype_t *sdtype, 
 				    void *rbuf, int *rcounts, int *disps, 
 				    struct ompi_datatype_t *rdtype, 
 				    int root, 
 				    struct ompi_communicator_t *comm, 
-				    struct mca_coll_base_module_1_1_0_t *module);
+				    mca_coll_base_module_t *module);
 int mca_coll_hierarch_reduce_intra(void *sbuf, void* rbuf, int count, 
 				   struct ompi_datatype_t *dtype, 
 				   struct ompi_op_t *op, 
 				   int root,
 				   struct ompi_communicator_t *comm, 
-				   struct mca_coll_base_module_1_1_0_t *module);
+				   mca_coll_base_module_t *module);
 int mca_coll_hierarch_reduce_scatter_intra(void *sbuf, void *rbuf, 
 					   int *rcounts, 
 					   struct ompi_datatype_t *dtype, 
 					   struct ompi_op_t *op, 
 					   struct ompi_communicator_t *comm, 
-					   struct mca_coll_base_module_1_1_0_t *module);
+					   mca_coll_base_module_t *module);
 int mca_coll_hierarch_scan_intra(void *sbuf, void *rbuf, int count, 
 				 struct ompi_datatype_t *dtype, 
 				 struct ompi_op_t *op, 
 				 struct ompi_communicator_t *comm, 
-				 struct mca_coll_base_module_1_1_0_t *module);
+				 mca_coll_base_module_t *module);
 int mca_coll_hierarch_scatter_intra(void *sbuf, int scount, 
 				    struct ompi_datatype_t *sdtype, void *rbuf, 
 				    int rcount, struct ompi_datatype_t *rdtype, 
 				    int root, struct ompi_communicator_t *comm, 
-				    struct mca_coll_base_module_1_1_0_t *module);
+				    mca_coll_base_module_t *module);
 int mca_coll_hierarch_scatterv_intra(void *sbuf, int *scounts, int *disps, 
 				     struct ompi_datatype_t *sdtype, 
 				     void* rbuf, int rcount, 
 				     struct ompi_datatype_t *rdtype, int root, 
 				     struct ompi_communicator_t *comm, 
-				     struct mca_coll_base_module_1_1_0_t *module);
+				     mca_coll_base_module_t *module);
 
 /* 
  * These are trivial implementations of these routines used during comm_query/init,

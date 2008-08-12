@@ -342,23 +342,21 @@ typedef orte_iof_base_module_t* (*orte_iof_base_component_init_fn_t)(
     bool *have_hidden_threads
 );
 
-struct orte_iof_base_component_1_0_0_t {
+struct orte_iof_base_component_2_0_0_t {
   mca_base_component_t iof_version;
-  mca_base_component_data_1_0_0_t iof_data;
+  mca_base_component_data_t iof_data;
   orte_iof_base_component_init_fn_t iof_init;
 };
-typedef struct orte_iof_base_component_1_0_0_t orte_iof_base_component_1_0_0_t;
-typedef struct orte_iof_base_component_1_0_0_t orte_iof_base_component_t;
+typedef struct orte_iof_base_component_2_0_0_t orte_iof_base_component_2_0_0_t;
+typedef struct orte_iof_base_component_2_0_0_t orte_iof_base_component_t;
 
 END_C_DECLS
 
 /*
- * Macro for use in components that are of type iof v1.0.0
+ * Macro for use in components that are of type iof
  */
-#define ORTE_IOF_BASE_VERSION_1_0_0 \
-  /* iof v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* iof v1.0 */ \
-  "iof", 1, 0, 0
+#define ORTE_IOF_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "iof", 2, 0, 0
 
 #endif /* ORTE_IOF_H */

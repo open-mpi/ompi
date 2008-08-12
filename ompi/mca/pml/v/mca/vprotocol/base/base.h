@@ -31,20 +31,18 @@ OMPI_DECLSPEC extern mca_vprotocol_base_component_t mca_vprotocol_component;
 OMPI_DECLSPEC extern mca_vprotocol_base_module_t mca_vprotocol;
     
 
-/* Macro for use in components that are of type vprotocol v1.0.0
+/* Macro for use in components that are of type vprotocol
  */
-#define MCA_VPROTOCOL_BASE_VERSION_1_0_0 \
-    /* vprotocol v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* vprotocol v1.0 */ \
-    "vprotocol", 1, 0, 0
+#define MCA_VPROTOCOL_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "vprotocol", 2, 0, 0
         
 /* Macro to mark an invalid component version (0.0.0). Any component showing 
  * that version number will be ignored. 
  */
 #define MCA_VPROTOCOL_BASE_VERSION_0_0_0 \
-    /* vprotocol v0.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
+    /* vprotocol v0.0 is chained to MCA v2.0 */ \
+    MCA_BASE_VERSION_2_0_0, \
     /* vprotocol v0.0 */ \
     "vprotocol", 0, 0, 0
         

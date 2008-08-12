@@ -144,11 +144,11 @@ typedef int (*ompi_osc_base_component_select_fn_t)(struct ompi_win_t *win,
  * this structure, called mca_osc_[component_name]_component, must
  * exist in any OSC component.
  */
-struct ompi_osc_base_component_1_0_0_t {
+struct ompi_osc_base_component_2_0_0_t {
     /** Base component description */
     mca_base_component_t osc_version;
     /** Base component data block */
-    mca_base_component_data_1_0_0_t osc_data;
+    mca_base_component_data_t osc_data;
     /** Component initialization function */
     ompi_osc_base_component_init_fn_t osc_init;
     /** Query whether component is useable for give comm/info */
@@ -158,8 +158,8 @@ struct ompi_osc_base_component_1_0_0_t {
     /* Finalize the component infrastructure */
     ompi_osc_base_component_finalize_fn_t osc_finalize;
 };
-typedef struct ompi_osc_base_component_1_0_0_t ompi_osc_base_component_1_0_0_t;
-typedef ompi_osc_base_component_1_0_0_t ompi_osc_base_component_t;
+typedef struct ompi_osc_base_component_2_0_0_t ompi_osc_base_component_2_0_0_t;
+typedef ompi_osc_base_component_2_0_0_t ompi_osc_base_component_t;
 
 
 /* ******************************************************************** */
@@ -296,12 +296,10 @@ typedef ompi_osc_base_module_1_0_0_t ompi_osc_base_module_t;
 /* ******************************************************************** */
 
 
-/** Macro for use in components that are of type osc v1.0.0 */
-#define OMPI_OSC_BASE_VERSION_1_0_0 \
-  /* osc v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* osc v1.0 */ \
-  "osc", 1, 0, 0
+/** Macro for use in components that are of type osc */
+#define OMPI_OSC_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "osc", 2, 0, 0
 
 
 /* ******************************************************************** */

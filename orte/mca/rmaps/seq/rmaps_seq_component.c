@@ -37,10 +37,7 @@ static int orte_rmaps_seq_query(mca_base_module_t **module, int *priority);
 
 orte_rmaps_base_component_t mca_rmaps_seq_component = {
       {
-        /* Indicate that we are a rmaps v1.3.0 component (which also
-           implies a specific MCA version) */
-
-        ORTE_RMAPS_BASE_VERSION_1_3_0,
+        ORTE_RMAPS_BASE_VERSION_2_0_0,
 
         "seq", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -50,8 +47,6 @@ orte_rmaps_base_component_t mca_rmaps_seq_component = {
         orte_rmaps_seq_close, /* component close */
         orte_rmaps_seq_query  /* component query */
       },
-
-      /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT

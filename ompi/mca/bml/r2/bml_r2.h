@@ -51,7 +51,7 @@ struct mca_bml_r2_module_t {
 
 typedef struct mca_bml_r2_module_t mca_bml_r2_module_t;
 
-OMPI_DECLSPEC extern mca_bml_base_component_1_0_0_t mca_bml_r2_component;
+OMPI_DECLSPEC extern mca_bml_base_component_2_0_0_t mca_bml_r2_component;
 extern mca_bml_r2_module_t mca_bml_r2; 
 
 int mca_bml_r2_component_open(void); 

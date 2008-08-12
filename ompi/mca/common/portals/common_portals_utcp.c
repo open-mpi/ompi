@@ -45,11 +45,11 @@ static bool setup_utcp_params = true;
 static bool init_called = false;
 static ptl_handle_ni_t active_ni_h = PTL_INVALID_HANDLE;
 static mca_base_component_t portals_component = {
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     "common",
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     "portals",
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     NULL,
     NULL
 };

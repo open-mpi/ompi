@@ -107,7 +107,7 @@ OPAL_DECLSPEC extern bool opal_carto_base_selected;
 /**
  * Global component struct for the selected component
  */
-OPAL_DECLSPEC extern const opal_carto_base_component_1_0_0_t 
+OPAL_DECLSPEC extern const opal_carto_base_component_2_0_0_t 
 *opal_carto_base_component;
 
 /**

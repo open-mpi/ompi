@@ -212,24 +212,23 @@ typedef int (*opal_paffinity_base_module_finalize_fn_t)(void);
 
 
 /**
- * Structure for paffinity v1.1.0 components.
- * Chained to MCA v1.0.0
+ * Structure for paffinity components.
  */
-struct opal_paffinity_base_component_1_1_0_t {
+struct opal_paffinity_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 /**
  * Convenience typedef
  */
-typedef struct opal_paffinity_base_component_1_1_0_t opal_paffinity_base_component_1_1_0_t;
-typedef struct opal_paffinity_base_component_1_1_0_t opal_paffinity_base_component_t;
+typedef struct opal_paffinity_base_component_2_0_0_t opal_paffinity_base_component_2_0_0_t;
+typedef struct opal_paffinity_base_component_2_0_0_t opal_paffinity_base_component_t;
 
 
 /**
- * Structure for paffinity v1.0.0 modules
+ * Structure for paffinity modules
  */
 struct opal_paffinity_base_module_1_1_0_t {
     /** Module initialization function */
@@ -267,12 +266,10 @@ typedef struct opal_paffinity_base_module_1_1_0_t opal_paffinity_base_module_t;
 
 
 /*
- * Macro for use in components that are of type paffinity v1.1.0
+ * Macro for use in components that are of type paffinity
  */
-#define OPAL_PAFFINITY_BASE_VERSION_1_1_0 \
-    /* paffinity v1.1 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* paffinity v1.1 */ \
-    "paffinity", 1, 1, 0
+#define OPAL_PAFFINITY_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "paffinity", 2, 0, 0
 
 #endif /* OPAL_PAFFINITY_H */

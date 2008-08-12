@@ -76,7 +76,7 @@ int mca_coll_hierarch_init_query(bool allow_hierarch_user_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 {
     int size, rank;
@@ -247,7 +247,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority )
 /*
  * Init module on the communicator
  */
-int mca_coll_hierarch_module_enable (mca_coll_base_module_1_1_0_t *module,
+int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
 				     struct ompi_communicator_t *comm)
 {
     int color;

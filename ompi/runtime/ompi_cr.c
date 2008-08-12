@@ -85,7 +85,7 @@ int ompi_cr_output = -1;
     do {                                                        \
         bool found = false;                                     \
         int k;                                                  \
-        mca_coll_base_module_1_1_0_t *my_module =               \
+        mca_coll_base_module_t *my_module =               \
             comm->c_coll.coll_ ## func ## _module;              \
         if (NULL != my_module) {                                \
             for (k = 0 ; k < highest_module ; ++k) {            \
@@ -104,10 +104,10 @@ int ompi_cr_output = -1;
 static int
 notify_collectives(int msg)
 {
-    mca_coll_base_module_1_1_0_t *modules[NUM_COLLECTIVES];
+    mca_coll_base_module_t *modules[NUM_COLLECTIVES];
     int i, max, ret, highest_module = 0;
 
-    memset(&modules, 0, sizeof(mca_coll_base_module_1_1_0_t*) * NUM_COLLECTIVES);
+    memset(&modules, 0, sizeof(mca_coll_base_module_t*) * NUM_COLLECTIVES);
 
     max = opal_pointer_array_get_size(&ompi_mpi_communicators);
     for (i = 0 ; i < max ; ++i) {

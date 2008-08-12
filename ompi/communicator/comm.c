@@ -64,13 +64,13 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 typedef int ompi_comm_allgatherfct (void* inbuf, int incount, MPI_Datatype intype,
                                     void* outbuf, int outcount, MPI_Datatype outtype,
                                     ompi_communicator_t *comm,
-                                    struct mca_coll_base_module_1_1_0_t *data);
+                                    mca_coll_base_module_t *data);
 
 static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Datatype intype,
                                               void* outbuf, int outcount, 
                                               MPI_Datatype outtype, 
                                               ompi_communicator_t *comm,
-                                              struct mca_coll_base_module_1_1_0_t *data);
+                                              mca_coll_base_module_t *data);
 
 static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
                                 ompi_communicator_t *newcomm);
@@ -887,7 +887,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
                                               MPI_Datatype intype, void* outbuf,
                                               int outcount, MPI_Datatype outtype,
                                               ompi_communicator_t *comm,
-                                              struct mca_coll_base_module_1_1_0_t *data)
+                                              mca_coll_base_module_t *data)
 {
     int rank, size, rsize, i, rc;
     int *tmpbuf=NULL;

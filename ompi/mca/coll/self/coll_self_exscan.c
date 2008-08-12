@@ -33,7 +33,7 @@ int mca_coll_self_exscan_intra(void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype, 
                                struct ompi_op_t *op, 
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     /* Since there's only one process, there's nothing to do */
 

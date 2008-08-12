@@ -42,7 +42,7 @@ mca_coll_inter_allgather_inter(void *sbuf, int scount,
                                void *rbuf, int rcount,
                                struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm,
-                               struct mca_coll_base_module_1_1_0_t *module)
+                               mca_coll_base_module_t *module)
 {
     int rank, root = 0, size, rsize, err;
     char *ptmp = NULL;

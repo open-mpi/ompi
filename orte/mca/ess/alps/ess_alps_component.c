@@ -40,9 +40,7 @@ orte_ess_base_component_t mca_ess_alps_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a ess v1.0.0 component (which also
-           implies a specific MCA version) */
-        ORTE_ESS_BASE_VERSION_1_0_0,
+        ORTE_ESS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "alps",
@@ -55,7 +53,6 @@ orte_ess_base_component_t mca_ess_alps_component = {
         orte_ess_alps_component_close,
         orte_ess_alps_component_query
     },
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is not checkpoint ready */
         MCA_BASE_METADATA_PARAM_NONE

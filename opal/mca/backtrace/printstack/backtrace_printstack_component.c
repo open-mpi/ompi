@@ -20,13 +20,11 @@
 
 #include "opal/mca/backtrace/backtrace.h"
 
-const opal_backtrace_base_component_1_0_0_t mca_backtrace_printstack_component = {
+const opal_backtrace_base_component_2_0_0_t mca_backtrace_printstack_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a backtrace v1.0.0 component (which also
-           implies a specific MCA version) */
-        OPAL_BACKTRACE_BASE_VERSION_1_0_0,
+        OPAL_BACKTRACE_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "printstack",
@@ -38,8 +36,6 @@ const opal_backtrace_base_component_1_0_0_t mca_backtrace_printstack_component =
         NULL,
         NULL
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

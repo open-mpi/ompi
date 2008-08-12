@@ -38,7 +38,8 @@ opal_crs_none_component_t mca_crs_none_component = {
          *  meta information about the component itnone
          */
         {
-            OPAL_CRS_BASE_VERSION_1_0_0,
+            OPAL_CRS_BASE_VERSION_2_0_0,
+
             /* Component name and version */
             "none",
             OMPI_MAJOR_VERSION,
@@ -50,8 +51,6 @@ opal_crs_none_component_t mca_crs_none_component = {
             crs_none_close,
             opal_crs_none_component_query
         },
-
-        /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT

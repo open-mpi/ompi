@@ -35,7 +35,7 @@ static int open_component(void);
 static int close_component(void);
 static int init_query(bool enable_progress_threads,
                       bool enable_mpi_threads);
-static const struct mca_io_base_module_1_0_0_t *
+static const struct mca_io_base_module_2_0_0_t *
   file_query(struct ompi_file_t *file, 
              struct mca_io_base_file_t **private_data,
              int *priority);
@@ -81,14 +81,12 @@ const char *mca_io_romio_component_version_string =
 "OMPI/MPI ROMIO io MCA component version " OMPI_VERSION ", " ROMIO_VERSION_STRING;
 
 
-mca_io_base_component_1_0_0_t mca_io_romio_component = {
+mca_io_base_component_2_0_0_t mca_io_romio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
     {
-        /* Indicate that we are a io v1.0.0 component (which also implies a
-           specific MCA version) */
-        MCA_IO_BASE_VERSION_1_0_0,
+        MCA_IO_BASE_VERSION_2_0_0,
         "romio",
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
@@ -96,9 +94,6 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
         open_component,
         close_component,
     },
-
-    /* Next the MCA v1.0.0 component meta data */
-
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
@@ -196,7 +191,7 @@ static int init_query(bool enable_progress_threads,
 }
 
 
-static const struct mca_io_base_module_1_0_0_t *
+static const struct mca_io_base_module_2_0_0_t *
 file_query(struct ompi_file_t *file, 
            struct mca_io_base_file_t **private_data,
            int *priority)

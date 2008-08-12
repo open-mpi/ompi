@@ -38,7 +38,7 @@
  */
 struct mca_btl_portals_component_t {
     /* base BTL component */
-    mca_btl_base_component_1_0_1_t super;
+    mca_btl_base_component_2_0_0_t super;
 
     /* output channel for debugging.  Value settings when using
      * output_verbose:

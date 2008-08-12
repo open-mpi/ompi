@@ -121,7 +121,7 @@ typedef orte_grpcomm_base_module_2_0_0_t orte_grpcomm_base_module_t;
  */
 struct orte_grpcomm_base_component_2_0_0_t {
     mca_base_component_t base_version;
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 typedef struct orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_2_0_0_t;
 typedef orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_t;
@@ -132,8 +132,8 @@ typedef orte_grpcomm_base_component_2_0_0_t orte_grpcomm_base_component_t;
  * Macro for use in components that are of type grpcomm v2.0.0
  */
 #define ORTE_GRPCOMM_BASE_VERSION_2_0_0 \
-  /* grpcomm v2.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
+  /* grpcomm v2.0 is chained to MCA v2.0 */ \
+  MCA_BASE_VERSION_2_0_0, \
   /* grpcomm v2.0 */ \
   "grpcomm", 2, 0, 0
 

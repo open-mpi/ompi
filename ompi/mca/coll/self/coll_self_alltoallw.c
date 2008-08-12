@@ -35,7 +35,7 @@ int mca_coll_self_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
                                   void *rbuf, int *rcounts, int *rdisps,
                                   struct ompi_datatype_t **rdtypes, 
                                   struct ompi_communicator_t *comm,
-                                  struct mca_coll_base_module_1_1_0_t *module)
+                                  mca_coll_base_module_t *module)
 {
     int err;        
     ptrdiff_t lb, rextent, sextent;

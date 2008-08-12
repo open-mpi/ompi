@@ -55,30 +55,27 @@ OPAL_DECLSPEC char * opal_install_dirs_expand(const char* input);
 
 
 /**
- * Structure for installdirs v1.0.0 components.
- * Chained to MCA v1.0.0
+ * Structure for installdirs components.
  */
-struct opal_installdirs_base_component_1_0_0_t {
+struct opal_installdirs_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t component;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t component_data;
+    mca_base_component_data_t component_data;
     /** install directories provided by the given component */
     opal_install_dirs_t install_dirs_data;
 };
 /**
  * Convenience typedef
  */
-typedef struct opal_installdirs_base_component_1_0_0_t opal_installdirs_base_component_t;
+typedef struct opal_installdirs_base_component_2_0_0_t opal_installdirs_base_component_t;
 
 /*
- * Macro for use in components that are of type installdirs v1.0.0
+ * Macro for use in components that are of type installdirs
  */
-#define OPAL_INSTALLDIRS_BASE_VERSION_1_0_0 \
-    /* installdirs v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* installdirs v1.0 */ \
-    "installdirs", 1, 0, 0
+#define OPAL_INSTALLDIRS_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "installdirs", 2, 0, 0
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

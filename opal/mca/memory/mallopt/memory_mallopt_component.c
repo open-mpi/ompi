@@ -44,13 +44,11 @@ int  __munmap(void* addr, size_t len);
 
 static int opal_memory_malloc_open(void);
 
-const opal_memory_base_component_1_0_0_t mca_memory_mallopt_component = {
+const opal_memory_base_component_2_0_0_t mca_memory_mallopt_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a memory v1.0.0 component (which also
-           implies a specific MCA version) */
-        OPAL_MEMORY_BASE_VERSION_1_0_0,
+        OPAL_MEMORY_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "mallopt",
@@ -62,8 +60,6 @@ const opal_memory_base_component_1_0_0_t mca_memory_mallopt_component = {
         opal_memory_malloc_open,
         NULL
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

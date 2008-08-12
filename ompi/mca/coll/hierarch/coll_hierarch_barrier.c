@@ -36,7 +36,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_hierarch_barrier_intra(struct ompi_communicator_t *comm, 
-				    struct mca_coll_base_module_1_1_0_t *module)
+				    mca_coll_base_module_t *module)
 {
     struct ompi_communicator_t *llcomm=NULL;
     struct ompi_communicator_t *lcomm=NULL;

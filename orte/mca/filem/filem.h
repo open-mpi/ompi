@@ -301,13 +301,13 @@ typedef int (*orte_filem_base_wait_all_fn_t)
      (opal_list_t *request_list);
 
 /**
- * Structure for FILEM v1.0.0 components.
+ * Structure for FILEM components.
  */
-struct orte_filem_base_component_1_0_0_t {
+struct orte_filem_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 
     /** Verbosity Level */
     int verbose;
@@ -316,11 +316,11 @@ struct orte_filem_base_component_1_0_0_t {
     /** Default Priority */
     int priority;
 };
-typedef struct orte_filem_base_component_1_0_0_t orte_filem_base_component_1_0_0_t;
-typedef struct orte_filem_base_component_1_0_0_t orte_filem_base_component_t;
+typedef struct orte_filem_base_component_2_0_0_t orte_filem_base_component_2_0_0_t;
+typedef struct orte_filem_base_component_2_0_0_t orte_filem_base_component_t;
 
 /**
- * Structure for FILEM v1.0.0 modules
+ * Structure for FILEM  modules
  */
 struct orte_filem_base_module_1_0_0_t {
     /** Initialization Function */
@@ -350,13 +350,11 @@ typedef struct orte_filem_base_module_1_0_0_t orte_filem_base_module_t;
 ORTE_DECLSPEC extern orte_filem_base_module_t orte_filem;
 
 /**
- * Macro for use in components that are of type FILEM v1.0.0
+ * Macro for use in components that are of type FILEM
  */
-#define ORTE_FILEM_BASE_VERSION_1_0_0 \
-    /* FILEM v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* FILEM v1.0 */ \
-    "filem", 1, 0, 0
+#define ORTE_FILEM_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "filem", 2, 0, 0
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

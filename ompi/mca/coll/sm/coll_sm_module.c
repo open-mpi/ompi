@@ -66,7 +66,7 @@ uint32_t mca_coll_sm_iov_size = 1;
 /*
  * Local functions
  */
-static int sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+static int sm_module_enable(mca_coll_base_module_t *module,
                           struct ompi_communicator_t *comm);
 static bool have_local_peers(ompi_group_t *group, size_t size);
 static int bootstrap_init(void);
@@ -129,7 +129,7 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_1_1_0_t *
+mca_coll_base_module_t *
 mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_sm_module_t *sm_module;
@@ -200,7 +200,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
  * Init module on the communicator
  */
 static int
-sm_module_enable(struct mca_coll_base_module_1_1_0_t *module,
+sm_module_enable(mca_coll_base_module_t *module,
                  struct ompi_communicator_t *comm)
 {
     int i, j, root, ret;

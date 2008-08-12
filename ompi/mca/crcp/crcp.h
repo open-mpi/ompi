@@ -257,13 +257,13 @@ typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_ft_event_fn_t)
 
 
 /**
- * Structure for CRCP v1.0.0 components.
+ * Structure for CRCP components.
  */
-struct ompi_crcp_base_component_1_0_0_t {
+struct ompi_crcp_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 
     /** Verbosity Level */
     int verbose;
@@ -273,11 +273,11 @@ struct ompi_crcp_base_component_1_0_0_t {
     int priority;
 
 };
-typedef struct ompi_crcp_base_component_1_0_0_t ompi_crcp_base_component_1_0_0_t;
-typedef struct ompi_crcp_base_component_1_0_0_t ompi_crcp_base_component_t;
+typedef struct ompi_crcp_base_component_2_0_0_t ompi_crcp_base_component_2_0_0_t;
+typedef struct ompi_crcp_base_component_2_0_0_t ompi_crcp_base_component_t;
 
 /**
- * Structure for CRCP v1.0.0 modules
+ * Structure for CRCP modules
  */
 struct ompi_crcp_base_module_1_0_0_t {
     /** Initialization Function */
@@ -342,13 +342,11 @@ typedef struct ompi_crcp_base_module_1_0_0_t ompi_crcp_base_module_t;
 OMPI_DECLSPEC extern ompi_crcp_base_module_t ompi_crcp;
 
 /**
- * Macro for use in components that are of type CRCP v1.0.0
+ * Macro for use in components that are of type CRCP
  */
-#define OMPI_CRCP_BASE_VERSION_1_0_0 \
-    /* CRCP v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* CRCP v1.0 */ \
-    "crcp", 1, 0, 0
+#define OMPI_CRCP_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "crcp", 2, 0, 0
 
 /**
  * Macro to call the CRCP Request Complete function

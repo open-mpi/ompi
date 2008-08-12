@@ -50,7 +50,7 @@ int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm);
 int mca_topo_unity_module_init (struct ompi_communicator_t *comm);
 int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm);
 
-OMPI_MODULE_DECLSPEC extern mca_topo_base_component_1_0_0_t mca_topo_unity_component;
+OMPI_MODULE_DECLSPEC extern mca_topo_base_component_2_0_0_t mca_topo_unity_component;
 
 /*
  * ******************************************************************

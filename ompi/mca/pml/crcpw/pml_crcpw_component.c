@@ -38,10 +38,7 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
            information about the component itself */
         
         {
-            /* Indicate that we are a pml v1.0.0 component (which also implies
-               a specific MCA version) */
-            
-            MCA_PML_BASE_VERSION_1_0_0,
+            MCA_PML_BASE_VERSION_2_0_0,
     
             "crcpw", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
@@ -50,9 +47,6 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
             mca_pml_crcpw_component_open,  /* component open */
             mca_pml_crcpw_component_close  /* component close */
         },
-        
-        /* Next the MCA v1.0.0 component meta data */
-        
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT

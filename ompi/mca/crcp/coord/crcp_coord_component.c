@@ -47,7 +47,8 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
          *  meta information about the component
          */
         {
-            OMPI_CRCP_BASE_VERSION_1_0_0,
+            OMPI_CRCP_BASE_VERSION_2_0_0,
+
             /* Component name and version */
             "coord",
             OMPI_MAJOR_VERSION,
@@ -59,8 +60,6 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
             crcp_coord_close,
             ompi_crcp_coord_component_query
         },
-
-        /* Next the MCA v1.0.0 component meta data */
         {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT

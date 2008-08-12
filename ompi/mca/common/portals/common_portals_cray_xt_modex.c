@@ -27,11 +27,11 @@
 
 
 static mca_base_component_t portals_component = {
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     "common",
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     "portals",
-    MCA_BASE_VERSION_1_0_0,
+    MCA_BASE_VERSION_2_0_0,
     NULL,
     NULL
 };

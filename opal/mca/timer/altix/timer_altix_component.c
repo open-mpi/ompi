@@ -39,13 +39,11 @@ static unsigned long *mmdev_map;
 static int opal_timer_altix_open(void);
 static int opal_timer_altix_close(void);
 
-const opal_timer_base_component_1_0_0_t mca_timer_altix_component = {
+const opal_timer_base_component_2_0_0_t mca_timer_altix_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a timer v1.0.0 component (which also
-           implies a specific MCA version) */
-        OPAL_TIMER_BASE_VERSION_1_0_0,
+        OPAL_TIMER_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "altix",
@@ -55,10 +53,8 @@ const opal_timer_base_component_1_0_0_t mca_timer_altix_component = {
 
         /* Component open and close functions */
         opal_timer_altix_open,
-	opal_timer_altix_close
+        opal_timer_altix_close
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT

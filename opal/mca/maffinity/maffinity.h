@@ -95,23 +95,22 @@ typedef int (*opal_maffinity_base_module_bind_fn_t)
     (opal_maffinity_base_segment_t *segments, size_t num_segments, int node_id);
 
 /**
- * Structure for maffinity v1.0.0 components.
- * Chained to MCA v1.0.0
+ * Structure for maffinity components.
  */
-struct opal_maffinity_base_component_1_0_0_t {
+struct opal_maffinity_base_component_2_0_0_t {
     /** MCA base component */
     mca_base_component_t base_version;
     /** MCA base data */
-    mca_base_component_data_1_0_0_t base_data;
+    mca_base_component_data_t base_data;
 };
 /**
  * Convenience typedef
  */
-typedef struct opal_maffinity_base_component_1_0_0_t opal_maffinity_base_component_1_0_0_t;
+typedef struct opal_maffinity_base_component_2_0_0_t opal_maffinity_base_component_2_0_0_t;
 
 
 /**
- * Structure for maffinity v1.0.0 modules
+ * Structure for maffinity modules
  */
 struct opal_maffinity_base_module_1_0_0_t {
     /** Module initialization function */
@@ -129,12 +128,10 @@ typedef struct opal_maffinity_base_module_1_0_0_t opal_maffinity_base_module_1_0
 
 
 /*
- * Macro for use in components that are of type maffinity v1.0.0
+ * Macro for use in components that are of type maffinity
  */
-#define OPAL_MAFFINITY_BASE_VERSION_1_0_0 \
-    /* maffinity v1.0 is chained to MCA v1.0 */ \
-    MCA_BASE_VERSION_1_0_0, \
-    /* maffinity v1.0 */ \
-    "maffinity", 1, 0, 0
+#define OPAL_MAFFINITY_BASE_VERSION_2_0_0 \
+    MCA_BASE_VERSION_2_0_0, \
+    "maffinity", 2, 0, 0
 
 #endif /* OPAL_MAFFINITY_H */

@@ -21,9 +21,7 @@ opal_installdirs_base_component_t mca_installdirs_windows_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        /* Indicate that we are a backtrace v1.0.0 component (which also
-           implies a specific MCA version) */
-        OPAL_INSTALLDIRS_BASE_VERSION_1_0_0,
+        OPAL_INSTALLDIRS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
         "windows",
@@ -35,11 +33,9 @@ opal_installdirs_base_component_t mca_installdirs_windows_component = {
         installdirs_windows_open,
         NULL
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
-        /* Whether the component is checkpointable or not */
-        true
+        /* This component is checkpointable */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 };
 

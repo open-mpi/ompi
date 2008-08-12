@@ -32,7 +32,7 @@ static orte_filem_base_component_t none_component = {
      *  meta information about the component itself
      */
     {
-        ORTE_FILEM_BASE_VERSION_1_0_0,
+        ORTE_FILEM_BASE_VERSION_2_0_0,
         /* Component name and version */
         "none",
         OMPI_MAJOR_VERSION,
@@ -44,11 +44,9 @@ static orte_filem_base_component_t none_component = {
         orte_filem_base_none_close,
         orte_filem_base_none_query
     },
-
-    /* Next the MCA v1.0.0 component meta data */
     {
-        /* Is the component checkpointable ? */
-        true
+        /* This component is checkpointable */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
     
     /* Verbosity level */

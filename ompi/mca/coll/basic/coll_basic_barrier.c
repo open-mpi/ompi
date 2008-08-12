@@ -37,7 +37,7 @@
  */
 int
 mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm,
-                                 struct mca_coll_base_module_1_1_0_t *module)
+                                 mca_coll_base_module_t *module)
 {
     int i;
     int err;
@@ -103,7 +103,7 @@ mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm,
  */
 int
 mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
-                                 struct mca_coll_base_module_1_1_0_t *module)
+                                 mca_coll_base_module_t *module)
 {
     int i;
     int err;
@@ -182,7 +182,7 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
  */
 int
 mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm,
-                                 struct mca_coll_base_module_1_1_0_t *module)
+                                 mca_coll_base_module_t *module)
 {
     int rank;
     int result;

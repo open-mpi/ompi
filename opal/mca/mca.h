@@ -20,6 +20,67 @@
  * @file 
  *
  * Top-level interface for \em all MCA components.
+ *
+ * Historical notes:
+ *
+ * Open MPI originally used a v1.0.0 of the MCA component structs, but
+ * did not have a version number in the struct name.  If I recall
+ * correctly, this is because we simply didn't think through (or never
+ * envisioned) changing the MCA base component struct itself.  Oops.
+ *
+ * We made some changes in the base struct in Open MPI v1.3, and
+ * decided the following at the same time:
+ *
+ * - Bump the MCA version number to 2.0.0 and add some "reserved"
+ *   space at the end of the struct.
+ * - The major MCA version number is essentially tied to the space
+ *   that the struct occupies; if we make future changes in the struct
+ *   by just using some of the reserved space, it may be possible to
+ *   just increment the minor version number (depending on the scope of
+ *   the change).  If we need to add more space to the struct, we'll
+ *   increment the major version number.
+ * - The MCA base component struct now has a version number in it
+ *   (starting with Open MPI v1.3, it is 2.0.0). 
+ * - As was an unstated assumption in prior versions of Open MPI, the
+ *   unversioned versions of struct names (both in the MCA base and in
+ *   individual framework bases) are intended for components who want
+ *   to be forward source-compatible.  That is, the unversioned struct
+ *   name always represents the most recent interface version.  If you
+ *   need to use an older version, you can explicitly use that older
+ *   struct version name.  Please note, however, the Open MPI
+ *   developers may not generally provide older versions of framework
+ *   interface structs unless they know if someone outside of the Open
+ *   MPI community needs it.  
+ *
+ *   ***IF YOU NEED BACKWARDS SOURCE OR BINARY COMPATIBILITY, you must
+ *   let us know!***
+ *
+ * - We are currently only aware of one external developer making Open
+ *   MPI components for the v1.2 series.  He already knows that there
+ *   are major changes coming in the v1.3 series, and does not expect to
+ *   be able to use his v1.2 DSO binaries in v1.3.  As such, we are
+ *   breaking backwards binary compatibility in v1.3: there is no
+ *   possibility of loading an MCA v1.0 binary component in Open MPI
+ *   v1.3 or beyond (source compatibility is much easier -- the binary
+ *   "refuse to load MCA components <v2.0.0" policy is enforced in
+ *   mca_base_component_find.c).
+ *
+ *   ***IF YOU NEED BACKWARDS BINARY COMPATIBILITY, please let us
+ *   know!***
+ *
+ * - Note that we decided that framework version numbers are *not*
+ *   related to the MCA version number.  It is permissible to bump the
+ *   MCA version number and leave all the framework version numbers
+ *   they same.  Specifically: a component is uniquely identified by
+ *   its (MCA version, framework version, component version) tuple.
+ *   So a component that is simply compiled with two different MCA
+ *   base versions is still considered "different" because the tuple
+ *   first member is different.
+ * - Per the discussion above, we decided to have MCA v2.0 no longer
+ *   load <v2.0.0 components, and therefore avoided the "how to upcast
+ *   a component in memory" issue.  After v2.0.0, it is slightly
+ *   easier because the MCA component structs have "reserved" space at
+ *   the end that may account for future version data fields.
  */
 
 #ifndef OPAL_MCA_H
@@ -38,13 +99,14 @@
  * particular version of a specific framework, and to publish its own
  * name and version.
  */
-struct mca_base_module_t {
+struct mca_base_module_2_0_0_t {
     int dummy_value;
 };
-/**
- * Convenience typedef.
- */
-typedef struct mca_base_module_t mca_base_module_t;
+/** Unversioned convenience typedef; use this name in
+    frameworks/components to stay forward source-compatible */
+typedef struct mca_base_module_2_0_0_t mca_base_module_t;
+/** Versioned convenience typedef */
+typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
 
 
 /**
@@ -81,9 +143,10 @@ typedef struct mca_base_module_t mca_base_module_t;
  * function.  In this cause, the MCA will act as if it called the open
  * function and it returned MCA_SUCCESS.
  */
-typedef int (*mca_base_open_component_fn_t)(void);
+typedef int (*mca_base_open_component_1_0_0_fn_t)(void);
 
-/** MCA component close function
+/** 
+ * MCA component close function.
  *
  * @retval MCA_SUCCESS The component successfully shut down.
  *
@@ -103,9 +166,10 @@ typedef int (*mca_base_open_component_fn_t)(void);
  * this function.  In this case, the MCA will act as if it called the
  * close function and it returned MCA_SUCCESS.
  */
-typedef int (*mca_base_close_component_fn_t)(void);
+typedef int (*mca_base_close_component_1_0_0_fn_t)(void);
 
-/** MCA component query function
+/** 
+ * MCA component query function.
  *
  * @retval OPAL_SUCCESS The component successfully queried.
  *
@@ -116,12 +180,51 @@ typedef int (*mca_base_close_component_fn_t)(void);
  *
  * @param priority The priority of this component.
  *
- * This function is used by the mca_base_select function to find the highest
- * priority component to select. Frameworks are free to implement their own
- * query function, but must also implment their own select function as a result.
- * 
+ * This function is used by the mca_base_select function to find the
+ * highest priority component to select. Frameworks are free to
+ * implement their own query function, but must also implment their
+ * own select function as a result.
  */
-typedef int (*mca_base_query_component_fn_t)(mca_base_module_t **module, int *priority);
+typedef int (*mca_base_query_component_2_0_0_fn_t)(mca_base_module_2_0_0_t **module, int *priority);
+
+/**
+ * MCA component parameter registration function.
+ *
+ * @retval MCA_SUCCESS This component successfully registered its
+ * parameters and can be used in this process.
+ *
+ * @retval anything_else The MCA will ignore this component for the
+ * duration of the process.
+ *
+ * If a component has a non-NULL parameter registration function, it
+ * will be invoked to register all MCA parameters associated with the
+ * component.  This function is invoked *before* the component "open"
+ * function is invoked.
+ *
+ * The registration function should not allocate any resources that
+ * need to be freed (aside from registering MCA parameters).
+ * Specifically, strings that are passed to the MCA parameter
+ * registration functions are all internally copied; there's no need
+ * for the caller to keep them after registering a parameter.  Hence,
+ * it is possible that the registration function will be the *only*
+ * function invoked on a component; component authors should take care
+ * that no resources are leaked in this case.
+ *
+ * This function should return MCA_SUCCESS if it wishes to remain
+ * loaded in the process.  Any other return value will cause the MCA
+ * base to unload the component.  Although most components do not use
+ * this mechanism to force themselves to be unloaded (because if they
+ * are immediately unloaded, ompi_info will not display them), the
+ * mechanism is available should the need arise.
+ *
+ * If the component a) has no MCA parameters to register, b) no
+ * resources to allocate, and c) can always be used in a process
+ * (albiet perhaps not selected), it may provide NULL for this
+ * function.  In this cause, the MCA will act as if it called the
+ * registration function and it returned MCA_SUCCESS.
+ */
+typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
+
 
 /**
  * Maximum length of MCA framework string names.
@@ -140,7 +243,7 @@ typedef int (*mca_base_query_component_fn_t)(mca_base_module_t **module, int *pr
  * particular version of a specific framework, and to publish its own
  * name and version.
  */
-struct mca_base_component_t {
+struct mca_base_component_2_0_0_t {
 
   int mca_major_version; 
   /**< Major number of the MCA. */
@@ -170,17 +273,24 @@ struct mca_base_component_t {
   int mca_component_release_version;
   /**< This component's release version number. */
   
-  mca_base_open_component_fn_t mca_open_component;
+  mca_base_open_component_1_0_0_fn_t mca_open_component;
   /**< Method for opening this component. */
-  mca_base_close_component_fn_t mca_close_component;
+  mca_base_close_component_1_0_0_fn_t mca_close_component;
   /**< Method for closing this component. */
-  mca_base_query_component_fn_t mca_query_component;
+  mca_base_query_component_2_0_0_fn_t mca_query_component;
   /**< Method for querying this component. */
+  mca_base_register_component_params_2_0_0_fn_t mca_register_component_params;
+  /**< Method for registering the component's MCA parameters */
+
+  /** Extra space to allow for expansion in the future without
+      breaking older components. */
+  char reserved[32];
 };
-/**
- * Convenience typedef.
- */
-typedef struct mca_base_component_t mca_base_component_t;
+/** Unversioned convenience typedef; use this name in
+    frameworks/components to stay forward source-compatible */
+typedef struct mca_base_component_2_0_0_t mca_base_component_t;
+/** Versioned convenience typedef */
+typedef struct mca_base_component_2_0_0_t mca_base_component_2_0_0_t;
 
 /*
  * Metadata Bit field parameters
@@ -190,24 +300,34 @@ typedef struct mca_base_component_t mca_base_component_t;
 #define MCA_BASE_METADATA_PARAM_DEBUG       (uint32_t)0x04 /**< Debug enabled/only Component */
 
 /**
- * Meta data for MCA v1.0.0 components.
+ * Meta data for MCA v2.0.0 components.
  */
-struct mca_base_component_data_1_0_0_t {
+struct mca_base_component_data_2_0_0_t {
     uint32_t param_field;
+    /**< Metadata parameter bit field filled in by the parameters
+         defined above */
+
+    /** Extra space to allow for expansion in the future without
+        breaking older components. */
+    char reserved[32];
 };
-/**
- * Convenience typedef.
- */
-typedef struct mca_base_component_data_1_0_0_t mca_base_component_data_1_0_0_t;
+/** Unversioned convenience typedef; use this name in
+    frameworks/components to stay forward source-compatible */
+typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_t;
+/** Versioned convenience typedef */
+typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_2_0_0_t;
 
 /**
  * Macro for framework author convenience.  
  *
  * This macro is used by frameworks defining their component types,
- * indicating that they subscribe to the MCA version 1.0.0.  See
+ * indicating that they subscribe to the MCA version 2.0.0.  See
  * component header files (e.g., coll.h) for examples of its usage.
  */
-#define MCA_BASE_VERSION_1_0_0 1, 0, 0
+#define MCA_BASE_VERSION_MAJOR 2
+#define MCA_BASE_VERSION_MINOR 0
+#define MCA_BASE_VERSION_RELEASE 0
+#define MCA_BASE_VERSION_2_0_0 MCA_BASE_VERSION_MAJOR, MCA_BASE_VERSION_MINOR, MCA_BASE_VERSION_RELEASE
 
 
 /**

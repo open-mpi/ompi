@@ -56,10 +56,7 @@ orte_iof_proxy_component_t mca_iof_proxy_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a iof v1.0.0 component (which also
-           implies a specific MCA version) */
-
-        ORTE_IOF_BASE_VERSION_1_0_0,
+        ORTE_IOF_BASE_VERSION_2_0_0,
 
         "proxy", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -68,8 +65,6 @@ orte_iof_proxy_component_t mca_iof_proxy_component = {
         orte_iof_proxy_open,  /* component open  */
         orte_iof_proxy_close  /* component close */
       },
-
-      /* Next the MCA v1.0.0 component meta data */
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT

@@ -56,7 +56,7 @@ extern "C" {
  */
 
 struct mca_btl_ud_component_t {
-    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */
+    mca_btl_base_component_2_0_0_t super;  /**< base BTL component */
 
     uint32_t max_btls;  /**< Maximum number of BTL modules */
     uint32_t num_btls;  /**< Number of available/initialized BTL modules */

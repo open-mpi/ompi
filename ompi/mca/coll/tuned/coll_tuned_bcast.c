@@ -35,7 +35,7 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
                                      struct ompi_datatype_t* datatype, 
                                      int root,
                                      struct ompi_communicator_t* comm,
-				     struct mca_coll_base_module_1_1_0_t *module,
+				     mca_coll_base_module_t *module,
                                      uint32_t count_by_segment,
                                      ompi_coll_tree_t* tree )
 {
@@ -259,7 +259,7 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
                                       struct ompi_datatype_t* datatype, 
                                       int root,
                                       struct ompi_communicator_t* comm,
-				      struct mca_coll_base_module_1_1_0_t *module,
+				      mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
@@ -288,7 +288,7 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
                                       struct ompi_datatype_t* datatype, 
                                       int root,
                                       struct ompi_communicator_t* comm,
-				      struct mca_coll_base_module_1_1_0_t *module,
+				      mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
@@ -317,7 +317,7 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
                                    struct ompi_datatype_t* datatype, 
                                    int root,
                                    struct ompi_communicator_t* comm,
-				   struct mca_coll_base_module_1_1_0_t *module,
+				   mca_coll_base_module_t *module,
                                    uint32_t segsize, int32_t chains )
 {
     int segcount = count;
@@ -346,7 +346,7 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
                                       struct ompi_datatype_t* datatype, 
                                       int root,
                                       struct ompi_communicator_t* comm,
-				      struct mca_coll_base_module_1_1_0_t *module,
+				      mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
@@ -375,7 +375,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
                                             struct ompi_datatype_t* datatype, 
                                             int root,
                                             struct ompi_communicator_t* comm,
-					    struct mca_coll_base_module_1_1_0_t *module,
+					    mca_coll_base_module_t *module,
                                             uint32_t segsize )
 {
     int err=0, line;
@@ -643,7 +643,7 @@ int
 ompi_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
                                           struct ompi_communicator_t *comm,
-					  struct mca_coll_base_module_1_1_0_t *module)
+					  mca_coll_base_module_t *module)
 {
     int i;
     int size;
@@ -775,7 +775,7 @@ int ompi_coll_tuned_bcast_intra_do_forced(void *buf, int count,
                                           struct ompi_datatype_t *dtype,
                                           int root,
                                           struct ompi_communicator_t *comm,
-					  struct mca_coll_base_module_1_1_0_t *module)
+					  mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -809,7 +809,7 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
                                         struct ompi_datatype_t *dtype,
                                         int root,
                                         struct ompi_communicator_t *comm,
-					struct mca_coll_base_module_1_1_0_t *module,
+					mca_coll_base_module_t *module,
                                         int algorithm, int faninout, int segsize)
 
 {

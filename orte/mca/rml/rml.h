@@ -86,16 +86,16 @@ typedef struct orte_rml_module_t* (*orte_rml_component_init_fn_t)(int  *priority
  * this structure, called mca_rml_[component name]_component, must
  * exist in any RML component.
  */
-struct orte_rml_component_1_0_0_t {
+struct orte_rml_component_2_0_0_t {
     /* Base component description */
     mca_base_component_t rml_version;
     /* Base component data block */
-    mca_base_component_data_1_0_0_t rml_data;
+    mca_base_component_data_t rml_data;
     /* Component intialization function */
     orte_rml_component_init_fn_t rml_init;
 };
 /** Convienence typedef */
-typedef struct orte_rml_component_1_0_0_t orte_rml_component_t;
+typedef struct orte_rml_component_2_0_0_t orte_rml_component_t;
 
 
 /* ******************************************************************** */
@@ -640,12 +640,10 @@ ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
 /* ******************************************************************** */
 
 
-/** Macro for use in components that are of type rml v1.0.0 */
-#define ORTE_RML_BASE_VERSION_1_0_0 \
-  /* rml v1.0 is chained to MCA v1.0 */ \
-  MCA_BASE_VERSION_1_0_0, \
-  /* rml v1.0 */ \
-  "rml", 1, 0, 0
+/** Macro for use in components that are of type rml */
+#define ORTE_RML_BASE_VERSION_2_0_0 \
+  MCA_BASE_VERSION_2_0_0, \
+  "rml", 2, 0, 0
 
 
 /* ******************************************************************** */

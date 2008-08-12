@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -141,7 +142,7 @@ extern "C" {
      * returned up the stack.
      */
     OMPI_DECLSPEC int mca_io_base_file_select(struct ompi_file_t *file,
-                                              struct mca_base_component_t *preferred);
+                                              mca_base_component_t *preferred);
 
     /**
      * Finalize a io component on a specific file handle.

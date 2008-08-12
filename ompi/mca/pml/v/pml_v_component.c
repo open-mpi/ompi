@@ -33,12 +33,12 @@ static int mca_pml_v_enable(bool enable);
 static inline int mca_pml_v_param_register_int( const char* param_name, int default_value);
 static inline char *mca_pml_v_param_register_string( const char* param_name, char *default_value);
 
-mca_pml_base_component_1_0_0_t mca_pml_v_component = 
+mca_pml_base_component_2_0_0_t mca_pml_v_component = 
 {
   /* First, the mca_base_component_t struct containing meta
    * information about the component itself */
   {
-    MCA_PML_BASE_VERSION_1_0_0, /* Indicate that we are a pml v1.0.0 component (which also implies a specific MCA version) */
+    MCA_PML_BASE_VERSION_2_0_0,
     "v", /* MCA component name */
     OMPI_MAJOR_VERSION,  /* MCA component major version */
     OMPI_MINOR_VERSION,  /* MCA component minor version */
@@ -46,10 +46,8 @@ mca_pml_base_component_1_0_0_t mca_pml_v_component =
     mca_pml_v_component_open,
     mca_pml_v_component_close
   },
-
-  /* Next the MCA v1.0.0 component meta data */
   {
-    false /* Whether the component is checkpointable or not */
+      MCA_BASE_METADATA_PARAM_NONE /* Component is not checkpointable */
   },
 
   mca_pml_v_component_init,  /* component init */
