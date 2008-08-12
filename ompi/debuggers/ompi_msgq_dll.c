@@ -746,7 +746,7 @@ int mqs_get_communicator (mqs_process *proc, mqs_communicator *comm)
     if (extra->current_communicator) {
         *comm = extra->current_communicator->comm_info;
         DEBUG(VERBOSE_COMM,("mqs_get_communicator %d local_rank %d name %s\n",
-                            comm->unique_id, (int)comm->local_rank,
+                            (int)comm->unique_id, (int)comm->local_rank,
                             comm->name));
         return mqs_ok;
     }
