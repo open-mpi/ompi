@@ -862,7 +862,9 @@ mca_oob_tcp_accept_thread_handler(int sd, short flags, void* user)
        happen, so no need for yet another #if */
     if (OPAL_EV_READ == flags) {
         char buf[1];
-        read(sd, buf, 1);
+        ssize_t ret = read(sd, buf, 1);
+
+        assert (ret == 1);
     }
 
     /* Copy in all pending connections.  opal_list_join is O(1), so
