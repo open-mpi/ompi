@@ -115,6 +115,8 @@
 #define VERBOSE_REQ      0x00000010
 #define VERBOSE_REQ_DUMP 0x00000020
 
+#define VERBOSE 0x0000000
+0
 #if VERBOSE
 #define DEBUG(LEVEL, WHAT) if(LEVEL & VERBOSE) { printf WHAT; }
 #else
