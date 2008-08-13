@@ -120,10 +120,10 @@ bool ompi_mpi_maffinity_setup = false;
 
 bool ompi_warn_on_fork;
 
+#if OMPI_HAVE_POSIX_THREADS
 static bool fork_warning_issued = false;
 static bool atfork_called = false;
 
-#if HAVE_PTHREAD_H
 static void warn_fork_cb(void)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
@@ -137,7 +137,7 @@ static void warn_fork_cb(void)
 
 void ompi_warn_fork(void)
 {
-#if HAVE_PTHREAD_H
+#if OMPI_HAVE_POSIX_THREADS
     if (ompi_warn_on_fork && !atfork_called) {
         pthread_atfork(warn_fork_cb, NULL, NULL);
         atfork_called = true;
