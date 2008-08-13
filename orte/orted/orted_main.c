@@ -94,8 +94,8 @@ char *log_path = NULL;
 static opal_event_t *orted_exit_event;
 
 static void shutdown_callback(int fd, short flags, void *arg);
+static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short event, void *arg);
-static void clean_fail(int fd, short flags, void *arg);
 
 static struct {
     bool debug;
@@ -245,6 +245,9 @@ int orte_daemon(int argc, char *argv[])
         exit(1);
     }
 
+    /* setup the exit triggers */
+    OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
+ 
     /* save the environment for launch purposes. This MUST be
      * done so that we can pass it to any local procs we
      * spawn - otherwise, those local procs won't see any
@@ -333,7 +336,7 @@ int orte_daemon(int argc, char *argv[])
              * and have it kill us
              */
             if (0 < orted_globals.fail_delay) {
-                ORTE_TIMER_EVENT(orted_globals.fail_delay, clean_fail);
+                ORTE_TIMER_EVENT(orted_globals.fail_delay, shutdown_signal);
                 
             } else {
                 opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -402,10 +405,10 @@ int orte_daemon(int argc, char *argv[])
      * after ourselves. 
      */
     opal_event_set(&term_handler, SIGTERM, OPAL_EV_SIGNAL,
-                   shutdown_callback, NULL);
+                   shutdown_signal, NULL);
     opal_event_add(&term_handler, NULL);
     opal_event_set(&int_handler, SIGINT, OPAL_EV_SIGNAL,
-                   shutdown_callback, NULL);
+                   shutdown_signal, NULL);
     opal_event_add(&int_handler, NULL);
 
 #ifndef __WINDOWS__
@@ -626,55 +629,27 @@ int orte_daemon(int argc, char *argv[])
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
+    /* cleanup the triggers */
+    OBJ_DESTRUCT(&orte_exit);
+
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
     return ret;
 }
 
-static void clean_fail(int fd, short flags, void *arg)
+static void shutdown_signal(int fd, short flags, void *arg)
 {
-    /* protect against multiple calls to exit */
-    if (!opal_atomic_trylock(&orted_exit_lock)) { /* returns 1 if already locked */
-        return;
-    }
-    
-    opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                orted_globals.abort ? "abort" : "abnormal termination");
-    
-    /* cleanup */
-    if (NULL != log_path) {
-        unlink(log_path);
-    }
-    
-    /* make sure our local procs are dead - but don't update their state
-     * on the HNP as this may be redundant
+    /* trigger the call to shutdown callback to protect
+     * against race conditions - the trigger event will
+     * check the one-time lock
      */
-    orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
-    
-    /* do -not- call finalize as this will send a message to the HNP
-     * indicating clean termination! Instead, just forcibly cleanup
-     * the local session_dir tree and exit
-     */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* if we were ordered to abort, do so */
-    if (orted_globals.abort) {
-        abort();
-    }
-
-    /* otherwise, exit with a non-zero status */
-    exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    orte_trigger_event(&orte_exit);
 }
 
 static void shutdown_callback(int fd, short flags, void *arg)
 {
     int ret;
     
-    /* protect against multiple calls */
-    if (!opal_atomic_trylock(&orted_exit_lock)) { /* returns 1 if already locked */
-        return;
-    }
-
     if (NULL != arg) {
         /* it's the singleton pipe...  remove that handler */
         opal_event_del(&pipe_handler);
@@ -694,7 +669,29 @@ static void shutdown_callback(int fd, short flags, void *arg)
      */
     orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
     
-   /* Finalize and clean up ourselves */
+    /* cleanup the triggers */
+    OBJ_DESTRUCT(&orte_exit);
+
+    /* if we were ordered to abort, do so */
+    if (orted_globals.abort) {
+        opal_output(0, "%s is executing clean abort", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* do -not- call finalize as this will send a message to the HNP
+         * indicating clean termination! Instead, just forcibly cleanup
+         * the local session_dir tree and abort
+         */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+        abort();
+    } else if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
+        opal_output(0, "%s is executing clean abnormal termination", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* do -not- call finalize as this will send a message to the HNP
+         * indicating clean termination! Instead, just forcibly cleanup
+         * the local session_dir tree and exit
+         */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    }
+
+    /* Finalize and clean up ourselves */
     ret = orte_finalize();
     exit(ret);
 }
