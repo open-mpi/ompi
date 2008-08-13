@@ -69,6 +69,10 @@ bool orte_allocation_required;
 char *orte_launch_agent;
 char **orted_cmd_line=NULL;
 
+orte_job_t *orte_debugger_daemon=NULL;
+bool orte_enable_debug_cospawn_while_running;
+int orte_debugger_check_rate;
+
 orte_trigger_event_t orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;

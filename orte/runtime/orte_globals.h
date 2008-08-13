@@ -210,8 +210,12 @@ typedef struct {
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
 /* define a set of flags to control the launch of a job */
-#define ORTE_JOB_CONTROL_LOCAL_SPAWN    (uint16_t) 0x01
-#define ORTE_JOB_CONTROL_NON_ORTE_JOB   (uint16_t) 0x02
+#define ORTE_JOB_CONTROL_LOCAL_SPAWN        (uint16_t) 0x01
+#define ORTE_JOB_CONTROL_NON_ORTE_JOB       (uint16_t) 0x02
+#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    (uint16_t) 0x04
+#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     (uint16_t) 0x08
+#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     (uint16_t) 0x10
+#define ORTE_JOB_CONTROL_FORWARD_COMM       (uint16_t) 0x20
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -384,6 +388,10 @@ ORTE_DECLSPEC extern bool orte_allocation_required;
 
 ORTE_DECLSPEC extern char *orte_launch_agent;
 ORTE_DECLSPEC extern char **orted_cmd_line;
+
+ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
+ORTE_DECLSPEC extern bool orte_enable_debug_cospawn_while_running;
+ORTE_DECLSPEC extern int orte_debugger_check_rate;
 
 /* exit triggers and flags */
 ORTE_DECLSPEC extern orte_trigger_event_t orte_exit, orteds_exit;

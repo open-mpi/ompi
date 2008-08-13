@@ -387,7 +387,9 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+    /* always forward output from user apps */
+    jdata->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+
     /* Parse each app, adding it to the job object */
     parse_locals(argc, argv);
     

@@ -56,7 +56,7 @@ int orte_odls_base_close(void)
         }
     }
     OBJ_DESTRUCT(&orte_daemonmap);
-
+    
     /* if no components are available, then punt */
     if (!orte_odls_base.components_available) {
         return ORTE_SUCCESS;
