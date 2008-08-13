@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,10 +39,16 @@ static void show_help(char *argv0, int ret)
            argv0);
     printf("set or get the affinity of a process\n\n");
     printf("  -p, --pid                  operating on existing given pid\n");
-    printf("                             pid can also be \"self\" or \"parent\"\n");
     printf("  -c, --cpu-list             display and specify cpus in list format\n");
     printf("  -h, --help                 display this help\n");
     printf("  -v, --version              output version information\n");
+    printf("\n");
+    printf("[mask] is a bitmask of Linux processor IDs\n");
+    printf("[cpu-list] is a list of Linux processor IDs, or a <core>@<socket>\n");
+    printf("   specification list; <core> and <socket> are either keywords ('all',\n");
+    printf("   'even', 'odd') or Linux core / socket IDs, respectively (vs.\n");
+    printf("   the Nth socket / core)\n");
+    printf("[pid] can be a PID or 'parent' or 'self'\n");
     printf("\n");
     printf("The default behavior is to run a new command:\n");
     printf("  %s 03 sshd -b 1024\n", argv0);

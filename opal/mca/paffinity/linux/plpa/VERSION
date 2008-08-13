@@ -6,7 +6,7 @@
 # <major>.<minor>.<release>.  If release is zero, then it is omitted.
 
 major=1
-minor=1
+minor=2
 release=0
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
@@ -16,7 +16,7 @@ release=0
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=
+greek=b2
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # PLPA version number in some form.
@@ -33,4 +33,4 @@ want_svn=0
 # distribution tarball is being made from an SVN checkout, the value
 # of svn_r in this file is replaced with the output of "svnversion".
 
-svn_r=r147:149
+svn_r=r192

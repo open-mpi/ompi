@@ -1,10 +1,10 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2005-05-14.22
+scriptversion=2007-11-22.22
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005
-#   Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005,
+# 2007  Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
@@ -101,14 +101,14 @@ esac
 # FIXME: add hostname here for parallel makes that run commands on
 # other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
-trap "cd `pwd`; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
+trap "cd '`pwd`'; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
 mkdir $dirname || exit 1
 
 cd $dirname
 
 case $# in
-  0) $prog "$input" ;;
-  *) $prog "$@" "$input" ;;
+  0) "$prog" "$input" ;;
+  *) "$prog" "$@" "$input" ;;
 esac
 ret=$?
 

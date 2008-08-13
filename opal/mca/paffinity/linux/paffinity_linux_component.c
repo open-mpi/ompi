@@ -78,6 +78,10 @@ static int linux_register(void)
                            "priority",
                            "Priority of the linux paffinity component",
                            false, false, 10, NULL);
+    mca_base_param_reg_string(&mca_paffinity_linux_component.base_version,
+                              "plpa_version",
+                              "Version of PLPA that is embedded in Open MPI",
+                              false, true, PAFFINITY_LINUX_PLPA_VERSION, NULL);
 
     return OPAL_SUCCESS;
 }

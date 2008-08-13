@@ -26,7 +26,9 @@ int main(int argc, char *argv[])
     int ret = 0;
     int need_help = 0;
     int show_topo = 0;
-    int have_topo, num_sockets, max_socket_num, num_cores, max_core_num;
+    int have_topo, num_sockets, max_socket_num, num_cores, max_core_id;
+    int num_processors, max_processor_id, processor_id;
+    int socket_id, exists, online, num_offline;
     PLPA_NAME(api_type_t) api_probe;
 
     for (i = 1; i < argc; ++i) {
@@ -90,14 +92,49 @@ int main(int argc, char *argv[])
 
     if (show_topo) {
         if (have_topo) {
-            /* Remember that max_socket and max_core values are
-               0-indexed */
-            for (i = 0; i <= max_socket_num; ++i) {
-                ret = PLPA_NAME(get_core_info)(i, &num_cores, &max_core_num);
-                if (0 == ret) {
-                    printf("Socket %d: %d core%s (max core ID: %d)\n",
-                           i, num_cores, (1 == num_cores) ? "" : "s",
-                           max_core_num);
+            /* Go through all the sockets */
+            for (i = 0; i < num_sockets; ++i) {
+                /* Turn the socket number into a Linux socket ID */
+                if (0 != PLPA_NAME(get_socket_id)(i, &socket_id)) {
+                    fprintf(stderr, "plpa_get_socket_id failed\n");
+                    break;
+                }
+                /* Find out about the cores on that socket */
+                if (0 != PLPA_NAME(get_core_info)(socket_id,
+                                                  &num_cores, &max_core_id)) {
+                    fprintf(stderr, "plpa_get_core_info failed\n");
+                    break;
+                }
+
+                printf("Socket %d (ID %d): %d core%s (max core ID: %d)\n",
+                       i, socket_id, num_cores, (1 == num_cores) ? "" : "s",
+                       max_core_id);
+            }
+
+            /* Go through all the processors and count how many are
+               offline; we have no topology information for offline
+               processors */
+            if (0 != PLPA_NAME(get_processor_info)(&num_processors,
+                                                   &max_processor_id)) {
+                fprintf(stderr, "plpa_get_processor_info failed\n");
+            } else {
+                for (num_offline = i = 0; i < num_processors; ++i) {
+                    if (0 != PLPA_NAME(get_processor_id)(i, &processor_id)) {
+                        fprintf(stderr, "pla_get_processor_id failed\n");
+                        break;
+                    }
+                    if (0 != PLPA_NAME(get_processor_flags)(processor_id,
+                                                            &exists, 
+                                                            &online)) {
+                        fprintf(stderr, "plpa_get_processor_flags failed\n");
+                        break;
+                    }
+                    if (exists && !online) {
+                        ++num_offline;
+                    }
+                }
+                if (num_offline > 0) {
+                    printf("%d processor%s offline (no topology information available)\n", num_offline, (1 == num_offline ? "" : "s"));
                 }
             }
         } else {
