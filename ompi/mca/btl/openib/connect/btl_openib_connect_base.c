@@ -283,7 +283,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "no cpcs for port", true,
                        orte_process_info.nodename,
-                       ibv_get_device_name(btl->hca->ib_dev),
+                       ibv_get_device_name(btl->device->ib_dev),
                        msg);
         free(cpcs);
         free(msg);

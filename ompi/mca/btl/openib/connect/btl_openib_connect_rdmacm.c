@@ -140,7 +140,7 @@ static void rdmacm_component_register(void)
     }
 }
 
-/* This function traverses the list of endpoints associated with the hca
+/* This function traverses the list of endpoints associated with the device
  * and determines which of them the remote side is attempting to connect
  * to.  This is determined based on the local endpoint's modex message
  * recevied and the IP address and port associated with the rdma_cm
@@ -152,7 +152,7 @@ static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *local,
 {
     int i;
     mca_btl_openib_endpoint_t *ep = NULL;
-    opal_pointer_array_t *endpoints = local->openib_btl->hca->endpoints;
+    opal_pointer_array_t *endpoints = local->openib_btl->device->endpoints;
 
     for (i = 0; i < opal_pointer_array_get_size(endpoints); i++) {
         mca_btl_openib_endpoint_t *ib_endpoint;
@@ -200,9 +200,9 @@ static void rdmacm_cleanup(rdmacm_contents_t *local,
 }
 
 /* Returns max inlne size for qp #N */
-static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
+static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
 {
-    if (mca_btl_openib_component.qp_infos[qp].size <= hca->max_inline_data) {
+    if (mca_btl_openib_component.qp_infos[qp].size <= device->max_inline_data) {
         /* If qp message size is smaller than max_inline_data,
          * we should enable inline messages */
         return mca_btl_openib_component.qp_infos[qp].size;
@@ -210,7 +210,7 @@ static uint32_t max_inline_size(int qp, mca_btl_openib_hca_t *hca)
         /* If qp message size is bigger that max_inline_data, we
          * should enable inline messages only for RDMA QP (for PUT/GET
          * fin messages) and for the first qp */
-        return hca->max_inline_data;
+        return device->max_inline_data;
     }
     /* Otherway it is no reason for inline */
     return 0;
@@ -248,17 +248,17 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
 
     memset(&attr, 0, sizeof(attr));
     attr.qp_type = IBV_QPT_RC;
-    attr.send_cq = local->openib_btl->hca->ib_cq[BTL_OPENIB_LP_CQ];
-    attr.recv_cq = local->openib_btl->hca->ib_cq[qp_cq_prio(qpnum)];
+    attr.send_cq = local->openib_btl->device->ib_cq[BTL_OPENIB_LP_CQ];
+    attr.recv_cq = local->openib_btl->device->ib_cq[qp_cq_prio(qpnum)];
     attr.srq = srq;
     attr.cap.max_recv_wr = max_recv_wr;
     attr.cap.max_send_wr = max_send_wr;
     attr.cap.max_inline_data = req_inline = 
-        max_inline_size(qpnum, local->openib_btl->hca);
+        max_inline_size(qpnum, local->openib_btl->device);
     attr.cap.max_send_sge = 1;
     attr.cap.max_recv_sge = 1; /* we do not use SG list */
 
-    qp = ibv_create_qp(local->openib_btl->hca->ib_pd, &attr);
+    qp = ibv_create_qp(local->openib_btl->device->ib_pd, &attr);
     if (NULL == qp) {
         BTL_ERROR(("Failed to create qp with %d", qp));
         goto out;
@@ -269,7 +269,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *local,
         endpoint->qps[qpnum].ib_inline_max = attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", orte_process_info.nodename,
-                       ibv_get_device_name(local->openib_btl->hca->ib_dev),
+                       ibv_get_device_name(local->openib_btl->device->ib_dev),
                        req_inline, attr.cap.max_inline_data);
     } else {
         endpoint->qps[qpnum].ib_inline_max = req_inline;
@@ -706,7 +706,7 @@ out:
 
 static int create_dummy_cq(rdmacm_contents_t *local, mca_btl_openib_module_t *openib_btl)
 {
-    local->dummy_cq = ibv_create_cq(openib_btl->hca->ib_dev_context, 1, NULL, NULL, 0);
+    local->dummy_cq = ibv_create_cq(openib_btl->device->ib_dev_context, 1, NULL, NULL, 0);
     if (NULL == local->dummy_cq) {
         BTL_ERROR(("dummy_cq not created"));
         goto out;
@@ -732,7 +732,7 @@ static int create_dummy_qp(rdmacm_contents_t *local, struct rdma_cm_id *id, int 
     attr.cap.max_send_sge = 1;
     attr.cap.max_recv_sge = 1;
 
-    qp = ibv_create_qp(local->openib_btl->hca->ib_pd, &attr);
+    qp = ibv_create_qp(local->openib_btl->device->ib_pd, &attr);
     if (NULL == qp) {
         BTL_ERROR(("Failed to create qp with %d", qp));
         goto out;
@@ -1000,10 +1000,10 @@ static int ipaddrcheck(rdmacm_contents_t *server,
 
     /* Look up the IP address of this device/port */
     ipaddr = 
-        mca_btl_openib_rdma_get_ipv4addr(openib_btl->hca->ib_dev_context, 
+        mca_btl_openib_rdma_get_ipv4addr(openib_btl->device->ib_dev_context, 
                                          openib_btl->port_num);
     if (0 == ipaddr) {
-        BTL_VERBOSE(("openib BTL: rdmacm CPC unable to find IP address for %s", ibv_get_device_name(openib_btl->hca->ib_dev)));
+        BTL_VERBOSE(("openib BTL: rdmacm CPC unable to find IP address for %s", ibv_get_device_name(openib_btl->device->ib_dev)));
         return OMPI_ERR_NOT_FOUND;
     }
 
@@ -1139,8 +1139,8 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
         goto out5;
     }
 
-    /* Verify that the HCA has a valid IP address on it, or we cannot
-       use the cpc */
+    /* Verify that the device has a valid IP address on it, or we
+       cannot use the cpc */
     rc = ipaddrcheck(server, openib_btl);
     if (0 != rc) {
         opal_output_verbose(5, mca_btl_base_output,
@@ -1181,7 +1181,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, ompi_btl_
 
     opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: rdmacm CPC available for use on %s",
-                        ibv_get_device_name(openib_btl->hca->ib_dev));
+                        ibv_get_device_name(openib_btl->device->ib_dev));
     return OMPI_SUCCESS;
 
 out6:
@@ -1200,11 +1200,11 @@ out:
     if (OMPI_ERR_NOT_SUPPORTED == rc) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unavailable for use on %s; skipped",
-                            ibv_get_device_name(openib_btl->hca->ib_dev));
+                            ibv_get_device_name(openib_btl->device->ib_dev));
     } else {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rmacm CPC unavailable for use on %s; fatal error %d (%s)",
-                            ibv_get_device_name(openib_btl->hca->ib_dev), rc,
+                            ibv_get_device_name(openib_btl->device->ib_dev), rc,
                             opal_strerror(rc));
     }
     return rc;

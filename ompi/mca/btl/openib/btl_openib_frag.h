@@ -272,7 +272,7 @@ alloc_credit_frag(mca_btl_openib_module_t *btl)
     int rc;
     ompi_free_list_item_t *item;
 
-    OMPI_FREE_LIST_WAIT(&btl->hca->send_free_control, item, rc);
+    OMPI_FREE_LIST_WAIT(&btl->device->send_free_control, item, rc);
 
     return to_send_control_frag(item);
 }
