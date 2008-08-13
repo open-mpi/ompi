@@ -1149,10 +1149,13 @@ CLEANUP:
          * co-locate any debugger daemons so that they get launched
          * before we report anything to the HNP. This ensures that
          * the debugger daemons are ready-to-go before mpirun returns
-         * from the plm.spawn command
+         * from the plm.spawn command. Only spawn the debugger, though,
+         * if we have local children - otherwise, the HNP could spawn
+         * a debugger when it doesn't have any local procs
          */
         if (NULL != orte_odls_globals.debugger &&
-            !orte_odls_globals.debugger_launched) {
+            !orte_odls_globals.debugger_launched &&
+            0 < opal_list_get_size(&orte_odls_globals.children)) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:launch forking debugger with %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
