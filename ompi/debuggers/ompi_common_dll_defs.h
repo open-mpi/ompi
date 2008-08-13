@@ -69,14 +69,14 @@ typedef struct
         mqs_type *type;
         int size;
         struct {
-            int fl_elem_class;    /* opal_class_t* */
-            int fl_mpool;         /* struct mca_mpool_base_module_t* */
-            int fl_elem_size;     /* size_t */
-            int fl_alignment;     /* size_t */
-            int fl_allocations;   /* opal_list_t */
-            int fl_max_to_alloc;  /* size_t */
-            int fl_num_per_alloc; /* size_t */
-            int fl_num_allocated; /* size_t */
+            int fl_frag_class;         /* opal_class_t* */
+            int fl_mpool;              /* struct mca_mpool_base_module_t* */
+            int fl_frag_size;          /* size_t */
+            int fl_frag_alignment;     /* size_t */
+            int fl_allocations;        /* opal_list_t */
+            int fl_max_to_alloc;       /* size_t */
+            int fl_num_per_alloc;      /* size_t */
+            int fl_num_allocated;      /* size_t */
         } offset;
     } ompi_free_list_t;
     struct {
