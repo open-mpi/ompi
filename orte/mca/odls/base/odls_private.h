@@ -75,6 +75,7 @@ typedef struct orte_odls_job_t {
     orte_jobid_t        jobid;                  /* jobid for this data */
     orte_app_context_t  **apps;                 /* app_contexts for this job */
     orte_std_cntr_t     num_apps;               /* number of app_contexts */
+    uint16_t            controls;               /* control flags for job */
     orte_std_cntr_t     total_slots_alloc;
     orte_vpid_t         num_procs;
     int32_t             num_local_procs;
@@ -106,6 +107,10 @@ typedef struct {
     opal_list_t jobs;
     /* byte object to store daemon map for later xmit to procs */
     opal_byte_object_t *dmap;
+    /* any co-spawned debugger daemon */
+    orte_odls_job_t *debugger;
+    /* debugger launched */
+    bool debugger_launched;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
@@ -127,7 +132,8 @@ orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 /* define a function that will fork a local proc */
 typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
                                                    orte_odls_child_t *child,
-                                                   char **environ_copy);
+                                                   char **environ_copy,
+                                                   bool forward_output);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_launch_local(orte_jobid_t job,

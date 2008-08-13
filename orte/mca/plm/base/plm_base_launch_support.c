@@ -913,6 +913,11 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
         goto CHECK_ALL_JOBS;
     }
     
+    /* if this job is not to be monitored, then ignore it */
+    if (ORTE_JOB_CONTROL_DO_NOT_MONITOR & jdata->controls) {
+        return;
+    }
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:check_job_completed for job %s - num_terminated %lu  num_procs %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1047,6 +1052,10 @@ CHECK_ALL_JOBS:
                  * the jobs so we can just quit the loop
                  */
                 break;
+            }
+            /* if the job is flagged to not be monitored, skip it */
+            if (ORTE_JOB_CONTROL_DO_NOT_MONITOR & jobs[j]->controls) {
+                continue;
             }
             /* when checking for job termination, we must be sure to NOT check
              * our own job as it - rather obviously - has NOT terminated!

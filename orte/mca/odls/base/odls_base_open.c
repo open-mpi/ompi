@@ -101,6 +101,7 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->jobid = ORTE_JOBID_INVALID;
     ptr->apps = NULL;
     ptr->num_apps = 0;
+    ptr->controls = 0;
     ptr->total_slots_alloc = 0;
     ptr->num_procs = 0;
     ptr->num_local_procs = 0;
@@ -168,6 +169,8 @@ int orte_odls_base_open(void)
     OBJ_CONSTRUCT(&orte_odls_globals.children, opal_list_t);
     OBJ_CONSTRUCT(&orte_odls_globals.jobs, opal_list_t);
     orte_odls_globals.dmap = NULL;
+    orte_odls_globals.debugger = NULL;
+    orte_odls_globals.debugger_launched = false;
     
     /* initialize and setup the daemonmap */
     OBJ_CONSTRUCT(&orte_daemonmap, opal_pointer_array_t);
