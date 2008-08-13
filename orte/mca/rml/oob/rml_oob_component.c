@@ -389,6 +389,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
         if (ORTE_SUCCESS != ret) {
             if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
                 /* still no route -- try again */
+                ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
                 OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
                 opal_list_append(&orte_rml_oob_module.queued_routing_messages,
                                  &qmsg->super);
