@@ -141,12 +141,20 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
 
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
-                         "%s pubsub:orte: publishing service %s scope %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         service_name, global_scope ? "Global" : "Local"));
-    
-    if (!global_scope) {
+    if (0 == flag) {
+        /* scope was not defined - see if server exists */
+        if (!server_setup) {
+            setup_server();
+        }
+        if (mca_pubsub_orte_component.server_found) {
+            /* server was found - use it as our default store */
+            info_host = &mca_pubsub_orte_component.server;
+            global_scope = true;
+        } else {
+            /* server was not found - use our HNP as default store */
+            info_host = ORTE_PROC_MY_HNP;
+        }
+    } else if (!global_scope) {
         /* if the scope is not global, then store the value on the HNP */
         info_host = ORTE_PROC_MY_HNP;
     } else {
@@ -165,6 +173,11 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
         info_host = &mca_pubsub_orte_component.server;
     }
     
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: publishing service %s scope %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         service_name, global_scope ? "Global" : "Local"));
+
     /* construct the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
@@ -226,7 +239,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
     char *port_name=NULL;
     int ret, rc, flag, i;
     char value[256], **tokens, *ptr;
-    int lookup[2] = { LOCAL, GLOBAL };
+    int lookup[2] = { GLOBAL, LOCAL };
     size_t num_tokens;
 
     /* Look in the MPI_Info (ompi_info_t*) for the key
@@ -283,6 +296,29 @@ static char* lookup ( char *service_name, ompi_info_t *info )
                 opal_argv_free(tokens);
             }
         }
+        
+        if (NONE == lookup[0]) {
+            /* if the user provided an info key, then we at least must
+             * be given one place to look
+             */
+            orte_show_help("help-ompi-pubsub-orte.txt",
+                           "pubsub-orte:unknown-order",
+                           true, (long)ORTE_PROC_MY_NAME->vpid);
+            return NULL;
+        }
+        
+    } else {
+        /* if no info key was provided, then we default to the global
+         * server IF it is active
+         */
+        if (!server_setup) {
+            setup_server();
+        }
+        if (!mca_pubsub_orte_component.server_found) {
+            /* global server was not found - just look local */
+            lookup[0] = LOCAL;
+            lookup[1] = NONE;
+        }
     }
     
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
@@ -290,34 +326,6 @@ static char* lookup ( char *service_name, ompi_info_t *info )
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, lookup[0]));
     
-    /* check for error situations */
-    
-    if (NONE == lookup[0]) {
-        /* if the user provided an info key, then we at least must
-         * be given one place to look
-         */
-        orte_show_help("help-ompi-pubsub-orte.txt",
-                       "pubsub-orte:unknown-order",
-                       true, (long)ORTE_PROC_MY_NAME->vpid);
-        return NULL;
-    }
-    
-    if (GLOBAL == lookup[0]) {
-        /* has the server been setup yet? */
-        if (!server_setup) {
-            setup_server();
-        }
-        
-        if (!mca_pubsub_orte_component.server_found) {
-            /* if we were told to look global first and no server is
-             * present, then that is an error
-             */
-            orte_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
-                           true, (long)ORTE_PROC_MY_NAME->vpid, "lookup from");
-            return NULL;
-        }
-    }
-
     /* go find the value */
     for (i=0; i < 2; i++) {
         if (LOCAL == lookup[i]) {
@@ -339,6 +347,8 @@ static char* lookup ( char *service_name, ompi_info_t *info )
                 return NULL;
             }
             info_host = &mca_pubsub_orte_component.server;
+        } else if (NONE == lookup[i]) {
+            continue;
         } else {
             /* unknown host! */
             orte_show_help("help-ompi-pubsub-orte.txt",
@@ -431,12 +441,20 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     
     ompi_info_get_bool(info, "ompi_global_scope", &global_scope, &flag);
 
-    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
-                         "%s pubsub:orte: unpublish service %s scope %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         service_name, global_scope ? "Global" : "Local"));
-    
-    if (!global_scope) {
+    if (0 == flag) {
+        /* scope was not defined - see if server exists */
+        if (!server_setup) {
+            setup_server();
+        }
+        if (mca_pubsub_orte_component.server_found) {
+            /* server was found - use it as our default store */
+            info_host = &mca_pubsub_orte_component.server;
+            global_scope = true;
+        } else {
+            /* server was not found - use our HNP as default store */
+            info_host = ORTE_PROC_MY_HNP;
+        }
+    } else if (!global_scope) {
         /* if the scope is not global, then unpublish the value from the HNP */
         info_host = ORTE_PROC_MY_HNP;
     } else {
@@ -449,11 +467,16 @@ static int unpublish ( char *service_name, ompi_info_t *info )
         */
         if (!mca_pubsub_orte_component.server_found) {
             orte_show_help("help-ompi-pubsub-orte.txt", "pubsub-orte:no-server",
-                           true);
+                           true, (long)ORTE_PROC_MY_NAME->vpid, "unpublish from");
             return OMPI_ERR_NOT_FOUND;
         }
         info_host = &mca_pubsub_orte_component.server;
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
+                         "%s pubsub:orte: unpublish service %s scope %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         service_name, global_scope ? "Global" : "Local"));
     
     /* construct the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);

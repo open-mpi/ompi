@@ -57,6 +57,8 @@ struct orterun_globals_t {
     opal_mutex_t lock;
     bool sleep;
     char *ompi_server;
+    bool wait_for_server;
+    int server_wait_timeout;
 };
 
 /**
