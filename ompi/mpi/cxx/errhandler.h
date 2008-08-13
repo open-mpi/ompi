@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -30,22 +30,10 @@ public:
     : mpi_errhandler(i) {}
 
  // copy / assignment
-  inline Errhandler(const Errhandler& e)
-    : comm_handler_fn(e.comm_handler_fn), 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-      file_handler_fn(e.file_handler_fn), 
-#endif
-      win_handler_fn(e.win_handler_fn), 
-      mpi_errhandler(e.mpi_errhandler) { }
+  inline Errhandler(const Errhandler& e) : mpi_errhandler(e.mpi_errhandler) { }
 
-  inline Errhandler& operator=(const Errhandler& e)
-  {
+  inline Errhandler& operator=(const Errhandler& e) {
     mpi_errhandler = e.mpi_errhandler;
-    comm_handler_fn = e.comm_handler_fn;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-    file_handler_fn = e.file_handler_fn;
-#endif
-    win_handler_fn = e.win_handler_fn;
     return *this;
   }
 
@@ -70,11 +58,6 @@ public:
   
   virtual void Free();
 
-  Comm::Errhandler_fn* comm_handler_fn;
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE
-  File::Errhandler_fn* file_handler_fn;
-#endif
-  Win::Errhandler_fn* win_handler_fn;
-
+private:
   MPI_Errhandler mpi_errhandler;
 };

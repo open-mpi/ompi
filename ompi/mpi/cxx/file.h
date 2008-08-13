@@ -311,9 +311,5 @@ protected:
   MPI_File mpi_file;
 
 #endif
-
-public:
-  Errhandler* my_errhandler;
-
 };
 

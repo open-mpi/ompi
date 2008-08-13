@@ -214,13 +214,11 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
 {
     int i;
     int rsize;
-    int rank;
     int err;
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
     ompi_request_t **reqs = basic_module->mccb_reqs;
 
     rsize = ompi_comm_remote_size(comm);
-    rank = ompi_comm_rank(comm);
 
     if (MPI_PROC_NULL == root) {
         /* do nothing */

@@ -107,7 +107,6 @@ mca_coll_basic_gather_inter(void *sbuf, int scount,
 {
     int i;
     int err;
-    int rank;
     int size;
     char *ptmp;
     MPI_Aint incr;
@@ -115,8 +114,6 @@ mca_coll_basic_gather_inter(void *sbuf, int scount,
     MPI_Aint lb;
 
     size = ompi_comm_remote_size(comm);
-    rank = ompi_comm_rank(comm);
-
 
     if (MPI_PROC_NULL == root) {
         /* do nothing */

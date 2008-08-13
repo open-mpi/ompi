@@ -102,59 +102,58 @@ ompi_group_t *ompi_group_allocate_sporadic(int group_size)
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);
-    if (new_group) {
-        if (OMPI_ERROR == new_group->grp_f_to_c_index) {
-            OBJ_RELEASE(new_group);
+    if( NULL == new_group) {
+        goto error_exit;
+    }
+    if (OMPI_ERROR == new_group->grp_f_to_c_index) {
+        OBJ_RELEASE(new_group);
+        new_group = NULL;
+        goto error_exit;
+    }
+    /* allocate array of (grp_sporadic_list )'s */
+    if (0 < group_size) {
+        new_group->sparse_data.grp_sporadic.grp_sporadic_list = 
+            (struct ompi_group_sporadic_list_t *)malloc
+            (sizeof(struct ompi_group_sporadic_list_t ) * group_size);
+        
+        /* non-empty group */
+        if ( NULL == new_group->sparse_data.grp_sporadic.grp_sporadic_list) {
+            /* sporadic list allocation failed */
+            OBJ_RELEASE (new_group);
             new_group = NULL;
-	    goto error_exit;
-        } else {
-            /* allocate array of (grp_sporadic_list )'s */
-            if (0 < group_size) {
-		new_group->sparse_data.grp_sporadic.grp_sporadic_list = 
-                    (struct ompi_group_sporadic_list_t *)malloc
-                    (sizeof(struct ompi_group_sporadic_list_t ) * group_size);
-
-                /* non-empty group */
-                if ( NULL == new_group->sparse_data.grp_sporadic.grp_sporadic_list) {
-                    /* sporadic list allocation failed */
-                    OBJ_RELEASE (new_group);
-		    new_group = NULL;
-		    goto error_exit;
-                }
-            }
-
-            /* set the group size */
-            new_group->grp_proc_count = group_size; /* actually it's the number of 
-						       elements in the sporadic list*/
-
-            /* initialize our rank to MPI_UNDEFINED */
-            new_group->grp_my_rank    = MPI_UNDEFINED;
+            goto error_exit;
         }
     }
+    
+    /* set the group size */
+    new_group->grp_proc_count = group_size; /* actually it's the number of 
+                                               elements in the sporadic list*/
+    
+    /* initialize our rank to MPI_UNDEFINED */
+    new_group->grp_my_rank       = MPI_UNDEFINED;
     new_group->grp_proc_pointers = NULL;
     OMPI_GROUP_SET_SPORADIC(new_group);    
         
 error_exit:
-    /* return */
     return new_group;
 }
-ompi_group_t *ompi_group_allocate_strided(void) { 
-  /* local variables */
+
+ompi_group_t *ompi_group_allocate_strided(void)
+{
     ompi_group_t *new_group = NULL;
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);
-    if (new_group) {
-        if (OMPI_ERROR == new_group->grp_f_to_c_index) {
-            OBJ_RELEASE(new_group);
-            new_group = NULL;
-	    goto error_exit;
-        }
-	else {
-            /* initialize our rank to MPI_UNDEFINED */
-            new_group->grp_my_rank    = MPI_UNDEFINED;
-        }
+    if( NULL == new_group ) {
+        goto error_exit;
     }
+    if (OMPI_ERROR == new_group->grp_f_to_c_index) {
+        OBJ_RELEASE(new_group);
+        new_group = NULL;
+        goto error_exit;
+    }
+    /* initialize our rank to MPI_UNDEFINED */
+    new_group->grp_my_rank    = MPI_UNDEFINED;
     new_group->grp_proc_pointers     = NULL;
     OMPI_GROUP_SET_STRIDED(new_group);
     new_group->sparse_data.grp_strided.grp_strided_stride         = -1;
@@ -166,32 +165,31 @@ error_exit:
 }
 ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
 {
-    /* local variables */
     ompi_group_t *new_group = NULL;
 
     assert (group_size >= 0);
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);
-    if (new_group) {
-        if (OMPI_ERROR == new_group->grp_f_to_c_index) {
-            OBJ_RELEASE(new_group);
-            new_group = NULL;
-	    goto error_exit;
-        } else {
-            /* allocate the unsigned char list */
-	    new_group->sparse_data.grp_bitmap.grp_bitmap_array = (unsigned char *)malloc 
-                (sizeof(unsigned char) * ompi_group_div_ceil(orig_group_size,BSIZE));
-                        
-	    new_group->sparse_data.grp_bitmap.grp_bitmap_array_len = 
-                ompi_group_div_ceil(orig_group_size,BSIZE);
-	    
-	    new_group->grp_proc_count = group_size;
-
-            /* initialize our rank to MPI_UNDEFINED */
-            new_group->grp_my_rank    = MPI_UNDEFINED;
-        }
+    if( NULL == new_group) {
+        goto error_exit;
     }
+    if (OMPI_ERROR == new_group->grp_f_to_c_index) {
+        OBJ_RELEASE(new_group);
+        new_group = NULL;
+        goto error_exit;
+    }
+    /* allocate the unsigned char list */
+    new_group->sparse_data.grp_bitmap.grp_bitmap_array = (unsigned char *)malloc 
+        (sizeof(unsigned char) * ompi_group_div_ceil(orig_group_size,BSIZE));
+    
+    new_group->sparse_data.grp_bitmap.grp_bitmap_array_len = 
+        ompi_group_div_ceil(orig_group_size,BSIZE);
+    
+    new_group->grp_proc_count = group_size;
+
+    /* initialize our rank to MPI_UNDEFINED */
+    new_group->grp_my_rank    = MPI_UNDEFINED;
     new_group->grp_proc_pointers     = NULL;
     OMPI_GROUP_SET_BITMAP(new_group);
     

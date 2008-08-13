@@ -123,13 +123,10 @@ mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module)
 {
-    int size, rsize;
-    int err, i;
-    int *scounts = NULL;
-    int *sdisps = NULL;
+    int rsize, err, i;
+    int *scounts = NULL, *sdisps = NULL;
 
     rsize = ompi_comm_remote_size(comm);
-    size = ompi_comm_size(comm);
 
     scounts = (int *) malloc(rsize * sizeof(int));
     sdisps = (int *) calloc(rsize, sizeof(int));

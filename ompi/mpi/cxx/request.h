@@ -57,7 +57,7 @@ public:
 #else
 
   // construction / destruction
-  Request() { mpi_request = MPI_REQUEST_NULL; }
+  Request() : mpi_request(MPI_REQUEST_NULL) { }
   virtual ~Request() {}
   Request(MPI_Request i) : mpi_request(i) { }
 

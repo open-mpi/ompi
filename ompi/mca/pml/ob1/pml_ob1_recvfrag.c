@@ -133,8 +133,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     
      /* get sequence number of next message that can be processed */
     if(OPAL_UNLIKELY((((uint16_t) hdr->hdr_seq) != ((uint16_t) proc->expected_sequence)) ||
-                     (opal_list_get_size(&proc->frags_cant_match) > 0 ) ||
-                     (num_segments > 1))) {
+                     (opal_list_get_size(&proc->frags_cant_match) > 0 ))) {
         goto slow_path;
     }
     
@@ -172,7 +171,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_delivered > 0) { 
             struct iovec iov[2];
-            uint32_t iov_count = num_segments;
+            uint32_t iov_count = 1;
             
             /*
              *  Make user buffer accessable(defined) before unpacking.
@@ -187,10 +186,11 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
             iov[0].iov_len = bytes_received;
             iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
                                               OMPI_PML_OB1_MATCH_HDR_LEN);
-            if(num_segments > 1) {
-                bytes_received += segment[1].seg_len;
-                iov[1].iov_len = segment[1].seg_len;
-                iov[1].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment[1].seg_addr.pval);
+            while (iov_count < num_segments) {
+                bytes_received += segment[iov_count].seg_len;
+                iov[iov_count].iov_len = segment[iov_count].seg_len;
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment[iov_count].seg_addr.pval);
+                iov_count++;
             }
             ompi_convertor_unpack( &match->req_recv.req_base.req_convertor,
                                    iov,

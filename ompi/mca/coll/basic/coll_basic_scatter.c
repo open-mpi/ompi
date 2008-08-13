@@ -110,15 +110,13 @@ mca_coll_basic_scatter_inter(void *sbuf, int scount,
                              int root, struct ompi_communicator_t *comm,
                              mca_coll_base_module_t *module)
 {
-    int i, rank, size, err;
+    int i, size, err;
     char *ptmp;
     ptrdiff_t lb, incr;
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
     ompi_request_t **reqs = basic_module->mccb_reqs;
 
     /* Initialize */
-
-    rank = ompi_comm_rank(comm);
     size = ompi_comm_remote_size(comm);
 
     if (MPI_PROC_NULL == root) {

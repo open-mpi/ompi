@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +30,6 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/bml/base/bml_base_endpoint.h" 
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "bml_r2.h"
 #include "orte/util/name_fns.h"
