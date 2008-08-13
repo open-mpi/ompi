@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  *
  * Portions of this file originally contributed by Advanced Micro
  * Devices, Inc.  See notice below.
@@ -122,24 +122,27 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
 
 typedef struct tuple_t_ {
-    int processor_id, socket, core;
+    int processor_id, socket_id, core_id, online;
 } tuple_t;
 
+static const char *sysfs_mount = "/sys";
 static int supported = 0;
 static int num_processors = -1;
-static int max_processor_num = -1;
+static int max_processor_id = -1;
 static int num_sockets = -1;
 static int max_socket_id = -1;
 static int *max_core_id = NULL;
 static int *num_cores = NULL;
 static int max_core_id_overall = -1;
 static tuple_t *map_processor_id_to_tuple = NULL;
-static tuple_t ***map_tuple_to_processor_id = NULL;
+static tuple_t **map_tuple_to_processor_id = NULL;
+static PLPA_NAME(cache_behavior_t) cache_behavior = PLPA_NAME_CAPS(CACHE_IGNORE);
 
 static void clear_cache(void)
 {
@@ -156,25 +159,31 @@ static void clear_cache(void)
         map_processor_id_to_tuple = NULL;
     }
     if (NULL != map_tuple_to_processor_id) {
-        if (NULL != map_tuple_to_processor_id[0]) {
-            free(map_tuple_to_processor_id[0]);
-            map_tuple_to_processor_id = NULL;
-        }
         free(map_tuple_to_processor_id);
         map_tuple_to_processor_id = NULL;
     }
 
-    num_processors = max_processor_num = -1;
+    num_processors = max_processor_id = -1;
     num_sockets = max_socket_id = -1;
     max_core_id_overall = -1;
 }
 
-static void load_cache(const char *sysfs_mount)
+static void load_cache(void)
 {
-    int i, j, k, invalid_entry, fd;
+    int i, j, k, invalid_entry, fd, found_online;
     char path[PATH_MAX], buf[8] = "\0\0\0\0\0\0\0\0";
+    PLPA_NAME(cpu_set_t) valid_processors;
     PLPA_NAME(cpu_set_t) *cores_on_sockets;
     int found;
+    DIR *dir;
+    struct dirent dentry, *dentryp = NULL;
+
+#if PLPA_DEBUG
+    char *temp = getenv("PLPA_SYSFS_MOUNT");
+    if (temp) {
+        sysfs_mount = temp;
+    }
+#endif
 
     /* Check for the parent directory */
     sprintf(path, "%s/devices/system/cpu", sysfs_mount);
@@ -182,16 +191,41 @@ static void load_cache(const char *sysfs_mount)
         return;
     }
 
-    /* Go through and find the max processor ID */
-    for (num_processors = max_processor_num = i = 0; 
-         i < PLPA_BITMASK_CPU_MAX; ++i) {
-        sprintf(path, "%s/devices/system/cpu/cpu%d", sysfs_mount, i);
-        if (0 != access(path, (R_OK | X_OK))) {
-            max_processor_num = i - 1;
-            break;
-        }
-        ++num_processors;
+    dir = opendir(path);
+    if (NULL == dir) {
+        return;
     }
+
+    /* Catch all entries of format "cpu%d", count them and maintain
+       max_processor_id */
+    num_processors = 0;
+    PLPA_CPU_ZERO(&valid_processors);
+    do {
+        int ret = readdir_r(dir, &dentry, &dentryp);
+        if (0 != ret) {
+            closedir(dir);
+            clear_cache();
+            return;
+        }
+
+        if (dentryp) {
+            int cpuid;
+
+            ret = sscanf(dentryp->d_name, "cpu%d", &cpuid);
+            if (1 == ret) {
+                ++num_processors;
+                if (cpuid >= PLPA_BITMASK_CPU_MAX) {
+                    closedir(dir);
+                    clear_cache();
+                    return;
+                } else if (cpuid > max_processor_id) {
+                    max_processor_id = cpuid;
+                }
+                PLPA_CPU_SET(cpuid, &valid_processors);
+            }
+        }
+    } while (NULL != dentryp);
+    closedir(dir);
 
     /* If we found no processors, then we have no topology info */
     if (0 == num_processors) {
@@ -202,52 +236,103 @@ static void load_cache(const char *sysfs_mount)
     /* Malloc space for the first map (processor ID -> tuple).
        Include enough space for one invalid entry. */
     map_processor_id_to_tuple = malloc(sizeof(tuple_t) * 
-                                       (max_processor_num + 2));
+                                       (max_processor_id + 2));
     if (NULL == map_processor_id_to_tuple) {
+        clear_cache();
         return;
     }
-    for (i = 0; i <= max_processor_num; ++i) {
-        map_processor_id_to_tuple[i].processor_id = i;
-        map_processor_id_to_tuple[i].socket = -1;
-        map_processor_id_to_tuple[i].core = -1;
+    for (i = 0; i <= max_processor_id; ++i) {
+        if (PLPA_CPU_ISSET(i, &valid_processors)) {
+            map_processor_id_to_tuple[i].processor_id = i;
+        } else {
+            map_processor_id_to_tuple[i].processor_id = -1;
+        }
+        map_processor_id_to_tuple[i].socket_id = -1;
+        map_processor_id_to_tuple[i].core_id = -1;
     }
     /* Set the invalid entry */
     invalid_entry = i;
     map_processor_id_to_tuple[invalid_entry].processor_id = -1;
-    map_processor_id_to_tuple[invalid_entry].socket = -1;
-    map_processor_id_to_tuple[invalid_entry].core = -1;
+    map_processor_id_to_tuple[invalid_entry].socket_id = -1;
+    map_processor_id_to_tuple[invalid_entry].core_id = -1;
 
     /* Build a cached map of (socket,core) tuples */
-    for (found = 0, i = 0; i <= max_processor_num; ++i) {
+    for (found = 0, i = 0; i <= max_processor_id; ++i) {
+
+        /* Check for invalid processor ID */
+        if (map_processor_id_to_tuple[i].processor_id < 0) {
+            continue;
+        }
+
+        /* Read the "online" state for this processor.  If the online
+           file is not there, then the kernel likely doesn't have
+           hotplug support so just assume that it's online.  Some notes:
+
+           - the perms on the "online" file are root/600, so only root
+             will see this info
+           - if online is 0, then all the topology files disappear (!)
+             -- so PLPA needs to compensate for that
+        */
+        found_online = 0;
+        sprintf(path, "%s/devices/system/cpu/cpu%d/online", 
+                sysfs_mount, i);
+        fd = open(path, O_RDONLY);
+        memset(buf, 0, sizeof(buf));
+        if (fd >= 0 && read(fd, buf, sizeof(buf) - 1) > 0) {
+            found_online = 1;
+            sscanf(buf, "%d", &(map_processor_id_to_tuple[i].online));
+        } else {
+            map_processor_id_to_tuple[i].online = 1;
+        }
+        close(fd);
+
+        /* Core ID */
         sprintf(path, "%s/devices/system/cpu/cpu%d/topology/core_id", 
                 sysfs_mount, i);
         fd = open(path, O_RDONLY);
-        if ( fd < 0 ) {
-            continue;
+        if (fd >= 0) {
+            memset(buf, 0, sizeof(buf));
+            if (read(fd, buf, sizeof(buf) - 1) > 0) {
+                sscanf(buf, "%d", &(map_processor_id_to_tuple[i].core_id));
+            } else {
+                map_processor_id_to_tuple[i].core_id = -1;
+            }
+            close(fd);
+        } 
+        /* Special case: we didn't find the core_id file, but we *did*
+           find the online file and the processor is offline -- then
+           just mark the core ID as "unknown" and keep going (because
+           if a processor is offline, the core_id file won't exist --
+           grumble) */
+        else if (found_online && 0 == map_processor_id_to_tuple[i].online) {
+            map_processor_id_to_tuple[i].core_id = -1;
         }
-        if ( read(fd, buf, 7) <= 0 ) {
-            continue;
-        }
-        sscanf(buf, "%d", &(map_processor_id_to_tuple[i].core));
-        close(fd);
-        
+
+        /* Socket ID */
         sprintf(path,
                 "%s/devices/system/cpu/cpu%d/topology/physical_package_id",
                 sysfs_mount, i);
         fd = open(path, O_RDONLY);
-        if ( fd < 0 ) {
-            continue;
+        if (fd >= 0) {
+            memset(buf, 0, sizeof(buf));
+            if (read(fd, buf, sizeof(buf) - 1) > 0) {
+                sscanf(buf, "%d", &(map_processor_id_to_tuple[i].socket_id));
+            }
+            close(fd);
+            found = 1;
         }
-        if ( read(fd, buf, 7) <= 0 ) {
-            continue;
+        /* Special case: we didn't find the socket_id file, but we
+           *did* find the online file and the processor is offline --
+           then just mark the socket ID as "unknown" and keep going
+           (because if a processor is offline, the socket_id file won't
+           exist -- grumble) */
+        else if (found_online && 0 == map_processor_id_to_tuple[i].online) {
+            map_processor_id_to_tuple[i].socket_id = -1;
         }
-        sscanf(buf, "%d", &(map_processor_id_to_tuple[i].socket));
-        close(fd);
-        found = 1;
         
         /* Keep a running tab on the max socket number */
-        if (map_processor_id_to_tuple[i].socket > max_socket_id) {
-            max_socket_id = map_processor_id_to_tuple[i].socket;
+        if (map_processor_id_to_tuple[i].socket_id > max_socket_id) {
+            max_socket_id = map_processor_id_to_tuple[i].socket_id;
         }
     }
 
@@ -276,23 +361,20 @@ static void load_cache(const char *sysfs_mount)
     }
 
     /* Find the max core number on each socket */
-    for (i = 0; i <= max_processor_num; ++i) {
-        /* If we don't have the core/socket for a given processor ID,
-           then skip it */
-        if (map_processor_id_to_tuple[i].core < 0 ||
-            map_processor_id_to_tuple[i].socket < 0) {
+    for (i = 0; i <= max_processor_id; ++i) {
+        if (map_processor_id_to_tuple[i].processor_id < 0 ||
+            map_processor_id_to_tuple[i].socket_id < 0) {
             continue;
         }
-
-        if (map_processor_id_to_tuple[i].core > 
-            max_core_id[map_processor_id_to_tuple[i].socket]) {
-            max_core_id[map_processor_id_to_tuple[i].socket] = 
-                map_processor_id_to_tuple[i].core;
+        if (map_processor_id_to_tuple[i].core_id > 
+            max_core_id[map_processor_id_to_tuple[i].socket_id]) {
+            max_core_id[map_processor_id_to_tuple[i].socket_id] = 
+                map_processor_id_to_tuple[i].core_id;
         }
-        if (max_core_id[map_processor_id_to_tuple[i].socket] > 
+        if (max_core_id[map_processor_id_to_tuple[i].socket_id] > 
             max_core_id_overall) {
             max_core_id_overall = 
-                max_core_id[map_processor_id_to_tuple[i].socket];
+                max_core_id[map_processor_id_to_tuple[i].socket_id];
         }
     }
 
@@ -322,15 +404,15 @@ static void load_cache(const char *sysfs_mount)
     for (i = 0; i <= max_socket_id; ++i) {
         PLPA_CPU_ZERO(&(cores_on_sockets[i]));
     }
-    for (i = 0; i <= max_processor_num; ++i) {
-        if (map_processor_id_to_tuple[i].socket >= 0) {
-            PLPA_CPU_SET(map_processor_id_to_tuple[i].core,
-                         &(cores_on_sockets[map_processor_id_to_tuple[i].socket]));
+    for (i = 0; i <= max_processor_id; ++i) {
+        if (map_processor_id_to_tuple[i].socket_id >= 0) {
+            PLPA_CPU_SET(map_processor_id_to_tuple[i].core_id,
+                         &(cores_on_sockets[map_processor_id_to_tuple[i].socket_id]));
         }
     }
     for (i = 0; i <= max_socket_id; ++i) {
         int count = 0;
-        for (j = 0; j < PLPA_BITMASK_CPU_MAX; ++j) {
+        for (j = 0; j <= max_core_id[i]; ++j) {
             if (PLPA_CPU_ISSET(j, &(cores_on_sockets[i]))) {
                 ++count;
             }
@@ -345,44 +427,35 @@ static void load_cache(const char *sysfs_mount)
        (socket,core) => processor_id.  This map simply points to
        entries in the other map (i.e., it's by reference instead of by
        value). */
-    map_tuple_to_processor_id = malloc(sizeof(tuple_t **) *
-                                       (max_socket_id + 1));
+    map_tuple_to_processor_id = malloc(sizeof(tuple_t *) *
+                                       ((max_socket_id + 1) *
+                                        (max_core_id_overall + 1)));
     if (NULL == map_tuple_to_processor_id) {
         clear_cache();
         return;
     }
-    map_tuple_to_processor_id[0] = malloc(sizeof(tuple_t *) * 
-                                          ((max_socket_id + 1) * 
-                                           (max_core_id_overall + 1)));
-    if (NULL == map_tuple_to_processor_id[0]) {
-        clear_cache();
-        return;
-    }
-    /* Set pointers for 2nd dimension */
-    for (i = 1; i <= max_socket_id; ++i) {
-        map_tuple_to_processor_id[i] = 
-            map_tuple_to_processor_id[i - 1] + max_core_id_overall + 1;
-    }
     /* Compute map */
     for (i = 0; i <= max_socket_id; ++i) {
         for (j = 0; j <= max_core_id_overall; ++j) {
+            tuple_t **tuple_ptr = &map_tuple_to_processor_id[
+                                   i * (max_core_id_overall + 1) + j];
+
             /* Default to the invalid entry in the other map, meaning
                that this (socket,core) combination doesn't exist
                (e.g., the core number does not exist in this socket,
                although it does exist in other sockets). */
-            map_tuple_to_processor_id[i][j] = 
-                &map_processor_id_to_tuple[invalid_entry];
+            *tuple_ptr = &map_processor_id_to_tuple[invalid_entry];
 
             /* See if this (socket,core) tuple exists in the other
                map.  If so, set this entry to point to it (overriding
                the invalid entry default). */
-            for (k = 0; k <= max_processor_num; ++k) {
-                if (map_processor_id_to_tuple[k].socket == i &&
-                    map_processor_id_to_tuple[k].core == j) {
-                    map_tuple_to_processor_id[i][j] = 
-                        &map_processor_id_to_tuple[k];
+            for (k = 0; k <= max_processor_id; ++k) {
+                if (map_processor_id_to_tuple[k].socket_id == i &&
+                    map_processor_id_to_tuple[k].core_id == j) {
+                    *tuple_ptr = &map_processor_id_to_tuple[k];
 #if defined(PLPA_DEBUG) && PLPA_DEBUG
-                    printf("Creating map: (socket %d, core %d) -> ID %d\n",
+                    printf("Creating map [%d]: (socket %d, core %d) -> ID %d\n",
+                           i * (max_core_id_overall + 1) + j,
                            i, j, k);
 #endif
                     break;
@@ -394,29 +467,25 @@ static void load_cache(const char *sysfs_mount)
     supported = 1;
 }
 
-/* Internal function to setup the mapping data.  Guaranteed to be
-   calling during PLPA_NAME(init), so we don't have to worry about
-   thread safety here. */
-int PLPA_NAME(map_init)(void)
+static int cache_action(void)
 {
-    const char *sysfs_mount = "/sys";
-    char *temp;
+    switch (cache_behavior) {
+    case PLPA_NAME_CAPS(CACHE_USE):
+        if (NULL == map_processor_id_to_tuple) {
+            load_cache();
+        }
+        break;
 
-    temp = getenv("PLPA_SYSFS_MOUNT");
-    if (temp) {
-        sysfs_mount = temp;
+    case PLPA_NAME_CAPS(CACHE_IGNORE):
+        clear_cache();
+        load_cache();
+        break;
+
+    default:
+        return EINVAL;
     }
 
-    load_cache(sysfs_mount);
     return 0;
-}
-
-/* Internal function to cleanup allocated memory.  Only called by one
-   thread (during PLPA_NAME(finalize), so don't need to worry about
-   thread safety here. */
-void PLPA_NAME(map_finalize)(void)
-{
-    clear_cache();
 }
 
 /* Return whether this kernel supports topology information or not */
@@ -440,7 +509,8 @@ int PLPA_NAME(have_topology_information)(int *supported_arg)
     return 0;
 }
 
-int PLPA_NAME(map_to_processor_id)(int socket, int core, int *processor_id)
+int PLPA_NAME(map_to_processor_id)(int socket_id, int core_id, 
+                                   int *processor_id)
 {
     int ret;
 
@@ -451,25 +521,31 @@ int PLPA_NAME(map_to_processor_id)(int socket, int core, int *processor_id)
         }
     }
 
-    /* Check for bozo arguments */
-    if (NULL == processor_id) {
-        return EINVAL;
-    }
-
     /* If this system doesn't support mapping, sorry Charlie */
     if (!supported) {
         return ENOSYS;
     }
 
+    /* Check for bozo arguments */
+    if (NULL == processor_id) {
+        return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
     /* Check for some invalid entries */
-    if (socket < 0 || socket > max_socket_id ||
-        core < 0 || core > max_core_id_overall) {
+    if (socket_id < 0 || socket_id > max_socket_id ||
+        core_id < 0 || core_id > max_core_id[socket_id]) {
         return ENOENT;
     }
     /* If the mapping returns -1, then this is a non-existent
        socket/core combo (even though they fall within the max socket
        / max core overall values) */
-    ret = map_tuple_to_processor_id[socket][core]->processor_id;
+    ret = map_tuple_to_processor_id[socket_id * (max_core_id_overall + 1) +
+                                    core_id]->processor_id;
     if (-1 == ret) {
         return ENOENT;
     }
@@ -479,7 +555,8 @@ int PLPA_NAME(map_to_processor_id)(int socket, int core, int *processor_id)
     return 0;
 }
 
-int PLPA_NAME(map_to_socket_core)(int processor_id, int *socket, int *core)
+int PLPA_NAME(map_to_socket_core)(int processor_id, 
+                                  int *socket_id, int *core_id)
 {
     int ret;
 
@@ -490,33 +567,39 @@ int PLPA_NAME(map_to_socket_core)(int processor_id, int *socket, int *core)
         }
     }
 
-    /* Check for bozo arguments */
-    if (NULL == socket || NULL == core) {
-        return EINVAL;
-    }
-
     /* If this system doesn't support mapping, sorry Charlie */
     if (!supported) {
         return ENOSYS;
     }
 
+    /* Check for bozo arguments */
+    if (NULL == socket_id || NULL == core_id) {
+        return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
     /* Check for some invalid entries */
-    if (processor_id < 0 || processor_id > max_processor_num) {
+    if (processor_id < 0 || processor_id > max_processor_id ||
+        map_processor_id_to_tuple[processor_id].processor_id < 0) {
         return ENOENT;
     }
-    ret = map_processor_id_to_tuple[processor_id].socket;
+    ret = map_processor_id_to_tuple[processor_id].socket_id;
     if (-1 == ret) {
         return ENOENT;
     }
 
     /* Ok, all should be good -- return the mapping */
-    *socket = ret;
-    *core = map_processor_id_to_tuple[processor_id].core;
+    *socket_id = ret;
+    *core_id = map_processor_id_to_tuple[processor_id].core_id;
     return 0;
 }
 
 int PLPA_NAME(get_processor_info)(int *num_processors_arg,
-                                  int *max_processor_num_arg)
+                                  int *max_processor_id_arg)
 {
     int ret;
 
@@ -527,9 +610,38 @@ int PLPA_NAME(get_processor_info)(int *num_processors_arg,
         }
     }
 
+    /* If this system doesn't support mapping, sorry Charlie */
+    if (!supported) {
+        return ENOSYS;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
     /* Check for bozo arguments */
-    if (NULL == max_processor_num_arg || NULL == num_processors_arg) {
+    if (NULL == max_processor_id_arg || NULL == num_processors_arg) {
         return EINVAL;
+    }
+
+    /* All done */
+    *num_processors_arg = num_processors;
+    *max_processor_id_arg = max_processor_id;
+    return 0;
+}
+
+/* Returns the Linux processor ID for the Nth processor (starting with
+   0). */
+int PLPA_NAME(get_processor_id)(int processor_num, int *processor_id)
+{
+    int ret, i, count;
+
+    /* Initialize if not already done so */
+    if (!PLPA_NAME(initialized)) {
+        if (0 != (ret = PLPA_NAME(init)())) {
+            return ret;
+        }
     }
 
     /* If this system doesn't support mapping, sorry Charlie */
@@ -537,9 +649,83 @@ int PLPA_NAME(get_processor_info)(int *num_processors_arg,
         return ENOSYS;
     }
 
-    /* All done */
-    *num_processors_arg = num_processors;
-    *max_processor_num_arg = max_processor_num;
+    /* Check for bozo arguments */
+    if (NULL == processor_id) {
+        return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for out of range params */
+    if (processor_num < 0 || processor_num > num_processors) {
+        return EINVAL;
+    }
+
+    /* Find the processor_num'th processor */
+    for (count = i = 0; i <= max_processor_id; ++i) {
+        if (map_processor_id_to_tuple[i].processor_id >= 0) {
+            if (count++ == processor_num) {
+                *processor_id = map_processor_id_to_tuple[i].processor_id;
+                return 0;
+            }
+        }
+    }
+
+    /* Didn't find it */
+    return ENODEV;
+}
+
+/* Check to see if a given Linux processor ID exists / is online.
+   Returns 0 on success. */
+int PLPA_NAME(get_processor_flags)(int processor_id, 
+                                   int *exists_arg, int *online_arg)
+{
+    int ret, exists, online;
+
+    /* Initialize if not already done so */
+    if (!PLPA_NAME(initialized)) {
+        if (0 != (ret = PLPA_NAME(init)())) {
+            return ret;
+        }
+    }
+
+    /* If this system doesn't support mapping, sorry Charlie */
+    if (!supported) {
+        return ENOSYS;
+    }
+
+    /* Check for bozo arguments */
+    if (NULL == exists_arg && NULL == online_arg) {
+        return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for out of range params */
+    if (processor_id < 0 || processor_id > max_processor_id) {
+        return EINVAL;
+    }
+
+    exists = online = 0;
+    if (processor_id == map_processor_id_to_tuple[processor_id].processor_id) {
+        exists = 1;
+        if (map_processor_id_to_tuple[processor_id].online) {
+            online = 1;
+        }
+    }
+    if (NULL != exists_arg) {
+        *exists_arg = exists;
+    }
+    if (NULL != online_arg) {
+        *online_arg = online;
+    }
+
     return 0;
 }
 
@@ -555,14 +741,19 @@ int PLPA_NAME(get_socket_info)(int *num_sockets_arg, int *max_socket_id_arg)
         }
     }
 
-    /* Check for bozo arguments */
-    if (NULL == max_socket_id_arg || NULL == num_sockets_arg) {
-        return EINVAL;
-    }
-
     /* If this system doesn't support mapping, sorry Charlie */
     if (!supported) {
         return ENOSYS;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for bozo arguments */
+    if (NULL == max_socket_id_arg || NULL == num_sockets_arg) {
+        return EINVAL;
     }
 
     /* All done */
@@ -571,8 +762,64 @@ int PLPA_NAME(get_socket_info)(int *num_sockets_arg, int *max_socket_id_arg)
     return 0;
 }
 
+/* Returns the Linux socket ID for the Nth socket (starting with 0). */
+int PLPA_NAME(get_socket_id)(int socket_num, int *socket_id)
+{
+    int ret, i, j, k, count;
+
+    /* Initialize if not already done so */
+    if (!PLPA_NAME(initialized)) {
+        if (0 != (ret = PLPA_NAME(init)())) {
+            return ret;
+        }
+    }
+
+    /* If this system doesn't support mapping, sorry Charlie */
+    if (!supported) {
+        return ENOSYS;
+    }
+
+    /* Check for bozo arguments */
+    if (NULL == socket_id) {
+        printf("get_socket_id bad 1\n");
+        return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for out of range params */
+    if (socket_num < 0 || socket_num > num_sockets) {
+        printf("get_socket_id bad 2\n");
+        return EINVAL;
+    }
+
+    /* Find the socket_num'th socket */
+    for (count = i = 0; i <= max_socket_id; ++i) {
+        /* See if any core in this socket is active.  If so, count
+           this socket */
+        for (j = 0; j <= max_core_id_overall; ++j) {
+            k = i * (max_core_id_overall + 1) + j;
+            if (map_tuple_to_processor_id[k]->processor_id >= 0) {
+                if (count++ == socket_num) {
+                    *socket_id = map_tuple_to_processor_id[k]->socket_id;
+                    return 0;
+                }
+                /* Ok, we found one -- skip to the end of this socket */
+                j = max_core_id_overall + 1;
+            }
+        }
+    }
+
+    /* Didn't find it */
+    printf("get_socket id bad 3\n");
+    return ENODEV;
+}
+
 /* Return the number of cores in a socket and the max core ID number */
-int PLPA_NAME(get_core_info)(int socket, int *num_cores_arg, 
+int PLPA_NAME(get_core_info)(int socket_id, int *num_cores_arg, 
                              int *max_core_id_arg)
 {
     int ret;
@@ -584,9 +831,48 @@ int PLPA_NAME(get_core_info)(int socket, int *num_cores_arg,
         }
     }
 
+    /* If this system doesn't support mapping, sorry Charlie */
+    if (!supported) {
+        return ENOSYS;
+    }
+
     /* Check for bozo arguments */
     if (NULL == max_core_id_arg || NULL == num_cores_arg) {
         return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for some invalid entries */
+    if (socket_id < 0 || socket_id > max_socket_id ||
+        -1 == max_core_id[socket_id]) {
+        return ENOENT;
+    }
+    ret = num_cores[socket_id];
+    if (-1 == ret) {
+        return ENOENT;
+    }
+
+    /* All done */
+    *num_cores_arg = ret;
+    *max_core_id_arg = max_core_id[socket_id];
+    return 0;
+}
+
+/* Given a specific socket, returns the Linux core ID for the Nth core
+   (starting with 0) */
+int PLPA_NAME(get_core_id)(int socket_id, int core_num, int *core_id)
+{
+    int ret, i, j, count;
+
+    /* Initialize if not already done so */
+    if (!PLPA_NAME(initialized)) {
+        if (0 != (ret = PLPA_NAME(init)())) {
+            return ret;
+        }
     }
 
     /* If this system doesn't support mapping, sorry Charlie */
@@ -594,17 +880,119 @@ int PLPA_NAME(get_core_info)(int socket, int *num_cores_arg,
         return ENOSYS;
     }
 
-    /* Check for some invalid entries */
-    if (socket < 0 || socket > max_socket_id || -1 == max_core_id[socket]) {
-        return ENOENT;
-    }
-    ret = num_cores[socket];
-    if (-1 == ret) {
-        return ENOENT;
+    /* Check for bozo arguments */
+    if (NULL == core_id) {
+        return EINVAL;
     }
 
-    /* All done */
-    *num_cores_arg = ret;
-    *max_core_id_arg = max_core_id[socket];
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for out of range params */
+    if (socket_id < 0 || socket_id > max_socket_id ||
+        core_num < 0 || core_num > max_core_id_overall) {
+        return EINVAL;
+    }
+
+    /* Find the core_num'th core */
+    for (count = i = 0, j = socket_id * (max_core_id_overall + 1);
+         i <= max_core_id_overall; ++i) {
+        if (map_tuple_to_processor_id[j + i]->processor_id >= 0) {
+            if (count++ == core_num) {
+                *core_id = map_tuple_to_processor_id[j + 1]->core_id;
+                return 0;
+            }
+        }
+    }
+
+    /* Didn't find it */
+    return ENODEV;
+}
+
+/* Check to see if a given Linux (socket_id,core_id) tuple exists / is
+   online.  Returns 0 on success. */
+int PLPA_NAME(get_core_flags)(int socket_id, int core_id,
+                              int *exists_arg, int *online_arg)
+{
+    int ret, i, exists, online;
+
+    /* Initialize if not already done so */
+    if (!PLPA_NAME(initialized)) {
+        if (0 != (ret = PLPA_NAME(init)())) {
+            return ret;
+        }
+    }
+
+    /* If this system doesn't support mapping, sorry Charlie */
+    if (!supported) {
+        return ENOSYS;
+    }
+
+    /* Check for bozo arguments */
+    if (NULL == exists_arg && NULL == online_arg) {
+        return EINVAL;
+    }
+
+    /* Check cache behavior */
+    if (0 != (ret = cache_action())) {
+        return ret;
+    }
+
+    /* Check for out of range params */
+    if (socket_id < 0 || socket_id > max_socket_id ||
+        core_id < 0 || core_id > max_core_id_overall) {
+        return EINVAL;
+    }
+
+    exists = online = 0;
+    i = socket_id * (max_core_id_overall + 1) + core_id;
+    if (map_tuple_to_processor_id[i]->processor_id >= 0) {
+        exists = 1;
+        if (map_tuple_to_processor_id[i]->online) {
+            online = 1;
+        }
+    }
+
+    if (NULL != exists_arg) {
+        *exists_arg = exists;
+    }
+    if (NULL != online_arg) {
+        *online_arg = online;
+    }
+    return 0;
+}
+
+/* Set PLPA's caching behavior */
+int PLPA_NAME(set_cache_behavior)(PLPA_NAME(cache_behavior_t) behavior)
+{
+    switch (behavior) {
+    case PLPA_NAME_CAPS(CACHE_USE):
+        if (PLPA_NAME_CAPS(CACHE_USE) != cache_behavior) {
+            load_cache();
+            cache_behavior = PLPA_NAME_CAPS(CACHE_USE);
+        }
+        break;
+
+    case PLPA_NAME_CAPS(CACHE_IGNORE):
+        if (PLPA_NAME_CAPS(CACHE_IGNORE) != cache_behavior) {
+            clear_cache();
+            cache_behavior = PLPA_NAME_CAPS(CACHE_IGNORE);
+        }
+        break;
+
+    case PLPA_NAME_CAPS(CACHE_REFRESH):
+        if (PLPA_NAME_CAPS(CACHE_USE) != cache_behavior) {
+            return EINVAL;
+        }
+        clear_cache();
+        load_cache();
+        break;
+
+    default:
+        return EINVAL;
+    }
+
     return 0;
 }

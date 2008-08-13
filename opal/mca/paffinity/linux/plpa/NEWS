@@ -16,6 +16,27 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of PLPA since
 version 1.0.
 
+1.2
+---
+
+- Allow mapping from simple/contiguous processor, socket, and core
+  numbers to the corresponding back-end Linux ID (and clean up
+  documentation references between "X number" and "X ID", where X is
+  one of processor, socket, core).
+- Support CPU hot plugging.
+- Add explicit control over the PLPA topology information cache.
+
+
+1.1.1
+-----
+
+- Ensure that --enable-included also disables executables by default.
+  Thanks to Brian Curtis for identifying the problem and supplying a
+  patch.
+- Add ENABLE_EXECUTABLES m4 macro to allow behavior in m4
+  configuration analogous to "--enable-included --enable-executables".
+
+
 1.1
 ---
 

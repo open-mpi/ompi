@@ -263,10 +263,55 @@ In more detail:
    support topology information (e.g., 2.6.16 or later):
 
    - plpa_map_to_processor_id()
+     Take a (socket_id, core_id) tuple and map it to a Linux processor
+     ID
+
    - plpa_map_to_socket_core()
-   - plpa_max_processor_id()
-   - plpa_max_socket()
-   - plpa_max_core()
+     Take a Linux processor ID and map it to a (socket_id, core_id)
+     tuple
+
+   - plpa_get_processor_info()
+     Return the number of processors and the max Linux processor ID
+
+   - plpa_get_processor_id()
+     Return the Linux processor ID for the Nth processor (starting
+     with 0)
+
+   - plpa_get_processor_flags()
+     Return whether a Linux processor ID exists, and if so, if it is
+     online
+
+   - plpa_get_socket_info()
+     Return the number of sockets and the max Linux socket ID
+
+   - plpa_get_socket_id()
+     Return the Linux socket ID for the Nth socket (starting with 0)
+
+   - plpa_get_core_info()
+     For a given socket ID, return the number of cores and the max
+     Linux core ID
+
+   - plpa_get_core_id()
+     For a given socket ID, return the Linux core ID of the Nth core
+     (starting with 0)
+
+   - plpa_get_core_flags()
+     Return whether a (socket_id,core_id) tuple exists, and if so, if
+     it is online
+
+   - plpa_set_cache_behavior()
+     Tell PLPA to use (or not) a local cache for the topology
+     information, or to refresh the cache right now
+
+   *** NOTE: Topology information (i.e., (socket_id, core_id) tuples)
+       are not reported for offline processors.  Hence, if any
+       processors are offline, the socket/core values returned by PLPA
+       will likely change once the processor is brought back online.
+       Sorry; this is how the Linux kernel works -- there's nothing
+       PLPA can do about it.
+
+   The above functions are slightly more documented in plpa.h.
+   Contributions of real man pages would be greatly appreciated.
 
    On unsupported kernels, a negative value is returned to indicate
    graceful failure.  Additionally, the function
@@ -376,14 +421,21 @@ acinclude.m4 (assuming the use of Automake):
 
 m4_include(path/to/plpa.m4)
 
-The following macros can then be used from your configure script:
+The following macros can then be used from your configure script (only
+PLPA_INIT *must* be invoked if using the m4 macros):
 
 - PLPA_STANDALONE
   Force the building of PLPA in standalone mode.  Overrides the
-  --enable-included-mode command line switch.
+  --enable-included-mode command line switch. 
 
 - PLPA_INCLUDED
-  Force the building of PLPA in included mode.
+  or
+  PLPA_INCLUDED(config-prefix)
+      NOTE: 1-argument form is deprecated and will be removed in PLPA
+            v1.2 
+  Force the building of PLPA in included mode.  See PLPA_INIT for a
+  description of config-prefix (note that passing config-prefix
+  through PLPA_INIT is the preferred way to set it).
 
 - PLPA_SET_SYMBOL_PREFIX(foo)
   Tells the PLPA to prefix all types and public symbols with "foo"
@@ -408,12 +460,26 @@ The following macros can then be used from your configure script:
   Provides the same result as the --disable-executables configure
   flag, and is implicit in included mode.
 
-- PLPA_INIT(action-upon-success, action-upon-failure)
+- PLPA_ENABLE_EXECUTABLES
+  Provides the same result as the --enable-executables configure flag.
+  If used in conjunction with PLPA_INCLUDED, it must be specified
+  *after* PLPA_INLCLUDED to have effect, as PLPA_INCLUDED *disables*
+  executables.
+
+- PLPA_INIT(config-prefix, action-upon-success, action-upon-failure)
+  or
+  PLPA_INIT(action-upon-success, action-upon-failure)
+      NOTE: 2-argument form is deprecated and will be removed in PLPA
+            v1.2 
   Invoke the PLPA tests and setup the PLPA to build.  A traversal of
   "make" into the PLPA directory should build everything (it is safe
   to list the PLPA directory in the SUBDIRS of a higher-level
   Makefile.am, for example).  PLPA_INIT must be invoked after the
-  INCLUDED / STANDALONE / SET_SYMBOL_PREFIX macros.
+  INCLUDED / STANDALONE / SET_SYMBOL_PREFIX macros.  The first
+  argument is the 3-argument form is the prefix to use for AC_OUTPUT
+  files.  Hence, if your embedded PLPA is located in the source tree
+  at contrib/plpa, you'd pass [contrib/plpa] as the first argument.
+  The 2-argument form assumes the prefix ".".
 
 - PLPA_DO_AM_CONDITIONALS
   If you embed PLPA in a larger project and build it conditionally
