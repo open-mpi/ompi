@@ -738,7 +738,8 @@ AC_CACHE_SAVE
 
 ompi_show_title "Library and Function tests"
 
-AC_CHECK_LIB([util], [openpty])
+# Darwin doesn't need -lutil, as it's something other than this -lutil.
+OMPI_CHECK_FUNC_LIB([openpty], [util])
 
 AC_CHECK_LIB([nsl], [gethostbyname])
 
