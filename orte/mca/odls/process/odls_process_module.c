@@ -93,7 +93,8 @@ static int odls_process_kill_local_procs(orte_jobid_t job, bool set_state)
 static int odls_process_fork_local_proc(
     orte_app_context_t* context,
     orte_odls_child_t *child,
-	char **environ_copy)
+	char **environ_copy,
+    bool forward_output)
 {
     pid_t pid;
     orte_iof_base_io_conf_t opts;
