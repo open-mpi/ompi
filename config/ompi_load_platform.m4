@@ -56,5 +56,35 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
         fi
         echo "Loaded platform arguments for $platform_loaded"
         OMPI_LOG_MSG([Loaded platform arguments for $platform_loaded])
+
+        # look for default mca param file
+
+        # setup by getting full pathname for the platform directories
+        platform_base="`dirname $with_platform`"
+        # get full pathname of where we are so we can return
+        platform_savedir="`pwd`"
+        # go to where the platform file is located
+        cd "$platform_base"
+        # get the full path to this location
+        platform_file_dir=`pwd`
+        # return to where we started
+        cd "$platform_savedir"
+
+        # define an alternate default mca param filename
+        platform_alt_mca_file="`basename $platform_loaded`.conf"
+
+        # look where platform file is located for platform.conf name
+        if test -r "${platform_file_dir}/${platform_alt_mca_file}" ; then
+            AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [$platform_file_dir/$platform_alt_mca_file])
+        # if not, see if a file is there with the default name
+        elif test -r "${platform_file_dir}/openmpi-mca-params.conf" ; then
+            AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [$platform_file_dir/openmpi-mca-params.conf])
+        # if not, then just use the default
+        else
+            AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [openmpi-mca-params.conf])
+        fi
+
+    else
+        AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [openmpi-mca-params.conf])
     fi
 ])
