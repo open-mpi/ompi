@@ -64,8 +64,9 @@ make_tarball() {
     # Autogen
     #
     echo "*** Running autogen.sh..."
-    ./autogen.sh 2>&1 | tee auto.out
-    if test ! "$?" = "0"; then
+    rm -f success
+    (./autogen.sh 2>&1 && touch success) | tee auto.out
+    if test ! -f success; then
         echo "Autogen failed.  Aborting"
         exit 1
     fi
@@ -74,8 +75,9 @@ make_tarball() {
     # Configure
     #
     echo "*** Running configure..."
-    ./configure --enable-dist 2>&1 | tee config.out
-    if test ! "$?" = "0"; then 
+    rm -f success
+    (./configure --enable-dist 2>&1 && touch success) | tee config.out
+    if test ! -f success; then
         echo "Configure failed.  Aborting"
         exit 1
     fi
@@ -86,11 +88,13 @@ make_tarball() {
     echo "*** Running make distcheck..."
     save_LD=$LD_LIBRARY_PATH
     LD_LIBRARY_PATH=
-    make distcheck 2>&1 | tee dist.out
-    if test ! "$?" = "0"; then
+    rm -f success
+    (make distcheck 2>&1 && touch success) | tee dist.out
+    if test ! -f success; then
         echo "Make dist failed.  Aborting"
         exit 1
     fi
+    rm -f success
     LD_LIBRARY_PATH=$save_LD
 
     #
