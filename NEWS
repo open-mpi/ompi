@@ -29,6 +29,7 @@ version 1.0.
 1.2.7
 -----
 
+- Update some QLogic HCA vendor IDs.  See ticket #1453.
 - Fix F90 binding for MPI_CART_GET.  Thanks to Scott Beardsley for
   bringing it to our attention. See ticket #1429.
 - Remove a spurious warning message generated in/by ROMIO. See ticket #1421.
