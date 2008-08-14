@@ -172,7 +172,7 @@ static void clear_cache(void)
 static void load_cache(void)
 {
     int i, j, k, invalid_entry, fd, found_online;
-    char path[PATH_MAX], buf[8] = "\0\0\0\0\0\0\0\0";
+    char path[PATH_MAX], buf[8];
     PLPA_NAME(cpu_set_t) valid_processors;
     PLPA_NAME(cpu_set_t) *cores_on_sockets;
     int found;
