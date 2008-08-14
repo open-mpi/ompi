@@ -126,6 +126,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct tuple_t_ {
     int processor_id, socket_id, core_id, online;
@@ -633,9 +634,11 @@ int PLPA_NAME(get_processor_info)(int *num_processors_arg,
 
 /* Returns the Linux processor ID for the Nth processor (starting with
    0). */
-int PLPA_NAME(get_processor_id)(int processor_num, int *processor_id)
+int PLPA_NAME(get_processor_id)(int processor_num, int *processor_id,
+                                PLPA_NAME(count_specification_t) count_spec)
 {
     int ret, i, count;
+    bool match;
 
     /* Initialize if not already done so */
     if (!PLPA_NAME(initialized)) {
@@ -667,9 +670,29 @@ int PLPA_NAME(get_processor_id)(int processor_num, int *processor_id)
     /* Find the processor_num'th processor */
     for (count = i = 0; i <= max_processor_id; ++i) {
         if (map_processor_id_to_tuple[i].processor_id >= 0) {
-            if (count++ == processor_num) {
-                *processor_id = map_processor_id_to_tuple[i].processor_id;
-                return 0;
+            match = false;
+            switch (count_spec) {
+            case PLPA_NAME_CAPS(COUNT_ONLINE):
+                if (map_processor_id_to_tuple[i].online) {
+                    match = true;
+                }
+                break;
+
+            case PLPA_NAME_CAPS(COUNT_OFFLINE):
+                if (!map_processor_id_to_tuple[i].online) {
+                    match = true;
+                }
+                break;
+
+            case PLPA_NAME_CAPS(COUNT_ALL):
+                match = true;
+                break;
+            }
+            if (match) {
+                if (count++ == processor_num) {
+                    *processor_id = map_processor_id_to_tuple[i].processor_id;
+                    return 0;
+                }
             }
         }
     }
@@ -781,7 +804,6 @@ int PLPA_NAME(get_socket_id)(int socket_num, int *socket_id)
 
     /* Check for bozo arguments */
     if (NULL == socket_id) {
-        printf("get_socket_id bad 1\n");
         return EINVAL;
     }
 
@@ -792,7 +814,6 @@ int PLPA_NAME(get_socket_id)(int socket_num, int *socket_id)
 
     /* Check for out of range params */
     if (socket_num < 0 || socket_num > num_sockets) {
-        printf("get_socket_id bad 2\n");
         return EINVAL;
     }
 
@@ -814,7 +835,6 @@ int PLPA_NAME(get_socket_id)(int socket_num, int *socket_id)
     }
 
     /* Didn't find it */
-    printf("get_socket id bad 3\n");
     return ENODEV;
 }
 
