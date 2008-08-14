@@ -119,7 +119,8 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "plpa_get_processor_info failed\n");
             } else {
                 for (num_offline = i = 0; i < num_processors; ++i) {
-                    if (0 != PLPA_NAME(get_processor_id)(i, &processor_id)) {
+                    if (0 != PLPA_NAME(get_processor_id)(i, &processor_id,
+                                                         PLPA_NAME_CAPS(COUNT_ALL))) {
                         fprintf(stderr, "pla_get_processor_id failed\n");
                         break;
                     }

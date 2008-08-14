@@ -429,13 +429,7 @@ PLPA_INIT *must* be invoked if using the m4 macros):
   --enable-included-mode command line switch. 
 
 - PLPA_INCLUDED
-  or
-  PLPA_INCLUDED(config-prefix)
-      NOTE: 1-argument form is deprecated and will be removed in PLPA
-            v1.2 
-  Force the building of PLPA in included mode.  See PLPA_INIT for a
-  description of config-prefix (note that passing config-prefix
-  through PLPA_INIT is the preferred way to set it).
+  Force the building of PLPA in included mode.
 
 - PLPA_SET_SYMBOL_PREFIX(foo)
   Tells the PLPA to prefix all types and public symbols with "foo"
@@ -467,19 +461,15 @@ PLPA_INIT *must* be invoked if using the m4 macros):
   executables.
 
 - PLPA_INIT(config-prefix, action-upon-success, action-upon-failure)
-  or
-  PLPA_INIT(action-upon-success, action-upon-failure)
-      NOTE: 2-argument form is deprecated and will be removed in PLPA
-            v1.2 
   Invoke the PLPA tests and setup the PLPA to build.  A traversal of
   "make" into the PLPA directory should build everything (it is safe
   to list the PLPA directory in the SUBDIRS of a higher-level
-  Makefile.am, for example).  PLPA_INIT must be invoked after the
-  INCLUDED / STANDALONE / SET_SYMBOL_PREFIX macros.  The first
-  argument is the 3-argument form is the prefix to use for AC_OUTPUT
-  files.  Hence, if your embedded PLPA is located in the source tree
-  at contrib/plpa, you'd pass [contrib/plpa] as the first argument.
-  The 2-argument form assumes the prefix ".".
+  Makefile.am, for example).  ***PLPA_INIT must be invoked after the
+  STANDALONE, INCLUDED, SET_SYMBOL_PREFIX, DISABLE_EXECUTABLES, and
+  ENABLE_EXECUTABLES macros.*** The first argument is the prefix to
+  use for AC_OUTPUT files.  Hence, if your embedded PLPA is located in
+  the source tree at contrib/plpa, you should pass [contrib/plpa] as
+  the first argument.
 
 - PLPA_DO_AM_CONDITIONALS
   If you embed PLPA in a larger project and build it conditionally
@@ -494,17 +484,17 @@ PLPA_INIT *must* be invoked if using the m4 macros):
 Here's an example of integrating with a larger project named sandbox:
 
 shell$ cd sandbox
-shell$ cp -r /somewhere/else/plpa-<version> .
+shell$ cp -r /somewhere/else/plpa-<version> plpa
 shell$ edit acinclude.m4
-...add the line "m4_include(plpa-<version>/config/plpa.m4)"...
+...add the line "m4_include(plpa/config/plpa.m4)"...
 shell$ edit Makefile.am
-...add "plpa-<version>" to SUBDIRS...
-...add "$(top_builddir)/plpa-<version>/src/libplpa/libplpa_included.la" to
+...add "plpa" to SUBDIRS...
+...add "$(top_builddir)/plpa/src/libplpa/libplpa_included.la" to
    my executable's LDADD line...
 shell$ edit configure.ac
 ...add "PLPA_INCLUDED" line...
 ...add "PLPA_SET_SYMBOL_PREFIX(sandbox_plpa_)" line...
-...add "PLPA_INIT(plpa_happy=yes, plpa_happy=no)" line...
+...add "PLPA_INIT([./plpa], [plpa_happy=yes], [plpa_happy=no])" line...
 ...add error checking for plpa_happy=no case...
 shell$ edit src/my_program.c
 ...add #include <plpa.h>...
