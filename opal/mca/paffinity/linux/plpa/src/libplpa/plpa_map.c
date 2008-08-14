@@ -454,7 +454,7 @@ static void load_cache(void)
                 if (map_processor_id_to_tuple[k].socket_id == i &&
                     map_processor_id_to_tuple[k].core_id == j) {
                     *tuple_ptr = &map_processor_id_to_tuple[k];
-#if defined(PLPA_DEBUG) && PLPA_DEBUG
+#if defined(PLPA_DEBUG) && PLPA_DEBUG && 0
                     printf("Creating map [%d]: (socket %d, core %d) -> ID %d\n",
                            i * (max_core_id_overall + 1) + j,
                            i, j, k);
@@ -599,10 +599,21 @@ int PLPA_NAME(map_to_socket_core)(int processor_id,
     return 0;
 }
 
+/* Deprecated function */
 int PLPA_NAME(get_processor_info)(int *num_processors_arg,
                                   int *max_processor_id_arg)
 {
-    int ret;
+    return PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_ALL),
+                                         num_processors_arg,
+                                         max_processor_id_arg);
+}
+
+int PLPA_NAME(get_processor_data)(PLPA_NAME(count_specification_t) count_spec,
+                                  int *num_processors_arg,
+                                  int *max_processor_id_arg)
+{
+    int i, ret;
+    bool match;
 
     /* Initialize if not already done so */
     if (!PLPA_NAME(initialized)) {
@@ -626,16 +637,52 @@ int PLPA_NAME(get_processor_info)(int *num_processors_arg,
         return EINVAL;
     }
 
-    /* All done */
-    *num_processors_arg = num_processors;
-    *max_processor_id_arg = max_processor_id;
+    /* If we wanted all processors, we're done */
+    if (PLPA_NAME_CAPS(COUNT_ALL) == count_spec) {
+        *num_processors_arg = num_processors;
+        *max_processor_id_arg = max_processor_id;
+    } else {
+        /* Otherwise, count the appropriate type */
+        *num_processors_arg = 0;
+        *max_processor_id_arg = 0;
+        for (i = 0; i <= max_processor_id; ++i) {
+            if (map_processor_id_to_tuple[i].processor_id >= 0) {
+                match = false;
+                switch (count_spec) {
+                case PLPA_NAME_CAPS(COUNT_ONLINE):
+                    if (map_processor_id_to_tuple[i].online) {
+                        match = true;
+                    }
+                    break;
+
+                case PLPA_NAME_CAPS(COUNT_OFFLINE):
+                    if (!map_processor_id_to_tuple[i].online) {
+                        match = true;
+                    }
+                    break;
+                default:
+                    /* Just so that compilers don't complain */
+                    break;
+                }
+                if (match) {
+                    ++(*num_processors_arg);
+                    if (*max_processor_id_arg < 
+                        map_processor_id_to_tuple[i].processor_id) {
+                        *max_processor_id_arg =
+                            map_processor_id_to_tuple[i].processor_id;
+                    }
+                }
+            }
+        }
+    }
     return 0;
 }
 
 /* Returns the Linux processor ID for the Nth processor (starting with
    0). */
-int PLPA_NAME(get_processor_id)(int processor_num, int *processor_id,
-                                PLPA_NAME(count_specification_t) count_spec)
+int PLPA_NAME(get_processor_id)(int processor_num, 
+                                PLPA_NAME(count_specification_t) count_spec,
+                                int *processor_id)
 {
     int ret, i, count;
     bool match;
