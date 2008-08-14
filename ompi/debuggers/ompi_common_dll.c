@@ -1,8 +1,9 @@
 /*
- * Copyright (c) 2007-2008 Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2008      Sun Microsystmes, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +47,23 @@ static int host_is_big_endian = 0;
 #endif
 
 /*
+ * For sanity checking to try to help keep the code in this DLL in
+ * sync with the real structs out in the main OMPI code base.  If
+ * we're not compiling this file inside ompi_debugger_sanity.c, then
+ * ompi_field_offset() won't be defined.  So we define it here to be a
+ * call to the real function mqs_field_offset.
+ */
+#ifndef ompi_field_offset
+#define ompi_field_offset(out_name, qh_type, struct_name, field_name)  \
+{ \
+    out_name = mqs_field_offset((qh_type), #field_name); \
+    if (out_name < 0) { \
+        fprintf(stderr, "WARNING: Field " #field_name " of type " #struct_name " not found!\n"); \
+    } \
+}
+#endif
+
+/*
  * Open MPI use a bunch of lists in order to keep track of the
  * internal objects. We have to make sure we're able to find all of
  * them in the image and compute their ofset in order to be able to
@@ -70,7 +88,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->opal_list_item_t.type = qh_type;
         i_info->opal_list_item_t.size = mqs_sizeof(qh_type);
-        i_info->opal_list_item_t.offset.opal_list_next = mqs_field_offset(qh_type, "opal_list_next");
+        ompi_field_offset(i_info->opal_list_item_t.offset.opal_list_next,
+                          qh_type, opal_list_item_t, opal_list_next);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "opal_list_t", mqs_lang_c );
@@ -80,7 +99,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->opal_list_t.type = qh_type;
         i_info->opal_list_t.size = mqs_sizeof(qh_type);
-        i_info->opal_list_t.offset.opal_list_sentinel = mqs_field_offset(qh_type, "opal_list_sentinel");
+        ompi_field_offset(i_info->opal_list_t.offset.opal_list_sentinel,
+                          qh_type, opal_list_t, opal_list_sentinel);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_item_t", mqs_lang_c );
@@ -94,20 +114,30 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_t", mqs_lang_c );
+
         if( !qh_type ) {
             missing_in_action = "ompi_free_list_t";
             goto type_missing;
         }
+
         i_info->ompi_free_list_t.type = qh_type;
         i_info->ompi_free_list_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_free_list_t.offset.fl_frag_class = mqs_field_offset(qh_type, "fl_frag_class");
-        i_info->ompi_free_list_t.offset.fl_mpool = mqs_field_offset(qh_type, "fl_mpool");
-        i_info->ompi_free_list_t.offset.fl_frag_size = mqs_field_offset(qh_type, "fl_frag_size");
-        i_info->ompi_free_list_t.offset.fl_frag_alignment = mqs_field_offset(qh_type, "fl_frag_alignment");
-        i_info->ompi_free_list_t.offset.fl_allocations = mqs_field_offset(qh_type, "fl_allocations");
-        i_info->ompi_free_list_t.offset.fl_max_to_alloc = mqs_field_offset(qh_type, "fl_max_to_alloc");
-        i_info->ompi_free_list_t.offset.fl_num_per_alloc = mqs_field_offset(qh_type, "fl_num_per_alloc");
-        i_info->ompi_free_list_t.offset.fl_num_allocated = mqs_field_offset(qh_type, "fl_num_allocated");
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_mpool,
+                          qh_type, ompi_free_list_t, fl_mpool);
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_allocations,
+                          qh_type, ompi_free_list_t, fl_allocations); 
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_frag_class,
+                          qh_type, ompi_free_list_t, fl_frag_class);
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_frag_size,
+                          qh_type, ompi_free_list_t, fl_frag_size);
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_frag_alignment,
+                          qh_type, ompi_free_list_t, fl_frag_alignment);
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_max_to_alloc,
+                          qh_type, ompi_free_list_t, fl_max_to_alloc);
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_num_per_alloc,
+                          qh_type, ompi_free_list_t, fl_num_per_alloc);
+        ompi_field_offset(i_info->ompi_free_list_t.offset.fl_num_allocated,
+                          qh_type, ompi_free_list_t, fl_num_allocated);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "opal_hash_table_t", mqs_lang_c );
@@ -117,10 +147,14 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->opal_hash_table_t.type = qh_type;
         i_info->opal_hash_table_t.size = mqs_sizeof(qh_type);
-        i_info->opal_hash_table_t.offset.ht_table = mqs_field_offset(qh_type, "ht_table");
-        i_info->opal_hash_table_t.offset.ht_table_size = mqs_field_offset(qh_type, "ht_table_size");
-        i_info->opal_hash_table_t.offset.ht_size = mqs_field_offset(qh_type, "ht_size");
-        i_info->opal_hash_table_t.offset.ht_mask = mqs_field_offset(qh_type, "ht_mask");
+        ompi_field_offset(i_info->opal_hash_table_t.offset.ht_table,
+                          qh_type, opal_hash_table_t, ht_table);
+        ompi_field_offset(i_info->opal_hash_table_t.offset.ht_table_size,
+                          qh_type, opal_hash_table_t, ht_table_size);
+        ompi_field_offset(i_info->opal_hash_table_t.offset.ht_size,
+                          qh_type, opal_hash_table_t, ht_size);
+        ompi_field_offset(i_info->opal_hash_table_t.offset.ht_mask,
+                          qh_type, opal_hash_table_t, ht_mask);
     }
     /*
      * Now let's look for all types required for reading the requests.
@@ -133,11 +167,16 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_request_t.type = qh_type;
         i_info->ompi_request_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
-        i_info->ompi_request_t.offset.req_status = mqs_field_offset(qh_type, "req_status");
-        i_info->ompi_request_t.offset.req_complete = mqs_field_offset(qh_type, "req_complete");
-        i_info->ompi_request_t.offset.req_state = mqs_field_offset(qh_type, "req_state");
-        i_info->ompi_request_t.offset.req_f_to_c_index = mqs_field_offset(qh_type, "req_f_to_c_index");
+        ompi_field_offset(i_info->ompi_request_t.offset.req_type,
+                          qh_type, ompi_request_t, req_type);
+        ompi_field_offset(i_info->ompi_request_t.offset.req_status,
+                          qh_type, ompi_request_t, req_status);
+        ompi_field_offset(i_info->ompi_request_t.offset.req_complete,
+                          qh_type, ompi_request_t, req_complete);
+        ompi_field_offset(i_info->ompi_request_t.offset.req_state,
+                          qh_type, ompi_request_t, req_state);
+        ompi_field_offset(i_info->ompi_request_t.offset.req_f_to_c_index,
+                          qh_type, ompi_request_t, req_f_to_c_index);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_request_t", mqs_lang_c );
@@ -147,16 +186,26 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->mca_pml_base_request_t.type = qh_type;
         i_info->mca_pml_base_request_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_base_request_t.offset.req_addr = mqs_field_offset(qh_type, "req_addr");
-        i_info->mca_pml_base_request_t.offset.req_count = mqs_field_offset(qh_type, "req_count");
-        i_info->mca_pml_base_request_t.offset.req_peer = mqs_field_offset(qh_type, "req_peer");
-        i_info->mca_pml_base_request_t.offset.req_tag = mqs_field_offset(qh_type, "req_tag");
-        i_info->mca_pml_base_request_t.offset.req_comm = mqs_field_offset(qh_type, "req_comm");
-        i_info->mca_pml_base_request_t.offset.req_datatype = mqs_field_offset(qh_type, "req_datatype");
-        i_info->mca_pml_base_request_t.offset.req_proc = mqs_field_offset(qh_type, "req_proc");
-        i_info->mca_pml_base_request_t.offset.req_sequence = mqs_field_offset(qh_type, "req_sequence");
-        i_info->mca_pml_base_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
-        i_info->mca_pml_base_request_t.offset.req_pml_complete = mqs_field_offset(qh_type, "req_pml_complete");
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_addr,
+                          qh_type, mca_pml_base_request_t, req_addr);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_count,
+                          qh_type, mca_pml_base_request_t, req_count);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_peer,
+                          qh_type, mca_pml_base_request_t, req_peer);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_tag,
+                          qh_type, mca_pml_base_request_t, req_tag);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_comm,
+                          qh_type, mca_pml_base_request_t, req_comm);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_datatype,
+                          qh_type, mca_pml_base_request_t, req_datatype);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_proc,
+                          qh_type, mca_pml_base_request_t, req_proc);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_sequence,
+                          qh_type, mca_pml_base_request_t, req_sequence);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_type,
+                          qh_type, mca_pml_base_request_t, req_type);
+        ompi_field_offset(i_info->mca_pml_base_request_t.offset.req_pml_complete,
+                          qh_type, mca_pml_base_request_t, req_pml_complete);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_send_request_t", mqs_lang_c );
@@ -166,9 +215,12 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->mca_pml_base_send_request_t.type = qh_type;
         i_info->mca_pml_base_send_request_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_base_send_request_t.offset.req_addr = mqs_field_offset(qh_type, "req_addr");
-        i_info->mca_pml_base_send_request_t.offset.req_bytes_packed = mqs_field_offset(qh_type, "req_bytes_packed");
-        i_info->mca_pml_base_send_request_t.offset.req_send_mode = mqs_field_offset(qh_type, "req_send_mode");
+        ompi_field_offset(i_info->mca_pml_base_send_request_t.offset.req_addr,
+                          qh_type, mca_pml_base_send_request_t, req_addr);
+        ompi_field_offset(i_info->mca_pml_base_send_request_t.offset.req_bytes_packed,
+                          qh_type, mca_pml_base_send_request_t, req_bytes_packed);
+        ompi_field_offset(i_info->mca_pml_base_send_request_t.offset.req_send_mode,
+                          qh_type, mca_pml_base_send_request_t, req_send_mode);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_recv_request_t", mqs_lang_c );
@@ -178,7 +230,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->mca_pml_base_recv_request_t.type = qh_type;
         i_info->mca_pml_base_recv_request_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed = mqs_field_offset(qh_type, "req_bytes_packed");
+        ompi_field_offset(i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed,
+                          qh_type, mca_pml_base_recv_request_t, req_bytes_packed);
     }
     /*
      * Gather information about the received fragments and theirs headers.
@@ -192,8 +245,10 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->mca_pml_ob1_common_hdr_t.type = qh_type;
         i_info->mca_pml_ob1_common_hdr_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_ob1_common_hdr_t.offset.hdr_type = mqs_field_offset(qh_type, "hdr_type");
-        i_info->mca_pml_ob1_common_hdr_t.offset.hdr_flags = mqs_field_offset(qh_type, "hdr_flags");
+        ompi_field_offset(i_info->mca_pml_ob1_common_hdr_t.offset.hdr_type,
+                          qh_type, mca_pml_ob1_common_hdr_t, hdr_type);
+        ompi_field_offset(i_info->mca_pml_ob1_common_hdr_t.offset.hdr_flags,
+                          qh_type, mca_pml_ob1_common_hdr_t, hdr_flags);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_match_hdr_t", mqs_lang_c );
@@ -203,11 +258,16 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->mca_pml_ob1_match_hdr_t.type = qh_type;
         i_info->mca_pml_ob1_match_hdr_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_common = mqs_field_offset(qh_type, "hdr_common");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_ctx    = mqs_field_offset(qh_type, "hdr_ctx");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_src    = mqs_field_offset(qh_type, "hdr_src");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_tag    = mqs_field_offset(qh_type, "hdr_tag");
-        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_seq    = mqs_field_offset(qh_type, "hdr_seq");
+        ompi_field_offset(i_info->mca_pml_ob1_match_hdr_t.offset.hdr_common,
+                          qh_type, mca_pml_ob1_match_hdr_t, hdr_common);
+        ompi_field_offset(i_info->mca_pml_ob1_match_hdr_t.offset.hdr_ctx,
+                          qh_type, mca_pml_ob1_match_hdr_t, hdr_ctx);
+        ompi_field_offset(i_info->mca_pml_ob1_match_hdr_t.offset.hdr_src,
+                          qh_type, mca_pml_ob1_match_hdr_t, hdr_src);
+        ompi_field_offset(i_info->mca_pml_ob1_match_hdr_t.offset.hdr_tag,
+                          qh_type, mca_pml_ob1_match_hdr_t, hdr_tag);
+        ompi_field_offset(i_info->mca_pml_ob1_match_hdr_t.offset.hdr_seq,
+                          qh_type, mca_pml_ob1_match_hdr_t, hdr_seq);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_recv_frag_t", mqs_lang_c );
@@ -217,8 +277,10 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->mca_pml_ob1_recv_frag_t.type = qh_type;
         i_info->mca_pml_ob1_recv_frag_t.size = mqs_sizeof(qh_type);
-        i_info->mca_pml_ob1_recv_frag_t.offset.hdr = mqs_field_offset(qh_type, "hdr");
-        i_info->mca_pml_ob1_recv_frag_t.offset.request = mqs_field_offset(qh_type, "request");
+        ompi_field_offset(i_info->mca_pml_ob1_recv_frag_t.offset.hdr,
+                          qh_type, mca_pml_ob1_recv_frag_t, hdr);
+        ompi_field_offset(i_info->mca_pml_ob1_recv_frag_t.offset.request,
+                          qh_type, mca_pml_ob1_recv_frag_t, request);
     }
 #endif
     /*
@@ -232,10 +294,14 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->opal_pointer_array_t.type = qh_type;
         i_info->opal_pointer_array_t.size = mqs_sizeof(qh_type);
-        i_info->opal_pointer_array_t.offset.lowest_free = mqs_field_offset(qh_type, "lowest_free");
-        i_info->opal_pointer_array_t.offset.number_free = mqs_field_offset(qh_type, "number_free");
-        i_info->opal_pointer_array_t.offset.size = mqs_field_offset(qh_type, "size");
-        i_info->opal_pointer_array_t.offset.addr = mqs_field_offset(qh_type, "addr");
+        ompi_field_offset(i_info->opal_pointer_array_t.offset.lowest_free,
+                          qh_type, opal_pointer_array_t, lowest_free);
+        ompi_field_offset(i_info->opal_pointer_array_t.offset.number_free,
+                          qh_type, opal_pointer_array_t, number_free);
+        ompi_field_offset(i_info->opal_pointer_array_t.offset.size,
+                          qh_type, opal_pointer_array_t, size);
+        ompi_field_offset(i_info->opal_pointer_array_t.offset.addr,
+                          qh_type, opal_pointer_array_t, addr);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_communicator_t", mqs_lang_c );
@@ -245,17 +311,24 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_communicator_t.type = qh_type;
         i_info->ompi_communicator_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_communicator_t.offset.c_name = mqs_field_offset(qh_type, "c_name");
-        i_info->ompi_communicator_t.offset.c_contextid = mqs_field_offset(qh_type, "c_contextid");
-        i_info->ompi_communicator_t.offset.c_my_rank = mqs_field_offset(qh_type, "c_my_rank" );
-        i_info->ompi_communicator_t.offset.c_local_group = mqs_field_offset(qh_type, "c_local_group" );
-        i_info->ompi_communicator_t.offset.c_remote_group = mqs_field_offset(qh_type, "c_remote_group" );
-        i_info->ompi_communicator_t.offset.c_flags = mqs_field_offset(qh_type, "c_flags" );
-
-        i_info->ompi_communicator_t.offset.c_f_to_c_index = mqs_field_offset(qh_type, "c_f_to_c_index" );
-
-        i_info->ompi_communicator_t.offset.c_topo_comm = mqs_field_offset(qh_type, "c_topo_comm" );
-        i_info->ompi_communicator_t.offset.c_keyhash = mqs_field_offset(qh_type, "c_keyhash" );
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_name,
+                          qh_type, ompi_communicator_t, c_name);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_contextid,
+                          qh_type, ompi_communicator_t, c_contextid);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_my_rank,
+                          qh_type, ompi_communicator_t, c_my_rank);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_local_group,
+                          qh_type, ompi_communicator_t, c_local_group);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_remote_group,
+                          qh_type, ompi_communicator_t, c_remote_group);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_flags,
+                          qh_type, ompi_communicator_t, c_flags);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_f_to_c_index,
+                          qh_type, ompi_communicator_t, c_f_to_c_index);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_topo_comm,
+                          qh_type, ompi_communicator_t, c_topo_comm);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_keyhash,
+                          qh_type, ompi_communicator_t, c_keyhash);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_topo_base_comm_1_0_0_t", mqs_lang_c );
@@ -265,14 +338,14 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_mca_topo_base_comm_1_0_0_t.type = qh_type;
         i_info->ompi_mca_topo_base_comm_1_0_0_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_ndims_or_nnodes = 
-            mqs_field_offset(qh_type, "mtc_ndims_or_nnodes");
-        i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_dims_or_index = 
-            mqs_field_offset(qh_type, "mtc_dims_or_index");
-        i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_periods_or_edges = 
-            mqs_field_offset(qh_type, "mtc_periods_or_edges" );
-        i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_reorder = 
-            mqs_field_offset(qh_type, "mtc_reorder" );
+        ompi_field_offset(i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_ndims_or_nnodes,
+                          qh_type, mca_topo_base_comm_1_0_0_t, mtc_ndims_or_nnodes);
+        ompi_field_offset(i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_dims_or_index,
+                          qh_type, mca_topo_base_comm_1_0_0_t, mtc_dims_or_index);
+        ompi_field_offset(i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_periods_or_edges,
+                          qh_type, mca_topo_base_comm_1_0_0_t, mtc_periods_or_edges);
+        ompi_field_offset(i_info->ompi_mca_topo_base_comm_1_0_0_t.offset.mtc_reorder,
+                          qh_type, mca_topo_base_comm_1_0_0_t, mtc_reorder);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_group_t", mqs_lang_c );
@@ -282,9 +355,12 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_group_t.type = qh_type;
         i_info->ompi_group_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_group_t.offset.grp_proc_count = mqs_field_offset(qh_type, "grp_proc_count");
-        i_info->ompi_group_t.offset.grp_my_rank = mqs_field_offset(qh_type, "grp_my_rank");
-        i_info->ompi_group_t.offset.grp_flags = mqs_field_offset(qh_type, "grp_flags" );
+        ompi_field_offset(i_info->ompi_group_t.offset.grp_proc_count,
+                          qh_type, ompi_group_t, grp_proc_count);
+        ompi_field_offset(i_info->ompi_group_t.offset.grp_my_rank,
+                          qh_type, ompi_group_t, grp_my_rank);
+        ompi_field_offset(i_info->ompi_group_t.offset.grp_flags,
+                          qh_type, ompi_group_t, grp_flags);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_status_public_t", mqs_lang_c );
@@ -294,11 +370,16 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_status_public_t.type = qh_type;
         i_info->ompi_status_public_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_status_public_t.offset.MPI_SOURCE = mqs_field_offset(qh_type, "MPI_SOURCE");
-        i_info->ompi_status_public_t.offset.MPI_TAG = mqs_field_offset(qh_type, "MPI_TAG");
-        i_info->ompi_status_public_t.offset.MPI_ERROR = mqs_field_offset(qh_type, "MPI_ERROR" );
-        i_info->ompi_status_public_t.offset._count = mqs_field_offset(qh_type, "_count" );
-        i_info->ompi_status_public_t.offset._cancelled = mqs_field_offset(qh_type, "_cancelled" );
+        ompi_field_offset(i_info->ompi_status_public_t.offset.MPI_SOURCE,
+                          qh_type, ompi_status_public_t, MPI_SOURCE);
+        ompi_field_offset(i_info->ompi_status_public_t.offset.MPI_TAG,
+                          qh_type, ompi_status_public_t, MPI_TAG);
+        ompi_field_offset(i_info->ompi_status_public_t.offset.MPI_ERROR,
+                          qh_type, ompi_status_public_t, MPI_ERROR);
+        ompi_field_offset(i_info->ompi_status_public_t.offset._count,
+                          qh_type, ompi_status_public_t, _count);
+        ompi_field_offset(i_info->ompi_status_public_t.offset._cancelled,
+                          qh_type, ompi_status_public_t, _cancelled);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_datatype_t", mqs_lang_c );
@@ -308,8 +389,10 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
         i_info->ompi_datatype_t.type = qh_type;
         i_info->ompi_datatype_t.size = mqs_sizeof(qh_type);
-        i_info->ompi_datatype_t.offset.size = mqs_field_offset(qh_type, "size");
-        i_info->ompi_datatype_t.offset.name = mqs_field_offset(qh_type, "name");
+        ompi_field_offset(i_info->ompi_datatype_t.offset.size,
+                          qh_type, ompi_datatype_t, size);
+        ompi_field_offset(i_info->ompi_datatype_t.offset.name,
+                          qh_type, ompi_datatype_t, name);
     }
 
     /* All the types are here. Let's succesfully return. */
