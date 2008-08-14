@@ -598,7 +598,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
     if (!mca_plm_rsh_component.tree_spawn &&
         !orte_debug_flag &&
         !orte_debug_daemons_flag &&
-        !orte_debug_daemons_file_flag) {
+        !orte_debug_daemons_file_flag &&
+        !orte_leave_session_attached) {
         opal_argv_append(&argc, &argv, "--daemonize");
     }
     
@@ -994,7 +995,8 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         goto launch_apps;
     }
     
-    if (0 < opal_output_get_verbosity(orte_plm_globals.output) &&
+    if ((0 < opal_output_get_verbosity(orte_plm_globals.output) ||
+         orte_leave_session_attached) &&
         mca_plm_rsh_component.num_concurrent < map->num_new_daemons) {
         /**
         * If we are in '--debug-daemons' we keep the ssh connection 
