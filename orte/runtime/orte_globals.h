@@ -368,6 +368,7 @@ ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
 /* global variables used by RTE - instanced in orte_globals.c */
 ORTE_DECLSPEC extern bool orte_reuse_daemons, orte_timing;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
+ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;

@@ -142,12 +142,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries" },
     
     /* select XML output */
-    { "orte", "xml", "output", '\0', NULL, "xml", 0,
+    { "orte", "xml", "output", '\0', "xml", "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
     
     /* Specify the launch agent to be used */
-    { "orte", "launch", "agent", '\0', NULL, "launch-agent", 1,
+    { "orte", "launch", "agent", '\0', "launch-agent", "launch-agent", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Command used to start processes on remote nodes (default: orted)" },
     
@@ -279,23 +279,27 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Sequence of debuggers to search for when \"--debug\" is used" },
 
     /* OpenRTE arguments */
-    { "orte", "debug", NULL, 'd', NULL, "debug-devel", 0,
+    { "orte", "debug", NULL, 'd', "debug-devel", "debug-devel", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
     
-    { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
+    { "orte", "debug", "daemons", '\0', "debug-daemons", "debug-daemons", 0,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Enable debugging of any OpenRTE daemons used by this application" },
     
-    { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
+    { "orte", "debug", "daemons_file", '\0', "debug-daemons-file", "debug-daemons-file", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
     
-    { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
+    { "orte", "leave", "session_attached", '\0', "leave-session-attached", "leave-session-attached", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE" },
+
+    { NULL, NULL, NULL, '\0', "tmpdir", "tmpdir", 1,
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
 
-    { "orte", "do_not", "launch", '\0', NULL, "do-not-launch", 0,
+    { "orte", "do_not", "launch", '\0', "do-not-launch", "do-not-launch", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
     
