@@ -18,6 +18,9 @@
 #include "OTF_inttypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /* *** Definition OTF_CopyHandler_r *** ************************************* */
 
@@ -143,6 +146,10 @@ int OTF_CopyHandler_FileGroupOperationSummary( void* userData, uint64_t time,
 	uint32_t groupid, uint32_t process, uint64_t nopen, uint64_t nclose,
 	uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesread,
 	uint64_t byteswrite );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_COPYOTF_CopyHandler_R_H */
 

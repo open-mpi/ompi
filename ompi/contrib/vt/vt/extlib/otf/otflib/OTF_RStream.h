@@ -120,14 +120,15 @@ case. */
 #include "OTF_inttypes.h"
 
 
-struct struct_OTF_Reader;
-
-
 #include "OTF_FileManager.h"
 #include "OTF_RBuffer.h"
 #include "OTF_Filenames.h"
 #include "OTF_HandlerArray.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 struct struct_OTF_RStream {
 
@@ -613,5 +614,8 @@ uint8_t OTF_RStream_snapshotBytesProgress( OTF_RStream* rstream,
 uint8_t OTF_RStream_statisticBytesProgress( OTF_RStream* rstream,
 	uint64_t* minimum, uint64_t* current, uint64_t* maximum );
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_RSTREAM_H */

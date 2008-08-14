@@ -20,6 +20,10 @@
 #include "OTF_Filenames.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** mode determining what to do with a file */
 enum enum_OTF_FileMode {
 
@@ -84,5 +88,9 @@ void OTF_File_setZBufferSize( OTF_File* file, uint32_t size );
 /** internal use */
 OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 	OTF_FileMode mode, OTF_FileCompression compression );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_FILE_H */

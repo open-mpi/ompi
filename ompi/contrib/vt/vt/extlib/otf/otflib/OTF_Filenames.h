@@ -20,6 +20,10 @@
 #include "OTF_Definitions.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /*#define OTF_FILETYPE_MASTER 		0
 #define OTF_FILETYPE_GLOBAL_DEF 	1
 #define OTF_FILETYPE_DEF 			2
@@ -58,5 +62,9 @@ char* OTF_stripFilename( const char* filename );
 
 /** DEPRICATED Check whether a file exists or not. Return 1 on success. */
 int OTF_fileExists( const char* filename );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_FILENAMES */

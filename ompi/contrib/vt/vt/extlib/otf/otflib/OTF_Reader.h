@@ -28,6 +28,10 @@
 #include "OTF_HandlerArray.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** \defgroup reader Reader Interface
  *
  * The reader provides high level read access to traces
@@ -794,5 +798,8 @@ uint8_t OTF_Reader_snapshotBytesProgress( OTF_Reader* reader,
 uint8_t OTF_Reader_statisticBytesProgress( OTF_Reader* reader,
 	uint64_t* minimum, uint64_t* current, uint64_t* maximum );
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_READER_H */
