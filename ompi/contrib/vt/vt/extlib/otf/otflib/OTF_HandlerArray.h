@@ -40,6 +40,10 @@
 #include "OTF_Writer.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** Generic function pointer for OTF record handlers. \ingroup ha*/
 typedef int (OTF_FunctionPointer) ( void *userData, ... );
 
@@ -1057,6 +1061,10 @@ int OTF_Handler_UnknownRecord( void *userData,
                                 uint32_t counterid, 
                                 uint64_t value );
 */
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_HANDLERARRAY_H */
 

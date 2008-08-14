@@ -126,6 +126,10 @@
 #include "OTF_RBuffer.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** entry for 1:n mapping */
 struct struct_OTF_MapEntry {
 
@@ -450,6 +454,10 @@ uint32_t* OTF_MasterControl_getValues( OTF_MasterControl* mc,
  */
 uint32_t OTF_MasterControl_getNewStreamId( OTF_MasterControl* mc );
 
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_MASTERCONTROL_H */
 

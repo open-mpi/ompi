@@ -89,6 +89,10 @@
 #include "OTF_WStream.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** writer object \ingroup writer */
 typedef struct struct_OTF_Writer OTF_Writer;
 
@@ -1168,6 +1172,9 @@ uint32_t OTF_Writer_mapProcess( OTF_Writer* writer, uint32_t processId );
     create one and append it to 'streams'. \ingroup writer */
 OTF_WStream* OTF_Writer_getStream( OTF_Writer* writer, uint32_t stream );
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_WRITER_H */
 

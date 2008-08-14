@@ -19,6 +19,10 @@
 #include "OTF_HandlerArray.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /**	Parse one event record from buffer and call the appropriate
 	function - internal use only. */
 int OTF_Reader_parseEventRecord( OTF_RBuffer* buffer, 
@@ -49,5 +53,8 @@ int OTF_Reader_readUnknownRecord( OTF_RBuffer* buffer,
 int OTF_Reader_readUnknownDefRecord( OTF_RBuffer* buffer, 
 		OTF_HandlerArray* handlers, uint32_t streamid );
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_PARSE_H */

@@ -72,6 +72,10 @@
 #endif
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /** Converts unsigned integers of 8, 16, 32 or 64 bit length into OTF counter values. */
 uint64_t OTF_Unsigned2Counter( uint64_t value );
 /** Converts OTF counter values to unsigned integers of 8, 16, 32 or 64 bit length. */
@@ -94,6 +98,10 @@ float OTF_Counter2Float( uint64_t value );
 uint64_t OTF_Double2Counter( double value );
 /** Converts OTF counter values to double precision floating point values. */
 double OTF_Counter2Double( uint64_t value );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_INTTYPES_H */
 

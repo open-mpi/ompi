@@ -88,6 +88,10 @@
 #include "OTF_Filenames.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct struct_OTF_WStream {
 
 
@@ -527,6 +531,10 @@ int OTF_WStream_writeCollOpSummary( OTF_WStream* wstream,
 	uint64_t time, uint32_t process,  uint32_t root,  
 	uint64_t bytes_sent, uint64_t bytes_recved );
 */
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_WSTREAM_H */
 
