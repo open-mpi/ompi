@@ -27,7 +27,10 @@ int main(int argc, char *argv[])
     int need_help = 0;
     int show_topo = 0;
     int have_topo, num_sockets, max_socket_num, num_cores, max_core_id;
-    int num_processors, max_processor_id, processor_id;
+    int num_processors_online, max_processor_id_online;
+    int num_processors_offline, max_processor_id_offline;
+    int num_processors_total, max_processor_id_total;
+    int processor_id;
     int socket_id, exists, online, num_offline;
     PLPA_NAME(api_type_t) api_probe;
 
@@ -92,6 +95,61 @@ int main(int argc, char *argv[])
 
     if (show_topo) {
         if (have_topo) {
+            /* Go through all the processors and count how many are
+               offline; we have no topology information for offline
+               processors */
+            if (0 != PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_ALL),
+                                                   &num_processors_total,
+                                                   &max_processor_id_total) ||
+                0 != PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_ONLINE),
+                                                   &num_processors_online,
+                                                   &max_processor_id_online) ||
+                0 != PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_OFFLINE),
+                                                   &num_processors_offline,
+                                                   &max_processor_id_offline)) {
+                fprintf(stderr, "plpa_get_processor_info failed\n");
+                exit(1);
+            }
+            /* This is a little overkill; this information should
+               never mismatch.  But what the heck. */
+            if (num_processors_online + num_processors_offline !=
+                num_processors_total) {
+                fprintf(stderr, "Number of online and offline processors do not seem to add up (online: %d, offline: %d, total: %d)\n",
+                        num_processors_online,
+                        num_processors_offline,
+                        num_processors_total);
+                exit(1);
+            }
+
+            printf("Number of processors online: %d\n", num_processors_online);
+            printf("Number of processors offline: %d (no topology information available)\n", 
+                   num_processors_offline);
+
+            /* Another "over the top" check -- these should never
+               disagree.  But what the heck; it's a good test of
+               PLPA. */
+            for (num_offline = i = 0; i < num_processors_total; ++i) {
+                if (0 != PLPA_NAME(get_processor_id)(i,
+                                                     PLPA_NAME_CAPS(COUNT_ALL),
+                                                      &processor_id)) {
+                    fprintf(stderr, "pla_get_processor_id failed\n");
+                    break;
+                }
+                if (0 != PLPA_NAME(get_processor_flags)(processor_id,
+                                                        &exists, 
+                                                        &online)) {
+                    fprintf(stderr, "plpa_get_processor_flags failed\n");
+                    break;
+                }
+                if (exists && !online) {
+                    ++num_offline;
+                }
+            }
+            if (num_offline != num_processors_offline) {
+                fprintf(stderr, "Number of online and offline processors do not seem to add up (1)\n");
+                exit(1);
+            }
+
             /* Go through all the sockets */
             for (i = 0; i < num_sockets; ++i) {
                 /* Turn the socket number into a Linux socket ID */
@@ -109,34 +167,6 @@ int main(int argc, char *argv[])
                 printf("Socket %d (ID %d): %d core%s (max core ID: %d)\n",
                        i, socket_id, num_cores, (1 == num_cores) ? "" : "s",
                        max_core_id);
-            }
-
-            /* Go through all the processors and count how many are
-               offline; we have no topology information for offline
-               processors */
-            if (0 != PLPA_NAME(get_processor_info)(&num_processors,
-                                                   &max_processor_id)) {
-                fprintf(stderr, "plpa_get_processor_info failed\n");
-            } else {
-                for (num_offline = i = 0; i < num_processors; ++i) {
-                    if (0 != PLPA_NAME(get_processor_id)(i, &processor_id,
-                                                         PLPA_NAME_CAPS(COUNT_ALL))) {
-                        fprintf(stderr, "pla_get_processor_id failed\n");
-                        break;
-                    }
-                    if (0 != PLPA_NAME(get_processor_flags)(processor_id,
-                                                            &exists, 
-                                                            &online)) {
-                        fprintf(stderr, "plpa_get_processor_flags failed\n");
-                        break;
-                    }
-                    if (exists && !online) {
-                        ++num_offline;
-                    }
-                }
-                if (num_offline > 0) {
-                    printf("%d processor%s offline (no topology information available)\n", num_offline, (1 == num_offline ? "" : "s"));
-                }
             }
         } else {
             printf("Kernel topology not supported -- cannot show topology information\n");
