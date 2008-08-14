@@ -20,9 +20,7 @@
 #define OTF_PLATFORM_H
 
 #ifdef __cplusplus
-#define EXTERN extern "C"
-#else
-#define EXTERN extern
+extern "C" {
 #endif /* __cplusplus */
 
 /* if you know (for sure) of more compilers supporting __FUNCTION__,
@@ -84,6 +82,10 @@
 
 #endif
 
-EXTERN char *OTF_strdup( const char*s );
+char *OTF_strdup( const char*s );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_PLATFORM_H */

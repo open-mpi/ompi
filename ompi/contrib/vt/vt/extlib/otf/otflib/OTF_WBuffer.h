@@ -27,6 +27,10 @@
 #include "OTF_Filenames.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct struct_OTF_WBuffer {
 
 
@@ -121,6 +125,10 @@ uint32_t OTF_WBuffer_writeNewline( OTF_WBuffer* wbuffer );
 /** internal use */
 OTF_WBuffer* OTF_WBuffer_open_zlevel( const char* filename,
 	OTF_FileManager* manager, OTF_FileCompression compression );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_WBUFFER_H */
 

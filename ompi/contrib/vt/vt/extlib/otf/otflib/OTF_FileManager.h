@@ -32,6 +32,10 @@
 #include "OTF_inttypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct struct_OTF_File;
 typedef struct struct_OTF_File OTF_File;
 
@@ -73,6 +77,9 @@ int OTF_FileManager_touchFile( OTF_FileManager* m, OTF_File* file );
 internally. Return 1 on success, 0 otherwise. */
 int OTF_FileManager_suspendFile( OTF_FileManager* m, OTF_File* file );
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_FILEMANAGER_H */
 

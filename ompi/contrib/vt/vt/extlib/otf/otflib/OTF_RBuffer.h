@@ -26,6 +26,10 @@
 #include "OTF_File.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct struct_OTF_RBuffer {
 
 
@@ -205,6 +209,10 @@ uint64_t OTF_RBuffer_getFileSize( OTF_RBuffer* rbuffer );
 
 /** Returns the fileposition of the file attached to this buffer */
 uint64_t OTF_RBuffer_getFilePos( OTF_RBuffer* rbuffer );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_RBUFFER_H */
 

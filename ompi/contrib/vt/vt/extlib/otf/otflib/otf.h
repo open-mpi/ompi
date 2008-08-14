@@ -73,11 +73,6 @@
 #define OTF_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-
 #include "OTF_Definitions.h"
 #include "OTF_FileManager.h"
 #include "OTF_Filenames.h"
@@ -87,11 +82,6 @@ extern "C" {
 #include "OTF_Reader.h"
 #include "OTF_WStream.h"
 #include "OTF_Writer.h"
-
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
 
 
 #endif /* OTF_H */
