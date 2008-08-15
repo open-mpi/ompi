@@ -29,6 +29,8 @@ version 1.0.
 1.2.7
 -----
 
+- Only link in libutil when it is needed/desired.  Thanks to
+  Brian Barret for diagnosing and fixing the problem.  See ticket #1455.
 - Update some QLogic HCA vendor IDs.  See ticket #1453.
 - Fix F90 binding for MPI_CART_GET.  Thanks to Scott Beardsley for
   bringing it to our attention. See ticket #1429.
