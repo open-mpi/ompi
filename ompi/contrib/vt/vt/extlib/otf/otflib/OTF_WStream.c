@@ -147,7 +147,20 @@ OTF_WStream* OTF_WStream_open( const char* namestub, uint32_t id,
 		OTF_FileManager* manager ) {
 
 
-	OTF_WStream* ret= (OTF_WStream*) malloc( sizeof(OTF_WStream) );
+	OTF_WStream* ret= NULL;
+
+	if( NULL == manager ) {
+	
+#		ifdef OTF_VERBOSE
+			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"manager has not been specified.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+#		endif
+
+		return NULL;
+	}
+
+	ret= (OTF_WStream*) malloc( sizeof(OTF_WStream) );
 	if( NULL == ret ) {
 	
 #		ifdef OTF_VERBOSE
@@ -161,20 +174,8 @@ OTF_WStream* OTF_WStream_open( const char* namestub, uint32_t id,
 
 	OTF_WStream_init( ret );
 
-
 	ret->namestub= OTF_strdup( namestub );
 	ret->id= id;
-
-	if( NULL == manager ) {
-	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-				"manager has not been specified.\n",
-				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
-
-		return NULL;
-	}
 	ret->manager= manager;
 
 	/* leave buffers allone, they are allocated on demand */

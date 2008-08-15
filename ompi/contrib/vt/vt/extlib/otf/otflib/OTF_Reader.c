@@ -418,7 +418,7 @@ int OTF_Heap_initEventHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->n= 0;
 	heap->s= OTF_MasterControl_getCount( reader->mc );
 
-	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer) );
+	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
 #		ifdef OTF_VERBOSE
@@ -507,7 +507,7 @@ int OTF_Heap_initDefHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->n= 0;
 	heap->s= 1 + OTF_MasterControl_getCount( reader->mc );
 
-	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer) );
+	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
 #		ifdef OTF_VERBOSE
@@ -606,7 +606,7 @@ int OTF_Heap_initStatisticsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->n= 0;
 	heap->s= OTF_MasterControl_getCount( reader->mc );
 
-	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer) );
+	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
 #		ifdef OTF_VERBOSE
@@ -697,7 +697,7 @@ int OTF_Heap_initSnapshotsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 	heap->n= 0;
 	heap->s= OTF_MasterControl_getCount( reader->mc );
 
-	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer) );
+	heap->buffers= (OTF_RBuffer**) malloc( heap->s * sizeof(OTF_RBuffer*) );
 	if( NULL == heap->buffers ) {
 	
 #		ifdef OTF_VERBOSE

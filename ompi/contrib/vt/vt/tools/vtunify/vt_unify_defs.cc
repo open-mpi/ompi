@@ -639,24 +639,25 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 		  if( p_loc_def_entry->type ==
 		      DefRec_DefProcessGroup_struct::TYPE_OMP_TEAM )
 		  {
-		     snprintf( new_name, sizeof( new_name ),
+		     snprintf( new_name, sizeof( new_name ) - 1,
 			       "OMP Thread Team %d", omp_comm_idx++ );
 		  }
 		  else if( p_loc_def_entry->type ==
 			   DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_WORLD )
 		  {
-		     strcpy( new_name, "MPI_COMM_WORLD" );
+		     strncpy( new_name, "MPI_COMM_WORLD",
+			      sizeof( new_name ) - 1 );
 		  }
 		  else if( p_loc_def_entry->type ==
 			   DefRec_DefProcessGroup_struct::TYPE_MPI_COMM_SELF )
 		  {
-		     snprintf( new_name, sizeof( new_name ),
+		     snprintf( new_name, sizeof( new_name ) - 1,
 			       "MPI_COMM_SELF %d", mpi_comm_self_idx++ );
 		  }
 		  else
 		  {
 		     strncpy( new_name, p_loc_def_entry->name.c_str(),
-			      sizeof( new_name ) );
+			      sizeof( new_name ) - 1 );
 		  }
 		  
 		  // add new definition to vector of global definitions
@@ -1371,7 +1372,7 @@ Definitions::writeGlobal( const std::vector<DefRec_Base_struct*> *
 	       n,
 	       array );
 
-	    delete array;
+	    delete[] array;
 
 	    break;
 	 }
@@ -1610,7 +1611,7 @@ Definitions::addMPIComms2Global( std::vector<DefRec_Base_struct*> *
       std::vector<uint32_t> vec_members = m_mapMPICommId2Members[commid];
 
       // add index to comm's name
-      snprintf( comm_name, sizeof( comm_name ),
+      snprintf( comm_name, sizeof( comm_name ) - 1,
 		"MPI Communicator %d", comm_name_idx++ );
 
       // create token for global comm.

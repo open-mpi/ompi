@@ -51,7 +51,8 @@ public:
    //
    struct DefRec_Base_struct
    {
-      DefRec_Base_struct() {}
+      DefRec_Base_struct()
+	 : loccpuid(0), deftoken(0) {}
       DefRec_Base_struct(DefRecTypeT _etype)
 	 : etype(_etype), loccpuid(0), deftoken(0) {}
       virtual ~DefRec_Base_struct() {}
@@ -67,7 +68,8 @@ public:
    struct DefRec_DefinitionComment_struct : DefRec_Base_struct
    {
       DefRec_DefinitionComment_struct() 
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefinitionComment) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefinitionComment),
+      orderidx(0) {}
       DefRec_DefinitionComment_struct(uint32_t _orderidx,
 				      std::string _comment)
 	 : DefRec_Base_struct(DEF_REC_TYPE__DefinitionComment),
@@ -97,7 +99,8 @@ public:
    struct DefRec_DefTimerResolution_struct : DefRec_Base_struct
    {
       DefRec_DefTimerResolution_struct() 
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefTimerResolution) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefTimerResolution),
+      ticksPerSecond(0) {}
       DefRec_DefTimerResolution_struct(uint64_t _ticksPerSecond)
 	 : DefRec_Base_struct(DEF_REC_TYPE__DefTimerResolution),
       ticksPerSecond(_ticksPerSecond) {}
@@ -111,7 +114,8 @@ public:
    struct DefRec_DefProcess_struct : DefRec_Base_struct
    {
       DefRec_DefProcess_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcess) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcess),
+      parent(0) {}
       DefRec_DefProcess_struct(uint32_t _deftoken, std::string _name,
 			       uint32_t _parent)
 	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcess),
@@ -132,7 +136,6 @@ public:
 
       DefRec_DefProcessGroup_struct()
 	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcessGroup) {}
-
       DefRec_DefProcessGroup_struct(uint32_t _loccpuid,
 				    uint32_t _deftoken,
 				    ProcessGroupTypeT _type,
@@ -184,7 +187,8 @@ public:
    struct DefRec_DefScl_struct : DefRec_Base_struct
    {
       DefRec_DefScl_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefScl) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefScl),
+      sclfile(0), sclline(0) {}
       DefRec_DefScl_struct(uint32_t _loccpuid, uint32_t _deftoken,
 				uint32_t _sclfile, uint32_t _sclline)
 	 : DefRec_Base_struct(DEF_REC_TYPE__DefScl),
@@ -217,7 +221,8 @@ public:
    struct DefRec_DefFile_struct : DefRec_Base_struct
    {
       DefRec_DefFile_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFile) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefFile),
+      group(0) {}
       DefRec_DefFile_struct(uint32_t _loccpuid, uint32_t _deftoken,
 			    std::string _name, uint32_t _group )
 	 : DefRec_Base_struct(DEF_REC_TYPE__DefFile),
@@ -251,7 +256,8 @@ public:
    struct DefRec_DefFunction_struct : DefRec_Base_struct
    {
       DefRec_DefFunction_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFunction) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefFunction),
+      group(0), scltoken(0) {}
       DefRec_DefFunction_struct(uint32_t _loccpuid, uint32_t _deftoken,
 				std::string _name, uint32_t _group,
 				uint32_t _scltoken)
@@ -270,7 +276,8 @@ public:
    struct DefRec_DefCollectiveOperation_struct : DefRec_Base_struct
    {
       DefRec_DefCollectiveOperation_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCollectiveOperation) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefCollectiveOperation),
+      type(0) {}
       DefRec_DefCollectiveOperation_struct(uint32_t _loccpuid,
 					   uint32_t _collOp,
 					   std::string _name,
@@ -304,7 +311,8 @@ public:
    struct DefRec_DefCounter_struct : DefRec_Base_struct
    {
       DefRec_DefCounter_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCounter) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefCounter),
+      properties(0), countergroup(0) {}
       DefRec_DefCounter_struct(uint32_t _loccpuid, uint32_t _deftoken,
 			       std::string _name, uint32_t _properties,
 			       uint32_t _countergroup, std::string _unit)
@@ -352,10 +360,11 @@ private:
 
    struct MPIComm_struct
    {
-      MPIComm_struct(const uint32_t & _commid) : commid(_commid), index((uint32_t)-1) {}
+      MPIComm_struct(const uint32_t & _commid)
+	 : commid(_commid), loccpuid(0), deftoken(0), index((uint32_t)-1) {}
 
       MPIComm_struct(const uint32_t & _commid, const uint32_t & _index)
-	 : commid(_commid), index(_index) {}
+	 : commid(_commid), loccpuid(0), deftoken(0), index(_index) {}
 
       MPIComm_struct(const uint32_t & _commid, const uint32_t & _loccpuid,
 		     const uint32_t & _deftoken, const uint32_t & _index)

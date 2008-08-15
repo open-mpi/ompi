@@ -29,7 +29,7 @@ struct Process {
 };
 struct FiltHandlerArgument {
 
-	FiltHandlerArgument() {}
+	FiltHandlerArgument() : wstream(0), mc(0) {}
 
 	FiltHandlerArgument(const FiltHandlerArgument& fha);
 

@@ -151,18 +151,20 @@ int main (int argc, char *argv[]) {
         break;
       }
     }
-  }
-  if ( infile && lang == L_NA ) {
-    cerr << "ERROR: cannot determine input file language\n";
-    errFlag =true;
+
+    if ( lang == L_NA ) {
+      cerr << "ERROR: cannot determine input file language\n";
+      errFlag = true;
+    }
   }
 
   // generate output file name if necessary
-  if ( !errFlag && (a+1) == argc ) {
+  if ( !errFlag && infile && (a+1) == argc ) {
     out_filename = new char[strlen(infile)+5];
     char* dot = (char *) strrchr(infile, '.');
     if ( dot != 0 ) {
-      sprintf(out_filename, "%.*s.mod%s", (int)(dot - infile), infile, dot);
+      snprintf(out_filename, strlen(infile)+5, "%.*s.mod%s",
+	       (int)(dot - infile), infile, dot);
     
       if ( keepSrcInfo && (lang & L_FORTRAN) ) {
         dot = strrchr(out_filename, '.');
@@ -209,24 +211,28 @@ int main (int argc, char *argv[]) {
   if ( tabfile && (a == argc) ) {
     // just generate table file
     generateTableFile(rcdir, rcfile, tabfile);
-  } else {
+  } else if( infile ) {
     // generate opari include file name
     // C: in working directory
     // F: in rcfile directory
     char* incfile = 0;
+    int len = 0;
     if ( lang & L_FORTRAN ) {
       // only need base filename without path
       const char* dirsep = strrchr(infile, '/');
       if ( dirsep ) {
-        incfile = new char[strlen(rcdir)+strlen(dirsep)+12];
-        sprintf(incfile, "%s/%s.opari.inc", rcdir, dirsep+1);
+	len = strlen(rcdir)+strlen(dirsep)+12;
+        incfile = new char[len];
+        snprintf(incfile, len, "%s/%s.opari.inc", rcdir, dirsep+1);
       } else {
-        incfile = new char[strlen(rcdir)+strlen(infile)+13];
-        sprintf(incfile, "%s/%s.opari.inc", rcdir, infile);
+	len = strlen(rcdir)+strlen(infile)+13;
+        incfile = new char[len];
+        snprintf(incfile, len, "%s/%s.opari.inc", rcdir, infile);
       }
     } else {
-      incfile = new char[strlen(infile)+12];
-      sprintf(incfile, "%s.opari.inc", infile);
+      len = strlen(infile)+12;
+      incfile = new char[len];
+      snprintf(incfile, len, "%s.opari.inc", infile);
     }
 
     // transform

@@ -87,7 +87,7 @@ int main ( int argc, const char** args ) {
 	const char* p;
 
 	uint32_t len;
-	const char* infilename;
+	char* infilename= NULL;
 	char* outfilename= NULL;
 
 	int keep= 0;
@@ -191,14 +191,18 @@ int main ( int argc, const char** args ) {
 		
 			/* assume argument is a file name */
 
+			len= (uint32_t) strlen( args[i] );
+			infilename= (char*)realloc( infilename, len +1 );
+			assert( NULL != infilename );
+			strncpy( infilename, args[i], len +1 );
+
 			switch ( mode ) {
 
 			case MODE_DECOMPRESS:
 
 				/* decompress file */
-				infilename= args[i];
-				len= (uint32_t) strlen( infilename );
-				outfilename= realloc( outfilename, len +1 );
+
+				outfilename= (char*)realloc( outfilename, len +1 );
 				assert( NULL != outfilename );
 
 				/* built outfilename */
@@ -249,8 +253,6 @@ int main ( int argc, const char** args ) {
 			default:
 
 				/* compress file */
-				infilename= args[i];
-				len= (uint32_t) strlen( infilename );
 
 				/* check for ".z" at the end and refuse compression if found */
 				if ( ( 2 < len ) && ( 0 == strcmp( ".z", infilename +len -2 ) ) ) {
@@ -318,6 +320,7 @@ int main ( int argc, const char** args ) {
 	}
 
 	free( outfilename );
+	free( infilename );
 	outfilename= NULL;
 	infilename= NULL;
 
@@ -358,12 +361,17 @@ int compressFile( const char* filename, const char* outfilename,
 	if ( NULL == fin ) {
 	
 		fprintf( stderr, "cannot open file '%s' for reading, skip\n", filename );
+		free( inbuf );
+		free( outbuf );
 		return 1;
 	}
 	fout= fopen( outfilename, "wb" );
 	if ( NULL == fout ) {
 	
 		fprintf( stderr, "cannot open file '%s' for writing, skip\n", outfilename );
+		fclose( fin );
+		free( inbuf );
+		free( outbuf );
 		return 1;
 	}
 
@@ -477,12 +485,17 @@ int decompressFile( const char* infilename, const char* outfilename, uint32_t bl
 	if ( NULL == fin ) {
 	
 		fprintf( stderr, "cannot open file '%s' for reading, skip\n", infilename );
+		free( inbuf );
+		free( outbuf );
 		return 1;
 	}
 	fout= fopen( outfilename, "wb" );
 	if ( NULL == fout ) {
 	
 		fprintf( stderr, "cannot open file '%s' for writing, skip\n", outfilename );
+		fclose( fin );
+		free( inbuf );
+		free( outbuf );
 		return 1;
 	}
 
@@ -524,6 +537,8 @@ int decompressFile( const char* infilename, const char* outfilename, uint32_t bl
 		if ( Z_OK != status ) {
 		
 			fprintf( stderr, "error in uncompressing\n" );
+			fclose( fin );
+			fclose( fout );
 			return 0;
 		}
 		
@@ -557,6 +572,9 @@ int decompressFile( const char* infilename, const char* outfilename, uint32_t bl
 	inflateEnd( &z );
 	fclose( fin );
 	fclose( fout );
+	
+	free( inbuf );
+	free( outbuf );
 
 	return 0;
 }

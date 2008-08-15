@@ -520,7 +520,7 @@ Statistics::formatTime( uint64_t time )
    {
       if( i == 3 || sec >= 0.1 )
       {
-	 sprintf( str, "%.3f%s", sec, unit[i] );
+	 snprintf( str, sizeof( str ) - 1, "%.3f%s", sec, unit[i] );
 	 break;
       }
       sec *= 1000.0;

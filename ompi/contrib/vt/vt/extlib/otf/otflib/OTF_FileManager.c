@@ -69,6 +69,7 @@ void OTF_FileManager_finalize( OTF_FileManager* manager ) {
 
 
 	OTF_FileList* pos;
+	OTF_FileList* next;
 
 
 #	ifdef OTF_DEBUG
@@ -88,9 +89,10 @@ void OTF_FileManager_finalize( OTF_FileManager* manager ) {
 
 		while ( NULL != pos ) {
 
-			pos= pos->next;
-
+			next = pos->next;
 			free( pos );
+			pos = next;
+
 		}
 	}
 
