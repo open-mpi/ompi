@@ -64,12 +64,6 @@ char OTF_RBuffer_checkTimeRecord( OTF_RBuffer* rbuffer ) {
 	c= rbuffer->buffer[ p ];
 	while ( ( ' ' == c ) || ( '\t' == c ) ) {
 
-		if ( '\n' == c ) {
-
-			/* not a time record */
-			return 0;
-		}
-
 		++p;
 		c= rbuffer->buffer[ p ];
 	}
@@ -105,12 +99,6 @@ char OTF_RBuffer_checkProcessRecord( OTF_RBuffer* rbuffer ) {
 	p= rbuffer->pos;
 	c= rbuffer->buffer[ p ];
 	while ( ( ' ' == c ) || ( '\t' == c ) ) {
-
-		if ( '\n' == c ) {
-
-			/* not a process record */
-			return 0;
-		}
 
 		++p;
 		c= rbuffer->buffer[ p ];

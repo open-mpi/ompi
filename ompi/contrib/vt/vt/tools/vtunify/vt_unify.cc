@@ -331,8 +331,8 @@ readUnifyControlFiles()
       char filename[STRBUFSIZE];
 
       // create file name
-      sprintf( filename, "%s.%x.uctl",
-	       Params.in_file_prefix.c_str(), i+1 );
+      snprintf( filename, sizeof( filename ) - 1, "%s.%x.uctl",
+		Params.in_file_prefix.c_str(), i+1 );
 
       // open unify control file for reading
       //
@@ -593,8 +593,8 @@ cleanUp()
       //
       for( i = 0; i < Params.uctl_files_num; i++ )
       {
-	 sprintf( filename1, "%s.%x.uctl",
-		  Params.in_file_prefix.c_str(), i+1 );
+	 snprintf( filename1, sizeof( filename1 ) - 1, "%s.%x.uctl",
+		   Params.in_file_prefix.c_str(), i+1 );
 	 
 	 if( remove( filename1 ) != 0 )
 	 {

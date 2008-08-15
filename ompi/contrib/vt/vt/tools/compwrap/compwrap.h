@@ -13,8 +13,6 @@
 #ifndef _COMPWRAP_H_
 #define _COMPWRAP_H_
 
-#define STRBUFSIZE 4096
-
 #define VTSEQLIB "-lvt"
 #define VTMPILIB "-lvt.mpi"
 #define VTOMPLIB "-lvt.omp"
