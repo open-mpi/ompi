@@ -34,7 +34,7 @@ int main( int argc, char** argv ) {
 
 
 	int i;
-	char tmp[10240];
+	char tmp[1024];
 
 
 	if( argc == 1 ) {
@@ -67,17 +67,13 @@ int main( int argc, char** argv ) {
 		
 		} else if ( 0 == strcmp( argv[i], "--libs" ) ) {
 
-			memset(tmp, 0, 10240 );
-
-			strcat( tmp, "-L" );
-			strcat( tmp, OTFCONFIG_LIBDIR );
-			strcat( tmp, " -lotf" );
-
+			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotf %s\n",
+				OTFCONFIG_LIBDIR,
 #ifdef HAVE_ZLIB
-			strcat( tmp, " -lz" );
+				"-lz" );
+#else /* HAVE_ZLIB */
+				"" );
 #endif /* HAVE_ZLIB */
-
-			strcat( tmp, "\n" );
 
 			printf( tmp );
 

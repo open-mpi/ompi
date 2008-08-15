@@ -231,8 +231,6 @@ public:
 class State {
 
 
-	uint32_t x;
-
 	std::map<uint32_t,ProcessState> processes;
 
 	/* maps the function to its funtiongroupid */

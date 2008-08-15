@@ -89,7 +89,7 @@ char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 		break;
 
 	default:
-
+		free(ret);
 		return NULL;
 	}
 

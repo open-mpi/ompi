@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,13 +106,13 @@ ReadDataFile()
       return false;
    }
 
-   char buffer[STRBUFSIZE];
+   char buffer[1024];
    std::string line;
    unsigned int line_no = 0;
    unsigned int key_idx = 0;
 
    while( key_idx < keys_num 
-	  && in.getline( buffer, STRBUFSIZE ) )
+	  && in.getline( buffer, sizeof(buffer) ) )
    {
       line_no++;
 
@@ -240,8 +241,8 @@ ReadDataFile()
       }
       else if( key.compare( "inst_avail" ) == 0 )
       {
-	 char cvalue[STRBUFSIZE];
-	 strcpy( cvalue, value.c_str() );
+	 char cvalue[100];
+	 strncpy( cvalue, value.c_str(), sizeof(cvalue) );
 
 	 char * token = strtok( cvalue, " " );
 	 if( !token )
@@ -654,8 +655,9 @@ ParseCommandLine( int argc, char ** argv )
 	    return false;
 	 }
 
-	 char * args = new char[strlen(argv[i+1])+1];
-	 strcpy( args, argv[++i] );
+	 int len = strlen(argv[i+1])+1;
+	 char * args = new char[len];
+	 strncpy( args, argv[++i], len );
 	 char * token = strtok( args, " " );
 
 	 do
@@ -1089,58 +1091,58 @@ Wrapper::show()
    //
    if( showmeLink() )
    {
-      char vtlib[STRBUFSIZE];
+      char vtlib[1024];
 
       if( usesOMP() )
       {
 	 if( usesMPI() )
 	 {
-	    sprintf( vtlib, "%s %s %s %s "VTHYBLIB" %s %s",
-		     Properties.comp_ldflags.c_str(),
-		     Properties.libdir.c_str(),
-		     getInstType() == INST_TYPE_DYNINST ?
-		     Properties.dynattlib.c_str() : "",
+	    snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTHYBLIB" %s %s",
+		      Properties.comp_ldflags.c_str(),
+		      Properties.libdir.c_str(),
+		      getInstType() == INST_TYPE_DYNINST ?
+		      Properties.dynattlib.c_str() : "",
 #if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		     Properties.fmpilib.c_str(),
+		      Properties.fmpilib.c_str(),
 #else
-		     "",
+		      "",
 #endif
-		     Properties.pmpilib.c_str(),
-		     Properties.comp_ulibs.c_str() );
+		      Properties.pmpilib.c_str(),
+		      Properties.comp_ulibs.c_str() );
 	 }
 	 else
 	 {
-	    sprintf( vtlib, "%s %s %s "VTOMPLIB" %s",
-		     Properties.comp_ldflags.c_str(),
-		     Properties.libdir.c_str(),
-		     getInstType() == INST_TYPE_DYNINST ?
-		     Properties.dynattlib.c_str() : "",
-		     Properties.comp_ulibs.c_str() );
+	    snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTOMPLIB" %s",
+		      Properties.comp_ldflags.c_str(),
+		      Properties.libdir.c_str(),
+		      getInstType() == INST_TYPE_DYNINST ?
+		      Properties.dynattlib.c_str() : "",
+		      Properties.comp_ulibs.c_str() );
 	 }
       }
       else if( usesMPI() )
       {
-	 sprintf( vtlib, "%s %s %s %s "VTMPILIB" %s %s",
-		  Properties.comp_ldflags.c_str(),
-		  Properties.libdir.c_str(),
-		  getInstType() == INST_TYPE_DYNINST ?
-		  Properties.dynattlib.c_str() : "",
+	 snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTMPILIB" %s %s",
+		   Properties.comp_ldflags.c_str(),
+		   Properties.libdir.c_str(),
+		   getInstType() == INST_TYPE_DYNINST ?
+		   Properties.dynattlib.c_str() : "",
 #if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		  Properties.fmpilib.c_str(),
+		   Properties.fmpilib.c_str(),
 #else
-		  "",
+		   "",
 #endif	     
-		  Properties.pmpilib.c_str(),
-		  Properties.comp_ulibs.c_str() );
+		   Properties.pmpilib.c_str(),
+		   Properties.comp_ulibs.c_str() );
       }
       else
       {
-	 sprintf( vtlib, "%s %s %s "VTSEQLIB" %s",
-		  Properties.comp_ldflags.c_str(),
-		  Properties.libdir.c_str(),
-		  getInstType() == INST_TYPE_DYNINST ?
-		  Properties.dynattlib.c_str() : "",
-		  Properties.comp_ulibs.c_str() );	     
+	 snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTSEQLIB" %s",
+		   Properties.comp_ldflags.c_str(),
+		   Properties.libdir.c_str(),
+		   getInstType() == INST_TYPE_DYNINST ?
+		   Properties.dynattlib.c_str() : "",
+		   Properties.comp_ulibs.c_str() );	     
       }
 
       std::cout << (showmeCompile() ? "" : Properties.comp_args) << " "
@@ -1218,7 +1220,7 @@ Wrapper::run()
    }
    else
    {
-      char vtlib[STRBUFSIZE];
+      char vtlib[1024];
 
       if( usesOMP() || getInstType() == INST_TYPE_POMP )
       {
@@ -1242,54 +1244,54 @@ Wrapper::run()
       {
 	 if( usesMPI() )
 	 {
-	    sprintf( vtlib, "%s %s %s %s "VTHYBLIB" %s %s",
-		     Properties.comp_ldflags.c_str(),
-		     Properties.libdir.c_str(),
-		     getInstType() == INST_TYPE_DYNINST ?
-		     Properties.dynattlib.c_str() : "",
+	    snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTHYBLIB" %s %s",
+		      Properties.comp_ldflags.c_str(),
+		      Properties.libdir.c_str(),
+		      getInstType() == INST_TYPE_DYNINST ?
+		      Properties.dynattlib.c_str() : "",
 #if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		     Properties.fmpilib.c_str(),
+		      Properties.fmpilib.c_str(),
 #else
-		     "",
+		      "",
 #endif
-		     Properties.pmpilib.c_str(),
-		     Properties.comp_ulibs.c_str() );
+		      Properties.pmpilib.c_str(),
+		      Properties.comp_ulibs.c_str() );
 	 }
 	 else
 	 {
-	    sprintf( vtlib, "%s %s %s "VTOMPLIB" %s",
-		     Properties.comp_ldflags.c_str(),
-		     Properties.libdir.c_str(),
-		     getInstType() == INST_TYPE_DYNINST ?
-		     Properties.dynattlib.c_str() : "",
-		     Properties.comp_ulibs.c_str() );
+	    snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTOMPLIB" %s",
+		      Properties.comp_ldflags.c_str(),
+		      Properties.libdir.c_str(),
+		      getInstType() == INST_TYPE_DYNINST ?
+		      Properties.dynattlib.c_str() : "",
+		      Properties.comp_ulibs.c_str() );
 	 }
       }
       else
       {
 	 if( usesMPI() )
 	 {
-	    sprintf( vtlib, "%s %s %s %s "VTMPILIB" %s %s",
-		     Properties.comp_ldflags.c_str(),
-		     Properties.libdir.c_str(),
-		     getInstType() == INST_TYPE_DYNINST ?
-		     Properties.dynattlib.c_str() : "",
+	    snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTMPILIB" %s %s",
+		      Properties.comp_ldflags.c_str(),
+		      Properties.libdir.c_str(),
+		      getInstType() == INST_TYPE_DYNINST ?
+		      Properties.dynattlib.c_str() : "",
 #if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		     Properties.fmpilib.c_str(),
+		      Properties.fmpilib.c_str(),
 #else
-		     "",
+		      "",
 #endif	     
-		     Properties.pmpilib.c_str(),
-		     Properties.comp_ulibs.c_str() );
+		      Properties.pmpilib.c_str(),
+		      Properties.comp_ulibs.c_str() );
 	 }
 	 else
 	 {
-	    sprintf( vtlib, "%s %s %s "VTSEQLIB" %s",
-		     Properties.comp_ldflags.c_str(),
-		     Properties.libdir.c_str(),
-		     getInstType() == INST_TYPE_DYNINST ?
-		     Properties.dynattlib.c_str() : "",
-		     Properties.comp_ulibs.c_str() );	     
+	    snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTSEQLIB" %s",
+		      Properties.comp_ldflags.c_str(),
+		      Properties.libdir.c_str(),
+		      getInstType() == INST_TYPE_DYNINST ?
+		      Properties.dynattlib.c_str() : "",
+		      Properties.comp_ulibs.c_str() );	     
 	 }
       }
 
@@ -1347,8 +1349,14 @@ Wrapper::run()
 		  std::cout << "+++ rename " << Properties.vec_opari_mfiles_obj[i]
 			    << " to " << target << std::endl;
 	       
-	       rename( Properties.vec_opari_mfiles_obj[i].c_str(),
-		       target.c_str() );
+	       if( rename( Properties.vec_opari_mfiles_obj[i].c_str(),
+			   target.c_str() ) == -1 )
+	       {
+		  std::cerr << ExeName << ": error: could not rename "
+			    << Properties.vec_opari_mfiles_obj[i].c_str()
+			    << " to " << target.c_str() << std::endl
+			    << strerror(errno) << std::endl;
+	       }
 	    }
 	 }
       }
@@ -1543,10 +1551,10 @@ Wrapper::opari_getIncFilesFromTabFile( const std::string tabfile )
    std::ifstream in( tabfile.c_str() );
    if( in )
    {
-      char buffer[STRBUFSIZE];
+      char buffer[1024];
       std::string line;
 
-      while( in.getline( buffer, STRBUFSIZE ) )
+      while( in.getline( buffer, sizeof(buffer) ) )
       {
 	 line = buffer;
 

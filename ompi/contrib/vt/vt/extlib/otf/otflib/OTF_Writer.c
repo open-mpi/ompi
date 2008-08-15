@@ -151,7 +151,20 @@ int OTF_Writer_finish( OTF_Writer* writer ) {
 OTF_Writer* OTF_Writer_open( const char* namestub, uint32_t m, OTF_FileManager* manager ) {
 
 
-	OTF_Writer* ret= (OTF_Writer*) malloc( sizeof(OTF_Writer) );
+	OTF_Writer* ret= NULL;
+
+	if( NULL == manager ) {
+	
+#		ifdef OTF_VERBOSE
+			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"manager has not been specified.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+#		endif
+
+		return NULL;
+	}
+
+	ret= (OTF_Writer*) malloc( sizeof(OTF_Writer) );
 	if( NULL == ret ) {
 	
 #		ifdef OTF_VERBOSE
@@ -169,16 +182,6 @@ OTF_Writer* OTF_Writer_open( const char* namestub, uint32_t m, OTF_FileManager* 
 
 	ret->namestub= OTF_stripFilename( namestub );
 
-	if( NULL == manager ) {
-	
-#		ifdef OTF_VERBOSE
-			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-				"manager has not been specified.\n",
-				__FUNCTION__, __FILE__, __LINE__ );
-#		endif
-
-		return NULL;
-	}
 	ret->manager= manager;
 
 	ret->mc= OTF_MasterControl_new( ret->manager );

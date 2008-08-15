@@ -26,6 +26,7 @@ included AFTER this macro definitions */
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -533,10 +534,21 @@ uint64_t OTF_File_size( OTF_File* file ) {
 
 	struct stat st;
 
+	if ( stat( file->filename, &st ) == -1 ) {
 
-	stat( file->filename, &st );
+#		ifdef OTF_VERBOSE
+			fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						"stat() failed: %s\n",
+						__FUNCTION__, __FILE__, __LINE__,
+						strerror(errno) );
+#		endif /* OTF_VERBOSE */
 
-	return st.st_size;
+		return 0;
+	} else {
+
+		return st.st_size;
+
+	}
 }
 
 

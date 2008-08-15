@@ -933,6 +933,11 @@ int OTF_Reader_readDefProcessGroup( OTF_RBuffer* buffer,
 				PARSE_ERROR( buffer );
 #			endif
 
+			if ( array ) {
+				free( array );
+				array= NULL;
+			}
+
 			return 0;
 		}
 
@@ -941,6 +946,11 @@ int OTF_Reader_readDefProcessGroup( OTF_RBuffer* buffer,
 #		ifdef OTF_VERBOSE
 			PARSE_ERROR( buffer );
 #		endif
+
+		if ( array ) {
+			free( array );
+			array= NULL;
+		}
 
 		return 0;
 	}
@@ -963,6 +973,11 @@ int OTF_Reader_readDefProcessGroup( OTF_RBuffer* buffer,
 #		ifdef OTF_VERBOSE
 			PARSE_ERROR( buffer );
 #		endif
+
+		if ( array ) {
+			free( array );
+			array= NULL;
+		}
 
 		return 0;
 	}
