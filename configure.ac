@@ -1206,7 +1206,13 @@ CFLAGS_WITHOUT_OPTFLAGS="$s_result"
 if test "$with_tv_debug_flags" != ""; then
     TOTALVIEW_DEBUG_FLAGS="$with_tv_debug_flags"
 else
-    TOTALVIEW_DEBUG_FLAGS="-g"
+    # Tweak the compiler flags passed to orterun for Sun Studio SPARC
+    # https://svn.open-mpi.org/trac/ompi/ticket/1448
+    if test "x$ompi_cv_c_compiler_vendor" = "xsun" -a -n "`echo $host | $GREP sparc`"; then
+        TOTALVIEW_DEBUG_FLAGS="-g -xO0"
+    else
+        TOTALVIEW_DEBUG_FLAGS="-g"
+    fi
 fi
 AC_MSG_CHECKING([which of CFLAGS are ok for TotalView modules])
 AC_MSG_RESULT([$CFLAGS_WITHOUT_OPTFLAGS])
