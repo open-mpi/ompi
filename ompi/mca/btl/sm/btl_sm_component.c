@@ -343,6 +343,22 @@ btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
         opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
 }
 
+static int process_pending_send(struct mca_btl_base_endpoint_t *ep) 
+{ 
+    btl_sm_pending_send_item_t *si; 
+    int rc; 
+
+    si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends); 
+    if(NULL == si) return OMPI_ERROR; 
+    
+    OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+
+    MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
+                          true, rc);
+
+    return rc; 
+} 
+
 int mca_btl_sm_component_progress(void)
 {
     /* local variables */
@@ -351,9 +367,7 @@ int mca_btl_sm_component_progress(void)
     ompi_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
-    int peer_smp_rank;
-    int rc = 0;
-    bool useless;
+    int peer_smp_rank, rc = 0;
 
     /* poll each fifo */
     for(peer_smp_rank = 0; peer_smp_rank < mca_btl_sm_component.num_smp_procs;
@@ -373,9 +387,7 @@ int mca_btl_sm_component_progress(void)
             opal_atomic_lock(fifo->tail_lock);
         }
 
-        hdr = (mca_btl_sm_hdr_t*)ompi_cb_fifo_read_from_tail(&fifo->tail->cb_fifo,
-                                                             fifo->tail->cb_overflow,
-                                                             &useless );
+        hdr = (mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail(fifo);
 
         /* release thread lock */
         if(opal_using_threads()) {
@@ -408,17 +420,20 @@ int mca_btl_sm_component_progress(void)
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
+		goto recheck_peer;
                 break;
             }
             case MCA_BTL_SM_FRAG_ACK:
             {
                 int status = (uintptr_t)hdr & MCA_BTL_SM_FRAG_STATUS_MASK;
                 int btl_ownership;
+                struct mca_btl_base_endpoint_t* endpoint;
 
                 frag = (mca_btl_sm_frag_t *)((char*)((uintptr_t)hdr &
                             (~(MCA_BTL_SM_FRAG_TYPE_MASK |
                             MCA_BTL_SM_FRAG_STATUS_MASK))));
 
+                endpoint = frag->endpoint;
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
                 if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
                     /* completion callback */
@@ -427,6 +442,10 @@ int mca_btl_sm_component_progress(void)
                 }
                 if( btl_ownership ) {
                     MCA_BTL_SM_FRAG_RETURN(frag);
+                }
+                if(opal_list_get_size(&endpoint->pending_sends)) {
+		    if( OMPI_ERR_RESOURCE_BUSY == process_pending_send(endpoint) )
+		        break;
                 }
                 goto recheck_peer;
             }
