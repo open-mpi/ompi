@@ -622,7 +622,6 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
         frag->segment.seg_len = size;
         frag->base.des_flags = flags;
     }
-
     return (mca_btl_base_descriptor_t*)frag;
 }
 
@@ -812,7 +811,11 @@ int mca_btl_sm_send(
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                           endpoint->peer_smp_rank, frag->hdr, false, rc);
-    return (rc < 0 ? rc : 1);
+    if( OPAL_LIKELY(0 == rc) ) {
+        return 1;  /* the data is completely gone */
+    }
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    return rc;
 }
 
 int mca_btl_sm_ft_event(int state) {
