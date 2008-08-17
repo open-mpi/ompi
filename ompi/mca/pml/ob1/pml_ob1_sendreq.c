@@ -617,7 +617,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
 
     ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_MATCH,
-            sendreq->req_send.req_base.req_proc);
+                 sendreq->req_send.req_base.req_proc);
 
     /* short message */
     des->des_cbfunc = mca_pml_ob1_match_completion_free;
