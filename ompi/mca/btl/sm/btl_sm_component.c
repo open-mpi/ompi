@@ -444,8 +444,8 @@ int mca_btl_sm_component_progress(void)
                     MCA_BTL_SM_FRAG_RETURN(frag);
                 }
                 if(opal_list_get_size(&endpoint->pending_sends)) {
-		    if( OMPI_ERR_RESOURCE_BUSY == process_pending_send(endpoint) )
-		        break;
+                   if( OMPI_ERR_RESOURCE_BUSY == process_pending_send(endpoint) )
+                       break;
                 }
                 goto recheck_peer;
             }
