@@ -815,7 +815,10 @@ int mca_btl_sm_send(
         return 1;  /* the data is completely gone */
     }
     frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-    return rc;
+    /* not yet gone, but pending. Let the upper level knows that
+     * the callback will be triggered when the data will be sent.
+     */
+    return 0;
 }
 
 int mca_btl_sm_ft_event(int state) {
