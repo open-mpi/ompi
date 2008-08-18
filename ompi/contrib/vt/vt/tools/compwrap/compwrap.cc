@@ -112,7 +112,7 @@ ReadDataFile()
    unsigned int key_idx = 0;
 
    while( key_idx < keys_num 
-	  && in.getline( buffer, sizeof(buffer) ) )
+	  && in.getline( buffer, sizeof(buffer) - 1 ) )
    {
       line_no++;
 
@@ -242,7 +242,7 @@ ReadDataFile()
       else if( key.compare( "inst_avail" ) == 0 )
       {
 	 char cvalue[100];
-	 strncpy( cvalue, value.c_str(), sizeof(cvalue) );
+	 strncpy( cvalue, value.c_str(), sizeof(cvalue) - 1 );
 
 	 char * token = strtok( cvalue, " " );
 	 if( !token )
@@ -1097,7 +1097,7 @@ Wrapper::show()
       {
 	 if( usesMPI() )
 	 {
-	    snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTHYBLIB" %s %s",
+	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTHYBLIB" %s %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1112,7 +1112,7 @@ Wrapper::show()
 	 }
 	 else
 	 {
-	    snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTOMPLIB" %s",
+	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTOMPLIB" %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1122,7 +1122,7 @@ Wrapper::show()
       }
       else if( usesMPI() )
       {
-	 snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTMPILIB" %s %s",
+	 snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTMPILIB" %s %s",
 		   Properties.comp_ldflags.c_str(),
 		   Properties.libdir.c_str(),
 		   getInstType() == INST_TYPE_DYNINST ?
@@ -1137,7 +1137,7 @@ Wrapper::show()
       }
       else
       {
-	 snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTSEQLIB" %s",
+	 snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTSEQLIB" %s",
 		   Properties.comp_ldflags.c_str(),
 		   Properties.libdir.c_str(),
 		   getInstType() == INST_TYPE_DYNINST ?
@@ -1244,7 +1244,7 @@ Wrapper::run()
       {
 	 if( usesMPI() )
 	 {
-	    snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTHYBLIB" %s %s",
+	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTHYBLIB" %s %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1259,7 +1259,7 @@ Wrapper::run()
 	 }
 	 else
 	 {
-	    snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTOMPLIB" %s",
+	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTOMPLIB" %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1271,7 +1271,7 @@ Wrapper::run()
       {
 	 if( usesMPI() )
 	 {
-	    snprintf( vtlib, sizeof(vtlib), "%s %s %s %s "VTMPILIB" %s %s",
+	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTMPILIB" %s %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1286,7 +1286,7 @@ Wrapper::run()
 	 }
 	 else
 	 {
-	    snprintf( vtlib, sizeof(vtlib), "%s %s %s "VTSEQLIB" %s",
+	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTSEQLIB" %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1554,7 +1554,7 @@ Wrapper::opari_getIncFilesFromTabFile( const std::string tabfile )
       char buffer[1024];
       std::string line;
 
-      while( in.getline( buffer, sizeof(buffer) ) )
+      while( in.getline( buffer, sizeof(buffer) - 1 ) )
       {
 	 line = buffer;
 
