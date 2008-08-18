@@ -149,7 +149,7 @@ int main ( int argc, const char** argv ) {
 
 			for( uint32_t a= 0; a < OTF_NRECORDS; ++a ) fha.records[a]= false;
 
-			while( i < argc && argv[i+1][0] >= '0' && argv[i+1][0] <= '9' ) {
+			while( i+1 < argc && argv[i+1][0] >= '0' && argv[i+1][0] <= '9' ) {
 
 				fha.records[atol(argv[i+1])]= true;
 
