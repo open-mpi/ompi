@@ -121,7 +121,7 @@ int RFG_Filter_setDefaultCallLimit( RFG_Filter* filter, int32_t limit )
 int RFG_Filter_readDefFile( RFG_Filter* filter )
 {
   FILE*    f;
-  char     orgline[MAX_LINE_LEN];
+  char*    orgline;
   uint32_t lineno = 0;
   uint8_t  parse_err = 0;
 
@@ -140,9 +140,13 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
     return 0;
   }
 
+  orgline = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
+  if( orgline == NULL )
+    return 0;
+
   /* read lines */
 
-  while( fgets( orgline, MAX_LINE_LEN, f ) )
+  while( !parse_err && fgets( orgline, MAX_LINE_LEN - 1, f ) )
   {
     int32_t climit;
     char* p;
@@ -159,12 +163,18 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
     lineno++;
 
     if( strlen( line ) == 0 )
+    {
+      free( line );
       continue;
+    }
 
     trim( line );
 
     if( line[0] == '#' )
+    {
+      free( line );
       continue;
+    }
     
     /* search for '--'
        e.g. "func1;func2;func3 -- 1000"
@@ -175,6 +185,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
     if( p == NULL )
     {
       parse_err = 1;
+      free( line );
       break;
     }
 
@@ -226,6 +237,8 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
     fprintf( stderr, "%s:%u: Could not parse line '%s'\n",
 	     filter->deffile, lineno, orgline );
   }
+
+  free( orgline );
 
   fclose( f );
 
