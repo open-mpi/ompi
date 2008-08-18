@@ -629,8 +629,10 @@ cleanUp()
 	    
 	    if( access( filename1, F_OK ) != 0 )
 	    {
+	       assert( strlen( filename1 ) + 2 + 1 < sizeof( filename1 ) - 1 );
+
 	       // file not found, try '.z' suffix
-	       strcat( filename1, ".z" );
+	       strncat( filename1, ".z", 2 );
 	    }
 
 	    if( remove( filename1 ) == 0 )
@@ -659,9 +661,12 @@ cleanUp()
    
    if( access( filename1, F_OK ) != 0 )
    {
+      assert( strlen( filename1 ) + 2 + 1 < sizeof( filename1 ) - 1 );
+      assert( strlen( filename2 ) + 2 + 1 < sizeof( filename2 ) - 1 );
+
       // file not found, try '.z' suffix
-      strcat( filename1, ".z" );
-      strcat( filename2, ".z" );
+      strncat( filename1, ".z", 2 );
+      strncat( filename2, ".z", 2 );
    }
 
    if( rename( filename1, filename2 ) != 0 )
@@ -717,9 +722,12 @@ cleanUp()
 
 	 if( access( filename1, F_OK ) != 0 )
 	 {
+	    if( strlen( filename1 ) + 2 + 1 < sizeof( filename1 ) - 1 );
+	    if( strlen( filename2 ) + 2 + 1 < sizeof( filename2 ) - 1 );
+
 	    // file not found, try '.z' suffix
-	    strcat( filename1, ".z" );
-	    strcat( filename2, ".z" );
+	    strncat( filename1, ".z", 2 );
+	    strncat( filename2, ".z", 2 );
 	 }
 
 	 if( rename( filename1, filename2 ) == 0 )
