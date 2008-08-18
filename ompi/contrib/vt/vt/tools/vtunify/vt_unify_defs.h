@@ -44,7 +44,8 @@ public:
 		  DEF_REC_TYPE__DefFunction,
 		  DEF_REC_TYPE__DefCollectiveOperation,
 		  DEF_REC_TYPE__DefCounterGroup,
-		  DEF_REC_TYPE__DefCounter } DefRecTypeT;
+		  DEF_REC_TYPE__DefCounter,
+                  DEF_REC_TYPE__Unknown } DefRecTypeT;
    
    //
    // DefRec_Base_struct
@@ -52,7 +53,7 @@ public:
    struct DefRec_Base_struct
    {
       DefRec_Base_struct()
-	 : loccpuid(0), deftoken(0) {}
+	 : etype(DEF_REC_TYPE__Unknown), loccpuid(0), deftoken(0) {}
       DefRec_Base_struct(DefRecTypeT _etype)
 	 : etype(_etype), loccpuid(0), deftoken(0) {}
       virtual ~DefRec_Base_struct() {}
@@ -135,7 +136,8 @@ public:
       ProcessGroupTypeT;
 
       DefRec_DefProcessGroup_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcessGroup) {}
+	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcessGroup),
+      type(TYPE_OTHER) {}
       DefRec_DefProcessGroup_struct(uint32_t _loccpuid,
 				    uint32_t _deftoken,
 				    ProcessGroupTypeT _type,
