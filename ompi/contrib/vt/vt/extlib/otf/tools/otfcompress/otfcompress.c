@@ -76,7 +76,7 @@ int decompressFile( const char* filename, const char* outfilename,
 #define MODE_DECOMPRESS 2
 
 
-int main ( int argc, const char** args ) {
+int main ( int argc, const char** argv ) {
 
 
 	int ret;
@@ -87,7 +87,7 @@ int main ( int argc, const char** args ) {
 	const char* p;
 
 	uint32_t len;
-	char* infilename= NULL;
+	const char* infilename;
 	char* outfilename= NULL;
 
 	int keep= 0;
@@ -104,20 +104,20 @@ int main ( int argc, const char** args ) {
 	/* collect parameters */
 	for ( i= 1; i < argc; i++ ) {
 
-		if ( 0 == strcmp( "-h", args[i] ) || 0 == strcmp( "--help", args[i] ) ) {
+		if ( 0 == strcmp( "-h", argv[i] ) || 0 == strcmp( "--help", argv[i] ) ) {
 
 			SHOW_HELPTEXT;
 			exit( 0 );
 
 		} else 
 
-		if ( 0 == strcmp( "-k", args[i] ) ) {
+		if ( 0 == strcmp( "-k", argv[i] ) ) {
 
 			keep= 1;
 
 		} else 
 
-		if ( 0 == strcmp( "-c", args[i] ) ) {
+		if ( 0 == strcmp( "-c", argv[i] ) ) {
 
 			if ( MODE_DEFAULT == mode ) {
 
@@ -130,7 +130,7 @@ int main ( int argc, const char** args ) {
 
 		} else 
 
-		if ( 0 == strcmp( "-d", args[i] ) ) {
+		if ( 0 == strcmp( "-d", argv[i] ) ) {
 
 			if ( MODE_DEFAULT == mode ) {
 
@@ -143,13 +143,13 @@ int main ( int argc, const char** args ) {
 
 		} else 
 
-		if ( ( '-' == args[i][0] ) && ( '0' <= args[i][1] ) && ( '9' >= args[i][1] ) )  {
+		if ( ( '-' == argv[i][0] ) && ( '0' <= argv[i][1] ) && ( '9' >= argv[i][1] ) )  {
 
-			zlevel= (int) ( args[i][1] - '0' );
+			zlevel= (int) ( argv[i][1] - '0' );
 
 		} else 
 		
-		if ( 0 == strcmp( "-V", args[i] ) ) {
+		if ( 0 == strcmp( "-V", argv[i] ) ) {
 		
 			printf( "%u.%u.%u \"%s\"\n", OTF_VERSION_MAYOR, OTF_VERSION_MINOR,
 				OTF_VERSION_SUB, OTF_VERSION_STRING);
@@ -157,11 +157,11 @@ int main ( int argc, const char** args ) {
 		}
 	}
 
-	/* look at args[0], mode defaults to compress/decomress according to command name */
+	/* look at argv[0], mode defaults to compress/decomress according to command name */
 	if ( MODE_DEFAULT == mode ) {
 	
-		p= strrchr( args[0], '/' );
-		command = NULL != p ? p+1 : args[0];
+		p= strrchr( argv[0], '/' );
+		command = NULL != p ? p+1 : argv[0];
 
 		if ( 0 == strcmp( "otfcompress", command ) ) {
 
@@ -183,7 +183,7 @@ int main ( int argc, const char** args ) {
 	/* files to (de)compress */
 	for ( i= 1; i < argc; i++ ) {
 
-		if ( '-' == args[i][0] ) {
+		if ( '-' == argv[i][0] ) {
 
 			/* switches already handled */
 
@@ -191,18 +191,14 @@ int main ( int argc, const char** args ) {
 		
 			/* assume argument is a file name */
 
-			len= (uint32_t) strlen( args[i] );
-			infilename= (char*)realloc( infilename, len +1 );
-			assert( NULL != infilename );
-			strncpy( infilename, args[i], len +1 );
-
 			switch ( mode ) {
 
 			case MODE_DECOMPRESS:
 
 				/* decompress file */
-
-				outfilename= (char*)realloc( outfilename, len +1 );
+				infilename= argv[i];
+				len= (uint32_t) strlen( infilename );
+				outfilename= realloc( outfilename, len +1 );
 				assert( NULL != outfilename );
 
 				/* built outfilename */
@@ -253,6 +249,8 @@ int main ( int argc, const char** args ) {
 			default:
 
 				/* compress file */
+				infilename= argv[i];
+				len= (uint32_t) strlen( infilename );
 
 				/* check for ".z" at the end and refuse compression if found */
 				if ( ( 2 < len ) && ( 0 == strcmp( ".z", infilename +len -2 ) ) ) {
@@ -320,7 +318,6 @@ int main ( int argc, const char** args ) {
 	}
 
 	free( outfilename );
-	free( infilename );
 	outfilename= NULL;
 	infilename= NULL;
 
@@ -583,7 +580,7 @@ int decompressFile( const char* infilename, const char* outfilename, uint32_t bl
 #else /* HAVE_ZLIB */
 
 
-int main ( int argc, const char** args ) {
+int main ( int argc, const char** argv ) {
 
 
 	fprintf( stderr, "'zlib' not available, otfcompress de-activated\n" );
