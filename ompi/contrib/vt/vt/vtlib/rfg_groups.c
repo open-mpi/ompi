@@ -126,7 +126,7 @@ int RFG_Groups_setDefaultGroup( RFG_Groups* groups, const char* name )
 int RFG_Groups_readDefFile( RFG_Groups* groups )
 {
   FILE*    f;
-  char     orgline[MAX_LINE_LEN];
+  char*    orgline;
   uint32_t lineno = 0;
   uint8_t  parse_err = 0;
 
@@ -145,10 +145,13 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     return 0;
   }
 
+  orgline = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
+  if( orgline == NULL )
+    return 0;
+
   /* read lines */
 
-  while( fgets( orgline, MAX_LINE_LEN, f ) 
-	 && !parse_err )
+  while( !parse_err && fgets( orgline, MAX_LINE_LEN - 1, f ) )
   {
     char  group[STRBUF_SIZE];
     char* p;
@@ -165,12 +168,18 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     lineno++;
 
     if( strlen( line ) == 0 )
+    {
+      free( line );
       continue;
+    }
 
     trim( line );
 
     if( line[0] == '#' )
+    {
+      free( line );
       continue;
+    }
 
     /* search for '='
        e.g. "GROUP=func1;func2;func3"
@@ -181,6 +190,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     if( p == NULL )
     {
       parse_err = 1;
+      free( line );
       break;
     }
 
@@ -225,7 +235,9 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     fprintf( stderr, "%s:%u: Could not parse line '%s'\n",
 	     groups->deffile, lineno, orgline );
   }
-  
+
+  free( orgline );
+
   fclose( f );
 
   return parse_err ? 0 : 1;
