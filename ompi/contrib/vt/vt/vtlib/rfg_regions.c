@@ -195,8 +195,13 @@ int RFG_Regions_addGroupAssign( RFG_Regions* regions,
   for( i = 0; i < n; i++ )
   {
     if( !RFG_Groups_addAssign( regions->groups, gname, va_arg(ap, char*) ) )
+    {
+      va_end(ap);
       return 0;
+    }
   }
+
+  va_end(ap);
 
   return 1;
 }
