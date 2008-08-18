@@ -1179,7 +1179,7 @@ static map<uint32_t,uint64_t> readFilterFile( const string& filename, const map<
             ulimit= ATOL8(line.substr(a+4, line.size()-a-4).c_str());
             line= line.substr(0, a);
             sline= new char[line.length()+1];
-            strncpy( sline, line.c_str(), line.length()+1 );
+            strncpy( sline, line.c_str(), line.length() );
 
             char* token = strtok(sline, ";");
 			while( token ) {
