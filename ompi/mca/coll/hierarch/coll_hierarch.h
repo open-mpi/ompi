@@ -45,6 +45,17 @@ extern int mca_coll_hierarch_verbose_param;
 extern int mca_coll_hierarch_use_rdma_param;
 extern int mca_coll_hierarch_ignore_sm_param;
 extern int mca_coll_hierarch_detection_alg_param;
+extern int mca_coll_hierarch_bcast_alg_param;
+extern int mca_coll_hierarch_segsize_param;
+
+
+#define COLL_HIERARCH_SEG_BCAST_ALG   1
+#define COLL_HIERARCH_SEG1_BCAST_ALG  2
+#define COLL_HIERARCH_SEG2_BCAST_ALG  3
+#define COLL_HIERARCH_SEG3_BCAST_ALG  4
+#define COLL_HIERARCH_BASIC_BCAST_ALG 5
+
+
 
 #define HIER_DEFAULT_NUM_LLEAD 5
 /*
