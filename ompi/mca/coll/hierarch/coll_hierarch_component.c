@@ -46,6 +46,8 @@ int mca_coll_hierarch_verbose_param=0;
 int mca_coll_hierarch_use_rdma_param=0;   
 int mca_coll_hierarch_ignore_sm_param=0;   
 int mca_coll_hierarch_detection_alg_param=2;
+int mca_coll_hierarch_bcast_alg_param=COLL_HIERARCH_BASIC_BCAST_ALG;
+int mca_coll_hierarch_segsize_param=32768;
 
 /*
  * Local function
@@ -122,9 +124,22 @@ static int hierarch_open(void)
     mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
                            "detection_alg",
                            "Used to specify the algorithm for detecting Hierarchy."
-			   "To specify all levels or two levels of hierarchy",
+			   "Choose between all or two levels of hierarchy",
                            false, false, mca_coll_hierarch_detection_alg_param,
                            &mca_coll_hierarch_detection_alg_param);
+
+
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
+                           "bcast_alg",
+                           "Used to specify the algorithm used for bcast operations.",
+                           false, false, mca_coll_hierarch_bcast_alg_param,
+                           &mca_coll_hierarch_bcast_alg_param);
+
+    mca_base_param_reg_int(&mca_coll_hierarch_component.collm_version,
+                           "segment_size",
+                           "Used to specify the segment size for segmented algorithms.",
+                           false, false, mca_coll_hierarch_segsize_param,
+                           &mca_coll_hierarch_segsize_param);
 
     return OMPI_SUCCESS;
 }
