@@ -21,7 +21,7 @@
 #include <string.h>
 
 #define VT_MSG_PFIX  "VampirTrace"
-#define VT_MSG_SIZE  4096
+#define VT_MSG_SIZE  1024
 
 static int vt_pid = -1;
 
@@ -35,9 +35,10 @@ static void vt_print_msg(const char* fmt, va_list az)
 {
   char buffer[VT_MSG_SIZE];
 
-  if (vt_pid != -1) sprintf(buffer, "[%d]", vt_pid); else buffer[0]=0;
-  sprintf(buffer + strlen(buffer), "%s: ", VT_MSG_PFIX);
-  vsprintf(buffer + strlen(buffer), fmt, az);
+  if (vt_pid != -1) snprintf(buffer, sizeof(buffer)-1,
+			     "[%d]", vt_pid); else buffer[0]=0;
+  snprintf(buffer + strlen(buffer), sizeof(buffer)-1, "%s: ", VT_MSG_PFIX);
+  vsnprintf(buffer + strlen(buffer), sizeof(buffer)-1, fmt, az);
   VT_SUSPEND_IO_TRACING();
   fprintf(stderr, "%s\n", buffer);
   fflush(NULL);
@@ -48,7 +49,7 @@ static void vt_print_msg(const char* fmt, va_list az)
 void vt_error_impl(const char* f, int l)
 {
   char buffer[VT_MSG_SIZE];
-  sprintf(buffer, "%s [%s:%d]", VT_MSG_PFIX, f, l);
+  snprintf(buffer, sizeof(buffer)-1, "%s [%s:%d]", VT_MSG_PFIX, f, l);
 
   VT_SUSPEND_IO_TRACING();
   perror(buffer);
@@ -62,6 +63,7 @@ void vt_error_msg(const char* fmt, ...)
 
   va_start(ap, fmt);
   vt_print_msg(fmt, ap);
+  va_end(ap);
   exit(EXIT_FAILURE);
 }
 
@@ -71,6 +73,7 @@ void vt_warning(const char* fmt, ...)
 
   va_start(ap, fmt);
   vt_print_msg(fmt, ap);
+  va_end(ap);
   return;
 }
 
@@ -82,6 +85,7 @@ void vt_cntl_msg(const char* fmt, ...)
     {
       va_start(ap, fmt);
       vt_print_msg(fmt, ap);
+      va_end(ap);
       return;
     }
 }
@@ -93,9 +97,11 @@ inline void vt_debug_msg(int level, const char* fmt, ...)
   if( level <= VT_DEBUG ) {
     va_start(ap, fmt);
     vt_print_msg(fmt, ap);
+    va_end(ap);
   }
 #else
   va_start(ap, fmt); /* only for avoiding a compiler warning */
+  va_end(ap);
 #endif
 }
 
