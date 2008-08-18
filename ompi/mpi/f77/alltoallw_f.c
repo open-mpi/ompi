@@ -106,4 +106,6 @@ void mpi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
+    free(c_sendtypes);
+    free(c_recvtypes);
 }

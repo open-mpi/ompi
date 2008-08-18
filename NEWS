@@ -29,6 +29,8 @@ version 1.0.
 1.2.7
 -----
 
+- Fixed a memory leak in MPI_Alltoallw when called from Fortran.
+  Thanks to Dave Grote for the bugreport.  See ticket #1457.
 - Only link in libutil when it is needed/desired.  Thanks to
   Brian Barret for diagnosing and fixing the problem.  See ticket #1455.
 - Update some QLogic HCA vendor IDs.  See ticket #1453.
