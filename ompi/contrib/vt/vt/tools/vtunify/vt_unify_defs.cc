@@ -1241,6 +1241,10 @@ Definitions::createGlobal( const std::vector<DefRec_Base_struct*> *
 
 	    break;
 	 }
+         default: // DEF_REC_TYPE__Unknown
+	 {
+	    assert( 0 );
+	 }
       }
    }
 
@@ -1482,6 +1486,10 @@ Definitions::writeGlobal( const std::vector<DefRec_Base_struct*> *
 	       p_entry->unit.c_str() );
 
 	    break;
+	 }
+         default: // DEF_REC_TYPE__Unknown
+	 {
+	    assert( 0 );
 	 }
       }
    }
