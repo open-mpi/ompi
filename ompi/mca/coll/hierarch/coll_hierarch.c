@@ -376,7 +376,7 @@ int mca_coll_hierarch_get_all_lleaders ( int rank, mca_coll_hierarch_module_t *h
 	llead->my_lleader = MPI_UNDEFINED;
     }
     else {
-	llead->am_lleader = 0;
+	llead->am_lleader = MPI_UNDEFINED;
 	for ( i=0; i< hierarch_module->hier_num_lleaders; i++ ) {
 	    if ( hierarch_module->hier_llr[i] == mycolor ) {
 		llead->my_lleader = cntarr[i]-1;
@@ -510,14 +510,14 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
 	rc = ompi_comm_group ( llcomm, &llgroup);
 	if ( OMPI_SUCCESS != rc ) {
 	    return NULL;
-	}
-	
-	rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
-	if ( OMPI_SUCCESS != rc ) {
-	    return NULL;
-	}
-	/* ompi_group_free (&llgroup) */
-	/* ompi_group_free (&group); */
+        }	
+
+        rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
+        if ( OMPI_SUCCESS != rc ) {
+            return NULL;
+        }
+        /*ompi_group_free (&llgroup);
+	  ompi_group_free (&group); */
     }
      
     return llcomm;
