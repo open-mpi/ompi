@@ -47,7 +47,7 @@ static char* replace_vars(char *v) {
       while ( *end && (isalnum(*end) || *end == '_')) end++;
     }
     /* determine name of variable */
-    vname = (char*)malloc(end-start);
+    vname = (char*)malloc((end-start)+1);
     strncpy(vname, start, end-start);
     vname[end-start] = '\0';
 
@@ -56,7 +56,7 @@ static char* replace_vars(char *v) {
 
     /* put together string with variable replaced by value */
     /* -- allocate enough space and copy stuff before variable part */
-    res = (char*)malloc(strlen(v)+strlen(vval));
+    res = (char*)malloc(strlen(v)+strlen(vval)+1);
     plen = (start - v) - 1 - extra;
     if (plen) strncpy(res, v, plen);
     res[plen] = '\0';
@@ -64,6 +64,8 @@ static char* replace_vars(char *v) {
     strcat(res, vval);
     /* -- add stuff after variable */
     if ( *end ) strcat(res, end + extra);
+
+    free(vname);
     return res;
   }
 }
@@ -72,7 +74,7 @@ static int parse_bool(char *str) {
   static char strbuf[128];
   char* ptr = strbuf;
 
-  strncpy(strbuf, str, 128);
+  strncpy(strbuf, str, sizeof(strbuf)-1);
   while ( *ptr )
     {
       *ptr = tolower(*ptr);
@@ -498,22 +500,25 @@ char* vt_env_metrics_spec()
 {
   char  msg[128];
   char* spec = getenv("VT_METRICS_SPEC");
+  int len;
 
-  if ( spec != NULL ) { /* use specified file */
-    sprintf(msg, "VT_METRICS_SPEC=%s", spec);
+  if ( spec != NULL && strlen(spec) > 0 ) { /* use specified file */
+    snprintf(msg, sizeof(msg)-1, "VT_METRICS_SPEC=%s", spec);
   } else if (access(METRICS_SPEC, R_OK) == 0) {
     /* use file in current directory */
-    spec = (char*)calloc(strlen(METRICS_SPEC)+3, 1);
-    sprintf(spec, "./%s", METRICS_SPEC);
-    sprintf(msg, "[CURDIR] VT_METRICS_SPEC=%s", spec);
+    len = strlen(METRICS_SPEC)+3;
+    spec = (char*)calloc(len, sizeof(char));
+    snprintf(spec, len-1, "./%s", METRICS_SPEC);
+    snprintf(msg, sizeof(msg)-1, "[CURDIR] VT_METRICS_SPEC=%s", spec);
   } else {
 #ifdef DATADIR
     /* default to installation file */
-    spec = (char*)calloc(strlen(DATADIR)+strlen(METRICS_SPEC)+2, 1);
-    sprintf(spec, "%s/%s", DATADIR, METRICS_SPEC);
-    sprintf(msg, "[DATADIR] VT_METRICS_SPEC=%s", spec);
+    len = strlen(DATADIR)+strlen(METRICS_SPEC)+2;
+    spec = (char*)calloc(len, sizeof(char));
+    snprintf(spec, len-1, "%s/%s", DATADIR, METRICS_SPEC);
+    snprintf(msg, sizeof(msg)-1, "[DATADIR] VT_METRICS_SPEC=%s", spec);
 #else
-    sprintf(msg, "VT_METRICS_SPEC not set");
+    snprintf(msg, sizeof(msg)-1, "VT_METRICS_SPEC not set");
 #endif
   }
   vt_cntl_msg(msg);
