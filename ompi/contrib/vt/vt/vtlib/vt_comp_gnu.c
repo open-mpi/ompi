@@ -127,10 +127,10 @@ static void get_symtab_bfd(void) {
      int pid = getpid();
      char exe[256];
 
-     sprintf(exe, "/proc/%d/exe", pid);
+     snprintf(exe, sizeof(exe)-1, "/proc/%d/exe", pid);
      BfdImage = bfd_openr(exe, 0 );
      if ( ! BfdImage ) {
-       sprintf(exe, "/proc/%d/object/a.out", pid);
+       snprintf(exe, sizeof(exe)-1, "/proc/%d/object/a.out", pid);
        BfdImage = bfd_openr(exe, 0 );
       
        if ( ! BfdImage ) {
@@ -215,18 +215,17 @@ static void get_symtab_bfd(void) {
  * Get symbol table by parsing nm-file
  */
 
-static void get_symtab_nm(void)
+static void get_symtab_nm(const char* nmfilename)
 {
-  char* nmfilename = vt_env_nmfile();
   FILE* nmfile;
-  char  line[4096];
+  char  line[1024];
 
   /* open nm-file */
   if( !(nmfile = fopen(nmfilename, "r")) )
     vt_error_msg("Could not open symbol list file %s", nmfilename);
 
   /* read lines */
-  while( fgets( line, 4096, nmfile ) )
+  while( fgets( line, sizeof(line)-1, nmfile ) )
   {
     char* col;
     char  delim[2] = " ";
@@ -293,10 +292,12 @@ static void get_symtab_nm(void)
  */
 static void get_symtab(void)
 {
+  char* nmfilename = vt_env_nmfile();
+   
   /* read nm-output file, if given? */
-  if( vt_env_nmfile() )
+  if( nmfilename )
   {
-    get_symtab_nm();
+    get_symtab_nm( nmfilename );
   }
   /* read application's executable by using BFD */
   else
@@ -394,7 +395,6 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
  */
 
 void __cyg_profile_func_exit(void* func, void* callsite) {
-  HashNode *hn;
   void * funcptr = func;
   uint64_t time;
 
@@ -406,7 +406,7 @@ void __cyg_profile_func_exit(void* func, void* callsite) {
   funcptr = *( void ** )func;
 #endif
 
-  if ( (hn = hash_get((long)funcptr)) ) {
+  if ( hash_get((long)funcptr) ) {
     vt_exit(&time);
   }
 
