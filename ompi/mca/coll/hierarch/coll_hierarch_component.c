@@ -173,9 +173,11 @@ mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
         current = (struct mca_coll_hierarch_llead_t *)opal_pointer_array_get_item ( 
                   &(hierarch_module->hier_llead), i ) ;
         if ( current->lleaders != NULL ) {
-            ompi_comm_free ( &(current->llcomm));
             free ( current->lleaders );
         }
+	if ( MPI_COMM_NULL != current->llcomm ){
+	    ompi_comm_free ( &(current->llcomm));
+	}
         free ( current );
     }
     opal_pointer_array_remove_all ( &(hierarch_module->hier_llead));

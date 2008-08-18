@@ -168,8 +168,9 @@ static int mca_coll_hierarch_bcast_intra_seg (void *buff,
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
 
-    ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &typeext, &ub);
+    ompi_ddt_type_size  ( datatype, &typesize);
+    ompi_ddt_get_extent ( datatype, &ub, &typeext);
+
 
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {
@@ -193,13 +194,14 @@ static int mca_coll_hierarch_bcast_intra_seg (void *buff,
 
     realsegsize = segcount*typeext;
     remaining_count = segcount;
+
     
     for (segindex = 0; segindex < num_segments; segindex++) {
 	/* determine how many elements are being sent in this round */
 	if( segindex == (num_segments - 1) ) {
 	    remaining_count = count - segindex*segcount;
 	}
-	
+		
 	/* Bcast on the upper level among the local leaders */
 	if ( MPI_UNDEFINED != llroot ) {
 	    ret = llcomm->c_coll.coll_bcast(tmpbuf, remaining_count, 
@@ -246,7 +248,8 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
     int i, realsegsize=0, remaining_count=0;
     int num_segments=0, segcount=0, segindex=0;
     char* tmpbuf = (char *) buff;
-    ompi_request_t **req=NULL;
+    ompi_request_t **sreq=NULL;
+    ompi_request_t *rreq=MPI_REQUEST_NULL;
 
     rank   = ompi_comm_rank ( comm );
     lcomm  = hierarch_module->hier_lcomm;
@@ -266,7 +269,7 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
     ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &typeext, &ub);
+    ompi_ddt_get_extent ( datatype, &ub, &typeext);
     
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {
@@ -289,29 +292,25 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
     }
 
     realsegsize = segcount*typeext;
-    tmpbuf = (char *) buff;
     remaining_count = segcount;
     
     if ( MPI_COMM_NULL != llcomm ) {
-	llrank = ompi_comm_rank ( llcomm );
-	llsize = ompi_comm_size (llcomm);
-	req = (ompi_request_t **)malloc ( (llsize) * sizeof(ompi_request_t *));
-	if ( NULL == req ) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	for(i=0; i<llsize; i++) {
-	    req[i] = MPI_REQUEST_NULL;
-	}
+        llrank = ompi_comm_rank ( llcomm );
+        llsize = ompi_comm_size ( llcomm);
+        sreq = hierarch_module->hier_reqs;
+        for(i=0; i<llsize; i++) {
+            sreq[i] = MPI_REQUEST_NULL;
+        }
     }
 
     /* Broadcasting the first segment in the upper level*/
     if ( MPI_UNDEFINED != llroot ) {
-	ret = llcomm->c_coll.coll_bcast(tmpbuf, remaining_count, datatype, 
-					llroot, llcomm, 
-					llcomm->c_coll.coll_bcast_module );
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
-	}
+        ret = llcomm->c_coll.coll_bcast(tmpbuf, remaining_count, datatype, 
+                                        llroot, llcomm, 
+                                        llcomm->c_coll.coll_bcast_module );
+        if ( OMPI_SUCCESS != ret ) {
+            return ret;
+        }
     }
     
     
@@ -327,15 +326,15 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
 	/* Broadcasting the next segment in the upper level using non blocking 
 	   operations*/
 	if ( MPI_COMM_NULL != llcomm ) {
-	    if(llrank == llroot) {
-		for(i = 0; i < llsize; i++) {
+	    if( llrank == llroot) {
+		for( i = 0; i < llsize; i++) {
 		    if( i != llroot) {
 			ret = MCA_PML_CALL(isend(tmpbuf, remaining_count, datatype, i, 
 					   MCA_COLL_BASE_TAG_BCAST,
 					   MCA_PML_BASE_SEND_STANDARD,
-					   llcomm, &(req[i])));
+					   llcomm, &(sreq[i])));
 			if ( OMPI_SUCCESS != ret ) {
-			    goto exit;
+			    return ret;
 			}
 			
 		    }
@@ -344,9 +343,9 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
 	    else {
 		ret = MCA_PML_CALL(irecv(tmpbuf, remaining_count, datatype, llroot,  
 					 MCA_COLL_BASE_TAG_BCAST,
-					 llcomm, &(req[i+1])));
+					 llcomm, &rreq ));
 		if ( OMPI_SUCCESS != ret ) {
-		    goto exit;
+		    return ret;
 		}
 
 	    }
@@ -360,16 +359,26 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
 					   datatype, lroot, lcomm, 
 					   lcomm->c_coll.coll_bcast_module);
 	    if ( OMPI_SUCCESS != ret ) {
-		goto exit;
+		return ret;
 	    }
 	}
 	
-	ret = ompi_request_wait_all(llsize, req, MPI_STATUSES_IGNORE);
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
+	if ( MPI_COMM_NULL != llcomm ) {
+	    if ( llrank == llroot ) {
+		ret = ompi_request_wait_all( llsize, sreq, MPI_STATUSES_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    return ret;
+		}
+	    }
+	    else {
+		ret = ompi_request_wait_all(1, &rreq, MPI_STATUS_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    return ret;
+		}
+	    }
 	}
     }
-    
+
     /* Bcasting the last segment among the lower level processes using blocking operations
      * once the local leaders got the data from the root, they can distribute
      * it to the processes in their local, low-level communicator.
@@ -380,10 +389,6 @@ static int mca_coll_hierarch_bcast_intra_seg1 (void *buff,
 				       lcomm->c_coll.coll_bcast_module);
     }
 
-exit:
-    if ( NULL != req ) {
-	free ( req );
-    }
     
     return ret;
 }
@@ -400,14 +405,15 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
     struct ompi_communicator_t *lcomm=NULL;
     mca_coll_hierarch_module_t *hierarch_module = (mca_coll_hierarch_module_t *) module;
     int lroot=MPI_UNDEFINED, llroot=MPI_UNDEFINED;
-    int llsize=0, rank=0, ret=OMPI_SUCCESS;
+    int rank=0, ret=OMPI_SUCCESS;
     int lsize=0, lrank=0;
     MPI_Aint ub=0, typeext=0;
     size_t typesize=0;
     int i, realsegsize=0, remaining_count=0;
     int num_segments=0, segcount=0, segindex=0;
     char* tmpbuf = (char *) buff;
-    ompi_request_t **req=NULL;
+    ompi_request_t **sreq=NULL;
+    ompi_request_t *rreq=MPI_REQUEST_NULL;
 
     rank   = ompi_comm_rank ( comm );
     lcomm  = hierarch_module->hier_lcomm;
@@ -427,7 +433,7 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
     ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &typeext, &ub);
+    ompi_ddt_get_extent ( datatype, &ub, &typeext);
     
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {
@@ -450,17 +456,12 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
     }
 
     realsegsize = segcount*typeext;
-    tmpbuf = (char *) buff;
     remaining_count = segcount;
     
     lsize = ompi_comm_size (lcomm);
-    req = (ompi_request_t **)malloc ( (lsize) * sizeof(ompi_request_t *));
-    if ( NULL == req ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
+    sreq = hierarch_module->hier_reqs;
     for(i=0; i<lsize; i++) {
-	req[i] = MPI_REQUEST_NULL;
+	sreq[i] = MPI_REQUEST_NULL;
     }
     
     
@@ -469,7 +470,7 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
 					llroot, llcomm, 
 					llcomm->c_coll.coll_bcast_module);
 	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
+	    return ret;
 	}
     }
     
@@ -488,9 +489,9 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
 			ret = MCA_PML_CALL(isend(tmpbuf, remaining_count, datatype, i, 
 						 MCA_COLL_BASE_TAG_BCAST,
 						 MCA_PML_BASE_SEND_STANDARD,
-						 lcomm, &(req[i])));
+						 lcomm, &(sreq[i])));
 			if ( OMPI_SUCCESS != ret ) {
-			    goto exit;
+			    return ret;
 			}
 
 		    }
@@ -498,9 +499,9 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
 	    }
 	    else {
 		ret = MCA_PML_CALL(irecv(tmpbuf, remaining_count, datatype, lroot,
-					 MCA_COLL_BASE_TAG_BCAST, lcomm, &(req[i+1])));
+					 MCA_COLL_BASE_TAG_BCAST, lcomm, &rreq));
 		if ( OMPI_SUCCESS != ret ) {
-		    goto exit;
+		    return ret;
 		}
 	    }
 	}
@@ -516,15 +517,25 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
 					    llroot, llcomm, 
 					    llcomm->c_coll.coll_bcast_module);
 	    if ( OMPI_SUCCESS != ret ) {
-		goto exit;
+		return ret;
 	    }
 	}
 
-	ret = ompi_request_wait_all ( lsize, req, MPI_STATUSES_IGNORE);
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
+	if ( MPI_COMM_NULL != lcomm ) {
+	    if ( lrank == lroot ) {
+		ret = ompi_request_wait_all ( lsize, sreq, MPI_STATUSES_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    return ret;
+		}
+	    }
+	    else {
+		ret = ompi_request_wait_all ( 1, &rreq, MPI_STATUS_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    return ret;
+		}
+	    }
 	}
-	
+
     }
     
     /* Bcasting the last segment among the lower level processes
@@ -536,12 +547,6 @@ static int mca_coll_hierarch_bcast_intra_seg2 (void *buff,
 				       lroot, lcomm, 
 				       lcomm->c_coll.coll_bcast_module);
     }
-
-exit:
-    if ( NULL != req ) {
-	free ( req );
-    }
-
     
     return ret;
 }
@@ -558,14 +563,15 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
     struct ompi_communicator_t *lcomm=NULL;
     mca_coll_hierarch_module_t *hierarch_module = (mca_coll_hierarch_module_t *) module;
     int lroot=MPI_UNDEFINED, llroot=MPI_UNDEFINED;
-    int llrank=0, llsize=0, rank=0, ret=OMPI_SUCCESS;
-    int lsize=0, lrank=0;
+    int llrank=MPI_UNDEFINED, llsize=0, rank=0, ret=OMPI_SUCCESS;
+    int lsize=0, lrank=MPI_UNDEFINED;
     MPI_Aint ub=0, typeext=0;
     size_t typesize=0;
     int i, realsegsize=0, remaining_count=0;
     int num_segments=0, segcount=0, segindex=0;
     char* tmpbuf = (char *) buff;
-    ompi_request_t **req=NULL, **req1=NULL;
+    ompi_request_t **sreq=NULL, **sreq1=NULL;
+    ompi_request_t *rreq=MPI_REQUEST_NULL, *rreq1=MPI_REQUEST_NULL;
 
     rank   = ompi_comm_rank ( comm );
     lcomm  = hierarch_module->hier_lcomm;
@@ -585,7 +591,7 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
     llcomm = mca_coll_hierarch_get_llcomm ( root, hierarch_module, &llroot, &lroot);
 
     ompi_ddt_type_size ( datatype, &typesize);
-    ompi_ddt_get_extent ( datatype, &typeext, &ub);
+    ompi_ddt_get_extent ( datatype, &ub, &typeext);
 
     /* Determine number of segments and number of elements per segment */
     if ((typesize > 0) && (segsize % typesize != 0)) {
@@ -602,28 +608,27 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
 	if (num_segments == 1) segcount = count;
     }
     realsegsize = segcount*typeext;
-    tmpbuf = (char *) buff;
     remaining_count = segcount;
 
-    lsize = ompi_comm_size (lcomm);
-    req1 = (ompi_request_t **)malloc ( lsize * sizeof(ompi_request_t *));
-    if ( NULL == req1 ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for(i=0; i<lsize; i++) {
-	req1[i] = MPI_REQUEST_NULL;
+    if ( MPI_COMM_NULL != lcomm ) {
+        lsize = ompi_comm_size ( lcomm );
+        lrank = ompi_comm_rank ( lcomm );	
+        sreq1 = (ompi_request_t **)malloc ( lsize * sizeof(ompi_request_t *));
+        if ( NULL == sreq1 ) {
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        for(i=0; i<lsize; i++) {
+	    sreq1[i] = MPI_REQUEST_NULL;
+        }
     }
 
     if ( MPI_COMM_NULL != llcomm ) {
-	llsize = ompi_comm_size (llcomm);
-	llrank = ompi_comm_rank ( llcomm );
+        llsize = ompi_comm_size (llcomm);
+        llrank = ompi_comm_rank ( llcomm );
     
-	req  = (ompi_request_t **)malloc ( llsize * sizeof(ompi_request_t *));
-	if ( NULL == req ) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+        sreq  = hierarch_module->hier_reqs;
 	for(i=0; i<llsize; i++) {
-	    req1[i] = MPI_REQUEST_NULL;
+	    sreq[i] = MPI_REQUEST_NULL;
 	}
     }
 
@@ -653,35 +658,35 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
 			ret = MCA_PML_CALL(isend(tmpbuf, remaining_count, datatype, i,
 						 MCA_COLL_BASE_TAG_BCAST, 
 						 MCA_PML_BASE_SEND_STANDARD,
-						 llcomm, (req+i) ));
+						 llcomm, (sreq+i) ));
 			if ( OMPI_SUCCESS != ret ) {
 			    goto exit;
 			}
 		    }
 		}
 	    }
-	    else {
-		ret = MCA_PML_CALL(irecv(tmpbuf, remaining_count, datatype, llroot,
-					 MCA_COLL_BASE_TAG_BCAST, 
-					 llcomm, (req) ));
-		if ( OMPI_SUCCESS != ret ) {
-		    goto exit;
-		}
-	    }
-	}
+            else {
+                ret = MCA_PML_CALL(irecv(tmpbuf, remaining_count, datatype, llroot,
+                                         MCA_COLL_BASE_TAG_BCAST, 
+                                         llcomm, &rreq ));
+                if ( OMPI_SUCCESS != ret ) {
+                    goto exit;
+                }
+            }
+        }
 	
 	/* broadcasting the before segment among the lower level processes
 	 * once the local leaders got the data from the root, they can distribute
 	 * it to the processes in their local, low-level communicator.
 	 */
 	if ( MPI_COMM_NULL != lcomm ) {
-	    if(lrank == lroot) {
-		for(i = 0; i < lsize; i++) {
+	    if( lrank == lroot) {
+		for( i = 0; i < lsize; i++) {
 		    if( i != lroot) {
 			ret = MCA_PML_CALL(isend(tmpbuf-realsegsize, segcount, datatype, i,
 						 MCA_COLL_BASE_TAG_BCAST,
 						 MCA_PML_BASE_SEND_STANDARD,
-						 lcomm, (req1+i) ));
+						 lcomm, (sreq1+i) ));
 			if ( OMPI_SUCCESS != ret ) {
 			    goto exit;
 			}
@@ -690,7 +695,7 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
 	    }
 	    else {
 		ret = MCA_PML_CALL(irecv(tmpbuf-realsegsize, segcount, datatype, lroot, 
-					 MCA_COLL_BASE_TAG_BCAST , lcomm, req1 ));
+					 MCA_COLL_BASE_TAG_BCAST , lcomm, &rreq1 ));
 		if ( OMPI_SUCCESS != ret ) {
 		    goto exit;
 		}
@@ -698,17 +703,36 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
 	}
 	
 	/* Wait for the upper level bcast to complete*/
-	ret = ompi_request_wait_all(llsize, req, MPI_STATUSES_IGNORE);
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
+	if ( MPI_COMM_NULL != llcomm ) {
+	    if ( llrank == llroot ) {
+		ret = ompi_request_wait_all(llsize, sreq, MPI_STATUSES_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    goto exit;
+		}
+	    }
+	    else {
+		ret = ompi_request_wait_all ( 1, &rreq, MPI_STATUS_IGNORE );
+		if ( OMPI_SUCCESS != ret ) {
+		    goto exit;
+		}
+	    }
 	}
 	
 	/*Wait for the lower level bcast to complete */
-	ret = ompi_request_wait_all(lsize, req1, MPI_STATUSES_IGNORE);
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
-	}
-	
+	if ( MPI_COMM_NULL != lcomm ) {
+	    if ( lrank == lroot ) {
+		ret = ompi_request_wait_all(lsize, sreq1, MPI_STATUSES_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    goto exit;
+		}
+	    }
+	    else {
+		ret = ompi_request_wait_all( 1, &rreq1, MPI_STATUS_IGNORE);
+		if ( OMPI_SUCCESS != ret ) {
+		    goto exit;
+		}
+	    }
+	}	
     }
     
     /*Bcasting the last segment among the lower level processes
@@ -716,20 +740,14 @@ static int mca_coll_hierarch_bcast_intra_seg3 (void *buff,
      * it to the processes in their local, low-level communicator.
      */
     if ( MPI_COMM_NULL != lcomm ) {
-	ret = lcomm->c_coll.coll_bcast(tmpbuf, remaining_count, datatype,  
-				       lroot, lcomm, 
-				       lcomm->c_coll.coll_bcast_module);
-	if ( OMPI_SUCCESS != ret ) {
-	    goto exit;
-	}
+        ret = lcomm->c_coll.coll_bcast(tmpbuf, remaining_count, datatype,  
+                                       lroot, lcomm, 
+                                       lcomm->c_coll.coll_bcast_module);
     }
     
 exit:
-    if ( NULL != req ) {
-	free ( req );
-    }
-    if ( NULL != req1 ) {
-	free ( req1 );
+    if ( NULL != sreq1 ) {
+	free ( sreq1 );
     }
 
     return ret;
