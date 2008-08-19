@@ -588,9 +588,11 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
         }
 
         /* When not in debug mode and --debug-daemons was not passed,
-         * tie stdout/stderr to dev null so we don't see messages from orted */
+         * tie stdout/stderr to dev null so we don't see messages from orted
+         * EXCEPT if the user has requested that we leave sessions attached
+         */
         if (0 >= opal_output_get_verbosity(orte_plm_globals.output) &&
-            !orte_debug_daemons_flag) {
+            !orte_debug_daemons_flag && !orte_leave_session_attached) {
             if (fd >= 0) {
                 if (fd != 1) {
                     dup2(fd,1);
