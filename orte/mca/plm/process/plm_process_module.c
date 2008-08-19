@@ -461,7 +461,8 @@ int orte_plm_process_launch(orte_job_t *jdata)
     orte_app_context_t **apps;
     orte_node_t **nodes;
     orte_std_cntr_t nnode;
-    
+    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+
     if (mca_plm_process_component.timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
             opal_output(0, "plm_process: could not obtain start time");
@@ -607,6 +608,9 @@ int orte_plm_process_launch(orte_job_t *jdata)
     lib_base = opal_basename(opal_install_dirs.libdir);
     bin_base = opal_basename(opal_install_dirs.bindir);
 
+    /* set the job state to indicate we attempted to launch */
+    job_state = ORTE_JOB_STATE_FAILED_TO_START;
+    
     /*
      * Iterate through each of the nodes
      */
@@ -860,7 +864,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if( failed_launch ) {
-        orte_plm_base_launch_failed(jdata->jobid, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(jdata->jobid, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
     }
 
     return rc;

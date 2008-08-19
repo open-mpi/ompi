@@ -58,6 +58,7 @@ int orted_debug_failure;
 int orted_debug_failure_delay;
 bool orte_homogeneous_nodes = false;
 bool orte_hetero_apps = false;
+bool orte_never_launched = false;
 
 int32_t orte_contiguous_nodes;
 int orte_debug_output = -1;

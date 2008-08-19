@@ -148,7 +148,8 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     bool failed_launch = true;
     mode_t current_umask;
     orte_jobid_t failed_job;
-    
+    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+
     /* default to declaring the daemons as failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
@@ -272,6 +273,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             } 
         }
     }
+    
+    /* set the job state to indicate we attempted to launch */
+    job_state = ORTE_JOB_STATE_FAILED_TO_START;
     
     /* Iterate through each of the nodes and spin
      * up a daemon.
@@ -413,7 +417,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
     }
         
     /* setup a "heartbeat" timer to periodically check on
