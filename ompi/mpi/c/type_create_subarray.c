@@ -43,7 +43,7 @@ int MPI_Type_create_subarray(int ndims,
 
 {
     MPI_Datatype last_type; 
-    int32_t i, step, start_loop, end_loop;
+    int32_t i, step, end_loop;
     MPI_Aint size, displ, extent;
 
     MEMCHECKER(
@@ -88,11 +88,11 @@ int MPI_Type_create_subarray(int ndims,
     }
 
     if( MPI_ORDER_C == order ) {
-        start_loop = i = ndims - 1;
+        i = ndims - 1;
         step = -1;
         end_loop = -1;
     } else {
-        start_loop = i = 0;
+        i = 0;
         step = 1;
         end_loop = ndims;
     }

@@ -339,6 +339,7 @@ static void load_cache(const char *sysfs_mount)
             num_cores[i] = count;
         }
     }
+    free(cores_on_sockets);
 
     /* Now go through and build the map in the other direction:
        (socket,core) => processor_id.  This map simply points to

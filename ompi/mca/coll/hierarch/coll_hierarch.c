@@ -315,6 +315,9 @@ int mca_coll_hierarch_module_enable (mca_coll_base_module_t *module,
     
  exit:
     if ( OMPI_SUCCESS != ret ) {
+        if (NULL != llead) {
+            free(llead);
+        }
         ompi_comm_free ( &lcomm );
 	return OMPI_ERROR;
     }
