@@ -60,3 +60,44 @@ The requested hosts were in this hostfile:
 
 Please verify that you have specified the allocated resources properly in
 the provided hostfile.
+#
+[hostfile:relative-syntax]
+A relative host was specified, but no prior allocation has been made.
+Thus, there is no way to determine the proper host to be used.
+
+hostfile entry: %s
+
+Please see the orte_hosts man page for further information.
+#
+[hostfile:relative-node-not-found]
+A relative host was specified, but was not found. The requested host was
+specified with as:
+
+Index: %d
+Syntax given: %s
+
+Please see the orte_hosts man page for further information.
+#
+[hostfile:relative-node-out-of-bounds]
+A relative host was specified, but the index given is beyond the number
+of hosts in the current allocation:
+
+Index: %d
+#hosts: %d
+
+You could obtain a larger allocation or reduce the relative host index.
+Please see the orte_hosts man page for further information.
+#
+[hostfile:invalid-relative-node-syntax]
+A relative host was improperly specified - the value provided was.
+
+hostfile entry: %s
+
+You may have forgotten to preface a node with 'N' or 'n', or used the 'e' or 'E' to indicate
+empty nodes. Please see the orte_hosts man page for further information.
+#
+[hostfile:not-enough-empty]
+The requested number of empty hosts was not available - the system was short by %d hosts.
+
+Please recheck your allocation - further information is available on the
+orte_hosts man page.
