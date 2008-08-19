@@ -120,6 +120,12 @@ username           { orte_util_hostfile_value.sval = yytext;
 "user_name"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_USERNAME; }
 
+\+n[0-9]+	   { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_RELATIVE; }
+\+[eE][\:][0-9]+   { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_RELATIVE; }
+
+
 [0-9]+             { orte_util_hostfile_value.ival = atol(yytext); 
                      return ORTE_HOSTFILE_INT; }
 %{ /* First detect hosts as standard Strings (but without ".")
