@@ -85,8 +85,14 @@ typedef uint16_t orte_job_state_t;
 #define ORTE_JOB_STATE_ABORTED_BY_SIG       0x0400  /* job was killed by a signal */
 #define ORTE_JOB_STATE_ABORTED_WO_SYNC      0x0800  /* job was aborted because proc exit'd w/o required sync */
 
+/* the job never even attempted to launch due to an error earlier in the
+ * launch procedure
+ */
+#define ORTE_JOB_NEVER_LAUNCHED             0x1000
+
 /* the processes in this job have been ordered to "die", but may not have completed it yet. Don't order it again */
-#define ORTE_JOB_STATE_ABORT_ORDERED        0x8000  
+#define ORTE_JOB_STATE_ABORT_ORDERED        0x8000
+
 
 /**
 * Node State, corresponding to the ORTE_NODE_STATE_* #defines,

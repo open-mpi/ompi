@@ -152,6 +152,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     JobPriority job_priority = JobPriority_Normal;
 
  	orte_jobid_t failed_job; 
+    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
 
  	/* default to declaring the daemon launch failed */ 
  	failed_job = ORTE_PROC_MY_NAME->jobid; 
@@ -364,7 +365,10 @@ GETMAP:
 
     hr = pJob->SetExtendedJobTerm(_bstr_t(L"extended terms"), _bstr_t(L"TermValue"));
   
-    /* Iterate through each of the nodes and spin
+    /* set the job state to indicate we attempted to launch */
+    job_state = ORTE_JOB_STATE_FAILED_TO_START;
+    
+     /* Iterate through each of the nodes and spin
      * up a daemon.
      */
     for (i = 0; i < map->num_nodes; i++) {
@@ -566,7 +570,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
     }
         
     /* check for timing request - get stop time and process if so */

@@ -147,7 +147,8 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     struct timeval launchstart, launchstop;
     int proc_vpid_index;
     orte_jobid_t failed_job;
-    
+    orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+
     /* flag the daemons as failing by default */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
@@ -334,6 +335,9 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         }
     }
 
+    /* set the job state to indicate we attempted to launch */
+    job_state = ORTE_JOB_STATE_FAILED_TO_START;
+    
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
 
@@ -406,7 +410,7 @@ cleanup:
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
     }
     
     return rc;

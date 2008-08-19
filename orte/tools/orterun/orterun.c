@@ -643,6 +643,14 @@ static void job_completed(int trigpipe, short event, void *arg)
     
     exit_state = jdata->state;
 
+    /* if we never launched, just skip this part to avoid
+     * meaningless error messages
+     */
+    if (orte_never_launched) {
+        rc = orte_exit_status;
+        goto DONE;
+    }
+    
     if (ORTE_JOB_STATE_TERMINATED != exit_state) {
         /* abnormal termination of some kind */
         dump_aborted_procs();
