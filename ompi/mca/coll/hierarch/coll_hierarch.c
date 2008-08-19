@@ -502,22 +502,13 @@ struct ompi_communicator_t*  mca_coll_hierarch_get_llcomm (int root,
     *llroot = MPI_UNDEFINED;
 
     if ( MPI_COMM_NULL != llcomm ) {
-	rc = ompi_comm_group ( hierarch_module->hier_comm, &group);
-	if ( OMPI_SUCCESS != rc ) {
-	    return NULL;
-	}
-
-	rc = ompi_comm_group ( llcomm, &llgroup);
-	if ( OMPI_SUCCESS != rc ) {
-	    return NULL;
-        }	
+	group   = hierarch_module->hier_comm->c_local_group;
+	llgroup = llcomm->c_local_group;
 
         rc = ompi_group_translate_ranks ( group, 1, &root, llgroup, llroot);
         if ( OMPI_SUCCESS != rc ) {
             return NULL;
         }
-        /*ompi_group_free (&llgroup);
-	  ompi_group_free (&group); */
     }
      
     return llcomm;
