@@ -48,6 +48,7 @@
 bool orte_timing;
 bool orte_debug_daemons_flag = false;
 bool orte_debug_daemons_file_flag = false;
+bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;

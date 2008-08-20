@@ -76,6 +76,14 @@ int orte_register_params(void)
         orte_debug_daemons_flag = true;
     }
 
+    /* do we want session output left open? */
+    mca_base_param_reg_int_name("orte", "leave_session_attached",
+                                "Whether applications and/or daemons should leave their sessions "
+                                "attached so that any output can be received - this allows X forwarding "
+                                "without all the attendant debugging output",
+                                false, false, (int)false, &value);
+    orte_leave_session_attached = OPAL_INT_TO_BOOL(value);
+    
     /* See comment in orte/tools/orterun/debuggers.c about this MCA
        param (this param is internal) */
     mca_base_param_reg_int_name("orte",
