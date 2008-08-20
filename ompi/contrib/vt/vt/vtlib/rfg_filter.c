@@ -142,7 +142,10 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
 
   orgline = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
   if( orgline == NULL )
+  {
+    fclose( f );
     return 0;
+  }
 
   /* read lines */
 

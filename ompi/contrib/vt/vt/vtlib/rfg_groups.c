@@ -147,7 +147,10 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 
   orgline = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
   if( orgline == NULL )
+  {
+    fclose( f );
     return 0;
+  }
 
   /* read lines */
 
