@@ -17,8 +17,7 @@
 # $HEADER$
 #
 
-opal_config_files = \
-		openmpi-mca-params.conf
+opal_config_files = @OPAL_DEFAULT_MCA_PARAM_CONF@
 
 EXTRA_DIST = $(opal_config_files)
 
