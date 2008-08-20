@@ -1518,13 +1518,12 @@ DEF_FMPI_FUNC( vt_mpi_waitall_f(MPI_Fint* count, MPI_Fint array_of_requests[],
   MPI_Request* l_request = 0;
   MPI_Status* c_status = 0;
 
-  if (*count > 0) {
-    l_request = alloc_request_array(*count);
-    c_status = alloc_status_array(*count);
-    for (i=0; i<*count; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*count);
+  c_status = alloc_status_array(*count);
+  for (i=0; i<*count; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Waitall(*count, l_request, c_status);
   for (i=0; i<*count; i++) {
     array_of_requests[i] = MPI_Request_c2f(l_request[i]);
@@ -1548,12 +1547,11 @@ DEF_FMPI_FUNC( vt_mpi_waitany_f(MPI_Fint* count, MPI_Fint array_of_requests[],
   MPI_Request *l_request = 0;
   MPI_Status c_status;
 
-  if (*count > 0) {
-    l_request = alloc_request_array(*count);
-    for (i=0; i<*count; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*count);
+  for (i=0; i<*count; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Waitany(*count, l_request, index, &c_status);
   if (*ierr == MPI_SUCCESS) {
     if (*index >= 0) {
@@ -1583,13 +1581,12 @@ DEF_FMPI_FUNC( vt_mpi_waitsome_f(MPI_Fint* incount,
   MPI_Request *l_request = 0;
   MPI_Status  *c_status = 0;
 
-  if (*incount > 0) {
-    l_request = alloc_request_array(*incount);
-    c_status = alloc_status_array(*incount);
-    for (i=0; i<*incount; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*incount);
+  c_status = alloc_status_array(*incount);
+  for (i=0; i<*incount; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Waitsome(*incount, l_request, outcount, array_of_indices,
 		       c_status); 
   if (*ierr == MPI_SUCCESS) {
@@ -1644,12 +1641,11 @@ DEF_FMPI_FUNC( vt_mpi_testany_f(MPI_Fint* count, MPI_Fint array_of_requests[],
   MPI_Request *l_request = 0;
   MPI_Status c_status;
 
-  if (*count > 0) {
-    l_request = alloc_request_array(*count);
-    for (i=0; i<*count; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*count);
+  for (i=0; i<*count; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Testany(*count, l_request, index, flag, &c_status);
   if (*ierr == MPI_SUCCESS) {
     if (*flag && *index >= 0) {
@@ -1677,13 +1673,12 @@ DEF_FMPI_FUNC( vt_mpi_testall_f(MPI_Fint* count, MPI_Fint array_of_requests[],
   MPI_Request *l_request = 0;
   MPI_Status *c_status = 0;
 
-  if (*count > 0) {
-    l_request = alloc_request_array(*count);
-    c_status = alloc_status_array(*count);
-    for (i=0; i<*count; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*count);
+  c_status = alloc_status_array(*count);
+  for (i=0; i<*count; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Testall(*count, l_request, flag, c_status);
   for (i=0; i<*count; i++) {
     array_of_requests[i] = MPI_Request_c2f(l_request[i]);
@@ -1710,13 +1705,12 @@ DEF_FMPI_FUNC( vt_mpi_testsome_f(MPI_Fint* incount,
   MPI_Request *l_request = 0;
   MPI_Status  *c_status = 0;
 
-  if (*incount > 0) {
-    l_request = alloc_request_array(*incount);
-    c_status = alloc_status_array(*incount);
-    for (i=0; i<*incount; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*incount);
+  c_status = alloc_status_array(*incount);
+  for (i=0; i<*incount; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Testsome(*incount, l_request, outcount, array_of_indices,
 			 c_status); 
   if (*ierr == MPI_SUCCESS) {
@@ -1843,12 +1837,11 @@ DEF_FMPI_FUNC( vt_mpi_startall_f(MPI_Fint* count, MPI_Fint array_of_requests[],
   int i;
   MPI_Request *l_request = 0;
 
-  if (*count > 0) {
-    l_request = alloc_request_array(*count);
-    for (i=0; i<*count; i++) {
-      l_request[i] = MPI_Request_f2c(array_of_requests[i]);
-    }
+  l_request = alloc_request_array(*count);
+  for (i=0; i<*count; i++) {
+    l_request[i] = MPI_Request_f2c(array_of_requests[i]);
   }
+
   *ierr = MPI_Startall(*count, l_request);
   if (*ierr == MPI_SUCCESS) {
     for (i=0; i<*count; i++) {

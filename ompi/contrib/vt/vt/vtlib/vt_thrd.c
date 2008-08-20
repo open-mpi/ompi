@@ -39,7 +39,6 @@ static uint32_t tnum = 0;
 
 VTThrd* VTThrd_create(uint32_t tid)
 {
-  char tmp[PATH_MAX];
   VTThrd *thread;
 #if (defined (VT_METR))  
   int num_metrics = vt_metric_num();
@@ -48,19 +47,18 @@ VTThrd* VTThrd_create(uint32_t tid)
   if (tnum > (uint32_t)vt_env_max_threads())
     vt_error_msg("FATAL: Cannot create more than %d threads", vt_env_max_threads());
 
-  thread = (VTThrd*) malloc(sizeof(VTThrd));
+  thread = (VTThrd*)malloc(sizeof(VTThrd));
   if ( thread == NULL )
     vt_error();
 
-  /* basename includes local path but neither thread identifier nor suffix */
-  sprintf(tmp, "%s/%s.%lx.%u", vt_env_ldir(), vt_env_fprefix(),
-                              vt_pform_node_id(), getpid());
-
-  thread->tmp_name = (char*)calloc(strlen(tmp) + 1, sizeof(char*));
+  thread->tmp_name = (char*)calloc(PATH_MAX + 1, sizeof(char));
   if ( thread->tmp_name == NULL )
     vt_error();
 
-  strcpy(thread->tmp_name, tmp);
+  /* basename includes local path but neither thread identifier nor suffix */
+  snprintf(thread->tmp_name, PATH_MAX, "%s/%s.%lx.%u",
+	   vt_env_ldir(), vt_env_fprefix(),
+	   vt_pform_node_id(), getpid());
 
   thread->stack_level = 0;
 
@@ -146,19 +144,24 @@ void VTThrd_close(VTThrd* thrd)
 
 void VTThrd_delete(VTThrd* thrd, uint32_t tid)
 {
-  if (thrd && thrd->gen)
+  if (!thrd) return;
+
+  if (thrd->gen)
     VTGen_delete(thrd->gen);
 
 #if (defined (VT_METR))
-  if ( vt_metric_num() > 0 )
+  if (thrd->metv && vt_metric_num() > 0 )
     vt_metric_free(thrd->metv);
 #endif
   
 #if (defined (RFG))
-  RFG_Regions_free( thrd->rfg_regions );
+  if (thrd->rfg_regions)
+    RFG_Regions_free( thrd->rfg_regions );
 #endif
 
-  free(thrd->tmp_name);
+  if (thrd->tmp_name)
+    free(thrd->tmp_name);
+
   free(thrd);
 
   /* decrement the thread object counter */
