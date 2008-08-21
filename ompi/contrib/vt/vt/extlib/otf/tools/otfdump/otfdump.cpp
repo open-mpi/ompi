@@ -138,7 +138,7 @@ int main ( int argc, const char** argv ) {
 
 		} else if ( (0 == strcmp( "--procs", argv[i] )) && ( i+1 < argc ) ) {
 
-			while( i < argc && argv[i+1][0] >= '0' && argv[i+1][0] <= '9' ) {
+			while( i+1 < argc && argv[i+1][0] >= '0' && argv[i+1][0] <= '9' ) {
 
 				enabledRecords.push_back( atol(argv[i+1] ) );
 
@@ -147,15 +147,26 @@ int main ( int argc, const char** argv ) {
 			
 		} else if ( (0 == strcmp( "--records", argv[i] )) && ( i+1 < argc ) ) {
 
-			for( uint32_t a= 0; a < OTF_NRECORDS; ++a ) fha.records[a]= false;
+			bool error= false;
+			long a;
+
+			for( a= 0; a < OTF_NRECORDS; ++a ) fha.records[a]= false;
 
 			while( i+1 < argc && argv[i+1][0] >= '0' && argv[i+1][0] <= '9' ) {
 
-				fha.records[atol(argv[i+1])]= true;
-
-				++i;
+				a= atol(argv[i+1]);
+				if ( a >= 0 && a < OTF_NRECORDS ) {
+					fha.records[a]= true;
+					i++;
+				} else {
+					fprintf( stderr, "ERROR: Unknown record-type-number '%li'.\n", a );
+					error= true;
+					break;
+				}
 			}
-			
+
+			if ( error ) exit(1);
+
 		} else {
 
 			if ( '-' != argv[i][0] ) {
@@ -164,7 +175,7 @@ int main ( int argc, const char** argv ) {
 
 			} else {
 
-				fprintf( stderr, "ERROR: Unknown argument.\n" );
+				fprintf( stderr, "ERROR: Unknown argument '%s'.\n", argv[i] );
 				exit(1);
 			}
 		}
