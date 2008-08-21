@@ -843,7 +843,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_app_context_t *app, **apps;
     orte_std_cntr_t num_apps;
     orte_odls_child_t *child=NULL;
-    int i, num_processors, max_processor_id;
+    int i, num_processors;
     bool oversubscribed;
     int rc=ORTE_SUCCESS, ret;
     bool launch_failed=true;
@@ -898,7 +898,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
     }
     
-    if (ORTE_SUCCESS != opal_paffinity_base_get_processor_info(&num_processors, &max_processor_id)) {
+    if (ORTE_SUCCESS != opal_paffinity_base_get_processor_info(&num_processors)) {
         /* if we cannot find the number of local processors, we have no choice
          * but to default to conservative settings
          */

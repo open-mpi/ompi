@@ -1847,11 +1847,12 @@ static int get_ib_dev_distance(struct ibv_device *dev)
 {
     opal_paffinity_base_cpu_set_t cpus;
     opal_carto_base_node_t *device_node;
-    int min_distance = -1, i, max_proc_id, num_processors;
+    int min_distance = -1, i, num_processors;
     const char *device = ibv_get_device_name(dev);
 
-    if(opal_paffinity_base_get_processor_info(&num_processors, &max_proc_id) != OMPI_SUCCESS)
-        max_proc_id = 100; /* Choose something big enough */
+    if(opal_paffinity_base_get_processor_info(&num_processors) != OMPI_SUCCESS) {
+        num_processors = 100; /* Choose something big enough */
+    }
 
     device_node = opal_carto_base_find_node(host_topo, device);
 
@@ -1862,7 +1863,7 @@ static int get_ib_dev_distance(struct ibv_device *dev)
     OPAL_PAFFINITY_CPU_ZERO(cpus);
     opal_paffinity_base_get(&cpus);
 
-    for (i = 0; i < max_proc_id; i++) {
+    for (i = 0; i < num_processors; i++) {
         opal_carto_base_node_t *slot_node;
         int distance, socket, core;
         char *slot;
@@ -1870,7 +1871,7 @@ static int get_ib_dev_distance(struct ibv_device *dev)
         if(!OPAL_PAFFINITY_CPU_ISSET(i, cpus))
             continue;
 
-        opal_paffinity_base_map_to_socket_core(i, &socket, &core);
+        opal_paffinity_base_get_map_to_socket_core(i, &socket, &core);
         asprintf(&slot, "slot%d", socket);
 
         slot_node = opal_carto_base_find_node(host_topo, slot);

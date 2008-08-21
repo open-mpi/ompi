@@ -34,9 +34,12 @@ static int windows_module_set(opal_paffinity_base_cpu_set_t cpumask);
 static int windows_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static int windows_module_map_to_processor_id(int socket, int core, int *processor_id);
 static int windows_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int windows_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int windows_module_get_socket_info(int *num_sockets, int *max_socket_num);        
-static int windows_module_get_core_info(int socket, int *num_cores, int *max_core_num);  
+static int windows_module_get_processor_info(int *num_processors);
+static int windows_module_get_socket_info(int *num_sockets);        
+static int windows_module_get_core_info(int socket, int *num_cores);  
+static int get_physical_processor_id(int logical_processor_id);
+static int get_physical_socket_id(int logical_socket_id);
+static int get_physical_core_id(int physical_socket_id, int logical_core_id);
 
 static SYSTEM_INFO sys_info;
 
@@ -55,6 +58,9 @@ static const opal_paffinity_base_module_1_1_0_t loc_module = {
     windows_module_get_processor_info,
     windows_module_get_socket_info,
     windows_module_get_core_info,
+    get_physical_processor_id,
+    get_physical_socket_id,
+    get_physical_core_id,
     windows_module_finalize
 };
 
@@ -132,21 +138,34 @@ static int windows_module_map_to_socket_core(int processor_id, int *socket, int 
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int windows_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int windows_module_get_processor_info(int *num_processors)
 {
-    *num_processors = *max_processor_id = sys_info.dwNumberOfProcessors;
+    *num_processors = sys_info.dwNumberOfProcessors;
     return OPAL_SUCCESS;
 }
 
-static int windows_module_get_socket_info(int *num_sockets, int *max_socket_num)      
+static int windows_module_get_socket_info(int *num_sockets)      
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int windows_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int windows_module_get_core_info(int socket, int *num_cores)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
+static int get_physical_processor_id(int logical_processor_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
 
+static int get_physical_socket_id(int logical_socket_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int get_physical_core_id(int physical_socket_id, int logical_core_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
 

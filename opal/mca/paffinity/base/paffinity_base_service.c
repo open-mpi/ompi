@@ -28,69 +28,107 @@
 #include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 
-static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_cnt, long rank)
+static bool diag_requested;
+
+static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_cnt, long rank, bool logical_map)
 {
     int i;
     char **range;
     int range_cnt;
     int lower_range, upper_range;
-    int processor_id, num_processors, socket=-1, core=-1;
-    int max_processor_id;
+    int processor_id, num_processors;
     int rc;
+    int phys_processor;
     opal_paffinity_base_cpu_set_t cpumask;
 
-    if (OPAL_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors, &max_processor_id))) {
+    /* get the number of LOGICAL processors on this node */
+    if (OPAL_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
         return OPAL_ERROR;
     }
     OPAL_PAFFINITY_CPU_ZERO(cpumask);
     for (i=0; i<socket_cnt; i++) {
         if (0 == strcmp("*", socket_list[i])) {
-            for ( processor_id=0; processor_id<=max_processor_id; processor_id++) {
-                OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                if (OPAL_SUCCESS != ( rc = opal_paffinity_base_set(cpumask))) {
+            /* bind to all available logical processors - first set the bits in the cpu mask */
+            for ( processor_id=0; processor_id<=num_processors; processor_id++) {
+                if (0 > (phys_processor = opal_paffinity_base_get_physical_processor_id(processor_id))) {
+                    opal_output(0, "Rank %ld: PAFFINITY cannot get physical processor id for logical processor %ld",
+                                rank, (long)processor_id);
                     return OPAL_ERROR;
                 }
-                opal_paffinity_base_map_to_socket_core(processor_id, &socket, &core);
-                opal_output_verbose(5, opal_paffinity_base_output,
-                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d )",rank, processor_id, socket, core);
+                OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                /* output diagnostic if requested */
+                if (diag_requested) {
+                    opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d (#%d)",
+                                rank, phys_processor, processor_id);
+                }
             }
-            continue;
-        }
+            /* tell paffinity to bind us */
+            if (OPAL_SUCCESS != ( rc = opal_paffinity_base_set(cpumask))) {
+                return rc;
+            }
+           continue;
+        } /* end if * */
+        
         range = opal_argv_split(socket_list[i],'-');
         range_cnt = opal_argv_count(range);
         switch (range_cnt) {
-            case 1:
+            case 1:  /* no - was present, so just one processor given */
                 processor_id = atoi(range[0]);
-                if (processor_id > max_processor_id) {
-                    opal_output(0, "ERROR !!! processor_id (%d) > max_processor_id(%d), modify rankfile and run again\n",processor_id, max_processor_id);
-                    return OPAL_ERROR;
+                if (logical_map) {
+                    /* need to convert this to physical processor id */
+                    if (0 > (phys_processor = opal_paffinity_base_get_physical_processor_id(processor_id))) {
+                        opal_output(0, "Rank %ld: PAFFINITY cannot get physical processor id for logical processor %ld",
+                                    rank, (long)processor_id);
+                        return OPAL_ERROR;
+                    }                    
+                } else {
+                    phys_processor = processor_id;
                 }
-                OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
+                /* set the bit for this physical processor */
+                OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                /* tell paffinity to bind us */
                 if (OPAL_SUCCESS != ( rc = opal_paffinity_base_set(cpumask))) {
-                    return OPAL_ERROR;
+                    return rc;
                 }
-                opal_paffinity_base_map_to_socket_core(processor_id, &socket, &core);
-                opal_output_verbose(5, opal_paffinity_base_output,
-                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d )",
-                                    rank, processor_id, socket, core);
+                /* output diagnostic if requested */
+                if (diag_requested) {
+                    opal_output(0, "paffinity slot assignment: rank %ld runs on cpu #%d (#%d)",
+                                rank, phys_processor, processor_id);
+                }
                 break;
-            case 2:
+                
+            case 2:  /* range of processor id's was given */
                 lower_range = atoi(range[0]);
                 upper_range = atoi(range[1]);
-                if (max_processor_id < upper_range || lower_range >= upper_range ) {
-                    opal_output(0,"Error !!! Check your boundaries %d < %d(max_cpu) < %d, modify rankfile and run again\n",
-                                lower_range, max_processor_id, upper_range);
+                if (num_processors < (upper_range - lower_range) ||
+                    upper_range <= lower_range) {
+                    opal_output(0,"Rank %ld: PAFFINITY Error !!! Check your boundaries lower %d upper %d #processors %d",
+                                rank, lower_range, upper_range, num_processors);
                     return OPAL_ERROR;
                 }
+
                 for (processor_id=lower_range; processor_id<=upper_range; processor_id++) {
-                    OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                    if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                        return OPAL_ERROR;
+                    if (logical_map) {
+                        /* need to convert this to physical processor id */
+                        if (0 > (phys_processor = opal_paffinity_base_get_physical_processor_id(processor_id))) {
+                            opal_output(0, "Rank %ld: PAFFINITY cannot get physical processor id for logical processor %d",
+                                        rank, processor_id);
+                            return OPAL_ERROR;
+                        }                    
+                    } else {
+                        phys_processor = processor_id;
                     }
-                    opal_paffinity_base_map_to_socket_core(processor_id, &socket, &core);
-                    opal_output_verbose(5, opal_paffinity_base_output,
-                                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d )",
-                                        rank, processor_id, socket, core);
+                    /* set the bit for this physical processor */
+                    OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                    /* output diagnostic if requested */
+                    if (diag_requested) {
+                        opal_output(0, "paffinity slot assignment: rank %ld runs on cpu #%d (#%d)",
+                                    rank, phys_processor, processor_id);
+                    }
+                }
+                /* tell paffinity to bind us */
+                if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                    return rc;
                 }
                 break;
             default:
@@ -102,234 +140,367 @@ static int opal_paffinity_base_socket_to_cpu_set(char **socket_list, int socket_
     return OPAL_SUCCESS;
 }
 
-static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_cnt, long rank)
+static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, int socket_core_list_cnt, long rank, bool logical_map)
 {
-        int rc, i;
-        char **socket_core;
-        int socket_core_cnt;
-        char **range;
-        int range_cnt;
-        int lower_range, upper_range;
-        int socket, core, processor_id ;
-        int max_socket_num, max_core_num;
-        int num_sockets, num_cores;
-        opal_paffinity_base_cpu_set_t cpumask;
-        
-        socket_core = opal_argv_split (socket_core_list[0], ':');
-        socket_core_cnt = opal_argv_count(socket_core);
-        OPAL_PAFFINITY_CPU_ZERO(cpumask);
-        socket = atoi(socket_core[0]);
-        
-        if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_socket_info(&num_sockets, &max_socket_num))) {
+    int rc, i;
+    char **socket_core;
+    int socket_core_cnt;
+    char **range;
+    int range_cnt;
+    int lower_range, upper_range;
+    int socket, core;
+    int num_sockets, num_cores;
+    int phys_socket, phys_core, phys_processor;
+    opal_paffinity_base_cpu_set_t cpumask;
+    
+    socket_core = opal_argv_split (socket_core_list[0], ':');
+    socket_core_cnt = opal_argv_count(socket_core);
+    OPAL_PAFFINITY_CPU_ZERO(cpumask);
+    socket = atoi(socket_core[0]);
+    
+    /* get the number of LOGICAL sockets on this node */
+    if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_socket_info(&num_sockets))) {
+        return rc;
+    }
+    
+    if (logical_map) {
+        /* need to convert provided socket to a PHYSICAL socket id */
+        phys_socket = opal_paffinity_base_get_physical_socket_id(socket);
+        if (0 > phys_socket) {
+            opal_output(0, "Rank %ld: PAFFINITY cannot get physical socket id for logical socket %ld",
+                        rank, (long)socket);
             return OPAL_ERROR;
         }
-        
-        if ( socket > max_socket_num) {
-            opal_output(0,"ERROR !!! socket(%d) > max_socket_num(%d), modify rankfile and run again",
-                        socket, max_socket_num);
-            return OPAL_ERROR;
+    } else {
+        phys_socket = socket;
+    }
+    
+    /* get the LOGICAL core info for this socket */
+    if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_core_info(phys_socket, &num_cores))) {
+        opal_output(0,"Rank %ld: PAFFINITY Error !!! Could not get core info for physical socket number %d (%d)",
+                    rank, phys_socket, socket);
+        return rc;
+    }
+    
+    if (0 == strcmp("*",socket_core[1])) {
+        /* bind to all available LOGICAL cores */
+        for (core = 0; core <= num_cores; core++) {
+            /* convert to PHYSICAL core id */
+            if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                            rank, (long)core, (long)phys_socket, (long)socket);
+                return OPAL_ERROR;
+            }
+            /* get the PHYSICAL processor id for the PHYSICAL socket/core */
+            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                return rc;
+            }
+            /* set the bit for this processor */
+            OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
         }
-        if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_core_info(socket, &num_cores, &max_core_num))) {
-            opal_output(0,"Error !!! Invalid socket number (%d) in rankfile, modify rankfile and run again\n",
-                           socket);
-            return OPAL_ERROR;
+        /* tell paffinity to bind us */
+        if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+            return rc;
         }
-        
-        if (0 == strcmp("*",socket_core[1])) {
-            for (core = 0; core <= max_core_num; core++) {
-                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
-                    return OPAL_ERROR;
+        /* output diagnostic if requested */
+        if (diag_requested) {
+            opal_output(0, "paffinity slot assignment: rank %ld runs on physical processor #%d ( %d : %d)",
+                        rank, phys_processor, socket, core);
+        }
+    } else {
+        range = opal_argv_split(socket_core[1], '-');
+        range_cnt = opal_argv_count(range);
+        switch (range_cnt) {
+            case 1:  /* only one core specified */
+                core = atoi(range[0]);
+                if (logical_map) {
+                    /* convert to physical core */
+                    if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                        opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                    rank, (long)core, (long)phys_socket, (long)socket);
+                        return OPAL_ERROR;
+                    }
+                } else {
+                    phys_core = core;
                 }
-                OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
+                /* get the PHYSICAL processor id for this PHYSICAL socket/core */
+                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                    return rc;
+                }
+                /* set the bit for this processor */
+                OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                /* tell paffinity to bind us */
                 if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                    return rc;
+                }
+                /* output diagnostic if requested */
+                if (diag_requested) {
+                    opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d ( %d[%d] : %d[%d])",
+                                rank, phys_processor, phys_socket, socket, phys_core, core);
+                }
+                break;
+                
+            case 2:  /* range of core id's was given */
+                lower_range = atoi(range[0]);
+                upper_range = atoi(range[1]);
+                if ( 0 > lower_range || num_cores < (upper_range - lower_range) || lower_range >= upper_range ) {
+                    opal_output(0,"Rank %ld: PAFFINITY Error !!! Check your boundaries lower %d upper %d num_cores %d",
+                                rank, lower_range, upper_range, num_cores);
                     return OPAL_ERROR;
                 }
-                opal_output_verbose(5, opal_paffinity_base_output,
-                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                    rank, processor_id, socket, core);
-            }
-        } else {
-            range = opal_argv_split(socket_core[1], '-');
-            range_cnt = opal_argv_count(range);
-            switch (range_cnt) {
-                case 1:
-                    core = atoi(range[0]);
-                    if ( core > max_core_num  ) {
-                        opal_output(0,"Error!!! core(%d)>max_core(%d) on socket %d, modify rankfile and run again\n",
-                                core, max_core_num, socket);
-                        return OPAL_ERROR;
-                    }
-                    if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
-                        return OPAL_ERROR;
-                    }
-                    OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                    if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                        return OPAL_ERROR;
-                    }
-                    opal_output_verbose(5, opal_paffinity_base_output,
-                                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                        rank, processor_id, socket, core);
-                    break;
-                case 2:
-                    lower_range = atoi(range[0]);
-                    upper_range = atoi(range[1]);
-                    if ( 0 > lower_range || max_core_num < upper_range || lower_range >= upper_range ) {
-                        opal_output(0,"Error !!! Check your boundaries %d < %d(max_core) < %d ,modify rankfile and run again\n",
-                                lower_range, max_core_num, upper_range);
-                        return OPAL_ERROR;
-                    }
-                    for (core=lower_range; core<=upper_range; core++) {
-                        if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
+                for (core=lower_range; core<=upper_range; core++) {
+                    if (logical_map) {
+                        /* convert to physical core */
+                        if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                            opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                        rank, (long)core, (long)phys_socket, (long)socket);
                             return OPAL_ERROR;
                         }
-                        OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                        if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                            return OPAL_ERROR;
-                        }
-                        opal_output_verbose(5, opal_paffinity_base_output,
-                                            "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                            rank, processor_id, socket, core);
+                    } else {
+                        phys_core = core;
                     }
-                    break;
-                default:
-                    opal_argv_free(range);
-                    opal_argv_free(socket_core);
-                    return OPAL_ERROR;
-            }
-            opal_argv_free(range);
-            opal_argv_free(socket_core);
+                    /* get the PHYSICAL processor id for this PHYSICAL socket/core */
+                    if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                        return rc;
+                    }
+                    /* set the bit for this processor */
+                    OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                    /* output diagnostic if requested */
+                    if (diag_requested) {
+                        opal_output(0,"paffinity slot assignment: rank %ld runs on cpu #%d ( %d[%d] : %d[%d])",
+                                    rank, phys_processor, phys_socket, socket, phys_core, core);                        
+                    }
+                }
+                /* tell paffinity to bind us */
+                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                    return rc;
+                }
+                break;
+                
+            default:
+                opal_argv_free(range);
+                opal_argv_free(socket_core);
+                return OPAL_ERROR;
         }
-        for (i=1; i<socket_core_list_cnt; i++) {
-            socket_core = opal_argv_split (socket_core_list[i], ':');
-            socket_core_cnt = opal_argv_count(socket_core);
-            switch (socket_core_cnt) {
-                case 1:
-                    range = opal_argv_split(socket_core[0], '-');
+        opal_argv_free(range);
+        opal_argv_free(socket_core);
+    }
+    
+    for (i=1; i<socket_core_list_cnt; i++) {
+        socket_core = opal_argv_split (socket_core_list[i], ':');
+        socket_core_cnt = opal_argv_count(socket_core);
+        switch (socket_core_cnt) {
+            case 1:
+                /* no colon => these cores are on the same socket as the last one specified,
+                 * so we map them on that same physical socket
+                 */
+                range = opal_argv_split(socket_core[0], '-');
+                range_cnt = opal_argv_count(range);
+                switch (range_cnt) {
+                    case 1:  /* only one core provided */
+                        core = atoi(range[0]);
+                        if (logical_map) {
+                            /* convert to physical core */
+                            if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                                opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                            rank, (long)core, (long)phys_socket, (long)socket);
+                                return OPAL_ERROR;
+                            }
+                        } else {
+                            phys_core = core;
+                        }
+                        /* get the PHYSICAL processor id for this PHYSICAL socket/core */
+                        if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                            return rc;
+                        }
+                        /* set the bit for this processor */
+                        OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                        /* tell paffinity to bind us */
+                        if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                            return rc;
+                        }
+                        /* output diagnostic if requested */
+                        if (diag_requested) {
+                            opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d ( %d[%d] : %d[%d])",
+                                        rank, phys_processor, phys_socket, socket, phys_core, core);
+                        }
+                        break;
+                        
+                    case 2:    /* range of core id's was given */
+                        if ( 0 > lower_range || num_cores < (upper_range - lower_range) || lower_range >= upper_range ) {
+                            opal_output(0,"Rank %ld: PAFFINITY Error !!! Check your boundaries lower %d upper %d num_cores %d",
+                                        rank, lower_range, upper_range, num_cores);
+                            return OPAL_ERROR;
+                        }
+                        for (core=lower_range; core<=upper_range; core++) {
+                            if (logical_map) {
+                                /* convert to physical core */
+                                if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                                    opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                                rank, (long)core, (long)phys_socket, (long)socket);
+                                    return OPAL_ERROR;
+                                }
+                            } else {
+                                phys_core = core;
+                            }
+                            /* get the PHYSICAL processor id for this PHYSICAL socket/core */
+                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                                return rc;
+                            }
+                            /* set the bit for this processor */
+                            OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                            /* output diagnostic if requested */
+                            if (diag_requested) {
+                                opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d ( %d[%d] : %d[%d])",
+                                            rank, phys_processor, phys_socket, socket, phys_core, core);
+                            }
+                        }
+                        /* tell paffinity to bind us */
+                        if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                            return rc;
+                        }
+                        break;
+                        
+                    default:
+                        opal_argv_free(range);
+                        opal_argv_free(socket_core);
+                        return OPAL_ERROR;
+                }
+                opal_argv_free(range);
+                break;
+                
+            case 2:  /* colon was given => refers to a new socket! */
+                socket = atoi(socket_core[0]);
+                if (logical_map) {
+                    /* need to convert provided socket to a PHYSICAL socket id */
+                    phys_socket = opal_paffinity_base_get_physical_socket_id(socket);
+                    if (0 > phys_socket) {
+                        opal_output(0, "Rank %ld: PAFFINITY cannot get physical socket id for logical socket %ld",
+                                    rank, (long)socket);
+                        return OPAL_ERROR;
+                    }
+                } else {
+                    phys_socket = socket;
+                }
+                
+                /* get the LOGICAL core info for this socket */
+                if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_core_info(phys_socket, &num_cores))) {
+                    opal_output(0,"Rank %ld: PAFFINITY Error !!! Could not get core info for physical socket number %d (%d)",
+                                rank, phys_socket, socket);
+                    return rc;
+                }
+                
+                if (0 == strcmp("*",socket_core[1])) {
+                    /* bind to all available LOGICAL cores */
+                    for (core = 0; core <= num_cores; core++) {
+                        /* convert to PHYSICAL core id */
+                        if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                            opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                        rank, (long)core, (long)phys_socket, (long)socket);
+                            return OPAL_ERROR;
+                        }
+                        /* get the PHYSICAL processor id for the PHYSICAL socket/core */
+                        if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                            return rc;
+                        }
+                        /* set the bit for this processor */
+                        OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                    }
+                    /* tell paffinity to bind us */
+                    if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                        return rc;
+                    }
+                    /* output diagnostic if requested */
+                    if (diag_requested) {
+                        opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d ( %d[%d] : %d[%d])",
+                                    rank, phys_processor, phys_socket, socket, phys_core, core);
+                    }
+                } else {
+                    range = opal_argv_split(socket_core[1], '-');
                     range_cnt = opal_argv_count(range);
+                    socket = atoi(socket_core[0]);
                     switch (range_cnt) {
-                        case 1:
+                        case 1:  /* only one core specified */
                             core = atoi(range[0]);
-                            /* use PLPA to construct the child->cpu_set */
-                            if ( core > max_core_num ) {
-                                opal_output(0,"Error !!! core(%d) > max_core(%d), modify rankfile and run again\n",
-                                            core, max_core_num);
-                                return OPAL_ERROR;
+                            if (logical_map) {
+                                /* convert to physical core */
+                                if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                                    opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                                rank, (long)core, (long)phys_socket, (long)socket);
+                                    return OPAL_ERROR;
+                                }
+                            } else {
+                                phys_core = core;
                             }
-                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
-                                opal_output(0,"Error !!! Invalid socket:core pair (%d:%d), modify rankfile and run again\n",
-                                            socket, core);
-                                return OPAL_ERROR;
+                            /* get the PHYSICAL processor id for this PHYSICAL socket/core */
+                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                                return rc;
                             }
-                            OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                                return OPAL_ERROR;
+                            /* set the bit for this processor */
+                            OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                            /* tell paffinity to bind us */
+                            if (OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                                return rc;
                             }
-                            opal_output_verbose(5, opal_paffinity_base_output,
-                                                "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                                rank, processor_id, socket, core);
+                            /* output diagnostic if requested */
+                            if (diag_requested) {
+                                opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d ( %d[%d] : %d[%d])",
+                                            rank, phys_processor, phys_socket, socket, phys_core, core);
+                            }
                             break;
-                        case 2:
+                            
+                        case 2:  /* range of core id's was given */
                             lower_range = atoi(range[0]);
                             upper_range = atoi(range[1]);
-                            if ( 0 > lower_range || max_core_num < upper_range || lower_range >= upper_range) {
-                                opal_output(0,"Error !!! Check your boundaries %d < %d(max_core) < %d, modify rankfile and run again\n",
-                                        lower_range, max_core_num, upper_range);
+                            if ( 0 > lower_range || num_cores < (upper_range - lower_range) || lower_range >= upper_range ) {
+                                opal_output(0,"Rank %ld: PAFFINITY Error !!! Check your boundaries lower %d upper %d num_cores %d",
+                                            rank, lower_range, upper_range, num_cores);
                                 return OPAL_ERROR;
                             }
                             for (core=lower_range; core<=upper_range; core++) {
-                                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
-                                    return OPAL_ERROR;
+                                if (logical_map) {
+                                    /* convert to physical core */
+                                    if (0 > (phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core))) {
+                                        opal_output(0, "Rank %ld: PAFFINITY cannot get physical core id for logical core %ld in physical socket %ld (%ld)",
+                                                    rank, (long)core, (long)phys_socket, (long)socket);
+                                        return OPAL_ERROR;
+                                    }
+                                } else {
+                                    phys_core = core;
                                 }
-                                OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                                    return OPAL_ERROR;
+                                /* get the PHYSICAL processor id for this PHYSICAL socket/core */
+                                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_get_map_to_processor_id (phys_socket, phys_core, &phys_processor))) {
+                                    return rc;
                                 }
-                                opal_output_verbose(5, opal_paffinity_base_output,
-                                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                                    rank, processor_id, socket, core);
+                                /* set the bit for this processor */
+                                OPAL_PAFFINITY_CPU_SET(phys_processor, cpumask);
+                                /* output diagnostic if requested */
+                                if (diag_requested) {
+                                    opal_output(0, "paffinity slot assignment: rank %ld runs on physical cpu #%d ( %d[%d] : %d[%d])",
+                                                rank, phys_processor, phys_socket, socket, phys_core, core);
+                                }
                             }
-                            break;
+                            /* tell paffinity to bind us */
+                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
+                                return rc;
+                            }
+                            
                         default:
                             opal_argv_free(range);
                             opal_argv_free(socket_core);
                             return OPAL_ERROR;
                     }
                     opal_argv_free(range);
-                    break;
-                case 2:
-                    socket = atoi(socket_core[0]);
-                    if (0 == strcmp("*",socket_core[1])) {
-                        for (core=0; core<=max_core_num; core++) {
-                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id ( socket, core, &processor_id))) {
-                                return OPAL_ERROR;
-                            }
-                            OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                            if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                                return OPAL_ERROR;
-                            }
-                            opal_output_verbose(5, opal_paffinity_base_output,
-                                                "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                                rank, processor_id, socket, core);
-                        }
-                    } else {
-                        range = opal_argv_split(socket_core[1], '-');
-                        range_cnt = opal_argv_count(range);
-                        socket = atoi(socket_core[0]);
-                        switch (range_cnt) {
-                            case 1:
-                                core = atoi(range[0]);
-                                if ( core > max_core_num ) {
-                                    opal_output(0,"Error !!! max_core(%d) < core(%d), modify rankfile and run again\n", 
-                                                core, max_core_num);
-                                    return OPAL_ERROR;
-                                }
-                                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
-                                    return OPAL_ERROR;
-                                }
-                                OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                                if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                                    return OPAL_ERROR;
-                                }
-                                opal_output_verbose(5, opal_paffinity_base_output,
-                                                    "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                                    rank, processor_id, socket, core);
-                                break;
-                            case 2:
-                                lower_range = atoi(range[0]);
-                                upper_range = atoi(range[1]);
-                                if ( 0 > lower_range || max_core_num < upper_range || lower_range > upper_range) {
-                                    opal_output(0,"Error !!! Check your boundaries %d < %d(max_core) < %d, modify rankfile and run again\n",
-                                            lower_range, max_core_num, upper_range);
-                                    return OPAL_ERROR;
-                                }
-                                for ( core = lower_range; core <= upper_range; core++) {
-                                    if ( OPAL_SUCCESS != (rc = opal_paffinity_base_map_to_processor_id (socket, core, &processor_id))) {
-                                        return OPAL_ERROR;
-                                    }
-                                    OPAL_PAFFINITY_CPU_SET(processor_id, cpumask);
-                                    if ( OPAL_SUCCESS != (rc = opal_paffinity_base_set(cpumask))) {
-                                        return OPAL_ERROR;
-                                    }
-                                    opal_output_verbose(5, opal_paffinity_base_output,
-                                                        "paffinity slot assignment: rank %ld runs on cpu #%d ( %d : %d)",
-                                                        rank, processor_id, socket, core); 
-                                }
-                                break;
-                            default:
-                                opal_argv_free(range);
-                                opal_argv_free(socket_core);
-                                return OPAL_ERROR;
-                        }
-                        opal_argv_free(range);
-                    }
-                    break;
+                }
+                break;
+                
                 default:
-                    opal_argv_free(socket_core);
-                    return OPAL_ERROR;
-            }
-            opal_argv_free(socket_core);
+                opal_argv_free(socket_core);
+                return OPAL_ERROR;
         }
-        return OPAL_SUCCESS;
+        opal_argv_free(socket_core);
+    }
+    return OPAL_SUCCESS;
 }
 
 int opal_paffinity_base_slot_list_set(long rank)
@@ -338,14 +509,15 @@ int opal_paffinity_base_slot_list_set(long rank)
     char **item;
     char **socket_core;
     int item_cnt, socket_core_cnt, rc;
-
+    bool logical_map;
+    
     rc = mca_base_param_find("opal", NULL, "paffinity_base_slot_list");
     /* If there was not slot list specified, return a specific error
-       code indicating that */
+     code indicating that */
     if (rc <= 0) {
         return OPAL_ERR_NOT_FOUND;
     }
-
+    
     if (OPAL_SUCCESS == mca_base_param_lookup_string(rc, &slot_str)) {
         if (NULL == slot_str) {
             return OPAL_ERR_NOT_FOUND;
@@ -354,30 +526,45 @@ int opal_paffinity_base_slot_list_set(long rank)
     if (0 == strcmp("", slot_str)){
         return OPAL_ERR_BAD_PARAM;
     }
-        opal_output_verbose(5, opal_paffinity_base_output, "paffinity slot assignment: slot_list == %s", slot_str);
-        
+    /* check for diag request to avoid repeatedly doing so */
+    if (4 < opal_output_get_verbosity(opal_paffinity_base_output)) {
+        diag_requested = true;
+    } else {
+        diag_requested = false;
+    }
+    
+    opal_output_verbose(5, opal_paffinity_base_output, "paffinity slot assignment: slot_list == %s", slot_str);
+    
+    if ('P' == slot_str[0] || 'p' == slot_str[0]) {
+        /* user has specified physical mapping */
+        logical_map = false;
+        item = opal_argv_split (&slot_str[1], ',');
+    } else {
+        logical_map = true;  /* default to logical mapping */
         item = opal_argv_split (slot_str, ',');
-        item_cnt = opal_argv_count (item);
-        socket_core = opal_argv_split (item[0], ':');
-        socket_core_cnt = opal_argv_count(socket_core);
-        opal_argv_free(socket_core);
-        switch (socket_core_cnt) {
-            case 1:
-                if (OPAL_SUCCESS != (rc = opal_paffinity_base_socket_to_cpu_set(item, item_cnt, rank))) {
-                    opal_argv_free(item);
-                    return OPAL_ERROR;
-                }
-                break;
-            case 2:
-                if (OPAL_SUCCESS != (rc = opal_paffinity_base_socket_core_to_cpu_set(item, item_cnt, rank))) {
-                    opal_argv_free(item);
-                    return OPAL_ERROR;
-                }
-                break;
-            default:
+    }
+    
+    item_cnt = opal_argv_count (item);
+    socket_core = opal_argv_split (item[0], ':');
+    socket_core_cnt = opal_argv_count(socket_core);
+    opal_argv_free(socket_core);
+    switch (socket_core_cnt) {
+        case 1:  /* binding to cpu's */
+            if (OPAL_SUCCESS != (rc = opal_paffinity_base_socket_to_cpu_set(item, item_cnt, rank, logical_map))) {
                 opal_argv_free(item);
-                return OPAL_ERROR;
-        }
-        opal_argv_free(item);
-        return OPAL_SUCCESS;
+                return rc;
+            }
+            break;
+        case 2: /* binding to socket/core specification */
+            if (OPAL_SUCCESS != (rc = opal_paffinity_base_socket_core_to_cpu_set(item, item_cnt, rank, logical_map))) {
+                opal_argv_free(item);
+                return rc;
+            }
+            break;
+        default:
+            opal_argv_free(item);
+            return OPAL_ERROR;
+    }
+    opal_argv_free(item);
+    return OPAL_SUCCESS;
 }
