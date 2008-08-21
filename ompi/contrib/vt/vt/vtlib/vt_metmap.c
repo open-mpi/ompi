@@ -33,7 +33,7 @@ static vt_metricmap_t* vt_metricmap_append(vt_metricmap_t* map,
     if (map == NULL) {
         map = (vt_metricmap_t*)calloc(1, sizeof(vt_metricmap_t));
         if (map == NULL) {
-            vt_cntl_msg("Metricmap creation failed!\n");
+            vt_cntl_msg("Metricmap creation failed!");
             return NULL;
         }
         /*printf("Created new metricmap head @0x%p\n", map);*/
@@ -41,7 +41,7 @@ static vt_metricmap_t* vt_metricmap_append(vt_metricmap_t* map,
         while (map->next != NULL) map = map->next;
         map->next = (vt_metricmap_t*)calloc(1, sizeof(vt_metricmap_t));
         if (map->next == NULL) {
-            vt_cntl_msg("Metricmap append failed!\n");
+            vt_cntl_msg("Metricmap append failed!");
             return NULL;
         }
         map = map->next;
@@ -111,14 +111,10 @@ vt_metricmap_t* vt_metricmap_init(vt_metmap_t match)
 
     if (!specfile) return NULL;
 
-    if (access(specfile, F_OK)) {
-        vt_cntl_msg("Metric specification file does not exist: %s\n", specfile);
-        return NULL;
-    }
-
     fp = fopen(specfile, "r"); 
     if (fp == NULL) {
-        vt_cntl_msg("Failed to open metric specification: %s\n", specfile);
+        vt_cntl_msg("Failed to open metric specification %s: %s",
+		    specfile, strerror(errno));
         return NULL;
     }
 
@@ -140,7 +136,7 @@ vt_metricmap_t* vt_metricmap_init(vt_metmap_t match)
         /*printf("%3d:%2d %d-[%2d] %s\n", lineno, defs, type, len, line);*/
         if (type == VT_METMAP_UNKNOWN) {
             unknown_defs++;
-            vt_cntl_msg("Failed to parse metric definition line %d: %s\n", lineno, line);
+            vt_cntl_msg("Failed to parse metric definition line %d: %s", lineno, line);
             continue;
         }
         line[7] = '\0'; /* terminate definition type */
@@ -159,7 +155,7 @@ vt_metricmap_t* vt_metricmap_init(vt_metmap_t match)
                           && (type == VT_METMAP_MEASURE))) {
                 type = VT_METMAP_INVALID;
                 invalid_defs++;
-                vt_cntl_msg("XXXX Def %d:%s <%s> invalid!\n", lineno, line, def_name);
+                vt_cntl_msg("XXXX Def %d:%s <%s> invalid!", lineno, line, def_name);
             } else {
                 map = vt_metricmap_append(map, type, def_name, def_args);
                 measure_defs++;

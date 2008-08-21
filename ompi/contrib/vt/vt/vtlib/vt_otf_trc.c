@@ -717,9 +717,12 @@ static void vt_cpy_to_gdir(uint32_t tid)
   static const size_t buffer_size = 0x2000000;
   char* buffer;
 
-  char* tmp_prefix;
-  char* tmp_name;
+  char* global_dir = vt_env_gdir();
+  char* file_prefix = vt_env_fprefix();
+
+  char  global_name[1024];
   char* local_name;
+  char* local_prefix;
   char* suffix;
 
   FILE* infile;
@@ -727,45 +730,47 @@ static void vt_cpy_to_gdir(uint32_t tid)
 
   uint8_t i;
 
-  buffer = (char*)calloc( buffer_size, sizeof(char));
+  buffer = (char*)calloc(buffer_size, sizeof(char));
   if ( buffer == NULL )
     vt_error();
 
-  tmp_prefix = VTGen_get_name(thrdv[tid]->gen);
+  local_prefix = VTGen_get_name(thrdv[tid]->gen);
 
   for(i = 0; i < 3; i++)
   {   
     uint64_t bytes_read;
 
+    /* get local file name */
     if(i == 0)
-      tmp_name = VTGen_get_defname(thrdv[tid]->gen);
+      local_name = VTGen_get_defname(thrdv[tid]->gen);
     else if( i == 1 )
-      tmp_name = VTGen_get_eventname(thrdv[tid]->gen);
+      local_name = VTGen_get_eventname(thrdv[tid]->gen);
     else
-      tmp_name = VTGen_get_statname(thrdv[tid]->gen);
+      local_name = VTGen_get_statname(thrdv[tid]->gen);
+
+    if ( local_name == NULL )
+      vt_error();
 
     /* determine file suffix */
-    suffix = strchr(tmp_name+strlen(tmp_prefix)+1, '.');
-      
-    local_name = (char*)calloc(strlen(vt_env_gdir()) +
-			strlen(vt_env_fprefix()) + 32, sizeof(char));
+    suffix = strchr(local_name+strlen(local_prefix)+1, '.');
+    if ( suffix == NULL )
+      vt_error();
 
-    /* build local file name */
-    sprintf(local_name, "%s/%s.%x%s",
-	    vt_env_gdir(), vt_env_fprefix(),
-	    65536*tid+(my_trace+1), suffix);
+    /* build global file name */
+    snprintf(global_name, sizeof(global_name) - 1, "%s/%s.%x%s",
+	     global_dir, file_prefix,
+	     65536*tid+(my_trace+1), suffix);
       
-    infile = fopen(tmp_name, "rb");
+    infile = fopen(local_name, "rb");
     if ( infile == NULL )
     {
       free(local_name);
-      free(tmp_name);
       continue;
     }
 
-    outfile = fopen(local_name, "wb");
+    outfile = fopen(global_name, "wb");
     if ( outfile == NULL )
-      vt_error_msg("Cannot open file %s for writing", local_name);
+      vt_error_msg("Cannot open file %s for writing", global_name);
 
     /* copy file */
     while((bytes_read = fread(buffer, sizeof(char), buffer_size, infile)))
@@ -775,7 +780,6 @@ static void vt_cpy_to_gdir(uint32_t tid)
     fclose(outfile);
 
     free(local_name);
-    free(tmp_name);
   }
 
   free(buffer);
@@ -801,8 +805,8 @@ static void vt_write_filt_file()
       char  filename[300];
       FILE* filt_file;
   
-      sprintf(filename, "%s/%s.%x.filt",
-	      vt_env_gdir(), vt_env_fprefix(), 65536*i+(my_trace+1));
+      snprintf(filename, sizeof(filename) - 1, "%s/%s.%x.filt",
+	       vt_env_gdir(), vt_env_fprefix(), 65536*i+(my_trace+1));
 
       filt_file = fopen(filename, "w");
 
@@ -924,8 +928,8 @@ static void vt_write_uctl_file()
   char  filename[300];
   FILE* uctl_file;
   
-  sprintf(filename, "%s/%s.%x.uctl",
-	  vt_env_gdir(), vt_env_fprefix(), my_trace+1);
+  snprintf(filename, sizeof(filename) - 1, "%s/%s.%x.uctl",
+	   vt_env_gdir(), vt_env_fprefix(), my_trace+1);
 
   uctl_file = fopen(filename, "w");
 
@@ -1180,14 +1184,16 @@ void vt_def_mpi_comm(uint32_t cid,
   }
 
   if(cid == 0)
-    strcpy(cname, "__MPI_COMM_WORLD__");
+    strncpy(cname, "__MPI_COMM_WORLD__", sizeof(cname) - 1);
   else if(cid == 1)
-    strcpy(cname, "__MPI_COMM_SELF__");
+    strncpy(cname, "__MPI_COMM_SELF__", sizeof(cname) - 1);
   else
-    strcpy(cname, "__MPI_COMM_USER__");
+    strncpy(cname, "__MPI_COMM_USER__", sizeof(cname) - 1);
 
   VTGen_write_DEF_PROCESS_GROUP(VTTHRD_GEN(thrdv[VT_MY_THREAD]),
 				cid+1, cname, cgrpc, cgrpv);
+
+  free(cgrpv);
 }
 
 /*
