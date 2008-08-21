@@ -221,18 +221,18 @@ int main (int argc, char *argv[]) {
       // only need base filename without path
       const char* dirsep = strrchr(infile, '/');
       if ( dirsep ) {
-	len = strlen(rcdir)+strlen(dirsep)+12;
+	len = strlen(rcdir)+strlen(dirsep)+11+1;
         incfile = new char[len];
-        snprintf(incfile, len, "%s/%s.opari.inc", rcdir, dirsep+1);
+        snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, dirsep+1);
       } else {
-	len = strlen(rcdir)+strlen(infile)+13;
+	len = strlen(rcdir)+strlen(infile)+12+1;
         incfile = new char[len];
-        snprintf(incfile, len, "%s/%s.opari.inc", rcdir, infile);
+        snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, infile);
       }
     } else {
-      len = strlen(infile)+12;
+      len = strlen(infile)+10+1;
       incfile = new char[len];
-      snprintf(incfile, len, "%s.opari.inc", infile);
+      snprintf(incfile, len - 1, "%s.opari.inc", infile);
     }
 
     // transform
