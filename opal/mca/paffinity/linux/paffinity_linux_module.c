@@ -36,6 +36,10 @@
 #include "paffinity_linux.h"
 #include "plpa/src/libplpa/plpa.h"
 
+/*
+ * Local static variables
+ */
+opal_paffinity_linux_plpa_cpu_set_t global_paff_mask;
 
 /*
  * Local functions
@@ -45,9 +49,12 @@ static int linux_module_set(opal_paffinity_base_cpu_set_t cpumask);
 static int linux_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static int linux_module_map_to_processor_id(int socket, int core, int *processor_id);
 static int linux_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int linux_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int linux_module_get_socket_info(int *num_sockets, int *max_socket_num);
-static int linux_module_get_core_info(int socket, int *num_cores, int *max_core_num);
+static int linux_module_get_processor_info(int *num_processors);
+static int linux_module_get_socket_info(int *num_sockets);
+static int linux_module_get_core_info(int socket, int *num_cores);
+static int get_physical_processor_id(int logical_processor_id);
+static int get_physical_socket_id(int logical_socket_id);
+static int get_physical_core_id(int physical_socket_id, int logical_core_id);
 
 /*
  * Linux paffinity module
@@ -64,6 +71,9 @@ static const opal_paffinity_base_module_1_1_0_t loc_module = {
     linux_module_get_processor_info,
     linux_module_get_socket_info,
     linux_module_get_core_info,
+    get_physical_processor_id,
+    get_physical_socket_id,
+    get_physical_core_id,
     NULL
 };
 
@@ -98,8 +108,46 @@ int opal_paffinity_linux_component_query(mca_base_module_t **module, int *priori
 
 static int linux_module_init(void)
 {
-    /* Nothing to do */
+    int supported;
+    opal_paffinity_linux_plpa_cpu_set_t tmp;
+    int i;
+    
+    /* ensure the global mask is clean */
+    OPAL_PAFFINITY_CPU_ZERO(global_paff_mask);
 
+    /* check if PLPA supports topology */
+    opal_paffinity_linux_plpa_have_topology_information(&supported);
+    
+    if (!supported) {
+        /* do a little dance to give us some info we can
+         * use to support at least binding processors
+         */
+        OPAL_PAFFINITY_CPU_ZERO(tmp);  /* ensure this is clean */
+        /* get our current affinity so we can return to it later */
+        opal_paffinity_linux_plpa_sched_getaffinity(getpid(), sizeof(tmp), &tmp);
+        /* set all the bits in the global mask */
+        for (i=0; i < OPAL_PAFFINITY_BITMASK_CPU_MAX; i++) {
+            OPAL_PAFFINITY_CPU_SET(i, global_paff_mask);
+        }
+        /* set the affinity, but don't check the return code as
+         * it may return an error. This is a simple method
+         * for probing which processors actually exist
+         */
+        opal_paffinity_linux_plpa_sched_setaffinity(getpid(), 
+                                                    sizeof(global_paff_mask), 
+                                                    &global_paff_mask);
+        /* now do a get and find out where we actually are bound */
+        opal_paffinity_linux_plpa_sched_getaffinity(getpid(),
+                                                    sizeof(global_paff_mask),
+                                                    &global_paff_mask);
+        /* the mask now contains a map of the actual physical processors
+         * Set ourselves back to our original affinity
+         */
+        opal_paffinity_linux_plpa_sched_setaffinity(getpid(), 
+                                                    sizeof(tmp), 
+                                                    &tmp);
+    }
+    
     return OPAL_SUCCESS;
 }
 
@@ -185,10 +233,13 @@ static int linux_module_map_to_socket_core(int processor_id, int *socket, int *c
     return convert(ret);
 }
 
-static int linux_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int linux_module_get_processor_info(int *num_processors)
 {
-    int ret = opal_paffinity_linux_plpa_get_processor_info(num_processors, 
-                                                           max_processor_id);
+    int max_processor_id;
+    
+    int ret = opal_paffinity_linux_plpa_get_processor_data(OPAL_PAFFINITY_LINUX_PLPA_COUNT_ONLINE,
+                                                           num_processors, 
+                                                           &max_processor_id);
 
     /* If we're on a kernel that does not support the topology
        functionality, PLPA will return ENOSYS and not try to calculate
@@ -198,7 +249,7 @@ static int linux_module_get_processor_info(int *num_processors, int *max_process
     if (ENOSYS == ret) {
         ret = sysconf(_SC_NPROCESSORS_ONLN);
         if (ret > 0) {
-            *num_processors = *max_processor_id = ret;
+            *num_processors = ret;
             return OPAL_SUCCESS;
         } else {
             return OPAL_ERR_IN_ERRNO;
@@ -208,17 +259,85 @@ static int linux_module_get_processor_info(int *num_processors, int *max_process
     }
 }
 
-static int linux_module_get_socket_info(int *num_sockets, int *max_socket_num)
+static int linux_module_get_socket_info(int *num_sockets)
 {
+    int max_socket_num;
+    
     int ret = opal_paffinity_linux_plpa_get_socket_info(num_sockets, 
-                                                        max_socket_num);
+                                                        &max_socket_num);
     return convert(ret);
 }
 
-static int linux_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int linux_module_get_core_info(int socket, int *num_cores)
 {
+    int max_core_num;
+    
     int ret = opal_paffinity_linux_plpa_get_core_info(socket, num_cores, 
-                                                      max_core_num);
+                                                      &max_core_num);
     return convert(ret);
+}
+
+static int get_physical_processor_id(int logical_processor_id)
+{
+    int ret, phys_id;
+    int i, count;
+    
+    ret = opal_paffinity_linux_plpa_get_processor_id(logical_processor_id,
+                                                     OPAL_PAFFINITY_LINUX_PLPA_COUNT_ONLINE,
+                                                     &phys_id);
+    if (0 == ret) {
+        /* PLPA was able to return a value, so pass it along */
+        return phys_id;
+    }
+
+    ret = convert(ret);
+    if (OPAL_ERR_NOT_SUPPORTED == ret) {
+        /* if it isn't supported, then we may be able
+         * to use our global_paff_mask to compute the
+         * mapping
+         */
+        count = 0;
+        for (i=0; i < OPAL_PAFFINITY_BITMASK_CPU_MAX; i++) {
+            if (OPAL_PAFFINITY_CPU_ISSET(i, global_paff_mask)) {
+                if (count == logical_processor_id) {
+                    ret = i;
+                    break;
+                } 
+                count++;
+            }
+        }
+    }
+    /* if we executed the above loop and didn't find anything,
+     * this will still be set to OPAL_ERR_NOT_SUPPORTED, which
+     * is what we want in that case
+     */
+    return ret;
+}
+
+
+static int get_physical_socket_id(int logical_socket_id)
+{
+    int ret, phys_id;
+
+    ret = opal_paffinity_linux_plpa_get_socket_id(logical_socket_id,
+                                                  &phys_id);
+    if (0 == ret) {
+        return phys_id;
+    } else {
+        return convert(ret);
+    }
+}
+
+static int get_physical_core_id(int physical_socket_id, int logical_core_id)
+{
+    int ret, phys_id;
+
+    ret = opal_paffinity_linux_plpa_get_core_id(physical_socket_id,
+                                                logical_core_id, &phys_id);
+    if (0 == ret) {
+        return phys_id;
+    } else {
+        return convert(ret);
+    }
 }
 

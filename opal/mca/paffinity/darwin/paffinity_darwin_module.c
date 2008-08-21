@@ -41,32 +41,38 @@
 /*
  * Local functions
  */
-static int darwin_module_init(void);
-static int darwin_module_set(opal_paffinity_base_cpu_set_t cpumask);
-static int darwin_module_get(opal_paffinity_base_cpu_set_t *cpumask);
-static int darwin_module_finalize(void);
-static int darwin_module_map_to_processor_id(int socket, int core, int *processor_id);
-static int darwin_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int darwin_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int darwin_module_get_socket_info(int *num_sockets, int *max_socket_num);
-static int darwin_module_get_core_info(int socket, int *num_cores, int *max_core_num);
+static int init(void);
+static int set(opal_paffinity_base_cpu_set_t cpumask);
+static int get(opal_paffinity_base_cpu_set_t *cpumask);
+static int finalize(void);
+static int map_to_processor_id(int socket, int core, int *processor_id);
+static int map_to_socket_core(int processor_id, int *socket, int *core);
+static int get_processor_info(int *num_processors);
+static int get_socket_info(int *num_sockets);
+static int get_core_info(int socket, int *num_cores);
+static int get_physical_processor_id(int logical_processor_id);
+static int get_physical_socket_id(int logical_socket_id);
+static int get_physical_core_id(int physical_socket_id, int logical_core_id);
 
 /*
  * Solaris paffinity module
  */
 static const opal_paffinity_base_module_1_1_0_t loc_module = {
     /* Initialization function */
-    darwin_module_init,
+    init,
 
     /* Module function pointers */
-    darwin_module_set,
-    darwin_module_get,
-    darwin_module_map_to_processor_id,
-    darwin_module_map_to_socket_core,
-    darwin_module_get_processor_info,
-    darwin_module_get_socket_info,
-    darwin_module_get_core_info,
-    darwin_module_finalize
+    set,
+    get,
+    map_to_processor_id,
+    map_to_socket_core,
+    get_processor_info,
+    get_socket_info,
+    get_core_info,
+    get_physical_processor_id,
+    get_physical_socket_id,
+    get_physical_core_id,
+    finalize
 };
 
 int opal_paffinity_darwin_component_query(mca_base_module_t **module, int *priority)
@@ -79,36 +85,36 @@ int opal_paffinity_darwin_component_query(mca_base_module_t **module, int *prior
 }
 
 /* do nothing here. both mpirun and processes would run init(), but
- * only processes would run the darwin_module_set function */
-static int darwin_module_init(void)
+ * only processes would run the set function */
+static int init(void)
 {
     return OPAL_SUCCESS;
 }
 
 /* this gives us a cpumask which tells which CPU to bind */
-static int darwin_module_set(opal_paffinity_base_cpu_set_t cpumask)
+static int set(opal_paffinity_base_cpu_set_t cpumask)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 /* This get function returns the CPU id that's currently binded,
  * and then sets the cpumask. */
-static int darwin_module_get(opal_paffinity_base_cpu_set_t *cpumask) 
+static int get(opal_paffinity_base_cpu_set_t *cpumask) 
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int darwin_module_map_to_processor_id(int socket, int core, int *processor_id)
+static int map_to_processor_id(int socket, int core, int *processor_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int darwin_module_map_to_socket_core(int processor_id, int *socket, int *core)
+static int map_to_socket_core(int processor_id, int *socket, int *core)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int darwin_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int get_processor_info(int *num_processors)
 {
     int rc=OPAL_SUCCESS, num_cores;
 #if !OPAL_HAVE__SC_NPROCESSORS_ONLN
@@ -143,23 +149,37 @@ static int darwin_module_get_processor_info(int *num_processors, int *max_proces
     /* rc will contain the number of processors
      * that are currently online - return that value
      */
-    *num_processors = *max_processor_id = num_cores;
+    *num_processors = num_cores;
     
     return rc;
 }
 
-static int darwin_module_get_socket_info(int *num_sockets, int *max_socket_num)
+static int get_socket_info(int *num_sockets)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int darwin_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int get_core_info(int socket, int *num_cores)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
+static int get_physical_processor_id(int logical_processor_id)
+{
+    return logical_processor_id;
+}
 
-static int darwin_module_finalize(void)
+static int get_physical_socket_id(int logical_socket_id)
+{
+    return logical_socket_id;
+}
+
+static int get_physical_core_id(int physical_socket_id, int logical_core_id)
+{
+    return logical_core_id;
+}
+
+static int finalize(void)
 {
     return OPAL_SUCCESS;
 }

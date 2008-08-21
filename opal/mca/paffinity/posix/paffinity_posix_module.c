@@ -44,9 +44,12 @@ static int posix_module_get(opal_paffinity_base_cpu_set_t *cpumask);
 static int posix_module_finalize(void);
 static int posix_module_map_to_processor_id(int socket, int core, int *processor_id);
 static int posix_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int posix_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int posix_module_get_socket_info(int *num_sockets, int *max_socket_num);
-static int posix_module_get_core_info(int socket, int *num_cores, int *max_core_num);
+static int posix_module_get_processor_info(int *num_processors);
+static int posix_module_get_socket_info(int *num_sockets);
+static int posix_module_get_core_info(int socket, int *num_cores);
+static int get_physical_processor_id(int logical_processor_id);
+static int get_physical_socket_id(int logical_socket_id);
+static int get_physical_core_id(int physical_socket_id, int logical_core_id);
 
 /*
  * Solaris paffinity module
@@ -63,6 +66,9 @@ static const opal_paffinity_base_module_1_1_0_t loc_module = {
     posix_module_get_processor_info,
     posix_module_get_socket_info,
     posix_module_get_core_info,
+    get_physical_processor_id,
+    get_physical_socket_id,
+    get_physical_core_id,
     posix_module_finalize
 };
 
@@ -107,7 +113,7 @@ static int posix_module_map_to_socket_core(int processor_id, int *socket, int *c
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int posix_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int posix_module_get_processor_info(int *num_processors)
 {
     int rc;
     
@@ -116,23 +122,38 @@ static int posix_module_get_processor_info(int *num_processors, int *max_process
         /* system was unable to provide a number, so return
          * an error and set the values to something negative
          */
-        *num_processors = *max_processor_id = -1;
+        *num_processors = -1;
         return OPAL_ERR_NOT_FOUND;
     }
     /* rc will contain the number of processors
      * that are currently online - return that value
      */
-    *num_processors = *max_processor_id = rc;
+    *num_processors = rc;
 
     return OPAL_SUCCESS;
 }
 
-static int posix_module_get_socket_info(int *num_sockets, int *max_socket_num)
+static int posix_module_get_socket_info(int *num_sockets)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int posix_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int posix_module_get_core_info(int socket, int *num_cores)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int get_physical_processor_id(int logical_processor_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int get_physical_socket_id(int logical_socket_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int get_physical_core_id(int physical_socket_id, int logical_core_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }

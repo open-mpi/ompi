@@ -46,9 +46,12 @@ static int solaris_module_finalize(void);
 static int cpumask_to_id(opal_paffinity_base_cpu_set_t cpumask);
 static int solaris_module_map_to_processor_id(int socket, int core, int *processor_id);
 static int solaris_module_map_to_socket_core(int processor_id, int *socket, int *core);
-static int solaris_module_get_processor_info(int *num_processors, int *max_processor_id);
-static int solaris_module_get_socket_info(int *num_sockets, int *max_socket_num);
-static int solaris_module_get_core_info(int socket, int *num_cores, int *max_core_num);
+static int solaris_module_get_processor_info(int *num_processors);
+static int solaris_module_get_socket_info(int *num_sockets);
+static int solaris_module_get_core_info(int socket, int *num_cores);
+static int solaris_module_get_physical_processor_id(int logical_processor_id);
+static int solaris_module_get_physical_socket_id(int logical_socket_id);
+static int solaris_module_get_physical_core_id(int physical_socket_id, int logical_core_id);
 
 /*
  * Solaris paffinity module
@@ -65,6 +68,9 @@ static const opal_paffinity_base_module_1_1_0_t loc_module = {
     solaris_module_get_processor_info,
     solaris_module_get_socket_info,
     solaris_module_get_core_info,
+    solaris_module_get_physical_processor_id,
+    solaris_module_get_physical_socket_id,
+    solaris_module_get_physical_core_id,
     solaris_module_finalize
 };
 
@@ -90,46 +96,24 @@ static int solaris_module_init(void)
 /* this gives us a cpumask which tells which CPU to bind */
 static int solaris_module_set(opal_paffinity_base_cpu_set_t cpumask)
 {
-    int index, *cpuid_list, cpuid_loc=0;
-    processorid_t currid, cpuid_max;
-    processor_info_t pinfo;
+    processorid_t cpuid;
 
-    /* cpuid_max is the max number available for a system arch. It is
-     * an inclusive list. e.g. If cpuid_max=31, cpuid would be 0-31 */
-    cpuid_max = sysconf(_SC_CPUID_MAX);
-    cpuid_list = (int*)malloc((cpuid_max+1)*sizeof(int));
 
-    /* Because not all CPU ID in cpuid_max are actually valid,
-     * and CPU ID may also not be contiguous. Therefore we
-     * need to run through processor_info to ensure the validity.
-     * Then find out which are actually online */
-    for (currid=0; currid<=cpuid_max; currid++) {
-        if (0 == processor_info(currid, &pinfo)) {
-            if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
-                 cpuid_list[cpuid_loc++] = currid;
-            }
-        }
-    }
-
-    /* Find out where in the cpumask is the location of the current CPU.
-     * Once the index position of the CPU is located, then the set index
-     * We will use the same index in cpuid_list to locate the CPU ID */
-    index = cpumask_to_id(cpumask);
-    if (-1 == index) {
+    /* Find out where in the cpumask is the location of the current CPU. */
+    cpuid = cpumask_to_id(cpumask);
+    if (-1 == cpuid) {
         opal_output(0, "paffinity:solaris: Error when coverting cpumask to id");
         return OPAL_ERR_IN_ERRNO;
     }
 
-    if (0 != processor_bind(P_PID, P_MYID, cpuid_list[index], NULL)) {
+    if (0 != processor_bind(P_PID, P_MYID, cpuid, NULL)) {
         opal_output(0, "paffinity:solaris: Error when binding to CPU #%d: %s",
-            cpuid_list[index], strerror(errno));
-        free(cpuid_list);
+            cpuid, strerror(errno));
         return OPAL_ERR_IN_ERRNO;
     }
 
     opal_output_verbose(5, opal_paffinity_base_output,
-        "paffinity:solaris: Successfully bind to CPU #%d", cpuid_list[index]);
-    free(cpuid_list);
+        "paffinity:solaris: Successfully bind to CPU #%d", cpuid);
     return OPAL_SUCCESS;
 }
 
@@ -175,7 +159,7 @@ static int solaris_module_map_to_socket_core(int processor_id, int *socket, int 
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int solaris_module_get_processor_info(int *num_processors, int *max_processor_id)
+static int solaris_module_get_processor_info(int *num_processors)
 {
     processorid_t currid, cpuid_max;
     processor_info_t pinfo;
@@ -195,19 +179,54 @@ static int solaris_module_get_processor_info(int *num_processors, int *max_proce
         if (0 == processor_info(currid, &pinfo)) {
             if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
                  (*num_processors)++;
-                 *max_processor_id = currid;
             }
         }
     }
     return OPAL_SUCCESS;
 }
 
-static int solaris_module_get_socket_info(int *num_sockets, int *max_socket_num)
+static int solaris_module_get_socket_info(int *num_sockets)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int solaris_module_get_core_info(int socket, int *num_cores, int *max_core_num)
+static int solaris_module_get_core_info(int socket, int *num_cores)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int solaris_module_get_physical_processor_id(int logical_processor_id)
+{
+    processorid_t currid, cpuid_max, cpuid_log=0;
+    processor_info_t pinfo;
+
+    /* cpuid_max is the max number available for a system arch. It is
+     * an inclusive list. e.g. If cpuid_max=31, cpuid would be 0-31 */
+    cpuid_max = sysconf(_SC_CPUID_MAX);
+
+    /* Because not all CPU ID in cpuid_max are actually valid,
+     * and CPU ID may also not be contiguous. Therefore we
+     * need to run through processor_info to ensure the validity.
+     * Then find out which are actually online */
+    for (currid=0; currid<=cpuid_max; currid++) {
+        if (0 == processor_info(currid, &pinfo)) {
+            if (P_ONLINE == pinfo.pi_state || P_NOINTR == pinfo.pi_state) {
+                 if (cpuid_log == logical_processor_id) {
+                     break;
+                 } 
+                 cpuid_log++;
+            }
+        }
+    }
+    return currid;
+}
+
+static int solaris_module_get_physical_socket_id(int logical_socket_id)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
+static int solaris_module_get_physical_core_id(int physical_socket_id, int logical_core_id)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
