@@ -127,7 +127,7 @@ char* vt_env_apppath()
     {
       read = 0;
       tmp = getenv("VT_APPPATH");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  apppath = replace_vars(tmp);
 	}
@@ -145,7 +145,7 @@ char* vt_env_dyn_blacklist()
     {
       read = 0;
       tmp = getenv("VT_DYN_BLACKLIST");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  dyn_blacklist = replace_vars(tmp);
 	}
@@ -163,7 +163,7 @@ char* vt_env_dyn_shlibs()
     {
       read = 0;
       tmp = getenv("VT_DYN_SHLIBS");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  dyn_shlibs = replace_vars(tmp);
 	}
@@ -179,7 +179,7 @@ char* vt_env_gdir()
   if (! gdir)
     {
       tmp = getenv("VT_PFORM_GDIR");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
           gdir = replace_vars(tmp);
         }
@@ -199,7 +199,7 @@ char* vt_env_ldir()
   if (! ldir)
     {
       tmp = getenv("VT_PFORM_LDIR");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
           ldir = replace_vars(tmp);
         }
@@ -219,7 +219,7 @@ char* vt_env_fprefix()
   if (! fprefix)
     {
       tmp = getenv("VT_FILE_PREFIX");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
           fprefix = replace_vars(tmp);
         }
@@ -239,7 +239,7 @@ size_t vt_env_bsize()
    if (buffer_size == 0)
      {
        tmp = getenv("VT_BUFFER_SIZE");
-       if (tmp != NULL)
+       if (tmp != NULL && strlen(tmp) > 0)
          {
 	   buffer_size = parse_size(tmp);
 	   if (buffer_size <= 0)
@@ -266,7 +266,7 @@ int vt_env_mode()
   if (modeflags == 0)
     {
       tmp = getenv("VT_MODE");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  char* tk = strtok(tmp, ":");
 	  int dc = 0;
@@ -299,7 +299,7 @@ int vt_env_stat_intv()
   if (stat_intv == -1)
     {
       tmp = getenv("VT_STAT_INTV");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  stat_intv = atoi(tmp);
 	  if (stat_intv < 0)
@@ -321,7 +321,7 @@ int vt_env_stat_show()
   if (stat_show == -1)
     {
       tmp = getenv("VT_STAT_SHOW");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  stat_show = parse_bool(tmp);
 	}
@@ -341,7 +341,7 @@ int vt_env_is_verbose()
   if (verbose == -1)
     {
       tmp = getenv("VT_VERBOSE");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  int val = atoi(tmp);
 	  if (val > 0)
@@ -365,7 +365,7 @@ int vt_env_do_demangle()
   if (do_demangle == -1)
     {
       tmp = getenv("VT_DEMANGLE");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  do_demangle = parse_bool(tmp);
 	}
@@ -385,7 +385,7 @@ int vt_env_do_unify()
   if (do_unify == -1)
     {
       tmp = getenv("VT_UNIFY");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  do_unify = parse_bool(tmp);
 	}
@@ -405,7 +405,7 @@ int vt_env_do_clean()
   if (do_clean == -1)
     {
       tmp = getenv("VT_CLEAN");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  do_clean = parse_bool(tmp);
 	}
@@ -425,7 +425,7 @@ int vt_env_memtrace()
   if (memtrace == -1)
     {
       tmp = getenv("VT_MEMTRACE");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  memtrace = parse_bool(tmp);
 	}
@@ -445,7 +445,7 @@ int vt_env_iotrace()
   if (iotrace == -1)
     {
       tmp = getenv("VT_IOTRACE");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  iotrace = parse_bool(tmp);
 	}
@@ -465,7 +465,7 @@ int vt_env_mpitrace()
   if (mpitrace == -1)
     {
       tmp = getenv("VT_MPITRACE");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  mpitrace = parse_bool(tmp);
 	}
@@ -486,6 +486,8 @@ char* vt_env_metrics()
     {
       read = 0;
       metrics = getenv("VT_METRICS");
+      if ( metrics != NULL && strlen(metrics) == 0 )
+	metrics = NULL;
     }
   return metrics;
 }
@@ -533,7 +535,7 @@ int vt_env_max_flushes()
   if (max_flushes == -1)
     {
       tmp = getenv("VT_MAX_FLUSHES");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  max_flushes = atoi(tmp);
 	  if (max_flushes < 0)
@@ -555,7 +557,7 @@ int vt_env_max_threads()
   if (max_threads == -1)
     {
       tmp = getenv("VT_MAX_THREADS");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  max_threads = atoi(tmp);
 	}
@@ -577,7 +579,7 @@ char* vt_env_nmfile()
   {
     read = 0;
     tmp = getenv("VT_NMFILE");
-    if (tmp != NULL)
+    if (tmp != NULL && strlen(tmp) > 0)
       {
 	nmfile = replace_vars(tmp);
       }
@@ -593,7 +595,7 @@ int vt_env_compression()
   if (compression == -1)
     {
       tmp = getenv("VT_COMPRESSION");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  compression = parse_bool(tmp);
 	}
@@ -615,7 +617,7 @@ char*  vt_env_filter_spec()
     {
       read = 0;
       tmp = getenv("VT_FILTER_SPEC");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  spec = replace_vars(tmp);
 	}
@@ -633,7 +635,7 @@ char*  vt_env_groups_spec()
     {
       read = 0;
       tmp = getenv("VT_GROUPS_SPEC");
-      if (tmp != NULL)
+      if (tmp != NULL && strlen(tmp) > 0)
         {
 	  spec = replace_vars(tmp);
 	}
