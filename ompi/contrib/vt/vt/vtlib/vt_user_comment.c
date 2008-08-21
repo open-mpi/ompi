@@ -65,10 +65,10 @@ void VT_User_comment___f(const char* comment, int cl);
 void VT_User_comment_def___f(const char* comment, int cl)
 {
   int comlen;
-  char fcombuf[4096];
+  char fcombuf[1024];
 
   /* -- convert Fortran to C strings -- */
-  comlen = ( cl < 4096 ) ? cl : 4095;
+  comlen = ( cl < 1024 ) ? cl : 1023;
   strncpy(fcombuf, comment, comlen);
   fcombuf[comlen] = '\0';
 
@@ -81,10 +81,10 @@ void VT_User_comment_def___f(const char* comment, int cl)
 void VT_User_comment___f(const char* comment, int cl)
 {
   int comlen;
-  char fcombuf[4096];
+  char fcombuf[1024];
 
   /* -- convert Fortran to C strings -- */
-  comlen = ( cl < 4096 ) ? cl : 4095;
+  comlen = ( cl < 1024 ) ? cl : 1023;
   strncpy(fcombuf, comment, comlen);
   fcombuf[comlen] = '\0';
 
