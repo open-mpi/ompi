@@ -812,7 +812,14 @@ int mca_btl_sm_send(
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                           endpoint->peer_smp_rank, frag->hdr, false, rc);
-    return (rc < 0 ? rc : 1);
+    if( OPAL_LIKELY(0 == rc) ) {
+        return 1;  /* the data is completely gone */
+    }
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    /* not yet gone, but pending. Let the upper level knows that
+     * the callback will be triggered when the data will be sent.
+     */
+    return 0;
 }
 
 int mca_btl_sm_ft_event(int state) {

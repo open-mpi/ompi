@@ -474,7 +474,7 @@ sm_module_enable(mca_coll_base_module_t *module,
                c->sm_control_size);
     }
 
-    /* Save previous component's reduce informaation */
+    /* Save previous component's reduce information */
     sm_module->previous_reduce = comm->c_coll.coll_reduce;
     sm_module->previous_reduce_module = comm->c_coll.coll_reduce_module;
     OBJ_RETAIN(sm_module->previous_reduce_module);

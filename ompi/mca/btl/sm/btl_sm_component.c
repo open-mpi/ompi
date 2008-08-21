@@ -343,6 +343,22 @@ btl_sm_add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
         opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
 }
 
+static int process_pending_send(struct mca_btl_base_endpoint_t *ep)
+{
+    btl_sm_pending_send_item_t *si;
+    int rc;
+
+    si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends);
+    if(NULL == si) return OMPI_ERROR;
+
+    OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+
+    MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
+                          true, rc);
+
+    return rc;
+}
+
 int mca_btl_sm_component_progress(void)
 {
     /* local variables */
@@ -428,6 +444,10 @@ int mca_btl_sm_component_progress(void)
                 }
                 if( btl_ownership ) {
                     MCA_BTL_SM_FRAG_RETURN(frag);
+                }
+                if(opal_list_get_size(&endpoint->pending_sends)) {
+                   if( OMPI_ERR_RESOURCE_BUSY == process_pending_send(endpoint) )
+                       break;
                 }
                 goto recheck_peer;
             }
