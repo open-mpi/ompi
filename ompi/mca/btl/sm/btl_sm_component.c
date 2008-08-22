@@ -389,9 +389,7 @@ int mca_btl_sm_component_progress(void)
             opal_atomic_lock(fifo->tail_lock);
         }
 
-        hdr = (mca_btl_sm_hdr_t*)ompi_cb_fifo_read_from_tail(&fifo->tail->cb_fifo,
-                                                             fifo->tail->cb_overflow,
-                                                             &useless );
+        hdr = (mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail(fifo);
 
         /* release thread lock */
         if(opal_using_threads()) {
