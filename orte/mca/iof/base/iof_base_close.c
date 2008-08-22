@@ -60,11 +60,11 @@ int orte_iof_base_close(void)
 
     OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);
     OBJ_DESTRUCT(&orte_iof_base.iof_endpoints);
-    OBJ_DESTRUCT(&orte_iof_base.iof_lock);
     OBJ_DESTRUCT(&orte_iof_base.iof_condition);
     OBJ_DESTRUCT(&orte_iof_base.iof_fragments);
 
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OBJ_DESTRUCT(&orte_iof_base.iof_lock);
 
     return ORTE_SUCCESS;
 }
