@@ -622,7 +622,6 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
         frag->segment.seg_len = size;
         frag->base.des_flags = flags;
     }
-
     return (mca_btl_base_descriptor_t*)frag;
 }
 
