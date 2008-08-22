@@ -40,7 +40,6 @@
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/filem/base/base.h"
-#include "orte/mca/iof/base/base.h"
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
@@ -154,21 +153,6 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
-    /*
-     * setup I/O forwarding system - must come after we init routes
-     * so we can get our HNP's name set
-     */
-    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_iof_base_select";
-        goto error;
-    }
-    
     
 #if OPAL_ENABLE_FT == 1
     /*
@@ -235,7 +219,6 @@ int orte_ess_base_app_finalize(void)
     orte_filem_base_close();
     
     orte_wait_finalize();
-    orte_iof_base_close();
     
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();
