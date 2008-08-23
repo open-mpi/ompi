@@ -138,7 +138,7 @@ static void init_maffinity(int *my_mem_node, int *max_mem_node)
 {
     static opal_carto_graph_t *topo;
     opal_value_array_t dists;
-    int i, num_core, socket, rc;
+    int i, num_core, socket;
     opal_paffinity_base_cpu_set_t cpus;
     char *myslot = NULL;
     opal_carto_node_distance_t *dist;
@@ -165,7 +165,11 @@ static void init_maffinity(int *my_mem_node, int *max_mem_node)
          if(OPAL_PAFFINITY_CPU_ISSET(i, cpus))
              break;
 
-     rc = opal_paffinity_base_get_map_to_socket_core(i, &socket, &i);
+    if (OMPI_SUCCESS != opal_paffinity_base_get_map_to_socket_core(i, &socket, &i)) {
+        /* no topology info available */
+        goto out;
+    }
+    
      asprintf(&myslot, "slot%d", socket);
 
      slot_node = opal_carto_base_find_node(topo, myslot);
