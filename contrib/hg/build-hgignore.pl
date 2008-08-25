@@ -51,15 +51,9 @@ static-components.h
 # Start at the top level
 process(".");
 
-# If there's an old .hgignore, save it
-if (-f ".hgignore") {
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
-        localtime(time);
-    my $new_name = sprintf(".hgignore.%04d%02d%02d-%02d%02d",
-                           $year + 1900, $mon + 1, $mday, $hour, $min);
-    rename(".hgignore", $new_name) || 
-        die "Unable to rename old .hgignore file: $!";
-}
+# If there's an old .hgignore, delete it
+unlink(".hgignore")
+    if (-f ".hgignore");
 
 # Write the new one
 open(FILE, ">.hgignore");
