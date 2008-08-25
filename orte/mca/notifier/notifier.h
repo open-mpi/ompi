@@ -36,8 +36,13 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
+#ifdef HAVE_SYSLOG_H
 #include <syslog.h>
+#endif /* HAVE_SYSLOG_H */
+
+#ifdef HAVE_STDARG_H
 #include <stdarg.h>
+#endif /* HAVE_STDARG_H */
 
 #include "opal/mca/mca.h"
 
