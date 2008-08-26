@@ -288,12 +288,20 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 node = (orte_node_t*)item;
                 /* see if this node is empty */
                 if (0 == node->slots_inuse) {
+                    /* check to see if it is specified later */
+                    for (j=i+1; j < len_mapped_node; j++) {
+                        if (0 == strcmp(mapped_nodes[j], node->name)) {
+                            /* specified later - skip this one */
+                            goto skipnode;
+                        }
+                    }
                     /* remove item from list */
                     opal_list_remove_item(nodes, item);
                     /* xfer to keep list */
                     opal_list_append(&keep, item);
                     --num_empty;
                 }
+            skipnode:
                 item = next;
             }
         } else {
