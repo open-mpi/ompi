@@ -71,5 +71,6 @@ extern orte_hostfile_value_t  orte_util_hostfile_value;
 #define ORTE_HOSTFILE_NEWLINE        13
 #define ORTE_HOSTFILE_IPV6           14
 #define ORTE_HOSTFILE_SLOT           15
+#define ORTE_HOSTFILE_RELATIVE       16
 
 #endif

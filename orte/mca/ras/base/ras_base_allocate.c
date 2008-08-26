@@ -131,7 +131,11 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     /* nothing was found, or no active module was alive. Our next
      * option is to look for a hostfile and assign our global
      * pool from there. First, we check for a default hostfile
-     * as set by an mca param
+     * as set by an mca param.
+     *
+     * Note that any relative node syntax found in the hostfile will
+     * generate an error in this scenario, so only non-relative syntax
+     * can be present
      */
     if (NULL != orte_default_hostfile) {
         OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
@@ -172,6 +176,10 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      * add the nodes found in each hostfile to our list - i.e.,
      * the resulting list contains the UNION of all nodes specified
      * in hostfiles from across all app_contexts
+     *
+     * Note that any relative node syntax found in the hostfiles will
+     * generate an error in this scenario, so only non-relative syntax
+     * can be present
      */
     
     /* convenience def */
@@ -230,6 +238,10 @@ int orte_ras_base_allocate(orte_job_t *jdata)
      * is there. The parser will add the -host nodes to our list - i.e.,
      * the resulting list contains the UNION of all nodes specified
      * by -host across all app_contexts
+     *
+     * Note that any relative node syntax found in the -host lists will
+     * generate an error in this scenario, so only non-relative syntax
+     * can be present
      */
     for (i=0; i < jdata->num_apps; i++) {
         if (NULL != apps[i]->dash_host) {
