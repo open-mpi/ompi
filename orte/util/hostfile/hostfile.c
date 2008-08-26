@@ -689,7 +689,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     opal_list_item_t *item, *itm, *item2, *item1;
     char *cptr;
     int num_empty, i, nodeidx, startempty=0;
-    bool want_all_empty;
+    bool want_all_empty=false;
     orte_node_t **nodepool, *newnode;
     int rc;
     
