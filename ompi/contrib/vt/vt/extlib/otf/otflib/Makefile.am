@@ -11,6 +11,7 @@ include_HEADERS = otf.h \
 	OTF_FileManager.h \
 	OTF_Filenames.h \
 	OTF_HandlerArray.h \
+	OTF_inttypes.h \
 	OTF_MasterControl.h \
 	OTF_RBuffer.h \
 	OTF_RStream.h \
@@ -19,11 +20,12 @@ include_HEADERS = otf.h \
 	OTF_WStream.h \
 	OTF_Writer.h
 
-nodist_include_HEADERS = OTF_inttypes.h
+nodist_include_HEADERS = OTF_inttypes_unix.h
 
 noinst_HEADERS = OTF_Keywords.h \
 	         OTF_Parse.h \
-                 OTF_Platform.h
+	         OTF_Platform.h \
+	         OTF_Platform_unix.h
 
 lib_LTLIBRARIES = libotf.la
 
@@ -45,6 +47,8 @@ libotf_la_SOURCES = \
 	OTF_inttypes.c
 
 EXTRA_DIST = \
+	OTF_Platform_win.h \
+	OTF_inttypes_win.h \
 	libotf_vs05.vcproj
 
 

@@ -20,15 +20,16 @@
 
 typedef enum
 {
-   INST_TYPE_GNU     = 0x1,     // auto. instrumentation by GNU comp.
-   INST_TYPE_INTEL   = 0x2,     // ^ Intel version >=10
-   INST_TYPE_PGI     = 0x4,     // ^ PGI
-   INST_TYPE_PHAT    = 0x8,     // ^ SUN
-   INST_TYPE_XL      = 0x10,    // ^ IBM (xlc, xlC,...)
-   INST_TYPE_FTRACE  = 0x20,    // ^ NEC SX
-   INST_TYPE_MANUAL  = 0x40,    // manual instr. by VT API
-   INST_TYPE_POMP    = 0x80,    // semi auto. instr. by POMP directives
-   INST_TYPE_DYNINST = 0x100    // binary instrumentation by Dyninst
+   INST_TYPE_GNU       = 0x1,     // auto. instrumentation by GNU comp.
+   INST_TYPE_INTEL     = 0x2,     // ^ Intel version >=10
+   INST_TYPE_PATHSCALE = 0x4,     // ^ Pathscale version >=3.1
+   INST_TYPE_PGI       = 0x8,     // ^ PGI
+   INST_TYPE_SUN       = 0x10,    // ^ SUN
+   INST_TYPE_XL        = 0x20,    // ^ IBM (xlc, xlC,...)
+   INST_TYPE_FTRACE    = 0x40,    // ^ NEC SX
+   INST_TYPE_MANUAL    = 0x80,    // manual instr. by VT API
+   INST_TYPE_POMP      = 0x100,   // semi auto. instr. by POMP directives
+   INST_TYPE_DYNINST   = 0x200    // binary instrumentation by Dyninst
 } InstTypeT;
 
 struct ProperiesS
@@ -40,8 +41,8 @@ struct ProperiesS
       opari_cmd(""), opari_args(""), opari_tab_comp_cmd(""),
       opari_tab_comp_flags(""),
       pmpilib(""), fmpilib(""), dynattlib(""),
-      iflags_gnu(""), iflags_intel(""), iflags_pgi(""),
-      iflags_phat(""), iflags_xl(""), iflags_ftrace(""),
+      iflags_gnu(""), iflags_intel(""), iflags_pathscale(""), iflags_pgi(""),
+      iflags_sun(""), iflags_xl(""), iflags_ftrace(""),
       inst_type(INST_TYPE_MANUAL), inst_avail(0),
       beverbose(false), componly(false), uses_mpi(false), uses_omp(false),
       showme(false), showme_compile(false), showme_link(false) {}
@@ -80,8 +81,9 @@ struct ProperiesS
 
    std::string iflags_gnu;
    std::string iflags_intel;
+   std::string iflags_pathscale;
    std::string iflags_pgi;
-   std::string iflags_phat;
+   std::string iflags_sun;
    std::string iflags_xl;
    std::string iflags_ftrace;
 

@@ -6,15 +6,12 @@
 #ifndef OTFTOVTF3_HANDLER_H
 #define OTFTOVTF3_HANDLER_H
 
+#include "config.h"
 
-#ifdef HAVE_CONFIG_H
-#       include "config.h"
-#endif
 
 #include "OTF_inttypes.h"
 
 #include "otf.h"
-
 
 typedef struct {
 
@@ -29,8 +26,6 @@ typedef struct {
 	FILE* outfile;
 
 } Control;
-
-
 
 /* *** Definition handler *** ************************************* */
 

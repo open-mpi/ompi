@@ -1,3 +1,22 @@
+15. Improved C/C++ parsing
+    added support for bonded line-continuation in OpenMP directives.
+    For example
+
+      #pragma omp parallel\
+       private(i)
+
+    is now correctly instrumented. Prior a space or tabulator between
+    the last word and the line-continuation '\' was necessary.
+
+14. Improved Fortran parsing
+    instrument parallel fortran end do loops without OpenMP end do loop pragma.
+    Works for correctly nested do loops with
+    a) f90 END DO's
+    b) f77 labeled continue statements
+    The special case for b) where multiple loops use the same continue
+    statement as end do has restrictions: OPARI can only handle these cases
+    which do NOT require adding extra continue statements.
+
 13. !!!INCOMPATIBLE CHANGE!!!
     POMP interface routines renamed from pomp_type_event to
     POMP_Type_event. Necessary to allow porting to machines

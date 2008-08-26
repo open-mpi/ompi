@@ -16,8 +16,9 @@ fmpilib=
 dynattlib=@VTDYNATTLIB@
 compiler_iflags_gnu=-g -finstrument-functions
 compiler_iflags_intel=-g -finstrument-functions
+compiler_iflags_pathscale=-g -finstrument-functions
 compiler_iflags_pgi=-Mprof=func
-compiler_iflags_phat=
+compiler_iflags_sun=
 compiler_iflags_xl=-qdebug=function_trace
 compiler_iflags_ftrace=-ftrace
 inst_avail=@VT_WRAPPER_AVAIL_INST@

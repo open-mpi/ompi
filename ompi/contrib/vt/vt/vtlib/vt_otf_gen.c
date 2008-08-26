@@ -10,9 +10,7 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #include "vt_otf_gen.h"
 #include "vt_otf_sum.h"
@@ -30,10 +28,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <otf.h>
+#include "otf.h"
 
 #if (defined (VT_MPI) || defined (VT_OMPI))
-#include <mpi.h>
+#include "mpi.h"
 #endif
 
 /*

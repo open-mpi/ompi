@@ -6,16 +6,13 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include "config.h"
+
 
 #include <vector>
 #include <deque>
 #include <map>
 #include <list>
-
-
-#ifdef HAVE_CONFIG_H
-#       include "config.h"
-#endif
 
 #include "OTF_inttypes.h"
 
@@ -23,7 +20,6 @@
 
 
 /* *** function stuff *** ********************************* */
-
 
 struct FunctionCall {
 
@@ -194,7 +190,7 @@ public:
 
 	void sendMessage( uint64_t time, uint32_t receiver, uint32_t procGroup,
 		uint32_t tag, uint32_t msglength, uint32_t source );
-	
+
 	void recvMessage( uint32_t msglength );
 		
 	void matchMessage( uint32_t receiver, uint32_t procGroup, uint32_t tag );
@@ -223,9 +219,7 @@ public:
 	void writeOpenFiles( OTF_Writer* writer, uint64_t time, uint32_t processid ) const;
 };
 
-
 /* *** State *** **************************************** */
-
 
 /** state of a whole trace */
 class State {
@@ -238,7 +232,7 @@ class State {
 	
 	/* maps the files to its filegroupid */
 	std::map< uint32_t, uint32_t> filegroups;
-	
+
 	bool usefunctiongroups;
 	bool usefilegroups;
 	bool doSnapshots;
@@ -265,7 +259,7 @@ public:
 	
 	void sendMessage( uint64_t time, uint32_t sender, uint32_t receiver,
 		uint32_t procGroup, uint32_t tag, uint32_t length, uint32_t source );
-	
+
 	void recvMessage( uint32_t sender, uint32_t receiver, uint32_t procGroup,
 		uint32_t tag, uint32_t msglength );
 
@@ -283,7 +277,6 @@ public:
 	void writeSnapshot( OTF_Writer* writer, uint64_t time ) const;
 	void writeStatistics( OTF_Writer* writer, uint64_t time );
 };
-
 
 #endif /* STATE_H */
 

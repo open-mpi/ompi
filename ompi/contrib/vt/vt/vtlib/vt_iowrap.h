@@ -19,12 +19,10 @@
 #   define EXTERN extern
 #endif
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #if (defined(VT_IOWRAP))
-#include <otf.h>
+#include "otf.h"
 #include "vt_error.h"
 # define VT_ENABLE_IO_TRACING() vt_io_tracing_enabled = 1;
 # define VT_DISABLE_IO_TRACING() vt_io_tracing_enabled = 0;

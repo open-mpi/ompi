@@ -10,9 +10,7 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #include "vt_thrd.h"
 #include "vt_trc.h"
@@ -34,10 +32,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <otf.h>
+#include "otf.h"
 
 #if (defined (VT_MPI) || defined (VT_OMPI))
-#include <mpi.h>
+#include "mpi.h"
 #include "vt_sync.h"
 #endif
 #if (defined (VT_OMPI) || defined (VT_OMP))

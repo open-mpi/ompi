@@ -14,6 +14,7 @@
  * Global variables
  */
 
+int pomp_initialized = 0;
 int pomp_tracing = 0;
 
 /*
@@ -167,6 +168,7 @@ void POMP_Parallel_end(struct ompregdescr* r) {
 }
 
 void POMP_Parallel_fork(struct ompregdescr* r) {
+  if ( !pomp_initialized ) POMP_Init();
   if ( pomp_tracing ) {
     fprintf(stderr, "%3d: fork  parallel\n", omp_get_thread_num());
   }

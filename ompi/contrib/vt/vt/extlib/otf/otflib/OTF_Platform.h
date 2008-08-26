@@ -19,70 +19,38 @@
 #ifndef OTF_PLATFORM_H
 #define OTF_PLATFORM_H
 
+#if defined(_WIN32) /* windows */
+#	include "OTF_Platform_win.h"
+#else /* unix */
+#	include "OTF_Platform_unix.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 /* if you know (for sure) of more compilers supporting __FUNCTION__,
    then add them here */
-#if defined __GNUC__ /* gnu */
-#elif defined _MSC_VER /* ms vs */
-#elif defined __xlC__ /* ibm xlc */
+#if defined(__GNUC__) /* gnu */
+#elif defined(_MSC_VER) /* ms vs */
+#elif defined(__xlC__) /* ibm xlc */
 #else
 
 	/* set __FUNCTION__ to a dummy for compilers not supporting this macro */
-	#define __FUNCTION__ "<unknown function>"
+#	define __FUNCTION__ "<unknown function>"
 
 #endif
 
-
 #ifndef __FILE__
-	#define __FILE__ "<unknown file>"
+#	define __FILE__ "<unknown file>"
 #endif
 
 #ifndef __LINE__
-	#define __LINE__ 0
+#	define __LINE__ 0
 #endif
 
-
-
-#if defined __linux
-
-	#define OTF_fseek fseeko
-	#define OTF_ftell ftello
-
-	#define OTF_snprintf snprintf
-
-#elif defined WIN32 /* windows */
-
-
-	#if defined _MSC_VER /* vs */
-
-		#define HAVE_IO_H
-
-		#define OTF_ftell (uint64_t) _ftelli64
-		#define OTF_fseek(f,off,orig) _fseeki64(f,(__int64)off,orig)
-
-		#define OTF_snprintf _snprintf
-
-		#pragma warning (disable : 4996) /* disable insecurity/deprication warnings */
-
-	#else
-
-		#error "You are using an unsupported compiler on windows."
-
-	#endif
-
-#else /* don't know what to put here */
-
-	#define OTF_fseek fseek
-	#define OTF_ftell ftell
-	
-	#define OTF_snprintf snprintf
-
-#endif
-
-char *OTF_strdup( const char*s );
+char *OTF_basename( char* path );
+char *OTF_strdup( const char* s );
 
 #ifdef __cplusplus
 }

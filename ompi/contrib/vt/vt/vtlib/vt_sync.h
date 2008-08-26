@@ -21,7 +21,7 @@
 
 #include "vt_inttypes.h"
 
-#include <mpi.h>
+#include "mpi.h"
 
 EXTERN int64_t vt_offset(int64_t* ltime, MPI_Comm comm);
 

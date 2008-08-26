@@ -3,20 +3,18 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
+#include "config.h"
+
 
 #include <stdio.h>
-
-#ifdef HAVE_CONFIG_H
-#       include <config.h>
-#endif
 
 #include "OTF_inttypes.h"
 #include "OTF_Platform.h"
 
-#include <otf.h>
+#include "otf.h"
 
 #ifdef HAVE_VTF3
-#include <vtf3.h>
+#include "vtf3.h"
 #endif /* HAVE_VTF3 */
 
 #include "Handler.h"

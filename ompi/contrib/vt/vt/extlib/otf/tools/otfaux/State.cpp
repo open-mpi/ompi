@@ -66,6 +66,7 @@ void ProcessState::sendMessage( uint64_t time, uint32_t receiver,
 	
 	sstatistics.bytes_sent+= msglength;
 	sstatistics.number_sent++;
+
 	
 	
 	sstack.push_back( Send( time, receiver, procGroup, tag, source ) );
@@ -603,6 +604,7 @@ void ProcessState::writeStatistics( OTF_Writer* writer, uint64_t time,
 	}
 	
 	/* write the message summary if any message was sent */
+
 	if ( sstatistics.number_sent > 0 || sstatistics.number_recvd > 0) {
 	
 		OTF_Writer_writeMessageSummary( writer, time /* current time */,

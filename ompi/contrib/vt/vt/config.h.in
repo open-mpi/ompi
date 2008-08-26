@@ -6,6 +6,12 @@
 /* Define to 1 if you have the `atexit' function. */
 #undef HAVE_ATEXIT
 
+/* Define to 1 if you have the <catamount/data.h> header file. */
+#undef HAVE_CATAMOUNT_DATA_H
+
+/* Define to 1 if you have the <catamount/dclock.h> header file. */
+#undef HAVE_CATAMOUNT_DCLOCK_H
+
 /* Define to 1 if you have the `creat64' function. */
 #undef HAVE_CREAT64
 
@@ -14,6 +20,9 @@
 
 /* Define to 1 if you have the `fopen64' function. */
 #undef HAVE_FOPEN64
+
+/* Define to 1 if you have the `fseeko' function. */
+#undef HAVE_FSEEKO
 
 /* Define to 1 if you have the `fseeko64' function. */
 #undef HAVE_FSEEKO64
@@ -138,7 +147,7 @@
 /* Cycle counter (e.g. TSC) */
 #undef TIMER_CYCLE_COUNTER
 
-/* dclock */
+/* Use `dclock' function */
 #undef TIMER_DCLOCK
 
 /* gethrtime */

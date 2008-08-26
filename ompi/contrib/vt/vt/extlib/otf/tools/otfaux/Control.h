@@ -6,18 +6,14 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
+#include "config.h"
 
 #include <set>
 
-
-#ifdef HAVE_CONFIG_H
-#       include "config.h"
-#endif
-
 #include "OTF_inttypes.h"
+#include "otf.h"
 
 #include "State.h"
-#include "otf.h"
 
 
 struct Control {

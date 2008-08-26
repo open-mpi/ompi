@@ -92,9 +92,9 @@ ReadDataFile()
       "compiler", "compiler_flags", "linker_flags", "libs", "includedir",
       "libdir", "opari_bin", "opari_tab_compiler", "opari_tab_compiler_flags",
       "pmpilib", "fmpilib", "dynattlib", "compiler_iflags_gnu",
-      "compiler_iflags_intel", "compiler_iflags_pgi", "compiler_iflags_phat",
-      "compiler_iflags_xl", "compiler_iflags_ftrace", "inst_avail",
-      "inst_default"
+      "compiler_iflags_intel", "compiler_iflags_pathscale", "compiler_iflags_pgi",
+      "compiler_iflags_sun", "compiler_iflags_xl", "compiler_iflags_ftrace",
+      "inst_avail", "inst_default"
    };
    
    std::string data_file = DATADIR"/" + ExeName + "-wrapper-data.txt";
@@ -223,13 +223,17 @@ ReadDataFile()
       {
 	 Properties.iflags_intel = value; 
       }
+      else if( key.compare( "compiler_iflags_pathscale" ) == 0 )
+      {
+         Properties.iflags_pathscale = value;
+      }
       else if( key.compare( "compiler_iflags_pgi" ) == 0 )
       {
 	 Properties.iflags_pgi = value;
       }
-      else if( key.compare( "compiler_iflags_phat" ) == 0 )
+      else if( key.compare( "compiler_iflags_sun" ) == 0 )
       {
-	 Properties.iflags_phat = value;
+	 Properties.iflags_sun = value;
       }
       else if( key.compare( "compiler_iflags_xl" ) == 0 )
       {
@@ -260,10 +264,12 @@ ReadDataFile()
 	       Properties.inst_avail |= INST_TYPE_GNU;
 	    else if( strcmp( token, "intel" ) == 0 )
 	       Properties.inst_avail |= INST_TYPE_INTEL;
+	    else if( strcmp( token, "pathscale" ) == 0 )
+	       Properties.inst_avail |= INST_TYPE_PATHSCALE;
 	    else if( strcmp( token, "pgi" ) == 0 )
 	       Properties.inst_avail |= INST_TYPE_PGI;
-	    else if( strcmp( token, "phat" ) == 0 )
-	       Properties.inst_avail |= INST_TYPE_PHAT;
+	    else if( strcmp( token, "sun" ) == 0 )
+	       Properties.inst_avail |= INST_TYPE_SUN;
 	    else if( strcmp( token, "xl" ) == 0 )
 	       Properties.inst_avail |= INST_TYPE_XL;
 	    else if( strcmp( token, "ftrace" ) == 0 )
@@ -292,10 +298,12 @@ ReadDataFile()
 	    error = !theWrapper->setInstType( INST_TYPE_GNU );
 	 else if( strcmp( value.c_str(), "intel" ) == 0 )
 	    error = !theWrapper->setInstType( INST_TYPE_INTEL );
+	 else if( strcmp( value.c_str(), "pathscale" ) == 0 )
+	    error = !theWrapper->setInstType( INST_TYPE_PATHSCALE );
 	 else if( strcmp( value.c_str(), "pgi" ) == 0 )
 	    error = !theWrapper->setInstType( INST_TYPE_PGI );
-	 else if( strcmp( value.c_str(), "phat" ) == 0 )
-	    error = !theWrapper->setInstType( INST_TYPE_PHAT );
+	 else if( strcmp( value.c_str(), "sun" ) == 0 )
+	    error = !theWrapper->setInstType( INST_TYPE_SUN );
 	 else if( strcmp( value.c_str(), "xl" ) == 0 )
 	    error = !theWrapper->setInstType( INST_TYPE_XL );
 	 else if( strcmp( value.c_str(), "ftrace" ) == 0 )
@@ -387,10 +395,12 @@ ReadEnvironmentVars()
 	 error = !theWrapper->setInstType( INST_TYPE_GNU );
       else if( senv.compare("intel") == 0 )
 	 error = !theWrapper->setInstType( INST_TYPE_INTEL );
+      else if( senv.compare("pathscale") == 0 )
+	 error = !theWrapper->setInstType( INST_TYPE_PATHSCALE );
       else if( senv.compare("pgi") == 0 )
 	 error = !theWrapper->setInstType( INST_TYPE_PGI );
-      else if( senv.compare("phat") == 0 )
-	 error = !theWrapper->setInstType( INST_TYPE_PHAT );
+      else if( senv.compare("sun") == 0 )
+	 error = !theWrapper->setInstType( INST_TYPE_SUN );
       else if( senv.compare("xl") == 0 )
 	 error = !theWrapper->setInstType( INST_TYPE_XL );
       else if( senv.compare("ftrace") == 0 )
@@ -497,10 +507,12 @@ ParseCommandLine( int argc, char ** argv )
 	    error = !theWrapper->setInstType( INST_TYPE_GNU );
 	 else if( arg.compare("intel") == 0 )
 	    error = !theWrapper->setInstType( INST_TYPE_INTEL );
+	 else if( arg.compare("pathscale") == 0 )
+	    error = !theWrapper->setInstType( INST_TYPE_PATHSCALE );
 	 else if( arg.compare("pgi") == 0 )
 	    error = !theWrapper->setInstType( INST_TYPE_PGI );
-	 else if( arg.compare("phat") == 0 )
-	    error = !theWrapper->setInstType( INST_TYPE_PHAT );
+	 else if( arg.compare("sun") == 0 )
+	    error = !theWrapper->setInstType( INST_TYPE_SUN );
 	 else if( arg.compare("xl") == 0 )
 	    error = !theWrapper->setInstType( INST_TYPE_XL );
 	 else if( arg.compare("ftrace") == 0 )
@@ -839,9 +851,11 @@ Wrapper::showUsageText()
 	     << std::endl
 	     << "       intel             ... Intel (version >= 10.x) ..."
 	     << std::endl
+	     << "       pathscale         ... Pathscale (version >= 3.1) ..."
+	     << std::endl
 	     << "       pgi               ... Portland Group (PGI) ..."
 	     << std::endl
-	     << "       phat              ... SUN Fortran 90 ..."
+	     << "       sun               ... SUN Fortran 90 ..."
 	     << std::endl
 	     << "       xl                ... IBM ..."
 	     << std::endl
@@ -859,10 +873,12 @@ Wrapper::showUsageText()
       std::cout << "gnu";
    else if( std::string(DEFAULT_COMPINST).compare( "intel" ) == 0 )
       std::cout << "intel";
+   else if( std::string(DEFAULT_COMPINST).compare( "pathscale" ) == 0 )
+      std::cout << "pathscale";
    else if( std::string(DEFAULT_COMPINST).compare( "pgi" ) == 0 )
       std::cout << "pgi";
-   else if( std::string(DEFAULT_COMPINST).compare( "phat" ) == 0 )
-      std::cout << "phat";
+   else if( std::string(DEFAULT_COMPINST).compare( "sun" ) == 0 )
+      std::cout << "sun";
    else if( std::string(DEFAULT_COMPINST).compare( "xl" ) == 0 )
       std::cout << "xl";
    else if( std::string(DEFAULT_COMPINST).compare( "ftrace" ) == 0 )
@@ -1018,11 +1034,14 @@ Wrapper::showInfo()
       case INST_TYPE_INTEL:
 	 std::cout << "intel" << std::endl;
 	 break;
+      case INST_TYPE_PATHSCALE:
+	 std::cout << "pathscale" << std::endl;
+	 break;
       case INST_TYPE_PGI:
 	 std::cout << "pgi" << std::endl;
 	 break;
-      case INST_TYPE_PHAT:
-	 std::cout << "phat" << std::endl;
+      case INST_TYPE_SUN:
+	 std::cout << "sun" << std::endl;
 	 break;
       case INST_TYPE_XL:
 	 std::cout << "xl" << std::endl;
@@ -1051,10 +1070,12 @@ Wrapper::showInfo()
       std::cout << " gnu";
    if( isInstAvail( INST_TYPE_INTEL ) )
       std::cout << " intel";
+   if( isInstAvail( INST_TYPE_PATHSCALE ) )
+      std::cout << " pathscale";
    if( isInstAvail( INST_TYPE_PGI ) )
       std::cout << " pgi";
-   if( isInstAvail( INST_TYPE_PHAT ) )
-      std::cout << " phat";
+   if( isInstAvail( INST_TYPE_SUN ) )
+      std::cout << " sun";
    if( isInstAvail( INST_TYPE_XL ) )
       std::cout << " xl";
    if( isInstAvail( INST_TYPE_FTRACE ) )
@@ -1353,8 +1374,8 @@ Wrapper::run()
 			   target.c_str() ) == -1 )
 	       {
 		  std::cerr << ExeName << ": error: could not rename "
-			    << Properties.vec_opari_mfiles_obj[i].c_str()
-			    << " to " << target.c_str() << std::endl
+			    << Properties.vec_opari_mfiles_obj[i]
+			    << " to " << target << std::endl
 			    << strerror(errno) << std::endl;
 	       }
 	    }
@@ -1392,11 +1413,14 @@ Wrapper::setInstType( const InstTypeT type )
       case INST_TYPE_INTEL:
 	 Properties.comp_iflags = Properties.iflags_intel;
 	 break;
+      case INST_TYPE_PATHSCALE:
+	 Properties.comp_iflags = Properties.iflags_pathscale;
+	 break;
       case INST_TYPE_PGI:
 	 Properties.comp_iflags = Properties.iflags_pgi;
 	 break;
-      case INST_TYPE_PHAT:
-	 Properties.comp_iflags = Properties.iflags_phat;
+      case INST_TYPE_SUN:
+	 Properties.comp_iflags = Properties.iflags_sun;
 	 break;
       case INST_TYPE_XL:
 	 Properties.comp_iflags = Properties.iflags_xl;

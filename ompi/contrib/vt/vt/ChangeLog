@@ -213,3 +213,15 @@
 	- added configure option '--[enable|disable]-binaries' to control
 	  building of binaries (useful for multi-lib installations)
 
+5.4.6
+	- updated version of internal OTF to 1.3.11 (see extlib/otf/ChangeLog)
+	- added support for Cray CNL
+	- added support for automatic instrumentation by using Pathscale
+	  compiler (version 3.1 or higher required)
+	- fixed a bug in vtfilter where the tool dies when a counter appears
+	  outside of function
+	- fixed faulty shell comparison in configure which may cause an	infinite
+	  loop
+	- bugfix: added configure check for I/O functions functions 'fseeko()'
+	  (this function is not available on NEC SX platforms)
+	- enhancement to OPARI (see tools/opari/ChangeLog:14,15)

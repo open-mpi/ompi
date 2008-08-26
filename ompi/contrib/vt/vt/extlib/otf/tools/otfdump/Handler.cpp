@@ -7,7 +7,6 @@
 
 #include "Handler.h"
 
-
 int handleDefinitionComment( void* userData, uint32_t stream,
 	const char* comment ) {
 

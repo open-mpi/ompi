@@ -20,9 +20,7 @@ is available on a platform, e.g. for NEC SX6
 
 */
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #if defined(HAVE_STDINT_H) && HAVE_STDINT_H
 #  include <stdint.h>

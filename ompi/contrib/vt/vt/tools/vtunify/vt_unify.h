@@ -13,9 +13,7 @@
 #ifndef _VT_UNIFY_H_
 #define _VT_UNIFY_H_
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #include "vt_inttypes.h"
 

@@ -286,7 +286,8 @@ int handleFiltCounter( void* userData,
 
 	Process& proc = fha->t2p.find( process )->second;
 	
-	if( proc.fstack.top() == false ) return OTF_RETURN_OK;
+	if( proc.fstack.size() > 0 && proc.fstack.top() == false )
+			return OTF_RETURN_OK;
 
 	return OTF_WStream_writeCounter(fha->wstream,time,process,counter,value) == 0 ?
 		OTF_RETURN_ABORT : OTF_RETURN_OK;

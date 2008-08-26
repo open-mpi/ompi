@@ -632,7 +632,7 @@ int OTF_Handler_Counter( void* userData,
  * @param time        Time when collective operation was entered by member.
  * @param process     Process identifier i.e. collective member. 
  * @param collective  Collective identifier as defined with
- *                    OTF_Handler_eDefCollectiveOperation(). 
+ *                    OTF_Handler_DefCollectiveOperation(). 
  * @param procGroup   Group of processes participating in this collective.
  * @param rootProc    Root process if != 0.
  * @param sent        Data volume sent by member or 0.
@@ -943,15 +943,15 @@ int OTF_Handler_FunctionGroupSummary( void* userData,
  *
  * \ingroup handler
  */
-int OTF_Handler_MessageSummary( void* userData, 
-                                uint64_t time, 
-                                uint32_t process, 
+int OTF_Handler_MessageSummary( void* userData,
+                                uint64_t time,
+                                uint32_t process,
                                 uint32_t peer,
                                 uint32_t comm,
-                                uint32_t type,  
-                                uint64_t sentNumber, 
-                                uint64_t receivedNumber, 
-                                uint64_t sentBytes, 
+                                uint32_t type,
+                                uint64_t sentNumber,
+                                uint64_t receivedNumber,
+                                uint64_t sentBytes,
                                 uint64_t receivedBytes );
 
 

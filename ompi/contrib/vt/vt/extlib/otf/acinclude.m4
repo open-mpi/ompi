@@ -306,7 +306,7 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 			py_version=`$PYTHON -c "from distutils.sysconfig import *; \
 				from string import join; \
 				print join(get_config_vars('VERSION'))" 2> /dev/null`
-			if test "$py_version" == "[None]" -o -z "$py_version"; then
+			if test "$py_version" = "[None]" -o -z "$py_version"; then
 				if test -n "$PYTHON_VERSION"; then
 					py_version=$PYTHON_VERSION
 				else
@@ -320,7 +320,7 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 				print '-L' + get_python_lib(0,1), \
 					'-lpython';" 2> /dev/null`$py_version
 		fi
-		if test ! "$PYTHON_LDFLAGS" == "$py_version"; then
+		if test ! "$PYTHON_LDFLAGS" = "$py_version"; then
 			AC_MSG_RESULT([$PYTHON_LDFLAGS])
 		else
 			AC_MSG_RESULT([no])

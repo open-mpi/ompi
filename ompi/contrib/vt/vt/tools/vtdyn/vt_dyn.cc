@@ -10,9 +10,7 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,14 +25,14 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include <BPatch.h>
-#include <BPatch_function.h>
-#include <BPatch_image.h>
-#include <BPatch_module.h>
-#include <BPatch_process.h>
-#include <BPatch_snippet.h>
-#include <BPatch_statement.h>
-#include <BPatch_Vector.h>
+#include "BPatch.h"
+#include "BPatch_function.h"
+#include "BPatch_image.h"
+#include "BPatch_module.h"
+#include "BPatch_process.h"
+#include "BPatch_snippet.h"
+#include "BPatch_statement.h"
+#include "BPatch_Vector.h"
 
 #include "vt_dyn.h"
 

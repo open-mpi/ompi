@@ -11,7 +11,7 @@
  **/
 
 #include <string.h>
-#include <otf.h>
+#include "otf.h"
 #if (defined (VT_OMPI) || defined (VT_OMP))
   #include "opari_omp.h"
 #endif

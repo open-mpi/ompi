@@ -1,7 +1,7 @@
 INCLUDES = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
 
 if AMBUILDBINARIES
-noinst_PROGRAMS = \
+bin_PROGRAMS = \
 	otfdump
 endif
 
