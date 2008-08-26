@@ -6,12 +6,10 @@
 #ifndef OTFTOVTF3_TREEHASH_H
 #define OTFTOVTF3_TREEHASH_H
 
+#include "config.h"
+
 
 #include <assert.h>
-
-#ifdef HAVE_CONFIG_H
-#       include <config.h>
-#endif
 
 #include "OTF_inttypes.h"
 #include "OTF_Platform.h"

@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-#include <vtf3.h>
+#include "vtf3.h"
 
 #include "Treehash.h"
 

@@ -10,9 +10,7 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #include "vt_pform.h"
 #include "vt_trc.h"

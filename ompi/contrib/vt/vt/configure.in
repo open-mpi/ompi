@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.5, service@vampir.eu)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.5)
+AC_INIT(VampirTrace, 5.4.6, service@vampir.eu)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.6)
 AC_CONFIG_SRCDIR(config.h.in)
 AM_CONFIG_HEADER(config.h)
 
@@ -27,7 +27,7 @@ AC_CANONICAL_HOST
 AS_IF([test x"$prefix" = "xNONE"], [prefix="$ac_default_prefix"])
 AS_IF([test x"$exec_prefix" = "xNONE"], [exec_prefix="$prefix"])
 AS_IF([test x"$datarootdir" = x -o "$datarootdir" = "\${prefix}/share"],
-[datarootdir="\${prefix}/share/\${PACKAGE_TARNAME}"])
+[datarootdir="\${prefix}/share/vampirtrace"])
 AS_IF([test x"$docdir" = x -o "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
 

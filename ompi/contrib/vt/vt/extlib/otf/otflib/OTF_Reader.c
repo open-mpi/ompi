@@ -3,9 +3,8 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+
 
 #include <assert.h>
 
@@ -920,7 +919,6 @@ int OTF_Heap_checksorted( OTF_Heap* heap ) {
 
 
 int OTF_Reader_init( OTF_Reader* reader ) {
-
 
 	reader->namestub= NULL;
 

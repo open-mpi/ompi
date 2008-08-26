@@ -34,9 +34,9 @@ case. */
  *
  * Common includes
  * \code
- * #include <otf.h>
  * #include <stdio.h>
  * #include <assert.h>
+ * #include "otf.h"
  * \endcode
  *
  *

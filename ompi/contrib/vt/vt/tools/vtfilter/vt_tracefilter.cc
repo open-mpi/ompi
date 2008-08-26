@@ -34,6 +34,7 @@
 	newly created filter file.
 */
 
+#include "config.h"
 
 #include "vt_filter.h"
 #include "vt_otfhandler.h"

@@ -3,9 +3,9 @@
 
 
 AC_PREREQ(2.57)
-AC_INIT(OTF, 1.3.10, andreas.knuepfer@tu-dresden.de )
+AC_INIT(OTF, 1.3.11, andreas.knuepfer@tu-dresden.de )
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(OTF, 1.3.10)
+AM_INIT_AUTOMAKE(OTF, 1.3.11)
 AC_CONFIG_SRCDIR([config.h.in])
 AM_CONFIG_HEADER(config.h)
 
@@ -52,7 +52,7 @@ AC_SUBST([have_stdint_h])
 AC_SUBST([have_inttypes_h])
 
 # Checks for library functions.
-AC_CHECK_FUNCS([strdup])
+AC_CHECK_FUNCS([fseeko ftello strdup])
 
 # Checks for typedefs, structures, and compiler characteristics.
 # AC_C_CONST ### do not use this if you want to do C++ programs because it might define 'const'
@@ -74,19 +74,19 @@ sizeof_long=$ac_cv_sizeof_long
 AC_SUBST([sizeof_long])
 
 AC_CONFIG_FILES([Makefile
-	tools/Makefile
-	tools/otfdump/Makefile
-	tools/otfmerge/Makefile
-	tools/vtf2otf/Makefile
-	tools/otf2vtf/Makefile
-	tools/otfaux/Makefile
 	otflib/Makefile
+	otflib/OTF_inttypes_unix.h
 	otflib_py/Makefile
-	otflib/OTF_inttypes.h
+	tools/Makefile
+	tools/otfaux/Makefile
 	tools/otfcompress/Makefile
 	tools/otfconfig/Makefile
+	tools/otfdump/Makefile
+	tools/otfmerge/Makefile
+	tools/otf2vtf/Makefile
+	tools/vtf2otf/Makefile
+	docu/Makefile
 ])
-#	tools/otfdump/Makefile
 
 ## workaround for stupid warning caused by newer autoconf versions
 AC_DEFUN([AC_DATAROOTDIR_CHECKED])

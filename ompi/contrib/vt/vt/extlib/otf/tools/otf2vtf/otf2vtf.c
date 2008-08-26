@@ -10,11 +10,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <otf.h>
 #include "OTF_Platform.h"
+#include "otf.h"
 
 #ifdef HAVE_VTF3
-#include <vtf3.h>
+#include "vtf3.h"
 #endif /* HAVE_VTF3 */
 
 #include "Handler.h"

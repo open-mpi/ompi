@@ -1,15 +1,14 @@
 if AMHAVEPYTHONSWIG
-SUBDIRS = \
-	otflib \
-	otflib_py \
-	tools
+OTFLIB_PY = otflib_py
 else
+OTFLIB_PY =
+endif
+
 SUBDIRS = \
 	otflib \
-	tools
-endif
+	$(OTFLIB_PY) \
+	tools \
+	docu
+
 EXTRA_DIST= \
-	docu/api/specification.pdf \
-	docu/tools/otftools.pdf \
-	docu/doxygen.conf \
 	otf_vc05.sln

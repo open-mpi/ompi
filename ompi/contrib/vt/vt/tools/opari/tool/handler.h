@@ -1,9 +1,9 @@
 /****************************************************************************
 **  SCALASCA    http://www.scalasca.org/                                   **
-**  KOJAK       http://www.fz-juelich.de/zam/kojak/                        **
+**  KOJAK       http://www.fz-juelich.de/jsc/kojak/                        **
 *****************************************************************************
-**  Copyright (c) 1998-2007                                                **
-**  Forschungszentrum Juelich, Zentralinstitut fuer Angewandte Mathematik  **
+**  Copyright (c) 1998-2008                                                **
+**  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
 **  See the file COPYRIGHT in the package base directory for details       **
 ****************************************************************************/

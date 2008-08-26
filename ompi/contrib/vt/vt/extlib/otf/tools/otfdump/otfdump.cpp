@@ -11,8 +11,8 @@
 #include <stdio.h>
 
 #include <vector>
-using namespace std;
 
+using namespace std;
 
 #if SIZEOF_LONG == 4
 #  define ATOL8 atoll

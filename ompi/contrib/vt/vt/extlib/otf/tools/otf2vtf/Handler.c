@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <otf.h>
+#include "otf.h"
 
-#include <vtf3.h>
+#include "vtf3.h"
 
 #include "Treehash.h"
 

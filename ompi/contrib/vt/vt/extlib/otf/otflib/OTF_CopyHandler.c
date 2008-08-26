@@ -3,9 +3,7 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 
 #include "OTF_Platform.h"

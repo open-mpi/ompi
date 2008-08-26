@@ -13,9 +13,7 @@
 #ifndef _VT_FNMATCH_H
 #define _VT_FNMATCH_H
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #if defined(HAVE_FNMATCH_H) && HAVE_FNMATCH_H
 #  include <fnmatch.h>

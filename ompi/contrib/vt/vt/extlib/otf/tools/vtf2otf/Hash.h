@@ -6,14 +6,11 @@
 #ifndef HASH_H
 #define HASH_H
 
-
-#define HASHSIZE 1024
-
-#ifdef HAVE_CONFIG_H
-#       include <config.h>
-#endif
+#include "config.h"
 
 #include "OTF_inttypes.h"
+
+#define HASHSIZE 1024
 
 
 struct struct_SubEntry {

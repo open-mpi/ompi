@@ -10,9 +10,7 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #include "vt_otf_gen.h"
 #include "vt_otf_sum.h"
@@ -24,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <otf.h>
+#include "otf.h"
 
 #define VTSUM_STACK_BSIZE 100
 #define VTSUM_STAT_BSIZE  500

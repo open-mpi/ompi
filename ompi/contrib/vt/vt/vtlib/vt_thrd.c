@@ -25,7 +25,7 @@
 
 
 #if (defined (VT_MPI) || defined (VT_OMPI))
-#include <mpi.h>
+#include "mpi.h"
 #include "vt_sync.h"
 #endif
 #if (defined (VT_OMPI) || defined (VT_OMP))
