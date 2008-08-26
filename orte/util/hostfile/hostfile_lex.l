@@ -124,6 +124,8 @@ username           { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RELATIVE; }
 \+[eE][\:][0-9]+   { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RELATIVE; }
+\+[eE]             { orte_util_hostfile_value.sval = yytext;
+                     return ORTE_HOSTFILE_RELATIVE; }
 
 
 [0-9]+             { orte_util_hostfile_value.ival = atol(yytext); 

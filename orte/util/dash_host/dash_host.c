@@ -157,6 +157,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     orte_node_t *node, **nodepool;
     int nodeidx;
     int num_empty=0;
+    opal_list_t keep;
     bool want_all_empty = false;
     
     /* if the incoming node list is empty, then there
@@ -184,10 +185,13 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                     if (NULL != (cptr = strchr(mini_map[k], ':'))) {
                         /* the colon indicates a specific # are requested */
                         cptr++; /* step past : */
-                        num_empty += strtol(cptr, NULL, 10);
+                        /* put a marker into the list */
+                        cptr--;
+                        *cptr = '*';
+                        opal_argv_append_nosize(&mapped_nodes, cptr);
                     } else {
-                        /* want them all - set num_empty to max */
-                        num_empty = INT_MAX;
+                        /* add a marker to the list */
+                        opal_argv_append_nosize(&mapped_nodes, "*");
                         want_all_empty = true;
                     }
                 } else if ('n' == mini_map[k][1] ||
@@ -246,50 +250,83 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     
     /* we found some info - filter what is on the list...
      * i.e., go through the list and remove any nodes that
-     * were -not- included on the -host list
+     * were -not- included on the -host list.
+     *
+     * NOTE: The following logic is based on knowing that
+     * any node can only be included on the incoming
+     * nodes list ONCE.
      */
+    
     len_mapped_node = opal_argv_count(mapped_nodes);
-    item = opal_list_get_first(nodes);
-    while (item != opal_list_get_end(nodes)) {
-        /* hang on to next item in case this one gets removed */
-        next = opal_list_get_next(item);
-        node = (orte_node_t*)item;
-        /* search -host list to see if this one is found */
-        found = false;
-        for (i = 0; i < len_mapped_node; ++i) {
-            /* we have a match if one of two conditions is met:
+    /* setup a working list so we can put the final list
+     * of nodes in order. This way, if the user specifies a
+     * set of nodes, we will use them in the order in which
+     * they were specifed. Note that empty node requests
+     * will always be appended to the end
+     */
+    OBJ_CONSTRUCT(&keep, opal_list_t);
+    
+    for (i = 0; i < len_mapped_node; ++i) {
+        /* check if we are supposed to add some number of empty
+         * nodes here
+         */
+        if ('*' == mapped_nodes[i][0]) {
+            /* if there is a number after the '*', then we are
+             * to insert a specific # of nodes
+             */
+            if ('\0' == mapped_nodes[i][1]) {
+                /* take all empty nodes from the list */
+                num_empty = INT_MAX;
+            } else {
+                /* extract number of nodes to take */
+                num_empty = strtol(&mapped_nodes[i][1], NULL, 10);
+            }
+            /* search for empty nodes and take them */
+            item = opal_list_get_first(nodes);
+            while (0 < num_empty && item != opal_list_get_end(nodes)) {
+                next = opal_list_get_next(item);  /* save this position */
+                node = (orte_node_t*)item;
+                /* see if this node is empty */
+                if (0 == node->slots_inuse) {
+                    /* remove item from list */
+                    opal_list_remove_item(nodes, item);
+                    /* xfer to keep list */
+                    opal_list_append(&keep, item);
+                    --num_empty;
+                }
+                item = next;
+            }
+        } else {
+            /* we are looking for a specific node on the list
+             * we have a match if one of two conditions is met:
              * 1. the node_name and mapped_nodes directly match
              * 2. the node_name is the local system name AND
              *    either the mapped_node is "localhost" OR it
              *    is a local interface as found by opal_ifislocal
              */
-            if (NULL != mapped_nodes[i] &&
-                (0 == strcmp(node->name, mapped_nodes[i]) ||
-                 (0 == strcmp(node->name, orte_process_info.nodename) &&
-                  (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i]))))) {
-                found = true;  /* found it - leave it alone */
-                free(mapped_nodes[i]);
-                mapped_nodes[i] = NULL;
+            item = opal_list_get_first(nodes);
+            while (item != opal_list_get_end(nodes)) {
+                next = opal_list_get_next(item);  /* save this position */
+                node = (orte_node_t*)item;
+                /* search -host list to see if this one is found */
+                found = false;
+                if ((0 == strcmp(node->name, mapped_nodes[i]) ||
+                    (0 == strcmp(node->name, orte_process_info.nodename) &&
+                    (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i]))))) {
+                    /* remove item from list */
+                    opal_list_remove_item(nodes, item);
+                    /* xfer to keep list */
+                    opal_list_append(&keep, item);
+                    break;
+                }
+                item = next;
             }
         }
-        if (!found) {
-            /* if this node wasn't found on the list of explicitly called-out
-             * nodes, see if we wanted empty nodes and if this one is empty
-             */
-            if (0 < num_empty && 0 == node->slots_inuse) {
-                /* both true - keep this one */
-                found = true;
-                --num_empty;
-            }
-        }
-        
-        if (!found) {
-            opal_list_remove_item(nodes, item);
-            OBJ_RELEASE(item);
-        }
-        item = next;    /* move on */
+        /* done with the mapped entry */
+        free(mapped_nodes[i]);
+        mapped_nodes[i] = NULL;
     }
-    
+
     /* was something specified that was -not- found? */
     for (i=0; i < len_mapped_node; i++) {
         if (NULL != mapped_nodes[i]) {
@@ -299,6 +336,17 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
             goto cleanup;
         }
     }
+    
+    /* clear the rest of the nodes list */
+    while (NULL != (item = opal_list_remove_first(nodes))) {
+        OBJ_RELEASE(item);
+    }
+    
+    /* the nodes list has been cleared - rebuild it in order */
+    while (NULL != (item = opal_list_remove_first(&keep))) {
+        opal_list_append(nodes, item);
+    }
+    
     /* did they ask for more than we could provide */
     if (!want_all_empty && 0 < num_empty) {
         orte_show_help("help-dash-host.txt", "dash-host:not-enough-empty",
