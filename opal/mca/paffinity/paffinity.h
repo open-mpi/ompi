@@ -41,17 +41,45 @@
  * selected component before invoking function pointers).  If there is
  * no selected component, they return an appropriate error code.
  *
+ * In the paffinity interface, we make the distinction between LOGICAL
+ * and PHYSICAL processors.  LOGICAL processors are defined to have
+ * some corresponding PHYSICAL processor that both exists and is
+ * currently online.  LOGICAL processors numbered countiguously
+ * starting with 0.  PHYSICAL processors are numbered according to the
+ * underlying operating system; they are represented by integers, but
+ * no guarantees are made about their values.
+ *
+ * Hence, LOGICAL processor IDs are convenient for humans and are in
+ * the range of [0,N-1] (assuming N processors are currently online).
+ * Each LOGICAL processor has a 1:1 relationship with a PHYSICAL
+ * processor, but the PHYSICAL processor's ID can be any unique
+ * integer value.
+ * 
+ * ***NOTE*** Obtaining information about socket/core IDs is not well
+ * supported in many OS's.  Programmers using this paffinity interface
+ * should fully expect to sometimes get OPAL_ERR_NOT_SUPPORTED back
+ * when calling such functions.
+
  * General scheme
  *
  * The component has one function: query().  It simply returns a
  * priority (for the unlikely event where there are multiple
  * components available on a given platform).
  *
- * The module has three functions:
+ * The module has the following functions:
  *
  * - module_init: initialze the module
  * - set: set this process's affinity to a specific processor set
  * - get: get this process's processor affinity set
+ * - map physical (socket ID, core ID) -> physical processor ID
+ * - map physical processor ID -> physical (socket ID, core ID)
+ * - get the number of logical processors
+ * - get the number of logical sockets
+ * - get the number of logical cores on a specific socket
+ * - map logical processor ID -> physical processor ID
+ * - map logical socket ID -> physical socket ID
+ * - map physical socket ID, logical core ID -> physical core ID
+ * - module_finalize: finalize the module
  */
 
 #ifndef OPAL_PAFFINITY_H
@@ -145,63 +173,90 @@ typedef int (*opal_paffinity_base_module_init_1_1_0_fn_t)(void);
 
 /**
  * Module function to set this process' affinity to a specific set of
- * [virtual] CPUs.
+ * PHYSICAL CPUs.
  */
 typedef int (*opal_paffinity_base_module_set_fn_t)(opal_paffinity_base_cpu_set_t cpumask);
 
 
 /**
  * Module function to get this process' affinity to a specific set of
- * [virtual] CPUs.  Returns OPAL_ERR_NOT_FOUND if
+ * PHYSICAL CPUs.  Returns OPAL_ERR_NOT_FOUND if
  * opal_paffinity_base_module_set_fn_t() was not previously invoked in
  * this process.
  */
 typedef int (*opal_paffinity_base_module_get_fn_t)(opal_paffinity_base_cpu_set_t *cpumask);
 
 /**
- * Provides mapping socket:core -> processor id. currently
- * supported only in Linux hosts
+ * Returns mapping of PHYSICAL socket:core -> PHYSICAL processor id.
  * 
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * supported
  */
-typedef int (*opal_paffinity_base_module_map_to_processor_id_fn_t)(int socket, int core, int *processor_id);
+typedef int (*opal_paffinity_base_module_get_map_to_processor_id_fn_t)(int physical_socket,
+                                                                       int physical_core,
+                                                                       int *physical_processor_id);
 
 /**
- * Provides mapping processor id -> socket:core. currently
- * supported only in Linux hosts
+ * Provides mapping of PHYSICAL processor id -> PHYSICAL socket:core.
  * 
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * supported
  */
-typedef int (*opal_paffinity_base_module_map_to_socket_core_fn_t)(int processor_id, int *socket, int *core);
+typedef int (*opal_paffinity_base_module_get_map_to_socket_core_fn_t)(int physical_processor_id,
+                                                                      int *physical_socket,
+                                                                      int *physical_core);
 
 /**
- * Provides highest processor id number in a host. currently
- * supported only in Linux hosts
+ * Provides number of LOGICAL processors in a host.
  * 
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * supported
  */
-typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_processors, int *max_processor_id);
+typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_processors);
 
 /**
- * Provides the number of sockets in a host. currently supported
+ * Provides the number of LOGICAL sockets in a host.
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supported
+ */
+typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets);
+
+/**
+ * Provides the number of LOGICAL cores in a PHYSICAL socket. currently supported
  * only in Linux hosts
  * 
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supporeted (solaris, windows, etc...)
  */
-typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets, int *max_socket_num);
+typedef int (*opal_paffinity_base_module_get_core_info_fn_t)(int physical_socket, int *num_cores);
 
 /**
- * Provides the number of cores in a socket. currently supported
- * only in Linux hosts
+ * Return the PHYSICAL processor id that corresponds to the
+ * given LOGICAL processor id
+ *
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_get_physical_processor_id_fn_t)(int logical_processor_id);
+
+/**
+ * Return the PHYSICAL socket id that corresponds to the given
+ * LOGICAL socket id
  * 
  * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supporeted (solaris, windows, etc...)
  */
-typedef int (*opal_paffinity_base_module_get_core_info_fn_t)(int socket, int *num_cores, int *max_core_num);
+typedef int (*opal_paffinity_base_module_get_physical_socket_id_fn_t)(int logical_socket_id);
+
+/**
+ * Return the PHYSICAL core id that corresponds to the given LOGICAL
+ * core id on the given PHYSICAL socket id
+ * 
+ * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supporeted (solaris, windows, etc...)
+ */
+typedef int (*opal_paffinity_base_module_get_physical_core_id_fn_t)(int physical_socket_id, int logical_core_id);
 
 
 /**
@@ -232,31 +287,40 @@ typedef struct opal_paffinity_base_component_2_0_0_t opal_paffinity_base_compone
  */
 struct opal_paffinity_base_module_1_1_0_t {
     /** Module initialization function */
-    opal_paffinity_base_module_init_1_1_0_fn_t paff_module_init;
+    opal_paffinity_base_module_init_1_1_0_fn_t                  paff_module_init;
 
     /** Set this process' affinity */
-    opal_paffinity_base_module_set_fn_t paff_module_set;
+    opal_paffinity_base_module_set_fn_t                         paff_module_set;
 
     /** Get this process' affinity */
-    opal_paffinity_base_module_get_fn_t paff_module_get;
+    opal_paffinity_base_module_get_fn_t                         paff_module_get;
 
     /** Map socket:core to processor ID */
-    opal_paffinity_base_module_map_to_processor_id_fn_t paff_map_to_processor_id;
+    opal_paffinity_base_module_get_map_to_processor_id_fn_t     paff_get_map_to_processor_id;
 
     /** Map processor ID to socket:core */
-    opal_paffinity_base_module_map_to_socket_core_fn_t  paff_map_to_socket_core;
+    opal_paffinity_base_module_get_map_to_socket_core_fn_t      paff_get_map_to_socket_core;
 
     /** Return the max processor ID */
-    opal_paffinity_base_module_get_processor_info_fn_t paff_get_processor_info;
+    opal_paffinity_base_module_get_processor_info_fn_t          paff_get_processor_info;
 
     /** Return the max socket number */
-    opal_paffinity_base_module_get_socket_info_fn_t paff_get_socket_info;
+    opal_paffinity_base_module_get_socket_info_fn_t             paff_get_socket_info;
 
     /** Return the max core number */
-    opal_paffinity_base_module_get_core_info_fn_t paff_get_core_info;
+    opal_paffinity_base_module_get_core_info_fn_t               paff_get_core_info;
 
+    /* Return physical processor id */
+    opal_paffinity_base_module_get_physical_processor_id_fn_t   paff_get_physical_processor_id;
+    
+    /* Return physical socket id */
+    opal_paffinity_base_module_get_physical_socket_id_fn_t      paff_get_physical_socket_id;
+    
+    /* Return physical core id */
+    opal_paffinity_base_module_get_physical_core_id_fn_t        paff_get_physical_core_id;
+    
     /** Shut down this module */
-    opal_paffinity_base_module_finalize_fn_t paff_module_finalize;
+    opal_paffinity_base_module_finalize_fn_t                    paff_module_finalize;
 };
 /**
  * Convenience typedef

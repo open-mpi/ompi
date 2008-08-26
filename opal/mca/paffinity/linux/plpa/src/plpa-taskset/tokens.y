@@ -196,19 +196,20 @@ static void cpu_set(PLPA_NAME(cpu_set_t) *out, int pos)
 
 static void cpu_set_all(PLPA_NAME(cpu_set_t) *out, id_type_t type)
 {
-    int i, max_id, max_id_num, s, c;
+    int i, max_num, max_id, exists, online;
     PLPA_CPU_ZERO(out);
 
-    /* Only set processor ID's that exist */
+    /* Only set processor ID's that exist and are online */
     if (ALL == type) {
-        max_id_num = PLPA_BITMASK_CPU_MAX;
+        max_id = PLPA_BITMASK_CPU_MAX;
     } else if (PROCESSOR == type) {
-        plpa_get_processor_info(&max_id, &max_id_num);
+        PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_ONLINE),
+                                      &max_num, &max_id);
     }
 
-    for (i = 0; i <= max_id_num; ++i) {
-        if (ALL == type ||
-            (PROCESSOR == type && 0 == plpa_map_to_socket_core(i, &s, &c))) {
+    for (i = 0; i <= max_id; ++i) {
+        if (0 == PLPA_NAME(get_processor_flags)(i, &exists, &online) &&
+            exists && online) {
             PLPA_CPU_SET(i, out);
         }
     }
@@ -216,19 +217,20 @@ static void cpu_set_all(PLPA_NAME(cpu_set_t) *out, id_type_t type)
 
 static void cpu_set_even(PLPA_NAME(cpu_set_t) *out, id_type_t type)
 {
-    int i, max_id, max_id_num, s, c;
+    int i, max_num, max_id, exists, online;
     PLPA_CPU_ZERO(out);
 
-    /* Only set processor ID's that exist */
+    /* Only set processor ID's that exist and are online */
     if (ALL == type) {
-        max_id_num = PLPA_BITMASK_CPU_MAX;
+        max_id = PLPA_BITMASK_CPU_MAX;
     } else if (PROCESSOR == type) {
-        plpa_get_processor_info(&max_id, &max_id_num);
+        PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_ONLINE),
+                                      &max_num, &max_id);
     }
 
-    for (i = 0; i <= max_id_num; i += 2) {
-        if (ALL == type ||
-            (PROCESSOR == type && 0 == plpa_map_to_socket_core(i, &s, &c))) {
+    for (i = 0; i <= max_id; i += 2) {
+        if (0 == PLPA_NAME(get_processor_flags)(i, &exists, &online) &&
+            exists && online) {
             PLPA_CPU_SET(i, out);
         }
     }
@@ -236,19 +238,20 @@ static void cpu_set_even(PLPA_NAME(cpu_set_t) *out, id_type_t type)
 
 static void cpu_set_odd(PLPA_NAME(cpu_set_t) *out, id_type_t type)
 {
-    int i, max_id, max_id_num, s, c;
+    int i, max_num, max_id, exists, online;
     PLPA_CPU_ZERO(out);
 
     /* Only set processor ID's that exist */
     if (ALL == type) {
-        max_id_num = PLPA_BITMASK_CPU_MAX;
+        max_id = PLPA_BITMASK_CPU_MAX;
     } else if (PROCESSOR == type) {
-        plpa_get_processor_info(&max_id, &max_id_num);
+        PLPA_NAME(get_processor_data)(PLPA_NAME_CAPS(COUNT_ONLINE),
+                                      &max_num, &max_id);
     }
 
-    for (i = 1; i <= max_id_num; i += 2) {
-        if (ALL == type ||
-            (PROCESSOR == type && 0 == plpa_map_to_socket_core(i, &s, &c))) {
+    for (i = 1; i <= max_id; i += 2) {
+        if (0 == PLPA_NAME(get_processor_flags)(i, &exists, &online) &&
+            exists && online) {
             PLPA_CPU_SET(i, out);
         }
     }
@@ -297,7 +300,7 @@ static void sc_merge(PLPA_NAME(cpu_set_t) *out,
         exit(1);
     }
 
-    if (0 != plpa_get_socket_info(&num_sockets, &max_socket_id)) {
+    if (0 != PLPA_NAME(get_socket_info)(&num_sockets, &max_socket_id)) {
         fprintf(stderr, "ERROR: Unable to retrieve socket information\n");
         exit(1);
     }
@@ -315,8 +318,8 @@ static void sc_merge(PLPA_NAME(cpu_set_t) *out,
                     socket, max_socket_id);
             exit(1);
         } else if (sockets_are_valid && 
-                   ENOENT == plpa_get_core_info(socket, &num_cores,
-                                                &max_core_id) &&
+                   ENOENT == PLPA_NAME(get_core_info)(socket, &num_cores,
+                                                      &max_core_id) &&
                    PLPA_CPU_ISSET(socket, sockets)) {
             fprintf(stderr, "ERROR: Invalid socket ID specified (%d does not exist)\n",
                     socket);

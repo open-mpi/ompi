@@ -28,7 +28,20 @@ AC_DEFUN([MCA_paffinity_linux_POST_CONFIG],[
 ])dnl
 
 AC_DEFUN([MCA_paffinity_linux_CONFIG],[
+    OMPI_VAR_SCOPE_PUSH([PLPA_VERSION])
+
+    # Setup PLPA
     PLPA_SET_SYMBOL_PREFIX([opal_paffinity_linux_plpa_])
-    PLPA_INCLUDED([opal/mca/paffinity/linux/plpa])
-    PLPA_INIT([$1],[$2])
+    PLPA_INCLUDED
+    PLPA_INIT([opal/mca/paffinity/linux/plpa], 
+              [AC_MSG_CHECKING([for PLPA version])
+               PLPA_VERSION=`$srcdir/opal/mca/paffinity/linux/plpa/config/plpa_get_version.sh $srcdir/opal/mca/paffinity/linux/plpa/VERSION`
+               AC_DEFINE_UNQUOTED([PAFFINITY_LINUX_PLPA_VERSION], 
+                                  ["$PLPA_VERSION"], 
+                                  [Version of PLPA embedded in OMPI])
+               AC_MSG_RESULT([$PLPA_VERSION])
+               $1], 
+              [$2])
+
+    OMPI_VAR_SCOPE_POP
 ])dnl

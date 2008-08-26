@@ -384,9 +384,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Otherwise, if mpi_paffinity_alone was set, use that scheme */
     else if (ompi_mpi_paffinity_alone) {
         opal_paffinity_base_cpu_set_t mask;
+        int phys_cpu;
         OPAL_PAFFINITY_CPU_ZERO(mask);
-        OPAL_PAFFINITY_CPU_SET(orte_ess.get_node_rank(ORTE_PROC_MY_NAME),
-                               mask);
+        phys_cpu = opal_paffinity_base_get_physical_processor_id(orte_ess.get_node_rank(ORTE_PROC_MY_NAME));
+        if (0 > phys_cpu) {
+            error = "Could not get physical processor id - cannot set processor affinity";
+            goto error;
+        }
+        OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
         ret = opal_paffinity_base_set(mask);
         if (OPAL_SUCCESS != ret) {
             error = "Setting processor affinity failed";

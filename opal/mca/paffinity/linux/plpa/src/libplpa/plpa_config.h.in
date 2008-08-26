@@ -70,7 +70,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Whether we're in debugging mode or not */
+/* Whether we are in debugging more or not */
 #undef PLPA_DEBUG
 
 /* Major version of PLPA */

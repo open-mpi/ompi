@@ -22,9 +22,6 @@ if PLPA_BUILD_EXECUTABLES
 bin_PROGRAMS += plpa-taskset
 endif
 
-# Force parser.c to be re-compiled when tokens.h is re-generated
-parser.c: tokens.h
-
 plpa_taskset_SOURCES = \
         plpa-taskset.c \
         plpa-taskset.h \

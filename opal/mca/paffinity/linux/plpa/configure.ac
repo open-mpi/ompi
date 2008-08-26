@@ -125,42 +125,14 @@ if test "$want_picky" = 1; then
     CFLAGS="$CFLAGS $add"
 fi
 
-AC_MSG_CHECKING([whether to enable debug mode])
-AC_ARG_ENABLE(debug,
-              AC_HELP_STRING([--disable-debug],
-                             [When in Subversion checkouts of PLPA and compiling with gcc, the default is to debugging.  Use --disable-debug or --enable-debug overrides any default setting]))
-
-# Slightly different tests for whether we're in a svn checkout or not
-want_debug=no
-if test -d "$srcdir/.svn"; then
-    if test "$enable_debug" = "no"; then
-        value=0
-        msg="no"
-    else
-        value=1
-        msg="yes (default)"
-    fi
-else
-    if test "$enable_debug" = "yes"; then
-        value=1
-        msg="yes"
-    else
-        value=0
-        msg="no (default)"
-    fi
-fi
-if test "$value" = "1"; then
-    CFLAGS="$CFLAGS -g"
-fi
-AC_DEFINE_UNQUOTED([PLPA_DEBUG], [$value], [Whether we're in debugging mode or not])
-# Stupid emacs mode: '
-AC_MSG_RESULT([$msg])
-
 # Setup the PLPA (taking all defaults)
-PLPA_STANDALONE
-PLPA_INIT([plpa_setup=happy], [plpa_setup=unhappy])
+PLPA_INIT([.], [plpa_setup=happy], [plpa_setup=unhappy])
 AS_IF([test "$plpa_setup" = "unhappy"],
       [AC_MSG_ERROR([Cannot continue])])
+
+if test "$plpa_debug" = "1"; then
+    CFLAGS="$CFLAGS -g"
+fi
 
 # Setup libtool
 AM_ENABLE_SHARED
