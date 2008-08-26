@@ -259,7 +259,7 @@ int RFG_Regions_stackPush( RFG_Regions* regions,
   {
     if( !stack_enlarge( regions->stack ) )
     {       
-      fprintf( stderr, "RFG_Regions_stackPush(): Error: Could not enlarge stack size" );
+      fprintf( stderr, "RFG_Regions_stackPush(): Error: Could not enlarge stack size\n" );
       return 0;
     }
   }
@@ -286,7 +286,7 @@ int RFG_Regions_stackPop( RFG_Regions* regions,
 
   if( regions->stack->pos == -1 )
   {
-    fprintf( stderr, "RFG_Regions_stackPop(): Error: Stack underflow" );
+    fprintf( stderr, "RFG_Regions_stackPop(): Error: Stack underflow\n" );
     return 0;
   }
 
@@ -309,7 +309,7 @@ RFG_RegionInfo* RFG_Regions_add( RFG_Regions* regions,
 
   if( !rname )
   {
-    fprintf( stderr, "RFG_Regions_add(): Error: Empty region name" );
+    fprintf( stderr, "RFG_Regions_add(): Error: Empty region name\n" );
     return NULL;
   }
 

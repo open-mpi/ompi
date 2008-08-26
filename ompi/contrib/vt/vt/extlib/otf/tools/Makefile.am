@@ -1,11 +1,10 @@
-TMP1 = otfmerge otfaux otfconfig otfdump
+TMP1 = otfaux otfconfig otfdump otfmerge
 
 if AMHAVEVTF3
-TMP2 = vtf2otf otf2vtf 
+TMP2 = otf2vtf vtf2otf
 else
 TMP2= 
 endif
-
 
 if AMHAVEZLIB
 TMP3 = otfcompress

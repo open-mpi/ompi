@@ -100,6 +100,7 @@ DEF_FPOMP_FUNC(void POMP_Parallel_end_f(int* id)) {
 			   POMP_Parallel_end_f, (int* id), (id))
 
 DEF_FPOMP_FUNC(void POMP_Parallel_fork_f(int* id)) {
+  if ( !pomp_initialized ) POMP_Init();
   if ( pomp_tracing ) POMP_Parallel_fork(pomp_rd_table[*id]);
 } VT_GENERATE_F77_BINDINGS(pomp_parallel_fork, POMP_PARALLEL_FORK,
 			   POMP_Parallel_fork_f, (int* id), (id))

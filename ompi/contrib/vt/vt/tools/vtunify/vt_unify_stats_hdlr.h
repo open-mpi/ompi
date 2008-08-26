@@ -15,7 +15,7 @@
 
 #include "vt_inttypes.h"
 
-#include <otf.h>
+#include "otf.h"
 
 int Handle_FunctionSummary(
    OTF_WStream* wstream, 

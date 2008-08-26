@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <otf.h>
+#include "otf.h"
 
 #include "vt_inttypes.h"
 

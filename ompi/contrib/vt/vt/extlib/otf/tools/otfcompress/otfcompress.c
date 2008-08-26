@@ -3,9 +3,8 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
-#ifdef HAVE_CONFIG_H
-	#include "config.h"
-#endif
+#include "config.h"
+
 
 #define _LARGEFILE64_SOURCE 
 #define _LARGEFILE64_SOURCE 

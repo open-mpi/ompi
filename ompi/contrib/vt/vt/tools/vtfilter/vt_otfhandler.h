@@ -13,7 +13,7 @@
 #ifndef _VT_OTFHANDLER_H_
 #define _VT_OTFHANDLER_H_
 
-#include <otf.h>
+#include "otf.h"
 
 #include "vt_filter.h"
 

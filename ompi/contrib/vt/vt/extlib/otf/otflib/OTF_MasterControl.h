@@ -28,9 +28,9 @@
  *
  *
  *  \code
- *  #include <otf.h>
  *  #include <stdio.h>
  *  #include <assert.h>
+ *  #include "otf.h"
  *  
  *  int main( int argc, char** argv ) {
  *  \endcode

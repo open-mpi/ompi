@@ -3,10 +3,8 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
+#include "config.h"
 
-#ifdef HAVE_CONFIG_H
-	#include "config.h"
-#endif
 
 #include <set>
 #include <iostream>
@@ -70,7 +68,6 @@ void checkExistingFile( const char* tmpfilename, bool forceoverwrite, bool delet
 
 
 int main ( int argc, const char** argv ) {
-
 
 	char* filename = NULL;
 	int buffersize= 1024;
@@ -459,11 +456,11 @@ int main ( int argc, const char** argv ) {
 	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control,
 		OTF_ENDPROCESS_RECORD );
 
-    OTF_HandlerArray_setHandler( handlers, 
-    	(OTF_FunctionPointer*) handleCollectiveOperation,
-    	OTF_COLLOP_RECORD );
-    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
-    	OTF_COLLOP_RECORD );
+        OTF_HandlerArray_setHandler( handlers, 
+    		(OTF_FunctionPointer*) handleCollectiveOperation,
+    		OTF_COLLOP_RECORD );
+    	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+    		OTF_COLLOP_RECORD );
 		
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleEventComment,

@@ -5,6 +5,7 @@
 
 #include "config.h"
 
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,10 +13,10 @@
 #include <unistd.h>
 
 #include "OTF_Platform.h"
-#include <otf.h>
+#include "otf.h"
 
 #ifdef HAVE_VTF3
-#include <vtf3.h>
+#include "vtf3.h"
 #endif /* HAVE_VTF3 */
 
 #include "Handler.h"
@@ -40,7 +41,7 @@ static const char* Helptext[] = {
 "     -n <n>         output stream count                                   \n",
 "     -b <n>         size of the writer buffer                             \n",
 "     -z <n>         use zlib compression                                  \n",
-"     -io            compute io events. This is neccessary for getting     \n",
+"     -io            compute io events. This is necessary for getting      \n",
 "                    correct durations in IO-operations. Result of this    \n",
 "                    step is a file with extra information. This file      \n",
 "                    is used for creating correct duration-information in  \n",

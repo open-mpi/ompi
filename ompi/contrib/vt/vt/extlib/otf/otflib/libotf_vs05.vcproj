@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="libotf"
 	ProjectGUID="{6B9B49C9-75CD-400D-B736-5EACA04D0A82}"
 	RootNamespace="libotf"
@@ -119,6 +119,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -178,6 +179,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OTF_inttypes_win.h"
+				>
+			</File>
+			<File
 				RelativePath=".\OTF_Keywords.h"
 				>
 			</File>
@@ -191,6 +196,10 @@
 			</File>
 			<File
 				RelativePath=".\OTF_Platform.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_Platform_win.h"
 				>
 			</File>
 			<File
@@ -259,6 +268,10 @@
 			</File>
 			<File
 				RelativePath=".\OTF_Parse.c"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_Platform.c"
 				>
 			</File>
 			<File

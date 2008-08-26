@@ -67,8 +67,9 @@ AC_DEFUN([ACVT_COMPINST],
 	force_compinst="no"
 	build_compinst_gnu="no"
 	build_compinst_intel="no"
+	build_compinst_pathscale="no"
 	build_compinst_pgi="no"
-	build_compinst_phat="no"
+	build_compinst_sun="no"
 	build_compinst_xl="no"
 	build_compinst_ftrace="no"
 	compinst_list=
@@ -78,7 +79,7 @@ AC_DEFUN([ACVT_COMPINST],
 
 	AC_ARG_ENABLE(compinst,
 		AC_HELP_STRING([--enable-compinst=COMPINSTLIST],
-			[enable support for compiler instrumentation (gnu,intel,pgi,phat,xl,ftrace), default: automatically by configure]),
+			[enable support for compiler instrumentation (gnu,intel,pathscale,pgi,sun,xl,ftrace), default: automatically by configure]),
 	[AS_IF([test x"$enableval" = "xno"], [check_compinst="no"], [enable_compinst="$enableval"])])
 
 	AS_IF([test x"$check_compinst" = "xyes"],
@@ -105,15 +106,20 @@ AC_DEFUN([ACVT_COMPINST],
 						AS_IF([test x"$first" = "xyes"],
 						[compinst_default="intel"])
 						;;
+					pathscale)
+						build_compinst_pathscale="yes"
+						AS_IF([test x"$first" = "xyes"],
+						[compinst_default="pathscale"])
+						;;
 					pgi)
 						build_compinst_pgi="yes"
 						AS_IF([test x"$first" = "xyes"],
 						[compinst_default="pgi"])
 						;;
-					phat)
-						build_compinst_phat="yes"
+					sun)
+						build_compinst_sun="yes"
 						AS_IF([test x"$first" = "xyes"],
-						[compinst_default="phat"])
+						[compinst_default="sun"])
 						;;
 					xl)
 						build_compinst_xl="yes"
@@ -150,6 +156,17 @@ AC_DEFUN([ACVT_COMPINST],
 						AC_MSG_RESULT([intel])
 					])
 					;;
+				pathcc* | scpathcc*)
+					compver=`$CC -dumpversion`
+					compver_major=`echo $compver | cut -d '.' -f 1`
+					compver_minor=`echo $compver | cut -d '.' -f 2`
+					AS_IF([test $compver_major -ge 3 -a $compver_minor -ge 1],
+					[
+						build_compinst_intel="yes"
+						compinst_default="pathscale"
+						AC_MSG_RESULT([pathscale])
+					])
+					;;
 				pgcc*)
 					build_compinst_pgi="yes"
 					compinst_default="pgi"
@@ -161,16 +178,16 @@ AC_DEFUN([ACVT_COMPINST],
 					AC_MSG_RESULT([xl])
 					;;
 				suncc*)
-					build_compinst_phat="yes"
-					compinst_default="phat"
-					AC_MSG_RESULT([phat])
+					build_compinst_sun="yes"
+					compinst_default="sun"
+					AC_MSG_RESULT([sun])
 					;;
 				cc*)
 					AS_IF([test x"$PLATFORM" = "xsun"],
 					[
-						build_compinst_phat="yes"
-						compinst_default="phat"
-						AC_MSG_RESULT([phat])
+						build_compinst_sun="yes"
+						compinst_default="sun"
+						AC_MSG_RESULT([sun])
 					])
 					AS_IF([test x"$PLATFORM" = "xnecsx"],
 					[
@@ -193,7 +210,7 @@ AC_DEFUN([ACVT_COMPINST],
 			compinst_list=$compinst_default
 		])
 
-		AS_IF([test x"$build_compinst_gnu" = "xyes" -o x"$build_compinst_intel" = "xyes"],
+		AS_IF([test x"$build_compinst_gnu" = "xyes" -o x"$build_compinst_intel" = "xyes" -o x"$build_compinst_pathscale" = "xyes"],
 		[
 			ACVT_BFD
 			AS_IF([test x"$bfd_error" = "xno"],
@@ -312,7 +329,7 @@ AC_DEFUN([ACVT_CONF_EXPAND_VARS],
 	while :
 	do
 		$2=`eval echo $var`
-		AS_IF([test $$2 == $var], [break], [var=$$2])
+		AS_IF([test x"$$2" = "x$var"], [break], [var=$$2])
 	done
 ])
 
@@ -639,6 +656,7 @@ AC_DEFUN([ACVT_IOWRAP],
 			AC_CHECK_FUNCS([ \
 				creat64 \
 				fopen64 \
+				fseeko \
 				fseeko64 \
 				lseek64 \
 				fsetpos64 \
@@ -1387,7 +1405,7 @@ AC_DEFUN([ACVT_OTF],
 			otf_conf_args="$otf_conf_args --without-zlib"
 		])
 
-		otf_conf_args="$otf_conf_args --prefix=\"$prefix\" --exec-prefix=\"$exec_prefix\" --bindir=\"$bindir\" --libdir=\"$libdir\" --includedir=\"$includedir\" --datarootdir=\"$datarootdir\" --datadir=\"$datadir\" --docdir=\"$docdir\" $OTFFLAGS --cache-file=\"/dev/null\" --srcdir=\"$otf_srcdir\""
+		otf_conf_args="$otf_conf_args --prefix=\"$prefix\" --exec-prefix=\"$exec_prefix\" --bindir=\"$bindir\" --libdir=\"$libdir\" --includedir=\"$includedir\" --docdir=\"$docdir/otf\" $OTFFLAGS --cache-file=\"/dev/null\" --srcdir=\"$otf_srcdir\""
 		
 		AC_MSG_NOTICE([running $SHELL $otf_conf_cmd $otf_conf_args])
 		eval "$SHELL '$otf_conf_cmd' $otf_conf_args"
@@ -1529,7 +1547,7 @@ AC_DEFUN([ACVT_PLATFORM],
 	AC_MSG_CHECKING([for platform])
 
 	AC_ARG_WITH(platform,
-		AC_HELP_STRING([--with-platform], [configure for given platform (altix,ibm,linux,macos,sun,origin,crayx1,generic), default: automatically by configure]),
+		AC_HELP_STRING([--with-platform], [configure for given platform (altix,ibm,linux,macos,sun,origin,crayxt,generic), default: automatically by configure]),
 	[
 		PLATFORM=$withval
 		AC_MSG_RESULT([skipped (--with-platform=$withval)])
@@ -1542,7 +1560,7 @@ AC_DEFUN([ACVT_PLATFORM],
 				[AS_IF([test "$host_cpu" = "powerpc64" -a -d /bgl/BlueLight],
 				 [PLATFORM=bgl],
 				 [AS_IF([test "$host_cpu" = "x86_64" -a -d /opt/xt-boot],
-				  [PLATFORM=crayxt3],
+				  [PLATFORM=crayxt],
 				  [PLATFORM=linux])])])
 				;;
 			sunos* | solaris*)
@@ -1649,10 +1667,23 @@ AC_DEFUN([ACVT_PLATFORM],
 		AC_DEFINE([TIMER], [TIMER_GETTIMEOFDAY], [Use timer (see below)])
 		AC_MSG_NOTICE([selected timer: TIMER_GETTIMEOFDAY])
 		;;
-	crayxt3)
-		AC_DEFINE([TIMER_DCLOCK], [1], [dclock])
-		AC_DEFINE([TIMER], [TIMER_DCLOCK], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_DCLOCK])
+	crayxt)
+		use_timer=TIMER_CYCLE_COUNTER
+		AC_TRY_COMPILE([],
+[
+#ifndef __LIBCATAMOUNT__
+#  error "__LIBCATAMOUNT__ not defined"
+#endif
+],
+		[AC_CHECK_HEADERS([catamount/dclock.h],
+		[AC_CHECK_HEADERS([catamount/data.h], [use_timer=TIMER_DCLOCK])])])
+
+		AC_DEFINE([TIMER_GETTIMEOFDAY], [1], [Use `gettimeofday' function])
+		AC_DEFINE([TIMER_CLOCK_GETTIME], [2], [Use `clock_gettime' function])
+		AC_DEFINE([TIMER_DCLOCK], [3], [Use `dclock' function])
+		AC_DEFINE([TIMER_CYCLE_COUNTER], [4], [Cycle counter (e.g. TSC)])
+		AC_DEFINE_UNQUOTED([TIMER], [$use_timer], [Use timer (see below)])
+		AC_MSG_NOTICE([selected timer: $use_timer])
 		;;
 	origin)
 		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])

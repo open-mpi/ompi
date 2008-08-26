@@ -193,7 +193,7 @@ int handleEventComment( void* firsthandlerarg, uint64_t time,
 
 
 int handleCollectiveOperation( void* firsthandlerarg, uint64_t time, 
-    uint32_t process, uint32_t functionToken, uint32_t communicator, 
+    uint32_t process, uint32_t collective, uint32_t communicator, 
     uint32_t rootprocess, uint32_t sent, uint32_t received, 
     uint64_t duration, uint32_t scltoken ) {
 	

@@ -3,9 +3,8 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+
 
 #include "OTF_Platform.h"
 #include "OTF_Parse.h"
@@ -296,7 +295,7 @@ int OTF_Reader_parseEventRecord( OTF_RBuffer* buffer,
 
 		break;
 
-	case OTF_KEYWORD_F_LEAVE /* 'U' */ :
+	case OTF_KEYWORD_F_LEAVE /* 'L' */ :
 
 		if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LEAVE ) || 
 				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LEAVE ) ) {
@@ -386,7 +385,6 @@ int OTF_Reader_parseEventRecord( OTF_RBuffer* buffer,
 
 int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer, 
 		OTF_HandlerArray* handlers, uint32_t streamid ) {
-
 
 	/* check prefix */
 	if ( OTF_RBuffer_testPrefix( buffer, OTF_KEYWORD_S_DEF_PREFIX ) ||
@@ -553,7 +551,6 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 int OTF_Reader_parseStatisticsRecord( OTF_RBuffer* buffer, 
 		OTF_HandlerArray* handlers ) {
 
-
 	/* check prefix */
 	if ( OTF_RBuffer_testPrefix( buffer, OTF_KEYWORD_S_SUM_PREFIX ) ||
 			OTF_RBuffer_testPrefix( buffer, OTF_KEYWORD_L_SUM_PREFIX ) ) {
@@ -626,7 +623,7 @@ int OTF_Reader_parseStatisticsRecord( OTF_RBuffer* buffer,
 
 	case OTF_KEYWORD_F_SUMCOMMENT /* 'C' */ :
 
-		if ( OTF_RBuffer_testKeyword( buffer, 
+		if ( OTF_RBuffer_testKeyword( buffer,
 				OTF_KEYWORD_S_SUMCOMMENT ) || 
 				OTF_RBuffer_testKeyword( buffer, 
 				OTF_KEYWORD_L_SUMCOMMENT ) ) {

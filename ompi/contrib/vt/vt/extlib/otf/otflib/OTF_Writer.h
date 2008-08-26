@@ -22,8 +22,8 @@
  *  \section writer_example A simple Example
  *
  *  \code
- *  #include <otf.h>
  *  #include <assert.h>
+ *  #include "otf.h"
  *
  *  int main( int argc, char** argv ) {
  *  \endcode
@@ -1091,7 +1091,7 @@ int OTF_Writer_writeFunctionGroupSummary( OTF_Writer* writer,
  * @param process        Process where messages originated.
  * @param peer           Process where the message is sent to
  * @param comm           Communicator of message summary
- * @param tag           Message type/tag.
+ * @param tag            Message type/tag.
  * @param number_sent    The number of messages sent.
  * @param number_recved  The number of messages received.
  * @param bytes_sent     The number of bytes sent via messages of the given

@@ -79,6 +79,7 @@ extern void POMP_Unset_nest_lock(omp_nest_lock_t *s);
 extern int  POMP_Test_nest_lock(omp_nest_lock_t *s);
 #endif
 
+extern int pomp_initialized;
 extern int pomp_tracing;
 
 #ifdef __cplusplus

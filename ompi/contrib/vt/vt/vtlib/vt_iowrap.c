@@ -10,9 +10,7 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#if HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include "config.h"
 
 #define _GNU_SOURCE
 #define _LARGEFILE64_SOURCE
@@ -120,7 +118,6 @@ int vt_iowrap_init(void)
 	VT_IOWRAP_INIT_FUNC(fopen);
 	VT_IOWRAP_INIT_FUNC(fclose);
 	VT_IOWRAP_INIT_FUNC(fseek);
-	VT_IOWRAP_INIT_FUNC(fseeko);
 	VT_IOWRAP_INIT_FUNC(rewind);
 	VT_IOWRAP_INIT_FUNC(fsetpos);
 	VT_IOWRAP_INIT_FUNC(fread);
@@ -135,6 +132,9 @@ int vt_iowrap_init(void)
 	VT_IOWRAP_INIT_FUNC(puts);
 	VT_IOWRAP_INIT_FUNC(fscanf);
 	VT_IOWRAP_INIT_FUNC(fprintf);
+#if defined(HAVE_FSEEKO) && HAVE_FSEEKO
+        VT_IOWRAP_INIT_FUNC(fseeko);
+#endif /* HAVE_FSEEKO */
 #if defined(HAVE_OPEN64) && HAVE_OPEN64
 	VT_IOWRAP_INIT_FUNC(open64);
 #endif /* HAVE_OPEN64 */
@@ -767,6 +767,7 @@ int fseek(FILE *stream, long offset, int whence)
 }
 
 
+#if defined(HAVE_FSEEKO) && HAVE_FSEEKO
 int fseeko(FILE *stream, off_t offset, int whence)
 {
 #define VT_IOWRAP_THISFUNCNAME fseeko
@@ -793,6 +794,7 @@ int fseeko(FILE *stream, off_t offset, int whence)
 	return ret;
 #undef VT_IOWRAP_THISFUNCNAME
 }
+#endif /* HAVE_FSEEKO */
 
 
 #if defined(HAVE_FSEEKO64) && HAVE_FSEEKO64

@@ -138,7 +138,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlib.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				IgnoreAllDefaultLibraries="false"

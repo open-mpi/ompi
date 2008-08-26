@@ -6,10 +6,8 @@
 #ifndef HANDLER_H
 #define HANDLER_H
 
+#include "config.h"
 
-#ifdef HAVE_CONFIG_H
-#       include "config.h"
-#endif
 
 #include "OTF_inttypes.h"
 #include "OTF_Writer.h"

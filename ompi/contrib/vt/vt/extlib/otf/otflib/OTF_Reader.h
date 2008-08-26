@@ -40,9 +40,9 @@ extern "C" {
  * \section reader_example1 A simple Example
  *
  * \code
- * #include <otf.h>
  * #include <stdio.h>
  * #include <assert.h>
+ * #include "otf.h"
  * \endcode
  *
  * Define handlers/callbacls for the records you want to read.
@@ -121,9 +121,9 @@ extern "C" {
  *
  * Same as before
  * \code
- * #include <otf.h>
  * #include <stdio.h>
  * #include <assert.h>
+ * #include "otf.h"
  * \endcode
  *
  * Create a structure, which holds information needed in every handler.

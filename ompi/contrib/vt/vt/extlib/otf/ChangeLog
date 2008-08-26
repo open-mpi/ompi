@@ -1,4 +1,4 @@
-1.0.x
+1.0
 	- initial version
 	
 1.1.1
@@ -27,14 +27,14 @@
 	- have UnknownRecord report handle incomplete records or additional bytes at 
 	the end of a file.
 
-1.2.0
+1.2
 	- introduce transparent zlib compression
 
 1.2.1
 	- added progress functions using read bytes instead of timestamps
 
 1.2.2
-	- important bugfix: definitionstream 0 was ignored since version 1.2.0
+	- important bugfix: definitionstream 0 was ignored since version 1.2
 
 1.2.3
 	- bugfix: provided copy handlers returned wrong value
@@ -139,7 +139,7 @@
 	  currently there is no way to "repair" the buffer/stream after an unsorted
 	  time stamp has been issued.
 
-1.3.0
+1.3
 	- integrated libtool for shared and static linkage to otf
 	- removed the possibility to include zlib symbols into otf
 	- fixed warning which appeared when not using zlib
@@ -208,3 +208,9 @@
 	- added configure option '--[enable|disable]-binaries' to control
 	  building of binaries (useful for multi-lib installations)
 
+1.3.11
+	- build/install tool 'otfdump' by default
+	- install documentation
+	- bugfix: removed included system headers inside 'extern "C" {}'
+	- bugfix: added configure check for functions 'fseeko()' and 'ftello()'
+	  (these functions are not available on NEC SX platforms)

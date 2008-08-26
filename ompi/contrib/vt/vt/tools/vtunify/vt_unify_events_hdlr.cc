@@ -15,7 +15,7 @@
 
 #include "vt_inttypes.h"
 
-#include <otf.h>
+#include "otf.h"
 
 #include <assert.h>
 

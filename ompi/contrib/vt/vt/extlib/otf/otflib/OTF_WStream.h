@@ -26,8 +26,8 @@
  * \section wstream_example A short Example
  *
  *  \code
- *  #include <otf.h>
  *  #include <assert.h>
+ *  #include "otf.h"
  *
  *  int main( int argc, char** argv ) {
  *  \endcode

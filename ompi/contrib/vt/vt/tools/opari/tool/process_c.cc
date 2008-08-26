@@ -1,9 +1,9 @@
 /****************************************************************************
 **  SCALASCA    http://www.scalasca.org/                                   **
-**  KOJAK       http://www.fz-juelich.de/zam/kojak/                        **
+**  KOJAK       http://www.fz-juelich.de/jsc/kojak/                        **
 *****************************************************************************
-**  Copyright (c) 1998-2007                                                **
-**  Forschungszentrum Juelich, Zentralinstitut fuer Angewandte Mathematik  **
+**  Copyright (c) 1998-2008                                                **
+**  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
 **  See the file COPYRIGHT in the package base directory for details       **
 ****************************************************************************/
@@ -49,10 +49,18 @@ namespace {
     unsigned s = preStmt.size();
     bool inComment = false;
 
-    // "remove" comments
     for (unsigned i=0; i<s; ++i) {
       string::size_type pos = 0;
       string& line = preStmt[i];
+
+      // shift bonded line-continuation '\' one position to right
+      if ( line[line.size()-1] == '\\'
+           && line.size() >= 2 && line[line.size()-2] != ' '
+           && line[line.size()-2] != '\t' ) {
+        line.insert(line.size()-1, " ");
+      }
+
+      // "remove" comments
       while ( pos < line.size() ) {
         if ( inComment ) {
           // look for comment end

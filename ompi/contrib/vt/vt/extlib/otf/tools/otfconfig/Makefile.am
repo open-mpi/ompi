@@ -5,11 +5,6 @@ bin_PROGRAMS = \
 	otfconfig
 endif
 
-otfconfig_LDADD = $(top_builddir)/otflib/libotf.la
-if ! AMDEPZLIB
-otfconfig_LDADD += $(ZLIB_LIB_LINE)
-endif
-
 otfconfig_SOURCES = \
 	otfconfig.c
 
