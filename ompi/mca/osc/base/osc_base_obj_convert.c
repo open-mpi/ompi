@@ -200,7 +200,7 @@ ompi_osc_base_process_op(void *outbuf,
         struct iovec iov;
         uint32_t iov_count = 1;
         size_t max_data;
-        struct ompi_convertor_master_t master;
+        struct ompi_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
         int i, found_index = -1;
         uint64_t mask = 1;
 
