@@ -48,6 +48,8 @@
 #ifndef MCA_OMPI_MODULE_EXCHANGE_H
 #define MCA_OMPI_MODULE_EXCHANGE_H
 
+#include "ompi_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -56,7 +58,6 @@
 
 #include "orte/types.h"
 
-struct mca_base_component_t;
 struct ompi_proc_t;
 
 BEGIN_C_DECLS
