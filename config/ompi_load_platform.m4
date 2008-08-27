@@ -76,12 +76,15 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
         # look where platform file is located for platform.conf name
         if test -r "${platform_file_dir}/${platform_alt_mca_file}" ; then
             AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [$platform_file_dir/$platform_alt_mca_file])
+            AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "yes")
         # if not, see if a file is there with the default name
         elif test -r "${platform_file_dir}/openmpi-mca-params.conf" ; then
             AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [$platform_file_dir/openmpi-mca-params.conf])
+            AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "yes")
         # if not, then just use the default
         else
             AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [openmpi-mca-params.conf])
+            AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "no")
         fi
 
     else
