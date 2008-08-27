@@ -193,9 +193,7 @@
   void ompi_mpi_op_##name##_short_int OMPI_OP_PROTO; \
   void ompi_mpi_op_##name##_long_double_int OMPI_OP_PROTO;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /**
  * Handler functions for MPI_MAX
@@ -449,10 +447,6 @@ extern "C" {
   void ompi_mpi_op_three_buff_##name##_short_int OMPI_OP_PROTO_3BUF; \
   void ompi_mpi_op_three_buff_##name##_long_double_int OMPI_OP_PROTO_3BUF;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 /**
  * Handler functions for MPI_MAX
  */
@@ -532,8 +526,6 @@ extern "C" {
  */
   OMPI_OP_3BUFF_HANDLER_2TYPE(minloc)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* OMPI_OP_PREDEFINED_H */
