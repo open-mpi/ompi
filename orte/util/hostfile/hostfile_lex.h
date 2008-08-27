@@ -18,7 +18,7 @@
  */
 
 #ifndef ORTE_UTIL_HOSTFILE_LEX_H_
-#define ORTE_UTILutil_HOSTFILE_LEX_H_
+#define ORTE_UTIL_HOSTFILE_LEX_H_
 
 #include "orte_config.h"
 
