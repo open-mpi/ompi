@@ -327,6 +327,8 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
                         break;
                         
                     case 2:    /* range of core id's was given */
+                        lower_range = atoi(range[0]);
+                        upper_range = atoi(range[1]);
                         if ( 0 > lower_range || num_cores < (upper_range - lower_range) || lower_range >= upper_range ) {
                             opal_output(0,"Rank %ld: PAFFINITY Error !!! Check your boundaries lower %d upper %d num_cores %d",
                                         rank, lower_range, upper_range, num_cores);
