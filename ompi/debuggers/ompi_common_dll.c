@@ -357,6 +357,8 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         i_info->ompi_group_t.size = mqs_sizeof(qh_type);
         ompi_field_offset(i_info->ompi_group_t.offset.grp_proc_count,
                           qh_type, ompi_group_t, grp_proc_count);
+        ompi_field_offset(i_info->ompi_group_t.offset.grp_proc_pointers,
+                          qh_type, ompi_group_t, grp_proc_pointers);
         ompi_field_offset(i_info->ompi_group_t.offset.grp_my_rank,
                           qh_type, ompi_group_t, grp_my_rank);
         ompi_field_offset(i_info->ompi_group_t.offset.grp_flags,
@@ -396,6 +398,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
     }
 
     /* All the types are here. Let's succesfully return. */
+    *message = NULL;
     return mqs_ok;
 
  type_missing:
