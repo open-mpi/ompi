@@ -180,6 +180,7 @@ typedef struct
         int size;
         struct {
             int grp_proc_count;
+            int grp_proc_pointers;
             int grp_my_rank;
             int grp_flags;
         } offset;

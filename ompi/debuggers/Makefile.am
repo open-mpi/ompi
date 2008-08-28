@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-noinst_LTLIBRARIES = libdebuggers.la
+noinst_LTLIBRARIES = libdebuggers.la libompi_debugger_canary.la
 pkglib_LTLIBRARIES = libompi_dbg_msgq.la
 
 # This is not quite in the Automake spirit, but we have to do it.
@@ -43,6 +43,9 @@ libdebuggers_la_CPPFLAGS = \
         -DOMPI_MSGQ_DLL=\"$(pkglibdir)/libompi_dbg_msgq.so\" \
         -DOMPI_MSGQ_DLL_PREFIX=\"libompi_dbg_msgq\" \
         -DOMPI_MPIHANDLES_DLL_PREFIX=\"libompi_dbg_mpihandles\"
+
+libompi_debugger_canary_la_SOURCES = \
+        ompi_debugger_canary.c
 
 common = ompi_common_dll_defs.h ompi_common_dll.c
 
