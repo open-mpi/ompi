@@ -206,7 +206,7 @@ static int translate (group_t *this, int index)
 /* Search the group list for this group, if not found create it.
  */
 static group_t * find_or_create_group( mqs_process *proc,
-                                       mqs_taddr_t table )
+                                       mqs_taddr_t group_base )
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
     mpi_process_info_extra *extra = (mpi_process_info_extra*) p_info->extra;
@@ -218,9 +218,10 @@ static group_t * find_or_create_group( mqs_process *proc,
     int i, np;
     group_t *group;
     mqs_taddr_t value;
+    mqs_taddr_t tablep;
 
     np = ompi_fetch_int( proc,
-                         table + i_info->ompi_group_t.offset.grp_proc_count,
+                         group_base + i_info->ompi_group_t.offset.grp_proc_count,
                          p_info );
     if( np < 0 ) {
         DEBUG(VERBOSE_COMM, ("Get a size for the communicator = %d\n", np));
@@ -229,7 +230,7 @@ static group_t * find_or_create_group( mqs_process *proc,
     /* Iterate over each communicator seeing if we can find this group */
     for (;comm; comm = comm->next) {
         group = comm->group;
-        if( group && (group->group_base == table) ) {
+        if( group && (group->group_base == group_base) ) {
             group->ref_count++;			/* Someone else is interested */
             DEBUG(VERBOSE_GROUP, ("Increase refcount for group 0x%p to %d\n",
                                   (void*)group, group->ref_count) );
@@ -242,12 +243,16 @@ static group_t * find_or_create_group( mqs_process *proc,
     tr = (int *)mqs_malloc (np*sizeof(int));
     trbuffer = (char *)mqs_malloc (np*sizeof(mqs_taddr_t));
     group->local_to_global = tr;
-    group->group_base = table;
+    group->group_base = group_base;
     DEBUG(VERBOSE_GROUP, ("Create a new group 0x%p with %d members\n",
                           (void*)group, np) );
+    
+    tablep = ompi_fetch_pointer( proc,
+                                 group_base + i_info->ompi_group_t.offset.grp_proc_pointers,
+                                 p_info);
 
     if( (0 != np) &&
-        (mqs_ok != mqs_fetch_data(proc, table, np * p_info->sizes.pointer_size,
+        (mqs_ok != mqs_fetch_data(proc, tablep, np * p_info->sizes.pointer_size,
                                   trbuffer)) ) {
         DEBUG(VERBOSE_GROUP,("Failed to read the proc data. Destroy group %p\n",
                              (void*)group));
@@ -633,6 +638,7 @@ static int rebuild_communicator_list (mqs_process *proc)
             old->comm_ptr             = comm_ptr;
             old->comm_info.unique_id  = context_id;
             old->comm_info.local_rank = local_rank;
+            old->group = NULL;
 
             DEBUG(VERBOSE_COMM,("Create new communicator 0x%lx with context_id %d and local_rank %d\n",
                                 (long)old, context_id, local_rank));
