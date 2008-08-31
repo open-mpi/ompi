@@ -73,9 +73,9 @@ OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
  * requirements introduced in MPI 2-1 Sect. 10.2.5, 
  * MPI_TYPE_CREATE_F90_xxxx, page 295, line 47.
  */
-OMPI_DECLSPEC extern opal_hash_table_t ompi_mpi_f90_integer_hashtable;
-OMPI_DECLSPEC extern opal_hash_table_t ompi_mpi_f90_real_hashtable;
-OMPI_DECLSPEC extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
+extern opal_hash_table_t ompi_mpi_f90_integer_hashtable;
+extern opal_hash_table_t ompi_mpi_f90_real_hashtable;
+extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 
 /** version string of ompi */
 OMPI_DECLSPEC extern const char ompi_version_string[];
