@@ -102,6 +102,7 @@ int orte_dt_init(void)
     int rc;
     opal_data_type_t tmp;
 
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* set default output */
     orte_debug_output = opal_output_open(NULL);
     /* open up the verbose output for ORTE debugging */
@@ -113,6 +114,7 @@ int orte_dt_init(void)
             opal_output_set_verbosity(orte_debug_output, 1);
         }
     }
+#endif
         
     /** register the base system types with the DSS */
     tmp = ORTE_STD_CNTR;
@@ -340,6 +342,7 @@ int orte_dt_init(void)
     return ORTE_SUCCESS;    
 }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 int orte_hnp_globals_init(void)
 {
     int rc;
@@ -364,6 +367,7 @@ int orte_hnp_globals_init(void)
     
     return ORTE_SUCCESS;
 }
+#endif
 
 orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
