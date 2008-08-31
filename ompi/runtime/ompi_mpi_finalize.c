@@ -164,6 +164,15 @@ int ompi_mpi_finalize(void)
         OBJ_RELEASE(item);
     }
 
+    /* Remove all F90 types from the hash tables. As the OBJ_DESTRUCT will
+     * call a special destructor able to release predefined types, we can
+     * simply call the OBJ_DESTRUCT on the hash table and all memory will
+     * be correctly released.
+     */
+    OBJ_DESTRUCT( &ompi_mpi_f90_integer_hashtable );
+    OBJ_DESTRUCT( &ompi_mpi_f90_real_hashtable );
+    OBJ_DESTRUCT( &ompi_mpi_f90_complex_hashtable );
+
     /* Free communication objects */
 
     /* free window resources */
