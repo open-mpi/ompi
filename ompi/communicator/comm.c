@@ -633,7 +633,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 /**********************************************************************/
 /**********************************************************************/
 int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm, 
-            int sync_flag)
+                    int sync_flag)
 {
     ompi_communicator_t *comp=NULL;
     ompi_communicator_t *newcomp=NULL;
@@ -687,34 +687,18 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d DUP FROM %d", 
              newcomp->c_contextid, comm->c_contextid );
 
-    if(0 == sync_flag) {
-        /* activate communicator and init coll-module */
-        rc = ompi_comm_activate (newcomp,  /* new communicator */ 
-                                 comp,     /* old comm */
-                                 NULL,     /* bridge comm */
-                                 NULL,     /* local leader */
-                                 NULL,     /* remote_leader */
-                                 mode,     /* mode */
-                                 -1,       /* send_first */
-                                 0         /* sync_flag */
-                                 );
-        if ( OMPI_SUCCESS != rc ) {
-            return rc;
-        }
-    } else { 
-        /* activate communicator and init coll-module without synchronizing processes*/
-        rc = ompi_comm_activate (newcomp,  /* new communicator */ 
-                                 comp,     /* old comm */
-                                 NULL,     /* bridge comm */
-                                 NULL,     /* local leader */
-                                 NULL,     /* remote_leader */
-                                 mode,     /* mode */
-                                 -1,       /* send_first */
-                                 1        /* sync_flag */
-                                 );
-        if ( OMPI_SUCCESS != rc ) {
-            return rc;
-        }
+    /* activate communicator and init coll-module */
+    rc = ompi_comm_activate (newcomp,   /* new communicator */ 
+                             comp,      /* old comm */
+                             NULL,      /* bridge comm */
+                             NULL,      /* local leader */
+                             NULL,      /* remote_leader */
+                             mode,      /* mode */
+                             -1,        /* send_first */
+                             sync_flag  /* sync_flag (1 means no processes synchronization) */
+                             );
+    if ( OMPI_SUCCESS != rc ) {
+        return rc;
     }
     
     *newcomm = newcomp;
