@@ -50,7 +50,6 @@ int mca_topo_base_cart_sub (MPI_Comm comm,
      int rank;
      int ndim;
      int dim;
-     bool allfalse;
      int i;
      int *d;
      int *c;
@@ -65,7 +64,6 @@ int mca_topo_base_cart_sub (MPI_Comm comm,
      colour = key = 0;
      colfactor = keyfactor = 1;
      ndim = 0;
-     allfalse = false;
 
      i = comm->c_topo_comm->mtc_ndims_or_nnodes - 1;
      d = comm->c_topo_comm->mtc_dims_or_index + i;
@@ -83,15 +81,11 @@ int mca_topo_base_cart_sub (MPI_Comm comm,
           keyfactor *= dim;
         }
      }
-    /*
-     * Special case: if all of remain_dims were false, we need to make
-     * a cartesian communicator with just ourselves in it (you can't
-     * have a communicator unless you're in it).
-     */
-     if (ndim == 0) {
-        colour = ompi_comm_rank (comm);
-        ndim = 1;
-        allfalse = true;
+    /* Special case: if all of remain_dims were false, we need to make
+       a 0-dimension cartesian communicator with just ourselves in it
+       (you can't have a communicator unless you're in it). */
+     if (0 == ndim) {
+         colour = ompi_comm_rank (comm);
      }
     /*
      * Split the communicator.
@@ -107,33 +101,33 @@ int mca_topo_base_cart_sub (MPI_Comm comm,
         
         temp_comm->c_topo_comm->mtc_ndims_or_nnodes = ndim;
         
-        if (!allfalse) {
-           p = temp_comm->c_topo_comm->mtc_dims_or_index;
-           d = comm->c_topo_comm->mtc_dims_or_index;
-           r = remain_dims;
-           for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; ++i, ++d, ++r) {
-             if (*r) {
-                 *p++ = *d;
-              }
-           }
-           } else {
-             temp_comm->c_topo_comm->mtc_dims_or_index[0] = 1;
-           }
-          /*
-           * Compute the caller's coordinates.
-           */
-          rank = ompi_comm_rank (temp_comm);
-          if (MPI_SUCCESS != errcode) {
-             OBJ_RELEASE(temp_comm);
-             return errcode;
-          }
-          errcode = temp_comm->c_topo->topo_cart_coords (temp_comm, rank,
-                             ndim, temp_comm->c_topo_comm->mtc_coords);
-          if (MPI_SUCCESS != errcode) {
-             OBJ_RELEASE(temp_comm);
-             return errcode;
-          }
-      }
+        if (ndim >= 1) {
+            p = temp_comm->c_topo_comm->mtc_dims_or_index;
+            d = comm->c_topo_comm->mtc_dims_or_index;
+            r = remain_dims;
+            for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; 
+                 ++i, ++d, ++r) {
+                if (*r) {
+                    *p++ = *d;
+                }
+            }
+
+            /*
+             * Compute the caller's coordinates, if ndims>0
+             */
+            rank = ompi_comm_rank (temp_comm);
+            if (MPI_SUCCESS != errcode) {
+                OBJ_RELEASE(temp_comm);
+                return errcode;
+            }
+            errcode = temp_comm->c_topo->topo_cart_coords (temp_comm, rank,
+                                                           ndim, temp_comm->c_topo_comm->mtc_coords);
+            if (MPI_SUCCESS != errcode) {
+                OBJ_RELEASE(temp_comm);
+                return errcode;
+            }
+        }
+     }
 
       *new_comm = temp_comm;
       return MPI_SUCCESS;

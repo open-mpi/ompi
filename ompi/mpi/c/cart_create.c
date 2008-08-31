@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,11 +56,11 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
-        if (1 > ndims) {
+        if (ndims < 0) {
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                           FUNC_NAME);
-        }
-        if (NULL == dims || NULL == periods || NULL == comm_cart) {
+        } else if (ndims >= 1 &&
+                   (NULL == dims || NULL == periods || NULL == comm_cart)) {
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }

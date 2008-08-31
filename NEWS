@@ -38,6 +38,9 @@ Trunk (not on release branches yet)
 1.3 (not released yet)
 ---
 
+- Increased MPI_SUBVERSION value in mpi.h to 1 (i.e., MPI 2.1)
+- Changed behavior of MPI_GRAPH_CREATE, MPI_TOPO_CREATE, and several
+  other topology functions per MPI-2.1.
 - Fix the type of the C++ constant MPI::IN_PLACE.
 - Various enhancements to the openib BTL:
   - Added btl_openib_if_[in|ex]clude MCA parameters for
