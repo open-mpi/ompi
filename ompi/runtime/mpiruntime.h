@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,7 +31,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_list.h"
+#include "opal/class/opal_hash_table.h"
 
 BEGIN_C_DECLS
 
@@ -67,6 +67,15 @@ OMPI_DECLSPEC extern bool ompi_warn_on_fork;
     MPI_REGISTER_DATAREP so that we can free it during
     MPI_FINALIZE. */
 OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
+
+/** In ompi_mpi_init: the lists of Fortran 90 mathing datatypes.
+ * We need these lists and hashtables in order to satisfy the new
+ * requirements introduced in MPI 2-1 Sect. 10.2.5, 
+ * MPI_TYPE_CREATE_F90_xxxx, page 295, line 47.
+ */
+OMPI_DECLSPEC extern opal_hash_table_t ompi_mpi_f90_integer_hashtable;
+OMPI_DECLSPEC extern opal_hash_table_t ompi_mpi_f90_real_hashtable;
+OMPI_DECLSPEC extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 
 /** version string of ompi */
 OMPI_DECLSPEC extern const char ompi_version_string[];

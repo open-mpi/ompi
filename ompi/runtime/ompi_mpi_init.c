@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -95,6 +95,11 @@
 #include "ompi/runtime/ompi_cr.h"
 
 #include "orte/runtime/orte_globals.h"
+
+/* This is required for the boundaries of the hash tables used to store
+ * the F90 types returned by the MPI_Type_create_f90_XXX functions.
+ */
+#include <float.h>
 
 #if OMPI_CC_USE_PRAGMA_IDENT
 #pragma ident OMPI_IDENT_STRING
@@ -830,9 +835,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Initialize the registered datarep list to be empty */
-
     OBJ_CONSTRUCT(&ompi_registered_datareps, opal_list_t);
 
+    /* Initialize the arrays used to store the F90 types returned by the
+     *  MPI_Type_create_f90_XXX functions.
+     */
+    OBJ_CONSTRUCT( &ompi_mpi_f90_integer_hashtable, opal_hash_table_t);
+    opal_hash_table_init(&ompi_mpi_f90_integer_hashtable, 16 /* why not? */);
+
+    OBJ_CONSTRUCT( &ompi_mpi_f90_real_hashtable, opal_hash_table_t);
+    opal_hash_table_init(&ompi_mpi_f90_real_hashtable, FLT_MAX_10_EXP);
+
+    OBJ_CONSTRUCT( &ompi_mpi_f90_complex_hashtable, opal_hash_table_t);
+    opal_hash_table_init(&ompi_mpi_f90_complex_hashtable, FLT_MAX_10_EXP);
+    
     /* All done.  Wasn't that simple? */
 
     ompi_mpi_initialized = true;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,6 +36,7 @@ static const char FUNC_NAME[] = "MPI_Type_create_f90_complex";
 
 int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
 {
+    uint64_t key;
 
     OPAL_CR_NOOP_PROGRESS();
 
@@ -58,12 +59,47 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
     if( MPI_UNDEFINED == p ) p = 0;
     if( MPI_UNDEFINED == r ) r = 0;
 
+    /**
+     * With respect to the MPI standard, MPI-2.0 Sect. 10.2.5, MPI_TYPE_CREATE_F90_xxxx,
+     * page 295, line 47 we handle this nicely by caching the values in a hash table.
+     * However, as the value of might not always make sense, a little bit of optimization
+     * might be a good idea. Therefore, first we try to see if we can handle the value
+     * with some kind of default value, and if it's the case then we look into the
+     * cache.
+     */
+
     if( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) )    *newtype = &ompi_mpi_datatype_null;
     else if( (DBL_DIG < p) || (DBL_MAX_10_EXP < r) ) *newtype = &ompi_mpi_ldblcplex;
     else if( (FLT_DIG < p) || (FLT_MAX_10_EXP < r) ) *newtype = &ompi_mpi_dblcplex;
     else                                             *newtype = &ompi_mpi_cplex;
 
     if( *newtype != &ompi_mpi_datatype_null ) {
+        ompi_datatype_t* datatype;
+        int* a_i[2];
+
+        key = (((uint64_t)p) << 32) | ((uint64_t)r);
+        if( OPAL_SUCCESS == opal_hash_table_get_value_uint64( &ompi_mpi_f90_complex_hashtable,
+                                                              key, (void**)newtype ) ) {
+            return MPI_SUCCESS;
+        }
+        /* Create the duplicate type corresponding to selected type, then
+         * set the argument to be a COMBINER with the correct value of r
+         * and add it to the hash table. */
+        if (OMPI_SUCCESS != ompi_ddt_duplicate( *newtype, &datatype)) {
+            OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
+                                    MPI_ERR_INTERN, FUNC_NAME );
+        }
+        /* Make sure the user is not allowed to free this datatype as specified
+         * in the MPI standard.
+         */
+        datatype->flags |= DT_FLAG_PREDEFINED;
+
+        a_i[0] = &r;
+        a_i[1] = &p;
+        ompi_ddt_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_COMPLEX );
+
+        opal_hash_table_set_value_uint64( &ompi_mpi_f90_complex_hashtable, key, datatype );
+        *newtype = datatype;
         return MPI_SUCCESS;
     }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,41 +35,72 @@ static const char FUNC_NAME[] = "MPI_Type_create_f90_integer";
 int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
 
 {
-
     OPAL_CR_NOOP_PROGRESS();
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-    /* Note: These functions accept negative integers for the p and r
-     * arguments.  This is because for the SELECTED_INTEGER_KIND,
-     * negative numbers are equivalent to zero values.  See section
-     * 13.14.95 of the Fortran 95 standard. */
+        /* Note: These functions accept negative integers for the p and r
+         * arguments.  This is because for the SELECTED_INTEGER_KIND,
+         * negative numbers are equivalent to zero values.  See section
+         * 13.14.95 of the Fortran 95 standard. */
+    }
 
-  }
+    /**
+     * With respect to the MPI standard, MPI-2.0 Sect. 10.2.5, MPI_TYPE_CREATE_F90_xxxx,
+     * page 295, line 47 we handle this nicely by caching the values in a hash table.
+     * However, as the value of might not always make sense, a little bit of optimization
+     * might be a good idea. Therefore, first we try to see if we can handle the value
+     * with some kind of default value, and if it's the case then we look into the
+     * cache.
+     */
 
-   if      (r > 38) *newtype = &ompi_mpi_datatype_null;
+    if      (r > 38) *newtype = &ompi_mpi_datatype_null;
 #if OMPI_HAVE_F90_INTEGER16
-   else if (r > 18) *newtype = &ompi_mpi_long_long_int;
+    else if (r > 18) *newtype = &ompi_mpi_long_long_int;
 #else
-   else if (r > 18) *newtype = &ompi_mpi_datatype_null;
+    else if (r > 18) *newtype = &ompi_mpi_datatype_null;
 #endif  /* OMPI_HAVE_F90_INTEGER16 */
 #if SIZEOF_LONG > SIZEOF_INT
-   else if (r >  9) *newtype = &ompi_mpi_long;
+    else if (r >  9) *newtype = &ompi_mpi_long;
 #else
 #if SIZEOF_LONG_LONG > SIZEOF_INT
-   else if (r >  9) *newtype = &ompi_mpi_long_long_int;
+    else if (r >  9) *newtype = &ompi_mpi_long_long_int;
 #else
-   else if (r >  9) *newtype = &ompi_mpi_datatype_null;
+    else if (r >  9) *newtype = &ompi_mpi_datatype_null;
 #endif  /* SIZEOF_LONG_LONG > SIZEOF_INT */
 #endif  /* SIZEOF_LONG > SIZEOF_INT */
-   else if (r >  4) *newtype = &ompi_mpi_int;
-   else if (r >  2) *newtype = &ompi_mpi_short;
-   else             *newtype = &ompi_mpi_byte;
+    else if (r >  4) *newtype = &ompi_mpi_int;
+    else if (r >  2) *newtype = &ompi_mpi_short;
+    else             *newtype = &ompi_mpi_byte;
 
-   if( *newtype != &ompi_mpi_datatype_null ) {
-      return MPI_SUCCESS;
-   }
+    if( *newtype != &ompi_mpi_datatype_null ) {
+        ompi_datatype_t* datatype;
+        int* a_i[1];
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        if( OPAL_SUCCESS == opal_hash_table_get_value_uint32( &ompi_mpi_f90_integer_hashtable,
+                                                              r, (void**)newtype ) ) {
+            return MPI_SUCCESS;
+        }
+        /* Create the duplicate type corresponding to selected type, then
+         * set the argument to be a COMBINER with the correct value of r
+         * and add it to the hash table. */
+        if (OMPI_SUCCESS != ompi_ddt_duplicate( *newtype, &datatype)) {
+            OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
+                                    MPI_ERR_INTERN, FUNC_NAME );
+        }
+        /* Make sure the user is not allowed to free this datatype as specified
+         * in the MPI standard.
+         */
+        datatype->flags |= DT_FLAG_PREDEFINED;
+
+        a_i[0] = &r;
+        ompi_ddt_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_INTEGER );
+
+        opal_hash_table_set_value_uint32( &ompi_mpi_f90_integer_hashtable, r, datatype );
+        *newtype = datatype;
+        return MPI_SUCCESS;
+    }
+
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }

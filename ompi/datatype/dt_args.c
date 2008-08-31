@@ -309,21 +309,22 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
 {
     ompi_ddt_args_t* pArgs = (ompi_ddt_args_t*)pData->args;
 
-    if( pData->flags & DT_FLAG_PREDEFINED ) {
-        switch(which){
-        case 0:
-            *ci = 0;
-            *ca = 0;
-            *cd = 0;
-            *type = MPI_COMBINER_NAMED;
-            break;
-        default:
-            return MPI_ERR_INTERN;
+    if( NULL == pArgs ) {  /* only for predefined datatypes */
+        if( pData->flags & DT_FLAG_PREDEFINED ) {
+            switch(which){
+            case 0:
+                *ci = 0;
+                *ca = 0;
+                *cd = 0;
+                *type = MPI_COMBINER_NAMED;
+                break;
+            default:
+                return MPI_ERR_INTERN;
+            }
+            return(MPI_SUCCESS);
         }
-        return(MPI_SUCCESS);
+        return MPI_ERR_INTERN;
     }
-
-    if( pArgs == NULL ) return MPI_ERR_INTERN;
 
     switch(which){
     case 0:     /* GET THE LENGTHS */
