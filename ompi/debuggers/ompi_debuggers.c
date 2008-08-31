@@ -158,9 +158,14 @@ void ompi_wait_for_debugger(void)
     char *a, *b, **dirs;
     opal_buffer_t buf;
 
+
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
+#if ORTE_DISABLE_FULL_SUPPORT
+    debugger = 0;
+#else
     debugger = orte_in_parallel_debugger;
+#endif
 
     /* Add in environment variables for other launchers, such as yod,
        srun, ...etc. */

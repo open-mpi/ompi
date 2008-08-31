@@ -29,6 +29,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/runtime/runtime_internals.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -63,6 +64,8 @@ static int rte_init(char flags)
 {
     int rc;
     int nprocs;
+
+    orte_dt_init();
     
     /* Get our process information */
     
