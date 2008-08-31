@@ -256,6 +256,13 @@ INST (double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
       mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*
+ * Hash tables for MPI_Type_create_f90* functions
+ */
+opal_hash_table_t ompi_mpi_f90_integer_hashtable;
+opal_hash_table_t ompi_mpi_f90_real_hashtable;
+opal_hash_table_t ompi_mpi_f90_complex_hashtable;
+
+/*
  * Per MPI-2:9.5.3, MPI_REGISTER_DATAREP is a memory leak.  There is
  * no way to *de*register datareps once they've been registered.  So
  * we have to track all registrations here so that they can be
