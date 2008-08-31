@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 University of Houston. All rights reserved.
- * Copyright (c) 2007      Cisco, Inc. All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1387,21 +1387,24 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
     new_comm->c_flags |= cart_or_graph;
 
     new_comm->c_topo_comm->mtc_ndims_or_nnodes = ndims_or_nnodes;
-    
     new_comm->c_topo_comm->mtc_dims_or_index = NULL;
     new_comm->c_topo_comm->mtc_periods_or_edges = NULL;
     new_comm->c_topo_comm->mtc_reorder = reorder;
-
     new_comm->c_topo_comm->mtc_coords = NULL;
 
-    new_comm->c_topo_comm->mtc_dims_or_index = (int *)malloc (sizeof(int) * ndims_or_nnodes);
-    if (NULL == new_comm->c_topo_comm->mtc_dims_or_index) {
-        ompi_comm_free (&new_comm);
-        *comm_topo = new_comm;
-        return OMPI_ERROR;
+    /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
+       a 0-byte malloc -- leave dims_or_index as NULL */
+    if (!(OMPI_COMM_CART == cart_or_graph && 0 == ndims_or_nnodes)) {
+        new_comm->c_topo_comm->mtc_dims_or_index = 
+            (int *) malloc(sizeof(int) * ndims_or_nnodes);
+        if (NULL == new_comm->c_topo_comm->mtc_dims_or_index) {
+            ompi_comm_free (&new_comm);
+            *comm_topo = new_comm;
+            return OMPI_ERROR;
+        }
+        memcpy (new_comm->c_topo_comm->mtc_dims_or_index,
+                dims_or_index, ndims_or_nnodes * sizeof(int));
     }
-    memcpy (new_comm->c_topo_comm->mtc_dims_or_index,
-            dims_or_index, ndims_or_nnodes * sizeof(int));
 
     /* Now the topology component has been selected, let the component
      * re-arrange the proc ranks if need be. This is a down-call into
@@ -1445,21 +1448,24 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
          * structure. The base component functions are free to change
          * it as they deem fit */
 
-        new_comm->c_topo_comm->mtc_periods_or_edges =
-            (int*) malloc (sizeof(int) * ndims_or_nnodes);
-        if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
-            ompi_comm_free (&new_comm);
-            *comm_topo = new_comm;
-            return OMPI_ERROR;
-        }
-        memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
-                periods_or_edges, ndims_or_nnodes * sizeof(int));
+        if (ndims_or_nnodes > 0) {
+            new_comm->c_topo_comm->mtc_periods_or_edges =
+                (int*) malloc(sizeof(int) * ndims_or_nnodes);
+            if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
+                ompi_comm_free (&new_comm);
+                *comm_topo = new_comm;
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
+                    periods_or_edges, ndims_or_nnodes * sizeof(int));
 
-        new_comm->c_topo_comm->mtc_coords = (int *)malloc (sizeof(int) * ndims_or_nnodes);
-        if (NULL == new_comm->c_topo_comm->mtc_coords) {
-            ompi_comm_free (&new_comm);
-            *comm_topo = new_comm;
-            return OMPI_ERROR;
+            new_comm->c_topo_comm->mtc_coords = 
+                (int *) malloc(sizeof(int) * ndims_or_nnodes);
+            if (NULL == new_comm->c_topo_comm->mtc_coords) {
+                ompi_comm_free (&new_comm);
+                *comm_topo = new_comm;
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
         }
 
         if (OMPI_SUCCESS != 
@@ -1645,14 +1651,22 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
 
     /* pointers for the rest of the information have been set
        up.... simply allocate enough space and copy all the
-       information from the previous one */
+       information from the previous one.  Remember that MPI-2.1
+       allows for 0-dimensional Cartesian communicators. */
 
     newt->mtc_ndims_or_nnodes = oldt->mtc_ndims_or_nnodes;
     newt->mtc_reorder = oldt->mtc_reorder;
+    if (OMPI_COMM_IS_CART(oldcomm) && 0 == oldt->mtc_ndims_or_nnodes) {
+        newt->mtc_dims_or_index = NULL;
+        newt->mtc_periods_or_edges = NULL;
+        newt->mtc_coords = NULL;
+        return MPI_SUCCESS;
+    }
+
     newt->mtc_dims_or_index = 
         (int *)malloc(sizeof(int) * newt->mtc_ndims_or_nnodes);
     if (NULL == newt->mtc_dims_or_index) {
-        return OMPI_ERROR;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     memcpy (newt->mtc_dims_or_index, oldt->mtc_dims_or_index,
             newt->mtc_ndims_or_nnodes * sizeof(int));

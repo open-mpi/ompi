@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,7 +58,10 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank)
             return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                           FUNC_NAME);
         }
-        if ((NULL == coords) || (NULL == rank)){
+        /* Per MPI-2.1, coords is only relevant if the dimension of
+           the cartesian comm is >0 */
+        if ((NULL == coords && comm->c_topo_comm->mtc_ndims_or_nnodes >= 1) ||
+            (NULL == rank)){
             return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
