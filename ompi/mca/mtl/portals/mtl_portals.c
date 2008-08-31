@@ -34,7 +34,9 @@ static ptl_handle_md_t ack_catchall_md_h;
 static ptl_handle_md_t read_catchall_md_h;
 static ptl_handle_md_t unex_long_md_h;
 
-static ompi_mtl_portals_request_t catchall_request;
+static ompi_mtl_portals_request_t catchall_send_request;
+static ompi_mtl_portals_request_t catchall_ack_request;
+static ompi_mtl_portals_request_t catchall_read_request;
 
 mca_mtl_portals_module_t ompi_mtl_portals = {
     {
@@ -64,15 +66,21 @@ OBJ_CLASS_INSTANCE(ompi_mtl_portals_event_t, opal_list_item_t,
 
 /* catchall callback */
 static int
-ompi_mtl_portals_catchall_callback(ptl_event_t *ev, ompi_mtl_portals_request_t *ptl_request)
+ompi_mtl_portals_catchall_callback(ptl_event_t *ev, 
+                                   ompi_mtl_portals_request_t *ptl_request)
 {
-
-    opal_output(fileno(stderr),"ERROR - received catchall event\n"); 
+    if (ptl_request == &catchall_send_request) {
+        opal_output(fileno(stderr),"ERROR - received catchall event on send queue"); 
+    } else if (ptl_request == &catchall_ack_request) {
+        opal_output(fileno(stderr),"ERROR - received catchall event on ack queue");  
+    } else if (ptl_request == &catchall_read_request) {
+        opal_output(fileno(stderr),"ERROR - received catchall event on read queue");  
+    } else {
+        opal_output(fileno(stderr),"ERROR - received catchall event of unknown origin");  
+    }
 
     abort();
-
     return OMPI_ERROR;
-
 } 
 
 
@@ -155,11 +163,11 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
     assert(ret == PTL_OK);
 
     /* attach catchalls to the send, ack, and read portals */
-    catchall_request.event_callback = ompi_mtl_portals_catchall_callback;
     md.eq_handle = ompi_mtl_portals.ptl_eq_h;
-    md.user_ptr = &catchall_request;
 
     /* catchall for the send portal */
+    catchall_send_request.event_callback = ompi_mtl_portals_catchall_callback;
+    md.user_ptr = &catchall_send_request;
     ret = PtlMEMDPost(ompi_mtl_portals.ptl_ni_h,
                       ompi_mtl_portals.ptl_unex_long_me_h,
                       anyid,
@@ -175,6 +183,8 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
     assert(ret == PTL_OK);
 
     /* catchall for ack portal */
+    catchall_ack_request.event_callback = ompi_mtl_portals_catchall_callback;
+    md.user_ptr = &catchall_ack_request;
     ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                       OMPI_MTL_PORTALS_ACK_TABLE_ID,
                       anyid,
@@ -192,6 +202,8 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
     assert(ret == PTL_OK);
 
     /* catchall for read portal */
+    catchall_read_request.event_callback = ompi_mtl_portals_catchall_callback;
+    md.user_ptr = &catchall_read_request;
     ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                       OMPI_MTL_PORTALS_READ_TABLE_ID,
                       anyid,
