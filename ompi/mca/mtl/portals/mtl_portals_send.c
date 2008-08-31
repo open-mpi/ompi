@@ -188,7 +188,7 @@ ompi_mtl_portals_zero_send(mca_pml_base_send_mode_t mode, int contextid, int loc
     ptl_match_bits_t match_bits;
     ptl_match_bits_t mode_bits;
 
-    mode_bits = (MCA_PML_BASE_SEND_STANDARD == mode) ? PTL_SHORT_MSG : PTL_READY_MSG;
+    mode_bits = (MCA_PML_BASE_SEND_READY != mode) ? PTL_SHORT_MSG : PTL_READY_MSG;
 
     PTL_SET_SEND_BITS(match_bits, contextid, localrank, tag, mode_bits); 
 
@@ -218,7 +218,7 @@ ompi_mtl_portals_short_send(mca_pml_base_send_mode_t mode, void *start, int leng
     void *copyblock;
     ptl_match_bits_t mode_bits;
 
-    mode_bits = (MCA_PML_BASE_SEND_STANDARD == mode) ? PTL_SHORT_MSG : PTL_READY_MSG;
+    mode_bits = (MCA_PML_BASE_SEND_READY != mode) ? PTL_SHORT_MSG : PTL_READY_MSG;
 
     PTL_SET_SEND_BITS(match_bits, contextid, localrank, tag, mode_bits); 
 
@@ -257,7 +257,7 @@ ompi_mtl_portals_medium_isend( mca_pml_base_send_mode_t mode, void *start, int l
     ptl_handle_md_t md_h;
     ptl_match_bits_t mode_bits;
 
-    mode_bits = (MCA_PML_BASE_SEND_STANDARD == mode) ? PTL_SHORT_MSG : PTL_READY_MSG;
+    mode_bits = (MCA_PML_BASE_SEND_READY != mode) ? PTL_SHORT_MSG : PTL_READY_MSG;
 
     PTL_SET_SEND_BITS(match_bits, contextid, localrank, tag, mode_bits); 
     
@@ -446,9 +446,9 @@ ompi_mtl_portals_sync_isend( void *start, int length, int contextid, int localra
 #define PTL_SEND_CODE									\
 {											\
     switch (mode) {									\
-											\
 	case MCA_PML_BASE_SEND_STANDARD:						\
 	case MCA_PML_BASE_SEND_READY:							\
+	case MCA_PML_BASE_SEND_BUFFERED:					     	\
 											\
 	    if (0 == length) {								\
 											\
@@ -526,7 +526,8 @@ ompi_mtl_portals_sync_isend( void *start, int length, int contextid, int localra
 	    break;									\
 											\
 	default:									\
-	    opal_output(fileno(stderr),"Unexpected msg type\n");                        \
+	    opal_output(fileno(stderr),"Unexpected msg type %d\n", mode);                        \
+            abort();                                                                    \
 											\
     }											\
 }
