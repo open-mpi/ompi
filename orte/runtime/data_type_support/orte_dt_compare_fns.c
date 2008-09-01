@@ -107,6 +107,7 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
     return OPAL_EQUAL;
 }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 /**
  * JOB
  */
@@ -255,3 +256,4 @@ int orte_dt_compare_grpcomm_mode(orte_grpcomm_mode_t *value1, orte_grpcomm_mode_
     return OPAL_EQUAL;
 }
 
+#endif

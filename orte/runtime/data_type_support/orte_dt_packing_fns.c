@@ -134,6 +134,7 @@ int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
     return ret;
 }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * JOB
  * NOTE: We do not pack all of the job object's fields as many of them have no
@@ -834,3 +835,4 @@ int orte_dt_pack_grpcomm_mode(opal_buffer_t *buffer, const void *src, int32_t nu
     return ret;
 }
 
+#endif
