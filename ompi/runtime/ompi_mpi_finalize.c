@@ -163,6 +163,7 @@ int ompi_mpi_finalize(void)
     while (NULL != (item = opal_list_remove_first(&ompi_registered_datareps))) {
         OBJ_RELEASE(item);
     }
+    OBJ_DESTRUCT(&ompi_registered_datareps);
 
     /* Remove all F90 types from the hash tables. As the OBJ_DESTRUCT will
      * call a special destructor able to release predefined types, we can
