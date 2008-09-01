@@ -11,6 +11,9 @@
  * $HEADER$
  *
  */
+
+#define _WIN32_DCOM
+
 #include "orte_config.h"
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -78,7 +81,7 @@ static int plm_ccp_finalize(void);
 static int plm_ccp_connect(ICluster* pCluster);
 static int plm_ccp_disconnect(void);
 
-void get_cluster_message(ICluster* pCluster);
+void plm_get_cluster_message(ICluster* pCluster);
 static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv);
 
 /*
@@ -127,7 +130,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     orte_std_cntr_t launched = 0, i; 
 
     orte_job_map_t *map = NULL;
-    int argc, rc, node_name_index, proc_name_index;
+    int argc, rc, node_name_index, proc_vpid_index, proc_name_index;
     char *param, **env = NULL, *var, **argv = NULL;
     bool connected = false;
     char *bin_base = NULL, *lib_base = NULL, *command_line;
@@ -254,7 +257,7 @@ GETMAP:
 
     hr = pCluster->CreateJob(&pJob);
     if (FAILED(hr)) {
-        get_cluster_message(pCluster);
+        plm_get_cluster_message(pCluster);
         opal_output(orte_plm_globals.output,
                     "plm:ccp:failed to create cluster object!");
         goto cleanup;
@@ -269,8 +272,8 @@ GETMAP:
     env = opal_argv_copy(orte_launch_environ);
 
     /* add our umask -- see big note in orted.c */
-    current_umask = umask(0);
-    umask(current_umask);
+    current_umask = _umask(0);
+    _umask(current_umask);
     asprintf(&var, "0%o", current_umask);
     opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
     free(var);
@@ -422,7 +425,7 @@ GETMAP:
         /* Set terms for task. */
         hr = pCluster->CreateTask(&pTask);
         if (FAILED(hr)) {
-            get_cluster_message(pCluster);
+            plm_get_cluster_message(pCluster);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
             goto cleanup;
@@ -495,7 +498,7 @@ GETMAP:
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "Added job %d to scheduling queue.\n", job_id));
     }else {
-        get_cluster_message(pCluster);
+        plm_get_cluster_message(pCluster);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -734,7 +737,7 @@ static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char *
 }
 
 
-void get_cluster_message(ICluster* pCluster)
+void plm_get_cluster_message(ICluster* pCluster)
 {
     HRESULT hr = S_OK;
     BSTR message = NULL;
