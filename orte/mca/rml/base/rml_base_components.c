@@ -10,6 +10,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/rml/rml.h"
 
