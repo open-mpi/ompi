@@ -24,6 +24,7 @@ dist_pkgdata_DATA += runtime/help-orte-runtime.txt
 headers += \
         runtime/runtime.h \
 	runtime/orte_locks.h \
+        runtime/orte_globals.h \
         runtime/runtime_internals.h \
         runtime/data_type_support/orte_dt_support.h
 
@@ -46,8 +47,6 @@ if !ORTE_DISABLE_FULL_SUPPORT
 headers += \
         runtime/runtime_internals.h \
 	runtime/orte_wait.h \
-        runtime/orte_globals.h \
-        runtime/orte_globals_class_instances.h \
         runtime/orte_cr.h \
         runtime/orte_data_server.h
 

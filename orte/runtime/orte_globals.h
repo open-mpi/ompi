@@ -44,13 +44,49 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 
+
+BEGIN_C_DECLS
+
+ORTE_DECLSPEC extern int orte_debug_verbosity;
+ORTE_DECLSPEC extern char *orte_prohibited_session_dirs;
+ORTE_DECLSPEC extern bool orte_xml_output;
+ORTE_DECLSPEC extern bool orte_help_want_aggregate;
+
+/* Shortcut for some commonly used names */
+#define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
+ORTE_DECLSPEC extern orte_process_name_t orte_name_wildcard;  /** instantiated in orte/runtime/orte_init.c */
+#define ORTE_NAME_INVALID       (&orte_name_invalid)
+ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
+
+#define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
+
+/* define a special name that belongs to orterun */
+#define ORTE_PROC_MY_HNP        (&orte_process_info.my_hnp)
+
+/* define the name of my daemon */
+#define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
+
+/* See comment in orte/tools/orterun/debuggers.c about this MCA
+   param */
+ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
+
+
+#if ORTE_DISABLE_FULL_SUPPORT
+
+/* These types are used in interface functions that should never be
+   used or implemented in the non-full interface, but need to be
+   declared for various reasons.  So have a dummy type to keep things
+   simple (and throw an error if someone does try to use them) */
+struct orte_job_t;
+typedef struct orte_job_t orte_job_t;
+
+#else
+
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
 
 /* define a default error return code for ORTE */
 #define ORTE_ERROR_DEFAULT_EXIT_CODE    1
-
-BEGIN_C_DECLS
 
 /**
  * Define a macro for updating the orte_exit_status
@@ -81,26 +117,6 @@ BEGIN_C_DECLS
         }                                                                   \
     } while(0);
 
-
-ORTE_DECLSPEC extern bool orte_help_want_aggregate;
-ORTE_DECLSPEC extern char *orte_prohibited_session_dirs;
-
-#define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
-
-/* define a special name that belongs to orterun */
-#define ORTE_PROC_MY_HNP        (&orte_process_info.my_hnp)
-
-/* define the name of my daemon */
-#define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
-
-/*
- * Shortcut for some commonly used names
- */
-#define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
-ORTE_DECLSPEC extern orte_process_name_t orte_name_wildcard;  /** instantiated in orte/runtime/orte_init.c */
-
-#define ORTE_NAME_INVALID       (&orte_name_invalid)
-ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
 
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
@@ -353,8 +369,6 @@ typedef struct {
 } orte_jmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /**
 * Get a job data object
  * We cannot just reference a job data object with its jobid as
@@ -374,8 +388,6 @@ ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
-ORTE_DECLSPEC extern bool orte_xml_output;
-ORTE_DECLSPEC extern int orte_debug_verbosity;
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
 ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
@@ -414,10 +426,6 @@ ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 /* global arrays for data storage */
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
-
-/* See comment in orte/tools/orterun/debuggers.c about this MCA
-   param */
-ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

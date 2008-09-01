@@ -118,6 +118,8 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_NAME                (OPAL_DSS_ID_DYNAMIC + 2)  /**< an orte_process_name_t */
 #define    ORTE_VPID                (OPAL_DSS_ID_DYNAMIC + 3)  /**< a vpid */
 #define    ORTE_JOBID               (OPAL_DSS_ID_DYNAMIC + 4)  /**< a jobid */
+
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* State-related types */
 #define    ORTE_NODE_STATE          (OPAL_DSS_ID_DYNAMIC + 5)  /**< node status flag */
 #define    ORTE_PROC_STATE          (OPAL_DSS_ID_DYNAMIC + 6)  /**< process/resource status */
@@ -142,5 +144,7 @@ typedef void* orte_iov_base_ptr_t;
 
 /* GRPCOMM types */
 #define    ORTE_GRPCOMM_MODE        (OPAL_DSS_ID_DYNAMIC + 19) 
+
+#endif /* !ORTE_DISABLE_FULL_SUPPORT */
 
 #endif
