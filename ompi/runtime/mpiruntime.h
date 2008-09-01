@@ -116,7 +116,7 @@ int ompi_mpi_finalize(void);
 /**
  * Abort the processes of comm
  */
-int ompi_mpi_abort(struct ompi_communicator_t* comm,
+OMPI_DECLSPEC int ompi_mpi_abort(struct ompi_communicator_t* comm,
                    int errcode, bool kill_remote_of_intercomm);
 
 /**
