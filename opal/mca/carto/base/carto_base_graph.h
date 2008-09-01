@@ -33,6 +33,8 @@
 
 #include "opal/mca/carto/carto.h"
 
+BEGIN_C_DECLS
+
 OPAL_DECLSPEC extern opal_carto_graph_t *opal_carto_base_common_host_graph;
 
 /**
@@ -136,5 +138,7 @@ OPAL_DECLSPEC opal_carto_base_node_t
  * @return int success or error
  */
 OPAL_DECLSPEC int opal_carto_base_graph_get_host_graph_fn(opal_carto_graph_t **graph, const char * graph_type);
+
+END_C_DECLS
 
 #endif
