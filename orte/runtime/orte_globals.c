@@ -59,7 +59,6 @@ bool orte_hetero_apps = false;
 bool orte_never_launched = false;
 
 int32_t orte_contiguous_nodes;
-int orte_debug_output = -1;
 char **orte_launch_environ;
 opal_pointer_array_t orte_daemonmap;
 
@@ -93,6 +92,7 @@ opal_pointer_array_t *orte_node_pool;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
+int orte_debug_output = -1;
 bool orte_debug_daemons_flag = false;
 bool orte_xml_output = false;
 
