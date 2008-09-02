@@ -51,6 +51,7 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
             *size = sizeof(orte_process_name_t);
             break;
             
+#if !ORTE_DISABLE_FULL_SUPPORT
         case ORTE_DAEMON_CMD:
             *size = sizeof(orte_daemon_cmd_flag_t);
             break;
@@ -78,6 +79,7 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
         case ORTE_GRPCOMM_MODE:
             *size = sizeof(orte_grpcomm_mode_t);
             break;
+#endif
             
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
@@ -87,6 +89,7 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
     return ORTE_SUCCESS;
 }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * JOB
  */
@@ -258,3 +261,4 @@ int orte_dt_size_map(size_t *size, orte_job_map_t *src, opal_data_type_t type)
     return ORTE_SUCCESS;
 }
 
+#endif

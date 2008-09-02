@@ -23,26 +23,15 @@ dist_pkgdata_DATA += runtime/help-orte-runtime.txt
 
 headers += \
         runtime/runtime.h \
-	runtime/orte_locks.h
+	runtime/orte_locks.h \
+        runtime/orte_globals.h \
+        runtime/runtime_internals.h \
+        runtime/data_type_support/orte_dt_support.h
 
 libopen_rte_la_SOURCES += \
         runtime/orte_finalize.c \
         runtime/orte_init.c \
         runtime/orte_locks.c \
-        runtime/orte_mca_params.c
-
-if !ORTE_DISABLE_FULL_SUPPORT
-
-headers += \
-        runtime/runtime_internals.h \
-	runtime/orte_wait.h \
-        runtime/orte_globals.h \
-        runtime/orte_globals_class_instances.h \
-        runtime/orte_cr.h \
-        runtime/orte_data_server.h \
-        runtime/data_type_support/orte_dt_support.h
-
-libopen_rte_la_SOURCES += \
         runtime/orte_globals.c \
         runtime/data_type_support/orte_dt_compare_fns.c \
         runtime/data_type_support/orte_dt_copy_fns.c \
@@ -51,6 +40,17 @@ libopen_rte_la_SOURCES += \
         runtime/data_type_support/orte_dt_size_fns.c \
         runtime/data_type_support/orte_dt_packing_fns.c \
         runtime/data_type_support/orte_dt_unpacking_fns.c \
+        runtime/orte_mca_params.c
+
+if !ORTE_DISABLE_FULL_SUPPORT
+
+headers += \
+        runtime/runtime_internals.h \
+	runtime/orte_wait.h \
+        runtime/orte_cr.h \
+        runtime/orte_data_server.h
+
+libopen_rte_la_SOURCES += \
         runtime/orte_wait.c \
         runtime/orte_cr.c \
         runtime/orte_data_server.c

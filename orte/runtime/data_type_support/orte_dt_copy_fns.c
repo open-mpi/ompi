@@ -99,6 +99,8 @@ int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t typ
     return ORTE_SUCCESS;
 }
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /**
  * JOB
  */
@@ -354,3 +356,4 @@ int orte_dt_copy_grpcomm_mode(orte_grpcomm_mode_t **dest, orte_grpcomm_mode_t *s
     return ORTE_SUCCESS;
 }
 
+#endif
