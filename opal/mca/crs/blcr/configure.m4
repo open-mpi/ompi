@@ -22,16 +22,17 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                 [AC_HELP_STRING([--with-blcr],
                                 [Path to BLCR Installation])])
 
-    # If we don't want FT, don't compile this component
     check_crs_blcr_good="no"
-    AS_IF([test "$ompi_want_ft" = "1"],
+    AS_IF([test "$with_blcr" = "no"], [$2],
+        [check_crs_blcr_good="yes"])
+
+    # If we don't want FT, don't compile this component
+    AS_IF([test "$check_crs_blcr_good" = "yes" -a "$ompi_want_ft" = "1"],
         [check_crs_blcr_good="yes"],
         [$2])
 
-    AS_IF([test "$check_crs_blcr_good" = "yes" -a "$with_blcr" = "no"],
-          [check_crs_blcr_good="no"],
-          [check_crs_blcr_good="yes"
-           AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"],
+    AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
+          [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"],
                  [check_crs_blcr_dir="$with_blcr"],
                  [check_crs_blcr_dir=""])])
 
