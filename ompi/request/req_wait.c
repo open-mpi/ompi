@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -297,11 +297,9 @@ int ompi_request_default_wait_all( size_t count,
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
-            if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-                statuses[i] = ompi_status_empty;
-            } else {
-                statuses[i] = request->req_status;
-            }
+
+            statuses[i] = request->req_status;
+
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
             } else {

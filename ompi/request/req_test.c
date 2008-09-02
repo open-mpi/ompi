@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -210,8 +210,14 @@ int ompi_request_default_test_all(
         /* fill out completion status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             request  = *rptr;
+            /*
+             * If the request is OMPI_REQUEST_INACTIVE set the status
+             * (either in the case of standard and persistent requests),
+             * to the already initialized req_status.
+             * Works also in the case of persistent request w/ MPI_PROC_NULL.
+             */
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-                statuses[i] = ompi_status_empty;
+                statuses[i] = request->req_status;
                 continue;
             }
             if (OMPI_REQUEST_GEN == request->req_type) {
