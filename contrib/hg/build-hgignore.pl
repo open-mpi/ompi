@@ -48,6 +48,13 @@ static-components.h
 *~
 *\\\#/;
 
+my $debug;
+$debug = 1
+    if ($ARGV[0]);
+
+print "Thinking...\n"
+    if (!$debug);
+
 # Start at the top level
 process(".");
 
@@ -81,7 +88,8 @@ sub process {
 
     chomp($svn_ignore);
     if ($svn_ignore ne "") {
-        print "Found svn:ignore in $dir\n";
+        print "Found svn:ignore in $dir\n"
+            if ($debug);
         foreach my $line (split(/\n/, $svn_ignore)) {
             chomp($line);
             $line =~ s/^\.\///;
