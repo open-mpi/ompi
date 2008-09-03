@@ -543,14 +543,3 @@ support.  Short eager RDMA is not yet supported with progress threads;
 its use has been disabled in this job.  
 
 This is a warning only; you job will attempt to continue.
-#
-[cannot raise btl error]
-The OpenFabrics driver in Open MPI tried to raise a fatal error, but
-failed.  Hopefully there was an error message before this one that
-gave some more detailed information.
-
-  Local host: %s
-  Source file: %s
-  Source line: %d
-
-Your job is now going to abort, sorry.

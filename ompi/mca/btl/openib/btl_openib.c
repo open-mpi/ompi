@@ -967,6 +967,15 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         OBJ_RELEASE(endpoint);
     }
 
+    /* Finalize the CPC modules on this openib module */
+    for (i = 0; i < openib_btl->num_cpcs; ++i) {
+        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
+            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+        }
+        free(openib_btl->cpcs[i]);
+    }
+    free(openib_btl->cpcs);
+
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
@@ -982,15 +991,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
                 OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
         }
     }
-
-    /* Finalize the CPC modules on this openib module */
-    for (i = 0; i < openib_btl->num_cpcs; ++i) {
-        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
-            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
-        }
-        free(openib_btl->cpcs[i]);
-    }
-    free(openib_btl->cpcs);
 
     /* Release device if there are no more users */
     if(!(--openib_btl->device->btls)) {

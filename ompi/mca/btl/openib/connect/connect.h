@@ -128,29 +128,19 @@
  * used.  There is only this function, which tells when a specific
  * CPC/BTL module is no longer being used.
  *
- * cbm_uses_cts: a bool that indicates whether the CPC will use the
- * CTS protocol or not.
- *   - if true: the CPC will post the fragment on
- *     endpoint->endpoint_cts_frag as a receive buffer and will *not*
- *     call ompi_btl_openib_post_recvs().
- *   - if false: the CPC will call ompi_btl_openib_post_recvs() before
- *     calling ompi_btl_openib_cpc_complete().
- *
- * There are two functions in the main openib BTL that the CPC may
+ * There are two functions in the main openib BTL that the CPC will
  * call:
  *
  * - ompi_btl_openib_post_recvs(endpoint): once a QP is locally
  * connected to the remote side (but we don't know if the remote side
  * is connected to us yet), this function is invoked to post buffers
- * on the QP, setup credits for the endpoint, etc.  This function is
- * *only* invoked if the CPC's cbm_uses_cts is false.
+ * on the QP, setup credits for the endpoint, etc.
  *
- * - ompi_btl_openib_cpc_complete(endpoint): once that a CPC knows
- * that a QP is connected on *both* sides, this function is invoked to
- * tell the main openib BTL "ok, you can use this connection now."
- * (e.g., the main openib BTL will either invoke the CTS protocol or
- * start sending out fragments that were queued while the connection
- * was establishing, etc.).
+ * - ompi_btl_openib_connected(endpoint): once we know that a QP is
+ * connected on *both* sides, this function is invoked to tell the
+ * main openib BTL "ok, you can use this connection now." (e.g., the
+ * main openib BTL will start sending out fragments that were queued
+ * while the connection was establing, etc.).
  */
 #ifndef BTL_OPENIB_CONNECT_H
 #define BTL_OPENIB_CONNECT_H
@@ -340,14 +330,6 @@ typedef struct ompi_btl_openib_connect_base_module_t {
 
     /** Finalize the cpc module */
     ompi_btl_openib_connect_base_module_finalize_fn_t cbm_finalize;
-
-    /** Whether this module will use the CTS protocol or not.  This
-        directly states whether this module will call
-        mca_btl_openib_endpoint_post_recvs() or not: true = this
-        module will *not* call _post_recvs() and instead will post the
-        receive buffer provided at endpoint->endpoint_cts_frag on qp
-        0. */
-    bool cbm_uses_cts;
 } ompi_btl_openib_connect_base_module_t;
 
 END_C_DECLS

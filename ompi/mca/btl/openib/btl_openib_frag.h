@@ -116,7 +116,6 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #define MCA_BTL_OPENIB_CONTROL_CREDITS      0
 #define MCA_BTL_OPENIB_CONTROL_RDMA         1
 #define MCA_BTL_OPENIB_CONTROL_COALESCED    2
-#define MCA_BTL_OPENIB_CONTROL_CTS          3
 
 struct mca_btl_openib_control_header_t {
     uint8_t type;
@@ -268,7 +267,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_coalesced_frag_t);
  */
 
 static inline mca_btl_openib_send_control_frag_t *
-alloc_control_frag(mca_btl_openib_module_t *btl)
+alloc_credit_frag(mca_btl_openib_module_t *btl)
 {
     int rc;
     ompi_free_list_item_t *item;
