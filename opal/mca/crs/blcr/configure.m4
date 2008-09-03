@@ -23,18 +23,28 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                                 [Path to BLCR Installation])])
 
     check_crs_blcr_good="no"
-    AS_IF([test "$with_blcr" = "no"], [$2],
-        [check_crs_blcr_good="yes"])
+    # If we don't want BLCR, then don't compile it
+    AS_IF([test "$with_blcr" = "no"],
+          [$2
+           check_crs_blcr_good="no"],
+          [check_crs_blcr_good="yes"])
 
     # If we don't want FT, don't compile this component
-    AS_IF([test "$check_crs_blcr_good" = "yes" -a "$ompi_want_ft" = "1"],
-        [check_crs_blcr_good="yes"],
-        [$2])
+    AS_IF([test "$ompi_want_ft" = "0"],
+          [$2
+           check_crs_blcr_good="no"],
+          [check_crs_blcr_good="yes"])
 
+    # Determine the search paths for the headers and libraries
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
           [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"],
-                 [check_crs_blcr_dir="$with_blcr"],
-                 [check_crs_blcr_dir=""])])
+                 [check_crs_blcr_dir="$with_blcr"
+                  AS_IF([test ! -z "$check_crs_blcr_dir/lib64"],
+                      [check_crs_blcr_libdir="$check_crs_blcr_dir/lib64"],
+                      [check_crs_blcr_libdir="$check_crs_blcr_dir/lib"])
+                 ],
+                 [check_crs_blcr_dir=""
+                  check_crs_blcr_libdir=""])])
 
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2], [
         crs_blcr_CFLAGS="$CFLAGS"
@@ -44,7 +54,7 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
 
         AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"], 
               [CPPFLAGS="$CPPFLAGS -I$check_crs_blcr_dir/include"
-               LDFLAGS="$LDFLAGS -L$check_crs_blcr_dir/lib"])
+               LDFLAGS="$LDFLAGS -L$check_crs_blcr_libdir"])
 
         AC_CHECK_HEADERS([libcr.h],
                          [AC_CHECK_LIB([cr], 
@@ -68,7 +78,7 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                       crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-pedantic//g'`"
                       crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-Wundef//g'`"
                       crs_blcr_CPPFLAGS="$crs_blcr_CPPFLAGS -I$check_crs_blcr_dir/include"
-                      crs_blcr_LDFLAGS="$crs_blcr_LDFLAGS -L$check_crs_blcr_dir/lib"
+                      crs_blcr_LDFLAGS="$crs_blcr_LDFLAGS -L$check_crs_blcr_libdir"
                       ])
                crs_blcr_LIBS="$crs_blcr_LIBS -lcr"])
                
@@ -98,7 +108,7 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
            prev_CPPFLAGS="$CPPFLAGS"
            prev_LDFLAGS="$LDFLAGS"
            CPPFLAGS="$CPPFLAGS -I$check_crs_blcr_dir/include"
-           LDFLAGS="$LDFLAGS -L$check_crs_blcr_dir/lib"
+           LDFLAGS="$LDFLAGS -L$check_crs_blcr_libdir"
 
            crs_blcr_have_working_cr_request=0
            AC_MSG_CHECKING(for BLCR working cr_request)
