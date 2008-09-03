@@ -79,22 +79,6 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* Normalize any coords[i] that is outside the appropriate range
-       for dimensions that are periodic */
-    for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; ++i) {
-        if (comm->c_topo_comm->mtc_periods_or_edges[i] &&
-            (coords[i] < 0 || 
-             coords[i] >= comm->c_topo_comm->mtc_dims_or_index[i])) {
-            if (coords[i] < 0) {
-                coords[i] = (-coords[i]) %
-                    comm->c_topo_comm->mtc_dims_or_index[i];
-                coords[i] = comm->c_topo_comm->mtc_dims_or_index[i] - coords[i];
-            } else {
-                coords[i] = coords[i] % comm->c_topo_comm->mtc_dims_or_index[i];
-            }
-        }
-    }
-
     /* get the function pointer on this communicator */
     func = comm->c_topo->topo_cart_rank;
 
