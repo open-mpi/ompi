@@ -63,14 +63,18 @@ int mca_topo_base_cart_rank (MPI_Comm comm,
    for (; i >= 0; --i, --c, --d, --p) {
        dim = *d;
        ord = *c;
-        if ((ord < 0) || (ord >= dim)) {
-          if (*p) {
-             return MPI_ERR_ARG;
-          }
-          ord %= dim;
-          if (ord < 0) {
-             ord += dim;
-          }
+       /* Per MPI-2.1 7.5.4 (description of MPI_CART_RANK), if the
+          dimension is periodic and the coordinate is outside of 0 <=
+          coord(i) < dim, then normalize it.  If the dimension is not
+          periodic, it's an error. */
+       if ((ord < 0) || (ord >= dim)) {
+           if (!*p) {
+               return MPI_ERR_ARG;
+           }
+           ord %= dim;
+           if (ord < 0) {
+               ord += dim;
+           }
        }
        prank += factor * ord;
        factor *= dim;
