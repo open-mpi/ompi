@@ -18,10 +18,10 @@
 #if HAVE_XRC
 #include "connect/btl_openib_connect_xoob.h"
 #endif
-#if OMPI_HAVE_RDMACM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_RDMACM
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
-#if OMPI_HAVE_IBCM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_IBCM
 #include "connect/btl_openib_connect_ibcm.h"
 #endif
 
@@ -44,7 +44,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_RDMACM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_RDMACM
     &ompi_btl_openib_connect_rdmacm,
 #else
     &ompi_btl_openib_connect_empty,
@@ -52,7 +52,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if IB CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_IBCM && OMPI_HAVE_THREADS
+#if OMPI_HAVE_IBCM
     &ompi_btl_openib_connect_ibcm,
 #else
     &ompi_btl_openib_connect_empty,
@@ -272,14 +272,6 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
         }
         opal_output(-1, "match cpc for local port: %s",
                     available[i]->cbc_name);
-
-        /* If the CPC wants to use the CTS protocol, check to ensure
-           that QP 0 is PP; if it's not, we can't use this CPC (or the
-           CTS protocol) */
-        if (!BTL_OPENIB_QP_TYPE_PP(0)) {
-            BTL_VERBOSE(("this CPConly supports when the first btl_openib_receive_queues QP is a PP QP"));
-            continue;
-        }
 
         /* This CPC has indicated that it wants to run on this openib
            BTL module.  Woo hoo! */

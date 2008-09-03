@@ -32,7 +32,7 @@ AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_btl_openib_CONFIG],[
-    OMPI_VAR_SCOPE_PUSH([cpcs have_threads])
+    OMPI_VAR_SCOPE_PUSH([cpcs])
     cpcs="oob"
 
     OMPI_CHECK_OPENIB([btl_openib],
@@ -54,23 +54,15 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
            $1],
           [$2])
 
-    AC_MSG_CHECKING([for thread support (needed for ibcm/rdmacm)])
-    have_threads=`echo $THREAD_TYPE | awk '{ print [$]1 }'`
-    if test "x$have_threads" = "x"; then
-        have_threads=none
-    fi
-    AC_MSG_RESULT([$have_threads])
 
     AS_IF([test "$btl_openib_happy" = "yes"],
           [if test "x$btl_openib_have_xrc" = "x1"; then
               cpcs="$cpcs xoob"
           fi
-          if test "x$btl_openib_have_rdmacm" = "x1" -a \
-                  "$have_threads" != "none"; then
+          if test "x$btl_openib_have_rdmacm" = "x1"; then
               cpcs="$cpcs rdmacm"
           fi
-          if test "x$btl_openib_have_ibcm" = "x1" -a \
-                  "$have_threads" != "none"; then
+          if test "x$btl_openib_have_ibcm" = "x1"; then
               cpcs="$cpcs ibcm"
           fi
           AC_MSG_CHECKING([which openib btl cpcs will be built])

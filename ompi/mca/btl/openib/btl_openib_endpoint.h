@@ -167,15 +167,7 @@ struct mca_btl_base_endpoint_t {
     /** hook for local CPC to hang endpoint-specific data */
     void *endpoint_local_cpc_data;
 
-    /** If endpoint_local_cpc->cbm_uses_cts is true and this endpoint
-        is iWARP, then endpoint_initiator must be true on the side
-        that actually initiates the QP, false on the other side.  This
-        bool is used to know which way to send the first CTS
-        message. */
-    bool endpoint_initiator;
-
-    /** pointer to remote proc's CPC data (essentially its CPC modex
-        message) */
+    /** pointer to remote CPC's data (essentially its CPC modex message) */
     ompi_btl_openib_connect_base_module_data_t *endpoint_remote_cpc_data;
 
     /** current state of the connection */
@@ -228,22 +220,6 @@ struct mca_btl_base_endpoint_t {
 
     /** information about the remote port */
     mca_btl_openib_rem_info_t rem_info;
-
-    /** Frag for initial wireup CTS protocol; will be NULL if CPC
-        indicates that it does not want to use CTS */
-    ompi_free_list_item_t *endpoint_cts_frag;
-
-    /** Whether we've posted receives on this EP or not (only used in
-        CTS protocol) */
-    bool endpoint_posted_recvs;
-
-    /** Whether we've received the CTS from the peer or not (only used
-        in CTS protocol) */
-    bool endpoint_cts_received;
-
-    /** Whether we've send out CTS to the peer or not (only used in
-        CTS protocol) */
-    bool endpoint_cts_sent;
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -268,8 +244,6 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t*,
 void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t*);
-void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint);
-void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t*);
 void mca_btl_openib_endpoint_init(mca_btl_openib_module_t*,
                                   mca_btl_base_endpoint_t*,
@@ -312,7 +286,7 @@ static inline int post_recvs(mca_btl_base_endpoint_t *ep, const int qp,
     if (0 == rc)
         return OMPI_SUCCESS;
 
-    BTL_ERROR(("error %d posting receive on qp %d", rc, qp));
+    BTL_ERROR(("error %d posting receive on qp %d\n", rc, qp));
     return OMPI_ERROR;
 }
 

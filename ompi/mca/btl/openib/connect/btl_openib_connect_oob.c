@@ -86,7 +86,7 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_oob = {
     /* Query */
     oob_component_query,
     /* Finalize */
-    oob_component_finalize,
+    oob_component_finalize
 };
 
 /* Open - this functions sets up any oob specific commandline params */
@@ -166,7 +166,6 @@ static int oob_component_query(mca_btl_openib_module_t *btl,
     (*cpc)->cbm_start_connect = oob_module_start_connect;
     (*cpc)->cbm_endpoint_finalize = NULL;
     (*cpc)->cbm_finalize = NULL;
-    (*cpc)->cbm_uses_cts = false;
 
     opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: oob CPC available for use on %s",
@@ -829,19 +828,19 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             } else {
                 send_connect_data(ib_endpoint, ENDPOINT_CONNECT_ACK);
                 /* Tell main BTL that we're done */
-                mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
+                mca_btl_openib_endpoint_connected(ib_endpoint);
              }
             break;
             
         case MCA_BTL_IB_WAITING_ACK:
             /* Tell main BTL that we're done */
-            mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
+            mca_btl_openib_endpoint_connected(ib_endpoint);
             break;
             
         case MCA_BTL_IB_CONNECT_ACK:
             send_connect_data(ib_endpoint, ENDPOINT_CONNECT_ACK);
             /* Tell main BTL that we're done */
-            mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
+            mca_btl_openib_endpoint_connected(ib_endpoint);
             break;
             
         case MCA_BTL_IB_CONNECTED:
