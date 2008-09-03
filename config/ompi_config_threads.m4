@@ -162,12 +162,11 @@ else
 
 ************************************************************************
 
-Open MPI was unable to find threading support on your system.  In the
-near future, the OMPI development team is considering requiring
-threading support for proper OMPI execution.  This is in part because
-we are not aware of any users that do not have thread support - so we
-need you to e-mail us at ompi@ompi-mpi.org and let us know about this
-problem.
+Open MPI was unable to find threading support on your system.  The
+OMPI development team is considering requiring threading support for
+proper OMPI execution.  This is in part because we are not aware of
+any users that do not have thread support - so we need you to e-mail
+us at ompi@ompi-mpi.org and let us know about this problem.
 
 ************************************************************************
 

@@ -18,41 +18,46 @@ BEGIN_C_DECLS
 /**
  * Typedef for fd callback function
  */
-typedef void *(ompi_btl_openib_fd_callback_fn_t)(int fd, int flags, 
-                                                 void *context);
+typedef void *(ompi_btl_openib_fd_event_callback_fn_t)(int fd, int flags, 
+                                                       void *context);
 
 /**
  * Typedef for generic callback function
  */
-typedef void *(ompi_btl_openib_schedule_callback_fn_t)(void *context);
+typedef void *(ompi_btl_openib_fd_main_callback_fn_t)(void *context);
 
 /**
- * Initialize fd monitoring
+ * Initialize fd monitoring.
+ * Called by the main thread.
  */
 int ompi_btl_openib_fd_init(void);
 
 /**
- * Start monitoring an fd
+ * Start monitoring an fd.
+ * Called by main or service thread; callback will be in service thread.
  */
 int ompi_btl_openib_fd_monitor(int fd, int flags, 
-                               ompi_btl_openib_fd_callback_fn_t *callback,
+                               ompi_btl_openib_fd_event_callback_fn_t *callback,
                                void *context);
 
 /**
- * Stop monitoring an fd
+ * Stop monitoring an fd.
+ * Called by main or service thread; callback will be in service thread.
  */
 int ompi_btl_openib_fd_unmonitor(int fd, 
-                                 ompi_btl_openib_fd_callback_fn_t *callback,
+                                 ompi_btl_openib_fd_event_callback_fn_t *callback,
                                  void *context);
 
 /**
- * Run a function in the main thread
+ * Run a function in the main thread.
+ * Called by the service thread.
  */
-int ompi_btl_openib_fd_schedule(ompi_btl_openib_schedule_callback_fn_t callback,
-                                void *context);
+int ompi_btl_openib_fd_run_in_main(ompi_btl_openib_fd_main_callback_fn_t callback,
+                                   void *context);
 
 /**
- * Finalize fd monitoring
+ * Finalize fd monitoring.
+ * Called by the main thread.
  */
 int ompi_btl_openib_fd_finalize(void);
 

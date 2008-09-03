@@ -440,6 +440,28 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
                 (((unsigned char*)clsc_hdr) + skip);
         }
        break;
+    case MCA_BTL_OPENIB_CONTROL_CTS:
+        OPAL_OUTPUT((0, "received CTS control message: posted recvs %d, sent cts %d",
+                     ep->endpoint_posted_recvs, ep->endpoint_cts_sent));
+        ep->endpoint_cts_received = true;
+
+        /* Only send the CTS back and mark connected if:
+           - we have posted our receives (it's possible that we can
+             get this CTS before this side's CPC has called
+             cpc_complete())
+           - we have not yet sent our CTS
+
+           We don't even want to mark the endpoint connected() until
+           we have posted our receives because otherwise we will
+           trigger credit management (because the rd_credits will
+           still be negative), and Bad Things will happen. */
+        if (ep->endpoint_posted_recvs) {
+            if (!ep->endpoint_cts_sent) {
+                mca_btl_openib_endpoint_send_cts(ep);
+            }
+            mca_btl_openib_endpoint_connected(ep);
+        }
+        break;
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
        break;
