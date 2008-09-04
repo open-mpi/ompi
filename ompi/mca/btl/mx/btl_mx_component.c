@@ -177,6 +177,8 @@ int mca_btl_mx_component_close(void)
 }
 
 #ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
+static int __counter = 0;
+
 /**
  * In order to avoid useless memcpy, the unexpected handler will be called
  * by the MX library before doing any match in the MX internal queues. Here
@@ -197,11 +199,15 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
     mca_btl_base_descriptor_t descriptor;
     mca_btl_base_segment_t segment;
 
+    if( 0 == __counter ) {
+        return MX_RECV_CONTINUE;
+    }
     /*opal_output( 0, "Get unexpected handler context %p source %lld match_value %lld\n"
       "\tlength %d data %p\n", context, source.stuff[0], match_value, length,
       data_if_available );*/
-    if( !(0x01 & match_value) )
+    if( !(0x01 & match_value) ) {
         return MX_RECV_CONTINUE;
+    }
 
     tag = (match_value >> 8) & 0xff;
     reg = mca_btl_base_active_message_trigger + tag;
@@ -217,7 +223,7 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
 #endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
 
 /*
- * Create and intialize an MX PTL module, where each module
+ * Create and initialize an MX BTL module, where each module
  * represents a specific NIC.
  */
 static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
@@ -584,6 +590,10 @@ int mca_btl_mx_component_progress(void)
     mx_request_t mx_request;
     mca_btl_mx_frag_t* frag;
 
+    if( ++__counter > 1 ) {
+      opal_output( 0, "OOPS\n" );
+    }
+
     for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
         mca_btl_mx_module_t* mx_btl = mca_btl_mx_component.mx_btls[i];
         uint32_t mx_result = 0;
@@ -612,43 +622,49 @@ int mca_btl_mx_component_progress(void)
          */
         frag = mx_status.context;
         num_progressed++;
-        if( NULL != frag ) {
-            if( MCA_BTL_MX_SEND == frag->type ) {  /* it's a send */
-                int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-                /* call the completion callback */
-                if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
-                    frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
-                                           &(frag->base), OMPI_SUCCESS );
-                }
-                if( btl_ownership ) {
-                    MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
-                }
-                goto recheck_device;
-            } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
-                mca_btl_active_message_callback_t* reg;
-                mx_segment_t mx_segment;
-                uint8_t tag = (mx_status.match_info >> 8) & 0xff;
-                
-                reg = mca_btl_base_active_message_trigger + tag;
-                frag->base.des_dst->seg_len = mx_status.msg_length;
-                reg->cbfunc( &(mx_btl->super), tag, &(frag->base), reg->cbdata );
-                /**
-                 * The upper level extract the data from the fragment.
-                 * Now we can register the fragment
-                 * again with the MX BTL.
-                 */
-                mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
-                mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
-                mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
-                                      0x01ULL, BTL_MX_RECV_MASK,
-                                      frag, &(frag->mx_request) );
-                if( MX_SUCCESS != mx_return ) {
-                    opal_output( 0, "Fail to re-register a fragment with the MX NIC ... (%s)\n",
-                                 mx_strerror(mx_return) );
-                }
+        /* If the context is NULL then we are facing a send immediate request. Therefore,
+         * nothing special should be done, just keep going.
+         */
+        if( NULL == frag ) goto recheck_device;
+        if( MCA_BTL_MX_SEND == frag->type ) {  /* it's a send */
+            int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+            /* call the completion callback */
+            if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
+                                       &(frag->base), OMPI_SUCCESS );
+            }
+            if( btl_ownership ) {
+                MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
+            }
+            goto recheck_device;
+#if 0
+        } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
+#endif
+        } else {
+            mca_btl_active_message_callback_t* reg;
+            mx_segment_t mx_segment;
+            uint8_t tag = (mx_status.match_info >> 8) & 0xff;
+            
+            reg = mca_btl_base_active_message_trigger + tag;
+            frag->base.des_dst->seg_len = mx_status.msg_length;
+            reg->cbfunc( &(mx_btl->super), tag, &(frag->base), reg->cbdata );
+            /**
+             * The upper level extract the data from the fragment.
+             * Now we can register the fragment
+             * again with the MX BTL.
+             */
+            mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
+            mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
+            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
+                                  0x01ULL, BTL_MX_RECV_MASK,
+                                  frag, &(frag->mx_request) );
+            if( MX_SUCCESS != mx_return ) {
+                opal_output( 0, "Fail to re-register a fragment with the MX NIC ... (%s)\n",
+                             mx_strerror(mx_return) );
             }
         }
     }
+    __counter--;
     return num_progressed;
 }
 
