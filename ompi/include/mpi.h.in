@@ -176,7 +176,7 @@
  * MPI version
  */
 #define MPI_VERSION 2
-#define MPI_SUBVERSION 0
+#define MPI_SUBVERSION 1
 
 /*
  * To accomodate programs written for MPI implementations that use a

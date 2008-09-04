@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,7 +57,10 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_COMM,
                                            FUNC_NAME);
         }
-        if ( (1 > nnodes) || (NULL == index) || (NULL == edges) ) {
+        if (nnodes < 0) {
+            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
+                                           FUNC_NAME);
+        } else if (nnodes >= 1 && ((NULL == index) || (NULL == edges))) {
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
@@ -71,6 +74,13 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
+    }
+
+    /* MPI-2.1 7.5.3 states that if nnodes == 0, all processes should
+       get MPI_COMM_NULL */
+    if (0 == nnodes) {
+        *comm_graph = MPI_COMM_NULL;
+        return MPI_SUCCESS;
     }
 
     /*
