@@ -36,7 +36,7 @@ static const char FUNC_NAME[] = "MPI_Cart_rank";
 
 int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) 
 {
-    int err;
+    int i, err;
     mca_topo_base_module_cart_rank_fn_t func;
 
     MEMCHECKER(
@@ -61,6 +61,16 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank)
         if ((NULL == coords) || (NULL == rank)){
             return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                           FUNC_NAME);
+        }
+
+        /* Check if coords[i] is within the acceptable range if
+           dimension i is not periodic */
+        for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; ++i) {
+            if (!comm->c_topo_comm->mtc_periods_or_edges[i] &&
+                (coords[i] < 0 || 
+                 coords[i] > comm->c_topo_comm->mtc_dims_or_index[i])) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            }
         }
     }
 
