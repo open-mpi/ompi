@@ -112,11 +112,15 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
 
+#if 0
     if( (NULL != cbfunc) && ( 0 == mca_btl_mx_component.mx_use_unexpected) ) {
+#endif
+    if( NULL != cbfunc ) {
         mca_btl_mx_frag_t* frag;
         mx_return_t mx_return;
         mx_segment_t mx_segment;
         int i, rc;
+
         /* Post the receives if there is no unexpected handler */
         for( i = 0; i < mca_btl_mx_component.mx_max_posted_recv; i++ ) {
             MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
@@ -398,6 +402,97 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
 
 
 /**
+ * Initiate an inline send to the peer. If failure then return a descriptor.
+ *
+ * @param btl (IN)      BTL module
+ * @param peer (IN)     BTL peer addressing
+ */
+static int mca_btl_mx_sendi( struct mca_btl_base_module_t* btl,
+                             struct mca_btl_base_endpoint_t* endpoint,
+                             struct ompi_convertor_t* convertor,
+                             void* header,
+                             size_t header_size,
+                             size_t payload_size,
+                             uint8_t order,
+                             uint32_t flags,
+                             mca_btl_base_tag_t tag,
+                             mca_btl_base_descriptor_t** descriptor )
+{
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
+    size_t max_data;
+
+    if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
+        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
+            return OMPI_ERROR;
+        if( MCA_BTL_MX_CONNECTION_PENDING == ((mca_btl_mx_endpoint_t*)endpoint)->status )
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        if( OMPI_SUCCESS != mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint ) )
+            return OMPI_ERROR;
+    }
+
+    if( !ompi_convertor_need_buffers(convertor) ) {
+        uint32_t mx_segment_count = 0;
+        uint64_t tag64 = 0x01ULL | (((uint64_t)tag) << 8);
+        mx_return_t mx_return;
+        mx_request_t mx_request;
+        mx_segment_t mx_segments[2], *mx_segment = mx_segments;
+
+	if( 0 != header_size ) {
+	    mx_segment->segment_ptr    = header;
+	    mx_segment->segment_length = header_size;
+	    mx_segment++;
+	    mx_segment_count++;
+	}
+	if( 0 != payload_size ) {
+	    struct iovec iov;
+	    uint32_t iov_count = 1;
+
+	    iov.iov_base = NULL;
+	    iov.iov_len = payload_size;
+
+	    (void)ompi_convertor_pack( convertor, &iov, &iov_count, &max_data );
+	    assert( max_data == payload_size );
+
+  	    mx_segment->segment_ptr    = iov.iov_base;
+	    mx_segment->segment_length = max_data;
+	    mx_segment_count++;
+	}
+
+        mx_return = mx_isend( mx_btl->mx_endpoint, mx_segments, mx_segment_count,
+                              endpoint->mx_peer_addr, tag64, NULL, &mx_request );
+        if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
+            opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
+            return OMPI_ERROR;
+        }
+#ifdef HAVE_MX_FORGET
+	{
+	    uint32_t mx_result;
+	    mx_return = mx_ibuffered( mx_btl->mx_endpoint, &mx_request, &mx_result );
+	    if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
+	        opal_output( 0, "mx_ibuffered failed with error %d (%s)\n",
+			     mx_return, mx_strerror(mx_return) );
+		return OMPI_SUCCESS;
+	    }
+	    if( mx_result ) {
+	        mx_return = mx_forget( mx_btl->mx_endpoint, &mx_request );
+		if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
+		    opal_output( 0, "mx_forget failed with error %d (%s)\n",
+				 mx_return, mx_strerror(mx_return) );
+		}
+	    }
+	    return OMPI_SUCCESS;
+	}
+#endif
+     }
+    /* No optimization on this path. Just allocate a descriptor and return it
+     * to the user.
+     */
+    *descriptor = mca_btl_mx_alloc( btl, endpoint, order,
+                                    header_size + payload_size, flags );
+    return OMPI_ERR_RESOURCE_BUSY;
+}
+
+/**
  * Initiate an asynchronous send.
  *
  * @param btl (IN)         BTL module
@@ -563,7 +658,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_src,
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
-        NULL, /* send immediate */
+        mca_btl_mx_sendi, /* send immediate */
         mca_btl_mx_put, /* put */
         NULL, /* get */
         mca_btl_base_dump,
