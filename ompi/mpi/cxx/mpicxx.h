@@ -49,6 +49,10 @@
 // a #define (it's used in an enum).
 #include <iostream>
 
+static const int ompi_stdio_seek_set = SEEK_SET;
+static const int ompi_stdio_seek_cur = SEEK_CUR;
+static const int ompi_stdio_seek_end = SEEK_END;
+
 // smash SEEK_* #defines
 #ifdef SEEK_SET
 #undef SEEK_SET
@@ -57,9 +61,9 @@
 #endif
 
 // make globally scoped constants to replace smashed #defines
-extern const int SEEK_SET;
-extern const int SEEK_CUR;
-extern const int SEEK_END;
+static const int SEEK_SET = ompi_stdio_seek_set;
+static const int SEEK_CUR = ompi_stdio_seek_cur;
+static const int SEEK_END = ompi_stdio_seek_end;
 #endif
 
 // forward declare so that we can still do inlining
