@@ -47,6 +47,16 @@
 #define OMPI_BUILDING 1
 #endif
 
+/*
+ * Flex is trying to include the unistd.h file. As there is no configure
+ * option or this, the flex generated files will try to include the file
+ * even on platforms without unistd.h (such as Windows). Therefore, if we
+ * know this file is not available, we can prevent flex from including it.
+ */
+#ifndef HAVE_UNISTD_H
+#define YY_NO_UNISTD_H
+#endif
+
 /***********************************************************************
  *
  * code that should be in ompi_config_bottom.h regardless of build
