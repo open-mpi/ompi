@@ -71,7 +71,7 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank)
         for (i = 0; i < comm->c_topo_comm->mtc_ndims_or_nnodes; ++i) {
             if (!comm->c_topo_comm->mtc_periods_or_edges[i] &&
                 (coords[i] < 0 || 
-                 coords[i] > comm->c_topo_comm->mtc_dims_or_index[i])) {
+                 coords[i] >= comm->c_topo_comm->mtc_dims_or_index[i])) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
         }
