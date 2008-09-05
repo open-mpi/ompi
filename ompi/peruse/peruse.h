@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -151,7 +151,7 @@ int PERUSE_Event_get( peruse_event_h event_h, int* event );
 /* Obtain MPI object associated with event handle */
 int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object );
 
-/* Propagaiont mode */
+/* Propagation mode */
 int PERUSE_Event_propagate( peruse_event_h event_h, int mode );
 
 #endif
