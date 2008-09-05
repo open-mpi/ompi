@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -19,13 +19,10 @@
 #include "ompi/file/file.h"
 #include "ompi/win/win.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
+BEGIN_C_DECLS
 
 typedef int (ompi_peruse_callback_f)(peruse_event_h event_h,
-              MPI_Aint unique_id, void * spec, void * param);
+             MPI_Aint unique_id, void * spec, void * param);
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_peruse_t);
 
@@ -35,7 +32,7 @@ struct ompi_peruse_handle_t {
     int active;                     /**< Whether this handle has been activated */
     int event;                      /**< Event being watched */
     int type;                       /**< Object-type this event is registered on */
-    ompi_communicator_t* comm;      /**< Corresponding communicicator */
+    ompi_communicator_t* comm;      /**< Corresponding communicator */
     ompi_file_t* file;              /**< Corresponding file */
     ompi_win_t* win;                /**< Corresponding window, in case we have support */
     ompi_peruse_callback_f* fn;     /**< Callback function specified by user */
@@ -120,14 +117,13 @@ do {                                                                            
     } while(0)
 
 #else
+
 #define PERUSE_TRACE_COMM_EVENT(event, base_req, op)
 #define PERUSE_TRACE_COMM_OMPI_EVENT(event, base_req, size, op)
 #define PERUSE_TRACE_MSG_EVENT(event, comm_ptr, hdr_peer, hdr_tag, op)
+
 #endif
 
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* _PERUSE_INTERNAL_H_ */

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -13,7 +13,9 @@
  */
 
 #include "ompi_config.h"
-#include <stdlib.h>
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
 #include "mpi.h"
 #include "ompi/peruse/peruse.h"
 #include "ompi/peruse/peruse-internal.h"
@@ -30,8 +32,8 @@ static void ompi_peruse_handle_construct (ompi_peruse_handle_t* p)
     p->event = PERUSE_EVENT_INVALID;
     p->type = PERUSE_TYPE_INVALID;
     p->comm = MPI_COMM_NULL;
-    /* p->win = MPI_WIN_NULL; */
     /* p->file = MPI_FILE_NULL */
+    /* p->win = MPI_WIN_NULL; */
     p->fn = NULL;
     p->param = NULL;
 
@@ -76,3 +78,4 @@ int ompi_peruse_finalize (void)
 
     return OMPI_SUCCESS;
 }
+
