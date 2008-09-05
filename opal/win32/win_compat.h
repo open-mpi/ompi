@@ -131,15 +131,30 @@ typedef unsigned int uint;
 #define strncasecmp               _strnicmp
 #define strcasecmp                _stricmp
 
-#define UINT32_MAX _UI32_MAX
-#define UINT32_MIN _UI32_MIN
-#define INT32_MAX  _I32_MAX
-#define INT32_MIN  _I32_MIN
-#define INT16_MIN  _I16_MIN
-#define INT16_MAX  _I16_MAX
-#define UINT8_MAX  _UI8_MAX
-#define UINT8_MIN  _UI8_MIN
-
+#ifndef UINT32_MAX
+#define UINT32_MAX            _UI32_MAX
+#endif
+#ifndef UINT32_MIN
+#define UINT32_MIN            _UI32_MIN
+#endif
+#ifndef INT32_MAX
+#define INT32_MAX             _I32_MAX
+#endif
+#ifndef INT32_MIN
+#define INT32_MIN             _I32_MIN
+#endif
+#ifndef INT16_MIN
+#define INT16_MIN             _I16_MIN
+#endif
+#ifndef INT16_MAX
+#define INT16_MAX             _I16_MAX
+#endif
+#ifndef UINT8_MAX
+#define UINT8_MAX             _UI8_MAX
+#endif
+#ifndef UINT8_MIN
+#define UINT8_MIN             _UI8_MIN
+#endif
 
 /* Make sure we let the compiler know that we support __func__ */
 #if !defined(HAVE_DECL___FUNC__)
