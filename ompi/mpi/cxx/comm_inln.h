@@ -548,6 +548,12 @@ MPI::Comm::Set_errhandler(const MPI::Errhandler& errhandler) const
     (void)MPI_Comm_set_errhandler(mpi_comm, errhandler);
 }
 
+inline void 
+MPI::Comm::Call_errhandler(int errorcode) const
+{
+  (void) MPI_Comm_call_errhandler(mpi_comm, errorcode);
+}
+
 // 1) original Create_keyval that takes the first 2 arguments as C++
 //    functions
 inline int
