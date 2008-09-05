@@ -21,7 +21,7 @@
 #include "orte_config.h"
 
 #include <stdio.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
