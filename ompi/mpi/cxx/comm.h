@@ -386,6 +386,7 @@ public:
 
   virtual Errhandler Get_errhandler() const;
 
+  void Call_errhandler(int errorcode) const;
 
   //
   // Keys and Attributes
