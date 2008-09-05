@@ -1,8 +1,7 @@
 enable_dlopen=no
 enable_pty_support=no
-with_tm=/opt/PBS
-LDFLAGS=-L/opt/PBS/lib64
 with_openib=/opt/ofed
+with_openib_libdir=/opt/ofed/lib64
 with_memory_manager=yes
 enable_mem_debug=no
 enable_mem_profile=no
@@ -12,7 +11,14 @@ with_devel_headers=yes
 enable_heterogeneous=yes
 enable_debug=no
 enable_shared=yes
-with_wrapper_cflags=-I/opt/panfs/include
-with_io_romio_flags=--with-file-system=ufs+nfs+panfs
+enable_static=no
 with_slurm=no
+enable_visibility=yes
 enable_memchecker=no
+enable_ipv6=no
+enable_mpi_f77=yes
+enable_mpi_f90=yes
+enable_mpi_cxx=yes
+enable_mpi_cxx_seek=yes
+enable_mca_no_build=pml-dr,pml-crcp2,crcp,filem
+with_io_romio_flags=--with-file-system=ufs+nfs+panfs
