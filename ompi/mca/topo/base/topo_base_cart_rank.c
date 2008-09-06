@@ -47,7 +47,6 @@ int mca_topo_base_cart_rank (MPI_Comm comm,
    int i;
    int *d;
    int *c;
-   int *p;
 
    /*
     * Loop over coordinates computing the rank.
@@ -57,10 +56,9 @@ int mca_topo_base_cart_rank (MPI_Comm comm,
 
     i = comm->c_topo_comm->mtc_ndims_or_nnodes - 1;
     d = comm->c_topo_comm->mtc_dims_or_index + i;
-    p = comm->c_topo_comm->mtc_periods_or_edges + i;
     c = coords + i;
 
-   for (; i >= 0; --i, --c, --d, --p) {
+   for (; i >= 0; --i, --c, --d) {
        dim = *d;
        ord = *c;
        /* Per MPI-2.1 7.5.4 (description of MPI_CART_RANK), if the
