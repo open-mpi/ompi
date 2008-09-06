@@ -411,14 +411,6 @@ static int rte_ft_event(int state)
         }
 
         /*
-         * Notify IOF
-         */
-        if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_CHECKPOINT))) {
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        /*
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CHECKPOINT))) {
@@ -448,14 +440,6 @@ static int rte_ft_event(int state)
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_CONTINUE))) {
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        /*
-         * Notify IOF
-         */
-        if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_CONTINUE))) {
             exit_status = ret;
             goto cleanup;
         }
@@ -579,14 +563,6 @@ static int rte_ft_event(int state)
          * Notify Routed
          */
         if( ORTE_SUCCESS != (ret = orte_routed.ft_event(OPAL_CRS_RESTART))) {
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        /*
-         * Notify IOF
-         */
-        if( ORTE_SUCCESS != (ret = orte_iof.ft_event(OPAL_CRS_RESTART))) {
             exit_status = ret;
             goto cleanup;
         }
