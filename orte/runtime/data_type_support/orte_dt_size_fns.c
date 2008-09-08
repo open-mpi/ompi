@@ -116,7 +116,7 @@ int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type)
     
     for (i=0; i < src->procs->size; i++) {
         if (NULL != src->procs->addr[i]) {
-            orte_dt_size_proc(&sz, src->procs->addr[i], ORTE_PROC);
+            orte_dt_size_proc(&sz, (orte_proc_t *) src->procs->addr[i], ORTE_PROC);
             *size += sz;
         }
     }
@@ -157,7 +157,7 @@ int orte_dt_size_node(size_t *size, orte_node_t *src, opal_data_type_t type)
     
     for (i=0; i < src->procs->size; i++) {
         if (NULL != src->procs->addr[i]) {
-            orte_dt_size_proc(&sz, src->procs->addr[i], ORTE_PROC);
+            orte_dt_size_proc(&sz, (orte_proc_t *) src->procs->addr[i], ORTE_PROC);
             *size += sz;
         }
     }

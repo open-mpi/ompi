@@ -201,7 +201,7 @@ static uint64_t message_seq_num = 1;
 
 /* The current message being worked on */
 static uint64_t current_msg_id = 0;
-static ompi_crcp_coord_pml_message_type_t current_msg_type = 0;
+static ompi_crcp_coord_pml_message_type_t current_msg_type = COORD_MSG_TYPE_UNKNOWN;
 
 /* If we need to stall the C/R coordination until the current
  * operation is complete */
@@ -1609,7 +1609,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_irecv(
             tag = drain_msg_ref->tag;
 
             if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
-                                                    buf, drain_msg_ref->buffer) ) {
+                                                    (char *) buf, (char *) drain_msg_ref->buffer) ) {
                 opal_output( mca_crcp_coord_component.super.output_handle,
                              "crcp:coord: pml_irecv(): Datatype copy failed (%d)",
                              ret);
@@ -1794,7 +1794,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_recv(
             src = drain_msg_ref->rank;
             tag = drain_msg_ref->tag;
             if( 0 != ompi_ddt_copy_content_same_ddt(datatype, count,
-                                                    buf, drain_msg_ref->buffer) ) {
+                                                    (char *) buf, (char *) drain_msg_ref->buffer) ) {
                 opal_output( mca_crcp_coord_component.super.output_handle,
                              "crcp:coord: pml_recv(): Datatype copy failed (%d)",
                              ret);
@@ -2116,7 +2116,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_coord_pml_start(
 
                         /* Copy the drained message */
                         if( 0 != ompi_ddt_copy_content_same_ddt(msg_ref->datatype, msg_ref->count,
-                                                                msg_ref->buffer, drain_msg_ref->buffer) ) {
+                                                               (char *)  msg_ref->buffer, (char *) drain_msg_ref->buffer) ) {
                             opal_output( mca_crcp_coord_component.super.output_handle,
                                          "crcp:coord: pml_start(): Datatype copy failed (%d)",
                                          ret);
@@ -5072,11 +5072,11 @@ static void display_all_timers(int state) {
         return;
     }
 
-    opal_output(0, "crcp:coord: timing(%20s): ******************** Begin: [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
+    opal_output(0, "crcp:coord: timing(%20s): ******************** Begin: [State = %12s]\n", "Summary", opal_crs_base_state_str((opal_crs_state_type_t)state));
     for( i = 0; i < CRCP_TIMER_MAX; ++i) {
         display_indv_timer_core(i, 0, 0, false);
     }
-    opal_output(0, "crcp:coord: timing(%20s): ******************** End:   [State = %12s]\n", "Summary", opal_crs_base_state_str(state));
+    opal_output(0, "crcp:coord: timing(%20s): ******************** End:   [State = %12s]\n", "Summary", opal_crs_base_state_str((opal_crs_state_type_t)state));
 }
 
 static void display_indv_timer(int idx, int proc, int msgs) {

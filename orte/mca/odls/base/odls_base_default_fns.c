@@ -461,7 +461,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
         /* ident this proc's node */
-        pmap = opal_value_array_get_item(&jobdat->procmap, j);
+        pmap = (orte_pmap_t *) opal_value_array_get_item(&jobdat->procmap, j);
         if (pmap->node < 0 || pmap->node >= orte_daemonmap.size) {
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
             rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;

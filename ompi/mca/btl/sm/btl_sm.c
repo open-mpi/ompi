@@ -116,7 +116,7 @@ static int init_fifos(ompi_fifo_t *f, int n)
         f[j].head = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
         f[j].tail = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
         if(opal_using_threads()) {
-            char *buf = mpool_calloc(2, CACHE_LINE_SIZE);
+            char *buf = (char *) mpool_calloc(2, CACHE_LINE_SIZE);
             /* allocate head and tail locks on different cache lines */
             if(NULL == buf)
                 return OMPI_ERROR;
@@ -181,7 +181,7 @@ static void init_maffinity(int *my_mem_node, int *max_mem_node)
      if((*max_mem_node = opal_value_array_get_size(&dists)) < 2)
          goto out;
 
-     dist = opal_value_array_get_item(&dists, 0);
+     dist = (opal_carto_node_distance_t *) opal_value_array_get_item(&dists, 0);
      opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
 out:
      if(myslot) free(myslot);
@@ -201,7 +201,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     mca_btl_sm_component.num_mem_nodes = num_mem_nodes;
 
     /* lookup shared memory pool */
-    mca_btl_sm_component.sm_mpools = calloc(num_mem_nodes,
+    mca_btl_sm_component.sm_mpools = (mca_mpool_base_module_t **) calloc(num_mem_nodes,
                                             sizeof(mca_mpool_base_module_t*));
 
     /* create mpool for each memory node */
@@ -324,7 +324,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     mca_btl_sm_component.fifo[mca_btl_sm_component.my_smp_rank] = my_fifos;
 
-    mca_btl_sm_component.mem_nodes = malloc(sizeof(uint16_t) * n);
+    mca_btl_sm_component.mem_nodes = (uint16_t *) malloc(sizeof(uint16_t) * n);
     if(NULL == mca_btl_sm_component.mem_nodes)
         return OMPI_ERR_OUT_OF_RESOURCE;
 

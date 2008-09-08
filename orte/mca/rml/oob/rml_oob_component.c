@@ -140,7 +140,7 @@ rml_oob_init(int* priority)
     /* Set default timeout for queued messages to be 1/2 second */
     orte_rml_oob_module.timeout.tv_sec = 0;
     orte_rml_oob_module.timeout.tv_usec = 500000;
-    orte_rml_oob_module.timer_event = malloc(sizeof(opal_event_t));
+    orte_rml_oob_module.timer_event = (opal_event_t *) malloc(sizeof(opal_event_t));
     if (NULL == orte_rml_oob_module.timer_event) {
         return NULL;
     }
@@ -500,7 +500,7 @@ rml_oob_recv_route_callback(int status,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&next)));
             ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
-            qmsg->payload[0].iov_base = malloc(iov[0].iov_len);
+            qmsg->payload[0].iov_base = (char *) malloc(iov[0].iov_len);
             if (NULL == qmsg->payload[0].iov_base) abort();
             qmsg->payload[0].iov_len = iov[0].iov_len;
             memcpy(qmsg->payload[0].iov_base, iov[0].iov_base, iov[0].iov_len);
