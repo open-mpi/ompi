@@ -857,7 +857,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
     }
         
     send(trig->channel, (const char *) &data, sizeof(int), 0);
-	CloseHandle((HANDLE)trig->channel);
+	closesocket(trig->channel);
     opal_progress();
 }
 
