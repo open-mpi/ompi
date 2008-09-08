@@ -106,7 +106,6 @@ ORTE_DECLSPEC void orte_plm_base_recv(int status, orte_process_name_t* sender,
 ORTE_DECLSPEC int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                                         char *sds,
                                                         int *proc_vpid_index,
-                                                        int *node_name_index,
                                                         bool heartbeat);
 
 /*

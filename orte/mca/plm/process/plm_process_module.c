@@ -447,7 +447,6 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
 int orte_plm_process_launch(orte_job_t *jdata)
 {
     orte_job_map_t *map = NULL;
-    int node_name_index2;
     int proc_vpid_index;
     int local_exec_index;
     char *vpid_string = NULL;
@@ -564,7 +563,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           &proc_vpid_index,
-                                          &node_name_index2, false);
+                                          false);
     
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
@@ -637,10 +636,6 @@ int orte_plm_process_launch(orte_job_t *jdata)
             return ORTE_ERR_FATAL;
         }
         
-        /* setup node name */
-        free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(nodes[nnode]->name);
-
         if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
             param = opal_argv_join(argv, ' ');
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,

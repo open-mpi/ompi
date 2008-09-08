@@ -71,7 +71,7 @@ int orte_plm_base_select(void)
     orte_plm = *best_module;
     orte_plm_base.selected_component = *best_component;
     orte_plm_base.selected = true;
-
+    
  cleanup:
     return exit_status;
 }

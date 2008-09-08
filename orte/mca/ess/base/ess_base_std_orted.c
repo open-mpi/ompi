@@ -58,24 +58,39 @@
 
 #include "orte/mca/ess/base/base.h"
 
+static bool plm_in_use;
+
 int orte_ess_base_orted_setup(void)
 {
     int ret;
     char *error = NULL;
+    char *plm_to_use;
 
     /* some environments allow remote launches - e.g., ssh - so
-     * open the PLM and select something
+     * open the PLM and select something -only- if we are given
+     * a specific module to use
      */
-    if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_open";
-        goto error;
-    }
+    mca_base_param_reg_string_name("plm", NULL,
+                                   "Which plm component to use (empty = none)",
+                                   false, false,
+                                   NULL, &plm_to_use);
     
-    if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_select";
-        goto error;
+    if (NULL == plm_to_use) {
+        plm_in_use = false;
+    } else {
+        plm_in_use = true;
+        
+        if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_base_open";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_base_select";
+            goto error;
+        }
     }
 
     /* Setup the communication infrastructure */
@@ -133,6 +148,21 @@ int orte_ess_base_orted_setup(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_rml.enable_comm";
         goto error;
+    }
+    
+    /* Now provide a chance for the PLM
+     * to perform any module-specific init functions. This
+     * needs to occur AFTER the communications are setup
+     * as it may involve starting a non-blocking recv
+     * Do this only if a specific PLM was given to us - the
+     * orted has no need of the proxy PLM at all
+     */
+    if (plm_in_use) {
+        if (ORTE_SUCCESS != (ret = orte_plm.init())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_plm_init";
+            goto error;
+        }
     }
     
     /* setup my session directory */
@@ -275,7 +305,9 @@ int orte_ess_base_orted_finalize(void)
     orte_iof_base_close();
     
     /* finalize selected modules */
-    orte_plm_base_close();
+    if (plm_in_use) {
+        orte_plm_base_close();
+    }
     orte_errmgr_base_close();
     
     /* now can close the rml and its friendly group comm */

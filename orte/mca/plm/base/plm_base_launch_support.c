@@ -731,7 +731,6 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
                                           int *proc_vpid_index,
-                                          int *node_name_index,
                                           bool heartbeat)
 {
     char *param = NULL;
@@ -769,7 +768,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, param);
         free(param);
     }
-    if (heartbeat) {
+    if (heartbeat && 0 < orte_heartbeat_rate) {
         /* tell the daemon to do a heartbeat */
         opal_argv_append(argc, argv, "--heartbeat");
         asprintf(&param, "%d", orte_heartbeat_rate);
@@ -821,13 +820,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, param);
     free(param);
     
-    /* Node Name */
-    if(NULL != node_name_index) {
-        opal_argv_append(argc, argv, "--nodename");
-        *node_name_index = *argc;
-        opal_argv_append(argc, argv, "<template>");
-    }
-    
     /* pass along any cmd line MCA params provided to mpirun,
      * being sure to "purge" any that would cause problems
      * on backend nodes
@@ -839,9 +831,20 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
              * have a generic way of passing it as some environments ignore
              * any quotes we add, while others don't - so we ignore any
              * such options. In most cases, this won't be a problem as
-             * they typically only apply to things of interest to the HNP
+             * they typically only apply to things of interest to the HNP.
+             * Individual environments can add these back into the cmd line
+             * as they know if it can be supported
              */
             if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                continue;
+            }
+            /* The daemon will attempt to open the PLM on the remote
+             * end. Only a few environments allow this, so the daemon
+             * only opens the PLM -if- it is specifically told to do
+             * so by giving it a specific PLM module. To ensure we avoid
+             * confusion, do not include any directives here
+             */
+            if (0 == strcmp(orted_cmd_line[i+1], "plm")) {
                 continue;
             }
             /* must be okay - pass it along */
