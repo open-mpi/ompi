@@ -310,7 +310,7 @@ struct event_base * event_base_new(void);
 
   @see event_base_set(), event_base_new()
  */
-int event_init(void);
+OPAL_DECLSPEC int event_init(void);
 
 /**
   Reinitialized the event base after a fork
@@ -333,7 +333,7 @@ int event_reinit(struct event_base *base);
 
   @see event_base_dispatch()
  */
-int event_dispatch(void);
+OPAL_DECLSPEC int event_dispatch(void);
 
 
 /**
@@ -342,7 +342,7 @@ int event_dispatch(void);
   @param eb the event_base structure returned by event_init()
   @see event_init(), event_dispatch()
  */
-int event_base_dispatch(struct event_base *);
+OPAL_DECLSPEC int event_base_dispatch(struct event_base *);
 
 
 /**
@@ -353,10 +353,6 @@ int event_base_dispatch(struct event_base *);
  */
 const char * event_base_get_method(struct event_base *);
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
-
-OPAL_DECLSPEC int event_init(void);
-OPAL_DECLSPEC int event_dispatch(void);
-OPAL_DECLSPEC int event_base_dispatch(struct opal_event_base *);
 
 OPAL_DECLSPEC int opal_event_fini(void);
 OPAL_DECLSPEC int opal_event_enable(void);
@@ -590,9 +586,6 @@ int event_base_loopbreak(struct event_base *);
  */
 OPAL_DECLSPEC void event_set(struct event *, int, short, void (*)(int, short, void *), void *);
 
-OPAL_DECLSPEC int   event_add(struct opal_event *, struct timeval *);
-OPAL_DECLSPEC int   event_del(struct opal_event *);
-OPAL_DECLSPEC void  event_active(struct opal_event*, int, short);
 OPAL_DECLSPEC extern opal_mutex_t opal_event_lock;
 
 
@@ -638,6 +631,46 @@ int event_once(int, short, void (*)(int, short, void *), void *, struct timeval 
  */
 int event_base_once(struct event_base *, int, short, void (*)(int, short, void *), void *, struct timeval *);
 
+
+
+
+/**
+  Add an event to the set of monitored events.
+
+  The function event_add() schedules the execution of the ev event when the
+  event specified in event_set() occurs or in at least the time specified in
+  the tv.  If tv is NULL, no timeout occurs and the function will only be
+  called if a matching event occurs on the file descriptor.  The event in the
+  ev argument must be already initialized by event_set() and may not be used
+  in calls to event_set() until it has timed out or been removed with
+  event_del().  If the event in the ev argument already has a scheduled
+  timeout, the old timeout will be replaced by the new one.
+
+  @param ev an event struct initialized via event_set()
+  @param timeout the maximum amount of time to wait for the event, or NULL
+         to wait forever
+  @return 0 if successful, or -1 if an error occurred
+  @see event_del(), event_set()
+  */
+OPAL_DECLSPEC int event_add(struct event *, struct timeval *);
+
+
+/**
+  Remove an event from the set of monitored events.
+
+  The function event_del() will cancel the event in the argument ev.  If the
+  event has already executed or has never been added the call will have no
+  effect.
+
+  @param ev an event struct to be removed from the working set
+  @return 0 if successful, or -1 if an error occurred
+  @see event_add()
+ */
+OPAL_DECLSPEC int event_del(struct event *);
+
+OPAL_DECLSPEC void event_active(struct event *, int, short);
+
+
 static inline int
 opal_event_add(struct opal_event *ev, struct timeval *tv)
 {
@@ -659,44 +692,6 @@ opal_event_active(struct opal_event* ev, int res, short ncalls)
 {
     OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, event_active(ev, res, ncalls));
 }
-
-
-/**
-  Add an event to the set of monitored events.
-
-  The function event_add() schedules the execution of the ev event when the
-  event specified in event_set() occurs or in at least the time specified in
-  the tv.  If tv is NULL, no timeout occurs and the function will only be
-  called if a matching event occurs on the file descriptor.  The event in the
-  ev argument must be already initialized by event_set() and may not be used
-  in calls to event_set() until it has timed out or been removed with
-  event_del().  If the event in the ev argument already has a scheduled
-  timeout, the old timeout will be replaced by the new one.
-
-  @param ev an event struct initialized via event_set()
-  @param timeout the maximum amount of time to wait for the event, or NULL
-         to wait forever
-  @return 0 if successful, or -1 if an error occurred
-  @see event_del(), event_set()
-  */
-int event_add(struct event *, struct timeval *);
-
-
-/**
-  Remove an event from the set of monitored events.
-
-  The function event_del() will cancel the event in the argument ev.  If the
-  event has already executed or has never been added the call will have no
-  effect.
-
-  @param ev an event struct to be removed from the working set
-  @return 0 if successful, or -1 if an error occurred
-  @see event_add()
- */
-int event_del(struct event *);
-
-void event_active(struct event *, int, short);
-
 
 /**
   Checks if a specific event is pending or scheduled.
