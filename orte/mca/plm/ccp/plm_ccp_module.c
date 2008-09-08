@@ -130,7 +130,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     orte_std_cntr_t launched = 0, i; 
 
     orte_job_map_t *map = NULL;
-    int argc, rc, node_name_index, proc_vpid_index, proc_name_index;
+    int argc, rc, proc_vpid_index, proc_name_index;
     char *param, **env = NULL, *var, **argv = NULL;
     bool connected = false;
     char *bin_base = NULL, *lib_base = NULL, *command_line;
@@ -222,7 +222,7 @@ GETMAP:
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
                                           &proc_vpid_index,
-                                          &node_name_index, false);
+                                          false);
 
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
@@ -383,10 +383,6 @@ GETMAP:
             continue;
         }
 
-        /* setup node name */
-        free(argv[node_name_index]);
-        argv[node_name_index] = strdup(node->name);
-        
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
