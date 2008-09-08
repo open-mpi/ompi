@@ -38,6 +38,8 @@ Trunk (not on release branches yet)
 1.3 (not released yet)
 ---
 
+- Added missing MPI::Comm::Call_errhandler() function.  Thanks to Dave
+  Goodell for bringing this to our attention.
 - Increased MPI_SUBVERSION value in mpi.h to 1 (i.e., MPI 2.1)
 - Changed behavior of MPI_GRAPH_CREATE, MPI_TOPO_CREATE, and several
   other topology functions per MPI-2.1.
