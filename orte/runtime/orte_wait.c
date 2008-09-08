@@ -800,16 +800,7 @@ static void opal_process_handle_destruct( opal_object_t* obj )
 static OBJ_CLASS_INSTANCE( opal_process_handle_t, opal_list_item_t,
                            opal_process_handle_construct, opal_process_handle_destruct );
 
-static void 
-trigger_event_destructor(orte_trigger_event_t *trig)
-{
-    if (0 <= trig->channel) {
-        close(trig->channel);
-    }
-}
-
-static void 
-trigger_event_constructor(orte_trigger_event_t *trig)
+static void trigger_event_constructor(orte_trigger_event_t *trig)
 {
     trig->channel = -1;
     opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
@@ -818,7 +809,7 @@ trigger_event_constructor(orte_trigger_event_t *trig)
 OBJ_CLASS_INSTANCE(orte_trigger_event_t,
                    opal_object_t,
                    trigger_event_constructor,
-                   trigger_event_destructor);
+                   NULL);
 
 /*********************************************************************
  *
@@ -865,8 +856,8 @@ void orte_trigger_event(orte_trigger_event_t *trig)
         return;
     }
         
-    write(trig->channel, &data, sizeof(int));
-    close(trig->channel);
+    send(trig->channel, (const char *) &data, sizeof(int), 0);
+	CloseHandle((HANDLE)trig->channel);
     opal_progress();
 }
 
@@ -1069,9 +1060,8 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
 {
     int p[2];
     
-    if (pipe(p) < 0) {
-        ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        return ORTE_ERR_SYS_LIMITS_PIPES;
+    if (evutil_socketpair(AF_UNIX, SOCK_STREAM, 0, p) == -1) {
+        return ORTE_ERROR;
     }
 
     /* create the event */
