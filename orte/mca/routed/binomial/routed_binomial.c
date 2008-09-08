@@ -339,7 +339,7 @@ static int update_route(orte_process_name_t *target,
         }
         
         /* not there, so add the route FOR THE JOB FAMILY*/
-        route_copy = malloc(sizeof(orte_process_name_t));
+        route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
         *route_copy = *route;
         rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
                                               ORTE_JOB_FAMILY(target->jobid), route_copy);
@@ -374,7 +374,7 @@ static int update_route(orte_process_name_t *target,
         }
         
         /* not already present, so let's add it */
-        route_copy = malloc(sizeof(orte_process_name_t));
+        route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
         *route_copy = *route;
         rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
                                               target->jobid, route_copy);
@@ -406,7 +406,7 @@ static int update_route(orte_process_name_t *target,
         }
         
         /* not present - add it to the table */
-        route_copy = malloc(sizeof(orte_process_name_t));
+        route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
         *route_copy = *route;
         rc = opal_hash_table_set_value_uint64(&peer_list,
                                               orte_util_hash_name(target), route_copy);

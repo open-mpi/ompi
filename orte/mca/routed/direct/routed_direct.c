@@ -236,7 +236,7 @@ static int update_route(orte_process_name_t *target,
         }
         
         /* not there, so add the route FOR THE JOB FAMILY*/
-        route_copy = malloc(sizeof(orte_process_name_t));
+        route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
         *route_copy = *route;
         rc = opal_hash_table_set_value_uint32(&peer_list,
                                               ORTE_JOB_FAMILY(target->jobid), route_copy);

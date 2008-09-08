@@ -291,7 +291,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         if(-1 == index) {
             index = num_local_interfaces++;
             local_kindex_to_index[kindex] = index;
-            local_interfaces[index] = malloc(sizeof(mca_btl_tcp_interface_t));
+            local_interfaces[index] = (mca_btl_tcp_interface_t *) malloc(sizeof(mca_btl_tcp_interface_t));
             assert(NULL != local_interfaces[index]);
             mca_btl_tcp_initialise_interface(local_interfaces[index], kindex, index);
         }
@@ -304,7 +304,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                 }
 
                 local_interfaces[local_kindex_to_index[kindex]]->ipv4_address = 
-                    malloc(sizeof(local_addr));
+                    (struct sockaddr_storage*) malloc(sizeof(local_addr));
                 memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv4_address, 
                         &local_addr, sizeof(local_addr));
                 opal_ifindextomask(idx, 
@@ -318,7 +318,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                 }
 
                 local_interfaces[local_kindex_to_index[kindex]]->ipv6_address 
-                    = malloc(sizeof(local_addr));
+                    = (struct sockaddr_storage*) malloc(sizeof(local_addr));
                 memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv6_address, 
                         &local_addr, sizeof(local_addr));
                 opal_ifindextomask(idx, 
@@ -349,7 +349,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         if(-1 == index) {
             index = num_peer_interfaces++;
             peer_kindex_to_index[endpoint_addr->addr_ifkindex] = index;
-            peer_interfaces[index] = malloc(sizeof(mca_btl_tcp_interface_t));
+            peer_interfaces[index] = (mca_btl_tcp_interface_t *) malloc(sizeof(mca_btl_tcp_interface_t));
             mca_btl_tcp_initialise_interface(peer_interfaces[index], 
                     endpoint_addr->addr_ifkindex, index);
         }       
@@ -364,13 +364,13 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
         switch(endpoint_addr_ss.ss_family) {
             case AF_INET:
-                peer_interfaces[index]->ipv4_address = malloc(sizeof(endpoint_addr_ss));
+                peer_interfaces[index]->ipv4_address = (struct sockaddr_storage*) malloc(sizeof(endpoint_addr_ss));
                 peer_interfaces[index]->ipv4_endpoint_addr = endpoint_addr;
                 memcpy(peer_interfaces[index]->ipv4_address, 
                         &endpoint_addr_ss, sizeof(endpoint_addr_ss));
                 break;
             case AF_INET6:
-                peer_interfaces[index]->ipv6_address = malloc(sizeof(endpoint_addr_ss));
+                peer_interfaces[index]->ipv6_address = (struct sockaddr_storage*) malloc(sizeof(endpoint_addr_ss));
                 peer_interfaces[index]->ipv6_endpoint_addr = endpoint_addr;
                 memcpy(peer_interfaces[index]->ipv6_address, 
                         &endpoint_addr_ss, sizeof(endpoint_addr_ss));
@@ -468,7 +468,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
      * interfaces
      */
 
-    best_assignment = malloc (perm_size * sizeof(int));
+    best_assignment = (unsigned int *) malloc (perm_size * sizeof(int));
 
     a = (int *) malloc(perm_size * sizeof(int));
     if (NULL == a) {
