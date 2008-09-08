@@ -321,12 +321,18 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
         return rc;
     }
     
-    /* Remove this node if it has reached its max number of allocatable slots OR it has
-     * reached the soft limit AND we are in a "no oversubscribe" state
+    /* If this node has reached its max number of allocatable slots OR it has
+     * reached the soft limit AND we are in a "no oversubscribe" state, then
+     * we need to return a flag telling the mapper this is the case so it
+     * can move on to the next node
      */
     if ((0 != current_node->slots_max  &&
         current_node->slots_inuse >= current_node->slots_max) ||
         (!oversubscribe && current_node->slots_inuse >= current_node->slots)) {
+        /* see if we are supposed to remove the node from the list - some
+         * mappers want us to do so to avoid any chance of continuing to
+         * add procs to it
+         */
         if (remove_from_list) {
             opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
             /* release it - it was retained when we started, so this
@@ -334,7 +340,9 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
              */
             OBJ_RELEASE(current_node);
         }
-        /** now return the proper code so the caller knows we removed the node! */
+        /* now return the proper code so the caller knows this node
+         * is fully used
+         */
         return ORTE_ERR_NODE_FULLY_USED;
     }
 
@@ -392,8 +400,8 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
                 }
             }
             if (NULL == psave && NULL == psave2) {
-                /* we must have processed them all! */
-                goto DONE;
+                /* we must have processed them all for this node! */
+                break;
             }
             if (NULL != psave) {
                 psave->local_rank = local_rank;
@@ -406,7 +414,6 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
         }
     }
 
-DONE:
     return ORTE_SUCCESS;
 }
 

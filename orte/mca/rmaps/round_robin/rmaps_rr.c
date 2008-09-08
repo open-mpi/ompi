@@ -187,6 +187,7 @@ static int map_app_by_slot(
          * (b) if some of the slots are in-use, then we take the number of
          *     remaining slots before hitting the soft limit (node_slots)
          * (c) if we are at or above the soft limit, we take a full node_slots
+         *     unless we are loadbalancing, in which case we only take one
          *
          * Note: if node_slots is zero, then we always just take 1 slot
          *
@@ -197,8 +198,13 @@ static int map_app_by_slot(
          * many processes as another before oversubscribing, it will continue
          * to do so after oversubscribing).
          */
-        if (0 == node->slots_inuse ||
-            node->slots_inuse >= node->slots_alloc) {
+        if (node->slots_inuse >= node->slots_alloc) {
+            if (orte_rmaps_base.loadbalance) {
+                num_slots_to_take = 1;
+            } else {
+                num_slots_to_take = (node->slots_alloc == 0) ? 1 : node->slots_alloc;
+            }
+        } else if (0 == node->slots_inuse) {
             num_slots_to_take = (node->slots_alloc == 0) ? 1 : node->slots_alloc;
         } else {
             num_slots_to_take = node->slots_alloc - node->slots_inuse;
@@ -269,11 +275,12 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     orte_std_cntr_t i;
     opal_list_t node_list;
     opal_list_item_t *item;
-    orte_node_t *node, **nodes, *nd1;
+    orte_node_t *node, **nodes, *nd1, *ndmin;
     orte_vpid_t vpid_start;
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
     orte_std_cntr_t slots_per_node;
+    int overload;
 
     OPAL_TRACE(1);
     
@@ -372,9 +379,14 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             cur_node_item = opal_list_get_first(&node_list);
         }
 
-        /* is this node oversubscribed? */
+        /* is this node fully subscribed? If so, then the first
+         * proc we assign will oversubscribe it, so let's look
+         * for another candidate
+         */
         node = (orte_node_t*)cur_node_item;
-        if (node->slots_inuse > node->slots) {
+        ndmin = node;
+        overload = ndmin->slots_inuse - ndmin->slots;
+        if (node->slots_inuse >= node->slots) {
             /* work down the list - is there another node that
              * would not be oversubscribed?
              */
@@ -390,6 +402,15 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                     cur_node_item = item;
                     goto proceed;
                 }
+                /* this one was also oversubscribed, keep track of the
+                 * node that has the least usage - if we can't
+                 * find anyone who isn't fully utilized, we will
+                 * start with the least used node
+                 */
+                if (overload >= (nd1->slots_inuse - nd1->slots)) {
+                    ndmin = nd1;
+                    overload = ndmin->slots_inuse - ndmin->slots;
+                }
                 if (item == opal_list_get_last(&node_list)) {
                     item = opal_list_get_first(&node_list);
                 } else {
@@ -397,9 +418,10 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 }
             }
             /* if we get here, then we cycled all the way around the
-             * list without finding a better answer - just use what
-             * we have
+             * list without finding a better answer - just use the node
+             * that is minimally overloaded
              */
+            cur_node_item = (opal_list_item_t*)ndmin;
         }
         
     proceed:
