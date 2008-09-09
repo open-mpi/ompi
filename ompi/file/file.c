@@ -256,6 +256,9 @@ static void file_constructor(ompi_file_t *file)
     /* Construct the io request freelist */
     OBJ_CONSTRUCT(&file->f_io_requests, opal_list_t);
 
+    /* Construct the per-module io request freelist */
+    OBJ_CONSTRUCT(&file->f_io_requests_lock, opal_mutex_t);
+
     /* If the user doesn't want us to ever free it, then add an extra
        RETAIN here */
 
