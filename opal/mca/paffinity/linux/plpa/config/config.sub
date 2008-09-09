@@ -4,7 +4,7 @@
 #   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
 #   Free Software Foundation, Inc.
 
-timestamp='2008-06-16'
+timestamp='2008-09-08'
 
 # This file is (in principle) common to ALL GNU software.
 # The presence of a machine in this file suggests that SOME GNU software
@@ -288,7 +288,7 @@ case $basic_machine in
 	| v850 | v850e \
 	| we32k \
 	| x86 | xc16x | xscale | xscalee[bl] | xstormy16 | xtensa \
-	| z8k)
+	| z8k | z80)
 		basic_machine=$basic_machine-unknown
 		;;
 	m6811 | m68hc11 | m6812 | m68hc12)
@@ -375,7 +375,7 @@ case $basic_machine in
 	| x86-* | x86_64-* | xc16x-* | xps100-* | xscale-* | xscalee[bl]-* \
 	| xstormy16-* | xtensa*-* \
 	| ymp-* \
-	| z8k-*)
+	| z8k-* | z80-*)
 		;;
 	# Recognize the basic CPU types without company name, with glob match.
 	xtensa*)
@@ -1138,6 +1138,10 @@ case $basic_machine in
 		;;
 	z8k-*-coff)
 		basic_machine=z8k-unknown
+		os=-sim
+		;;
+	z80-*-coff)
+		basic_machine=z80-unknown
 		os=-sim
 		;;
 	none)
