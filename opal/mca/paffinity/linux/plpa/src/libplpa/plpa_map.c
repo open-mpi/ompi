@@ -968,7 +968,7 @@ int PLPA_NAME(get_core_id)(int socket_id, int core_num, int *core_id)
          i <= max_core_id_overall; ++i) {
         if (map_tuple_to_processor_id[j + i]->processor_id >= 0) {
             if (count++ == core_num) {
-                *core_id = map_tuple_to_processor_id[j + 1]->core_id;
+                *core_id = map_tuple_to_processor_id[j + i]->core_id;
                 return 0;
             }
         }
