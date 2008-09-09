@@ -318,11 +318,13 @@ static void ompi_comm_reg_destructor (ompi_comm_reg_t *regcom)
 void ompi_comm_reg_init (void)
 {
     OBJ_CONSTRUCT(&ompi_registered_comms, opal_list_t);
+    OBJ_CONSTRUCT(&ompi_cid_lock, opal_mutex_t);
 }
 
 void ompi_comm_reg_finalize (void)
 {
     OBJ_DESTRUCT(&ompi_registered_comms);
+    OBJ_DESTRUCT(&ompi_cid_lock);
 }
 
 
