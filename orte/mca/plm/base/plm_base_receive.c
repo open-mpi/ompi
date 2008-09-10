@@ -111,6 +111,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     orte_exit_code_t exit_code;
     int rc, ret;
     struct timeval beat;
+    orte_app_context_t **apps, **child_apps;
     
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_PLM_CMD))) {
@@ -139,6 +140,21 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 goto ANSWER_LAUNCH;
             }
+            
+            /* if the prefix was set in the parent's job, we need to transfer
+             * that prefix to the child's app_context so any further launch of
+             * orteds can find the correct binary. There always has to be at
+             * least one app_context in both parent and child, so we don't
+             * need to check that here. However, be sure not to overwrite
+             * the prefix if the user already provide it!
+             */
+            apps = (orte_app_context_t**)parent->apps->addr;
+            child_apps = (orte_app_context_t**)jdata->apps->addr;
+            if (NULL != apps[0]->prefix_dir &&
+                NULL == child_apps[0]->prefix_dir) {
+                child_apps[0]->prefix_dir = strdup(apps[0]->prefix_dir);
+            }
+            
             /* find the sender's node in the job map */
             procs = (orte_proc_t**)parent->procs->addr;
             /* set the bookmark so the child starts from that place - this means
