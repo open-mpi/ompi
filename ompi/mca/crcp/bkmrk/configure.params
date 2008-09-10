@@ -15,5 +15,5 @@
 # $HEADER$
 #
 
-PARAM_INIT_FILE=crcp_coord_component.c
+PARAM_INIT_FILE=crcp_bkmrk_component.c
 PARAM_CONFIG_FILES="Makefile"

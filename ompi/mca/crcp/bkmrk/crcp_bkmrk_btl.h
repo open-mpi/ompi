@@ -17,12 +17,12 @@
 /**
  * @file
  * 
- * Coord CRCP component
+ * Hoke CRCP component
  *
  */
 
-#ifndef MCA_CRCP_COORD_BTL_EXPORT_H
-#define MCA_CRCP_COORD_BTL_EXPORT_H
+#ifndef MCA_CRCP_HOKE_BTL_EXPORT_H
+#define MCA_CRCP_HOKE_BTL_EXPORT_H
 
 #include "ompi_config.h"
 
@@ -33,7 +33,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
-#include "ompi/mca/crcp/coord/crcp_coord.h"
+#include "ompi/mca/crcp/bkmrk/crcp_bkmrk.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -129,4 +129,4 @@ extern "C" {
 }
 #endif
 
-#endif /* MCA_CRCP_COORD_BTL_EXPORT_H */
+#endif /* MCA_CRCP_HOKE_BTL_EXPORT_H */

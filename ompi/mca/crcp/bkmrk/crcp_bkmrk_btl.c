@@ -23,7 +23,7 @@
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/event/event.h"
-#include "orte/util/show_help.h"
+#include "orte/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -35,14 +35,14 @@
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 
-#include "crcp_coord.h"
-#include "crcp_coord_btl.h"
+#include "crcp_bkmrk.h"
+#include "crcp_bkmrk_btl.h"
 
-int ompi_crcp_coord_btl_init(void) {
+int ompi_crcp_bkmrk_btl_init(void) {
     return OMPI_SUCCESS;
 }
 
-int ompi_crcp_coord_btl_finalize(void) {
+int ompi_crcp_bkmrk_btl_finalize(void) {
     return OMPI_SUCCESS;
 }
 

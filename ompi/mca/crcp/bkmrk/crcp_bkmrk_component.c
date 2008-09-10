@@ -16,31 +16,31 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
-#include "crcp_coord.h"
+#include "crcp_bkmrk.h"
 
 /*
  * Public string for version number
  */
-const char *ompi_crcp_coord_component_version_string = 
-"OMPI CRCP coord MCA component version " OMPI_VERSION;
+const char *ompi_crcp_bkmrk_component_version_string = 
+"OMPI CRCP bkmrk MCA component version " OMPI_VERSION;
 
 int timing_enabled = 0;
 
 /*
  * Local functionality
  */
-static int crcp_coord_open(void);
-static int crcp_coord_close(void);
+static int crcp_bkmrk_open(void);
+static int crcp_bkmrk_close(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointer to our public functions in it
  */
-ompi_crcp_coord_component_t mca_crcp_coord_component = {
+ompi_crcp_bkmrk_component_t mca_crcp_bkmrk_component = {
     /* First do the base component stuff */
     {
         /* Handle the general mca_component_t struct containing 
@@ -48,17 +48,16 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
          */
         {
             OMPI_CRCP_BASE_VERSION_2_0_0,
-
             /* Component name and version */
-            "coord",
+            "bkmrk",
             OMPI_MAJOR_VERSION,
             OMPI_MINOR_VERSION,
             OMPI_RELEASE_VERSION,
             
             /* Component open and close functions */
-            crcp_coord_open,
-            crcp_coord_close,
-            ompi_crcp_coord_component_query
+            crcp_bkmrk_open,
+            crcp_bkmrk_close,
+            ompi_crcp_bkmrk_component_query
         },
         {
             /* The component is checkpoint ready */
@@ -70,11 +69,11 @@ ompi_crcp_coord_component_t mca_crcp_coord_component = {
         /* opal_output handler */
         -1,
         /* Default priority */
-        10
+        20
     }
 };
 
-static int crcp_coord_open(void) 
+static int crcp_bkmrk_open(void) 
 {
     int val;
 
@@ -82,31 +81,31 @@ static int crcp_coord_open(void)
      * This should be the last componet to ever get used since
      * it doesn't do anything.
      */
-    mca_base_param_reg_int(&mca_crcp_coord_component.super.base_version,
+    mca_base_param_reg_int(&mca_crcp_bkmrk_component.super.base_version,
                            "priority",
-                           "Priority of the CRCP coord component",
+                           "Priority of the CRCP bkmrk component",
                            false, false,
-                           mca_crcp_coord_component.super.priority,
-                           &mca_crcp_coord_component.super.priority);
+                           mca_crcp_bkmrk_component.super.priority,
+                           &mca_crcp_bkmrk_component.super.priority);
     
-    mca_base_param_reg_int(&mca_crcp_coord_component.super.base_version,
+    mca_base_param_reg_int(&mca_crcp_bkmrk_component.super.base_version,
                            "verbose",
-                           "Verbose level for the CRCP coord component",
+                           "Verbose level for the CRCP bkmrk component",
                            false, false,
-                           mca_crcp_coord_component.super.verbose, 
-                           &mca_crcp_coord_component.super.verbose);
+                           mca_crcp_bkmrk_component.super.verbose, 
+                           &mca_crcp_bkmrk_component.super.verbose);
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
-    if ( 0 != mca_crcp_coord_component.super.verbose) {
-        mca_crcp_coord_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_crcp_coord_component.super.output_handle,
-                                  mca_crcp_coord_component.super.verbose);
+    if ( 0 != mca_crcp_bkmrk_component.super.verbose) {
+        mca_crcp_bkmrk_component.super.output_handle = opal_output_open(NULL);
+        opal_output_set_verbosity(mca_crcp_bkmrk_component.super.output_handle,
+                                  mca_crcp_bkmrk_component.super.verbose);
     } else {
-        mca_crcp_coord_component.super.output_handle = ompi_crcp_base_output;
+        mca_crcp_bkmrk_component.super.output_handle = ompi_crcp_base_output;
     }
 
-    mca_base_param_reg_int(&mca_crcp_coord_component.super.base_version,
+    mca_base_param_reg_int(&mca_crcp_bkmrk_component.super.base_version,
                            "timing",
                            "Enable Performance timing",
                            false, false,
@@ -117,22 +116,22 @@ static int crcp_coord_open(void)
     /*
      * Debug Output
      */
-    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: open()");
-    opal_output_verbose(20, mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: open: priority   = %d", 
-                        mca_crcp_coord_component.super.priority);
-    opal_output_verbose(20, mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: open: verbosity  = %d", 
-                        mca_crcp_coord_component.super.verbose);
+    opal_output_verbose(10, mca_crcp_bkmrk_component.super.output_handle,
+                        "crcp:bkmrk: open()");
+    opal_output_verbose(20, mca_crcp_bkmrk_component.super.output_handle,
+                        "crcp:bkmrk: open: priority   = %d", 
+                        mca_crcp_bkmrk_component.super.priority);
+    opal_output_verbose(20, mca_crcp_bkmrk_component.super.output_handle,
+                        "crcp:bkmrk: open: verbosity  = %d", 
+                        mca_crcp_bkmrk_component.super.verbose);
 
     return OMPI_SUCCESS;
 }
 
-static int crcp_coord_close(void)
+static int crcp_bkmrk_close(void)
 {
-    opal_output_verbose(10, mca_crcp_coord_component.super.output_handle,
-                        "crcp:coord: close()");
+    opal_output_verbose(10, mca_crcp_bkmrk_component.super.output_handle,
+                        "crcp:bkmrk: close()");
 
     return OMPI_SUCCESS;
 }
