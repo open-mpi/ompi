@@ -32,10 +32,10 @@ snapc=full
 #
 # OMPI Parameters
 # - Wrap the PML
-# - Use the LAM/MPI-like Coordinated Checkpoint/Restart Coordination Protocol
+# - Use a Bookmark Exchange Fully Coordinated Checkpoint/Restart Coordination Protocol
 #
 pml_wrapper=crcpw
-crcp=coord
+crcp=bkmrk
 
 #
 # Temporary fix to force the event engine to use poll to behave well with BLCR
