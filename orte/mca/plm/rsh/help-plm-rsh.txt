@@ -64,3 +64,14 @@ remove the debug-daemons flag.
 The user (%d) is unknown to the system (i.e. there is no corresponding
 entry in the password file). Please contact your system administrator
 for a fix.
+#
+[cannot-resolve-shell-with-prefix]
+The rsh launcher has been given a prefix to use, but could not determine
+the type of remote shell being used on the remote node. This is a fatal
+error as we cannot determine how to construct the cmd line to set your
+remote LD_LIBRARY_PATH and PATH environmental variables.
+
+The prefix we were given are:
+
+opal_prefix: %s
+prefix_dir: %s
