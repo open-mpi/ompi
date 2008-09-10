@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # $COPYRIGHT$
@@ -623,7 +623,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/types.h sys/uio.h net/uio.h sys/utsname.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h sys/sysctl.h crt_externs.h regex.h \
-    ioLib.h sockLib.h hostLib.h shlwapi.h])
+    ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h
@@ -1266,6 +1266,11 @@ if test $ac_cv_type_long_long = yes ; then
   AC_DEFINE(OMPI_HAVE_LONG_LONG, 1,
 	    [Do not use outside of mpi.h.  Define to 1 if the system has the type `long long'.]) dnl `
 fi
+if test $ac_cv_header_sys_synch_h = yes ; then
+  AC_DEFINE(OMPI_HAVE_SYS_SYNCH_H, 1,
+	    [Do not use outside of mpi.h.  Define to 1 if you have the <sys/synch.h> header file.])
+fi
+
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_BOOL, $ac_cv_sizeof_bool,
           [Do not use outside of mpi.h.  The size of a `bool', as computed by sizeof.]) dnl `
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_INT, $ac_cv_sizeof_int,
