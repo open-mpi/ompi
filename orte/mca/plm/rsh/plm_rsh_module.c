@@ -579,6 +579,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       (orted_prefix != NULL ? orted_prefix : ""),
                       prefix_dir, bin_base,
                       orted_cmd);
+        } else {
+            orte_show_help("help-plm-rsh.txt", "cannot-resolve-shell-with-prefix", true,
+                           (NULL == opal_prefix) ? "NULL" : opal_prefix,
+                           prefix_dir);
+            return ORTE_ERR_SILENT;
         }
     } else {
         /* no prefix directory, so just aggregate the result */
