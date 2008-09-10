@@ -18,14 +18,10 @@
 // 
 // $HEADER$
 
-#include <stdio.h>
-static const int ompi_stdio_seek_set = SEEK_SET;
-static const int ompi_stdio_seek_cur = SEEK_CUR;
-static const int ompi_stdio_seek_end = SEEK_END;
-
 #include "mpicxx.h"
 
-/* Need to include ompi_config.h after mpicxx.h... */
+/* Need to include ompi_config.h after mpicxx.h so that we get
+   SEEK_SET and friends right */
 #include "ompi_config.h"
 
 #if OMPI_CXX_USE_PRAGMA_IDENT
@@ -38,13 +34,6 @@ namespace MPI {
 }
 
 #include "ompi/errhandler/errhandler.h"
-
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE && OMPI_WANT_MPI_CXX_SEEK
-
-const int SEEK_SET = ompi_stdio_seek_set;
-const int SEEK_CUR = ompi_stdio_seek_cur;
-const int SEEK_END = ompi_stdio_seek_end;
-#endif
 
 namespace MPI {
 
