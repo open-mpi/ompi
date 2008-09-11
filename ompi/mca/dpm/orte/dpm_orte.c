@@ -482,12 +482,10 @@ static int spawn(int count, char **array_of_commands,
 {
     int rc, i, j, counter;
     int have_wdir=0;
-    bool have_prefix;
     int valuelen=OMPI_PATH_MAX, flag=0;
     char cwd[OMPI_PATH_MAX];
     char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
     char prefix[OMPI_PATH_MAX];
-    char *base_prefix=NULL;
 
     orte_job_t *jdata;
     orte_app_context_t *app;
@@ -599,7 +597,6 @@ static int spawn(int count, char **array_of_commands,
 
         /* Check for well-known info keys */
         have_wdir = 0;
-        have_prefix = false;
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 
             /* check for 'host' */
@@ -628,7 +625,6 @@ static int spawn(int count, char **array_of_commands,
             ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix), prefix, &flag);
             if ( flag ) {
                 app->prefix_dir = strdup(prefix);
-                have_prefix = true;
             }
 
             /* check for 'wdir' */ 
@@ -668,23 +664,10 @@ static int spawn(int count, char **array_of_commands,
             app->cwd = strdup(cwd);
         }
         
-        /* if the user told us a new prefix, then we leave it alone. otherwise, if
-         * a prefix had been provided before, copy that one into the new app_context
-         * for use by the spawned children
-         */
-        if ( !have_prefix && NULL != base_prefix) {
-            app->prefix_dir = strdup(base_prefix);
-        }
-        
         /* leave the map info alone - the launcher will
          * decide where to put things
          */
     } /* for (i = 0 ; i < count ; ++i) */
-
-    /* cleanup */
-    if (NULL != base_prefix) {
-        free(base_prefix);
-    }
 
     /* spawn procs */
     rc = orte_plm.spawn(jdata);
