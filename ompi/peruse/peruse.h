@@ -97,61 +97,61 @@ enum {
  */
 
 /* PERUSE initialization */
-int PERUSE_Init( void );
+OMPI_DECLSPEC int PERUSE_Init( void );
 
 /* Query all implemented events */
-int PERUSE_Query_supported_events( int* num_supported,
-                                   char*** event_names,
-                                   int** events );
+OMPI_DECLSPEC int PERUSE_Query_supported_events( int* num_supported,
+                                                 char*** event_names,
+                                                 int** events );
 
 /* Query supported events */
-int PERUSE_Query_event( const char* event_name, int* event );
+OMPI_DECLSPEC int PERUSE_Query_event( const char* event_name, int* event );
 
 /* Query event name */
-int PERUSE_Query_event_name( int event, char** event_name );
+OMPI_DECLSPEC int PERUSE_Query_event_name( int event, char** event_name );
 
 /* Get environment variables that affect MPI library behavior */
-int PERUSE_Query_environment( int* env_size, char*** env );
+OMPI_DECLSPEC int PERUSE_Query_environment( int* env_size, char*** env );
 
 /* Query the scope of queue metrics - global or per communicator */
-int PERUSE_Query_queue_event_scope( int* scope );
+OMPI_DECLSPEC int PERUSE_Query_queue_event_scope( int* scope );
 
 /*
  * II. Events, objects initialization and manipulation
  */
 /* Initialize event associated with an MPI communicator */
-int PERUSE_Event_comm_register( int                       event,
-                                MPI_Comm                  comm,
-                                peruse_comm_callback_f *  callback_fn,
-                                void *                    param,
-                                peruse_event_h *          event_h );
+OMPI_DECLSPEC int PERUSE_Event_comm_register( int                       event,
+                                              MPI_Comm                  comm,
+                                              peruse_comm_callback_f *  callback_fn,
+                                              void *                    param,
+                                              peruse_event_h *          event_h );
 
 /* Start collecting data (activate event) */
-int PERUSE_Event_activate( peruse_event_h event_h );
+OMPI_DECLSPEC int PERUSE_Event_activate( peruse_event_h event_h );
 
 /* Stop collecting data (deactivate event) */
-int PERUSE_Event_deactivate( peruse_event_h event_h );
+OMPI_DECLSPEC int PERUSE_Event_deactivate( peruse_event_h event_h );
 
 /* Free event handle */
-int PERUSE_Event_release( peruse_event_h* event_h );
+OMPI_DECLSPEC int PERUSE_Event_release( peruse_event_h* event_h );
 
 /* Set a new comm callback */
-int PERUSE_Event_comm_callback_set( peruse_event_h            event_h,
-                                    peruse_comm_callback_f*   callback_fn,
-                                    void *                    param);
+OMPI_DECLSPEC int PERUSE_Event_comm_callback_set( peruse_event_h            event_h,
+                                                  peruse_comm_callback_f*   callback_fn,
+                                                  void *                    param);
 
 /* Get the current comm callback */
-int PERUSE_Event_comm_callback_get( peruse_event_h            event_h,
-                                    peruse_comm_callback_f**  callback_fn,
-                                    void **                   param );
+OMPI_DECLSPEC int PERUSE_Event_comm_callback_get( peruse_event_h            event_h,
+                                                  peruse_comm_callback_f**  callback_fn,
+                                                  void **                   param );
 
 /* Obtain event descriptor from an event handle (reverse lookup) */
-int PERUSE_Event_get( peruse_event_h event_h, int* event );
+OMPI_DECLSPEC int PERUSE_Event_get( peruse_event_h event_h, int* event );
 
 /* Obtain MPI object associated with event handle */
-int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object );
+OMPI_DECLSPEC int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object );
 
 /* Propagation mode */
-int PERUSE_Event_propagate( peruse_event_h event_h, int mode );
+OMPI_DECLSPEC int PERUSE_Event_propagate( peruse_event_h event_h, int mode );
 
 #endif
