@@ -341,7 +341,6 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     orte_job_map_t *map;
     orte_std_cntr_t num_nodes;
     int node_name_index1;
-    int node_name_index2;
     int proc_vpid_index;
     int local_exec_index, local_exec_index_end;
     char *vpid_string = NULL;
@@ -545,8 +544,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
      */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
-                                          &proc_vpid_index,
-                                          &node_name_index2);
+                                          &proc_vpid_index);
     
     local_exec_index_end = argc;
     if (mca_plm_submit_component.debug) {
@@ -612,9 +610,6 @@ int orte_plm_submit_launch(orte_job_t *jdata)
             argv[node_name_index1] = strdup(nodes[nnode]->name);
         }
 
-        free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(nodes[nnode]->name);
-        
         /* fork a child to exec the submit/ssh session */
         
         pid = fork();

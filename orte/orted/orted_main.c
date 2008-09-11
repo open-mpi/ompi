@@ -167,10 +167,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
       "Direct the orted to separate from the current session"},
     
-    { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
-      &orte_process_info.nodename, OPAL_CMD_LINE_TYPE_STRING,
-      "Node name as specified by host/resource description." },
-
     { "tmpdir", "base", NULL, '\0', NULL, "tmpdir", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree" },

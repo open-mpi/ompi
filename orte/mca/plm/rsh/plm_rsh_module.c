@@ -342,7 +342,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
 static int setup_launch(int *argcptr, char ***argvptr,
                         char *nodename,
-                        int *node_name_index1, int *node_name_index2,
+                        int *node_name_index1,
                         int *proc_vpid_index, char *prefix_dir,
                         bool *remote_sh, bool *remote_csh)
 {
@@ -611,7 +611,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           proc_vpid_index,
-                                          node_name_index2,
                                           true);
     
     /* in the rsh environment, we can append multi-word arguments
@@ -779,7 +778,6 @@ static int remote_spawn(opal_buffer_t *launch)
     orte_vpid_t vpid;
     orte_nid_t **nodes;
     int node_name_index1;
-    int node_name_index2;
     int proc_vpid_index;
     char **argv = NULL;
     char *prefix;
@@ -829,7 +827,7 @@ static int remote_spawn(opal_buffer_t *launch)
     }
     
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1, &node_name_index2,
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
                                            &proc_vpid_index, prefix, &remote_sh, &remote_csh))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -856,9 +854,6 @@ static int remote_spawn(opal_buffer_t *launch)
         free(argv[node_name_index1]);
         argv[node_name_index1] = strdup(nodes[vpid]->name);
         
-        free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(nodes[vpid]->name);
-
         /* fork a child to exec the rsh/ssh session */
         pid = fork();
         if (pid < 0) {
@@ -935,7 +930,6 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
 {
     orte_job_map_t *map = NULL;
     int node_name_index1;
-    int node_name_index2;
     int proc_vpid_index;
     char **argv = NULL;
     char *prefix_dir;
@@ -1038,7 +1032,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     prefix_dir = apps[0]->prefix_dir;
     
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, nodes[0]->name, &node_name_index1, &node_name_index2,
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, nodes[0]->name, &node_name_index1,
                                            &proc_vpid_index, prefix_dir, &remote_sh, &remote_csh))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -1145,9 +1139,6 @@ launch:
             argv[node_name_index1] = strdup(nodes[nnode]->name);
         }
 
-        free(argv[node_name_index2]);
-        argv[node_name_index2] = strdup(nodes[nnode]->name);
-        
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

@@ -130,7 +130,6 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     orte_job_map_t *map = NULL;
     orte_app_context_t **apps;
     orte_node_t **nodes;
-    int node_name_index;
     int proc_vpid_index;
     char *param;
     char **env = NULL;
@@ -203,7 +202,6 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
                                           &proc_vpid_index,
-                                          &node_name_index,
                                           true);
 
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
@@ -285,10 +283,6 @@ static int plm_tm_launch_job(orte_job_t *jdata)
             continue;
         }
  
-        /* setup node name */
-        free(argv[node_name_index]);
-        argv[node_name_index] = strdup(node->name);
-        
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

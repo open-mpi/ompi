@@ -438,7 +438,6 @@ cleanup:
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           NULL,
-                                          NULL,
                                           true);
 
     /* Note that capacity is a starting capacity, not max */
