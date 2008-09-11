@@ -64,7 +64,7 @@ const int PERUSE_num_events = (sizeof(PERUSE_events) / sizeof(peruse_event_assoc
 /*
  * PERUSE user-callable function
  */
-OMPI_DECLSPEC int PERUSE_Init (void)
+int PERUSE_Init (void)
 {
     if (MPI_PARAM_CHECK) {
         if (!ompi_mpi_initialized || ompi_mpi_finalized)
@@ -76,7 +76,7 @@ OMPI_DECLSPEC int PERUSE_Init (void)
 
 
 /* Query all implemented events */
-OMPI_DECLSPEC int PERUSE_Query_supported_events( int* num_supported,
+int PERUSE_Query_supported_events( int* num_supported,
                                                  char*** event_names,
                                                  int** events )
 {
@@ -96,7 +96,7 @@ OMPI_DECLSPEC int PERUSE_Query_supported_events( int* num_supported,
 
 
 /* Query supported events */
-OMPI_DECLSPEC int PERUSE_Query_event (const char* event_name, int* event)
+int PERUSE_Query_event (const char* event_name, int* event)
 {
     int i;
 
@@ -111,7 +111,7 @@ OMPI_DECLSPEC int PERUSE_Query_event (const char* event_name, int* event)
 
 
 /* Query event name */
-OMPI_DECLSPEC int PERUSE_Query_event_name (int event, char** event_name)
+int PERUSE_Query_event_name (int event, char** event_name)
 {
     if (event < 0 || event > PERUSE_num_events ||
         NULL == PERUSE_events[event].name)
@@ -123,14 +123,14 @@ OMPI_DECLSPEC int PERUSE_Query_event_name (int event, char** event_name)
 
 
 /* Get environment variables that affect MPI library behavior */
-OMPI_DECLSPEC int PERUSE_Query_environment( int * env_size, char *** env )
+int PERUSE_Query_environment( int * env_size, char *** env )
 {
     /* XXX tbd */
     return PERUSE_SUCCESS;
 }
 
 /* Query the scope of queue metrics - global or per communicator */
-OMPI_DECLSPEC int PERUSE_Query_queue_event_scope (int * scope)
+int PERUSE_Query_queue_event_scope (int * scope)
 {
     *scope = PERUSE_PER_COMM;
 
@@ -142,7 +142,7 @@ OMPI_DECLSPEC int PERUSE_Query_queue_event_scope (int * scope)
  * II. Events, objects initialization and manipulation
  */
 /* Initialize event associated with an MPI communicator */
-OMPI_DECLSPEC int PERUSE_Event_comm_register( int                       event,
+int PERUSE_Event_comm_register( int                       event,
                                               MPI_Comm                  comm,
                                               peruse_comm_callback_f *  callback_fn,
                                               void *                    param,
@@ -192,7 +192,7 @@ OMPI_DECLSPEC int PERUSE_Event_comm_register( int                       event,
 
 
 /* Start collecting data (activate event) */
-OMPI_DECLSPEC int PERUSE_Event_activate (peruse_event_h event_h)
+int PERUSE_Event_activate (peruse_event_h event_h)
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -209,7 +209,7 @@ OMPI_DECLSPEC int PERUSE_Event_activate (peruse_event_h event_h)
 
 
 /* Stop collecting data (deactivate event) */
-OMPI_DECLSPEC int PERUSE_Event_deactivate (peruse_event_h event_h)
+int PERUSE_Event_deactivate (peruse_event_h event_h)
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -226,7 +226,7 @@ OMPI_DECLSPEC int PERUSE_Event_deactivate (peruse_event_h event_h)
 
 
 /* Free event handle */
-OMPI_DECLSPEC int PERUSE_Event_release (peruse_event_h * event_h)
+int PERUSE_Event_release (peruse_event_h * event_h)
 {
     if (MPI_PARAM_CHECK) {
         if (PERUSE_EVENT_HANDLE_NULL == event_h)
@@ -258,7 +258,7 @@ OMPI_DECLSPEC int PERUSE_Event_release (peruse_event_h * event_h)
     }                                                                 \
 
 /* Set a new comm callback */
-OMPI_DECLSPEC int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
+int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
                                                   peruse_comm_callback_f*  callback_fn,
                                                   void*                    param )
 {
@@ -275,7 +275,7 @@ OMPI_DECLSPEC int PERUSE_Event_comm_callback_set( peruse_event_h           event
 }
 
 /* Get the current comm callback */
-OMPI_DECLSPEC int PERUSE_Event_comm_callback_get( peruse_event_h           event_h,
+int PERUSE_Event_comm_callback_get( peruse_event_h           event_h,
                                                   peruse_comm_callback_f** callback_fn,
                                                   void**                   param )
 {
@@ -292,7 +292,7 @@ OMPI_DECLSPEC int PERUSE_Event_comm_callback_get( peruse_event_h           event
 }
 
 /* Obtain event descriptor from an event handle (reverse lookup) */
-OMPI_DECLSPEC int PERUSE_Event_get( peruse_event_h event_h, int* event )
+int PERUSE_Event_get( peruse_event_h event_h, int* event )
 {
     if (MPI_PARAM_CHECK) {
         if (NULL == event_h)
@@ -308,7 +308,7 @@ OMPI_DECLSPEC int PERUSE_Event_get( peruse_event_h event_h, int* event )
 
 
 /* Obtain MPI object associated with event handle */
-OMPI_DECLSPEC int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object )
+int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object )
 {
     ompi_peruse_handle_t* p = (ompi_peruse_handle_t*)event_h;
 
@@ -329,7 +329,7 @@ OMPI_DECLSPEC int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_ob
 
 
 /* Propagaiont mode */
-OMPI_DECLSPEC int PERUSE_Event_propagate (peruse_event_h event_h, int mode)
+int PERUSE_Event_propagate (peruse_event_h event_h, int mode)
 {
     return PERUSE_SUCCESS;
 }
