@@ -21,7 +21,7 @@
 #
 [unreachable proc]
 At least one pair of MPI processes are unable to reach each other for
-MPI communications.  This means that no Open MPI device has inidicated
+MPI communications.  This means that no Open MPI device has indicated
 that it can be used to communicate between these processes.  This is
 an error; Open MPI requires that all MPI processes be able to reach
 each other.  This error can sometimes be the result of forgetting to
