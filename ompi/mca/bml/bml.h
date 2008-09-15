@@ -74,7 +74,6 @@ struct mca_bml_base_btl_t {
     mca_btl_base_module_prepare_fn_t btl_prepare_dst;
     mca_btl_base_module_put_fn_t     btl_put;
     mca_btl_base_module_get_fn_t     btl_get;
-    mca_btl_base_component_progress_fn_t btl_progress; 
 
     mca_mpool_base_module_t*         btl_mpool;
 };
@@ -415,16 +414,6 @@ typedef struct mca_bml_base_module_t* (*mca_bml_base_component_init_fn_t)(
                                                                           );
 
 /**
- * MCA->BML Called to progress outstanding requests for
- * non-threaded polling environments.
- *
- * @param tstamp     Current time.
- * @return           OMPI_SUCCESS or error code on failure.
- */
-
-typedef int (*mca_bml_base_module_progress_fn_t)(void);
-
-/**
  *  BML component descriptor. Contains component version information
  *  and component open/close/init functions.
  */
@@ -599,8 +588,6 @@ struct mca_bml_base_module_t {
     mca_bml_base_module_register_error_cb_fn_t bml_register_error;
 
     mca_bml_base_module_finalize_fn_t      bml_finalize;
-
-    mca_bml_base_module_progress_fn_t bml_progress;
 
     mca_bml_base_module_ft_event_fn_t      bml_ft_event;
 };

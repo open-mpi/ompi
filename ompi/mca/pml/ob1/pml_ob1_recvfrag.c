@@ -79,8 +79,8 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                           mca_btl_base_tag_t tag,
                                           mca_btl_base_descriptor_t* des,
                                           void* cbdata ) { 
-    mca_btl_base_segment_t* segment = des->des_dst;
-    mca_pml_ob1_match_hdr_t* hdr = (mca_pml_ob1_match_hdr_t*)segment->seg_addr.pval;
+    mca_btl_base_segment_t* segments = des->des_dst;
+    mca_pml_ob1_match_hdr_t* hdr = (mca_pml_ob1_match_hdr_t*)segments->seg_addr.pval;
     ompi_communicator_t *comm_ptr;
     mca_pml_ob1_recv_request_t *match = NULL;
     mca_pml_ob1_comm_t *comm;
@@ -89,7 +89,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
     
-    if( OPAL_UNLIKELY(segment->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN) ) {
+    if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN) ) {
         return;
      }
     ob1_hdr_ntoh(((mca_pml_ob1_hdr_t*) hdr), MCA_PML_OB1_HDR_TYPE_MATCH);
@@ -151,7 +151,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
                             hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     
-    match = match_one(btl, hdr, segment, num_segments, comm_ptr, proc, frag);
+    match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, frag);
     
     /* The match is over. We generate the SEARCH_POSTED_Q_END here,
      * before going into the mca_pml_ob1_check_cantmatch_for_match so
@@ -165,7 +165,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     
     if(OPAL_LIKELY(match)) {
-        bytes_received = segment->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
+        bytes_received = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
         match->req_recv.req_bytes_packed = bytes_received;
         
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
@@ -184,12 +184,12 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
                        );
             
             iov[0].iov_len = bytes_received;
-            iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
+            iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments->seg_addr.pval +
                                               OMPI_PML_OB1_MATCH_HDR_LEN);
             while (iov_count < num_segments) {
-                bytes_received += segment[iov_count].seg_len;
-                iov[iov_count].iov_len = segment[iov_count].seg_len;
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment[iov_count].seg_addr.pval);
+                bytes_received += segments[iov_count].seg_len;
+                iov[iov_count].iov_len = segments[iov_count].seg_len;
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments[iov_count].seg_addr.pval);
                 iov_count++;
             }
             ompi_convertor_unpack( &match->req_recv.req_base.req_convertor,
@@ -216,7 +216,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     
  slow_path:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-    mca_pml_ob1_recv_frag_match(btl, hdr, segment,
+    mca_pml_ob1_recv_frag_match(btl, hdr, segments,
                                 num_segments, MCA_PML_OB1_HDR_TYPE_MATCH);
 }
 

@@ -181,7 +181,7 @@ mca_pml_ob1_component_init( int* priority,
      * to avoid useless functions calls. The event library will instead call
      * directly the BML function.
      */
-    mca_pml_ob1.super.pml_progress = mca_bml.bml_progress;
+    /*mca_pml_ob1.super.pml_progress = mca_bml.bml_progress;*/
 
     return &mca_pml_ob1.super;
 }
