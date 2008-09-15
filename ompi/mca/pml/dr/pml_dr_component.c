@@ -128,8 +128,8 @@ int mca_pml_dr_component_close(void)
 }
 
 mca_pml_base_module_t* mca_pml_dr_component_init(int* priority, 
-                                                  bool enable_progress_threads,
-                                                  bool enable_mpi_threads)
+                                                 bool enable_progress_threads,
+                                                 bool enable_mpi_threads)
 {
     if((*priority) > mca_pml_dr.priority) {
         *priority = mca_pml_dr.priority;
@@ -142,8 +142,6 @@ mca_pml_base_module_t* mca_pml_dr_component_init(int* priority,
         return NULL; 
     }
     
-    mca_pml_dr.super.pml_progress = mca_bml.bml_progress;
-
     return &mca_pml_dr.super;
 }
 

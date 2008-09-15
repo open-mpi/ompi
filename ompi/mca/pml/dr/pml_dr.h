@@ -119,8 +119,6 @@ extern int mca_pml_dr_enable(
     bool enable
 );
 
-extern int mca_pml_dr_progress(void);
-
 extern int mca_pml_dr_iprobe(
     int dst,
     int tag,

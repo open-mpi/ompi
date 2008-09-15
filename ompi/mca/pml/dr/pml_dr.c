@@ -44,7 +44,7 @@ mca_pml_dr_t mca_pml_dr = {
     mca_pml_dr_add_procs,
     mca_pml_dr_del_procs,
     mca_pml_dr_enable,
-    mca_pml_dr_progress,
+    NULL, /*mca_pml_dr_progress,*/
     mca_pml_dr_add_comm,
     mca_pml_dr_del_comm,
     mca_pml_dr_irecv_init,

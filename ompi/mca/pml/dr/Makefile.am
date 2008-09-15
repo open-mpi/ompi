@@ -30,7 +30,6 @@ dr_sources  = \
 	pml_dr_iprobe.c \
 	pml_dr_irecv.c \
 	pml_dr_isend.c \
-	pml_dr_progress.c \
 	pml_dr_recvfrag.c \
 	pml_dr_recvfrag.h \
 	pml_dr_recvreq.c \
