@@ -401,8 +401,8 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     } else if (communicator_size > (a3 * message_size + b3)) {
         /* Binary_32K */
         segsize = 32*1024;
-        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, module,
-						      segsize, max_requests);
+        return ompi_coll_tuned_reduce_intra_binary( sendbuf, recvbuf, count, datatype, op, root,
+                                                    comm, module, segsize, max_requests);
     }
     if (communicator_size > (a4 * message_size + b4)) {
         /* Pipeline_32K */
