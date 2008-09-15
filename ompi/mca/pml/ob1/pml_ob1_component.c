@@ -202,6 +202,7 @@ int mca_pml_ob1_component_fini(void)
     OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.non_existing_communicator_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.buffers);
     OBJ_DESTRUCT(&mca_pml_ob1.pending_pckts);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);

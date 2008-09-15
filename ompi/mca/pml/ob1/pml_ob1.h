@@ -73,6 +73,8 @@ struct mca_pml_ob1_t {
     opal_list_t send_pending;
     opal_list_t recv_pending;
     opal_list_t rdma_pending;
+    /* List of pending fragments without a matching communicator */
+    opal_list_t non_existing_communicator_pending;
     bool enabled; 
     char* allocator_name;
     mca_allocator_base_module_t* allocator; 

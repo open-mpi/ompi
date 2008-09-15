@@ -54,6 +54,25 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
  */
 
 /**
+ * Append a unexpected descriptor to a queue. This function will allocate and
+ * initialize the fragment (if necessary) and the will added to the specified
+ * queue. The frag will be updated to the allocated fragment if necessary.
+ */
+static void
+append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
+                    mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
+                    size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
+{
+    int rc;
+
+    if(NULL == frag) {
+        MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
+        MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
+    }
+    opal_list_append(queue, (opal_list_item_t*)frag);
+}
+
+/**
  * Match incoming recv_frags against posted receives.  
  * Supports out of order delivery.
  * 
@@ -98,14 +117,14 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
     if(OPAL_UNLIKELY(NULL == comm_ptr)) {
         /* This is a special case. A message for a not yet existing
-         * communicator can happens, but right now we
-         * segfault. Instead, and until we find a better solution,
-         * just drop the message. However, in the near future we
-         * should store this fragment in a global list, and deliver
-         * it to the right communicator once it get created.
+         * communicator can happens. Instead of doing a matching we
+         * will temporarily add it the a pending queue in the PML.
+         * Later on, when the communicator is completely instantiated,
+         * this pending queue will be searched and all matching fragments
+         * moved to the right communicator.
          */
-        opal_output( 0, "Dropped message for the non-existing communicator %d\n",
-                     (int)hdr->hdr_ctx );
+        append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending,
+                             btl, hdr, segments, num_segments, frag );
         return;
     }
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
@@ -424,19 +443,6 @@ static mca_pml_ob1_recv_request_t *match_incomming(
     return NULL;
 }
 
-static void append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
-        mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
-        size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
-{
-    int rc;
-
-    if(NULL == frag) {
-        MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
-        MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
-    }
-    opal_list_append(queue, (opal_list_item_t*)frag);
-}
-
 static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
         mca_pml_ob1_match_hdr_t *hdr, mca_btl_base_segment_t* segments,
         size_t num_segments, ompi_communicator_t *comm_ptr,
@@ -554,14 +560,15 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
     if(OPAL_UNLIKELY(NULL == comm_ptr)) {
-        /* This is a special case. A message for a not yet existing communicator can
-         * happens, but right now we segfault. Instead, and until we find a better
-         * solution, just drop the message. However, in the near future we should
-         * store this fragment in a global list, and deliver it to the right
-         * communicator once it get created.
+        /* This is a special case. A message for a not yet existing
+         * communicator can happens. Instead of doing a matching we
+         * will temporarily add it the a pending queue in the PML.
+         * Later on, when the communicator is completely instantiated,
+         * this pending queue will be searched and all matching fragments
+         * moved to the right communicator.
          */
-        opal_output( 0, "Dropped message for the non-existing communicator %d\n",
-                     (int)hdr->hdr_ctx );
+        append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending,
+                             btl, hdr, segments, num_segments, frag );
         return OMPI_SUCCESS;
     }
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;

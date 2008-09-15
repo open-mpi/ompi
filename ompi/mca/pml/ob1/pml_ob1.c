@@ -133,6 +133,8 @@ int mca_pml_ob1_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
+    /* missing communicator pending list */
+    OBJ_CONSTRUCT(&mca_pml_ob1.non_existing_communicator_pending, opal_list_t);
 
     /**
      * If we get here this is the PML who get selected for the run. We
@@ -171,6 +173,10 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     mca_pml_ob1_comm_t* pml_comm = OBJ_NEW(mca_pml_ob1_comm_t);
+    opal_list_item_t* item;
+    mca_pml_ob1_recv_frag_t* frag;
+    mca_pml_ob1_comm_proc_t* pml_proc;
+    mca_pml_ob1_match_hdr_t* hdr;
     int i;
 
     if (NULL == pml_comm) {
@@ -181,6 +187,68 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 
     for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
         pml_comm->procs[i].ompi_proc = ompi_group_peer_lookup(comm->c_remote_group,i);
+    }
+    /* Grab all related messages from the non_existing_communicator pending queue */
+    for( item = opal_list_get_first(&mca_pml_ob1.non_existing_communicator_pending);
+         item != opal_list_get_end(&mca_pml_ob1.non_existing_communicator_pending);
+         item = opal_list_get_next(item) ) {
+        frag = (mca_pml_ob1_recv_frag_t*)item;
+        hdr = &frag->hdr.hdr_match;
+
+        /* Is this fragment for the current communicator ? */
+        if( frag->hdr.hdr_match.hdr_ctx != comm->c_contextid )
+            continue;
+
+        /* As we now know we work on a fragment for this communicator we should
+         * remove it from the non_existing_communicator_pending list. As a result
+         * after the call item will contain the previous item so the loop will
+         * continue to work as expected. */
+        item = opal_list_remove_item( &mca_pml_ob1.non_existing_communicator_pending, item );
+
+      add_fragment_to_unexpected:
+        /* We generate the MSG_ARRIVED event as soon as the PML is aware
+         * of a matching fragment arrival. Independing if it is received
+         * on the correct order or not. This will allow the tools to
+         * figure out if the messages are not received in the correct
+         * order (if multiple network interfaces).
+         */
+        PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm,
+                               hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+
+        /* There is no matching to be done, and no lock to be held on the communicator as
+         * we know at this point that the communicator has not yet been returned to the user.
+         * The only required protection is around the non_existing_communicator_pending queue.
+         * We just have to push the fragment into the unexpected list of the corresponding
+         * proc, or into the out-of-order (cant_match) list.
+         */
+        pml_proc = &(pml_comm->procs[hdr->hdr_src]);
+
+        if( ((uint16_t)hdr->hdr_seq) == ((uint16_t)pml_proc->expected_sequence) ) {
+            /* We're now expecting the next sequence number. */
+            pml_proc->expected_sequence++;
+            opal_list_append( &pml_proc->unexpected_frags, (opal_list_item_t*)frag );
+            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
+                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            /* And now the ugly part. As some fragments can be inserted in the cant_match list,
+             * every time we succesfully add a fragment in the unexpected list we have to make
+             * sure the next one is not in the cant_match. Otherwise, we will endup in a deadlock
+             * situation as the cant_match is only checked when a new fragment is received from
+             * the network.
+             */
+           for(frag = (mca_pml_ob1_recv_frag_t *)opal_list_get_first(&pml_proc->frags_cant_match);
+               frag != (mca_pml_ob1_recv_frag_t *)opal_list_get_end(&pml_proc->frags_cant_match);
+               frag = (mca_pml_ob1_recv_frag_t *)opal_list_get_next(frag)) {
+               hdr = &frag->hdr.hdr_match;
+               /* If the message has the next expected seq from that proc...  */
+               if(hdr->hdr_seq != pml_proc->expected_sequence)
+                   continue;
+
+               opal_list_remove_item(&pml_proc->frags_cant_match, (opal_list_item_t*)frag);
+               goto add_fragment_to_unexpected;
+           }
+        } else {
+            opal_list_append( &pml_proc->frags_cant_match, (opal_list_item_t*)frag );
+        }
     }
     return OMPI_SUCCESS;
 }
