@@ -543,7 +543,7 @@ int mca_bml_r2_del_procs(size_t nprocs,
     return OMPI_SUCCESS;
 }
 
-static inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl)
+inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl)
 {
     unsigned int p;
 

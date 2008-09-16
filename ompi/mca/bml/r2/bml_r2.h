@@ -89,6 +89,9 @@ int mca_bml_r2_component_fini(void);
 
 int mca_bml_r2_ft_event(int status);
 
+inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl);
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

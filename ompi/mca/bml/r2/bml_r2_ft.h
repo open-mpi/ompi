@@ -28,7 +28,6 @@
 extern "C" {
 #endif
 
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
