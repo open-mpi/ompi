@@ -48,6 +48,7 @@ int mca_bml_r2_ft_event(int state)
     size_t btl_idx;
     int ret, p;
     int loc_state;
+    opal_list_item_t* w_item = NULL;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
@@ -128,6 +129,28 @@ int mca_bml_r2_ft_event(int state)
         ;
     }
     else if(OPAL_CRS_RESTART_PRE == state ) {
+        /* Flush the progress functions */
+        procs = ompi_proc_all(&num_procs);
+        if(NULL == procs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        for (w_item =  opal_list_get_first(&mca_btl_base_modules_initialized);
+             w_item != opal_list_get_end(&mca_btl_base_modules_initialized);
+             w_item =  opal_list_get_next(w_item)) {
+            mca_btl_base_selected_module_t *sm = (mca_btl_base_selected_module_t *) w_item;
+            mca_btl_base_module_t* btl = sm->btl_module;
+
+            /* unregister the BTL progress function if any */
+            bml_r2_remove_btl_progress(btl);
+
+            /* dont use this btl for any peers */
+            for(p = 0; p < (int)num_procs; ++p) {
+                ompi_proc_t* proc = procs[p];
+                mca_bml_r2_del_proc_btl(proc, sm->btl_module);
+            }
+        }
+        /* End New */
+
         mca_bml_r2.num_btl_modules  = 0;
         mca_bml_r2.num_btl_progress = 0;
 
