@@ -176,13 +176,6 @@ mca_pml_ob1_component_init( int* priority,
     mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
     mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
 
-    /* As our own progress function does nothing except calling the BML
-     * progress, let's modify the progress function pointer in our structure
-     * to avoid useless functions calls. The event library will instead call
-     * directly the BML function.
-     */
-    /*mca_pml_ob1.super.pml_progress = mca_bml.bml_progress;*/
-
     return &mca_pml_ob1.super;
 }
 
