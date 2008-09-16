@@ -73,7 +73,7 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
        ompi_mpi_leave_pinned* may have been set after MCA params were
        read (e.g., by the openib btl) */
     mca_mpool_rdma_component.leave_pinned = (int) 
-        (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline);
+        (1 == ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline);
 }
 
 static inline int dereg_mem(mca_mpool_base_module_t *mpool,
