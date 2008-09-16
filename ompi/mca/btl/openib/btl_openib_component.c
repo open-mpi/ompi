@@ -854,7 +854,7 @@ static void device_destruct(mca_btl_openib_device_t *device)
     OBJ_DESTRUCT(&device->device_lock);
 
     if (ibv_close_device(device->ib_dev_context)) {
-        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+        if (1 == ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
             BTL_VERBOSE(("Warning! Failed to close device"));
             goto device_error;
         } else {
@@ -1988,8 +1988,8 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    /* If we have a memory manager available, unless the user
-       explicitly set mpi_leave_pinned==0 or
+    /* If we have a memory manager available, and
+       mpi_leave_pinned==-1, then unless the user explicitly set
        mpi_leave_pinned_pipeline==0, then set mpi_leave_pinned to 1.
 
        We have a memory manager if:
@@ -2004,11 +2004,8 @@ btl_openib_component_init(int *num_btl_modules,
         index = mca_base_param_find("mpi", NULL, "leave_pinned");
         if (index >= 0) {
             if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
-                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
-                                                             NULL)) {
-                if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
-                    ++ret;
-                }
+                -1 == value) {
+                ++ret;
             }
         }
         index = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");

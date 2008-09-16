@@ -125,9 +125,10 @@ OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
 
 /**
- * Whether to use the "leave pinned" protocol or not.
+ * Whether to use the "leave pinned" protocol or not (0 = no, 1 = yes,
+ * -1 = determine at runtime).
  */
-OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned;
+OMPI_DECLSPEC extern int ompi_mpi_leave_pinned;
 
 /**
  * Whether to use the "leave pinned pipeline" protocol or not.

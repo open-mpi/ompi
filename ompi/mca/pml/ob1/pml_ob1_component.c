@@ -173,7 +173,7 @@ mca_pml_ob1_component_init( int* priority,
     /* Set this here (vs in component_open()) because
        ompi_mpi_leave_pinned* may have been set after MCA params were
        read (e.g., by the openib btl) */
-    mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
+    mca_pml_ob1.leave_pinned = (1 == ompi_mpi_leave_pinned);
     mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
 
     return &mca_pml_ob1.super;
