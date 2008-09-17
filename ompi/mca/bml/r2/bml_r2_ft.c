@@ -48,7 +48,6 @@ int mca_bml_r2_ft_event(int state)
     size_t btl_idx;
     int ret, p;
     int loc_state;
-    opal_list_item_t* w_item = NULL;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
