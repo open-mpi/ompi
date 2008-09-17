@@ -543,7 +543,7 @@ int mca_bml_r2_del_procs(size_t nprocs,
     return OMPI_SUCCESS;
 }
 
-inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl)
+static inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl)
 {
     unsigned int p;
 
@@ -601,9 +601,11 @@ int mca_bml_r2_finalize( void )
 
     if( NULL != mca_bml_r2.btl_modules) {
         free( mca_bml_r2.btl_modules);
+        mca_bml_r2.btl_modules = NULL;
     }
     if( NULL != mca_bml_r2.btl_progress ) {
         free( mca_bml_r2.btl_progress);
+        mca_bml_r2.btl_progress = NULL;
     }
 
     mca_btl_base_close();
