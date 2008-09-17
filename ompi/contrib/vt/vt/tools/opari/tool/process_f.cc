@@ -326,7 +326,6 @@ void process_fortran(istream& is, const char* infile, ostream& os,
   // for endloop instrumentation
   stack<LoopDescriptionT> loopstack; 
   LoopDescriptionT toploop;
-  bool fix_form = false;
   int pragma_indent=0;
   Line_type typeOfLastLine=UNKNOWN_LINE;
   Loop_type waitforOMPEndDo = TYPE_NO_OMP;
@@ -375,7 +374,6 @@ void process_fortran(istream& is, const char* infile, ostream& os,
        */
       if ( lowline[5+pomp]==' ' || lowline[5+pomp]=='\t'
                                 || lowline[5+pomp]=='0' ) {
-	fix_form = true;
 	pragma_indent = 0;
         // new directive
         if ( currPragma ) {
@@ -409,7 +407,6 @@ void process_fortran(istream& is, const char* infile, ostream& os,
               ) {
 
       int pomp = ((lowline[pstart+1] == 'p') || (lowline[pstart+2] == 'p'));
-      fix_form = false;
       pragma_indent = pstart;
 
       /*
