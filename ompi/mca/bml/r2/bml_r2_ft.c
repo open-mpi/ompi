@@ -129,56 +129,23 @@ int mca_bml_r2_ft_event(int state)
         ;
     }
     else if(OPAL_CRS_RESTART_PRE == state ) {
-        /* Flush the progress functions */
-        procs = ompi_proc_all(&num_procs);
-        if(NULL == procs) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        for (w_item =  opal_list_get_first(&mca_btl_base_modules_initialized);
-             w_item != opal_list_get_end(&mca_btl_base_modules_initialized);
-             w_item =  opal_list_get_next(w_item)) {
-            mca_btl_base_selected_module_t *sm = (mca_btl_base_selected_module_t *) w_item;
-            mca_btl_base_module_t* btl = sm->btl_module;
-
-            /* unregister the BTL progress function if any */
-            bml_r2_remove_btl_progress(btl);
-
-            /* dont use this btl for any peers */
-            for(p = 0; p < (int)num_procs; ++p) {
-                ompi_proc_t* proc = procs[p];
-                mca_bml_r2_del_proc_btl(proc, sm->btl_module);
-            }
-        }
-        /* End New */
-
-        mca_bml_r2.num_btl_modules  = 0;
-        mca_bml_r2.num_btl_progress = 0;
-
-        if( NULL != mca_bml_r2.btl_modules) {
-            free( mca_bml_r2.btl_modules);
-            mca_bml_r2.btl_modules = NULL;
-        }
-        if( NULL != mca_bml_r2.btl_progress ) {
-            free( mca_bml_r2.btl_progress);
-            mca_bml_r2.btl_progress = NULL;
-        }
-
         opal_output_verbose(10, ompi_cr_output,
-                            "bml:r2: ft_event(Restart): Reselect BTLs\n");
+                            "bml:r2: ft_event(Restart): Finalize BML\n");
 
         /*
-         * Close the BTLs
-         *
-         * Need to do this because we may have BTL components that were
-         * unloaded in the first selection that may be available now.
-         * Conversely we may have BTL components loaded now that
-         * are not available now.
+         * Finalize the BML
+         * - Flush progress functions
+         * - Flush module references
+         * - mca_btl_base_close()
+         *   Need to do this because we may have BTL components that were
+         *   unloaded in the first selection that may be available now.
+         *   Conversely we may have BTL components loaded now that
+         *   are not available now.
          */
-        if( OMPI_SUCCESS != (ret = mca_btl_base_close())) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed to close BTL framework\n");
+        if( OMPI_SUCCESS != (ret = mca_bml_r2_finalize()) ) {
+            opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
             return ret;
         }
-
     }
     else if(OPAL_CRS_RESTART == state  ) {
 
