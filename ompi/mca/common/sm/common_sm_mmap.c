@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,8 +80,6 @@ static mca_common_sm_mmap_t* create_map(int fd, size_t size, char *file_name,
     seg = (mca_common_sm_file_header_t*)
         mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if((void*)-1 == seg) {
-        opal_output(0, "mca_common_sm_mmap_init: "
-                    "mmap failed with errno=%d\n", errno);
         return NULL;
     }
 

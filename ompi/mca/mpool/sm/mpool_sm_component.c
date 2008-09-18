@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -262,7 +263,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
                  file_name,sizeof(mca_common_sm_mmap_t), 8 )
              )) 
     {
-        opal_output(0, "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
+        opal_output(mca_mpool_sm_component.verbose, 
+                    "mca_mpool_sm_init: unable to create shared memory mapping (%s)", file_name);
         free(file_name);
         free(mpool_module);
         return NULL;
