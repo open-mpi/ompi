@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/util/argv.h"
 #include "orte/util/show_help.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
@@ -58,6 +59,9 @@ mca_bml_r2_module_t mca_bml_r2 = {
     }
     
 };
+
+/* Names of all the BTL components that this BML is aware of */
+static char *btl_names = NULL;
 
 
 static inline unsigned int bml_base_log2(unsigned long val) {
@@ -101,9 +105,11 @@ int mca_bml_r2_progress( void )
 
 static int mca_bml_r2_add_btls( void )
 {
+    int i;
     opal_list_t *btls = NULL; 
     mca_btl_base_selected_module_t* selected_btl;
     size_t num_btls = 0; 
+    char **btl_names_argv = NULL;
     
     if(true == mca_bml_r2.btls_added) {
         return OMPI_SUCCESS; 
@@ -129,6 +135,23 @@ static int mca_bml_r2_add_btls( void )
         selected_btl =  (mca_btl_base_selected_module_t*)opal_list_get_next(selected_btl)) {
         mca_btl_base_module_t *btl = selected_btl->btl_module;
         mca_bml_r2.btl_modules[mca_bml_r2.num_btl_modules++] = btl;
+        for (i = 0; NULL != btl_names_argv && NULL != btl_names_argv[i]; ++i) {
+            if (0 == 
+                strcmp(btl_names_argv[i],
+                       btl->btl_component->btl_version.mca_component_name)) {
+                break;
+            }
+        }
+        if (NULL == btl_names_argv || NULL == btl_names_argv[i]) {
+            opal_argv_append_nosize(&btl_names_argv, 
+                                    btl->btl_component->btl_version.mca_component_name);
+        }
+    }
+    if (NULL != btl_names_argv) {
+        btl_names = opal_argv_join(btl_names_argv, ' ');
+        opal_argv_free(btl_names_argv);
+    } else {
+        btl_names = strdup("no devices available");
     }
 
     /* sort r2 list by exclusivity */
@@ -206,11 +229,11 @@ int mca_bml_r2_add_procs( size_t nprocs,
     if (NULL == btl_endpoints) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     for(p_index = 0; p_index < mca_bml_r2.num_btl_modules; p_index++) {
         mca_btl_base_module_t* btl = mca_bml_r2.btl_modules[p_index];
         int btl_inuse = 0;
-        
+
         /* if the r2 can reach the destination proc it sets the
          * corresponding bit (proc index) in the reachable bitmap
          * and can return addressing information for each proc
@@ -444,12 +467,16 @@ int mca_bml_r2_add_procs( size_t nprocs,
 
     if (mca_bml_r2.show_unreach_errors && 
         OMPI_ERR_UNREACH == ret) {
-
         orte_show_help("help-mca-bml-r2",
                        "unreachable proc",
-                       true, ORTE_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
-                       ORTE_NAME_PRINT(&(unreach_proc->proc_name)), NULL);
-
+                       true, 
+                       (ompi_proc_local_proc->proc_hostname ?
+                        ompi_proc_local_proc->proc_hostname :
+                        ORTE_NAME_PRINT(&(ompi_proc_local_proc->proc_name))),
+                       (unreach_proc->proc_hostname ? 
+                        unreach_proc->proc_hostname :
+                        ORTE_NAME_PRINT(&(unreach_proc->proc_name))),
+                       btl_names);
     }
 
     free(new_procs); 
@@ -537,6 +564,11 @@ int mca_bml_r2_finalize( void ) {
     ompi_proc_t** procs;
     size_t p, num_procs;
     opal_list_item_t* w_item;
+
+    if (NULL != btl_names) {
+        free(btl_names);
+        btl_names = NULL;
+    }
 
     /* Similar to mca_bml_r2_del_btl ... */
     procs = ompi_proc_all(&num_procs);
