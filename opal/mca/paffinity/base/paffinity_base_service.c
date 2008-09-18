@@ -157,6 +157,7 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
     socket_core_cnt = opal_argv_count(socket_core);
     OPAL_PAFFINITY_CPU_ZERO(cpumask);
     socket = atoi(socket_core[0]);
+    core = atoi(socket_core[1]);
     
     /* get the number of LOGICAL sockets on this node */
     if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_socket_info(&num_sockets))) {
@@ -174,7 +175,8 @@ static int opal_paffinity_base_socket_core_to_cpu_set(char **socket_core_list, i
     } else {
         phys_socket = socket;
     }
-    
+    phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, core);
+
     /* get the LOGICAL core info for this socket */
     if ( OPAL_SUCCESS != ( rc = opal_paffinity_base_get_core_info(phys_socket, &num_cores))) {
         opal_output(0,"Rank %ld: PAFFINITY Error !!! Could not get core info for physical socket number %d (%d)",
