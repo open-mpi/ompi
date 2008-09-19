@@ -13,7 +13,54 @@ $HEADER$
 ===========================================================================
 
 This is the Portable Linux Processor Affinity (PLPA) package
-(pronounced "pli-pa").  It is intended for developers who wish to use
+(pronounced "pli-pa").  The PLPA has evolved over time to provide the
+following capabilities:
+
+1. Provide a stable API on Linux for processor affinity (Linux has
+   provided three different API signatures over time).
+2. Provide a simple API that translates between Linux processor ID and
+   (socket ID, core ID) tuples, and allows querying processor topology
+   information on supported platforms.
+3. Provide a command-line executable (plpa-taskset(1)) that provides
+   all the same functionality as the venerable taskset(1) command, and
+   several extensions, including the ability to bind processes to
+   specific (socket, core) tuples on supported platforms.
+
+Note that the PLPA is fully embeddable, meaning that it can be wholly
+contained in larger software packages that wish to have a single,
+stable version of processor affinity API functionality.  See below for
+more details on embedding.
+
+Also note that PLPA's socket/core and other topology information is
+only available on certain platforms.  Specifically, PLPA reads the
+/sys filesystem to glean its information; if your system does not
+export processor topology information through /sys, the PLPA cannot
+provide that information.  For example, AMD/Intel processor topology
+support was included in Linux kernel v2.6.16, but POWER processor
+topology information is not yet supported as of Linux kernel v2.6.26.
+
+In a world where the processor counts in hosts are [again] increasing,
+particularly where at least some of them are NUMA-based architectures,
+processor affinity is becoming more important.  We hope that the PLPA
+is helpful to you.  Enjoy.
+
+Note that if you're looking into processor affinity, and if you're on
+a NUMA machine, you probably also want to look into libnuma:
+
+    ftp://ftp.suse.com/pub/people/ak/numa/
+
+If you are a developer, keep reading.  If you are a system
+administrator or other end-user, you're probably more interested in
+using the plpa-info(1) and plpa-taskset(1) executable commands; see
+the output of "plpa-info" and "plpa-taskset --help" for more
+information.
+
+===========================================================================
+
+The following text is specific technical information about the
+original problem that PLPA Was created to solve.
+
+The original intent for the PLPA was for developers who wished to use
 Linux processor affinity via the sched_setaffinity() and
 sched_getaffinity() library calls, but don't want to wade through the
 morass of 3 different APIs that have been offered through the life of
@@ -38,30 +85,13 @@ that developers can write to.  It provides three things:
 2. A run-time test and dispatch that will invoke the Right back-end
    API depending on what back-end API the system you are running on
    has.
-3. Mapping information between (socket, core) tuples and Linux virtual
-   processor IDs.
-
-This package is actually pretty small.  It does not attempt to have
-many extra bells and whistles.  Anyone could write it and package it.
-We did it simply because it appears that no one else has yet done
-this.  In a world where larger scale SMPs are [again] becoming more
-common, particularly where at least some of them are NUMA-based
-architectures, processor affinity is going to become more and more
-important.  Just because developers have not yet realized that they
-have this problem does not mean that they won't evenutally figure it
-out.  :-)
-
-Note that if you're looking into processor affinity, if you're on a
-NUMA machine, you probably also want to look into libnuma:
-
-    ftp://ftp.suse.com/pub/people/ak/numa/
-
-We hope that PLPA helps you.
+3. Mapping information between (socket ID, core ID) tuples and Linux
+   virtual processor IDs.
 
 ===========================================================================
 
-What, exactly, is the problem?
-------------------------------
+What, exactly, is the problem?  History.
+----------------------------------------
 
 There are at least 3 different ways that sched_setaffinity is
 implemented in glibc (only one of which is documented in the
@@ -204,31 +234,37 @@ How do I use PLPA?
 
 There are three main uses of the PLPA:
 
-1. Using the plpa-info executable to check if your system supports
-   processor affinity and the PLPA can determine which to use at run-time.
-2. Developers using the PLPA library to enable source and binary Linux
-   processor affinity portability.
-3. Using the plpa-taskset executable to bind arbitrary executables to
-   Linux virtual procesor IDs and/or specific sockets/core.
+1. Using the plpa-info(1) executable to check if your system supports
+   processor affinity and the PLPA can determine which to use at
+   run-time.
+2. Developers using the PLPA library both to enable source and binary
+   Linux processor affinity portability, and to write
+   processor-topology-aware applications.
+3. Using the plpa-taskset(1) executable to bind arbitrary executables
+   to Linux virtual processor IDs and/or specific socket/core tuples.
 
 In more detail:
 
-1. The plpa-info executable is a simple call into the PLPA library
-   that checks which API variant the system it is running on has.  If
-   the kernel supports processor affinity and the PLPA is able to
-   figure out which API variant to use, it prints "Kernel affinity
-   support: no".  Other responses indicate an error.
+1. The plpa-info(1) executable is a few simple calls into the PLPA
+   library that checks which API variant the system it is running on
+   has.  If the kernel supports processor affinity and the PLPA is
+   able to figure out which API variant to use, it prints "Kernel
+   affinity support: no".  Other responses indicate an error.  The
+   "--topo" switch will print out basic topology information about
+   your system, if supported.
 
    Since the PLPA library abstracts this kind of problem away, this is
-   more a diagnostic tool than anything else.  Note that plpa-info is
-   *only* compiled and installed if PLPA is installed as a standalone
-   package (see below).
+   more a diagnostic tool than anything else.  
 
    See "plpa-info --help" for more information.  A man page does not
    yet exist, unfortunately.
 
+   Note that plpa-info is *only* compiled and installed if PLPA is
+   installed as a standalone package (see below).
+
 2. Developers can use this package by including the <plpa.h> header
-   file and using the following prototypes:
+   file and using the following prototypes for setting and getting
+   processor affinity:
 
    int plpa_sched_setaffinity(pid_t pid, size_t cpusetsize,
                               const plpa_cpu_set_t *cpuset);
@@ -259,15 +295,32 @@ In more detail:
    Note that all four macros take a *pointer* to a plpa_cpu_set_t, as
    denoted by "&cpuset" in the descriptions above.
 
-   The following API functions are also available on kernels that
-   support topology information (e.g., 2.6.16 or later):
+   Also note that he PLPA distinguishes between Linux processor,
+   socket, and core IDs and processor, socket, and core numbers.  The
+   *Linux IDs* are kernel-assigned integer values that do not
+   necessarily start with zero and are not necessarily contiguous.
+   The *numbers* start with 0 and are contiguous to (N-1).  The
+   numbers are therefore mainly a human convenience; they may or may
+   not exactly correspond to the Linux IDs; it is safest to assume
+   that they do not.
+
+   The following API functions are also available on supported
+   platforms with kernels that support topology information (e.g.,
+   AMD/Intel platforms with Linux kernel v2.6.16 or later).  The list
+   below is a summary only; see plpa.h for a specific list of function
+   signatures:
+
+   - plpa_have_topology_information() 
+     Will return 1 if the PLPA is able to provide topology
+     information, 0 otherwise.  If 0 is returned, all the functions
+     below will return a negative value to signify a graceful failure.
 
    - plpa_map_to_processor_id()
-     Take a (socket_id, core_id) tuple and map it to a Linux processor
+     Take a (socket ID, core ID) tuple and map it to a Linux processor
      ID
 
    - plpa_map_to_socket_core()
-     Take a Linux processor ID and map it to a (socket_id, core_id)
+     Take a Linux processor ID and map it to a (socket ID, core ID)
      tuple
 
    - plpa_get_processor_info()
@@ -296,15 +349,24 @@ In more detail:
      (starting with 0)
 
    - plpa_get_core_flags()
-     Return whether a (socket_id,core_id) tuple exists, and if so, if
+     Return whether a (socket ID,core ID) tuple exists, and if so, if
      it is online
 
    - plpa_set_cache_behavior()
      Tell PLPA to use (or not) a local cache for the topology
      information, or to refresh the cache right now
 
-   *** NOTE: Topology information (i.e., (socket_id, core_id) tuples)
-       are not reported for offline processors.  Hence, if any
+   - plpa_finalize()
+     Release all internal resources allocated and maintained by the
+     PLPA.  It is permissible to invoke other PLPA functions after
+     plpa_finalize(), but if you want to release PLPA's resources, you
+     will need to invoke plpa_finalize() again.  Note that it is not
+     necessary (but harmless) to invoke plpa_finalize() on systems
+     where plpa_have_topology_information() returns that the topology
+     information is not supported.
+
+   *** NOTE: Topology information (i.e., (socket ID, core ID) tuples)
+       may not be reported for offline processors.  Hence, if any
        processors are offline, the socket/core values returned by PLPA
        will likely change once the processor is brought back online.
        Sorry; this is how the Linux kernel works -- there's nothing
@@ -313,41 +375,16 @@ In more detail:
    The above functions are slightly more documented in plpa.h.
    Contributions of real man pages would be greatly appreciated.
 
-   On unsupported kernels, a negative value is returned to indicate
-   graceful failure.  Additionally, the function
-   plpa_have_topology_information() can be called to determine whether
-   a kernel supports the topology information or not.  It returns 1 if
-   the information is available (and therefore the above plpa_*()
-   functions return meaningful values) or 0 if the information is
-   unavailable (and therefore the above plpa_*() functions return a
-   negative value indicating failure).
-
-   Note that invoking any of the topology functions (including
-   plpa_have_topology_information()) will allocate memory from the
-   heap.  To release this memory, call plpa_finalize().
-
-   Note that the special case of invoking any of the topology
-   functions on an unsupported kernel will not allocate any memory;
-   invoking plpa_finalize() is therefore unnecessary, but harmless.
-
-   See plpa.h for a bit more information on these functions.  Detailed
-   documentation such as man pages is still lacking, unfortunately.
-
-3. The plpa-taskset executable represents an evolution of the
+3. The plpa-taskset(1) executable represents an evolution of the
    venerable "taskset(1)" command.  It allows binding of arbitrary
-   processes to specific Linux virtual processors and/or specific
-   sockets/cores.  It supports all the same command line syntax of the
-   taskset command, but also supports additional syntax for specifying
-   sockets/cores (plpa-taskset will figure out the mapping from the
-   socket/core specification to the appropriate Linux virtual
-   processor IDs).
-
-   Hence, you can launch processor-bound jobs without needing to
-   modify their source code to call the PLPA library.
-
-   See "plpa-taskset --help" for more information on the command line
-   options available, and brief examples of usage.  A man page does
-   not yet exist, unfortunately.
+   processes to specific Linux processor IDs and/or specific (socket
+   ID, core ID) tuples.  It supports all the same command line syntax
+   of the taskset(1) command, but also supports additional syntax for
+   specifying socket and core IDs.  Hence, you can launch
+   processor-bound jobs without needing to modify their source code to
+   call the PLPA library.  See "plpa-taskset --help" for more
+   information on the command line options available, and brief
+   examples of usage.  A man page does not yet exist, unfortunately.
 
 ===========================================================================
 
@@ -372,7 +409,8 @@ step as root or some other privileged user.
 - <plpa.h> in $includedir (typically $prefix/include)
 - libplpa.la and libplpa.a and/or libplpa.so in $libdir (typically
   $prefix/lib)
-- plpa-info executable in $bindir (typically $prefix/bin)
+- plpa-info(1) executable in $bindir (typically $prefix/bin)
+- plpa-taskset(1) executable in $bindir (typically $prefix/bin)
 
 Note that since PLPA builds itself with GNU Libtool, it can be built
 as a static or shared library (or both).  The default is to build a
@@ -388,8 +426,8 @@ as root or some privileged user).
 
 ===========================================================================
 
-How do I include PLPA in my software package?
----------------------------------------------
+How do I include/embed PLPA in my software package?
+---------------------------------------------------
 
 It can be desirable to include PLPA in a larger software package
 (be sure to check out the LICENSE file) so that users don't have to
@@ -400,7 +438,7 @@ with it?).
 When used in "included" mode, PLPA will:
 
 - not install any header files
-- not build or install plpa-info or plpa-taskset
+- not build or install any executables
 - not build libplpa.* -- instead, it will build libplpa_included.*
 
 There are two ways to put PLPA into "included" mode.  From the
@@ -483,6 +521,7 @@ PLPA_INIT *must* be invoked if using the m4 macros):
 
 Here's an example of integrating with a larger project named sandbox:
 
+----------
 shell$ cd sandbox
 shell$ cp -r /somewhere/else/plpa-<version> plpa
 shell$ edit acinclude.m4
@@ -491,6 +530,7 @@ shell$ edit Makefile.am
 ...add "plpa" to SUBDIRS...
 ...add "$(top_builddir)/plpa/src/libplpa/libplpa_included.la" to
    my executable's LDADD line...
+...add "-I$(top_builddir)/plpa/src/libplpa" to AM_CPPFLAGS
 shell$ edit configure.ac
 ...add "PLPA_INCLUDED" line...
 ...add "PLPA_SET_SYMBOL_PREFIX(sandbox_plpa_)" line...
@@ -507,6 +547,7 @@ shell$ ./configure
 ...lots of output...
 shell$ make
 ...lots of output...
+----------
 
 ===========================================================================
 
@@ -527,6 +568,8 @@ int main(int argc, char* argv[]) {
     plpa_api_type_t p;
     if (0 == plpa_api_probe(&p) && PLPA_PROBE_OK == p) {
         printf("All is good!\n");
+    } else {
+        printf("Looks like PLPA is not working\n");
     }
     return 0;
 }
@@ -567,10 +610,9 @@ the BSD license.
 How do I get involved in PLPA?
 ------------------------------
 
-Hopefully, PLPA is so simple that it won't need to be modified much
-after its first few releases.  However, it is possible that we'll need
-to modify the run-time test if new variants of the Linux processor
-affinity API emerge.
+The PLPA continues to evolve, particularly as core counts increase and
+internal host topology becomes more important.  We want to hear your
+opinions.
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's mailing list:
@@ -586,3 +628,10 @@ list:
      http://www.open-mpi.org/mailman/listinfo.cgi/plpa-users
 
 Thanks for your time.
+
+ LocalWords:  pli plpa taskset sys AMD sched setaffinity getaffinity Ick pid sg
+ LocalWords:  len distros cpusetsize const cpu cpuset fdset ISSET MDK num CLR
+ LocalWords:  etaffinity includedir libplpa libdir bindir acinclude INIT init
+ LocalWords:  INLCLUDED config SUBDIRS contrib CONDITIONALs cd cp builddir src
+ LocalWords:  executable's LDADD CPPFLAGS aclocal autoconf libtoolize automake
+ LocalWords:  argc argv api printf lplpa gcc
