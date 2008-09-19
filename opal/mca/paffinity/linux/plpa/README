@@ -628,10 +628,3 @@ list:
      http://www.open-mpi.org/mailman/listinfo.cgi/plpa-users
 
 Thanks for your time.
-
- LocalWords:  pli plpa taskset sys AMD sched setaffinity getaffinity Ick pid sg
- LocalWords:  len distros cpusetsize const cpu cpuset fdset ISSET MDK num CLR
- LocalWords:  etaffinity includedir libplpa libdir bindir acinclude INIT init
- LocalWords:  INLCLUDED config SUBDIRS contrib CONDITIONALs cd cp builddir src
- LocalWords:  executable's LDADD CPPFLAGS aclocal autoconf libtoolize automake
- LocalWords:  argc argv api printf lplpa gcc
