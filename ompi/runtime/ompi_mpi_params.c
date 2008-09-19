@@ -53,7 +53,7 @@ bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
 bool ompi_mpi_keep_fqdn_hostnames = false;
-bool ompi_mpi_leave_pinned = false;
+int ompi_mpi_leave_pinned = -1;
 bool ompi_mpi_leave_pinned_pipeline = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
@@ -251,10 +251,10 @@ int ompi_mpi_register_params(void)
     /* Leave pinned parameter */
 
     mca_base_param_reg_int_name("mpi", "leave_pinned",
-                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks.",
+                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (0 = do not use \"leave pinned\" protocol, 1 = use \"leave pinned\" protocol, -1 = allow network to choose at runtime).",
                                 false, false,
-                                (int) ompi_mpi_leave_pinned, &value);
-    ompi_mpi_leave_pinned = OPAL_INT_TO_BOOL(value);
+                                ompi_mpi_leave_pinned, &value);
+    ompi_mpi_leave_pinned = value;
 
     mca_base_param_reg_int_name("mpi", "leave_pinned_pipeline",
                                 "Whether to use the \"leave pinned pipeline\" protocol or not.",
