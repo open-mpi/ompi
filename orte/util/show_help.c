@@ -406,15 +406,12 @@ int orte_show_help(const char *filename, const char *topic,
     if (!ready) {
         /* if we are finalizing, then we have no way to process
          * this through the orte_show_help system - just drop it to
-         * opal_show_help for handling
+         * stderr; that's at least better than not showing it.
          *
          * If we are not finalizing, then this is probably a show_help
          * stemming from either a cmd-line request to display the usage
          * message, or a show_help related to a user error. In either case,
-         * we can't do anything but just call opal_show_help
-         *
-         * Ensure we suppress the opal_output warnings for this case, then
-         * re-enable them when we are done
+         * we can't do anything but just print to stderr.
          */
         fprintf(stderr, "%s", output);
         goto CLEANUP;
