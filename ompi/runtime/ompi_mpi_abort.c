@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,6 +42,8 @@
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
+#include "ompi/debuggers/debuggers.h"
+#include "ompi/errhandler/errcode.h"
 
 static bool have_been_invoked = false;
 
@@ -51,7 +53,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                bool kill_remote_of_intercomm)
 {
     int count = 0, i;
-    char *host, hostname[MAXHOSTNAMELEN];
+    char *msg, *host, hostname[MAXHOSTNAMELEN];
     pid_t pid = 0;
     orte_process_name_t *abort_procs;
     orte_std_cntr_t nabort_procs;
@@ -92,6 +94,19 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                if opal_backtrace_print() is not supported. */
             opal_backtrace_print(stderr);
         }
+    }
+
+    /* Notify the debugger that we're about to abort */
+
+    if (asprintf(&msg, "[%s:%d] aborting with MPI error %s%s", 
+                 host, (int) pid, ompi_mpi_errnum_get_string(errcode), 
+                 ompi_mpi_abort_print_stack ? 
+                 " (stack trace available on stderr)" : "") < 0) {
+        msg = NULL;
+    }
+    ompi_debugger_notify_abort(msg);
+    if (NULL != msg) {
+        free(msg);
     }
 
     /* Should we wait for a while before aborting? */
