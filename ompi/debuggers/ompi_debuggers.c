@@ -90,6 +90,13 @@ OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
     sizeof(size_t)
 };
     
+/*
+ * Values defined by the standardized interface; do not change these
+ * values
+ */
+#define MPIR_DEBUG_SPAWNED   1
+#define MPIR_DEBUG_ABORTING  2
+
 /**
  * There is an issue with the debugger running on different architectures
  * compared with the debugged program. We need to know the sizes of the types
@@ -114,6 +121,8 @@ OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
 OMPI_DECLSPEC volatile int MPIR_being_debugged = 0;
+OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
+OMPI_DECLSPEC char *MPIR_debug_abort_string = "";
 
 /* Check for a file in few direct ways for portability */
 static void check(char *dir, char *file, char **locations) 
@@ -238,3 +247,30 @@ void ompi_wait_for_debugger(void)
         }
     }
 }    
+
+/*
+ * Breakpoint function for parallel debuggers.  This function is also
+ * defined in orterun for the starter.  It should never conflict with
+ * this one, but we'll make it static, just to be sure.
+ */
+static void *MPIR_Breakpoint(void)
+{
+    return NULL;
+}
+
+/*
+ * Tell the debugger that we are about to abort
+ */
+void ompi_debugger_notify_abort(char *reason)
+{
+    MPIR_debug_state = MPIR_DEBUG_ABORTING;
+
+    if (NULL != reason && strlen(reason) > 0) {
+        MPIR_debug_abort_string = reason;
+    } else {
+        MPIR_debug_abort_string = "Unknown";
+    }
+
+    /* Now tell the debugger */
+    MPIR_Breakpoint();
+}
