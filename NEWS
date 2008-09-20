@@ -38,17 +38,19 @@ Trunk (not on release branches yet)
 1.3 (not released yet)
 ---
 
+- Upgraded Open MPI tarballs to use Autoconf 2.63, Automake 1.10.1,
+  Libtool 2.2.6a.
 - Added missing MPI::Comm::Call_errhandler() function.  Thanks to Dave
   Goodell for bringing this to our attention.
-- Increased MPI_SUBVERSION value in mpi.h to 1 (i.e., MPI 2.1)
+- Increased MPI_SUBVERSION value in mpi.h to 1 (i.e., MPI 2.1).
 - Changed behavior of MPI_GRAPH_CREATE, MPI_TOPO_CREATE, and several
   other topology functions per MPI-2.1.
 - Fix the type of the C++ constant MPI::IN_PLACE.
 - Various enhancements to the openib BTL:
   - Added btl_openib_if_[in|ex]clude MCA parameters for
     including/excluding comma-delimited lists of HCAs and ports.
-  - Added IB CM and RDMA CM support, includng
-    btl_openib_cpc_[in|ex]clude MCA parameters
+  - Added RDMA CM support, includng btl_openib_cpc_[in|ex]clude MCA
+    parameters
   - Added NUMA support to only use "near" network adapters
   - Added "Bucket SRQ" (BSRQ) support to better utilize registered
     memory, including btl_openib_receive_queues MCA parameter
@@ -59,14 +61,16 @@ Trunk (not on release branches yet)
   - "mpi_leave_pinned=1" is now the default when possible,
     automatically improving performance for large messages when
     application buffers are re-used
+- Elimiated duplicated error messages when multiple MPI processes fail
+  with the same error.
 - Added NUMA support to the shared memory BTL.
 - Add Valgrind-based memory checking for MPI-semantic checks.
 - Add support for some optional Fortran datatypes (MPI_LOGICAL1,
-  MPI_LOGICAL2, MPI_LOGICAL4 and MPI_LOGICAL8)
-- Remove use of STL from C++ bindings.
+  MPI_LOGICAL2, MPI_LOGICAL4 and MPI_LOGICAL8).
+- Remove the use of the STL from the C++ bindings.
 - Added support for Platform/LSF job launchers.  Must be Platform LSF
   v7.0.2 or later.
-- Updated ROMIO with the version from MPICH2 1.0.7
+- Updated ROMIO with the version from MPICH2 1.0.7.
 - Added RDMA capable one-sided component (called rdma), which
   can be used with BTL components that expose a full one-sided
   interface.
@@ -74,13 +78,12 @@ Trunk (not on release branches yet)
   predefined datatypes in the fortran header files, there will not be
   any compatibility issues.
 - Added Portable Linux Processor Affinity (PLPA) for Linux.
-- Release tarballs now use Autoconf 2.61 and Automake 1.10.
 - Addition of a finer symbols export control via the visibiliy feature
   offered by some compilers.
 - Added checkpoint/restart process fault tolerance support. Initially
   support a LAM/MPI-like protocol.
 - Removed "mvapi" BTL; all InfiniBand support now uses the OpenFabrics
-  driver stacks.
+  driver stacks ("openib" BTL).
 - Added more stringent MPI API parameter checking to help user-level
   debugging.
 - The ptmalloc2 memory manager component is now by default built as
