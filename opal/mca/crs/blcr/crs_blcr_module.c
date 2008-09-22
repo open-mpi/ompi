@@ -93,7 +93,6 @@ OBJ_CLASS_INSTANCE(opal_crs_blcr_snapshot_t,
 /******************
  * Local Functions
  ******************/
-static int blcr_chmod(char *dest);
 static int blcr_checkpoint_peer(pid_t pid, char * local_dir, char ** fname);
 static int blcr_get_checkpoint_filename(char **fname, pid_t pid);
 static int opal_crs_blcr_thread_callback(void *arg);
@@ -273,7 +272,6 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
-    char * tmp_str = NULL;
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint(%d, ---)", pid);
@@ -356,23 +354,6 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     
     if(*state == OPAL_CRS_CONTINUE) {
         /*
-         * Make sure the snapshot is in the proper directory
-         * Update the snapshot structure
-         */
-        asprintf(&tmp_str, "%s/%s", snapshot->super.local_location, snapshot->context_filename);
-        if (0 != (ret = blcr_chmod(tmp_str))) { 
-            *state = OPAL_CRS_ERROR;
-            opal_output(mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: checkpoint(): Error: Unable to chmod the checkpoint file (%s in the directory (%s) :[%d].",
-                        snapshot->context_filename, tmp_str, ret);
-            perror("crs:blcr: checkpoint");
-            free(tmp_str);
-
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        /*
          * Update the metadata file
          */
         if( OPAL_SUCCESS != (ret = blcr_update_snapshot_metadata(snapshot)) ) {
@@ -391,11 +372,6 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     base_snapshot = &(snapshot->super);
 
  cleanup:
-    if(NULL != tmp_str) {
-        free(tmp_str);
-        tmp_str = NULL;
-    }
-
     return exit_status;
 }
 
@@ -859,29 +835,4 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
     }
 
     return exit_status;
-}
-
-/*
- * Change permissions on the file so we can read it
- */
-static int blcr_chmod(char *dest) {
-    char * command = NULL;
-    int ret = OPAL_SUCCESS;
-
-    /* JJH: Assume 'chmod' is in the path */
-    asprintf(&command, "chmod u+rwX  %s", dest);
-
-    if (0 != (ret = system(command) )) {
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: move(): Error: Unable to execute the command <%s> :[%d].",
-                    command, ret);
-        perror("crs:blcr chmod");
-        goto error;
-    }
-    
- error:
-    if( NULL != command ) {
-        free(command);
-    }
-    return ret;
 }
