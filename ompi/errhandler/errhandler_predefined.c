@@ -214,5 +214,9 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
         comm = &ompi_mpi_comm_self;
     }
 
-    ompi_mpi_abort(comm, *error_code, false);
+    if (NULL != error_code) {
+        ompi_mpi_abort(comm, *error_code, false);
+    } else {
+        ompi_mpi_abort(comm, 1, false);
+    }
 }
