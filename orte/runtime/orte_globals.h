@@ -222,10 +222,6 @@ typedef struct {
     /** Username on this node, if specified */
     char *username;
     char *slot_list;
-    /** Clustername (machine name of cluster) on which this node
-        resides.  ALPS scheduled systems need this to enable
-        multi-cluster support.  */
-    char *clustername;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
