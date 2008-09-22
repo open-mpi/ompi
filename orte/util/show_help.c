@@ -200,11 +200,17 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
          item = opal_list_get_next(item)) {
         tli = (tuple_list_item_t*) item;
         if (tli->tli_count_since_last_display > 0) {
+            static bool first = true;
             opal_output(0, "%d more process%s sent help message %s / %s",
                         tli->tli_count_since_last_display,
                         (tli->tli_count_since_last_display > 1) ? "es have" : " has",
                         tli->tli_filename, tli->tli_topic);
             tli->tli_count_since_last_display = 0;
+
+            if (first) {
+                opal_output(0, "Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages");
+                first = false;
+            }
         }
     }
 
