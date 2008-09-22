@@ -102,6 +102,8 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
     int orte_snapc_full_setup_job(orte_jobid_t jobid);
     int orte_snapc_full_release_job(orte_jobid_t jobid);
 
+    int orte_snapc_full_ft_event(int state);
+
     /*
      * Global Coordinator Functionality
      */
@@ -132,6 +134,7 @@ typedef uint8_t orte_snapc_full_cmd_flag_t;
      */
     int app_coord_init(void);
     int app_coord_finalize(void);
+    int app_coord_ft_event(int state);
 
 END_C_DECLS
 

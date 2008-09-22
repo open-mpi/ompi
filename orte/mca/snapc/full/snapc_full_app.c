@@ -34,7 +34,7 @@
 #include <signal.h>
 #endif
 
-#include "opal/runtime/opal_cr.h"
+#include "orte/runtime/orte_cr.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
@@ -198,13 +198,15 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
      * - Init the checkpoint metadata file
      */
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
-                         "App) notify_response: Start checkpoint..."));
+                         "App) notify_response: Init checkpoint directory..."));
     if( OPAL_SUCCESS != (ret = opal_crs_base_init_snapshot_directory(local_snapshot) ) ) {
         opal_output(0, "App) Error: Unable to initalize the snapshot directory!\n");
         exit_status = ret;
         goto ckpt_cleanup;
     }
 
+    OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                         "App) notify_response: Start checkpoint..."));
  STAGE_1:
     opal_cr_currently_stalled = false;
 
@@ -236,6 +238,9 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         goto ckpt_cleanup;
     }
     else if(cr_state == OPAL_CRS_CONTINUE) {
+        OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
+                             "App) notify_response: Continuing...(%d)\n",
+                             getpid()));
         ;  /* Don't need to do anything here */
     }
     else if(cr_state == OPAL_CRS_TERM ) {
@@ -264,6 +269,8 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     close(app_comm_pipe_r_fd);
     remove(app_comm_pipe_r);
     remove(app_comm_pipe_w);
+    app_comm_pipe_r_fd = -1;
+    app_comm_pipe_w_fd = -1;
     
     if(app_term) {
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
@@ -527,3 +534,81 @@ static int snapc_full_app_ckpt_handshake_end(int cr_state)
  cleanup:
     return exit_status;
 }
+
+int app_coord_ft_event(int state) {
+    int exit_status = ORTE_SUCCESS;
+    char *tmp_pid = NULL;
+
+    /******** Checkpoint Prep ********/
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ; /* Nothing */
+    }
+    /******** Continue Recovery ********/
+    else if (OPAL_CRS_CONTINUE == state ) {
+        ; /* Nothing */
+    }
+    /******** Restart Pre-Recovery ********/
+    else if (OPAL_CRS_RESTART_PRE == state ) {
+        ;
+    }
+    /******** Restart Recovery ********/
+    else if (OPAL_CRS_RESTART == state ) {
+        OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
+                             "App) Initalized for Application %s (Restart)\n", 
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+        if( 0 <= app_comm_pipe_r_fd ) {
+            close(app_comm_pipe_r_fd);
+            app_comm_pipe_r_fd = -1;
+        }
+        if( 0 <= app_comm_pipe_w_fd ) {
+            close(app_comm_pipe_w_fd);
+            app_comm_pipe_w_fd = -1;
+        }
+        if( NULL != app_comm_pipe_r ) {
+            remove(app_comm_pipe_r);
+            free(app_comm_pipe_r);
+            app_comm_pipe_r = NULL;
+        }
+        if( NULL != app_comm_pipe_w ) {
+            remove(app_comm_pipe_w);
+            free(app_comm_pipe_w);
+            app_comm_pipe_w = NULL;
+        }
+
+        /* String representation of the PID */
+        asprintf(&tmp_pid, "%d", getpid());
+
+        asprintf(&app_comm_pipe_r, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_R, tmp_pid);
+        asprintf(&app_comm_pipe_w, "%s/%s.%s", opal_cr_pipe_dir, OPAL_CR_NAMED_PROG_W, tmp_pid);
+
+        /*
+         * Setup a signal handler to catch and start the proper thread
+         * to handle the checkpoint
+         */
+        if( SIG_ERR == signal(opal_cr_entry_point_signal, snapc_full_app_signal_handler) ) {
+            opal_output(mca_snapc_full_component.super.output_handle,
+                        "App) init: Error: Failed to register signal %d\n",
+                        opal_cr_entry_point_signal);
+            exit_status = OPAL_ERROR;
+            goto cleanup;
+        }
+
+        OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
+                             "App) Named Pipes (%s) (%s), Signal (%d)", 
+                             app_comm_pipe_r, app_comm_pipe_w, opal_cr_entry_point_signal));
+
+    }
+    /******** Termination ********/
+    else if (OPAL_CRS_TERM == state ) {
+        ; /* Nothing */
+    }
+    /******** Error State ********/
+    else {
+        ; /* Nothing */
+    }
+
+ cleanup:
+    return exit_status;
+}
+
