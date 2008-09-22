@@ -19,85 +19,91 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_crs_blcr_CONFIG],[
     AC_ARG_WITH([blcr],
-                [AC_HELP_STRING([--with-blcr],
+                [AC_HELP_STRING([--with-blcr(=DIR)],
                                 [Path to BLCR Installation])])
+    AC_ARG_WITH([blcr-libdir],
+                [AC_HELP_STRING([--with-blcr-libdir=DIR],
+                                [Search for BLCR libraries in DIR])])
 
     check_crs_blcr_good="no"
-    # If we don't want BLCR, then don't compile it
+    # If we do not want BLCR, then do not compile it
     AS_IF([test "$with_blcr" = "no"],
           [$2
            check_crs_blcr_good="no"],
           [check_crs_blcr_good="yes"])
 
-    # If we don't want FT, don't compile this component
+    # If we do not want FT, don't compile this component
     AS_IF([test "$ompi_want_ft" = "0"],
           [$2
            check_crs_blcr_good="no"],
           [check_crs_blcr_good="yes"])
 
+    # Defaults
+    check_crs_blcr_dir_msg="compiler default"
+    check_crs_blcr_libdir_msg="linker default"
+    check_crs_blcr_dir=""
+    check_crs_blcr_libdir=""
+
     # Determine the search paths for the headers and libraries
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
           [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"],
                  [check_crs_blcr_dir="$with_blcr"
-                  AS_IF([test ! -z "$check_crs_blcr_dir/lib64"],
-                      [check_crs_blcr_libdir="$check_crs_blcr_dir/lib64"],
-                      [check_crs_blcr_libdir="$check_crs_blcr_dir/lib"])
-                 ],
-                 [check_crs_blcr_dir=""
-                  check_crs_blcr_libdir=""])])
+                  check_crs_blcr_dir_msg="$with_blcr (from --with-blcr)"])
+           AS_IF([test ! -z "$with_blcr_libdir" -a "$with_blcr_libdir" != "yes"],
+                 [check_crs_blcr_libdir="$with_blcr_libdir"
+                  check_crs_blcr_libdir_msg="$with_blcr_libdir (from --with-blcr-libdir)"])
+          ])
 
-    AS_IF([test "$check_crs_blcr_good" != "yes"], [$2], [
-        crs_blcr_CFLAGS="$CFLAGS"
-        crs_blcr_CPPFLAGS="$CPPFLAGS"
-        crs_blcr_LDFLAGS="$LDFLAGS"
-        crs_blcr_LIBS="$LIBS"
+    crs_blcr_save_CFLAGS="$CFLAGS"
+    crs_blcr_save_CPPFLAGS="$CPPFLAGS"
+    crs_blcr_save_LDFLAGS="$LDFLAGS"
+    crs_blcr_save_LIBS="$LIBS"
 
-        AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"], 
-              [CPPFLAGS="$CPPFLAGS -I$check_crs_blcr_dir/include"
-               LDFLAGS="$LDFLAGS -L$check_crs_blcr_libdir"])
+    crs_blcr_CFLAGS="$CFLAGS"
+    crs_blcr_CPPFLAGS="$CPPFLAGS"
+    crs_blcr_LDFLAGS="$LDFLAGS"
+    crs_blcr_LIBS="$LIBS"
 
-        AC_CHECK_HEADERS([libcr.h],
-                         [AC_CHECK_LIB([cr], 
-                                       [cr_init],
-                                       [check_crs_blcr_good="yes"],
-                                       [check_crs_blcr_good="no"])],
-                         [check_crs_blcr_good="no"])
-
-        CFLAGS="$crs_blcr_CFLAGS"
-        CPPFLAGS="$crs_blcr_CPPFLAGS"
-        LDFLAGS="$crs_blcr_LDFLAGS"
-        LIBS="$crs_blcr_LIBS"
-
-        AS_IF([test "$check_crs_blcr_good" != "yes"], 
-              [AS_IF([test ! -z "$with_blcr"],
-                      [AC_MSG_ERROR([BLCR support requested but not found.  Perhaps you need to specify the location of the BLCR libraries.])])
-                  $2],
-              [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"], 
-                     [crs_blcr_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
-                      crs_blcr_CFLAGS="`echo $crs_blcr_CFLAGS | sed 's/-Wundef//g'`"
-                      crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-pedantic//g'`"
-                      crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-Wundef//g'`"
-                      crs_blcr_CPPFLAGS="$crs_blcr_CPPFLAGS -I$check_crs_blcr_dir/include"
-                      crs_blcr_LDFLAGS="$crs_blcr_LDFLAGS -L$check_crs_blcr_libdir"
-                      ])
-               crs_blcr_LIBS="$crs_blcr_LIBS -lcr"])
-               
-        #
-        # Since BLCR libraries are not fully ISO99 C compliant
-        # -pedantic and -Wundef raise a bunch of warnings, so
-        # we just strip them off for this component
-        #
-        AS_IF([test "$crs_blcr_CFLAGS" != "$CFLAGS" -a "$check_crs_blcr_good" = "yes"],
-            [AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for blcr component because libcr.h is not really ANSI C])])
-    ])
-
-    # If check worked, set wraper flags.
-    # Evaluate suceed / fail
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
-          [crs_blcr_WRAPPER_EXTRA_LDFLAGS="$crs_blcr_LDFLAGS"
-           crs_blcr_WRAPPER_EXTRA_LIBS="$crs_blcr_LIBS"
+          [AC_MSG_CHECKING([for BLCR dir])
+           AC_MSG_RESULT([$check_crs_blcr_dir_msg])
+           AC_MSG_CHECKING([for BLCR library dir])
+           AC_MSG_RESULT([$check_crs_blcr_libdir_msg])
+           OMPI_CHECK_PACKAGE([crs_blcr_check],
+                              [libcr.h],
+                              [cr],
+                              [cr_init],
+                              [],
+                              [$check_crs_blcr_dir],
+                              [$check_crs_blcr_libdir],
+                              [check_crs_blcr_good="yes"],
+                              [check_crs_blcr_good="no"])
+          ])
+
+    # Check to see if we found the BLCR libcr.h library
+    # If we did then add the arguments to the wrapper compiler
+    AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
+          [
+           #
+           # Since BLCR libraries are not fully ISO99 C compliant
+           # -pedantic and -Wundef raise a bunch of warnings, so
+           # we just strip them off for this component
+           AC_MSG_WARN([Removed -pedantic and -Wundef from CFLAGS for blcr component because libcr.h is not really ANSI C])
+           # Strip off problematic arguments
+           crs_blcr_CFLAGS="`echo $crs_blcr_check_CFLAGS | sed 's/-pedantic//g'`"
+           crs_blcr_CFLAGS="`echo $crs_blcr_CFLAGS | sed 's/-Wundef//g'`"
+           crs_blcr_CPPFLAGS="`echo $crs_blcr_check_CPPFLAGS | sed 's/-pedantic//g'`"
+           crs_blcr_CPPFLAGS="`echo $crs_blcr_CPPFLAGS | sed 's/-Wundef//g'`"
+           crs_blcr_LDFLAGS="$crs_blcr_check_LDFLAGS"
+           crs_blcr_LIBS="$crs_blcr_check_LIBS"
+           #
+           # Add to wrapper compiler
+           crs_blcr_WRAPPER_EXTRA_CFLAGS="$crs_blcr_CFLAGS"
            crs_blcr_WRAPPER_EXTRA_CPPFLAGS="$crs_blcr_CPPFLAGS"
+           crs_blcr_WRAPPER_EXTRA_LDFLAGS="$crs_blcr_LDFLAGS"
+           crs_blcr_WRAPPER_EXTRA_LIBS="$crs_blcr_LIBS"
            $1])
+
 
     #
     # Check for version >= 0.6.0 which has:
@@ -105,11 +111,6 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
     # - 'requester' parameter to checkpoint_info
     #
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2], [
-           prev_CPPFLAGS="$CPPFLAGS"
-           prev_LDFLAGS="$LDFLAGS"
-           CPPFLAGS="$CPPFLAGS -I$check_crs_blcr_dir/include"
-           LDFLAGS="$LDFLAGS -L$check_crs_blcr_libdir"
-
            crs_blcr_have_working_cr_request=0
            AC_MSG_CHECKING(for BLCR working cr_request)
            AC_TRY_COMPILE([#include <libcr.h>],
@@ -134,20 +135,26 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                [#include <libcr.h>])
            AC_DEFINE_UNQUOTED([CRS_BLCR_HAVE_INFO_REQUESTER], [$crs_blcr_have_info_requester],
                [BLCRs cr_checkpoint_info.requester member availability])
-
-           CPPFLAGS="$prev_CPPFLAGS"
-           LDFLAGS="$prev_LDFLAGS"
            $1])
 
+    CFLAGS="$crs_blcr_save_CFLAGS"
+    CPPFLAGS="$crs_blcr_save_CPPFLAGS"
+    LDFLAGS="$crs_blcr_save_LDFLAGS"
+    LIBS="$crs_blcr_save_LIBS"
+
     #
-    AS_IF([test "$check_crs_blcr_good" != "yes"], [$2], [
-            AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LDFLAGS])
+    AS_IF([test "$check_crs_blcr_good" = "yes"],
+          [ AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LDFLAGS])
             AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_LIBS])
             AC_SUBST([crs_blcr_crs_blcr_WRAPPER_EXTRA_CPPFLAGS])
             AC_SUBST([crs_blcr_CFLAGS])
             AC_SUBST([crs_blcr_CPPFLAGS])
             AC_SUBST([crs_blcr_LDFLAGS])
             AC_SUBST([crs_blcr_LIBS])
-            $1])
-    
+            $1],
+          [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "no"],
+                 [AC_MSG_WARN([BLCR support requested but not found.  Perhaps you need to specify the location of the BLCR libraries.])
+                  AC_MSG_ERROR([Aborting.])])
+           $3])
+
 ])dnl
