@@ -270,11 +270,22 @@ int opal_cr_init(void )
                         "opal_cr: init: Debug SIGPIPE: %d (%s)",
                         val, (opal_cr_debug_sigpipe ? "True" : "False"));
 
+#if OPAL_ENABLE_FT_THREAD == 1
+    /* If we have a thread, then attach the SIGPIPE signal handler there since
+     * it is most likely to be the one that needs it.
+     */
     if( opal_cr_debug_sigpipe && !opal_cr_thread_use_if_avail ) {
         if( SIG_ERR == signal(SIGPIPE, opal_cr_sigpipe_debug_signal_handler) ) {
             ;
         }
     }
+#else
+    if( opal_cr_debug_sigpipe ) {
+        if( SIG_ERR == signal(SIGPIPE, opal_cr_sigpipe_debug_signal_handler) ) {
+            ;
+        }
+    }
+#endif
 
 #else
     opal_output( 0, "This feature is disabled on Windows" );
