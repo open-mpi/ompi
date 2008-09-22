@@ -15,6 +15,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_checksum.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
