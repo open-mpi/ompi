@@ -8,6 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
+Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -30,11 +31,12 @@ build includes a lot of debugging features.  This happens
 automatically when when configure detects the hidden ".svn" Subversion
 meta directory (that is present in all Subversion checkouts) in your
 source tree, and therefore activates a number of developer-only
-debugging features in the Open MPI code base.
+debugging features in the Open MPI code base.  The same is true if you
+have a Mercurial checkout (with the hidden .hg meta directory).
 
-By definition, debugging builds will perform slower than optimized
-builds of Open MPI.  You should *NOT* conduct timing tests or try to
-run production performance numbers with debugging builds.
+By definition, debugging builds will perform [much] slower than
+optimized builds of Open MPI.  You should *NOT* conduct timing tests
+or try to run production performance numbers with debugging builds.
 
 If you wish to build an optimized version of Open MPI from a
 developer's checkout, you have three main options:
@@ -52,8 +54,8 @@ developer's checkout, you have three main options:
      shell$ make all install
 
 2. Use a VPATH build.  Simply build Open MPI from a different
-   directory than the source tree -- one where the .svn subdirectory
-   is not present.  For example:
+   directory than the source tree -- one where the .svn / .hg
+   subdirectory is not present.  For example:
 
      shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
      shell$ cd ompi
@@ -165,7 +167,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../autoconf-2.62
+      shell$ cd ../autoconf-2.63
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
@@ -179,7 +181,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../libtool-2.2.4
+      shell$ cd ../libtool-2.2.6
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
