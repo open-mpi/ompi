@@ -1,44 +1,78 @@
 Open MPI Authors
 ================
 
-The following list contains the names and Subversion IDs of
-individuals who have committed code to the Open MPI repository.  Those
-marked with (*) are no longer active in the project.
+The following cumulative list contains the names and Subversion IDs of
+all individuals who have committed code to the Open MPI repository.
 
 Username    Name                        Affiliation(s)
 ----------- --------------------------- -------------------------
+Anya        Anya Tatashina              Sun
+adi         Adrian Knoth                UJ
 afriedle    Andrew Friedley             IU, SNL
 angskun     Thara Angskun               UTK
+bbenton     Brad Benton                 IBM
 bosilca     George Bosilca              UTK
+bouteill    Aurelien Bouteiller         UTK
 brbarret    Brian Barrett               IU, LANL
-casswell    Laura Casswell (*)          LANL
+casswell    Laura Casswell              LANL
+coti        Camille Coti                UTK
+csbell      Christian Bell              QLogic
+damico      Bill D'Amico                Cisco
 ddd         David Daniel                LANL
-dgdimick    Denis Dimick (*)            LANL
+dgdimick    Denis Dimick                LANL
+dkerr       Donald Kerr                 Sun
+dlacher     Dan Lacher                  Sun
 edgar       Edgar Gabriel               HLRS, UH, UTK
+emallove    Ethan Mallove               Sun
 gef         Graham Fagg                 UTK
-gingery     Ginger Young (*)            LANL
+gingery     Ginger Young                LANL
 gleb        Gleb Natapov                Voltaire
 gshipman    Galen Shipman               LANL
 gwatson     Greg Watson                 LANL
+herault     Thomas Herault              INRIA
 hpcstork    Sven Stork                  HLRS
+htor        Torsten Hoefler             IU, TUC
+jdmason     Jon Mason                   Chelsio
 jjhursey    Josh Hursey                 IU, LANL
+jnysal      Nysal Jan                   IBM
 jsquyres    Jeff Squyres                Cisco, IU
-mitch       Mitch Sukalski (*)          SNL
+jurenz      Matthias Jurenz             ZIH
+karenn      Karen Norteman              Sun
+kmroz       Karl Mroz                   UBC
+knuepfer    Andreas Knuepfer            ZIH
+lemarini    Pierre Lemarinier           UTK
+lennyve     Lenny Verkhovsky            Voltaire
+lums        Andrew Lumsdaine            IU
+matney      Ken Matney                  ORNL
+mitch       Mitch Sukalski              SNL
 mschaara    Mohamad Chaarawi            UH
-mt          Mark Taylor (*)             LANL
-pkambadu    Prabhanjan Kambadur (*)     IU
+mt          Mark Taylor                 LANL
+ollie       Li-Ta Lo                    LANL
+paklui      Pak Lui                     Sun
+pasha       Pavel Shamis                Mellanox
+patrick     Patrick Geoffray            Myricom
+penoff      Brad Penoff                 UBC
+pjesa       Jelena Pjesivac-Grbovic     UTK
+pkambadu    Prabhanjan Kambadur         IU
 rasmussn    Craig Rasmussen             LANL
+rbbrigh     Ron Brightwell              SNL
 rhc         Ralph Castain               LANL
-rlgraham    Rich Graham                 LANL
-rta         Rob Awles (*)               LANL
+rlgraham    Rich Graham                 ORNL, LANL
+rolfv       Rolf Vandevaart             Sun
+rta         Rob Awles                   LANL
 rusraink    Rainer Keller               HLRS
-santhana    Gopal Santhanaraman (*)     OSU
-surs        Sayantan Sur (*)            OSU
+sami        Sami Aaragon                LANL
+santhana    Gopal Santhanaraman         OSU
+sharonm     Sharon Melamed              Voltaire
+shiqing     Shiqing Fan                 HLRS
+surs        Sayantan Sur                OSU
 sushant     Sushant Sharma              LANL
-tprins      Tim Prins (*)               LANL
+tdd         Terry Dontje                Sun
+timattox    Tim Mattox                  IU
+tprins      Tim Prins                   IU, LANL
 twoodall    Tim Woodall                 LANL
-vsahay      Vishal Sahay (*)            IU
-yuw         Weikuan Yu (*)              LANL, OSU
+vsahay      Vishal Sahay                IU
+yuw         Weikuan Yu                  LANL, OSU
 
 Affiliaion abbreviations:
 -------------------------
@@ -49,5 +83,9 @@ IU = Indiana University
 LANL = Los Alamos National Laboratory
 OSU = The Ohio State University
 SNL = Sandia National Laboratory
+TUC = Technische Universtaet Chemnitz
+UBC = University of British Columbia
+UJ = Friedrich-Schiller-Universitat Jena
 UTK = University of Tennessee, Knoxville
 Voltaire = Voltaire
+ZIH = Technische Universitaet Dresden
