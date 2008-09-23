@@ -52,8 +52,8 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     #
     AC_ARG_ENABLE([openib-ibcm],
         [AC_HELP_STRING([--enable-openib-ibcm],
-                        [Enable Open Fabrics IBCM support in openib BTL (default: enabled)])], 
-                        [enable_openib_ibcm="$enableval"], [enable_openib_ibcm="yes"])
+                        [Enable Open Fabrics IBCM support in openib BTL (default: disabled)])], 
+                        [enable_openib_ibcm="$enableval"], [enable_openib_ibcm="no"])
     #
     # Openfabrics RDMACM
     #
