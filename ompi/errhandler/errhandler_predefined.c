@@ -171,17 +171,12 @@ static void backend_fatal_aggregate(char *type,
 {
     char *arg, *prefix, *err_msg = "Unknown error";
     bool err_msg_need_free = false;
-    char hostname[MAXHOSTNAMELEN + 1];
-    pid_t pid;
 
     arg = va_arg(arglist, char*);
     va_end(arglist);
 
-    gethostname(hostname, sizeof(hostname) - 1);
-    hostname[MAXHOSTNAMELEN] = '\0';
-    pid = getpid();
-
-    asprintf(&prefix, "[%s:%d]", hostname, (int) pid);
+    asprintf(&prefix, "[%s:%d]", orte_process_info.nodename,
+             (int) orte_process_info.pid);
 
     if (NULL != error_code) {
         err_msg = ompi_mpi_errnum_get_string(*error_code);
