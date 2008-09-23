@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights resereved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -76,6 +76,7 @@
 #endif  /* defined(HAVE_STDLIB_H) */
 
 #include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/group/group.h"
 #include "msgq_interface.h"
 #include "ompi_msgq_dll_defs.h"
 
@@ -218,7 +219,7 @@ static group_t * find_or_create_group( mqs_process *proc,
     communicator_t *comm     = extra->communicator_list;
     int *tr;
     char *trbuffer;
-    int i, np;
+    int i, np, is_dense;
     group_t *group;
     mqs_taddr_t value;
     mqs_taddr_t tablep;
@@ -230,6 +231,12 @@ static group_t * find_or_create_group( mqs_process *proc,
         DEBUG(VERBOSE_COMM, ("Get a size for the communicator = %d\n", np));
         return NULL;  /* Makes no sense ! */
     }
+    is_dense = 
+        ompi_fetch_int( proc,
+                        group_base + i_info->ompi_group_t.offset.grp_flags,
+                        p_info );
+    is_dense = (0 != (is_dense & OMPI_GROUP_DENSE));
+
     /* Iterate over each communicator seeing if we can find this group */
     for (;comm; comm = comm->next) {
         group = comm->group;
@@ -270,6 +277,10 @@ static group_t * find_or_create_group( mqs_process *proc,
      * We will endup with an array of Open MPI internal pointers to proc
      * structure. By comparing this pointers to the MPI_COMM_WORLD group
      * we can figure out the global rank in the MPI_COMM_WORLD of the process.
+     *
+     * Note that this only works for dense groups.  Someday we may
+     * support more than dense groups, but that's what we've got for
+     * today.
      */
      if( NULL == extra->world_proc_array ) {
          extra->world_proc_array = mqs_malloc( np * sizeof(mqs_taddr_t) );
@@ -277,7 +288,7 @@ static group_t * find_or_create_group( mqs_process *proc,
              mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
                                  &value, p_info->sizes.pointer_size );
              extra->world_proc_array[i] = value;
-             group->local_to_global[i] = i;
+             group->local_to_global[i] = is_dense ? i : -1;
          }
          extra->world_proc_array_entries = np;
      } else {
@@ -286,12 +297,16 @@ static group_t * find_or_create_group( mqs_process *proc,
          for( i = 0; i < np; i++ ) {
              mqs_target_to_host( proc, trbuffer + p_info->sizes.pointer_size*i,
                                  &value, p_info->sizes.pointer_size );
-             /* get the global rank this MPI process */
-             for( j = 0; j < extra->world_proc_array_entries; j++ ) {
-                 if( value == extra->world_proc_array[j] ) {
-                     group->local_to_global[i] = j;
-                     break;
+             if (is_dense) {
+                 /* get the global rank this MPI process */
+                 for( j = 0; j < extra->world_proc_array_entries; j++ ) {
+                     if( value == extra->world_proc_array[j] ) {
+                         group->local_to_global[i] = j;
+                         break;
+                     }
                  }
+             } else {
+                 group->local_to_global[i] = -1;
              }
          }
      }
