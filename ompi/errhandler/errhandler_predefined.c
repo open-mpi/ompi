@@ -21,8 +21,15 @@
 #include "ompi_config.h"
 #include <stdlib.h>
 #include <stdarg.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 
 #include "orte/util/show_help.h"
+#include "orte/runtime/orte_globals.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode.h"
@@ -153,9 +160,66 @@ static void out(char *str, char *arg)
     }
 }
 
-static void backend_fatal(char *type, struct ompi_communicator_t *comm,
-                          char *name, int *error_code, 
-                          va_list arglist)
+/*
+ * Use orte_show_help() to aggregate the error messages (i.e., show it
+ * once rather than N times).
+ */
+static void backend_fatal_aggregate(char *type, 
+                                    struct ompi_communicator_t *comm,
+                                    char *name, int *error_code, 
+                                    va_list arglist)
+{
+    char *arg, *prefix, *err_msg = "Unknown error";
+    bool err_msg_need_free = false;
+    char hostname[MAXHOSTNAMELEN + 1];
+    pid_t pid;
+
+    arg = va_arg(arglist, char*);
+    va_end(arglist);
+
+    gethostname(hostname, sizeof(hostname) - 1);
+    hostname[MAXHOSTNAMELEN] = '\0';
+    pid = getpid();
+
+    asprintf(&prefix, "[%s:%d]", hostname, (int) pid);
+
+    if (NULL != error_code) {
+        err_msg = ompi_mpi_errnum_get_string(*error_code);
+        if (NULL == err_msg) {
+            err_msg_need_free = true;
+            asprintf(&err_msg, "Error code: %d (no associated error message)",
+                     *error_code);
+        }
+    }
+
+    if (NULL != name && ompi_mpi_initialized && !ompi_mpi_finalized) {
+        orte_show_help("help-mpi-errors.txt", 
+                       "mpi_errors_are_fatal", false,
+                       prefix, (NULL == arg) ? "" : "in",
+                       (NULL == arg) ? "" : arg,
+                       prefix, type, name, prefix, err_msg, prefix);
+    } else if (NULL == name) {
+        orte_show_help("help-mpi-errors.txt", 
+                       "mpi_errors_are_fatal unknown handle", false,
+                       prefix, (NULL == arg) ? "" : "in",
+                       (NULL == arg) ? "" : arg,
+                       prefix, type, prefix, err_msg, prefix);
+    }
+
+    if (err_msg_need_free) {
+        free(err_msg);
+    }
+}
+
+/* 
+ * THESE MESSAGES ARE COORDINATED WITH FIXED STRINGS IN
+ * help-mpi-errors.txt!  Do not change these messages without also
+ * changing help-mpi-errors.txt!
+ */
+static void backend_fatal_no_aggregate(char *type, 
+                                       struct ompi_communicator_t *comm,
+                                       char *name, int *error_code, 
+                                       va_list arglist)
 {
     int len;
     char *arg;
@@ -163,12 +227,14 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
 
     fflush(stdout);
     fflush(stderr);
+
     arg = va_arg(arglist, char*);
     if (NULL != arg) {
         out("*** An error occurred in %s\n", arg);
     } else {
         out("*** An error occurred\n", NULL);
     }
+    va_end(arglist);
 
     if (NULL != name && ompi_mpi_initialized && !ompi_mpi_finalized) {
         /* Don't use asprintf() here because there may be stack / heap
@@ -206,10 +272,29 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
             out("*** Error code: %d (no associated error message)\n", intbuf);
         }
     }
-    out("*** MPI_ERRORS_ARE_FATAL (goodbye)\n", NULL);
-    va_end(arglist);
+    out("*** MPI_ERRORS_ARE_FATAL (your MPI job will now abort)\n", NULL);
+}
 
-    /* Should we do something more intelligent here? */
+static void backend_fatal(char *type, struct ompi_communicator_t *comm,
+                          char *name, int *error_code, 
+                          va_list arglist)
+{
+    /* Do we want help message aggregation?  Usually yes, but it uses
+       malloc(), which may cause further errors if we're exiting due
+       to a memory problem.  So we also have the option to *not*
+       aggregate (which doesn't use malloc during its call stack,
+       meaning that there is a better chance that the error message
+       will actually get printed).  Note that we can only do
+       aggregation after MPI_INIT and before MPI_FINALIZE. */
+    if (orte_help_want_aggregate && ompi_mpi_initialized && 
+        !ompi_mpi_finalized) {
+        backend_fatal_aggregate(type, comm, name, error_code, arglist);
+    } else {
+        backend_fatal_no_aggregate(type, comm, name, error_code, arglist);
+    }
+
+    /* Should we do something more intelligent than just using
+       COMM_SELF? */
     if (comm == NULL) {
         comm = &ompi_mpi_comm_self;
     }
