@@ -79,6 +79,7 @@ int orte_rmaps_base_open(void)
     int param, value;
     char *policy;
     opal_output_stream_t lds;
+    bool btmp;
 
     /* init the globals */
     orte_rmaps_base.active_module = NULL;
@@ -167,6 +168,16 @@ int orte_rmaps_base_open(void)
                                 "Whether to display the process map after it is computed",
                                 false, false, (int)false, &value);
     orte_rmaps_base.display_map = OPAL_INT_TO_BOOL(value);
+    
+    /* should we display a detailed (developer-quality) version of the map after determining it? */
+    mca_base_param_reg_int_name("rmaps", "base_display_devel_map",
+                                "Whether to display a developer-detail process map after it is computed",
+                                false, false, (int)false, &value);
+    btmp = OPAL_INT_TO_BOOL(value);
+    if (btmp) {
+        orte_rmaps_base.display_map = true;
+        orte_devel_level_output = true;
+    }
     
     /* Open up all the components that we can find */
     if (ORTE_SUCCESS != 

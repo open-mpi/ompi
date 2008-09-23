@@ -244,6 +244,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "base", "display_map", '\0', "display-map", "display-map", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the process map just before launch"},
+    { "rmaps", "base", "display_devel_map", '\0', "display-devel-map", "display-devel-map", 0,
+       NULL, OPAL_CMD_LINE_TYPE_BOOL,
+       "Display a detailed process map (mostly intended for developers) just before launch"},
     { NULL, NULL, NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
@@ -255,6 +258,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the allocation being used by this job"},
+    { "ras", "base", "display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
 
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,

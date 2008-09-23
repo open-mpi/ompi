@@ -76,6 +76,7 @@ int orte_ras_base_open(void)
 {
     int value;
     opal_output_stream_t lds;
+    bool btmp;
     
     /* set default flags */
     orte_ras_base.active_module = NULL;
@@ -86,6 +87,16 @@ int orte_ras_base_open(void)
                                 "Whether to display the allocation after it is determined",
                                 false, false, (int)false, &value);
     orte_ras_base.display_alloc = OPAL_INT_TO_BOOL(value);
+
+    /* should we display a detailed (developer-quality) version of the allocation after determining it? */
+    mca_base_param_reg_int_name("ras", "base_display_devel_alloc",
+                                "Whether to display a developer-detail allocation after it is determined",
+                                false, false, (int)false, &value);
+    btmp = OPAL_INT_TO_BOOL(value);
+    if (btmp) {
+        orte_ras_base.display_alloc = true;
+        orte_devel_level_output = true;
+    }
 
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */

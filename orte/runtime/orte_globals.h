@@ -393,6 +393,7 @@ ORTE_DECLSPEC extern int orted_debug_failure_delay;
 ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
 ORTE_DECLSPEC extern bool orte_hetero_apps;
 ORTE_DECLSPEC extern bool orte_never_launched;
+ORTE_DECLSPEC extern bool orte_devel_level_output;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;
