@@ -27,8 +27,8 @@ an error; Open MPI requires that all MPI processes be able to reach
 each other.  This error can sometimes be the result of forgetting to
 specify the "self" BTL.
 
-  Process 1 is on host: %s
-  Process 2 is on host: %s
-  BTLs attempted:       %s
+  Process 1 (%s) is on host: %s
+  Process 2 (%s) is on host: %s
+  BTLs attempted: %s
 
 Your MPI job is now going to abort; sorry.
