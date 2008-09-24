@@ -651,14 +651,16 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
     }
     
     /* initialize MPIR_proctable */
-    i=0;
     procs = (orte_proc_t**)jdata->procs->addr;
     apps = (orte_app_context_t**)jdata->apps->addr;
     for (j=0; j < jdata->num_procs; j++) {
         if (NULL == procs[j]) {
             opal_output(0, "Error: undefined proc at position %ld\n", (long)j);
         }
-        
+        /* store this data in the location whose index
+         * corresponds to the proc's rank
+         */
+        i = procs[j]->name.vpid;
         appctx = apps[procs[j]->app_idx];
         
         MPIR_proctable[i].host_name = strdup(procs[j]->node->name);
@@ -670,7 +672,6 @@ void orte_debugger_init_after_spawn(orte_job_t *jdata)
             opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
         } 
         MPIR_proctable[i].pid = procs[j]->pid;
-        i++;
     }
 
     if (orte_debug_flag) {
