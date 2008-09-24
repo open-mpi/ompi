@@ -5,7 +5,9 @@
  * The most basic of MPI applications
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
+#include <unistd.h>
 #include "mpi.h"
 
 int main(int argc, char* argv[])

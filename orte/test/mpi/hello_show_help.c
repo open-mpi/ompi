@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
 #include "mpi.h"
 
 #include "orte/util/show_help.h"
