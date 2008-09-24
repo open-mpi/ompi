@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +34,11 @@ BEGIN_C_DECLS
      * Wait for a debugger if asked.
      */
     OMPI_DECLSPEC void ompi_wait_for_debugger(void);
+
+    /**
+     * Notify a debugger that we're about to abort
+     */
+    OMPI_DECLSPEC void ompi_debugger_notify_abort(char *string);
 
 END_C_DECLS
 
