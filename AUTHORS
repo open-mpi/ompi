@@ -33,7 +33,7 @@ herault     Thomas Herault              INRIA
 hpcstork    Sven Stork                  HLRS
 htor        Torsten Hoefler             IU, TUC
 jdmason     Jon Mason                   Chelsio
-jjhursey    Josh Hursey                 IU, LANL
+jjhursey    Josh Hursey                 IU, ORNL, LANL, LBNL
 jnysal      Nysal Jan                   IBM
 jsquyres    Jeff Squyres                Cisco, IU
 jurenz      Matthias Jurenz             ZIH
@@ -81,6 +81,8 @@ Cisco = Cisco Systems, Inc.
 HLRS = High Performance Computing Center, Stuttgart
 IU = Indiana University
 LANL = Los Alamos National Laboratory
+LBNL = Lawrence Berkeley National Laboratory
+ORNL = Oak Ridge National Laboratory
 OSU = The Ohio State University
 SNL = Sandia National Laboratories
 TUC = Technische Universtaet Chemnitz
