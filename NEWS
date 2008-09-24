@@ -107,10 +107,10 @@ Trunk (not on release branches yet)
 
 1.2.8 (not released yet)
 -----
-  
+
 - Fix a regession introduced in 1.2.6 for the IBM eHCA. See ticket #1526.
-  
-  
+
+
 1.2.7
 -----
 
