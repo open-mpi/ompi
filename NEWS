@@ -105,9 +105,21 @@ Trunk (not on release branches yet)
   in cross-compile environments.
 
 
+1.2.8 (not released yet)
+-----
+  
+- Fix a regession introduced in 1.2.6 for the IBM eHCA. See ticket #1526.
+  
+  
 1.2.7
 -----
 
+- Add some Sun HCA vendor IDs.  See ticket #1461.
+- Fixed a memory leak in MPI_Alltoallw when called from Fortran.
+  Thanks to Dave Grote for the bugreport.  See ticket #1457.
+- Only link in libutil when it is needed/desired.  Thanks to
+  Brian Barret for diagnosing and fixing the problem.  See ticket #1455.
+- Update some QLogic HCA vendor IDs.  See ticket #1453.
 - Fix F90 binding for MPI_CART_GET.  Thanks to Scott Beardsley for
   bringing it to our attention. See ticket #1429.
 - Remove a spurious warning message generated in/by ROMIO. See ticket #1421.
@@ -137,7 +149,7 @@ Trunk (not on release branches yet)
 -----
 
 - Fix a bug in the inter-allgather for asymmetric inter-communicators.
-  Thanks to Martin Audet fro the bug report. See ticket #1247.
+  Thanks to Martin Audet for the bug report. See ticket #1247.
 - Fix a bug in the openib BTL when setting the CQ depth.  Thanks
   to Jon Mason for the bug report and fix.  See ticket #1245.
 - On Mac OS X Leopard, the execinfo component will be used for
