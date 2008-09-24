@@ -13,7 +13,7 @@ angskun     Thara Angskun               UTK
 bbenton     Brad Benton                 IBM
 bosilca     George Bosilca              UTK
 bouteill    Aurelien Bouteiller         UTK
-brbarret    Brian Barrett               IU, LANL
+brbarret    Brian Barrett               IU, LANL, SNL
 casswell    Laura Casswell              LANL
 coti        Camille Coti                UTK
 csbell      Christian Bell              QLogic
@@ -82,7 +82,7 @@ HLRS = High Performance Computing Center, Stuttgart
 IU = Indiana University
 LANL = Los Alamos National Laboratory
 OSU = The Ohio State University
-SNL = Sandia National Laboratory
+SNL = Sandia National Laboratories
 TUC = Technische Universtaet Chemnitz
 UBC = University of British Columbia
 UJ = Friedrich-Schiller-Universitat Jena
