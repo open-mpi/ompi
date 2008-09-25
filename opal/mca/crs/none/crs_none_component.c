@@ -19,7 +19,7 @@
  * Public string for version number
  */
 const char *opal_crs_none_component_version_string = 
-"OPAL CRS none MCA component version " OMPI_VERSION;
+"OPAL CRS none MCA component version " OPAL_VERSION;
 
 /*
  * Local functionality
@@ -42,9 +42,9 @@ opal_crs_none_component_t mca_crs_none_component = {
 
             /* Component name and version */
             "none",
-            OMPI_MAJOR_VERSION,
-            OMPI_MINOR_VERSION,
-            OMPI_RELEASE_VERSION,
+            OPAL_MAJOR_VERSION,
+            OPAL_MINOR_VERSION,
+            OPAL_RELEASE_VERSION,
             
             /* Component open and close functions */
             crs_none_open,
