@@ -478,7 +478,6 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 
         /* initialize MPIR_proctable */
 
-        i=0;
         for (item =  opal_list_get_first(&map->nodes);
              item != opal_list_get_end(&map->nodes);
              item =  opal_list_get_next(item)) {
@@ -489,6 +488,10 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                  item2 = opal_list_get_next(item2)) {
                 proc = (orte_mapped_proc_t*)item2;
                 appctx = map->apps[proc->app_idx];
+                /* store this data in the location whose index
+                 * corresponds to the proc's rank
+                 */
+                i = proc->rank;
                 
                 MPIR_proctable[i].host_name = strdup(node->nodename);
                 if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) {
@@ -499,7 +502,6 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                      opal_os_path( false, appctx->cwd, appctx->app, NULL );
                 }
                 MPIR_proctable[i].pid = proc->pid;
-                i++;
             }
         }
         OBJ_RELEASE(map);
