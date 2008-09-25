@@ -398,7 +398,7 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
                 src_string = "default value";
                 break;
             case MCA_BASE_PARAM_SOURCE_ENV:
-                src_string = "environment";
+                src_string = "environment or cmdline";
                 break;
             case MCA_BASE_PARAM_SOURCE_FILE:
                 src_string = "file";

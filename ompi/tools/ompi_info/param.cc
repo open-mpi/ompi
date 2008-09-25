@@ -220,7 +220,7 @@ void ompi_info::show_mca_params(opal_list_t *info,
                         content += "default value";
                         break;
                     case MCA_BASE_PARAM_SOURCE_ENV:
-                        content += "environment";
+                        content += "environment or cmdline";
                         break;
                     case MCA_BASE_PARAM_SOURCE_FILE:
                         content += "file [";
@@ -296,7 +296,7 @@ void ompi_info::show_mca_params(opal_list_t *info,
                         content = "default value";
                         break;
                     case MCA_BASE_PARAM_SOURCE_ENV:
-                        content = "environment";
+                        content = "environment-cmdline";
                         break;
                     case MCA_BASE_PARAM_SOURCE_FILE:
                         content = "file:";
