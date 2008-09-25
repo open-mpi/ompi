@@ -357,7 +357,7 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     orte_node_t **nodes;
     orte_proc_t **procs, *psave, *psave2;
     orte_vpid_t minv, minv2;
-    uint8_t local_rank;
+    orte_local_rank_t local_rank;
     orte_job_map_t *map;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -387,13 +387,13 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
             /* find the minimum vpid proc */
             for (j=0; j < nodes[i]->num_procs; j++) {
                 if (procs[j]->name.jobid == jdata->jobid &&
-                    UINT8_MAX == procs[j]->local_rank &&
+                    ORTE_LOCAL_RANK_MAX == procs[j]->local_rank &&
                     procs[j]->name.vpid < minv) {
                     minv = procs[j]->name.vpid;
                     psave = procs[j];
                 }
                 /* no matter what job...still have to handle node_rank */
-                if (UINT8_MAX == procs[j]->node_rank &&
+                if (ORTE_NODE_RANK_MAX == procs[j]->node_rank &&
                     procs[j]->name.vpid < minv2) {
                     minv2 = procs[j]->name.vpid;
                     psave2 = procs[j];

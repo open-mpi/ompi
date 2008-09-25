@@ -600,8 +600,8 @@ static void orte_proc_construct(orte_proc_t* proc)
 {
     proc->name = *ORTE_NAME_INVALID;
     proc->pid = 0;
-    proc->local_rank = UINT8_MAX;
-    proc->node_rank = UINT8_MAX;
+    proc->local_rank = ORTE_LOCAL_RANK_MAX;
+    proc->node_rank = ORTE_NODE_RANK_MAX;
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->app_idx = -1;
     proc->slot_list = NULL;

@@ -185,7 +185,7 @@ typedef struct {
     /* array of pointers to procs on this node */
     opal_pointer_array_t *procs;
     /* next node rank on this node */
-    uint8_t next_node_rank;
+    orte_node_rank_t next_node_rank;
     /* whether or not we are oversubscribed */
     bool oversubscribed;
     /** The node architecture, as reported by the remote node. This
@@ -226,12 +226,12 @@ typedef struct {
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
 /* define a set of flags to control the launch of a job */
-#define ORTE_JOB_CONTROL_LOCAL_SPAWN        (uint16_t) 0x01
-#define ORTE_JOB_CONTROL_NON_ORTE_JOB       (uint16_t) 0x02
-#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    (uint16_t) 0x04
-#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     (uint16_t) 0x08
-#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     (uint16_t) 0x10
-#define ORTE_JOB_CONTROL_FORWARD_COMM       (uint16_t) 0x20
+#define ORTE_JOB_CONTROL_LOCAL_SPAWN        (uint16_t) 0x0001
+#define ORTE_JOB_CONTROL_NON_ORTE_JOB       (uint16_t) 0x0002
+#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    (uint16_t) 0x0004
+#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     (uint16_t) 0x0008
+#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     (uint16_t) 0x0010
+#define ORTE_JOB_CONTROL_FORWARD_COMM       (uint16_t) 0x0020
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -299,13 +299,13 @@ struct orte_proc_t {
      * rank on a node can perform certain fns -
      * e.g., open an sm backing file
      */
-    uint8_t local_rank;
+    orte_local_rank_t local_rank;
     /* local rank on the node across all procs
      * and jobs known to this HNP - this is
      * needed so that procs can do things like
      * know which static IP port to use
      */
-    uint8_t node_rank;
+    orte_node_rank_t node_rank;
     /* process state */
     orte_proc_state_t state;
     /* exit code */
@@ -354,9 +354,9 @@ typedef struct {
     /* index to node */
     int32_t node;
     /* local rank */
-    uint8_t local_rank;
+    orte_local_rank_t local_rank;
     /* node rank */
-    uint8_t node_rank;
+    orte_node_rank_t node_rank;
 } orte_pmap_t;
 
 typedef struct {

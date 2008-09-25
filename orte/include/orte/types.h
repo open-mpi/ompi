@@ -37,6 +37,20 @@ typedef int32_t orte_std_cntr_t;  /** standard counters used in ORTE */
 #define ORTE_STD_CNTR_MIN       INT32_MIN
 #define ORTE_STD_CNTR_INVALID   -1
 
+/** rank on node, used for both local and node rank. We
+ * don't send these around on their own, so don't create
+ * dedicated type support for them - we are defining them
+ * here solely for readability in the code and so we have
+ * one place where any future changes can be made
+ */
+typedef uint16_t orte_local_rank_t;
+typedef uint16_t orte_node_rank_t;
+#define ORTE_LOCAL_RANK         OPAL_UINT16
+#define ORTE_NODE_RANK          OPAL_UINT16
+#define ORTE_LOCAL_RANK_MAX     UINT16_MAX
+#define ORTE_NODE_RANK_MAX      UINT16_MAX
+
+
 /*
  * general typedefs & structures
  */
