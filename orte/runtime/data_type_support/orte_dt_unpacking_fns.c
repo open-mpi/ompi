@@ -442,7 +442,7 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
         /* unpack the local rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (&(procs[i]->local_rank)), &n, OPAL_UINT8))) {
+                         (&(procs[i]->local_rank)), &n, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -450,7 +450,7 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
         /* unpack the local rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                          (&(procs[i]->node_rank)), &n, OPAL_UINT8))) {
+                          (&(procs[i]->node_rank)), &n, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

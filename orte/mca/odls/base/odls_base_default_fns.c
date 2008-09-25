@@ -1375,6 +1375,8 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     orte_pmap_t pmap;
     int32_t one32;
     int8_t one8;
+    orte_local_rank_t lrank;
+    orte_node_rank_t nrank;
     opal_buffer_t buffer;
     int rc;
     
@@ -1391,9 +1393,11 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID); /* num_procs */
     one32 = 0;
     opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
+    lrank = 0;
+    opal_dss.pack(&buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
+    nrank = 0;
+    opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
     one8 = 0;
-    opal_dss.pack(&buffer, &one8, 1, OPAL_UINT8);  /* local rank */
-    opal_dss.pack(&buffer, &one8, 1, OPAL_UINT8);  /* node rank */
     opal_dss.pack(&buffer, &one8, 1, OPAL_INT8);  /* app_idx */
     jobdat->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
     opal_dss.unload(&buffer, (void**)&jobdat->pmap->bytes, &jobdat->pmap->size);

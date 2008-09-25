@@ -405,14 +405,14 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
         
         /* pack the local rank */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(procs[i]->local_rank)), 1, OPAL_UINT8))) {
+                         (void*)(&(procs[i]->local_rank)), 1, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* pack the node rank */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(procs[i]->node_rank)), 1, OPAL_UINT8))) {
+                         (void*)(&(procs[i]->node_rank)), 1, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
