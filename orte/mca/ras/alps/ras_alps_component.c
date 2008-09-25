@@ -31,6 +31,7 @@
  * Local variables
  */
 static int param_priority;
+static int param_read_attempts;
 
 
 /*
@@ -73,6 +74,12 @@ static int ras_alps_open(void)
                                "Priority of the alps ras component",
                                false, false, 75, NULL);
 
+    param_read_attempts = 
+        mca_base_param_reg_int(&mca_ras_alps_component.base_version,
+                               "appinfo_read_attempts",
+                               "Maximum number of attempts to read ALPS appinfo file",
+                               false, false, 10, NULL);
+
     return ORTE_SUCCESS;
 }
 
@@ -88,8 +95,8 @@ static int orte_ras_alps_component_query(mca_base_module_t **module, int *priori
 
     if (NULL != getenv("BATCH_PARTITION_ID")) {
         mca_base_param_lookup_int(param_priority, priority);
-        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
-                             "ras:alps: available for selection"));
+        opal_output_verbose(1, orte_ras_base.ras_output,
+                             "ras:alps: available for selection");
         *module = (mca_base_module_t *) &orte_ras_alps_module;
         return ORTE_SUCCESS;
     }
@@ -100,4 +107,12 @@ static int orte_ras_alps_component_query(mca_base_module_t **module, int *priori
                 "ras:alps: NOT available for selection");
     *module = NULL;
     return ORTE_ERROR;
+}
+
+int orte_ras_alps_get_appinfo_attempts( int *attempts ) {
+
+    mca_base_param_lookup_int(param_read_attempts, attempts);
+    opal_output_verbose(1, orte_ras_base.ras_output,
+                         "ras:alps:orte_ras_alps_get_appinfo_attempts: %d", *attempts);
+    return ORTE_SUCCESS;
 }
