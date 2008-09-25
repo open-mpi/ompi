@@ -290,7 +290,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_ARGV_NULL            ((char **) 0)   /* NULL argument vector */
 #define MPI_ARGVS_NULL           ((char ***) 0)  /* NULL argument vectors */
 #define MPI_ERRCODES_IGNORE      ((int *) 0)    /* don't return error codes */
-#define MPI_MAX_PORT_NAME        256     /* max port name length */
+#define MPI_MAX_PORT_NAME        1024    /* max port name length */
 #define MPI_MAX_NAME_LEN         MPI_MAX_PORT_NAME /* max port name length */
 #define MPI_ORDER_C              0       /* C row major order */
 #define MPI_ORDER_FORTRAN        1       /* Fortran column major order */
