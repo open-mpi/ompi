@@ -33,6 +33,7 @@ extern "C" {
 
     ORTE_DECLSPEC extern orte_ras_base_component_t mca_ras_alps_component;
     ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_alps_module;
+    ORTE_DECLSPEC int orte_ras_alps_get_appinfo_attempts( int *attempts );
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
