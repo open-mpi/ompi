@@ -108,9 +108,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
      * consts we have to manually cast it before using it for writing purposes.
      */
     remote_sizes = (size_t*)master->remote_sizes;
-    for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
-        remote_sizes[i] = ompi_ddt_local_sizes[i];
-    }
+    memcpy(remote_sizes, ompi_ddt_local_sizes, sizeof(size_t) * DT_MAX_PREDEFINED);
     /**
      * If the local and remote architecture are the same there is no need
      * to check for the remote data sizes. They will always be the same as
@@ -139,6 +137,11 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
         remote_sizes[DT_UNSIGNED_LONG]      = 8;
         remote_sizes[DT_LONG_LONG_INT]      = 8;
         remote_sizes[DT_UNSIGNED_LONG_LONG] = 8;
+    } else {
+        remote_sizes[DT_LONG]               = 4;
+        remote_sizes[DT_UNSIGNED_LONG]      = 4;
+        remote_sizes[DT_LONG_LONG_INT]      = 4;
+        remote_sizes[DT_UNSIGNED_LONG_LONG] = 4;
     }
     /* find out the remote logical size. It can happens that the size will be
      * unknown (if Fortran is not supported on the remote library). If this is
@@ -153,7 +156,12 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
     } else {
         opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
     }
-
+    /* check the size for the doubles */
+    if( opal_arch_checkmask( &master->remote_arch, OPAL_ARCH_LONGDOUBLEIS128 ) ) {
+        remote_sizes[DT_LONG_DOUBLE] = 16;
+    } else {
+        remote_sizes[DT_LONG_DOUBLE] = 8;
+    }
     /**
      * Now we can compute the conversion mask. For all sizes where the remote
      * and local architecture differ a conversion is needed. Moreover, if the
@@ -419,29 +427,26 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
 /**
  * Compute the remote size.
  */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #define OMPI_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
 {                                                                         \
     if( OPAL_UNLIKELY(0 != bdt_mask) ) {                                  \
         ompi_convertor_master_t* master;                                  \
         int i;                                                            \
+        uint64_t mask = datatype->bdt_used;                               \
         convertor->flags ^= CONVERTOR_HOMOGENEOUS;                        \
-        bdt_mask = datatype->bdt_used;                                    \
         master = convertor->master;                                       \
         convertor->remote_size = 0;                                       \
-        for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {                  \
-            if( bdt_mask & ((uint64_t)1 << i) ) {                         \
+        for( i = DT_CHAR; mask && (i < DT_MAX_PREDEFINED); i++ ) {        \
+            if( mask & ((uint64_t)1 << i) ) {                             \
                 convertor->remote_size += (datatype->btypes[i] *          \
                                            master->remote_sizes[i]);      \
+                mask ^= ((uint64_t)1 << i);                               \
             }                                                             \
         }                                                                 \
         convertor->remote_size *= convertor->count;                       \
         convertor->use_desc = &(datatype->desc);                          \
     }                                                                     \
 }
-#else
-#define OMPI_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**
  * This macro will initialize a convertor based on a previously created
