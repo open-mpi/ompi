@@ -421,7 +421,7 @@ mca_btl_portals_component_progress(void)
                                              tag
                                              ));
                         
-                        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,"received %d bytes \n", ev.mlength));
+                        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,"received %d bytes \n", (int) ev.mlength));
                         frag->segments[0].seg_addr.pval = &frag->data;
                         frag->segments[0].seg_len = header_size;
                         if(ev.mlength) {

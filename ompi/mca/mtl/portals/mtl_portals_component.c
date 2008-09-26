@@ -145,7 +145,8 @@ ompi_mtl_portals_component_open(void)
                            false,
                            false,
                            8192,
-                           &ompi_mtl_portals.ptl_copy_block_len);
+                           &tmp);
+    ompi_mtl_portals.ptl_copy_block_len = tmp;
 
     mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
                            "aggressive_polling",
