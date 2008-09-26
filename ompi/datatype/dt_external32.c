@@ -61,7 +61,7 @@
  * MPI_REAL16              16
  *
  * All floating point values are in big-endian IEEE format. Double extended use 16 bytes, with
- * 15 exponent bits (bias = 10383), 112 mantissa bits and the same encoding as double.All
+ * 15 exponent bits (bias = 10383), 112 mantissa bits and the same encoding as double. All
  * integers are in two's complement big-endian format.
  * 
  * All data are byte aligned, regardless of type. That's exactly what we expect as we can
