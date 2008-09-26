@@ -175,7 +175,7 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         /* see if this message filled the receive block */
         if (recv_event->ev.md.length - (recv_event->ev.offset + 
                                         recv_event->ev.mlength) <
-            recv_event->ev.md.max_size) {
+            (ptl_size_t) recv_event->ev.md.max_size) {
             block->full = true;
         }
 

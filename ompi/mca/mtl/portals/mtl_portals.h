@@ -78,7 +78,7 @@ struct mca_mtl_portals_module_t {
     ptl_handle_md_t ptl_short_md_h;
 
     int ptl_num_copy_blocks;
-    int ptl_copy_block_len;
+    ptl_size_t ptl_copy_block_len;
 
     int *ptl_copy_block_free_list;
     int ptl_copy_block_first_free;

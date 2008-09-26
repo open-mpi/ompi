@@ -335,8 +335,6 @@ ompi_mtl_portals_progress(void)
     int count = 0, ret;
     ptl_event_t ev;
     ompi_mtl_portals_request_t *ptl_request;
-    int which;
-    ompi_mtl_portals_event_t *unex_recv;
 
     while (true) {
 

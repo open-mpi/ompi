@@ -23,7 +23,7 @@ extern void ompi_mtl_portals_short_setup(void);
 extern void ompi_mtl_portals_short_cleanup(void);
 
 static inline int
-ompi_mtl_portals_alloc_short_buf()
+ompi_mtl_portals_alloc_short_buf(void)
 {
     int buf_num;
 
