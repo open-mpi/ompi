@@ -1988,6 +1988,20 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
+    /* If we are using ptmalloc2 and there are no posix threads
+       available, this will cause memory corruption.  Refuse to run.
+       Right now, ptmalloc2 is the only memory manager that we have on
+       OS's that support OpenFabrics that provide both FREE and MUNMAP
+       support, so the following test is [currently] good enough... */
+    value = opal_mem_hooks_support_level();
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                       "ptmalloc2 with no threads", true,
+                       orte_process_info.nodename);
+        goto no_btls;
+    } 
+
     /* If we have a memory manager available, and
        mpi_leave_pinned==-1, then unless the user explicitly set
        mpi_leave_pinned_pipeline==0, then set mpi_leave_pinned to 1.
@@ -1995,7 +2009,6 @@ btl_openib_component_init(int *num_btl_modules,
        We have a memory manager if:
        - we have both FREE and MUNMAP support
        - we have MUNMAP support and the linux mallopt */
-    value = opal_mem_hooks_support_level();
     if (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
          ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) ||
         (0 != (OPAL_MEMORY_MUNMAP_SUPPORT & value) &&

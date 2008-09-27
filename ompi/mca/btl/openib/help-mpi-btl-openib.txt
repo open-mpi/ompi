@@ -543,3 +543,12 @@ support.  Short eager RDMA is not yet supported with progress threads;
 its use has been disabled in this job.  
 
 This is a warning only; you job will attempt to continue.
+#
+[ptmalloc2 with no threads]
+WARNING: It appears that ptmalloc2 was compiled into this process via
+-lopenmpi-malloc, but there is no thread support.  This combination is
+known to cause memory corruption in the openib BTL.  Open MPI is
+therefore disabling the use of the openib BTL in this process for this
+run.
+
+  Local host: %s
