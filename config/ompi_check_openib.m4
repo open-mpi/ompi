@@ -76,10 +76,18 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [AS_IF([test "$THREAD_TYPE" != "posix" -a "$memory_ptmalloc2_happy" = "yes"],
-                 [AC_MSG_WARN([POSIX Threads disabled but PTMalloc2 enabled.])
-                  AC_MSG_WARN([This will cause memory corruption with OpenFabrics.])
-                  AC_MSG_WARN([Not building component.])
-                  ompi_check_openib_happy="no"])])
+                 [AS_IF([test "$enable_ptmalloc2_internal" = "yes"],
+                        [AC_MSG_WARN([POSIX threads are disabled, but])
+                         AC_MSG_WARN([--enable-ptmalloc2-internal was specified.  This will])
+                         AC_MSG_WARN([cause memory corruption with OpenFabrics.])
+                         AC_MSG_WARN([Not building component.])
+                         ompi_check_openib_happy="no"],
+                        [AC_MSG_WARN([POSIX threads are disabled, but the ptmalloc2 memory])
+                         AC_MSG_WARN([manager is being built.  Compiling MPI applications with])
+                         AC_MSG_WARN([-lopenmpi-malloc will result in memory corruption; Open])
+                         AC_MSG_WARN([MPI will disable the openib BTL at run-time if such a])
+                         AC_MSG_WARN([combination is detected.])
+                         AC_MSG_WARN([You have been warned.])])])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"], 
             [AC_CHECK_HEADERS(
