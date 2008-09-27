@@ -36,6 +36,7 @@ int ompi_dpm_base_null_connect_accept (ompi_communicator_t *comm, int root,
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
+
 void ompi_dpm_base_null_disconnect(ompi_communicator_t *comm)
 {
     return;
@@ -66,6 +67,17 @@ void ompi_dpm_base_null_mark_dyncomm (ompi_communicator_t *comm)
 }
 
 int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int ompi_dpm_base_null_parse_port(char *port_name, 
+                                  orte_process_name_t *rproc, orte_rml_tag_t *tag)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+int ompi_dpm_base_null_route_to_port(char *rml_uri, orte_process_name_t *rproc)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
