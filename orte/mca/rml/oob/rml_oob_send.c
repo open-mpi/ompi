@@ -144,7 +144,8 @@ orte_rml_oob_send(orte_process_name_t* peer,
                                                       msg);
     if (ret < 0) {
         ORTE_ERROR_LOG(ret);
-        opal_output(0, "%s attempted to send to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&next));
+        opal_output(0, "%s attempted to send to %s: tag %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                             ORTE_NAME_PRINT(&next), (int)real_tag);
         goto cleanup;
     }
 
@@ -233,7 +234,8 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
                                                       msg);
     if (ret < 0) {
         ORTE_ERROR_LOG(ret);
-        opal_output(0, "%s attempted to send to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&next));
+        opal_output(0, "%s attempted to send to %s: tag %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                             ORTE_NAME_PRINT(&next), (int)real_tag);
         OBJ_RELEASE(msg);
     }
 
@@ -355,6 +357,9 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
                                                       msg);
 
     if (ret < 0) {
+        ORTE_ERROR_LOG(ret);
+        opal_output(0, "%s attempted to send to %s: tag %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                             ORTE_NAME_PRINT(&next), (int)real_tag);
         OBJ_RELEASE(msg);
         OBJ_RELEASE(buffer);
     }
