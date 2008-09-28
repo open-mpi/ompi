@@ -299,6 +299,15 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     
     if (!orte_devel_level_output) {
         /* just provide a simple output for users */
+        if (0 == src->num_procs) {
+            /* no procs mapped yet, so just show allocation */
+            asprintf(&tmp, "\n%sData for node: Name: %s\tNum slots: %ld\tMax slots: %ld",
+                     pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
+                     (long)src->slots, (long)src->slots_max);
+            free(pfx2);
+            *output = tmp;
+            return ORTE_SUCCESS;
+        }
         asprintf(&tmp, "\n%sData for node: Name: %s\tNum procs: %ld",
                  pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
                  (long)src->num_procs);
@@ -593,12 +602,15 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
         }
         free(tmp);
         tmp = tmp2;
+    } else {
+        /* this is being printed for a user, so let's make it easier to see */
+        asprintf(&tmp, "\n%s========================   JOB MAP   ========================", pfx2);
     }
     
     
     for (i=0; i < src->nodes->size; i++) {
         if (NULL != src->nodes->addr[i]) {
-            if (ORTE_SUCCESS != (rc = opal_dss.print(&tmp2, pfx, src->nodes->addr[i], ORTE_NODE))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.print(&tmp2, pfx2, src->nodes->addr[i], ORTE_NODE))) {
                 ORTE_ERROR_LOG(rc);
                 free(pfx);
                 free(tmp);
@@ -613,6 +625,13 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                 tmp = tmp3;
             }
         }
+    }
+    
+    if (!orte_devel_level_output) {
+        /* this is being printed for a user, so let's make it easier to see */
+        asprintf(&tmp2, "%s\n\n%s=============================================================\n", tmp, pfx2);
+        free(tmp);
+        tmp = tmp2;
     }
     
     /* set the return */

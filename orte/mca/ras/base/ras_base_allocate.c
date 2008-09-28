@@ -316,6 +316,8 @@ DISPLAY:
         if (orte_xml_output) {
             asprintf(&tmp, "<allocation>\n");
             pfx = "\t";
+        } else {
+            asprintf(&tmp, "\n======================   ALLOCATED NODES   ======================\n");
         }
         alloc = (orte_node_t**)orte_node_pool->addr;
         for (i=0; i < orte_node_pool->size; i++) {
@@ -333,13 +335,11 @@ DISPLAY:
             }
         }
         if (orte_xml_output) {
-            asprintf(&tmp2, "%s</allocation>\n", tmp);
-            free(tmp);
+            opal_output(orte_ras_base.alloc_output, "%s</allocation>\n", tmp);
         } else {
-            tmp2 = tmp;
+            opal_output(orte_ras_base.alloc_output, "%s\n\n=================================================================\n", tmp);
         }
-        opal_output(orte_ras_base.alloc_output, "%s", tmp2);
-        free(tmp2);
+        free(tmp);
     }
     
     return rc;
