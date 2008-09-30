@@ -568,13 +568,13 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         return OMPI_SUCCESS;
     }
     switch(rc) {
-    case OMPI_ERR_RESOURCE_BUSY:
-        /* don't signal request completion; will be completed in wait() */
-        rc = OMPI_SUCCESS;
-        break;
-    default:
-        mca_bml_base_free(bml_btl, des);
-        break;
+        case OMPI_ERR_RESOURCE_BUSY:
+            /* No more resources. Allow the upper level to queue the send */
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            break;
+        default:
+            mca_bml_base_free(bml_btl, des);
+            break;
     }
     return rc;
 }
