@@ -450,7 +450,6 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  *
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Set of processes
- * @param endpoint (OUT)      Set of (optional) mca_bml_base_endpoint_t structures by BML.
  * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this BML.
  * @return                    OMPI_SUCCESS or error status on failure.
  *
@@ -476,7 +475,6 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
 typedef int (*mca_bml_base_module_add_procs_fn_t)(
                                                   size_t nprocs,
                                                   struct ompi_proc_t** procs, 
-                                                  struct mca_bml_base_endpoint_t** endpoints,
                                                   struct ompi_bitmap_t* reachable
                                                   );
 
