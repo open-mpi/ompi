@@ -159,7 +159,6 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     ompi_bitmap_t reachable;
-    struct mca_bml_base_endpoint_t **bml_endpoints = NULL;
     int rc;
     size_t i;
 
@@ -186,16 +185,10 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    bml_endpoints = (mca_bml_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
-    if (NULL == bml_endpoints) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
     /* initialize bml endpoint data */
     rc = mca_bml.bml_add_procs(
                                nprocs,
                                procs,
-                               bml_endpoints,
                                &reachable
                                );
     if(OMPI_SUCCESS != rc)
@@ -232,7 +225,6 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         int idx;
         mca_pml_dr_endpoint_t *endpoint;
 
-
         endpoint = OBJ_NEW(mca_pml_dr_endpoint_t);
         endpoint->proc_ompi = procs[i];
         procs[i]->proc_pml = (struct mca_pml_base_endpoint_t*) endpoint;
@@ -251,7 +243,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         MCA_PML_DR_DEBUG(10, (0, "%s:%d: setting endpoint->dst to %d\n", 
                               __FILE__, __LINE__, idx));
         
-        endpoint->bml_endpoint = bml_endpoints[i];
+        endpoint->bml_endpoint = procs[i]->proc_bml;
     }
     
     for(i = 0; i < nprocs; i++) { 
@@ -259,10 +251,6 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
             opal_pointer_array_get_item(&mca_pml_dr.endpoints, i);
             ep->src = mca_pml_dr.my_rank;
     }
-    /* no longer need this */
-    if ( NULL != bml_endpoints ) {
-        free ( bml_endpoints);
-    } 
     return rc;
 }
 

@@ -570,7 +570,6 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 {
     ompi_bitmap_t reachable;
     ompi_proc_t **procs=NULL;
-    struct mca_bml_base_endpoint_t **bml_endpoints=NULL;
     struct mca_bml_base_btl_array_t *bml_btl_array=NULL;
     mca_bml_base_btl_t *bml_btl=NULL;
     mca_btl_base_component_t *btl=NULL;
@@ -598,14 +597,8 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
         return;
     }
 
-    bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( size * 
-                                                                 sizeof(struct mca_bml_base_endpoint_t*));
-    if ( NULL == bml_endpoints ) {
-        return;
-    }
-
     procs = comm->c_local_group->grp_proc_pointers;
-    rc = mca_bml.bml_add_procs ( size, procs, bml_endpoints,  &reachable );
+    rc = mca_bml.bml_add_procs ( size, procs, &reachable );
     if(OMPI_SUCCESS != rc) {
         return;
     }
@@ -617,10 +610,10 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
         }
 	
         if ( use_rdma ) {
-            bml_btl_array = &(bml_endpoints[i]->btl_rdma);
+            bml_btl_array = &(procs[i]->proc_bml->btl_rdma);
         }
         else {
-            bml_btl_array = &(bml_endpoints[i]->btl_send);
+            bml_btl_array = &(procs[i]->proc_bml->btl_send);
         }
         bml_btl = mca_bml_base_btl_array_get_index ( bml_btl_array, 0 );
         btl = bml_btl->btl->btl_component;
@@ -656,10 +649,6 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     }
 
     *key = firstproc;
-
-    if ( NULL != bml_endpoints ) {
-        free ( bml_endpoints);
-    }
 
     return;
 }

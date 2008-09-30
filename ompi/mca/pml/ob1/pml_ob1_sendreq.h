@@ -79,7 +79,8 @@ static inline bool unlock_send_request(mca_pml_ob1_send_request_t *sendreq)
 
 static inline void
 add_request_to_send_pending(mca_pml_ob1_send_request_t* sendreq,
-        const mca_pml_ob1_send_pending_t type, const bool append)
+                            const mca_pml_ob1_send_pending_t type,
+                            const bool append)
 {
     opal_list_item_t *item = (opal_list_item_t*)sendreq;
 
@@ -363,10 +364,9 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
             break;
         }
     } else {
-        if(bml_btl->btl_rndv_eager_limit < eager_limit)
+        size = eager_limit;
+        if(OPAL_UNLIKELY(bml_btl->btl_rndv_eager_limit < eager_limit))
             size = bml_btl->btl_rndv_eager_limit;
-        else
-            size = eager_limit;
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if
