@@ -56,12 +56,9 @@
 #include "btl_sm_frag.h"
 #include "btl_sm_fifo.h"
 
-
-
 /*
  * Shared Memory (SM) component instance.
  */
-
 mca_btl_sm_component_t mca_btl_sm_component = {
     {  /* super is being filled in */
         /* First, the mca_base_component_t struct containing meta information

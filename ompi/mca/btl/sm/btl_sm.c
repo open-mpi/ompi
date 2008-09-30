@@ -791,11 +791,10 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-int mca_btl_sm_send(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor,
-    mca_btl_base_tag_t tag)
+int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
+                     struct mca_btl_base_endpoint_t* endpoint,
+                     struct mca_btl_base_descriptor_t* descriptor,
+                     mca_btl_base_tag_t tag )
 {
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)descriptor;
     int rc;
