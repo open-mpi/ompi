@@ -118,10 +118,10 @@ ompi_osc_rdma_peer_info_free(ompi_osc_rdma_peer_info_t *peer_info)
     if (NULL != peer_info->local_descriptors) {
         for (i = 0 ; i < peer_info->local_num_btls ; ++i) {
             if (NULL != peer_info->local_descriptors[i]) {
-                mca_bml_base_btl_t *bml_btl =
-                    peer_info->local_btls[i];
-                bml_btl->btl_free(bml_btl->btl,
-                                 peer_info->local_descriptors[i]);
+                mca_bml_base_btl_t *bml_btl = peer_info->local_btls[i];
+                mca_btl_base_module_t* btl = bml_btl->btl;
+                
+                btl->btl_free(btl, peer_info->local_descriptors[i]);
             }
         }
         free(peer_info->local_descriptors);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,8 +28,6 @@
 static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* ep)
 {
     ep->btl_pipeline_send_length = 0;
-    ep->btl_max_send_size = 0;
-    ep->btl_rdma_align = 0;
     ep->btl_send_limit = 0;
 
     OBJ_CONSTRUCT(&ep->btl_eager, mca_bml_base_btl_array_t);

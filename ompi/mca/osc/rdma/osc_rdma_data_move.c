@@ -157,8 +157,9 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
                            ompi_osc_rdma_sendreq_t *sendreq)
 {
     mca_btl_base_descriptor_t* descriptor;
-    size_t size = sendreq->req_origin_bytes_packed;
     ompi_osc_rdma_btl_t *rdma_btl = NULL;
+    mca_btl_base_module_t* btl;
+    size_t size = sendreq->req_origin_bytes_packed;
     int index, target, ret;
 
     target = sendreq->req_target_rank;
@@ -172,6 +173,7 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
         }
 
         rdma_btl = &(module->m_peer_info[target].peer_btls[index]);
+        btl = rdma_btl->bml_btl->btl;
 
         if (sendreq->req_type == OMPI_OSC_RDMA_PUT) {
             mca_bml_base_prepare_src(rdma_btl->bml_btl, NULL,
@@ -199,10 +201,8 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
             descriptor->des_cbdata = sendreq;
             descriptor->des_cbfunc = rdma_cb;
 
-            ret = rdma_btl->bml_btl->
-                btl_put(rdma_btl->bml_btl->btl,
-                        rdma_btl->bml_btl->btl_endpoint,
-                        descriptor);
+            ret = btl->btl_put(btl, rdma_btl->bml_btl->btl_endpoint,
+                               descriptor);
         } else {
             mca_bml_base_prepare_dst(rdma_btl->bml_btl,
                     NULL, &sendreq->req_origin_convertor, rdma_btl->rdma_order,
@@ -223,10 +223,8 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
             descriptor->des_cbdata = sendreq;
             descriptor->des_cbfunc = rdma_cb;
 
-            ret = rdma_btl->bml_btl->
-                btl_get(rdma_btl->bml_btl->btl,
-                        rdma_btl->bml_btl->btl_endpoint,
-                        descriptor);
+            ret = btl->btl_get(btl, rdma_btl->bml_btl->btl_endpoint,
+                               descriptor);
         }
         rdma_btl->rdma_order = descriptor->order;
 
@@ -403,6 +401,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     int ret = OMPI_SUCCESS;
     mca_bml_base_endpoint_t *endpoint = NULL;
     mca_bml_base_btl_t *bml_btl = NULL;
+    mca_btl_base_module_t* btl = NULL;
     mca_btl_base_descriptor_t *descriptor = NULL;
     ompi_osc_rdma_send_header_t *header = NULL;
     size_t written_data = 0;
@@ -445,10 +444,11 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         /* get a buffer... */
         endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_bml;
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+        btl = bml_btl->btl;
         mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
-                module->m_use_buffers ? bml_btl->btl_eager_limit :
-                needed_len < bml_btl->btl_eager_limit ? needed_len :
-                bml_btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+                           module->m_use_buffers ? btl->btl_eager_limit :
+                           needed_len < btl->btl_eager_limit ? needed_len :
+                           btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
         if (NULL == descriptor) {
             ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
@@ -690,7 +690,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     endpoint = (mca_bml_base_endpoint_t*) replyreq->rep_origin_proc->proc_bml;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
-            bml_btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+            bml_btl->btl->btl_eager_limit, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         goto cleanup;

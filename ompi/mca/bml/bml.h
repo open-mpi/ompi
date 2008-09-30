@@ -53,29 +53,10 @@ struct mca_mpool_base_resources_t;
  */
 
 struct mca_bml_base_btl_t {
-    int    btl_index;                             /**< index in endpoint array */
-    int    btl_flags;                             /**< support for put/get? */
-    double btl_weight;                            /**< BTL weight for scheduling */
-    size_t btl_eager_limit;                       /**< BTL eager limit */
-    size_t btl_rndv_eager_limit;                  /**< BTL rndv eager limit */
-    size_t btl_max_send_size;                     /**< BTL min send size */
-    size_t btl_rdma_pipeline_send_length;         /**< BTL send length */
-    size_t btl_rdma_pipeline_frag_size;           /**< BTL rdma frag size */
-    size_t btl_min_rdma_pipeline_size;            /**< BTL min rdma size */
-    struct mca_btl_base_module_t *btl;            /**< BTL module */
-    struct mca_btl_base_endpoint_t* btl_endpoint; /**< BTL addressing info */
-        
-    /* BTL function table */
-    mca_btl_base_module_alloc_fn_t   btl_alloc;
-    mca_btl_base_module_free_fn_t    btl_free;
-    mca_btl_base_module_send_fn_t    btl_send;
-    mca_btl_base_module_sendi_fn_t   btl_sendi;
-    mca_btl_base_module_prepare_fn_t btl_prepare_src;
-    mca_btl_base_module_prepare_fn_t btl_prepare_dst;
-    mca_btl_base_module_put_fn_t     btl_put;
-    mca_btl_base_module_get_fn_t     btl_get;
-
-    mca_mpool_base_module_t*         btl_mpool;
+    uint32_t  btl_flags;                             /**< support for put/get? */
+    float     btl_weight;                            /**< BTL weight for scheduling */
+    struct    mca_btl_base_module_t *btl;            /**< BTL module */
+    struct    mca_btl_base_endpoint_t* btl_endpoint; /**< BTL addressing info */
 };
 typedef struct mca_bml_base_btl_t mca_bml_base_btl_t;
 
@@ -241,27 +222,31 @@ struct mca_bml_base_endpoint_t {
     size_t                   btl_pipeline_send_length;   /**< max of pipeline send_length of available BTLs */
     size_t                   btl_send_limit;    /**< max of min rdma pipeline for available rmda btls */
     size_t                   btl_max_send_size; /**< min of max send size for available send btls */
-    size_t                   btl_rdma_align;    /**< max of min rdma size for available rmda btls */
     mca_bml_base_btl_array_t btl_eager;         /**< array of btls to use for first fragments */
     mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
-    size_t                   bml_max_send_length;
-    size_t                   bml_max_rdma_length;
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
-    size_t btl_rdma_index;                      /**< index of last used BTL for RDMA */
-    uint32_t btl_flags_or;                      /**< the bitwise OR of the btl flags */
-    uint32_t btl_flags_and;                     /**< the bitwise AND of the btl flags */
+    size_t                   btl_rdma_index;    /**< index of last used BTL for RDMA */
+    uint32_t                 btl_flags_or;      /**< the bitwise OR of the btl flags */
 };
 typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
                               
     
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
 
-static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, uint8_t order, size_t size, uint32_t flags) { 
-    *des = bml_btl->btl_alloc(bml_btl->btl, bml_btl->btl_endpoint, order, size, flags);
+static inline void mca_bml_base_alloc( mca_bml_base_btl_t* bml_btl,
+                                       mca_btl_base_descriptor_t** des,
+                                       uint8_t order, size_t size, uint32_t flags )
+{
+    mca_btl_base_module_t* btl = bml_btl->btl;
+    *des = btl->btl_alloc(btl, bml_btl->btl_endpoint, order, size, flags);
 }
 
-static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
-    bml_btl->btl_free( bml_btl->btl, des );   
+static inline void mca_bml_base_free( mca_bml_base_btl_t* bml_btl,
+                                      mca_btl_base_descriptor_t* des )
+{ 
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
+    btl->btl_free( btl, des );   
     /* The previous function is supposed to release the des object
      * so we should not touch it anymore.
      */
@@ -269,22 +254,22 @@ static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_d
 
 #if OMPI_ENABLE_DEBUG_RELIABILITY
 
-int mca_bml_base_send(
-    mca_bml_base_btl_t* bml_btl, 
-    mca_btl_base_descriptor_t* des, 
-    mca_btl_base_tag_t tag); 
+int mca_bml_base_send( mca_bml_base_btl_t* bml_btl, 
+                       mca_btl_base_descriptor_t* des, 
+                       mca_btl_base_tag_t tag );
 
 
 #else
 
-static inline int mca_bml_base_send(
-    mca_bml_base_btl_t* bml_btl,
-    mca_btl_base_descriptor_t* des,
-    mca_btl_base_tag_t tag)
+static inline int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
+                                     mca_btl_base_descriptor_t* des,
+                                     mca_btl_base_tag_t tag )
 {
     int rc;
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
     des->des_context = (void*) bml_btl;
-    rc = bml_btl->btl_send(bml_btl->btl, bml_btl->btl_endpoint, des, tag);
+    rc = btl->btl_send(btl, bml_btl->btl_endpoint, des, tag);
     if(rc == OMPI_ERR_RESOURCE_BUSY)
         rc = OMPI_SUCCESS;
 
@@ -293,45 +278,48 @@ static inline int mca_bml_base_send(
 
 #endif
 
-static inline int mca_bml_base_send_status(
-    mca_bml_base_btl_t* bml_btl,
-    mca_btl_base_descriptor_t* des,
-    mca_btl_base_tag_t tag)
+static inline int mca_bml_base_send_status( mca_bml_base_btl_t* bml_btl,
+                                            mca_btl_base_descriptor_t* des,
+                                            mca_btl_base_tag_t tag )
 {
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
     des->des_context = (void*) bml_btl;
-    return bml_btl->btl_send(bml_btl->btl, bml_btl->btl_endpoint, des, tag);
+    return btl->btl_send(btl, bml_btl->btl_endpoint, des, tag);
 }
 
-static inline int  mca_bml_base_sendi(
-    mca_bml_base_btl_t* bml_btl,
-    struct ompi_convertor_t* convertor,
-    void* header,
-    size_t header_size,
-    size_t payload_size,
-    uint8_t order,
-    uint32_t flags,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_descriptor_t** descriptor)
+static inline int  mca_bml_base_sendi( mca_bml_base_btl_t* bml_btl,
+                                       struct ompi_convertor_t* convertor,
+                                       void* header,
+                                       size_t header_size,
+                                       size_t payload_size,
+                                       uint8_t order,
+                                       uint32_t flags,
+                                       mca_btl_base_tag_t tag,
+                                       mca_btl_base_descriptor_t** descriptor )
 {
-    return bml_btl->btl_sendi(bml_btl->btl, bml_btl->btl_endpoint, 
-                              convertor, header, header_size,
-                              payload_size, order, flags, tag, descriptor);
+    mca_btl_base_module_t* btl = bml_btl->btl;
+    return btl->btl_sendi(btl, bml_btl->btl_endpoint, 
+                          convertor, header, header_size,
+                          payload_size, order, flags, tag, descriptor);
 }
 
-static inline int mca_bml_base_put(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
+static inline int mca_bml_base_put( mca_bml_base_btl_t* bml_btl,
+                                    mca_btl_base_descriptor_t* des)
+{
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
     des->des_context = (void*) bml_btl; 
-    return bml_btl->btl_put(
-                             bml_btl->btl,
-                             bml_btl->btl_endpoint, 
-                             des);
+    return btl->btl_put( btl, bml_btl->btl_endpoint, des );
 }
 
-static inline int mca_bml_base_get(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
+static inline int mca_bml_base_get( mca_bml_base_btl_t* bml_btl,
+                                    mca_btl_base_descriptor_t* des)
+{
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
     des->des_context = (void*) bml_btl; 
-    return bml_btl->btl_get(
-                             bml_btl->btl,
-                             bml_btl->btl_endpoint, 
-                             des);
+    return btl->btl_get( btl, bml_btl->btl_endpoint, des );
 }
 
 
@@ -342,15 +330,12 @@ static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
                                             size_t reserve, 
                                             size_t *size,
                                             uint32_t flags,
-                                            mca_btl_base_descriptor_t** des) { 
-    *des = bml_btl->btl_prepare_src( bml_btl->btl, 
-                                     bml_btl->btl_endpoint, 
-                                     reg, 
-                                     conv,
-                                     order,
-                                     reserve,
-                                     size,
-                                     flags );
+                                            mca_btl_base_descriptor_t** des)
+{
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
+    *des = btl->btl_prepare_src( btl, bml_btl->btl_endpoint, reg, conv,
+                                 order, reserve, size, flags );
     if( OPAL_LIKELY((*des) != NULL) ) {
         (*des)->des_context = (void*) bml_btl;
     }
@@ -363,15 +348,12 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
                                             size_t reserve, 
                                             size_t *size,
                                             uint32_t flags,
-                                            mca_btl_base_descriptor_t** des) { 
-    *des = bml_btl->btl_prepare_dst( bml_btl->btl, 
-                                     bml_btl->btl_endpoint, 
-                                     reg, 
-                                     conv,
-                                     order,
-                                     reserve,
-                                     size,
-                                     flags );
+                                            mca_btl_base_descriptor_t** des)
+{ 
+    mca_btl_base_module_t* btl = bml_btl->btl;
+
+    *des = btl->btl_prepare_dst( btl, bml_btl->btl_endpoint, reg, conv,
+                                 order, reserve, size, flags );
     if( OPAL_LIKELY((*des) != NULL) ) {
         (*des)->des_context = (void*) bml_btl;
     }
@@ -570,12 +552,7 @@ typedef int (*mca_bml_base_module_ft_event_fn_t)(int status);
 struct mca_bml_base_module_t {
     /* BML common attributes */
     mca_bml_base_component_t* bml_component; /**< pointer back to the BML component structure */
-    size_t      bml_eager_limit;      /**< maximum size of first fragment -- eager send */
-    size_t      bml_rndv_eager_limit;    /**< size of a first fragment of rndv protocol */
-    size_t      bml_max_send_size;    /**< maximum send fragment size supported by the BML */
-    size_t      bml_min_rdma_size;    /**< threshold below which the BML should not fragment */
-    size_t      bml_max_rdma_size;    /**< maximum rdma fragment size supported by the BML */
-    
+
     /* BML function table */
     mca_bml_base_module_add_procs_fn_t     bml_add_procs;
     mca_bml_base_module_del_procs_fn_t     bml_del_procs;

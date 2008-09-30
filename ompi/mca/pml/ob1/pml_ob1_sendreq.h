@@ -341,7 +341,8 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
                                     mca_bml_base_btl_t* bml_btl )
 {
     size_t size = sendreq->req_send.req_bytes_packed;
-    size_t eager_limit = bml_btl->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);
+    mca_btl_base_module_t* btl = bml_btl->btl;
+    size_t eager_limit = btl->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);
     int rc;
 
     if( OPAL_LIKELY(size <= eager_limit) ) {
@@ -365,8 +366,8 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
         }
     } else {
         size = eager_limit;
-        if(OPAL_UNLIKELY(bml_btl->btl_rndv_eager_limit < eager_limit))
-            size = bml_btl->btl_rndv_eager_limit;
+        if(OPAL_UNLIKELY(btl->btl_rndv_eager_limit < eager_limit))
+            size = btl->btl_rndv_eager_limit;
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if

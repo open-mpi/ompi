@@ -25,11 +25,6 @@ int mca_bml_base_output = -1;
 
 mca_bml_base_module_t mca_bml = {
     NULL,                    /* bml_component */
-    0,                       /* bml_eager_limit */ 
-    0,                       /* bml_rndv_eager_limit */ 
-    0,                       /* bml_max_send_size */ 
-    0,                       /* bml_min_rdma_size */ 
-    0,                       /* bml_max_rdma_size */ 
     NULL,                    /* bml_add_procs */ 
     NULL,                    /* bml_del_procs */
     NULL,                    /* bml_add_btl */
