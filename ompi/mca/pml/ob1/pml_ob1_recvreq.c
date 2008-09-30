@@ -687,9 +687,8 @@ void mca_pml_ob1_recv_request_matched_probe( mca_pml_ob1_recv_request_t* recvreq
  *
 */
 
-int mca_pml_ob1_recv_request_schedule_once(
-        mca_pml_ob1_recv_request_t* recvreq,
-        mca_bml_base_btl_t *start_bml_btl)
+int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
+                                            mca_bml_base_btl_t *start_bml_btl )
 {
     mca_bml_base_btl_t* bml_btl; 
     int num_tries = recvreq->req_rdma_cnt, num_fail = 0;
@@ -717,6 +716,7 @@ int mca_pml_ob1_recv_request_schedule_once(
         mca_btl_base_descriptor_t* dst;
         mca_btl_base_descriptor_t* ctl;
         mca_mpool_base_registration_t * reg = NULL;
+        mca_btl_base_module_t* btl;
         int rc, rdma_idx;
 
         if(prev_bytes_remaining == bytes_remaining) {
@@ -743,21 +743,20 @@ int mca_pml_ob1_recv_request_schedule_once(
             if(++recvreq->req_rdma_idx >= recvreq->req_rdma_cnt)
                 recvreq->req_rdma_idx = 0;
         } while(!size);
+        btl = bml_btl->btl;
 
         /* makes sure that we don't exceed BTL max rdma size
          * if memory is not pinned already */
-        if(NULL == reg &&
-                bml_btl->btl_rdma_pipeline_frag_size != 0 &&
-                size > bml_btl->btl_rdma_pipeline_frag_size) {
-            size = bml_btl->btl_rdma_pipeline_frag_size;
+        if( (NULL == reg) && (btl->btl_rdma_pipeline_frag_size != 0) &&
+                             (size > btl->btl_rdma_pipeline_frag_size)) {
+            size = btl->btl_rdma_pipeline_frag_size;
         }
 
         /* take lock to protect converter against concurrent access
          * from unpack */
         OPAL_THREAD_LOCK(&recvreq->lock);
-        ompi_convertor_set_position(
-                &recvreq->req_recv.req_base.req_convertor,
-                &recvreq->req_rdma_offset);
+        ompi_convertor_set_position( &recvreq->req_recv.req_base.req_convertor,
+                                     &recvreq->req_rdma_offset );
 
         /* prepare a descriptor for RDMA */
         mca_bml_base_prepare_dst(bml_btl, reg, 
@@ -806,8 +805,7 @@ int mca_pml_ob1_recv_request_schedule_once(
 
         if(!recvreq->req_ack_sent)
             recvreq->req_ack_sent = true;
-        ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_PUT,
-                recvreq->req_recv.req_base.req_proc);
+        ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_PUT, recvreq->req_recv.req_base.req_proc);
 
         PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                       &(recvreq->req_recv.req_base), size,

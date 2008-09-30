@@ -299,7 +299,7 @@ mca_pml_ob1_calc_weighted_length( mca_pml_ob1_com_btl_t *btls, int num_btls, siz
         mca_bml_base_btl_t* bml_btl = btls[i].bml_btl;
         size_t length = 0;
         if( OPAL_UNLIKELY(0 != length_left) ) {
-            length = (length_left > bml_btl->btl_eager_limit)?
+            length = (length_left > bml_btl->btl->btl_eager_limit)?
                 ((size_t)(size * (bml_btl->btl_weight / weight_total))) :
                 length_left;
 
