@@ -82,11 +82,18 @@ static int orte_ras_slurm_allocate(orte_jobid_t jobid, opal_list_t *attributes)
     }
     regexp = strdup(slurm_node_str);
     
-    tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
+    tasks_per_node = getenv("SLURM_JOB_CPUS_PER_NODE");
     if (NULL == tasks_per_node) {
-        opal_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
-                       "SLURM_TASKS_PER_NODE");
-        return ORTE_ERR_NOT_FOUND;
+        /* didn't find SLURM 1.2 or above envar - look for prior
+         * version
+         */
+        tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
+        if (NULL == tasks_per_node) {
+            /* couldn't find any version - abort */
+            opal_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
+                           "SLURM_JOB_CPUS_PER NODE or SLURM_TASKS_PER_NODE");
+            return ORTE_ERR_NOT_FOUND;
+        }
     }
     node_tasks = strdup(tasks_per_node);
 
