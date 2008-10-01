@@ -12,6 +12,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "ompi/communicator/communicator.h"
 #include "vprotocol_pessimist.h"
 
 static inline int mca_param_register_int( const char* param_name, int default_value);
@@ -110,7 +111,8 @@ static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int*
     mca_vprotocol_pessimist.event_buffer_length = 0;
     mca_vprotocol_pessimist.event_buffer = 
                 (vprotocol_pessimist_mem_event_t *) malloc(_event_buffer_size);
-
+    mca_vprotocol_pessimist.el_comm = MPI_COMM_NULL;
+    
     return &mca_vprotocol_pessimist.super;
 }
                                                                           
@@ -126,13 +128,14 @@ static int mca_vprotocol_pessimist_component_finalize(void)
 
 int mca_vprotocol_pessimist_enable(bool enable) {
     if(enable) {
-        int ret; 
+        int ret;
         if((ret = vprotocol_pessimist_sender_based_init(_mmap_file_name, 
-                                                 _sender_based_size)) < OPAL_SUCCESS)
+                                                 _sender_based_size)) != OMPI_SUCCESS)
             return ret;
     }
     else {
         vprotocol_pessimist_sender_based_finalize();
+        vprotocol_pessimist_event_logger_disconnect(&mca_vprotocol_pessimist.el_comm);
     }
     return OMPI_SUCCESS;
 }
