@@ -23,6 +23,7 @@
 #include "limits.h"
 #include "ompi/attribute/attribute.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/prefetch.h"
 
 static void __get_free_dt_struct( ompi_datatype_t* pData )
 {
@@ -109,7 +110,10 @@ ompi_datatype_t* ompi_ddt_create( int32_t expectedSize )
 
 int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, MPI_Aint lb, MPI_Aint extent, ompi_datatype_t** newType )
 {
-    ompi_ddt_duplicate( oldType, newType );
+    int ret = ompi_ddt_duplicate( oldType, newType );
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
     (*newType)->lb = lb;
     (*newType)->ub = lb + extent;
 

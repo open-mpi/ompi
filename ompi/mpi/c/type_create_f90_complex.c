@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,6 +77,7 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
     if( *newtype != &ompi_mpi_datatype_null ) {
         ompi_datatype_t* datatype;
         int* a_i[2];
+        int rc;
 
         key = (((uint64_t)p) << 32) | ((uint64_t)r);
         if( OPAL_SUCCESS == opal_hash_table_get_value_uint64( &ompi_mpi_f90_complex_hashtable,
@@ -98,7 +100,10 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
         a_i[1] = &p;
         ompi_ddt_set_args( datatype, 1, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_COMPLEX );
 
-        opal_hash_table_set_value_uint64( &ompi_mpi_f90_complex_hashtable, key, datatype );
+        rc = opal_hash_table_set_value_uint64( &ompi_mpi_f90_complex_hashtable, key, datatype );
+        if (OMPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
+        }
         *newtype = datatype;
         return MPI_SUCCESS;
     }
