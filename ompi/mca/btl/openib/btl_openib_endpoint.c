@@ -638,9 +638,13 @@ int mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* ep,
     rc = check_endpoint_state(ep, &to_base_frag(frag)->base,
             &ep->pending_lazy_frags);
 
-    if(OPAL_LIKELY(rc == OMPI_SUCCESS))
+    if(OPAL_LIKELY(OMPI_SUCCESS == rc)) {
         rc = mca_btl_openib_endpoint_post_send(ep, frag);
+    }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+    if (OPAL_UNLIKELY(OMPI_ERR_RESOURCE_BUSY == rc)) {
+        rc = OMPI_SUCCESS;
+    }
 
     return rc;
 }
