@@ -93,7 +93,7 @@ int ompi_dpm_base_null_dyn_finalize (void);
 void ompi_dpm_base_null_mark_dyncomm (ompi_communicator_t *comm);
 int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag);
 int ompi_dpm_base_null_parse_port(char *port_name, 
-                                  orte_process_name_t *rproc, orte_rml_tag_t *tag);
+                                  char **hnp_uri, char **rml_uri, orte_rml_tag_t *tag);
 int ompi_dpm_base_null_route_to_port(char *rml_uri, orte_process_name_t *rproc);
 int ompi_dpm_base_null_close_port(char *port_name);
 
