@@ -121,7 +121,7 @@ typedef int (*ompi_dpm_base_module_open_port_fn_t)(char *port_name, orte_rml_tag
  * Converts an opaque port string to a RML process nane and tag.
  */
 typedef int (*ompi_dpm_base_module_parse_port_name_t)(char *port_name,
-                                                      orte_process_name_t *rproc,
+                                                      char **hnp_uri, char **rml_uri,
                                                       orte_rml_tag_t *tag);
 
 /* 

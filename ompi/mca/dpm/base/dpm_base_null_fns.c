@@ -72,7 +72,7 @@ int ompi_dpm_base_null_open_port(char *port_name, orte_rml_tag_t given_tag)
 }
 
 int ompi_dpm_base_null_parse_port(char *port_name, 
-                                  orte_process_name_t *rproc, orte_rml_tag_t *tag)
+                                  char **hnp_uri, char **rml_uri, orte_rml_tag_t *tag)
 {
     return OMPI_ERR_NOT_SUPPORTED;
 }
