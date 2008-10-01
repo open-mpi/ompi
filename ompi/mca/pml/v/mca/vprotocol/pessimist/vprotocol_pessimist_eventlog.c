@@ -11,6 +11,66 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
 
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "ompi/mca/dpm/dpm.h"
+#include "ompi/mca/pubsub/pubsub.h"
+
+int vprotocol_pessimist_event_logger_connect(char *el_name, ompi_communicator_t **el_comm)
+{
+    int rc;
+    opal_buffer_t buffer;
+    char *port;
+    orte_process_name_t el_proc;
+    char *hnp_uri, *rml_uri;
+    orte_rml_tag_t el_tag;
+    
+    port = ompi_pubsub.lookup(el_name, MPI_INFO_NULL);
+    V_OUTPUT_VERBOSE(45, "Found port < %s >", port);
+    
+    /* separate the string into the HNP and RML URI and tag */
+    if (ORTE_SUCCESS != (rc = ompi_dpm.parse_port(port, &hnp_uri, &rml_uri, &el_tag))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* extract the originating proc's name */
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &el_proc, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        free(rml_uri); free(hnp_uri);
+        return rc;
+    }
+    /* make sure we can route rml messages to the destination */
+    if (ORTE_SUCCESS != (rc = ompi_dpm.route_to_port(hnp_uri, &el_proc))) {
+        ORTE_ERROR_LOG(rc);
+        free(rml_uri); free(hnp_uri);
+        return rc;
+    }
+    free(rml_uri); free(hnp_uri);
+    
+    /* Send an rml message to tell the remote end to wake up and jump into 
+     * connect/accept */
+    OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    rc = orte_rml.send_buffer(&el_proc, &buffer, el_tag+1, 0);
+    if(OMPI_SUCCESS > rc) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buffer);        
+        return rc;
+    }
+    OBJ_DESTRUCT(&buffer);
+
+    rc = ompi_dpm.connect_accept(MPI_COMM_SELF, 0, port, true, el_comm);
+    if(OMPI_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
+}
+
+int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm)
+{
+    ompi_dpm.disconnect(el_comm);
+    return OMPI_SUCCESS;
+}
 
 void vprotocol_pessimist_matching_replay(int *src) {
 #if OMPI_ENABLE_DEBUG

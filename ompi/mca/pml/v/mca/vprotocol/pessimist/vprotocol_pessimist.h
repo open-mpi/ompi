@@ -30,6 +30,7 @@ typedef struct mca_vprotocol_pessimist_module_t {
     opal_list_t pending_events;
 
     /* output buffer for messages to event logger */
+    ompi_communicator_t *el_comm;
     vprotocol_pessimist_mem_event_t *event_buffer;
     size_t event_buffer_length;
     size_t event_buffer_max_length;
@@ -46,7 +47,7 @@ typedef struct mca_vprotocol_pessimist_module_t {
 } mca_vprotocol_pessimist_module_t;
 
 OMPI_DECLSPEC extern mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist;
-OMPI_DECLSPEC extern mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component;
+OMPI_DECLSPEC extern mca_vprotocol_base_component_t mca_vprotocol_pessimist_component;
 
 int mca_vprotocol_pessimist_enable(bool enable);
 int mca_vprotocol_pessimist_dump(struct ompi_communicator_t* comm, int verbose);

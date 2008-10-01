@@ -16,6 +16,22 @@
 
 BEGIN_C_DECLS
 
+/** Enum containing the command tags to remotely control event loggers
+  */
+typedef enum {
+    VPROTOCOL_PESSIMIST_LOG_EVENTS_TAG
+} vprotocol_pessimist_event_logger_command_tag_t; 
+
+/** Initialize the MPI connexion with the event logger
+ * @return OMPI_SUCCESS or error code
+ */
+int vprotocol_pessimist_event_logger_connect(char *el_name, ompi_communicator_t **el_comm);
+
+/** Finalize the MPI connexion with the event logger
+ * @return OMPI_SUCCESS or error code
+ */
+int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm);
+
 /*******************************************************************************
   * ANY_SOURCE MATCHING
   */
@@ -63,14 +79,20 @@ static inline void vprotocol_pessimist_matching_log_finish(ompi_request_t *req)
 }
 
 /* Helper macro to actually perform the send to EL. */
-#define __VPROTOCOL_PESSIMIST_SEND_BUFFER() do {                                \
-  if(mca_vprotocol_pessimist.event_buffer_length)                             \
-  {                                                                           \
-/*  pml_v.host_pml.send(mca_vprotocol_pessimist.event_buffer,  MPI_BYTE,        \
-             mca_vprotocol_pessimist.event_buffer_length *                    \
-                sizeof(vprotocol_pessimist_mem_event_t));                    */ \
-    mca_vprotocol_pessimist.event_buffer_length = 0;                          \
-  }                                                                           \
+#define __VPROTOCOL_PESSIMIST_SEND_BUFFER() do {                              \
+    if(mca_vprotocol_pessimist.event_buffer_length)                           \
+    {                                                                         \
+        if(ompi_comm_invalid(mca_vprotocol_pessimist.el_comm))                \
+            vprotocol_pessimist_event_logger_connect("EL",                    \
+                                        &mca_vprotocol_pessimist.el_comm);    \
+        mca_pml_v.host_pml.pml_send(mca_vprotocol_pessimist.event_buffer,     \
+                            mca_vprotocol_pessimist.event_buffer_length *     \
+                            sizeof(vprotocol_pessimist_mem_event_t),          \
+                            MPI_BYTE, 0, VPROTOCOL_PESSIMIST_LOG_EVENTS_TAG,  \
+                            MCA_PML_BASE_SEND_STANDARD,                       \
+                            mca_vprotocol_pessimist.el_comm);                 \
+        mca_vprotocol_pessimist.event_buffer_length = 0;                      \
+    }                                                                         \
 } while(0)
 
 
