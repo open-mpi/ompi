@@ -33,7 +33,7 @@ extern "C" {
  * indicates whether multiple threads may invoke this component
  * simultaneously or not.
  */
-typedef struct mca_vprotocol_base_module_1_0_0_t * 
+typedef struct mca_vprotocol_base_module_2_0_0_t * 
     (*mca_vprotocol_base_component_init_fn_t)(int *priority, 
                                               bool enable_progress_threads,
                                               bool enable_mpi_threads);
@@ -55,7 +55,7 @@ typedef mca_vprotocol_base_component_2_0_0_t mca_vprotocol_base_component_t;
 
 /* The base module of the component
  */
-typedef struct mca_vprotocol_base_module_1_0_0_t
+typedef struct mca_vprotocol_base_module_2_0_0_t
 {
     /* PML module stuff */ 
     mca_pml_base_module_add_procs_fn_t      add_procs;
@@ -87,8 +87,8 @@ typedef struct mca_vprotocol_base_module_1_0_0_t
     /* Custom requests classes to add extra data at end of pml requests */
     opal_class_t *                            req_recv_class;
     opal_class_t *                            req_send_class;
-} mca_vprotocol_base_module_1_0_0_t;
-typedef mca_vprotocol_base_module_1_0_0_t mca_vprotocol_base_module_t;
+} mca_vprotocol_base_module_2_0_0_t;
+typedef mca_vprotocol_base_module_2_0_0_t mca_vprotocol_base_module_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
