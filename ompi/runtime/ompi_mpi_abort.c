@@ -98,7 +98,8 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     /* Notify the debugger that we're about to abort */
 
-    if (asprintf(&msg, "[%s:%d] aborting with MPI error %s%s", 
+    if (errcode < 0 ||
+        asprintf(&msg, "[%s:%d] aborting with MPI error %s%s", 
                  host, (int) pid, ompi_mpi_errnum_get_string(errcode), 
                  ompi_mpi_abort_print_stack ? 
                  " (stack trace available on stderr)" : "") < 0) {
