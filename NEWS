@@ -112,6 +112,7 @@ Trunk (not on release branches yet)
 1.2.8 (not released yet...)
 -----
 
+- Add support for SLURM_JOB_CPUS_PER_NODE if available. See ticket #1536.
 - Fix the MPIR_Proctable to be in process rank order. See ticket #1529.
 - Fix a regession introduced in 1.2.6 for the IBM eHCA. See ticket #1526.
 
