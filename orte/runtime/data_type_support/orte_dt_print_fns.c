@@ -590,7 +590,6 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                  (src->pernode) ? "TRUE" : "FALSE", (long)src->npernode,
                  (src->oversubscribe) ? "TRUE" : "FALSE",
                  (src->cpu_lists) ? "TRUE" : "FALSE");
-        free(pfx2);
         
         if (ORTE_VPID_INVALID == src->daemon_vpid_start) {
             asprintf(&tmp2, "%s\n%sNum new daemons: %ld\tNew daemon starting vpid INVALID\n%sNum nodes: %ld",
@@ -616,14 +615,10 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                 free(tmp);
                 return rc;
             }
-            if (NULL == tmp) {
-                tmp = tmp2;
-            } else {
-                asprintf(&tmp3, "%s\n%s", tmp, tmp2);
-                free(tmp);
-                free(tmp2);
-                tmp = tmp3;
-            }
+            asprintf(&tmp3, "%s\n%s", tmp, tmp2);
+            free(tmp);
+            free(tmp2);
+            tmp = tmp3;
         }
     }
     
@@ -633,6 +628,7 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
         free(tmp);
         tmp = tmp2;
     }
+    free(pfx2);
     
     /* set the return */
     *output = tmp;

@@ -16,6 +16,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/bit_ops.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -43,7 +44,8 @@ static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
-static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
+static int get_wireup_info(opal_buffer_t *buf);
 static int warmup_routes(void);
 
 #if OPAL_ENABLE_FT == 1
@@ -62,6 +64,7 @@ orte_routed_module_t orte_routed_binomial_module = {
     route_is_defined,
     update_routing_tree,
     get_routing_tree,
+    proc_is_below,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
     binomial_ft_event
@@ -928,11 +931,31 @@ static bool route_is_defined(const orte_process_name_t *target)
 }
 
 /*************************************/
+typedef struct {
+    opal_list_item_t super;
+    orte_vpid_t vpid;
+    opal_bitmap_t relatives;
+} orte_routed_tree_t;
 
-static int binomial_tree(int rank, int parent, int me, int num_procs)
+static void construct(orte_routed_tree_t *rt)
+{
+    rt->vpid = ORTE_VPID_INVALID;
+    OBJ_CONSTRUCT(&rt->relatives, opal_bitmap_t);
+}
+static void destruct(orte_routed_tree_t *rt)
+{
+    OBJ_DESTRUCT(&rt->relatives);
+}
+OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
+                   construct, destruct);
+
+
+static int binomial_tree(int rank, int parent, int me, int num_procs,
+                         int *nchildren, opal_list_t *childrn, opal_bitmap_t *relatives)
 {
     int i, bitmap, peer, hibit, mask, found;
-    orte_namelist_t *child;
+    orte_routed_tree_t *child;
+    opal_bitmap_t *relations;
     
     /* is this me? */
     if (me == rank) {
@@ -944,22 +967,30 @@ static int binomial_tree(int rank, int parent, int me, int num_procs)
         for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
             peer = rank | mask;
             if (peer < num_procs) {
-                child = OBJ_NEW(orte_namelist_t);
-                child->name.jobid = ORTE_PROC_MY_NAME->jobid;
-                child->name.vpid = peer;
+                child = OBJ_NEW(orte_routed_tree_t);
+                child->vpid = peer;
                 OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
                                      "%s routed:binomial found child %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&child->name)));
-                
-                opal_list_append(&my_children, &child->item);
-                num_children++;
+                                     ORTE_VPID_PRINT(child->vpid)));
+                if (NULL != childrn) {
+                    /* this is a direct child - add it to my list */
+                    opal_list_append(childrn, &child->super);
+                    (*nchildren)++;
+                    /* setup the relatives bitmap */
+                    opal_bitmap_init(&child->relatives, num_procs);
+                    /* point to the relatives */
+                    relations = &child->relatives;
+                } else {
+                    /* we are recording someone's relatives - set the bit */
+                    opal_bitmap_set_bit(relatives, peer);
+                    /* point to this relations */
+                    relations = relatives;
+                }
+                /* search for this child's relatives */
+                binomial_tree(0, 0, peer, num_procs, NULL, NULL, relations);
             }
         }
-        OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
-                             "%s routed:binomial found parent %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             parent));
         return parent;
     }
     
@@ -973,7 +1004,7 @@ static int binomial_tree(int rank, int parent, int me, int num_procs)
         peer = rank | mask;
         if (peer < num_procs) {
             /* execute compute on this child */
-            if (0 <= (found = binomial_tree(peer, rank, me, num_procs))) {
+            if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives))) {
                 return found;
             }
         }
@@ -998,18 +1029,41 @@ static int update_routing_tree(void)
     }
     num_children = 0;
     
-    /* recompute the tree */
+    /* compute my direct children and the bitmap that shows which vpids
+     * lie underneath their branch
+     */
     my_parent.vpid = binomial_tree(0, 0, ORTE_PROC_MY_NAME->vpid,
-                                   orte_process_info.num_procs);
+                                   orte_process_info.num_procs,
+                                   &num_children, &my_children, NULL);
     
+#if 0
+    {
+        orte_routed_tree_t *child;
+        int j;
+        
+        opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_routed_tree_t*)item;
+            opal_output(0, "%s: \tchild %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), child->vpid);
+            for (j=0; j < (int)orte_process_info.num_procs; j++) {
+                if (opal_bitmap_is_set_bit(&child->relatives, j)) {
+                    opal_output(0, "%s: \t\trelation %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
+                }
+            }
+        }
+    }
+#endif
+
     return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(orte_jobid_t job,
-                                    opal_list_t *children)
+static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
 {
     opal_list_item_t *item;
-    orte_namelist_t *nm, *child;
+    orte_namelist_t *nm;
+    orte_routed_tree_t *child;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -1025,10 +1079,10 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
         for (item = opal_list_get_first(&my_children);
              item != opal_list_get_end(&my_children);
              item = opal_list_get_next(item)) {
-            child = (orte_namelist_t*)item;
+            child = (orte_routed_tree_t*)item;
             nm = OBJ_NEW(orte_namelist_t);
-            nm->name.jobid = child->name.jobid;
-            nm->name.vpid = child->name.vpid;
+            nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+            nm->name.vpid = child->vpid;
             opal_list_append(children, &nm->item);
         }
     }
@@ -1036,7 +1090,7 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
     return my_parent.vpid;
 }
 
-static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
+static int get_wireup_info(opal_buffer_t *buf)
 {
     int rc;
     
@@ -1055,7 +1109,7 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(job, buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;
@@ -1063,6 +1117,43 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
 
     return ORTE_SUCCESS;
 }
+
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
+{
+    opal_list_item_t *item;
+    orte_routed_tree_t *child;
+    
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return false;
+    }
+
+    /* quick check: if root == target, then the answer is always true! */
+    if (root == target) {
+        return true;
+    }
+    
+    /* check the list of children to see if either their vpid
+     * matches target, or the target bit is set in their bitmap
+     */
+    
+    /* first find the specified child */
+    for (item = opal_list_get_first(&my_children);
+         item != opal_list_get_end(&my_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_routed_tree_t*)item;
+        if (child->vpid == root) {
+            /* now see if the target lies below this child */
+            return opal_bitmap_is_set_bit(&child->relatives, target);
+        }
+    }
+    
+    /* only get here if we have no children or we didn't find anything */
+    return false;
+}
+
 
 #if OPAL_ENABLE_FT == 1
 static int binomial_ft_event(int state)
