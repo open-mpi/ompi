@@ -14,61 +14,37 @@
 
 #include "opal/util/bit_ops.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_bitmap.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
 
-int down_search(int rank, int parent, int me, int num_procs,
-                int *num_children, opal_list_t *children)
-{
-    int i, bitmap, peer, hibit, mask, found;
-    orte_namelist_t *child;
-    
-    /* is this me? */
-    if (me == rank) {
-        bitmap = opal_cube_dim(num_procs);
-        
-        hibit = opal_hibit(rank, bitmap);
-        --bitmap;
-        
-        for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-            peer = rank | mask;
-            if (peer < num_procs) {
-                if (NULL != children) {
-                    child = OBJ_NEW(orte_namelist_t);
-                    child->name.jobid = ORTE_PROC_MY_NAME->jobid;
-                    child->name.vpid = peer;
-                    opal_list_append(children, &child->item);
-                }
-                (*num_children)++;
-            }
-        }
-        return parent;
-    }
-    
-    /* find the children of this rank */
-    bitmap = opal_cube_dim(num_procs);
-    
-    hibit = opal_hibit(rank, bitmap);
-    --bitmap;
-    
-    for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
-        peer = rank | mask;
-        if (peer < num_procs) {
-            /* execute compute on this child */
-            if (0 <= (found = down_search(peer, rank, me, num_procs, num_children, children))) {
-                return found;
-            }
-        }
-    }
-    return -1;
-}
+typedef struct {
+    opal_list_item_t super;
+    orte_vpid_t vpid;
+    opal_bitmap_t relatives;
+} orte_routed_tree_t;
 
-#if 0
-int down_search(int rank, int parent, int me)
+static void construct(orte_routed_tree_t *rt)
+{
+    rt->vpid = ORTE_VPID_INVALID;
+    OBJ_CONSTRUCT(&rt->relatives, opal_bitmap_t);
+}
+static destruct(orte_routed_tree_t *rt)
+{
+    OBJ_DESTRUCT(&rt->relatives);
+}
+OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
+                   construct, destruct);
+
+
+int down_search(int rank, int parent, int me, int num_procs,
+                int *num_children, opal_list_t *children, opal_bitmap_t *relatives)
 {
     int i, bitmap, peer, hibit, mask, found;
+    orte_routed_tree_t *child;
+    opal_bitmap_t *relations;
     
     /* is this me? */
     if (me == rank) {
@@ -77,12 +53,27 @@ int down_search(int rank, int parent, int me)
         hibit = opal_hibit(rank, bitmap);
         --bitmap;
         
-        printf("\tfound parent %d\n", parent);
         for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
             peer = rank | mask;
             if (peer < num_procs) {
-                printf("\tchild: %d\n", peer);
-                num_children++;
+                child = OBJ_NEW(orte_routed_tree_t);
+                child->vpid = peer;
+                if (NULL != children) {
+                    /* this is a direct child - add it to my list */
+                    opal_list_append(children, &child->super);
+                    (*num_children)++;
+                    /* setup the relatives bitmap */
+                    opal_bitmap_init(&child->relatives, num_procs);
+                    /* point to the relatives */
+                    relations = &child->relatives;
+                } else {
+                    /* we are recording someone's relatives - set the bit */
+                    opal_bitmap_set_bit(relatives, peer);
+                    /* point to this relations */
+                    relations = relatives;
+                }
+                /* search for this child's relatives */
+                down_search(0, 0, peer, num_procs, NULL, NULL, relations);
             }
         }
         return parent;
@@ -98,38 +89,48 @@ int down_search(int rank, int parent, int me)
         peer = rank | mask;
         if (peer < num_procs) {
             /* execute compute on this child */
-            if (0 <= (found = down_search(peer, rank, me))) {
+            if (0 <= (found = down_search(peer, rank, me, num_procs, num_children, children, relatives))) {
                 return found;
             }
         }
     }
     return -1;
 }
-#endif
 
 int main(int argc, char* argv[])
 {
-    int i;
+    int i, j;
     int found;
     opal_list_t children;
     opal_list_item_t *item;
     int num_children;
     int num_procs;
-    orte_namelist_t *child;
+    orte_routed_tree_t *child;
+    opal_bitmap_t *relations;
+    
+    if (2 != argc) {
+        printf("usage: binom x, where x=number of procs\n");
+        exit(1);
+    }
     
     orte_init(ORTE_TOOL);
         
-    num_procs = 32;
+    num_procs = atoi(argv[1]);
     
     for (i=0; i < num_procs; i++) {
         OBJ_CONSTRUCT(&children, opal_list_t);
         num_children = 0;
         printf("i am %d:", i);
-        found = down_search(0, 0, i, num_procs, &num_children, &children);
+        found = down_search(0, 0, i, num_procs, &num_children, &children, NULL);
         printf("\tparent %d num_children %d\n", found, num_children);
         while (NULL != (item = opal_list_remove_first(&children))) {
-            child = (orte_namelist_t*)item;
-            printf("\t\tchild %d\n", child->name.vpid);
+            child = (orte_routed_tree_t*)item;
+            printf("\tchild %d\n", child->vpid);
+            for (j=0; j < num_procs; j++) {
+                if (opal_bitmap_is_set_bit(&child->relatives, j)) {
+                    printf("\t\trelation %d\n", j);
+                }
+            }
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&children);

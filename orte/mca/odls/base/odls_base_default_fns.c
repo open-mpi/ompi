@@ -114,7 +114,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 
     /* get wireup info for daemons per the selected routing module */
     wireup = OBJ_NEW(opal_buffer_t);
-    if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(ORTE_PROC_MY_NAME->jobid, wireup))) {
+    if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(wireup))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(wireup);
         return rc;
@@ -507,12 +507,15 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                 goto REPORT_ERROR;
             }
         } else {            
-            /* is this proc on one of my children in the daemon tree? */
+            /* is this proc on a daemon in a branch of the daemon tree
+             * that is below me? If so, then the daemon collective will
+             * receive a message via that direct child
+             */
             for (item = opal_list_get_first(&daemon_tree);
                  item != opal_list_get_end(&daemon_tree);
                  item = opal_list_get_next(item)) {
                 nm = (orte_namelist_t*)item;
-                if (nm->name.vpid == node->daemon) {
+                if (orte_routed.proc_is_below(nm->name.vpid, node->daemon)) {
                     /* add to the count for collectives */
                     jobdat->num_participating++;
                     /* remove this node from the tree so we don't count it again */
@@ -2205,10 +2208,11 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     }
 
     if (jobdat->num_collected == jobdat->num_participating) {
-        /* if I am the HNP, then this is done! Handle it below */
+        /* if I am the HNP, go process the results */
         if (orte_process_info.hnp) {
             goto hnp_process;
         }
+        
         /* if I am not the HNP, send to my parent */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         /* add the requisite command header */

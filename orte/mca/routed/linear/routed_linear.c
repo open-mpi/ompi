@@ -42,7 +42,8 @@ static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
-static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
+static int get_wireup_info(opal_buffer_t *buf);
 static int warmup_routes(void);
 
 #if OPAL_ENABLE_FT == 1
@@ -61,6 +62,7 @@ orte_routed_module_t orte_routed_linear_module = {
     route_is_defined,
     update_routing_tree,
     get_routing_tree,
+    proc_is_below,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
     linear_ft_event
@@ -926,8 +928,7 @@ static int update_routing_tree(void)
     return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(orte_jobid_t job,
-                                    opal_list_t *children)
+static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
 {
     orte_namelist_t *nm;
     
@@ -960,7 +961,22 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
 }
 
 
-static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
+{
+    /* if the target is less than the root, then the path
+     * cannot lie through the root
+     */
+    
+    if (target < root) {
+        return false;
+    }
+
+    /* otherwise, it does! */
+    return true;
+}
+
+
+static int get_wireup_info(opal_buffer_t *buf)
 {
     int rc;
     
@@ -979,7 +995,7 @@ static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(job, buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;

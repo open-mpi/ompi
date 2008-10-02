@@ -11,6 +11,9 @@
 #include "rml_oob.h"
 
 #include "opal/util/argv.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -25,6 +28,7 @@ orte_rml_oob_ping(const char* uri,
     int rc;
 
     if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(uri, &name, &uris))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
  
