@@ -135,7 +135,7 @@ int mca_vprotocol_pessimist_enable(bool enable) {
     }
     else {
         vprotocol_pessimist_sender_based_finalize();
-        vprotocol_pessimist_event_logger_disconnect(&mca_vprotocol_pessimist.el_comm);
+        vprotocol_pessimist_event_logger_disconnect(mca_vprotocol_pessimist.el_comm);
     }
     return OMPI_SUCCESS;
 }
