@@ -285,7 +285,9 @@ static void load_cache(void)
         } else {
             map_processor_id_to_tuple[i].online = 1;
         }
-        close(fd);
+        if (fd >= 0) {
+            close(fd);
+        }
 
         /* Core ID */
         sprintf(path, "%s/devices/system/cpu/cpu%d/topology/core_id", 
