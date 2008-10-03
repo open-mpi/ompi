@@ -29,7 +29,9 @@ version 1.0.
 1.2.8
 -----
 
-- Add support for SLURM_JOB_CPUS_PER_NODE if available. See ticket #1536.
+- Adjust SLURM support to first look for $SLURM_JOB_CPUS_PER_NODE instead of
+  the deprecated $SLURM_TASKS_PER_NODE environment variable.  This change
+  may be *required* when using SLURM v1.2 and above.  See ticket #1536.
 - Fix the MPIR_Proctable to be in process rank order. See ticket #1529.
 - Fix a regession introduced in 1.2.6 for the IBM eHCA. See ticket #1526.
 
