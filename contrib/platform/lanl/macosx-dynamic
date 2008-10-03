@@ -14,7 +14,6 @@ enable_static=no
 enable_contrib_no_build=libnbc,vt
 with_xgrid=no
 enable_io_romio=no
-enable_visibility=yes
 enable_ipv6=no
 enable_mpi_f77=no
 enable_mpi_f90=no

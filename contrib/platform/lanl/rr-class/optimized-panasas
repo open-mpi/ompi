@@ -13,7 +13,6 @@ enable_debug=no
 enable_shared=yes
 enable_static=yes
 with_slurm=no
-enable_visibility=yes
 enable_memchecker=no
 enable_ipv6=no
 enable_mpi_f77=yes
