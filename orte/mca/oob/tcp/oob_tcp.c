@@ -862,8 +862,9 @@ mca_oob_tcp_accept_thread_handler(int sd, short flags, void* user)
        happen, so no need for yet another #if */
     if (OPAL_EV_READ == flags) {
         char buf[1];
-        ssize_t ret = read(sd, buf, 1);
-
+        ssize_t ret;
+        
+        ret = read(sd, buf, 1); /* do this as separate step so non-debug compiles don't bark */
         assert (ret == 1);
     }
 
