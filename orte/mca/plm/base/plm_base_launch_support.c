@@ -453,11 +453,15 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
                          "%s plm:base:daemon_callback completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* all done launching - update the num_procs in my local structure */
-    orte_process_info.num_procs = jdatorted->num_procs;
-    /* update the routing tree */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
-        ORTE_ERROR_LOG(rc);
+    /* all done launching - update the num_procs in my local structure if required
+     * so that any subsequent communications are correctly routed
+     */
+    if (orte_process_info.num_procs != jdatorted->num_procs) {
+        orte_process_info.num_procs = jdatorted->num_procs;
+        /* update the routing tree */
+        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
     /* if a tree-launch was underway, clear out the cmd */
