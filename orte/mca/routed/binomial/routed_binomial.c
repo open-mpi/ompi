@@ -1014,6 +1014,8 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
 
 static int update_routing_tree(void)
 {
+    orte_routed_tree_t *child;
+    int j;
     opal_list_item_t *item;
     
     /* if I am anything other than a daemon or the HNP, this
@@ -1036,11 +1038,7 @@ static int update_routing_tree(void)
                                    orte_process_info.num_procs,
                                    &num_children, &my_children, NULL);
     
-#if 0
-    {
-        orte_routed_tree_t *child;
-        int j;
-        
+    if (0 < opal_output_get_verbosity(orte_routed_base_output)) {
         opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
         for (item = opal_list_get_first(&my_children);
              item != opal_list_get_end(&my_children);
@@ -1054,7 +1052,6 @@ static int update_routing_tree(void)
             }
         }
     }
-#endif
 
     return ORTE_SUCCESS;
 }
