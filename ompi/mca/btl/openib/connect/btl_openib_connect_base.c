@@ -18,10 +18,10 @@
 #if HAVE_XRC
 #include "connect/btl_openib_connect_xoob.h"
 #endif
-#if OMPI_HAVE_RDMACM
+#if OMPI_HAVE_RDMACM && OMPI_HAVE_THREADS
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
-#if OMPI_HAVE_IBCM
+#if OMPI_HAVE_IBCM && OMPI_HAVE_THREADS
 #include "connect/btl_openib_connect_ibcm.h"
 #endif
 
@@ -44,7 +44,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if RDMA CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_RDMACM
+#if OMPI_HAVE_RDMACM && OMPI_HAVE_THREADS
     &ompi_btl_openib_connect_rdmacm,
 #else
     &ompi_btl_openib_connect_empty,
@@ -52,7 +52,7 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
 
     /* Always have an entry here so that the CP indexes will always be
        the same: if IB CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_IBCM
+#if OMPI_HAVE_IBCM && OMPI_HAVE_THREADS
     &ompi_btl_openib_connect_ibcm,
 #else
     &ompi_btl_openib_connect_empty,
@@ -273,6 +273,14 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
         opal_output(-1, "match cpc for local port: %s",
                     available[i]->cbc_name);
 
+        /* If the CPC wants to use the CTS protocol, check to ensure
+           that QP 0 is PP; if it's not, we can't use this CPC (or the
+           CTS protocol) */
+        if (!BTL_OPENIB_QP_TYPE_PP(0)) {
+            BTL_VERBOSE(("this CPConly supports when the first btl_openib_receive_queues QP is a PP QP"));
+            continue;
+        }
+
         /* This CPC has indicated that it wants to run on this openib
            BTL module.  Woo hoo! */
         ++cpc_index;
@@ -389,6 +397,92 @@ ompi_btl_openib_connect_base_get_cpc_byindex(uint8_t index)
     return (index >= (sizeof(all) / 
                       sizeof(ompi_btl_openib_connect_base_module_t *))) ?
         NULL : all[index];
+}
+
+int ompi_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
+{
+    ompi_free_list_item_t *fli;
+    int length = sizeof(mca_btl_openib_header_t) +
+        sizeof(mca_btl_openib_header_coalesced_t) +
+        sizeof(mca_btl_openib_control_header_t) +
+        sizeof(mca_btl_openib_footer_t) +
+        mca_btl_openib_component.qp_infos[mca_btl_openib_component.credits_qp].size;
+
+    /* Explicitly don't use the mpool registration */
+    fli = &(endpoint->endpoint_cts_frag.super.super.base.super);
+    fli->registration = NULL;
+    fli->ptr = malloc(length);
+    if (NULL == fli->ptr) {
+        BTL_ERROR(("malloc failed"));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    endpoint->endpoint_cts_mr = 
+        ibv_reg_mr(endpoint->endpoint_btl->device->ib_pd, 
+                   fli->ptr, length,
+                   IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE |
+                   IBV_ACCESS_REMOTE_READ);
+    OPAL_OUTPUT((-1, "registered memory %p, length %d", fli->ptr, length));
+    if (NULL == endpoint->endpoint_cts_mr) {
+        free(fli->ptr);
+        BTL_ERROR(("Failed to reg mr!"));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Copy the lkey where it needs to go */
+    endpoint->endpoint_cts_frag.super.sg_entry.lkey = 
+        endpoint->endpoint_cts_frag.super.super.segment.seg_key.key32[0] = 
+        endpoint->endpoint_cts_mr->lkey;
+    endpoint->endpoint_cts_frag.super.sg_entry.length = length;
+
+    /* Construct the rest of the recv_frag_t */
+    OBJ_CONSTRUCT(&(endpoint->endpoint_cts_frag), mca_btl_openib_recv_frag_t);
+    endpoint->endpoint_cts_frag.super.super.base.order = 
+        mca_btl_openib_component.credits_qp;
+    endpoint->endpoint_cts_frag.super.endpoint = endpoint;
+    OPAL_OUTPUT((-1, "Got a CTS frag for peer %s, addr %p, length %d, lkey %d",
+                 endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                 (void*) endpoint->endpoint_cts_frag.super.sg_entry.addr,
+                 endpoint->endpoint_cts_frag.super.sg_entry.length,
+                 endpoint->endpoint_cts_frag.super.sg_entry.lkey));
+
+    return OMPI_SUCCESS;
+}
+
+int ompi_btl_openib_connect_base_free_cts(mca_btl_base_endpoint_t *endpoint)
+{
+    if (NULL != endpoint->endpoint_cts_mr) {
+        ibv_dereg_mr(endpoint->endpoint_cts_mr);
+        endpoint->endpoint_cts_mr = NULL;
+    }
+    if (NULL != endpoint->endpoint_cts_frag.super.super.base.super.ptr) {
+        free(endpoint->endpoint_cts_frag.super.super.base.super.ptr);
+        endpoint->endpoint_cts_frag.super.super.base.super.ptr = NULL;
+        OPAL_OUTPUT((-1, "Freeing CTS frag"));
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ * Called to start a connection
+ */
+int ompi_btl_openib_connect_base_start(
+        ompi_btl_openib_connect_base_module_t *cpc,
+        mca_btl_base_endpoint_t *endpoint)
+{
+    /* If the CPC uses the CTS protocol, provide a frag buffer for the
+       CPC to post.  Must allocate these frags up here in the main
+       thread because the FREE_LIST_WAIT is not thread safe. */
+    if (cpc->cbm_uses_cts) {
+        int rc;
+        rc = ompi_btl_openib_connect_base_alloc_cts(endpoint);
+        if (OMPI_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    return cpc->cbm_start_connect(cpc, endpoint);
 }
 
 /*

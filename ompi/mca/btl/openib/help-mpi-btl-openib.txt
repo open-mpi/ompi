@@ -234,6 +234,17 @@ WARNING: There was an error initializing an OpenFabrics device.
   Local host:   %s
   Local device: %s
 #
+[no devices right type]
+WARNING: No OpenFabrics devices of the right type were found within
+the requested bus distance.  The OpenFabrics BTL will be ignored for
+this run.
+
+  Local host:     %s
+  Requested type: %s
+
+If the "requested type" is "<any>", this usually means that *no*
+OpenFabrics devices were found within the requested bus distance.
+#
 [default subnet prefix]
 WARNING: There are more than one active ports on host '%s', but the
 default subnet GID prefix was detected on more than one of these
@@ -528,14 +539,6 @@ adapter default settings file:
 
     %s/mca-btl-openib-device-params.ini
 #
-[failed load cpc]
-No OpenFabrics connection schemes reported that they were able to be
-used on a specific device.  As such, the openib BTL (OpenFabrics
-support) will be disabled.
-
-  Local host:   %s
-  Local device: %s
-#
 [eager RDMA and progress threads]
 WARNING: The openib BTL was directed to use "eager RDMA" for short
 messages, but the openib BTL was compiled with progress threads
@@ -552,3 +555,22 @@ therefore disabling the use of the openib BTL in this process for this
 run.
 
   Local host: %s
+#
+[cannot raise btl error]
+The OpenFabrics driver in Open MPI tried to raise a fatal error, but
+failed.  Hopefully there was an error message before this one that
+gave some more detailed information.
+
+  Local host: %s
+  Source file: %s
+  Source line: %d
+
+Your job is now going to abort, sorry.
+#
+[no iwarp support]
+Open MPI does not support iWARP devices with this version of OFED.
+You need to upgrade to a later version of OFED (1.3 or later) for Open
+MPI to support iWARP devices.
+
+(This message is being displayed because you told Open MPI to use
+iWARP devices via the btl_openib_device_type MCA parameter)

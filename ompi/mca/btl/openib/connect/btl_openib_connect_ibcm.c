@@ -248,7 +248,7 @@
  *   normal RTU processing.  If the RTU is received later, the IBCM
  *   system on the passive side will know that it's effectively a
  *   duplicate, and therefore can be ignored.
- */                                                                             
+ */
 
 #include "ompi_config.h"
 
@@ -649,6 +649,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         rc = OMPI_ERR_NOT_SUPPORTED;
         goto error;
     }
+
     /* If we do not have struct ibv_device.transport_device, then
        we're in an old version of OFED that is IB only (i.e., no
        iWarp), so we can safely assume that we can use this CPC. */
@@ -699,12 +700,13 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     BTL_VERBOSE(("created cpc module %p for btl %p",
                  (void*)m, (void*)btl));
 
-    /* See if we've already for an IB CM listener for this device */
+    /* See if we've already got an IB CM listener for this device */
     for (item = opal_list_get_first(&ibcm_cm_listeners);
          item != opal_list_get_end(&ibcm_cm_listeners);
          item = opal_list_get_next(item)) {
         cmh = (ibcm_listen_cm_id_t*) item;
         if (cmh->ib_context == btl->device->ib_dev_context) {
+            OBJ_RETAIN(cmh);
             break;
         }
     }
@@ -753,6 +755,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
+        OPAL_OUTPUT((-1, "opened ibcm device 0x%" PRIx64 " (%s)",
+                     (uint64_t) cmh->cm_device, 
+                     ibv_get_device_name(cmh->ib_context->device)));
 
         if (0 != (rc = ib_cm_create_id(cmh->cm_device, 
                                        &cmh->listen_cm_id, NULL))) {
@@ -779,9 +784,6 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         }
 
         opal_list_append(&ibcm_cm_listeners, &(cmh->super));
-    } else {
-        /* We found an existing IB CM handle -- bump up the refcount */
-        OBJ_RETAIN(cmh);
     }
     m->cmh = cmh;
     imli = OBJ_NEW(ibcm_module_list_item_t);
@@ -831,6 +833,9 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
     m->cpc.cbm_start_connect = ibcm_module_start_connect;
     m->cpc.cbm_endpoint_finalize = ibcm_endpoint_finalize;
     m->cpc.cbm_finalize = ibcm_module_finalize;
+    /* Setting uses_cts=true also guarantees that we'll only be
+       selected if QP 0 is PP */
+    m->cpc.cbm_uses_cts = true;
 
     /* Start monitoring the fd associated with the cm_device */
     ompi_btl_openib_fd_monitor(cmh->cm_device->fd, OPAL_EV_READ,
@@ -901,7 +906,8 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     init_attr.cap.max_send_sge = 1;
     init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-        init_attr.cap.max_recv_wr = max_recv_wr;
+        /* Add one for the CTS receive frag that will be posted */
+        init_attr.cap.max_recv_wr = max_recv_wr + 1;
     } else {
         init_attr.cap.max_recv_wr = 0;
     }
@@ -1265,7 +1271,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
 
     /* Set the endpoint state to "connecting" (this function runs in
        the main MPI thread; not the service thread, so we can set the
-       endpoint_state here). */
+       endpoint_state here with no memory barriers). */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
 
     /* Fill in the path record for this peer */
@@ -1363,9 +1369,6 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
             }
             if (0 != (rc = ib_cm_send_req(req->super.cm_id, cm_req))) {
                 BTL_VERBOSE(("Got nonzero return from ib_cm_send_req: %d, errno %d", rc, errno));
-                if (-1 == rc) {
-                    perror("Errno is ");
-                }
                 rc = OMPI_ERR_UNREACH;
                 goto err;
             }
@@ -1438,11 +1441,9 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
  */
 static void *callback_unlock(int fd, int flags, void *context)
 {
-/* We need #if protection in order to prevent unused variable warning */
-#if OMPI_HAVE_THREAD_SUPPORT 
-    opal_mutex_t *m = (opal_mutex_t*) context;
-    OPAL_THREAD_UNLOCK(m);
-#endif
+    volatile int *barrier = (volatile int *) context;
+    OPAL_OUTPUT((-1, "ibcm unlocking main thread"));
+    *barrier = 1;
     return NULL;
 }
 
@@ -1455,7 +1456,7 @@ static void ibcm_listen_cm_id_constructor(ibcm_listen_cm_id_t *cmh)
 
 static void ibcm_listen_cm_id_destructor(ibcm_listen_cm_id_t *cmh)
 {
-    opal_mutex_t mutex;
+    volatile int barrier = 0;
     opal_list_item_t *item;
 
     /* Remove all the ibcm module items */
@@ -1482,19 +1483,41 @@ static void ibcm_listen_cm_id_destructor(ibcm_listen_cm_id_t *cmh)
 
         /* Stop monitoring the cm_device's fd (wait for it to be
            released from the monitoring entity) */
-        OPAL_THREAD_LOCK(&mutex);
         ompi_btl_openib_fd_unmonitor(cmh->cm_device->fd, 
                                      callback_unlock,
-                                     &mutex);
-        OPAL_THREAD_LOCK(&mutex);
+
+                                     (void*) &barrier);
+        /* JMS debug code while figuring out the IBCM problem */
+#if 0
+        while (0 == barrier) {
+            sched_yield();
+        }
+#else
+        {
+            time_t t = time(NULL);
+            OPAL_OUTPUT((-1, "main thread waiting for ibcm barrier"));
+            while (0 == barrier) {
+                sched_yield();
+                if (time(NULL) - t > 5) {
+                    OPAL_OUTPUT((-1, "main thread been looping for a long time..."));
+                    break;
+                }
+            }
+        }
+#endif
 
         /* Destroy the listener */
         if (NULL != cmh->listen_cm_id) {
+            OPAL_OUTPUT((-1, "destryoing ibcm listener 0x%" PRIx64,
+                         (uint64_t) cmh->listen_cm_id));
             ib_cm_destroy_id(cmh->listen_cm_id);
         }
 
         /* Close the CM device */
         if (NULL != cmh->cm_device) {
+            OPAL_OUTPUT((-1, "closing ibcm device 0x%" PRIx64 " (%s)",
+                         (uint64_t) cmh->cm_device, 
+                         ibv_get_device_name(cmh->ib_context->device)));
             ib_cm_close_device(cmh->cm_device);
         }
     }
@@ -1564,7 +1587,7 @@ static int ibcm_module_finalize(mca_btl_openib_module_t *btl,
 {
     ibcm_module_t *m = (ibcm_module_t *) cpc;
 
-    /* If we previously successfully initialized, then destroy
+    /* If we previously successfully initialized, then release
        everything */
     if (NULL != m && NULL != m->cmh) {
         OBJ_RELEASE(m->cmh);
@@ -1700,21 +1723,6 @@ static int qp_to_rts(int qp_index, struct ib_cm_id *cm_id,
     BTL_VERBOSE(("successfully set RTS"));
     TIMER_STOP(QP_TO_RTS);
     return OMPI_SUCCESS;
-}
-
-/*
- * Callback (from main thread) when an incoming IBCM request needs to
- * initiate a new connection in the other direction.
- */
-static void *callback_set_endpoint_connecting(void *context)
-{
-    mca_btl_openib_endpoint_t *endpoint =
-        (mca_btl_openib_endpoint_t *) context;
-
-    BTL_VERBOSE(("ibcm scheduled callback: setting endpoint to CONNECTING"));
-    endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
-
-    return NULL;
 }
 
 /*
@@ -1895,9 +1903,11 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
        If this is not the first request, then assume that all the QPs
        have been created already and we can just lookup what we need. */
     if (!ie->ie_qps_created) {
-        /* Schedule to set the endpoint_state to "CONNECTING" */
-        ompi_btl_openib_fd_schedule(callback_set_endpoint_connecting, 
-                                    endpoint);
+        /* Set the endpoint_state to "CONNECTING".  This is running
+           in the service thread, so we need to do a write barrier. */
+        endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
+        opal_atomic_wmb();
+
         if (OMPI_SUCCESS != (rc = qp_create_all(endpoint, imodule))) {
             rej_reason = REJ_PASSIVE_SIDE_ERROR;
             BTL_ERROR(("qp_create_all failed -- reject"));
@@ -1923,16 +1933,19 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         goto reject;
     }
 
-    /* Post receive buffers.  Similar to QP creation, above, we post
-       *all* receive buffers at once (for all QPs).  So ensure to only
-       do this for the first request received.  If this is not the
-       first request on this endpoint, then assume that all the
-       receive buffers have been posted already. */
+    /* Post a single receive buffer on the smallest QP for the CTS
+       protocol */
     if (!ie->ie_recv_buffers_posted) {
-        if (OMPI_SUCCESS != 
-            (rc = mca_btl_openib_endpoint_post_recvs(endpoint))) {
-            /* JMS */
-            BTL_VERBOSE(("failed to post recv buffers"));
+        struct ibv_recv_wr *bad_wr, *wr;
+
+        assert(NULL != endpoint->endpoint_cts_frag.super.super.base.super.ptr);
+        wr = &(endpoint->endpoint_cts_frag.rd_desc);
+        assert(NULL != wr);
+        wr->next = NULL;
+
+        OPAL_OUTPUT((-1, "REQUEST posting CTS recv buffer"));
+        if (0 != ibv_post_recv(endpoint->qps[mca_btl_openib_component.credits_qp].qp->lcl_qp, wr, &bad_wr)) {
+            BTL_VERBOSE(("failed to post CTS recv buffer"));
             rej_reason = REJ_PASSIVE_SIDE_ERROR;
             goto reject;
         }
@@ -2045,32 +2058,31 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
                 (ompi_btl_openib_connect_base_module_t *) imodule;
             cbdata->cscd_endpoint = endpoint;
             BTL_VERBOSE(("starting connect in other direction"));
-            ompi_btl_openib_fd_schedule(callback_start_connect, cbdata);
+            ompi_btl_openib_fd_run_in_main(callback_start_connect, cbdata);
             
             TIMER_STOP(REQUEST_RECEIVED);
             return OMPI_SUCCESS;
         }
-        BTL_ERROR(("malloc failed"));
     }
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
     TIMER_STOP(REQUEST_RECEIVED);
-    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
-                                endpoint);
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
+                                   endpoint);
     return rc;
 }
  
 /*
  * Callback (from main thread) when the endpoint has been connected
  */
-static void *callback_set_endpoint_connected(void *context)
+static void *callback_set_endpoint_cpc_complete(void *context)
 {
     mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t*) context;
 
-    BTL_VERBOSE(("calling endpoint_connected"));
-    mca_btl_openib_endpoint_connected(endpoint);
-    BTL_VERBOSE(("*** CONNECTED endpoint_connected done!"));
+    BTL_VERBOSE(("calling endpoint_cpc_complete"));
+    mca_btl_openib_endpoint_cpc_complete(endpoint);
+    BTL_VERBOSE(("*** CONNECTED endpoint_cpc_complete done!"));
 
     return NULL;
 }
@@ -2133,18 +2145,27 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
         goto error;
     }
 
-    /* Now that all the qp's are created locally, post some receive
-       buffers, setup credits, etc.  The post_recvs() call posts the
-       buffers for all QPs at once, so be sure to only do this for the
-       *first* reply that is received on an endpoint.  For all other
-       replies received on an endpoint, we can safely assume that the
-       receive buffers have already been posted. */
+    /* Now that all the qp's are created locally, post a single
+       receive buffer on the smallest QP for the CTS protocol.  Be
+       sure to only do this for the *first* reply that is received on
+       an endpoint.  For all other replies received on an endpoint, we
+       can safely assume that the CTS receive buffer has already been
+       posted. */
     if (!ie->ie_recv_buffers_posted) {
-        if (OMPI_SUCCESS != 
-            (rc = mca_btl_openib_endpoint_post_recvs(endpoint))) {
-            BTL_VERBOSE(("failed to post recv buffers"));
+        struct ibv_recv_wr *bad_wr, *wr;
+
+        OPAL_OUTPUT((-1, "REPLY posting CTS recv buffer"));
+        assert(NULL != endpoint->endpoint_cts_frag.super.super.base.super.ptr);
+        wr = &(endpoint->endpoint_cts_frag.rd_desc);
+        assert(NULL != wr);
+        wr->next = NULL;
+
+        if (0 != ibv_post_recv(endpoint->qps[mca_btl_openib_component.credits_qp].qp->lcl_qp, wr, &bad_wr)) {
+            /* JMS */
+            BTL_VERBOSE(("failed to post CTS recv buffer"));
             goto error;
         }
+
         ie->ie_recv_buffers_posted = true;
     }
 
@@ -2168,7 +2189,7 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
        that we're done. */
     if (0 == --(ie->ie_qps_to_connect)) {
         BTL_VERBOSE(("REPLY telling main BTL we're connected"));
-        ompi_btl_openib_fd_schedule(callback_set_endpoint_connected, endpoint);
+        ompi_btl_openib_fd_run_in_main(callback_set_endpoint_cpc_complete, endpoint);
     }
 
     TIMER_STOP(REPLY_RECEIVED);
@@ -2177,8 +2198,8 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
  error:
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error,
-                                endpoint);
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
+                                   endpoint);
     return rc;
 }
 
@@ -2207,30 +2228,11 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
        that we're done. */
     if (0 == --(ie->ie_qps_to_connect)) {
         BTL_VERBOSE(("RTU telling main BTL we're connected"));
-        ompi_btl_openib_fd_schedule(callback_set_endpoint_connected, endpoint);
+        ompi_btl_openib_fd_run_in_main(callback_set_endpoint_cpc_complete, endpoint);
     }
 
     BTL_VERBOSE(("all done"));
     TIMER_STOP(RTU_RECEIVED);
-    return OMPI_SUCCESS;
-}
-
-
-static int disconnect_request_received(ibcm_listen_cm_id_t *cmh,
-                                        struct ib_cm_event *event)
-{
-    BTL_VERBOSE(("disconnect request received"));
-    return OMPI_SUCCESS;
-}
-
-
-static int disconnect_reply_received(ibcm_listen_cm_id_t *cmd,
-                                      struct ib_cm_event *event)
-{
-    BTL_VERBOSE(("disconnect reply received"));
-#if 0
-    ib_cm_send_drep(event->cm_id, NULL, 0);
-#endif
     return OMPI_SUCCESS;
 }
 
@@ -2298,7 +2300,7 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
                  reason));
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, NULL);
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error, NULL);
     return OMPI_ERR_NOT_FOUND;
 }
 
@@ -2330,8 +2332,8 @@ static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, 
-                                endpoint);
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error, 
+                                   endpoint);
     return OMPI_SUCCESS;
 }
 
@@ -2362,25 +2364,9 @@ static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_schedule(mca_btl_openib_endpoint_invoke_error, 
-                                endpoint);
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error, 
+                                   endpoint);
     return OMPI_SUCCESS;
-}
-
-
-static int disconnect_request_error(ibcm_listen_cm_id_t *cmh,
-                                    struct ib_cm_event *e)
-{
-    BTL_VERBOSE(("disconnect request error!"));
-    return OMPI_SUCCESS;
-}
-
-
-static int unhandled_event(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *e)
-{
-    BTL_VERBOSE(("unhandled event error (%p, %d)", 
-                 (void*) e, e->event));
-    return OMPI_ERR_NOT_FOUND;
 }
 
 
@@ -2391,38 +2377,46 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
     ibcm_listen_cm_id_t *cmh = (ibcm_listen_cm_id_t*) context;
     struct ib_cm_event *e = NULL;
 
+    OPAL_OUTPUT((-1, "ibcm dispatch: on device 0x%" PRIx64", fd %d", 
+                 (uint64_t) cmh->cm_device, fd));
     TIMER_START(CM_GET_EVENT);
+    /* Blocks until next event, which should be immediately (because
+       we shouldn't call this dispatch function unless there's
+       something ready to read) */
     rc = ib_cm_get_event(cmh->cm_device, &e);
     TIMER_STOP(CM_GET_EVENT);
+    if (-ENODATA == rc) {
+        OPAL_OUTPUT((-1, "ibcm dispatch: GOT NOT DATA!"));
+        return NULL;
+    }
+    while (-1 == rc && EAGAIN == errno) {
+        OPAL_OUTPUT((-1, "ibcm dispatch: GOT EAGAIN!"));
+        /* Try again */
+        rc = ib_cm_get_event(cmh->cm_device, &e);
+    }
     if (0 == rc && NULL != e) {
         want_ack = true;
         switch (e->event) {
         case IB_CM_REQ_RECEIVED:
+            OPAL_OUTPUT((-1, "ibcm dispatch: request received on fd %d", fd));
             /* Incoming request */
             rc = request_received(cmh, e);
             break;
             
         case IB_CM_REP_RECEIVED:
+            OPAL_OUTPUT((-1, "ibcm dispatch: reply received on fd %d", fd));
             /* Reply received */
             rc = reply_received(cmh, e);
             break;
             
         case IB_CM_RTU_RECEIVED:
+            OPAL_OUTPUT((-1, "ibcm dispatch: RTU received on fd %d", fd));
             /* Ready to use! */
             rc = ready_to_use_received(cmh, e);
             break;
-            
-        case IB_CM_DREQ_RECEIVED:
-            /* Disconnect request */
-            rc = disconnect_request_received(cmh, e);
-            break;
-            
-        case IB_CM_DREP_RECEIVED:
-            /* Disconnect reply */
-            rc = disconnect_reply_received(cmh, e);
-            break;
-            
+                        
         case IB_CM_REJ_RECEIVED:
+            OPAL_OUTPUT((-1, "ibcm dispatch: reject received on fd %d", fd));
             /* Rejected connection */
             rc = reject_received(cmh, e);
             /* reject_received() called ib_cm_ack_event so that the CM
@@ -2431,22 +2425,32 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
             break;
             
         case IB_CM_REQ_ERROR:
+            OPAL_OUTPUT((-1, "ibcm dispatch: request error received on fd %d", fd));
             /* Request error */
             rc = request_error(cmh, e);
             break;
             
         case IB_CM_REP_ERROR:
+            OPAL_OUTPUT((-1, "ibcm dispatch: reply error received on fd %d", fd));
             /* Reply error */
             rc = reply_error(cmh, e);
             break;
             
+        case IB_CM_DREQ_RECEIVED:
+        case IB_CM_DREP_RECEIVED:
         case IB_CM_DREQ_ERROR:
-            /* Disconnect request error */
-            rc = disconnect_request_error(cmh, e);
+            OPAL_OUTPUT((-1, "ibcm dispatch: %s received on fd %d",
+                        (IB_CM_DREQ_RECEIVED == e->event) ? "disconnect request" :
+                        (IB_CM_DREP_RECEIVED == e->event) ? "disconnect reply" :
+                        "disconnect request error", fd));
+            /* We don't care */
+            rc = OMPI_SUCCESS;
             break;
             
         default:
-            rc = unhandled_event(cmh, e);
+            /* This would be odd */
+            OPAL_OUTPUT((-1, "ibcm dispatch: unhandled event received on fd %d", fd));
+            rc = OMPI_ERR_NOT_FOUND;
             break;
         }
 
@@ -2462,6 +2466,8 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
                function), the dispatch function would have done that
                already */
         }
+    } else {
+        OPAL_OUTPUT((-1, "Got weird value back from ib_cm_get_event: %d", rc));
     }
 
     return NULL;

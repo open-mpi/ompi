@@ -933,31 +933,19 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
     openib_btl = (mca_btl_openib_module_t*) btl;
 
-    /* Remove the btl from component list */
-    if ( mca_btl_openib_component.ib_num_btls > 1 ) {
-        for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
-            if (mca_btl_openib_component.openib_btls[i] == openib_btl){
-                mca_btl_openib_component.openib_btls[i] =
-                    mca_btl_openib_component.openib_btls[mca_btl_openib_component.ib_num_btls-1];
-                break;
-            }
-        }
-    }
-
-    mca_btl_openib_component.ib_num_btls--;
-
     /* Release all QPs */
-    for(ep_index=0;
-            ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
-            ep_index++) {
+    for (ep_index=0;
+         ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
+         ep_index++) {
         endpoint=opal_pointer_array_get_item(openib_btl->device->endpoints,
-                ep_index);
+                                             ep_index);
         if(!endpoint) {
             BTL_VERBOSE(("In finalize, got another null endpoint"));
             continue;
         }
-        if(endpoint->endpoint_btl != openib_btl)
+        if(endpoint->endpoint_btl != openib_btl) {
             continue;
+        }
         for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
             if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
                 openib_btl->device->eager_rdma_buffers[i] = NULL;
@@ -966,15 +954,6 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
         OBJ_RELEASE(endpoint);
     }
-
-    /* Finalize the CPC modules on this openib module */
-    for (i = 0; i < openib_btl->num_cpcs; ++i) {
-        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
-            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
-        }
-        free(openib_btl->cpcs[i]);
-    }
-    free(openib_btl->cpcs);
 
     /* Release SRQ resources */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
@@ -992,10 +971,32 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
         }
     }
 
+    /* Finalize the CPC modules on this openib module */
+    for (i = 0; i < openib_btl->num_cpcs; ++i) {
+        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
+            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+        }
+        free(openib_btl->cpcs[i]);
+    }
+    free(openib_btl->cpcs);
+
     /* Release device if there are no more users */
-    if(!(--openib_btl->device->btls)) {
+    if (!(--openib_btl->device->btls)) {
         OBJ_RELEASE(openib_btl->device);
     }
+
+    /* Remove the btl from component list */
+    if ( mca_btl_openib_component.ib_num_btls > 1 ) {
+        for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++){
+            if (mca_btl_openib_component.openib_btls[i] == openib_btl){
+                mca_btl_openib_component.openib_btls[i] =
+                    mca_btl_openib_component.openib_btls[mca_btl_openib_component.ib_num_btls-1];
+                break;
+            }
+        }
+    }
+
+    mca_btl_openib_component.ib_num_btls--;
 
     OBJ_DESTRUCT(&openib_btl->ib_lock);
     free(openib_btl);
