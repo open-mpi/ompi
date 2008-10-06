@@ -417,6 +417,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_proc = 0;
     endpoint->endpoint_local_cpc = NULL;
     endpoint->endpoint_remote_cpc_data = NULL;
+    endpoint->endpoint_initiator = false;
     endpoint->endpoint_tstamp = 0.0;
     endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
     endpoint->endpoint_retries = 0;
@@ -442,6 +443,12 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->use_eager_rdma = false;
     endpoint->eager_rdma_remote.tokens = 0;
     endpoint->eager_rdma_local.credits = 0;
+    endpoint->endpoint_cts_mr = NULL;
+    endpoint->endpoint_cts_frag.super.super.base.super.registration = NULL;
+    endpoint->endpoint_cts_frag.super.super.base.super.ptr = NULL;
+    endpoint->endpoint_posted_recvs = false;
+    endpoint->endpoint_cts_received = false;
+    endpoint->endpoint_cts_sent = false;
 }
 
 /*
@@ -458,6 +465,9 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     if (NULL != endpoint->endpoint_local_cpc->cbm_endpoint_finalize) {
         endpoint->endpoint_local_cpc->cbm_endpoint_finalize(endpoint);
     }
+
+    /* Release CTS buffer */
+    ompi_btl_openib_connect_base_free_cts(endpoint);
 
     /* Release memory resources */
     do {
@@ -531,8 +541,8 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
 
 /*
- * call when the connect module has created all the qp's on an
- * endpoint and needs to have some receive buffers posted
+ * Called when the connect module has created all the qp's on an
+ * endpoint and needs to have some receive buffers posted.
  */
 int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
 {
@@ -549,6 +559,123 @@ int mca_btl_openib_endpoint_post_recvs(mca_btl_openib_endpoint_t *endpoint)
     return OMPI_SUCCESS;
 }
 
+static void cts_sent(mca_btl_base_module_t* btl,
+                     struct mca_btl_base_endpoint_t* ep,
+                     struct mca_btl_base_descriptor_t* des,
+                     int status)
+{
+    /* Nothing to do/empty function (we can't pass in a NULL pointer
+       for the des_cbfunc) */
+    OPAL_OUTPUT((-1, "CTS send to %s completed",
+                 ep->endpoint_proc->proc_ompi->proc_hostname));
+}
+
+/*
+ * Send CTS control fragment
+ */
+void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint) 
+{
+    mca_btl_openib_send_control_frag_t *sc_frag;
+    mca_btl_base_descriptor_t *base_des;
+    mca_btl_openib_frag_t *openib_frag;
+    mca_btl_openib_com_frag_t *com_frag;
+    mca_btl_openib_control_header_t *ctl_hdr;
+
+    OPAL_OUTPUT((-1, "SENDING CTS to %s on qp index %d (QP num %d)",
+                 endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                 mca_btl_openib_component.credits_qp,
+                 endpoint->qps[mca_btl_openib_component.credits_qp].qp->lcl_qp->qp_num));
+    sc_frag = alloc_control_frag(endpoint->endpoint_btl);
+    if (OPAL_UNLIKELY(NULL == sc_frag)) {
+        BTL_ERROR(("Failed to allocate control buffer"));
+        mca_btl_openib_endpoint_invoke_error(endpoint);
+        return;
+    }
+
+    /* I dislike using the "to_<foo>()" macros; I prefer using the
+       explicit member fields to ensure I get the types right.  Since
+       this is not a performance-criticial part of the code, it's
+       ok. */
+    com_frag = &(sc_frag->super.super);
+    openib_frag = &(com_frag->super);
+    base_des = &(openib_frag->base);
+
+    base_des->des_cbfunc = cts_sent;
+    base_des->des_cbdata = NULL;
+    base_des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
+    base_des->order = mca_btl_openib_component.credits_qp;
+    openib_frag->segment.seg_len = sizeof(mca_btl_openib_control_header_t);
+    com_frag->endpoint = endpoint;
+
+    sc_frag->hdr->tag = MCA_BTL_TAG_BTL;
+    sc_frag->hdr->cm_seen = 0;
+    sc_frag->hdr->credits = 0;
+
+    ctl_hdr = (mca_btl_openib_control_header_t*)
+        openib_frag->segment.seg_addr.pval;
+    ctl_hdr->type = MCA_BTL_OPENIB_CONTROL_CTS;
+
+    /* Send the fragment */
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+    if (OMPI_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, sc_frag)) {
+        BTL_ERROR(("Failed to post CTS send"));
+        mca_btl_openib_endpoint_invoke_error(endpoint);
+    }
+    endpoint->endpoint_cts_sent = true;
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+}
+
+/*
+ * Called when the CPC has established a connection on an endpoint
+ */
+void mca_btl_openib_endpoint_cpc_complete(mca_btl_openib_endpoint_t *endpoint)
+{
+    /* If the CPC uses the CTS protocol, then start it up */
+    if (endpoint->endpoint_local_cpc->cbm_uses_cts) {
+        /* Post our receives, which will make credit management happy
+           (i.e., rd_credits will be 0) */
+        if (OMPI_SUCCESS != mca_btl_openib_endpoint_post_recvs(endpoint)) {
+            BTL_ERROR(("Failed to post receive buffers"));
+            mca_btl_openib_endpoint_invoke_error(endpoint);
+            return;
+        }
+        endpoint->endpoint_posted_recvs = true;
+
+        /* If this is IB, send the CTS immediately.  If this is iWARP,
+           then only send the CTS if this endpoint was the initiator
+           of the connection (the receiver will send its CTS when it
+           receives this side's CTS).  Also send the CTS if we already
+           received the peer's CTS (e.g., if this process was slow to
+           call cpc_complete(). */
+        OPAL_OUTPUT((-1, "cpc_complete to peer %s: is IB %d, initiatior %d, cts received: %d",
+                     endpoint->endpoint_proc->proc_ompi->proc_hostname,
+                     (IBV_TRANSPORT_IB == 
+                      endpoint->endpoint_btl->device->ib_dev->transport_type),
+                     endpoint->endpoint_initiator,
+                     endpoint->endpoint_cts_received));
+        if (IBV_TRANSPORT_IB == 
+            endpoint->endpoint_btl->device->ib_dev->transport_type ||
+            endpoint->endpoint_initiator ||
+            endpoint->endpoint_cts_received) {
+            mca_btl_openib_endpoint_send_cts(endpoint);
+
+            /* If we've already got the CTS from the other side, then
+               mark us as connected */
+            if (endpoint->endpoint_cts_received) {
+                OPAL_OUTPUT((-1, "cpc_complete to %s -- already got CTS, so marking endpoint as complete",
+                             endpoint->endpoint_proc->proc_ompi->proc_hostname));
+                mca_btl_openib_endpoint_connected(endpoint);
+            }
+        }
+
+        OPAL_OUTPUT((-1, "cpc_complete to %s -- done",
+                     endpoint->endpoint_proc->proc_ompi->proc_hostname));
+        return;
+    }
+
+    /* Otherwise, just set the endpoint to "connected" */
+    mca_btl_openib_endpoint_connected(endpoint);
+}
 
 /*
  * called when the connect module has completed setup of an endpoint
@@ -560,6 +687,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_endpoint_t *ep;
     bool master = false;
 
+    opal_output(-1, "Now we are CONNECTED");
     if (MCA_BTL_XRC_ENABLED) {
         OPAL_THREAD_LOCK(&endpoint->ib_addr->addr_lock);
         if (MCA_BTL_IB_ADDR_CONNECTED == endpoint->ib_addr->status) {
@@ -616,8 +744,8 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
             ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
             ep = (mca_btl_openib_endpoint_t *)ep_item;
             if (OMPI_SUCCESS != 
-                endpoint->endpoint_local_cpc->cbm_start_connect(endpoint->endpoint_local_cpc, 
-                                                                ep)) {
+                ompi_btl_openib_connect_base_start(endpoint->endpoint_local_cpc, 
+                                                   ep)) {
                 BTL_ERROR(("Failed to connect pending endpoint\n"));
             }
         }
@@ -696,7 +824,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     frag = endpoint->qps[qp].credit_frag;
 
     if(OPAL_UNLIKELY(NULL == frag)) {
-        frag = alloc_credit_frag(openib_btl);
+        frag = alloc_control_frag(openib_btl);
         frag->qp_idx = qp;
         endpoint->qps[qp].credit_frag = frag;
         /* set those once and forever */
@@ -785,7 +913,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     mca_btl_openib_send_control_frag_t* frag;
     int rc;
 
-    frag = alloc_credit_frag(openib_btl);
+    frag = alloc_control_frag(openib_btl);
     if(NULL == frag) {
         return -1;
     }
@@ -942,7 +1070,8 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
     if (NULL == endpoint) {
         int i;
         for (i = 0; i < mca_btl_openib_component.ib_num_btls; ++i) {
-            if (NULL != mca_btl_openib_component.openib_btls[i]) {
+            if (NULL != mca_btl_openib_component.openib_btls[i] &&
+                NULL != mca_btl_openib_component.openib_btls[i]->error_cb) {
                 btl = mca_btl_openib_component.openib_btls[i];
                 break;
             }
@@ -952,9 +1081,11 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
     }
 
     /* If we didn't find a BTL, then just bail :-( */
-    if (NULL == btl) {
+    if (NULL == btl || NULL == btl->error_cb) {
         orte_show_help("help-mpi-btl-openib.txt",
-                       "cannot raise btl error", orte_process_info.nodename);
+                       "cannot raise btl error", true,
+                       orte_process_info.nodename,
+                       __FILE__, __LINE__);
         exit(1);
     }
 

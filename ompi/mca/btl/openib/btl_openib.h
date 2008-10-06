@@ -117,6 +117,12 @@ typedef enum {
     BTL_OPENIB_RQ_SOURCE_MAX
 } btl_openib_receive_queues_source_t;
 
+typedef enum {
+    BTL_OPENIB_DT_IB,
+    BTL_OPENIB_DT_IWARP,
+    BTL_OPENIB_DT_ALL
+} btl_openib_device_type_t;
+
 struct mca_btl_openib_component_t {
     mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
 
@@ -200,6 +206,7 @@ struct mca_btl_openib_component_t {
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
     uint32_t use_async_event_thread; /**< Use the async event handler */
 #endif
+    btl_openib_device_type_t device_type;
     char *if_include;
     char **if_include_list;
     char *if_exclude;

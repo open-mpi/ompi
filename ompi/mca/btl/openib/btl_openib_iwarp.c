@@ -16,6 +16,7 @@
 #if OMPI_HAVE_RDMACM
 #include <rdma/rdma_cma.h>
 #include <malloc.h>
+#include <stdio.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
@@ -45,13 +46,36 @@ static OBJ_CLASS_INSTANCE(rdma_addr_list_t, opal_list_item_t,
                           NULL, NULL);
 static opal_list_t *myaddrs = NULL;
 
+#if OMPI_ENABLE_DEBUG
+static char *stringify(uint32_t addr)
+{
+    static char line[64];
+    memset(line, 0, sizeof(line));
+    snprintf(line, sizeof(line) - 1, "%d.%d.%d.%d (0x%x)", 
+#if defined(WORDS_BIGENDIAN)
+             (addr >> 24),
+             (addr >> 16) & 0xff,
+             (addr >> 8) & 0xff,
+             addr & 0xff,
+#else
+             addr & 0xff,
+             (addr >> 8) & 0xff,
+             (addr >> 16) & 0xff,
+             (addr >> 24),
+#endif
+             addr);
+    return line;
+}
+#endif
+
 uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
 {
     opal_list_item_t *item;
 
-    /* In the off chance that the user forces non-rdmacm cpc and iwarp, the list
-     * will be uninitialized.  Return 0 to prevent crashes, and the lack of it
-     * actually working will be caught at a later stage.
+    /* In the off chance that the user forces non-rdmacm cpc and
+     * iwarp, the list will be uninitialized.  Return 0 to prevent
+     * crashes, and the lack of it actually working will be caught at
+     * a later stage.
      */
     if (NULL == myaddrs) {
         return 0;
@@ -69,16 +93,27 @@ uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
     return 0;
 }
 
-uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, uint8_t port)
+uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
+                                          uint8_t port)
 {
     opal_list_item_t *item;
 
+    /* Sanity check */
+    if (NULL == myaddrs) {
+        return 0;
+    }
+
+    BTL_VERBOSE(("Looking for %s:%d in IP address list",
+                 ibv_get_device_name(verbs->device), port));
     for (item = opal_list_get_first(myaddrs);
          item != opal_list_get_end(myaddrs);
          item = opal_list_get_next(item)) {
         struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
         if (!strcmp(addr->dev_name, verbs->device->name) && 
             port == addr->dev_port) {
+            BTL_VERBOSE(("FOUND: %s:%d is %s",
+                         ibv_get_device_name(verbs->device), port,
+                         stringify(addr->addr)));
             return addr->addr;
         }
     }
@@ -130,14 +165,14 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
 
     ch = rdma_create_event_channel();
     if (NULL == ch) {
-        BTL_ERROR(("failed creating event channel"));
+        BTL_VERBOSE(("failed creating RDMA CM event channel"));
         rc = OMPI_ERROR;
         goto out1;
     }
 
     rc = rdma_create_id(ch, &cm_id, NULL, RDMA_PS_TCP);
     if (rc) {
-        BTL_ERROR(("rdma_create_id returned %d", rc));
+        BTL_VERBOSE(("rdma_create_id returned %d", rc));
         rc = OMPI_ERROR;
         goto out2;
     }
@@ -165,11 +200,12 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     myaddr->addr = sinp->sin_addr.s_addr;
     myaddr->subnet = myaddr->addr & netmask;
     inet_ntop(sinp->sin_family, &sinp->sin_addr, 
-            myaddr->addr_str, sizeof myaddr->addr_str);
+              myaddr->addr_str, sizeof(myaddr->addr_str));
     memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);
     myaddr->dev_port = cm_id->port_num;
-    BTL_VERBOSE(("adding addr %s dev %s port %d to rdma_addr_list", 
-                 myaddr->addr_str, myaddr->dev_name, myaddr->dev_port));
+    BTL_VERBOSE(("Adding addr %s (0x%x) as %s:%d", 
+                 myaddr->addr_str, myaddr->addr,
+                 myaddr->dev_name, myaddr->dev_port));
 
     opal_list_append(myaddrs, &(myaddr->super));
 
@@ -225,7 +261,10 @@ void mca_btl_openib_free_rdma_addr_list(void)
        OBJ_RELEASE(myaddrs);
     }
 }
-#else
+
+#else 
+/* !OMPI_HAVE_RDMACM case */
+
 uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) 
 {
     return 0;
@@ -239,9 +278,10 @@ uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
 
 int mca_btl_openib_build_rdma_addr_list(void) 
 {
-    return 0;
+    return OMPI_SUCCESS;
 }
 
-void mca_btl_openib_free_rdma_addr_list(void) {
+void mca_btl_openib_free_rdma_addr_list(void) 
+{
 }
 #endif
