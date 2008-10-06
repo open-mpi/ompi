@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -17,20 +17,19 @@
 # 
 # $HEADER$
 #
-
-# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
-
-dist_pkgdata_DATA += errhandler/help-mpi-errors.txt
-
-headers += \
-        errhandler/errcode.h \
-        errhandler/errcode-internal.h \
-        errhandler/errhandler.h \
-        errhandler/errhandler_predefined.h
-
-libmpi_la_SOURCES += \
-        errhandler/errhandler.c \
-        errhandler/errhandler_invoke.c \
-        errhandler/errhandler_predefined.c \
-        errhandler/errcode.c \
-        errhandler/errcode-internal.c
+# *** THESE MESSAGES ARE COORDINATED WITH FIXED STRINGS IN
+# *** errhandler_predefined.c!  Do not change these messages without also
+# *** changing errhandler_predefined.c!
+#
+[mpi_errors_are_fatal]
+%s *** An error occurred %s %s
+%s *** on %s %s
+%s *** %s
+%s *** MPI_ERRORS_ARE_FATAL (your MPI job will now abort)
+#
+[mpi_errors_are_fatal unknown handle]
+%s *** An error occurred %s %s
+%s *** on a NULL %s
+%s *** %s
+%s *** MPI_ERRORS_ARE_FATAL (your MPI job will now abort)
+#
