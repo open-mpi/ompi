@@ -262,7 +262,7 @@ int mca_btl_openib_endpoint_post_send(mca_btl_openib_endpoint_t *endpoint,
 
 
 OBJ_CLASS_INSTANCE(mca_btl_openib_endpoint_t,
-                   opal_object_t, mca_btl_openib_endpoint_construct,
+                   opal_list_item_t, mca_btl_openib_endpoint_construct,
                    mca_btl_openib_endpoint_destruct);
 
 /*
