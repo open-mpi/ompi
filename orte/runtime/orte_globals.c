@@ -481,7 +481,7 @@ static void orte_job_construct(orte_job_t* job)
                             ORTE_GLOBAL_ARRAY_MAX_SIZE,
                             2);
     job->num_apps = 0;
-    job->controls = 0;
+    job->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
     job->total_slots_alloc = 0;
     job->num_procs = 0;
     job->procs = OBJ_NEW(opal_pointer_array_t);
