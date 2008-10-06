@@ -495,10 +495,10 @@ static void check_debugger(int fd, short event, void *arg)
              */
             orte_plm_base_create_jobid(&jdata->jobid);
             /* flag the job as being debugger daemons */
-            jdata->controls = ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
-            /* if directed, we forward output */
-            if (MPIR_forward_output) {
-                jdata->controls |= ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+            jdata->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
+            /* unless directed, we do not forward output */
+            if (!MPIR_forward_output) {
+                jdata->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
             }
             /* set the mapping policy to "pernode" so we only get
              * one debugger daemon on each node
@@ -590,10 +590,10 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
          */
         orte_plm_base_create_jobid(&orte_debugger_daemon->jobid);
         /* flag the job as being debugger daemons */
-        orte_debugger_daemon->controls = ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
-        /* if directed, we forward output */
-        if (MPIR_forward_output) {
-            orte_debugger_daemon->controls |= ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+        orte_debugger_daemon->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
+        /* unless directed, we do not forward output */
+        if (!MPIR_forward_output) {
+            orte_debugger_daemon->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
         }
         /* add it to the global job pool */
         opal_pointer_array_add(orte_job_data, &orte_debugger_daemon->super);
