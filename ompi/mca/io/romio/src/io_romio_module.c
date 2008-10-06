@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,16 +21,18 @@
 
 #include "mpi.h"
 #include "opal/threads/mutex.h"
+#include "ompi/datatype/datatype.h"
 #include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
 
 /*
- * Global function that does not need to be prototyped in a header
- * because ROMIO just expects this function to exist
+ * Global functions that do not need to be prototyped in a header
+ * because ROMIO just expects these functions to exist.
  */
 int MPIR_Status_set_bytes(ompi_status_public_t *status, 
                           struct ompi_datatype_t *datatype, int size);
+void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 
 
 /*
@@ -131,4 +134,15 @@ int MPIR_Status_set_bytes(ompi_status_public_t *status,
 
     MPI_Status_set_elements(status, MPI_CHAR, nbytes);
     return MPI_SUCCESS;
+}
+
+
+void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
+{
+    /*
+     * Open MPI contiguous check return true for datatype with
+     * gaps in the beginning and at the end. We have to provide
+     * a count of 2 in order to get these gaps taken into acount.
+     */
+    *flag = ompi_ddt_is_contiguous_memory_layout(datatype, 2);
 }

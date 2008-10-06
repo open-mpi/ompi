@@ -58,6 +58,10 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
     *flag = MPI_SGI_type_is_contig(datatype) && (displacement == 0);
 }
 
+#elif defined(OMPI_BUILDING) && OMPI_BUILDING
+
+/* This function is included in Open MPI source code */
+
 #else
 
 void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
