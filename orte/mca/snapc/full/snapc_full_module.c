@@ -46,7 +46,7 @@ static orte_snapc_base_module_t loc_module = {
     orte_snapc_full_module_finalize,
     orte_snapc_full_setup_job,
     orte_snapc_full_release_job,
-    orte_snapc_base_none_ft_event
+    orte_snapc_full_ft_event
 };
 
 /*
@@ -263,6 +263,23 @@ int orte_snapc_full_release_job(orte_jobid_t jobid) {
     }
 
     return exit_status;
+}
+
+int orte_snapc_full_ft_event(int state) {
+    switch(orte_snapc_coord_type) 
+        {
+        case ORTE_SNAPC_GLOBAL_COORD_TYPE:
+        case ORTE_SNAPC_LOCAL_COORD_TYPE:
+            ; /* Do nothing */
+            break;
+        case ORTE_SNAPC_APP_COORD_TYPE:
+            return app_coord_ft_event(state);
+            break;
+        default:
+            break;
+        }
+
+    return ORTE_SUCCESS;
 }
 
 /******************

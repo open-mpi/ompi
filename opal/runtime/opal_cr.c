@@ -270,7 +270,7 @@ int opal_cr_init(void )
                         "opal_cr: init: Debug SIGPIPE: %d (%s)",
                         val, (opal_cr_debug_sigpipe ? "True" : "False"));
 
-    if( opal_cr_debug_sigpipe ) {
+    if( opal_cr_debug_sigpipe && !opal_cr_thread_use_if_avail ) {
         if( SIG_ERR == signal(SIGPIPE, opal_cr_sigpipe_debug_signal_handler) ) {
             ;
         }
@@ -725,6 +725,12 @@ static void* opal_cr_thread_fn(opal_object_t *obj)
     /* Sanity Check */
     if( !opal_cr_thread_use_if_avail ) {
         return NULL;
+    }
+
+    if( opal_cr_debug_sigpipe ) {
+        if( SIG_ERR == signal(SIGPIPE, opal_cr_sigpipe_debug_signal_handler) ) {
+            ;
+        }
     }
 
     /*
