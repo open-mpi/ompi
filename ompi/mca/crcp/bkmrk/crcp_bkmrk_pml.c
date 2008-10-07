@@ -3838,6 +3838,11 @@ static int drain_message_find_any(size_t count, int tag, int peer,
          * communicator, and search only the peer that matches.
          */
         if( MPI_ANY_SOURCE != peer && peer >= 0) {
+            /* Check to see if peer could possibly be in this communicator */
+            if( comm->c_local_group->grp_proc_count <= peer ) {
+                continue;
+            }
+                
             if( OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                                             &(cur_peer_ref->proc_name),
                                                             &(comm->c_local_group->grp_proc_pointers[peer]->proc_name)) ) {
