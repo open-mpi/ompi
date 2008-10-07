@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,6 +54,10 @@
  * halving is used to be nice to the app memory wise.  There are much
  * better algorithms for large messages with cummutative operations,
  * so this should be investigated further.
+ *
+ * NOTE: We default to a simple reduce/scatterv if one of the rcounts
+ * is zero.  This is because the existing algorithms do not currently
+ * support a count of zero in the array.
  */
 int
 mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
@@ -66,6 +71,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     int *disps = NULL;
     char *recv_buf = NULL, *recv_buf_free = NULL;
     char *result_buf = NULL, *result_buf_free = NULL;
+    bool zerocounts = false;
 
     /* Initialize */
     rank = ompi_comm_rank(comm);
@@ -78,8 +84,14 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     disps[0] = 0;
     for (i = 0; i < (size - 1); ++i) {
         disps[i + 1] = disps[i] + rcounts[i];
+        if (0 == rcounts[i]) {
+            zerocounts = true;
+        }
     }
     count = disps[size - 1] + rcounts[size - 1];
+    if (0 == rcounts[size - 1]) {
+        zerocounts = true;
+    }
 
     /* short cut the trivial case */
     if (0 == count) {
@@ -98,7 +110,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     }
 
     if ((op->o_flags & OMPI_OP_FLAGS_COMMUTE) &&
-        (buf_size < COMMUTATIVE_LONG_MSG)) {
+        (buf_size < COMMUTATIVE_LONG_MSG) && (!zerocounts)) {
         int tmp_size = 1, remain = 0, tmp_rank;
 
         /* temporary receive buffer.  See coll_basic_reduce.c for details on sizing */
