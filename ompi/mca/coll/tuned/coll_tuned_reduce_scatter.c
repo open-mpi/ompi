@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -526,12 +527,14 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
 	inbuf[1] = inbuf_free[1] - lb;
     }
 
-    /* Handle MPI_IN_PLACE */
-    if (MPI_IN_PLACE != sbuf) {
-	ret = ompi_ddt_copy_content_same_ddt(dtype, total_count, 
-					     accumbuf, (char*)sbuf);
-	if (ret < 0) { line = __LINE__; goto error_hndl; }
+    /* Handle MPI_IN_PLACE for size > 1 */
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
     }
+
+    ret = ompi_ddt_copy_content_same_ddt(dtype, total_count, 
+                                         accumbuf, (char*)sbuf);
+    if (ret < 0) { line = __LINE__; goto error_hndl; }
 
     /* Computation loop */
 
