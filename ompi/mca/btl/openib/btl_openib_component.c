@@ -1228,7 +1228,7 @@ static int btl_openib_component_progress(void)
 
             if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
                 uint32_t size;
-                opal_atomic_rmb();
+                opal_atomic_mb();
                 if(endpoint->nbo) {
                     BTL_OPENIB_FOOTER_NTOH((*frag->ftr));
                 }
