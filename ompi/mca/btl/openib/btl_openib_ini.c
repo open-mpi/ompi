@@ -90,8 +90,6 @@ static int parse_line(parsed_section_values_t *item);
 static void reset_section(bool had_previous_value, parsed_section_values_t *s);
 static void reset_values(ompi_btl_openib_ini_values_t *v);
 static int save_section(parsed_section_values_t *s);
-static int intify(char *string);
-static int intify_list(char *str, uint32_t **values, int *len);
 static inline void show_help(const char *topic);
 
 
@@ -364,14 +362,14 @@ static int parse_line(parsed_section_values_t *sv)
        all whitespace at the beginning and ending of the value. */
 
     if (0 == strcasecmp(key_buffer, "vendor_id")) {
-        if (OMPI_SUCCESS != (ret = intify_list(value, &sv->vendor_ids, 
+        if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_intify_list(value, &sv->vendor_ids, 
                                                &sv->vendor_ids_len))) {
             return ret;
         }
     }
 
     else if (0 == strcasecmp(key_buffer, "vendor_part_id")) {
-        if (OMPI_SUCCESS != (ret = intify_list(value, &sv->vendor_part_ids,
+        if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_intify_list(value, &sv->vendor_part_ids,
                                                &sv->vendor_part_ids_len))) {
             return ret;
         }
@@ -379,13 +377,13 @@ static int parse_line(parsed_section_values_t *sv)
 
     else if (0 == strcasecmp(key_buffer, "mtu")) {
         /* Single value */
-        sv->values.mtu = (uint32_t) intify(value);
+        sv->values.mtu = (uint32_t) ompi_btl_openib_ini_intify(value);
         sv->values.mtu_set = true;
     }
 
     else if (0 == strcasecmp(key_buffer, "use_eager_rdma")) {
         /* Single value */
-        sv->values.use_eager_rdma = (uint32_t) intify(value);
+        sv->values.use_eager_rdma = (uint32_t) ompi_btl_openib_ini_intify(value);
         sv->values.use_eager_rdma_set = true;
     }
 
@@ -547,7 +545,7 @@ static int save_section(parsed_section_values_t *s)
 /*
  * Do string-to-integer conversion, for both hex and decimal numbers
  */
-static int intify(char *str)
+int ompi_btl_openib_ini_intify(char *str)
 {
     while (isspace(*str)) {
         ++str;
@@ -568,7 +566,7 @@ static int intify(char *str)
 /*
  * Take a comma-delimited list and infity them all
  */
-static int intify_list(char *value, uint32_t **values, int *len)
+int ompi_btl_openib_ini_intify_list(char *value, uint32_t **values, int *len)
 {
     char *comma;
     char *str = value;
@@ -584,7 +582,7 @@ static int intify_list(char *value, uint32_t **values, int *len)
         if (NULL == *values) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        *values[0] = (uint32_t) intify(str);
+        *values[0] = (uint32_t) ompi_btl_openib_ini_intify(str);
         *len = 1;
     } else {
         /* If we found a comma, loop over all the values.  Be a
@@ -594,7 +592,7 @@ static int intify_list(char *value, uint32_t **values, int *len)
         do {
             *comma = '\0';
             *values = realloc(*values, sizeof(uint32_t) * (*len + 2));
-            (*values)[*len] = (int32_t) intify(str);
+            (*values)[*len] = (int32_t) ompi_btl_openib_ini_intify(str);
             ++(*len);
             str = comma + 1;
             comma = strchr(str, ',');
@@ -602,7 +600,7 @@ static int intify_list(char *value, uint32_t **values, int *len)
         /* Get the last value (i.e., the value after the last
            comma, because it won't have been snarfed in the
            loop) */
-        (*values)[*len] = (uint32_t) intify(str);
+        (*values)[*len] = (uint32_t) ompi_btl_openib_ini_intify(str);
         ++(*len);
     }
 

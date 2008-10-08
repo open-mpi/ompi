@@ -49,6 +49,9 @@ extern "C" {
      */
     int ompi_btl_openib_ini_finalize(void);
 
+    int ompi_btl_openib_ini_intify(char *string);
+    int ompi_btl_openib_ini_intify_list(char *str, uint32_t **values, int *len);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

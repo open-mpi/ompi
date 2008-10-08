@@ -27,6 +27,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
+#include "btl_openib_ini.h"
 
 /*
  * Local flags
@@ -97,7 +98,7 @@ static inline int reg_int(const char* param_name, const char* param_desc,
  */
 int btl_openib_register_mca_params(void) 
 {
-    char *msg, *str;
+    char *msg, *str, *pkey;
     int ival, ival2, ret, tmp;
 
     ret = OMPI_SUCCESS;
@@ -192,13 +193,15 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_pkey_ix = (uint32_t) ival;
 
-    CHECK(reg_int("ib_pkey_val", "InfiniBand pkey value"
+    CHECK(reg_string("ib_pkey_val", "InfiniBand pkey value"
                   "(must be > 0 and < 0xffff)",
-                  0, &ival, REGINT_GE_ZERO));
-    if (ival > 0xffff) {
+                  "0", &pkey, 0));
+    mca_btl_openib_component.ib_pkey_val = ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
+    if (mca_btl_openib_component.ib_pkey_val > MCA_BTL_IB_PKEY_MASK || 
+            mca_btl_openib_component.ib_pkey_val < 0) {
         ret = OMPI_ERR_BAD_PARAM;
     }
-    mca_btl_openib_component.ib_pkey_val = (uint32_t) ival;
+    free(pkey);
 
     CHECK(reg_int("ib_psn", "InfiniBand packet sequence starting number "
                   "(must be >= 0)", 

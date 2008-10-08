@@ -51,6 +51,7 @@ extern "C" {
 
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
+#define MCA_BTL_IB_PKEY_MASK 0x7fff
 
 /**
  * Infiniband (IB) BTL component.
