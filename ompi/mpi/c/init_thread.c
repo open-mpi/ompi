@@ -36,7 +36,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                     int *provided) 
 {
     int err;
-    MPI_Comm null = NULL;
 
     /*
      *   A thread compliant MPI implementation will be able to return provided
@@ -69,6 +68,16 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     } else {
         err = ompi_mpi_init(0, NULL, required, provided);
     }
-    
-    OMPI_ERRHANDLER_RETURN(err, null, err, FUNC_NAME);
+
+    /* Since we don't have a communicator to invoke an errorhandler on
+       here, don't use the fancy-schmancy ERRHANDLER macros; they're
+       really designed for real communicator objects.  Just use the
+       back-end function directly. */
+
+    if (MPI_SUCCESS != err) {
+        return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM,
+                                      err < 0 ? ompi_errcode_get_mpi_code(err) :
+                                      err, FUNC_NAME);
+    }
+    return MPI_SUCCESS;
 }
