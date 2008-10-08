@@ -1722,8 +1722,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 break;
             }
             if (0 == mca_btl_openib_component.ib_pkey_val) {
-                ret = init_one_port(btl_list, device, i, mca_btl_openib_component.ib_pkey_ix,
-                                    &ib_port_attr);
+                ret = init_one_port(btl_list, device, i, 0, &ib_port_attr);
             } else {
                 uint16_t pkey,j;
                 for (j = 0; j < device->ib_dev_attr.max_pkeys; j++) {

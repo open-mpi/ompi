@@ -180,7 +180,6 @@ struct mca_btl_openib_component_t {
     uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
 
     int32_t ib_max_inline_data; /**< Max size of inline data */
-    uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
     uint32_t ib_pkey_val;
     uint32_t ib_psn;
     uint32_t ib_qp_ous_rd_atom;
