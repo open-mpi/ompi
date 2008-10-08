@@ -260,7 +260,7 @@ int btl_openib_register_mca_params(void)
                   16, (int*) &mca_btl_openib_component.reg_mru_len,
                   REGINT_GE_ONE));
 
-    CHECK(reg_int("of_cq_size", "ib_cq_size",
+    CHECK(reg_int("cq_size", "ib_cq_size",
                   "Size of the OpenFabrics completion "
                   "queue (will automatically be set to a minimum of "
                   "(2 * number_of_peers * btl_openib_rd_num))",
@@ -268,7 +268,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
         mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
 
-    CHECK(reg_int("of_max_inline_data", "ib_max_inline_data",
+    CHECK(reg_int("max_inline_data", "ib_max_inline_data",
                   "Maximum size of inline data segment "
                   "(-1 = use device default, "
                   "0 = run-time probe to discover max value, "
@@ -276,7 +276,7 @@ int btl_openib_register_mca_params(void)
                   -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
 
-    CHECK(reg_string("of_pkey", "ib_pkey_val", 
+    CHECK(reg_string("pkey", "ib_pkey_val", 
                      "OpenFabrics partition key (pkey) value. "
                      "Unsigned integer decimal or hex values are allowed (e.g., \"3\" or \"0x3f\") and will be masked against the maximum allowable IB paritition key value (0x7fff)",
                      "0", &pkey, 0));
@@ -291,7 +291,7 @@ int btl_openib_register_mca_params(void)
     }
     free(pkey);
 
-    CHECK(reg_int("of_psn", "ib_psn",
+    CHECK(reg_int("psn", "ib_psn",
                   "OpenFabrics packet sequence starting number "
                   "(must be >= 0)",
                   0, &ival, REGINT_GE_ZERO));
@@ -313,7 +313,7 @@ int btl_openib_register_mca_params(void)
         /* Don't try to recover from this */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    CHECK(reg_int("of_mtu", "ib_mtu", msg, IBV_MTU_1024, &ival, 0));
+    CHECK(reg_int("mtu", "ib_mtu", msg, IBV_MTU_1024, &ival, 0));
     free(msg);
     if (ival < IBV_MTU_1024 || ival > IBV_MTU_4096) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
