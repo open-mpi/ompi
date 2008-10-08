@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,12 @@ BEGIN_C_DECLS
      * Shut down / release all internal state
      */
     int ompi_btl_openib_ini_finalize(void);
+
+    /**
+     * string to int convertors with dec/hex autodetection
+     */
+    int ompi_btl_openib_ini_intify(char *string);
+    int ompi_btl_openib_ini_intify_list(char *str, uint32_t **values, int *len);
 
 END_C_DECLS
 
