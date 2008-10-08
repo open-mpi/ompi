@@ -29,7 +29,7 @@ version 1.0.
 1.2.8
 -----
 
-- Fix OpenIB partition support. See ticket #1557.
+- Fix OpenFabrics IB partition support. See ticket #1557.
 - Restore v1.1 feature that sourced .profile on remote nodes if the default
   shell will not do so (e.g. /bin/sh and /bin/ksh).  See ticket #1560.
 - Fix segfault in MPI_Init_thread() if ompi_mpi_init() fails. See ticket #1562.
