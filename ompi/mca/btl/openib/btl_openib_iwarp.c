@@ -22,9 +22,9 @@
 #include "opal/util/if.h"
 
 #include "connect/connect.h"
-#include "btl_openib_endpoint.h"
 #endif
 /* Always want to include this file */
+#include "btl_openib_endpoint.h"
 #include "btl_openib_iwarp.h"
 #if OMPI_HAVE_RDMACM
 
