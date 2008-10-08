@@ -342,15 +342,13 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 static int setup_launch(int *argcptr, char ***argvptr,
                         char *nodename,
                         int *node_name_index1,
-                        int *proc_vpid_index, char *prefix_dir,
-                        bool *remote_sh, bool *remote_csh)
+                        int *proc_vpid_index, char *prefix_dir)
 {
     struct passwd *p;
     int argc;
     char **argv;
     char *param;
-    orte_plm_rsh_shell_t shell;
-    bool local_sh = false, local_csh = false;
+    orte_plm_rsh_shell_t remote_shell, local_shell;
     char *lib_base, *bin_base;
     int orted_argc;
     char **orted_argv;
@@ -359,6 +357,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     int rc;
 
     /* What is our local shell? */
+    local_shell = ORTE_PLM_RSH_SHELL_UNKNOWN;
     p = getpwuid(getuid());
     if( NULL == p ) {
         /* This user is unknown to the system. Therefore, there is no reason we
@@ -368,69 +367,51 @@ static int setup_launch(int *argcptr, char ***argvptr,
         return ORTE_ERR_FATAL;
     } else {
         param = p->pw_shell;
-        shell = find_shell(p->pw_shell);
+        local_shell = find_shell(p->pw_shell);
     }
     /* If we didn't find it in getpwuid(), try looking at the $SHELL
      environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
      */
-    if (ORTE_PLM_RSH_SHELL_UNKNOWN == shell && 
+    if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell && 
         NULL != (param = getenv("SHELL"))) {
-        shell = find_shell(param);
+        local_shell = find_shell(param);
     }
     
-    switch (shell) {
-        case ORTE_PLM_RSH_SHELL_SH:  /* fall through */
-        case ORTE_PLM_RSH_SHELL_KSH: /* fall through */
-        case ORTE_PLM_RSH_SHELL_ZSH: /* fall through */
-        case ORTE_PLM_RSH_SHELL_BASH: local_sh = true; break;
-        case ORTE_PLM_RSH_SHELL_TCSH: /* fall through */
-        case ORTE_PLM_RSH_SHELL_CSH:  local_csh = true; break;
-        default:
-            opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
-                        (NULL != param) ? param : "unknown");
-            *remote_sh = true;
-            break;
+    if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell) {
+        opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
+                    (NULL != param) ? param : "unknown");
+        local_shell = ORTE_PLM_RSH_SHELL_BASH;
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: local csh: %s, local sh: %s",
+                         "%s plm:rsh: local shell: %d (%s)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (local_csh ? "TRUE" : "FALSE"),
-                         (local_sh ? "TRUE" : "FALSE")));
+                         local_shell, orte_plm_rsh_shell_name[local_shell]));
     
     /* What is our remote shell? */
     if (mca_plm_rsh_component.assume_same_shell) {
-        *remote_sh = local_sh;
-        *remote_csh = local_csh;
+        remote_shell = local_shell;
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: assuming same remote shell as local shell",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     } else {
-        orte_plm_rsh_shell_t shell;
-        rc = orte_plm_rsh_probe(nodename, &shell);
+        rc = orte_plm_rsh_probe(nodename, &remote_shell);
         
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        switch (shell) {
-            case ORTE_PLM_RSH_SHELL_SH:  /* fall through */
-            case ORTE_PLM_RSH_SHELL_KSH: /* fall through */
-            case ORTE_PLM_RSH_SHELL_ZSH: /* fall through */
-            case ORTE_PLM_RSH_SHELL_BASH: *remote_sh = true; break;
-            case ORTE_PLM_RSH_SHELL_TCSH: /* fall through */
-            case ORTE_PLM_RSH_SHELL_CSH:  *remote_csh = true; break;
-            default:
+        if (ORTE_PLM_RSH_SHELL_UNKNOWN == remote_shell) {
                 opal_output(0, "WARNING: rsh probe returned unhandled shell; assuming bash\n");
-                *remote_sh = true;
+            remote_shell = ORTE_PLM_RSH_SHELL_BASH;
         }
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: remote csh: %d, remote sh: %d",
+                         "%s plm:rsh: remote shell: %d (%s)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         *remote_csh, *remote_sh));
+                         remote_shell, orte_plm_rsh_shell_name[remote_shell]));
     
     /* Figure out the basenames for the libdir and bindir.  This
      requires some explanation:
@@ -469,6 +450,28 @@ static int setup_launch(int *argcptr, char ***argvptr,
     argc = mca_plm_rsh_component.agent_argc;
     *node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
+    
+    /* Do we need to source .profile on the remote side?
+        - sh: yes (see bash(1))
+        - ksh: yes (see ksh(1))
+        - bash: no (see bash(1))
+        - [t]csh: no (see csh(1) and tcsh(1))
+        - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
+     */
+    
+    if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+        ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
+        int i;
+        char **tmp;
+        tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
+        if (NULL == tmp) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        for (i = 0; NULL != tmp[i]; ++i) {
+            opal_argv_append(&argc, &argv, tmp[i]);
+        }
+        opal_argv_free(tmp);
+    }
     
     /* now get the orted cmd - as specified by user - into our tmp array.
      * The function returns the location where the actual orted command is
@@ -531,7 +534,10 @@ static int setup_launch(int *argcptr, char ***argvptr,
          * with the prefix directory
          */
         char *opal_prefix = getenv("OPAL_PREFIX");
-        if (*remote_sh) {
+        if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+            ORTE_PLM_RSH_SHELL_KSH == remote_shell ||
+            ORTE_PLM_RSH_SHELL_ZSH == remote_shell ||
+            ORTE_PLM_RSH_SHELL_BASH == remote_shell) {
             /* if there is nothing preceding orted, then we can just
              * assemble the cmd with the orted_cmd at the end. Otherwise,
              * we have to insert the orted_prefix in the right place
@@ -548,7 +554,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       (orted_prefix != NULL ? orted_prefix : ""),
                       prefix_dir, bin_base,
                       orted_cmd);
-        } else if (*remote_csh) {
+        } else if (ORTE_PLM_RSH_SHELL_TCSH == remote_shell ||
+                   ORTE_PLM_RSH_SHELL_CSH == remote_shell) {
             /* [t]csh is a bit more challenging -- we
              have to check whether LD_LIBRARY_PATH
              is already set before we try to set it.
@@ -657,8 +664,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
 
 /* actually ssh the child */
 static void ssh_child(int argc, char **argv,
-                      orte_vpid_t vpid, int proc_vpid_index,
-                      bool remote_sh, bool remote_csh)
+                      orte_vpid_t vpid, int proc_vpid_index)
 {
     char** env;
     char* var;
@@ -787,7 +793,6 @@ static int remote_spawn(opal_buffer_t *launch)
     char *prefix;
     int argc;
     int rc;
-    bool remote_sh = false, remote_csh = false; 
     bool failed_launch = true;
     pid_t pid;
     orte_std_cntr_t n;
@@ -832,7 +837,7 @@ static int remote_spawn(opal_buffer_t *launch)
     
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
-                                           &proc_vpid_index, prefix, &remote_sh, &remote_csh))) {
+                                           &proc_vpid_index, prefix))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -874,8 +879,7 @@ static int remote_spawn(opal_buffer_t *launch)
                                  nodes[vpid]->name));
             
             /* do the ssh launch - this will exit if it fails */
-            ssh_child(argc, argv, vpid,
-                      proc_vpid_index, remote_sh, remote_csh);
+            ssh_child(argc, argv, vpid, proc_vpid_index);
             
         } else { /* father */
             OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
@@ -939,7 +943,6 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     char *prefix_dir;
     int argc;
     int rc;
-    bool remote_sh = false, remote_csh = false; 
     bool failed_launch = true;
     orte_app_context_t **apps;
     orte_node_t **nodes;
@@ -1038,7 +1041,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, nodes[0]->name, &node_name_index1,
-                                           &proc_vpid_index, prefix_dir, &remote_sh, &remote_csh))) {
+                                           &proc_vpid_index, prefix_dir))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -1164,8 +1167,7 @@ launch:
         if (pid == 0) {
             
             /* do the ssh launch - this will exit if it fails */
-            ssh_child(argc, argv, nodes[nnode]->daemon->name.vpid,
-                      proc_vpid_index, remote_sh, remote_csh);
+            ssh_child(argc, argv, nodes[nnode]->daemon->name.vpid, proc_vpid_index);
             
             
         } else { /* father */
