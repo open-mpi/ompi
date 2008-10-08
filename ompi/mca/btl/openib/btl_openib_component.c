@@ -1726,9 +1726,13 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                                     &ib_port_attr);
             } else {
                 uint16_t pkey,j;
-                for (j=0; j < device->ib_dev_attr.max_pkeys; j++) {
-                    ibv_query_pkey(device->ib_dev_context, i, j, &pkey);
-                    pkey=ntohs(pkey);
+                for (j = 0; j < device->ib_dev_attr.max_pkeys; j++) {
+                    if(ibv_query_pkey(device->ib_dev_context, i, j, &pkey)){
+                        BTL_ERROR(("error getting pkey for index %d, device %s "
+                                    "port number %d errno says %s",
+                                    j, ibv_get_device_name(device->ib_dev), i, strerror(errno)));
+                    }
+                    pkey = ntohs(pkey) & MCA_BTL_IB_PKEY_MASK;
                     if(pkey == mca_btl_openib_component.ib_pkey_val){
                         ret = init_one_port(btl_list, device, i, j, &ib_port_attr);
                         break;

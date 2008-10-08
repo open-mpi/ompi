@@ -31,6 +31,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
+#include "btl_openib_ini.h"
 #include "connect/base.h"
 
 #ifdef HAVE_IBV_FORK_INIT
@@ -132,7 +133,7 @@ int btl_openib_register_mca_params(void)
     char default_qps[100];
     uint32_t mid_qp_size;
     int i;
-    char *msg, *str;
+    char *msg, *str, *pkey;
     int ival, ival2, ret, tmp;
 
     ret = OMPI_SUCCESS;
@@ -280,16 +281,18 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_pkey_ix = (uint32_t) ival;
 
-    CHECK(reg_int("of_pkey_val", "ib_pkey_val", "OpenFabrics pkey value"
-                  "(must be > 0 and < 0xffff)",
-                  0, &ival, REGINT_GE_ZERO));
-    if (ival > 0xffff) {
+    CHECK(reg_string("of_pkey_val", "ib_pkey_val", "OpenFabrics pkey value"
+                "(must be > 0 and < 0xffff)",
+                "0", &pkey, 0));
+    mca_btl_openib_component.ib_pkey_val = ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
+    if (mca_btl_openib_component.ib_pkey_val > 0x7fff ||
+            mca_btl_openib_component.ib_pkey_val < 0) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "invalid value for btl_openib_ib_pkey_val",
                        "btl_openib_ib_pkey_val ignored");
-    } else {
-        mca_btl_openib_component.ib_pkey_val = (uint32_t) ival;
+        mca_btl_openib_component.ib_pkey_val = 0;
     }
+    free(pkey);
 
     CHECK(reg_int("of_psn", "ib_psn",
                   "OpenFabrics packet sequence starting number "
