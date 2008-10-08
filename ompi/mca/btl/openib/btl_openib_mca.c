@@ -276,15 +276,12 @@ int btl_openib_register_mca_params(void)
                   -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
 
-    CHECK(reg_int("of_pkey_ix", "ib_pkey_ix", "OpenFabrics pkey index "
-                  "(must be >= 0)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_pkey_ix = (uint32_t) ival;
-
-    CHECK(reg_string("of_pkey_val", "ib_pkey_val", "OpenFabrics pkey value"
-                "(must be > 0 and < 0xffff)",
-                "0", &pkey, 0));
-    mca_btl_openib_component.ib_pkey_val = ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
+    CHECK(reg_string("of_pkey", "ib_pkey_val", 
+                     "OpenFabrics partition key (pkey) value. "
+                     "Unsigned integer decimal or hex values are allowed (e.g., \"3\" or \"0x3f\") and will be masked against the maximum allowable IB paritition key value (0x7fff)",
+                     "0", &pkey, 0));
+    mca_btl_openib_component.ib_pkey_val = 
+        ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
     if (mca_btl_openib_component.ib_pkey_val > MCA_BTL_IB_PKEY_MASK ||
             mca_btl_openib_component.ib_pkey_val < 0) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
