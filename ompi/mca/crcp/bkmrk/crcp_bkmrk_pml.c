@@ -172,7 +172,8 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *msg_r
                                 opal_list_t * from_list,
                                 ompi_crcp_bkmrk_pml_peer_ref_t *to_peer_ref,
                                 opal_list_t * to_list,
-                                ompi_crcp_bkmrk_pml_traffic_message_ref_t **new_msg_ref);
+                                ompi_crcp_bkmrk_pml_traffic_message_ref_t **new_msg_ref,
+                                bool keep_active); /* If you have to create a new context, should it be initialized to active? */
 
 /*
  * Traffic Message: Strip off the first matching request
@@ -2308,7 +2309,8 @@ static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *re
                                  COORD_MSG_TYPE_P_RECV,
                                  NULL, &(unknown_persist_recv_list),
                                  peer_ref, &(peer_ref->recv_init_list),
-                                 &new_msg_ref);
+                                 &new_msg_ref,
+                                 true);
             msg_ref = new_msg_ref;
         }
     }
@@ -2546,7 +2548,8 @@ static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request
                                  COORD_MSG_TYPE_I_RECV,
                                  NULL, &(unknown_recv_from_list),
                                  peer_ref, &(peer_ref->irecv_list),
-                                 &new_msg_ref);
+                                 &new_msg_ref,
+                                 true);
             msg_ref = new_msg_ref;
         }
     }
@@ -2721,7 +2724,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_recv(
                                  COORD_MSG_TYPE_B_RECV,
                                  NULL, &(unknown_recv_from_list),
                                  peer_ref, &(peer_ref->recv_list),
-                                 &new_msg_ref);
+                                 &new_msg_ref,
+                                 false);
             new_msg_ref->done++;
             new_msg_ref->active--;
         } else {
@@ -3232,7 +3236,8 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
                                 opal_list_t * from_list,
                                 ompi_crcp_bkmrk_pml_peer_ref_t *to_peer_ref,
                                 opal_list_t * to_list,
-                                ompi_crcp_bkmrk_pml_traffic_message_ref_t **new_msg_ref)
+                                ompi_crcp_bkmrk_pml_traffic_message_ref_t **new_msg_ref,
+                                bool keep_active)
 {
     int ret, exit_status = ORTE_SUCCESS;
     ompi_crcp_bkmrk_pml_message_content_ref_t *new_content, *prev_content;
@@ -3278,7 +3283,7 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
         new_content->buffer  =  NULL;
         new_content->request =  request;
         new_content->done    =  false;
-        new_content->active  =  false;
+        new_content->active  =  keep_active;
         new_content->already_posted  = true;
         new_content->already_drained = loc_already_drained;
         OBJ_RETAIN(request);
@@ -3345,11 +3350,6 @@ static int traffic_message_grab_content(ompi_crcp_bkmrk_pml_traffic_message_ref_
     ompi_crcp_bkmrk_pml_message_content_ref_t *new_content = NULL;
     ompi_crcp_bkmrk_pml_message_content_ref_t *loc_content_ref = NULL;
     opal_list_item_t* item = NULL;
-    static int sleeper = 2;
-
-    while(sleeper == 1 ) {
-        sleep(1);
-    }
 
     /*
      * If there is no request list, return NULL
