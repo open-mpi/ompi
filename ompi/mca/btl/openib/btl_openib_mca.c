@@ -282,13 +282,6 @@ int btl_openib_register_mca_params(void)
                      "0", &pkey, 0));
     mca_btl_openib_component.ib_pkey_val = 
         ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
-    if (mca_btl_openib_component.ib_pkey_val > MCA_BTL_IB_PKEY_MASK ||
-            mca_btl_openib_component.ib_pkey_val < 0) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "invalid value for btl_openib_ib_pkey_val",
-                       "btl_openib_ib_pkey_val ignored");
-        mca_btl_openib_component.ib_pkey_val = 0;
-    }
     free(pkey);
 
     CHECK(reg_int("psn", "ib_psn",
