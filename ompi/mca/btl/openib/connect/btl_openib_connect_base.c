@@ -276,8 +276,9 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
         /* If the CPC wants to use the CTS protocol, check to ensure
            that QP 0 is PP; if it's not, we can't use this CPC (or the
            CTS protocol) */
-        if (!BTL_OPENIB_QP_TYPE_PP(0)) {
-            BTL_VERBOSE(("this CPConly supports when the first btl_openib_receive_queues QP is a PP QP"));
+        if (cpcs[cpc_index]->cbm_uses_cts &&
+            !BTL_OPENIB_QP_TYPE_PP(0)) {
+            BTL_VERBOSE(("this CPC only supports when the first btl_openib_receive_queues QP is a PP QP"));
             continue;
         }
 
