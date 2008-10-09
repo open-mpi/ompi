@@ -478,9 +478,6 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
 				   rbuf, rcounts[rank], dtype, 0,
 				   comm->c_local_comm,
 				   comm->c_local_comm->c_coll.coll_scatterv_module);
-    if (OMPI_SUCCESS != err) {
-        goto exit;
-    }
 
   exit:
     if (NULL != tmpbuf) {
