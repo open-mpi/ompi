@@ -60,9 +60,9 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
         case MCA_PML_OB1_SEND_PENDING_START:
             send_dst = mca_bml_base_btl_array_find(
                     &sendreq->req_endpoint->btl_eager, bml_btl->btl);
-            if(NULL == send_dst ||
-                    mca_pml_ob1_send_request_start_btl(sendreq, send_dst) ==
-                    OMPI_ERR_OUT_OF_RESOURCE) {
+            if( (NULL == send_dst) ||
+                (mca_pml_ob1_send_request_start_btl(sendreq, send_dst) ==
+                 OMPI_ERR_OUT_OF_RESOURCE) ) {
                 /* prepend to the pending list to minimize reordering in case
                  * send_dst != 0 */
                 add_request_to_send_pending(sendreq,
@@ -561,20 +561,20 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
 
     /* send */
     rc = mca_bml_base_send_status(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MATCH);
-    if( OPAL_LIKELY( rc >= 0 ) ) {
+    if( OPAL_LIKELY( rc >= OMPI_SUCCESS ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             mca_pml_ob1_match_completion_free_request( bml_btl, sendreq );
         }
         return OMPI_SUCCESS;
     }
     switch(rc) {
-        case OMPI_ERR_RESOURCE_BUSY:
-            /* don't signal request completion; will be completed in wait() */
-            rc = OMPI_SUCCESS;
-            break;
-        default:
-            mca_bml_base_free(bml_btl, des);
-            break;
+    case OMPI_ERR_RESOURCE_BUSY:
+        /* don't signal request completion; will be completed in wait() */
+        rc = OMPI_SUCCESS;
+        break;
+    default:
+        mca_bml_base_free(bml_btl, des);
+        break;
     }
     return rc;
 }
@@ -1203,8 +1203,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
         frag->rdma_length = save_size;
         if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-            opal_list_append(&mca_pml_ob1.rdma_pending,
-                    (opal_list_item_t*)frag);
+            opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         } else {

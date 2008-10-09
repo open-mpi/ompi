@@ -38,7 +38,6 @@ mca_bml_base_module_t mca_bml = {
     NULL,                    /* bml_register */ 
     NULL,                    /* bml_register_error */ 
     NULL,                    /* bml_finalize*/
-    NULL,                    /* bml_progress */
     NULL                     /* FT event */
 };
 mca_bml_base_component_t mca_bml_component;
