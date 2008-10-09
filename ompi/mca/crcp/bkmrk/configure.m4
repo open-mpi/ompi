@@ -15,9 +15,9 @@
 # $HEADER$
 #
 
-# MCA_crcp_coord_CONFIG([action-if-found], [action-if-not-found])
+# MCA_crcp_bkmrk_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_crcp_coord_CONFIG],[
+AC_DEFUN([MCA_crcp_bkmrk_CONFIG],[
     # If we don't want FT, don't compile this component
     AS_IF([test "$ompi_want_ft" = "1"],
         [$1],

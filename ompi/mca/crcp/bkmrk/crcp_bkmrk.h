@@ -17,12 +17,12 @@
 /**
  * @file
  * 
- * Coord CRCP component
+ * Hoke CRCP component
  *
  */
 
-#ifndef MCA_CRCP_COORD_EXPORT_H
-#define MCA_CRCP_COORD_EXPORT_H
+#ifndef MCA_CRCP_HOKE_EXPORT_H
+#define MCA_CRCP_HOKE_EXPORT_H
 
 #include "ompi_config.h"
 
@@ -42,11 +42,11 @@ extern "C" {
     /*
      * Local Component structures
      */
-    struct ompi_crcp_coord_component_t {
+    struct ompi_crcp_bkmrk_component_t {
         ompi_crcp_base_component_t super;  /** Base CRCP component */
     };
-    typedef struct ompi_crcp_coord_component_t ompi_crcp_coord_component_t;
-    OMPI_MODULE_DECLSPEC extern ompi_crcp_coord_component_t mca_crcp_coord_component;
+    typedef struct ompi_crcp_bkmrk_component_t ompi_crcp_bkmrk_component_t;
+    OMPI_MODULE_DECLSPEC extern ompi_crcp_bkmrk_component_t mca_crcp_bkmrk_component;
 
     /*
      * Local variables
@@ -56,15 +56,15 @@ extern "C" {
     /*
      * Module functions
      */
-    int ompi_crcp_coord_component_query(mca_base_module_t **module, int *priority);
-    int ompi_crcp_coord_module_init(void);
-    int ompi_crcp_coord_module_finalize(void);
+    int ompi_crcp_bkmrk_component_query(mca_base_module_t **module, int *priority);
+    int ompi_crcp_bkmrk_module_init(void);
+    int ompi_crcp_bkmrk_module_finalize(void);
 
-    int ompi_crcp_coord_pml_init(void);
-    int ompi_crcp_coord_pml_finalize(void);
+    int ompi_crcp_bkmrk_pml_init(void);
+    int ompi_crcp_bkmrk_pml_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* MCA_CRCP_COORD_EXPORT_H */
+#endif /* MCA_CRCP_HOKE_EXPORT_H */

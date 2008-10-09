@@ -14,32 +14,32 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-ompi-crcp-coord.txt
+dist_pkgdata_DATA = help-ompi-crcp-bkmrk.txt
 
 sources = \
-        crcp_coord.h \
-        crcp_coord_pml.h \
-        crcp_coord_component.c \
-        crcp_coord_module.c \
-        crcp_coord_pml.c
+        crcp_bkmrk.h \
+        crcp_bkmrk_pml.h \
+        crcp_bkmrk_component.c \
+        crcp_bkmrk_module.c \
+        crcp_bkmrk_pml.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_crcp_coord_DSO
+if OMPI_BUILD_crcp_bkmrk_DSO
 component_noinst =
-component_install = mca_crcp_coord.la
+component_install = mca_crcp_bkmrk.la
 else
-component_noinst = libmca_crcp_coord.la
+component_noinst = libmca_crcp_bkmrk.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_crcp_coord_la_SOURCES = $(sources)
-mca_crcp_coord_la_LDFLAGS = -module -avoid-version
+mca_crcp_bkmrk_la_SOURCES = $(sources)
+mca_crcp_bkmrk_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_crcp_coord_la_SOURCES = $(sources)
-libmca_crcp_coord_la_LDFLAGS = -module -avoid-version
+libmca_crcp_bkmrk_la_SOURCES = $(sources)
+libmca_crcp_bkmrk_la_LDFLAGS = -module -avoid-version
