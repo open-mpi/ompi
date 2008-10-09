@@ -147,6 +147,9 @@ static const uint32_t ProcInc    = 0x2;
 #define OPAL_CR_THREAD_LOCK()                                                      \
  {                                                                                 \
     while(!OPAL_ATOMIC_CMPSET_32(&opal_cr_thread_num_in_library, 0, ThreadFlag)) { \
+      if( !opal_cr_thread_is_active && opal_cr_thread_is_done) {                   \
+          break;                                                                   \
+      }                                                                            \
       sched_yield();                                                               \
       usleep(opal_cr_thread_sleep_wait);                                           \
     }                                                                              \
@@ -213,9 +216,9 @@ int opal_cr_init(void )
 
 #if OPAL_ENABLE_FT_THREAD == 1
     mca_base_param_reg_int_name("opal_cr", "use_thread",
-                                "Use an async thread to checkpoint this program (Default: Enabled)",
+                                "Use an async thread to checkpoint this program (Default: Disabled)",
                                 false, false,
-                                1, &val);
+                                0, &val);
     opal_cr_thread_use_if_avail = OPAL_INT_TO_BOOL(val);
 
     opal_output_verbose(10, opal_cr_output,
@@ -768,7 +771,7 @@ static void* opal_cr_thread_fn(opal_object_t *obj)
     /*
      * While active
      */
-    while( opal_cr_thread_is_active ) {
+    while( opal_cr_thread_is_active && !opal_cr_thread_is_done) {
         /*
          * While no threads are in the MPI library then try to process
          * checkpoint requests.
@@ -818,8 +821,9 @@ void opal_cr_thread_finalize_library(void)
         OPAL_CR_TEST_CHECKPOINT_READY();
     } else {
         /* Deactivate the CR Thread */
-        opal_cr_thread_is_active  = false;
         opal_cr_thread_is_done    = true;
+        opal_cr_thread_is_active  = false;
+        OPAL_CR_LOCK();
         opal_cr_thread_in_library = true;
     }
 }
@@ -830,8 +834,9 @@ void opal_cr_thread_abort_library(void)
         OPAL_CR_TEST_CHECKPOINT_READY();
     } else {
         /* Deactivate the CR Thread */
-        opal_cr_thread_is_active  = false;
         opal_cr_thread_is_done    = true;
+        opal_cr_thread_is_active  = false;
+        OPAL_CR_LOCK();
         opal_cr_thread_in_library = true;
     }
 }
