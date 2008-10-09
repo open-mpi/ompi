@@ -98,12 +98,12 @@ typedef uint32_t (*orte_ess_base_module_proc_get_arch_fn_t)(orte_process_name_t 
 /**
  * Get the local rank of a remote process
  */
-typedef uint8_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_process_name_t *proc);
+typedef orte_local_rank_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_process_name_t *proc);
 
 /**
  * Get the node rank of a remote process
  */
-typedef uint8_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
+typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
 
 /**
  * Update the arch of a remote process

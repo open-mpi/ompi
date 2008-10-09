@@ -83,8 +83,8 @@ static int rte_finalize(void);
 static bool proc_is_local(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
-static uint8_t proc_get_local_rank(orte_process_name_t *proc);
-static uint8_t proc_get_node_rank(orte_process_name_t *proc);
+static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
+static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
 
 #if OPAL_ENABLE_FT == 1
@@ -309,7 +309,7 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
     return ORTE_SUCCESS;
 }
 
-static uint8_t proc_get_local_rank(orte_process_name_t *proc)
+static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
@@ -327,7 +327,7 @@ static uint8_t proc_get_local_rank(orte_process_name_t *proc)
     return pmap->local_rank;
 }
 
-static uint8_t proc_get_node_rank(orte_process_name_t *proc)
+static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
