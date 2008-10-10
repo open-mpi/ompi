@@ -371,12 +371,10 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
                                     mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize, lsize;
-    int totalcounts, tcount;
+    int totalcounts;
     ptrdiff_t lb, extent;
-    char *tmpbuf = NULL, *tmpbuf2 = NULL, *tbuf = NULL;
+    char *tmpbuf = NULL, *tmpbuf2 = NULL;
     ompi_request_t *req;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **reqs = basic_module->mccb_reqs;
     int *disps = NULL;
 
     rank = ompi_comm_rank(comm);
