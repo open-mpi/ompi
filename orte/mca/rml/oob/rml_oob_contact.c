@@ -51,8 +51,10 @@ orte_rml_oob_set_uri(const char* uri)
     char** uris;
     char** ptr;
     int rc = orte_rml_base_parse_uris(uri, &name, &uris);
-    if(rc != ORTE_SUCCESS)
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    }
 
     for(ptr = uris; ptr != NULL && *ptr != NULL; ptr++) {
         orte_rml_oob_module.active_oob->oob_set_addr(&name, *ptr);

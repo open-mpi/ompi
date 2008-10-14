@@ -54,7 +54,8 @@ static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
-static int get_wireup_info(orte_jobid_t job, opal_buffer_t *buf);
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
+static int get_wireup_info(opal_buffer_t *buf);
 static int warmup_routes(void);
 
 #if OPAL_ENABLE_FT == 1
@@ -73,6 +74,7 @@ orte_routed_module_t orte_routed_direct_module = {
     route_is_defined,
     update_routing_tree,
     get_routing_tree,
+    proc_is_below,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
     direct_ft_event
@@ -865,8 +867,7 @@ static int update_routing_tree(void)
     return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(orte_jobid_t job,
-                                    opal_list_t *children)
+static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
 {
     orte_namelist_t *nm;
     orte_job_t *jdata;
@@ -896,7 +897,7 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_VPID_INVALID;
         }
-        /* if this is the daemon job, don't include myself */
+        /* if this is to the daemons, don't include myself */
         if (ORTE_PROC_MY_NAME->jobid == job) {
             start = 1;
         } else {
@@ -914,7 +915,25 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job,
     return ORTE_VPID_INVALID;
 }
 
-static int get_wireup_info(orte_jobid_t jobid, opal_buffer_t *buf)
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
+{
+    /* this is a flat routing tree - if I am not the HNP, then
+     * nobody is below
+     */
+    if (!orte_process_info.hnp) {
+        return false;
+    }
+    /* if I am the HNP, then the route is through the root
+     * if the root is the target
+     */
+    if (root == target) {
+        return true;
+    }
+    /* otherwise, not */
+    return false;
+}
+
+static int get_wireup_info(opal_buffer_t *buf)
 {
     int rc;
     
@@ -926,7 +945,7 @@ static int get_wireup_info(orte_jobid_t jobid, opal_buffer_t *buf)
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(jobid, buf))) {
+    if (ORTE_SUCCESS != (rc = orte_rml_base_get_contact_info(ORTE_PROC_MY_NAME->jobid, buf))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         return rc;

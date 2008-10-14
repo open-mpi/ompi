@@ -21,6 +21,7 @@
 
 # Source code files
 headers += \
+        class/opal_bitmap.h \
         class/opal_free_list.h \
         class/opal_hash_table.h \
         class/opal_list.h \
@@ -31,6 +32,7 @@ headers += \
         class/opal_value_array.h
 
 libopen_pal_la_SOURCES += \
+        class/opal_bitmap.c \
         class/opal_free_list.c \
         class/opal_hash_table.c \
         class/opal_list.c \
