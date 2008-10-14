@@ -120,7 +120,7 @@ Trunk (not on release branches yet)
   the deprecated $SLURM_TASKS_PER_NODE environment variable.  This change
   may be *required* when using SLURM v1.2 and above.  See ticket #1536.
 - Fix the MPIR_Proctable to be in process rank order. See ticket #1529.
-- Fix a regession introduced in 1.2.6 for the IBM eHCA. See ticket #1526.
+- Fix a regression introduced in 1.2.6 for the IBM eHCA. See ticket #1526.
 
 
 1.2.7
