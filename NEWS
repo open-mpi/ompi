@@ -107,9 +107,15 @@ Trunk (not on release branches yet)
   in cross-compile environments.
 
 
-1.2.8 (not released yet)
+1.2.8
 -----
 
+- Tweaked one memory barrier in the openib component to be more conservative.
+  May fix a problem observed on PPC machines.  See ticket #1532.
+- Fix OpenFabrics IB partition support. See ticket #1557.
+- Restore v1.1 feature that sourced .profile on remote nodes if the default
+  shell will not do so (e.g. /bin/sh and /bin/ksh).  See ticket #1560.
+- Fix segfault in MPI_Init_thread() if ompi_mpi_init() fails. See ticket #1562.
 - Adjust SLURM support to first look for $SLURM_JOB_CPUS_PER_NODE instead of
   the deprecated $SLURM_TASKS_PER_NODE environment variable.  This change
   may be *required* when using SLURM v1.2 and above.  See ticket #1536.
