@@ -256,6 +256,9 @@ static void file_constructor(ompi_file_t *file)
     /* Construct the io request freelist */
     OBJ_CONSTRUCT(&file->f_io_requests, opal_list_t);
 
+    /* Construct the per-module io request freelist */
+    OBJ_CONSTRUCT(&file->f_io_requests_lock, opal_mutex_t);
+
     /* If the user doesn't want us to ever free it, then add an extra
        RETAIN here */
 
@@ -313,8 +316,10 @@ static void file_destructor(ompi_file_t *file)
     }
 
     /* Destruct the io request freelist */
-
     OBJ_DESTRUCT(&file->f_io_requests);
+
+    /* Destruct the io requests lock  */
+    OBJ_DESTRUCT(&file->f_io_requests_lock);
 
     /* Reset the f_to_c table entry */
 
