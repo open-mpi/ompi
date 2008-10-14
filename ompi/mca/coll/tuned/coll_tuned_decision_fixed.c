@@ -450,7 +450,9 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
  *	Accepts:	- same arguments as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code (passed from 
  *                        the reduce scatter implementation)
- *                                        
+ *      Note: If we detect zero valued counts in the rcounts array, we
+ *      fall back to the nonoverlapping algorithm because the other
+ *      algorithms do not currently handle it.
  */
 int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
                                                     int *rcounts,
@@ -465,20 +467,27 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
    const double b = 8.0;
    const size_t small_message_size = 12 * 1024;
    const size_t large_message_size = 256 * 1024;
+   bool zerocounts = false;
 
    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
 
-   if( !ompi_op_is_commute(op) ) {
+   comm_size = ompi_comm_size(comm);
+   /* We need data size for decision function */
+   ompi_ddt_type_size(dtype, &dsize);
+   total_message_size = 0;
+   for (i = 0; i < comm_size; i++) { 
+     total_message_size += rcounts[i];
+     if (0 == rcounts[i]) {
+       zerocounts = true;
+     }
+   }
+
+   if( !ompi_op_is_commute(op) || (zerocounts)) {
       return ompi_coll_tuned_reduce_scatter_intra_nonoverlapping (sbuf, rbuf, rcounts, 
                                                                   dtype, op, 
                                                                   comm, module); 
    }
    
-   comm_size = ompi_comm_size(comm);
-   /* We need data size for decision function */
-   ompi_ddt_type_size(dtype, &dsize);
-   total_message_size = 0;
-   for (i = 0; i < comm_size; i++) { total_message_size += rcounts[i]; }
    total_message_size *= dsize;
 
    /* compute the nearest power of 2 */
