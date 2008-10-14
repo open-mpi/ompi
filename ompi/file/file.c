@@ -316,8 +316,10 @@ static void file_destructor(ompi_file_t *file)
     }
 
     /* Destruct the io request freelist */
-
     OBJ_DESTRUCT(&file->f_io_requests);
+
+    /* Destruct the io requests lock  */
+    OBJ_DESTRUCT(&file->f_io_requests_lock);
 
     /* Reset the f_to_c table entry */
 
