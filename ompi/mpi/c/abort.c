@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,6 +18,7 @@
  */
 #include "ompi_config.h"
 
+#include "orte/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/memchecker.h"
@@ -49,7 +50,9 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    opal_output(0, "MPI_ABORT invoked on rank %d in communicator %s with errorcode %d\n", 
-                ompi_comm_rank(comm), comm->c_name, errorcode);
+    orte_show_help("help-mpi-api.txt", "mpi-abort", true,
+                   ompi_comm_rank(comm), 
+                   (NULL != comm->c_name) ? comm->c_name : "<Unknown>",
+                   errorcode);
     return ompi_mpi_abort(comm, errorcode, true);
 }
