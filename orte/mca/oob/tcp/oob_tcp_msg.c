@@ -374,7 +374,6 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
             }
 	    return false;
         } else if (rc == 0)  {
-            /* Under Windows  have the PROTOCOL explicitly close the socket?? */
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
                 opal_output(0, "%s-%s mca_oob_tcp_msg_recv: peer closed connection", 
                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -463,36 +462,6 @@ static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 }
 
 
-#ifdef __WINDOWS__
-/*
- * XXX First try to fix orte issues, that readv is polled early and msg
- */
-struct envelope_t {
-   mca_oob_tcp_peer_t* peer;
-   mca_oob_tcp_msg_t* post;
-};
-
-static void peer_event_callback_wrapper (int fd, short flags, void * envelope)
-{
-    mca_oob_tcp_peer_t* peer = ((envelope_t *) envelope)->peer;
-    mca_oob_tcp_msg_t* post = ((envelope_t *) envelope)->post;
-
-    /* XXX We should have a ref_count per post, maybe on peer
-     * and have the event released
-     * If the event is not Persistent (like this one),
-     * it should freed again
-     */
-
-    post->msg_cbfunc(
-                post->msg_rc,
-                &peer->peer_name,
-                post->msg_uiov,
-                post->msg_ucnt,
-                post->msg_hdr.msg_tag,
-                post->msg_cbdata);
-}
-#endif
-
 /*
  * Progress a completed recv:
  * (1) signal a posted recv as complete
@@ -557,30 +526,6 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
         if(post->msg_flags & ORTE_RML_PERSISTENT) {
-#ifdef __WINDOWS__
-            /*
-             * In order to protect against reentry, due to a event in
-             * a threaded callback (and thereby reading EOF, thereby falsely *closing* the connection),
-             * just register a wrapper callback with zero timeout to libevent.
-             *
-             * This will be called "real soon", but we will be ready to grasp the next event.
-             */
-            {
-              struct envelope_t * envelope;
-              opal_event_t * peer_event;
-
-              peer_event = (opal_event_t *) malloc (sizeof (opal_event_t));
-              memset (peer_event, 0, sizeof (opal_event_t));
-
-              envelope = (envelope_t *) malloc (sizeof (struct envelope_t));
-              envelope->peer = peer;
-              envelope->post = post;
-
-              opal_evtimer_set(peer_event, peer_event_callback_wrapper, envelope);
-
-              opal_event_add (peer_event, 0);
-            }
-#else
             post->msg_cbfunc(
                 post->msg_rc, 
                 &peer->peer_name, 
@@ -588,7 +533,6 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 post->msg_ucnt, 
                 post->msg_hdr.msg_tag, 
                 post->msg_cbdata);
-#endif /* __WINDOWS__ */
         } else {
             mca_oob_tcp_msg_complete(post, &msg->msg_hdr.msg_origin);
         }
