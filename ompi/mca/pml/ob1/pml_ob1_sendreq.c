@@ -470,7 +470,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     size_t max_data = size;
     int rc;
 
-    if(NULL != bml_btl->btl_sendi) {
+    if(NULL != bml_btl->btl->btl_sendi) {
         mca_pml_ob1_match_hdr_t match;
         match.hdr_common.hdr_flags = 0;
         match.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
@@ -568,13 +568,13 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         return OMPI_SUCCESS;
     }
     switch(rc) {
-    case OMPI_ERR_RESOURCE_BUSY:
-        /* don't signal request completion; will be completed in wait() */
-        rc = OMPI_SUCCESS;
-        break;
-    default:
-        mca_bml_base_free(bml_btl, des);
-        break;
+        case OMPI_ERR_RESOURCE_BUSY:
+            /* No more resources. Allow the upper level to queue the send */
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            break;
+        default:
+            mca_bml_base_free(bml_btl, des);
+            break;
     }
     return rc;
 }
@@ -1020,9 +1020,8 @@ cannot_pack:
         size = range->range_btls[btl_idx].length;
 
         /* makes sure that we don't exceed BTL max send size */
-        if(bml_btl->btl_max_send_size != 0)
-        {
-            size_t max_send_size = bml_btl->btl_max_send_size -
+        if(bml_btl->btl->btl_max_send_size != 0) {
+            size_t max_send_size = bml_btl->btl->btl_max_send_size -
                 sizeof(mca_pml_ob1_frag_hdr_t);
 
             if (size > max_send_size) {

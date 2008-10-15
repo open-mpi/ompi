@@ -62,7 +62,7 @@ size_t mca_pml_ob1_rdma_btls(
             mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma,
                     (bml_endpoint->btl_rdma_index + n) % num_btls); 
         mca_mpool_base_registration_t* reg = NULL;
-        mca_mpool_base_module_t *btl_mpool = bml_btl->btl_mpool;
+        mca_mpool_base_module_t *btl_mpool = bml_btl->btl->btl_mpool;
 
         if(NULL != btl_mpool) {
             if(!mca_pml_ob1.leave_pinned) {
@@ -101,10 +101,9 @@ size_t mca_pml_ob1_rdma_btls(
     return num_btls_used;
 }
 
-size_t mca_pml_ob1_rdma_pipeline_btls(
-    mca_bml_base_endpoint_t* bml_endpoint,
-    size_t size,
-    mca_pml_ob1_com_btl_t* rdma_btls)
+size_t mca_pml_ob1_rdma_pipeline_btls( mca_bml_base_endpoint_t* bml_endpoint,
+                                       size_t size,
+                                       mca_pml_ob1_com_btl_t* rdma_btls )
 {
     int i, num_btls = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
     double weight_total = 0;
@@ -112,7 +111,7 @@ size_t mca_pml_ob1_rdma_pipeline_btls(
     for(i = 0; i < num_btls && i < mca_pml_ob1.max_rdma_per_request; i++) {
         rdma_btls[i].bml_btl =
             mca_bml_base_btl_array_get_next(&bml_endpoint->btl_rdma);
-        if(rdma_btls[i].bml_btl->btl_mpool != NULL)
+        if(NULL != rdma_btls[i].bml_btl->btl->btl_mpool)
             rdma_btls[i].btl_reg = NULL;
         else
             rdma_btls[i].btl_reg = &pml_ob1_dummy_reg;

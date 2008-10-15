@@ -194,7 +194,7 @@ int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 
 
 /*
- *   For each proc setup a datastructure that indicates the PTLs
+ *   For each proc setup a datastructure that indicates the BTLs
  *   that can be used to reach the destination.
  *
  */
@@ -202,7 +202,6 @@ int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     ompi_bitmap_t reachable;
-    struct mca_bml_base_endpoint_t ** bml_endpoints = NULL;
     int rc;
     size_t i;
 
@@ -235,16 +234,8 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     }
 #endif
 
-    bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
-		     sizeof(struct mca_bml_base_endpoint_t*));
-    if ( NULL == bml_endpoints ) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto cleanup_and_return;
-    }
-   
     rc = mca_bml.bml_add_procs( nprocs,
                                 procs,
-                                bml_endpoints,
                                 &reachable );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
@@ -297,9 +288,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         goto cleanup_and_return;
     
   cleanup_and_return:
-    if( NULL != bml_endpoints) {
-        free ( bml_endpoints);
-    }
     OBJ_DESTRUCT(&reachable);
 
     return rc;

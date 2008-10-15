@@ -1220,7 +1220,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
              ++j) {
             mca_bml_base_btl_t *bml_btl =
                 mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, j);
-            mca_mpool_base_module_t *btl_mpool = bml_btl->btl_mpool;
+            mca_mpool_base_module_t *btl_mpool = bml_btl->btl->btl_mpool;
             int index = peer_info->local_num_btls;
 
             if (!is_valid_rdma(bml_btl)) continue;
