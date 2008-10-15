@@ -2959,7 +2959,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
             uint32_t size;
             mca_btl_openib_module_t *btl = endpoint->endpoint_btl;
 
-            opal_atomic_rmb();
+            opal_atomic_mb();
 
             if(endpoint->nbo) {
                 BTL_OPENIB_FOOTER_NTOH(*frag->ftr);
