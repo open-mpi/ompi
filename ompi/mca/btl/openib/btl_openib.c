@@ -255,18 +255,21 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
     }
 
     rc = adjust_cq(device, BTL_OPENIB_HP_CQ);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto out;
+    }
 
     rc = adjust_cq(device, BTL_OPENIB_LP_CQ);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto out;
+    }
 
-    if(0 == openib_btl->num_peers)
+    if (0 == openib_btl->num_peers) {
        rc = create_srq(openib_btl);
+    }
 
-out:
     openib_btl->num_peers += nprocs;
+out:
     return rc;
 }
 
