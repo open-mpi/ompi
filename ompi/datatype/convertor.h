@@ -158,7 +158,10 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 }
 
 /*
- *
+ * Return:   0 if data is nor required to be packed for sending
+ *           1 if data does need to be packed (src and destination are
+ *             heterogenous from a data perspective, or data is not
+ *             contigous.
  */
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
