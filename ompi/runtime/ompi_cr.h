@@ -49,6 +49,12 @@ extern "C" {
      */
     OMPI_DECLSPEC extern int ompi_cr_output;
 
+    /*
+     * If one of the BTLs that shutdown require a full, clean rebuild of the
+     * point-to-point stack on 'continue' as well as 'restart'.
+     */
+    OPAL_DECLSPEC extern bool ompi_cr_continue_like_restart;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

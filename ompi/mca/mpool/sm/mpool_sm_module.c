@@ -28,7 +28,12 @@
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/maffinity_types.h"
 #include "opal/mca/maffinity/base/base.h"
+#include "orte/util/proc_info.h"
 
+#if OPAL_ENABLE_FT    == 1
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/runtime/ompi_cr.h"
+#endif
 
 /* 
  *  Initializes the mpool module.
@@ -116,15 +121,54 @@ void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr,
     mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
 }
 
+#if OPAL_ENABLE_FT    == 0
 int mca_mpool_sm_ft_event(int state) {
+    return OMPI_SUCCESS;
+}
+#else
+int mca_mpool_sm_ft_event(int state) {
+    mca_mpool_base_module_t *self_module = NULL;
+    char * file_name = NULL;
+
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        /* Record the shared memory filename */
+        asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
+                  orte_process_info.job_session_dir,
+                  orte_process_info.nodename );
+        opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, file_name);
+        free(file_name);
+        file_name = NULL;
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        ;
+        if(ompi_cr_continue_like_restart) {
+            /* Remove self from the list of all modules */
+            self_module = mca_mpool_base_module_lookup("sm");
+            mca_mpool_base_module_destroy(self_module);
+
+            /* Release the old sm file, if it exists */
+            if( NULL != mca_common_sm_mmap ) {
+                if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
+                    /* Add old shared memory file for eventual removal */
+                    opal_crs_base_cleanup_append(mca_common_sm_mmap->map_path, false);
+                }
+                OBJ_RELEASE( mca_common_sm_mmap );
+            }
+        }
     }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
+    else if(OPAL_CRS_RESTART == state ||
+            OPAL_CRS_RESTART_PRE == state) {
+        /* Remove self from the list of all modules */
+        self_module = mca_mpool_base_module_lookup("sm");
+        mca_mpool_base_module_destroy(self_module);
+
+        /* Release the old sm file, if it exists */
+        if( NULL != mca_common_sm_mmap ) {
+            if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
+                /* Add old shared memory file for eventual removal */
+                opal_crs_base_cleanup_append(mca_common_sm_mmap->map_path, false);
+            }
+            OBJ_RELEASE( mca_common_sm_mmap );
+        }
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
@@ -135,3 +179,4 @@ int mca_mpool_sm_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
+#endif /* OPAL_ENABLE_FT */

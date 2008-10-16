@@ -19,6 +19,10 @@
 #include "ompi_config.h"
 #include "opal/util/if.h"
 
+#if OPAL_ENABLE_FT == 1
+#include "ompi/runtime/ompi_cr.h"
+#endif
+
 #include "btl_mx.h"
 #include "btl_mx_frag.h" 
 #include "btl_mx_proc.h"
@@ -616,9 +620,36 @@ int mca_btl_mx_finalize( struct mca_btl_base_module_t* btl )
 }
 
 
+#if OPAL_ENABLE_FT == 0
 int mca_btl_mx_ft_event(int state) {
+    return OMPI_SUCCESS;
+}
+#else
+int mca_btl_mx_ft_event(int state) {
+    mca_btl_mx_module_t* mx_btl;
+    int i;
+
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        /* Continue must reconstruct the routes (including modex), since we
+         * have to tear down the devices completely.
+         * We have to do this because the MX driver can be checkpointed, but
+         * cannot be restarted with BLCR due to an mmap problem. If we do not
+         * close MX then BLCR throws the following error in /var/log/messages:
+         *   kernel: do_mmap(<file>, 00002aaab0aac000, 0000000000400000, ...) failed: ffffffffffffffff
+         *   kernel: vmadump: mmap failed: /dev/mx0
+         *   kernel: blcr: thaw_threads returned error, aborting. -1
+         * JJH: It may be possible to, instead of restarting the entire driver, just reconnect endpoints
+         */
+        ompi_cr_continue_like_restart = true;
+
+        for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
+            mx_btl = mca_btl_mx_component.mx_btls[i];
+
+            if( NULL != mx_btl->mx_endpoint ) {
+                mx_close_endpoint(mx_btl->mx_endpoint);
+                mx_btl->mx_endpoint = NULL;
+            }
+        }
     }
     else if(OPAL_CRS_CONTINUE == state) {
         ;
@@ -635,6 +666,7 @@ int mca_btl_mx_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
+#endif /* OPAL_ENABLE_FT */
 
 mca_btl_mx_module_t mca_btl_mx_module = {
     {

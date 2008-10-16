@@ -44,6 +44,12 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
+
+#if OPAL_ENABLE_FT    == 1
+#include "opal/mca/crs/base/base.h"
+#include "ompi/runtime/ompi_cr.h"
+#endif
+
 #include "btl_sm.h"
 #include "btl_sm_endpoint.h"
 #include "btl_sm_frag.h"
@@ -824,15 +830,55 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
     return 0;
 }
 
+#if OPAL_ENABLE_FT    == 0
 int mca_btl_sm_ft_event(int state) {
+    return OMPI_SUCCESS;
+}
+#else
+int mca_btl_sm_ft_event(int state) {
+    /* Notify mpool */
+    if( NULL != mca_btl_sm_component.sm_mpool &&
+        NULL != mca_btl_sm_component.sm_mpool->mpool_ft_event) {
+        mca_btl_sm_component.sm_mpool->mpool_ft_event(state);
+    }
+
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        if( NULL != mca_btl_sm_component.mmap_file ) {
+            /* On restart we need the old file names to exist (not necessarily
+             * contain content) so the CRS component does not fail when searching
+             * for these old file handles. The restart procedure will make sure
+             * these files get cleaned up appropriately.
+             */
+            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.mmap_file->map_path);
+
+            /* Record the job session directory */
+            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_MKDIR, orte_process_info.job_session_dir);
+        }
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        ;
+        if( ompi_cr_continue_like_restart ) {
+            if( NULL != mca_btl_sm_component.mmap_file ) {
+                /* Do not Add session directory on continue */
+
+                /* Add shared memory file */
+                opal_crs_base_cleanup_append(mca_btl_sm_component.mmap_file->map_path, false);
+            }
+
+            /* Clear this so we force the module to re-init the sm files */
+            mca_btl_sm_component.sm_mpool = NULL;
+        }
     }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
+    else if(OPAL_CRS_RESTART == state ||
+            OPAL_CRS_RESTART_PRE == state) {
+        if( NULL != mca_btl_sm_component.mmap_file ) {
+            /* Add session directory */
+            opal_crs_base_cleanup_append(orte_process_info.job_session_dir, true);
+            /* Add shared memory file */
+            opal_crs_base_cleanup_append(mca_btl_sm_component.mmap_file->map_path, false);
+        }
+
+        /* Clear this so we force the module to re-init the sm files */
+        mca_btl_sm_component.sm_mpool = NULL;
     }
     else if(OPAL_CRS_TERM == state ) {
         ;
@@ -843,3 +889,4 @@ int mca_btl_sm_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
+#endif /* OPAL_ENABLE_FT */

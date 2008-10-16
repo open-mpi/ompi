@@ -547,17 +547,61 @@ void mca_pml_ob1_error_handler(
     orte_errmgr.abort(-1, NULL);
 }
 
+#if OPAL_ENABLE_FT    == 0
+int mca_pml_ob1_ft_event( int state ) {
+    return OMPI_SUCCESS;
+}
+#else
 int mca_pml_ob1_ft_event( int state )
 {
+    static bool first_continue_pass = false;
     ompi_proc_t** procs = NULL;
     size_t num_procs;
     int ret, p;
 
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        if( opal_cr_timing_barrier_enabled ) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
+            orte_grpcomm.barrier();
+        }
+
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        ;
+        first_continue_pass = !first_continue_pass;
+
+        if( !first_continue_pass ) { 
+            if( opal_cr_timing_barrier_enabled ) {
+                OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
+                orte_grpcomm.barrier();
+            }
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
+        }
+
+        if( ompi_cr_continue_like_restart && !first_continue_pass ) {
+            /*
+             * Get a list of processes
+             */
+            procs = ompi_proc_all(&num_procs);
+            if(NULL == procs) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            /*
+             * Refresh the proc structure, and publish our proc info in the modex.
+             * NOTE: Do *not* call ompi_proc_finalize as there are many places in
+             *       the code that point to indv. procs in this strucutre. For our
+             *       needs here we only need to fix up the modex, bml and pml 
+             *       references.
+             */
+            if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
+                opal_output(0,
+                            "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
+                            ret);
+                free (procs);
+                return ret;
+            }
+        }
     }
     else if(OPAL_CRS_RESTART_PRE == state ) {
         /* Nothing here */
@@ -612,10 +656,64 @@ int mca_pml_ob1_ft_event( int state )
     }
     
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P1);
+
+        if( opal_cr_timing_barrier_enabled ) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR0);
+            /* JJH Cannot barrier here due to progress engine -- orte_grpcomm.barrier();*/
+        }
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        ;
+        if( !first_continue_pass ) {
+            if( opal_cr_timing_barrier_enabled ) {
+                OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
+                orte_grpcomm.barrier();
+            }
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
+        }
+
+        if( ompi_cr_continue_like_restart && !first_continue_pass ) {
+            /*
+             * Exchange the modex information once again.
+             * BTLs will have republished their modex information.
+             */
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
+                opal_output(0,
+                            "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
+                            ret);
+                return ret;
+            }
+
+            /*
+             * Startup the PML stack now that the modex is running again
+             * Add the new procs (BTLs redo modex recv's)
+             */
+            if( OMPI_SUCCESS != (ret = mca_pml_ob1_add_procs(procs, num_procs) ) ) {
+                opal_output(0, "pml:ob1: ft_event(Restart): Failed in add_procs (%d)", ret);
+                return ret;
+            }
+
+            /* Is this barrier necessary ? JJH */
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+                opal_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+                return ret;
+            }
+
+            if( NULL != procs ) {
+                for(p = 0; p < (int)num_procs; ++p) {
+                    OBJ_RELEASE(procs[p]);
+                }
+                free(procs);
+                procs = NULL;
+            }
+        }
+        if( !first_continue_pass ) {
+            if( opal_cr_timing_barrier_enabled ) {
+                OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
+                orte_grpcomm.barrier();
+            }
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
+        }
     }
     else if(OPAL_CRS_RESTART_PRE == state ) {
         /* Nothing here */
@@ -664,6 +762,7 @@ int mca_pml_ob1_ft_event( int state )
 
     return OMPI_SUCCESS;
 }
+#endif /* OPAL_ENABLE_FT */
 
 int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
 {

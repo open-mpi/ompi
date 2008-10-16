@@ -503,6 +503,21 @@ int mca_base_param_set_int(int index, int value)
     return OPAL_SUCCESS;
 }
 
+/*
+ * Deregister a parameter
+ */
+int mca_base_param_deregister(int index)
+{
+    size_t size;
+
+    /* Lookup the index and see if it's valid */
+    size = opal_value_array_get_size(&mca_base_params);
+    if (index < 0 || ((size_t) index) > size) {
+        return OPAL_ERROR;
+    }
+
+    return opal_value_array_remove_item(&mca_base_params, index);
+}
 
 /*
  * Look up a string MCA parameter.

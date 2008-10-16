@@ -56,8 +56,8 @@ mca_mpool_rdma_component_t mca_mpool_rdma_component = {
           NULL
       },
       {
-          /* The component is not checkpoint ready */
-          MCA_BASE_METADATA_PARAM_NONE
+          /* The component is checkpoint ready */
+          MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
 
       mca_mpool_rdma_init

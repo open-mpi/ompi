@@ -54,6 +54,7 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
     mpool->super.mpool_deregister = mca_mpool_rdma_deregister;
     mpool->super.mpool_release_memory = mca_mpool_rdma_release_memory;
     mpool->super.mpool_finalize = mca_mpool_rdma_finalize;
+    mpool->super.mpool_ft_event = mca_mpool_rdma_ft_event;
     mpool->super.rcache =
         mca_rcache_base_module_create(mca_mpool_rdma_component.rcache_name);
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
@@ -477,4 +478,25 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
     OBJ_DESTRUCT(&mpool_rdma->gc_list);
     OBJ_DESTRUCT(&mpool_rdma->reg_list);
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+}
+
+int mca_mpool_rdma_ft_event(int state) {
+    if(OPAL_CRS_CHECKPOINT == state) {
+        ;
+    }
+    else if(OPAL_CRS_CONTINUE == state) {
+        ;
+    }
+    else if(OPAL_CRS_RESTART == state ||
+            OPAL_CRS_RESTART_PRE == state) {
+        ;
+    }
+    else if(OPAL_CRS_TERM == state ) {
+        ;
+    }
+    else {
+        ;
+    }
+
+    return OMPI_SUCCESS;
 }

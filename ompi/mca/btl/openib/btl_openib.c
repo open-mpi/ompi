@@ -32,6 +32,11 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+
+#if OPAL_ENABLE_FT == 1
+#include "ompi/runtime/ompi_cr.h"
+#endif
+
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
 #include "btl_openib_proc.h"
@@ -90,6 +95,10 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_ft_event
     }
 };
+
+#if OPAL_ENABLE_FT == 1
+static int ft_event_btl_openib_finalize(struct mca_btl_base_module_t* btl);
+#endif
 
 static void show_init_error(const char *file, int line,
                             const char *func, const char *dev)
@@ -936,6 +945,11 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
     openib_btl = (mca_btl_openib_module_t*) btl;
 
+    /* Sanity check */
+    if( mca_btl_openib_component.ib_num_btls <= 0 ) {
+        return 0;
+    }
+
     /* Release all QPs */
     for (ep_index=0;
          ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
@@ -1185,12 +1199,36 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
+#if OPAL_ENABLE_FT == 0
 int mca_btl_openib_ft_event(int state) {
+    return OMPI_SUCCESS;
+}
+#else
+int mca_btl_openib_ft_event(int state) {
+    int i;
+
     if(OPAL_CRS_CHECKPOINT == state) {
-        ;
+        /* Continue must reconstruct the routes (including modex), since we
+         * have to tear down the devices completely. */
+        ompi_cr_continue_like_restart = true;
+
+        /*
+         * To keep the node from crashing we need to call ibv_close_device
+         * before the checkpoint is taken. To do this we need to tear
+         * everything down, and rebuild it all on continue/restart. :(
+         */
+
+        /* Shutdown all modules
+         * - Do this backwards since the openib_finalize function also loops
+         *   over this variable.
+         */
+        for (i = 0; i < mca_btl_openib_component.ib_num_btls; ++i ) {
+            ft_event_btl_openib_finalize( &(mca_btl_openib_component.openib_btls[i])->super);
+        }
+        ompi_btl_openib_connect_base_finalize();
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        ;
+        ; /* Cleared by forcing the modex, no work needed */
     }
     else if(OPAL_CRS_RESTART == state) {
         ;
@@ -1204,3 +1242,72 @@ int mca_btl_openib_ft_event(int state) {
 
     return OMPI_SUCCESS;
 }
+
+static int ft_event_btl_openib_finalize(struct mca_btl_base_module_t* btl) {
+    mca_btl_openib_module_t* openib_btl;
+    mca_btl_openib_endpoint_t* endpoint;
+    int ep_index, i;
+    int qp, rc = OMPI_SUCCESS;
+
+    openib_btl = (mca_btl_openib_module_t*) btl;
+
+    /* Release all QPs */
+    for(ep_index=0;
+        ep_index < opal_pointer_array_get_size(openib_btl->device->endpoints);
+        ep_index++) {
+        endpoint=opal_pointer_array_get_item(openib_btl->device->endpoints,
+                                             ep_index);
+        if(!endpoint) {
+            BTL_VERBOSE(("In finalize, got another null endpoint"));
+            continue;
+        }
+        if(endpoint->endpoint_btl != openib_btl)
+            continue;
+        for(i = 0; i < openib_btl->device->eager_rdma_buffers_count; i++) {
+            if(openib_btl->device->eager_rdma_buffers[i] == endpoint) {
+                openib_btl->device->eager_rdma_buffers[i] = NULL;
+                OBJ_RELEASE(endpoint);
+            }
+        }
+        OBJ_RELEASE(endpoint);
+    }
+
+    /* Finalize the CPC modules on this openib module */
+    for (i = 0; i < openib_btl->num_cpcs; ++i) {
+        if (NULL != openib_btl->cpcs[i]->cbm_finalize) {
+            openib_btl->cpcs[i]->cbm_finalize(openib_btl, openib_btl->cpcs[i]);
+        }
+        free(openib_btl->cpcs[i]);
+    }
+    free(openib_btl->cpcs);
+
+    /* Release SRQ resources */
+    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
+        if(!BTL_OPENIB_QP_TYPE_PP(qp)) {
+            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                                               &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+            MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                                               &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+            if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
+                BTL_VERBOSE(("Failed to close SRQ %d", qp));
+                rc = OMPI_ERROR;
+            }
+            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
+            OBJ_DESTRUCT(&openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
+        }
+    }
+
+    /* Release device if there are no more users */
+    if(!(--openib_btl->device->btls)) {
+        OBJ_RELEASE(openib_btl->device);
+    }
+    mca_btl_openib_component.devices_count = 0;
+    mca_btl_openib_component.ib_num_btls = 0;
+    OBJ_DESTRUCT(&mca_btl_openib_component.ib_procs);
+
+    BTL_VERBOSE(("Success in closing BTL resources"));
+
+    return rc;
+}
+
+#endif /* OPAL_ENABLE_FT */
