@@ -284,6 +284,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
     unsigned long deltat;
     orte_std_cntr_t cnt=1;
     uint8_t flag;
+    orte_job_t *jdata;
     
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) { /* if abnormal exit */
         /* if we are not the HNP, send a message to the HNP alerting it
@@ -305,12 +306,16 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             OBJ_DESTRUCT(&buf);
         } else {
             orte_proc_t *daemon=(orte_proc_t*)cbdata;
+            jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+            
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s daemon %d failed with status %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (int)daemon->name.vpid, WEXITSTATUS(status)));
             /* note that this daemon failed */
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
+            /* increment the #daemons terminated so we will exit properly */
+            jdata->num_terminated++;
             /* report that the daemon has failed so we can exit */
             orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, pid, status, ORTE_JOB_STATE_FAILED_TO_START);
         }

@@ -383,7 +383,7 @@ CLEANUP:
                          ORTE_NAME_PRINT(&mev->sender)));
 
     if (orted_failed_launch) {
-        orte_errmgr.incomplete_start(ORTE_PROC_MY_NAME->jobid, jdatorted->aborted_proc->exit_code);
+        orte_errmgr.incomplete_start(ORTE_PROC_MY_NAME->jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
     } else {
         orted_num_callback++;
     }

@@ -604,7 +604,7 @@ int orterun(int argc, char *argv[])
      * same exit fd as the daemon does so that orted_comm
      * can cause either of us to exit since we share that code
      */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, job_completed))) {
+    if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, "job_complete", job_completed))) {
         orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
                        orterun_basename, ORTE_ERROR_NAME(rc));
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -683,7 +683,7 @@ static void job_completed(int trigpipe, short event, void *arg)
      * trigger when the orteds are gone and tell the orteds that it is
      * okay to finalize and exit, we are done with them.
      */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, terminated))) {
+    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, "orted_exit", terminated))) {
         orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
                        orterun_basename, ORTE_ERROR_NAME(rc));
         goto DONE;
@@ -691,12 +691,10 @@ static void job_completed(int trigpipe, short event, void *arg)
     
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {        
         /* since we know that the sends didn't completely go out,
-         * we know that the prior event will never fire. Delete it
-         * for completeness, and replace it with a timeout so
+         * we know that the prior event will never fire. Add a timeout so
          * that those daemons that can respond have a chance to do
          * so
          */
-        opal_event_del(orteds_exit_event);
         /* get the orted job data object */
         if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
             /* we are totally hozed */
