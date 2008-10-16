@@ -500,5 +500,6 @@ void ompi_btl_openib_connect_base_finalize(void)
             }
         }
         free(available);
+        available = NULL;
     }
 }

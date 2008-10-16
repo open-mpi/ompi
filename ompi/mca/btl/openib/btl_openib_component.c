@@ -111,8 +111,8 @@ mca_btl_openib_component_t mca_btl_openib_component = {
             btl_openib_component_close  /* component close */
         },
         {
-            /* The component is not checkpoint ready */
-            MCA_BASE_METADATA_PARAM_NONE
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
         btl_openib_component_init,

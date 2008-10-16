@@ -304,7 +304,7 @@ int opal_crs_base_cleanup_flush(void)
         argc = opal_argv_count(cleanup_file_argv);
         for( i = 0; i < argc; ++i) {
             opal_output_verbose(15, opal_crs_base_output,
-                                "opal:crs: cleanup_flush: Remove File <%s>\n", cleanup_dir_argv[i]);
+                                "opal:crs: cleanup_flush: Remove File <%s>\n", cleanup_file_argv[i]);
             unlink(cleanup_file_argv[i]);
         }
 

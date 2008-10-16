@@ -122,6 +122,14 @@ int mca_mpool_rdma_release_memory(mca_mpool_base_module_t* mpool, void *base,
  * finalize mpool
  */
 void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool);
+
+/**
+ * Fault Tolerance Event Notification Function
+ * @param state Checkpoint Stae
+ * @return OMPI_SUCCESS or failure status
+ */
+int mca_mpool_rdma_ft_event(int state);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

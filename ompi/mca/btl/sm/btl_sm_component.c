@@ -52,6 +52,11 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
+
+#if OPAL_ENABLE_FT    == 1
+#include "opal/runtime/opal_cr.h"
+#endif
+
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
 #include "btl_sm_fifo.h"
@@ -74,8 +79,8 @@ mca_btl_sm_component_t mca_btl_sm_component = {
             mca_btl_sm_component_close  /* component close */
         },
         {
-            /* The component is not checkpoint ready */
-            MCA_BASE_METADATA_PARAM_NONE
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
         mca_btl_sm_component_init,
@@ -210,7 +215,17 @@ int mca_btl_sm_component_close(void)
          * to it are gone - no error checking, since we want all procs
          * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
+#if OPAL_ENABLE_FT    == 1
+        /* Only unlink the file if we are *not* restarting
+         * If we are restarting the file will be unlinked at a later time.
+         */
+        if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
+           OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
+            unlink(mca_btl_sm_component.mmap_file->map_path);
+        }
+#else
         unlink(mca_btl_sm_component.mmap_file->map_path);
+#endif
         OBJ_RELEASE(mca_btl_sm_component.mmap_file);
     }
 

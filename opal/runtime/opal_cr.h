@@ -267,7 +267,65 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      * OPAL Checkpoint Coordination Routine
      */
     OPAL_DECLSPEC int opal_cr_coord(int state);
-    
+
+    /**
+     * Checkpoint life-cycle timing
+     */
+    OPAL_DECLSPEC void opal_cr_set_time(int idx);
+    OPAL_DECLSPEC void opal_cr_display_all_timers(void);
+    OPAL_DECLSPEC void opal_cr_clear_timers(void);
+
+    OPAL_DECLSPEC extern bool opal_cr_timing_enabled;
+    OPAL_DECLSPEC extern bool opal_cr_timing_barrier_enabled;
+    OPAL_DECLSPEC extern int  opal_cr_timing_my_rank;
+    OPAL_DECLSPEC extern int  opal_cr_timing_target_rank;
+
+
+#define OPAL_CR_TIMER_ENTRY0    0
+#define OPAL_CR_TIMER_ENTRY1    1
+#define OPAL_CR_TIMER_ENTRY2    2
+#define OPAL_CR_TIMER_CRCPBR0   3
+#define OPAL_CR_TIMER_CRCP0     4
+#define OPAL_CR_TIMER_CRCPBR1   5
+#define OPAL_CR_TIMER_P2P0      6
+#define OPAL_CR_TIMER_P2P1      7
+#define OPAL_CR_TIMER_P2PBR0    8
+#define OPAL_CR_TIMER_CORE0     9
+#define OPAL_CR_TIMER_CORE1    10
+#define OPAL_CR_TIMER_COREBR0  11
+#define OPAL_CR_TIMER_P2P2     12
+#define OPAL_CR_TIMER_P2PBR1   13
+#define OPAL_CR_TIMER_P2P3     14
+#define OPAL_CR_TIMER_P2PBR2   15
+#define OPAL_CR_TIMER_CRCP1    16
+#define OPAL_CR_TIMER_COREBR1  17
+#define OPAL_CR_TIMER_CORE2    18
+#define OPAL_CR_TIMER_ENTRY3   19
+#define OPAL_CR_TIMER_ENTRY4   20
+#define OPAL_CR_TIMER_MAX      21
+
+
+#define OPAL_CR_CLEAR_TIMERS()                          \
+    {                                                   \
+        if(OPAL_UNLIKELY(opal_cr_timing_enabled > 0)) { \
+            opal_cr_clear_timers();                     \
+        }                                               \
+    }
+
+#define OPAL_CR_SET_TIMER(idx)                          \
+    {                                                   \
+        if(OPAL_UNLIKELY(opal_cr_timing_enabled > 0)) { \
+            opal_cr_set_time(idx);                      \
+        }                                               \
+    }
+
+#define OPAL_CR_DISPLAY_ALL_TIMERS()                    \
+    {                                                   \
+        if(OPAL_UNLIKELY(opal_cr_timing_enabled > 0)) { \
+            opal_cr_display_all_timers();               \
+        }                                               \
+    }
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -173,6 +173,10 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         goto STAGE_1;
     }
 
+    OPAL_CR_CLEAR_TIMERS();
+    opal_cr_timing_my_rank = ORTE_PROC_MY_NAME->vpid;
+    OPAL_CR_SET_TIMER(OPAL_CR_TIMER_ENTRY0);
+
     /*
      * Open communication channels
      */
@@ -193,6 +197,8 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         goto ckpt_cleanup;
     }
 
+    OPAL_CR_SET_TIMER(OPAL_CR_TIMER_ENTRY1);
+
     /*
      * Begin checkpoint
      * - Init the checkpoint metadata file
@@ -204,6 +210,8 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
         exit_status = ret;
         goto ckpt_cleanup;
     }
+
+    OPAL_CR_SET_TIMER(OPAL_CR_TIMER_ENTRY2);
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Start checkpoint..."));
@@ -255,6 +263,7 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     /*
      * Final Handshake
      */
+    OPAL_CR_SET_TIMER(OPAL_CR_TIMER_ENTRY3);
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "App) notify_response: Waiting for final handshake."));
     if( ORTE_SUCCESS != (ret = snapc_full_app_ckpt_handshake_end(cr_state ) ) ) {
@@ -281,6 +290,11 @@ int snapc_full_app_notify_response(opal_cr_ckpt_cmd_state_t resp)
     /* Prepare to wait for another checkpoint action */
     opal_cr_checkpointing_state = OPAL_CR_STATUS_NONE;
     opal_cr_currently_stalled   = false;
+
+    OPAL_CR_SET_TIMER(OPAL_CR_TIMER_ENTRY4);
+    if(OPAL_CRS_RESTART != cr_state) {
+        OPAL_CR_DISPLAY_ALL_TIMERS();
+    }
 
     return exit_status;
 }

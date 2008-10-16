@@ -41,3 +41,12 @@ crcp=bkmrk
 # Temporary fix to force the event engine to use poll to behave well with BLCR
 #
 opal_event_include=poll
+
+#
+# We currently only support the following options to the OpenIB BTL
+# Future development will attempt to eliminate many of these restrictions
+#
+btl_openib_want_fork_support=1
+btl_openib_use_async_event_thread=0
+btl_openib_use_eager_rdma=0
+btl_openib_cpc_include=oob

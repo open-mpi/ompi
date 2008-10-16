@@ -1613,11 +1613,13 @@ int mca_oob_tcp_ft_event(int state) {
          */
         OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         opal_event_disable();
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     }
     else if(OPAL_CRS_CONTINUE == state) {
         /*
          * Resume event processing
          */
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
         opal_event_enable();
         OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     }
@@ -1635,6 +1637,8 @@ int mca_oob_tcp_ft_event(int state) {
              */
             MCA_OOB_TCP_PEER_RETURN(peer);
         }
+
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
 
         OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
         OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);

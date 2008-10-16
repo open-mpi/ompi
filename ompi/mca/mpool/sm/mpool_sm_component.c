@@ -38,6 +38,10 @@
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/proc/proc.h"
 
+#if OPAL_ENABLE_FT    == 1
+#include "opal/runtime/opal_cr.h"
+#endif
+
 /*
  * Local functions
  */
@@ -62,8 +66,8 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
         mca_mpool_sm_close
       },
       {
-          /* The component is not checkpoint ready */
-          MCA_BASE_METADATA_PARAM_NONE
+          /* The component is checkpoint ready */
+          MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
 
       mca_mpool_sm_init
@@ -134,7 +138,17 @@ static int mca_mpool_sm_close( void )
 {
     if( NULL != mca_common_sm_mmap ) {
         if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
+#if OPAL_ENABLE_FT    == 1
+            /* Only unlink the file if we are *not* restarting
+             * If we are restarting the file will be unlinked at a later time.
+             */
+            if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
+               OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
+                unlink( mca_common_sm_mmap->map_path );
+            }
+#else
             unlink( mca_common_sm_mmap->map_path );
+#endif
         }
         OBJ_RELEASE( mca_common_sm_mmap );
     }

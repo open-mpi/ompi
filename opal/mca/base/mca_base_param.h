@@ -471,6 +471,14 @@ extern "C" {
                                                   bool deprecated);
 
     /**
+     * Deregister a MCA parameter
+     *
+     * @param index Index returned from mca_base_param_register_init()
+     *
+     */
+    OPAL_DECLSPEC int mca_base_param_deregister(int index);
+
+    /**
      * Look up an integer MCA parameter.
      *
      * @param index Index previous returned from
