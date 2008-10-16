@@ -518,11 +518,6 @@ void orte_trigger_event(orte_trigger_event_t *trig)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          trig->name));
     
-    /* if the trigger isn't setup yet, just return */
-    if (trig->channel < 0) {
-        return;
-    }
-
     /* if we already fired it, don't do it again - this automatically
      * records that we did fire it
      */
@@ -887,11 +882,6 @@ void orte_trigger_event(orte_trigger_event_t *trig)
                          "%s calling %s trigger",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          trig->name));
-    
-    /* if the trigger isn't setup yet, just return */
-    if (trig->channel < 0) {
-        return;
-    }
     
     if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
         return;

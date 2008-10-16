@@ -441,6 +441,33 @@ int orterun(int argc, char *argv[])
         return rc;
     }    
     
+    /* setup an event we can wait for that will tell
+     * us to terminate - both normal and abnormal
+     * termination will call us here. Use the
+     * same exit fd as the daemon does so that orted_comm
+     * can cause either of us to exit since we share that code
+     */
+    if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, "job_complete", job_completed))) {
+        orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
+                       orterun_basename, ORTE_ERROR_NAME(rc));
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto DONE;
+    }
+    
+    /* setup an event that will
+     * trigger when the orteds are gone and tell the orteds that it is
+     * okay to finalize and exit, we are done with them.
+     * We set this up here in order to provide a way for us to
+     * wakeup and terminate should the daemons themselves fail to launch,
+     * and before we define signal handlers since they will call the
+     * exit event trigger!
+     */
+    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, "orted_exit", terminated))) {
+        orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
+                       orterun_basename, ORTE_ERROR_NAME(rc));
+        goto DONE;
+    }
+
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
      * to cleanup
@@ -597,19 +624,6 @@ int orterun(int argc, char *argv[])
     
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
-
-    /* setup an event we can wait for that will tell
-     * us to terminate - both normal and abnormal
-     * termination will call us here. Use the
-     * same exit fd as the daemon does so that orted_comm
-     * can cause either of us to exit since we share that code
-     */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orterun_event, &orte_exit, "job_complete", job_completed))) {
-        orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
-                       orterun_basename, ORTE_ERROR_NAME(rc));
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        goto DONE;
-    }
     
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
@@ -678,17 +692,7 @@ static void job_completed(int trigpipe, short event, void *arg)
     
     /* if the debuggers were run, clean up */
     orte_debugger_finalize();
-    
-    /* the job is complete - now setup an event that will
-     * trigger when the orteds are gone and tell the orteds that it is
-     * okay to finalize and exit, we are done with them.
-     */
-    if (ORTE_SUCCESS != (rc = orte_wait_event(&orteds_exit_event, &orteds_exit, "orted_exit", terminated))) {
-        orte_show_help("help-orterun.txt", "orterun:event-def-failed", true,
-                       orterun_basename, ORTE_ERROR_NAME(rc));
-        goto DONE;
-    }
-    
+
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_orteds())) {        
         /* since we know that the sends didn't completely go out,
          * we know that the prior event will never fire. Add a timeout so
