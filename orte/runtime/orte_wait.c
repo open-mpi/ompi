@@ -182,15 +182,21 @@ static OBJ_CLASS_INSTANCE(registered_cb_item_t, opal_list_item_t, NULL, NULL);
 static void 
 trigger_event_constructor(orte_trigger_event_t *trig)
 {
+    trig->name = NULL;
     trig->channel = -1;
     opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
 }
-
-
+static void 
+trigger_event_destructor(orte_trigger_event_t *trig)
+{
+    if (NULL != trig->name) {
+        free(trig->name);
+    }
+}
 OBJ_CLASS_INSTANCE(orte_trigger_event_t,
                    opal_object_t,
                    trigger_event_constructor,
-                   NULL);
+                   trigger_event_destructor);
 
 /*********************************************************************
  *
@@ -473,6 +479,7 @@ orte_wait_cb_enable()
 
 
 int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
+                    char *trigger_name,
                     void (*cbfunc)(int, short, void*))
 {
     int p[2];
@@ -482,6 +489,9 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
 
+    /* save the trigger name */
+    trig->name = strdup(trigger_name);
+    
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
     
@@ -503,6 +513,19 @@ void orte_trigger_event(orte_trigger_event_t *trig)
 {
     int data=1;
     
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                        "%s calling %s trigger",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         trig->name));
+    
+    /* if the trigger isn't setup yet, just return */
+    if (trig->channel < 0) {
+        return;
+    }
+
+    /* if we already fired it, don't do it again - this automatically
+     * records that we did fire it
+     */
     if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
         return;
     }
@@ -800,16 +823,24 @@ static void opal_process_handle_destruct( opal_object_t* obj )
 static OBJ_CLASS_INSTANCE( opal_process_handle_t, opal_list_item_t,
                            opal_process_handle_construct, opal_process_handle_destruct );
 
-static void trigger_event_constructor(orte_trigger_event_t *trig)
+static void 
+trigger_event_constructor(orte_trigger_event_t *trig)
 {
+    trig->name = NULL;
     trig->channel = -1;
     opal_atomic_init(&trig->lock, OPAL_ATOMIC_UNLOCKED);
 }
-
+static void 
+trigger_event_destructor(orte_trigger_event_t *trig)
+{
+    if (NULL != trig->name) {
+        free(trig->name);
+    }
+}
 OBJ_CLASS_INSTANCE(orte_trigger_event_t,
                    opal_object_t,
                    trigger_event_constructor,
-                   NULL);
+                   trigger_event_destructor);
 
 /*********************************************************************
  *
@@ -851,6 +882,16 @@ orte_wait_finalize(void)
 void orte_trigger_event(orte_trigger_event_t *trig)
 {
     int data=1;
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s calling %s trigger",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         trig->name));
+    
+    /* if the trigger isn't setup yet, just return */
+    if (trig->channel < 0) {
+        return;
+    }
     
     if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
         return;
@@ -1056,6 +1097,7 @@ orte_wait_cb_enable(void)
 
 
 int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
+                    char *trigger_name,
                     void (*cbfunc)(int, short, void*))
 {
     int p[2];
@@ -1064,6 +1106,9 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
         return ORTE_ERROR;
     }
 
+    /* save the trigger name */
+    trig->name = strdup(trigger_name);
+    
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
     
@@ -1166,6 +1211,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
 
 int
 orte_wait_event(opal_event_t **event, int *trig,
+                char *trigger_name,
                 void (*cbfunc)(int, short, void*))
 {
     return ORTE_ERR_NOT_SUPPORTED;

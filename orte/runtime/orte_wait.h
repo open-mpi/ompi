@@ -49,6 +49,7 @@ BEGIN_C_DECLS
 
 typedef struct {
     opal_object_t super;
+    char *name;
     int channel;
     opal_atomic_lock_t lock;
 } orte_trigger_event_t;
@@ -118,6 +119,7 @@ ORTE_DECLSPEC int orte_wait_cb_enable(void);
  */
 ORTE_DECLSPEC int orte_wait_event(opal_event_t **event,
                                   orte_trigger_event_t *trig,
+                                  char *trigger_name,
                                   void (*cbfunc)(int, short, void*));
 
 /**
@@ -251,25 +253,26 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
  * that the computed wait time doesn't exceed the desired max
  * wait
  */
-#define ORTE_DETECT_TIMEOUT(event, n, deltat, maxwait, cbfunc)      \
-    do {                                                            \
-        struct timeval now;                                         \
-        opal_event_t *tmp;                                          \
-        int timeout;                                                \
-        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));          \
-        opal_evtimer_set(tmp, (cbfunc), NULL);                      \
-        timeout = (deltat) * (n);                                   \
-        if ((maxwait) > 0 && timeout > (maxwait)) {                 \
-            timeout = (maxwait);                                    \
-        }                                                           \
-        now.tv_sec = timeout/1000000;                               \
-        now.tv_usec = timeout%1000000;                              \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                  \
-                             "defining timeout: %ld sec %ld usec",  \
-                            (long)now.tv_sec, (long)now.tv_usec));  \
-        opal_evtimer_add(tmp, &now);                                \
-        *(event) = tmp;                                             \
-    }while(0);                                                      \
+#define ORTE_DETECT_TIMEOUT(event, n, deltat, maxwait, cbfunc)              \
+    do {                                                                    \
+        struct timeval now;                                                 \
+        opal_event_t *tmp;                                                  \
+        int timeout;                                                        \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));                  \
+        opal_evtimer_set(tmp, (cbfunc), NULL);                              \
+        timeout = (deltat) * (n);                                           \
+        if ((maxwait) > 0 && timeout > (maxwait)) {                         \
+            timeout = (maxwait);                                            \
+        }                                                                   \
+        now.tv_sec = timeout/1000000;                                       \
+        now.tv_usec = timeout%1000000;                                      \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                          \
+                             "defining timeout: %ld sec %ld usec at %s:%d", \
+                            (long)now.tv_sec, (long)now.tv_usec,            \
+                            __FILE__, __LINE__));                           \
+        opal_evtimer_add(tmp, &now);                                        \
+        *(event) = tmp;                                                     \
+    }while(0);                                                              \
 
 
 /**
@@ -277,19 +280,20 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
  * wakeup to do something, and then go back to sleep again. Setting
  * a timer allows us to do this
  */
-#define ORTE_TIMER_EVENT(time, cbfunc)                          \
-    do {                                                        \
-        struct timeval now;                                     \
-        opal_event_t *tmp;                                      \
-        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));      \
-        opal_evtimer_set(tmp, (cbfunc), tmp);                   \
-        now.tv_sec = (time);                                    \
-        now.tv_usec = 0;                                        \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
-                            "defining timer event: %ld sec",    \
-                            (long)now.tv_sec));                 \
-        opal_evtimer_add(tmp, &now);                            \
-    }while(0);                                                  \
+#define ORTE_TIMER_EVENT(time, cbfunc)                                  \
+    do {                                                                \
+        struct timeval now;                                             \
+        opal_event_t *tmp;                                              \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));              \
+        opal_evtimer_set(tmp, (cbfunc), tmp);                           \
+        now.tv_sec = (time);                                            \
+        now.tv_usec = 0;                                                \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                      \
+                            "defining timer event: %ld sec at %s:%d",   \
+                            (long)now.tv_sec,                           \
+                            __FILE__, __LINE__));                       \
+        opal_evtimer_add(tmp, &now);                                    \
+    }while(0);                                                          \
 
 
 /**
