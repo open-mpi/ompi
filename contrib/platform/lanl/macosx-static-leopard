@@ -1,5 +1,3 @@
-enable_dlopen=no
-enable_pty_support=no
 with_memory_manager=no
 enable_mem_debug=yes
 enable_mem_profile=no
