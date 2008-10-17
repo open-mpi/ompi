@@ -384,7 +384,7 @@ int orte_daemon(int argc, char *argv[])
      * fd as orterun so that orte_comm can wake either of us up
      * since we share that code
      */
-    if (ORTE_SUCCESS != (ret = orte_wait_event(&orted_exit_event, &orte_exit, shutdown_callback))) {
+    if (ORTE_SUCCESS != (ret = orte_wait_event(&orted_exit_event, &orte_exit, "orted_shutdown", shutdown_callback))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
