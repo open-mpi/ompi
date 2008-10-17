@@ -652,6 +652,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
         }
     }
     
+    if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+        ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
+        opal_argv_append(&argc, &argv, ")");
+    }
+
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
