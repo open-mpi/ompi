@@ -104,7 +104,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     HAVE_CXX_EXCEPTIONS=0
     AC_ARG_ENABLE([cxx-exceptions], 
         [AC_HELP_STRING([--enable-cxx-exceptions],
-	                [enable support for C++ exceptions])],
+	                [enable support for C++ exceptions (default: enabled)])],
         [ENABLE_CXX_EXCEPTIONS="$enableval"])
 
     AC_MSG_CHECKING([if want C++ exception handling])

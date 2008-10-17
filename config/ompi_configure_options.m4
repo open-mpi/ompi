@@ -386,7 +386,7 @@ AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 AC_MSG_CHECKING([if want pretty-print stacktrace])
 AC_ARG_ENABLE([pretty-print-stacktrace],
     [AC_HELP_STRING([--enable-pretty-print-stacktrace],
-                    [Pretty print stacktrace on process signal])])
+                    [Pretty print stacktrace on process signal (default: enabled)])])
 if test "$enable_pretty_print_stacktrace" = "no" ; then
     AC_MSG_RESULT([no])
     WANT_PRETTY_PRINT_STACKTRACE=0
@@ -441,7 +441,7 @@ AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
 AC_MSG_CHECKING([if pty support should be enabled])
 AC_ARG_ENABLE(pty-support,
     AC_HELP_STRING([--enable-pty-support],
-                   [Enable/disable PTY support for STDIO forwarding.  default: enabled]))
+                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
 if test "$enable_pty_support" = "no" ; then
     AC_MSG_RESULT([no])
     OMPI_ENABLE_PTY_SUPPORT=0
