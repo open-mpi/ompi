@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -192,7 +193,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
             opal_event_add(&rev->ev, 0);                            \
             opal_list_append((revlist), &rev->super);               \
         } else {                                                    \
-            opal_list_prepend((revlist), $rev->super);              \
+            opal_list_prepend((revlist), &rev->super);              \
         }                                                           \
     } while(0);
 
