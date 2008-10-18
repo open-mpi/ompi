@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,7 +27,7 @@ libmca_iof_la_SOURCES =
 nobase_orte_HEADERS =
 
 # local files
-headers = iof.h
+headers = iof.h iof_types.h
 libmca_iof_la_SOURCES += $(headers)
 
 # Conditionally install the header files
