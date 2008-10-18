@@ -20,25 +20,27 @@
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_iof_null_DSO
+if OMPI_BUILD_iof_orted_DSO
 component_noinst =
-component_install = mca_iof_null.la
+component_install = mca_iof_orted.la
 else
-component_noinst = libmca_iof_null.la
+component_noinst = libmca_iof_orted.la
 component_install =
 endif
 
-null_SOURCES = \
-    iof_null.h \
-    iof_null_module.c \
-    iof_null_component.c
+orted_SOURCES = \
+    iof_orted.c \
+    iof_orted.h \
+    iof_orted_component.c \
+    iof_orted_read.c \
+    iof_orted_receive.c
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_iof_null_la_SOURCES = $(null_SOURCES)
-mca_iof_null_la_LDFLAGS = -module -avoid-version
+mca_iof_orted_la_SOURCES = $(orted_SOURCES)
+mca_iof_orted_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_iof_null_la_SOURCES = $(null_SOURCES)
-libmca_iof_null_la_LIBADD =
-libmca_iof_null_la_LDFLAGS = -module -avoid-version
+libmca_iof_orted_la_SOURCES = $(orted_SOURCES)
+libmca_iof_orted_la_LIBADD =
+libmca_iof_orted_la_LDFLAGS = -module -avoid-version

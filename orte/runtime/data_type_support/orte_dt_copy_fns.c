@@ -356,4 +356,21 @@ int orte_dt_copy_grpcomm_mode(orte_grpcomm_mode_t **dest, orte_grpcomm_mode_t *s
     return ORTE_SUCCESS;
 }
 
+int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_type_t type)
+{
+    size_t datasize;
+    
+    datasize = sizeof(orte_iof_tag_t);
+    
+    *dest = (orte_iof_tag_t*)malloc(datasize);
+    if (NULL == *dest) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    memcpy(*dest, src, datasize);
+    
+    return ORTE_SUCCESS;
+}
+
 #endif

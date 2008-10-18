@@ -190,8 +190,7 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
     
-    /*
-     * setup I/O forwarding system - must come after we init routes */
+    /* setup I/O forwarding system - must come after we init routes */
     if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_iof_base_open";
@@ -303,7 +302,7 @@ int orte_ess_base_orted_finalize(void)
     
     orte_wait_finalize();
     orte_iof_base_close();
-    
+
     /* finalize selected modules */
     if (plm_in_use) {
         orte_plm_base_close();

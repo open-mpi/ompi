@@ -159,6 +159,9 @@ typedef void* orte_iov_base_ptr_t;
 /* GRPCOMM types */
 #define    ORTE_GRPCOMM_MODE        (OPAL_DSS_ID_DYNAMIC + 19) 
 
+/* IOF types */
+#define    ORTE_IOF_TAG             (OPAL_DSS_ID_DYNAMIC + 20)
+
 #endif /* !ORTE_DISABLE_FULL_SUPPORT */
 
 #endif

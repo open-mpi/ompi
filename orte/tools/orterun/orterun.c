@@ -135,7 +135,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
-
+    { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 0,
+      &orterun_globals.report_pid, OPAL_CMD_LINE_TYPE_BOOL,
+      "Printout pid" },
+    
     /* hetero apps */
     { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -145,6 +148,16 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "xml", "output", '\0', "xml", "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
+    
+    /* tag output */
+    { "orte", "tag", "output", '\0', "tag-output", "tag-output", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Tag all output with [job,rank]" },
+    
+    /* select stdin option */
+    { NULL, NULL, NULL, '\0', "stdin", "stdin", 1,
+      &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
+      "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
     
     /* Specify the launch agent to be used */
     { "orte", "launch", "agent", '\0', "launch-agent", "launch-agent", 1,
@@ -397,9 +410,15 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    /* always forward output from user apps */
-    jdata->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
-
+    /* check what user wants us to do with stdin */
+    if (0 == strcmp(orterun_globals.stdin_target, "all")) {
+        jdata->stdin_target = ORTE_VPID_WILDCARD;
+    } else if (0 == strcmp(orterun_globals.stdin_target, "none")) {
+        jdata->stdin_target = ORTE_VPID_INVALID;
+    } else {
+        jdata->stdin_target = strtoul(orterun_globals.stdin_target, NULL, 10);
+    }
+    
     /* Parse each app, adding it to the job object */
     parse_locals(argc, argv);
     
@@ -1098,6 +1117,7 @@ static int init_globals(void)
         orterun_globals.ompi_server = NULL;
         orterun_globals.wait_for_server = false;
         orterun_globals.server_wait_timeout = 10;
+        orterun_globals.stdin_target = "0";
     }
 
     /* Reset the other fields every time */
@@ -1106,6 +1126,7 @@ static int init_globals(void)
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
     orterun_globals.quiet                      = false;
+    orterun_globals.report_pid                 = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
@@ -1174,6 +1195,11 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         exit(0);
     }
 
+    /* check for request to report pid */
+    if (orterun_globals.report_pid) {
+        printf("%s pid: %d\n", orterun_basename, (int)getpid());
+    }
+    
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {

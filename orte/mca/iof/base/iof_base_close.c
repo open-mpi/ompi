@@ -24,47 +24,67 @@
 #include "opal/event/event.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
-#include "orte/mca/iof/base/iof_base_endpoint.h"
 
 
 int orte_iof_base_close(void)
 {
-    opal_list_item_t* item;
-
-    /* We only need to flush if an iof component was successfully
-       selected */
-
-    if (orte_iof_base.iof_flush) {
-        orte_iof.iof_flush();
-        orte_iof_base.iof_flush = false;
-    }
-
-    /* finalize component */
-    if (NULL != orte_iof.iof_finalize) {
-        orte_iof.iof_finalize();
-    }
-
+    bool dump;
+    opal_list_item_t *item;
+    orte_iof_write_output_t *output;
+    int num_written;
+    
     /* shutdown any remaining opened components */
     if (0 != opal_list_get_size(&orte_iof_base.iof_components_opened)) {
         mca_base_components_close(orte_iof_base.iof_output, 
                               &orte_iof_base.iof_components_opened, NULL);
     }
-
-    /* final cleanup of resources */
-    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
-    while((item = opal_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
-        OBJ_RELEASE(item);
-    }
-
     OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);
-    OBJ_DESTRUCT(&orte_iof_base.iof_endpoints);
-    OBJ_DESTRUCT(&orte_iof_base.iof_condition);
-    OBJ_DESTRUCT(&orte_iof_base.iof_fragments);
 
-    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-    OBJ_DESTRUCT(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
+    if (!orte_process_info.daemon) {
+        /* check if anything is still trying to be written out */
+        if (!opal_list_is_empty(&orte_iof_base.iof_write_stdout.outputs)) {
+            dump = false;
+            /* make one last attempt to write this out */
+            while (NULL != (item = opal_list_remove_first(&orte_iof_base.iof_write_stdout.outputs))) {
+                output = (orte_iof_write_output_t*)item;
+                if (!dump) {
+                    num_written = write(orte_iof_base.iof_write_stdout.fd, output->data, output->numbytes);
+                    if (num_written < output->numbytes) {
+                        /* don't retry - just cleanout the list and dump it */
+                        dump = true;
+                    }
+                }
+                OBJ_RELEASE(output);
+            }
+        }
+        OBJ_DESTRUCT(&orte_iof_base.iof_write_stdout);
+        if (!opal_list_is_empty(&orte_iof_base.iof_write_stderr.outputs)) {
+            dump = false;
+            /* make one last attempt to write this out */
+            while (NULL != (item = opal_list_remove_first(&orte_iof_base.iof_write_stderr.outputs))) {
+                output = (orte_iof_write_output_t*)item;
+                if (!dump) {
+                    num_written = write(orte_iof_base.iof_write_stderr.fd, output->data, output->numbytes);
+                    if (num_written < output->numbytes) {
+                        /* don't retry - just cleanout the list and dump it */
+                        dump = true;
+                    }
+                }
+                OBJ_RELEASE(output);
+            }
+        }
+        OBJ_DESTRUCT(&orte_iof_base.iof_write_stderr);
+    }
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
+
+    OBJ_DESTRUCT(&orte_iof_base.iof_write_output_lock);
+
 
     return ORTE_SUCCESS;
 }

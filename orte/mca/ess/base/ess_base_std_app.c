@@ -226,7 +226,7 @@ int orte_ess_base_app_finalize(void)
     orte_rml_base_close();
     
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-    
+        
     return ORTE_SUCCESS;    
 }
 

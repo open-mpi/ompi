@@ -20,31 +20,28 @@
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_iof_svc_DSO
+if OMPI_BUILD_iof_hnp_DSO
 component_noinst =
-component_install = mca_iof_svc.la
+component_install = mca_iof_hnp.la
 else
-component_noinst = libmca_iof_svc.la
+component_noinst = libmca_iof_hnp.la
 component_install =
 endif
 
-svc_SOURCES = \
-    iof_svc.c \
-    iof_svc.h \
-    iof_svc_component.c \
-    iof_svc_proxy.h \
-    iof_svc_proxy.c \
-    iof_svc_pub.h \
-    iof_svc_pub.c \
-    iof_svc_sub.h \
-    iof_svc_sub.c
+hnp_SOURCES = \
+    iof_hnp.c \
+    iof_hnp.h \
+    iof_hnp_component.c \
+    iof_hnp_read.c \
+    iof_hnp_send.c \
+    iof_hnp_receive.c
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_iof_svc_la_SOURCES = $(svc_SOURCES)
-mca_iof_svc_la_LDFLAGS = -module -avoid-version
+mca_iof_hnp_la_SOURCES = $(hnp_SOURCES)
+mca_iof_hnp_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_iof_svc_la_SOURCES = $(svc_SOURCES)
-libmca_iof_svc_la_LIBADD =
-libmca_iof_svc_la_LDFLAGS = -module -avoid-version
+libmca_iof_hnp_la_SOURCES = $(hnp_SOURCES)
+libmca_iof_hnp_la_LIBADD =
+libmca_iof_hnp_la_LDFLAGS = -module -avoid-version

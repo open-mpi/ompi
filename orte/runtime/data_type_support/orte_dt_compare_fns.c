@@ -256,4 +256,14 @@ int orte_dt_compare_grpcomm_mode(orte_grpcomm_mode_t *value1, orte_grpcomm_mode_
     return OPAL_EQUAL;
 }
 
+/* ORTE_IOF_TAG */
+int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal_data_type_t type)
+{
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+    
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+    
+    return OPAL_EQUAL;
+}
+
 #endif

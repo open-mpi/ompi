@@ -52,8 +52,8 @@ BEGIN_C_DECLS
 
 #define ORTE_RML_TAG_INVALID                 0
 #define ORTE_RML_TAG_DAEMON                  1
-#define ORTE_RML_TAG_IOF_SVC                 2
-#define ORTE_RML_TAG_IOF_CLNT                3
+#define ORTE_RML_TAG_IOF_HNP                 2
+#define ORTE_RML_TAG_IOF_PROXY               3
 #define ORTE_RML_TAG_XCAST_BARRIER           4
 #define ORTE_RML_TAG_PLM                     5
 #define ORTE_RML_TAG_PLM_PROXY               6

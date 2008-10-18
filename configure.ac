@@ -1315,6 +1315,7 @@ AC_CONFIG_FILES([
     orte/tools/wrappers/ortecc-wrapper-data.txt
     orte/tools/wrappers/ortec++-wrapper-data.txt
     orte/tools/orte-checkpoint/Makefile
+    orte/tools/orte-iof/Makefile
     orte/tools/orte-restart/Makefile
     orte/tools/orte-ps/Makefile
     orte/tools/orte-clean/Makefile

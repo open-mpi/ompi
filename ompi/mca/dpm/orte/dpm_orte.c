@@ -501,6 +501,7 @@ static int spawn(int count, char **array_of_commands,
     char cwd[OMPI_PATH_MAX];
     char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
     char prefix[OMPI_PATH_MAX];
+    char stdin_target[OMPI_PATH_MAX];
 
     orte_job_t *jdata;
     orte_app_context_t *app;
@@ -664,6 +665,20 @@ static int spawn(int count, char **array_of_commands,
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
             if (non_mpi) {
                 jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+            }
+            
+            /* see if user specified what to do with stdin - defaults to
+             * not forwarding stdin to child processes
+             */
+            ompi_info_get (array_of_info[i], "ompi_stdin_target", valuelen, stdin_target, &flag);
+            if ( flag ) {
+                if (0 == strcmp(stdin_target, "all")) {
+                    jdata->stdin_target = ORTE_VPID_WILDCARD;
+                } else if (0 == strcmp(stdin_target, "none")) {
+                    jdata->stdin_target = ORTE_VPID_INVALID;
+                } else {
+                    jdata->stdin_target = strtoul(stdin_target, NULL, 10);
+                }
             }
         }
 

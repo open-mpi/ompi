@@ -102,6 +102,7 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->apps = NULL;
     ptr->num_apps = 0;
     ptr->controls = 0;
+    ptr->stdin_target = ORTE_VPID_INVALID;
     ptr->total_slots_alloc = 0;
     ptr->num_procs = 0;
     ptr->num_local_procs = 0;

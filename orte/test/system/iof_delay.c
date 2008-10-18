@@ -9,7 +9,7 @@
 
 #include "orte/runtime/runtime.h"
 
-#define MAX_COUNT 3
+#define MAX_COUNT 300
 #define ORTE_IOF_BASE_MSG_MAX   2048
 
 
@@ -37,22 +37,8 @@ main(int argc, char *argv[]){
         count = MAX_COUNT;
     }
     
-    if (argc == 3) {
-        /* read from stdin */
-        readstdin = true;
-    } else {
-        readstdin = false;
-    }
-    
-    if (0 == ORTE_PROC_MY_NAME->vpid && readstdin) {
-        while (0 != (msgsize = read(0, msg, ORTE_IOF_BASE_MSG_MAX))) {
-            if (msgsize > 0) {
-                msg[msgsize] = '\n';
-                 write(1, msg, msgsize);
-            }
-        }
-    }
-    
+
+    i = 1;
     for (j=1; j < count+1; j++) {
         
 #if 0
@@ -64,7 +50,15 @@ main(int argc, char *argv[]){
         msgsize = 10;
         msg[msgsize-1] = '\n';
         
-        write(1, msg, msgsize);
+        if (i == 1) {
+            i = 2;
+        } else {
+            i = 1;
+        }
+
+        write(i, msg, msgsize);
+        
+        sleep(3);
         
     }
 
