@@ -110,10 +110,6 @@ typedef struct {
     opal_list_item_t super;
     char data[ORTE_IOF_BASE_TAGGED_OUT_MAX];
     int numbytes;
-#if OMPI_ENABLE_DEBUG
-    char *file;
-    int line;
-#endif
 } orte_iof_write_output_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 
@@ -167,16 +163,19 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 
 #else
 
-#define ORTE_IOF_SINK_DEFINE(nm, fid, tg, lcl, eplist)      \
-    do {                                                    \
-        orte_iof_sink_t *ep;                                \
-        ep = OBJ_NEW(orte_iof_sink_t);                      \
-        ep->name.jobid = (nm)->jobid;                       \
-        ep->name.vpid = (nm)->vpid;                         \
-        ep->tag = (tg);                                     \
-        ep->fd = (fid);                                     \
-        ep->local = (lcl);                                  \
-        opal_list_append((eplist), &ep->super);             \
+#define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
+    do {                                                            \
+        orte_iof_sink_t *ep;                                        \
+        ep = OBJ_NEW(orte_iof_sink_t);                              \
+        ep->name.jobid = (nm)->jobid;                               \
+        ep->name.vpid = (nm)->vpid;                                 \
+        ep->tag = (tg);                                             \
+        ep->wev.fd = (fid);                                         \
+        opal_event_set(&(ep->wev.ev), ep->wev.fd,                   \
+                       OPAL_EV_WRITE|OPAL_EV_PERSIST,               \
+                       wrthndlr, &(ep->wev));                       \
+        opal_list_append((eplist), &ep->super);                     \
+        *(snk) = ep;                                                \
     } while(0);
 
 #define ORTE_IOF_READ_EVENT(nm, fid, tg, cbfunc, revlist, actv)     \
