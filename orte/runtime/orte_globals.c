@@ -52,6 +52,8 @@ bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
+bool orte_tag_output;
+bool orte_xml_output;
 int orted_debug_failure;
 int orted_debug_failure_delay;
 bool orte_homogeneous_nodes = false;
@@ -346,6 +348,20 @@ int orte_dt_init(void)
 
 #endif /* !ORTE_DISABLE_FULL_SUPPORT */
     
+    tmp = ORTE_IOF_TAG;
+    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_iof_tag,
+                                                     orte_dt_unpack_iof_tag,
+                                                     (opal_dss_copy_fn_t)orte_dt_copy_iof_tag,
+                                                     (opal_dss_compare_fn_t)orte_dt_compare_iof_tag,
+                                                     (opal_dss_size_fn_t)orte_dt_std_size,
+                                                     (opal_dss_print_fn_t)orte_dt_std_print,
+                                                     (opal_dss_release_fn_t)orte_dt_std_release,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "ORTE_IOF_TAG", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return ORTE_SUCCESS;    
 }
 
@@ -482,6 +498,7 @@ static void orte_job_construct(orte_job_t* job)
                             2);
     job->num_apps = 0;
     job->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+    job->stdin_target = ORTE_VPID_INVALID;
     job->total_slots_alloc = 0;
     job->num_procs = 0;
     job->procs = OBJ_NEW(opal_pointer_array_t);

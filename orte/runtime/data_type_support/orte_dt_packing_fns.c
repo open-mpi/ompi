@@ -181,7 +181,14 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
         
         /* pack the control flags */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->controls)), 1, OPAL_UINT16))) {
+                         (void*)(&(jobs[i]->controls)), 1, ORTE_JOB_CONTROL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the stdin target */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)(&(jobs[i]->stdin_target)), 1, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -835,4 +842,19 @@ int orte_dt_pack_grpcomm_mode(opal_buffer_t *buffer, const void *src, int32_t nu
     return ret;
 }
 
+/*
+ * ORTE_IOF_TAG
+ */
+int orte_dt_pack_iof_tag(opal_buffer_t *buffer, const void *src, int32_t num_vals,
+                              opal_data_type_t type)
+{
+    int ret;
+    
+    /* Turn around and pack the real type */
+    if (ORTE_SUCCESS != (ret = opal_dss_pack_buffer(buffer, src, num_vals, ORTE_IOF_TAG_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;
+}
 #endif

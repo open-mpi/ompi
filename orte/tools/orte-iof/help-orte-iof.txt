@@ -1,6 +1,6 @@
-# -*- makefile -*-
+# -*- text -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -10,33 +10,27 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
+# This is the US/English help file for Open MPI IOF tool
+#
+[usage]
+orte-iof [OPTIONS]
+  Open MPI IO Forwarding Tool
 
-# This makefile.am does not stand on its own - it is included from
-# orte/Makefile.am
+%s
 
-SUBDIRS += \
-	tools/orte-checkpoint \
-	tools/orte-clean \
-	tools/orte-iof \
-	tools/orte-ps \
-	tools/orte-restart \
-	tools/orted \
-	tools/orterun \
-	tools/wrappers
+#
+[pid-required]
+The orte-iof tool requires the pid of the mpirun whose output
+you would like to monitor. This is needed to ensure that the
+tool contacts the correct mpirun when requesting access to the
+output from the specified ranks.
 
-DIST_SUBDIRS += \
-	tools/orte-checkpoint \
-	tools/orte-clean \
-	tools/orte-iof \
-	tools/orte-ps \
-	tools/orte-restart \
-	tools/orted \
-	tools/orterun \
-	tools/wrappers
+Please use the --pid option to specify the mpirun's pid.
+#
+

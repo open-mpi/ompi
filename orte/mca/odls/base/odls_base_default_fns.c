@@ -171,7 +171,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             return rc;
         }
         /* pack the control flags */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &orte_debugger_daemon->controls, 1, OPAL_UINT16))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &orte_debugger_daemon->controls, 1, ORTE_JOB_CONTROL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }        
@@ -197,7 +197,13 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     
     /* pack the control flags for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->controls, 1, OPAL_UINT16))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->controls, 1, ORTE_JOB_CONTROL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the stdin target  */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->stdin_target, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -354,7 +360,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             goto REPORT_ERROR;
         }
         cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &(orte_odls_globals.debugger->controls), &cnt, OPAL_UINT16))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &(orte_odls_globals.debugger->controls), &cnt, ORTE_JOB_CONTROL))) {
             ORTE_ERROR_LOG(rc);
             goto REPORT_ERROR;
         }
@@ -410,7 +416,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     /* unpack the control flags for the job */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->controls, &cnt, OPAL_UINT16))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->controls, &cnt, ORTE_JOB_CONTROL))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the stdin target for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->stdin_target, &cnt, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1118,7 +1130,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             }
         }
 
-        rc = fork_local(app, child, app->env, ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls);
+        rc = fork_local(app, child, app->env, jobdat->controls, jobdat->stdin_target);
         /* reaquire lock so we don't double unlock... */
         OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
         if (ORTE_SUCCESS != rc) {
@@ -1165,7 +1177,7 @@ CLEANUP:
                                  (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
             
             fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL,
-                       ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls);
+                       orte_odls_globals.debugger->controls, ORTE_VPID_INVALID);
             orte_odls_globals.debugger_launched = true;
         }
         
@@ -1663,38 +1675,11 @@ GOTCHILD:
         goto MOVEON;
     }
 
-    /* If this child was the (vpid==0), we hooked it up to orterun's
-       STDIN SOURCE earlier (do not change this without also changing
-       odsl_default_fork_local_proc()).  So we have to tell the SOURCE
-       a) that we don't want any more data and b) that it should not
-       expect any more ACKs from this endpoint (so that the svc
-       component can still flush/shut down cleanly).
-
-       Note that the source may have already detected that this
-       process died as part of an OOB/RML exception, but that's ok --
-       its "exception" detection capabilities are not reliable, so we
-       *have* to do this unpublish here, even if it arrives after an
-       exception is detected and handled (in which case this unpublish
-       request will be ignored/discarded. */
-
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc pid %ld corresponds to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)pid,
                          ORTE_NAME_PRINT(child->name)));
-
-    if (0 == child->name->vpid) {
-        rc = orte_iof.iof_unpublish(child->name, ORTE_NS_CMP_ALL, 
-                                    ORTE_IOF_STDIN);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            /* We can't really abort, so keep going... */
-        }
-    }
-
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:wait_local_proc orted sent IOF unpub message!",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* determine the state of this process */
     if(WIFEXITED(status)) {

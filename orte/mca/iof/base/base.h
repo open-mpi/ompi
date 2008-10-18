@@ -37,6 +37,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include "opal/class/opal_free_list.h"
 #include "opal/threads/condition.h"
@@ -50,27 +53,162 @@ ORTE_DECLSPEC int orte_iof_base_open(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
+/*
+ * Maximum size of single msg 
+ */
+#define ORTE_IOF_BASE_MSG_MAX           1024
+#define ORTE_IOF_BASE_TAG_MAX             50
+#define ORTE_IOF_BASE_TAGGED_OUT_MAX    2048
+#define ORTE_IOF_MAX_INPUT_BUFFERS      1024
+
+typedef struct {
+    opal_list_item_t super;
+    bool pending;
+    opal_event_t ev;
+    int fd;
+    opal_list_t outputs;
+} orte_iof_write_event_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_event_t);
+
 struct orte_iof_base_t {
-   int                  iof_output;
-   opal_list_t          iof_components_opened;
-   bool                 iof_flush;
-   opal_list_t          iof_endpoints;
-   opal_mutex_t         iof_lock;
-   opal_condition_t     iof_condition;
-   size_t               iof_waiting;
-   opal_free_list_t     iof_fragments;
-   size_t               iof_window_size;
-   orte_process_name_t  iof_service;
+    int                     iof_output;
+    opal_list_t             iof_components_opened;
+    opal_mutex_t            iof_write_output_lock;
+    orte_iof_write_event_t  iof_write_stdout;
+    orte_iof_write_event_t  iof_write_stderr;
 };
 typedef struct orte_iof_base_t orte_iof_base_t;
 
+typedef struct {
+    opal_list_item_t super;
+    orte_process_name_t name;
+    orte_process_name_t daemon;
+    orte_iof_tag_t tag;
+    orte_iof_write_event_t wev;
+#if OMPI_ENABLE_DEBUG
+    char *file;
+    int line;
+#endif
+} orte_iof_sink_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 
+typedef struct {
+    opal_list_item_t super;
+    orte_process_name_t name;
+    opal_event_t ev;
+    orte_iof_tag_t tag;
+    bool active;
+#if OMPI_ENABLE_DEBUG
+    char *file;
+    int line;
+#endif
+} orte_iof_read_event_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_read_event_t);
+
+typedef struct {
+    opal_list_item_t super;
+    char data[ORTE_IOF_BASE_TAGGED_OUT_MAX];
+    int numbytes;
+#if OMPI_ENABLE_DEBUG
+    char *file;
+    int line;
+#endif
+} orte_iof_write_output_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
+
+#if OMPI_ENABLE_DEBUG
+
+#define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
+    do {                                                            \
+        orte_iof_sink_t *ep;                                        \
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
+                            "defining endpoint: %s %d",             \
+                            __FILE__, __LINE__));                   \
+        ep = OBJ_NEW(orte_iof_sink_t);                              \
+        ep->name.jobid = (nm)->jobid;                               \
+        ep->name.vpid = (nm)->vpid;                                 \
+        ep->tag = (tg);                                             \
+        ep->wev.fd = (fid);                                         \
+        opal_event_set(&(ep->wev.ev), ep->wev.fd,                   \
+                       OPAL_EV_WRITE|OPAL_EV_PERSIST,               \
+                       wrthndlr, &(ep->wev));                       \
+        opal_list_append((eplist), &ep->super);                     \
+        *(snk) = ep;                                                \
+        ep->file = strdup(__FILE__);                                \
+        ep->line = __LINE__;                                        \
+    } while(0);
+
+#define ORTE_IOF_READ_EVENT(nm, fid, tg, cbfunc, revlist, actv)     \
+    do {                                                            \
+        orte_iof_read_event_t *rev;                                 \
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
+                            "%s defining read event for %s: %s %d", \
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),     \
+                            ORTE_NAME_PRINT((nm)),                  \
+                            __FILE__, __LINE__));                   \
+        rev = OBJ_NEW(orte_iof_read_event_t);                       \
+        rev->name.jobid = (nm)->jobid;                              \
+        rev->name.vpid = (nm)->vpid;                                \
+        rev->tag = (tg);                                            \
+        rev->file = strdup(__FILE__);                               \
+        rev->line = __LINE__;                                       \
+        opal_event_set(&rev->ev, (fid),                             \
+                       OPAL_EV_READ | OPAL_EV_PERSIST,              \
+                       (cbfunc), rev);                              \
+        if ((actv)) {                                               \
+            opal_event_add(&rev->ev, 0);                            \
+            opal_list_append((revlist), &rev->super);               \
+        } else {                                                    \
+            opal_list_prepend((revlist), &rev->super);              \
+        }                                                           \
+    } while(0);
+
+
+#else
+
+#define ORTE_IOF_SINK_DEFINE(nm, fid, tg, lcl, eplist)      \
+    do {                                                    \
+        orte_iof_sink_t *ep;                                \
+        ep = OBJ_NEW(orte_iof_sink_t);                      \
+        ep->name.jobid = (nm)->jobid;                       \
+        ep->name.vpid = (nm)->vpid;                         \
+        ep->tag = (tg);                                     \
+        ep->fd = (fid);                                     \
+        ep->local = (lcl);                                  \
+        opal_list_append((eplist), &ep->super);             \
+    } while(0);
+
+#define ORTE_IOF_READ_EVENT(nm, fid, tg, cbfunc, revlist, actv)     \
+    do {                                                            \
+        orte_iof_read_event_t *rev;                                 \
+        rev = OBJ_NEW(orte_iof_read_event_t);                       \
+        rev->name.jobid = (nm)->jobid;                              \
+        rev->name.vpid = (nm)->vpid;                                \
+        rev->tag = (tg);                                            \
+        opal_event_set(&rev->ev, (fid),                             \
+                       OPAL_EV_READ | OPAL_EV_PERSIST,              \
+                       (cbfunc), rev);                              \
+        if ((actv)) {                                               \
+            opal_event_add(&rev->ev, 0);                            \
+            opal_list_append((revlist), &rev->super);               \
+        } else {                                                    \
+            opal_list_prepend((revlist), $rev->super);              \
+        }                                                           \
+    } while(0);
+
+#endif
 
 ORTE_DECLSPEC int orte_iof_base_close(void);
 ORTE_DECLSPEC int orte_iof_base_select(void);
 ORTE_DECLSPEC int orte_iof_base_flush(void);
 
 ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
+
+/* base functions */
+ORTE_DECLSPEC int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
+                                             unsigned char *data, int numbytes,
+                                             orte_iof_write_event_t *channel);
+ORTE_DECLSPEC void orte_iof_base_write_handler(int fd, short event, void *cbdata);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

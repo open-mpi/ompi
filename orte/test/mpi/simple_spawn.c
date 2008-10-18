@@ -53,5 +53,6 @@ printf("%d completed MPI_Init\n", rank);
     }
 
     MPI_Finalize();
+    fprintf(stderr, "%d: exiting\n", pid);
     return 0;
 }

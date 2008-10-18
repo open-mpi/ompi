@@ -168,7 +168,8 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
 static int odls_default_fork_local_proc(orte_app_context_t* context,
                                         orte_odls_child_t *child,
                                         char **environ_copy,
-                                        bool forward_output)
+                                        orte_job_controls_t controls,
+                                        orte_vpid_t stdin_target)
 {
     orte_iof_base_io_conf_t opts;
     int rc;
@@ -181,11 +182,9 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
          default */
         opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
         
-        /* BWB - Fix post beta.  Should setup stdin in orterun and make
-         part of the app_context.  Do not change this without also
-         changing the reverse of this in
-         odls_default_wait_local_proc(). */
-        if (NULL != child && child->name->vpid == 0) {
+        /* do we want to setup stdin? */
+        if (NULL != child &&
+            (stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == stdin_target)) {
             opts.connect_stdin = true;
         } else {
             opts.connect_stdin = false;
@@ -259,7 +258,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
             }
             
             
-        } else if (!forward_output) {
+        } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
             /* tie stdin/out/err/internal to /dev/null */
             int fdnull;
             for (i=0; i < 3; i++) {
@@ -320,7 +319,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         exit(1);
     } else {
 
-        if (NULL != child && forward_output) {
+        if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
             /* connect endpoints IOF */
             rc = orte_iof_base_setup_parent(child->name, &opts);
             if(ORTE_SUCCESS != rc) {

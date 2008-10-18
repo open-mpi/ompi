@@ -27,16 +27,10 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-#include "orte/mca/iof/base/iof_base_header.h"
-#include "orte/mca/iof/base/iof_base_fragment.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-#endif
 
 /*
  * The following file was created by configure.  It contains extern
@@ -45,6 +39,9 @@
  */
 
 #include "orte/mca/iof/base/static-components.h"
+
+orte_iof_base_module_t orte_iof;
+
 
 #if ORTE_DISABLE_FULL_SUPPORT
 /* have to include a bogus function here so that
@@ -57,6 +54,54 @@ int orte_iof_base_open(void)
 }
 
 #else
+
+/* class instances */
+static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
+{
+    OBJ_CONSTRUCT(&ptr->wev, orte_iof_write_event_t);
+}
+static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
+{
+    OBJ_DESTRUCT(&ptr->wev);
+}
+OBJ_CLASS_INSTANCE(orte_iof_sink_t,
+                   opal_list_item_t,
+                   orte_iof_base_sink_construct,
+                   orte_iof_base_sink_destruct);
+
+
+static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
+{
+    memset(&rev->ev,0,sizeof(rev->ev));
+}
+static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
+{
+    opal_event_del(&rev->ev);
+}
+OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
+                   opal_list_item_t,
+                   orte_iof_base_read_event_construct,
+                   orte_iof_base_read_event_destruct);
+
+static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
+{
+    wev->pending = false;
+    wev->fd = -1;
+    OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
+}
+static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
+{
+    opal_event_del(&wev->ev);
+    OBJ_DESTRUCT(&wev->outputs);
+}
+OBJ_CLASS_INSTANCE(orte_iof_write_event_t,
+                   opal_list_item_t,
+                   orte_iof_base_write_event_construct,
+                   orte_iof_base_write_event_destruct);
+
+OBJ_CLASS_INSTANCE(orte_iof_write_output_t,
+                   opal_list_item_t,
+                   NULL, NULL);
 
 /*
  * Global variables
@@ -71,44 +116,35 @@ orte_iof_base_t orte_iof_base;
  */
 int orte_iof_base_open(void)
 {
-    int id;
-    int int_value;
-    char *str_value;
-
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_endpoints, opal_list_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_condition, opal_condition_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_fragments, opal_free_list_t);
-    orte_iof_base.iof_waiting = 0;
-    orte_iof_base.iof_flush = false;
+    OBJ_CONSTRUCT(&orte_iof_base.iof_write_output_lock, opal_mutex_t);
 
-    /* lookup common parameters */
-    id = mca_base_param_register_int("iof","base","window_size",NULL,ORTE_IOF_BASE_MSG_MAX << 1);
-    mca_base_param_lookup_int(id,&int_value);
-    orte_iof_base.iof_window_size = int_value;
-
-    /* someone might pass in an iof_service name, so do a little
-     * dance to setup the default
-     */
-    orte_util_convert_process_name_to_string(&str_value, ORTE_PROC_MY_HNP);
-    id = mca_base_param_register_string("iof","base","service",NULL,str_value);
-    free(str_value);
-    mca_base_param_lookup_string(id,&str_value);
-    orte_util_convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
-    free(str_value);
-
+    /* daemons do not need to do this as they do not write out stdout/err */
+    if (!orte_process_info.daemon) {
+        /* setup the stdout event */
+        OBJ_CONSTRUCT(&orte_iof_base.iof_write_stdout, orte_iof_write_event_t);
+        orte_iof_base.iof_write_stdout.fd = 1;
+        /* create the write event, but don't add it until we need it */
+        opal_event_set(&orte_iof_base.iof_write_stdout.ev,
+                       orte_iof_base.iof_write_stdout.fd,
+                       OPAL_EV_WRITE|OPAL_EV_PERSIST,
+                       orte_iof_base_write_handler,
+                       &orte_iof_base.iof_write_stdout);
+        
+        /* setup the stderr event */
+        OBJ_CONSTRUCT(&orte_iof_base.iof_write_stderr, orte_iof_write_event_t);
+        orte_iof_base.iof_write_stderr.fd = 2;
+        /* create the write event, but don't add it until we need it */
+        opal_event_set(&orte_iof_base.iof_write_stderr.ev,
+                       orte_iof_base.iof_write_stderr.fd,
+                       OPAL_EV_WRITE|OPAL_EV_PERSIST,
+                       orte_iof_base_write_handler,
+                       &orte_iof_base.iof_write_stderr);
+    }
+    
     orte_iof_base.iof_output = opal_output_open(NULL);
-
-    /* initialize free list */
-    opal_free_list_init( &orte_iof_base.iof_fragments,
-			 sizeof(orte_iof_base_frag_t),
-			 OBJ_CLASS(orte_iof_base_frag_t),
-			 0,     /* number to initially allocate */
-			 -1,    /* maximum elements to allocate */
-			 16 );  /* number per allocation */
-
+    
     /* Open up all available components */
     if (ORTE_SUCCESS != 
         mca_base_components_open("iof", orte_iof_base.iof_output,

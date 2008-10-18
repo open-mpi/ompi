@@ -171,6 +171,11 @@ int orte_register_params(void)
                                 "Number of nodes after which contiguous nodename encoding will automatically be used [default: INT_MAX]",
                                 false, false, INT32_MAX, &orte_contiguous_nodes);
     
+    mca_base_param_reg_int_name("orte", "tag_output",
+                                "Tag all output with [job,rank] (default: false)",
+                                false, false, (int) false, &value);
+    orte_tag_output = OPAL_INT_TO_BOOL(value);
+
     mca_base_param_reg_int_name("orte", "xml_output",
                                 "Display all output in XML format (default: false)",
                                 false, false, (int) false, &value);
