@@ -108,6 +108,12 @@ Trunk (not on release branches yet)
   in cross-compile environments.
 
 
+1.2.9 (unreleased)
+------------------
+
+- Fix a problem setting OPAL_PREFIX for remote sh-based shells.
+
+
 1.2.8
 -----
 
