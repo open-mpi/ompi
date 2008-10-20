@@ -981,7 +981,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                   "%s/%s/%s",
                                   (opal_prefix != NULL ? "OPAL_PREFIX=" : ""),
                                   (opal_prefix != NULL ? opal_prefix : ""),
-                                  (opal_prefix != NULL ? " ;" : ""),
+                                  (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : ""),
                                   prefix_dir, bin_base,
                                   prefix_dir, lib_base,
                                   prefix_dir, bin_base,
