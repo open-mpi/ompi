@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -102,7 +102,7 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
     opal_list_append(&(flist->fl_allocations), (opal_list_item_t*) alloc_ptr);
     ptr = alloc_ptr + sizeof(opal_list_item_t);
 
-    mod = (intptr_t)ptr % CACHE_LINE_SIZE;
+    mod = (uintptr_t)ptr % CACHE_LINE_SIZE;
     if(mod != 0) {
         ptr += (CACHE_LINE_SIZE - mod);
     }
