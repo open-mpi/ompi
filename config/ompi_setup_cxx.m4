@@ -116,8 +116,24 @@ AC_DEFUN([OMPI_SETUP_CXX],[
         OMPI_CXX_FIND_EXCEPTION_FLAGS
         if test "$OMPI_CXX_EXCEPTIONS" = "1"; then
             HAVE_CXX_EXCEPTIONS=1
-            CFLAGS="$CFLAGS $OMPI_CXX_EXCEPTIONS_CFLAGS"
-            FFLAGS="$FFLAGS $OMPI_CXX_EXCEPTIONS_FFLAGS"
+
+            # Test to see if the C compiler likes these flags
+            AC_MSG_CHECKING([to see if C compiler likes the exception flags])
+            CFLAGS="$CFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
+            AC_LANG_SAVE
+            AC_LANG_C
+            AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[int i = 0;]]),
+                              [AC_MSG_RESULT([yes])],
+                              [AC_MSG_RESULT([no])
+                               AC_MSG_WARN([C++ exception flags are different between the C and C++ compilers; this configure script cannot currently handle this scenario.  Either disable C++ exception support or send mail to the Open MPI users list.])
+                               AC_MSG_ERROR([*** Cannot continue])])
+            AC_LANG_RESTORE
+
+            # We can't test the F77 and F90 compilers now because we
+            # haven't found/set the up yet.  So just save the flags
+            # and test them later (in ompi_setup_f77.m4 and
+            # ompi_setup_f90.m4).
+
             CXXFLAGS="$CXXFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
             LDFLAGS="$LDFLAGS $OMPI_CXX_EXCEPTIONS_LDFLAGS"
 

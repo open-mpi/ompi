@@ -108,6 +108,27 @@ directory.
 EOF
      AC_MSG_ERROR([C and Fortran 77 compilers are not link compatible.  Can not continue.])])])
 
+# Test to see if the F90 compilers likes the C++ exceptions flags.  If
+# it doesn't, just abort.  We *could* handle this scenario (e.g.,
+# probe the F90 compiler for what flags would be necessary), but we're
+# kinda assuming that no one will care.  If they do, they'll e-mail us.
+AC_MSG_CHECKING([to see if F77 compiler likes the C++ exception flags])
+if test $OMPI_WANT_F77_BINDINGS -eq 0; then
+    AC_MSG_RESULT([skipped (no F77 bindings)])
+elif test "$OMPI_CXX_EXCEPTIONS_CXXFLAGS" = ""; then
+    AC_MSG_RESULT([skipped (no C++ exceptions flags)])
+else
+    FFLAGS="$FFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
+    AC_LANG_PUSH(Fortran 77)
+    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [[        INTEGER I
+        I = 3]]),
+                      [AC_MSG_RESULT([yes])],
+                      [AC_MSG_RESULT([no])
+                       AC_MSG_WARN([C++ exception flags are different between the C and C++ compilers; this configure script cannot currently handle this scenario.  Either disable C++ exception support or send mail to the Open MPI users list.])
+                       AC_MSG_ERROR([*** Cannot continue])])
+    AC_LANG_POP
+fi
+
 AC_DEFINE_UNQUOTED(OMPI_WANT_F77_BINDINGS, $OMPI_WANT_F77_BINDINGS,
     [Whether we want the MPI f77 bindings or not])
 AC_DEFINE_UNQUOTED(OMPI_F77, "$OMPI_F77", [OMPI underlying F77 compiler])
