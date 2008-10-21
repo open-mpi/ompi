@@ -108,9 +108,9 @@ directory.
 EOF
      AC_MSG_ERROR([C and Fortran 77 compilers are not link compatible.  Can not continue.])])])
 
-# Test to see if the F90 compilers likes the C++ exceptions flags.  If
+# Test to see if the F77 compilers likes the C++ exceptions flags.  If
 # it doesn't, just abort.  We *could* handle this scenario (e.g.,
-# probe the F90 compiler for what flags would be necessary), but we're
+# probe the F77 compiler for what flags would be necessary), but we're
 # kinda assuming that no one will care.  If they do, they'll e-mail us.
 AC_MSG_CHECKING([to see if F77 compiler likes the C++ exception flags])
 if test $OMPI_WANT_F77_BINDINGS -eq 0; then
