@@ -20,15 +20,16 @@ AC_DEFUN([MCA_memchecker_valgrind_COMPILE_MODE], [
 # MCA_memchecker_valgrind_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
-    OMPI_VAR_SCOPE_PUSH([ompi_check_memchecker_valgrind_save_CPPFLAGS ompi_check_memchecker_valgrind_happy])
+    OMPI_VAR_SCOPE_PUSH([opal_memchecker_valgrind_save_CPPFLAGS opal_memchecker_valgrind_happy opal_memchecker_valgrind_CPPFLAGS])
 
     AC_ARG_WITH([valgrind],
         [AC_HELP_STRING([--with-valgrind(=DIR)],
             [Directory where the valgrind software is installed])])
 
     memchecker_valgrind_CPPFLAGS=
-    ompi_check_memchecker_valgrind_save_CPPFLAGS="$CPPFLAGS"
-    ompi_check_memchecker_valgrind_happy=no
+    opal_memchecker_valgrind_CPPFLAGS=
+    opal_memchecker_valgrind_save_CPPFLAGS="$CPPFLAGS"
+    opal_memchecker_valgrind_happy=no
     AS_IF([test "$with_valgrind" != "no"],
           [AS_IF([test ! -z "$with_valgrind" -a "$with_valgrind" != "yes"],
                  [CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
@@ -41,19 +42,19 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
                      [[char buffer = 0xff;
                        VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]]),
                      [AC_MSG_RESULT([yes])
-                      ompi_check_memchecker_valgrind_happy=yes],
+                      opal_memchecker_valgrind_happy=yes],
                      [AC_MSG_RESULT([no])
                       AC_MSG_ERROR([Need Valgrind version 3.2.0 or later. Can not build component.])]
                      [AC_MSG_RESULT([cross-compiling; assume yes...?])
                       AC_MSG_WARN([OMPI will fail to compile if you do not have Valgrind version 3.2.0 or later])
-                      ompi_check_memchecker_valgrind_happy=yes]),
+                      opal_memchecker_valgrind_happy=yes]),
                  ],
                  [AC_MSG_WARN([valgrind.h not found])
                   AC_MSG_WARN([Cannot compile this component])])])
-    CPPFLAGS="$ompi_check_memchecker_valgrind_save_CPPFLAGS"
+    CPPFLAGS="$opal_memchecker_valgrind_save_CPPFLAGS"
 
-    AS_IF([test "$ompi_check_memchecker_valgrind_happy" = "yes"],
-          [memchecker_valgrind_CPPFLAGS="-I$with_valgrind/include"
+    AS_IF([test "$opal_memchecker_valgrind_happy" = "yes"],
+          [memchecker_valgrind_CPPFLAGS=$opal_memchecker_valgrind_CPPFLAGS
            $1],[$2])
 
     AC_SUBST([memchecker_valgrind_CPPFLAGS])
