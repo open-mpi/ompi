@@ -1,9 +1,8 @@
-
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -80,6 +79,8 @@ struct mca_btl_mx_component_t {
     /**< true if we want to activate the MX support for shared memory */
     int32_t                                 mx_support_self;
     /**< true if we want to activate the MX support for self communications */
+    int32_t                                 mx_bonding;
+    /**< true if MX is in charge of doing the device bonding */
     int32_t                                 mx_use_unexpected;
     /**< true if Open MPI is allowed to register an unexpected handler with the MX library */
 
@@ -94,12 +95,14 @@ struct mca_btl_mx_component_t {
 
     opal_mutex_t     mx_lock;                  /**< lock for accessing module state */
 
+#if MX_HAVE_MAPPER_STATE
     char* mx_if_include;                       /**< include the following NICs */
     char* mx_if_exclude;                       /**< Exclude the following NICs. These
                                                  *   values are based on the last 6
                                                  *   digits in hexadecimal of the MAC
                                                  *   address of the mapper.
                                                  */
+#endif  /* MX_HAVE_MAPPER_STATE */
 }; 
 typedef struct mca_btl_mx_component_t mca_btl_mx_component_t;
 

@@ -327,6 +327,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 
     mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
     mx_segment.segment_length = frag->segment[0].seg_len;
+
     mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
                           frag->segment[0].seg_key.key64, 
                           BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
