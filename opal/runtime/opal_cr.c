@@ -77,6 +77,14 @@ bool opal_cr_stall_check       = false;
 bool opal_cr_currently_stalled = false;
 int  opal_cr_output;
 
+static double opal_cr_get_time(void);
+static void display_indv_timer_core(double diff, char *str);
+static double timer_start[OPAL_CR_TIMER_MAX];
+bool opal_cr_timing_barrier_enabled = false;
+bool opal_cr_timing_enabled = false;
+int  opal_cr_timing_my_rank = 0;
+int  opal_cr_timing_target_rank = 0;
+
 /******************
  * Local Functions & Var Decls
  ******************/
@@ -213,6 +221,28 @@ int opal_cr_init(void )
     opal_output_verbose(10, opal_cr_output,
                         "opal_cr: init: FT Enabled: %d",
                         val);
+
+    mca_base_param_reg_int_name("opal_cr", "enable_timer",
+                                "Enable Checkpoint timer (Default: Disabled)",
+                                false, false,
+                                0, &val);
+    opal_cr_timing_enabled = OPAL_INT_TO_BOOL(val);
+
+    mca_base_param_reg_int_name("opal_cr", "enable_timer_barrier",
+                                "Enable Checkpoint timer Barrier (Default: Disabled)",
+                                false, false,
+                                0, &val);
+    if( opal_cr_timing_enabled ) {
+        opal_cr_timing_barrier_enabled = OPAL_INT_TO_BOOL(val);
+    } else {
+        opal_cr_timing_barrier_enabled = false;
+    }
+
+    mca_base_param_reg_int_name("opal_cr", "timer_target_rank",
+                                "Target Rank for the timer (Default: 0)",
+                                false, false,
+                                0, &val);
+    opal_cr_timing_target_rank = val;
 
 #if OPAL_ENABLE_FT_THREAD == 1
     mca_base_param_reg_int_name("opal_cr", "use_thread",
@@ -505,6 +535,7 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
     /*
      * Take the checkpoint
      */
+    OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE0);
     if(OPAL_SUCCESS != (ret = opal_crs.crs_checkpoint(pid, snapshot, (opal_crs_state_type_t *)state))) {
         opal_output(opal_cr_output,
                     "opal_cr: inc_core: Error: The checkpoint failed. %d\n", ret);
@@ -513,6 +544,8 @@ int opal_cr_inc_core(pid_t pid, opal_crs_base_snapshot_t *snapshot, bool term, i
     }
 
     if(*state == OPAL_CRS_CONTINUE) {
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE1);
+
         if(term) {
             *state = OPAL_CRS_TERM;
             opal_cr_checkpointing_state  = OPAL_CR_STATUS_TERM;
@@ -869,3 +902,127 @@ void opal_cr_thread_noop_progress(void)
 }
 
 #endif /* OPAL_ENABLE_FT_THREAD == 1 */
+
+static double opal_cr_get_time() {
+    double wtime;
+
+#if OPAL_TIMER_USEC_NATIVE
+    wtime = (double)opal_timer_base_get_usec() / 1000000.0;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec / 1000000.0;
+#endif
+
+    return wtime;
+}
+
+void opal_cr_set_time(int idx)
+{
+    if(idx < OPAL_CR_TIMER_MAX ) {
+        if( timer_start[idx] <= 0.0 ) {
+            timer_start[idx] = opal_cr_get_time();
+        }
+    }
+}
+
+void opal_cr_clear_timers(void)
+{
+    int i;
+    for(i = 0; i < OPAL_CR_TIMER_MAX; ++i) {
+        timer_start[i] = 0.0;
+    }
+}
+
+static void display_indv_timer_core(double diff, char *str) {
+    double total = 0;
+    double perc  = 0;
+
+    total = timer_start[OPAL_CR_TIMER_MAX-1] - timer_start[OPAL_CR_TIMER_ENTRY0];
+    perc = (diff/total) * 100;
+
+    opal_output(0,
+                "opal_cr: timing: %-20s = %10.2f s\t%10.2f s\t%6.2f\n",
+                str,
+                diff,
+                total,
+                perc);
+    return;
+}
+
+void opal_cr_display_all_timers(void)
+{
+    double diff = 0.0;
+    char * label = NULL;
+
+    if( opal_cr_timing_target_rank != opal_cr_timing_my_rank ) {
+        return;
+    }
+
+    opal_output(0, "OPAL CR Timing: ******************** Summary Begin\n");
+
+    /********** Entry into the system **********/
+    label = strdup("Start Entry Point");
+    if( opal_cr_timing_barrier_enabled ) {
+        diff = timer_start[OPAL_CR_TIMER_CRCPBR0] - timer_start[OPAL_CR_TIMER_ENTRY0];
+    } else {
+        diff = timer_start[OPAL_CR_TIMER_CRCP0]   - timer_start[OPAL_CR_TIMER_ENTRY0];
+    }
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    /********** CRCP Protocol **********/
+    label = strdup("CRCP Protocol");
+    if( opal_cr_timing_barrier_enabled ) {
+        diff = timer_start[OPAL_CR_TIMER_CRCPBR1] - timer_start[OPAL_CR_TIMER_CRCP0];
+    } else {
+        diff = timer_start[OPAL_CR_TIMER_P2P0]    - timer_start[OPAL_CR_TIMER_CRCP0];
+    }
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    /********** P2P Suspend **********/
+    label = strdup("P2P Suspend");
+    if( opal_cr_timing_barrier_enabled ) {
+        diff = timer_start[OPAL_CR_TIMER_P2PBR0]     - timer_start[OPAL_CR_TIMER_P2P0];
+    } else {
+        diff = timer_start[OPAL_CR_TIMER_CORE0]     - timer_start[OPAL_CR_TIMER_P2P0];
+    }
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    /********** Checkpoint to Disk  **********/
+    label = strdup("Checkpoint");
+    diff = timer_start[OPAL_CR_TIMER_CORE1]    - timer_start[OPAL_CR_TIMER_CORE0];
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    /********** P2P Reactivation **********/
+    label = strdup("P2P Reactivation");
+    if( opal_cr_timing_barrier_enabled ) {
+        diff = timer_start[OPAL_CR_TIMER_P2PBR2] - timer_start[OPAL_CR_TIMER_CORE1];
+    } else {
+        diff = timer_start[OPAL_CR_TIMER_CRCP1]  - timer_start[OPAL_CR_TIMER_CORE1];
+    }
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    /********** CRCP Protocol Finalize **********/
+    label = strdup("CRCP Cleanup");
+    if( opal_cr_timing_barrier_enabled ) {
+        diff = timer_start[OPAL_CR_TIMER_COREBR1] - timer_start[OPAL_CR_TIMER_CRCP1];
+    } else {
+        diff = timer_start[OPAL_CR_TIMER_CORE2]   - timer_start[OPAL_CR_TIMER_CRCP1];
+    }
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    /********** Exit the system **********/
+    label = strdup("Finish Entry Point");
+    diff = timer_start[OPAL_CR_TIMER_ENTRY4] - timer_start[OPAL_CR_TIMER_CORE2];
+    display_indv_timer_core(diff, label);
+    free(label);
+
+    opal_output(0, "OPAL CR Timing: ******************** Summary End\n");
+}

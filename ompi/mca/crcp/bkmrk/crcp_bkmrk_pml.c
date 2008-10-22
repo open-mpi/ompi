@@ -42,6 +42,7 @@
 #include "ompi/mca/crcp/base/base.h"
 
 #include "ompi/class/ompi_free_list.h"
+#include "ompi/runtime/ompi_cr.h"
 
 #include "crcp_bkmrk.h"
 #include "crcp_bkmrk_pml.h"
@@ -2971,6 +2972,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
     static int step_to_return_to = 0;
+    static bool first_continue_pass = false;
     opal_list_item_t* item = NULL;
     int exit_status = OMPI_SUCCESS;
     int ret;
@@ -2991,6 +2993,12 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
         if( OMPI_CRCP_PML_PRE != pml_state->state){
             goto DONE;
         }
+
+        if( opal_cr_timing_barrier_enabled ) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR0);
+            orte_grpcomm.barrier();
+        }
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP0);
 
         START_TIMER(CRCP_TIMER_TOTAL_CKPT);
     STEP_1:
@@ -3030,7 +3038,15 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
             goto DONE;
         }
 
+        first_continue_pass = !first_continue_pass;
+
+        /* Only finalize the Protocol after the PML has been rebuilt */
+        if( ompi_cr_continue_like_restart && first_continue_pass ) {
+            goto DONE;
+        }
+
         START_TIMER(CRCP_TIMER_TOTAL_CONT);
+
         /*
          * Finish the coord protocol
          */
@@ -3045,6 +3061,12 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
 
         DISPLAY_ALL_TIMERS(state);
         clear_timers();
+
+        if( opal_cr_timing_barrier_enabled ) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR1);
+            orte_grpcomm.barrier();
+        }
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CORE2);
     }
     /*****************************
      * Restart from a checkpoint

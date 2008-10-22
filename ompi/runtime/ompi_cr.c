@@ -50,6 +50,7 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/runtime/runtime.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -71,6 +72,8 @@ static int ompi_cr_coord_pre_continue(void);
 static int ompi_cr_coord_post_ckpt(void);
 static int ompi_cr_coord_post_restart(void);
 static int ompi_cr_coord_post_continue(void);
+
+bool ompi_cr_continue_like_restart = false;
 
 /*************
  * Local vars
@@ -159,6 +162,9 @@ int ompi_cr_init(void)
         ompi_cr_output = opal_cr_output;
     }
 
+    /* Typically this is not needed. Individual BTLs will set this as needed */
+    ompi_cr_continue_like_restart = false;
+
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: init: ompi_cr_init()");
     
@@ -195,6 +201,9 @@ int ompi_cr_coord(int state)
      * take action given the state.
      */
     if(OPAL_CRS_CHECKPOINT == state) {
+        /* Default: use the fast way */
+        ompi_cr_continue_like_restart = false;
+
         /* Do Checkpoint Phase work */
         ret = ompi_cr_coord_pre_ckpt();
         if( ret == OMPI_EXISTS) {
@@ -317,6 +326,8 @@ static int ompi_cr_coord_pre_restart(void) {
 }
     
 static int ompi_cr_coord_pre_continue(void) {
+    int ret, exit_status = OMPI_SUCCESS;
+
     /*
      * Can not really do much until ORTE is up and running,
      * so defer action until the post_continue function.
@@ -324,7 +335,26 @@ static int ompi_cr_coord_pre_continue(void) {
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_continue: ompi_cr_coord_pre_continue()");
 
-    return OMPI_SUCCESS;
+    if( ompi_cr_continue_like_restart ) {
+        /* Mimic ompi_cr_coord_pre_restart(); */
+        if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
+    else {
+        if( opal_cr_timing_barrier_enabled ) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
+        }
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
+        if( opal_cr_timing_barrier_enabled ) {
+            OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
+        }
+        OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
+    }
+
+ cleanup:    
+    return exit_status;
 }
 
 /*************
