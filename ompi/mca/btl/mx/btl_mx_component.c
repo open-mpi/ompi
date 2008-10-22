@@ -83,7 +83,7 @@ int mca_btl_mx_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_btls",
                             "Maximum number of accepted Myrinet cards",
-                            false, false, 1, &mca_btl_mx_component.mx_max_btls );
+                            false, false, 10, &mca_btl_mx_component.mx_max_btls );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "timeout",
                             "Timeout for connections",
                             false, false, MX_INFINITE, &mca_btl_mx_component.mx_timeout );
@@ -99,6 +99,9 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
                             "Enable the MX support for shared memory",
                             false, false, 0, &mca_btl_mx_component.mx_support_sharedmem );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "bonding",
+                            "True if the lib MX is in charge of doing the device bonding, false if Open MPI will take care of it.",
+                            false, false, 0, &mca_btl_mx_component.mx_bonding );
 #ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "register_unexp",
                             "Enable the MX support for the unexpected request handler (Open MPI matching)",
@@ -112,7 +115,7 @@ int mca_btl_mx_component_open(void)
                             false, false, 32, &mca_btl_mx_component.mx_free_list_inc );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_max",
                             "Maximum number of request this device is allowed to allocate",
-                            false, false, 128, &mca_btl_mx_component.mx_free_list_max );
+                            false, false, 1024, &mca_btl_mx_component.mx_free_list_max );
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_posted_recv",
                             "Number of received posted in advance. Increasing this number for"
@@ -120,17 +123,24 @@ int mca_btl_mx_component_open(void)
 			    " in performances",
                             false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
 
+#if MX_HAVE_MAPPER_STATE
     mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_include",
 			       "Myrinet card to use (last 6 digits from the mapper MAC)",
 			       false, false, NULL, &mca_btl_mx_component.mx_if_include );
     mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_exclude",
 			       "Myrinet card to avoid (last 6 digits from the mapper MAC)",
 			       false, false, NULL, &mca_btl_mx_component.mx_if_exclude );
+#endif  /* MX_HAVE_MAPPER_STATE */
 
     mca_btl_mx_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
-    mca_btl_mx_module.super.btl_eager_limit = 1024;
-    mca_btl_mx_module.super.btl_rndv_eager_limit = 1024;
-    mca_btl_mx_module.super.btl_max_send_size = 8*1024;
+    if( mca_btl_mx_component.mx_use_unexpected ) {
+        mca_btl_mx_module.super.btl_eager_limit = 1024;
+        mca_btl_mx_module.super.btl_rndv_eager_limit = 1024;
+    } else {
+        mca_btl_mx_module.super.btl_eager_limit = 4*1024;
+        mca_btl_mx_module.super.btl_rndv_eager_limit = 4*1024;
+    }
+    mca_btl_mx_module.super.btl_max_send_size = 32*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_send_length = 256*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_frag_size = 8*1024*1024;
     mca_btl_mx_module.super.btl_min_rdma_pipeline_size = 0;
@@ -165,6 +175,7 @@ int mca_btl_mx_component_close(void)
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_procs);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_lock);
 
+#if MX_HAVE_MAPPER_STATE
     if( NULL != mca_btl_mx_component.mx_if_include ) {
         free( mca_btl_mx_component.mx_if_include );
 	mca_btl_mx_component.mx_if_include = NULL;
@@ -173,6 +184,7 @@ int mca_btl_mx_component_close(void)
         free( mca_btl_mx_component.mx_if_exclude );
 	mca_btl_mx_component.mx_if_exclude = NULL;
     }
+#endif  /* MX_HAVE_MAPPER_STATE */
     return OMPI_SUCCESS;
 }
 
@@ -264,7 +276,6 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 				(ms.mapper_mac[5]));
 
     }
-#endif  /* MX_HAVE_MAPPER_STATE */
 
     /* Try to figure out if we are allowed to use this network */
     snprintf( mapper_mac, 7, "%6x", mx_unique_network_id );
@@ -281,6 +292,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 		     nic_id, mapper_mac );*/
         return NULL;
     }
+#endif  /* MX_HAVE_MAPPER_STATE */
 
     mx_btl = malloc(sizeof(mca_btl_mx_module_t));
     if( NULL == mx_btl ) return NULL;
@@ -420,13 +432,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     *num_btl_modules = 0;
 
-    if (enable_progress_threads) { 
-        opal_output( 0, "mca_btl_mx_component_init: progress threads requested but not supported");
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
-        return NULL;
-    }
-
     /**
      * As the MX MTL get initialized before the MX BTL it will call the
      * mx_init and the environment variables set by the BTL will be useless.
@@ -450,8 +455,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     /* First check if MX is available ... */
     if( OMPI_SUCCESS != ompi_common_mx_initialize() ) { 
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
+        ompi_modex_send(&mca_btl_mx_component.super.btl_version, NULL, 0);
         return NULL;
     }
         
@@ -484,46 +488,49 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     /* intialize process hash table */
     OBJ_CONSTRUCT( &mca_btl_mx_component.mx_procs, opal_list_t );
 
-    /* get the number of card available on the system */
-    if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
-                               &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
-        opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
-                     status, mx_strerror(status) );
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
-        return NULL;
+    if( mca_btl_mx_component.mx_bonding ) {
+        mca_btl_mx_component.mx_num_btls = 1;  /* there is only one! */
+    } else {
+        /* get the number of card available on the system */
+        if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
+                                   &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
+            opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
+                         status, mx_strerror(status) );
+            ompi_modex_send(&mca_btl_mx_component.super.btl_version, NULL, 0);
+            return NULL;
+        }
+        
+        if (0 == mca_btl_mx_component.mx_num_btls) {
+            mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
+            ompi_modex_send(&mca_btl_mx_component.super.btl_version, NULL, 0);
+            return NULL;
+        }
+
+        /* determine the NIC ids */
+        size = sizeof(uint64_t) * (mca_btl_mx_component.mx_num_btls + 1);
+        if( NULL == (nic_addrs = (uint64_t*)malloc(size)) )
+            return NULL;
+        if( (status = mx_get_info( NULL, MX_NIC_IDS, NULL, 0,
+                                   nic_addrs, size)) != MX_SUCCESS) {
+            opal_output(0, "mca_btl_mx_component_init: mx_get_info(MX_NICS_IDS) failed size = %ld [%s] #cards %d\n",
+                        (unsigned long)size, mx_strerror(status), mca_btl_mx_component.mx_num_btls );
+            free(nic_addrs);
+            return NULL;
+        }
+        /*
+         * Limit ourselves to the number of devices requested by the users.
+         */
+        if( mca_btl_mx_component.mx_num_btls > mca_btl_mx_component.mx_max_btls ) {
+            mca_btl_mx_component.mx_num_btls = mca_btl_mx_component.mx_max_btls;
+        }
     }
 
-    if (0 == mca_btl_mx_component.mx_num_btls) {
-        mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
-        return NULL;
-    }
-
-#if 0
-    /* check for limit on number of btls */
-    if(mca_btl_mx_component.mx_num_btls > mca_btl_mx_component.mx_max_btls)
-        mca_btl_mx_component.mx_num_btls = mca_btl_mx_component.mx_max_btls;
-#endif
-    /* Now we know how many NIC are available on the system. We will create a BTL for each one
-     * and then give a pointer to the BTL to the upper level.
+    /* Now we know how many NIC are available on the system. We will create a BTL
+     * for each one and then give a pointer to the BTL to the upper level.
      */
     mca_btl_mx_component.mx_btls = malloc( mca_btl_mx_component.mx_num_btls * sizeof(mca_btl_base_module_t*) );
     if( NULL == mca_btl_mx_component.mx_btls ) {
         opal_output( 0, "MX BTL no memory\n" );
-        return NULL;
-    }
-
-    /* determine the NIC ids */
-    size = sizeof(uint64_t) * (mca_btl_mx_component.mx_num_btls + 1);
-    if( NULL == (nic_addrs = (uint64_t*)malloc(size)) )
-        return NULL;
-    if( (status = mx_get_info( NULL, MX_NIC_IDS, NULL, 0,
-                               nic_addrs, size)) != MX_SUCCESS) {
-        opal_output(0, "MX BTL error (mx_get_info failed) size = %ld [%s] #cards %d\n",
-                    (unsigned long)size, mx_strerror(status), mca_btl_mx_component.mx_num_btls );
-        free(nic_addrs);
         return NULL;
     }
 
