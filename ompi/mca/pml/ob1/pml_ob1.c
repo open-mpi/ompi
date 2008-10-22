@@ -421,8 +421,7 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
     int rc;
 
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_ob1_fin_hdr_t),
-                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
-                       MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
     if(NULL == fin) {
         MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl, order, status);
@@ -776,3 +775,4 @@ int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
 
     return 0;
 }
+
