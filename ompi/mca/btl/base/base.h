@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,6 +73,7 @@ extern char* mca_btl_base_exclude;
 extern int mca_btl_base_warn_component_unused;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
+OMPI_DECLSPEC extern int mca_btl_base_already_opened;
 
 END_C_DECLS
     
