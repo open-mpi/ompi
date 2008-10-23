@@ -64,7 +64,7 @@ void orte_iof_orted_send_xonxoff(orte_iof_tag_t tag)
         return;
     }
 
-    OPAL_OUTPUT_VERBOSE((0, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s sending %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (ORTE_IOF_XON == tag) ? "xon" : "xoff"));
@@ -136,40 +136,27 @@ static void process_msg(int fd, short event, void *cbdata)
             /* yes - is this intended for all vpids or this vpid? */
             if (ORTE_VPID_WILDCARD == target.vpid ||
                 sink->name.vpid == target.vpid) {
-                /* if stdin was closed, we need to close it too so the proc
-                 * knows it is done
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                     "%s writing data to local proc %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&sink->name)));
+                if (sink->wev.fd < 0) {
+                    /* this sink was already closed - ignore this data */
+                    goto CLEAN_RETURN;
+                }
+                /* send the bytes down the pipe - we even send 0 byte events
+                 * down the pipe so it forces out any preceding data before
+                 * closing the output stream
                  */
-                if (0 == numbytes) {
-                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                         "%s closing stdin of local proc %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&sink->name)));
-                    /* make sure the write event is off */
-                    if (!sink->wev.pending) {
-                        opal_event_del(&(sink->wev.ev));
-                    }
-                    close(sink->wev.fd);
-                    sink->wev.fd =-1;
-                } else if (sink->wev.fd < 0) {
-                    /* the fd has already been closed - ignore this input */
-                    continue;
-                } else {
-                    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                         "%s writing data to local proc %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&sink->name)));
-                    /* send the bytes down the pipe */
-                    if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&target, stream, data, numbytes, &sink->wev)) {
-                        /* getting too backed up - tell the HNP to hold off any more input if we
-                         * haven't already told it
-                         */
-                        if (!mca_iof_orted_component.xoff) {
-                            mca_iof_orted_component.xoff = true;
-                            orte_iof_orted_send_xonxoff(ORTE_IOF_XOFF);
-                        }
+                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&target, stream, data, numbytes, &sink->wev)) {
+                    /* getting too backed up - tell the HNP to hold off any more input if we
+                     * haven't already told it
+                     */
+                    if (!mca_iof_orted_component.xoff) {
+                        mca_iof_orted_component.xoff = true;
+                        orte_iof_orted_send_xonxoff(ORTE_IOF_XOFF);
                     }
                 }
-                
             }
         }
     }
@@ -187,7 +174,7 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
 {
     int rc;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_iof_base.iof_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted:receive got message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));

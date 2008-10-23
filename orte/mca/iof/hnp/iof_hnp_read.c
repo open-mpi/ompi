@@ -127,28 +127,17 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                                      "%s read %d bytes from stdin - writing to %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&rev->name)));
-                /* if stdin was closed, we need to close it too so the proc
-                 * knows it is done
+                /* send the bytes down the pipe - we even send 0 byte events
+                 * down the pipe so it forces out any preceding data before
+                 * closing the output stream
                  */
-                if (0 == numbytes) {
-                    /* make sure the write event is off */
-                    if (!sink->wev.pending) {
-                        opal_event_del(&(sink->wev.ev));
-                    }
-                    close(sink->wev.fd);
-                    sink->wev.fd =-1;
-                } else if (sink->wev.fd < 0) {
-                    /* the fd has already been closed or this doesn't refer to a local
-                     * sink - skip this entry */
-                    continue;
-                } else {
-                    /* send the bytes down the pipe */
-                    if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &sink->wev)) {
-                        /* getting too backed up - stop the read event for now if it is still active */
-                        if (!mca_iof_hnp_component.stdinev->active) {
-                            opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
-                            mca_iof_hnp_component.stdinev->active = false;
-                        }
+                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &sink->wev)) {
+                    /* getting too backed up - stop the read event for now if it is still active */
+                    if (mca_iof_hnp_component.stdinev->active) {
+                        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                             "buffer backed up - holding"));
+                        opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
+                        mca_iof_hnp_component.stdinev->active = false;
                     }
                 }
             } else {
@@ -217,9 +206,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         opal_event_del(&rev->ev);
         goto CLEAN_RETURN;
     }
-    
-    data[numbytes] = '\0';
-    
+
     if (ORTE_IOF_STDOUT & rev->tag) {
         orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
     } else {

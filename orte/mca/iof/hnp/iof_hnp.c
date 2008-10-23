@@ -94,8 +94,41 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         return ORTE_SUCCESS;
     }
     
-    /* only setup to read stdin once */
-    if ((src_tag & ORTE_IOF_STDIN) && NULL == mca_iof_hnp_component.stdinev) {
+    if (!(src_tag & ORTE_IOF_STDIN)) {
+        /* if we are not after stdin. then define a read event and activate it */
+        ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
+                            orte_iof_hnp_read_local_handler,
+                            &mca_iof_hnp_component.read_events, true);
+        return ORTE_SUCCESS;
+    }
+
+    /* if we are pushing stdin, this is happening only during launch - setup
+     * a target for this destination if it is going somewhere other than me
+     */
+    if (ORTE_VPID_WILDCARD == dst_name->vpid) {
+        /* if wildcard, define a sink with that info so it gets sent out */
+        ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
+                             stdin_write_handler,
+                             &mca_iof_hnp_component.sinks);
+    } else {
+        /* no - lookup the proc's daemon and set that into sink */
+        if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
+        procs = (orte_proc_t**)jdata->procs->addr;
+        /* if it is me, then don't set this up - we'll get it on the pull */
+        if (ORTE_PROC_MY_NAME->vpid != procs[dst_name->vpid]->node->daemon->name.vpid) {
+            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
+                                 stdin_write_handler,
+                                 &mca_iof_hnp_component.sinks);
+            sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+            sink->daemon.vpid = procs[dst_name->vpid]->node->daemon->name.vpid;
+        }
+    }
+    
+    /* now setup the read - but check to only do this once */
+    if (NULL == mca_iof_hnp_component.stdinev) {
         /* Since we are the HNP, we don't want to set nonblocking on our
          * file descriptors.  If we do so, we set the file descriptor to
          * non-blocking for everyone that has that file descriptor, which
@@ -145,50 +178,18 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              */
             ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
                                 orte_iof_hnp_read_local_handler,
-                                &mca_iof_hnp_component.read_events, true);
+                                &mca_iof_hnp_component.read_events, false);
             
             /* save it somewhere convenient */
             mca_iof_hnp_component.stdinev =
             (orte_iof_read_event_t*)opal_list_get_first(&mca_iof_hnp_component.read_events);
-            
+            /* flag that it is operational */
+            mca_iof_hnp_component.stdinev->active = true;
+            /* activate it */
+            opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
         }
     }
-    
-    /* if we are pushing stdin, this is happening only during launch - setup
-     * a target for this destination if it is going somewhere other than me
-     */
-    if (src_tag & ORTE_IOF_STDIN) {
-        /* is this wildcard? */
-        if (ORTE_VPID_WILDCARD == dst_name->vpid) {
-            /* define a sink with that info so it gets sent out */
-            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
-                                 stdin_write_handler,
-                                 &mca_iof_hnp_component.sinks);
-        } else {
-            /* no - lookup the proc's daemon and set that into sink */
-            if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                return ORTE_ERR_BAD_PARAM;
-            }
-            procs = (orte_proc_t**)jdata->procs->addr;
-            /* if it is me, then don't set this up - we'll get it on the pull */
-            if (ORTE_PROC_MY_NAME->vpid != procs[dst_name->vpid]->node->daemon->name.vpid) {
-                ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
-                                     stdin_write_handler,
-                                     &mca_iof_hnp_component.sinks);
-                sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-                sink->daemon.vpid = procs[dst_name->vpid]->node->daemon->name.vpid;
-            }
-        }
-    } else {
-        /* if we are not after stdin. then define a read event and activate it */
-        ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                            orte_iof_hnp_read_local_handler,
-                            &mca_iof_hnp_component.read_events, true);
-    }
-    
-    
-    
+        
     return ORTE_SUCCESS;
 }
 
@@ -258,8 +259,23 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
+        if (0 == output->numbytes) {
+            /* this indicates we are to close the fd - there is
+             * nothing to write
+             */
+            close(wev->fd);
+            /* be sure to delete the write event */
+            opal_event_del(&wev->ev);
+            wev->pending = false;
+            /* just leave - we don't want to restart the
+             * read event!
+             */
+            goto DEPART;
+        }
         num_written = write(wev->fd, output->data, output->numbytes);
         if (num_written < output->numbytes) {
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                 "incomplete write %d - adjusting data", num_written));
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
             /* push this item back on the front of the list */
@@ -276,6 +292,8 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
 CHECK:
     if (!mca_iof_hnp_component.stdinev->active) {
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                            "read event is off - checking if okay to restart"));
         /* if we have turned off the read event, check to
          * see if the output list has shrunk enough to
          * turn it back on
@@ -288,11 +306,14 @@ CHECK:
          */
         if (opal_list_get_size(&wev->outputs) < ORTE_IOF_MAX_INPUT_BUFFERS) {
             /* restart the read */
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                 "restarting read event"));
             mca_iof_hnp_component.stdinev->active = true;
             opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
         }
     }
 
+DEPART:
     /* unlock and go */
     OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
 }

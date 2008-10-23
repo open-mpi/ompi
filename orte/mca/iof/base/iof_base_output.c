@@ -69,6 +69,8 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     } else {
         /* error - this should never happen */
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                             "%s stream %0x", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), stream));
         return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
     }
     
@@ -100,7 +102,13 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
         output->numbytes = k;
     } else {
         /* copy over the data to be written */
-        memcpy(output->data, data, numbytes);
+        if (0 < numbytes) {
+            /* don't copy 0 bytes - we just need to pass
+             * the zero bytes so the fd can be closed
+             * after it writes everything out
+             */
+            memcpy(output->data, data, numbytes);
+        }
         output->numbytes = numbytes;
     }
     

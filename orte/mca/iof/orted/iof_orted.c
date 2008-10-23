@@ -157,6 +157,17 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
+        if (0 == output->numbytes) {
+            /* this indicates we are to close the fd - there is
+             * nothing to write
+             */
+            close(wev->fd);
+            /* be sure to delete the write event */
+            opal_event_del(&wev->ev);
+            /* set the fd to -1 to indicate that this channel is closed */
+            wev->fd = -1;
+            goto DEPART;
+        }
         num_written = write(wev->fd, output->data, output->numbytes);
         if (num_written < output->numbytes) {
             /* incomplete write - adjust data to avoid duplicate output */
@@ -191,6 +202,7 @@ CHECK:
         }
     }
     
+DEPART:
     /* unlock and go */
     OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 }
