@@ -48,7 +48,7 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_xoob = {
     /* Query */
     xoob_component_query,
     /* Finalize */
-    xoob_component_finalize
+    xoob_component_finalize,
 };
 
 typedef enum {
@@ -892,7 +892,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                 mca_btl_openib_endpoint_invoke_error(NULL);
                 return;
             }
-            mca_btl_openib_endpoint_connected(ib_endpoint);
+            mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
             OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_RESPONSE:
@@ -911,7 +911,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
             /* we got srq numbers on our request */
             XOOB_SET_REMOTE_INFO(ib_endpoint->rem_info, rem_info);
-            mca_btl_openib_endpoint_connected(ib_endpoint);
+            mca_btl_openib_endpoint_cpc_complete(ib_endpoint);
             OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
         case ENDPOINT_XOOB_CONNECT_XRC_NR_RESPONSE:
@@ -989,6 +989,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
     (*cpc)->cbm_start_connect = xoob_module_start_connect;
     (*cpc)->cbm_endpoint_finalize = NULL;
     (*cpc)->cbm_finalize = NULL;
+    (*cpc)->cbm_uses_cts = false;
 
     opal_output_verbose(5, mca_btl_base_output,
                         "openib BTL: xoob CPC available for use on %s",

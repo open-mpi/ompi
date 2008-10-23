@@ -111,8 +111,8 @@ mca_btl_openib_component_t mca_btl_openib_component = {
             btl_openib_component_close  /* component close */
         },
         {
-            /* The component is not checkpoint ready */
-            MCA_BASE_METADATA_PARAM_NONE
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
         btl_openib_component_init,
@@ -156,13 +156,38 @@ int btl_openib_component_open(void)
 
 static int btl_openib_component_close(void)
 {
+    int rc = OMPI_SUCCESS;
+
+#if OMPI_HAVE_THREADS
+    /* Tell the async thread to shutdown */
+    if (mca_btl_openib_component.use_async_event_thread &&
+        0 != mca_btl_openib_component.async_thread) {
+        int async_command = 0;
+        if (write(mca_btl_openib_component.async_pipe[1], &async_command,
+                  sizeof(int)) < 0) {
+            BTL_ERROR(("Failed to communicate with async event thread"));
+            rc = OMPI_ERROR;
+        } else {
+            if (pthread_join(mca_btl_openib_component.async_thread, NULL)) {
+                BTL_ERROR(("Failed to stop OpenIB async event thread"));
+                rc = OMPI_ERROR;
+            }
+        }
+        close(mca_btl_openib_component.async_pipe[0]);
+        close(mca_btl_openib_component.async_pipe[1]);
+        close(mca_btl_openib_component.async_comp_pipe[0]);
+        close(mca_btl_openib_component.async_comp_pipe[1]);
+    }
+#endif
+
     ompi_btl_openib_connect_base_finalize();
     ompi_btl_openib_fd_finalize();
     ompi_btl_openib_ini_finalize();
     if (NULL != mca_btl_openib_component.receive_queues) {
         free(mca_btl_openib_component.receive_queues);
     }
-    return OMPI_SUCCESS;
+
+    return rc;
 }
 
 static bool check_basics(void)
@@ -415,6 +440,30 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
                 (((unsigned char*)clsc_hdr) + skip);
         }
        break;
+    case MCA_BTL_OPENIB_CONTROL_CTS:
+        OPAL_OUTPUT((-1, "received CTS from %s (buffer %p): posted recvs %d, sent cts %d",
+                     ep->endpoint_proc->proc_ompi->proc_hostname,
+                     (void*) ctl_hdr,
+                     ep->endpoint_posted_recvs, ep->endpoint_cts_sent));
+        ep->endpoint_cts_received = true;
+
+        /* Only send the CTS back and mark connected if:
+           - we have posted our receives (it's possible that we can
+             get this CTS before this side's CPC has called
+             cpc_complete())
+           - we have not yet sent our CTS
+
+           We don't even want to mark the endpoint connected() until
+           we have posted our receives because otherwise we will
+           trigger credit management (because the rd_credits will
+           still be negative), and Bad Things will happen. */
+        if (ep->endpoint_posted_recvs) {
+            if (!ep->endpoint_cts_sent) {
+                mca_btl_openib_endpoint_send_cts(ep);
+            }
+            mca_btl_openib_endpoint_connected(ep);
+        }
+        break;
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
        break;
@@ -1133,6 +1182,14 @@ static bool inline is_credit_message(const mca_btl_openib_recv_frag_t *frag)
         (MCA_BTL_OPENIB_CONTROL_CREDITS == chdr->type);
 }
 
+static bool inline is_cts_message(const mca_btl_openib_recv_frag_t *frag)
+{
+    mca_btl_openib_control_header_t* chdr =
+        to_base_frag(frag)->segment.seg_addr.pval;
+    return (MCA_BTL_TAG_BTL == frag->hdr->tag) &&
+        (MCA_BTL_OPENIB_CONTROL_CTS == chdr->type);
+}
+
 static int32_t atoi_param(char *param, int32_t dflt)
 {
     if (NULL == param || '\0' == param[0]) {
@@ -1665,13 +1722,16 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 break;
             }
             if (0 == mca_btl_openib_component.ib_pkey_val) {
-                ret = init_one_port(btl_list, device, i, mca_btl_openib_component.ib_pkey_ix,
-                                    &ib_port_attr);
+                ret = init_one_port(btl_list, device, i, 0, &ib_port_attr);
             } else {
                 uint16_t pkey,j;
-                for (j=0; j < device->ib_dev_attr.max_pkeys; j++) {
-                    ibv_query_pkey(device->ib_dev_context, i, j, &pkey);
-                    pkey=ntohs(pkey);
+                for (j = 0; j < device->ib_dev_attr.max_pkeys; j++) {
+                    if(ibv_query_pkey(device->ib_dev_context, i, j, &pkey)){
+                        BTL_ERROR(("error getting pkey for index %d, device %s "
+                                    "port number %d errno says %s",
+                                    j, ibv_get_device_name(device->ib_dev), i, strerror(errno)));
+                    }
+                    pkey = ntohs(pkey) & MCA_BTL_IB_PKEY_MASK;
                     if(pkey == mca_btl_openib_component.ib_pkey_val){
                         ret = init_one_port(btl_list, device, i, j, &ib_port_attr);
                         break;
@@ -1721,6 +1781,14 @@ error:
     if (device->ib_pd) {
         ibv_dealloc_pd(device->ib_pd);
     }
+
+    if (OMPI_SUCCESS != ret) {
+        orte_show_help("help-mpi-btl-openib.txt",
+                       "error in device init", true, 
+                       orte_process_info.nodename,
+                       ibv_get_device_name(device->ib_dev));
+    }
+
     if (device->ib_dev_context) {
         ibv_close_device(device->ib_dev_context);
     }
@@ -1927,6 +1995,7 @@ btl_openib_component_init(int *num_btl_modules,
     struct dev_distance *dev_sorted;
     int distance;
     int index, value;
+    bool found;
     mca_base_param_source_t source;
 
     /* initialization */
@@ -1968,6 +2037,7 @@ btl_openib_component_init(int *num_btl_modules,
        Right now, ptmalloc2 is the only memory manager that we have on
        OS's that support OpenFabrics that provide both FREE and MUNMAP
        support, so the following test is [currently] good enough... */
+#if !OMPI_HAVE_THREADS
     value = opal_mem_hooks_support_level();
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
@@ -1975,7 +2045,8 @@ btl_openib_component_init(int *num_btl_modules,
                        "ptmalloc2 with no threads", true,
                        orte_process_info.nodename);
         goto no_btls;
-    } 
+    }
+#endif
 
     /* If we have a memory manager available, and
        mpi_leave_pinned==-1, then unless the user explicitly set
@@ -2122,27 +2193,61 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_component.async_thread = 0;
 #endif
     distance = dev_sorted[0].distance;
-    for (i = 0; i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
+    for (found = false, i = 0; 
+         i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
         if (distance != dev_sorted[i].distance) {
             break;
         }
 
-        if (OMPI_SUCCESS !=
-           (ret = init_one_device(&btl_list, dev_sorted[i].ib_dev)))
+        /* Only take devices that match the type specified by
+           btl_openib_device_type */
+        switch (mca_btl_openib_component.device_type) {
+        case BTL_OPENIB_DT_IB:
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+            if (IBV_TRANSPORT_IWARP == dev_sorted[i].ib_dev->transport_type) {
+                BTL_VERBOSE(("openib: only taking infiniband devices -- skipping %s",
+                             ibv_get_device_name(dev_sorted[i].ib_dev)));
+                continue;
+            }
+#endif
             break;
-    }
 
-    if (OMPI_SUCCESS != ret) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                       "error in device init", true, 
-                       orte_process_info.nodename,
-                       ibv_get_device_name(dev_sorted[i].ib_dev));
-        return NULL;
-    }
+        case BTL_OPENIB_DT_IWARP:
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+            if (IBV_TRANSPORT_IB == dev_sorted[i].ib_dev->transport_type) {
+                BTL_VERBOSE(("openib: only taking iwarp devices -- skipping %s",
+                             ibv_get_device_name(dev_sorted[i].ib_dev)));
+                continue;
+            }
+#else
+            orte_show_help("help-mpi-btl-openib.txt", "no iwarp support",
+                           true);
+#endif
+            break;
 
+        case BTL_OPENIB_DT_ALL:
+            break;
+        }
+
+        found = true;
+        if (OMPI_SUCCESS !=
+            (ret = init_one_device(&btl_list, dev_sorted[i].ib_dev))) {
+            free(dev_sorted);
+            goto no_btls;
+        }
+    }
     free(dev_sorted);
+    if (!found) {
+        orte_show_help("help-mpi-btl-openib.txt", "no devices right type",
+                       true, orte_process_info.nodename,
+                       ((BTL_OPENIB_DT_IB == mca_btl_openib_component.device_type) ?
+                        "InfiniBand" :
+                        (BTL_OPENIB_DT_IWARP == mca_btl_openib_component.device_type) ?
+                        "iWARP" : "<any>"));
+        goto no_btls;
+    }
 
     /* If we got back from checking all the devices and find that
        there are still items in the component.if_list, that means that
@@ -2162,13 +2267,13 @@ btl_openib_component_init(int *num_btl_modules,
     if(0 == mca_btl_openib_component.ib_num_btls) {
         orte_show_help("help-mpi-btl-openib.txt",
                 "no active ports found", true, orte_process_info.nodename);
-        return NULL;
+        goto no_btls;
     }
 
     /* Setup the BSRQ QP's based on the final value of
        mca_btl_openib_component.receive_queues. */
     if (OMPI_SUCCESS != setup_qps()) {
-        return NULL;
+        goto no_btls;
     }
 
     /* For XRC: 
@@ -2210,7 +2315,7 @@ btl_openib_component_init(int *num_btl_modules,
                                "error in device init", true, 
                                orte_process_info.nodename,
                                ibv_get_device_name(device->ib_dev));
-                return NULL;
+                goto no_btls;
             }
         }
     }
@@ -2221,14 +2326,14 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_num_btls);
     if(NULL == mca_btl_openib_component.openib_btls) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
-        return NULL;
+        goto no_btls;
     }
     btls = (struct mca_btl_base_module_t **)
         malloc(mca_btl_openib_component.ib_num_btls *
                sizeof(struct mca_btl_base_module_t*));
     if(NULL == btls) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
-        return NULL;
+        goto no_btls;
     }
 
     /* Copy the btl module structs into a contiguous array and fully
@@ -2243,18 +2348,16 @@ btl_openib_component_init(int *num_btl_modules,
         ret = 
             ompi_btl_openib_connect_base_select_for_local_port(openib_btl);
         if (OMPI_SUCCESS != ret) {
-            orte_show_help("help-mpi-btl-openib.txt",
-                           "failed load cpc", true,
-                           orte_process_info.nodename,
-                           ibv_get_device_name(openib_btl->device->ib_dev));
-            return NULL;
+            /* We already did a show_help in the lower layer */
+            goto no_btls;
         }
 
         mca_btl_openib_component.openib_btls[i] = openib_btl;
         OBJ_RELEASE(ib_selected);
         btls[i] = &openib_btl->super;
-        if(finish_btl_init(openib_btl) != OMPI_SUCCESS)
-            return NULL;
+        if (finish_btl_init(openib_btl) != OMPI_SUCCESS) {
+            goto no_btls;
+        }
      }
 
     btl_openib_modex_send();
@@ -2429,17 +2532,29 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         }
         OPAL_THREAD_UNLOCK(&erl->lock);
     } else {
-        MCA_BTL_IB_FRAG_RETURN(frag);
-        if(BTL_OPENIB_QP_TYPE_PP(rqp)) {
-            if(OPAL_UNLIKELY(is_credit_msg))
-                OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_received, 1);
-            else
-                OPAL_THREAD_ADD32(&ep->qps[rqp].u.pp_qp.rd_posted, -1);
-            mca_btl_openib_endpoint_post_rr(ep, cqp);
+        if (is_cts_message(frag)) {
+            /* If this was a CTS, free it here (it was
+               malloc'ed+ibv_reg_mr'ed -- so it should *not* be
+               FRAG_RETURN'ed). */
+            int rc = ompi_btl_openib_connect_base_free_cts(ep);
+            if (OMPI_SUCCESS != rc) {
+                return rc;
+            }
         } else {
-            mca_btl_openib_module_t *btl = ep->endpoint_btl;
-            OPAL_THREAD_ADD32(&btl->qps[rqp].u.srq_qp.rd_posted, -1);
-            mca_btl_openib_post_srr(btl, rqp);
+            /* Otherwise, FRAG_RETURN it and repost if necessary */
+            MCA_BTL_IB_FRAG_RETURN(frag);
+            if (BTL_OPENIB_QP_TYPE_PP(rqp)) {
+                if (OPAL_UNLIKELY(is_credit_msg)) {
+                    OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.cm_received, 1);
+                } else {
+                    OPAL_THREAD_ADD32(&ep->qps[rqp].u.pp_qp.rd_posted, -1);
+                }
+                mca_btl_openib_endpoint_post_rr(ep, cqp);
+            } else {
+                mca_btl_openib_module_t *btl = ep->endpoint_btl;
+                OPAL_THREAD_ADD32(&btl->qps[rqp].u.srq_qp.rd_posted, -1);
+                mca_btl_openib_post_srr(btl, rqp);
+            }
         }
     }
 
@@ -2606,17 +2721,21 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
     if(endpoint)
         openib_btl = endpoint->endpoint_btl;
 
-    if(wc->status != IBV_WC_SUCCESS)
+    if(wc->status != IBV_WC_SUCCESS) {
+        OPAL_OUTPUT((-1, "Got WC: ERROR"));
         goto error;
+    }
 
     /* Handle work completions */
     switch(wc->opcode) {
         case IBV_WC_RDMA_READ:
+            OPAL_OUTPUT((-1, "Got WC: RDMA_READ"));
             OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
             /* fall through */
 
         case IBV_WC_RDMA_WRITE:
         case IBV_WC_SEND:
+            OPAL_OUTPUT((-1, "Got WC: RDMA_WRITE or SEND"));
             if(openib_frag_type(des) == MCA_BTL_OPENIB_FRAG_SEND) {
                 opal_list_item_t *i;
                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
@@ -2649,6 +2768,8 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             mca_btl_openib_frag_progress_pending_put_get(endpoint, qp);
             break;
         case IBV_WC_RECV:
+            OPAL_OUTPUT((-1, "Got WC: RDMA_RECV, qp %d, src qp %d, WR ID %p",
+                         wc->qp_num, wc->src_qp, (void*) wc->wr_id));
             if(wc->wc_flags & IBV_WC_WITH_IMM) {
                 endpoint = (mca_btl_openib_endpoint_t*)
                     opal_pointer_array_get_item(device->endpoints, wc->imm_data);

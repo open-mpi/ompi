@@ -21,17 +21,25 @@
 #include "opal_config.h"
 
 #include <stdio.h>
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include "btl_openib_lex.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * local functions
  */
 static int finish_parsing(void) ;
 static int btl_openib_ini_yywrap(void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * global variables

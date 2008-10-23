@@ -31,7 +31,14 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_openib.h"
 #include "btl_openib_mca.h"
+#include "btl_openib_ini.h"
 #include "connect/base.h"
+
+#ifdef HAVE_IBV_FORK_INIT
+#define OMPI_HAVE_IBV_FORK_INIT 1
+#else
+#define OMPI_HAVE_IBV_FORK_INIT 0
+#endif
 
 /*
  * Local flags
@@ -126,7 +133,7 @@ int btl_openib_register_mca_params(void)
     char default_qps[100];
     uint32_t mid_qp_size;
     int i;
-    char *msg, *str;
+    char *msg, *str, *pkey;
     int ival, ival2, ret, tmp;
 
     ret = OMPI_SUCCESS;
@@ -155,55 +162,74 @@ int btl_openib_register_mca_params(void)
                   1, &ival, 0));
     mca_btl_openib_component.warn_nonexistent_if = (0 != ival);
 
-#ifdef HAVE_IBV_FORK_INIT
-    ival2 = -1;
-#else
-    ival2 = 0;
-#endif
+    if (OMPI_HAVE_IBV_FORK_INIT) {
+        ival2 = -1;
+    } else {
+        ival2 = 0;
+    }
     CHECK(reg_int("want_fork_support", NULL,
                   "Whether fork support is desired or not "
                   "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
                   ival2, &ival, 0));
-#ifdef HAVE_IBV_FORK_INIT
-    mca_btl_openib_component.want_fork_support = ival;
-#else
-    if (0 != ival) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                       "ibv_fork requested but not supported", true,
-                       orte_process_info.nodename);
-        return OMPI_ERROR;
+    if (OMPI_HAVE_IBV_FORK_INIT) {
+        mca_btl_openib_component.want_fork_support = ival;
+    } else {
+        if (0 != ival) {
+            orte_show_help("help-mpi-btl-openib.txt",
+                           "ibv_fork requested but not supported", true,
+                           orte_process_info.nodename);
+            return OMPI_ERROR;
+        }
     }
-#endif
 
     asprintf(&str, "%s/mca-btl-openib-device-params.ini",
              opal_install_dirs.pkgdatadir);
     if (NULL == str) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-#ifdef HAVE_IBV_FORK_INIT
-    ival2 = -1;
-#else
-    ival2 = 0;
-#endif
+    if (OMPI_HAVE_IBV_FORK_INIT) {
+        ival2 = -1;
+    } else {
+        ival2 = 0;
+    }
     CHECK(reg_int("want_fork_support", NULL,
                   "Whether fork support is desired or not "
                   "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
                   ival2, &ival, 0));
-#ifdef HAVE_IBV_FORK_INIT
-    mca_btl_openib_component.want_fork_support = ival;
-#else
-    if (0 != ival) {
-        orte_show_help("help-mpi-btl-openib.txt",
-                       "ibv_fork requested but not supported", true,
-                       orte_process_info.nodename);
-        return OMPI_ERROR;
+    if (OMPI_HAVE_IBV_FORK_INIT) {
+        mca_btl_openib_component.want_fork_support = ival;
+    } else {
+        if (0 != ival) {
+            orte_show_help("help-mpi-btl-openib.txt",
+                           "ibv_fork requested but not supported", true,
+                           orte_process_info.nodename);
+            return OMPI_ERROR;
+        }
     }
-#endif
 
     CHECK(reg_string("device_param_files", "hca_param_files",
                      "Colon-delimited list of INI-style files that contain device vendor/part-specific parameters",
                      str, &mca_btl_openib_component.device_params_file_names, 
                      0));
+    free(str);
+
+    CHECK(reg_string("device_type", NULL,
+                     "Specify to only use IB or iWARP network adapters (infiniband = only use InfiniBand HCAs; iwarp = only use iWARP NICs; all = use any available adapters)",
+                     "all", &str, 0));
+    if (0 == strcasecmp(str, "ib") ||
+        0 == strcasecmp(str, "infiniband")) {
+        mca_btl_openib_component.device_type = BTL_OPENIB_DT_IB;
+    } else if (0 == strcasecmp(str, "iw") ||
+               0 == strcasecmp(str, "iwarp")) {
+        mca_btl_openib_component.device_type = BTL_OPENIB_DT_IWARP;
+    } else if (0 == strcasecmp(str, "all")) {
+        mca_btl_openib_component.device_type = BTL_OPENIB_DT_ALL;
+    } else {
+        orte_show_help("help-mpi-btl-openib.txt",
+                       "ibv_fork requested but not supported", true,
+                       orte_process_info.nodename);
+        return OMPI_ERROR;
+    }
     free(str);
 
     CHECK(reg_int("max_btls", NULL,
@@ -234,7 +260,7 @@ int btl_openib_register_mca_params(void)
                   16, (int*) &mca_btl_openib_component.reg_mru_len,
                   REGINT_GE_ONE));
 
-    CHECK(reg_int("of_cq_size", "ib_cq_size",
+    CHECK(reg_int("cq_size", "ib_cq_size",
                   "Size of the OpenFabrics completion "
                   "queue (will automatically be set to a minimum of "
                   "(2 * number_of_peers * btl_openib_rd_num))",
@@ -242,7 +268,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_component.ib_cq_size[BTL_OPENIB_LP_CQ] =
         mca_btl_openib_component.ib_cq_size[BTL_OPENIB_HP_CQ] = (uint32_t) ival;
 
-    CHECK(reg_int("of_max_inline_data", "ib_max_inline_data",
+    CHECK(reg_int("max_inline_data", "ib_max_inline_data",
                   "Maximum size of inline data segment "
                   "(-1 = use device default, "
                   "0 = run-time probe to discover max value, "
@@ -250,23 +276,15 @@ int btl_openib_register_mca_params(void)
                   -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
 
-    CHECK(reg_int("of_pkey_ix", "ib_pkey_ix", "OpenFabrics pkey index "
-                  "(must be >= 0)",
-                  0, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.ib_pkey_ix = (uint32_t) ival;
+    CHECK(reg_string("pkey", "ib_pkey_val", 
+                     "OpenFabrics partition key (pkey) value. "
+                     "Unsigned integer decimal or hex values are allowed (e.g., \"3\" or \"0x3f\") and will be masked against the maximum allowable IB paritition key value (0x7fff)",
+                     "0", &pkey, 0));
+    mca_btl_openib_component.ib_pkey_val = 
+        ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
+    free(pkey);
 
-    CHECK(reg_int("of_pkey_val", "ib_pkey_val", "OpenFabrics pkey value"
-                  "(must be > 0 and < 0xffff)",
-                  0, &ival, REGINT_GE_ZERO));
-    if (ival > 0xffff) {
-        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "invalid value for btl_openib_ib_pkey_val",
-                       "btl_openib_ib_pkey_val ignored");
-    } else {
-        mca_btl_openib_component.ib_pkey_val = (uint32_t) ival;
-    }
-
-    CHECK(reg_int("of_psn", "ib_psn",
+    CHECK(reg_int("psn", "ib_psn",
                   "OpenFabrics packet sequence starting number "
                   "(must be >= 0)",
                   0, &ival, REGINT_GE_ZERO));
@@ -288,7 +306,7 @@ int btl_openib_register_mca_params(void)
         /* Don't try to recover from this */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    CHECK(reg_int("of_mtu", "ib_mtu", msg, IBV_MTU_1024, &ival, 0));
+    CHECK(reg_int("mtu", "ib_mtu", msg, IBV_MTU_1024, &ival, 0));
     free(msg);
     if (ival < IBV_MTU_1024 || ival > IBV_MTU_4096) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
@@ -487,11 +505,7 @@ int btl_openib_register_mca_params(void)
                            "have_fork_support",
                            "Whether the OpenFabrics stack supports applications that invoke the \"fork()\" system call or not (0 = no, 1 = yes).  Note that this value does NOT indicate whether the system being run on supports \"fork()\" with OpenFabrics applications or not.",
                            false, true,
-#ifdef HAVE_IBV_FORK_INIT
-                           1,
-#else
-                           0,
-#endif
+                           OMPI_HAVE_IBV_FORK_INIT ? 1 : 0,
                            NULL);
 
     mca_btl_openib_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;

@@ -54,6 +54,7 @@ BEGIN_C_DECLS
 
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
+#define MCA_BTL_IB_PKEY_MASK 0x7fff
 
 
 /*--------------------------------------------------------------------*/
@@ -117,6 +118,12 @@ typedef enum {
     BTL_OPENIB_RQ_SOURCE_MAX
 } btl_openib_receive_queues_source_t;
 
+typedef enum {
+    BTL_OPENIB_DT_IB,
+    BTL_OPENIB_DT_IWARP,
+    BTL_OPENIB_DT_ALL
+} btl_openib_device_type_t;
+
 struct mca_btl_openib_component_t {
     mca_btl_base_component_2_0_0_t          super;  /**< base BTL component */
 
@@ -173,7 +180,6 @@ struct mca_btl_openib_component_t {
     uint32_t ib_cq_size[2];  /**< Max outstanding CQE on the CQ */
 
     int32_t ib_max_inline_data; /**< Max size of inline data */
-    uint32_t ib_pkey_ix;     /**< InfiniBand pkey index */
     uint32_t ib_pkey_val;
     uint32_t ib_psn;
     uint32_t ib_qp_ous_rd_atom;
@@ -200,6 +206,7 @@ struct mca_btl_openib_component_t {
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
     uint32_t use_async_event_thread; /**< Use the async event handler */
 #endif
+    btl_openib_device_type_t device_type;
     char *if_include;
     char **if_include_list;
     char *if_exclude;

@@ -173,8 +173,8 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
             devices_poll->poll_size+=devices_poll->poll_size;
             async_pollfd_tmp = malloc(sizeof(struct pollfd) * devices_poll->poll_size);
             if (NULL == async_pollfd_tmp) {
-                BTL_ERROR(("Failed malloc: %s:%d"
-                            "Fatal error, stoping asyn event thread"
+                BTL_ERROR(("Failed malloc: %s:%d.  "
+                            "Fatal error, stoping asynch event thread"
                             , __FILE__, __LINE__));
                 return OMPI_ERROR;
             }
@@ -316,10 +316,10 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
         }
         ibv_ack_async_event(&event);
     } else {
-        /* the device == NULL , we failed to locate the devide
-         * this failure should not never happed */
-        BTL_ERROR(("Failed to find device with FD %d."
-                   "Fatal error, stoping asyn event thread",
+        /* if (device == NULL), then failed to locate the device!
+           This should never happen... */
+        BTL_ERROR(("Failed to find device with FD %d.  "
+                   "Fatal error, stoping asynch event thread",
                    devices_poll->async_pollfd[index].fd));
         return OMPI_ERROR;
     }
@@ -336,7 +336,7 @@ void* btl_openib_async_thread(void * async)
     struct mca_btl_openib_async_poll devices_poll;
 
     if (OMPI_SUCCESS != btl_openib_async_poll_init(&devices_poll)) {
-        BTL_ERROR(("Fatal error, stoping asyn event thread"));
+        BTL_ERROR(("Fatal error, stoping asynch event thread"));
         pthread_exit(&return_status);
     }
 
@@ -344,7 +344,7 @@ void* btl_openib_async_thread(void * async)
         rc = poll(devices_poll.async_pollfd, devices_poll.active_poll_size, -1);
         if (rc < 0) {
             if (errno != EINTR) {
-                BTL_ERROR(("Poll failed.Fatal error, stoping asyn event thread"));
+                BTL_ERROR(("Poll failed.  Fatal error, stoping asynch event thread"));
                 pthread_exit(&return_status);
             } else {
                 /* EINTR - we got interupt */
@@ -362,16 +362,16 @@ void* btl_openib_async_thread(void * async)
                         /* 0 poll we use for comunication with main thread */
                         if (OMPI_SUCCESS != btl_openib_async_commandh(&devices_poll)) {
                             free(devices_poll.async_pollfd);
-                            BTL_ERROR(("Failed to process async thread process."
-                                        "Fatal error, stoping asyn event thread"));
+                            BTL_ERROR(("Failed to process async thread process.  "
+                                        "Fatal error, stoping asynch event thread"));
                             pthread_exit(&return_status);
                         }
                     } else {
                         /* We get device event */
                         if (btl_openib_async_deviceh(&devices_poll, i)) {
                             free(devices_poll.async_pollfd);
-                            BTL_ERROR(("Failed to process async thread process."
-                                        "Fatal error, stoping asyn event thread"));
+                            BTL_ERROR(("Failed to process async thread process.  "
+                                        "Fatal error, stoping asynch event thread"));
                             pthread_exit(&return_status);
                         }
                     }
@@ -379,9 +379,9 @@ void* btl_openib_async_thread(void * async)
                 default:
                     /* Get event other than POLLIN
                      * this case should not never happend */
-                    BTL_ERROR(("Got unexpected event %d."
-                                "Fatal error, stoping asyn event thread"
-                                ,devices_poll.async_pollfd[i].revents));
+                    BTL_ERROR(("Got unexpected event %d.  "
+                               "Fatal error, stoping asynch event thread",
+                               devices_poll.async_pollfd[i].revents));
                     free(devices_poll.async_pollfd);
                     pthread_exit(&return_status);
             }
