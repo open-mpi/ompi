@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,17 +29,15 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
-extern int already_opened;
-
 int mca_btl_base_close(void)
 {
     opal_list_item_t *item;
     mca_btl_base_selected_module_t *sm;
 
-    if( already_opened <= 0 ) {
+    if( mca_btl_base_already_opened <= 0 ) {
         return OMPI_ERROR;
     } else {
-        if( --already_opened > 0 ) {
+        if( --mca_btl_base_already_opened > 0 ) {
             return OMPI_SUCCESS;
         }
     }
