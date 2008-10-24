@@ -28,6 +28,14 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#else
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#endif
+
 #include "orte/util/show_help.h"
 
 #include "orte/mca/rml/rml.h"
@@ -80,6 +88,19 @@ orte_iof_base_module_t orte_iof_orted_module = {
 
 static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
 {
+    int flags;
+
+    /* set the file descriptor to non-blocking - do this before we setup
+     * and activate the read event in case it fires right away
+     */
+    if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+        opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                    __FILE__, __LINE__, errno);
+    } else {
+        flags |= O_NONBLOCK;
+        fcntl(fd, F_SETFL, flags);
+    }
+
     /* setup to read from the specified file descriptor and
      * forward anything we get to the HNP
      */
@@ -105,12 +126,24 @@ static int orted_pull(const orte_process_name_t* dst_name,
                       int fd)
 {
     orte_iof_sink_t *sink;
+    int flags;
     
     /* this is a local call - only stdin is supported */
     if (ORTE_IOF_STDIN != src_tag) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
+    /* set the file descriptor to non-blocking - do this before we setup
+     * the sink in case it fires right away
+     */
+    if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+        opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                    __FILE__, __LINE__, errno);
+    } else {
+        flags |= O_NONBLOCK;
+        fcntl(fd, F_SETFL, flags);
+    }
+
     ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, src_tag,
                          stdin_write_handler,
                          &mca_iof_orted_component.sinks);
@@ -169,7 +202,21 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             goto DEPART;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
-        if (num_written < output->numbytes) {
+        if (num_written < 0) {
+            if (EAGAIN == errno || EINTR == errno) {
+                /* push this item back on the front of the list */
+                opal_list_prepend(&wev->outputs, item);
+                /* leave the write event running so it will call us again
+                 * when the fd is ready.
+                 */
+                goto CHECK;
+            }            
+            /* otherwise, something bad happened so all we can do is abort
+             * this attempt
+             */
+            OBJ_RELEASE(output);
+            goto ABORT;
+        } else if (num_written < output->numbytes) {
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
             /* push this item back on the front of the list */
@@ -181,6 +228,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
+ABORT:
     opal_event_del(&wev->ev);
     wev->pending = false;
     

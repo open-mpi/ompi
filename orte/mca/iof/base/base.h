@@ -60,7 +60,7 @@ ORTE_DECLSPEC int orte_iof_base_open(void);
 #define ORTE_IOF_BASE_MSG_MAX           1024
 #define ORTE_IOF_BASE_TAG_MAX             50
 #define ORTE_IOF_BASE_TAGGED_OUT_MAX    2048
-#define ORTE_IOF_MAX_INPUT_BUFFERS        10
+#define ORTE_IOF_MAX_INPUT_BUFFERS       100
 
 typedef struct {
     opal_list_item_t super;

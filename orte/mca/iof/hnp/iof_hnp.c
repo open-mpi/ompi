@@ -28,6 +28,14 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#else
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#endif
+
 #include "orte/util/show_help.h"
 
 #include "orte/mca/oob/base/base.h"
@@ -88,14 +96,25 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_job_t *jdata;
     orte_proc_t **procs;
     orte_iof_sink_t *sink;
-    
+    int flags;
+
     /* don't do this if the dst vpid is invalid */
     if (ORTE_VPID_INVALID == dst_name->vpid) {
         return ORTE_SUCCESS;
     }
     
     if (!(src_tag & ORTE_IOF_STDIN)) {
-        /* if we are not after stdin. then define a read event and activate it */
+        /* set the file descriptor to non-blocking - do this before we setup
+         * and activate the read event in case it fires right away
+         */
+        if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+            opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                        __FILE__, __LINE__, errno);
+        } else {
+            flags |= O_NONBLOCK;
+            fcntl(fd, F_SETFL, flags);
+        }
+        /* define a read event and activate it */
         ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
                             orte_iof_hnp_read_local_handler,
                             &mca_iof_hnp_component.read_events, true);
@@ -130,7 +149,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     /* now setup the read - but check to only do this once */
     if (NULL == mca_iof_hnp_component.stdinev) {
         /* Since we are the HNP, we don't want to set nonblocking on our
-         * file descriptors.  If we do so, we set the file descriptor to
+         * stdio stream.  If we do so, we set the file descriptor to
          * non-blocking for everyone that has that file descriptor, which
          * includes everyone else in our shell pipeline chain.  (See
          * http://lists.freebsd.org/pipermail/freebsd-hackers/2005-January/009742.html).
@@ -139,7 +158,15 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * isn't built to deal with that case (same with almost all other
          * unix text utils). 
          */
-        
+        if (0 != fd) {
+            if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+                opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                            __FILE__, __LINE__, errno);
+            } else {
+                flags |= O_NONBLOCK;
+                fcntl(fd, F_SETFL, flags);
+            }            
+        }
         if (isatty(fd)) {
             /* We should avoid trying to read from stdin if we
              * have a terminal, but are backgrounded.  Catch the
@@ -204,6 +231,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
                     int fd)
 {
     orte_iof_sink_t *sink;
+    int flags;
     
     /* this is a local call - only stdin is supported */
     if (ORTE_IOF_STDIN != src_tag) {
@@ -215,6 +243,17 @@ static int hnp_pull(const orte_process_name_t* dst_name,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(dst_name)));
 
+    /* set the file descriptor to non-blocking - do this before we setup
+     * the sink in case it fires right away
+     */
+    if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+        opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                    __FILE__, __LINE__, errno);
+    } else {
+        flags |= O_NONBLOCK;
+        fcntl(fd, F_SETFL, flags);
+    }
+    
     ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, src_tag,
                          stdin_write_handler,
                          &mca_iof_hnp_component.sinks);
@@ -273,7 +312,21 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             goto DEPART;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
-        if (num_written < output->numbytes) {
+        if (num_written < 0) {
+            if (EAGAIN == errno || EINTR == errno) {
+                /* push this item back on the front of the list */
+                opal_list_prepend(&wev->outputs, item);
+                /* leave the write event running so it will call us again
+                 * when the fd is ready.
+                 */
+                goto CHECK;
+            }            
+            /* otherwise, something bad happened so all we can do is abort
+             * this attempt
+             */
+            OBJ_RELEASE(output);
+            goto ABORT;
+        } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "incomplete write %d - adjusting data", num_written));
             /* incomplete write - adjust data to avoid duplicate output */
@@ -287,6 +340,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
+ABORT:
     opal_event_del(&wev->ev);
     wev->pending = false;
     

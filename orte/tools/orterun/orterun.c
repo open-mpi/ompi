@@ -460,6 +460,16 @@ int orterun(int argc, char *argv[])
         return rc;
     }    
     
+    /* Change the default behavior of libevent such that we want to
+     continually block rather than blocking for the default timeout
+     and then looping around the progress engine again.  There
+     should be nothing in the orted that cannot block in libevent
+     until "something" happens (i.e., there's no need to keep
+     cycling through progress because the only things that should
+     happen will happen in libevent).  This is a minor optimization,
+     but what the heck... :-) */
+    opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
+    
     /* setup an event we can wait for that will tell
      * us to terminate - both normal and abnormal
      * termination will call us here. Use the

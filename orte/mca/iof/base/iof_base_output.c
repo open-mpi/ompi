@@ -155,7 +155,21 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
         num_written = write(wev->fd, output->data, output->numbytes);
-        if (num_written < output->numbytes) {
+        if (num_written < 0) {
+            if (EAGAIN == errno || EINTR == errno) {
+                /* push this item back on the front of the list */
+                opal_list_prepend(&wev->outputs, item);
+                /* leave the write event running so it will call us again
+                 * when the fd is ready.
+                 */
+                goto DEPART;
+            }
+            /* otherwise, something bad happened so all we can do is abort
+             * this attempt
+             */
+            OBJ_RELEASE(output);
+            goto ABORT;
+        } else if (num_written < output->numbytes) {
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
             /* push this item back on the  front of the list */
@@ -163,14 +177,15 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
             /* leave the write event running so it will call us again
              * when the fd is ready
              */
-            OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
-            return;
+            goto DEPART;
         }
         OBJ_RELEASE(output);
     }
+ABORT:
     opal_event_del(&wev->ev);
     wev->pending = false;
 
+DEPART:
     /* unlock and go */
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
 }
