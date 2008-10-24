@@ -922,10 +922,6 @@ static void *rdmacm_unmonitor(int fd, int flags, void *context)
 {
     volatile int *barrier = (volatile int *) context;
 
-    if (NULL != event_channel) {
-        rdma_destroy_event_channel(event_channel);
-        event_channel = NULL;
-    }
     OPAL_OUTPUT((-1, "SERVICE rdmacm unlocking main thread"));
     *barrier = 1;
 
@@ -1884,6 +1880,12 @@ static int rdmacm_component_finalize(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&server_listener_list);
+
+    /* Now we're all done -- destroy the event channel */
+    if (NULL != event_channel) {
+        rdma_destroy_event_channel(event_channel);
+        event_channel = NULL;
+    }
 
     mca_btl_openib_free_rdma_addr_list();
 
