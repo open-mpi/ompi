@@ -2037,8 +2037,8 @@ btl_openib_component_init(int *num_btl_modules,
        Right now, ptmalloc2 is the only memory manager that we have on
        OS's that support OpenFabrics that provide both FREE and MUNMAP
        support, so the following test is [currently] good enough... */
-#if !OMPI_HAVE_THREADS
     value = opal_mem_hooks_support_level();
+#if !OMPI_HAVE_THREADS
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         orte_show_help("help-mpi-btl-openib.txt",
