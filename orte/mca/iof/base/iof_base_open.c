@@ -141,6 +141,16 @@ int orte_iof_base_open(void)
                        OPAL_EV_WRITE|OPAL_EV_PERSIST,
                        orte_iof_base_write_handler,
                        &orte_iof_base.iof_write_stderr);
+        /* do NOT set these file descriptors to non-blocking. If we do so,
+         * we set the file descriptor to non-blocking for everyone that has
+         * that file descriptor, which includes everyone else in our shell
+         * pipeline chain.  (See
+         * http://lists.freebsd.org/pipermail/freebsd-hackers/2005-January/009742.html).
+         * This causes things like "mpirun -np 1 big_app | cat" to lose
+         * output, because cat's stdout is then ALSO non-blocking and cat
+         * isn't built to deal with that case (same with almost all other
+         * unix text utils). 
+         */        
     }
     
     orte_iof_base.iof_output = opal_output_open(NULL);
