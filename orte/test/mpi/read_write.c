@@ -17,17 +17,27 @@ int main(int argc, char *argv[])
     char line[1024];
     FILE *file;
     unsigned int bytes = 0;
-
+    int reader = 0;
+    char *junk;
+    
+    if (2 == argc) {
+        /* a reader was specified */
+        reader = strtol(argv[1], NULL, 10);
+        fprintf(stderr, "reading from %d\n", reader);
+    }
+    
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &self);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     printf("Hello from process %d of %d\n", self, size);
     MPI_Barrier(MPI_COMM_WORLD);
-    if (0 == self) {
-        unlink("./junk");
-        file = fopen("./junk", "w+");
+    if (-1 == reader || reader == self) {
+        asprintf(&junk, "./junk%d", self);
+        unlink(junk);
+        file = fopen(junk, "w+");
         if (NULL == file) {
-            fprintf(stderr, "Couldn't open ./junk!");
+            fprintf(stderr, "Couldn't open %s!", junk);
+            free(junk);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
         while (NULL != fgets(line, sizeof(line), stdin)) {
@@ -36,7 +46,8 @@ int main(int argc, char *argv[])
             bytes += strlen(line) + 1;
         }
         fclose(file);
-        fprintf(stderr, "\nWrote %d bytes to ./junk\n", bytes);
+        fprintf(stderr, "\nWrote %d bytes to %s\n", bytes, junk);
+        free(junk);
     }
     MPI_Finalize();
 

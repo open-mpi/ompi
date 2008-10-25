@@ -117,6 +117,19 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         exit(0);
     }
     
+    /* quick sanity check - is the stdin target within range
+     * of the job?
+     */
+    if (ORTE_VPID_WILDCARD != jdata->stdin_target &&
+        jdata->num_procs <= jdata->stdin_target) {
+        /* this request cannot be met */
+        orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
+                       ORTE_VPID_PRINT(jdata->stdin_target),
+                       ORTE_VPID_PRINT(jdata->num_procs));
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        orte_trigger_event(&orte_exit);
+    }
+    
     /*** RHC: USER REQUEST TO TIE-OFF STDXXX TO /DEV/NULL
      *** WILL BE SENT IN LAUNCH MESSAGE AS PART OF CONTROLS FIELD.
      *** SO IF USER WANTS NO IO BEING SENT AROUND, THE ORTEDS
