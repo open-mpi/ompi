@@ -501,9 +501,8 @@ void ompi_info::do_config(bool want_all)
   const string f90profiling((OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F90_BINDINGS) ?
                             "yes" : "no");
   const string cxxexceptions(OMPI_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no");
-  int ompi_mpi_param_check = 3;
-  const string paramcheck(0 == MPI_PARAM_CHECK ? "never" :
-                          1 == MPI_PARAM_CHECK ? "always" : "runtime");
+  const string paramcheck(0 == MPI_PARAM_CHECK_LEVEL ? "never" :
+                          1 == MPI_PARAM_CHECK_LEVEL ? "always" : "runtime");
   string threads;
   const string want_libltdl(OMPI_WANT_LIBLTDL ? "yes" : "no");
   const string mpirun_prefix_by_default(ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ?

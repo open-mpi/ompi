@@ -345,20 +345,25 @@ mpi_param_check=ompi_mpi_param_check
 if test "$with_mpi_param_check" = "no" -o \
     "$with_mpi_param_check" = "never"; then
     mpi_param_check=0
+    mpi_param_check_level=0
     AC_MSG_RESULT([never])
 elif test "$with_mpi_param_check" = "yes" -o \
     "$with_mpi_param_check" = "always"; then
     mpi_param_check=1
+    mpi_param_check_level=1
     AC_MSG_RESULT([always])
 elif test "$with_mpi_param_check" = "runtime" -o \
     -z "$with_mpi_params_check"; then
     AC_MSG_RESULT([runtime])
+    mpi_param_check_level=2
 else
     AC_MSG_RESULT([unknown])
     AC_MSG_WARN([*** Unrecognized --with-mpi-param-check value])
     AC_MSG_WARN([*** See "configure --help" output])
     AC_MSG_WARN([*** Defaulting to "runtime"])
 fi
+AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK_LEVEL, $mpi_param_check_level,
+    [Whether we want to check MPI parameters never (0), always (1), or decide at run-time (2) -- this macro mainly for displaying the right value in ompi_info])
 AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
     [Whether we want to check MPI parameters always, never, or decide at run-time])
 
