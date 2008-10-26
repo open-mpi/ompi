@@ -15,7 +15,7 @@
   using std::cout;
   using std::cerr;
 #include <cstdio>
-  using std::sprintf;
+  using std::snprintf;
   using std::remove;
 #include <cstring>
   using std::strcmp;
