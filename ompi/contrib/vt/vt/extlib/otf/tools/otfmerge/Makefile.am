@@ -18,5 +18,5 @@ otfmerge_SOURCES = \
 	hash.c
 
 EXTRA_DIST = \
-	otfmerge_vs05.vcproj
+	otfmerge_vs08.vcproj
 	

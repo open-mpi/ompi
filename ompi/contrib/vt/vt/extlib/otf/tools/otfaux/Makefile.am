@@ -20,5 +20,5 @@ otfaux_SOURCES = \
 	State.cpp
 
 EXTRA_DIST = \
-	otfaux_vs05.vcproj
+	otfaux_vs08.vcproj
 
