@@ -12,7 +12,10 @@ included AFTER this macro definitions */
 #define _LARGEFILE64_SOURCE 
 #define _LARGE_FILES
 
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 
 #include "OTF_Platform.h"

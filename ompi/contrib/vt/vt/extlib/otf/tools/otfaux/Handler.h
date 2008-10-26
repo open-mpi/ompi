@@ -6,7 +6,10 @@
 #ifndef OTFTOVTF3_HANDLER_H
 #define OTFTOVTF3_HANDLER_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 
 #include "OTF_inttypes.h"
 

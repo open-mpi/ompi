@@ -22,6 +22,7 @@ extern "C" {
 #if defined(_MSC_VER) /* visual studio */
 
 #	define HAVE_IO_H
+#	define HAVE_ZLIB
 
 #	define OTF_ftell (uint64_t) _ftelli64
 #	define OTF_fseek(f,off,orig) _fseeki64(f,(__int64)off,orig)

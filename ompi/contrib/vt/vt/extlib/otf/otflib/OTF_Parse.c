@@ -3,7 +3,9 @@
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 
 #include "OTF_Platform.h"
@@ -234,7 +236,7 @@ int OTF_Reader_readFunctionGroupSummary( OTF_RBuffer* buffer,
 	appropriate handler.*/
 int OTF_Reader_readMessageSummary( OTF_RBuffer* buffer, 
 	OTF_HandlerArray* handlers );
-	
+
 /** This function reads a SUMFILEOPERATION record from buffer,
 	parse the parameter of the record and call the
 	appropriate handler.*/

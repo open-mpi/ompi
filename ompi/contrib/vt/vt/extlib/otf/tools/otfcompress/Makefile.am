@@ -20,5 +20,5 @@ otfcompress_SOURCES = \
 	otfcompress.c
 
 EXTRA_DIST = \
-	otfcompress_vs05.vcproj
+	otfcompress_vs08.vcproj
 

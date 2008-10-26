@@ -49,7 +49,7 @@ libotf_la_SOURCES = \
 EXTRA_DIST = \
 	OTF_Platform_win.h \
 	OTF_inttypes_win.h \
-	libotf_vs05.vcproj
+	libotf_vs08.vcproj
 
 
 .PHONY: doc

@@ -11,4 +11,4 @@ SUBDIRS = \
 	docu
 
 EXTRA_DIST= \
-	otf_vc05.sln
+	otf_vc08.sln

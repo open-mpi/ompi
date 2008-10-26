@@ -17,5 +17,5 @@ otfdump_SOURCES = \
 	otfdump.cpp
 
 EXTRA_DIST = \
-	otfdump_vs05.vcproj
+	otfdump_vs08.vcproj
 

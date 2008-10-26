@@ -6,7 +6,10 @@
 #ifndef HASH_H
 #define HASH_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 
 #include "OTF_inttypes.h"
 
