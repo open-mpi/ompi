@@ -1518,7 +1518,7 @@ void VTGen_write_COMMENT(VTGen* gen, uint64_t* time,
     uint8_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Comment));
 
-    VTGEN_ALLOC_DEF(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length);
 
     new_entry = ((VTBuf_Entry_Comment*)gen->buf->pos);
 
