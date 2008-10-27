@@ -30,6 +30,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <errno.h>
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
