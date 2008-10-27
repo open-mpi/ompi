@@ -169,9 +169,11 @@ static void dump(void)
                 MPIR_proctable[i].pid);
     }
     fprintf(stderr, "MPIR_executable_path: %s\n",
-            ('\0' == MPIR_executable_path[0]) ? "NULL" : MPIR_executable_path);
+            ('\0' == MPIR_executable_path[0]) ?
+            "NULL" : (char*) MPIR_executable_path);
     fprintf(stderr, "MPIR_server_arguments: %s\n",
-            ('\0' == MPIR_server_arguments[0]) ? "NULL" : MPIR_server_arguments);
+            ('\0' == MPIR_server_arguments[0]) ?
+            "NULL" : (char*) MPIR_server_arguments);
 }
 
 
