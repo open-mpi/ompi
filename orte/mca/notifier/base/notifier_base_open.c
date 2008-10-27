@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,7 +79,11 @@ int orte_notifier_base_open(void)
 
 static void orte_base_log(int priority, const char *msg, ...)
 {
-    /* just do nothing - it is here just so
-     * someone calling it won't segv
+    /* just do nothing - it is here just so someone calling it won't
+     * segv.  Put in va_start/va_end just so that compilers won't
+     * complain.
      */
+    va_list ap;
+    va_start(ap, msg);
+    va_end(ap);
 }
