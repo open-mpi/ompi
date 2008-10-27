@@ -263,7 +263,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
         strcat(msg, available[i]->cbc_name);
 
         rc = available[i]->cbc_query(btl, &cpcs[cpc_index]);
-        if (OMPI_ERR_NOT_SUPPORTED == rc) {
+        if (OMPI_ERR_NOT_SUPPORTED == rc || OMPI_ERR_UNREACH == rc) {
             continue;
         } else if (OMPI_SUCCESS != rc) {
             free(cpcs);
