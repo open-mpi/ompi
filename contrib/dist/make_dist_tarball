@@ -24,8 +24,8 @@
 
 M4_TARGET_VERSION=1.4.11
 AM_TARGET_VERSION=1.10.1
-AC_TARGET_VERSION=2.62
-LT_TARGET_VERSION=2.2.4
+AC_TARGET_VERSION=2.63
+LT_TARGET_VERSION=2.2.6
 
 #
 # First things first -- check that the auto versions that we have are
