@@ -1,5 +1,6 @@
+# -*- shell-script -*-
 #
-# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -9,7 +10,6 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,13 +17,17 @@
 # $HEADER$
 #
 
-EXTRA_DIST = \
-        distscript.csh \
-	ompi_get_version.m4sh \
-	libltdl_dlopen_global.diff \
-	lt1522-pathCC.diff \
-	lt21a-pathCC.diff \
-	ltmain_otool.diff
 
-maintainer-clean-local:
-	rm -f ompi_get_version.sh
+# OMPI_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
+# --------------------------------------------------------
+AC_DEFUN([OMPI_CHECK_ALPS],[
+	AC_ARG_WITH([alps],
+	    [AC_HELP_STRING([--with-alps],
+		    [Build ALPS scheduler component (default: no)])])
+	if test "$with_alps" = "yes" ; then
+	    ompi_check_alps_happy="yes"
+	fi
+	AS_IF([test "$ompi_check_alps_happy" = "yes"], 
+	    [$2], 
+	    [$3])
+	])
