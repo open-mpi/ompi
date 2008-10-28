@@ -293,20 +293,7 @@ OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
 OP_FUNC(sum, float, float, +=)
 OP_FUNC(sum, double, double, +=)
 #if HAVE_LONG_DOUBLE
-#if 1
-  void ompi_mpi_op_sum_long_double(void *in, void *out, int *count, \
-                                        MPI_Datatype *dtype)             \
-  {                                                                      \
-    int i;                                                               \
-    long double *a = (long double *) in;                                               \
-    long double *b = (long double *) out;                                              \
-    for (i = 0; i < *count; ++i) {                                       \
-      *(b++) += *(a++);                                                  \
-    }                                                                    \
-  }
-#else
 OP_FUNC(sum, long_double, long double, +=)
-#endif
 #endif
 #if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
@@ -324,22 +311,7 @@ OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
 OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
-#if 1
-  void ompi_mpi_op_sum_fortran_real16(void *in, void *out, int *count, \
-                                        MPI_Datatype *dtype)             \
-  {                                                                      \
-    int i;                                                               \
-    ompi_fortran_real16_t *a = (ompi_fortran_real16_t *) in;                                               \
-    ompi_fortran_real16_t *b = (ompi_fortran_real16_t *) out;                                              \
-                                                                             printf("Adding %Lf with %Lf\n", *b, *a); \
-    for (i = 0; i < *count; ++i) {                                       \
-      *(b++) += *(a++);                                                  \
-    }                                                                    \
-  }
-
-#else
 OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
-#endif
 #endif
 /* Complex */
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
