@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,6 +80,7 @@ int mca_btl_base_warn_component_unused = 1;
 opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
 int mca_btl_base_already_opened = 0;
+bool mca_btl_base_thread_multiple_override = false;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -86,6 +88,7 @@ int mca_btl_base_already_opened = 0;
  */
 int mca_btl_base_open(void)
 {
+    int i;
     if( ++mca_btl_base_already_opened > 1 ) return OMPI_SUCCESS;
 
     /* Verbose output */
@@ -98,6 +101,15 @@ int mca_btl_base_open(void)
 
     mca_btl_base_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_verbose);
+
+    /* Override the per-BTL "don't run if THREAD_MULTIPLE selected"
+       embargo? */
+    mca_base_param_reg_int_name("btl", 
+                                "base_thread_multiple_override", 
+                                "Enable BTLs that are not normally enabled when MPI_THREAD_MULTIPLE is enabled (THIS IS FOR DEVELOPERS ONLY!  SHOULD NOT BE USED BY END USERS!)",
+                                true, false, 
+                                0, &i);
+    mca_btl_base_thread_multiple_override = OPAL_INT_TO_BOOL(i);
 
   /* Open up all available components */
     

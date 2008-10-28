@@ -365,6 +365,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
+
+    /* Figure out the final MPI thread levels.  If we were not
+       compiled for support for MPI threads, then don't allow
+       MPI_THREAD_MULTIPLE.  Set this stuff up here early in the
+       process so that other components can make decisions based on
+       this value. */
+
+    ompi_mpi_thread_requested = requested;
+    if (OMPI_HAVE_THREAD_SUPPORT == 0) {
+        ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
+        ompi_mpi_main_thread = NULL;
+    } else if (OMPI_ENABLE_MPI_THREADS == 1) {
+        ompi_mpi_thread_provided = *provided = requested;
+        ompi_mpi_main_thread = opal_thread_get_self();
+    } else {
+        if (MPI_THREAD_MULTIPLE == requested) {
+            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
+        } else {
+            ompi_mpi_thread_provided = *provided = requested;
+        }
+        ompi_mpi_main_thread = opal_thread_get_self();
+    }
+
+    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
+                                MPI_THREAD_MULTIPLE);
+
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
 
@@ -629,29 +655,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_proc_set_arch failed";
         goto error;
     }
-    
-    /* Figure out the final MPI thread levels.  If we were not
-       compiled for support for MPI threads, then don't allow
-       MPI_THREAD_MULTIPLE. */
 
-    ompi_mpi_thread_requested = requested;
-    if (OMPI_HAVE_THREAD_SUPPORT == 0) {
-        ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
-        ompi_mpi_main_thread = NULL;
-    } else if (OMPI_ENABLE_MPI_THREADS == 1) {
-        ompi_mpi_thread_provided = *provided = requested;
-        ompi_mpi_main_thread = opal_thread_get_self();
-    } else {
-        if (MPI_THREAD_MULTIPLE == requested) {
-            ompi_mpi_thread_provided = *provided = MPI_THREAD_SERIALIZED;
-        } else {
-            ompi_mpi_thread_provided = *provided = requested;
-        }
-        ompi_mpi_main_thread = opal_thread_get_self();
-    }
-
-    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
-                                MPI_THREAD_MULTIPLE);
+    /* If thread support was enabled, then setup OPAL to allow for
+       them. */
     if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
         (*provided != MPI_THREAD_SINGLE)) {
         opal_set_using_threads(true);

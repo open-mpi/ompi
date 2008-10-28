@@ -74,6 +74,7 @@ extern int mca_btl_base_warn_component_unused;
 extern int mca_btl_base_already_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
+OMPI_DECLSPEC extern bool mca_btl_base_thread_multiple_override;
 
 END_C_DECLS
     
