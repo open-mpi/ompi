@@ -71,9 +71,9 @@ OMPI_DECLSPEC extern int mca_btl_base_output;
 extern char* mca_btl_base_include;
 extern char* mca_btl_base_exclude;
 extern int mca_btl_base_warn_component_unused;
+extern int mca_btl_base_already_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
-OMPI_DECLSPEC extern int mca_btl_base_already_opened;
 
 END_C_DECLS
     
