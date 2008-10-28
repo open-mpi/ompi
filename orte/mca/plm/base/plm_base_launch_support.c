@@ -121,6 +121,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
      * of the job?
      */
     if (ORTE_VPID_WILDCARD != jdata->stdin_target &&
+        ORTE_VPID_INVALID != jdata->stdin_target &&
         jdata->num_procs <= jdata->stdin_target) {
         /* this request cannot be met */
         orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
