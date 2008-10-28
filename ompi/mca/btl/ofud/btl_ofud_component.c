@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/mpiruntime.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -373,6 +375,11 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
     int* allowed_ports = NULL;
     char* btl_str;
     char* tok;
+
+    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        return NULL;
+    }
 
     /* First, check if the UD BTL was specifically selected.
        If not, then short out right away. */
