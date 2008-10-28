@@ -501,8 +501,27 @@ void ompi_info::do_config(bool want_all)
   const string f90profiling((OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F90_BINDINGS) ?
                             "yes" : "no");
   const string cxxexceptions(OMPI_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no");
-  const string paramcheck(0 == MPI_PARAM_CHECK_LEVEL ? "never" :
-                          1 == MPI_PARAM_CHECK_LEVEL ? "always" : "runtime");
+  // Do a little preprocessor trickery here to figure out the
+  // tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
+  // ompi_mpi_param_check).  The preprocessor will only allow
+  // comparisons against constants, so you'll get a warning if you
+  // check MPI_PARAM_CHECK against 0 or 1, but its real value is the
+  // string ompi_mpi_param_check.  So define ompi_mpi_param_check to
+  // be a constant, and then all the preprocessor comparisons work out
+  // ok.  Note that we chose the preprocessor comparison route because
+  // it is not sufficient to simply set the variable
+  // ompi_mpi_param_check to a non-0/non-1 value.  This is because the
+  // compiler will generate a warning that that C variable is unused
+  // when MPI_PARAM_CHECK is hard-coded to 0 or 1.
+  string paramcheck;
+#define ompi_mpi_param_check 999
+#if 0 == MPI_PARAM_CHECK
+  paramcheck = "never";
+#elif 1 == MPI_PARAM_CHECK
+  paramcheck = "always";
+#else
+  paramcheck = "runtime";
+#endif
   string threads;
   const string want_libltdl(OMPI_WANT_LIBLTDL ? "yes" : "no");
   const string mpirun_prefix_by_default(ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ?
