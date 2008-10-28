@@ -78,8 +78,7 @@ char* mca_btl_base_exclude = NULL;
 int mca_btl_base_warn_component_unused = 1;
 opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
-
-int already_opened = 0;
+int mca_btl_base_already_opened = 0;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -87,7 +86,7 @@ int already_opened = 0;
  */
 int mca_btl_base_open(void)
 {
-    if( ++already_opened > 1 ) return OMPI_SUCCESS;
+    if( ++mca_btl_base_already_opened > 1 ) return OMPI_SUCCESS;
 
     /* Verbose output */
     mca_base_param_reg_int_name("btl", 
