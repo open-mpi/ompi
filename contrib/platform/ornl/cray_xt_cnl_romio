@@ -57,7 +57,7 @@ ompi_cv_f77_sizeof_COMPLEXp16=${ompi_cv_f77_sizeof_COMPLEXp16=16}
 ompi_cv_f77_alignment_COMPLEXp16=${ompi_cv_f77_alignment_COMPLEXp16=8}
 ompi_cv_f77_sizeof_COMPLEXp32=${ompi_cv_f77_sizeof_COMPLEXp32=32}
 ompi_cv_f77_alignment_COMPLEXp32=${ompi_cv_f77_alignment_COMPLEXp32=8}
-ompi_cv_f77_true_value=${ompi_cv_f77_true_value=-1}
+ompi_cv_f77_true_value=${ompi_cv_f77_true_value=0}
 
 
 ompi_cv_f90_sizeof_LOGICAL=${ompi_cv_f90_sizeof_LOGICAL=4}
@@ -102,7 +102,7 @@ ompi_cv_f90_sizeof_COMPLEXp16=${ompi_cv_f90_sizeof_COMPLEXp16=16}
 ompi_cv_f90_alignment_COMPLEXp16=${ompi_cv_f90_alignment_COMPLEXp16=8}
 ompi_cv_f90_sizeof_COMPLEXp32=${ompi_cv_f90_sizeof_COMPLEXp32=32}
 ompi_cv_f90_alignment_COMPLEXp32=${ompi_cv_f90_alignment_COMPLEXp32=8}
-ompi_cv_f90_true_value=${ompi_cv_f90_true_value=-1}
+ompi_cv_f90_true_value=${ompi_cv_f90_true_value=0}
 ompi_cv_f90_sizeof_DOUBLE_COMPLEX=${ompi_cv_f90_sizeof_DOUBLE_COMPLEX=16}
 ompi_cv_f90_alignment_DOUBLE_COMPLEX=${ompi_cv_f90_alignment_DOUBLE_COMPLEX=8}
 ompi_cv_f90_int_kind_9=${ompi_cv_f90_int_kind_9=4}
