@@ -19,11 +19,11 @@
 
 EXTRA_DIST = \
         distscript.csh \
-	ompi_get_version.m4sh \
+	opal_get_version.m4sh \
 	libltdl_dlopen_global.diff \
 	lt1522-pathCC.diff \
 	lt21a-pathCC.diff \
 	ltmain_otool.diff
 
 maintainer-clean-local:
-	rm -f ompi_get_version.sh
+	rm -f opal_get_version.sh
