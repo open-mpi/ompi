@@ -37,6 +37,9 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /*  HAVE_STDLIB_H */
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif  /*  HAVE_SIGNAL_H */
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
