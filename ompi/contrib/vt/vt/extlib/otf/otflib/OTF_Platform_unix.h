@@ -20,18 +20,56 @@
 #endif
 
 
-#if defined(HAVE_FSEEKO) && HAVE_FSEEKO
-#	define OTF_fseek fseeko
-#else /* HAVE_FSEEKO */
-#	define OTF_fseek fseek
+#include <stdarg.h>
+#include <stdlib.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+#if !(defined(HAVE_FSEEKO) && HAVE_FSEEKO)
+#	undef fseeko
+#	define fseeko fseek
 #endif /* HAVE_FSEEKO */
 
-#if defined(HAVE_FTELLO) && HAVE_FTELLO
-#	define OTF_ftell ftello
-#else /* HAVE_FTELLO */
-#	define OTF_ftell ftell
+#if !(defined(HAVE_FTELLO) && HAVE_FTELLO)
+#	undef ftello
+#	define ftello ftell
 #endif /* HAVE_FTELLO */
 
-#define OTF_snprintf snprintf
+#if !(defined(HAVE_ASPRINTF) && HAVE_ASPRINTF)
+#	undef asprintf
+#	define asprintf OTF_asprintf
+#endif /* HAVE_ASPRINTF */
+
+#if !(defined(HAVE_SNPRINTF) && HAVE_SNPRINTF)
+#	undef snprintf
+#	define snprintf OTF_snprintf
+#endif /* HAVE_SNPRINTF */
+
+#if !(defined(HAVE_VASPRINTF) && HAVE_VASPRINTF)
+#	undef vasprintf
+#	define vasprintf OTF_vasprintf
+#endif /* HAVE_VASPRINTF */
+
+#if !(defined(HAVE_VSNPRINTF) && HAVE_VSNPRINTF)
+#	undef vsnprintf
+#	define vsnprintf OTF_vsnprintf
+#endif /* HAVE_VSNPRINTF */
+
+#if !(defined(HAVE_STRDUP) && HAVE_STRDUP)
+#	undef strdup
+#	define strdup OTF_strdup
+#endif /* HAVE_STRDUP */
+
+int OTF_asprintf( char** ptr, const char* fmt, ... );
+int OTF_snprintf( char* str, size_t size, const char* fmt, ... );
+int OTF_vasprintf( char** ptr, const char* fmt, va_list ap );
+int OTF_vsnprintf( char* str, size_t size, const char* fmt, va_list ap );
+char* OTF_strdup( const char* s );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_PLATFORM_UNIX_H */

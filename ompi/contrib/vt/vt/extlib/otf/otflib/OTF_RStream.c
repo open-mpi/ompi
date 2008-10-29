@@ -142,7 +142,7 @@ OTF_RStream* OTF_RStream_open( const char* namestub, uint32_t id, OTF_FileManage
 
 	OTF_RStream_init( ret );
 
-	ret->namestub= OTF_strdup( namestub );
+	ret->namestub= strdup( namestub );
 	ret->id= id;
 
 	if( NULL == manager ) {

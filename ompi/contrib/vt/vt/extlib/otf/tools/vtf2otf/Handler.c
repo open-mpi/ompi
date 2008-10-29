@@ -258,7 +258,7 @@ int handleDefcommunicator( void *fcb, int communicator,
 	fha->processgroups[fha->processgroupcount].id= mcommunicator;
 	fha->processgroups[fha->processgroupcount].size= communicatorsize;
 	fha->processgroups[fha->processgroupcount].procs= procs;
-	fha->processgroups[fha->processgroupcount].name= OTF_strdup( tmp );
+	fha->processgroups[fha->processgroupcount].name= strdup( tmp );
 
 	fha->processgroupcount++;
 
@@ -340,7 +340,7 @@ int handleDefcpugrp( void *fcb, unsigned int cpugrpid,
 	fha->processgroups[fha->processgroupcount].id= mpg;
 	fha->processgroups[fha->processgroupcount].size= cpuorcpugrpidarraydim;
 	fha->processgroups[fha->processgroupcount].procs= procs;
-	fha->processgroups[fha->processgroupcount].name= OTF_strdup( cpugrpname );
+	fha->processgroups[fha->processgroupcount].name= strdup( cpugrpname );
 
 	fha->processgroupcount++;
 
@@ -364,7 +364,7 @@ int handleDefcpuname( void *fcb, unsigned int cpuid,
 		return 0;
 	}
 	
-	((fcbT*)fcb)->processes[cpu][thread].name = OTF_strdup( cpuname );
+	((fcbT*)fcb)->processes[cpu][thread].name = strdup( cpuname );
 	
 	return 0;
 }

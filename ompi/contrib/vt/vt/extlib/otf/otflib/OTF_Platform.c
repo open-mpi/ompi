@@ -5,58 +5,259 @@
 
 #include "OTF_Platform.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 #if defined(_WIN32) /* windows */
 
-#	include <Windows.h>
+#include <Windows.h>
 
-	int gettimeofday(struct timeval* tv, void* dummytimezone) {
-		union {
-			long long ns100;
-			FILETIME ft;
-		} now;
+int gettimeofday(struct timeval* tv, void* dummytimezone) {
+	union {
+		long long ns100;
+		FILETIME ft;
+	} now;
  
-		GetSystemTimeAsFileTime (&now.ft);
-		tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
-		tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+	GetSystemTimeAsFileTime (&now.ft);
+	tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
+	tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
 
-		return 0;
+	return 0;
+}
+
+#else /* unix */
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
+static int guess_strlen(const char* fmt, va_list ap) {
+	char* sarg;
+	double darg;
+	float farg;
+	size_t i;
+	int iarg;
+	int len;
+	long larg;
+
+	/* Start off with a fudge factor of 128 to handle the % escapes that
+	 *      we aren't calculating here */
+
+	len = (int)strlen(fmt) + 128;
+	for (i = 0; i < strlen(fmt); ++i) {
+		if ('%' == fmt[i] && i + 1 < strlen(fmt) && '%' != fmt[i + 1]) {
+			++i;
+			switch (fmt[i]) {
+			case 'c':
+				(void)va_arg(ap, int);
+				len += 1;  /* let's suppose it's a printable char */
+				break;
+			case 's':
+				sarg = va_arg(ap, char*);
+
+				/* If there's an arg, get the strlen, otherwise we'll
+				 * use (null) */
+
+				if (NULL != sarg) {
+					len += (int)strlen(sarg);
+				} else {
+					len += 5;
+				}
+				break;
+			case 'd':
+			case 'i':
+				iarg = va_arg(ap, int);
+				/* Alloc for minus sign */
+				if (iarg < 0) ++len;
+				/* Now get the log10 */
+				do {
+					++len;
+					iarg /= 10;
+				} while (0 != iarg);
+				break;
+			case 'x':
+			case 'X':
+				iarg = va_arg(ap, int);
+				/* Now get the log16 */
+				do {
+					++len;
+					iarg /= 16;
+				} while (0 != iarg);
+				break;
+			case 'f':
+				farg = (float)va_arg(ap, int);
+				/* Alloc for minus sign */
+				if (farg < 0) {
+					++len;
+					farg = -farg;
+				}
+				/* Alloc for 3 decimal places + '.' */
+				len += 4;
+				/* Now get the log10 */
+				do {
+					++len;
+					farg /= 10.0;
+				} while (0 != farg);
+				break;
+			case 'g':
+				darg = va_arg(ap, int);
+				/* Alloc for minus sign */
+				if (darg < 0) {
+					++len;
+					darg = -darg;
+				}
+				/* Alloc for 3 decimal places + '.' */
+				len += 4;
+				/* Now get the log10 */
+				do {
+					++len;
+					darg /= 10.0;
+				} while (0 != darg);
+				break;
+			case 'l':
+				/* Get %ld %lx %lX %lf */
+				if (i + 1 < strlen(fmt)) {
+					++i;
+					switch (fmt[i]) {
+					case 'x':
+					case 'X':
+						larg = va_arg(ap, int);
+						/* Now get the log16 */
+						do {
+							++len;
+							larg /= 16;
+						} while (0 != larg);
+						break;
+					case 'f':
+						darg = va_arg(ap, int);
+						/* Alloc for minus sign */
+						if (darg < 0) {
+							++len;
+							darg = -darg;
+						}
+						/* Alloc for 3 decimal places + '.' */
+						len += 4;
+						/* Now get the log10 */
+						do {
+							++len;
+							darg /= 10.0;
+						} while (0 != darg);
+						break;
+					case 'd':
+					default:
+						larg = va_arg(ap, int);
+						/* Now get the log10 */
+						do {
+							++len;
+							larg /= 10;
+						} while (0 != larg);
+						break;
+					}
+				}
+			default:
+				break;
+			}
+		}
 	}
 
-#endif /* _WIN32 */
+	return len;
+}
 
-char* OTF_basename(char* path) {
-	char *ret;
-#if defined(_WIN32)
-	const char* s = "\\";
+int OTF_asprintf(char** ptr, const char* fmt, ...) {
+	int length;
+	va_list ap;
+
+	va_start(ap, fmt);
+	length = OTF_vasprintf(ptr, fmt, ap);
+	va_end(ap);
+
+	return length;
+}
+
+int OTF_vasprintf(char** ptr, const char* fmt, va_list ap) {
+	int length;
+	va_list ap2;
+
+	/* va_list might have pointer to internal state and using
+	 * it twice is a bad idea.  So make a copy for the second
+	 * use.  Copy order taken from Autoconf docs. */
+#if defined(HAVE_VA_COPY) && HAVE_VA_COPY
+	va_copy(ap2, ap);
+#elif defined(HAVE_UNDERSCORE_VA_COPY) && HAVE_UNDERSCORE_VA_COPY
+	__va_copy(ap2, ap);
 #else
-	const char* s = "/";
+	memcpy (&ap2, &ap, sizeof(va_list));
 #endif
-	
-	if( path == NULL || strlen( path ) == 0 ) {
-		ret = OTF_strdup( "." );
-	} else if( path[strlen(path)-1] == *s ) {
-		ret = OTF_strdup( s );
-	} else {
-		char* tmp;
-		if( ( tmp = strrchr( path, *s ) ) != NULL )
-			ret = OTF_strdup( tmp+1 );
-		else
-			ret = OTF_strdup( path );
+
+	/* guess the size */
+	length = guess_strlen(fmt, ap);
+
+	/* allocate a buffer */
+	*ptr = (char*) malloc((size_t) length + 1);
+	if (NULL == *ptr) {
+		errno = ENOMEM;
+		va_end(ap2);
+		return -1;
 	}
-	
-	return ret;
+
+	/* fill the buffer */
+	length = vsprintf(*ptr, fmt, ap2);
+#if (defined(HAVE_VA_COPY) && HAVE_VA_COPY) || (defined(HAVE_UNDERSCORE_VA_COPY) && HAVE_UNDERSCORE_VA_COPY)
+	va_end(ap2);
+#endif /* HAVE_VA_COPY || HAVE_UNDERSCORE_VA_COPY */
+
+	/* realloc */
+	*ptr = (char*)realloc(*ptr, (size_t)length + 1);
+	if (NULL == *ptr) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	return length;
+}
+
+int OTF_snprintf(char* str, size_t size, const char* fmt, ...) {
+	int length;
+	va_list ap;
+
+	va_start(ap, fmt);
+	length = OTF_vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+
+	return length;
+}
+
+int OTF_vsnprintf(char* str, size_t size, const char* fmt, va_list ap) {
+	int length;
+	char* buf;
+
+	length = OTF_vasprintf(&buf, fmt, ap);
+	if (length < 0) {
+		return length;
+	}
+
+	/* return the length when given a null buffer (C99) */
+	if (str) {
+		if ((size_t) length < size) {
+			strcpy(str, buf);
+		} else {
+			memcpy(str, buf, size - 1);
+			str[size] = '\0';
+		}
+	}
+
+	return length;
 }
 
 char* OTF_strdup(const char* s) {
-	char *c;
+	char* c;
 
-	if( s == NULL || ( c = ( char* )malloc( strlen(s)+1 ) ) == NULL )
+	if (s == NULL || (c = (char*)malloc(strlen(s)+1)) == NULL) {
+		errno = ENOMEM;
 		return NULL;
+	}
 
-	strcpy( c, s );
+	strcpy(c, s) ;
 
 	return c;
 }
+
+#endif /* windows/unix */
+

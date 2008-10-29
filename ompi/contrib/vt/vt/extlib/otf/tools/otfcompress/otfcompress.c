@@ -206,7 +206,7 @@ int main ( int argc, const char** argv ) {
 				strncpy( outfilename, infilename, len +1 );
 
 				/* find and remove ".z" at the end */
-				if ( ( 2 < len ) && ( 0 != strcmp( ".z", outfilename +len -2 ) ) ) {
+				if ( ( 2 >= len ) || ( 0 != strcmp( ".z", outfilename +len -2 ) ) ) {
 				
 					fprintf( stderr, "ERROR: no trailing '.z' in filename '%s', rejecting\n", 
 						infilename );
