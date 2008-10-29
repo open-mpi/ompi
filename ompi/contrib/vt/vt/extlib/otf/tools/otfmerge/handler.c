@@ -141,7 +141,7 @@ int handleDefFunction(  void* fcbx, uint32_t streamid,
 	
 		/* insert all data about the function */
 		si->functions[si->nfunctions].deftoken = deftoken;
-		si->functions[si->nfunctions].name = OTF_strdup( name );
+		si->functions[si->nfunctions].name = strdup( name );
 		si->functions[si->nfunctions].group = group;
 		si->functions[si->nfunctions].scltoken = scltoken;
 	
@@ -188,7 +188,7 @@ int handleDefFunctionGroup( void* fcbx, uint32_t streamid,
 	
 		/* insert all data about the function */
 		si->functiongroups[si->nfunctiongroups].deftoken = deftoken;
-		si->functiongroups[si->nfunctiongroups].name = OTF_strdup( name );
+		si->functiongroups[si->nfunctiongroups].name = strdup( name );
 	
 		++(si->nfunctiongroups);
 		

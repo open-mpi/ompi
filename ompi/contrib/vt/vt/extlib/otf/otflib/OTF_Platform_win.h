@@ -24,10 +24,13 @@ extern "C" {
 #	define HAVE_IO_H
 #	define HAVE_ZLIB
 
-#	define OTF_ftell (uint64_t) _ftelli64
-#	define OTF_fseek(f,off,orig) _fseeki64(f,(__int64)off,orig)
+#	undef ftello
+#	define ftello (uint64_t) _ftelli64
+#	undef fseeko
+#	define fseeko(f,off,orig) _fseeki64(f,(__int64)off,orig)
 
-#	define OTF_snprintf _snprintf
+#	define snprintf
+#	define snprintf _snprintf
 
 #	pragma warning (disable : 4996) /* disable insecurity/deprication warnings */
 

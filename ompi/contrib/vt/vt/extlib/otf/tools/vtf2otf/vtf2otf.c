@@ -93,7 +93,7 @@ int main (int argc, char **argv) {
 
 		} else if ( ( 0 == strcmp( "-o", argv[i] ) ) && ( i+1 < argc ) ) {
 		
-			fcb.outputFile= OTF_strdup( argv[i+1] );
+			fcb.outputFile= strdup( argv[i+1] );
 			
 			++i;
 
@@ -162,7 +162,7 @@ int main (int argc, char **argv) {
 		printf( " no output file specified\n" );
 		exit(1);
 		*/
-		outputFile= OTF_strdup( "out.otf" );
+		outputFile= strdup( "out.otf" );
 	}
 
 	if ( maxfilehandles < 1 ) {

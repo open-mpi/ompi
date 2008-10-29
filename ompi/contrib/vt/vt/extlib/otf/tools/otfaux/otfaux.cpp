@@ -126,7 +126,7 @@ int main ( int argc, const char** argv ) {
 
 		if ( ( 0 == strcmp( "-i", argv[i] ) ) && ( i+1 < argc ) ) {
 		
-			filename= OTF_strdup( argv[i+1] );
+			filename= strdup( argv[i+1] );
 			++i;
 
 		} else if ( ( 0 == strcmp( "-b", argv[i] ) ) && ( i+1 < argc ) ) {
@@ -241,7 +241,7 @@ int main ( int argc, const char** argv ) {
 
 			if ( '-' != argv[i][0] ) {
 			
-				filename= OTF_strdup( argv[i] );
+				filename= strdup( argv[i] );
 
 			} else {
 

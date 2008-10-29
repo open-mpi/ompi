@@ -191,6 +191,7 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 		return NULL;
 	}
 
+
 	OTF_RBuffer_init( ret );
 
 	if( NULL == manager ) {
@@ -206,7 +207,6 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 				
 		return NULL;
 	}
-	
 	
 	ret->file= OTF_File_open( filename, manager, OTF_FILEMODE_READ );
 

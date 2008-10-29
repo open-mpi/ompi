@@ -10,16 +10,18 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#include "vt_env.h"
-#include "vt_error.h"
-#include "vt_defs.h"
-#include "vt_pform.h"
+#include "config.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+
+#include "vt_env.h"
+#include "vt_error.h"
+#include "vt_defs.h"
+#include "vt_pform.h"
 
 #define VT_MAX_THREADS 65536
 
@@ -355,6 +357,27 @@ int vt_env_is_verbose()
 	}
     }
   return verbose;
+}
+
+int vt_env_debug()
+{
+  static int debug = -1;
+  char* tmp;
+
+  if (debug == -1)
+    {
+      tmp = getenv("VT_DEBUG");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          debug = atoi(tmp);
+          if (debug < 0) debug = 0;
+        }
+      else
+        {
+          debug = 0;
+        }
+    }
+  return debug;
 }
 
 int vt_env_do_demangle()

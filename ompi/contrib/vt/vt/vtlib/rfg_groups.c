@@ -1,9 +1,9 @@
+#include "config.h"
+
 #include "rfg_groups.h"
 #include "rfg_strmkrs.h"
 
-#include "vt_fnmatch.h"
 #include "vt_inttypes.h"
-#include "vt_strdup.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +46,7 @@ RFG_Groups* RFG_Groups_init()
   /* some initializes of data structure elements */
 
   ret->deffile = NULL;
-  ret->default_group = vt_strdup( "Application" );
+  ret->default_group = strdup( "Application" );
 
   ret->nassigns = 0;
   ret->assigns = NULL;
@@ -102,7 +102,7 @@ int RFG_Groups_setDefFile( RFG_Groups* groups, const char* deffile )
 
   /* set new group definition file */
 
-  groups->deffile = vt_strdup( deffile );
+  groups->deffile = strdup( deffile );
 
   return 1;
 }
@@ -118,7 +118,7 @@ int RFG_Groups_setDefaultGroup( RFG_Groups* groups, const char* name )
 
   /* set new default group */
 
-  groups->default_group = vt_strdup( name );
+  groups->default_group = strdup( name );
 
   return 1;
 }
@@ -166,7 +166,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 
     /* copy line so that the original line keep alive */
 
-    line = vt_strdup( orgline );
+    line = strdup( orgline );
 
     lineno++;
 
@@ -286,7 +286,7 @@ int RFG_Groups_addAssign( RFG_Groups* groups, const char* gname,
       return 0;
 
     entry = &(groups->assigns[groups->nassigns++]);
-    entry->group = vt_strdup( gname );
+    entry->group = strdup( gname );
     entry->npattern = 0;
     entry->pattern = NULL;
   }
@@ -306,7 +306,7 @@ int RFG_Groups_addAssign( RFG_Groups* groups, const char* gname,
   if( entry->pattern == NULL )
     return 0;
 
-  entry->pattern[entry->npattern++] = vt_strdup( pattern );
+  entry->pattern[entry->npattern++] = strdup( pattern );
 
   return 1;
 }
@@ -325,7 +325,7 @@ int RFG_Groups_get( RFG_Groups* groups, const char* rname,
   {
     for( j = 0; j < groups->assigns[i].npattern; j++ )
     {
-      if( vt_fnmatch( groups->assigns[i].pattern[j], rname, 0 ) == 0 )
+      if( fnmatch( groups->assigns[i].pattern[j], rname, 0 ) == 0 )
       {
 	*r_gname = groups->assigns[i].group;
 	return 1;

@@ -23,6 +23,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include "util/util.h"
+
 #include "compwrap.h"
 
 static bool ReadDataFile();
@@ -86,15 +88,15 @@ ReadDataFile()
 {
    bool error = false;
 
-   const unsigned int keys_num = 24;
+   const unsigned int keys_num = 25;
    const std::string keys[] = {
       "version", "language", "compiler_env", "compiler_flags_env",
       "compiler", "compiler_flags", "linker_flags", "libs", "includedir",
       "libdir", "opari_bin", "opari_tab_compiler", "opari_tab_compiler_flags",
       "pmpilib", "fmpilib", "dynattlib", "compiler_iflags_gnu",
-      "compiler_iflags_intel", "compiler_iflags_pathscale", "compiler_iflags_pgi",
-      "compiler_iflags_sun", "compiler_iflags_xl", "compiler_iflags_ftrace",
-      "inst_avail", "inst_default"
+      "compiler_iflags_intel", "compiler_iflags_pathscale",
+      "compiler_iflags_pgi", "compiler_iflags_sun", "compiler_iflags_xl",
+      "compiler_iflags_ftrace", "inst_avail", "inst_default"
    };
    
    std::string data_file = DATADIR"/" + ExeName + "-wrapper-data.txt";
@@ -1118,7 +1120,33 @@ Wrapper::show()
       {
 	 if( usesMPI() )
 	 {
-	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTHYBLIB" %s %s",
+	    vt_snprintf( vtlib, sizeof(vtlib) - 1,
+			 "%s %s %s %s "VTHYBLIB" %s %s",
+			 Properties.comp_ldflags.c_str(),
+			 Properties.libdir.c_str(),
+			 getInstType() == INST_TYPE_DYNINST ?
+			 Properties.dynattlib.c_str() : "",
+#if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
+			 Properties.fmpilib.c_str(),
+#else
+			 "",
+#endif
+			 Properties.pmpilib.c_str(),
+			 Properties.comp_ulibs.c_str() );
+	 }
+	 else
+	 {
+	    vt_snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTOMPLIB" %s",
+			 Properties.comp_ldflags.c_str(),
+			 Properties.libdir.c_str(),
+			 getInstType() == INST_TYPE_DYNINST ?
+			 Properties.dynattlib.c_str() : "",
+			 Properties.comp_ulibs.c_str() );
+	 }
+      }
+      else if( usesMPI() )
+      {
+	 vt_snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTMPILIB" %s %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
@@ -1127,43 +1155,18 @@ Wrapper::show()
 		      Properties.fmpilib.c_str(),
 #else
 		      "",
-#endif
+#endif	     
 		      Properties.pmpilib.c_str(),
 		      Properties.comp_ulibs.c_str() );
-	 }
-	 else
-	 {
-	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTOMPLIB" %s",
+      }
+      else
+      {
+	 vt_snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTSEQLIB" %s",
 		      Properties.comp_ldflags.c_str(),
 		      Properties.libdir.c_str(),
 		      getInstType() == INST_TYPE_DYNINST ?
 		      Properties.dynattlib.c_str() : "",
-		      Properties.comp_ulibs.c_str() );
-	 }
-      }
-      else if( usesMPI() )
-      {
-	 snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTMPILIB" %s %s",
-		   Properties.comp_ldflags.c_str(),
-		   Properties.libdir.c_str(),
-		   getInstType() == INST_TYPE_DYNINST ?
-		   Properties.dynattlib.c_str() : "",
-#if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		   Properties.fmpilib.c_str(),
-#else
-		   "",
-#endif	     
-		   Properties.pmpilib.c_str(),
-		   Properties.comp_ulibs.c_str() );
-      }
-      else
-      {
-	 snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTSEQLIB" %s",
-		   Properties.comp_ldflags.c_str(),
-		   Properties.libdir.c_str(),
-		   getInstType() == INST_TYPE_DYNINST ?
-		   Properties.dynattlib.c_str() : "",
-		   Properties.comp_ulibs.c_str() );	     
+		      Properties.comp_ulibs.c_str() );	     
       }
 
       std::cout << (showmeCompile() ? "" : Properties.comp_args) << " "
@@ -1265,54 +1268,56 @@ Wrapper::run()
       {
 	 if( usesMPI() )
 	 {
-	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTHYBLIB" %s %s",
-		      Properties.comp_ldflags.c_str(),
-		      Properties.libdir.c_str(),
-		      getInstType() == INST_TYPE_DYNINST ?
-		      Properties.dynattlib.c_str() : "",
+	    vt_snprintf( vtlib, sizeof(vtlib) - 1,
+			 "%s %s %s %s "VTHYBLIB" %s %s",
+			 Properties.comp_ldflags.c_str(),
+			 Properties.libdir.c_str(),
+			 getInstType() == INST_TYPE_DYNINST ?
+			 Properties.dynattlib.c_str() : "",
 #if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		      Properties.fmpilib.c_str(),
+			 Properties.fmpilib.c_str(),
 #else
-		      "",
+			 "",
 #endif
-		      Properties.pmpilib.c_str(),
-		      Properties.comp_ulibs.c_str() );
+			 Properties.pmpilib.c_str(),
+			 Properties.comp_ulibs.c_str() );
 	 }
 	 else
 	 {
-	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTOMPLIB" %s",
-		      Properties.comp_ldflags.c_str(),
-		      Properties.libdir.c_str(),
-		      getInstType() == INST_TYPE_DYNINST ?
-		      Properties.dynattlib.c_str() : "",
-		      Properties.comp_ulibs.c_str() );
+	    vt_snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTOMPLIB" %s",
+			 Properties.comp_ldflags.c_str(),
+			 Properties.libdir.c_str(),
+			 getInstType() == INST_TYPE_DYNINST ?
+			 Properties.dynattlib.c_str() : "",
+			 Properties.comp_ulibs.c_str() );
 	 }
       }
       else
       {
 	 if( usesMPI() )
 	 {
-	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s %s "VTMPILIB" %s %s",
-		      Properties.comp_ldflags.c_str(),
-		      Properties.libdir.c_str(),
-		      getInstType() == INST_TYPE_DYNINST ?
-		      Properties.dynattlib.c_str() : "",
+	    vt_snprintf( vtlib, sizeof(vtlib) - 1,
+			 "%s %s %s %s "VTMPILIB" %s %s",
+			 Properties.comp_ldflags.c_str(),
+			 Properties.libdir.c_str(),
+			 getInstType() == INST_TYPE_DYNINST ?
+			 Properties.dynattlib.c_str() : "",
 #if defined(WRAP_LANG_F77) || defined(WRAP_LANG_F90)
-		      Properties.fmpilib.c_str(),
+			 Properties.fmpilib.c_str(),
 #else
-		      "",
+			 "",
 #endif	     
-		      Properties.pmpilib.c_str(),
-		      Properties.comp_ulibs.c_str() );
+			 Properties.pmpilib.c_str(),
+			 Properties.comp_ulibs.c_str() );
 	 }
 	 else
 	 {
-	    snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTSEQLIB" %s",
-		      Properties.comp_ldflags.c_str(),
-		      Properties.libdir.c_str(),
-		      getInstType() == INST_TYPE_DYNINST ?
-		      Properties.dynattlib.c_str() : "",
-		      Properties.comp_ulibs.c_str() );	     
+	    vt_snprintf( vtlib, sizeof(vtlib) - 1, "%s %s %s "VTSEQLIB" %s",
+			 Properties.comp_ldflags.c_str(),
+			 Properties.libdir.c_str(),
+			 getInstType() == INST_TYPE_DYNINST ?
+			 Properties.dynattlib.c_str() : "",
+			 Properties.comp_ulibs.c_str() );	     
 	 }
       }
 

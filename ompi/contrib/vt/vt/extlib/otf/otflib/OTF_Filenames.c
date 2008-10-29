@@ -56,36 +56,36 @@ char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 	case OTF_FILETYPE_MASTER:
 
 		/* mastercontrol file stays uncompressed even with compression */
-		OTF_snprintf( ret, l, "%s.%s", namestub, OTF_FILENAMESUFFIX_MAIN );
+		snprintf( ret, l, "%s.%s", namestub, OTF_FILENAMESUFFIX_MAIN );
 		break;
 
 	case OTF_FILETYPE_GLOBAL_DEF:
 
-		OTF_snprintf( ret, l, "%s.%s%s", namestub, OTF_FILENAMESUFFIX_DEF,
+		snprintf( ret, l, "%s.%s%s", namestub, OTF_FILENAMESUFFIX_DEF,
 			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
 		break;
 
 	case OTF_FILETYPE_DEF:
 
-		OTF_snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_DEF,
+		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_DEF,
 			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
 		break;
 
 	case OTF_FILETYPE_EVENT:
 
-		OTF_snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_EVENTS,
+		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_EVENTS,
 			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
 		break;
 
 	case OTF_FILETYPE_SNAPS:
 
-		OTF_snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_SNAPS,
+		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_SNAPS,
 			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
 		break;
 
 	case OTF_FILETYPE_STATS:
 
-		OTF_snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_STATS,
+		snprintf( ret, l, "%s.%x.%s%s", namestub, id, OTF_FILENAMESUFFIX_STATS,
 			((type&OTF_FILECOMPRESSION_BITS) > 0 && (type&OTF_FILECOMPRESSION_BITS) <= 9 ) ? ".z" : "" );
 		break;
 
@@ -102,7 +102,7 @@ char* OTF_getFilename( const char* namestub, uint32_t id, OTF_FileType type,
 char* OTF_stripFilename( const char* filename ) {
 
 
-	char* ret= OTF_strdup( filename );
+	char* ret= strdup( filename );
 	char* p= ret;
 
 	if( NULL == p ) {

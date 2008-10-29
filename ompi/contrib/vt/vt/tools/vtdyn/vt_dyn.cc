@@ -10,8 +10,6 @@
  * See the file COPYRIGHT in the package base directory for details
  **/
 
-#include "config.h"
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -107,11 +105,7 @@ main( int argc, char ** argv )
    {
       // set/overwrite environment variable VT_UNIFY to zero,
       // so VampirTrace don't unify local traces (DYNINST Bug?)
-#if HAVE_SETENV == 1
-      setenv( "VT_UNIFY", "no", 1 );
-#else
       putenv( "VT_UNIFY=no" );
-#endif
    }
 
    // create instance of mutator
