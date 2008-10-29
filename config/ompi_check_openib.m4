@@ -43,7 +43,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     #
     # ConnectX XRC support
     #
-    AC_ARG_ENABLE([connectx-xrc],
+    AC_ARG_ENABLE([openib-connectx-xrc],
         [AC_HELP_STRING([--enable-openib-connectx-xrc],
                         [Enable ConnectX XRC support. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
                         [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
