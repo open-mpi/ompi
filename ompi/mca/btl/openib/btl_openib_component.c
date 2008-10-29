@@ -25,9 +25,19 @@
 #include "ompi_config.h"
 
 #include <infiniband/verbs.h>
+/* This is crummy, but <infiniband/driver.h> doesn't work on all
+   platforms with all compilers.  Specifically, trying to include it
+   on RHEL4U3 with the PGI 32 bit compiler will cause problems because
+   certain 64 bit types are not defined.  Per advice from Roland D.,
+   just include the one prototype that we need in this case
+   (ibv_get_sysfs_path()). */
+#ifdef HAVE_INFINIBAND_DRIVER_H
 #include <infiniband/driver.h>
+#else
+const char *ibv_get_sysfs_path(void);
+#endif
 #include <errno.h>
-#include <string.h>   /* for strerror()*/
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
