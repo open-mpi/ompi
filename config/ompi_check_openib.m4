@@ -187,6 +187,18 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            fi
           ])
 
+    # Check to see if <infiniband/driver.h> works.  It is known to
+    # create problems on some platforms with some compilers (e.g.,
+    # RHEL4U3 with the PGI 32 bit compiler).  Use undocumented (in AC
+    # 2.63) feature of AC_CHECK_HEADERS: if you explicitly pass in
+    # AC_INCLUDES_DEFAULT as the 4th arg to AC_CHECK_HEADERS, the test
+    # will fail if the header is present but not compilable, *but it
+    # will not print the big scary warning*.  See
+    # http://lists.gnu.org/archive/html/autoconf/2008-10/msg00143.html.
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [AC_CHECK_HEADERS([infiniband/driver.h], [], [], 
+                            [AC_INCLUDES_DEFAULT])])
+
     AC_MSG_CHECKING([if ConnectX XRC support is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_CONNECTX_XRC], [$$1_have_xrc],
         [Enable features required for ConnectX XRC support])
