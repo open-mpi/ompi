@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -492,8 +493,12 @@ static int mca_btl_sctp_component_create_instance(void)
         return OMPI_ERROR;
     }
 
-    /* allocate memory for btl */
-    mca_btl_sctp_component.sctp_btls = (mca_btl_sctp_module_t **)malloc(sizeof(mca_btl_sctp_module_t*));
+    /* Allocate memory for btl pointers.  This may be more space then
+       we need as some of the interfaces may get filtered out by the
+       if_include and if_exclude parameters.  But that is just a few
+       unused pointers. */
+    mca_btl_sctp_component.sctp_btls = 
+        (mca_btl_sctp_module_t **)malloc(if_count * sizeof(mca_btl_sctp_module_t*));
     if(NULL == mca_btl_sctp_component.sctp_btls) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

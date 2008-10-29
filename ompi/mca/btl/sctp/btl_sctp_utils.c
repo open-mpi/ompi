@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
 
 
 #include "btl_sctp_utils.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 
 /**
  * struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_frag
