@@ -127,8 +127,8 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
                        ORTE_VPID_PRINT(jdata->stdin_target),
                        ORTE_VPID_PRINT(jdata->num_procs));
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        orte_trigger_event(&orte_exit);
+        orte_finalize();
+        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
     
     /*** RHC: USER REQUEST TO TIE-OFF STDXXX TO /DEV/NULL

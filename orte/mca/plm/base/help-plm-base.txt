@@ -76,12 +76,14 @@ We are truly sorry for the inconvenience.
 #
 [stdin-target-out-of-range]
 The requested stdin target is out of range for this job - it points
-to a process rank that is greater than the number of process in the
+to a process rank that is greater than the number of processes in the
 job.
 
 Specified target: %s
 Number of procs: %s
 
 This could be caused by specifying a negative number for the stdin
-target, or by mistyping the desired rank. Please correct the cmd line
-and try again.
+target, or by mistyping the desired rank. Remember that MPI ranks begin
+with 0, not 1.
+
+Please correct the cmd line and try again.
