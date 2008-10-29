@@ -2002,15 +2002,19 @@ btl_openib_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0;
 
+    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        goto no_btls;
+    }
+
     /* Per https://svn.open-mpi.org/trac/ompi/ticket/1305, check to
        see if $sysfsdir/class/infiniband exists.  If it does not,
        assume that the RDMA hardware drivers are not loaded, and
        therefore we don't want OpenFabrics verbs support in this OMPI
        job.  No need to print a warning. */
     if (!check_basics()) {
-        return NULL;
+        goto no_btls;
     }
-    
 
     seedv[0] = ORTE_PROC_MY_NAME->vpid;
     seedv[1] = opal_sys_timer_get_cycles();

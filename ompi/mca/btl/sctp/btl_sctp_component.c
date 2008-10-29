@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,6 +54,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -691,6 +693,11 @@ mca_btl_base_module_t** mca_btl_sctp_component_init(int *num_btl_modules,
         bool enable_progress_threads,
         bool enable_mpi_threads)
 {
+    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        return NULL;
+    } 
+
     if(mca_btl_sctp_component.sctp_if_11) {
         /* 1 to 1 */
         mca_btl_base_module_t **btls;

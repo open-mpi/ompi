@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,6 +47,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/mpiruntime.h"
 
 
 #if OMPI_ENABLE_PROGRESS_THREADS
@@ -502,6 +503,14 @@ mca_btl_gm_component_init (int *num_btl_modules,
     *num_btl_modules = 0;
 
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+
+    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        mca_btl_gm_component.gm_num_btls = 0;
+        mca_btl_gm_modex_send();
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+        return NULL;
+    }
 
     /* try to initialize GM */
     if( GM_SUCCESS != gm_init() ) {

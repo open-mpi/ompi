@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -48,6 +48,7 @@
 #include "btl_udapl_endpoint.h"
 #include "orte/util/proc_info.h"
 #include "ompi/runtime/ompi_module_exchange.h"
+#include "ompi/runtime/mpiruntime.h"
 
 /*
  * Local Functions
@@ -447,6 +448,13 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     mca_btl_udapl_module_t *btl;
     DAT_COUNT num_ias;
     int32_t i;
+
+    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
+    if (ompi_mpi_thread_multiple && !mca_btl_base_thread_multiple_override) {
+        mca_btl_udapl_component.udapl_num_btls = 0;
+        mca_btl_udapl_modex_send();
+        return NULL;
+    } 
 
     /* parse the include and exclude lists, checking for errors */
     mca_btl_udapl_component.if_include_list =
