@@ -48,18 +48,19 @@ static-components.h
 *~
 *\\\#/;
 
+my $debug;
+$debug = 1
+    if ($ARGV[0]);
+
+print "Thinking...\n"
+    if (!$debug);
+
 # Start at the top level
 process(".");
 
-# If there's an old .hgignore, save it
-if (-f ".hgignore") {
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
-        localtime(time);
-    my $new_name = sprintf(".hgignore.%04d%02d%02d-%02d%02d",
-                           $year + 1900, $mon + 1, $mday, $hour, $min);
-    rename(".hgignore", $new_name) || 
-        die "Unable to rename old .hgignore file: $!";
-}
+# If there's an old .hgignore, delete it
+unlink(".hgignore")
+    if (-f ".hgignore");
 
 # Write the new one
 open(FILE, ">.hgignore");
@@ -87,7 +88,8 @@ sub process {
 
     chomp($svn_ignore);
     if ($svn_ignore ne "") {
-        print "Found svn:ignore in $dir\n";
+        print "Found svn:ignore in $dir\n"
+            if ($debug);
         foreach my $line (split(/\n/, $svn_ignore)) {
             chomp($line);
             $line =~ s/^\.\///;
