@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -127,7 +128,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
         #
         # Actually, this is not real fix, as GCC will pass on any -Wno- flag,
         # have fun with the warning: -Wno-britney
-        CFLAGS="$CFLAGS -Wno-long-double -Wstrict-prototypes"
+        CFLAGS="$CFLAGS $add -Wno-long-double -Wstrict-prototypes"
 
         AC_CACHE_CHECK([if $CC supports -Wno-long-double],
                    [ompi_cv_cc_wno_long_double],
