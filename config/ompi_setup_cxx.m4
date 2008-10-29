@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -58,7 +59,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
         # see if -Wno-long-double works...
         AC_LANG_PUSH(C++)
         CXXFLAGS_orig="$CXXFLAGS"
-        CXXFLAGS="$CXXFLAGS -Wno-long-double -fstrict-prototype"
+        CXXFLAGS="$CXXFLAGS $add -Wno-long-double -fstrict-prototype"
         AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
                    [ompi_cv_cxx_wno_long_double],
                    [AC_TRY_COMPILE([], [], 
