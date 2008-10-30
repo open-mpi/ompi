@@ -53,6 +53,14 @@ ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
 #define ORTE_VPID_PRINT(n) \
     orte_util_print_vpids(n)
 
+ORTE_DECLSPEC char* orte_util_print_job_family(const orte_jobid_t job);
+#define ORTE_JOB_FAMILY_PRINT(n) \
+    orte_util_print_job_family(n)
+
+ORTE_DECLSPEC char* orte_util_print_local_jobid(const orte_jobid_t job);
+#define ORTE_LOCAL_JOBID_PRINT(n) \
+    orte_util_print_local_jobid(n)
+
 
 /* a macro for identifying the job family - i.e., for
  * extracting the mpirun-specific id field of the jobid
@@ -60,6 +68,12 @@ ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
 #define ORTE_JOB_FAMILY(n) \
     (((n) >> 16) & 0x0000ffff)
 
+/* a macro for discovering the HNP name of a proc given its jobid */
+#define ORTE_HNP_NAME_FROM_JOB(n, job)     \
+    do {                                   \
+        (n)->jobid = (job) & 0xffff0000;   \
+        (n)->vpid = 0;                     \
+    } while(0);
 
 /* a macro for extracting the local jobid from the jobid - i.e.,
  * the non-mpirun-specific id field of the jobid

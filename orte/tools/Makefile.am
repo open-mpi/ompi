@@ -24,6 +24,7 @@
 SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-clean \
+	tools/orte-iof \
 	tools/orte-ps \
 	tools/orte-restart \
 	tools/orted \
@@ -33,6 +34,7 @@ SUBDIRS += \
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-clean \
+	tools/orte-iof \
 	tools/orte-ps \
 	tools/orte-restart \
 	tools/orted \

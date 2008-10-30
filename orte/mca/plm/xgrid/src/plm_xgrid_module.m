@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -149,8 +149,8 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
     orte_pointer_array_add(&index, orte_job_data, jdata);
 
     if (ORTE_SUCCESS != (rc = orte_plm_xgrid_make_nodes(jdata))) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -160,7 +160,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
 	    
     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(jdata))) {
         ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        goto cleanup;
     }         
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -168,22 +168,11 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
-    /* setup I/O forwarding */
-    name.jobid = jdata->jobid;
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-	goto cleanup;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
-        ORTE_ERROR_LOG(rc);
-	goto cleanup;
-    }
-
     /* launch new daemons */
     rc = [mca_plm_xgrid_component.client launchOrteds: jdata];
     if (ORTE_SUCCESS != rc) {
-	ORTE_ERROR_LOG(rc);
-	goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
 
     /* Daemons are running - launch the applications */

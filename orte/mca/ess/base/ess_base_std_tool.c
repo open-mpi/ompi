@@ -36,6 +36,7 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/iof/base/base.h"
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
@@ -105,6 +106,27 @@ int orte_ess_base_tool_setup(void)
         goto error;
     }
     
+    /* setup the routed info - the selected routed component
+     * will know what to do. 
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed.init_routes";
+        goto error;
+    }
+    
+    /* setup I/O forwarding system - must come after we init routes */
+    if (ORTE_SUCCESS != (ret = orte_iof_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_iof_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_iof_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_iof_base_select";
+        goto error;
+    }
+    
 #if OPAL_ENABLE_FT == 1
     /*
      * Setup the SnapC
@@ -140,6 +162,7 @@ int orte_ess_base_tool_finalize(void)
      * a very small subset of orte_init - ensure that
      * I only back those elements out
      */
+    orte_iof_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
     

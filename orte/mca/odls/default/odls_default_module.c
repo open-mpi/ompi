@@ -165,28 +165,38 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
  *  Fork/exec the specified processes
  */
 
-static int odls_default_fork_local_proc(
-    orte_app_context_t* context,
-    orte_odls_child_t *child,
-    char **environ_copy)
+static int odls_default_fork_local_proc(orte_app_context_t* context,
+                                        orte_odls_child_t *child,
+                                        char **environ_copy,
+                                        orte_job_controls_t controls,
+                                        orte_vpid_t stdin_target)
 {
     orte_iof_base_io_conf_t opts;
     int rc;
     sigset_t sigs;
     int i, p[2];
 
-    /* should pull this information from MPIRUN instead of going with
-       default */
-    opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
-    
-    /* BWB - Fix post beta.  Should setup stdin in orterun and make
-       part of the app_context.  Do not change this without also
-       changing the reverse of this in
-       odls_default_wait_local_proc(). */
-    if (child->name->vpid == 0) {
-        opts.connect_stdin = true;
-    } else {
-        opts.connect_stdin = false;
+    if (NULL != child) {
+        /* should pull this information from MPIRUN instead of going with
+         default */
+        opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
+        
+        /* do we want to setup stdin? */
+        if (NULL != child &&
+            (stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == stdin_target)) {
+            opts.connect_stdin = true;
+        } else {
+            opts.connect_stdin = false;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_iof_base_setup_prefork(&opts))) {
+            ORTE_ERROR_LOG(rc);
+            if (NULL != child) {
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                child->exit_code = rc;
+            }
+            return rc;
+        }
     }
     
     if (ORTE_SUCCESS != (rc = orte_iof_base_setup_prefork(&opts))) {
@@ -227,23 +237,41 @@ static int odls_default_fork_local_proc(
         close(p[0]);
         fcntl(p[1], F_SETFD, FD_CLOEXEC);
 
-        /*  setup stdout/stderr so that any error messages that we may
-            print out will get displayed back at orterun.
+        if (NULL != child) {
+            /*  setup stdout/stderr so that any error messages that we may
+             print out will get displayed back at orterun.
+             
+             NOTE: Definitely do this AFTER we check contexts so that any
+             error message from those two functions doesn't come out to the
+             user. IF we didn't do it in this order, THEN a user who gives
+             us a bad executable name or working directory would get N
+             error messages, where N=num_procs. This would be very annoying
+             for large jobs, so instead we set things up so that orterun
+             always outputs a nice, single message indicating what happened
+             */
+            if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts, 
+                                                               &environ_copy))) {
+                write(p[1], &i, sizeof(int));
+                exit(1);
+            }
             
-            NOTE: Definitely do this AFTER we check contexts so that any
-            error message from those two functions doesn't come out to the
-            user. IF we didn't do it in this order, THEN a user who gives
-            us a bad executable name or working directory would get N
-            error messages, where N=num_procs. This would be very annoying
-            for large jobs, so instead we set things up so that orterun
-            always outputs a nice, single message indicating what happened
-        */
-        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts, 
-                                                           &environ_copy))) {
-            write(p[1], &i, sizeof(int));
-            exit(1);
+            
+        } else if (!(ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
+            /* tie stdin/out/err/internal to /dev/null */
+            int fdnull;
+            for (i=0; i < 3; i++) {
+                fdnull = open("/dev/null", O_RDONLY, 0);
+                if(fdnull > i) {
+                    dup2(fdnull, i);
+                    close(fdnull);
+                }
+            }
+            fdnull = open("/dev/null", O_RDONLY, 0);
+            if(fdnull > opts.p_internal[1]) {
+                dup2(fdnull, opts.p_internal[1]);
+                close(fdnull);
+            }
         }
-        
 
         /* close all file descriptors w/ exception of
            stdin/stdout/stderr and the pipe used for the IOF INTERNAL
@@ -288,13 +316,15 @@ static int odls_default_fork_local_proc(
         exit(1);
     } else {
 
-        /* connect endpoints IOF */
-        rc = orte_iof_base_setup_parent(child->name, &opts);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+        if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
+            /* connect endpoints IOF */
+            rc = orte_iof_base_setup_parent(child->name, &opts);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
-
+        
         /* Wait to read something from the pipe or close */
         close(p[1]);
         while (1) {

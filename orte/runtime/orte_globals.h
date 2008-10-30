@@ -226,12 +226,15 @@ typedef struct {
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
 /* define a set of flags to control the launch of a job */
-#define ORTE_JOB_CONTROL_LOCAL_SPAWN        (uint16_t) 0x0001
-#define ORTE_JOB_CONTROL_NON_ORTE_JOB       (uint16_t) 0x0002
-#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    (uint16_t) 0x0004
-#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     (uint16_t) 0x0008
-#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     (uint16_t) 0x0010
-#define ORTE_JOB_CONTROL_FORWARD_COMM       (uint16_t) 0x0020
+typedef uint8_t orte_job_controls_t;
+#define ORTE_JOB_CONTROL    OPAL_UINT8
+
+#define ORTE_JOB_CONTROL_LOCAL_SPAWN        0x01
+#define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x02
+#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x04
+#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x08
+#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x10
+#define ORTE_JOB_CONTROL_FORWARD_COMM       0x20
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -245,7 +248,11 @@ typedef struct {
     /* flags to control the launch of this job - see above
      * for description of supported flags
      */
-    uint16_t controls;
+    orte_job_controls_t controls;
+    /* rank desiring stdin - for now, either one rank, all ranks
+     * (wildcard), or none (invalid)
+     */
+    orte_vpid_t stdin_target;
     /* total slots allocated to this job */
     orte_std_cntr_t total_slots_alloc;
     /* number of procs in this job */
@@ -388,6 +395,9 @@ ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
+ORTE_DECLSPEC extern bool orte_tag_output;
+ORTE_DECLSPEC extern bool orte_xml_output;
+ORTE_DECLSPEC extern int orte_debug_verbosity;
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
 ORTE_DECLSPEC extern bool orte_homogeneous_nodes;

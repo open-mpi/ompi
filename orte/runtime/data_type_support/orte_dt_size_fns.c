@@ -81,6 +81,10 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
             break;
 #endif
             
+        case ORTE_IOF_TAG:
+            *size = sizeof(orte_iof_tag_t);
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
             return ORTE_ERR_UNKNOWN_DATA_TYPE;

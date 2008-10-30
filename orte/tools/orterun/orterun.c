@@ -135,7 +135,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
-
+    { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 0,
+      &orterun_globals.report_pid, OPAL_CMD_LINE_TYPE_BOOL,
+      "Printout pid" },
+    
     /* hetero apps */
     { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -145,6 +148,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "xml", "output", '\0', "xml", "xml", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
+    
+    /* select stdin option */
+    { NULL, NULL, NULL, '\0', "stdin", "stdin", 1,
+      &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
+      "Specify procs to receive stdin [rank, none] (default: 0, indicating rank 0)" },
     
     /* Specify the launch agent to be used */
     { "orte", "launch", "agent", '\0', "launch-agent", "launch-agent", 1,
@@ -397,6 +405,14 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    /* check what user wants us to do with stdin */
+    if (0 == strcmp(orterun_globals.stdin_target, "all")) {
+        jdata->stdin_target = ORTE_VPID_WILDCARD;
+    } else if (0 == strcmp(orterun_globals.stdin_target, "none")) {
+        jdata->stdin_target = ORTE_VPID_INVALID;
+    } else {
+        jdata->stdin_target = strtoul(orterun_globals.stdin_target, NULL, 10);
+    }
     
     /* Parse each app, adding it to the job object */
     parse_locals(argc, argv);
@@ -438,6 +454,16 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
+    
+    /* Change the default behavior of libevent such that we want to
+     continually block rather than blocking for the default timeout
+     and then looping around the progress engine again.  There
+     should be nothing in the orted that cannot block in libevent
+     until "something" happens (i.e., there's no need to keep
+     cycling through progress because the only things that should
+     happen will happen in libevent).  This is a minor optimization,
+     but what the heck... :-) */
+    opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
     
     /* setup an event we can wait for that will tell
      * us to terminate - both normal and abnormal
@@ -1088,6 +1114,7 @@ static int init_globals(void)
         orterun_globals.ompi_server = NULL;
         orterun_globals.wait_for_server = false;
         orterun_globals.server_wait_timeout = 10;
+        orterun_globals.stdin_target = "0";
     }
 
     /* Reset the other fields every time */
@@ -1096,6 +1123,7 @@ static int init_globals(void)
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
     orterun_globals.quiet                      = false;
+    orterun_globals.report_pid                 = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
@@ -1164,6 +1192,11 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         exit(0);
     }
 
+    /* check for request to report pid */
+    if (orterun_globals.report_pid) {
+        printf("%s pid: %d\n", orterun_basename, (int)getpid());
+    }
+    
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {

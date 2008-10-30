@@ -10,12 +10,14 @@
 #include "orte/runtime/runtime.h"
 
 #define MAX_COUNT 3
+#define ORTE_IOF_BASE_MSG_MAX   2048
+
 
 int
 main(int argc, char *argv[]){
     int count;
     int msgsize;
-    uint8_t *msg;
+    unsigned char msg[ORTE_IOF_BASE_MSG_MAX];
     int i, j, rc;
     double maxpower;
     unsigned char chr;
@@ -42,26 +44,28 @@ main(int argc, char *argv[]){
         readstdin = false;
     }
     
+    if (0 == ORTE_PROC_MY_NAME->vpid && readstdin) {
+        while (0 != (msgsize = read(0, msg, ORTE_IOF_BASE_MSG_MAX))) {
+            if (msgsize > 0) {
+                msg[msgsize] = '\n';
+                 write(1, msg, msgsize);
+            }
+        }
+    }
+    
     for (j=1; j < count+1; j++) {
         
+#if 0
         maxpower = (double)(j%7);
-        msgsize = (int)pow(10.0, maxpower);
-        msg = (uint8_t*)malloc(msgsize);
+#endif
 
         chr = (j % 26) + 65;
-        memset(msg, chr, msgsize);
+        memset(msg, chr, ORTE_IOF_BASE_MSG_MAX);
+        msgsize = 10;
         msg[msgsize-1] = '\n';
         
-        if (0 == ORTE_PROC_MY_NAME->vpid) {
-            if (readstdin) {
-                msgsize = read(0, msg, msgsize);
-            }
-            write(1, msg, msgsize);
-        } else {
-            write(1, msg, msgsize);
-        }
+        write(1, msg, msgsize);
         
-        free(msg);
     }
 
     orte_finalize();

@@ -42,6 +42,7 @@ struct orterun_globals_t {
     bool version;
     bool verbose;
     bool quiet;
+    bool report_pid;
     bool exit;
     bool by_node;
     bool by_slot;
@@ -59,6 +60,7 @@ struct orterun_globals_t {
     char *ompi_server;
     bool wait_for_server;
     int server_wait_timeout;
+    char *stdin_target;
 };
 
 /**

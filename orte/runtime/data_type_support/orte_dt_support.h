@@ -34,6 +34,7 @@
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/iof/iof_types.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -74,6 +75,7 @@ int orte_dt_compare_tags(orte_rml_tag_t *value1,
                          opal_data_type_t type);
 int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, opal_data_type_t type);
 int orte_dt_compare_grpcomm_mode(orte_grpcomm_mode_t *value1, orte_grpcomm_mode_t *value2, opal_data_type_t type);
+int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal_data_type_t type);
 #endif
 
 /** Data type copy functions */
@@ -96,6 +98,7 @@ int orte_dt_copy_tag(orte_rml_tag_t **dest,
                            opal_data_type_t type);
 int orte_dt_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, opal_data_type_t type);
 int orte_dt_copy_grpcomm_mode(orte_grpcomm_mode_t **dest, orte_grpcomm_mode_t *src, opal_data_type_t type);
+int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_type_t type);
 #endif
 
 /** Data type pack functions */
@@ -136,6 +139,8 @@ int orte_dt_pack_daemon_cmd(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_grpcomm_mode(opal_buffer_t *buffer, const void *src,
                               int32_t num_vals, opal_data_type_t type);
+int orte_dt_pack_iof_tag(opal_buffer_t *buffer, const void *src, int32_t num_vals,
+                         opal_data_type_t type);
 #endif
 
 /** Data type print functions */
@@ -201,6 +206,8 @@ int orte_dt_unpack_daemon_cmd(opal_buffer_t *buffer, void *dest,
                             int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_grpcomm_mode(opal_buffer_t *buffer, void *dest,
                               int32_t *num_vals, opal_data_type_t type);
+int orte_dt_unpack_iof_tag(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
+                           opal_data_type_t type);
 #endif
 
 END_C_DECLS

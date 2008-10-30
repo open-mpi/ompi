@@ -160,6 +160,10 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
             break;
 #endif
             
+        case ORTE_IOF_TAG:
+            orte_dt_quick_print(output, "ORTE_IOF_TAG", prefix, src, ORTE_IOF_TAG_T);
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
             return ORTE_ERR_UNKNOWN_DATA_TYPE;
@@ -208,9 +212,9 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tState: %0x\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %0x\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid),
-             (long)src->num_apps, src->controls,
+             (long)src->num_apps, src->controls, ORTE_VPID_PRINT(src->stdin_target),
              src->state, src->abort ? "True" : "False");
 
     asprintf(&pfx, "%s\t", pfx2);

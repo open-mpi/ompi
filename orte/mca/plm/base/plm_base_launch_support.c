@@ -58,8 +58,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job);
 
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
-    int rc, fd;
-    orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
+    int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_job for job %s",
@@ -118,29 +117,29 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         exit(0);
     }
     
-    /*
-     * setup I/O forwarding
+    /* quick sanity check - is the stdin target within range
+     * of the job?
      */
-    name.jobid = jdata->jobid;
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (ORTE_VPID_WILDCARD != jdata->stdin_target &&
+        ORTE_VPID_INVALID != jdata->stdin_target &&
+        jdata->num_procs <= jdata->stdin_target) {
+        /* this request cannot be met */
+        orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
+                       ORTE_VPID_PRINT(jdata->stdin_target),
+                       ORTE_VPID_PRINT(jdata->num_procs));
+        orte_finalize();
+        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* IOF cannot currently handle multiple pulls to the same fd.  So
-       dup stderr to another fd.  :-\ */
-    fd = dup(2);
-    if (fd >= 0 && 
-        ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, 
-                                                ORTE_IOF_INTERNAL, fd))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
+    
+    /*** RHC: USER REQUEST TO TIE-OFF STDXXX TO /DEV/NULL
+     *** WILL BE SENT IN LAUNCH MESSAGE AS PART OF CONTROLS FIELD.
+     *** SO IF USER WANTS NO IO BEING SENT AROUND, THE ORTEDS
+     *** WILL TIE IT OFF AND THE IOF WILL NEVER RECEIVE ANYTHING.
+     *** THE IOF AUTOMATICALLY KNOWS TO OUTPUT ANY STDXXX
+     *** DATA IT -DOES- RECEIVE TO THE APPROPRIATE FD, SO THERE
+     *** IS NOTHING WE NEED DO HERE TO SETUP IOF
+     ***/
+    
 #if OPAL_ENABLE_FT == 1
     /*
      * Notify the Global SnapC component regarding new job
@@ -156,6 +155,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
 
 int orte_plm_base_launch_apps(orte_jobid_t job)
 {
+    orte_job_t *jdata;
     orte_daemon_cmd_flag_t command;
     opal_buffer_t *buffer;
     int rc;
@@ -166,6 +166,13 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
                          "%s plm:base:launch_apps for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
+
+    /* find the job's data record */
+    if (NULL == (jdata = orte_get_job_data_object(job))) {
+        /* bad jobid */
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
 
     /* setup the buffer */
     buffer = OBJ_NEW(opal_buffer_t);
@@ -206,8 +213,12 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch wiring up iof",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    /* push stdin - the IOF will know what to do with the specified target */
     name.jobid = job;
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
+    name.vpid = jdata->stdin_target;
+    
+    if (ORTE_SUCCESS != (rc = orte_iof.push(&name, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

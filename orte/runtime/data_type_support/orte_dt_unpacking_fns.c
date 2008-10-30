@@ -197,11 +197,19 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         /* unpack control flags */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                            (&(jobs[i]->controls)), &n, OPAL_UINT16))) {
+                            (&(jobs[i]->controls)), &n, ORTE_JOB_CONTROL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
                 
+        /* unpack stdin target */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                            (&(jobs[i]->stdin_target)), &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* unpack the total slots allocated to the job */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
@@ -912,6 +920,20 @@ int orte_dt_unpack_grpcomm_mode(opal_buffer_t *buffer, void *dest, int32_t *num_
     
     /* turn around and unpack the real type */
     ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_GRPCOMM_MODE_T);
+    
+    return ret;
+}
+
+/*
+ * ORTE_IOF_TAG
+ */
+int orte_dt_unpack_iof_tag(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
+                                opal_data_type_t type)
+{
+    int ret;
+    
+    /* turn around and unpack the real type */
+    ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_IOF_TAG_T);
     
     return ret;
 }

@@ -213,8 +213,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
     /* connect stdin endpoint */
     if (opts->connect_stdin) {
         /* and connect the pty to stdin */
-        ret = orte_iof.iof_publish(name, ORTE_IOF_SINK,
-                                   ORTE_IOF_STDIN, opts->p_stdin[1]);
+        ret = orte_iof.pull(name, ORTE_IOF_STDIN, opts->p_stdin[1]);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             return ret;
@@ -224,22 +223,19 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
     }
 
     /* connect read ends to IOF */
-    ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE,
-                              ORTE_IOF_STDOUT, opts->p_stdout[0]);
+    ret = orte_iof.push(name, ORTE_IOF_STDOUT, opts->p_stdout[0]);
     if(ORTE_SUCCESS != ret) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
 
-    ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE, 
-                              ORTE_IOF_STDERR, opts->p_stderr[0]);
+    ret = orte_iof.push(name, ORTE_IOF_STDERR, opts->p_stderr[0]);
     if(ORTE_SUCCESS != ret) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
 
-    ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE, 
-                               ORTE_IOF_INTERNAL, opts->p_internal[0]);
+    ret = orte_iof.push(name, ORTE_IOF_STDDIAG, opts->p_internal[0]);
     if(ORTE_SUCCESS != ret) {
         ORTE_ERROR_LOG(ret);
         return ret;

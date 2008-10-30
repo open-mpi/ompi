@@ -192,6 +192,86 @@ char* orte_util_print_jobids(const orte_jobid_t job)
     return ptr->buffers[ptr->cntr-1];
 }
 
+char* orte_util_print_job_family(const orte_jobid_t job)
+{
+    orte_print_args_buffers_t *ptr;
+    int rc;
+    unsigned long tmp1;
+    
+    if (!fns_init) {
+        /* setup the print_args function */
+        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        fns_init = true;
+    }
+    
+    ptr = get_print_name_buffer();
+    
+    if (NULL == ptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return orte_print_args_null;
+    }
+    
+    /* cycle around the ring */
+    if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
+    }
+    
+    if (ORTE_JOBID_INVALID == job) {
+        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "INVALID");
+    } else if (ORTE_JOBID_WILDCARD == job) {
+        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
+    } else {
+        tmp1 = ((unsigned long)job & 0xffff0000) >> 16;
+        snprintf(ptr->buffers[ptr->cntr++], 
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+                 "%lu", tmp1);
+    }
+    return ptr->buffers[ptr->cntr-1];
+}
+
+char* orte_util_print_local_jobid(const orte_jobid_t job)
+{
+    orte_print_args_buffers_t *ptr;
+    int rc;
+    unsigned long tmp1;
+    
+    if (!fns_init) {
+        /* setup the print_args function */
+        if (ORTE_SUCCESS != (rc = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        fns_init = true;
+    }
+    
+    ptr = get_print_name_buffer();
+    
+    if (NULL == ptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return orte_print_args_null;
+    }
+    
+    /* cycle around the ring */
+    if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
+    }
+    
+    if (ORTE_JOBID_INVALID == job) {
+        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "INVALID");
+    } else if (ORTE_JOBID_WILDCARD == job) {
+        snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
+    } else {
+        tmp1 = (unsigned long)job & 0x0000ffff;
+        snprintf(ptr->buffers[ptr->cntr++], 
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+                 "%lu", tmp1);
+    }
+    return ptr->buffers[ptr->cntr-1];
+}
+
 char* orte_util_print_vpids(const orte_vpid_t vpid)
 {
     orte_print_args_buffers_t *ptr;
