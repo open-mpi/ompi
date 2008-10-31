@@ -102,9 +102,11 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                              "%s iof:hnp:read handler %s Error on connection:%d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&rev->name), fd));
-        close(fd);
-        opal_event_del(&rev->ev);
-        goto CLEAN_RETURN;
+        /* Un-recoverable error. Allow the code to flow as usual in order to
+         * to send the zero bytes message up the stream, and then close the
+         * file descriptor and delete the event.
+         */
+        numbytes = 0;
     }
     
     /* is this read from our stdin? */
@@ -157,10 +159,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &sink->name, ORTE_IOF_STDIN, data, numbytes);
             }
         }
-        /* check if stdin was closed */
-        if (0 == numbytes) {
-            opal_event_del(&rev->ev);
-        }
         /* nothing more to do */
         goto CLEAN_RETURN;
     }
@@ -186,9 +184,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&sink->daemon)));
             orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &rev->name, rev->tag, data, numbytes);
-            if (0 == numbytes) {
-                opal_event_del(&rev->ev);
-            }
         }
     }
 
@@ -198,16 +193,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
                          ORTE_NAME_PRINT(&rev->name)));
     
-    /* if we read 0 bytes from the stdout/err/diag, there is
-     * nothing to output - we do not close these file descriptors,
-     * but we do terminate the event
-     */
-    if (0 == numbytes) {
-        opal_event_del(&rev->ev);
-        goto CLEAN_RETURN;
-    }
-
-    if (ORTE_IOF_STDOUT & rev->tag) {
+   if ( (0 != numbytes) && (ORTE_IOF_STDOUT & rev->tag) ) {
         orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
     } else {
         orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stderr);
@@ -215,7 +201,17 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     }
 
 CLEAN_RETURN:
-    OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
+    /* if we read 0 bytes from the stdout/err/diag, there is
+     * nothing to output - we do not close these file descriptors,
+     * but we do terminate the event
+     */
+    if (0 == numbytes) {
+        close(fd);
+        opal_event_del(&rev->ev);
+        rev->ev.ev_fd = -1;
+    }
+
+     OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
     
     /* since the event is persistent, we do not need to re-add it */
     return;
