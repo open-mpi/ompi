@@ -751,8 +751,9 @@ static int opal_ifinit(void)
         /* loop through all the interfaces and create the list */
         num_interfaces = num_bytes_returned / sizeof (INTERFACE_INFO);
         for (i = 0; i < num_interfaces; ++i) {
-            /* do all this only if the interface is up */
-            if (if_list[i].iiFlags & IFF_UP) {
+            /* do all this only if the interface is up, and skip loopback interface */
+            if (0 != (if_list[i].iiFlags & IFF_UP)
+                && 0 == (if_list[i].iiFlags & IFF_LOOPBACK)) {
 
                 OBJ_CONSTRUCT (&intf, opal_list_item_t);
         
@@ -771,17 +772,10 @@ static int opal_ifinit(void)
                 /* fill in the index in the table */
                 intf.if_index = opal_list_get_size(&opal_if_list)+1;
 
-                /* generate the interface name on your own ....
-                   loopback: lo
-                   Rest:    eth0, eth1, ..... */
+                /* generate the interface name, e.g. eth0, eth1, ..... */
+                sprintf (intf.if_name, "eth%u", interface_counter++);
 
-                if (if_list[i].iiFlags & IFF_LOOPBACK) {
-                    sprintf (intf.if_name, "lo");
-                } else {
-                    sprintf (intf.if_name, "eth%u", interface_counter++);
-                }
-
-                /* copy all this into a persistent form and store it in the list */
+				 /* copy all this into a persistent form and store it in the list */
                 intf_ptr = (opal_if_t *) malloc(sizeof(opal_if_t));
                 if (NULL == intf_ptr) {
                     opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
