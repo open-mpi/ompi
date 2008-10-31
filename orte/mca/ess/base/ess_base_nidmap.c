@@ -35,7 +35,7 @@
 
 int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
                                opal_pointer_array_t *nidmap,
-                               opal_value_array_t *pmap, orte_vpid_t *num_procs)
+                               orte_jmap_t *jmap)
 {
     int rc;
     opal_byte_object_t *bo;
@@ -71,8 +71,7 @@ int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
         return rc;
     }
     /* unpack the process map */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_pidmap(bo, num_procs,
-                                                      pmap, NULL, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_util_decode_pidmap(bo, &jmap->num_procs, &jmap->pmap))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -124,7 +123,6 @@ orte_nid_t* orte_ess_base_lookup_nid(opal_pointer_array_t *nidmap,
                                      opal_pointer_array_t *jobmap,
                                      orte_process_name_t *proc)
 {
-    orte_nid_t *nid;
     orte_nid_t **nids;
     orte_pmap_t *pmap;
     
@@ -135,10 +133,7 @@ orte_nid_t* orte_ess_base_lookup_nid(opal_pointer_array_t *nidmap,
             return NULL;
         }
         /* looking for a daemon in my family */
-        if (NULL == (nid = find_daemon_node(nidmap, proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        }
-        return nid;
+        return find_daemon_node(nidmap, proc);
     }
     
     /* looking for an application proc */

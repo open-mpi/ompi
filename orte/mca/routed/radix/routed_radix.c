@@ -16,6 +16,8 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_bitmap.h"
+#include "opal/util/bit_ops.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -30,7 +32,8 @@
 #include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/routed/base/base.h"
-#include "routed_linear.h"
+#include "routed_radix.h"
+
 
 static int init(void);
 static int finalize(void);
@@ -48,10 +51,10 @@ static int get_wireup_info(opal_buffer_t *buf);
 static int warmup_routes(void);
 
 #if OPAL_ENABLE_FT == 1
-static int linear_ft_event(int state);
+static int radix_ft_event(int state);
 #endif
 
-orte_routed_module_t orte_routed_linear_module = {
+orte_routed_module_t orte_routed_radix_module = {
     init,
     finalize,
     delete_route,
@@ -66,7 +69,7 @@ orte_routed_module_t orte_routed_linear_module = {
     proc_is_below,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
-    linear_ft_event
+    radix_ft_event
 #else
     NULL
 #endif
@@ -78,8 +81,10 @@ static orte_process_name_t      wildcard_route;
 static opal_condition_t         cond;
 static opal_mutex_t             lock;
 static orte_process_name_t      *lifeline=NULL;
+static orte_process_name_t      my_parent;
+static int                      num_children;
+static opal_list_t              my_children;
 static bool                     ack_recvd;
-
 
 
 static int init(void)
@@ -95,13 +100,19 @@ static int init(void)
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
 
     lifeline = NULL;
-
+    
+    /* setup the list of children */
+    OBJ_CONSTRUCT(&my_children, opal_list_t);
+    num_children = 0;
+    my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
+    
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
     int rc;
+    opal_list_item_t *item;
     
     /* if I am an application process, indicate that I am
         * truly finalizing prior to departure
@@ -127,6 +138,13 @@ static int finalize(void)
 
     lifeline = NULL;
 
+    /* deconstruct the list of children */
+    while (NULL != (item = opal_list_remove_first(&my_children))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&my_children);
+    num_children = 0;
+    
     return ORTE_SUCCESS;
 }
 
@@ -149,7 +167,7 @@ static int delete_route(orte_process_name_t *proc)
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_binomial_delete_route for %s",
+                         "%s routed_radix_delete_route for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
@@ -201,7 +219,7 @@ static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route)
 { 
     int rc;
-    orte_process_name_t * route_copy;
+    orte_process_name_t *route_copy;
     
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
@@ -215,9 +233,9 @@ static int update_route(orte_process_name_t *target,
         !orte_process_info.tool) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_linear_update: %s --> %s",
+                         "%s routed_radix_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(route)));
@@ -237,7 +255,7 @@ static int update_route(orte_process_name_t *target,
         }
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_linear_update: diff job family routing job %s --> %s",
+                             "%s routed_radix_update: diff job family routing job %s --> %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(target->jobid), 
                              ORTE_NAME_PRINT(route)));
@@ -283,8 +301,16 @@ static int update_route(orte_process_name_t *target,
 static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret, daemon;
+    opal_list_item_t *item;
+    orte_routed_tree_t *child;
     int rc;
 
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+    
     /* if it is me, then the route is just direct */
     if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
         ret = target;
@@ -297,7 +323,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
-    
+
     /******     HNP AND DAEMONS ONLY     ******/
     
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
@@ -321,9 +347,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ret = ORTE_NAME_INVALID;
         goto found;
     }
-    
+     
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
-    
+
     /* if this is going to the HNP, send direct */
     if (ORTE_PROC_MY_HNP->jobid == target->jobid &&
         ORTE_PROC_MY_HNP->vpid == target->vpid) {
@@ -353,30 +379,37 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* if the daemon is me, then send direct to the target! */
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
+        goto found;
     } else {
-        /* the linear routing tree is trivial - if the vpid is
-         * lower than mine, route through my parent, which is
-         * at my_vpid-1. If the vpid is higher than mine, then
-         * route to my_vpid+1, wrapping around to 0
-         */
-        if (daemon.vpid < ORTE_PROC_MY_NAME->vpid) {
-            daemon.vpid = ORTE_PROC_MY_NAME->vpid - 1;
-            ret = &daemon;
-        } else {
-            if (ORTE_PROC_MY_NAME->vpid < orte_process_info.num_procs-1) {
-                daemon.vpid = ORTE_PROC_MY_NAME->vpid + 1;
-            } else {
-                /* we are at end of chain - wrap around */
-                daemon.vpid = 0;
+        /* search routing tree for next step to that daemon */
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_routed_tree_t*)item;
+            if (child->vpid == daemon.vpid) {
+                /* the child is hosting the proc - just send it there */
+                ret = &daemon;
+                goto found;
             }
-            ret = &daemon;
+            /* otherwise, see if the daemon we need is below the child */
+            if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
+                /* yep - we need to step through this child */
+                daemon.vpid = child->vpid;
+                ret = &daemon;
+                goto found;
+            }
         }
     }
-
- found:
-
+    
+    /* if we get here, then the target daemon is not beneath
+     * any of our children, so we have to step up through our parent
+     */
+    daemon.vpid = my_parent.vpid;
+    ret = &daemon;
+    
+found:
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                         "%s routed_linear_get(%s) --> %s",
+                         "%s routed_radix_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(ret)));
@@ -405,7 +438,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
         
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_linear:callback got uri %s",
+                             "%s routed_radix:callback got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri));
         
@@ -476,7 +509,7 @@ static void recv_ack(int status, orte_process_name_t* sender,
 
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
-    /* the linear module routes all proc communications through
+    /* the radix module routes all proc communications through
      * the local daemon. Daemons must identify which of their
      * daemon-peers is "hosting" the specified recipient and
      * route the message to that daemon. Daemon contact info
@@ -499,7 +532,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     if (orte_process_info.daemon) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_linear: init routes for daemon job %s\n\thnp_uri %s",
+                             "%s routed_radix: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
@@ -532,7 +565,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
             wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
             
-            /* set our lifeline to the the HNP - we will abort if that connection is lost */
+            /* set our lifeline to the HNP - we will abort if that connection is lost */
             lifeline = ORTE_PROC_MY_HNP;
             
             /* daemons will send their contact info back to the HNP as
@@ -550,7 +583,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             }
 
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routed_linear: completed init routes",
+                             "%s routed_radix: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         return ORTE_SUCCESS;
@@ -560,7 +593,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     if (orte_process_info.hnp) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_linear: init routes for HNP job %s",
+                             "%s routed_radix: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
         
@@ -608,9 +641,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          */
         if (NULL != ndat) {
             int rc;
-            
+ 
+#if 0
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_linear: init routes w/non-NULL data",
+                                 "%s routed_radix: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* if this is for my job family, then we send the buffer
@@ -633,7 +667,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
                 
                 OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                     "%s routed_linear_init_routes: ack recvd",
+                                     "%s routed_radix_init_routes: ack recvd",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 
                 /* we already have defined our routes to everyone to
@@ -641,13 +675,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                  */
                 return ORTE_SUCCESS;
             }
-            
+#endif            
             /* if this is for a different job family, then we route via our HNP
              * to minimize connection counts to entities such as ompi-server, so
              * start by sending the contact info to the HNP for update
              */
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_linear_init_routes: diff job family - sending update to %s",
+                                 "%s routed_radix_init_routes: diff job family - sending update to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
             
@@ -667,7 +701,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_linear_init_routes: ack recvd",
+                                 "%s routed_radix_init_routes: ack recvd",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* our get_route function automatically routes all messages for
@@ -681,7 +715,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          */
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                             "%s routed_linear: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
+                             "%s routed_radix: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
                              (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
@@ -692,7 +726,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
              */
             opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_output(0, "%s ERROR: This is a fatal condition when the linear router",
+            opal_output(0, "%s ERROR: This is a fatal condition when the radix router",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_output(0, "%s ERROR: has been selected - either select the unity router",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
@@ -760,6 +794,19 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
 static int warmup_routes(void)
 {
+    opal_buffer_t buf;
+    orte_daemon_cmd_flag_t cmd=ORTE_DAEMON_NULL_CMD;
+    int rc;
+    
+    /* send a NULL command to my parent */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD);
+    if (0 > (rc = orte_rml.send_buffer(&my_parent, &buf, ORTE_RML_TAG_DAEMON, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&buf);
+        return rc;
+    }
+    OBJ_DESTRUCT(&buf);
     return ORTE_SUCCESS;
 }
 
@@ -773,7 +820,7 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        opal_output(0, "%s routed:linear: Connection to lifeline %s lost",
+        opal_output(0, "%s routed:radix: Connection to lifeline %s lost",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
@@ -782,7 +829,6 @@ static int route_lost(const orte_process_name_t *route)
     /* we don't care about this one, so return success */
     return ORTE_SUCCESS;
 }
-
 
 static bool route_is_defined(const orte_process_name_t *target)
 {
@@ -794,9 +840,59 @@ static bool route_is_defined(const orte_process_name_t *target)
     return true;
 }
 
+static void radix_tree(int rank, int *num_children,
+                       opal_list_t *children, opal_bitmap_t *relatives)
+{
+    int i, peer, Sum, NInLevel, rc;
+    orte_routed_tree_t *child;
+    opal_bitmap_t *relations;
+    
+    /* compute how many procs are at my level */
+    Sum=1;
+    NInLevel=1;
+    
+    while ( Sum < (rank+1) ) {
+        NInLevel *= mca_routed_radix_component.radix;
+        Sum += NInLevel;
+    }
+    
+    /* our children start at our rank + num_in_level */
+    peer = rank + NInLevel;
+    for (i = 0; i < mca_routed_radix_component.radix; i++) {
+        if (peer < (int)orte_process_info.num_procs) {
+            child = OBJ_NEW(orte_routed_tree_t);
+            child->vpid = peer;
+            if (NULL != children) {
+                /* this is a direct child - add it to my list */
+                opal_list_append(children, &child->super);
+                (*num_children)++;
+                /* setup the relatives bitmap */
+                opal_bitmap_init(&child->relatives, orte_process_info.num_procs);
+                /* point to the relatives */
+                relations = &child->relatives;
+            } else {
+                /* we are recording someone's relatives - set the bit */
+                if (OPAL_SUCCESS != (rc = opal_bitmap_set_bit(relatives, peer))) {
+                    opal_output(0, "%s Error: could not set relations bit!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                }
+                /* point to this relations */
+                relations = relatives;
+            }
+            /* search for this child's relatives */
+            radix_tree(peer, NULL, NULL, relations);
+        }
+        peer += NInLevel;
+    }
+}
 
 static int update_routing_tree(void)
 {
+    orte_routed_tree_t *child;
+    int j;
+    opal_list_item_t *item;
+    int Level,Sum,NInLevel,Ii;
+    int NInPrevLevel;
+
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
@@ -804,13 +900,62 @@ static int update_routing_tree(void)
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
-    /* nothing to do here as the routing tree is fixed */
+    /* clear the list of children if any are already present */
+    while (NULL != (item = opal_list_remove_first(&my_children))) {
+        OBJ_RELEASE(item);
+    }
+    num_children = 0;
+    
+    /* compute my parent */
+    Ii =  ORTE_PROC_MY_NAME->vpid;
+    Level=0;
+    Sum=1;
+    NInLevel=1;
+    
+    while ( Sum < (Ii+1) ) {
+        Level++;
+        NInLevel *= mca_routed_radix_component.radix;
+        Sum += NInLevel;
+    }
+    Sum -= NInLevel;
+    
+    NInPrevLevel = NInLevel/mca_routed_radix_component.radix;
+    
+    if( 0 == Ii ) {
+        my_parent.vpid = -1;
+    }  else {
+        my_parent.vpid = (Ii-Sum) % NInPrevLevel;
+        my_parent.vpid += (Sum - NInPrevLevel);
+    }
+    
+    /* compute my direct children and the bitmap that shows which vpids
+     * lie underneath their branch
+     */
+    radix_tree(Ii, &num_children, &my_children, NULL);
+    
+    if (0 < opal_output_get_verbosity(orte_routed_base_output)) {
+        opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_routed_tree_t*)item;
+            opal_output(0, "%s: \tchild %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), child->vpid);
+            for (j=0; j < (int)orte_process_info.num_procs; j++) {
+                if (opal_bitmap_is_set_bit(&child->relatives, j)) {
+                    opal_output(0, "%s: \t\trelation %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
+                }
+            }
+        }
+    }
+
     return ORTE_SUCCESS;
 }
 
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
 {
+    opal_list_item_t *item;
     orte_namelist_t *nm;
+    orte_routed_tree_t *child;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -819,42 +964,23 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
         return ORTE_VPID_INVALID;
     }
     
-    /* the linear routing tree consists of a chain of daemons
-     * extending from the HNP to orte_process_info.num_procs-1.
-     * Accordingly, my child is just the my_vpid+1 daemon
+    /* the radix routing tree always goes to our children,
+     * for any job
      */
-    if (NULL != children &&
-        ORTE_PROC_MY_NAME->vpid < orte_process_info.num_procs-1) {
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        nm->name.vpid = ORTE_PROC_MY_NAME->vpid + 1;
-        opal_list_append(children, &nm->item);
+    if (NULL != children) {
+        for (item = opal_list_get_first(&my_children);
+             item != opal_list_get_end(&my_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_routed_tree_t*)item;
+            nm = OBJ_NEW(orte_namelist_t);
+            nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+            nm->name.vpid = child->vpid;
+            opal_list_append(children, &nm->item);
+        }
     }
-    
-    if (orte_process_info.hnp) {
-        /* the parent of the HNP is invalid */
-        return ORTE_VPID_INVALID;
-    }
-    
-    /* my parent is the my_vpid-1 daemon */
-    return (ORTE_PROC_MY_NAME->vpid - 1);
+    /* return my parent's vpid */
+    return my_parent.vpid;
 }
-
-
-static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
-{
-    /* if the target is less than the root, then the path
-     * cannot lie through the root
-     */
-    
-    if (target < root) {
-        return false;
-    }
-
-    /* otherwise, it does! */
-    return true;
-}
-
 
 static int get_wireup_info(opal_buffer_t *buf)
 {
@@ -884,8 +1010,45 @@ static int get_wireup_info(opal_buffer_t *buf)
     return ORTE_SUCCESS;
 }
 
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
+{
+    opal_list_item_t *item;
+    orte_routed_tree_t *child;
+    
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return false;
+    }
+
+    /* quick check: if root == target, then the answer is always true! */
+    if (root == target) {
+        return true;
+    }
+    
+    /* check the list of children to see if either their vpid
+     * matches target, or the target bit is set in their bitmap
+     */
+    
+    /* first find the specified child */
+    for (item = opal_list_get_first(&my_children);
+         item != opal_list_get_end(&my_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_routed_tree_t*)item;
+        if (child->vpid == root) {
+            /* now see if the target lies below this child */
+            return opal_bitmap_is_set_bit(&child->relatives, target);
+        }
+    }
+    
+    /* only get here if we have no children or we didn't find anything */
+    return false;
+}
+
+
 #if OPAL_ENABLE_FT == 1
-static int linear_ft_event(int state)
+static int radix_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
@@ -916,3 +1079,4 @@ static int linear_ft_event(int state)
     return exit_status;
 }
 #endif
+

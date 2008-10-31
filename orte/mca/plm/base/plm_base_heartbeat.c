@@ -89,7 +89,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting or shutting down, ignore this */
-    if (orte_abnormal_term_ordered || orte_shutdown_in_progress) {
+    if (orte_abnormal_term_ordered || 0 == orte_heartbeat_rate) {
         return;
     }
     

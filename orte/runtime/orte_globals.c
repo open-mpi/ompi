@@ -63,7 +63,6 @@ bool orte_devel_level_output = false;
 
 int32_t orte_contiguous_nodes;
 char **orte_launch_environ;
-opal_pointer_array_t orte_daemonmap;
 
 bool orte_hnp_is_allocated = false;
 bool orte_allocation_required;
@@ -78,7 +77,7 @@ int orte_debugger_check_rate;
 orte_trigger_event_t orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
-bool orte_shutdown_in_progress = false;
+bool orte_routing_is_enabled = false;
 
 int orte_heartbeat_rate;
 int orte_startup_timeout;

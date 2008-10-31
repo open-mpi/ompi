@@ -74,11 +74,14 @@ static int rte_init(char flags);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 static bool proc_is_local(orte_process_name_t *proc);
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
+static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo);
+static int update_nidmap(opal_byte_object_t *bo);
 
 
 orte_ess_base_module_t orte_ess_hnp_module = {
@@ -86,11 +89,14 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     rte_finalize,
     rte_abort,
     proc_is_local,
+    proc_get_daemon,
     proc_get_hostname,
     proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
+    add_pidmap,
+    update_nidmap,
     NULL /* ft_event */
 };
 
@@ -564,6 +570,24 @@ static orte_proc_t* find_proc(orte_process_name_t *proc)
 }
 
 
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
+{
+    orte_proc_t *pdata;
+    
+    /* get the job data */
+     if (NULL == (pdata = find_proc(proc))) {
+         return ORTE_VPID_INVALID;
+     }
+     
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:env: proc %s is hosted by daemon %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         ORTE_VPID_PRINT(pdata->node->daemon->name.vpid)));
+    
+    return pdata->node->daemon->name.vpid;
+}
+
 static char* proc_get_hostname(orte_process_name_t *proc)
 {
     orte_proc_t *pdata;
@@ -654,4 +678,30 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
                          (int)pdata->node_rank));
     
     return pdata->node_rank;
+}
+
+static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo)
+{
+    /* there is nothing to do here - the HNP can resolve
+     * all requests directly from its internal data. However,
+     * we do need to free the data in the byte object to
+     * be consistent with other modules
+     */
+    if (NULL != bo && NULL != bo->bytes) {
+        free(bo->bytes);
+    }
+    return ORTE_SUCCESS;
+}
+
+static int update_nidmap(opal_byte_object_t *bo)
+{
+    /* there is nothing to do here - the HNP can resolve
+     * all requests directly from its internal data. However,
+     * we do need to free the data in the byte object to
+     * be consistent with other modules
+     */
+    if (NULL != bo && NULL != bo->bytes) {
+        free(bo->bytes);
+    }
+    return ORTE_SUCCESS;
 }

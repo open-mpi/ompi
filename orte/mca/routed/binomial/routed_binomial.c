@@ -20,6 +20,7 @@
 #include "opal/util/bit_ops.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
@@ -74,8 +75,7 @@ orte_routed_module_t orte_routed_binomial_module = {
 };
 
 /* local globals */
-static opal_hash_table_t        peer_list;
-static opal_hash_table_t        vpid_wildcard_list;
+static opal_hash_table_t        jobfam_list;
 static orte_process_name_t      wildcard_route;
 static opal_condition_t         cond;
 static opal_mutex_t             lock;
@@ -88,11 +88,8 @@ static bool                     ack_recvd;
 
 static int init(void)
 {
-    OBJ_CONSTRUCT(&peer_list, opal_hash_table_t);
-    opal_hash_table_init(&peer_list, 128);
-    
-    OBJ_CONSTRUCT(&vpid_wildcard_list, opal_hash_table_t);
-    opal_hash_table_init(&vpid_wildcard_list, 128);
+    OBJ_CONSTRUCT(&jobfam_list, opal_hash_table_t);
+    opal_hash_table_init(&jobfam_list, 128);
     
     wildcard_route.jobid = ORTE_NAME_INVALID->jobid;
     wildcard_route.vpid = ORTE_NAME_INVALID->vpid;
@@ -114,8 +111,6 @@ static int init(void)
 static int finalize(void)
 {
     int rc;
-    uint64_t key;
-    void * value, *node, *next_node;
     opal_list_item_t *item;
     
     /* if I am an application process, indicate that I am
@@ -135,22 +130,7 @@ static int finalize(void)
         orte_routed_base_comm_stop();
     }
     
-    /* don't destruct the routes until *after* we send the
-     * sync as the oob will be asking us how to route
-     * the message!
-     */
-    rc = opal_hash_table_get_first_key_uint64(&peer_list,
-                                              &key, &value, &node);
-    while(OPAL_SUCCESS == rc) {
-        if(NULL != value) {
-            free(value);
-        }
-        rc = opal_hash_table_get_next_key_uint64(&peer_list,
-                                                 &key, &value, node, &next_node);
-        node = next_node;
-    }
-    OBJ_DESTRUCT(&peer_list);
-    OBJ_DESTRUCT(&vpid_wildcard_list);
+    OBJ_DESTRUCT(&jobfam_list);
     /* destruct the global condition and lock */
     OBJ_DESTRUCT(&cond);
     OBJ_DESTRUCT(&lock);
@@ -208,13 +188,13 @@ static int delete_route(orte_process_name_t *proc)
         /* see if this proc is present - it will have a wildcard vpid,
          * so we have to look for it with that condition
          */
-        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+        rc = opal_hash_table_get_value_uint32(&jobfam_list,
                                               ORTE_JOB_FAMILY(proc->jobid),
                                               (void**)&route_copy);
         if (ORTE_SUCCESS == rc && NULL != route_copy) {
             /* proc is present - remove the data */
             free(route_copy);
-            rc = opal_hash_table_remove_value_uint32(&vpid_wildcard_list,
+            rc = opal_hash_table_remove_value_uint32(&jobfam_list,
                                                      ORTE_JOB_FAMILY(proc->jobid));
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
@@ -226,55 +206,12 @@ static int delete_route(orte_process_name_t *proc)
         return ORTE_SUCCESS;
     }
     
-    /* THIS CAME FROM OUR OWN JOB FAMILY... */
-    
-    /* treat vpid wildcards separately so they go onto the correct list */
-    if (proc->jobid != ORTE_JOBID_WILDCARD &&
-        proc->vpid == ORTE_VPID_WILDCARD) {
-        /* see if this target is already present - it will have a wildcard vpid,
-         * so we have to look for it on that list
-         */
-        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
-                                              proc->jobid,
-                                              (void**)&route_copy);
-        if (ORTE_SUCCESS == rc && NULL != route_copy) {
-            /* proc is present - remove the data */
-            free(route_copy);
-            rc = opal_hash_table_remove_value_uint32(&vpid_wildcard_list, proc->jobid);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-            }            
-            return rc;
-        }
-        /* not already present - nothing to do */
-        return ORTE_SUCCESS;
-    }
-    
-    /* check for an exact match */
-    if (proc->jobid != ORTE_JOBID_WILDCARD &&
-        proc->vpid != ORTE_VPID_WILDCARD) {
-        /* see if this route already exists in our table */
-        rc = opal_hash_table_get_value_uint64(&peer_list,
-                                              orte_util_hash_name(proc),
-                                              (void**)&route_copy);
-        
-        if (ORTE_SUCCESS == rc && NULL != route_copy) {
-            /* proc is present - remove the data */
-            free(route_copy);
-            rc = opal_hash_table_remove_value_uint64(&peer_list, orte_util_hash_name(proc));
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-            }            
-            return rc;
-        }
-        /* not already present - nothing to do */
-        return ORTE_SUCCESS;
-    }
-    
-    /* this must be a process that doesn't match any of the
-     * prior conditions - sorry!
+    /* THIS CAME FROM OUR OWN JOB FAMILY...there is nothing
+     * to do here. The routes will be redefined when we update
+     * the routing tree
      */
-    return ORTE_ERR_NOT_SUPPORTED;
+    
+    return ORTE_SUCCESS;
 }
 
 static int update_route(orte_process_name_t *target,
@@ -325,7 +262,7 @@ static int update_route(orte_process_name_t *target,
         /* see if this target is already present - it will have a wildcard vpid,
          * so we have to look for it with that condition
          */
-        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+        rc = opal_hash_table_get_value_uint32(&jobfam_list,
                                               ORTE_JOB_FAMILY(target->jobid),
                                               (void**)&route_copy);
         if (ORTE_SUCCESS == rc && NULL != route_copy) {
@@ -333,7 +270,7 @@ static int update_route(orte_process_name_t *target,
              * in case it has changed
              */
             *route_copy = *route;
-            rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+            rc = opal_hash_table_set_value_uint32(&jobfam_list,
                                                   ORTE_JOB_FAMILY(target->jobid), route_copy);
             if (ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
@@ -344,7 +281,7 @@ static int update_route(orte_process_name_t *target,
         /* not there, so add the route FOR THE JOB FAMILY*/
         route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
         *route_copy = *route;
-        rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
+        rc = opal_hash_table_set_value_uint32(&jobfam_list,
                                               ORTE_JOB_FAMILY(target->jobid), route_copy);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -354,81 +291,15 @@ static int update_route(orte_process_name_t *target,
     
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
     
-    /* treat vpid wildcards separately so they go onto the correct list */
-    if (target->jobid != ORTE_JOBID_WILDCARD &&
-        target->vpid == ORTE_VPID_WILDCARD) {
-        /* see if this target is already present - it will have a wildcard vpid,
-         * so we have to look for it on that list
-         */
-        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
-                                              target->jobid,
-                                              (void**)&route_copy);
-        if (ORTE_SUCCESS == rc && NULL != route_copy) {
-            /* target already present - update the route info
-             * in case it has changed
-             */
-            *route_copy = *route;
-            rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
-                                                  target->jobid, route_copy);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-            }            
-            return rc;
-        }
-        
-        /* not already present, so let's add it */
-        route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
-        *route_copy = *route;
-        rc = opal_hash_table_set_value_uint32(&vpid_wildcard_list,
-                                              target->jobid, route_copy);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
+    opal_output(0, "%s CALL TO UPDATE ROUTE FOR OWN JOB FAMILY", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     
-    /* check for an exact match */
-    if (target->jobid != ORTE_JOBID_WILDCARD &&
-        target->vpid != ORTE_VPID_WILDCARD) {
-        /* see if this route already exists in our table */
-        rc = opal_hash_table_get_value_uint64(&peer_list,
-                                              orte_util_hash_name(target),
-                                              (void**)&route_copy);
-        
-        if (ORTE_SUCCESS == rc && NULL != route_copy) {
-            /* target already present - update the route info
-             * in case it has changed
-             */
-            *route_copy = *route;
-            rc = opal_hash_table_set_value_uint64(&peer_list,
-                                                  orte_util_hash_name(target), route_copy);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-            }            
-            return rc;
-        }
-        
-        /* not present - add it to the table */
-        route_copy = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
-        *route_copy = *route;
-        rc = opal_hash_table_set_value_uint64(&peer_list,
-                                              orte_util_hash_name(target), route_copy);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
-    /* this must be a process that doesn't match any of the
-     * prior conditions - sorry!
-     */
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
 
 static orte_process_name_t get_route(orte_process_name_t *target)
 {
-    orte_process_name_t *ret;
+    orte_process_name_t *ret, daemon;
     int rc;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
@@ -450,6 +321,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
+    /******     HNP AND DAEMONS ONLY     ******/
+    
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         /* if I am a daemon, route this via the HNP */
@@ -461,7 +334,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         /* if I am the HNP or a tool, then I stored a route to
          * this job family, so look it up
          */
-        rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
+        rc = opal_hash_table_get_value_uint32(&jobfam_list,
                                               ORTE_JOB_FAMILY(target->jobid), (void**)&ret);
         if (ORTE_SUCCESS == rc) {
             /* got a good result - return it */
@@ -474,24 +347,39 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
 
-    /* check exact matches */
-    rc = opal_hash_table_get_value_uint64(&peer_list,
-                                          orte_util_hash_name(target), (void**)&ret);
-    if (ORTE_SUCCESS == rc) {
-        /* got a good result - return it */
+    /* if this is going to the HNP, send direct */
+    if (ORTE_PROC_MY_HNP->jobid == target->jobid &&
+        ORTE_PROC_MY_HNP->vpid == target->vpid) {
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                             "%s routing not enabled - going direct",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        ret = target;
         goto found;
     }
     
-    /* didn't find an exact match - check to see if a route for this job was defined */
-    rc = opal_hash_table_get_value_uint32(&vpid_wildcard_list,
-                                          target->jobid, (void**)&ret);
-    if (ORTE_SUCCESS == rc) {
-        /* got a good result - return it */
+    daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+    /* find out what daemon hosts this proc */
+    if (ORTE_VPID_INVALID == (daemon.vpid = orte_ess.proc_get_daemon(target))) {
+        /* we don't recognize this one - if we are the HNP, all
+         * we can do is abort
+         */
+        if (orte_process_info.hnp) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            ret = ORTE_NAME_INVALID;
+            goto found;
+        }
+        /* if we are not the HNP, send it to the wildcard location */
+        ret = &wildcard_route;
         goto found;
     }
     
-    /* default to wildcard route */
-    ret = &wildcard_route;
+    /* if the daemon is me, then send direct to the target! */
+    if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
+        ret = target;
+    } else {
+        /* otherwise, we send it directly to that daemon */
+        ret = &daemon;
+    }
 
  found:
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
@@ -645,20 +533,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-            /* if ndat is NULL, then this is being called during init,
-             * so just seed the routing table with a path back to the HNP...
-             */
-            if (ORTE_SUCCESS != (rc = update_route(ORTE_PROC_MY_HNP, ORTE_PROC_MY_HNP))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
             /* set the wildcard route for anybody whose name we don't recognize
              * to be the HNP
              */
             wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
             wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
             
-            /* set our lifeline to the the HNP - we will abort if that connection is lost */
+            /* set our lifeline to the HNP - we will abort if that connection is lost */
             lifeline = ORTE_PROC_MY_HNP;
             
             /* daemons will send their contact info back to the HNP as
@@ -923,32 +804,15 @@ static int route_lost(const orte_process_name_t *route)
 }
 
 
-
-/******* stub functions - to be implemented ******/
 static bool route_is_defined(const orte_process_name_t *target)
 {
+    /* find out what daemon hosts this proc */
+    if (ORTE_VPID_INVALID == orte_ess.proc_get_daemon((orte_process_name_t*)target)) {
+        return false;
+    }
+    
     return true;
 }
-
-/*************************************/
-typedef struct {
-    opal_list_item_t super;
-    orte_vpid_t vpid;
-    opal_bitmap_t relatives;
-} orte_routed_tree_t;
-
-static void construct(orte_routed_tree_t *rt)
-{
-    rt->vpid = ORTE_VPID_INVALID;
-    OBJ_CONSTRUCT(&rt->relatives, opal_bitmap_t);
-}
-static void destruct(orte_routed_tree_t *rt)
-{
-    OBJ_DESTRUCT(&rt->relatives);
-}
-OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
-                   construct, destruct);
-
 
 static int binomial_tree(int rank, int parent, int me, int num_procs,
                          int *nchildren, opal_list_t *childrn, opal_bitmap_t *relatives)
@@ -1083,8 +947,45 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
             opal_list_append(children, &nm->item);
         }
     }
+    
     /* return my parent's vpid */
     return my_parent.vpid;
+}
+
+static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
+{
+    opal_list_item_t *item;
+    orte_routed_tree_t *child;
+    
+    /* if I am anything other than a daemon or the HNP, this
+     * is a meaningless command as I am not allowed to route
+     */
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
+        return false;
+    }
+    
+    /* quick check: if root == target, then the answer is always true! */
+    if (root == target) {
+        return true;
+    }
+    
+    /* check the list of children to see if either their vpid
+     * matches target, or the target bit is set in their bitmap
+     */
+    
+    /* first find the specified child */
+    for (item = opal_list_get_first(&my_children);
+         item != opal_list_get_end(&my_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_routed_tree_t*)item;
+        if (child->vpid == root) {
+            /* now see if the target lies below this child */
+            return opal_bitmap_is_set_bit(&child->relatives, target);
+        }
+    }
+    
+    /* only get here if we have no children or we didn't find anything */
+    return false;
 }
 
 static int get_wireup_info(opal_buffer_t *buf)
@@ -1113,42 +1014,6 @@ static int get_wireup_info(opal_buffer_t *buf)
     }
 
     return ORTE_SUCCESS;
-}
-
-static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
-{
-    opal_list_item_t *item;
-    orte_routed_tree_t *child;
-    
-    /* if I am anything other than a daemon or the HNP, this
-     * is a meaningless command as I am not allowed to route
-     */
-    if (!orte_process_info.daemon && !orte_process_info.hnp) {
-        return false;
-    }
-
-    /* quick check: if root == target, then the answer is always true! */
-    if (root == target) {
-        return true;
-    }
-    
-    /* check the list of children to see if either their vpid
-     * matches target, or the target bit is set in their bitmap
-     */
-    
-    /* first find the specified child */
-    for (item = opal_list_get_first(&my_children);
-         item != opal_list_get_end(&my_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_routed_tree_t*)item;
-        if (child->vpid == root) {
-            /* now see if the target lies below this child */
-            return opal_bitmap_is_set_bit(&child->relatives, target);
-        }
-    }
-    
-    /* only get here if we have no children or we didn't find anything */
-    return false;
 }
 
 

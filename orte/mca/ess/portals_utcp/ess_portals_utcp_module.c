@@ -50,11 +50,14 @@ orte_ess_base_module_t orte_ess_portals_utcp_module = {
     rte_finalize,
     rte_abort,
     proc_is_local,
+    NULL,   /* proc_get_daemon is only used in ORTE */
     proc_get_hostname,
     proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
+    NULL,   /* add_pidmap is only used in ORTE */
+    NULL,   /* update_nidmap is only used in ORTE */
     NULL /* ft_event */
 };
 

@@ -87,11 +87,10 @@ static void send_callback(int status,
     }
 }
 
-int orte_plm_base_orted_exit(void)
+int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 {
     int rc;
     opal_buffer_t cmd;
-    orte_daemon_cmd_flag_t command = ORTE_DAEMON_EXIT_CMD;
     orte_job_t *daemons;
     orte_proc_t **procs;
     
@@ -99,8 +98,8 @@ int orte_plm_base_orted_exit(void)
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* flag that a shutdown is in progress so all heartbeats stop */
-    orte_shutdown_in_progress = true;
+    /* stop all heartbeats */
+    orte_heartbeat_rate = 0;
     
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
     
@@ -139,9 +138,11 @@ int orte_plm_base_orted_exit(void)
                              "%s plm:base:orted_cmd:orted_exit abnormal term ordered",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
-        /* be sure I get the command */
-        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-        
+        /* turn off message routing - no way to guarantee that
+         * the route still exists
+         */
+        orte_routing_is_enabled = false;
+
         /* now send the command one daemon at a time using a non-blocking
          * send - let the callback function keep track of how many
          * complete - it will delete the event if they all do.
@@ -195,14 +196,19 @@ int orte_plm_base_orted_exit(void)
             ev = NULL;
         }
         
+        /* be sure I get the command */
+        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmd, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+        
         /* if all the sends didn't go, or we couldn't send to
          * all daemons, then report that */
         if (num_reported < num_being_sent ||
             num_being_sent < (daemons->num_procs-1)) {
+            OBJ_DESTRUCT(&cmd);
             return ORTE_ERR_SILENT;
         }
 
         /* if all sends went out, return success */
+        OBJ_DESTRUCT(&cmd);
         return ORTE_SUCCESS;
     }
     

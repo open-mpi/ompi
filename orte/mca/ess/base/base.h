@@ -85,7 +85,7 @@ ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
  */
 ORTE_DECLSPEC int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
                                              opal_pointer_array_t *nidmap,
-                                             opal_value_array_t *pmap, orte_vpid_t *num_procs);
+                                             orte_jmap_t *jmap);
 
 ORTE_DECLSPEC orte_pmap_t* orte_ess_base_lookup_pmap(opal_pointer_array_t *jobmap, orte_process_name_t *proc);
 
