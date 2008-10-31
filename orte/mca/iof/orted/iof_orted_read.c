@@ -75,25 +75,19 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 #endif  /* !defined(__WINDOWS__) */
     
     if (numbytes <= 0) {
-        if (0 == numbytes) {
-            /* child process closed connection - close the fd */
-            close(fd);
-            goto CLEAN_RETURN;
-        }
-        /* either we have a connection error or it was a non-blocking read */
-        
-        /* non-blocking, retry */
-        if (EAGAIN == errno || EINTR == errno) {
-            OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
-            return;
-        } 
+        if (0 > numbytes) {
+            /* either we have a connection error or it was a non-blocking read */
+            if (EAGAIN == errno || EINTR == errno) {
+                /* non-blocking, retry */
+                OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
+                return;
+            } 
 
-        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                             "%s iof:orted:read handler %s Error on connection:%d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&rev->name), fd));
-        
-        close(fd);
+            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                 "%s iof:orted:read handler %s Error on connection:%d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&rev->name), fd));
+        }
         goto CLEAN_RETURN;
     }
     
@@ -142,6 +136,8 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 CLEAN_RETURN:
     /* delete the event from the event library */
     opal_event_del(&rev->ev);
+    close(rev->ev.ev_fd);
+    rev->ev.ev_fd = -1;
     if (NULL != buf) {
         OBJ_RELEASE(buf);
     }

@@ -163,12 +163,13 @@ static int orted_close(const orte_process_name_t* peer,
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
 
     /* The STDIN have a read event attached, while everything else
-     * have a sink. Therefore, we don't have to do anything special
-     * for them, the sink will empty the output queue.
+     * have a sink. We don't have to do anything special for sinks,
+     * they will dissapear when the output queue is empty.
      */
-    if( ORTE_IOF_STDIN == source_tag ) {
+    if( ORTE_IOF_STDIN & source_tag ) {
         opal_list_item_t *item, *next_item;
         orte_iof_read_event_t* rev;
+        int rev_fd;
 
         for( item = opal_list_get_first(&mca_iof_orted_component.read_events);
              item != opal_list_get_end(&mca_iof_orted_component.read_events);
@@ -182,8 +183,9 @@ static int orted_close(const orte_process_name_t* peer,
                 /* No need to delete the event, the destructor will automatically
                  * do it for us.
                  */
-                close(rev->ev.ev_fd);
+                rev_fd = rev->ev.ev_fd;
                 OBJ_RELEASE(item);
+                close(rev_fd);
             }
         }
     }
