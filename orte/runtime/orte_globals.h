@@ -371,6 +371,8 @@ typedef struct {
     opal_object_t super;
     /* jobid */
     orte_jobid_t job;
+    /* number of procs in this job */
+    orte_vpid_t num_procs;
     /* array of data for procs */
     opal_value_array_t pmap;
 } orte_jmap_t;
@@ -387,7 +389,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
 ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
 
 /* global variables used by RTE - instanced in orte_globals.c */
-ORTE_DECLSPEC extern bool orte_reuse_daemons, orte_timing;
+ORTE_DECLSPEC extern bool orte_timing;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
@@ -406,7 +408,6 @@ ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
-ORTE_DECLSPEC extern opal_pointer_array_t orte_daemonmap;
 
 ORTE_DECLSPEC extern bool orte_hnp_is_allocated;
 ORTE_DECLSPEC extern bool orte_allocation_required;
@@ -422,7 +423,7 @@ ORTE_DECLSPEC extern int orte_debugger_check_rate;
 ORTE_DECLSPEC extern orte_trigger_event_t orte_exit, orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
-ORTE_DECLSPEC extern bool orte_shutdown_in_progress;
+ORTE_DECLSPEC extern bool orte_routing_is_enabled;
 
 ORTE_DECLSPEC extern int orte_heartbeat_rate;
 ORTE_DECLSPEC extern int orte_startup_timeout;

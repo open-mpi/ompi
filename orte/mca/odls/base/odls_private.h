@@ -80,8 +80,7 @@ typedef struct orte_odls_job_t {
     orte_std_cntr_t     total_slots_alloc;
     orte_vpid_t         num_procs;
     int32_t             num_local_procs;
-    opal_value_array_t  procmap;                /* map of procs/node, local ranks */
-    opal_byte_object_t  *pmap;                  /* byte object version of procmap */
+    opal_byte_object_t  *pmap;                  /* local copy of pidmap byte object */
     opal_buffer_t       collection_bucket;
     opal_buffer_t       local_collection;
     orte_grpcomm_coll_t collective_type;

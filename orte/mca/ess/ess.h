@@ -71,6 +71,16 @@ typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report) __opal_
 typedef bool (*orte_ess_base_module_proc_is_local_fn_t)(orte_process_name_t *proc);
 
 /**
+ * Get the vpid of the daemon who hosts the specified proc
+ *
+ * In order to route messages to the correct place, the RML
+ * and routed modules need to know the vpid of the daemon
+ * that hosts the intended recipient. This API accesses
+ * the pidmap/nidmap to retrieve that info
+ */
+typedef orte_vpid_t (*orte_ess_base_module_proc_get_daemon_fn_t)(orte_process_name_t *proc);
+
+/**
  * Get the hostname where a proc resides
  *
  * MPI procs need to know the hostname where a specified proc resides.
@@ -110,7 +120,27 @@ typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_pr
  */
 typedef int (*orte_ess_base_module_update_arch_fn_t)(orte_process_name_t *proc, uint32_t arch);
 
+/**
+ * Add a pidmap
+ *
+ * When a job is dynamically launched via comm_spawn, the pre-existing daemons need to
+ * update their knowledge of the process map within the job so they can properly do
+ * things like route messages. This API allows daemons - and anyone else who wants to - to
+ * add a pidmap for a new job
+ */
+typedef int (*orte_ess_base_module_add_pidmap_fn_t)(orte_jobid_t job, opal_byte_object_t *bo);
 
+/**
+ * Update a nidmap
+ *
+ * When a job is dynamically launched via comm_spawn, the pre-existing daemons need to
+ * update their knowledge of the node map that contains info on what daemon resides
+ * on which nodes
+ */
+typedef int (*orte_ess_base_module_update_nidmap_fn_t)(opal_byte_object_t *bo);
+
+    
+    
 /**
  * Handle fault tolerance updates
  *
@@ -129,11 +159,14 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_finalize_fn_t              finalize;
     orte_ess_base_module_abort_fn_t                 abort;
     orte_ess_base_module_proc_is_local_fn_t         proc_is_local;
+    orte_ess_base_module_proc_get_daemon_fn_t       proc_get_daemon;
     orte_ess_base_module_proc_get_hostname_fn_t     proc_get_hostname;
     orte_ess_base_module_proc_get_arch_fn_t         proc_get_arch;
     orte_ess_base_module_proc_get_local_rank_fn_t   get_local_rank;
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
     orte_ess_base_module_update_arch_fn_t           update_arch;
+    orte_ess_base_module_add_pidmap_fn_t            add_pidmap;
+    orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
     orte_ess_base_module_ft_event_fn_t              ft_event;
 };
 typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_1_0_0_t;

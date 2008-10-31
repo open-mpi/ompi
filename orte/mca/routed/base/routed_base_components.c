@@ -40,6 +40,18 @@ int orte_routed_base_open(void)
 
 #else
 
+static void construct(orte_routed_tree_t *rt)
+{
+    rt->vpid = ORTE_VPID_INVALID;
+    OBJ_CONSTRUCT(&rt->relatives, opal_bitmap_t);
+}
+static void destruct(orte_routed_tree_t *rt)
+{
+    OBJ_DESTRUCT(&rt->relatives);
+}
+OBJ_CLASS_INSTANCE(orte_routed_tree_t, opal_list_item_t,
+                   construct, destruct);
+
 int orte_routed_base_output = -1;
 orte_routed_module_t orte_routed;
 opal_list_t orte_routed_base_components;

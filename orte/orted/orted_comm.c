@@ -80,6 +80,9 @@
 /*
  * Globals
  */
+static bool relay_is_required;
+static bool exit_after_relay;
+
 static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
@@ -254,6 +257,10 @@ CLEANUP:
         OBJ_RELEASE(buffer);
     }
     OBJ_RELEASE(mev);
+    /* see if we need to exit */
+    if (exit_after_relay) {
+        orte_trigger_event(&orte_exit);
+    }
 }
 
 void orte_daemon_recv(int status, orte_process_name_t* sender,
@@ -380,9 +387,13 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         buffer->unpack_ptr = unpack_ptr;
         /* setup an event to actually perform the relay */
         ORTE_MESSAGE_EVENT(&target, buffer, target_tag, send_relay);
+        /* flag that a relay is required */
+        relay_is_required = true;
         /* rewind the buffer to the right place for processing */
         buffer->unpack_ptr = save;
     } else {
+        /* flag that a relay is -not- required */
+        relay_is_required = false;
         /* rewind the buffer so we can process it correctly */
         buffer->unpack_ptr = unpack_ptr;
     }
@@ -605,7 +616,16 @@ static int process_commands(orte_process_name_t* sender,
             break;
             
             /****    EXIT COMMAND    ****/
-        case ORTE_DAEMON_EXIT_CMD:
+        case ORTE_DAEMON_EXIT_WITH_REPLY_CMD:
+            /* disable routing - we need to do this
+             * because daemons exit in an uncoordinated fashion.
+             * Thus, our routes are being dismantled, so we can't
+             * trust that any given route still exists
+             */
+            orte_routing_is_enabled = false;
+            /* if we are the HNP, kill our local procs and
+             * flag we are exited - but don't yet exit
+             */
             if (orte_process_info.hnp) {
                 orte_job_t *daemons;
                 orte_proc_t **procs;
@@ -627,12 +647,65 @@ static int process_commands(orte_process_name_t* sender,
                 /* all done! */
                 return ORTE_SUCCESS;
             }
-            /* eventually, we need to revise this so we only
-             * exit if all our children are dead. For now, treat
-             * the same as a "hard kill" command
+            /* if we are not the HNP, send a message to the HNP telling
+             * it we are leaving - and then trigger our exit
              */
             if (orte_debug_daemons_flag) {
                 opal_output(0, "%s orted_cmd: received exit",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* send a state update so the HNP knows we are "gone" */
+            {
+                opal_buffer_t ack;
+                orte_proc_state_t state=ORTE_PROC_STATE_TERMINATED;
+                orte_exit_code_t exit_code=0;
+                orte_plm_cmd_flag_t cmd = ORTE_PLM_UPDATE_PROC_STATE;
+                
+                OBJ_CONSTRUCT(&ack, opal_buffer_t);
+                opal_dss.pack(&ack, &cmd, 1, ORTE_PLM_CMD);
+                opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID);        
+                opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID);        
+                opal_dss.pack(&ack, &state, 1, ORTE_PROC_STATE);        
+                opal_dss.pack(&ack, &exit_code, 1, ORTE_EXIT_CODE);
+                orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
+                OBJ_DESTRUCT(&ack);
+            }
+            /* trigger our appropriate exit procedure
+             * NOTE: this event will fire -after- any zero-time events
+             * so any pending relays -do- get sent first
+             */
+            if (relay_is_required) {
+                exit_after_relay = true;
+            } else {
+                orte_trigger_event(&orte_exit);
+            }
+            return ORTE_SUCCESS;
+            break;
+
+            /****    EXIT_NO_REPLY COMMAND    ****/
+        case ORTE_DAEMON_EXIT_NO_REPLY_CMD:
+            /* disable routing - we need to do this
+             * because daemons exit in an uncoordinated fashion.
+             * Thus, our routes are being dismantled, so we can't
+             * trust that any given route still exists
+             */
+            orte_routing_is_enabled = false;
+            /* if we are the HNP, kill our local procs and
+             * flag we are exited - but don't yet exit
+             */
+            if (orte_process_info.hnp) {
+                /* if we are the HNP, ensure our local procs are terminated */
+                orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+                /* There is nothing more to do here - actual exit will be
+                 * accomplished by the plm
+                 */
+                return ORTE_SUCCESS;
+            }
+            /* if we are not the HNP, don't send any messages - just
+             * trigger our exit
+             */
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received exit_no_reply",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
             /* trigger our appropriate exit procedure
@@ -642,7 +715,7 @@ static int process_commands(orte_process_name_t* sender,
             orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;
-
+            
             /****    HALT VM COMMAND    ****/
         case ORTE_DAEMON_HALT_VM_CMD:
             if (orte_debug_daemons_flag) {

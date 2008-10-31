@@ -589,7 +589,6 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     int32_t *nodes;
     orte_proc_t **procs;
     orte_vpid_t i;
-    int8_t *tmp, flag;
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
     orte_node_rank_t *nrank;
@@ -644,38 +643,6 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     }
     free(nrank);
     
-    /* transfer and pack the app_idx in one pack */
-    tmp = (int8_t*)malloc(jdata->num_procs);
-    for (i=0; i < jdata->num_procs; i++) {
-        tmp[i] = procs[i]->app_idx;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, tmp, jdata->num_procs, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    free(tmp);
-   
-    /* are there cpu_list strings? */
-    if (jdata->map->cpu_lists) {
-        flag = (int)true;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        for (i=0; i < jdata->num_procs; i++) {
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &procs[i]->slot_list, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc; 
-            }
-        }
-    } else {
-        flag = (int)false;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
     OBJ_DESTRUCT(&buf);
@@ -685,17 +652,13 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
 
 
 int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
-                            opal_value_array_t *procs, int8_t **app_idx,
-                            char ***slot_str)
+                            opal_value_array_t *procs)
 {
     orte_vpid_t i, num_procs;
     orte_pmap_t pmap;
     int32_t *nodes;
     orte_local_rank_t *local_rank;
     orte_node_rank_t *node_rank;
-    int8_t *idx;
-    int8_t flag;
-    char **slots;
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc;
@@ -758,46 +721,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     free(nodes);
     free(local_rank);
     free(node_rank);
-    
-    /* only daemons/HNPs need the rest of the data, so if
-     * we aren't one of those, we are done!
-     */
-    if (!orte_process_info.hnp &&
-        !orte_process_info.daemon) {
-        OBJ_DESTRUCT(&buf);
-        return ORTE_SUCCESS;
-    }
-    
-    /* allocate memory for app_idx */
-    idx = (int8_t*)malloc(num_procs);
-    /* unpack app_idx in one shot */
-    n=num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, idx, &n, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    /* hand the array back to the caller */
-    *app_idx = idx;
-
-    /* unpack flag to indicate if slot_strings are present */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &flag, &n, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (flag) {
-        /* allocate space */
-        slots = (char**)malloc(num_procs * sizeof(char*));
-        for (i=0; i < num_procs; i++) {
-            n=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &slots[i], &n, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        *slot_str = slots;
-    }
     
     OBJ_DESTRUCT(&buf);
     return ORTE_SUCCESS;

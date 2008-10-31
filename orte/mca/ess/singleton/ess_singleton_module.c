@@ -45,6 +45,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -68,22 +69,28 @@ static void set_handler_default(int sig)
 static int rte_init(char flags);
 static int rte_finalize(void);
 static bool proc_is_local(orte_process_name_t *proc);
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
+static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo);
+static int update_nidmap(opal_byte_object_t *bo);
 
 orte_ess_base_module_t orte_ess_singleton_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
     proc_is_local,
+    proc_get_daemon,
     proc_get_hostname,
     proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
+    add_pidmap,
+    update_nidmap,
     NULL /* ft_event */
 };
 
@@ -181,6 +188,7 @@ static int rte_init(char flags)
     pmap.node_rank = 0;
     pmap.node = 0;
     opal_value_array_set_item(&jmap->pmap, 0, &pmap);
+    jmap->num_procs = 1;
     
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup())) {
@@ -430,19 +438,36 @@ static bool proc_is_local(orte_process_name_t *proc)
     
     if (nid->daemon == ORTE_PROC_MY_DAEMON->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                             "%s ess:env: proc %s is LOCAL",
+                             "%s ess:singleton: proc %s is LOCAL",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
         return true;
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s is REMOTE",
+                         "%s ess:singleton: proc %s is REMOTE",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
     return false;
     
+}
+
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
+{
+    orte_nid_t *nid;
+    
+    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+        return ORTE_VPID_INVALID;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:singleton: proc %s is hosted by daemon %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         ORTE_VPID_PRINT(nid->daemon)));
+    
+    return nid->daemon;
 }
 
 static char* proc_get_hostname(orte_process_name_t *proc)
@@ -536,3 +561,31 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     
     return pmap->node_rank;
 }
+
+static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo)
+{
+    orte_jmap_t *jmap;
+    int ret;
+    
+    jmap = OBJ_NEW(orte_jmap_t);
+    jmap->job = job;
+    opal_pointer_array_add(&jobmap, jmap);
+    
+    /* build the pmap */
+    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jmap->num_procs, &jmap->pmap))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;
+}
+
+static int update_nidmap(opal_byte_object_t *bo)
+{
+    int rc;
+    /* decode the nidmap - the util will know what to do */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &nidmap))) {
+        ORTE_ERROR_LOG(rc);
+    }    
+    return rc;
+}
+

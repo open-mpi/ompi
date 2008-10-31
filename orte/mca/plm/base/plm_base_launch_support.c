@@ -58,6 +58,7 @@ static int orte_plm_base_report_launched(orte_jobid_t job);
 
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
+    orte_job_t *jdatorted;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -87,27 +88,28 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         opal_byte_object_t bo;
         int i;
         orte_nid_t **nodes;
+        opal_pointer_array_t dummy;
         
         /* construct a nodemap */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* construct the daemon map, if required - the decode function
-         * knows what to do
-         */
-        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo, &orte_daemonmap))) {
+        OBJ_CONSTRUCT(&dummy, opal_pointer_array_t);
+        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo, &dummy))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /* print-out the map */
-        nodes = (orte_nid_t**)orte_daemonmap.addr;
-        for (i=0; i < orte_daemonmap.size; i++) {
+        nodes = (orte_nid_t**)dummy.addr;
+        for (i=0; i < dummy.size; i++) {
             if (NULL != nodes[i]) {
                 fprintf(stderr, "NIDMAP: name %s daemon %s arch %0x\n",
                         nodes[i]->name, ORTE_VPID_PRINT(nodes[i]->daemon), nodes[i]->arch);
+                OBJ_RELEASE(nodes[i]);
             }
         }
+        OBJ_DESTRUCT(&dummy);
     }
 #endif
     
@@ -129,6 +131,26 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
                        ORTE_VPID_PRINT(jdata->num_procs));
         orte_finalize();
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    }
+    
+    /* get the orted job data object */
+    if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    if (orte_process_info.num_procs != jdatorted->num_procs) {
+        /* more daemons are being launched - update the routing tree to
+         * ensure that the HNP knows how to route messages via
+         * the daemon routing tree - this needs to be done
+         * here to avoid potential race conditions where the HNP
+         * hasn't unpacked its launch message prior to being
+         * asked to communicate.
+         */
+        orte_process_info.num_procs = jdatorted->num_procs;
+        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
     /*** RHC: USER REQUEST TO TIE-OFF STDXXX TO /DEV/NULL
@@ -356,13 +378,6 @@ static void process_orted_launch_report(int fd, short event, void *data)
     pdatorted[mev->sender.vpid]->rml_uri = strdup(rml_uri);
     free(rml_uri);
 
-    /* set the route to be direct */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_route(&mev->sender, &mev->sender))) {
-        ORTE_ERROR_LOG(rc);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-
     /* get the remote arch */
     idx = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &arch, &idx, OPAL_INT32))) {
@@ -464,17 +479,6 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
                          "%s plm:base:daemon_callback completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* all done launching - update the num_procs in my local structure if required
-     * so that any subsequent communications are correctly routed
-     */
-    if (orte_process_info.num_procs != jdatorted->num_procs) {
-        orte_process_info.num_procs = jdatorted->num_procs;
-        /* update the routing tree */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-    
     /* if a tree-launch was underway, clear out the cmd */
     if (NULL != orte_tree_launch_cmd) {
         OBJ_RELEASE(orte_tree_launch_cmd);
@@ -505,7 +509,6 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     pid_t pid;
     orte_job_t *jdata;
     orte_proc_t **procs;
-    orte_process_name_t proc;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -540,9 +543,6 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     }
     procs = (orte_proc_t**)(jdata->procs->addr);
     
-    /* setup the process name */
-    proc.jobid = jobid;
-    
     /* the daemon will report the vpid, state, and pid of each
      * process it launches - we need the pid in particular so
      * that any debuggers can attach to the process
@@ -573,23 +573,6 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
             ORTE_ERROR_LOG(rc);
             app_launch_failed = true;
             goto CLEANUP;
-        }
-        
-        /* it is possible for a race condition to exist when the HNP does not have
-         * local procs whereby the HNP will need to communicate to a remote
-         * proc before it decodes the launch message itself and sets all the routes.
-         * This has been seen in cases where no local procs are launched and
-         * a debugger needs to attach to the job.
-         * To support that situation, go ahead and update the route here
-         */
-        proc.vpid = vpid;
-        /* if the sender is me, the route is direct to avoid infinite loops. We
-         * know the jobid is the same since the sender was another daemon
-         */
-        if (mev->sender.vpid == ORTE_PROC_MY_NAME->vpid) {
-            orte_routed.update_route(&proc, &proc);
-        } else {
-            orte_routed.update_route(&proc, &mev->sender);
         }
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,

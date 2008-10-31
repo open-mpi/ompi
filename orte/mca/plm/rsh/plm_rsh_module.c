@@ -79,6 +79,7 @@
 #include "orte/util/nidmap.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/routed/routed.h"
@@ -767,28 +768,6 @@ static void ssh_child(int argc, char **argv,
 
 static opal_buffer_t collected_uris;
 
-static int construct_daemonmap(opal_buffer_t *data)
-{
-    opal_byte_object_t *bo;
-    orte_std_cntr_t cnt;
-    int rc;
-    
-    /* extract the byte object holding the daemonmap */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    /* unpack the nodemap - this will free the bytes in bo */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &orte_daemonmap))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    return ORTE_SUCCESS;
-}
-
-
 /*
  * launch a set of daemons from a remote daemon
  */
@@ -796,16 +775,16 @@ static int remote_spawn(opal_buffer_t *launch)
 {
     opal_list_item_t *item;
     orte_vpid_t vpid;
-    orte_nid_t **nodes;
     int node_name_index1;
     int proc_vpid_index;
     char **argv = NULL;
-    char *prefix;
+    char *prefix, *hostname;
     int argc;
     int rc;
     bool failed_launch = true;
     pid_t pid;
     orte_std_cntr_t n;
+    opal_byte_object_t *bo;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: remote spawn called",
@@ -818,15 +797,17 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }            
     
-    /* construct the daemonmap, if required - the decode function
-     * will know what to do
-     */
-    if (ORTE_SUCCESS != (rc = construct_daemonmap(launch))) {
+    /* extract the byte object holding the nidmap */
+    n=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(launch, &bo, &n, OPAL_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    nodes = (orte_nid_t**)orte_daemonmap.addr;
-    vpid=ORTE_PROC_MY_NAME->vpid;
+    /* update our nidmap - this will free data in the byte object */
+    if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
     
     /* clear out any previous child info */
     while (NULL != (item = opal_list_remove_first(&mca_plm_rsh_component.children))) {
@@ -863,15 +844,16 @@ static int remote_spawn(opal_buffer_t *launch)
         orte_namelist_t *child = (orte_namelist_t*)item;
         vpid = child->name.vpid;
         
-        if (NULL == nodes[vpid]) {
-            opal_output(0, "%s NULL in daemonmap at position %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)vpid);
+        /* get the host where this daemon resides */
+        if (NULL == (hostname = orte_ess.proc_get_hostname(&child->name))) {
+            opal_output(0, "%s unable to get hostname for daemon %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(vpid));
             rc = ORTE_ERR_NOT_FOUND;
             goto cleanup;
         }
         
         free(argv[node_name_index1]);
-        argv[node_name_index1] = strdup(nodes[vpid]->name);
+        argv[node_name_index1] = strdup(hostname);
         
         /* fork a child to exec the rsh/ssh session */
         pid = fork();
@@ -886,7 +868,7 @@ static int remote_spawn(opal_buffer_t *launch)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: launching on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nodes[vpid]->name));
+                                 hostname));
             
             /* do the ssh launch - this will exit if it fails */
             ssh_child(argc, argv, vpid, proc_vpid_index);
@@ -1334,8 +1316,10 @@ int orte_plm_rsh_terminate_orteds(void)
 {
     int rc;
     
-    /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit())) {
+    /* now tell them to die - we need them to "phone home", though,
+     * so we can know that they have exited
+     */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_WITH_REPLY_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
     

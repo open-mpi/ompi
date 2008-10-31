@@ -563,10 +563,6 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer, int sd)
     peer->peer_state = MCA_OOB_TCP_CONNECTED;
     peer->peer_retries = 0;
 
-    /* Since we have a direct connection established to this peer, use
-       the connection as a direct route between peers */
-    orte_routed.update_route(&peer->peer_name, &peer->peer_name);
-
     if(opal_list_get_size(&peer->peer_send_queue) > 0) {
         if(NULL == peer->peer_send_msg) {
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)

@@ -49,8 +49,7 @@ ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr, opal_point
 
 ORTE_DECLSPEC int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr, orte_vpid_t *num_procs,
-                                          opal_value_array_t *procs, int8_t **app_idx,
-                                          char ***slot_str);
+                                          opal_value_array_t *procs);
 
 
 END_C_DECLS

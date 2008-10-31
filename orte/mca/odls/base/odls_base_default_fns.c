@@ -71,9 +71,6 @@
 
 #include "orte/mca/odls/base/odls_private.h"
 
-static int8_t *app_idx;
-static char **slot_str=NULL;
-
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -82,17 +79,21 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 {
     int rc;
     orte_job_t *jdata;
+    orte_proc_t **procs;
     orte_job_map_t *map;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
     int32_t numbytes;
     int8_t flag;
+    int8_t *tmp;
+    orte_vpid_t i;
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
+    procs = (orte_proc_t**)jdata->procs->addr;
     
     /* get a pointer to the job map */
     map = jdata->map;
@@ -190,6 +191,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the number of procs in this launch */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_procs, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the total slots allocated to us */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->total_slots_alloc, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
@@ -237,6 +244,38 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     /* release the data since it has now been copied into our buffer */
     free(bo.bytes);
     
+    /* transfer and pack the app_idx array for this job in one pack */
+    tmp = (int8_t*)malloc(jdata->num_procs);
+    for (i=0; i < jdata->num_procs; i++) {
+        tmp[i] = procs[i]->app_idx;
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, tmp, jdata->num_procs, OPAL_INT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(tmp);
+    
+    /* are there cpu_list strings? */
+    if (jdata->map->cpu_lists) {
+        flag = (int8_t)true;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        for (i=0; i < jdata->num_procs; i++) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &procs[i]->slot_list, 1, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc; 
+            }
+        }
+    } else {
+        flag = (int8_t)false;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
 
@@ -244,7 +283,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                                                 orte_jobid_t *job)
 {
     int rc, ret;
-    orte_vpid_t j;
+    orte_vpid_t j, host_daemon;
     orte_odls_child_t *child;
     orte_std_cntr_t cnt;
     orte_process_name_t proc, daemon;
@@ -252,13 +291,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     opal_buffer_t wireup;
     opal_byte_object_t *bo;
     int32_t numbytes;
-    orte_nid_t *node;
-    orte_pmap_t *pmap;
     opal_buffer_t alert;
     opal_list_item_t *item;
     orte_namelist_t *nm;
     opal_list_t daemon_tree;
     int8_t flag;
+    int8_t *app_idx;
+    char **slot_str=NULL;
     orte_jobid_t debugger;
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
@@ -283,10 +322,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* retain a copy for downloading to child processes */
     opal_dss.copy((void**)&orte_odls_globals.dmap, bo, OPAL_BYTE_OBJECT);
     
-    /* construct the daemon map, if required - the decode function
+    /* update our local nidmap, if required - the decode function
      * knows what to do - it will also free the bytes in the bo
      */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &orte_daemonmap))) {
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:construct updating nidmap",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
+    if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -408,6 +451,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     
     /* UNPACK JOB-SPECIFIC DATA */
+    /* unpack the number of procs in this launch */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_procs, &cnt, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }    
     /* unpack the total slots allocated to us */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->total_slots_alloc, &cnt, ORTE_STD_CNTR))) {
@@ -458,36 +507,62 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* retain a copy for downloading to child processes */
     opal_dss.copy((void**)&jobdat->pmap, bo, OPAL_BYTE_OBJECT);
     /* decode the pidmap  - this will also free the bytes in bo */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_pidmap(bo, &jobdat->num_procs, &jobdat->procmap, &app_idx, &slot_str))) {
+    if (ORTE_SUCCESS != (rc = orte_ess.add_pidmap(jobdat->jobid, bo))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
    
+    /* allocate memory for app_idx */
+    app_idx = (int8_t*)malloc(jobdat->num_procs);
+    /* unpack app_idx in one shot */
+    cnt=jobdat->num_procs;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, app_idx, &cnt, OPAL_INT8))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    
+    /* unpack flag to indicate if slot_strings are present */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    
+    if (flag) {
+        /* allocate space */
+        slot_str = (char**)malloc(jobdat->num_procs * sizeof(char*));
+        for (j=0; j < jobdat->num_procs; j++) {
+            cnt=1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &slot_str[j], &cnt, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                goto REPORT_ERROR;
+            }
+        }
+    }
+    
     /* get the daemon tree */
     OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
     orte_routed.get_routing_tree(ORTE_PROC_MY_NAME->jobid, &daemon_tree);
     
     /* cycle through the procs and find mine */
-    proc.jobid = *job;
+    proc.jobid = jobdat->jobid;
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
-        /* ident this proc's node */
-        pmap = (orte_pmap_t *) opal_value_array_get_item(&jobdat->procmap, j);
-        if (pmap->node < 0 || pmap->node >= orte_daemonmap.size) {
-            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-            rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        /* get the vpid of the daemon that is to host this proc */
+        if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&proc))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
             goto REPORT_ERROR;
         }
-        node = (orte_nid_t*)orte_daemonmap.addr[pmap->node];
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:constructing child list - checking proc %s on node %d with daemon %s",
+                             "%s odls:constructing child list - checking proc %s on daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j),
-                             pmap->node, ORTE_VPID_PRINT(node->daemon)));
+                             ORTE_VPID_PRINT(host_daemon)));
 
-        /* does this data belong to us? */
-        if (ORTE_PROC_MY_NAME->vpid == node->daemon) {
+        /* does this proc belong to us? */
+        if (ORTE_PROC_MY_NAME->vpid == host_daemon) {
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",
@@ -511,13 +586,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             opal_list_append(&orte_odls_globals.children, &child->super);
             opal_condition_signal(&orte_odls_globals.cond);
             OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-            /* set the routing info to be direct - we need to do this
-             * prior to launch as the procs may want to communicate right away
-             */
-            if (ORTE_SUCCESS != (rc = orte_routed.update_route(&proc, &proc))) {
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
-            }
         } else {            
             /* is this proc on a daemon in a branch of the daemon tree
              * that is below me? If so, then the daemon collective will
@@ -527,7 +595,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                  item != opal_list_get_end(&daemon_tree);
                  item = opal_list_get_next(item)) {
                 nm = (orte_namelist_t*)item;
-                if (orte_routed.proc_is_below(nm->name.vpid, node->daemon)) {
+                if (orte_routed.proc_is_below(nm->name.vpid, host_daemon)) {
                     /* add to the count for collectives */
                     jobdat->num_participating++;
                     /* remove this node from the tree so we don't count it again */
@@ -535,15 +603,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                     OBJ_RELEASE(item);
                     break;
                 }
-            }
-
-            /* set the routing info through the other daemon - we need to do this
-             * prior to launch as the procs may want to communicate right away
-             */
-            daemon.vpid = node->daemon;
-            if (ORTE_SUCCESS != (rc = orte_routed.update_route(&proc, &daemon))) {
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
             }
         }
     }
@@ -865,7 +924,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     opal_buffer_t alert;
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
-    orte_pmap_t *pmap;
+    orte_local_rank_t local_rank;
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -1075,8 +1134,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
          * We know - just live with it
          */
-        pmap = (orte_pmap_t*)opal_value_array_get_item(&jobdat->procmap, child->name->vpid);
-        asprintf(&value, "%lu", (unsigned long) pmap->local_rank);
+        local_rank = orte_ess.get_local_rank(child->name);
+        asprintf(&value, "%lu", (unsigned long) local_rank);
         opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
         free(value);
 
@@ -1387,23 +1446,21 @@ static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
 static void setup_singleton_jobdat(orte_jobid_t jobid)
 {
     orte_odls_job_t *jobdat;
-    orte_pmap_t pmap;
     int32_t one32;
     int8_t one8;
     orte_local_rank_t lrank;
     orte_node_rank_t nrank;
     opal_buffer_t buffer;
+    opal_byte_object_t *bo;
     int rc;
     
+    /* create a job tracking object for it */
     jobdat = OBJ_NEW(orte_odls_job_t);
     jobdat->jobid = jobid;
     jobdat->num_procs = 1;
     jobdat->num_local_procs = 1;
-    pmap.node = 0; /* since it is a singleton, it must be on the first node in array */
-    pmap.local_rank = 0;
-    pmap.node_rank = opal_list_get_size(&orte_odls_globals.children);
-    opal_value_array_set_item(&jobdat->procmap, 0, &pmap);
-    /* also need to setup a pidmap for it */
+    opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
+    /* need to setup a pidmap for it */
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID); /* num_procs */
     one32 = 0;
@@ -1414,10 +1471,14 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
     one8 = 0;
     opal_dss.pack(&buffer, &one8, 1, OPAL_INT8);  /* app_idx */
-    jobdat->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
-    opal_dss.unload(&buffer, (void**)&jobdat->pmap->bytes, &jobdat->pmap->size);
+    opal_dss.unload(&buffer, (void**)&bo->bytes, &bo->size);
     OBJ_DESTRUCT(&buffer);
-    opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
+    /* save a copy to send back to the proc */
+    opal_dss.copy((void**)&jobdat->pmap, bo, OPAL_BYTE_OBJECT);
+    /* update our ess data - this will release the byte object's data */
+    if (ORTE_SUCCESS != (rc = orte_ess.add_pidmap(jobid, bo))) {
+        ORTE_ERROR_LOG(rc);
+    }
     /* if we don't yet have a daemon map, then we have to generate one
      * to pass back to it
      */
@@ -1425,6 +1486,13 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
         orte_odls_globals.dmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
         /* construct a nodemap */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        /* we also need to update our local nidmap - copy the dmap
+         * as this will release the byte object's data
+         */
+        opal_dss.copy((void**)&bo, orte_odls_globals.dmap, OPAL_BYTE_OBJECT);
+        if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
             ORTE_ERROR_LOG(rc);
         }
     }

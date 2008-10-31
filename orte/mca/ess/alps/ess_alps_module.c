@@ -40,28 +40,33 @@ static int alps_set_name(void);
 static int rte_init(char flags);
 static int rte_finalize(void);
 static bool proc_is_local(orte_process_name_t *proc);
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
+static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo);
+static int update_nidmap(opal_byte_object_t *bo);
 
 orte_ess_base_module_t orte_ess_alps_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
     proc_is_local,
+    proc_get_daemon,
     proc_get_hostname,
     proc_get_arch,
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
+    add_pidmap,
+    update_nidmap,
     NULL /* ft_event */
 };
 
 static opal_pointer_array_t nidmap;
 static opal_pointer_array_t jobmap;
-static orte_vpid_t nprocs;
 
 
 static int rte_init(char flags)
@@ -95,6 +100,8 @@ static int rte_init(char flags)
             error = "orte_ess_base_tool_setup";
             goto error;
         }
+        /* as a tool, I don't need a nidmap - so just return now */
+        return ORTE_SUCCESS;
     } else {
         /* otherwise, I must be an application process - use
         * the default procedure to finish my setup
@@ -104,24 +111,25 @@ static int rte_init(char flags)
             error = "orte_ess_base_app_setup";
             goto error;
         }
-        
-        /* setup the nidmap arrays */
-        OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
-        opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
-        
-        /* setup array of jmaps */
-        OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
-        opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
-        jmap = OBJ_NEW(orte_jmap_t);
-        opal_pointer_array_add(&jobmap, jmap);
-        
-        /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                              &nidmap, &jmap->pmap, &nprocs))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_build_nidmap";
-            goto error;
-        }
+    }
+    
+    /* setup the nidmap arrays */
+    OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
+    opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
+    
+    /* setup array of jmaps */
+    OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
+    opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
+    jmap = OBJ_NEW(orte_jmap_t);
+    jmap->job = ORTE_PROC_MY_NAME->jobid;
+    opal_pointer_array_add(&jobmap, jmap);
+    
+    /* if one was provided, build my nidmap */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
+                                                          &nidmap, jmap))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ess_base_build_nidmap";
+        goto error;
     }
     
     return ORTE_SUCCESS;
@@ -151,26 +159,29 @@ static int rte_finalize(void)
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
+        /* as a tool, I didn't create a nidmap - so just return now */
+        return ret;
     } else {
-        /* otherwise, I must be an application process - deconstruct
-         * my nidmap and jobmap arrays
+        /* otherwise, I must be an application process
+         * use the default procedure to finish
          */
-        nids = (orte_nid_t**)nidmap.addr;
-        for (i=0; i < nidmap.size && NULL != nids[i]; i++) {
-            OBJ_RELEASE(nids[i]);
-        }
-        OBJ_DESTRUCT(&nidmap);
-        jmaps = (orte_jmap_t**)jobmap.addr;
-        for (i=0; i < jobmap.size && NULL != jmaps[i]; i++) {
-            OBJ_RELEASE(jmaps[i]);
-        }
-        OBJ_DESTRUCT(&jobmap);
-        
-        /* use the default procedure to finish */
         if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
     }
+    
+    
+    /* deconstruct my nidmap and jobmap arrays */
+    nids = (orte_nid_t**)nidmap.addr;
+    for (i=0; i < nidmap.size && NULL != nids[i]; i++) {
+        OBJ_RELEASE(nids[i]);
+    }
+    OBJ_DESTRUCT(&nidmap);
+    jmaps = (orte_jmap_t**)jobmap.addr;
+    for (i=0; i < jobmap.size && NULL != jmaps[i]; i++) {
+        OBJ_RELEASE(jmaps[i]);
+    }
+    OBJ_DESTRUCT(&jobmap);
     
     return ret;    
 }
@@ -199,6 +210,23 @@ static bool proc_is_local(orte_process_name_t *proc)
     
     return false;
     
+}
+
+static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
+{
+    orte_nid_t *nid;
+    
+    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+        return ORTE_VPID_INVALID;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
+                         "%s ess:alps: proc %s is hosted by daemon %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         ORTE_VPID_PRINT(nid->daemon)));
+    
+    return nid->daemon;
 }
 
 static char* proc_get_hostname(orte_process_name_t *proc)
@@ -293,6 +321,32 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     return pmap->node_rank;
 }
 
+static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo)
+{
+    orte_jmap_t *jmap;
+    int ret;
+    
+    jmap = OBJ_NEW(orte_jmap_t);
+    jmap->job = job;
+    opal_pointer_array_add(&jobmap, jmap);
+    
+    /* build the pmap */
+    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jmap->num_procs, &jmap->pmap))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;
+}
+
+static int update_nidmap(opal_byte_object_t *bo)
+{
+    int rc;
+    /* decode the nidmap - the util will know what to do */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &nidmap))) {
+        ORTE_ERROR_LOG(rc);
+    }    
+    return rc;
+}
 
 static int alps_set_name(void)
 {
