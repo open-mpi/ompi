@@ -60,11 +60,11 @@ static opal_list_item_t *cur_node_item = NULL;
 orte_rmaps_rank_file_map_t *rankmap = NULL;
 
 static int map_app_by_user_map(
-    orte_app_context_t* app,
-    orte_job_t* jdata,
-    orte_vpid_t vpid_start,
-    opal_list_t* nodes,
-    opal_list_t* procs)
+                               orte_app_context_t* app,
+                               orte_job_t* jdata,
+                               orte_vpid_t vpid_start,
+                               opal_list_t* nodes,
+                               opal_list_t* procs)
 {
 
     int rc = ORTE_SUCCESS;
@@ -78,29 +78,29 @@ static int map_app_by_user_map(
     }
 
     while (num_alloc < app->num_procs) {
-    /** see if any nodes remain unused and available. We need to do this check
-    * each time since we may remove nodes from the list (as they become fully
-    * used) as we cycle through the loop */
+        /** see if any nodes remain unused and available. We need to do this check
+         * each time since we may remove nodes from the list (as they become fully
+         * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
             /* No more nodes to allocate :( */
             orte_show_help("help-rmaps_rank_file.txt", "orte-rmaps-rf:alloc-error",
-                            true, app->num_procs, app->app);
+                           true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
 
-    /* Save the next node we can use before claiming slots, since
-    * we may need to prune the nodes list removing overused nodes.
-    * Wrap around to beginning if we are at the end of the list */
-    round_cnt=0;
-    if ( -1 != rankmap[vpid_start + num_alloc].rank) {
-        do {
-            if (opal_list_get_end(nodes) == opal_list_get_next(cur_node_item)) {
-                next = opal_list_get_first(nodes);
-                round_cnt++;
-            } else {
-                next = opal_list_get_next(cur_node_item);
-            }
-            /* Allocate a slot on this node */
+        /* Save the next node we can use before claiming slots, since
+         * we may need to prune the nodes list removing overused nodes.
+         * Wrap around to beginning if we are at the end of the list */
+        round_cnt=0;
+        if ( -1 != rankmap[vpid_start + num_alloc].rank) {
+            do {
+                if (opal_list_get_end(nodes) == opal_list_get_next(cur_node_item)) {
+                    next = opal_list_get_first(nodes);
+                    round_cnt++;
+                } else {
+                    next = opal_list_get_next(cur_node_item);
+                }
+                /* Allocate a slot on this node */
                 node = (orte_node_t*) cur_node_item;
                 cur_node_item = next;
                 if ( round_cnt == 2 ) {
@@ -108,21 +108,21 @@ static int map_app_by_user_map(
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                     return ORTE_ERR_BAD_PARAM; 
                 }
-        } while ( strcmp(node->name, rankmap[num_alloc + vpid_start].node_name));
-        node->slot_list = strdup(rankmap[num_alloc+vpid_start].slot_list);
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[num_alloc+vpid_start].rank, app->idx,
-            nodes, jdata->map->oversubscribe, true))) {
-            /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
-            * really isn't an error - we just need to break from the loop
-            * since the node is fully used up. For now, just don't report
-            * an error
-            */
-            if (ORTE_ERR_NODE_FULLY_USED != rc) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+            } while ( strcmp(node->name, rankmap[num_alloc + vpid_start].node_name));
+            node->slot_list = strdup(rankmap[num_alloc+vpid_start].slot_list);
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, rankmap[num_alloc+vpid_start].rank, app->idx,
+                                                                 nodes, jdata->map->oversubscribe, true))) {
+                /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
+                 * really isn't an error - we just need to break from the loop
+                 * since the node is fully used up. For now, just don't report
+                 * an error
+                 */
+                if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
         }
-    }
         ++num_alloc;
     }
     return ORTE_SUCCESS;
