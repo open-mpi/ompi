@@ -96,6 +96,8 @@ static int orte_iof_hnp_close(void)
         OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
         /* if the stdin event is active, delete it */
         if (NULL != mca_iof_hnp_component.stdinev && mca_iof_hnp_component.stdinev->active) {
+            /* this is being pedantic ... */
+            close(mca_iof_hnp_component.stdinev->ev.ev_fd);
             opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
         }
         /* cleanout all registered sinks */

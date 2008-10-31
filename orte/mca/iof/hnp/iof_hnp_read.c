@@ -102,7 +102,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                              "%s iof:hnp:read handler %s Error on connection:%d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&rev->name), fd));
-
+        close(fd);
         opal_event_del(&rev->ev);
         goto CLEAN_RETURN;
     }
