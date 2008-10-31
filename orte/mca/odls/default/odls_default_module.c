@@ -265,14 +265,14 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 fdnull = open("/dev/null", O_RDONLY, 0);
                 if(fdnull > i) {
                     dup2(fdnull, i);
-                    close(fdnull);
                 }
+                close(fdnull);
             }
             fdnull = open("/dev/null", O_RDONLY, 0);
             if(fdnull > opts.p_internal[1]) {
                 dup2(fdnull, opts.p_internal[1]);
-                close(fdnull);
             }
+            close(fdnull);
         }
 
         /* close all file descriptors w/ exception of
@@ -347,9 +347,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
-                
+                close(p[0]);
                 return ORTE_ERR_PIPE_READ_FAILURE;
-                break;
             } else if (0 == rc) {
                 /* Child was successful in exec'ing! */
                 break;
@@ -370,7 +369,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
-                
+                close(p[0]);
                 return i;
             }
         }
@@ -380,6 +379,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
             child->state = ORTE_PROC_STATE_LAUNCHED;
             child->alive = true;
         }
+        close(p[0]);
     }
     
     return ORTE_SUCCESS;

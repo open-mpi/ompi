@@ -74,7 +74,12 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     }
 #endif  /* !defined(__WINDOWS__) */
     
-    if (numbytes < 0) {
+    if (numbytes <= 0) {
+        if (0 == numbytes) {
+            /* child process closed connection - close the fd */
+            close(fd);
+            goto CLEAN_RETURN;
+        }
         /* either we have a connection error or it was a non-blocking read */
         
         /* non-blocking, retry */
@@ -88,10 +93,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&rev->name), fd));
         
-        
-        goto CLEAN_RETURN;
-    } else if (0 == numbytes) {
-        /* child process closed connection - close the fd */
         close(fd);
         goto CLEAN_RETURN;
     }

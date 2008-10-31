@@ -67,24 +67,28 @@
 int
 orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
 {
-    int ret;
-
-    /* first check to make sure we can do ptys */
-#if !OMPI_ENABLE_PTY_SUPPORT
-    opts->usepty = 0;
-#endif
+    int ret = -1;
 
     fflush(stdout);
 
+    /* first check to make sure we can do ptys */
 #if OMPI_ENABLE_PTY_SUPPORT
     if (opts->usepty) {
+        /**
+         * It has been reported that on MAC OS X 10.4 and prior one cannot
+         * safely close the writing side of a pty before completly reading
+         * all data inside.
+         * There seems to be two issues: first all pending data is
+         * discarded, and second it randomly generate kernel panics.
+         * Apparently this issue was fixed in 10.5 so by now we use the
+         * pty exactly as we use the pipes.
+         * This comment is here as a reminder.
+         */
         ret = opal_openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
                            (char*)NULL, (struct termios*)NULL, (struct winsize*)NULL);
-    } else {
-        ret = -1;
     }
 #else
-    ret = -1;
+    opts->usepty = 0;
 #endif
 
 #if defined(__WINDOWS__)
@@ -124,10 +128,8 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
     int ret;
     char *str;
 
-    if (!opts->usepty) {
-        close(opts->p_stdout[0]);
-    }
     close(opts->p_stdin[1]);
+    close(opts->p_stdout[0]);
     close(opts->p_stderr[0]);
     close(opts->p_internal[0]);
 
@@ -203,10 +205,8 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
 {
     int ret;
 
-    if (! opts->usepty) {
-        close(opts->p_stdout[1]);
-    }
     close(opts->p_stdin[0]);
+    close(opts->p_stdout[1]);
     close(opts->p_stderr[1]);
     close(opts->p_internal[1]);
 
