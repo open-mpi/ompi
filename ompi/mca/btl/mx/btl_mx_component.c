@@ -427,7 +427,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     mx_return_t status;
     uint32_t size, count;
     int32_t i;
-    uint64_t *nic_addrs;
+    uint64_t *nic_addrs = NULL;
     mca_btl_mx_addr_t *mx_addrs;
 
     *num_btl_modules = 0;
@@ -496,13 +496,11 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
                                    &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
             opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
                          status, mx_strerror(status) );
-            ompi_modex_send(&mca_btl_mx_component.super.btl_version, NULL, 0);
             return NULL;
         }
         
         if (0 == mca_btl_mx_component.mx_num_btls) {
             mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
-            ompi_modex_send(&mca_btl_mx_component.super.btl_version, NULL, 0);
             return NULL;
         }
 
@@ -530,13 +528,15 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
      */
     mca_btl_mx_component.mx_btls = malloc( mca_btl_mx_component.mx_num_btls * sizeof(mca_btl_base_module_t*) );
     if( NULL == mca_btl_mx_component.mx_btls ) {
-        opal_output( 0, "MX BTL no memory\n" );
+        if( NULL != nic_addrs) free( nic_addrs );
+        opal_output( 0, "MX BTL unable to allocate memory\n" );
         return NULL;
     }
 
     mx_addrs = (mca_btl_mx_addr_t*)calloc( mca_btl_mx_component.mx_num_btls, sizeof(mca_btl_mx_addr_t) );
     if( NULL == mx_addrs ) {
-        free( nic_addrs );
+        if( NULL != nic_addrs) free( nic_addrs );
+        opal_output( 0, "MX BTL unable to allocate memory\n" );
         return NULL;
     }
 
@@ -558,18 +558,22 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         BTL_MX_ADDR_HTON(mx_addrs[count]);
 #endif
         mca_btl_mx_component.mx_btls[count] = mx_btl;
-	count++;  /* one more succesfully initialized MX interface */
+        count++;  /* one more succesfully initialized MX interface */
     }
     mca_btl_mx_component.mx_num_btls = count;
     *num_btl_modules = count;
     if( 0 == count ) {
         /* No active BTL module */
+        free(nic_addrs);
+        free(mx_addrs);
+        free(mca_btl_mx_component.mx_btls);
+        mca_btl_mx_component.mx_btls = NULL;
         return NULL;
     }
 
     /* publish the MX addresses via the MCA framework */
     ompi_modex_send(&mca_btl_mx_component.super.btl_version, mx_addrs,
-			     sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls);
+                    sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls);
 
     free( nic_addrs );
     free( mx_addrs );
