@@ -217,7 +217,7 @@ orte_plm_xgrid_terminate_orteds(void)
 {
     int rc;
 
-    rc = orte_plm_base_orted_exit();
+    rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_WITH_REPLY_CMD);
     if (ORTE_SUCCESS != rc) {
 	rc = [mca_plm_xgrid_component.client terminateOrteds];
     }
