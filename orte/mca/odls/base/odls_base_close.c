@@ -49,7 +49,7 @@ int orte_odls_base_close(void)
     /* Close all available components (only one in this case)  */
 
     mca_base_components_close(orte_odls_globals.output, 
-                            &orte_odls_base.available_components, NULL);
+                              &orte_odls_base.available_components, NULL);
 
     /* All done */
 
