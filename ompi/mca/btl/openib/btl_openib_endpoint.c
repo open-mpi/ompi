@@ -1065,7 +1065,7 @@ unlock_rdma_local:
 void *mca_btl_openib_endpoint_invoke_error(void *context)
 {
     mca_btl_openib_endpoint_t *endpoint = (mca_btl_openib_endpoint_t*) context;
-    mca_btl_openib_module_t *btl;
+    mca_btl_openib_module_t *btl = NULL;
 
     if (NULL == endpoint) {
         int i;
