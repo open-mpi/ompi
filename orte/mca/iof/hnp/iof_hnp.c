@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -272,8 +272,9 @@ static int hnp_close(const orte_process_name_t* peer,
 {
     opal_list_item_t *item, *next_item;
 
-    if( ORTE_IOF_STDIN == source_tag ) {
+    if( ORTE_IOF_STDIN & source_tag ) {
         orte_iof_read_event_t* rev;
+        int rev_fd;
 
         for( item = opal_list_get_first(&mca_iof_hnp_component.read_events);
              item != opal_list_get_end(&mca_iof_hnp_component.read_events);
@@ -290,11 +291,12 @@ static int hnp_close(const orte_process_name_t* peer,
 
                 opal_list_remove_item(&mca_iof_hnp_component.read_events,
                                       item);
-                /* No need to delete the event, the destructor will automatically                              
-                 * do it for us.                                                                               
+                /* No need to delete the event, the destructor will automatically
+                 * do it for us.
                  */
-                close(rev->ev.ev_fd);
+                rev_fd = rev->ev.ev_fd;
                 OBJ_RELEASE(item);
+                close(rev_fd);
             }
         }
     }
@@ -369,6 +371,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         OBJ_RELEASE(output);
     }
 ABORT:
+    close(wev->fd);
     opal_event_del(&wev->ev);
     wev->pending = false;
     

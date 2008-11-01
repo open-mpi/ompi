@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -202,8 +202,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
 CLEAN_RETURN:
     /* if we read 0 bytes from the stdout/err/diag, there is
-     * nothing to output - we do not close these file descriptors,
-     * but we do terminate the event
+     * nothing to output - close these file descriptors,
+     * and terminate the event.
      */
     if (0 == numbytes) {
         close(fd);
