@@ -177,7 +177,6 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
                                     send_callback, 0);
         }
-        OBJ_DESTRUCT(&cmd); /* done with this */
         
         /* since we cannot know which daemons may/may not be alive,
          * setup an event so we will time out after giving the send
