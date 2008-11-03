@@ -10,8 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "config.h"
-
 #include "vt_thrd.h"
 #include "vt_metric.h"
 #include "vt_pform.h"

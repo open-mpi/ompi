@@ -24,6 +24,7 @@
 #include "vt_inttypes.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
+#include "vt_strdup.h"
 #include "vt_trc.h"
 #if defined (VT_OMPI) || defined (VT_OMP)
 #  include <omp.h>
@@ -94,8 +95,8 @@ static HashNode *register_region(long addr, char* func, char* file, int lno) {
   fid = vt_def_file(file);
   rid = vt_def_region(func, fid, lno, VT_NO_LNO, VT_DEF_GROUP, VT_FUNCTION);
   nhn = hash_put(addr, rid);
-  nhn->func = strdup(func);
-  nhn->file = strdup(file);
+  nhn->func = vt_strdup(func);
+  nhn->file = vt_strdup(file);
   nhn->lno  = lno;
   return nhn;
 }
@@ -286,8 +287,13 @@ void VT_Dyn_attach()
     }
     default:
     {
-      /* disable unifying local traces */
+      /* set/overwrite environment variable VT_UNIFY to zero,
+	 so VampirTrace don't unify local traces (DYNINST Bug?) */
+#if defined(HAVE_SETENV) && HAVE_SETENV
+      setenv("VT_UNIFY", "no", 1);
+#else /* HAVE_SETENV */
       putenv("VT_UNIFY=no");
+#endif
       
       /* Wait until mutator send signal to continue execution
        */

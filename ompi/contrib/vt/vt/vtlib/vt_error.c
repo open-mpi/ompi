@@ -10,17 +10,15 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "config.h"
+#include "vt_error.h"
+#include "vt_env.h"
+#include "vt_iowrap.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-
-#include "vt_error.h"
-#include "vt_env.h"
-#include "vt_iowrap.h"
 
 #define VT_MSG_PFIX  "VampirTrace"
 #define VT_MSG_SIZE  1024
@@ -92,15 +90,19 @@ void vt_cntl_msg(const char* fmt, ...)
     }
 }
 
-void vt_debug_msg(int level, const char* fmt, ...)
+inline void vt_debug_msg(int level, const char* fmt, ...)
 {
   va_list ap;
-
-  if( vt_env_debug() >= level ) {
+#if defined(VT_DEBUG) && (VT_DEBUG > 0)
+  if( level <= VT_DEBUG ) {
     va_start(ap, fmt);
     vt_print_msg(fmt, ap);
     va_end(ap);
   }
+#else
+  va_start(ap, fmt); /* only for avoiding a compiler warning */
+  va_end(ap);
+#endif
 }
 
 

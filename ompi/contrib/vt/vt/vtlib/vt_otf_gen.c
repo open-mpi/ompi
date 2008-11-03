@@ -21,6 +21,7 @@
 #include "vt_inttypes.h"
 #include "vt_metric.h"
 #include "vt_pform.h"
+#include "vt_strdup.h"
 #include "vt_trc.h"
 
 #include <unistd.h>
@@ -1054,7 +1055,7 @@ void VTGen_write_DEFINITION_COMMENT(VTGen* gen,
 
   new_entry->type    = BUF_ENTRY_TYPE__DefinitionComment;
   new_entry->length  = length;
-  new_entry->comment = strdup(comment);
+  new_entry->comment = vt_strdup(comment);
 
   VTGEN_JUMP(gen, length);
   VTGEN_CHECK_FLUSHCNTR(gen);
@@ -1078,7 +1079,7 @@ void VTGen_write_DEF_SCL_FILE(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefSclFile;
   new_entry->length = length;
   new_entry->fid    = fid;
-  new_entry->fname  = strdup(fname);
+  new_entry->fname  = vt_strdup(fname);
 
   VTGEN_JUMP(gen, length);
   VTGEN_CHECK_FLUSHCNTR(gen);
@@ -1127,7 +1128,7 @@ void VTGen_write_DEF_FILE_GROUP(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefFileGroup;
   new_entry->length = length;
   new_entry->gid    = gid;
-  new_entry->gname  = strdup(gname);
+  new_entry->gname  = vt_strdup(gname);
 
   VTGEN_JUMP(gen, length);
   VTGEN_CHECK_FLUSHCNTR(gen);
@@ -1152,7 +1153,7 @@ void VTGen_write_DEF_FILE(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefFile;
   new_entry->length = length;
   new_entry->fid    = fid;
-  new_entry->fname  = strdup(fname);
+  new_entry->fname  = vt_strdup(fname);
   new_entry->gid    = gid;
     
   VTGEN_JUMP(gen, length);
@@ -1177,7 +1178,7 @@ void VTGen_write_DEF_FUNCTION_GROUP(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefFunctionGroup;
   new_entry->length = length;
   new_entry->rdid   = rdid;
-  new_entry->rdesc  = strdup(rdesc);
+  new_entry->rdesc  = vt_strdup(rdesc);
 
   VTGEN_JUMP(gen, length);
   VTGEN_CHECK_FLUSHCNTR(gen);
@@ -1203,7 +1204,7 @@ void VTGen_write_DEF_FUNCTION(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefFunction;
   new_entry->length = length;
   new_entry->rid    = rid;
-  new_entry->rname  = strdup(rname);
+  new_entry->rname  = vt_strdup(rname);
   new_entry->rdid   = rdid;
   new_entry->sid    = sid;
 
@@ -1230,7 +1231,7 @@ void VTGen_write_DEF_COLLECTIVE_OPERATION(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefCollectiveOperation;
   new_entry->length = length;
   new_entry->cid    = cid;
-  new_entry->cname  = strdup(cname);
+  new_entry->cname  = vt_strdup(cname);
   new_entry->ctype  = ctype;
   
   VTGEN_JUMP(gen, length);
@@ -1255,7 +1256,7 @@ void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefCounterGroup;
   new_entry->length = length;
   new_entry->gid    = gid;
-  new_entry->gname  = strdup(gname);
+  new_entry->gname  = vt_strdup(gname);
 
   VTGEN_JUMP(gen, length);
   VTGEN_CHECK_FLUSHCNTR(gen);
@@ -1282,10 +1283,10 @@ void VTGen_write_DEF_COUNTER(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefCounter;
   new_entry->length = length;
   new_entry->cid    = cid;
-  new_entry->cname  = strdup(cname);
+  new_entry->cname  = vt_strdup(cname);
   new_entry->cprop  = cprop;
   new_entry->gid    = gid;
-  new_entry->cunit  = strdup(cunit);
+  new_entry->cunit  = vt_strdup(cunit);
     
   VTGEN_JUMP(gen, length);
   VTGEN_CHECK_FLUSHCNTR(gen);
@@ -1311,7 +1312,7 @@ void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen,
   new_entry->type   = BUF_ENTRY_TYPE__DefProcessGroup;
   new_entry->length = length;
   new_entry->cid    = cid;
-  new_entry->grpn   = strdup(grpn);
+  new_entry->grpn   = vt_strdup(grpn);
   new_entry->grpc   = grpc;
   new_entry->grpv   = (uint32_t*)calloc(grpc, sizeof(uint32_t));
   if(new_entry->grpv == NULL)
@@ -1524,7 +1525,7 @@ void VTGen_write_COMMENT(VTGen* gen, uint64_t* time,
     new_entry->type    = BUF_ENTRY_TYPE__Comment;
     new_entry->length  = length;
     new_entry->time    = *time;
-    new_entry->comment = strdup(comment);
+    new_entry->comment = vt_strdup(comment);
     
     VTGEN_JUMP(gen, length);
     VTGEN_CHECK_FLUSHCNTR(gen);

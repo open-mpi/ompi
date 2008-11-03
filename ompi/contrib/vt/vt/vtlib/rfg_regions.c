@@ -1,10 +1,9 @@
-#include "config.h"
-
 #include "rfg_regions.h"
 #include "rfg_filter.h"
 #include "rfg_groups.h"
 
 #include "vt_inttypes.h"
+#include "vt_strdup.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -406,8 +405,8 @@ static void hash_put( RFG_RegionInfo** htab, uint32_t h,
   uint32_t id         = h % HASH_MAX;
   RFG_RegionInfo* add = ( RFG_RegionInfo* )malloc( sizeof( RFG_RegionInfo ) );
   add->regionId       = h;
-  add->groupName      = strdup( g );
-  add->regionName     = strdup( r );
+  add->groupName      = vt_strdup( g );
+  add->regionName     = vt_strdup( r );
   add->callLimit      = l;
   add->callLimitCD    = l;
   add->next           = htab[id];

@@ -10,8 +10,6 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "config.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -22,6 +20,7 @@
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_metric.h"
+#include "vt_strdup.h"
 
 /* metricmap operations */
 
@@ -50,8 +49,8 @@ static vt_metricmap_t* vt_metricmap_append(vt_metricmap_t* map,
     }
 
     map->type = type;
-    map->event_name = strdup(event);
-    map->alias_name = strdup(alias);
+    map->event_name = vt_strdup(event);
+    map->alias_name = vt_strdup(alias);
     map->next = NULL;
     
     return map;

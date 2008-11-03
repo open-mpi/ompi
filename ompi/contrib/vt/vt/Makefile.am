@@ -1,14 +1,10 @@
 SUBDIRS = \
-	util \
 	extlib \
 	vtlib \
 	tools \
 	doc
 
 EXTRA_DIST = \
-	config_bottom.h \
-	CONFIG-EXAMPLES \
-	VERSION \
 	examples/c/Makefile \
 	examples/c/Makefile.config \
 	examples/c/hello.c \
@@ -23,5 +19,7 @@ EXTRA_DIST = \
 	examples/fortran/Makefile.config \
 	examples/fortran/hello.F \
 	examples/fortran/pi.F \
-	examples/fortran/ring.F
+	examples/fortran/ring.F \
+	CONFIG-EXAMPLES \
+	VERSION
 

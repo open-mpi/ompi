@@ -437,7 +437,7 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 	}
 	
 
-	ret= fseeko( file->file, pos, SEEK_SET );
+	ret= OTF_fseek( file->file, pos, SEEK_SET );
 	
 #ifdef HAVE_ZLIB
 
@@ -519,7 +519,7 @@ uint64_t OTF_File_tell( OTF_File* file ) {
 
 	if ( NULL != file->file ) {
 
-		file->pos= ftello( file->file );
+		file->pos= OTF_ftell( file->file );
 	}
 
 	return file->pos;
@@ -671,7 +671,7 @@ void OTF_File_suspend( OTF_File* file ) {
 
 	/* get status and close OS file */
 
-	file->pos= ftello( file->file );
+	file->pos= OTF_ftell( file->file );
 	fclose( file->file );
 	file->file= NULL;
 }
@@ -720,7 +720,7 @@ int OTF_File_revive( OTF_File* file, OTF_FileMode mode  ) {
 					return 0;
 				}
 
-				fseeko( file->file, file->pos, SEEK_SET );
+				OTF_fseek( file->file, file->pos, SEEK_SET );
 
 			} else {
 
@@ -901,7 +901,7 @@ int OTF_File_revive( OTF_File* file, OTF_FileMode mode  ) {
 				/* dont need to seek to the saved position because there 
 				will be another seek anyway*/
 				/*
-				fseeko( file->file, file->pos, SEEK_SET );
+				OTF_fseek( file->file, file->pos, SEEK_SET );
 				*/
 
 			} else {

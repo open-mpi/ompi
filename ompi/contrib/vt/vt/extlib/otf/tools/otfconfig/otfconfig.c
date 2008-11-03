@@ -7,7 +7,7 @@
 
 
 #include "OTF_inttypes.h"
-#include "OTF_Platform.h"
+
 #include "otf.h"
 
 #define SHOW_HELPTEXT { \

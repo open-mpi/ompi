@@ -1679,10 +1679,6 @@ MOVEON:
     /* indicate the child is no longer alive */
     child->alive = false;
 
-    /* Release the IOF resources related to this child */
-    orte_iof.close(child->name, (ORTE_IOF_STDIN | ORTE_IOF_STDOUT |
-                                 ORTE_IOF_STDERR | ORTE_IOF_STDDIAG) );
-
     /* Clean up the session directory as if we were the process
      * itself.  This covers the case where the process died abnormally
      * and didn't cleanup its own session directory.

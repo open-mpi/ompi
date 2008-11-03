@@ -23,7 +23,11 @@
 #	include "OTF_Platform_win.h"
 #else /* unix */
 #	include "OTF_Platform_unix.h"
-#endif /* windows/unix */
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /* if you know (for sure) of more compilers supporting __FUNCTION__,
    then add them here */
@@ -44,5 +48,12 @@
 #ifndef __LINE__
 #	define __LINE__ 0
 #endif
+
+char *OTF_basename( char* path );
+char *OTF_strdup( const char* s );
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* OTF_PLATFORM_H */

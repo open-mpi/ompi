@@ -81,7 +81,7 @@ int main (int argc, char **argv) {
 
 			if( i+1 < argc ) {
 			
-				inputFile= strdup( argv[i+1] );
+				inputFile= OTF_strdup( argv[i+1] );
 				++i;
 			}
 
@@ -122,7 +122,7 @@ int main (int argc, char **argv) {
 
 			if ( '-' != argv[i][0] ) {
 
-				inputFile= strdup( argv[i] );
+				inputFile= OTF_strdup( argv[i] );
 
 			} else {
 

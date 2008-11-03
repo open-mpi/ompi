@@ -2,8 +2,17 @@ AUTOMAKE_OPTIONS = -Wno-gnu
 
 if AMBUILDBINARIES
 
+if AMHAVECC
 WRAP_CC = vtcc
+else
+WRAP_CC =
+endif
+
+if AMHAVECXX
 WRAP_CXX = vtcxx
+else
+WRAP_CXX =
+endif
 
 if AMHAVEF77
 WRAP_F77 = vtf77
@@ -31,9 +40,6 @@ bin_PROGRAMS = $(WRAP_CC) $(WRAP_CXX) $(WRAP_F77) $(WRAP_FC)
 
 INCLUDES = -I$(top_srcdir)/vtlib/
 
-CC = $(CC_FOR_BUILD)
-CFLAGS = $(CFLAGS_FOR_BUILD)
-CPP = $(CPP_FOR_BUILD)
 CXX = $(CXX_FOR_BUILD)
 CXXFLAGS = $(CXXFLAGS_FOR_BUILD)
 CXXCPP = $(CXXCPP_FOR_BUILD)
@@ -43,18 +49,15 @@ LIBS = $(LIBS_FOR_BUILD)
 
 AM_CXXFLAGS = -DDATADIR=\"$(datadir)\"
 
-vtcc_SOURCES = compwrap.cc compwrap.h $(top_srcdir)/util/util.c
+vtcc_SOURCES = compwrap.cc compwrap.h
 vtcc_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_CC 
 
-vtcxx_SOURCES = compwrap.cc compwrap.h
+vtcxx_SOURCES = $(vtcc_SOURCES)
 vtcxx_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_CXX
-vtcxx_LDADD = util.$(OBJEXT)
 
-vtf77_SOURCES = compwrap.cc compwrap.h
+vtf77_SOURCES = $(vtcc_SOURCES)
 vtf77_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_F77
-vtf77_LDADD = util.$(OBJEXT)
 
-vtf90_SOURCES = compwrap.cc compwrap.h
+vtf90_SOURCES = $(vtcc_SOURCES)
 vtf90_CXXFLAGS = $(AM_CXXFLAGS) -DWRAP_LANG_F90
-vtf90_LDADD = util.$(OBJEXT)
 

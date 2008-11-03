@@ -38,7 +38,5 @@ vtunify_SOURCES = \
 	vt_unify_stats_hdlr.cc \
 	vt_unify_tkfac.cc
 
-vtunify_LDADD = \
-	$(top_builddir)/util/util.$(OBJEXT) \
-	$(OTFLIBRARY)
+vtunify_LDADD = $(OTFLIBRARY)
 

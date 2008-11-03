@@ -8,8 +8,6 @@
 
 #include <stdio.h>
 
-#include "OTF_Platform.h"
-
 #include "vtf3.h"
 
 #include "Treehash.h"
@@ -107,7 +105,7 @@ int treehash_addnode( hashtabT *p_hashtab, uint32_t process, const char* name, u
 	p_newnode->process = process;
 	p_newnode->processi = 0;
 	if ( name )
-		p_newnode->name = strdup( name );
+		p_newnode->name = OTF_strdup( name );
 	else
 		p_newnode->name = 0;
 	p_newnode->childrensize = 0;

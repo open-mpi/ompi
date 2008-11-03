@@ -14,6 +14,7 @@
 
 #include "vt_pform.h"
 #include "vt_error.h"
+#include "vt_strdup.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -133,7 +134,7 @@ void vt_pform_init() {
   if(exec_len != -1)
   {
     exec[exec_len] = '\0';
-    vt_exec = strdup(exec);
+    vt_exec = vt_strdup(exec);
   }
 }
 
