@@ -193,13 +193,15 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
                          ORTE_NAME_PRINT(&rev->name)));
     
-   if ( (0 != numbytes) && (ORTE_IOF_STDOUT & rev->tag) ) {
-        orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
-    } else {
-        orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stderr);
-
+    if (0 != numbytes) {
+        if (ORTE_IOF_STDOUT & rev->tag) {
+            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
+        } else {
+            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stderr);
+            
+        }
     }
-
+    
 CLEAN_RETURN:
     /* if we read 0 bytes from the stdout/err/diag, there is
      * nothing to output - close these file descriptors,
