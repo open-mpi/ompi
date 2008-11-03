@@ -161,6 +161,11 @@ Synonym for \fI-host\fP.
 .
 .
 .TP
+.B --hetero
+Indicates that multiple app_contexts are being provided that are a mix of 32/64-bit binaries.
+.
+.
+.TP
 .B -host\fR,\fP --host \fR<host1,host2,...,hostN>\fP
 List of hosts on which to invoke processes.
 .
@@ -172,8 +177,14 @@ Provide a hostfile to use.
 .
 .
 .TP
+.B -leave-session-attached\fR,\fP --leave-session-attached
+Do not detach OmpiRTE daemons used by this application. This allows error messages from the daemons
+as well as the underlying environment (e.g., when failing to launch a daemon) to be output.
+.
+.
+.TP
 .B -loadbalance\fR,\fP --loadbalance
-Uniform distribution of ranks across all nodes by Round Robin mapper.
+Uniform distribution of ranks across all nodes. See more detailed description below.
 .
 .
 .TP
@@ -219,6 +230,38 @@ error (without beginning execution of the application) otherwise.
 .
 .
 .TP
+.B -npernode\fR,\fP --npernode <#pernode>
+Launch the specified number of processes on each node of the allocation. Can be used
+with both \fI-bynode\fP and \fI-byslot\fP mapping modes.
+.
+.
+.TP
+.B -pernode\fR,\fP --pernode
+Launch one process on each node of the allocation - equivalent to npernode 1.
+.
+.
+.TP
+.B -ompi-server\fR,\fP --ompi-server <uri or file>
+Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that
+contains that info. The Open MPI server is used to support multi-application data exchange via
+the MPI-2 MPI_Publish_name and MPI_Lookup_name functions.
+.
+.
+.TP
+.B -wait-for-server\fR,\fP --wait-for-server
+Pause mpirun before launching the job until ompi-server is detected. This
+is useful in scripts where ompi-server may be started in the background, followed immediately by
+an \fImpirun\fP command that wishes to connect to it. Mpirun will pause until either the specified
+ompi-server is contacted or the server-wait-time is exceeded.
+.
+.
+.TP
+.B -server-wait-time\fR,\fP --server-wait-time <secs>
+The max amount of time (in seconds) mpirun should wait for the ompi-server to start. The default
+is 10 seconds.
+.
+.
+.TP
 .B -path\fR,\fP --path \fR<path>\fP
 <path> that will be used when attempting to locate the requested
 executables.  This is used prior to using the local PATH setting.
@@ -232,6 +275,25 @@ the target process.  See the "Remote Execution" section, below.
 .
 .
 .TP
+.B --preload-binary
+Copy the specified executable(s) to remote machines prior to starting remote processes. The
+executables will be copied to the Open MPI session directory and will be deleted upon
+completion of the job.
+.
+.
+.TP
+.B --preload-files <files>
+Preload the comma separated list of files to the current working directory of the remote
+machines where processes will be launched prior to starting those processes.
+.
+.
+.TP
+.B --preload-files-dest-dir <path>
+The destination directory to be used for preload-files, if other than the current working
+directory. By default, the absolute and relative paths provided by --preload-files are used.
+.
+.
+.TP
 .B -q\fR,\fP --quiet
 Suppress informative messages from orterun during application execution.
 .
@@ -239,6 +301,25 @@ Suppress informative messages from orterun during application execution.
 .TP
 .B -rf \f |--rankfile <arg0>\fP.
 Provide a rankfile file.
+.
+.
+.TP
+.B -slot-list\fR,\fP --slot-list <slots>
+List of processor IDs to be used for binding MPI processes. The specified bindings will
+be applied to all MPI processes. See explanation below for syntax.
+.
+.
+.TP
+.B -stdin\fR,\fP --stdin <rank>
+The MPI rank that is to receive stdin. The default is to forward stdin to rank=0, but this
+option can be used to forward stdin to any rank. It is also acceptable to specify \fInone\fP,
+indicating that no ranks are to receive stdin.
+.
+.
+.TP
+.B -tag-output\fR,\fP --tag-output
+Tag each line output to stdout, stderr, and stddiag with \fB[jobid, rank]<stdxxx>\fP indicating the process jobid
+and rank that generated the output, and the channel which generated it.
 .
 .
 .TP
@@ -250,12 +331,6 @@ Set the root for the session directory tree for mpirun only.
 .B -tv\fR,\fP --tv
 Launch processes under the TotalView debugger.
 Deprecated backwards compatibility flag. Synonym for \fI--debug\fP.
-.
-.
-.TP
-.B --universe \fR<username@hostname:universe_name>\fP
-For this application, set the universe name as:
-     username@hostname:universe_name
 .
 .
 .TP
@@ -293,30 +368,44 @@ values.  Users are advised to set variables in the environment, and
 then use \fI-x\fP to export (not define) them.
 .
 .
+.TP
+.B -xml\fR,\fP --xml
+Provide all output to stdout, stderr, and stddiag in an xml format.
+.
+.
 .P
 The following options are useful for developers; they are not generally
 useful to most ORTE and/or MPI users:
 .
 .TP
 .B -d\fR,\fP --debug-devel
-Enable debugging of the OpenRTE (the run-time layer in Open MPI).
+Enable debugging of the OmpiRTE (the run-time layer in Open MPI).
 This is not generally useful for most users.
 .
 .
 .TP
 .B --debug-daemons
-Enable debugging of any OpenRTE daemons used by this application.
+Enable debugging of any OmpiRTE daemons used by this application.
 .
 .
 .TP
 .B --debug-daemons-file
-Enable debugging of any OpenRTE daemons used by this application, storing
+Enable debugging of any OmpiRTE daemons used by this application, storing
 output in files.
 .
 .
 .TP
-.B --no-daemonize
-Do not detach OpenRTE daemons used by this application.
+.B -launch-agent\fR,\fP --launch-agent
+Name of the executable that is to be used to start processes on the remote nodes. The default
+is "orted". This option can be used to test new daemon concepts, or to pass options back to the
+daemons without having mpirun itself see them. For example, specifying a launch agent of
+\fRorted -mca odls_base_verbose 5\fR allows the developer to ask the orted for debugging output
+without clutter from mpirun itself.
+.
+.
+.TP
+.B --noprefix
+Disable the automatic --prefix behavior
 .
 .
 .\" **************************
@@ -968,4 +1057,4 @@ be the first rank that died but is not guaranteed to be so.
 .\" **************************
 .
 .\" .SH SEE ALSO
-.\" orted(1)
+.\" orted(1), ompi-server(1)
