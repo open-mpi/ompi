@@ -487,36 +487,18 @@ static int modex(opal_list_t *procs)
          * cmd line option if this situation exists, which will result in an mca param
          * being set for us, so all we need to do is check for the global boolean
          * that corresponds to that param
-         */
-        if (orte_hetero_apps) {
-            modex_reqd = true;
-        }
-        /* Case 2: the nodes are homo and our arch matches the one seen by my daemon. In
-         * this case, we are actually operating homogeneous even though hetero
-         * is supported, so no modex info is required
-         */
-        if (orte_homogeneous_nodes &&
-            orte_process_info.arch == orte_ess.proc_get_arch(ORTE_PROC_MY_DAEMON)) {
-            modex_reqd = false;
-        }
-        /* Case 2: the nodes are hetero, but the orted and app binaries were built
+         *
+         * Case 2: the nodes are hetero, but the app binaries were built
          * the same - i.e., either they are both 32-bit, or they are both 64-bit, but
          * no mixing of the two. In this case, we include the info in the modex
          */
-         else if (!orte_homogeneous_nodes) {
+        if (orte_hetero_apps || !orte_homogeneous_nodes) {
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
+                                 "%s grpcomm:basic: modex is required",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
             modex_reqd = true;
         }
-        /* Case 3: the nodes are homo, but the orted and app binaries were built
-         * differently - i.e., one is built 32-bit, and the other is built 64-bit.
-         * There are two sub-cases here, so we consider them separately
-         *
-         * Case 3(a): all apps were built the same. In this case, we can just
-         * use our own arch and do not need to modex. Since by default we fill-in
-         * the local nidmap with our own arch, we don't need to do anything here
-         */
-         else if (orte_homogeneous_nodes && orte_hetero_apps) {
-             modex_reqd = true;
-         }
     }
     
     if (modex_reqd) {

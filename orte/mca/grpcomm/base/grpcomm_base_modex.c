@@ -414,8 +414,8 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *mdx_reqd)
             OPAL_THREAD_UNLOCK(&mutex);
             goto cleanup;
         }
+        *mdx_reqd = true;
     }
-    *mdx_reqd = true;
     
 cleanup:
     OPAL_THREAD_UNLOCK(&mutex);
