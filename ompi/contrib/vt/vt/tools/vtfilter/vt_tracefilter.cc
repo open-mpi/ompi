@@ -40,8 +40,6 @@
 #include "vt_otfhandler.h"
 #include "vt_filthandler.h"
 
-#include "vt_fnmatch.h"
-
 #include <fstream>
 #include <assert.h>
 #include <string.h>
@@ -552,7 +550,7 @@ int main( int argc, char** argv ) {
 
 			for( its = exsym.begin(); its != exsym.end(); ++its ) {
 
-				if( 0 == vt_fnmatch( its->c_str(), itf->name.c_str(), FNM_NOESCAPE ) ) {
+				if( 0 == fnmatch( its->c_str(), itf->name.c_str(), FNM_NOESCAPE ) ) {
 					extok.insert( itf->id );
 					excluded = true;
 					break;
@@ -564,7 +562,7 @@ int main( int argc, char** argv ) {
 
 			for( its = insym.begin(); its != insym.end(); ++its ) {
 
-				if( 0 == vt_fnmatch( its->c_str(), itf->name.c_str(), FNM_NOESCAPE ) ) {
+				if( 0 == fnmatch( its->c_str(), itf->name.c_str(), FNM_NOESCAPE ) ) {
 					intok.insert( itf->id );
 					break;
 				}
@@ -1186,7 +1184,7 @@ static map<uint32_t,uint64_t> readFilterFile( const string& filename, const map<
 			while( token ) {
 				map<string,uint32_t>::const_iterator it = nm2tok.begin();
 				for( it = nm2tok.begin(); it != nm2tok.end(); ++it ) {
-					if( vt_fnmatch(token, it->first.c_str(), FNM_NOESCAPE) == 0 ) {
+					if( fnmatch(token, it->first.c_str(), FNM_NOESCAPE) == 0 ) {
 						map<uint32_t,uint64_t>::const_iterator it2 = ret.find(it->second);
 						if( it2 == ret.end() ) {
 							ret.insert(pair<uint32_t,uint64_t>(it->second,ulimit));

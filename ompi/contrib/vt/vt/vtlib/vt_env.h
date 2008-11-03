@@ -32,6 +32,7 @@ EXTERN int    vt_env_mode(void);
 EXTERN int    vt_env_stat_intv(void);
 EXTERN int    vt_env_stat_show(void);
 EXTERN int    vt_env_is_verbose(void);
+EXTERN int    vt_env_debug(void);
 EXTERN int    vt_env_do_demangle(void);
 EXTERN int    vt_env_do_unify(void);
 EXTERN int    vt_env_do_clean(void);

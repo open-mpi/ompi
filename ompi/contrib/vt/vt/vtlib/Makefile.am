@@ -149,7 +149,6 @@ VT_COMMON_SOURCES = \
 	vt_env.h \
 	vt_error.h \
 	vt_fbindings.h \
-	vt_fnmatch.h \
 	vt_inttypes.h \
 	vt_iowrap.h \
 	vt_iowrap_helper.h \
@@ -165,7 +164,6 @@ VT_COMMON_SOURCES = \
 	vt_otf_sum.h \
 	vt_pform.h \
 	vt_pomp.h \
-	vt_strdup.h \
 	vt_sync.h \
 	vt_thrd.h \
 	vt_trc.h \
@@ -183,7 +181,6 @@ VT_COMMON_SOURCES = \
 	vt_otf_trc.c \
 	vt_pform_@PLATFORM@.c \
 	vt_pomp_base.c \
-	vt_strdup.c \
 	vt_thrd.c \
 	vt_user_comment.c \
 	vt_user_count.c \
@@ -209,24 +206,25 @@ VT_HYB_SOURCES = \
 CC = $(MPICC)
 AM_CFLAGS = -DBINDIR=\"$(bindir)\" -DDATADIR=\"$(datadir)\" $(RFGCFLAGS) $(BFDCFLAGS) $(MEMHOOKCFLAGS) $(IOWRAPCFLAGS) $(METRCFLAGS)
 
+libvt_a_LIBADD = $(top_builddir)/util/util.$(OBJEXT)
 libvt_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(OPARILIBDIR)/pomp_fwrapper_base.c
 
 libvt_mpi_a_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR)
-libvt_mpi_a_LIBADD = pomp_fwrapper_base.o
+libvt_mpi_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT)
 libvt_mpi_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(VT_MPI_SOURCES)
 
 libvt_omp_a_CFLAGS = $(OMPFLAG) -DVT_OMP $(AM_CFLAGS)
-libvt_omp_a_LIBADD = pomp_fwrapper_base.o
+libvt_omp_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT)
 libvt_omp_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(VT_OMP_SOURCES)
 
 libvt_ompi_a_CFLAGS = $(OMPFLAG) -DVT_OMPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR)
-libvt_ompi_a_LIBADD = pomp_fwrapper_base.o
+libvt_ompi_a_LIBADD = pomp_fwrapper_base.$(OBJEXT) $(top_builddir)/util/util.$(OBJEXT)
 libvt_ompi_a_SOURCES = \
 	$(VT_COMMON_SOURCES) \
 	$(VT_HYB_SOURCES)
