@@ -132,7 +132,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       '\0', "rank", "rank", 
       1,
       &my_globals.ranks, OPAL_CMD_LINE_TYPE_STRING,
-     "Comma-separated list of ranks whose output is to be displayed" },
+     "Rank whose output is to be displayed" },
     
     { "orte", "tag", "output", 
      '\0', "tag-output", "tag-output", 
@@ -155,6 +155,7 @@ static void abort_exit_callback(int fd, short flags, void *arg);
 static struct opal_event term_handler;
 static struct opal_event int_handler;
 static opal_list_t hnp_list;
+static orte_process_name_t target_proc;
 
 
 int
@@ -163,7 +164,6 @@ main(int argc, char *argv[])
     int ret;
     opal_cmd_line_t cmd_line;
     opal_list_item_t* item = NULL;
-    orte_process_name_t target_proc;
     orte_iof_tag_t stream;
 
     /***************
@@ -185,6 +185,7 @@ main(int argc, char *argv[])
     my_globals.stdout_req = false;
     my_globals.stderr_req = false;
     my_globals.stddiag_req = false;
+    my_globals.ranks = "0";
 
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
@@ -270,7 +271,7 @@ main(int argc, char *argv[])
     
     /* we have our target - pull the specified output streams and dump to our stdout */
     target_proc.jobid = my_globals.target_hnp->name.jobid + 1;
-    target_proc.vpid = 0;
+    target_proc.vpid = strtol(my_globals.ranks, NULL, 10);
     if (ORTE_SUCCESS != (ret = orte_iof.pull(&target_proc, stream, 1))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
@@ -294,7 +295,6 @@ main(int argc, char *argv[])
 
 static void abort_exit_callback(int fd, short ign, void *arg)
 {
-    orte_process_name_t target_proc;
     opal_list_item_t *item;
     int ret;
     
@@ -303,8 +303,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
     opal_signal_del(&int_handler);
 
     /* close the outstanding pull */
-    target_proc.jobid = my_globals.target_hnp->name.jobid + 1;
-    target_proc.vpid = 0;
     if (ORTE_SUCCESS != (ret = orte_iof.close(&target_proc, ORTE_IOF_STDOUT))) {
         ORTE_ERROR_LOG(ret);
     }
