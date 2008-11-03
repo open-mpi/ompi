@@ -31,7 +31,6 @@
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/threads/mutex.h"
 #include "opal/util/if.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
@@ -47,7 +46,6 @@
 #include "orte/util/hostfile/hostfile_lex.h"
 #include "orte/util/hostfile/hostfile.h"
 
-static opal_mutex_t hostfile_mutex;
 
 static const char *cur_hostfile_name = NULL;
 
@@ -327,7 +325,6 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_
     int token;
     int rc = ORTE_SUCCESS;
 
-    OPAL_THREAD_LOCK(&hostfile_mutex);
 
     cur_hostfile_name = hostfile;
     
@@ -385,7 +382,6 @@ static int hostfile_parse(const char *hostfile, opal_list_t* updates, opal_list_
 unlock:
     cur_hostfile_name = NULL;
 
-    OPAL_THREAD_UNLOCK(&hostfile_mutex);
     return rc;
 }
 
