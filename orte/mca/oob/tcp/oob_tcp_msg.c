@@ -480,20 +480,12 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
          * not know how to route any reply back to the originator. Update
          * our route so we can dynamically build the routing table
          */
-        /* if the origin and the src are the same, then we don't need to do
-         * this - update_route was already called when the connection was
-         * established in oob_tcp_peer
-         */
-        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
-                                                        &(msg->msg_hdr.msg_origin),
-                                                        &(msg->msg_hdr.msg_src))) {
-            if (ORTE_SUCCESS != (rc = orte_routed.update_route(&(msg->msg_hdr.msg_origin),
-                                                               &(msg->msg_hdr.msg_src)))) {
-                /* Nothing we can do about errors here as we definitely want
-                 * the receive to complete, but at least bark loudly
-                 */
-                ORTE_ERROR_LOG(rc);
-            }
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&(msg->msg_hdr.msg_origin),
+                                                           &(msg->msg_hdr.msg_src)))) {
+            /* Nothing we can do about errors here as we definitely want
+             * the receive to complete, but at least bark loudly
+             */
+            ORTE_ERROR_LOG(rc);
         }
     }
     
