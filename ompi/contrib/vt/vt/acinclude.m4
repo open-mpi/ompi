@@ -549,6 +549,8 @@ AC_DEFUN([ACVT_DL],
 	dl_error="no"
 	have_dl="no"
 
+	have_rtld_next="no"
+
 	DLDIR=
 	DLINCDIR=
 	DLLIBDIR=
@@ -583,7 +585,7 @@ AC_DEFUN([ACVT_DL],
 	])
 	CPPFLAGS=$sav_CPPFLAGS
 
-	AS_IF([test x"$DLLIB" = x -a "$dl_error" = "no"],
+	AS_IF([test x"$DLLIB" = x -a x"$dl_error" = "xno"],
 	[
 		sav_LIBS=$LIBS
 		LIBS="$LIBS $DLLIBDIR -ldl"
@@ -593,13 +595,41 @@ AC_DEFUN([ACVT_DL],
 		LIBS=$sav_LIBS
 	])
 
-	AS_IF([test x"$DLLIB" = x -a "$dl_error" = "no"],
+	AS_IF([test x"$DLLIB" = x -a x"$dl_error" = "xno"],
 	[
 		AC_MSG_NOTICE([error: no libdl found; check path for libdl package first...])
 		dl_error="yes"
 	])
 
-	AS_IF([test x"$DLLIB" != x -a "$dl_error" = "no"], [have_dl="yes"])
+	AS_IF([test x"$dl_error" = "xno"],
+	[
+		AC_CHECK_DECL([RTLD_NEXT], [have_rtld_next="yes"], [], [#include <dlfcn.h>])
+
+		AS_IF([test x"$have_rtld_next" = "xno"],
+		[
+			AC_MSG_CHECKING([whether we need to define _GNU_SOURCE to get RTLD_NEXT])
+			AC_TRY_COMPILE(
+			[
+#define _GNU_SOURCE
+#include <dlfcn.h>
+			],
+			[
+#ifndef RTLD_NEXT
+  (void) RTLD_NEXT;
+#endif
+			],
+			[
+				AC_MSG_RESULT([yes])
+				have_rtld_next="yes"
+				CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
+			],
+			[
+				AC_MSG_RESULT([no])
+			])
+		])
+	])
+
+	AS_IF([test x"$DLLIB" != x -a x"$dl_error" = "xno"], [have_dl="yes"])
 
 	AC_SUBST(DLINCDIR)
 	AC_SUBST(DLLIBDIR)
@@ -753,12 +783,13 @@ AC_DEFUN([ACVT_IOWRAP],
 	AS_IF([test x"$check_iowrap" = "xyes"],
 	[
 		AS_IF([test x"$dl_error" = x], [ACVT_DL])
-		AS_IF([test x"$have_dl" = "xno"], [iowrap_error="yes"])
+		AS_IF([test x"$have_dl" = "xno" -o x"$have_rtld_next" = "xno"],
+		[iowrap_error="yes"])
 
 		AS_IF([test x"$iowrap_error" = "xno"],
 		[
-			sav_CFLAGS=$CFLAGS
-			CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+			sav_CPPFLAGS=$CPPFLAGS
+			CPPFLAGS="$CPPFLAGS -D_LARGEFILE64_SOURCE"
 			AC_CHECK_FUNCS([ \
 				creat64 \
 				fopen64 \
@@ -769,7 +800,7 @@ AC_DEFUN([ACVT_IOWRAP],
 				open64 \
 				pread64 \
 				pwrite64])
-			CFLAGS=$sav_CFLAGS
+			CPPFLAGS=$sav_CPPFLAGS
 
 			have_iowrap="yes"
 		])
