@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -269,6 +270,7 @@ int mca_btl_tcp_component_open(void)
 int mca_btl_tcp_component_close(void)
 {
     opal_list_item_t* item;
+    opal_list_item_t* next;
 
     if(NULL != mca_btl_tcp_component.tcp_if_include)
         free(mca_btl_tcp_component.tcp_if_include);
@@ -290,12 +292,14 @@ int mca_btl_tcp_component_close(void)
     }
 #endif
 
+
     /* cleanup any pending events */
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    for(item =  opal_list_remove_first(&mca_btl_tcp_component.tcp_events);
-        item != NULL; 
-        item =  opal_list_remove_first(&mca_btl_tcp_component.tcp_events)) {
+    for(item =  opal_list_get_first(&mca_btl_tcp_component.tcp_events);
+        item != opal_list_get_end(&mca_btl_tcp_component.tcp_events); 
+        item = next) {
         mca_btl_tcp_event_t* event = (mca_btl_tcp_event_t*)item;
+        next = opal_list_get_next(item);
         opal_event_del(&event->event);
         OBJ_RELEASE(event);
     }
