@@ -23,7 +23,6 @@
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_metric.h"
-#include "vt_strdup.h"
 
 #include <papi.h>
 
@@ -57,7 +56,7 @@ static void metricv_add(char* name, int code)
                       VT_METRIC_MAXNUM);
     else {
         metricv[nmetrics] = (struct metric*)malloc(sizeof(struct metric));
-        metricv[nmetrics]->name = vt_strdup(name);
+        metricv[nmetrics]->name = strdup(name);
         metricv[nmetrics]->descr[0] = '\0';
         metricv[nmetrics]->papi_code = code;
         nmetrics++;

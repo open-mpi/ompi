@@ -15,7 +15,6 @@
   using std::cout;
   using std::cerr;
 #include <cstdio>
-  using std::sprintf;
   using std::remove;
 #include <cstring>
   using std::strcmp;
@@ -25,6 +24,8 @@
   using std::strlen;
 #include <cstdlib>
   using std::exit;
+
+#include "util/util.h"
 
 #include "opari.h"
 #include "handler.h"
@@ -163,8 +164,8 @@ int main (int argc, char *argv[]) {
     out_filename = new char[strlen(infile)+5];
     char* dot = (char *) strrchr(infile, '.');
     if ( dot != 0 ) {
-      snprintf(out_filename, strlen(infile)+5, "%.*s.mod%s",
-	       (int)(dot - infile), infile, dot);
+      vt_snprintf(out_filename, strlen(infile)+5, "%.*s.mod%s",
+	          (int)(dot - infile), infile, dot);
     
       if ( keepSrcInfo && (lang & L_FORTRAN) ) {
         dot = strrchr(out_filename, '.');
@@ -223,16 +224,16 @@ int main (int argc, char *argv[]) {
       if ( dirsep ) {
 	len = strlen(rcdir)+strlen(dirsep)+11+1;
         incfile = new char[len];
-        snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, dirsep+1);
+        vt_snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, dirsep+1);
       } else {
 	len = strlen(rcdir)+strlen(infile)+12+1;
         incfile = new char[len];
-        snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, infile);
+        vt_snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, infile);
       }
     } else {
       len = strlen(infile)+10+1;
       incfile = new char[len];
-      snprintf(incfile, len - 1, "%s.opari.inc", infile);
+      vt_snprintf(incfile, len - 1, "%s.opari.inc", infile);
     }
 
     // transform

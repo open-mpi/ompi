@@ -28,7 +28,6 @@
 #include "vt_error.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
-#include "vt_strdup.h"
 #include "vt_trc.h"
 #if (defined (VT_OMPI) || defined (VT_OMP))
 #  include <omp.h>
@@ -64,7 +63,7 @@ static void hash_put(long h, const char* n, const char* fn, int lno) {
   HashNode *add = (HashNode*)malloc(sizeof(HashNode));
   add->id = h;
   add->name  = n;
-  add->fname = fn ? (const char*)vt_strdup(fn) : fn;
+  add->fname = fn ? (const char*)strdup(fn) : fn;
   add->lno   = lno;
   add->vtid = VT_NO_ID;
   add->next = htab[id];
@@ -198,7 +197,7 @@ static void get_symtab_bfd(void) {
       if( dem_name ) {
 	hash_put(addr, dem_name, filename, lno);
       } else {
-	char *n = vt_strdup(syms[i]->name);
+	char *n = strdup(syms[i]->name);
 	hash_put(addr, n, filename, lno);
       }
    }
@@ -276,7 +275,7 @@ static void get_symtab_nm(const char* nmfilename)
     /* add symbol to hash table */
     if( nc >= 3 )
     {
-      char* n = vt_strdup(funcname);
+      char* n = strdup(funcname);
       hash_put(addr, n, filename, lno);
     }
   }

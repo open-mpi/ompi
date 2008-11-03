@@ -1,9 +1,9 @@
+#include "config.h"
+
 #include "rfg_filter.h"
 #include "rfg_strmkrs.h"
 
-#include "vt_fnmatch.h"
 #include "vt_inttypes.h"
-#include "vt_strdup.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,7 +95,7 @@ int RFG_Filter_setDefFile( RFG_Filter* filter, const char* deffile )
 
   /* set new filter definition file */
 
-  filter->deffile = vt_strdup( deffile );
+  filter->deffile = strdup( deffile );
 
   return 1;
 }
@@ -161,7 +161,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter )
     
     /* copy line so that the original line keep alive */
 
-    line = vt_strdup( orgline );
+    line = strdup( orgline );
 
     lineno++;
 
@@ -308,7 +308,7 @@ int RFG_Filter_addCLimit( RFG_Filter* filter, int32_t climit,
   if( entry->pattern == NULL )
     return 0;
 
-  entry->pattern[entry->npattern++] = vt_strdup( pattern );
+  entry->pattern[entry->npattern++] = strdup( pattern );
 
   return 1;
 }
@@ -327,7 +327,7 @@ int RFG_Filter_get( RFG_Filter* filter, const char* rname,
   {
     for( j = 0; j < filter->climits[i].npattern; j++ )
     {
-      if( vt_fnmatch( filter->climits[i].pattern[j], rname, 0 ) == 0 )
+      if( fnmatch( filter->climits[i].pattern[j], rname, 0 ) == 0 )
       {
 	*r_climit = filter->climits[i].climit;
 	return 1;

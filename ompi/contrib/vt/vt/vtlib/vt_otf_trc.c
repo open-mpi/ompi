@@ -23,7 +23,6 @@
 #include "vt_memreg.h"
 #include "vt_metric.h"
 #include "vt_pform.h"
-#include "vt_strdup.h"
 #include "vt_error.h"
 
 #include <limits.h>
@@ -92,7 +91,7 @@ static void hash_put(int t, const char* n, int i) {
   if(t==HASH_TAB__RDESC)
   {
     HashNode_rdesc *add = (HashNode_rdesc*)malloc(sizeof(HashNode_rdesc));
-    add->rdesc = vt_strdup(n);
+    add->rdesc = strdup(n);
     add->rdid = i;
     add->next = htab_rdesc[id];
     htab_rdesc[id] = add;
@@ -100,7 +99,7 @@ static void hash_put(int t, const char* n, int i) {
   else if(t==HASH_TAB__FILE)
   {
     HashNode_file *add = (HashNode_file*)malloc(sizeof(HashNode_file));
-    add->fname = vt_strdup(n);
+    add->fname = strdup(n);
     add->fid = i;
     add->next = htab_file[id];
     htab_file[id] = add; 

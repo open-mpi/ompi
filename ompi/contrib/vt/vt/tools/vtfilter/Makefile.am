@@ -29,5 +29,7 @@ vtfilter_SOURCES = \
 	vt_otfhandler.cc \
 	vt_tracefilter.cc
 
-vtfilter_LDADD = $(OTFLIBRARY)
+vtfilter_LDADD = \
+	$(top_builddir)/util/util.$(OBJEXT) \
+	$(OTFLIBRARY)
 

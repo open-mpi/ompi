@@ -8,6 +8,9 @@ include_HEADERS = \
 	../lib/opari_omp.h \
 	../lib/pomp_lib.h
 
+CC = $(CC_FOR_BUILD)
+CFLAGS = $(CFLAGS_FOR_BUILD)
+CPP = $(CPP_FOR_BUILD)
 CXX = $(CXX_FOR_BUILD)
 CXXFLAGS = $(CXXFLAGS_FOR_BUILD)
 CXXCPP = $(CXXCPP_FOR_BUILD)
@@ -28,7 +31,8 @@ opari_SOURCES = \
 	opari.cc \
 	process_c.cc \
 	process_f.cc \
-	process_omp.cc
+	process_omp.cc \
+	$(top_srcdir)/util/util.c
 
 EXTRA_DIST = \
 	fixinc/cctype \

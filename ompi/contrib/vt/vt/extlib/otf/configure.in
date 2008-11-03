@@ -52,7 +52,13 @@ AC_SUBST([have_stdint_h])
 AC_SUBST([have_inttypes_h])
 
 # Checks for library functions.
-AC_CHECK_FUNCS([fseeko ftello strdup])
+AC_CHECK_DECL([va_copy],
+[AC_DEFINE([HAVE_VA_COPY], [1], [Define to 1 if you have the `va_copy' function.])],
+[], [#include <stdarg.h>])
+AC_CHECK_DECL([__va_copy],
+[AC_DEFINE([HAVE_UNDERSCORE_VA_COPY], [1], [Define to 1 if you have the `__va_copy' function.])],
+[], [#include <stdarg.h>])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf strdup fseeko ftello])
 
 # Checks for typedefs, structures, and compiler characteristics.
 # AC_C_CONST ### do not use this if you want to do C++ programs because it might define 'const'
