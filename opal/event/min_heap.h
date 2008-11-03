@@ -59,7 +59,7 @@ void min_heap_dtor(min_heap_t* s) { free(s->p); }
 void min_heap_elem_init(struct event* e) { e->min_heap_idx = -1; }
 int min_heap_empty(min_heap_t* s) { return 0u == s->n; }
 unsigned min_heap_size(min_heap_t* s) { return s->n; }
-struct event* min_heap_top(min_heap_t* s) { return s->n ? *s->p : 0; }
+struct event* min_heap_top(min_heap_t* s) { return s->n ? *(s->p) : (struct event*) 0; }
 
 int min_heap_push(min_heap_t* s, struct event* e)
 {
