@@ -29,6 +29,7 @@ version 1.0.
 1.2.9 (unreleased)
 ------------------
 
+- Fix a double free of events on the tcp_events list. See ticket #1631.
 - Fix a buffer overun in opal_free_list_grow (called by MPI_Init).
   Thanks to Patrick Farrell for the bugreport and Stephan Kramer for
   the bugfix.  See ticket #1583.
