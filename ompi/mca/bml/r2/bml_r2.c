@@ -452,7 +452,7 @@ int mca_bml_r2_add_procs(
         orte_ns.get_proc_name_string(&remote,
                                      &(unreach_proc->proc_name));
 
-        opal_show_help("help-mca-bml-r2",
+        opal_show_help("help-mca-bml-r2.txt",
                        "unreachable proc",
                        true, local, remote, NULL);
 
