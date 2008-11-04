@@ -211,23 +211,10 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
     int num_retry = 0;
     mx_return_t mx_status;
     mx_endpoint_addr_t mx_remote_addr;
-    mca_btl_mx_proc_t* module_proc = module_endpoint->endpoint_proc;
 
     module_endpoint->status = MCA_BTL_MX_CONNECTION_PENDING;
 
  retry_connect:
-#if 0
-    {
-        uint64_t nic_id;
-	uint32_t endpoint_id;
-	mx_decompose_endpoint_addr( module_endpoint->endpoint_btl->mx_endpoint_addr,
-				    &nic_id, &endpoint_id );
-	opal_output(0, "Connect local (nic_id %llx, endpoint_id %x) to \n"
-		       "       remote (nic_id %llx, endpoint_id %x)\n",
-		    nic_id, endpoint_id,
-		    module_endpoint->mx_peer->nic_id, module_endpoint->mx_peer->endpoint_id );
-    }
-#endif
     mx_status = mx_connect( module_endpoint->endpoint_btl->mx_endpoint,
                             module_endpoint->mx_peer->nic_id, module_endpoint->mx_peer->endpoint_id,
                             mca_btl_mx_component.mx_filter, mca_btl_mx_component.mx_timeout, &mx_remote_addr );
@@ -254,3 +241,4 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
 
     return OMPI_SUCCESS;
 }
+
