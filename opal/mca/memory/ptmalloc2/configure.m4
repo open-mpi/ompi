@@ -25,6 +25,12 @@ AC_DEFUN([MCA_memory_ptmalloc2_COMPILE_MODE], [
 ])
 
 
+AC_DEFUN([MCA_memory_ptmalloc2_POST_CONFIG],[
+    AM_CONDITIONAL([OMPI_WANT_EXTERNAL_PTMALLOC2],
+       [test "$enable_ptmalloc2_internal" != "yes"])
+])
+
+
 # MCA_memory_ptmalloc2_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
@@ -35,8 +41,6 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
                         instead of as separate library.  Only has meaning
                         if ptmalloc2 memory component exists])])
 
-    AM_CONDITIONAL([OMPI_WANT_EXTERNAL_PTMALLOC2],
-       [test "$enable_ptmalloc2_internal" != "yes"])
     AC_MSG_CHECKING([if ptmalloc2 should be part of libopen-pal])
     AS_IF([test "$enable_ptmalloc2_internal" = "yes"],
           [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
