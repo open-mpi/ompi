@@ -5,7 +5,7 @@
 **  Copyright (c) 1998-2008                                                **
 **  Forschungszentrum Juelich, Juelich Supercomputing Centre               **
 **                                                                         **
-**  See the file COPYING in the package base directory for details       **
+**  See the file COPYING in the package base directory for details         **
 ****************************************************************************/
 
 #include <fstream>
@@ -164,8 +164,12 @@ int main (int argc, char *argv[]) {
     out_filename = new char[strlen(infile)+5];
     char* dot = (char *) strrchr(infile, '.');
     if ( dot != 0 ) {
-      vt_snprintf(out_filename, strlen(infile)+5, "%.*s.mod%s",
-	          (int)(dot - infile), infile, dot);
+      char* infile_prefix = new char[strlen(infile)];
+      strncpy(infile_prefix, infile, (int)(dot - infile));
+      infile_prefix[(int)(dot-infile)] = '\0';
+
+      vt_snprintf(out_filename, strlen(infile)+5, "%s.mod%s",
+	          infile_prefix, dot);
     
       if ( keepSrcInfo && (lang & L_FORTRAN) ) {
         dot = strrchr(out_filename, '.');
@@ -177,6 +181,8 @@ int main (int argc, char *argv[]) {
         cerr << "ERROR: cannot open output file " << out_filename << "\n";
         errFlag = true;
       }
+
+      delete [] infile_prefix;
     } else {
       cerr << "ERROR: cannot generate output file name\n";
       errFlag =true;
