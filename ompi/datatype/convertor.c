@@ -46,6 +46,7 @@ static void ompi_convertor_construct( ompi_convertor_t* convertor )
     convertor->stack_size     = DT_STATIC_STACK_SIZE;
     convertor->partial_length = 0;
     convertor->remoteArch     = ompi_mpi_local_arch;
+    convertor->flags          = DT_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -464,7 +465,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
          * will not do anything.                                        \
          */                                                             \
         if( OPAL_UNLIKELY((0 == count) || (0 == datatype->size)) ) {    \
-            convertor->flags |= CONVERTOR_COMPLETED;                    \
+            convertor->flags |= DT_FLAG_NO_GAPS | CONVERTOR_COMPLETED;  \
             convertor->local_size = convertor->remote_size = 0;         \
             return OMPI_SUCCESS;                                        \
         }                                                               \
