@@ -39,23 +39,23 @@ EXTRA_DIST = \
         platform/lanl/macosx-dynamic \
         platform/lanl/macosx-dynamic-optimized \
         platform/lanl/macosx-static-leopard \
-        platform/rr-class/debug-nopanasas \
-        platform/rr-class/debug-panasas \
-        platform/rr-class/debug.conf \
-        platform/rr-class/debug-nopanasas.conf \
-        platform/rr-class/debug-panasas.conf \
-        platform/rr-class/optimized-nopanasas \
-        platform/rr-class/optimized-panasas \
-        platform/rr-class/optimized.conf \
-        platform/rr-class/optimized-nopanasas.conf \
-        platform/rr-class/optimized-panasas.conf \
-        platform/tlcc/debug-nopanasas \
-        platform/tlcc/debug-panasas \
-        platform/tlcc/debug.conf \
-        platform/tlcc/debug-nopanasas.conf \
-        platform/tlcc/debug-panasas.conf \
-        platform/tlcc/optimized-nopanasas \
-        platform/tlcc/optimized-panasas \
-        platform/tlcc/optimized.conf \
-        platform/tlcc/optimized-nopanasas.conf \
-        platform/tlcc/optimized-panasas.conf
+        platform/lanl/rr-class/debug-nopanasas \
+        platform/lanl/rr-class/debug-panasas \
+        platform/lanl/rr-class/debug.conf \
+        platform/lanl/rr-class/debug-nopanasas.conf \
+        platform/lanl/rr-class/debug-panasas.conf \
+        platform/lanl/rr-class/optimized-nopanasas \
+        platform/lanl/rr-class/optimized-panasas \
+        platform/lanl/rr-class/optimized.conf \
+        platform/lanl/rr-class/optimized-nopanasas.conf \
+        platform/lanl/rr-class/optimized-panasas.conf \
+        platform/lanl/tlcc/debug-nopanasas \
+        platform/lanl/tlcc/debug-panasas \
+        platform/lanl/tlcc/debug.conf \
+        platform/lanl/tlcc/debug-nopanasas.conf \
+        platform/lanl/tlcc/debug-panasas.conf \
+        platform/lanl/tlcc/optimized-nopanasas \
+        platform/lanl/tlcc/optimized-panasas \
+        platform/lanl/tlcc/optimized.conf \
+        platform/lanl/tlcc/optimized-nopanasas.conf \
+        platform/lanl/tlcc/optimized-panasas.conf
