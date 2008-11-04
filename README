@@ -12,6 +12,7 @@ Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
+Copyright (c) 2008      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -44,6 +45,86 @@ Thanks for your time.
 Much, much more information is also available in the Open MPI FAQ:
 
     http://www.open-mpi.org/faq/
+
+===========================================================================
+
+
+Detailed Open MPI v1.3 Feature List:
+
+  o Open RunTime Environment (ORTE) improvements
+    - General Robustness improvements
+    - Scalable job launch: we've seen ~16K processes in less than a minute
+      in a highly-optimized configuration
+    - New process mappers
+    - Support for Platform/LSF
+    - More flexible processing of host lists
+    - new mpirun cmd line options & associated functionality
+
+  o Fault-Tolerance Features
+    - Asynchronous, Transparent Checkpoint/Restart Support
+      - Fully coordinated checkpoint/restart coordination component
+      - Support for the following checkpoint/restart services:
+        - blcr: Berkley Lab's Checkpoint/Restart
+        - self: Application level callbacks
+      - Support for the following interconnects:
+        - tcp
+        - mx
+        - openib 
+        - sm
+        - self
+    - Improved Message Logging
+
+  o MPI_THREAD_MULTIPLE support for point-to-point messaging in the following BTLs:
+    - tcp
+    - sm
+    - mx
+    - elan
+    - self
+
+  o Point-to-point Messaging Layer (PML) improvements
+    - Memory Footprint reduction
+    - Improved latency
+    - Improved algorithm for multi-rail support
+
+  o Numerous Open Fabrics improvements/enhancements
+    - Added iWARP support (including RDMA CM)
+    - Memory Footprint and performance improvements
+      - "Bucket" SRQ support for better registered memory utilization
+      - XRC/ConnectX support
+      - Message Coalescing
+    - Improved error report mechanism with Asynchronous events
+    - Automatic Path Migration (APM)
+    - Improved processor/port binding
+    - Infrastructure for additional wireup strategies
+    - mpi_leave_pinned is now set on by default
+
+  o uDAPL BTL enhancements
+    - Multi-rail support
+    - Subnet checking
+    - interface include/exclude capabilities
+
+  o  Processor affinity
+    - Linux processor affinity improvements
+    - core/socket <--> process mappings
+
+  o Collectives
+    - Performance improvements
+    - Support for hierarchical collectives
+
+  o Miscellaneous
+    - MPI 2.1 compliant 
+    - Sparse process groups and communicators
+    - Support for Cray Compute Node Linux (CNL)
+    - One-sided rdma component (btl-level based rather than pml-level based)
+    - Aggregate MCA parameter sets
+    - MPI handle debugging
+    - Many small improvements to the MPI C++ bindings
+    - Valgrind support
+    - VampirTrace support
+    - updated ROMIO to the version from MPICH2 1.0.7
+    - removed the mVAPI IB stacks
+    - Display most error messages only once (vs. once for each process)
+    - Many other small improvements and bug fixes, too numerous to list here
 
 ===========================================================================
 
