@@ -154,6 +154,7 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
     }
     convertor->pDesc     = NULL;
     convertor->stack_pos = 0;
+    convertor->flags     = DT_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
     return OMPI_SUCCESS;
 }
 
@@ -224,7 +225,7 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->flags      = pSrcConv->flags | flags;
     convertor->master     = pSrcConv->master;
 
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
