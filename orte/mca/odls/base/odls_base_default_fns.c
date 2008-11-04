@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1678,6 +1678,10 @@ GOTCHILD:
 MOVEON:
     /* indicate the child is no longer alive */
     child->alive = false;
+
+    /* Release the IOF resources related to this child */
+    orte_iof.close(child->name, (ORTE_IOF_STDIN | ORTE_IOF_STDOUT |
+                                 ORTE_IOF_STDERR | ORTE_IOF_STDDIAG) );
 
     /* Clean up the session directory as if we were the process
      * itself.  This covers the case where the process died abnormally

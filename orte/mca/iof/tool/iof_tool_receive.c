@@ -90,11 +90,16 @@ static void process_msg(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&origin)));
     
-    /* write the output locally */
-    if (ORTE_IOF_STDOUT & stream) {
-        orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stdout);
-    } else {
-        orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stderr);
+    /* if numbytes is zero, it means that the channel was closed on the far end - for
+     * now, we just ignore this condition
+     */
+    if (0 < numbytes) {
+        /* write the output locally */
+        if (ORTE_IOF_STDOUT & stream) {
+            orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stdout);
+        } else {
+            orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stderr);
+        }
     }
     
 CLEAN_RETURN:
