@@ -366,6 +366,12 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     size = sizeof(mca_btl_mx_addr_t) * count;
     if( 0 == count ) {
         /* No active BTL module */
+        free(nic_addrs);
+        free(mx_addrs);
+        free(mca_btl_mx_component.mx_btls);
+        mca_btl_mx_component.mx_num_btls = 0;
+        mca_btl_base_error_no_nics("Myrinet/MX", "endpoint");
+        return NULL;
     }
     mca_btl_mx_component.mx_num_btls = count;
 
