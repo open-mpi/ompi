@@ -35,4 +35,27 @@ EXTRA_DIST = \
 	platform/ornl/cray_xt_cnl_romio \
 	platform/ornl/cray_xt_cnl_romio_debug \
         platform/ornl/ornl_configure.gnu \
-        platform/ornl/ornl_configure.pgi
+        platform/ornl/ornl_configure.pgi \
+        platform/lanl/macosx-dynamic \
+        platform/lanl/macosx-dynamic-optimized \
+        platform/lanl/macosx-static-leopard \
+        platform/rr-class/debug-nopanasas \
+        platform/rr-class/debug-panasas \
+        platform/rr-class/debug.conf \
+        platform/rr-class/debug-nopanasas.conf \
+        platform/rr-class/debug-panasas.conf \
+        platform/rr-class/optimized-nopanasas \
+        platform/rr-class/optimized-panasas \
+        platform/rr-class/optimized.conf \
+        platform/rr-class/optimized-nopanasas.conf \
+        platform/rr-class/optimized-panasas.conf \
+        platform/tlcc/debug-nopanasas \
+        platform/tlcc/debug-panasas \
+        platform/tlcc/debug.conf \
+        platform/tlcc/debug-nopanasas.conf \
+        platform/tlcc/debug-panasas.conf \
+        platform/tlcc/optimized-nopanasas \
+        platform/tlcc/optimized-panasas \
+        platform/tlcc/optimized.conf \
+        platform/tlcc/optimized-nopanasas.conf \
+        platform/tlcc/optimized-panasas.conf
