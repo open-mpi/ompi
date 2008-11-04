@@ -277,6 +277,7 @@ int mca_btl_sctp_component_open(void)
 int mca_btl_sctp_component_close(void)
 {
     opal_list_item_t* item;
+    opal_list_item_t* next;
 
     if(NULL != mca_btl_sctp_component.sctp_if_include) {
         free(mca_btl_sctp_component.sctp_if_include);
@@ -298,12 +299,13 @@ int mca_btl_sctp_component_close(void)
 
     /* cleanup any pending events */
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
-    for(item =  opal_list_remove_first(&mca_btl_sctp_component.sctp_events);
-        item != NULL; 
-        item =  opal_list_remove_first(&mca_btl_sctp_component.sctp_events)) {
-        mca_btl_sctp_event_t* event = (mca_btl_sctp_event_t*)item;
-        opal_event_del(&event->event);
-        OBJ_RELEASE(event);
+    for(item =	opal_list_get_first(&mca_btl_sctp_component.sctp_events);
+	item != opal_list_get_end(&mca_btl_sctp_component.sctp_events);
+	item = next) {
+	mca_btl_sctp_event_t* event = (mca_btl_sctp_event_t*)item;
+	next = opal_list_get_next(item);
+	opal_event_del(&event->event);
+	OBJ_RELEASE(event);
     }
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 
