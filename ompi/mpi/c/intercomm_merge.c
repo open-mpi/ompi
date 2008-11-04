@@ -2,15 +2,15 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 University of Houston.  All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -131,18 +131,10 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate ( newcomp,              /* new comm */ 
-                              intercomm,            /* old comm */
-                              NULL,                 /* bridge comm */
-                              NULL,                 /* local leader */
-                              NULL,                 /* remote_leader */
-                              OMPI_COMM_CID_INTER,  /* mode */
-                              -1,                   /* send_first */
-                              0);                    /* sync_flag */
+    rc = ompi_comm_activate( &newcomp );           /* new comm */ 
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-    
 
  exit:
     OPAL_CR_EXIT_LIBRARY();
@@ -164,3 +156,4 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     *newcomm = newcomp;
     return MPI_SUCCESS;
 }
+

@@ -1,14 +1,16 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -321,7 +323,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     module->m_sequence_number = (mca_osc_rdma_component.c_sequence_number++);
     OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
 
-    ret = ompi_comm_dup(comm, &module->m_comm, 0);
+    ret = ompi_comm_dup(comm, &module->m_comm);
     if (ret != OMPI_SUCCESS) goto cleanup;
 
     opal_output_verbose(1, ompi_osc_base_output,
@@ -1367,3 +1369,4 @@ setup_rdma(ompi_osc_rdma_module_t *module)
 
     return ret;
 }
+

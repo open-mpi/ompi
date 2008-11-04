@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -155,292 +155,281 @@ struct ompi_communicator_t {
     /* Collectives module interface and data */
     mca_coll_base_comm_coll_t c_coll;
 };
-    typedef struct ompi_communicator_t ompi_communicator_t;
-    OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
-    OMPI_DECLSPEC extern ompi_communicator_t ompi_mpi_comm_null;
+typedef struct ompi_communicator_t ompi_communicator_t;
+OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
+OMPI_DECLSPEC extern ompi_communicator_t ompi_mpi_comm_null;
 
 
-    /**
-     * Is this a valid communicator?  This is a complicated question.
-     * :-)
-     *
-     * According to MPI-1:5.2.4 (p137):
-     *
-     * "The predefined constant MPI_COMM_NULL is the value used for
-     * invalid communicator handles."
-     *
-     * Hence, MPI_COMM_NULL is not valid.  However, MPI-2:4.12.4 (p50)
-     * clearly states that the MPI_*_C2F and MPI_*_F2C functions
-     * should treat MPI_COMM_NULL as a valid communicator -- it
-     * distinctly differentiates between "invalid" handles and
-     * "MPI_*_NULL" handles.  Some feel that the MPI-1 definition
-     * still holds for all other MPI functions; others feel that the
-     * MPi-2 definitions trump the MPI-1 definition.  Regardless of
-     * who is right, there is ambiguity here.  So we have left
-     * ompi_comm_invalid() as originally coded -- per the MPI-1
-     * definition, where MPI_COMM_NULL is an invalid communicator.
-     * The MPI_Comm_c2f() function, therefore, calls
-     * ompi_comm_invalid() but also explictily checks to see if the
-     * handle is MPI_COMM_NULL.
-     */
-    static inline int ompi_comm_invalid(ompi_communicator_t* comm)
-    {
-        if ((NULL == comm) || (MPI_COMM_NULL == comm) ||
-            (OMPI_COMM_IS_FREED(comm)) || (OMPI_COMM_IS_INVALID(comm)) )
-            return true;
-        else
-            return false;
-    }
-
-    /**
-     * rank w/in the communicator
-     */
-    static inline int ompi_comm_rank(ompi_communicator_t* comm)
-    {
-        return comm->c_my_rank;
-    }
-
-    /**
-     * size of the communicator
-     */
-    static inline int ompi_comm_size(ompi_communicator_t* comm)
-    {
-        return comm->c_local_group->grp_proc_count;
-    }
-
-    /**
-     * size of the remote group for inter-communicators.
-     * returns zero for an intra-communicator
-     */
-    static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
-    {
-        return (comm->c_flags & OMPI_COMM_INTER ? comm->c_remote_group->grp_proc_count : 0);
-    }
-
-    /** 
-     * Context ID for the communicator, suitable for passing to
-     * ompi_comm_lookup for getting the communicator back 
-     */
-    static inline uint32_t ompi_comm_get_cid(ompi_communicator_t* comm) 
-    {
-        return comm->c_contextid;
-    }
-
-    /* return pointer to communicator associated with context id cid,
-     * No error checking is done*/
-    static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid)
-    {
-        /* array of pointers to communicators, indexed by context ID */
-        return (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators, cid);
-    }
-
-    static inline struct ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* comm, int peer_id)
-    {
-#if OMPI_ENABLE_DEBUG
-        if(peer_id >= comm->c_remote_group->grp_proc_count) {
-            opal_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
-            return (struct ompi_proc_t *) NULL;
-        }
-#endif
-        /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
-        return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
-    }
-
-    static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
-    {
-        if(peer_id < 0 || peer_id >= comm->c_remote_group->grp_proc_count) {
-            return true;
-        }
+/**
+ * Is this a valid communicator?  This is a complicated question.
+ * :-)
+ *
+ * According to MPI-1:5.2.4 (p137):
+ *
+ * "The predefined constant MPI_COMM_NULL is the value used for
+ * invalid communicator handles."
+ *
+ * Hence, MPI_COMM_NULL is not valid.  However, MPI-2:4.12.4 (p50)
+ * clearly states that the MPI_*_C2F and MPI_*_F2C functions
+ * should treat MPI_COMM_NULL as a valid communicator -- it
+ * distinctly differentiates between "invalid" handles and
+ * "MPI_*_NULL" handles.  Some feel that the MPI-1 definition
+ * still holds for all other MPI functions; others feel that the
+ * MPi-2 definitions trump the MPI-1 definition.  Regardless of
+ * who is right, there is ambiguity here.  So we have left
+ * ompi_comm_invalid() as originally coded -- per the MPI-1
+ * definition, where MPI_COMM_NULL is an invalid communicator.
+ * The MPI_Comm_c2f() function, therefore, calls
+ * ompi_comm_invalid() but also explictily checks to see if the
+ * handle is MPI_COMM_NULL.
+ */
+static inline int ompi_comm_invalid(ompi_communicator_t* comm)
+{
+    if ((NULL == comm) || (MPI_COMM_NULL == comm) ||
+        (OMPI_COMM_IS_FREED(comm)) || (OMPI_COMM_IS_INVALID(comm)) )
+        return true;
+    else
         return false;
+}
+
+/**
+ * rank w/in the communicator
+ */
+static inline int ompi_comm_rank(ompi_communicator_t* comm)
+{
+    return comm->c_my_rank;
+}
+
+/**
+ * size of the communicator
+ */
+static inline int ompi_comm_size(ompi_communicator_t* comm)
+{
+    return comm->c_local_group->grp_proc_count;
+}
+
+/**
+ * size of the remote group for inter-communicators.
+ * returns zero for an intra-communicator
+ */
+static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
+{
+    return (comm->c_flags & OMPI_COMM_INTER ? comm->c_remote_group->grp_proc_count : 0);
+}
+
+/** 
+ * Context ID for the communicator, suitable for passing to
+ * ompi_comm_lookup for getting the communicator back 
+ */
+static inline uint32_t ompi_comm_get_cid(ompi_communicator_t* comm) 
+{
+    return comm->c_contextid;
+}
+
+/* return pointer to communicator associated with context id cid,
+ * No error checking is done*/
+static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid)
+{
+    /* array of pointers to communicators, indexed by context ID */
+    return (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators, cid);
+}
+
+static inline struct ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* comm, int peer_id)
+{
+#if OMPI_ENABLE_DEBUG
+    if(peer_id >= comm->c_remote_group->grp_proc_count) {
+        opal_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
+        return (struct ompi_proc_t *) NULL;
     }
+#endif
+    /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
+    return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
+}
+
+static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
+{
+    if(peer_id < 0 || peer_id >= comm->c_remote_group->grp_proc_count) {
+        return true;
+    }
+    return false;
+}
 
 
-    /**
-     * Initialise MPI_COMM_WORLD and MPI_COMM_SELF
-     */
-    int ompi_comm_init(void);
-    OMPI_DECLSPEC int ompi_comm_link_function(void);
+/**
+ * Initialise MPI_COMM_WORLD and MPI_COMM_SELF
+ */
+int ompi_comm_init(void);
+OMPI_DECLSPEC int ompi_comm_link_function(void);
 
-    /**
-     * extract the local group from a communicator
-     */
-    OMPI_DECLSPEC int ompi_comm_group (ompi_communicator_t *comm, ompi_group_t **group);
+/**
+ * extract the local group from a communicator
+ */
+OMPI_DECLSPEC int ompi_comm_group (ompi_communicator_t *comm, ompi_group_t **group);
 
-    /**
-     * create a communicator based on a group
-     */
-    int ompi_comm_create (ompi_communicator_t* comm, ompi_group_t *group,
-                          ompi_communicator_t** newcomm);
+/**
+ * create a communicator based on a group
+ */
+int ompi_comm_create (ompi_communicator_t* comm, ompi_group_t *group,
+                      ompi_communicator_t** newcomm);
 
 
-    /**
-     * create a cartesian communicator
-     */
-    int ompi_topo_create (ompi_communicator_t *old_comm,
-                          int ndims_or_nnodes,
-                          int *dims_or_index,
-                          int *periods_or_edges,
-                          bool reorder,
-                          ompi_communicator_t **comm_cart,
-                          int cart_or_graph);
+/**
+ * create a cartesian communicator
+ */
+int ompi_topo_create (ompi_communicator_t *old_comm,
+                      int ndims_or_nnodes,
+                      int *dims_or_index,
+                      int *periods_or_edges,
+                      bool reorder,
+                      ompi_communicator_t **comm_cart,
+                      int cart_or_graph);
 
-    /**
-     * split a communicator based on color and key. Parameters
-     * are identical to the MPI-counterpart of the function.
-     *
-     * @param comm: input communicator
-     * @param color
-     * @param key
-     *
-     * @
-     */
-    OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key,
-                         ompi_communicator_t** newcomm, bool pass_on_topo);
+/**
+ * split a communicator based on color and key. Parameters
+ * are identical to the MPI-counterpart of the function.
+ *
+ * @param comm: input communicator
+ * @param color
+ * @param key
+ *
+ * @
+ */
+OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key,
+                                   ompi_communicator_t** newcomm, bool pass_on_topo);
 
-    /**
-     * dup a communicator. Parameter are identical to the MPI-counterpart
-     * of the function. It has been extracted, since we need to be able
-     * to dup a communicator internally as well.
-     *
-     * @param comm:      input communicator
-     *        sync_flag: 0 if processes need to synchronize in activate
-     *                   1 if the do not (optimization to c_local_comm creation)
-     *
-     */
-    OMPI_DECLSPEC int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, 
-                       int sync_flag);
+/**
+ * dup a communicator. Parameter are identical to the MPI-counterpart
+ * of the function. It has been extracted, since we need to be able
+ * to dup a communicator internally as well.
+ *
+ * @param comm:      input communicator
+ * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
+ */
+OMPI_DECLSPEC int ompi_comm_dup (ompi_communicator_t *comm, ompi_communicator_t **newcomm);
+/**
+ * compare two communicators.
+ *
+ * @param comm1,comm2: input communicators
+ *
+ */
+int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, int *result);
 
-     /**
-     * compare two communicators.
-     *
-     * @param comm1,comm2: input communicators
-     *
-     */
-    int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, int *result);
+/**
+ * free a communicator
+ */
+OMPI_DECLSPEC int ompi_comm_free (ompi_communicator_t **comm);
 
-    /**
-     * free a communicator
-     */
-    OMPI_DECLSPEC int ompi_comm_free (ompi_communicator_t **comm);
+/**
+ * allocate a new communicator structure
+ * @param local_group_size
+ * @param remote_group_size
+ *
+ * This routine allocates the structure, the according local and
+ * remote groups, the proc-arrays in the local and remote group.
+ * It furthermore sets the fortran index correctly,
+ * and sets all other elements to zero.
+ */
+ompi_communicator_t* ompi_comm_allocate (int local_group_size,
+                                         int remote_group_size);
 
-    /**
-     * allocate a new communicator structure
-     * @param local_group_size
-     * @param remote_group_size
-     *
-     * This routine allocates the structure, the according local and
-     * remote groups, the proc-arrays in the local and remote group.
-     * It furthermore sets the fortran index correctly,
-     * and sets all other elements to zero.
-     */
-    ompi_communicator_t* ompi_comm_allocate (int local_group_size,
-                                             int remote_group_size);
-
-    /**
-     * allocate new communicator ID
-     * @param newcomm:    pointer to the new communicator
-     * @param oldcomm:    original comm
-     * @param bridgecomm: bridge comm for intercomm_create
-     * @param mode: combination of input
-     *              OMPI_COMM_CID_INTRA:        intra-comm
-     *              OMPI_COMM_CID_INTER:        inter-comm
-     *              OMPI_COMM_CID_INTRA_BRIDGE: 2 intracomms connected by
-     *                                          a bridge comm. local_leader
-     *                                          and remote leader are in this
-     *                                          case an int (rank in bridge-comm).
-     *              OMPI_COMM_CID_INTRA_OOB:    2 intracomms, leaders talk
-     *                                          through OOB. lleader and rleader
-     *                                          are the required contact information.
-     * @param send_first: to avoid a potential deadlock for
-     *                    the OOB version.
-     * This routine has to be thread safe in the final version.
-     */
+/**
+ * allocate new communicator ID
+ * @param newcomm:    pointer to the new communicator
+ * @param oldcomm:    original comm
+ * @param bridgecomm: bridge comm for intercomm_create
+ * @param mode: combination of input
+ *              OMPI_COMM_CID_INTRA:        intra-comm
+ *              OMPI_COMM_CID_INTER:        inter-comm
+ *              OMPI_COMM_CID_INTRA_BRIDGE: 2 intracomms connected by
+ *                                          a bridge comm. local_leader
+ *                                          and remote leader are in this
+ *                                          case an int (rank in bridge-comm).
+ *              OMPI_COMM_CID_INTRA_OOB:    2 intracomms, leaders talk
+ *                                          through OOB. lleader and rleader
+ *                                          are the required contact information.
+ * @param send_first: to avoid a potential deadlock for
+ *                    the OOB version.
+ * This routine has to be thread safe in the final version.
+ */
 OMPI_DECLSPEC int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
-                            ompi_communicator_t* oldcomm,
-                            ompi_communicator_t* bridgecomm,
-                            void* local_leader,
-                            void* remote_leader,
-                            int mode,
-                            int send_first);
+                                      ompi_communicator_t* oldcomm,
+                                      ompi_communicator_t* bridgecomm,
+                                      void* local_leader,
+                                      void* remote_leader,
+                                      int mode,
+                                      int send_first);
 
-    /**
-     * shut down the communicator infrastructure.
-     */
-    int ompi_comm_finalize (void);
+/**
+ * shut down the communicator infrastructure.
+ */
+int ompi_comm_finalize (void);
 
-    /**
-     * This is THE routine, where all the communicator stuff
-     * is really set.
-     */
+/**
+ * This is THE routine, where all the communicator stuff
+ * is really set.
+ */
 OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
-                        ompi_communicator_t* oldcomm,
-                        int local_size,
-                        int *local_ranks,
-                        int remote_size,
-                        int *remote_ranks,
-                        opal_hash_table_t *attr,
-                        ompi_errhandler_t *errh,
-                        mca_base_component_t *topocomponent,
-                        ompi_group_t *local_group,
-                        ompi_group_t *remote_group   );
-    /**
-     * This is a short-hand routine used in intercomm_create.
-     * The routine makes sure, that all processes have afterwards
-     * a list of ompi_proc_t pointers for the remote group.
-     */
-    struct ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
-                                       ompi_communicator_t *bridge_comm,
-                                       int local_leader,
-                                       int remote_leader,
-                                       orte_rml_tag_t tag,
-                                       int rsize);
+                                  ompi_communicator_t* oldcomm,
+                                  int local_size,
+                                  int *local_ranks,
+                                  int remote_size,
+                                  int *remote_ranks,
+                                  opal_hash_table_t *attr,
+                                  ompi_errhandler_t *errh,
+                                  mca_base_component_t *topocomponent,
+                                  ompi_group_t *local_group,
+                                  ompi_group_t *remote_group   );
+/**
+ * This is a short-hand routine used in intercomm_create.
+ * The routine makes sure, that all processes have afterwards
+ * a list of ompi_proc_t pointers for the remote group.
+ */
+struct ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
+                                            ompi_communicator_t *bridge_comm,
+                                            int local_leader,
+                                            int remote_leader,
+                                            orte_rml_tag_t tag,
+                                            int rsize);
 
-    /**
-     * This routine verifies, whether local_group and remote group are overlapping
-     * in intercomm_create
-     */
-    int ompi_comm_overlapping_groups (int size, struct ompi_proc_t ** lprocs,
-                                      int rsize, struct ompi_proc_t ** rprocs);
+/**
+ * This routine verifies, whether local_group and remote group are overlapping
+ * in intercomm_create
+ */
+int ompi_comm_overlapping_groups (int size, struct ompi_proc_t ** lprocs,
+                                  int rsize, struct ompi_proc_t ** rprocs);
 
-    /**
-     * This is a routine determining whether the local or the
-     * remote group will be first in the new intra-comm.
-     * Just used from within MPI_Intercomm_merge.
-     */
-    int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
-                                   int high );
-
-
-OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t* newcomm,
-                             ompi_communicator_t* oldcomm,
-                             ompi_communicator_t* bridgecomm,
-                             void* local_leader,
-                             void* remote_leader,
-                             int mode,
-                             int send_first,
-                             int sync_flag );
+/**
+ * This is a routine determining whether the local or the
+ * remote group will be first in the new intra-comm.
+ * Just used from within MPI_Intercomm_merge.
+ */
+int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
+                                int high );
 
 
-    /**
-     * a simple function to dump the structure
-     */
-    int ompi_comm_dump ( ompi_communicator_t *comm );
+OMPI_DECLSPEC int ompi_comm_activate ( ompi_communicator_t** newcomm );
 
-    /* setting name */
-    int ompi_comm_set_name (ompi_communicator_t *comm, char *name );
+/**
+ * a simple function to dump the structure
+ */
+int ompi_comm_dump ( ompi_communicator_t *comm );
 
-    /*
-     * these are the init and finalize functions for the comm_reg
-     * stuff. These routines are necessary for handling multi-threading
-     * scenarious in the communicator_cid allocation
-     */
-    void ompi_comm_reg_init(void);
-    void ompi_comm_reg_finalize(void);
+/* setting name */
+int ompi_comm_set_name (ompi_communicator_t *comm, char *name );
 
-    /* global variable to save the number od dynamic communicators */
-    extern int ompi_comm_num_dyncomm;
+/*
+ * these are the init and finalize functions for the comm_reg
+ * stuff. These routines are necessary for handling multi-threading
+ * scenarious in the communicator_cid allocation
+ */
+void ompi_comm_reg_init(void);
+void ompi_comm_reg_finalize(void);
+
+/* global variable to save the number od dynamic communicators */
+extern int ompi_comm_num_dyncomm;
 
 
 END_C_DECLS
 
 #endif /* OMPI_COMMUNICATOR_H */
+

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -440,14 +441,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     /* activate comm and init coll-component */
-    rc = ompi_comm_activate ( newcomp,                 /* new communicator */
-                              comm,                    /* old communicator */
-                              NULL,                    /* bridge comm */
-                              &root,                   /* local leader */
-                              &carport,                /* remote leader */
-                              OMPI_COMM_CID_INTRA_OOB, /* mode */
-                              send_first,              /* send or recv first */
-                              0);                      /* sync_flag */
+    rc = ompi_comm_activate ( &newcomp );             /* new communicator */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -456,7 +450,6 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
        to enable the usage of fast communication devices
        between the two worlds ?
     */
-
 
  exit:
     /* done with OOB and such - slow our tick rate again */
@@ -1035,3 +1028,4 @@ static void process_cb(int fd, short event, void *data)
     /* flag complete */
     recv_completed = true;
 }
+

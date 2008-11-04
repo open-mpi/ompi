@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -173,7 +174,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     mca_pml_ob1_comm_t* pml_comm = OBJ_NEW(mca_pml_ob1_comm_t);
-    opal_list_item_t* item;
+    opal_list_item_t *item, *next_item;
     mca_pml_ob1_recv_frag_t* frag;
     mca_pml_ob1_comm_proc_t* pml_proc;
     mca_pml_ob1_match_hdr_t* hdr;
@@ -191,8 +192,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     /* Grab all related messages from the non_existing_communicator pending queue */
     for( item = opal_list_get_first(&mca_pml_ob1.non_existing_communicator_pending);
          item != opal_list_get_end(&mca_pml_ob1.non_existing_communicator_pending);
-         item = opal_list_get_next(item) ) {
+         item = next_item ) {
         frag = (mca_pml_ob1_recv_frag_t*)item;
+        next_item = opal_list_get_next(item);
         hdr = &frag->hdr.hdr_match;
 
         /* Is this fragment for the current communicator ? */
@@ -206,6 +208,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         item = opal_list_remove_item( &mca_pml_ob1.non_existing_communicator_pending, item );
 
       add_fragment_to_unexpected:
+
         /* We generate the MSG_ARRIVED event as soon as the PML is aware
          * of a matching fragment arrival. Independing if it is received
          * on the correct order or not. This will allow the tools to

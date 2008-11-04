@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -110,7 +111,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     
     if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN) ) {
         return;
-     }
+    }
     ob1_hdr_ntoh(((mca_pml_ob1_hdr_t*) hdr), MCA_PML_OB1_HDR_TYPE_MATCH);
     
     /* communicator pointer */
@@ -677,3 +678,4 @@ wrong_seq:
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     return OMPI_SUCCESS;
 }
+

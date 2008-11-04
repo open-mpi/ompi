@@ -3,16 +3,16 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
+ * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -411,88 +411,54 @@ static uint32_t ompi_comm_lowest_cid (void)
  * comm.c is, that this file contains the allreduce implementations
  * which are required, and thus we avoid having duplicate code...
  */
-int ompi_comm_activate ( ompi_communicator_t* newcomm, 
-                         ompi_communicator_t* comm, 
-                         ompi_communicator_t* bridgecomm, 
-                         void* local_leader,
-                         void* remote_leader,
-                         int mode, 
-                         int send_first, 
-                         int sync_flag)
+int ompi_comm_activate ( ompi_communicator_t** newcomm )
 {
-    int ok=0, gok=0;
-    ompi_comm_cid_allredfct* allredfnct;
+    int ret = 0;
 
-    if (0 == sync_flag) {
-        /* Step 1: the barrier, after which it is allowed to 
-         * send messages over the new communicator 
-         */
-        switch (mode) 
-        {
-            case OMPI_COMM_CID_INTRA: 
-                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
-                break;
-            case OMPI_COMM_CID_INTER:
-                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
-                break;
-            case OMPI_COMM_CID_INTRA_BRIDGE: 
-                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
-                break;
-            case OMPI_COMM_CID_INTRA_OOB: 
-                allredfnct=(ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
-                break;
-            default: 
-                return MPI_UNDEFINED;
-                break;
-        }
-        
-        if (MPI_THREAD_MULTIPLE != ompi_mpi_thread_provided) {
-            /* Only execute the synchronization for single-threaded scenarios.
-               For multi-threaded cases, the synchronization has already 
-               been executed in the cid-allocation loop */
-            (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
-                         local_leader, remote_leader, send_first );
-            
-        }
+    /**
+     * Check to see if this process is in the new communicator.
+     *
+     * Specifically, this function is invoked by all proceses in the
+     * old communicator, regardless of whether they are in the new
+     * communicator or not.  This is because it is far simpler to use
+     * MPI collective functions on the old communicator to determine
+     * some data for the new communicator (e.g., remote_leader) than
+     * to kludge up our own pseudo-collective routines over just the
+     * processes in the new communicator.  Hence, *all* processes in
+     * the old communicator need to invoke this function.
+     *
+     * That being said, only processes in the new communicator need to
+     * select a coll module for the new communicator.  More
+     * specifically, proceses who are not in the new communicator
+     * should *not* select a coll module -- for example,
+     * ompi_comm_rank(newcomm) returns MPI_UNDEFINED for processes who
+     * are not in the new communicator.  This can cause errors in the
+     * selection / initialization of a coll module.  Plus, it's
+     * wasteful -- processes in the new communicator will end up
+     * freeing the new communicator anyway, so we might as well leave
+     * the coll selection as NULL (the coll base comm unselect code
+     * handles that case properly).
+     */
+    if (MPI_UNDEFINED == (*newcomm)->c_local_group->grp_my_rank) {
+        return OMPI_SUCCESS;
     }
-    /* Check to see if this process is in the new communicator.
-
-       Specifically, this function is invoked by all proceses in the
-       old communicator, regardless of whether they are in the new
-       communicator or not.  This is because it is far simpler to use
-       MPI collective functions on the old communicator to determine
-       some data for the new communicator (e.g., remote_leader) than
-       to kludge up our own pseudo-collective routines over just the
-       processes in the new communicator.  Hence, *all* processes in
-       the old communicator need to invoke this function.
-
-       That being said, only processes in the new communicator need to
-       select a coll module for the new communicator.  More
-       specifically, proceses who are not in the new communicator
-       should *not* select a coll module -- for example,
-       ompi_comm_rank(newcomm) returns MPI_UNDEFINED for processes who
-       are not in the new communicator.  This can cause errors in the
-       selection / initialization of a coll module.  Plus, it's
-       wasteful -- processes in the new communicator will end up
-       freeing the new communicator anyway, so we might as well leave
-       the coll selection as NULL (the coll base comm unselect code
-       handles that case properly). */
-
-    if (MPI_UNDEFINED != newcomm->c_local_group->grp_my_rank) {
-
-        /* Step 2: call all functions, which might use the new
-           communicator already. */
-
-        /* Initialize the coll components */
-        /* Let the collectives components fight over who will do
-           collective on this new comm.  */
-        if (OMPI_SUCCESS != 
-            (ok = mca_coll_base_comm_select(newcomm))) {
-            return ok;
-        }
+    /* Initialize the PML stuff in the newcomm  */
+    if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
+        goto bail_on_error;
     }
+    OMPI_COMM_SET_PML_ADDED(*newcomm);
 
+    /* Let the collectives components fight over who will do
+       collective on this new comm.  */
+    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
+        goto bail_on_error;
+    }
     return OMPI_SUCCESS;
+
+ bail_on_error:
+    OBJ_RELEASE(*newcomm);
+    *newcomm = MPI_COMM_NULL;
+    return ret;
 }                         
 
 /**************************************************************************/
@@ -850,3 +816,4 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
 }
 
 END_C_DECLS
+

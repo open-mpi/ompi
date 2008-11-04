@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -103,6 +103,8 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
     newcomm = OBJ_NEW(ompi_communicator_t);
     /* fill in the inscribing hyper-cube dimensions */
     newcomm->c_cube_dim = opal_cube_dim(local_size);
+    newcomm->c_id_available   = MPI_UNDEFINED;
+    newcomm->c_id_start_index = MPI_UNDEFINED;
 
     if (NULL == local_group) {
         /* determine how the list of local_rank can be stored most
@@ -130,9 +132,9 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
         }
         newcomm->c_flags |= OMPI_COMM_INTER;
         if ( OMPI_COMM_IS_INTRA(oldcomm) ) {
-            ompi_comm_dup(oldcomm, &newcomm->c_local_comm,0);
+            ompi_comm_dup(oldcomm, &newcomm->c_local_comm);
         } else {
-            ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm,0);
+            ompi_comm_dup(oldcomm->c_local_comm, &newcomm->c_local_comm);
         }
     }
     else { 
@@ -214,14 +216,7 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
         }
     }
       
-    /* Initialize the PML stuff in the newcomm  */
-    if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(newcomm))) ) {
-        OBJ_RELEASE(newcomm);
-        return ret;
-    }
-
-    OMPI_COMM_SET_PML_ADDED(newcomm);
-    *ncomm = newcomm;
+   *ncomm = newcomm;
     return (OMPI_SUCCESS);
 }
 
@@ -354,15 +349,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
-                              comm,     /* old comm */
-                              NULL,     /* bridge comm */
-                              NULL,     /* local leader */
-                              NULL,     /* remote_leader */
-                              mode,     /* mode */
-                              -1,       /* send first */
-                              0);        /* sync_flag */
-                             
+    rc = ompi_comm_activate( &newcomp );  /* new communicator */ 
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -585,19 +572,10 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
              newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
-    rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
-                  comm,     /* old comm */
-                  NULL,     /* bridge comm */
-                  NULL,     /* local leader */
-                  NULL,     /* remote_leader */
-                  mode,     /* mode */
-                  -1,       /* send first */
-                  0);        /* sync_flag */
-                             
+    rc = ompi_comm_activate( &newcomp );  /* new communicator */ 
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-
 
  exit:
     if ( NULL != results ) {
@@ -619,7 +597,6 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
         free ( rranks );
     }
 
-
     /* Step 4: if we are not part of the comm, free the struct   */
     /* --------------------------------------------------------- */
     if ( NULL != newcomp && MPI_UNDEFINED == color ) {
@@ -632,8 +609,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm, 
-                    int sync_flag)
+int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 {
     ompi_communicator_t *comp=NULL;
     ompi_communicator_t *newcomp=NULL;
@@ -661,8 +637,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
                           (mca_base_component_t *) comp->c_topo_component,                  
                           /* topo component */
                           comp->c_local_group,                    /* local group */
-                          comp ->c_remote_group                   /* remote group */
-                          );
+                          comp ->c_remote_group );                /* remote group */
     if ( NULL == newcomm ) {
         rc =  MPI_ERR_INTERN;
         return rc;
@@ -688,15 +663,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm,
              newcomp->c_contextid, comm->c_contextid );
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate (newcomp,   /* new communicator */ 
-                             comp,      /* old comm */
-                             NULL,      /* bridge comm */
-                             NULL,      /* local leader */
-                             NULL,      /* remote_leader */
-                             mode,      /* mode */
-                             -1,        /* send_first */
-                             sync_flag  /* sync_flag (1 means no processes synchronization) */
-                             );
+    rc = ompi_comm_activate( &newcomp );  /* new communicator */ 
     if ( OMPI_SUCCESS != rc ) {
         return rc;
     }
@@ -1533,18 +1500,9 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
         return ret;
     }
 
-    ret = ompi_comm_activate ( new_comm,  /* new communicator */
-                               old_comm,     /* old comm */
-                               NULL,     /* bridge comm */
-                               NULL,     /* local leader */
-                               NULL,     /* remote_leader */
-                               OMPI_COMM_CID_INTRA,   /* mode */
-                               -1,       /* send first, doesn't matter */
-                               0);        /* sync_flag */
-
+    ret = ompi_comm_activate( &new_comm );  /* new communicator */
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
-        ompi_comm_free (&new_comm);
         *comm_topo = new_comm;
         return ret;
     }
@@ -1568,8 +1526,6 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
                                 int my_rank,
                                 ompi_errhandler_t *errh )
 {
-    int ret;
-    
     /* properly decrement the ref counts on the groups.
        We are doing this because this function is sort of a redo 
        of what is done in comm.c.. No need to decrement the ref 
@@ -1617,14 +1573,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     /* determine the cube dimensions */
     comm->c_cube_dim = opal_cube_dim(comm->c_local_group->grp_proc_count);
 
-    /* initialize PML stuff on the communicator */
-    if (OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(comm)))) {
-        /* some error has happened */
-        return ret;
-    }
-    OMPI_COMM_SET_PML_ADDED(comm);
-
-    return OMPI_SUCCESS;
+   return OMPI_SUCCESS;
 }
 
 static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm, 
@@ -1692,3 +1641,4 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
 
     return OMPI_SUCCESS;
 }
+
