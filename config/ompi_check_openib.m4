@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -108,6 +108,18 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     AS_IF([test "$ompi_check_openib_happy" = "yes" -a "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([The OpenFabrics BTL driver does not currently support progress threads.  Disabling BTL.])
            ompi_check_openib_happy="no"])
+
+    # Check to see if <infiniband/driver.h> works.  It is known to
+    # create problems on some platforms with some compilers (e.g.,
+    # RHEL4U3 with the PGI 32 bit compiler).  Use undocumented (in AC
+    # 2.63) feature of AC_CHECK_HEADERS: if you explicitly pass in
+    # AC_INCLUDES_DEFAULT as the 4th arg to AC_CHECK_HEADERS, the test
+    # will fail if the header is present but not compilable, *but it
+    # will not print the big scary warning*.  See
+    # http://lists.gnu.org/archive/html/autoconf/2008-10/msg00143.html.
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [AC_CHECK_HEADERS([infiniband/driver.h], [], [], 
+                            [AC_INCLUDES_DEFAULT])])
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],

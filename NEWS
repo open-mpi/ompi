@@ -29,6 +29,8 @@ version 1.0.
 1.2.9 (unreleased)
 ------------------
 
+- Fix a compilation problem on RHEL4U3 with the PGI 32 bit compiler
+  caused by <infiniband/driver.h>.  See ticket #1613.
 - Fix the --enable-cxx-exceptions configure option. See ticket #1607.
 - Properly handle when the MX BTL cannot open an endpoint. See ticket #1621.
 - Fix a double free of events on the tcp_events list. See ticket #1631.

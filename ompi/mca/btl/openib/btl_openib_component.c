@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -18,7 +18,6 @@
  * 
  * $HEADER$
  */
-
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
@@ -51,7 +50,17 @@
 #include "ompi/datatype/convertor.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include <infiniband/verbs.h> 
+/* This is crummy, but <infiniband/driver.h> doesn't work on all
+   platforms with all compilers.  Specifically, trying to include it
+   on RHEL4U3 with the PGI 32 bit compiler will cause problems because
+   certain 64 bit types are not defined.  Per advice from Roland D.,
+   just include the one prototype that we need in this case
+   (ibv_get_sysfs_path()). */
+#ifdef HAVE_INFINIBAND_DRIVER_H
 #include <infiniband/driver.h>
+#else
+const char *ibv_get_sysfs_path(void);
+#endif
 #include <errno.h> 
 #include <string.h>   /* for strerror()*/ 
 #include <sys/types.h>
