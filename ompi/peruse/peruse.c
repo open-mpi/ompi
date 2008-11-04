@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -12,10 +12,10 @@
  */
 
 #include "ompi_config.h"
-#include "mpi.h"
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
+#include "mpi.h"
 #include "ompi/peruse/peruse.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "opal/class/opal_hash_table.h"
@@ -77,8 +77,8 @@ int PERUSE_Init (void)
 
 /* Query all implemented events */
 int PERUSE_Query_supported_events( int* num_supported,
-                                   char*** event_names,
-                                   int** events )
+                                                 char*** event_names,
+                                                 int** events )
 {
     int i;
     *num_supported = PERUSE_num_events;
@@ -143,10 +143,10 @@ int PERUSE_Query_queue_event_scope (int * scope)
  */
 /* Initialize event associated with an MPI communicator */
 int PERUSE_Event_comm_register( int                       event,
-                                MPI_Comm                  comm,
-                                peruse_comm_callback_f *  callback_fn,
-                                void *                    param,
-                                peruse_event_h *          event_h )
+                                              MPI_Comm                  comm,
+                                              peruse_comm_callback_f *  callback_fn,
+                                              void *                    param,
+                                              peruse_event_h *          event_h )
 {
     ompi_peruse_handle_t * handle;
     if (MPI_PARAM_CHECK) {
@@ -259,8 +259,8 @@ int PERUSE_Event_release (peruse_event_h * event_h)
 
 /* Set a new comm callback */
 int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
-                                    peruse_comm_callback_f*  callback_fn,
-                                    void*                    param )
+                                                  peruse_comm_callback_f*  callback_fn,
+                                                  void*                    param )
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -276,8 +276,8 @@ int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
 
 /* Get the current comm callback */
 int PERUSE_Event_comm_callback_get( peruse_event_h           event_h,
-                                    peruse_comm_callback_f** callback_fn,
-                                    void**                   param )
+                                                  peruse_comm_callback_f** callback_fn,
+                                                  void**                   param )
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
