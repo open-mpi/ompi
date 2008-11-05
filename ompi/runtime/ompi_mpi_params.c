@@ -224,30 +224,16 @@ int ompi_mpi_register_params(void)
     ompi_mpi_abort_print_stack = false;
 #endif
 
-    mca_base_param_reg_int_name("mpi", "preconnect_all",
-                                "Whether to force MPI processes to create OOB "
-                                "and MPI connections with *all* peers during "
-                                "MPI_INIT (vs. making connections lazily -- "
-                                "upon the first MPI traffic between each "
-                                "process peer pair)",
-                                false, false, 0, NULL);
-
-    mca_base_param_reg_int_name("mpi", "preconnect_mpi",
-                                "Whether to force MPI processes to fully "
-                                "wire-up the MPI connections between MPI "
-                                "processes.",
-                                false, false, 0, NULL);
-
-    mca_base_param_reg_int_name("mpi", "preconnect_oob",
-                                "Whether to force MPI processes to fully "
-                                "wire-up the OOB system between MPI processes.",
-                                false, false, 0, NULL);
-
-    mca_base_param_reg_int_name("mpi", "preconnect_oob_simultaneous",
-                                "Number of simultaneous outstanding "
-                                "OOB connections to allow during preconnect.",
-                                false, false, 4, NULL);
-
+    value = mca_base_param_reg_int_name("mpi", "preconnect_mpi",
+                                        "Whether to force MPI processes to fully "
+                                        "wire-up the MPI connections between MPI "
+                                        "processes during "
+                                        "MPI_INIT (vs. making connections lazily -- "
+                                        "upon the first MPI traffic between each "
+                                        "process peer pair)",
+                                        false, false, 0, NULL);
+    mca_base_param_reg_syn_name(value, "mpi", "preconnect_all", true);
+    
     /* Leave pinned parameter */
 
     mca_base_param_reg_int_name("mpi", "leave_pinned",
