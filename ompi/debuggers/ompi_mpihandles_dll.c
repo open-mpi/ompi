@@ -98,6 +98,7 @@ int opal_progress_spin_count;
 volatile int32_t opal_progress_thread_count;
 bool opal_mutex_check_locks;
 bool opal_uses_threads;
+ompi_proc_t* ompi_proc_local_proc;
 #endif /* defined(__SUNPRO_C) */
 
 /*---------------------------------------------------------------------*/
