@@ -32,7 +32,7 @@ nodist_man_MANS = util/hostfile/orte_hosts.7
 # in the util/Makefile
 $(nodist_man_MANS): util/hostfile/$(am__dirstamp) $(top_builddir)/opal/include/opal_config.h
 
-EXTRA_DIST = $(nodist_man_MANS:.1=.1in)
+EXTRA_DIST = $(nodist_man_MANS:.7=.7in)
 
 AM_LFLAGS = -Porte_util_hostfile_
 LEX_OUTPUT_ROOT = lex.orte_util_hostfile_
