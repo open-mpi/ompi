@@ -30,6 +30,9 @@
 #if HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
@@ -51,10 +54,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/ess/ess.h"
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-#include "orte/mca/routed/routed.h"
-#endif
 
 #include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
@@ -345,16 +344,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     orte_setup = true;
-    
-#if !ORTE_DISABLE_FULL_SUPPORT
-    /* warmup the OOB routes.  Do this here because
-     it will go much faster before the event library is switched
-     into non-blocking mode */
-    if (OMPI_SUCCESS != (ret = orte_routed.warmup_routes())) {
-        error = "orte_routed_warmup_routes() failed";
-        goto error;
-    }
-#endif
     
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {

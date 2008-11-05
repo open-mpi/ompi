@@ -48,7 +48,6 @@ static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
 static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
 static int get_wireup_info(opal_buffer_t *buf);
-static int warmup_routes(void);
 
 #if OPAL_ENABLE_FT == 1
 static int radix_ft_event(int state);
@@ -61,7 +60,6 @@ orte_routed_module_t orte_routed_radix_module = {
     update_route,
     get_route,
     init_routes,
-    warmup_routes,
     route_lost,
     route_is_defined,
     update_routing_tree,
@@ -790,24 +788,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         
         return ORTE_SUCCESS;
     }
-}
-
-static int warmup_routes(void)
-{
-    opal_buffer_t buf;
-    orte_daemon_cmd_flag_t cmd=ORTE_DAEMON_NULL_CMD;
-    int rc;
-    
-    /* send a NULL command to my parent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD);
-    if (0 > (rc = orte_rml.send_buffer(&my_parent, &buf, ORTE_RML_TAG_DAEMON, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
-        return rc;
-    }
-    OBJ_DESTRUCT(&buf);
-    return ORTE_SUCCESS;
 }
 
 static int route_lost(const orte_process_name_t *route)
