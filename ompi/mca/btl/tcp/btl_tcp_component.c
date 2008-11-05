@@ -469,8 +469,8 @@ static int mca_btl_tcp_component_create_instances(void)
     {
         int i;
         for(i = 0; i < kif_count; i++) {
-            /* Bug, FIXME: Don't hardcode length of if_name, use IFNAMESIZE */
-            char if_name[32];
+            /* IF_NAMESIZE is defined in opal/util/if.h */
+            char if_name[IF_NAMESIZE];
             if_index = kindexes[i];
 
             opal_ifkindextoname(if_index, if_name, sizeof(if_name));
