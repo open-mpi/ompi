@@ -223,15 +223,6 @@ typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(orte_jobid_t job
  */
 typedef bool (*orte_routed_module_proc_is_below_fn_t)(orte_vpid_t root, orte_vpid_t target);
 
-/*
- * Warmup routes
- *
- * Preconnect the module's routes so that the sockets are created
- * and ready for messaging. Sends 0-byte messages to those
- * processes that are directly connected
- */
-typedef int (*orte_routed_module_warmup_routes_fn_t)(void);
-
 /**
  * Handle fault tolerance updates
  *
@@ -261,7 +252,6 @@ struct orte_routed_module_t {
     orte_routed_module_update_route_fn_t            update_route;
     orte_routed_module_get_route_fn_t               get_route;
     orte_routed_module_init_routes_fn_t             init_routes;
-    orte_routed_module_warmup_routes_fn_t           warmup_routes;
     orte_routed_module_route_lost_fn_t              route_lost;
     orte_routed_module_route_is_defined_fn_t        route_is_defined;
     /* fns for daemons */

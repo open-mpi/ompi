@@ -37,14 +37,9 @@ ompi_init_preconnect_mpi(void)
     param = mca_base_param_find("mpi", NULL, "preconnect_mpi");
     if (OMPI_ERROR == param) return OMPI_SUCCESS;
     ret = mca_base_param_lookup_int(param, &value);
-    if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
-    if (0 == value) {
-        param = mca_base_param_find("mpi", NULL, "preconnect_all");
-        if (OMPI_ERROR == param) return OMPI_SUCCESS;
-        ret = mca_base_param_lookup_int(param, &value);
-        if (OMPI_SUCCESS != ret) return OMPI_SUCCESS;
+    if (OMPI_SUCCESS != ret || 0 == value) {
+        return OMPI_SUCCESS;
     }
-    if (0 == value) return OMPI_SUCCESS;
 
     inbuf[0] = outbuf[0] = '\0';
 
