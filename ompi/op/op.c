@@ -234,7 +234,13 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #define FLOATING_POINT_FORTRAN_REAL8(name) { NULL }
 #define FLOATING_POINT_FORTRAN_REAL8_3BUFF(name) { NULL }
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16
+/* If:
+   - we have fortran REAL*16, *and*
+   - fortran REAL*16 matches the bit representation of the
+     corresponding C type
+   Only then do we put in function pointers for REAL*16 reductions.
+   Otherwise, just put in NULL. */
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 #define FLOATING_POINT_FORTRAN_REAL16(name) { ompi_mpi_op_##name##_fortran_real16 }
 #define FLOATING_POINT_FORTRAN_REAL16_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_real16 }
 #else
@@ -362,7 +368,14 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #define COMPLEX16(name) { NULL }
 #define COMPLEX16_3BUFF(name) { NULL }
 #endif
-#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
+/* If:
+   - we have fortran REAL*16, *and*
+   - fortran REAL*16 matches the bit representation of the
+     corresponding C type, *and*
+   - we have fortran COMPILEX*32
+   Only then do we put in function pointers for COMPLEX*32 reductions.
+   Otherwise, just put in NULL. */
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C && OMPI_HAVE_FORTRAN_COMPLEX32
 #define COMPLEX32(name) { ompi_mpi_op_##name##_fortran_complex32 }
 #define COMPLEX32_3BUFF(name) { ompi_mpi_op_three_buff_##name##_fortran_complex32 }
 #else
