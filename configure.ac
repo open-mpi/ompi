@@ -885,15 +885,19 @@ AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype cor
 # <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and
 # sysconf(), but does not have _SC_NPROCESSORS_ONLN.  Doh!
 
-AC_MSG_CHECKING([for _SC_NPROCESSORS_ONLN])
-AC_COMPILE_IFELSE(AC_LANG_SOURCE([[#include <unistd.h>
-]],[[int i = _SN_NPROCESSORS_ONLN;]]),
-    [MSG=yes OMPI_HAVE__SC_NPROCESSORS_ONLN=1], 
-    [MSG=no OMPI_HAVE__SC_NPROCESSORS_ONLN=0])
-AC_DEFINE_UNQUOTED(OPAL_HAVE__SC_NPROCESSORS_ONLN, 
-    $OMPI_HAVE__SC_NPROCESSORS_ONLN,
-    [Whether we have the _SC_NPROCESSORS_ONLN])
-AC_MSG_RESULT([$MSG])
+AC_CACHE_CHECK([for _SC_NPROCESSORS_ONLN],
+  [ompi_cv_have__SC_NPROCESSORS_ONLN],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT
+#include <unistd.h>
+],
+     [int i = _SC_NPROCESSORS_ONLN;])],
+     [ompi_cv_have__SC_NPROCESSORS_ONLN="yes"],
+     [ompi_cv_have__SC_NPROCESSORS_ONLN="no"])])
+AS_IF([test "$ompi_cv_have__SC_NPROCESSORS_ONLN" = "yes"],
+      [result=1], [result=0])
+AC_DEFINE_UNQUOTED([OPAL_HAVE__SC_NPROCESSORS_ONLN], [$result],
+  [Define to 1 ifyou have the declaration of _SC_NPROCESSORS_ONLN, and to 0 otherwise])
 
 # all: endian
 
