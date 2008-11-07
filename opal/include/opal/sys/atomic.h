@@ -521,8 +521,8 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
  * See opal_atomic_cmpset_* for pseudo-code.
  */
 #define opal_atomic_cmpset( ADDR, OLDVAL, NEWVAL )                  \
-   opal_atomic_cmpset_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
-                          (int64_t)(NEWVAL), sizeof(*(ADDR)) )
+   opal_atomic_cmpset_xx( (volatile void*)(ADDR), (intptr_t)(OLDVAL), \
+                          (intptr_t)(NEWVAL), sizeof(*(ADDR)) )
 
 /**
  * Atomic compare and set of pointer with acquire semantics. This
