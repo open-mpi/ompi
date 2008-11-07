@@ -237,7 +237,7 @@ int main (int argc, char *argv[]) {
         vt_snprintf(incfile, len - 1, "%s/%s.opari.inc", rcdir, infile);
       }
     } else {
-      len = strlen(infile)+10+1;
+      len = strlen(infile)+11+1;
       incfile = new char[len];
       vt_snprintf(incfile, len - 1, "%s.opari.inc", infile);
     }
