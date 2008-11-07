@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "opal/util/arch.h"
+#include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "orte/mca/oob/tcp/oob_tcp_addr.h"
@@ -245,6 +247,11 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     int idx, rc;
     int *a = NULL;
     unsigned int perm_size;
+    char **include;
+    char **exclude;
+    char **argv;
+    bool skip;
+    char local_if_name[IF_NAMESIZE];
 
     num_local_interfaces = 0;
     num_peer_interfaces = 0;
@@ -270,6 +277,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     memset(local_interfaces, 0, sizeof(local_interfaces));
     memset(peer_interfaces, 0, sizeof(peer_interfaces));
 
+    /* Collect up the list of included and excluded interfaces, if any */
+    include = opal_argv_split(mca_btl_tcp_component.tcp_if_include,',');
+    exclude = opal_argv_split(mca_btl_tcp_component.tcp_if_exclude,',');
+
     /*
      * the following two blocks shout CODE DUPLICATION. We are aware of
      * the problem
@@ -283,6 +294,50 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         int kindex, index;
 
         opal_ifindextoaddr (idx, (struct sockaddr*) &local_addr, sizeof (local_addr));
+        opal_ifindextoname (idx, local_if_name, sizeof (local_if_name));
+
+        /* If we were given a list of included interfaces, then check to see if the
+         * current one is a member of this set.  If so, drop down and complete
+         * processing.  If not, skip it and continue on to the next one. */
+        if(NULL != include) {
+            argv = include;
+            skip = true;
+            while(argv && *argv) {
+                /* When comparing included interfaces, we look for exact matches.
+                   That is why we are using strcmp() here. */
+                if (0 == strcmp(*argv, local_if_name)) {
+                    skip = false;
+                    break;
+                }
+                argv++;
+            }
+            if (true == skip) {
+                /* This interface is not part of the included set, so skip it */
+                continue;
+            }
+        }
+
+        /* If we were given a list of excluded interfaces, then check to see if the
+         * current one is a member of this set.  If not, drop down and complete
+         * processing.  If so, skip it and continue on to the next one. */
+        if (NULL != exclude) {
+            argv = exclude;
+            skip = false;
+            while(argv && *argv) {
+                /* When looking for interfaces to exclude, we only look at
+                 * the number of characters equal to what the user provided.
+                 * For example, excluding "lo" excludes "lo", "lo0" and
+                 * anything that starts with "lo" */
+                if(0 == strncmp(*argv, local_if_name, strlen(*argv))) {
+                    skip = true;
+                    break;
+                }
+                argv++;
+            }
+            if(true == skip) {
+                continue;
+            }
+        }
 
         kindex = opal_ifindextokindex(idx);
         index = local_kindex_to_index[kindex];
@@ -330,6 +385,8 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                         local_addr.ss_family);
         }
     }
+    opal_argv_free(include);
+    opal_argv_free(exclude);
 
     /*
      * identify all kernel interfaces and the associated addresses of
