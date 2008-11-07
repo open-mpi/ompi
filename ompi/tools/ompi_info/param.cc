@@ -626,14 +626,14 @@ void ompi_info::do_config(bool want_all)
       out("Fort have real8", "compiler:fortran:have:real8", 
           OMPI_HAVE_FORTRAN_REAL8 ? "yes" : "no");
       out("Fort have real16", "compiler:fortran:have:real16", 
-          OMPI_HAVE_FORTRAN_REAL16 ? "yes" : "no");
+          OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C ? "yes" : "no");
 
       out("Fort have complex8", "compiler:fortran:have:complex8", 
           OMPI_HAVE_FORTRAN_COMPLEX8 ? "yes" : "no");
       out("Fort have complex16", "compiler:fortran:have:complex16", 
           OMPI_HAVE_FORTRAN_COMPLEX16 ? "yes" : "no");
       out("Fort have complex32", "compiler:fortran:have:complex32", 
-          OMPI_HAVE_FORTRAN_COMPLEX32 ? "yes" : "no");
+          OMPI_HAVE_FORTRAN_COMPLEX32 && OMPI_REAL16_MATCHES_C ? "yes" : "no");
 
       out("Fort integer1 size", "compiler:fortran:sizeof:integer1", 
           OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_SIZEOF_FORTRAN_INTEGER1 : -1);
