@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -39,10 +40,7 @@ sources = \
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plm_bproc_la_SOURCES = $(sources)
-mca_plm_bproc_la_LIBADD = \
-    $(plm_bproc_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_plm_bproc_la_LIBADD = $(plm_bproc_LIBS)
 mca_plm_bproc_la_LDFLAGS = -module -avoid-version $(plm_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
