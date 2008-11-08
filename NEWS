@@ -38,6 +38,10 @@ Trunk (not on release branches yet)
 1.3 (not released yet)
 ---
 
+- Disabled MPI_REAL16 and MPI_COMPLEX32 support on platforms where the
+  bit representation of REAL*16 is different than that of the C type
+  of the same size (usually long double).  Thanks to Julien Devriendt
+  for reporting the issue.  See ticket #1603.
 - Increased the size of MPI_MAX_PORT_NAME to 1024 from 36. See ticket #1533.
 - Added "notify debugger on abort" feature. See tickets #1509 and #1510.
   Thanks to Seppo Sahrakropi for the bug report.
