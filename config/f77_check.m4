@@ -30,6 +30,8 @@ dnl
 #
 # types to search is a comma-seperated list of values
 AC_DEFUN([OMPI_F77_CHECK], [
+    OMPI_VAR_SCOPE_PUSH([ofc_have_type ofc_type_size ofc_type_alignment ofc_c_type ofc_expected_size])
+
     ofc_expected_size=$4
     ofc_have_type=0
     ofc_type_size=$ac_cv_sizeof_int
@@ -108,6 +110,5 @@ AC_DEFUN([OMPI_F77_CHECK], [
     [OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_alignment]
 
     # Clean up
-    unset ofc_have_type ofc_type_size ofc_type_alignment ofc_c_type
-    unset ofc_expected_size
+    OMPI_VAR_SCOPE_POP
 ])dnl

@@ -462,6 +462,12 @@ OMPI_F77_CHECK([REAL*8], [no],
                [float, double, long double], [8])
 OMPI_F77_CHECK([REAL*16], [no],
                [float, double, long double], [16])
+
+# In some compilers, the bit representation of REAL*16 is not the same
+# as the C counterpart that we found.  If this is the case, then we
+# want to disable reduction support for MPI_REAL16 (per ticket #1603).
+OMPI_F77_CHECK_REAL16_C_EQUIV
+
 OMPI_F77_CHECK([DOUBLE PRECISION], [yes],
                [float, double, long double], [-1])
 

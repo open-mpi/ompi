@@ -20,6 +20,8 @@ dnl
 # OMPI_F77_GET_ALIGNMENT(type, shell variable to set)
 # ----------------------------------------------------
 AC_DEFUN([OMPI_F77_GET_ALIGNMENT],[
+    unset happy
+    OMPI_VAR_SCOPE_PUSH([happy ompi_conftest_h])
     AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_alignment_$1])
 
     AC_CACHE_CHECK([alignment of Fortran $1], type_var,
@@ -44,7 +46,7 @@ EOF
         cat > conftest.c <<EOF
 #include <stdio.h>
 #include <stdlib.h>
-$conftest
+$ompi_conftest_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,18 +77,20 @@ EOF
                 [happy="yes"], [happy="no"])], [happy="no"])
 
         if test "$happy" = "no" ; then
+            AC_MSG_RESULT([Error!])
             AC_MSG_ERROR([Could not determine alignment of $1])
         fi
 
         AS_IF([test "$cross_compiling" = "yes"],
-            [AC_MSG_ERROR([Can not determine alignment of $1 when cross-compiling])],
+            [AC_MSG_RESULT([Error!])
+             AC_MSG_ERROR([Can not determine alignment of $1 when cross-compiling])],
             [OMPI_LOG_COMMAND([./conftest],
                 [AS_VAR_SET(type_var, [`cat conftestval`])],
-                [AC_MSG_ERROR([Could not determine alignment of $1])])])
-
-        unset happy ompi_conf
+                [AC_MSG_RESULT([Error!])
+                 AC_MSG_ERROR([Could not determine alignment of $1])])])
         rm -rf conftest*])
 
     $2=AS_VAR_GET([type_var])
     AS_VAR_POPDEF([type_var])dnl
+    OMPI_VAR_SCOPE_POP
 ])
