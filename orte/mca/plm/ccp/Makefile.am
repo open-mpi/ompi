@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -45,10 +46,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_plm_ccp_la_SOURCES = $(component_sources)
 mca_plm_ccp_la_LDFLAGS = -module -avoid-version $(plm_ccp_LDFLAGS)
-mca_plm_ccp_la_LIBADD = \
-    $(plm_ccp_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_plm_ccp_la_LIBADD = $(plm_ccp_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_plm_ccp_la_SOURCES = $(lib_sources)

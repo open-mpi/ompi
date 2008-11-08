@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      UT-Battelle, LLC
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -48,10 +49,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_ras_alps_la_SOURCES = $(component_sources)
 mca_ras_alps_la_LDFLAGS = -module -avoid-version $(ras_alps_LDFLAGS)
-mca_ras_alps_la_LIBADD = \
-    $(ras_alps_LIBS) \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
+mca_ras_alps_la_LIBADD = $(ras_alps_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ras_alps_la_SOURCES = $(lib_sources)
