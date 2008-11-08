@@ -1471,6 +1471,8 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
     one8 = 0;
     opal_dss.pack(&buffer, &one8, 1, OPAL_INT8);  /* app_idx */
+    /* setup a byte object and unload the packed data to it */
+    bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
     opal_dss.unload(&buffer, (void**)&bo->bytes, &bo->size);
     OBJ_DESTRUCT(&buffer);
     /* save a copy to send back to the proc */
@@ -1479,6 +1481,8 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     if (ORTE_SUCCESS != (rc = orte_ess.add_pidmap(jobid, bo))) {
         ORTE_ERROR_LOG(rc);
     }
+    free(bo);
+    
     /* if we don't yet have a daemon map, then we have to generate one
      * to pass back to it
      */
@@ -1489,12 +1493,14 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
             ORTE_ERROR_LOG(rc);
         }
         /* we also need to update our local nidmap - copy the dmap
-         * as this will release the byte object's data
+         * as this will release the byte object's data. The copy function
+         * will automatically malloc the bo itself, so we don't need to do so here
          */
         opal_dss.copy((void**)&bo, orte_odls_globals.dmap, OPAL_BYTE_OBJECT);
         if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
             ORTE_ERROR_LOG(rc);
         }
+        free(bo);
     }
     /* setup the daemon collectives */
     jobdat->num_participating = 1;    
