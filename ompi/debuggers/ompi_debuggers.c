@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -49,14 +49,16 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "debuggers.h"
 /**
- * A lot of include files that are required by al optimized builds in order
- * to get access to the type information. Beware, this file have to always
- * be compiled with the -g flag, otherwise the type information will be
- * missing and the parallel debuggers will be unable to initialize the
- * Open MPI debug library.
+ * BEWARE: The following headers are required by optimized builds in order
+ * to get access to the type information. Some compilers remove all type
+ * information on optimized build, and as a result we are unable to access
+ * the fields structure (i.e. to get their displacement). This file is
+ * included in the optimized build just to provide us with this missing
+ * informations. Therefore, it always have to be compiled with the -g flag,
+ * otherwise the type information will be missing and the parallel
+ * debuggers will be unable to initialize the Open MPI debug library.
  */
 #include "opal/class/opal_list.h"
-
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -98,26 +100,26 @@ OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
 #define MPIR_DEBUG_ABORTING  2
 
 /**
- * There is an issue with the debugger running on different architectures
- * compared with the debugged program. We need to know the sizes of the types
- * on the debugged program. The problem is that the size depend on the
- * compilation options (32 or 64 bits) and on the compiler. Therefore,
- * the simplest and more accurate way is to export these sizes directly from
- * the debugged program.
+ * BEWARE: Try to outsmart some compilers. In some cases, when variables
+ * are defined but not used, some compilers will optimized them out from
+ * the build. As we need to be able to access the structure sizes from the
+ * debugged program (in the case where the MPI library and the application
+ * is compiled with a different architecture flag than the parallel
+ * debugger, 32 vs. 64 bits), we have to have these variables defined.
  */
-OMPI_DECLSPEC opal_list_item_t* opal_list_item_t_type_inclusion = NULL;
-OMPI_DECLSPEC opal_list_t* opal_list_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_free_list_item_t* ompi_free_list_item_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_free_list_t* ompi_free_list_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_request_t* ompi_request_t_type_inclusion = NULL;
-OMPI_DECLSPEC mca_pml_base_request_t* mca_pml_base_request_t_type_inclusion = NULL;
-OMPI_DECLSPEC mca_pml_base_send_request_t* mca_pml_base_send_request_t_type_inclusion = NULL;
-OMPI_DECLSPEC mca_pml_base_recv_request_t* mca_pml_base_recv_request_t_type_inclusion = NULL;
-OMPI_DECLSPEC opal_pointer_array_t* opal_pointer_array_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_communicator_t* ompi_communicator_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_inclusion = NULL;
-OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_inclusion = NULL;
+OMPI_DECLSPEC opal_list_item_t* opal_list_item_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_list_t* opal_list_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_free_list_item_t* ompi_free_list_item_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_free_list_t* ompi_free_list_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_request_t* ompi_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC mca_pml_base_request_t* mca_pml_base_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC mca_pml_base_send_request_t* mca_pml_base_send_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC mca_pml_base_recv_request_t* mca_pml_base_recv_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_pointer_array_t* opal_pointer_array_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_communicator_t* ompi_communicator_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_force_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
 OMPI_DECLSPEC volatile int MPIR_being_debugged = 0;

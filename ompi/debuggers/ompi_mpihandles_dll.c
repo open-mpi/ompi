@@ -46,7 +46,6 @@
 #include "mpihandles_interface.h"
 #include "ompi_mpihandles_dll_defs.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/group/group.h"
 
 
 #define OPAL_ALIGN(x,a,t) (((x)+((t)(a)-1)) & ~(((t)(a)-1)))
