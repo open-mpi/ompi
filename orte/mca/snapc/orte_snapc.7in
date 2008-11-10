@@ -27,7 +27,7 @@ from many distributed local snapshots. The components in this framework
 determine how to: Initiate the checkpoint of the parallel application, gather
 together the many distributed local snapshots, and provide the user with a
 global snapshot handle reference that can be used to restart the parallel
-applicaiton.
+application.
 .
 .\" **************************
 .\"    General Process Requirements Section

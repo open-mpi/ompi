@@ -48,7 +48,7 @@ Error: The process with PID %d is not checkpointable.
        This could be due to one of the following:
         - An application with this PID doesn't currently exist
         - The application with this PID isn't checkpointable
-        - The applicaiton with this PID isn't an Open MPI application.
+        - The application with this PID isn't an Open MPI application.
        We were looking for the named file:
          %s
 
@@ -59,7 +59,7 @@ Error: Unable to find the contact information for PID %d.
           correct.
         - The PID is not that of an active MPIRUN.
         - The application with this PID isn't checkpointable
-        - The applicaiton with this PID isn't an Open MPI application.
+        - The application with this PID isn't an Open MPI application.
        ompi-checkpoint attempted to find the session directory:
          %s
 
@@ -71,7 +71,7 @@ Error: Unable to connect to the Head Node Process to initiate the
           correct.
         - The PID is not that of an active MPIRUN.
         - The application with this PID isn't checkpointable
-        - The applicaiton with this PID isn't an Open MPI application.
+        - The application with this PID isn't an Open MPI application.
 
 [non-ckptable]
 Error: The job with pid %d is not checkpointable.
