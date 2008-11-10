@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -78,7 +78,7 @@ struct mca_btl_base_endpoint_t {
     struct mca_btl_mx_proc_t*   endpoint_proc;
     /**< proc structure corresponding to endpoint */
 
-    struct mca_btl_mx_addr_t    mx_peer;
+    struct mca_btl_mx_addr_t*   mx_peer;
     /** the address as reported by the peer */
 
     mx_endpoint_addr_t          mx_peer_addr;

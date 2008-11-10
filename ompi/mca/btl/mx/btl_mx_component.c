@@ -83,7 +83,7 @@ int mca_btl_mx_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_btls",
                             "Maximum number of accepted Myrinet cards",
-                            false, false, 1, &mca_btl_mx_component.mx_max_btls );
+                            false, false, 8, &mca_btl_mx_component.mx_max_btls );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "timeout",
                             "Timeout for connections",
                             false, false, MX_INFINITE, &mca_btl_mx_component.mx_timeout );
@@ -99,6 +99,23 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
                             "Enable the MX support for shared memory",
                             false, false, 0, &mca_btl_mx_component.mx_support_sharedmem );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "bonding",
+                            "Integrate MX library bonding. Less than 0 is system default, everything else will set the MX_BONDING to the value.",
+                            false, false, 1, &mca_btl_mx_component.mx_bonding );
+    if( 0 >= mca_btl_mx_component.mx_bonding ) {
+        char* value = getenv("MX_BONDING");
+        if( NULL == value ) {
+            mca_btl_mx_component.mx_bonding = 1;
+        } else {
+            mca_btl_mx_component.mx_bonding = atoi(value);
+            if( 0 >= mca_btl_mx_component.mx_bonding )
+                mca_btl_mx_component.mx_bonding = 1;
+        }
+    } else if( 1 != mca_btl_mx_component.mx_bonding ) {
+        char value[8];
+        snprintf( value, 8, "%d\n", mca_btl_mx_component.mx_bonding );
+        opal_setenv( "MX_BONDING", value, true, &environ );
+    }
 #ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "register_unexp",
                             "Enable the MX support for the unexpected request handler (Open MPI matching)",
@@ -112,7 +129,7 @@ int mca_btl_mx_component_open(void)
                             false, false, 32, &mca_btl_mx_component.mx_free_list_inc );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_max",
                             "Maximum number of request this device is allowed to allocate",
-                            false, false, 128, &mca_btl_mx_component.mx_free_list_max );
+                            false, false, 1024, &mca_btl_mx_component.mx_free_list_max );
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_posted_recv",
                             "Number of received posted in advance. Increasing this number for"
@@ -120,29 +137,43 @@ int mca_btl_mx_component_open(void)
 			    " in performances",
                             false, false, 16, &mca_btl_mx_component.mx_max_posted_recv );
 
+#if MX_HAVE_MAPPER_STATE
     mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_include",
 			       "Myrinet card to use (last 6 digits from the mapper MAC)",
 			       false, false, NULL, &mca_btl_mx_component.mx_if_include );
     mca_base_param_reg_string( (mca_base_component_t*)&mca_btl_mx_component, "if_exclude",
 			       "Myrinet card to avoid (last 6 digits from the mapper MAC)",
 			       false, false, NULL, &mca_btl_mx_component.mx_if_exclude );
+#endif  /* MX_HAVE_MAPPER_STATE */
 
     mca_btl_mx_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
-    mca_btl_mx_module.super.btl_eager_limit = 1024;
-    mca_btl_mx_module.super.btl_rndv_eager_limit = 1024;
-    mca_btl_mx_module.super.btl_max_send_size = 8*1024;
+    if( mca_btl_mx_component.mx_use_unexpected ) {
+        mca_btl_mx_module.super.btl_eager_limit = 1024;
+        mca_btl_mx_module.super.btl_rndv_eager_limit = 1024;
+    } else {
+        mca_btl_mx_module.super.btl_eager_limit = 4*1024;
+        mca_btl_mx_module.super.btl_rndv_eager_limit = 4*1024;
+    }
+    mca_btl_mx_module.super.btl_max_send_size = 32*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_send_length = 256*1024;
     mca_btl_mx_module.super.btl_rdma_pipeline_frag_size = 8*1024*1024;
     mca_btl_mx_module.super.btl_min_rdma_pipeline_size = 0;
-    mca_btl_mx_module.super.btl_flags = 
-        MCA_BTL_FLAGS_SEND_INPLACE | 
-        MCA_BTL_FLAGS_PUT | 
-        MCA_BTL_FLAGS_SEND |
-        MCA_BTL_FLAGS_RDMA_MATCHED;
+    mca_btl_mx_module.super.btl_flags = (MCA_BTL_FLAGS_SEND_INPLACE |
+                                         MCA_BTL_FLAGS_PUT |
+                                         MCA_BTL_FLAGS_SEND |
+                                         MCA_BTL_FLAGS_RDMA_MATCHED);
     mca_btl_mx_module.super.btl_bandwidth = 2000;
     mca_btl_mx_module.super.btl_latency = 5;
     mca_btl_base_param_register(&mca_btl_mx_component.super.btl_version,
-            &mca_btl_mx_module.super);
+                                &mca_btl_mx_module.super);
+
+    if( 0 == mca_btl_mx_component.mx_support_sharedmem )
+        opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
+    if( 0 == mca_btl_mx_component.mx_support_self )
+        opal_setenv( "MX_DISABLE_SELF", "1", true, &environ );
+    /* Force the long pipeline (up to 4Kb fragments) */
+    opal_setenv( "MX_PIPELINE_LOG", "0", true, &environ );
+
     return OMPI_SUCCESS;
 }
 
@@ -165,6 +196,7 @@ int mca_btl_mx_component_close(void)
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_procs);
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_lock);
 
+#if MX_HAVE_MAPPER_STATE
     if( NULL != mca_btl_mx_component.mx_if_include ) {
         free( mca_btl_mx_component.mx_if_include );
 	mca_btl_mx_component.mx_if_include = NULL;
@@ -173,6 +205,7 @@ int mca_btl_mx_component_close(void)
         free( mca_btl_mx_component.mx_if_exclude );
 	mca_btl_mx_component.mx_if_exclude = NULL;
     }
+#endif  /* MX_HAVE_MAPPER_STATE */
     return OMPI_SUCCESS;
 }
 
@@ -218,168 +251,137 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
 
 /*
  * Create and intialize an MX PTL module, where each module
- * represents a specific NIC.
+ * represents a specific NIC or a specific bonded set of NICS.
  */
-static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
+static mca_btl_mx_module_t* mca_btl_mx_create(uint32_t board_num)
 {
     mca_btl_mx_module_t* mx_btl;
+    mx_endpoint_t mx_endpoint;
+    mx_endpoint_addr_t mx_endpoint_addr;
     mx_return_t status;
-    uint32_t nic_id, mx_unique_network_id = 0;
-    char mapper_mac[7], *where;
+    uint32_t endpoint_id, mx_unique_network_id = 0;
+    uint64_t nic_id;
 
-    status = mx_nic_id_to_board_number( addr, &nic_id );
+    /* open local endpoint */
+    status = mx_open_endpoint( board_num, MX_ANY_ENDPOINT,
+                               mca_btl_mx_component.mx_filter,
+                               NULL, 0, &mx_endpoint);
+    if(status != MX_SUCCESS) {
+        opal_output( 0, "mca_btl_mx_init: mx_open_endpoint() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
+        return NULL;
+    }
+
+    /* query the endpoint address */
+    if((status = mx_get_endpoint_addr( mx_endpoint,
+                                       &mx_endpoint_addr)) != MX_SUCCESS) {
+        opal_output( 0, "mca_btl_mx_init: mx_get_endpoint_addr() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
+        mx_close_endpoint(mx_endpoint);
+        return NULL;
+    }
+
+    status = mx_decompose_endpoint_addr(mx_endpoint_addr, &nic_id, &endpoint_id);
     if( MX_SUCCESS != status ) {
+        opal_output( 0, "mca_btl_mx_init: mx_decompose_endpoint_addr() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
+        mx_close_endpoint(mx_endpoint);
+        return NULL;
+    }
+    status = mx_nic_id_to_board_number(nic_id, &board_num);
+    if( MX_SUCCESS != status ) {
+        opal_output( 0, "mca_btl_mx_init: mx_nic_id_to_board_number() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
+        mx_close_endpoint(mx_endpoint);
         return NULL;
     }
 
 #if MX_HAVE_MAPPER_STATE
     {
-        mx_return_t ret;
         mx_endpt_handle_t endp_handle;
         mx_mapper_state_t ms;
+        char mapper_mac[7], *where;
 
-        ret = mx_open_board( nic_id, &endp_handle );
-        if( MX_SUCCESS != ret ) {
-            opal_output( 0, "Unable to open board %d: %s\n", nic_id, mx_strerror(ret) );
+        status = mx_open_board( board_num, &endp_handle );
+        if( MX_SUCCESS != status ) {
+            opal_output( 0, "Unable to open board %d: %s\n", board_num, mx_strerror(status) );
+            mx_close_endpoint(mx_endpoint);
             return NULL;
         }
 
-        ms.board_number = nic_id;
+        ms.board_number = board_num;
         ms.iport = 0;
-        ret = mx__get_mapper_state( endp_handle, &ms );
-        if( MX_SUCCESS != ret ) {
+        status = mx__get_mapper_state( endp_handle, &ms );
+        if( MX_SUCCESS != status ) {
             opal_output( 0, "get_mapper_state failed for board %d: %s\n",
-                         nic_id, mx_strerror(ret) );
+                         board_num, mx_strerror(status) );
+            mx_close_endpoint(mx_endpoint);
             return NULL;
         }
-	/* Keep the first 4 bytes for the network speed */
-	mx_unique_network_id = ((ms.mapper_mac[3] << 16) +
+        /* Keep the first 4 bytes for the network speed */
+        mx_unique_network_id = ((ms.mapper_mac[3] << 16) +
 				(ms.mapper_mac[4] << 8)  +
 				(ms.mapper_mac[5]));
 
+        /* Try to figure out if we are allowed to use this network */
+        snprintf( mapper_mac, 7, "%6x", mx_unique_network_id );
+
+        if( (NULL != mca_btl_mx_component.mx_if_exclude) &&
+            (NULL != (where = strstr(mca_btl_mx_component.mx_if_exclude, mapper_mac))) ) {
+            mx_close_endpoint(mx_endpoint);
+            return NULL;
+        }
+        else if( (NULL != mca_btl_mx_component.mx_if_include) &&
+                 (NULL == (where = strstr(mca_btl_mx_component.mx_if_include, mapper_mac))) ) {
+            mx_close_endpoint(mx_endpoint);
+            return NULL;
+        }
     }
 #endif  /* MX_HAVE_MAPPER_STATE */
 
-    /* Try to figure out if we are allowed to use this network */
-    snprintf( mapper_mac, 7, "%6x", mx_unique_network_id );
-
-    if( (NULL != mca_btl_mx_component.mx_if_exclude) &&
-	(NULL != (where = strstr(mca_btl_mx_component.mx_if_exclude, mapper_mac))) ) {
-        /*opal_output( 0, "MX network %d connected to the mapper %s has been excluded\n",
-		     nic_id, mapper_mac );*/
-        return NULL;
-    }
-    else if( (NULL != mca_btl_mx_component.mx_if_include) &&
-	     (NULL == (where = strstr(mca_btl_mx_component.mx_if_include, mapper_mac))) ) {
-        /*opal_output( 0, "MX network %d connected to the mapper %s has not been included\n",
-		     nic_id, mapper_mac );*/
-        return NULL;
-    }
-
     mx_btl = malloc(sizeof(mca_btl_mx_module_t));
-    if( NULL == mx_btl ) return NULL;
+    if( NULL == mx_btl ) {
+        opal_output( 0, "mca_btl_mx_init: unable to allocate %d bytes of memory\n",
+                     sizeof(mca_btl_mx_module_t) );
+        mx_close_endpoint(mx_endpoint);
+        return NULL;
+    }
 
     /* copy over default settings */
     memcpy( mx_btl, &mca_btl_mx_module, sizeof(mca_btl_mx_module_t) );
     OBJ_CONSTRUCT( &mx_btl->mx_peers, opal_list_t );
     OBJ_CONSTRUCT( &mx_btl->mx_lock, opal_mutex_t );
-    /* open local endpoint */
-    status = mx_open_endpoint( nic_id, MX_ANY_ENDPOINT,
-                               mca_btl_mx_component.mx_filter,
-                               NULL, 0, &mx_btl->mx_endpoint);
-    if(status != MX_SUCCESS) {
-        opal_output( 0, "mca_btl_mx_init: mx_open_endpoint() failed with status %d (%s)\n",
-                     status, mx_strerror(status) );
-        mx_btl->mx_endpoint = NULL;
-        mca_btl_mx_finalize( &mx_btl->super );
-        return NULL;
-    }
-    mx_btl->mx_unique_network_id = mx_unique_network_id;
-    mx_btl->super.btl_bandwidth = 1000;  /* whatever */
+    mx_btl->mx_endpoint = mx_endpoint;
+    mx_btl->mx_endpoint_addr = mx_endpoint_addr;
+
+    mx_btl->super.btl_bandwidth = 2000;  /* whatever */
     mx_btl->super.btl_latency = 10;
 #if defined(MX_HAS_NET_TYPE)
     {
-        int value;
+        int value, board = board_num;
         if( (status = mx_get_info( mx_btl->mx_endpoint, MX_LINE_SPEED,
-                                   &nic_id, sizeof(nic_id),
+                                   &board, sizeof(board),
                                    &value, sizeof(int))) != MX_SUCCESS ) {
             opal_output( 0, "mx_get_info(MX_LINE_SPEED) failed with status %d (%s)\n",
                          status, mx_strerror(status) );
         } else {
             if( MX_SPEED_2G == value ) {
-                mx_btl->mx_unique_network_id |= 0xaa000000;
+                mx_unique_network_id |= 0xaa000000;
                 mx_btl->super.btl_bandwidth = 2000;
                 mx_btl->super.btl_latency = 5;
             } else if( MX_SPEED_10G == value ) {
-                mx_btl->mx_unique_network_id |= 0xbb000000;
+                mx_unique_network_id |= 0xbb000000;
                 mx_btl->super.btl_bandwidth = 10000;
                 mx_btl->super.btl_latency = 3;
             } else {
-                mx_btl->mx_unique_network_id |= 0xcc000000;
+                mx_unique_network_id |= 0xcc000000;
             }
         }
     }
 #endif  /* defined(MX_HAS_NET_TYPE) */
+    mx_btl->super.btl_bandwidth *= mca_btl_mx_component.mx_bonding;
+    mx_btl->mx_unique_network_id = mx_unique_network_id;
 
-#if 0
-    {
-        int counters, board, i, value, *counters_value;
-        char text[MX_MAX_STR_LEN];
-        char *counters_name;
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_PIO_SEND_MAX, NULL, 0,
-                                   &value, sizeof(int))) != MX_SUCCESS ) {
-            opal_output( 0, "mx_get_info(MX_PIO_SEND_MAX) failed with status %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
-        printf( "MX_PIO_SEND_MAX = %d\n", value );
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COPY_SEND_MAX, NULL, 0,
-                                   &value, sizeof(int))) != MX_SUCCESS ) {
-            opal_output( 0, "mx_get_info(MX_COPY_SEND_MAX) failed with status %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
-        printf( "MX_COPY_SEND_MAX = %d\n", value );
-
-        board = 0;
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_PRODUCT_CODE, &board, sizeof(int),
-                                   text, MX_MAX_STR_LEN)) != MX_SUCCESS ) {
-            opal_output( 0, "mx_get_info(MX_PRODUCT_CODE) failed with status %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
-        printf( "product code %s\n", text );
-
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_COUNT, &board, sizeof(int),
-                                   &counters, sizeof(int))) != MX_SUCCESS ) {
-            opal_output( 0, "mx_get_info(MX_COUNTERS_COUNT) failed with status %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
-        printf( "counters = %d\n", counters );
-        counters_name = (char*)malloc( counters * MX_MAX_STR_LEN );
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_LABELS, &board, sizeof(int),
-                                   counters_name, counters * MX_MAX_STR_LEN)) != MX_SUCCESS ) {
-            opal_output( 0, "mx_get_info(MX_COUNTERS_LABELS) failed with status %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
-        counters_value = (int*)malloc( counters * sizeof(int) );
-        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_VALUES, &board, sizeof(int),
-                                   counters_value, counters * sizeof(int))) != MX_SUCCESS ) {
-            opal_output( 0, "mx_get_info(MX_COUNTERS_VALUES) failed with status %d (%s)\n",
-                         status, mx_strerror(status) );
-        }
-        for( i = 0; i < counters; i++ )
-            printf( "%d -> %s = %d\n", i, counters_name + i * MX_MAX_STR_LEN,
-                    counters_value[i] );
-        free( counters_name );
-        free( counters_value );
-    }
-#endif
-    /* query the endpoint address */
-    if((status = mx_get_endpoint_addr( mx_btl->mx_endpoint,
-                                       &mx_btl->mx_endpoint_addr)) != MX_SUCCESS) {
-        opal_output( 0, "mca_btl_mx_init: mx_get_endpoint_addr() failed with status %d (%s)\n",
-                     status, mx_strerror(status) );
-        mca_btl_mx_finalize( &mx_btl->super );
-        return NULL;
-    }
 #ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
     if( mca_btl_mx_component.mx_use_unexpected ) {
         status = mx_register_unexp_handler( mx_btl->mx_endpoint, mca_btl_mx_unexpected_handler,
@@ -387,8 +389,8 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         if( MX_SUCCESS != status ) {
             opal_output( 0, "mca_btl_mx_init: mx_register_unexp_handler() failed with status %d (%s)\n",
                          status, mx_strerror(status) );
-            mca_btl_mx_finalize( &mx_btl->super );
-            return NULL;
+            /* switch to a mode without the unexpected handler */
+            mca_btl_mx_component.mx_use_unexpected = 0;
         }
     }
 #endif  /* HAVE_MX_REGISTER_UNEXP_HANDLER */
@@ -407,19 +409,11 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 {
     mca_btl_base_module_t** btls;
     mx_return_t status;
-    uint32_t size, count;
+    uint32_t count;
     int32_t i;
-    uint64_t *nic_addrs;
     mca_btl_mx_addr_t *mx_addrs;
 
     *num_btl_modules = 0;
-
-    if (enable_progress_threads) { 
-        opal_output( 0, "mca_btl_mx_component_init: progress threads requested but not supported");
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
-        return NULL;
-    }
 
     /**
      * As the MX MTL get initialized before the MX BTL it will call the
@@ -429,13 +423,6 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
      */
     /*(void)ompi_common_mx_finalize();*/
 
-    if( 0 == mca_btl_mx_component.mx_support_sharedmem )
-        opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
-    if( 0 == mca_btl_mx_component.mx_support_self )
-        opal_setenv( "MX_DISABLE_SELF", "1", true, &environ );
-    /* Force the long pipeline (up to 4Kb fragments) */
-    opal_setenv( "MX_PIPELINE_LOG", "0", true, &environ );
-
     /* set the MX error handle to always return. This function is the only MX function
      * allowed to be called before mx_init in order to make sure that if the MX is not
      * up and running the MX library does not exit the application.
@@ -444,11 +431,31 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     /* First check if MX is available ... */
     if( OMPI_SUCCESS != ompi_common_mx_initialize() ) { 
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
+        ompi_modex_send(&mca_btl_mx_component.super.btl_version, NULL, 0);
         return NULL;
     }
         
+    /* get the number of card available on the system */
+    if( MX_SUCCESS != (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
+                                             &mca_btl_mx_component.mx_num_btls,
+                                             sizeof(uint32_t))) ) {
+        opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
+                     status, mx_strerror(status) );
+        return NULL;
+    }
+    /* Don't forget the bonding rules ... */
+    assert( mca_btl_mx_component.mx_bonding >= 1 );
+    mca_btl_mx_component.mx_num_btls /= mca_btl_mx_component.mx_bonding;
+
+    if (0 == mca_btl_mx_component.mx_num_btls) {
+        mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
+        return NULL;
+    }
+    /* Limit ourselves to the number of devices requested by the users. */
+    if( mca_btl_mx_component.mx_num_btls > mca_btl_mx_component.mx_max_btls ) {
+        mca_btl_mx_component.mx_num_btls = mca_btl_mx_component.mx_max_btls;
+    }
+
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_send_eager_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_send_user_frags, ompi_free_list_t);
@@ -478,62 +485,33 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     /* intialize process hash table */
     OBJ_CONSTRUCT( &mca_btl_mx_component.mx_procs, opal_list_t );
 
-    /* get the number of card available on the system */
-    if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
-                               &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
-        opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
-                     status, mx_strerror(status) );
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
-        return NULL;
-    }
-
-    if (0 == mca_btl_mx_component.mx_num_btls) {
-        mca_btl_base_error_no_nics("Myrinet/MX", "NIC");
-        ompi_modex_send(&mca_btl_mx_component.super.btl_version, 
-                                NULL, 0);
-        return NULL;
-    }
-
-#if 0
-    /* check for limit on number of btls */
-    if(mca_btl_mx_component.mx_num_btls > mca_btl_mx_component.mx_max_btls)
-        mca_btl_mx_component.mx_num_btls = mca_btl_mx_component.mx_max_btls;
-#endif
-    /* Now we know how many NIC are available on the system. We will create a BTL for each one
-     * and then give a pointer to the BTL to the upper level.
+    /* Now we know how many NIC are available on the system. We will create a BTL
+     * for each one and then give a pointer to the BTL to the upper level.
      */
-    mca_btl_mx_component.mx_btls = malloc( mca_btl_mx_component.mx_num_btls * sizeof(mca_btl_base_module_t*) );
+    mca_btl_mx_component.mx_btls = malloc( mca_btl_mx_component.mx_num_btls *
+                                           sizeof(mca_btl_base_module_t*) );
     if( NULL == mca_btl_mx_component.mx_btls ) {
-        opal_output( 0, "MX BTL no memory\n" );
+        opal_output( 0, "MX BTL unable to allocate memory\n" );
         return NULL;
     }
 
-    /* determine the NIC ids */
-    size = sizeof(uint64_t) * (mca_btl_mx_component.mx_num_btls + 1);
-    if( NULL == (nic_addrs = (uint64_t*)malloc(size)) )
-        return NULL;
-    if( (status = mx_get_info( NULL, MX_NIC_IDS, NULL, 0,
-                               nic_addrs, size)) != MX_SUCCESS) {
-        opal_output(0, "MX BTL error (mx_get_info failed) size = %ld [%s] #cards %d\n",
-                    (unsigned long)size, mx_strerror(status), mca_btl_mx_component.mx_num_btls );
-        free(nic_addrs);
-        return NULL;
-    }
-
-    mx_addrs = (mca_btl_mx_addr_t*)calloc( mca_btl_mx_component.mx_num_btls, sizeof(mca_btl_mx_addr_t) );
+    mx_addrs = (mca_btl_mx_addr_t*)calloc( mca_btl_mx_component.mx_num_btls,
+                                           sizeof(mca_btl_mx_addr_t) );
     if( NULL == mx_addrs ) {
-        free( nic_addrs );
+        opal_output( 0, "MX BTL unable to allocate memory\n" );
+        free(mca_btl_mx_component.mx_btls);
+        mca_btl_mx_component.mx_btls = NULL;
         return NULL;
     }
 
     /* create a btl for each NIC */
     for( i = count = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
-        mca_btl_mx_module_t* mx_btl = mca_btl_mx_create(nic_addrs[i]);
+        mca_btl_mx_module_t* mx_btl = mca_btl_mx_create(MX_ANY_NIC);
         if( NULL == mx_btl ) {
             continue;
         }
-        status = mx_decompose_endpoint_addr( mx_btl->mx_endpoint_addr, &(mx_addrs[count].nic_id),
+        status = mx_decompose_endpoint_addr( mx_btl->mx_endpoint_addr,
+                                             &(mx_addrs[count].nic_id),
                                              &(mx_addrs[count].endpoint_id) );
         if( MX_SUCCESS != status ) {
             mca_btl_mx_finalize( &mx_btl->super );
@@ -545,24 +523,25 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         BTL_MX_ADDR_HTON(mx_addrs[count]);
 #endif
         mca_btl_mx_component.mx_btls[count] = mx_btl;
-	count++;  /* one more succesfully initialized MX interface */
+        count++;  /* one more succesfully initialized MX interface */
     }
     mca_btl_mx_component.mx_num_btls = count;
     *num_btl_modules = count;
     if( 0 == count ) {
         /* No active BTL module */
+        free(mx_addrs);
+        free(mca_btl_mx_component.mx_btls);
+        mca_btl_mx_component.mx_btls = NULL;
         return NULL;
     }
 
     /* publish the MX addresses via the MCA framework */
     ompi_modex_send(&mca_btl_mx_component.super.btl_version, mx_addrs,
-			     sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls);
+                    sizeof(mca_btl_mx_addr_t) * mca_btl_mx_component.mx_num_btls);
 
-    free( nic_addrs );
     free( mx_addrs );
 
     btls = malloc( mca_btl_mx_component.mx_num_btls * sizeof(mca_btl_base_module_t*) );
-
     if( NULL == btls ) {
         free( mca_btl_mx_component.mx_btls );
         mca_btl_mx_component.mx_num_btls = 0;  /* no active BTL modules */
@@ -570,6 +549,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     }
     memcpy( btls,  mca_btl_mx_component.mx_btls,
             mca_btl_mx_component.mx_num_btls*sizeof(mca_btl_mx_module_t*) );
+
     return btls;
 }
 
@@ -652,3 +632,54 @@ int mca_btl_mx_component_progress(void)
     return num_progressed;
 }
 
+#if 0
+    {
+        int counters, board, i, value, *counters_value;
+        char text[MX_MAX_STR_LEN];
+        char *counters_name;
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_PIO_SEND_MAX, NULL, 0,
+                                   &value, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_PIO_SEND_MAX) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "MX_PIO_SEND_MAX = %d\n", value );
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COPY_SEND_MAX, NULL, 0,
+                                   &value, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COPY_SEND_MAX) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "MX_COPY_SEND_MAX = %d\n", value );
+
+        board = 0;
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_PRODUCT_CODE, &board, sizeof(int),
+                                   text, MX_MAX_STR_LEN)) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_PRODUCT_CODE) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "product code %s\n", text );
+
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_COUNT, &board, sizeof(int),
+                                   &counters, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COUNTERS_COUNT) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "counters = %d\n", counters );
+        counters_name = (char*)malloc( counters * MX_MAX_STR_LEN );
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_LABELS, &board, sizeof(int),
+                                   counters_name, counters * MX_MAX_STR_LEN)) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COUNTERS_LABELS) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        counters_value = (int*)malloc( counters * sizeof(int) );
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_VALUES, &board, sizeof(int),
+                                   counters_value, counters * sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COUNTERS_VALUES) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        for( i = 0; i < counters; i++ )
+            printf( "%d -> %s = %d\n", i, counters_name + i * MX_MAX_STR_LEN,
+                    counters_value[i] );
+        free( counters_name );
+        free( counters_value );
+    }
+#endif
