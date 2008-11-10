@@ -42,7 +42,7 @@ Error: The process with PID %d is not checkpointable.
        This could be due to one of the following:
         - An application with this PID doesn't currently exist
         - The application with this PID isn't checkpointable
-        - The applicaiton with this PID isn't an OPAL application.
+        - The application with this PID isn't an OPAL application.
        We were looking for the named files:
          %s
          %s
