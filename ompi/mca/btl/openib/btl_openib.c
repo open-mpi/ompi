@@ -331,6 +331,12 @@ int mca_btl_openib_add_procs(
 
         opal_output(-1, "add procs: adding proc %d", i);
 
+        /* OOB, XOOB, RDMACM, IBCM does not support SELF comunication, so 
+         * mark the prco as unreachable by openib btl  */
+        if (OPAL_EQUAL == orte_util_compare_name_fields
+                (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
+            continue;
+        }
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
         /* Most current iWARP adapters (June 2008) cannot handle
            talking to other processes on the same host (!) -- so mark
