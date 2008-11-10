@@ -47,11 +47,13 @@ int mca_btl_base_param_register(mca_base_component_t *version,
     REG_INT("exclusivity", "BTL exclusivity (must be >= 0)",
             module->btl_exclusivity, 0, uint32_t);
 
-    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, RDMA_COMPLETION=%d)",
+    asprintf(&msg, "BTL bit flags (general flags: SEND=%d, PUT=%d, GET=%d, SEND_INPLACE=%d, RDMA_MATCHED=%d, HETEROGENEOUS_RDMA=%d; flags only used by the \"dr\" PML (ignored by others): ACK=%d, CHECKSUM=%d, RDMA_COMPLETION=%d)",
              MCA_BTL_FLAGS_SEND,
              MCA_BTL_FLAGS_PUT,
              MCA_BTL_FLAGS_GET,
              MCA_BTL_FLAGS_SEND_INPLACE,
+             MCA_BTL_FLAGS_RDMA_MATCHED,
+             MCA_BTL_FLAGS_HETEROGENEOUS_RDMA,
              MCA_BTL_FLAGS_NEED_ACK,
              MCA_BTL_FLAGS_NEED_CSUM,
              MCA_BTL_FLAGS_RDMA_COMPLETION);
