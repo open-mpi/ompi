@@ -657,7 +657,7 @@ static int rte_ft_event(int state)
 
         /* if one was provided, build my nidmap */
         if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                              &nidmap, &jmap->pmap))) {
+                                                              &nidmap, jmap))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
