@@ -9,16 +9,13 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
-# Use the top-level Makefile.options
-
-
 
 sources = \
         ess_alps.h \
@@ -41,9 +38,6 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_alps_la_SOURCES = $(sources)
 mca_ess_alps_la_LDFLAGS = -module -avoid-version
-mca_ess_alps_la_LIBADD = \
-    $(top_ompi_builddir)/orte/libopen-rte.la \
-    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ess_alps_la_SOURCES =$(sources)
