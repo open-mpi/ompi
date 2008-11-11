@@ -209,8 +209,8 @@ int mca_btl_mx_component_close(void)
     return OMPI_SUCCESS;
 }
 
-#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
 static int __counter = 0;
+#ifdef HAVE_MX_REGISTER_UNEXP_HANDLER
 
 /**
  * In order to avoid useless memcpy, the unexpected handler will be called
@@ -570,10 +570,7 @@ int mca_btl_mx_component_progress(void)
     mx_request_t mx_request;
     mca_btl_mx_frag_t* frag;
 
-    if( ++__counter > 1 ) {
-      opal_output( 0, "OOPS\n" );
-    }
-
+    ++__counter;
     for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
         mca_btl_mx_module_t* mx_btl = mca_btl_mx_component.mx_btls[i];
         uint32_t mx_result = 0;
@@ -617,9 +614,6 @@ int mca_btl_mx_component_progress(void)
                 MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
             }
             goto recheck_device;
-#if 0
-        } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
-#endif
         } else {
             mca_btl_active_message_callback_t* reg;
             mx_segment_t mx_segment;
