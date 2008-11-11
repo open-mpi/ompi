@@ -242,13 +242,20 @@ Flex is used during the compilation of a developer's checkout (it is
 not used in distribution tarballs).  Other flavors of lex are *not*
 supported: given the choice of making parsing code portable between
 all flavors of lex and doing more interesting work on Open MPI, we
-greatly prefer the latter.  Flex is a mature software package, and as
-of this writing, it has not changed since v2.5.4a in July of 1997.
-This version seems to work fine with Open MPI; no testing has been
-performed to see what the minimum version of Flex is required by Open
-MPI.
+greatly prefer the latter.  
+
+Several developers use the stable flex version v2.5.4a from July of
+1997.  Others have upgraded to more recent versions; these also seem
+to work fine.  Note that no testing has been performed to see what the
+minimum version of Flex is required by Open MPI.  We suggest that you
+use v2.5.4a at the earliest.
+
+Note that the flex-generated code generates some compiler warnings on
+some platforms, but the warnings do not seem to be consistent or
+uniform on all platforms, compilers, and flex versions.  As such, we
+have done little to try to remove those warnings.
 
 If you do not have Flex installed, it can be downloaded from the
 following URL:
 
-   ftp://ftp.gnu.org/non-gnu/flex/
+   http://flex.sourceforge.net/
