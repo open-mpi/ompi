@@ -309,10 +309,10 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         {
 #ifdef HAVE_SIGINFO_T_SI_FD
             ret = snprintf(tmp, size, HOSTFORMAT "Band event: %ld, File Descriptor : %d\n",
-                           stacktrace_hostname, getpid(), info->si_band, info->si_fd);
+                           stacktrace_hostname, getpid(), (long)info->si_band, info->si_fd);
 #elif HAVE_SIGINFO_T_SI_BAND
             ret = snprintf(tmp, size, HOSTFORMAT "Band event: %ld\n",
-                           stacktrace_hostname, getpid(), info->si_band);
+                           stacktrace_hostname, getpid(), (long)info->si_band);
 #else
             ret = 0;
 #endif
