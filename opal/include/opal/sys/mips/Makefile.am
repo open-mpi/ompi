@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2008 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,5 +19,6 @@
 # This makefile.am does not stand on its own - it is included from opal/include/Makefile.am
 
 headers += \
-	opal/sys/mips/atomic.h
+	opal/sys/mips/atomic.h \
+	opal/sys/mips/timer.h
 
