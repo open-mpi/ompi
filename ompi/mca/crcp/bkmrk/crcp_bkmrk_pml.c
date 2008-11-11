@@ -174,7 +174,8 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *msg_r
                                 ompi_crcp_bkmrk_pml_peer_ref_t *to_peer_ref,
                                 opal_list_t * to_list,
                                 ompi_crcp_bkmrk_pml_traffic_message_ref_t **new_msg_ref,
-                                bool keep_active); /* If you have to create a new context, should it be initialized to active? */
+                                bool keep_active, /* If you have to create a new context, should it be initialized to active? */
+                                bool remove); /* Remove the original? - false = copy() */
 
 /*
  * Traffic Message: Strip off the first matching request
@@ -1239,7 +1240,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_enable(
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_progress(
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
-    OPAL_OUTPUT_VERBOSE((30, mca_crcp_bkmrk_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((35, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: pml_progress()"));
 
     pml_state->error_code = OMPI_SUCCESS;
@@ -2311,7 +2312,8 @@ static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *re
                                  NULL, &(unknown_persist_recv_list),
                                  peer_ref, &(peer_ref->recv_init_list),
                                  &new_msg_ref,
-                                 true);
+                                 true,
+                                 false);
             msg_ref = new_msg_ref;
         }
     }
@@ -2347,6 +2349,11 @@ static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *re
                                          true,  /* Find currently active */
                                          false, /* Mark as inactive */
                                          &content_ref);
+    if( NULL == content_ref ) {
+        exit_status = ORTE_ERROR;
+        goto DONE;
+    }
+
     if( !content_ref->already_drained ) {
         peer_ref->total_msgs_recvd += 1;
         msg_ref->done++;
@@ -2550,6 +2557,7 @@ static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request
                                  NULL, &(unknown_recv_from_list),
                                  peer_ref, &(peer_ref->irecv_list),
                                  &new_msg_ref,
+                                 true,
                                  true);
             msg_ref = new_msg_ref;
         }
@@ -2726,7 +2734,8 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_recv(
                                  NULL, &(unknown_recv_from_list),
                                  peer_ref, &(peer_ref->recv_list),
                                  &new_msg_ref,
-                                 false);
+                                 false,
+                                 true);
             new_msg_ref->done++;
             new_msg_ref->active--;
         } else {
@@ -3149,12 +3158,12 @@ static int traffic_message_append(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     int ret, exit_status = ORTE_SUCCESS;
     size_t ddt_size = 0;
 
-    ddt_size = in_ddt_size;
     if( NULL != datatype ) {
         ompi_ddt_type_size(datatype,
                            &ddt_size);
     } else {
-        ddt_size = 0;
+        ddt_size = in_ddt_size;
+        /* ddt_size = 0; */
     }
 
     /*
@@ -3259,22 +3268,25 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
                                 ompi_crcp_bkmrk_pml_peer_ref_t *to_peer_ref,
                                 opal_list_t * to_list,
                                 ompi_crcp_bkmrk_pml_traffic_message_ref_t **new_msg_ref,
-                                bool keep_active)
+                                bool keep_active,
+                                bool remove)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    ompi_crcp_bkmrk_pml_message_content_ref_t *new_content, *prev_content;
+    ompi_crcp_bkmrk_pml_message_content_ref_t *new_content = NULL, *prev_content = NULL;
     ompi_request_t *request = NULL;
     bool loc_already_drained = false;
 
     /* Append to the to_peer_ref */
     if( COORD_MSG_TYPE_B_RECV != msg_type ) {
-        traffic_message_grab_content(old_msg_ref, &prev_content, true, true); /* Remove, prefer already_drained */
+        traffic_message_grab_content(old_msg_ref, &prev_content, remove, true); /* Remove, prefer already_drained */
         request = prev_content->request;
 
         loc_already_drained = prev_content->already_drained;
 
-        prev_content->request = NULL;
-        HOKE_CONTENT_REF_RETURN(prev_content);
+        if( remove ) {
+            prev_content->request = NULL;
+            HOKE_CONTENT_REF_RETURN(prev_content);
+        }
     }
 
     ret = traffic_message_append(to_peer_ref, to_list,
@@ -3294,6 +3306,13 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
     } else {
         /* 'remove' from from_peer_ref */
         old_msg_ref->active--;
+    }
+
+    if( msg_type == COORD_MSG_TYPE_P_SEND ||
+        msg_type == COORD_MSG_TYPE_P_RECV ) {
+        if( keep_active ) {
+            (*new_msg_ref)->active++;
+        }
     }
 
     if( COORD_MSG_TYPE_B_RECV != msg_type && NULL == request ) {
