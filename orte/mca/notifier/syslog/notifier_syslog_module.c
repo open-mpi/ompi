@@ -45,10 +45,10 @@ static void myhelplog(int priority, const char *filename, const char *topic, ...
 
 /* Module def */
 orte_notifier_base_module_t orte_notifier_syslog_module = {
-init,
-finalize,
-mylog,
-myhelplog
+    init,
+    finalize,
+    mylog,
+    myhelplog
 };
 
 
