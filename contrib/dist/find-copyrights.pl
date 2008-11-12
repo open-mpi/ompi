@@ -48,12 +48,19 @@ my $core;
 sub save {
     my ($org, $year, $file) = @_;
 
+    # Remove leading and trailing spaces
     $org =~ s/^\s*(\S[\S\s]+?)\s*$/\1/;
+    # Remove any of "All rights reserved." at the end
+    $org =~ s/\.$//;
+    $org =~ s/ *reserved//i;
+    $org =~ s/ *rights//i;
+    $org =~ s/ *all//i;
+    $org =~ s/\.$//;
 
     # Save a range of years
     if ($year =~ m/([0-9]{4})-([0-9]{4})/) {
         my $y = $1;
-        while ($y < $2) {
+        while ($y <= $2) {
             save($org, $y, $file);
             ++$y;
         }
@@ -108,10 +115,41 @@ foreach my $f (@files) {
     close(FILE);
 }
 
+# Check for duplicate copyrights in the same file
+foreach my $c (qw/1 0/) {
+    foreach my $org (sort(keys(%{$copyrights->{$c}}))) {
+        foreach my $year (sort(keys(%{$copyrights->{$c}->{$org}}))) {
+            foreach my $f (keys(%{$copyrights->{$c}->{$org}->{$year}})) {
+                if ($copyrights->{$c}->{$org}->{$year}->{$f} > 1) {
+                    print "WARNING: repeated copyright in $f:\n    $org ($year)\n";
+                }
+            }
+        }
+    }
+}
+
+# Check for weird copyright years
+my ($sec,$min,$hour,$mday,$mon,$year_now,$wday,$yday,$isdst) = localtime(time);
+$year_now += 1970;
+foreach my $c (qw/1 0/) {
+    foreach my $org (sort(keys(%{$copyrights->{$c}}))) {
+        foreach my $year (sort(keys(%{$copyrights->{$c}->{$org}}))) {
+            if ($year < 1996 || $year > $year_now) {
+                print "WARNING: Suspicious copyright year ($org:$year):\n";
+                foreach my $f (keys(%{$copyrights->{$c}->{$org}->{$year}})) {
+                    print "    $f\n";
+                }
+            }
+        }
+    }
+}
+
+# Print out what we found
+print "Found copyrights:\n";
 foreach my $c (qw/1 0/) {
     print "========= Core: $c\n";
     foreach my $org (sort(keys(%{$copyrights->{$c}}))) {
-        print "$org " . join(",", 
+        print "$org: " . join(",", 
                              sort(keys(%{$copyrights->{$c}->{$org}}))) . "\n";
     }
 }
