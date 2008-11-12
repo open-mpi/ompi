@@ -678,7 +678,7 @@ static int extract_env_vars(int prev_pid)
     int exit_status = OPAL_SUCCESS;
     char *file_name = NULL;
     FILE *env_data = NULL;
-    int len = 128;
+    int len = OMPI_PATH_MAX;
     char * tmp_str = NULL;
 
     if( 0 > prev_pid ) {
@@ -703,7 +703,7 @@ static int extract_env_vars(int prev_pid)
     /* Extract an env var */
     while(!feof(env_data) ) {
         char **t_set = NULL;
-        len = 128;
+        len = OMPI_PATH_MAX;
 
         tmp_str = (char *) malloc(sizeof(char) * len);
         if( NULL == fgets(tmp_str, len, env_data) ) {
@@ -711,8 +711,14 @@ static int extract_env_vars(int prev_pid)
             goto cleanup;
         }
         len = strlen(tmp_str);
-        if(tmp_str[len - 1] == '\n')
+        if(tmp_str[len - 1] == '\n') {
             tmp_str[len - 1] = '\0';
+        } else {
+            opal_output(opal_cr_output,
+                        "opal_cr: extract_env_vars: Error: Parameter too long (%s)\n",
+                        tmp_str);
+            continue;
+        }
 
         if( NULL == (t_set = opal_argv_split(tmp_str, '=')) ) {
             break;
