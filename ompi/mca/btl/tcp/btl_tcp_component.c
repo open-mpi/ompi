@@ -200,7 +200,7 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_component.tcp_if_include =
         mca_btl_tcp_param_register_string("if_include", NULL, "");
     mca_btl_tcp_component.tcp_if_exclude =
-        mca_btl_tcp_param_register_string("if_exclude", NULL, "lo");
+        mca_btl_tcp_param_register_string("if_exclude", NULL, "lo,sppp");
     mca_btl_tcp_component.tcp_free_list_num =
         mca_btl_tcp_param_register_int ("free_list_num", NULL, 8);
     mca_btl_tcp_component.tcp_free_list_max =
