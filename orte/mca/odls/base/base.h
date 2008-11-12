@@ -75,6 +75,11 @@ ORTE_DECLSPEC int orte_odls_base_select(void);
 ORTE_DECLSPEC int orte_odls_base_finalize(void);
 ORTE_DECLSPEC int orte_odls_base_close(void);
 
+/* declare that external-to-odls completion criteria for a
+ * proc have been met
+ */
+ORTE_DECLSPEC void orte_odls_base_notify_iof_complete(int fd, short event, void *proc);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

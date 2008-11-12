@@ -96,6 +96,8 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_job_t *jdata;
     orte_proc_t **procs;
     orte_iof_sink_t *sink;
+    orte_iof_proc_t *proct;
+    opal_list_item_t *item;
     int flags;
 
     /* don't do this if the dst vpid is invalid */
@@ -114,10 +116,35 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             flags |= O_NONBLOCK;
             fcntl(fd, F_SETFL, flags);
         }
+        /* do we already have this process in our list? */
+        for (item = opal_list_get_first(&mca_iof_hnp_component.procs);
+             item != opal_list_get_end(&mca_iof_hnp_component.procs);
+             item = opal_list_get_next(item)) {
+            proct = (orte_iof_proc_t*)item;
+            if (proct->name.jobid == dst_name->jobid &&
+                proct->name.vpid == dst_name->vpid) {
+                /* found it */
+                goto SETUP;
+            }
+        }
+        /* if we get here, then we don't yet have this proc in our list */
+        proct = OBJ_NEW(orte_iof_proc_t);
+        proct->name.jobid = dst_name->jobid;
+        proct->name.vpid = dst_name->vpid;
+        opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
+        
+    SETUP:
         /* define a read event and activate it */
-        ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                            orte_iof_hnp_read_local_handler,
-                            &mca_iof_hnp_component.read_events, true);
+        if (src_tag & ORTE_IOF_STDOUT) {
+            ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, src_tag,
+                                orte_iof_hnp_read_local_handler, true);
+        } else if (src_tag & ORTE_IOF_STDERR) {
+            ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, src_tag,
+                                orte_iof_hnp_read_local_handler, true);
+        } else if (src_tag & ORTE_IOF_STDDIAG) {
+            ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, src_tag,
+                                orte_iof_hnp_read_local_handler, true);
+        }
         return ORTE_SUCCESS;
     }
 
@@ -184,12 +211,9 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * doesn't do a corresponding pull, however, then the stdin will
              * be dropped upon receipt at the local daemon
              */
-            ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                                orte_iof_hnp_read_local_handler,
-                                &mca_iof_hnp_component.read_events, false);
-            /* save it somewhere convenient */
-            mca_iof_hnp_component.stdinev =
-            (orte_iof_read_event_t*)opal_list_get_first(&mca_iof_hnp_component.read_events);
+            ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
+                                dst_name, fd, src_tag,
+                                orte_iof_hnp_read_local_handler, false);
             
             /* check to see if we want the stdin read event to be
              * active - we will always at least define the event,
@@ -203,20 +227,16 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             /* if we are not looking at a tty, just setup a read event
              * and activate it
              */
-            ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                                orte_iof_hnp_read_local_handler,
-                                &mca_iof_hnp_component.read_events, false);
+            ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
+                                dst_name, fd, src_tag,
+                                orte_iof_hnp_read_local_handler, false);
             
-            /* save it somewhere convenient */
-            mca_iof_hnp_component.stdinev =
-            (orte_iof_read_event_t*)opal_list_get_first(&mca_iof_hnp_component.read_events);
             /* flag that it is operational */
             mca_iof_hnp_component.stdinev->active = true;
             /* activate it */
             opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
         }
     }
-        
     return ORTE_SUCCESS;
 }
 
@@ -271,33 +291,25 @@ static int hnp_close(const orte_process_name_t* peer,
                      orte_iof_tag_t source_tag)
 {
     opal_list_item_t *item, *next_item;
-
-    if( ORTE_IOF_STDIN & source_tag ) {
-        orte_iof_read_event_t* rev;
-        int rev_fd;
-
-        for( item = opal_list_get_first(&mca_iof_hnp_component.read_events);
-             item != opal_list_get_end(&mca_iof_hnp_component.read_events);
-             item = next_item ) {
-            rev = (orte_iof_read_event_t*)item;
-            next_item = opal_list_get_next(item);
-            if( (rev->name.jobid == peer->jobid) &&
-                (rev->name.vpid == peer->vpid) ) {
-
-                /* Dont close if it's the main stdin. This will get closed
-                 * in component close.
-                 */
-                if( mca_iof_hnp_component.stdinev == rev ) continue;
-
-                opal_list_remove_item(&mca_iof_hnp_component.read_events,
-                                      item);
-                /* No need to delete the event, the destructor will automatically
-                 * do it for us.
-                 */
-                rev_fd = rev->ev.ev_fd;
-                OBJ_RELEASE(item);
-                close(rev_fd);
-            }
+    orte_iof_sink_t* sink;
+    
+    for(item = opal_list_get_first(&mca_iof_hnp_component.sinks);
+        item != opal_list_get_end(&mca_iof_hnp_component.sinks);
+        item = next_item ) {
+        sink = (orte_iof_sink_t*)item;
+        next_item = opal_list_get_next(item);
+        
+        if((sink->name.jobid == peer->jobid) &&
+           (sink->name.vpid == peer->vpid) &&
+           (source_tag & sink->tag)) {
+            
+            /* No need to delete the event or close the file
+             * descriptor - the destructor will automatically
+             * do it for us.
+             */
+            opal_list_remove_item(&mca_iof_hnp_component.sinks, item);
+            OBJ_RELEASE(item);
+            break;
         }
     }
     return ORTE_SUCCESS;
