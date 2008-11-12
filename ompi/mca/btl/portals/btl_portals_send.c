@@ -136,6 +136,8 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
     int ret;
     size_t max_data;
     
+    opal_output(0, "mca_btl_portals_sendi status is incomplete");
+    abort();
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     *des = NULL; 
     if (OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, 1) >

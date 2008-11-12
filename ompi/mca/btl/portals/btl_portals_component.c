@@ -594,14 +594,19 @@ mca_btl_portals_component_progress(void)
                 } else
 #endif
 
-                if (ev.rlength != ev.mlength) {
+                if ((ev.rlength != ev.mlength) || (ev.rlength == 0)) {
                     /* other side received message but truncated to 0.
                        This should only happen for unexpected
                        messages, and only when the other side has no
                        buffer space available for receiving */
-                    opal_output_verbose(50,
-                                        mca_btl_portals_component.portals_output,
-                                        "message was dropped.  Trying again");
+
+                    if (ev.rlength == 0)
+                        opal_output_verbose(10, mca_btl_portals_component.portals_output,
+                                            "PTL_EVENT_ACK: ev.rlength=%d ev.mlength=%d: requeueing request",
+                                            ev.rlength, ev.mlength);
+                    else
+                        opal_output_verbose(50, mca_btl_portals_component.portals_output,
+                                            "message was dropped.  Trying again");
                     
                     mca_btl_portals_send(&mca_btl_portals_module.super,
                                          frag->endpoint,
