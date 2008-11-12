@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 200-2007 The University of Tennessee and The University
+# Copyright (c) 2007      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # $COPYRIGHT$
