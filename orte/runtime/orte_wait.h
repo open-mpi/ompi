@@ -235,7 +235,34 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
     } while(0);
 
 #endif
-    
+
+/* Sometimes, we just need to get out of the event library so
+ * we can progress - and we need to pass a little info. For those
+ * cases, we define a zero-time event that passes info to a cbfunc
+ */
+typedef struct {
+    opal_object_t super;
+    opal_event_t *ev;
+    orte_process_name_t proc;
+} orte_notify_event_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
+
+#define ORTE_NOTIFY_EVENT(cbfunc, data)                         \
+    do {                                                        \
+        struct timeval now;                                     \
+        orte_notify_event_t *tmp;                               \
+        tmp = OBJ_NEW(orte_notify_event_t);                     \
+        tmp->proc.jobid = (data)->jobid;                        \
+        tmp->proc.vpid = (data)->vpid;                          \
+        opal_evtimer_set(tmp->ev, (cbfunc), tmp);               \
+        now.tv_sec = 0;                                         \
+        now.tv_usec = 0;                                        \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
+                            "defining notify event at %s:%d",   \
+                            __FILE__, __LINE__));               \
+        opal_evtimer_add(tmp->ev, &now);                        \
+    } while(0);                                                 \
+
 
 /**
  * In a number of places within the code, we want to setup a timer
@@ -272,7 +299,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
                             __FILE__, __LINE__));                           \
         opal_evtimer_add(tmp, &now);                                        \
         *(event) = tmp;                                                     \
-    }while(0);                                                              \
+    } while(0);                                                             \
 
 
 /**
@@ -293,7 +320,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
                             (long)now.tv_sec,                           \
                             __FILE__, __LINE__));                       \
         opal_evtimer_add(tmp, &now);                                    \
-    }while(0);                                                          \
+    } while(0);                                                         \
 
 
 /**

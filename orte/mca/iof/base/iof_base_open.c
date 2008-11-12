@@ -56,6 +56,30 @@ int orte_iof_base_open(void)
 #else
 
 /* class instances */
+static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
+{
+    ptr->revstdout = NULL;
+    ptr->revstderr = NULL;
+    ptr->revstddiag = NULL;
+}
+static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
+{
+    if (NULL != ptr->revstdout) {
+        OBJ_RELEASE(ptr->revstdout);
+    }
+    if (NULL != ptr->revstderr) {
+        OBJ_RELEASE(ptr->revstderr);
+    }
+    if (NULL != ptr->revstddiag) {
+        OBJ_RELEASE(ptr->revstddiag);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_iof_proc_t,
+                   opal_list_item_t,
+                   orte_iof_base_proc_construct,
+                   orte_iof_base_proc_destruct);
+
+
 static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 {
     OBJ_CONSTRUCT(&ptr->wev, orte_iof_write_event_t);
@@ -77,9 +101,12 @@ static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
     opal_event_del(&rev->ev);
+    if (0 <= rev->ev.ev_fd) {
+        close(rev->ev.ev_fd);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
-                   opal_list_item_t,
+                   opal_object_t,
                    orte_iof_base_read_event_construct,
                    orte_iof_base_read_event_destruct);
 
@@ -92,6 +119,9 @@ static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
     opal_event_del(&wev->ev);
+    if (0 <= wev->fd) {
+        close(wev->fd);
+    }
     OBJ_DESTRUCT(&wev->outputs);
 }
 OBJ_CLASS_INSTANCE(orte_iof_write_event_t,

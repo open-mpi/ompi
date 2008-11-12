@@ -97,6 +97,23 @@ OBJ_CLASS_INSTANCE(orte_message_event_t,
                    message_event_constructor,
                    message_event_destructor);
 
+
+static void notify_event_destructor(orte_notify_event_t *ev)
+{
+    if (NULL != ev->ev) {
+        free(ev->ev);
+    }
+}
+
+static void notify_event_constructor(orte_notify_event_t *ev)
+{
+    ev->ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+}
+OBJ_CLASS_INSTANCE(orte_notify_event_t,
+                   opal_object_t,
+                   notify_event_constructor,
+                   notify_event_destructor);
+
 #ifdef HAVE_WAITPID
 
 static volatile int cb_enabled = true;

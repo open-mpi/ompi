@@ -32,6 +32,7 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/ess/ess.h"
@@ -74,6 +75,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     unsigned char data[ORTE_IOF_BASE_MSG_MAX];
     int32_t numbytes;
     opal_list_item_t *item;
+    orte_iof_proc_t *proct;
     
     OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
     
@@ -159,8 +161,18 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &sink->name, ORTE_IOF_STDIN, data, numbytes);
             }
         }
+        /* if num_bytes was zero, then we need to terminate the event */
+        if (0 == numbytes) {
+            /* set the fd artificially to zero so the destructor does not close
+             * it - we never close our own stdin as this can cause problems with pipes
+             */
+            rev->ev.ev_fd = -1;
+            OBJ_RELEASE(mca_iof_hnp_component.stdinev);
+        }
         /* nothing more to do */
-        goto CLEAN_RETURN;
+        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
+        /* since the event is persistent, we do not need to re-add it */
+        return;
     }
     
     /* this must be output from one of my local procs - see
@@ -193,7 +205,42 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
                          ORTE_NAME_PRINT(&rev->name)));
     
-    if (0 != numbytes) {
+    if (0 == numbytes) {
+        /* if we read 0 bytes from the stdout/err/diag, there is
+         * nothing to output - find this proc on our list and
+         * release the appropriate event. This will delete the
+         * read event and close the file descriptor
+         */
+        for (item = opal_list_get_first(&mca_iof_hnp_component.procs);
+             item != opal_list_get_end(&mca_iof_hnp_component.procs);
+             item = opal_list_get_next(item)) {
+            proct = (orte_iof_proc_t*)item;
+            if (proct->name.jobid == rev->name.jobid &&
+                proct->name.vpid == rev->name.vpid) {
+                /* found it - release corresponding event. This deletes
+                 * the read event and closes the file descriptor
+                 */
+                if (rev->tag & ORTE_IOF_STDOUT) {
+                    OBJ_RELEASE(proct->revstdout);
+                } else if (rev->tag & ORTE_IOF_STDERR) {
+                    OBJ_RELEASE(proct->revstderr);
+                } else if (rev->tag & ORTE_IOF_STDDIAG) {
+                    OBJ_RELEASE(proct->revstddiag);
+                }
+                /* check to see if they are all done */
+                if (NULL == proct->revstdout &&
+                    NULL == proct->revstderr &&
+                    NULL == proct->revstddiag) {
+                    /* this proc's iof is complete */
+                    opal_list_remove_item(&mca_iof_hnp_component.procs, item);
+                    ORTE_NOTIFY_EVENT(orte_odls_base_notify_iof_complete, &proct->name);
+                    OBJ_RELEASE(proct);
+                }
+                break;
+            }
+        }
+        
+    } else {
         if (ORTE_IOF_STDOUT & rev->tag) {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
         } else {
@@ -202,17 +249,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
     }
     
-CLEAN_RETURN:
-    /* if we read 0 bytes from the stdout/err/diag, there is
-     * nothing to output - close these file descriptors,
-     * and terminate the event.
-     */
-    if (0 == numbytes) {
-        close(fd);
-        opal_event_del(&rev->ev);
-        rev->ev.ev_fd = -1;
-    }
-
      OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
     
     /* since the event is persistent, we do not need to re-add it */
