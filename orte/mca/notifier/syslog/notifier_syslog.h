@@ -36,7 +36,7 @@ int orte_notifier_syslog_component_query(mca_base_module_t **module, int *priori
 
 
 /*
- * Grpcomm interfaces
+ * Notifier interfaces
  */
 
 ORTE_MODULE_DECLSPEC extern orte_notifier_base_component_t mca_notifier_syslog_component;
