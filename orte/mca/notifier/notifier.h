@@ -40,13 +40,13 @@
 #include <syslog.h>
 #endif /* HAVE_SYSLOG_H */
 
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#endif /* HAVE_STDARG_H */
-
 #include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
+
+/* define priorities - this will eventually be replaced by OPAL_SOS priorities */
+#define ORTE_NOTIFIER_INFRA     LOG_CRIT
+#define ORTE_NOTIFIER_WARNING   LOG_WARNING
 
 /*
  * Component functions - all MUST be provided!
@@ -54,20 +54,24 @@ BEGIN_C_DECLS
 
 /* initialize the selected module */
 typedef int (*orte_notifier_base_module_init_fn_t)(void);
-
+    
 /* finalize the selected module */
 typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 
 /* Log a failure message */
-typedef void (*orte_notifier_base_module_log_fn_t)(int priority, const char *message, ...);
+typedef void (*orte_notifier_base_module_log_fn_t)(int priority, const char *msg, ...);
+
+/* Log a failure that is based upon a show_help message */
+typedef void (*orte_notifier_base_module_log_show_help_fn_t)(int priority, const char *file, const char *topic, ...);
 
 /*
  * Ver 1.0
  */
 struct orte_notifier_base_module_1_0_0_t {
-    orte_notifier_base_module_init_fn_t         init;
-    orte_notifier_base_module_finalize_fn_t     finalize;
-    orte_notifier_base_module_log_fn_t          log;
+    orte_notifier_base_module_init_fn_t             init;
+    orte_notifier_base_module_finalize_fn_t         finalize;
+    orte_notifier_base_module_log_fn_t              log;
+    orte_notifier_base_module_log_show_help_fn_t    log_help;
 };
 
 typedef struct orte_notifier_base_module_1_0_0_t orte_notifier_base_module_1_0_0_t;

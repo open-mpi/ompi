@@ -19,7 +19,6 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
-#include "orte/types.h"
 
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
@@ -32,22 +31,7 @@
 #include <stdarg.h>
 #endif
 
-#include "opal/threads/condition.h"
-#include "opal/util/bit_ops.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/dss/dss.h"
-
-
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
-#include "orte/mca/odls/odls_types.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
-#include "orte/orted/orted.h"
-#include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_globals.h"
+#include "opal/util/show_help.h"
 
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_syslog.h"
@@ -57,12 +41,14 @@
 static int init(void);
 static void finalize(void);
 static void mylog(int priority, const char *msg, ...);
+static void myhelplog(int priority, const char *filename, const char *topic, ...);
 
 /* Module def */
 orte_notifier_base_module_t orte_notifier_syslog_module = {
-    init,
-    finalize,
-    mylog
+init,
+finalize,
+mylog,
+myhelplog
 };
 
 
@@ -70,7 +56,7 @@ static int init(void) {
     int opts;
     
     opts = LOG_CONS | LOG_PID | LOG_SYSLOG;
-    openlog("OpenMPI Error Report:", opts, LOG_USER);
+    openlog("Open MPI Error Report:", opts, LOG_USER);
     
     return ORTE_SUCCESS;
 }
@@ -87,4 +73,23 @@ static void mylog(int priority, const char *msg, ...)
     va_start(arglist, msg);
     vsyslog(priority, msg, arglist);
     va_end(arglist);
+}
+
+static void myhelplog(int priority, const char *filename, const char *topic, ...)
+{
+    va_list arglist;
+    char *output;
+    
+    va_start(arglist, topic);
+    output = opal_show_help_vstring(filename, topic, false, arglist);
+    va_end(arglist);
+    
+    /* if nothing came  back, then nothing to do */
+    if (NULL == output) {
+        return;
+    }
+    
+    /* go ahead and output it */
+    syslog(priority, output);
+    free(output);
 }
