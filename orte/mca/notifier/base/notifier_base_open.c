@@ -39,7 +39,7 @@
 #include "orte/mca/notifier/base/static-components.h"
 
 static void orte_base_log(int priority, const char *msg, ...);
-
+static void orte_log_show_help(int priority, const char *file, const char *topic, ...);
 /*
  * Global variables
  */
@@ -47,7 +47,8 @@ int orte_notifier_base_output = -1;
 orte_notifier_base_module_t orte_notifier = {
     NULL,
     NULL,
-    orte_base_log
+    orte_base_log,
+    orte_log_show_help
 };
 opal_list_t mca_notifier_base_components_available;
 orte_notifier_base_component_t mca_notifier_base_selected_component;
@@ -85,5 +86,16 @@ static void orte_base_log(int priority, const char *msg, ...)
      */
     va_list ap;
     va_start(ap, msg);
+    va_end(ap);
+}
+
+static void orte_log_show_help(int priority, const char *file, const char *topic, ...)
+{
+    /* just do nothing - it is here just so someone calling it won't
+     * segv.  Put in va_start/va_end just so that compilers won't
+     * complain.
+     */
+    va_list ap;
+    va_start(ap, topic);
     va_end(ap);
 }
