@@ -220,7 +220,6 @@ ORTE_DECLSPEC int orte_iof_base_write_output(orte_process_name_t *name, orte_iof
                                              unsigned char *data, int numbytes,
                                              orte_iof_write_event_t *channel);
 ORTE_DECLSPEC void orte_iof_base_write_handler(int fd, short event, void *cbdata);
-ORTE_DECLSPEC void orte_iof_base_proc_complete(orte_process_name_t *proc);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
