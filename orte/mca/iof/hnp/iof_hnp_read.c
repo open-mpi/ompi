@@ -163,10 +163,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
         /* if num_bytes was zero, then we need to terminate the event */
         if (0 == numbytes) {
-            /* set the fd artificially to zero so the destructor does not close
-             * it - we never close our own stdin as this can cause problems with pipes
-             */
-            rev->ev.ev_fd = -1;
+            /* this will also close our stdin file descriptor */
             OBJ_RELEASE(mca_iof_hnp_component.stdinev);
         }
         /* nothing more to do */

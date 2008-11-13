@@ -99,9 +99,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_iof_proc_t *proct;
     opal_list_item_t *item;
     int flags;
+    int rc;
 
-    /* don't do this if the dst vpid is invalid */
-    if (ORTE_VPID_INVALID == dst_name->vpid) {
+    /* don't do this if the dst vpid is invalid or the fd is negative! */
+    if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
         return ORTE_SUCCESS;
     }
     
@@ -221,9 +222,11 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              */
             if (!(src_tag & ORTE_IOF_STDIN) || orte_iof_hnp_stdin_check(fd)) {
                 mca_iof_hnp_component.stdinev->active = true;
-                opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+                if (OPAL_SUCCESS != (rc = opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
+                    ORTE_ERROR_LOG(rc);
+                }
             }
-        } else{
+        } else {
             /* if we are not looking at a tty, just setup a read event
              * and activate it
              */
@@ -234,7 +237,9 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             /* flag that it is operational */
             mca_iof_hnp_component.stdinev->active = true;
             /* activate it */
-            opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+            if (OPAL_SUCCESS != (rc = opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
     }
     return ORTE_SUCCESS;
