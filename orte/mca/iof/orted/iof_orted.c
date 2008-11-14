@@ -160,36 +160,35 @@ static int orted_pull(const orte_process_name_t* dst_name,
 static int orted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag)
 {
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
-
     /* The STDIN have a read event attached, while everything else
      * have a sink. We don't have to do anything special for sinks,
      * they will dissapear when the output queue is empty.
      */
-    if( ORTE_IOF_STDIN & source_tag ) {
-        opal_list_item_t *item, *next_item;
-        orte_iof_read_event_t* rev;
-        int rev_fd;
-
-        for( item = opal_list_get_first(&mca_iof_orted_component.read_events);
-             item != opal_list_get_end(&mca_iof_orted_component.read_events);
-             item = next_item ) {
-            rev = (orte_iof_read_event_t*)item;
-            next_item = opal_list_get_next(item);
-            if( (rev->name.jobid == peer->jobid) &&
-                (rev->name.vpid == peer->vpid) ) {
-                opal_list_remove_item(&mca_iof_orted_component.read_events,
-                                      item);
-                /* No need to delete the event, the destructor will automatically
-                 * do it for us.
-                 */
-                rev_fd = rev->ev.ev_fd;
-                OBJ_RELEASE(item);
-                close(rev_fd);
-            }
+    opal_list_item_t *item, *next_item;
+    orte_iof_read_event_t* rev;
+    int rev_fd;
+    
+    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
+    
+    for( item = opal_list_get_first(&mca_iof_orted_component.read_events);
+        item != opal_list_get_end(&mca_iof_orted_component.read_events);
+        item = next_item ) {
+        rev = (orte_iof_read_event_t*)item;
+        next_item = opal_list_get_next(item);
+        if ((rev->name.jobid == peer->jobid) &&
+            (rev->name.vpid == peer->vpid) &&
+            (source_tag & rev->tag)) {
+            
+            opal_list_remove_item(&mca_iof_orted_component.read_events, item);
+            /* No need to delete the event, the destructor will automatically
+             * do it for us.
+             */
+            rev_fd = rev->ev.ev_fd;
+            OBJ_RELEASE(item);
+            close(rev_fd);
         }
     }
-
+    
     OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 
     return ORTE_SUCCESS;

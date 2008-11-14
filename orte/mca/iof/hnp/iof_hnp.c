@@ -271,35 +271,33 @@ static int hnp_close(const orte_process_name_t* peer,
                      orte_iof_tag_t source_tag)
 {
     opal_list_item_t *item, *next_item;
-
-    if( ORTE_IOF_STDIN & source_tag ) {
-        orte_iof_read_event_t* rev;
-        int rev_fd;
-
-        for( item = opal_list_get_first(&mca_iof_hnp_component.read_events);
-             item != opal_list_get_end(&mca_iof_hnp_component.read_events);
-             item = next_item ) {
-            rev = (orte_iof_read_event_t*)item;
-            next_item = opal_list_get_next(item);
-            if( (rev->name.jobid == peer->jobid) &&
-                (rev->name.vpid == peer->vpid) ) {
-
-                /* Dont close if it's the main stdin. This will get closed
-                 * in component close.
-                 */
-                if( mca_iof_hnp_component.stdinev == rev ) continue;
-
-                opal_list_remove_item(&mca_iof_hnp_component.read_events,
-                                      item);
-                /* No need to delete the event, the destructor will automatically
-                 * do it for us.
-                 */
-                rev_fd = rev->ev.ev_fd;
-                OBJ_RELEASE(item);
-                close(rev_fd);
-            }
+    orte_iof_read_event_t* rev;
+    int rev_fd;
+    
+    for( item = opal_list_get_first(&mca_iof_hnp_component.read_events);
+        item != opal_list_get_end(&mca_iof_hnp_component.read_events);
+        item = next_item ) {
+        rev = (orte_iof_read_event_t*)item;
+        next_item = opal_list_get_next(item);
+        if ((rev->name.jobid == peer->jobid) &&
+            (rev->name.vpid == peer->vpid) &&
+            (source_tag & rev->tag) ) {
+            
+            /* Dont close if it's the main stdin. This will get closed
+             * in component close.
+             */
+            if( mca_iof_hnp_component.stdinev == rev ) continue;
+            
+            opal_list_remove_item(&mca_iof_hnp_component.read_events, item);
+            /* No need to delete the event, the destructor will automatically
+             * do it for us.
+             */
+            rev_fd = rev->ev.ev_fd;
+            OBJ_RELEASE(item);
+            close(rev_fd);
         }
     }
+    
     return ORTE_SUCCESS;
 }
 
@@ -370,6 +368,8 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
+    goto CHECK;
+    
 ABORT:
     close(wev->fd);
     opal_event_del(&wev->ev);
