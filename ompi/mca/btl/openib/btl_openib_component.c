@@ -1542,15 +1542,36 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* Figure out what the max_inline_data value should be for all
        ports and QPs on this device */
     need_search = false;
-    if (0 == mca_btl_openib_component.ib_max_inline_data) {
-        need_search = true;
-    } else if (mca_btl_openib_component.ib_max_inline_data > 0) {
-        device->max_inline_data = mca_btl_openib_component.ib_max_inline_data;
-    } else if (values.max_inline_data_set) {
-        if (0 == values.max_inline_data) {
+    if(-2 != mca_btl_openib_component.ib_max_inline_data) {
+        /* User has explicitly set btl_openib_max_inline_data MCA parameter 
+           Per setup in _mca.c, we know that the MCA param value is guaranteed
+           to be >= -1 */
+        if (-1 == mca_btl_openib_component.ib_max_inline_data) {
             need_search = true;
-        } else if (values.max_inline_data > 0) {
-            device->max_inline_data = values.max_inline_data;
+        } else {
+            device->max_inline_data = (uint32_t) 
+                mca_btl_openib_component.ib_max_inline_data;
+        }
+    } else if (values.max_inline_data_set) {
+        if (-1 == values.max_inline_data) {
+            need_search = true;
+        } else if (values.max_inline_data >= 0) {
+            device->max_inline_data = (uint32_t) values.max_inline_data;
+        } else {
+            if(default_values.max_inline_data_set && 
+               default_values.max_inline_data >= -1) {
+                BTL_ERROR(("Invalid max_inline_data value specified "
+                           "in INI file (%d); using default value (%d)", 
+                            values.max_inline_data, 
+                            default_values.max_inline_data));
+                device->max_inline_data = (uint32_t) 
+                    default_values.max_inline_data;
+            } else {
+                BTL_ERROR(("Invalid max_inline_data value specified "
+                           "in INI file (%d)", values.max_inline_data));
+                ret = OMPI_ERR_BAD_PARAM;
+                goto error;
+            } 
         }
     }
     /* Horrible.  :-( Per the thread starting here:
@@ -2096,6 +2117,19 @@ btl_openib_component_init(int *num_btl_modules,
         if (2 == ret) {
             ompi_mpi_leave_pinned = 1;
             ompi_mpi_leave_pinned_pipeline = 0;
+        }
+    }
+    index = mca_base_param_find("btl", "openib", "max_inline_data");
+    if (index >= 0) {
+        if (OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
+                                                         NULL)) {
+            if (-1 == mca_btl_openib_component.ib_max_inline_data  && 
+                MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
+                /* If the user has not explicitly set this MCA parameter
+                   use max_inline_data value specified in the 
+                   device-specific parameters INI file */
+                mca_btl_openib_component.ib_max_inline_data = -2;
+            }
         }
     }
 

@@ -397,7 +397,7 @@ static int parse_line(parsed_section_values_t *sv)
 
     else if (0 == strcasecmp(key_buffer, "max_inline_data")) {
         /* Single value */
-        sv->values.max_inline_data = (uint32_t) ompi_btl_openib_ini_intify(value);
+        sv->values.max_inline_data = (int32_t) ompi_btl_openib_ini_intify(value);
         sv->values.max_inline_data_set = true;
     }
 
