@@ -264,9 +264,9 @@ static int hnp_pull(const orte_process_name_t* dst_name,
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s hnp:pull setting up %s to pass stdin",
+                         "%s hnp:pull setting up %s to pass stdin to fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(dst_name)));
+                         ORTE_NAME_PRINT(dst_name), fd));
 
     /* set the file descriptor to non-blocking - do this before we setup
      * the sink in case it fires right away
@@ -359,6 +359,10 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             goto DEPART;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                             "%s hnp:stdin:write:handler wrote %d bytes",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             num_written));
         if (num_written < 0) {
             if (EAGAIN == errno || EINTR == errno) {
                 /* push this item back on the front of the list */
@@ -368,11 +372,14 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  */
                 goto CHECK;
             }            
-            /* otherwise, something bad happened so all we can do is abort
-             * this attempt
+            /* otherwise, something bad happened so all we can do is declare an
+             * error and abort
              */
             OBJ_RELEASE(output);
-            goto ABORT;
+            close(wev->fd);
+            opal_event_del(&wev->ev);
+            wev->pending = false;
+            goto DEPART;
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "incomplete write %d - adjusting data", num_written));
@@ -387,13 +394,10 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
-ABORT:
-    close(wev->fd);
-    opal_event_del(&wev->ev);
-    wev->pending = false;
-    
+
 CHECK:
-    if (!mca_iof_hnp_component.stdinev->active) {
+    if (NULL != mca_iof_hnp_component.stdinev &&
+        !mca_iof_hnp_component.stdinev->active) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                             "read event is off - checking if okay to restart"));
         /* if we have turned off the read event, check to
