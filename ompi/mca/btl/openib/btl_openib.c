@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -130,7 +130,7 @@ int mca_btl_openib_add_procs(
     int i,j, rc;
     int rem_subnet_id_port_cnt;
     int lcl_subnet_id_port_cnt = 0;
-    int btl_rank;
+    int btl_rank = 0;
 
     for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
         if(mca_btl_openib_component.openib_btls[j].port_info.subnet_id
@@ -257,8 +257,8 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
 
 
     if(min_cq_size > (int32_t) mca_btl_openib_component.ib_cq_size) { 
-        mca_btl_openib_component.ib_cq_size = min_cq_size > (uint32_t)openib_btl->hca->ib_dev_attr.max_cqe ? 
-            (uint32_t)openib_btl->hca->ib_dev_attr.max_cqe : min_cq_size;
+        mca_btl_openib_component.ib_cq_size = min_cq_size > (int32_t)openib_btl->hca->ib_dev_attr.max_cqe ? 
+            (int32_t)openib_btl->hca->ib_dev_attr.max_cqe : min_cq_size;
 #if OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
         if(!first_time) { 
             rc = ibv_resize_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP], mca_btl_openib_component.ib_cq_size);
@@ -280,8 +280,8 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
     if(first_time) { 
         /* never been here before, setup cq and srq */
         mca_btl_openib_component.ib_cq_size = (int) mca_btl_openib_component.ib_cq_size > 
-            (uint32_t)openib_btl->hca->ib_dev_attr.max_cqe ? 
-            (uint32_t)openib_btl->hca->ib_dev_attr.max_cqe : 
+            (int32_t)openib_btl->hca->ib_dev_attr.max_cqe ? 
+            (int32_t)openib_btl->hca->ib_dev_attr.max_cqe : 
             (int) mca_btl_openib_component.ib_cq_size;
         return mca_btl_openib_create_cq_srq(openib_btl); 
     }

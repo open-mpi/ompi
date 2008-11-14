@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
@@ -566,8 +566,11 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
                 }
                 /* Ignore errors -- what are we going to do?
                    (and we ignore errors on the remote nodes
-                   in the fork pls, so this is consistent) */
-                chdir(var);
+                   in the fork pls, so this is consistent) */ 
+                if (0 != chdir(var) && mca_pls_gridengine_component.debug) {
+                    opal_output(0, "pls:gridengine: could not change to directory %s",
+                                var);
+                }
             }
         
             /* setup process name */

@@ -672,17 +672,17 @@ static void output(int output_id, const char *format, va_list arglist)
 #endif
 	}
 
-	/* stdout output */
+	/* stdout output (ignore errors) */
 
 	if (ldi->ldi_stdout) {
-            write(fileno(stdout), temp_str, strlen(temp_str)); 
+            (void) write(fileno(stdout), temp_str, strlen(temp_str)); 
             fflush(stdout);
 	}
 
-	/* stderr output */
+	/* stderr output (ignore errors) */
 
 	if (ldi->ldi_stderr) {
-            write(fileno(stderr),temp_str, strlen(temp_str)); 
+            (void) write(fileno(stderr),temp_str, strlen(temp_str)); 
             fflush(stderr);
 	}
 
@@ -701,12 +701,14 @@ static void output(int output_id, const char *format, va_list arglist)
 		        snprintf(buffer, BUFSIZ - 1,
 			             "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
 			             ldi->ldi_file_num_lines_lost);
-		        write(ldi->ldi_fd, buffer, strlen(buffer));
+                        /* Ignore write errors */
+		        (void) write(ldi->ldi_fd, buffer, strlen(buffer));
 		        ldi->ldi_file_num_lines_lost = 0;
 		    }
 	    }
 	    if (ldi->ldi_fd != -1) {
-            write(ldi->ldi_fd, temp_str, total_len);
+                /* Ignore write errors */
+                (void) write(ldi->ldi_fd, temp_str, total_len);
 	    }
 	}
 	OPAL_THREAD_UNLOCK(&mutex);

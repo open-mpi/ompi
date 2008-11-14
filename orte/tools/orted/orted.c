@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -376,8 +376,10 @@ int main(int argc, char *argv[])
 
     /* if requested, report my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
-        write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
-                    strlen(orte_universe_info.seed_uri)+1); /* need to add 1 to get the NULL */
+        /* need to add 1 to get the NULL.  Not much we can do if the
+           write fails. */
+        (void) write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
+                     strlen(orte_universe_info.seed_uri)+1);
         close(orted_globals.uri_pipe);
     }
 

@@ -12,6 +12,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -545,7 +546,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         /* default value: If the user did not tell us where to look for the
            executable, we assume the current working directory */
         if ( !have_wdir ) {
-            getcwd(cwd, OMPI_PATH_MAX);
+            if (NULL == getcwd(cwd, OMPI_PATH_MAX)) {
+                return ORTE_ERR_IN_ERRNO;
+            }
             apps[i]->cwd = strdup(cwd);
         }
         

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +57,9 @@ int opal_daemon_init(char *working_dir)
 #endif
 
     if (NULL != working_dir) {
-        chdir(working_dir);  /* change working directory */
+        if (0 != chdir(working_dir)) {
+            return OPAL_ERR_IN_ERRNO;
+        }
     }
 
     /* connect input to /dev/null */

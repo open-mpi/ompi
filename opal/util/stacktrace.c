@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -71,12 +72,12 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     char *si_code_str = "";
     char **traces;
 
-    /* write out the footer information */
+    /* write out the footer information.  Ignore write errors. */
     memset (print_buffer, 0, sizeof (print_buffer));
     ret = snprintf(print_buffer, sizeof(print_buffer),
                    HOSTFORMAT "*** Process received signal ***\n",
                    stacktrace_hostname, getpid());
-    write(fileno(stderr), print_buffer, ret);
+    (void) write(fileno(stderr), print_buffer, ret);
     fflush(stderr);
 
 
@@ -330,8 +331,9 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         tmp += ret;
     }
 
-    /* write out the signal information generated above */
-    write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
+    /* write out the signal information generated above.  Ignore write
+       errors. */
+    (void) write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
     fflush(stderr);
 
     /* print out the stack trace */
@@ -340,23 +342,23 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         int i;
         /* since we have the opportunity, strip off the bottom two
            function calls, which will be this function and
-           opa_backtrace_buffer(). */
+           opa_backtrace_buffer().  Ignore write errors. */
         for (i = 2 ; i < traces_size ; ++i) {
             ret = snprintf(print_buffer, sizeof(print_buffer),
                            HOSTFORMAT "[%2d] %s\n",
                            stacktrace_hostname, getpid(), i - 2, traces[i]);
-            write(fileno(stderr), print_buffer, ret);
+            (void) write(fileno(stderr), print_buffer, ret);
         }
     } else {
         opal_backtrace_print(stderr);
     }
 
-    /* write out the footer information */
+    /* write out the footer information.  Ignore write errors. */
     memset (print_buffer, 0, sizeof (print_buffer));
     ret = snprintf(print_buffer, sizeof(print_buffer), 
                    HOSTFORMAT "*** End of error message ***\n", 
                    stacktrace_hostname, getpid());
-    write(fileno(stderr), print_buffer, ret);
+    (void) write(fileno(stderr), print_buffer, ret);
     fflush(stderr);
 }
 

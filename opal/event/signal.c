@@ -197,7 +197,7 @@ opal_evsignal_handler(int sig)
 	opal_evsignal_caught = 1;
 
 	/* Wake up our notification mechanism */
-	write(ev_signal_pair[0], "a", 1);
+	(void) write(ev_signal_pair[0], "a", 1);
 	errno = save_errno;
 }
 

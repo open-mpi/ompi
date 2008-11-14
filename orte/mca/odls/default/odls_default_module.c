@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -703,13 +704,15 @@ static int odls_default_fork_local_proc(
            take care of outputting a pretty error message, if required
          */
         if (ORTE_SUCCESS != (i = orte_rmgr.check_context_cwd(context, true))) {
-           /* Tell the parent that Badness happened */
-            write(p[1], &i, sizeof(int));
+           /* Tell the parent that Badness happened.  Not much we can
+              do if the write fails. */
+            (void) write(p[1], &i, sizeof(int));
             exit(1);
         }
         if (ORTE_SUCCESS != (i = orte_rmgr.check_context_app(context))) {
-            /* Tell the parent that Badness happened */
-            write(p[1], &i, sizeof(int));
+            /* Tell the parent that Badness happened.  Not much we can
+               do if the write fails. */
+            (void) write(p[1], &i, sizeof(int));
             exit(1);
         }
 
