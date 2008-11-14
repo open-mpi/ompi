@@ -29,7 +29,7 @@ typedef struct ompi_btl_openib_ini_values_t {
 
     char *receive_queues;
 
-    uint32_t max_inline_data;
+    int32_t max_inline_data;
     bool max_inline_data_set;
 } ompi_btl_openib_ini_values_t;
 

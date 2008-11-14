@@ -270,9 +270,10 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("max_inline_data", "ib_max_inline_data",
                   "Maximum size of inline data segment "
-                  "(-1 = use device default, "
-                  "0 = run-time probe to discover max value, "
-                  "otherwise must be >= 1)",
+                  "(-1 = run-time probe to discover max value, "
+                  "otherwise must be >= 0). "
+                  "If not explicitly set, use max_inline_data from "
+                  "the INI file containing device-specific parameters",
                   -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
 
