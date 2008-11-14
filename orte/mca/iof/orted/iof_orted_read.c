@@ -32,7 +32,6 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/odls/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -60,8 +59,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     opal_buffer_t *buf=NULL;
     int rc;
     int32_t numbytes;
-    opal_list_item_t *item;
-    orte_iof_proc_t *proct;
     
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     
@@ -137,38 +134,10 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     return;
    
 CLEAN_RETURN:
-    /* must be an error, or zero bytes were read indicating that the
-     * proc terminated this IOF channel - either way, find this proc
-     * on our list and clean up
-     */
-    for (item = opal_list_get_first(&mca_iof_orted_component.procs);
-         item != opal_list_get_end(&mca_iof_orted_component.procs);
-         item = opal_list_get_next(item)) {
-        proct = (orte_iof_proc_t*)item;
-        if (proct->name.jobid == rev->name.jobid &&
-            proct->name.vpid == rev->name.vpid) {
-            /* found it - release corresponding event. This deletes
-             * the read event and closes the file descriptor
-             */
-            if (rev->tag & ORTE_IOF_STDOUT) {
-                OBJ_RELEASE(proct->revstdout);
-            } else if (rev->tag & ORTE_IOF_STDERR) {
-                OBJ_RELEASE(proct->revstderr);
-            } else if (rev->tag & ORTE_IOF_STDDIAG) {
-                OBJ_RELEASE(proct->revstddiag);
-            }
-            /* check to see if they are all done */
-            if (NULL == proct->revstdout &&
-                NULL == proct->revstderr &&
-                NULL == proct->revstddiag) {
-                /* this proc's iof is complete */
-                opal_list_remove_item(&mca_iof_orted_component.procs, item);
-                ORTE_NOTIFY_EVENT(orte_odls_base_notify_iof_complete, &proct->name);
-                OBJ_RELEASE(proct);
-            }
-            break;
-        }
-    }
+    /* delete the event from the event library */
+    opal_event_del(&rev->ev);
+    close(rev->ev.ev_fd);
+    rev->ev.ev_fd = -1;
     if (NULL != buf) {
         OBJ_RELEASE(buf);
     }
