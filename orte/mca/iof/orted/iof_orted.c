@@ -89,8 +89,6 @@ orte_iof_base_module_t orte_iof_orted_module = {
 static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
 {
     int flags;
-    opal_list_item_t *item;
-    orte_iof_proc_t *proct;
 
     /* set the file descriptor to non-blocking - do this before we setup
      * and activate the read event in case it fires right away
@@ -103,35 +101,12 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
         fcntl(fd, F_SETFL, flags);
     }
 
-    /* do we already have this process in our list? */
-    for (item = opal_list_get_first(&mca_iof_orted_component.procs);
-         item != opal_list_get_end(&mca_iof_orted_component.procs);
-         item = opal_list_get_next(item)) {
-        proct = (orte_iof_proc_t*)item;
-        if (proct->name.jobid == dst_name->jobid &&
-            proct->name.vpid == dst_name->vpid) {
-            /* found it */
-            goto SETUP;
-        }
-    }
-    /* if we get here, then we don't yet have this proc in our list */
-    proct = OBJ_NEW(orte_iof_proc_t);
-    proct->name.jobid = dst_name->jobid;
-    proct->name.vpid = dst_name->vpid;
-    opal_list_append(&mca_iof_orted_component.procs, &proct->super);
-    
-SETUP:
-    /* define a read event and activate it */
-    if (src_tag & ORTE_IOF_STDOUT) {
-        ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, src_tag,
-                            orte_iof_orted_read_handler, true);
-    } else if (src_tag & ORTE_IOF_STDERR) {
-        ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, src_tag,
-                            orte_iof_orted_read_handler, true);
-    } else if (src_tag & ORTE_IOF_STDDIAG) {
-        ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, src_tag,
-                            orte_iof_orted_read_handler, true);
-    }
+    /* setup to read from the specified file descriptor and
+     * forward anything we get to the HNP
+     */
+    ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
+                        orte_iof_orted_read_handler,
+                        &mca_iof_orted_component.read_events, true);
     
     return ORTE_SUCCESS;
 }
@@ -185,30 +160,36 @@ static int orted_pull(const orte_process_name_t* dst_name,
 static int orted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag)
 {
-    opal_list_item_t *item, *next_item;
-    orte_iof_sink_t* sink;
-
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
-    
-    for(item = opal_list_get_first(&mca_iof_orted_component.sinks);
-        item != opal_list_get_end(&mca_iof_orted_component.sinks);
-        item = next_item ) {
-        sink = (orte_iof_sink_t*)item;
-        next_item = opal_list_get_next(item);
-        
-        if((sink->name.jobid == peer->jobid) &&
-           (sink->name.vpid == peer->vpid) &&
-           (source_tag & sink->tag)) {
-            
-            /* No need to delete the event or close the file
-             * descriptor - the destructor will automatically
-             * do it for us.
-             */
-            opal_list_remove_item(&mca_iof_orted_component.sinks, item);
-            OBJ_RELEASE(item);
-            break;
+
+    /* The STDIN have a read event attached, while everything else
+     * have a sink. We don't have to do anything special for sinks,
+     * they will dissapear when the output queue is empty.
+     */
+    if( ORTE_IOF_STDIN & source_tag ) {
+        opal_list_item_t *item, *next_item;
+        orte_iof_read_event_t* rev;
+        int rev_fd;
+
+        for( item = opal_list_get_first(&mca_iof_orted_component.read_events);
+             item != opal_list_get_end(&mca_iof_orted_component.read_events);
+             item = next_item ) {
+            rev = (orte_iof_read_event_t*)item;
+            next_item = opal_list_get_next(item);
+            if( (rev->name.jobid == peer->jobid) &&
+                (rev->name.vpid == peer->vpid) ) {
+                opal_list_remove_item(&mca_iof_orted_component.read_events,
+                                      item);
+                /* No need to delete the event, the destructor will automatically
+                 * do it for us.
+                 */
+                rev_fd = rev->ev.ev_fd;
+                OBJ_RELEASE(item);
+                close(rev_fd);
+            }
         }
     }
+
     OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 
     return ORTE_SUCCESS;
@@ -260,20 +241,11 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  */
                 goto CHECK;
             }            
-            /* otherwise, something bad happened so all we can do is declare an
-             * error and abort
+            /* otherwise, something bad happened so all we can do is abort
+             * this attempt
              */
             OBJ_RELEASE(output);
-            close(wev->fd);
-            opal_event_del(&wev->ev);
-            wev->pending = false;
-            /* tell the HNP to stop sending us stuff */
-            if (!mca_iof_orted_component.xoff) {
-                mca_iof_orted_component.xoff = true;
-                orte_iof_orted_send_xonxoff(ORTE_IOF_XOFF);
-            }
-            /* tell ourselves to dump anything that arrives */
-            goto DEPART;
+            goto ABORT;
         } else if (num_written < output->numbytes) {
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
@@ -286,6 +258,11 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
+    goto CHECK;  /* don't abort yet. Spurious event might happens */
+ABORT:
+    close(wev->fd);
+    opal_event_del(&wev->ev);
+    wev->pending = false;
     
 CHECK:
     if (mca_iof_orted_component.xoff) {

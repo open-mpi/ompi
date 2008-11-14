@@ -69,7 +69,6 @@
 #include "opal/mca/crs/base/base.h"
 #endif
 
-#include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
@@ -1686,177 +1685,6 @@ static bool any_live_children(orte_jobid_t job)
 
 }
 
-static void check_proc_complete(orte_odls_child_t *child)
-{
-    int rc;
-    opal_buffer_t alert;
-    orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
-
-    /* is this proc fully complete? */
-    if (!child->waitpid_recvd || !child->iof_complete) {
-        /* apparently not - just return */
-        return;
-    }
-    
-    /* CHILD IS COMPLETE */
-    child->alive = false;
-    
-    /* Release only the stdin IOF file descriptor for this child, if one
-     * was defined. File descriptors for the other IOF channels - stdout,
-     * stderr, and stddiag - were released when their associated pipes
-     * were cleared and closed due to termination of the process
-     */
-    orte_iof.close(child->name, ORTE_IOF_STDIN);
-    
-    /* Clean up the session directory as if we were the process
-     * itself.  This covers the case where the process died abnormally
-     * and didn't cleanup its own session directory.
-     */
-    orte_session_dir_finalize(child->name);
-    
-    /* setup the alert buffer */
-    OBJ_CONSTRUCT(&alert, opal_buffer_t);
-    
-    /* if the proc aborted, tell the HNP right away */
-    if (ORTE_PROC_STATE_TERMINATED != child->state) {
-        /* pack update state command */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            goto unlock;
-        }
-        /* pack only the data for this proc - have to start with the jobid
-         * so the receiver can unpack it correctly
-         */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &child->name->jobid, 1, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            goto unlock;
-        }
-        /* now pack the child's info */
-        if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
-            ORTE_ERROR_LOG(rc);
-            goto unlock;
-        }
-        
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:proc_complete reporting proc %s aborted to HNP",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
-        
-        /* if we are the HNP, then we would rather not send this to ourselves -
-         * instead, we queue it up for local processing
-         */
-        if (orte_process_info.hnp) {
-            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
-                               ORTE_RML_TAG_PLM,
-                               orte_plm_base_receive_process_msg);
-        } else {
-            /* go ahead and send it */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
-                ORTE_ERROR_LOG(rc);
-                goto unlock;
-            }
-        }
-    } else {
-        /* since it didn't abort, let's see if all of that job's procs are done */
-        if (!any_live_children(child->name->jobid)) {
-            /* all those children are dead - alert the HNP */
-            /* pack update state command */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
-                ORTE_ERROR_LOG(rc);
-                goto unlock;
-            }
-            /* pack the data for the job */
-            if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, child->name->jobid))) {
-                ORTE_ERROR_LOG(rc);
-                goto unlock;
-            }
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:proc_complete reporting all procs in %s terminated",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(child->name->jobid)));
-            
-            /* if we are the HNP, then we would rather not send this to ourselves -
-             * instead, we queue it up for local processing
-             */
-            if (orte_process_info.hnp) {
-                ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
-                                   ORTE_RML_TAG_PLM,
-                                   orte_plm_base_receive_process_msg);
-            } else {
-                /* go ahead and send it */
-                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto unlock;
-                }
-            }
-        }
-    }
-    
-unlock:
-    OBJ_DESTRUCT(&alert);
-    
-}
-
-/* receive external-to-odls notification that a proc has met some completion
- * requirements
- */
-void orte_odls_base_notify_iof_complete(int fd, short event, void *data)
-{
-    orte_notify_event_t *nev = (orte_notify_event_t*)data;
-    orte_odls_child_t *child;
-    opal_list_item_t *item;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:notify_iof_complete for child %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&nev->proc)));
-    
-    /* since we are going to be working with the global list of
-     * children, we need to protect that list from modification
-     * by other threads. This will also be used to protect us
-     * from race conditions on any abort situation
-     */
-    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-    
-    /* find this child */
-    for (item = opal_list_get_first(&orte_odls_globals.children);
-         item != opal_list_get_end(&orte_odls_globals.children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        
-        if (child->name->jobid == nev->proc.jobid &&
-            child->name->vpid == nev->proc.vpid) { /* found it */
-            goto GOTCHILD;
-        }
-    }
-    /* get here if we didn't find the child, or if the specified child
-     * is already dead. If the latter, then we have a problem as it
-     * means we are detecting it exiting multiple times
-     */
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:proc_complete did not find child %s in table!",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&nev->proc)));
-    
-    /* release the event */
-    OBJ_RELEASE(nev);
-    /* it's just a race condition - don't error log it */
-    opal_condition_signal(&orte_odls_globals.cond);
-    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-    return;
-    
-GOTCHILD:
-    /* flag the iof as complete */
-    child->iof_complete = true;
-    /* release the event */
-    OBJ_RELEASE(nev);
-    /* now check to see if the proc is truly done */
-    check_proc_complete(child);
-}
-
-
 /*
  *  Wait for a callback indicating the child has completed.
  */
@@ -1865,9 +1693,12 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
 {
     orte_odls_child_t *child;
     opal_list_item_t *item;
+    bool aborted=false;
     char *job, *vpid, *abort_file;
     struct stat buf;
     int rc;
+    opal_buffer_t alert;
+    orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc child process %ld terminated",
@@ -1967,6 +1798,7 @@ GOTCHILD:
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
 
+            aborted = true;
             child->state = ORTE_PROC_STATE_ABORTED;
             free(abort_file);
         } else {
@@ -1977,6 +1809,7 @@ GOTCHILD:
                 /* if this is set, then we required a sync and didn't get it, so this
                  * is considered an abnormal termination and treated accordingly
                  */
+                aborted = true;
                 child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
@@ -2017,18 +1850,109 @@ GOTCHILD:
                              "%s odls:wait_local_proc child process %s terminated with signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
+        
+        aborted = true;
     }
 
 MOVEON:
-    /* indicate the waitpid fired */
-    child->waitpid_recvd = true;
+    /* indicate the child is no longer alive */
+    child->alive = false;
 
-    /* check for everything complete */
-    check_proc_complete(child);
-    
-    /* done */
+    /* Release the IOF resources related to this child */
+    orte_iof.close(child->name, (ORTE_IOF_STDIN | ORTE_IOF_STDOUT |
+                                 ORTE_IOF_STDERR | ORTE_IOF_STDDIAG) );
+
+    /* Clean up the session directory as if we were the process
+     * itself.  This covers the case where the process died abnormally
+     * and didn't cleanup its own session directory.
+     */
+    orte_session_dir_finalize(child->name);
+
+    /* setup the alert buffer */
+    OBJ_CONSTRUCT(&alert, opal_buffer_t);
+
+    /* if the proc aborted, tell the HNP right away */
+    if (aborted) {
+        /* pack update state command */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
+        /* pack only the data for this proc - have to start with the jobid
+         * so the receiver can unpack it correctly
+         */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &child->name->jobid, 1, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
+        /* now pack the child's info */
+        if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, false, child))) {
+            ORTE_ERROR_LOG(rc);
+            goto unlock;
+        }
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:wait_local_proc reporting proc %s aborted to HNP",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(child->name)));
+        
+        /* if we are the HNP, then we would rather not send this to ourselves -
+         * instead, we queue it up for local processing
+         */
+        if (orte_process_info.hnp) {
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
+                               ORTE_RML_TAG_PLM,
+                               orte_plm_base_receive_process_msg);
+        } else {
+            /* go ahead and send it */
+            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
+        }
+    } else {
+        /* since it didn't abort, let's see if all of that job's procs are done */
+        if (!any_live_children(child->name->jobid)) {
+            /* all those children are dead - alert the HNP */
+            /* pack update state command */
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
+            /* pack the data for the job */
+            if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, child->name->jobid))) {
+                ORTE_ERROR_LOG(rc);
+                goto unlock;
+            }
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:wait_local_proc reporting all procs in %s terminated",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(child->name->jobid)));
+            
+            /* if we are the HNP, then we would rather not send this to ourselves -
+             * instead, we queue it up for local processing
+             */
+            if (orte_process_info.hnp) {
+                ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
+                                   ORTE_RML_TAG_PLM,
+                                   orte_plm_base_receive_process_msg);
+            } else {
+                /* go ahead and send it */
+                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto unlock;
+                }
+            }
+        }
+    }
+
+unlock:
+    OBJ_DESTRUCT(&alert);
+
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+
 }
 
 int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
