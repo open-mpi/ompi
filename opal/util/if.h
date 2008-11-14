@@ -133,7 +133,8 @@ OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*,
                                      unsigned int);
 
 /**
- *  Lookup an interface by index and return its network mask.
+ *  Lookup an interface by index and return its network mask (in CIDR
+ *  notation -- NOT the actual netmask itself!).
  *
  *  @param if_index (IN)  Interface index
  *  @param if_name (OUT)  Interface address buffer
