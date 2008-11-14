@@ -169,6 +169,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
                        OPAL_EV_READ | OPAL_EV_PERSIST,              \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
+            rev->active = true;                                     \
             opal_event_add(&rev->ev, 0);                            \
         }                                                           \
     } while(0);
