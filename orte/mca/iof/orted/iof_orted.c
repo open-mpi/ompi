@@ -260,11 +260,16 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  */
                 goto CHECK;
             }            
-            /* otherwise, something bad happened so all we can do is abort
-             * this attempt
+            /* otherwise, something bad happened so all we can do is declare an
+             * error and abort
              */
             OBJ_RELEASE(output);
-            goto ABORT;
+            close(wev->fd);
+            opal_event_del(&wev->ev);
+            wev->pending = false;
+            /* tell the HNP to stop sending us stuff */
+            /* tell ourselves to dump anything that arrives */
+            goto DEPART;
         } else if (num_written < output->numbytes) {
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
@@ -277,11 +282,6 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
-    goto CHECK;  /* don't abort yet. Spurious event might happens */
-ABORT:
-    close(wev->fd);
-    opal_event_del(&wev->ev);
-    wev->pending = false;
     
 CHECK:
     if (mca_iof_orted_component.xoff) {
