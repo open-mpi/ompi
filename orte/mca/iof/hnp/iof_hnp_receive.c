@@ -62,14 +62,16 @@ static void process_msg(int fd, short event, void *cbdata)
     
     if (ORTE_IOF_XON & stream) {
         /* re-start the stdin read event */
-        if (!mca_iof_hnp_component.stdinev->active) {
+        if (NULL != mca_iof_hnp_component.stdinev &&
+            !mca_iof_hnp_component.stdinev->active) {
             mca_iof_hnp_component.stdinev->active = true;
             opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
         }
         goto CLEAN_RETURN;
     } else if (ORTE_IOF_XOFF & stream) {
         /* stop the stdin read event */
-        if (!mca_iof_hnp_component.stdinev->active) {
+        if (NULL != mca_iof_hnp_component.stdinev &&
+            !mca_iof_hnp_component.stdinev->active) {
             opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
             mca_iof_hnp_component.stdinev->active = false;
         }

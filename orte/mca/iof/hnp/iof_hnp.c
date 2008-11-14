@@ -232,14 +232,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              */
             ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
                                 dst_name, fd, src_tag,
-                                orte_iof_hnp_read_local_handler, false);
-            
-            /* flag that it is operational */
-            mca_iof_hnp_component.stdinev->active = true;
-            /* activate it */
-            if (OPAL_SUCCESS != (rc = opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
-                ORTE_ERROR_LOG(rc);
-            }
+                                orte_iof_hnp_read_local_handler, true);
         }
     }
     return ORTE_SUCCESS;

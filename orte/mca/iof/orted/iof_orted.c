@@ -268,6 +268,10 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             opal_event_del(&wev->ev);
             wev->pending = false;
             /* tell the HNP to stop sending us stuff */
+            if (!mca_iof_orted_component.xoff) {
+                mca_iof_orted_component.xoff = true;
+                orte_iof_orted_send_xonxoff(ORTE_IOF_XOFF);
+            }
             /* tell ourselves to dump anything that arrives */
             goto DEPART;
         } else if (num_written < output->numbytes) {
