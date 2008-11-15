@@ -55,7 +55,7 @@ Detailed Open MPI v1.3 Feature List:
     - Scalable job launch (we've seen ~16K processes in less than a
       minute in a highly-optimized configuration)
     - New process mappers
-    - Support for Platform/LSF environments
+    - Support for Platform/LSF environments (v7.0.2 and later)
     - More flexible processing of host lists
     - new mpirun cmd line options and associated functionality
 
@@ -172,7 +172,7 @@ General notes
   - rsh / ssh
   - LoadLeveler
   - PBS Pro, Open PBS, Torque
-  - Platform LSF
+  - Platform LSF (v7.0.2 and later)
   - SLURM
   - XGrid
   - Cray XT-3 and XT-4
@@ -367,17 +367,20 @@ MPI Functionality and Features
   functions (e.g., MPI attributes) have not been certified as safe
   when simultaneously used by multiple threads.
 
+  Note that Open MPI's thread support is in a fairly early stage; the
+  above devices are likely to *work*, but the latency is likely to be
+  fairly high.  Specifically, efforts so far have concentrated on
+  *correctness*, not *performance* (yet).
+
 - MPI_REAL16 and MPI_COMPLEX32 are only supported on platforms where a
   portable C datatype can be found that matches the Fortran type
   REAL*16, both in size and bit representation.
 
-**** --enable-progress-threads is broken, right?  Should we disable it
-  in v1.3?
 - Asynchronous message passing progress using threads can be turned on
   with the --enable-progress-threads option to configure.
-  Asynchronous message passing progress is only supported for TCP,
-  shared memory, and Myrinet/GM.  Myrinet/GM has only been lightly
-  tested.
+  Asynchronous message passing progress is only supported with devices
+  that support MPI_THREAD_MULTIPLE, but is only very lightly tested
+  (and may not provide very much performance benefit).
 
 
 Network Support
@@ -423,14 +426,11 @@ Network Support
     - InfiniPath PSM
     - Portals
 
-**** IS THIS TRUE?
   Open MPI will, by default, choose to use "cm" if it finds a
   cm-supported network at run-time.  Users can force the use of ob1 if
   desired by setting the "pml" MCA parameter at run-time:
 
     shell$ mpirun --mca pml ob1 ...
-
-**** DOES THIS NEED AN UPDATE?
 
 - Myrinet MX support is shared between the 2 internal devices, the MTL
   and the BTL.  The design of the BTL interface in Open MPI assumes
@@ -621,10 +621,10 @@ for a full list); a summary of the more commonly used ones follows:
   Allows the MPI thread level MPI_THREAD_MULTIPLE.  See
   --with-threads; this is currently disabled by default.
 
-**** SHOULD WE DISABLE THIS?
 --enable-progress-threads
   Allows asynchronous progress in some transports.  See
-  --with-threads; this is currently disabled by default.
+  --with-threads; this is currently disabled by default.  See the
+  above note about asynchronous progress.
 
 --disable-mpi-cxx
   Disable building the C++ MPI bindings.  Note that this does *not*
