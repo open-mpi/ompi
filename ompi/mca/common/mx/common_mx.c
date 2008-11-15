@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Myricom. All rights reserved.
+ * 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,11 +23,29 @@
 #include "ompi/constants.h"
 #include "common_mx.h"
 
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+#include "opal/memoryhooks/memory.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/runtime/params.h"
+#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/mpool/fake/mpool_fake.h"
+
+
+int mx__regcache_clean(void *ptr, size_t size);
+
 static int ompi_common_mx_initialize_ref_cnt = 0;
+static mca_mpool_base_module_t *ompi_common_mx_fake_mpool = 0;
+
 int
 ompi_common_mx_initialize(void)
 {
     mx_return_t mx_return;
+    struct mca_mpool_base_resources_t mpool_resources;
+    int index, value;
+    
     ompi_common_mx_initialize_ref_cnt++;
     
     if(ompi_common_mx_initialize_ref_cnt == 1) { 
@@ -35,7 +55,37 @@ ompi_common_mx_initialize(void)
          * library does not exit the application.
          */
         mx_set_error_handler(MX_ERRORS_RETURN);
-        
+	
+	/* If we have a memory manager available, and
+	   mpi_leave_pinned == -1, then set mpi_leave_pinned to 1.
+
+	   We have a memory manager if:
+	   - we have both FREE and MUNMAP support
+	   - we have MUNMAP support and the linux mallopt */
+	value = opal_mem_hooks_support_level();
+	if (((value & (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
+	     == (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
+	    || ((value & OPAL_MEMORY_MUNMAP_SUPPORT) &&
+		OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT)) {
+	  index = mca_base_param_find("mpi", NULL, "leave_pinned");
+	  if (index >= 0)
+            if ((mca_base_param_lookup_int(index, &value) == OPAL_SUCCESS) 
+		&& (value == -1)) {
+	      
+	      ompi_mpi_leave_pinned = 1;
+	      setenv("MX_RCACHE", "2", 1);
+	      mpool_resources.regcache_clean = mx__regcache_clean;
+	      ompi_common_mx_fake_mpool = 
+		mca_mpool_base_module_create("fake", NULL, &mpool_resources);
+	      if (!ompi_common_mx_fake_mpool) {
+		ompi_mpi_leave_pinned = 0;
+		setenv("MX_RCACHE", "0", 1);
+		opal_output(0, "Error creating fake mpool (error %s)\n",
+			    strerror(errno));
+	      }
+	    }
+	}
+	
         /* initialize the mx library */
         mx_return = mx_init(); 
         
@@ -57,6 +107,10 @@ ompi_common_mx_finalize(void)
     mx_return_t mx_return;
     ompi_common_mx_initialize_ref_cnt--;
     if( 0 == ompi_common_mx_initialize_ref_cnt ) { 
+
+        if (ompi_common_mx_fake_mpool) 
+	  mca_mpool_base_module_destroy(ompi_common_mx_fake_mpool);
+        
         mx_return = mx_finalize(); 
         if(mx_return != MX_SUCCESS){ 
             opal_output(0, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
