@@ -969,7 +969,7 @@ ras       - Resource allocation system
 rmaps     - Resource mapping system
 rml       - RTE message layer
 routed    - Routing table for the RML
-snapc     - Spapshot coordination
+snapc     - Snapshot coordination
 
 Miscellaneous frameworks:
 -------------------------
