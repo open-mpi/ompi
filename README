@@ -10,7 +10,7 @@ Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
-Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 $COPYRIGHT$
@@ -176,17 +176,17 @@ General notes
   - SLURM
   - XGrid
   - Cray XT-3 and XT-4
-  - Sun N1 Grid Engine (N1GE) 6 and open source Grid Engine
+  - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
 
 ***** NEEDS UPDATE
 - Systems that have been tested are:
-  - Linux (various flavors/distros), 32 bit, with gcc
+  - Linux (various flavors/distros), 32 bit, with gcc, and Sun Studio 12
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
-    Intel, Portland, and Pathscale compilers (*)
+    Intel, Portland, Pathscale, and Sun Studio 12 compilers (*)
   - OS X (10.4), 32 and 64 bit (i386, PPC, PPC64, x86_64), with gcc
     and Absoft compilers (*)
-  - Solaris 10 updates 2 and 3, SPARC and AMD, 32 and 64 bit, with Sun
-    Studio 10 and 11
+  - Solaris 10 update 2, 3 and 4, 32 and 64 bit (SPARC, i386, x86_64),
+    with Sun Studio 10, 11 and 12
 
   (*) Be sure to read the Compiler Notes, below.
 
