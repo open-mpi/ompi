@@ -55,7 +55,7 @@ int ompi_fortran_string_f2c(char *fstr, int len, char **cstr)
 
     /* Allocate space for the C string. */
 
-    if (NULL == (*cstr = malloc(len + 1))) {
+    if (NULL == (*cstr = (char *) malloc(len + 1))) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
