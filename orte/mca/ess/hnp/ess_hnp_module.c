@@ -48,6 +48,7 @@
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/notifier/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT == 1
@@ -404,6 +405,18 @@ static int rte_init(char flags)
         goto error;
     }
     
+    /* setup the notifier system */
+    if (ORTE_SUCCESS != (ret = orte_notifier_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_notifer_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_notifier_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_notifer_select";
+        goto error;
+    }
+
     return ORTE_SUCCESS;
 
 error:
@@ -425,6 +438,8 @@ static int rte_finalize(void)
                                 "contact.txt", NULL);
     unlink(contact_path);
     free(contact_path);
+    
+    orte_notifier_base_close();
     
     orte_cr_finalize();
     
