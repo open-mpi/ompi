@@ -358,16 +358,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == (daemon.vpid = orte_ess.proc_get_daemon(target))) {
-        /* we don't recognize this one - if we are the HNP, all
-         * we can do is abort
-         */
-        if (orte_process_info.hnp) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            ret = ORTE_NAME_INVALID;
-            goto found;
-        }
-        /* if we are not the HNP, send it to the wildcard location */
-        ret = &wildcard_route;
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        ret = ORTE_NAME_INVALID;
         goto found;
     }
     
@@ -618,17 +610,23 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                  "%s routed_binomial: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
-            /* if this is for my job family, then we send the buffer
-             * to the proper tag on the daemon
-             */
-            if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) == ORTE_JOB_FAMILY(job)) {
-                /* send the buffer to the proper tag on the daemon */
-                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, ndat,
+            if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) != ORTE_JOB_FAMILY(job)) {
+                /* if this is for a different job family, then we route via our HNP
+                 * to minimize connection counts to entities such as ompi-server, so
+                 * start by sending the contact info to the HNP for update
+                 */
+                OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+                                     "%s routed_binomial_init_routes: diff job family - sending update to %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
+                
+                if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, ndat,
                                                    ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                /* wait right here until the daemon acks the update to ensure that
+                
+                /* wait right here until the HNP acks the update to ensure that
                  * any subsequent messaging can succeed
                  */
                 ack_recvd = false;
@@ -641,43 +639,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                      "%s routed_binomial_init_routes: ack recvd",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 
-                /* we already have defined our routes to everyone to
-                 * be through the local daemon, so nothing further to do
+                /* our get_route function automatically routes all messages for
+                 * other job families via the HNP, so nothing more to do here
                  */
-                return ORTE_SUCCESS;
             }
-            
-            /* if this is for a different job family, then we route via our HNP
-             * to minimize connection counts to entities such as ompi-server, so
-             * start by sending the contact info to the HNP for update
-             */
-            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_binomial_init_routes: diff job family - sending update to %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
-            
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, ndat,
-                                               ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            
-            /* wait right here until the HNP acks the update to ensure that
-             * any subsequent messaging can succeed
-             */
-            ack_recvd = false;
-            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
-                                         ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
-            
-            ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
-            
-            OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
-                                 "%s routed_binomial_init_routes: ack recvd",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            
-            /* our get_route function automatically routes all messages for
-             * other job families via the HNP, so nothing more to do here
-             */
             return ORTE_SUCCESS;
         }
         

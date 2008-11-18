@@ -35,7 +35,7 @@
 
 int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
                                opal_pointer_array_t *nidmap,
-                               orte_jmap_t *jmap)
+                               opal_pointer_array_t *jobmap)
 {
     int rc;
     opal_byte_object_t *bo;
@@ -71,7 +71,7 @@ int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
         return rc;
     }
     /* unpack the process map */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_pidmap(bo, &jmap->num_procs, &jmap->pmap))) {
+    if (ORTE_SUCCESS != (rc = orte_util_decode_pidmap(bo, jobmap))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -88,6 +88,10 @@ orte_pmap_t* orte_ess_base_lookup_pmap(opal_pointer_array_t *jobmap, orte_proces
     
     jmaps = (orte_jmap_t**)jobmap->addr;
     for (i=0; i < jobmap->size && NULL != jmaps[i]; i++) {
+        OPAL_OUTPUT_VERBOSE((10, orte_ess_base_output,
+                             "%s ess:lookup:pmap: checking job %s for job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jmaps[i]->job), ORTE_JOBID_PRINT(proc->jobid)));
         if (proc->jobid == jmaps[i]->job) {
             pmap = (orte_pmap_t*)opal_value_array_get_item(&jmaps[i]->pmap, proc->vpid);
             return pmap;
@@ -111,6 +115,10 @@ static orte_nid_t* find_daemon_node(opal_pointer_array_t *nidmap,
     
     nids = (orte_nid_t**)nidmap->addr;
     for (i=0; i < nidmap->size && NULL != nids[i]; i++) {
+        OPAL_OUTPUT_VERBOSE((10, orte_ess_base_output,
+                             "%s ess:find:daemon:node: checking daemon %s for %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_VPID_PRINT(nids[i]->daemon), ORTE_VPID_PRINT(proc->vpid)));
         if (nids[i]->daemon == proc->vpid) {
             return nids[i];
         }
@@ -123,22 +131,45 @@ orte_nid_t* orte_ess_base_lookup_nid(opal_pointer_array_t *nidmap,
                                      opal_pointer_array_t *jobmap,
                                      orte_process_name_t *proc)
 {
-    orte_nid_t **nids;
+    orte_nid_t **nids, *nid;
     orte_pmap_t *pmap;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                         "%s ess:lookup:nid: looking for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+
+    /* if the proc is from a different job family, we always
+     * return NULL - we cannot know info for procs in other
+     * job families.
+     */
+    if (ORTE_JOB_FAMILY(proc->jobid) !=
+        ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        /* this isn't an error - let the caller decide if an
+         * error message is required
+         */
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "%s ess:lookup:nid: different job family",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        return NULL;
+    }
+    
     if (ORTE_PROC_IS_DAEMON(proc->jobid)) {
-        if (ORTE_JOB_FAMILY(proc->jobid) !=
-            ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
-            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-            return NULL;
-        }
         /* looking for a daemon in my family */
-        return find_daemon_node(nidmap, proc);
+        if (NULL == (nid = find_daemon_node(nidmap, proc))) {
+            OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                 "%s ess:lookup:nid: couldn't find daemon node",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        }
+        return nid;
     }
     
     /* looking for an application proc */
     if (NULL == (pmap = orte_ess_base_lookup_pmap(jobmap, proc))) {
-        opal_output(0, "proc: %s not found", ORTE_NAME_PRINT(proc));
+        /* if the proc is in my job family, then this definitely is
+         * an error - we should always know the node of a proc
+         * in our job family
+         */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return NULL;
     }

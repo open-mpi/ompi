@@ -47,9 +47,8 @@ BEGIN_C_DECLS
 ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr, opal_pointer_array_t *nodes);
 
-ORTE_DECLSPEC int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr);
-ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr, orte_vpid_t *num_procs,
-                                          opal_value_array_t *procs);
+ORTE_DECLSPEC int orte_util_encode_pidmap(opal_byte_object_t *boptr);
+ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr, opal_pointer_array_t *jobmap);
 
 
 END_C_DECLS

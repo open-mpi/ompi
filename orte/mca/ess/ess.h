@@ -121,14 +121,14 @@ typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_pr
 typedef int (*orte_ess_base_module_update_arch_fn_t)(orte_process_name_t *proc, uint32_t arch);
 
 /**
- * Add a pidmap
+ * Update thr pidmap
  *
  * When a job is dynamically launched via comm_spawn, the pre-existing daemons need to
  * update their knowledge of the process map within the job so they can properly do
  * things like route messages. This API allows daemons - and anyone else who wants to - to
  * add a pidmap for a new job
  */
-typedef int (*orte_ess_base_module_add_pidmap_fn_t)(orte_jobid_t job, opal_byte_object_t *bo);
+typedef int (*orte_ess_base_module_update_pidmap_fn_t)(opal_byte_object_t *bo);
 
 /**
  * Update a nidmap
@@ -165,7 +165,7 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_local_rank_fn_t   get_local_rank;
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
     orte_ess_base_module_update_arch_fn_t           update_arch;
-    orte_ess_base_module_add_pidmap_fn_t            add_pidmap;
+    orte_ess_base_module_update_pidmap_fn_t         update_pidmap;
     orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
     orte_ess_base_module_ft_event_fn_t              ft_event;
 };

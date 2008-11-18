@@ -584,7 +584,7 @@ process_daemons:
     return ORTE_SUCCESS;
 }
 
-int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
+int orte_util_encode_pidmap(opal_byte_object_t *boptr)
 {
     int32_t *nodes;
     orte_proc_t **procs;
@@ -592,56 +592,65 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
     orte_node_rank_t *nrank;
+    orte_job_t **jobs, *jdata;
+    int j;
     int rc;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
-    /* pack the number of procs */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->num_procs, 1, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc; 
+    jobs = (orte_job_t**)orte_job_data->addr;
+    /* for each job... */
+    for (j=0; j < orte_job_data->size && NULL != jobs[j]; j++) {
+        jdata = jobs[j];
+        /* pack the jobid */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->jobid, 1, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc; 
+        }
+        /* pack the number of procs */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->num_procs, 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc; 
+        }
+        
+        /* allocate memory for the nodes */
+        nodes = (int32_t*)malloc(jdata->num_procs * 4);
+        
+        /* transfer and pack the node info in one pack */
+        procs = (orte_proc_t**)jdata->procs->addr;
+        for (i=0; i < jdata->num_procs; i++) {
+            nodes[i] = procs[i]->node->index;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* free node storage */
+        free(nodes);
+        
+        /* transfer and pack the local_ranks in one pack */
+        lrank = (orte_local_rank_t*)malloc(jdata->num_procs*sizeof(orte_local_rank_t));
+        for (i=0; i < jdata->num_procs; i++) {
+            lrank[i] = procs[i]->local_rank;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, lrank, jdata->num_procs, ORTE_LOCAL_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        free(lrank);
+        
+        /* transfer and pack the node ranks in one pack */
+        nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
+        for (i=0; i < jdata->num_procs; i++) {
+            nrank[i] = procs[i]->node_rank;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nrank, jdata->num_procs, ORTE_NODE_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        free(nrank);
     }
-    
-    /* allocate memory for the nodes */
-    nodes = (int32_t*)malloc(jdata->num_procs * 4);
-    
-    /* transfer and pack the node info in one pack */
-    procs = (orte_proc_t**)jdata->procs->addr;
-    for (i=0; i < jdata->num_procs; i++) {
-        nodes[i] = procs[i]->node->index;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* free node storage */
-    free(nodes);
-    
-    /* allocate memory for the local_ranks */
-    lrank = (orte_local_rank_t*)malloc(jdata->num_procs*sizeof(orte_local_rank_t));
-    
-   /* transfer and pack them in one pack */
-    for (i=0; i < jdata->num_procs; i++) {
-        lrank[i] = procs[i]->local_rank;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, lrank, jdata->num_procs, ORTE_LOCAL_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    free(lrank);
-    
-    /* transfer and pack the node ranks in one pack */
-    nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
-    for (i=0; i < jdata->num_procs; i++) {
-        nrank[i] = procs[i]->node_rank;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nrank, jdata->num_procs, ORTE_NODE_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    free(nrank);
     
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
@@ -651,9 +660,9 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
 }
 
 
-int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
-                            opal_value_array_t *procs)
+int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap)
 {
+    orte_jobid_t jobid;
     orte_vpid_t i, num_procs;
     orte_pmap_t pmap;
     int32_t *nodes;
@@ -661,66 +670,90 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     orte_node_rank_t *node_rank;
     orte_std_cntr_t n;
     opal_buffer_t buf;
+    orte_jmap_t **jobs, *jmap;
+    bool already_present;
+    opal_value_array_t *procs;
+    int j;
     int rc;
     
     /* xfer the byte object to a buffer for unpacking */
-    /* load it into a buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     if (ORTE_SUCCESS != (rc = opal_dss.load(&buf, bo->bytes, bo->size))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /* unpack the number of procs */
-    n=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /* cycle through the buffer */
+    jobs = (orte_jmap_t**)jobmap->addr;
+    n = 1;
+    while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &jobid, &n, ORTE_JOBID))) {
+        /* is this job already in the map? */
+        already_present = false;
+        for (j=0; j < jobmap->size && NULL != jobs[j]; j++) {
+            if (jobid == jobs[j]->job) {
+                already_present = true;
+                break;
+            }
+        }
+        
+        /* unpack the number of procs */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* allocate memory for the node info */
+        nodes = (int32_t*)malloc(num_procs * 4);
+        /* unpack it in one shot */
+        n=num_procs;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, nodes, &n, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* allocate memory for local ranks */
+        local_rank = (orte_local_rank_t*)malloc(num_procs*sizeof(orte_local_rank_t));
+        /* unpack them in one shot */
+        n=num_procs;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, local_rank, &n, ORTE_LOCAL_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* allocate memory for node ranks */
+        node_rank = (orte_node_rank_t*)malloc(num_procs*sizeof(orte_node_rank_t));
+        /* unpack node ranks in one shot */
+        n=num_procs;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, node_rank, &n, ORTE_NODE_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* if we don't already have this data, store it */
+        if (!already_present) {
+            /* create and add an entry for the job */
+            jmap = OBJ_NEW(orte_jmap_t);
+            jmap->job = jobid;
+            jmap->num_procs = num_procs;
+            opal_pointer_array_add(jobmap, jmap);
+            /* allocate memory for the procs array */
+            procs = &jmap->pmap;
+            opal_value_array_set_size(procs, num_procs);
+            /* xfer the data */
+            for (i=0; i < num_procs; i++) {
+                pmap.node = nodes[i];
+                pmap.local_rank = local_rank[i];
+                pmap.node_rank = node_rank[i];
+                opal_value_array_set_item(procs, i, &pmap);
+            }
+        }
+        
+        /* release data */
+        free(nodes);
+        free(local_rank);
+        free(node_rank);
     }
-    *nprocs = num_procs;
-    
-    /* allocate memory for the procs array */
-    opal_value_array_set_size(procs, num_procs);
-
-    /* allocate memory for the node info */
-    nodes = (int32_t*)malloc(num_procs * 4);
-    /* unpack it in one shot */
-    n=num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, nodes, &n, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* allocate memory for local ranks */
-    local_rank = (orte_local_rank_t*)malloc(num_procs*sizeof(orte_local_rank_t));
-    /* unpack them in one shot */
-    n=num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, local_rank, &n, ORTE_LOCAL_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* allocate memory for node ranks */
-    node_rank = (orte_node_rank_t*)malloc(num_procs*sizeof(orte_node_rank_t));
-    /* unpack node ranks in one shot */
-    n=num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, node_rank, &n, ORTE_NODE_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* store the data */
-    for (i=0; i < num_procs; i++) {
-        pmap.node = nodes[i];
-        pmap.local_rank = local_rank[i];
-        pmap.node_rank = node_rank[i];
-        opal_value_array_set_item(procs, i, &pmap);
-    }
-    
-    /* release data */
-    free(nodes);
-    free(local_rank);
-    free(node_rank);
     
     OBJ_DESTRUCT(&buf);
     return ORTE_SUCCESS;
