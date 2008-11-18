@@ -53,7 +53,6 @@ bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
 bool orte_tag_output;
-bool orte_xml_output;
 int orted_debug_failure;
 int orted_debug_failure_delay;
 bool orte_homogeneous_nodes = false;
