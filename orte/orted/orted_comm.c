@@ -712,7 +712,11 @@ static int process_commands(orte_process_name_t* sender,
              * NOTE: this event will fire -after- any zero-time events
              * so any pending relays -do- get sent first
              */
-            orte_trigger_event(&orte_exit);
+            if (relay_is_required) {
+                exit_after_relay = true;
+            } else {
+                orte_trigger_event(&orte_exit);
+            }
             return ORTE_SUCCESS;
             break;
             
