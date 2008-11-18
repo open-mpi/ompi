@@ -80,7 +80,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
-static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo);
+static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
 
@@ -95,7 +95,7 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
-    add_pidmap,
+    update_pidmap,
     update_nidmap,
     NULL /* ft_event */
 };
@@ -680,7 +680,7 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     return pdata->node_rank;
 }
 
-static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo)
+static int update_pidmap(opal_byte_object_t *bo)
 {
     /* there is nothing to do here - the HNP can resolve
      * all requests directly from its internal data. However,

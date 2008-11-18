@@ -230,7 +230,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     
     /* encode the pidmap */
-    if (ORTE_SUCCESS != (rc = orte_util_encode_pidmap(jdata, &bo))) {
+    if (ORTE_SUCCESS != (rc = orte_util_encode_pidmap(&bo))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -507,7 +507,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* retain a copy for downloading to child processes */
     opal_dss.copy((void**)&jobdat->pmap, bo, OPAL_BYTE_OBJECT);
     /* decode the pidmap  - this will also free the bytes in bo */
-    if (ORTE_SUCCESS != (rc = orte_ess.add_pidmap(jobdat->jobid, bo))) {
+    if (ORTE_SUCCESS != (rc = orte_ess.update_pidmap(bo))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1462,6 +1462,7 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     opal_list_append(&orte_odls_globals.jobs, &jobdat->super);
     /* need to setup a pidmap for it */
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
+    opal_dss.pack(&buffer, &jobid, 1, ORTE_JOBID); /* jobid */
     opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID); /* num_procs */
     one32 = 0;
     opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
@@ -1478,7 +1479,7 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     /* save a copy to send back to the proc */
     opal_dss.copy((void**)&jobdat->pmap, bo, OPAL_BYTE_OBJECT);
     /* update our ess data - this will release the byte object's data */
-    if (ORTE_SUCCESS != (rc = orte_ess.add_pidmap(jobid, bo))) {
+    if (ORTE_SUCCESS != (rc = orte_ess.update_pidmap(bo))) {
         ORTE_ERROR_LOG(rc);
     }
     free(bo);

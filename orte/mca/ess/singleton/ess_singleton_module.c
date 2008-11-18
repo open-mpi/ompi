@@ -75,7 +75,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
-static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo);
+static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
 orte_ess_base_module_t orte_ess_singleton_module = {
@@ -89,7 +89,7 @@ orte_ess_base_module_t orte_ess_singleton_module = {
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
-    add_pidmap,
+    update_pidmap,
     update_nidmap,
     NULL /* ft_event */
 };
@@ -562,17 +562,12 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     return pmap->node_rank;
 }
 
-static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo)
+static int update_pidmap(opal_byte_object_t *bo)
 {
-    orte_jmap_t *jmap;
     int ret;
     
-    jmap = OBJ_NEW(orte_jmap_t);
-    jmap->job = job;
-    opal_pointer_array_add(&jobmap, jmap);
-    
     /* build the pmap */
-    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jmap->num_procs, &jmap->pmap))) {
+    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jobmap))) {
         ORTE_ERROR_LOG(ret);
     }
     

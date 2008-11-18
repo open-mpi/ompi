@@ -47,7 +47,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_arch(orte_process_name_t *proc, uint32_t arch);
-static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo);
+static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
 orte_ess_base_module_t orte_ess_alps_module = {
@@ -61,7 +61,7 @@ orte_ess_base_module_t orte_ess_alps_module = {
     proc_get_local_rank,
     proc_get_node_rank,
     update_arch,
-    add_pidmap,
+    update_pidmap,
     update_nidmap,
     NULL /* ft_event */
 };
@@ -74,7 +74,6 @@ static int rte_init(char flags)
 {
     int ret;
     char *error = NULL;
-    orte_jmap_t *jmap;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -121,13 +120,10 @@ static int rte_init(char flags)
     /* setup array of jmaps */
     OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
     opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
-    jmap = OBJ_NEW(orte_jmap_t);
-    jmap->job = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_add(&jobmap, jmap);
     
     /* if one was provided, build my nidmap */
     if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                          &nidmap, jmap))) {
+                                                          &nidmap, &jobmap))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_build_nidmap";
         goto error;
@@ -322,17 +318,12 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     return pmap->node_rank;
 }
 
-static int add_pidmap(orte_jobid_t job, opal_byte_object_t *bo)
+static int update_pidmap(opal_byte_object_t *bo)
 {
-    orte_jmap_t *jmap;
     int ret;
     
-    jmap = OBJ_NEW(orte_jmap_t);
-    jmap->job = job;
-    opal_pointer_array_add(&jobmap, jmap);
-    
     /* build the pmap */
-    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jmap->num_procs, &jmap->pmap))) {
+    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jobmap))) {
         ORTE_ERROR_LOG(ret);
     }
     
