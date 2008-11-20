@@ -617,6 +617,10 @@ static int process_commands(orte_process_name_t* sender,
             
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_WITH_REPLY_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received exit",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
             /* disable routing - we need to do this
              * because daemons exit in an uncoordinated fashion.
              * Thus, our routes are being dismantled, so we can't
@@ -650,11 +654,6 @@ static int process_commands(orte_process_name_t* sender,
             /* if we are not the HNP, send a message to the HNP telling
              * it we are leaving - and then trigger our exit
              */
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received exit",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            /* send a state update so the HNP knows we are "gone" */
             {
                 opal_buffer_t ack;
                 orte_proc_state_t state=ORTE_PROC_STATE_TERMINATED;
@@ -670,10 +669,7 @@ static int process_commands(orte_process_name_t* sender,
                 orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
                 OBJ_DESTRUCT(&ack);
             }
-            /* trigger our appropriate exit procedure
-             * NOTE: this event will fire -after- any zero-time events
-             * so any pending relays -do- get sent first
-             */
+            /* check to see if we need to relay messages */
             if (relay_is_required) {
                 exit_after_relay = true;
             } else {
@@ -684,6 +680,10 @@ static int process_commands(orte_process_name_t* sender,
 
             /****    EXIT_NO_REPLY COMMAND    ****/
         case ORTE_DAEMON_EXIT_NO_REPLY_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received exit_no_reply",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
             /* disable routing - we need to do this
              * because daemons exit in an uncoordinated fashion.
              * Thus, our routes are being dismantled, so we can't
@@ -694,24 +694,25 @@ static int process_commands(orte_process_name_t* sender,
              * flag we are exited - but don't yet exit
              */
             if (orte_process_info.hnp) {
+                orte_job_t *daemons;
+                orte_proc_t **procs;
                 /* if we are the HNP, ensure our local procs are terminated */
                 orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+                /* now lookup the daemon job object */
+                if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                procs = (orte_proc_t**)daemons->procs->addr;
+                /* declare us terminated so things can exit cleanly */
+                procs[0]->state = ORTE_PROC_STATE_TERMINATED;
+                daemons->num_terminated++;
                 /* There is nothing more to do here - actual exit will be
                  * accomplished by the plm
                  */
                 return ORTE_SUCCESS;
             }
-            /* if we are not the HNP, don't send any messages - just
-             * trigger our exit
-             */
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received exit_no_reply",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            /* trigger our appropriate exit procedure
-             * NOTE: this event will fire -after- any zero-time events
-             * so any pending relays -do- get sent first
-             */
+            /* check to see if we need to relay messages */
             if (relay_is_required) {
                 exit_after_relay = true;
             } else {
