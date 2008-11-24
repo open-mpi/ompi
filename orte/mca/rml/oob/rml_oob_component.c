@@ -500,7 +500,7 @@ rml_oob_recv_route_callback(int status,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&next)));
             ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
-            qmsg->payload[0].iov_base = (char *) malloc(iov[0].iov_len);
+            qmsg->payload[0].iov_base = (IOVBASE_TYPE*) malloc(iov[0].iov_len);
             if (NULL == qmsg->payload[0].iov_base) abort();
             qmsg->payload[0].iov_len = iov[0].iov_len;
             memcpy(qmsg->payload[0].iov_base, iov[0].iov_base, iov[0].iov_len);
