@@ -353,9 +353,9 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
             /* compute weighting factor for this r2 */
             if(btl->btl_bandwidth > 0) {
-                bml_btl->btl_weight = btl->btl_bandwidth / total_bandwidth;
+                bml_btl->btl_weight = (float)(btl->btl_bandwidth / total_bandwidth);
             } else {
-                bml_btl->btl_weight = 1.0 / n_size;
+                bml_btl->btl_weight = (float)(1.0 / n_size);
             }
 
             /* check to see if this r2 is already in the array of r2s 
@@ -552,9 +552,9 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
             ep_btl = bml_btl->btl;
 
             if(ep_btl->btl_bandwidth > 0) {
-                bml_btl->btl_weight = ep_btl->btl_bandwidth / total_bandwidth;
+                bml_btl->btl_weight = (float)(ep_btl->btl_bandwidth / total_bandwidth);
             } else {
-                bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep->btl_send);
+                bml_btl->btl_weight = (float)(1.0 / mca_bml_base_btl_array_get_size(&ep->btl_send));
             }
         }
     }
@@ -584,9 +584,9 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
             ep_btl = bml_btl->btl;
 
             if(ep_btl->btl_bandwidth > 0) {
-                bml_btl->btl_weight = ep_btl->btl_bandwidth / total_bandwidth;
+                bml_btl->btl_weight = (float)(ep_btl->btl_bandwidth / total_bandwidth);
             } else {
-                bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep->btl_rdma);
+                bml_btl->btl_weight = (float)(1.0 / mca_bml_base_btl_array_get_size(&ep->btl_rdma));
             }
         }
     }
