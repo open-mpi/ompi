@@ -49,6 +49,15 @@
 
 static const char *cur_hostfile_name = NULL;
 
+static void show_resolved_hostname(char *name, char *resolved)
+{
+    if (orte_xml_output) {
+        opal_output(0, "<noderesolve name=\"%s\" resolved=\"%s\">", name, resolved);
+    } else {
+        opal_output(0, "node name %s resolved to %s", name, resolved);
+    }
+}
+
 static void hostfile_parse_error(int token)
 {
     switch (token) {
@@ -181,6 +190,10 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             /* convert this into something globally unique */
             if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
                 /* Nodename has been allocated, that is for sure */
+                if (orte_show_resolved_nodenames &&
+                    0 != strcmp(node_name, orte_process_info.nodename)) {
+                    show_resolved_hostname(node_name, orte_process_info.nodename);
+                }
                 free (node_name);
                 node_name = strdup(orte_process_info.nodename);
             }
@@ -202,6 +215,10 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         /* convert this into something globally unique */
         if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
             /* Nodename has been allocated, that is for sure */
+            if (orte_show_resolved_nodenames &&
+                0 != strcmp(node_name, orte_process_info.nodename)) {
+                show_resolved_hostname(node_name, orte_process_info.nodename);
+            }
             free (node_name);
             node_name = strdup(orte_process_info.nodename);
         }
