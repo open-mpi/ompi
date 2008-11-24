@@ -680,13 +680,13 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     if (ORTE_SUCCESS != (rc = opal_dss.load(&buf, bo->bytes, bo->size))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
     
-    /* cycle through the buffer */
-    jobs = (orte_jmap_t**)jobmap->addr;
     n = 1;
+    /* cycle through the buffer */
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &jobid, &n, ORTE_JOBID))) {
+        jobs = (orte_jmap_t**)jobmap->addr;
         /* is this job already in the map? */
         already_present = false;
         for (j=0; j < jobmap->size && NULL != jobs[j]; j++) {
@@ -700,7 +700,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
         n=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &num_procs, &n, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto cleanup;
         }
         
         /* allocate memory for the node info */
@@ -709,7 +709,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
         n=num_procs;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, nodes, &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto cleanup;
         }
         
         /* allocate memory for local ranks */
@@ -718,7 +718,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
         n=num_procs;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, local_rank, &n, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto cleanup;
         }
         
         /* allocate memory for node ranks */
@@ -727,7 +727,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
         n=num_procs;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, node_rank, &n, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto cleanup;
         }
         
         /* if we don't already have this data, store it */
@@ -736,16 +736,26 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
             jmap = OBJ_NEW(orte_jmap_t);
             jmap->job = jobid;
             jmap->num_procs = num_procs;
-            opal_pointer_array_add(jobmap, jmap);
+            if (0 > (j = opal_pointer_array_add(jobmap, jmap))) {
+                ORTE_ERROR_LOG(j);
+                rc = j;
+                goto cleanup;
+            }
             /* allocate memory for the procs array */
             procs = &jmap->pmap;
-            opal_value_array_set_size(procs, num_procs);
+            if (ORTE_SUCCESS != (rc = opal_value_array_set_size(procs, num_procs))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
             /* xfer the data */
             for (i=0; i < num_procs; i++) {
                 pmap.node = nodes[i];
                 pmap.local_rank = local_rank[i];
                 pmap.node_rank = node_rank[i];
-                opal_value_array_set_item(procs, i, &pmap);
+                if (ORTE_SUCCESS != (rc = opal_value_array_set_item(procs, i, &pmap))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
             }
         }
         
@@ -753,9 +763,15 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, opal_pointer_array_t *jobmap
         free(nodes);
         free(local_rank);
         free(node_rank);
+        /* setup for next cycle */
+        n = 1;
+    }
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+        rc = ORTE_SUCCESS;
     }
     
+cleanup:
     OBJ_DESTRUCT(&buf);
-    return ORTE_SUCCESS;
+    return rc;
 }
 
