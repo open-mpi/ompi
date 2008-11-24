@@ -116,8 +116,18 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
              */
             hnp_node->slots_alloc = node->slots;
             /* use the local name for our node - don't trust what
-             * we got from an RM
+             * we got from an RM. If requested, display the resolved
+             * nodename info
              */
+            if (orte_show_resolved_nodenames &&
+                0 != strcmp(node->name, hnp_node->name)) {
+                if (orte_xml_output) {
+                    opal_output(0, "<noderesolve name=\"%s\" resolved=\"%s\">", node->name, hnp_node->name);
+                } else {
+                    opal_output(0, "node name %s resolved to %s", node->name, hnp_node->name);
+                }
+            }
+            
             /* update the total slots in the job */
             jdata->total_slots_alloc += hnp_node->slots;
             /* don't keep duplicate copy */

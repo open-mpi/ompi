@@ -32,6 +32,15 @@
 
 #include "dash_host.h"
 
+static void show_resolved_hostname(char *name, char *resolved)
+{
+    if (orte_xml_output) {
+        opal_output(0, "<noderesolve name=\"%s\" resolved=\"%s\">", name, resolved);
+    } else {
+        opal_output(0, "node name %s resolved to %s", name, resolved);
+    }
+}
+
 /* we can only enter this routine if no other allocation
  * was found, so we only need to know that finding any
  * relative node syntax should generate an immediate error
@@ -110,6 +119,10 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 /* it is local, so use the local nodename to avoid
                  * later confusion
                  */
+                if (orte_show_resolved_nodenames &&
+                    0 != strcmp(mapped_nodes[i], orte_process_info.nodename)) {
+                    show_resolved_hostname(mapped_nodes[i], orte_process_info.nodename);
+                }
                 node->name = strdup(orte_process_info.nodename);
             } else {
                 /* not local - use the given name */

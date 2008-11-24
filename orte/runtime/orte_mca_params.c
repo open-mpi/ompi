@@ -181,6 +181,11 @@ int orte_register_params(void)
                                 false, false, (int) false, &value);
     orte_xml_output = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("orte", "show_resolved_nodenames",
+                                "Display any node names that are resolved to a different name (default: false)",
+                                false, false, (int) false, &value);
+    orte_show_resolved_nodenames = OPAL_INT_TO_BOOL(value);
+    
     mca_base_param_reg_int_name("orte", "hetero_apps",
                                 "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries (default: false)",
                                 false, false, (int) false, &value);
