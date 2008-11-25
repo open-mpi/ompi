@@ -1092,6 +1092,12 @@ CFLAGS="$CFLAGS_save"
 
 ompi_show_subtitle "Libtool configuration"
 
+# Use the undocumented solaris_use_stlport4 libtool variable to turn off any
+# Cstd/stlport4 linkage. This allows Open MPI to be C++ STL agnostic.
+if test "x$ompi_cv_c_compiler_vendor" = "xsun"; then
+    solaris_use_stlport4="yes"
+fi
+
 dnl Not all versions of LT set the PACKAGE_VERSION
 m4_ifdef([LT_PACKAGE_VERSION], [], [m4_define([LT_PACKAGE_VERSION], [1.5.22])])
 

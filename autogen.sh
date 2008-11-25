@@ -541,6 +541,12 @@ EOF
             aclocal.m4 > aclocal.m4.new
         cp aclocal.m4.new aclocal.m4
         rm -f aclocal.m4.new
+
+        # This patch fixes a bug in Libtool's detection of the Sun Studio
+        # Fortran compiler. See the below e-mail thread for more details:
+        #   http://www.open-mpi.org/community/lists/devel/2008/11/4920.php
+        echo "   ++ patching for Sun Studio Fortran compilers"
+        patch -N -p0 < config/lt-sun-fortran.diff > /dev/null 2>&1
     fi
 
     run_and_check $ompi_autoconf
