@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -155,8 +155,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         /* Now that we know the datatype is contiguous, we should move the 2 pointers
          * source and destination to the correct displacement.
          */
-        destination += datatype->lb;
-        source      += datatype->lb;
+        destination += datatype->true_lb;
+        source      += datatype->true_lb;
         if( (ptrdiff_t)datatype->size == extent ) {  /* all contiguous == no gaps around */
             size_t total_length = iov_len_local;
             size_t memcpy_chunk = ompi_datatype_memcpy_block_size;
