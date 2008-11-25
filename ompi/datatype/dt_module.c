@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -870,8 +870,10 @@ int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int len
 
 static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
 {
-    if( length < 21 ) return 0;
-    snprintf( ptr, 21, "-----------[---][---]" );  /* set everything to - */
+    int index = 0;
+
+    if( length < 22 ) return 0;
+    index = snprintf( ptr, 22, "-----------[---][---]" );  /* set everything to - */
     if( usflags & DT_FLAG_DESTROYED )                ptr[0]  = 'd';
     if( usflags & DT_FLAG_COMMITED )                 ptr[1]  = 'c';
     if( usflags & DT_FLAG_CONTIGUOUS )               ptr[2]  = 'C';
@@ -907,7 +909,7 @@ static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
             ptr[17] = 'E'; ptr[18] = 'R'; ptr[19] = 'R'; break;
         }
     }
-    return 21;
+    return index;
 }
 
 static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size_t length )
