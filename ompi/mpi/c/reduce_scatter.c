@@ -41,9 +41,30 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
     int i, err, size, count;
 
     MEMCHECKER(
-        memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
+        int rank;
+        
+        size = ompi_comm_size(comm);
+        rank = ompi_comm_rank(comm);
+        for (count = i = 0; i < size; ++i) {
+            if (0 == recvcounts[i]) {
+                ++count;
+            }
+        }
+
         memchecker_comm(comm);
+        memchecker_datatype(datatype);
+        
+        /* check receive buffer of current proccess, whether it's addressable. */
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf,
+                        recvcounts[rank], datatype);
+        
+        /* check whether the actual send buffer is defined. */
+        if(MPI_IN_PLACE == sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
+        } else {
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
+          
+        }
     );
 
     if (MPI_PARAM_CHECK) {

@@ -120,11 +120,11 @@ OPAL_DECLSPEC int opal_memchecker_base_runindebugger(void);
  * @retval OPAL_SUCCESS upon success.
  *
  * This function calls the selected memchecker, whether
- *  every Byte of this memory region is addressible
+ *  every Byte of this memory region is addressable
  */
-OPAL_DECLSPEC int opal_memchecker_base_isaddressible(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_isaddressable(void * p, size_t len);
 #if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_isaddressible(p, len) 0
+#define opal_memchecker_base_isaddressable(p, len) 0
 #endif
 
 
@@ -193,7 +193,7 @@ OPAL_DECLSPEC int opal_memchecker_base_mem_defined(void * p, size_t len);
 #endif
 
 /**
- * Set a memory region to defined only if the region is addressible
+ * Set a memory region to defined only if the region is addressable
  *
  * @param p Pointer to the memory region
  * @param len Length of the memory region
@@ -202,11 +202,11 @@ OPAL_DECLSPEC int opal_memchecker_base_mem_defined(void * p, size_t len);
  *
  * This function calls the selected memchecker, to set
  * every Byte of this memory region to contain valid, initialized data,
- *  but only, if the memory region is addressible.
+ *  but only, if the memory region is addressable.
  */
-OPAL_DECLSPEC int opal_memchecker_base_mem_defined_if_addressible(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_mem_defined_if_addressable(void * p, size_t len);
 #if OMPI_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_mem_defined_if_addressible(p, len)
+#define opal_memchecker_base_mem_defined_if_addressable(p, len)
 #endif
 
 /**

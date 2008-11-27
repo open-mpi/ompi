@@ -42,8 +42,12 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
 
     MEMCHECKER(
         memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
         memchecker_comm(comm);
+        if (MPI_IN_PLACE != sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
+        } else {
+            memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
+        }
     );
 
     if (MPI_PARAM_CHECK) {

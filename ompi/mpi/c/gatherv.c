@@ -39,11 +39,36 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 MPI_Datatype recvtype, int root, MPI_Comm comm) 
 {
     int i, size, err;
+
     MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+        int rank;
+        ptrdiff_t ext;
+
+        size = ompi_comm_size(comm);
+        rank = ompi_comm_rank(comm);
+        ompi_ddt_type_extent(recvtype, &ext);
+
         memchecker_comm(comm);
+        if (ompi_comm_rank(comm) == root || MPI_ROOT == root) {
+            memchecker_datatype(recvtype);
+            /* check whether each receive buffer is addressable/defined(MPI_IN_PLACE). */
+            if(MPI_IN_PLACE == sendbuf) {
+                memchecker_call(&opal_memchecker_base_isdefined,
+                                recvbuf+displs[rank]*ext,
+                                recvcounts[rank], recvtype );
+            }
+            for (i = 0; i < size; i++) {
+                memchecker_call(&opal_memchecker_base_isaddressable,
+                                recvbuf+displs[i]*ext,
+                                recvcounts[i], recvtype);
+            }
+        }
+
+        /* check whether send buffer is defined on all processses. */
+        if (MPI_PROC_NULL != root && MPI_IN_PLACE != sendbuf ) {
+            memchecker_datatype(sendtype);
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+        }
     );
 
     if (MPI_PARAM_CHECK) {

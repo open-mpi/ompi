@@ -44,10 +44,17 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int err;
 
     MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         memchecker_comm(comm);
+        if (ompi_comm_rank(comm) == root || MPI_ROOT == root) {
+            memchecker_datatype(sendtype);
+            /* check whether root's send buffer is defined. */
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+        }
+        /* check whether the receive buffer is addressable. */
+        if (MPI_PROC_NULL != root && MPI_IN_PLACE != recvbuf) {
+            memchecker_datatype(recvtype);
+            memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+        }
     );
 
     if (MPI_PARAM_CHECK) {

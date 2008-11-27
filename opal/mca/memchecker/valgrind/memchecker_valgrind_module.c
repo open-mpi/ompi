@@ -34,12 +34,12 @@
  */
 static int valgrind_module_init(void);
 static int valgrind_module_runindebugger(void);
-static int valgrind_module_isaddressible(void * p, size_t len);
+static int valgrind_module_isaddressable(void * p, size_t len);
 static int valgrind_module_isdefined(void * p, size_t len);
 static int valgrind_module_mem_noaccess(void * p, size_t len);
 static int valgrind_module_mem_undefined(void * p, size_t len);
 static int valgrind_module_mem_defined(void * p, size_t len);
-static int valgrind_module_mem_defined_if_addressible(void * p, size_t len);
+static int valgrind_module_mem_defined_if_addressable(void * p, size_t len);
 static int valgrind_module_create_block(void * p, size_t len, char * description);
 static int valgrind_module_discard_block(void * p); /* Here, we need to do some mapping for valgrind */
 static int valgrind_module_leakcheck(void);
@@ -57,12 +57,12 @@ static const opal_memchecker_base_module_1_0_0_t loc_module = {
 
     /* Module function pointers */
     valgrind_module_runindebugger,
-    valgrind_module_isaddressible,
+    valgrind_module_isaddressable,
     valgrind_module_isdefined,
     valgrind_module_mem_noaccess,
     valgrind_module_mem_undefined,
     valgrind_module_mem_defined,
-    valgrind_module_mem_defined_if_addressible,
+    valgrind_module_mem_defined_if_addressable,
     valgrind_module_create_block,
     valgrind_module_discard_block,
     valgrind_module_leakcheck
@@ -96,7 +96,7 @@ static int valgrind_module_runindebugger(void)
 }
 
 
-static int valgrind_module_isaddressible(void * p, size_t len)
+static int valgrind_module_isaddressable(void * p, size_t len)
 {
     if (len > 0) {
         VALGRIND_CHECK_MEM_IS_ADDRESSABLE(p, len);
@@ -146,7 +146,7 @@ static int valgrind_module_mem_defined(void * p, size_t len)
 }
 
 
-static int valgrind_module_mem_defined_if_addressible(void * p, size_t len)
+static int valgrind_module_mem_defined_if_addressable(void * p, size_t len)
 {
     if (len > 0) {
         VALGRIND_MAKE_MEM_DEFINED_IF_ADDRESSABLE(p, len);

@@ -41,10 +41,26 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
     int i, size, err;
 
     MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, *sendcounts, sendtype);
+        ptrdiff_t ext;
+
+        size = ompi_comm_size(comm);
+        ompi_ddt_type_extent(recvtype, &ext);
+
         memchecker_comm(comm);
+        if (ompi_comm_rank(comm) == root || MPI_ROOT == root) {
+            memchecker_datatype(sendtype);
+            /* check each send buffer, whether they are defined. */
+            for (i = 0; i < size; i++) {
+                memchecker_call(&opal_memchecker_base_isdefined,
+                                sendbuf+displs[i]*ext,
+                                sendcounts[i], sendtype);
+            }
+        }
+        /* check whether the receive buffer is addressable */
+        if (MPI_PROC_NULL != root && MPI_IN_PLACE != recvbuf) {
+            memchecker_datatype(recvtype);
+            memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+        }
     );
 
     if (MPI_PARAM_CHECK) {
