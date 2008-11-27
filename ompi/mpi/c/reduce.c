@@ -42,8 +42,21 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
 
     MEMCHECKER(
         memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
         memchecker_comm(comm);
+        
+        /* check whether root's receive buffer is addressable. */
+        if( ompi_comm_rank(comm) == root || MPI_ROOT == root ) {
+            if (MPI_IN_PLACE == sendbuf) {
+                memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
+            } else {
+                memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, count, datatype);
+            }
+        }
+        
+        /* check whether send buffer is defined on all processes. */
+        if (MPI_PROC_NULL != root && MPI_IN_PLACE != sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
+        }
     );
 
     if (MPI_PARAM_CHECK) {

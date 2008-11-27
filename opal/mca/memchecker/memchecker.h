@@ -51,9 +51,9 @@ typedef int (*opal_memchecker_base_module_init_1_0_0_fn_t)(void);
 typedef int (*opal_memchecker_base_module_runindebugger_fn_t)(void);
 
 /**
- * Module function to check, whether memory region is addressible
+ * Module function to check, whether memory region is addressable
  */
-typedef int (*opal_memchecker_base_module_isaddressible_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_isaddressable_fn_t)(void * p, size_t len);
 
 /**
  * Module function to check, whether memory region is defined
@@ -76,9 +76,9 @@ typedef int (*opal_memchecker_base_module_mem_undefined_fn_t)(void * p, size_t l
 typedef int (*opal_memchecker_base_module_mem_defined_fn_t)(void * p, size_t len);
 
 /**
- * Module function to set memory region to defined, but only if addressible
+ * Module function to set memory region to defined, but only if addressable
  */
-typedef int (*opal_memchecker_base_module_mem_defined_if_addressible_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_mem_defined_if_addressable_fn_t)(void * p, size_t len);
 
 /**
  * Module function name a specific memory region
@@ -133,8 +133,8 @@ struct opal_memchecker_base_module_1_0_0_t {
     /** Module function to check, whether we are executed by memory debugger */
     opal_memchecker_base_module_runindebugger_fn_t runindebugger;
 
-    /** Module function to check, whether memory region is addressible */
-    opal_memchecker_base_module_isaddressible_fn_t isaddressible;
+    /** Module function to check, whether memory region is addressable */
+    opal_memchecker_base_module_isaddressable_fn_t isaddressable;
 
     /** Module function to check, whether memory region is defined */
     opal_memchecker_base_module_isdefined_fn_t isdefined;
@@ -148,8 +148,8 @@ struct opal_memchecker_base_module_1_0_0_t {
     /** Module function to set memory region to defined */
     opal_memchecker_base_module_mem_defined_fn_t mem_defined;
 
-    /** Module function to set memory region to defined, but only if addressible */
-    opal_memchecker_base_module_mem_defined_if_addressible_fn_t mem_defined_if_addressible;
+    /** Module function to set memory region to defined, but only if addressable */
+    opal_memchecker_base_module_mem_defined_if_addressable_fn_t mem_defined_if_addressable;
 
     /** Module function name a specific memory region */
     opal_memchecker_base_module_create_block_fn_t create_block;

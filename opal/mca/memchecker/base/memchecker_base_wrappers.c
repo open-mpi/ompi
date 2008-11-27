@@ -23,9 +23,9 @@ int opal_memchecker_base_runindebugger(void)
     return opal_memchecker_base_module->runindebugger();
 }
 
-int opal_memchecker_base_isaddressible(void * p, size_t len)
+int opal_memchecker_base_isaddressable(void * p, size_t len)
 {
-    return opal_memchecker_base_module->isaddressible(p, len);
+    return opal_memchecker_base_module->isaddressable(p, len);
 }
 
 
@@ -53,9 +53,9 @@ int opal_memchecker_base_mem_defined(void * p, size_t len)
 }
 
 
-int opal_memchecker_base_mem_defined_if_addressible(void * p, size_t len)
+int opal_memchecker_base_mem_defined_if_addressable(void * p, size_t len)
 {
-    return opal_memchecker_base_module->mem_defined_if_addressible(p, len);
+    return opal_memchecker_base_module->mem_defined_if_addressable(p, len);
 }
 
 

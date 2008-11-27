@@ -43,12 +43,27 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
     int i, size, err;   
     
     MEMCHECKER(
-        size = ompi_comm_remote_size(comm);
+        ptrdiff_t recv_ext;
+        ptrdiff_t send_ext;
+
+        size = ompi_comm_size(comm);
+
+        memchecker_comm(comm);
         for ( i = 0; i < size; i++ ) {
             memchecker_datatype(sendtypes[i]);
             memchecker_datatype(recvtypes[i]);
-            memchecker_call(&opal_memchecker_base_isdefined, (char*)sendbuf+sdispls[i], sendcounts[i], sendtypes[i]);
-            memchecker_comm(comm);
+            
+            ompi_ddt_type_extent(sendtypes[i], &send_ext);
+            ompi_ddt_type_extent(recvtypes[i], &recv_ext);
+
+            memchecker_call(&opal_memchecker_base_isdefined,
+                            sendbuf+sdispls[i]*send_ext,
+                            sendcounts[i],
+                            sendtypes[i]);
+            memchecker_call(&opal_memchecker_base_isaddressable,
+                            recvbuf+sdispls[i]*recv_ext,
+                            recvcounts[i],
+                            recvtypes[i]);
         }
     );
 

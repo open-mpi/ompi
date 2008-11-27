@@ -43,14 +43,26 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
     int i, size, err;
 
     MEMCHECKER(
-        size = ompi_comm_remote_size(comm);
-        
+        ptrdiff_t recv_ext;
+        ptrdiff_t send_ext;
+
+        size = ompi_comm_size(comm);
+        ompi_ddt_type_extent(recvtype, &recv_ext);
+        ompi_ddt_type_extent(sendtype, &send_ext);
+
         memchecker_datatype(sendtype);
         memchecker_datatype(recvtype);
-        
+        memchecker_comm(comm);
+
         for ( i = 0; i < size; i++ ) {
-            memchecker_call(&opal_memchecker_base_isdefined, (char*)sendbuf+sdispls[i], sendcounts[i], sendtype);
-            memchecker_comm(comm);
+            /* check if send chunks are defined. */
+            memchecker_call(&opal_memchecker_base_isdefined,
+                            sendbuf+sdispls[i]*send_ext,
+                            sendcounts[i], sendtype);
+            /* check if receive chunks are addressable. */
+            memchecker_call(&opal_memchecker_base_isaddressable,
+                            recvbuf+rdispls[i]*recv_ext,
+                            recvcounts[i], recvtype);
         }
     );
 

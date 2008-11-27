@@ -41,7 +41,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
 
     MEMCHECKER(
         memchecker_datatype(type);
-        memchecker_call(&opal_memchecker_base_isaddressible, buf, count, type);
+        memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
         memchecker_comm(comm);
     );
 

@@ -42,10 +42,22 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int err;
 
     MEMCHECKER(
-        memchecker_datatype(sendtype);
+        int rank;
+        ptrdiff_t ext;
+        rank = ompi_comm_rank(comm);
+        ompi_ddt_type_extent(recvtype, &ext);
+
         memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         memchecker_comm(comm);
+        /* check whether the actual send buffer is defined. */
+        if (MPI_IN_PLACE == sendbuf) {
+            memchecker_call(&opal_memchecker_base_isdefined, recvbuf+rank*ext, recvcount, recvtype);
+        } else {
+            memchecker_datatype(sendtype);
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+        }
+        /* check whether the receive buffer is addressable. */
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
     );
 
     if (MPI_PARAM_CHECK) {
