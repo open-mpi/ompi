@@ -2222,10 +2222,15 @@ btl_openib_component_init(int *num_btl_modules,
     if (list_count > 1) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "specified include and exclude", true,
-                       mca_btl_openib_component.if_include,
-                       mca_btl_openib_component.if_exclude,
-                       mca_btl_openib_component.ipaddr_include,
-                       mca_btl_openib_component.ipaddr_exclude, NULL);
+                       NULL == mca_btl_openib_component.if_include ?
+                        "<not specified>" : mca_btl_openib_component.if_include,
+                       NULL == mca_btl_openib_component.if_exclude ?
+                        "<not specified>" : mca_btl_openib_component.if_exclude,
+                       NULL == mca_btl_openib_component.ipaddr_include ?
+                        "<not specified>" :mca_btl_openib_component.ipaddr_include,
+                       NULL == mca_btl_openib_component.ipaddr_exclude ?
+                         "<not specified>" :mca_btl_openib_component.ipaddr_exclude,
+                       NULL);
         goto no_btls;
     } else if (NULL != mca_btl_openib_component.if_include) {
         mca_btl_openib_component.if_include_list =
