@@ -428,11 +428,19 @@ AC_ARG_WITH(f90-max-array-dim,
     AC_HELP_STRING([--with-f90-max-array-dim=<DIM>],
                    [The maximum array dimension supported in the F90 MPI bindings (default: $OMPI_FORTRAN_MAX_ARRAY_RANK).]))
 if test ! -z "$with_f90_max_array_dim" -a "$with_f90_max_array_dim" != "no"; then
-    # Ensure it's a number; hopefully a integer...
+    # Ensure it's a number (hopefully an integer!), and >=1 and <=7
     expr $with_f90_max_array_dim + 1 > /dev/null 2> /dev/null
-    if test "$?" = "0"; then
-        OMPI_FORTRAN_MAX_ARRAY_RANK="$with_f90_max_array_dim"
-    fi
+    happy=1
+    AS_IF([test "$?" != "0"], [happy=0],
+          [expr $with_f90_max_array_dim \>= 1 \& $with_f90_max_array_dim \<= 7 > /dev/null 2>/dev/null
+           AS_IF([test "$?" != "0"], [happy=0])])
+
+    # If badness in the above tests, bail
+    AS_IF([test "$happy" = "0"],
+          [AC_MSG_RESULT([bad value ($with_f90_max_array_dim)])
+           AC_MSG_WARN([--with-f90-max-array-dim value must be >=1 and <=7])
+           AC_MSG_ERROR([Cannot continue])])
+    OMPI_FORTRAN_MAX_ARRAY_RANK="$with_f90_max_array_dim"
 fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
 AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
