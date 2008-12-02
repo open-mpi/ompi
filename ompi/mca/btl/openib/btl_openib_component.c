@@ -2029,6 +2029,7 @@ btl_openib_component_init(int *num_btl_modules,
     int index, value;
     bool found;
     mca_base_param_source_t source;
+    int list_count = 0;
 
     /* initialization */
     *num_btl_modules = 0;
@@ -2208,12 +2209,23 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_component.if_include_list =
         mca_btl_openib_component.if_exclude_list =
         mca_btl_openib_component.if_list = NULL;
-    if (NULL != mca_btl_openib_component.if_include &&
-        NULL != mca_btl_openib_component.if_exclude) {
+
+    if (NULL != mca_btl_openib_component.if_include)
+      list_count++;
+    if (NULL != mca_btl_openib_component.if_exclude)
+      list_count++;
+    if (NULL != mca_btl_openib_component.ipaddr_include)
+      list_count++;
+    if (NULL != mca_btl_openib_component.ipaddr_exclude)
+      list_count++;
+
+    if (list_count > 1) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "specified include and exclude", true,
                        mca_btl_openib_component.if_include,
-                       mca_btl_openib_component.if_exclude, NULL);
+                       mca_btl_openib_component.if_exclude,
+                       mca_btl_openib_component.ipaddr_include,
+                       mca_btl_openib_component.ipaddr_exclude, NULL);
         goto no_btls;
     } else if (NULL != mca_btl_openib_component.if_include) {
         mca_btl_openib_component.if_include_list =
