@@ -512,14 +512,9 @@ static int rte_ft_event(int state)
          * Clear nidmap and jmap
          */
         nids = (orte_nid_t**)nidmap.addr;
-        for (i=0; i < nidmap.size; i++) {
-            if (NULL == nids[i]) {
-                break;
-            }
-            if (NULL != nids[i]->name) {
-                free(nids[i]->name);
-                nids[i]->name = NULL;
-            }
+        for (i=0; i < nidmap.size && NULL != nids[i]; i++) {
+            OBJ_RELEASE(nids[i]);
+            nids[i] = NULL;
         }
         OBJ_DESTRUCT(&nidmap);
 
@@ -646,13 +641,10 @@ static int rte_ft_event(int state)
 
         OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
         opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
-        jmap = OBJ_NEW(orte_jmap_t);
-        jmap->job = ORTE_PROC_MY_NAME->jobid;
-        opal_pointer_array_add(&jobmap, jmap);
 
         /* if one was provided, build my nidmap */
         if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                              &nidmap, jmap))) {
+                                                              &nidmap, &jobmap))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
