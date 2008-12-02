@@ -40,7 +40,7 @@ AC_DEFUN([OMPI_CHECK_TM_LIBS_FLAGS],[
 # --------------------------------------------------------
 AC_DEFUN([OMPI_CHECK_TM],[
     AC_ARG_WITH([tm],
-                [AC_HELP_STRING([--with-tm],
+                [AC_HELP_STRING([--with-tm(=DIR)],
                                 [Directory where the tm software is installed])])
 
     ompi_check_tm_found=no

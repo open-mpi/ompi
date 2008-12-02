@@ -23,7 +23,7 @@
 # --------------------------------------------------------
 AC_DEFUN([OMPI_CHECK_LOADLEVELER],[
     AC_ARG_WITH([loadleveler],
-                [AC_HELP_STRING([--with-loadleveler],
+                [AC_HELP_STRING([--with-loadleveler(=DIR)],
                                 [Directory where the loadleveler software is installed])])
 
     AS_IF([test "$with_loadleveler" = "no"],
