@@ -167,7 +167,6 @@ General notes
   reasons, mainly because it is part of our acronyms and internal API
   functionc calls.
 
-***** NEEDS UPDATE
 - The run-time systems that are currently supported are:
   - rsh / ssh
   - LoadLeveler
@@ -177,9 +176,8 @@ General notes
   - XGrid
   - Cray XT-3 and XT-4
   - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
-  - Windows CCP (Windows server 2003 and 2008)
+  - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
 
-***** NEEDS UPDATE
 - Systems that have been tested are:
   - Linux (various flavors/distros), 32 bit, with gcc, and Sun Studio 12
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
@@ -191,9 +189,11 @@ General notes
 
   (*) Be sure to read the Compiler Notes, below.
 
-***** NEEDS UPDATE
 - Other systems have been lightly (but not fully tested):
   - Other 64 bit platforms (e.g., Linux on PPC64)
+  - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008);
+    more testing and support is expected later in the Open MPI v1.3.x
+    series.
 
 Compiler Notes
 --------------
