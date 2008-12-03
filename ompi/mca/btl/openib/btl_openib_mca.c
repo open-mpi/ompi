@@ -564,6 +564,16 @@ int btl_openib_register_mca_params(void)
                      NULL, &mca_btl_openib_component.if_exclude,
                      0));
 
+    CHECK(reg_string("ipaddr_include", NULL,
+                     "Comma-delimited list of IP Addresses to be used (e.g. \"192.168.1.0/24\").  Mutually exclusive with btl_openib_ipaddr_exclude.",
+                     NULL, &mca_btl_openib_component.ipaddr_include,
+                     0));
+
+    CHECK(reg_string("ipaddr_exclude", NULL,
+                     "Comma-delimited list of IP Addresses to be excluded (e.g. \"192.168.1.0/24\").  Mutually exclusive with btl_openib_ipaddr_include.",
+                     NULL, &mca_btl_openib_component.ipaddr_exclude,
+                     0));
+
     /* Register any MCA params for the connect pseudo-components */
     if (OMPI_SUCCESS == ret) {
         ret = ompi_btl_openib_connect_base_register();

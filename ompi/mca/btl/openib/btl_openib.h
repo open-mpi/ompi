@@ -211,6 +211,8 @@ struct mca_btl_openib_component_t {
     char **if_include_list;
     char *if_exclude;
     char **if_exclude_list;
+    char *ipaddr_include;
+    char *ipaddr_exclude;
 
     /* MCA param btl_openib_receive_queues */
     char *receive_queues;

@@ -300,14 +300,17 @@ recompiling Open MPI against your OpenFabrics library installation to
 get more information.
 #
 [specified include and exclude]
-ERROR: You have specified both the btl_openib_if_include and
-btl_openib_if_exclude MCA parameters.  These two parameters are
-mutually exclusive; you can only specify one or the other.  
+ERROR: You have specified more than one of the btl_openib_if_include,
+btl_openib_if_exclude, btl_openib_ipaddr_include, or btl_openib_ipaddr_exclude
+MCA parameters.  These four parameters are mutually exclusive; you can only
+specify one.
 
 For reference, the values that you specified are:
 
   btl_openib_if_include: %s
   btl_openib_if_exclude: %s
+  btl_openib_ipaddr_include: %s
+  btl_openib_ipaddr_exclude: %s
 #
 [nonexistent port]
 WARNING: One or more nonexistent OpenFabrics devices/ports were

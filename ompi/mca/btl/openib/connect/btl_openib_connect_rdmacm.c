@@ -1601,7 +1601,14 @@ static int ipaddrcheck(id_context_t *context,
     int server_tcp_port = rdma_get_src_port(context->id);
     char *str;
 
-    /* Look up the IP address of this device/port */
+    /* Look up the IP address of this device/port.  This call should not be
+     * necessary, as rdma_get_local_addr would be more correct in returning the
+     * IP address given the cm_id (and not necessitate having to do a list look
+     * up).  Unfortunately, the subnet and IP address look up needs to match or
+     * there could be a mismatch if IP Aliases are being used.  For more
+     * information on this, please read comment above
+     * mca_btl_openib_get_iwarp_subnet_id in btl_openib_iwarp.c 
+     */
     ipaddr = 
         mca_btl_openib_rdma_get_ipv4addr(openib_btl->device->ib_dev_context, 
                                          openib_btl->port_num);

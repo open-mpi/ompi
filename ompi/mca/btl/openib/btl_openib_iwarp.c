@@ -68,6 +68,18 @@ static char *stringify(uint32_t addr)
 }
 #endif
 
+/* Note that each device port can have multiple IP addresses associated with it 
+ * (aka IP aliasing).  However, the openib module only knows about (device,port)
+ * tuples -- not IP addresses (only the RDMA CM CPC knows which IP addresses are
+ * associated with each (device,port) tuple).  Thus, any searching of device
+ * list for the IP Address or subnets may not work as one might expect.  The
+ * current behavior is to return the IP address (or subnet) of the *first*
+ * instance of the device on the list.  This behavior is uniform for subnet and
+ * IP addresses and thus should not cause any mismatches.  If this behavior is
+ * not preferred by the user, the MCA parameters to include/exclude specific IP
+ * addresses can be used to precisely specify which addresses are used (e.g., to
+ * effect specific subnet routing).
+ */
 uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
 {
     opal_list_item_t *item;
@@ -93,6 +105,13 @@ uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
     return 0;
 }
 
+/* This function should not be necessary, as rdma_get_local_addr would be more
+ * correct in returning the IP address given the cm_id (and not necessitate
+ * having to do a list look up).  Unfortunately, the subnet and IP address look
+ * up needs to match or there could be a mismatch if IP Aliases are being used.
+ * For more information on this, please read comment above
+ * mca_btl_openib_get_iwarp_subnet_id.
+ */
 uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
                                           uint8_t port)
 {
@@ -155,6 +174,53 @@ static int dev_specified(char *name, int port)
     return 0;
 }
 
+static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
+{
+    if (NULL != mca_btl_openib_component.ipaddr_include) {
+        char **list;
+        int i;
+
+        list = opal_argv_split(mca_btl_openib_component.ipaddr_include, ',');
+        for (i = 0; NULL != list[i]; i++) {
+            uint32_t subnet, list_subnet;
+            struct in_addr ipae;
+            char **temp = opal_argv_split(list[i], '/');
+
+            inet_pton(ipaddr->sin_family, temp[0], &ipae);
+            list_subnet = ipae.s_addr & ~(~0 << atoi(temp[1]));
+            subnet = ipaddr->sin_addr.s_addr & ~(~0 << netmask);
+
+            if (subnet == list_subnet) { 
+                return 0;
+            }
+        }
+
+        return 1;
+    }
+
+    if (NULL != mca_btl_openib_component.ipaddr_exclude) {
+        char **list;
+        int i;
+
+        list = opal_argv_split(mca_btl_openib_component.ipaddr_exclude, ',');
+        for (i = 0; NULL != list[i]; i++) {
+            uint32_t subnet, list_subnet;
+            struct in_addr ipae;
+            char **temp = opal_argv_split(list[i], '/');
+
+            inet_pton(ipaddr->sin_family, temp[0], &ipae);
+            list_subnet = ipae.s_addr & ~(~0 << atoi(temp[1]));
+            subnet = ipaddr->sin_addr.s_addr & ~(~0 << netmask);
+
+            if (subnet == list_subnet) { 
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
 {
     struct sockaddr_in *sinp;
@@ -177,15 +243,25 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
         goto out2;
     }
 
+    /* Bind the newly created cm_id to the IP address.  This will, amongst other
+       things, verify that the device is iWARP capable */
     rc = rdma_bind_addr(cm_id, ipaddr);
+    if (rc || !cm_id->verbs) {
+        rc = OMPI_SUCCESS;
+        goto out3;
+    }
+
+    /* Verify that the device has not been excluded */
+    rc = dev_specified(cm_id->verbs->device->name, cm_id->port_num);
     if (rc) {
         rc = OMPI_SUCCESS;
         goto out3;
     }
 
-    if (!cm_id->verbs ||
-        0 == ((struct sockaddr_in *)ipaddr)->sin_addr.s_addr ||
-        dev_specified(cm_id->verbs->device->name, cm_id->port_num)) {
+    /* Verify that the device has a valid IP address */
+    if (0 == ((struct sockaddr_in *)ipaddr)->sin_addr.s_addr ||
+	ipaddr_specified((struct sockaddr_in *)ipaddr, netmask)) {
+        rc = OMPI_SUCCESS;
         goto out3;
     }
 
@@ -198,13 +274,13 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
 
     sinp = (struct sockaddr_in *)ipaddr;
     myaddr->addr = sinp->sin_addr.s_addr;
-    myaddr->subnet = myaddr->addr & netmask;
+    myaddr->subnet = myaddr->addr & ~(~0 << netmask);
     inet_ntop(sinp->sin_family, &sinp->sin_addr, 
               myaddr->addr_str, sizeof(myaddr->addr_str));
     memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);
     myaddr->dev_port = cm_id->port_num;
-    BTL_VERBOSE(("Adding addr %s (0x%x) as %s:%d", 
-                 myaddr->addr_str, myaddr->addr,
+    BTL_VERBOSE(("Adding addr %s (0x%x) subnet 0x%x as %s:%d", 
+                 myaddr->addr_str, myaddr->addr, myaddr->subnet,
                  myaddr->dev_name, myaddr->dev_port));
 
     opal_list_append(myaddrs, &(myaddr->super));
