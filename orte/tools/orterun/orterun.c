@@ -1090,7 +1090,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
        (which is a Bad Thing), so we can't call it directly.
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
-    ORTE_TIMER_EVENT(0, abort_exit_callback);
+    ORTE_TIMER_EVENT(0, 0, abort_exit_callback);
 }
 
 /**
