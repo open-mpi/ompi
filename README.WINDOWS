@@ -98,8 +98,11 @@ as well as for the ml (assembler compiler) and the link utilities.
 But the current version require some GNU tools as well.  Here is the
 list of such tools:
 
-1. Download any Unix for Windows environment. I have successfully used
-   cygwin and minGW.
+1. Download any Unix for Windows environment. Tested environments include
+    - cygwin http://www.cygwin.com/
+    - minGW  http://www.mingw.org/
+    - Windows Services for Unix (SFU)
+             http://technet.microsoft.com/en-us/interopmigration/bb380242.aspx
 
 2. Make the default shell ash.exe (install it if it's not installed by
    default) as it will highly decrease the configuration and
