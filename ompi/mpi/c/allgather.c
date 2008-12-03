@@ -44,6 +44,7 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     MEMCHECKER(
         int rank;
         ptrdiff_t ext;
+
         rank = ompi_comm_rank(comm);
         ompi_ddt_type_extent(recvtype, &ext);
 
@@ -51,7 +52,9 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         memchecker_comm(comm);
         /* check whether the actual send buffer is defined. */
         if (MPI_IN_PLACE == sendbuf) {
-            memchecker_call(&opal_memchecker_base_isdefined, recvbuf+rank*ext, recvcount, recvtype);
+            memchecker_call(&opal_memchecker_base_isdefined, 
+                            (char *)(recvbuf)+rank*ext, 
+                            recvcount, recvtype);
         } else {
             memchecker_datatype(sendtype);
             memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);

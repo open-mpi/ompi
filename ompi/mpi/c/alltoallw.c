@@ -57,13 +57,11 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
             ompi_ddt_type_extent(recvtypes[i], &recv_ext);
 
             memchecker_call(&opal_memchecker_base_isdefined,
-                            sendbuf+sdispls[i]*send_ext,
-                            sendcounts[i],
-                            sendtypes[i]);
+                            (char *)(sendbuf)+sdispls[i]*send_ext,
+                            sendcounts[i], sendtypes[i]);
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            recvbuf+sdispls[i]*recv_ext,
-                            recvcounts[i],
-                            recvtypes[i]);
+                            (char *)(recvbuf)+sdispls[i]*recv_ext,
+                            recvcounts[i], recvtypes[i]);
         }
     );
 

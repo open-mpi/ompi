@@ -53,14 +53,14 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         /* check whether the receive buffer is addressable. */
         for (i = 0; i < size; i++) {
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            recvbuf+displs[i]*ext,
+                            (char *)(recvbuf)+displs[i]*ext,
                             recvcounts[i], recvtype);
         }
         
         /* check whether the actual send buffer is defined. */
         if (MPI_IN_PLACE == sendbuf) {
             memchecker_call(&opal_memchecker_base_isdefined,
-                            recvbuf+displs[rank]*ext,
+                            (char *)(recvbuf)+displs[rank]*ext,
                             recvcounts[rank], recvtype);
         } else {
             memchecker_datatype(sendtype);
