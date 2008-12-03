@@ -3,11 +3,29 @@ way to get access to a windows distribution is to download one from the
 download section on the Open MPI web site (http://www.open-mpi.org) or to
 check it out via SVN (information on the above mentioned web-site).
 
-The rest of the document is divided on 2. The first section is for an easy setup,
-based on some files we distribute (32 and 64 bits versions). The second one is
-only for advanced users, who want to deeply dig into the software.
+The rest of the document is divided on 3. The first and second sections are  
+for easy setup, based on some files we distribute (32 and 64 bits versions). 
+The third one is only for advanced users, who want to deeply dig into the software.
 
-First approach: Simple and strait-forward
+
+First approach: Using CMake 
+(CMake support will be available in trunk and Open MPI 1.3.x)
+
+1. Download the latest version of CMake (at least 2.4)
+
+2. In the CMake GUI, add the source path and build path of Open MPI
+   (out of source build is recommended)
+
+3. Then configure, and after the first time configuration, all available
+   options will show up in the CMake GUI, select required ones.
+
+4. Run configure again and then generate, all Windows solution files
+   will be generated in build path.
+
+5. Go to build directory, open the generated Windows solution file,
+   and compile.
+
+Second approach: Simple and strait-forward
 
 Step 1: untar in the root directory of the Open MPI distribution one of our tgz
         file from contrib/platform/win32/
@@ -46,7 +64,7 @@ Step *: Have fun ...
 Step *+1: If you have any problems, find any bugs please feel free to report to
           users@open-mpi.org
 
-Second approach: Confirmed users
+Third approach: Confirmed users
 
 The rest of this document is only for confirmed developers, who has spare
 time or an urgent necessity to compile their own windows version.
@@ -67,5 +85,5 @@ shell to get a window, go in the ompi directory and ... do like in any
 UNIX environments: configure and make.
 
 All questions, complaints and requests about the Windows port should be sent 
-by email to bosilca at open-mpi dot org.
+by email to bosilca at open-mpi dot org and fan at hlrs dot de.
 
