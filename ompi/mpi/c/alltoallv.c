@@ -57,11 +57,11 @@ int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
         for ( i = 0; i < size; i++ ) {
             /* check if send chunks are defined. */
             memchecker_call(&opal_memchecker_base_isdefined,
-                            sendbuf+sdispls[i]*send_ext,
+                            (char *)(sendbuf)+sdispls[i]*send_ext,
                             sendcounts[i], sendtype);
             /* check if receive chunks are addressable. */
             memchecker_call(&opal_memchecker_base_isaddressable,
-                            recvbuf+rdispls[i]*recv_ext,
+                            (char *)(recvbuf)+rdispls[i]*recv_ext,
                             recvcounts[i], recvtype);
         }
     );

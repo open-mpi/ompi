@@ -41,13 +41,21 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
     MEMCHECKER(
         memchecker_datatype(datatype);
         memchecker_comm(comm);
-        if( ompi_comm_rank(comm) == root || MPI_ROOT == root ) {
-            /* check whether root's send buffer is defined. */
-            memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype);
-        }
-        if( MPI_PROC_NULL != root ) {
+        if (OMPI_COMM_IS_INTRA(comm)) {
+            if (ompi_comm_rank(comm) == root) {
+                /* check whether root's send buffer is defined. */
+                memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype);
+            }
             /* check whether receive buffer is addressable. */
-            memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);
+            memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);  
+        } else {
+            if (MPI_ROOT == root) {
+                /* check whether root's send buffer is defined. */
+                memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype);
+            } else if (MPI_PROC_NULL != root) {
+                /* check whether receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);
+            }
         }
     );
 
