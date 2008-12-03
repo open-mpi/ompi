@@ -8,6 +8,7 @@ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2005 The Regents of the University of California.
                         All rights reserved.
+Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -30,11 +31,12 @@ build includes a lot of debugging features.  This happens
 automatically when when configure detects the hidden ".svn" Subversion
 meta directory (that is present in all Subversion checkouts) in your
 source tree, and therefore activates a number of developer-only
-debugging features in the Open MPI code base.
+debugging features in the Open MPI code base.  The same is true if you
+have a Mercurial checkout (with the hidden .hg meta directory).
 
-By definition, debugging builds will perform slower than optimized
-builds of Open MPI.  You should *NOT* conduct timing tests or try to
-run production performance numbers with debugging builds.
+By definition, debugging builds will perform [much] slower than
+optimized builds of Open MPI.  You should *NOT* conduct timing tests
+or try to run production performance numbers with debugging builds.
 
 If you wish to build an optimized version of Open MPI from a
 developer's checkout, you have three main options:
@@ -52,8 +54,8 @@ developer's checkout, you have three main options:
      shell$ make all install
 
 2. Use a VPATH build.  Simply build Open MPI from a different
-   directory than the source tree -- one where the .svn subdirectory
-   is not present.  For example:
+   directory than the source tree -- one where the .svn / .hg
+   subdirectory is not present.  For example:
 
      shell$ svn co http://svn.open-mpi.org/svn/ompi/trunk ompi
      shell$ cd ompi
@@ -165,7 +167,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../autoconf-2.62
+      shell$ cd ../autoconf-2.63
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
@@ -179,7 +181,7 @@ NOTE: On MacOS/X, the default "libtool" program is different than the
       --> If you are using the csh or tcsh shells, be sure to run the
           "rehash" command after you install each package.
 
-      shell$ cd ../libtool-2.2.4
+      shell$ cd ../libtool-2.2.6
       shell$ ./configure --prefix=PREFIX
       shell$ make; make install
 
@@ -240,13 +242,20 @@ Flex is used during the compilation of a developer's checkout (it is
 not used in distribution tarballs).  Other flavors of lex are *not*
 supported: given the choice of making parsing code portable between
 all flavors of lex and doing more interesting work on Open MPI, we
-greatly prefer the latter.  Flex is a mature software package, and as
-of this writing, it has not changed since v2.5.4a in July of 1997.
-This version seems to work fine with Open MPI; no testing has been
-performed to see what the minimum version of Flex is required by Open
-MPI.
+greatly prefer the latter.  
+
+Several developers use the stable flex version v2.5.4a from July of
+1997.  Others have upgraded to more recent versions; these also seem
+to work fine.  Note that no testing has been performed to see what the
+minimum version of Flex is required by Open MPI.  We suggest that you
+use v2.5.4a at the earliest.
+
+Note that the flex-generated code generates some compiler warnings on
+some platforms, but the warnings do not seem to be consistent or
+uniform on all platforms, compilers, and flex versions.  As such, we
+have done little to try to remove those warnings.
 
 If you do not have Flex installed, it can be downloaded from the
 following URL:
 
-   ftp://ftp.gnu.org/non-gnu/flex/
+   http://flex.sourceforge.net/
