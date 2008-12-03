@@ -65,19 +65,19 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
                              &(recvreq->req_recv.req_base), PERUSE_RECV );
 
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+        /* make buffer defined when the request is compeleted,
+           and before releasing the objects. */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            recvreq->req_recv.req_base.req_addr,
+                            recvreq->req_recv.req_base.req_count,
+                            recvreq->req_recv.req_base.req_datatype);
+        );
+
         MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    /*
-     * Package successfully received, make user buffer accessable.
-     */
-    MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_defined,
-                        recvreq->req_recv.req_base.req_addr,
-                        recvreq->req_recv.req_base.req_count,
-                        recvreq->req_recv.req_base.req_datatype);
-    );
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 } 

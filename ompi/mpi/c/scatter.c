@@ -44,10 +44,33 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int err;
 
     MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         memchecker_comm(comm);
+        if(OMPI_COMM_IS_INTRA(comm)) {
+            if(ompi_comm_rank(comm) == root) {
+                memchecker_datatype(sendtype);
+                /* check whether root's send buffer is defined. */
+                memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+                if(MPI_IN_PLACE != recvbuf) {
+                    memchecker_datatype(recvtype);
+                    /* check whether receive buffer is addressable. */
+                    memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+                }
+            } else {
+                memchecker_datatype(recvtype);
+                /* check whether receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+            }
+        } else {
+            if(MPI_ROOT == root) {
+                memchecker_datatype(sendtype);
+                /* check whether root's send buffer is defined. */
+                memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+            } else if (MPI_PROC_NULL != root) {
+                memchecker_datatype(recvtype);
+                /* check whether receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+            }
+        }
     );
 
     if (MPI_PARAM_CHECK) {

@@ -43,10 +43,44 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int err;
 
     MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+        int rank;
+        ptrdiff_t ext;
+
+        rank = ompi_comm_rank(comm);
+        ompi_ddt_type_extent(recvtype, &ext);
+
         memchecker_comm(comm);
+        if(OMPI_COMM_IS_INTRA(comm)) {
+            if(ompi_comm_rank(comm) == root) {
+                /* check whether root's send buffer is defined. */
+                if (MPI_IN_PLACE == sendbuf) {
+                  memchecker_call(&opal_memchecker_base_isdefined, 
+                                  (char *)(recvbuf)+rank*ext, 
+                                  recvcount, recvtype);
+                } else {
+                    memchecker_datatype(sendtype);
+                    memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+                }
+                
+                memchecker_datatype(recvtype);
+                /* check whether root's receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+            } else {
+                memchecker_datatype(sendtype);
+                /* check whether send buffer is defined on other processes. */
+                memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+            }
+        } else {
+            if (MPI_ROOT == root) {
+                memchecker_datatype(recvtype);
+                /* check whether root's receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+            } else if (MPI_PROC_NULL != root) {
+                memchecker_datatype(sendtype);
+                /* check whether send buffer is defined. */
+                memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+            }
+        }
     );
     
     if (MPI_PARAM_CHECK) {

@@ -36,7 +36,7 @@ static const char FUNC_NAME[] = "MPI_Alltoall";
 
 
 int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
-		 void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                 void *recvbuf, int recvcount, MPI_Datatype recvtype, 
                  MPI_Comm comm) 
 {
     int err;
@@ -45,6 +45,7 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         memchecker_datatype(sendtype);
         memchecker_datatype(recvtype);
         memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
         memchecker_comm(comm);
     );
 

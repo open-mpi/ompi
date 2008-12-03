@@ -100,16 +100,20 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
                              &(sendreq->req_send.req_base), PERUSE_SEND );
 
     if( true == sendreq->req_send.req_base.req_pml_complete ) {
+        /* make buffer defined when the request is compeleted,
+           and before releasing the objects. */
+        MEMCHECKER(
+            memchecker_call(&opal_memchecker_base_mem_defined,
+                            sendreq->req_send.req_base.req_addr,
+                            sendreq->req_send.req_base.req_count,
+                            sendreq->req_send.req_base.req_datatype);
+        );
+
         MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    MEMCHECKER(
-        memchecker_call(&opal_memchecker_base_mem_defined,
-                        sendreq->req_send.req_base.req_addr,
-                        sendreq->req_send.req_base.req_count,
-                        sendreq->req_send.req_base.req_datatype);
-    );
+
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
