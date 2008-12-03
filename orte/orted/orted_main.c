@@ -332,7 +332,7 @@ int orte_daemon(int argc, char *argv[])
              * and have it kill us
              */
             if (0 < orted_globals.fail_delay) {
-                ORTE_TIMER_EVENT(orted_globals.fail_delay, shutdown_signal);
+                ORTE_TIMER_EVENT(orted_globals.fail_delay, 0, shutdown_signal);
                 
             } else {
                 opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -614,7 +614,7 @@ int orte_daemon(int argc, char *argv[])
 
     /* if we were told to do a heartbeat, then setup to do so */
     if (0 < orted_globals.heartbeat) {
-        ORTE_TIMER_EVENT(orted_globals.heartbeat, orte_plm_base_heartbeat);
+        ORTE_TIMER_EVENT(orted_globals.heartbeat, 0, orte_plm_base_heartbeat);
     }
 
     /* wait to hear we are done */

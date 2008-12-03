@@ -93,10 +93,10 @@ static int orte_iof_orted_close(void)
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&mca_iof_orted_component.sinks);
-        while ((item = opal_list_remove_first(&mca_iof_orted_component.read_events)) != NULL) {
+        while ((item = opal_list_remove_first(&mca_iof_orted_component.procs)) != NULL) {
             OBJ_RELEASE(item);
         }
-        OBJ_DESTRUCT(&mca_iof_orted_component.read_events);
+        OBJ_DESTRUCT(&mca_iof_orted_component.procs);
         /* Cancel the RML receive */
         rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
         OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
@@ -134,7 +134,7 @@ static int orte_iof_orted_query(mca_base_module_t **module, int *priority)
     /* setup the local global variables */
     OBJ_CONSTRUCT(&mca_iof_orted_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_iof_orted_component.sinks, opal_list_t);
-    OBJ_CONSTRUCT(&mca_iof_orted_component.read_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_iof_orted_component.procs, opal_list_t);
     mca_iof_orted_component.xoff = false;
     
     /* we must be selected */

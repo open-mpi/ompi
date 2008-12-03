@@ -57,10 +57,10 @@ ORTE_DECLSPEC int orte_iof_base_open(void);
 /*
  * Maximum size of single msg 
  */
-#define ORTE_IOF_BASE_MSG_MAX           1024
+#define ORTE_IOF_BASE_MSG_MAX           4096
 #define ORTE_IOF_BASE_TAG_MAX             50
-#define ORTE_IOF_BASE_TAGGED_OUT_MAX    2048
-#define ORTE_IOF_MAX_INPUT_BUFFERS       100
+#define ORTE_IOF_BASE_TAGGED_OUT_MAX    8192
+#define ORTE_IOF_MAX_INPUT_BUFFERS        50
 
 typedef struct {
     opal_list_item_t super;
@@ -94,7 +94,7 @@ typedef struct {
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 
 typedef struct {
-    opal_list_item_t super;
+    opal_object_t super;
     orte_process_name_t name;
     opal_event_t ev;
     orte_iof_tag_t tag;
@@ -105,6 +105,15 @@ typedef struct {
 #endif
 } orte_iof_read_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_read_event_t);
+
+typedef struct {
+    opal_list_item_t super;
+    orte_process_name_t name;
+    orte_iof_read_event_t *revstdout;
+    orte_iof_read_event_t *revstderr;
+    orte_iof_read_event_t *revstddiag;
+} orte_iof_proc_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_proc_t);
 
 typedef struct {
     opal_list_item_t super;
@@ -127,7 +136,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
         ep->tag = (tg);                                             \
         ep->wev.fd = (fid);                                         \
         opal_event_set(&(ep->wev.ev), ep->wev.fd,                   \
-                       OPAL_EV_WRITE|OPAL_EV_PERSIST,               \
+                       OPAL_EV_WRITE,                               \
                        wrthndlr, &(ep->wev));                       \
         opal_list_append((eplist), &ep->super);                     \
         *(snk) = ep;                                                \
@@ -135,7 +144,13 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
         ep->line = __LINE__;                                        \
     } while(0);
 
-#define ORTE_IOF_READ_EVENT(nm, fid, tg, cbfunc, revlist, actv)     \
+/* add list of structs that has name of proc + orte_iof_tag_t - when
+ * defining a read event, search list for proc, add flag to the tag.
+ * when closing a read fd, find proc on list and zero out that flag
+ * when all flags = 0, then iof is complete - set message event to
+ * daemon processor indicating proc iof is terminated
+ */
+#define ORTE_IOF_READ_EVENT(rv, nm, fid, tg, cbfunc, actv)          \
     do {                                                            \
         orte_iof_read_event_t *rev;                                 \
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
@@ -144,19 +159,18 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
                             ORTE_NAME_PRINT((nm)),                  \
                             __FILE__, __LINE__));                   \
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
+        *(rv) = rev;                                                \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
         rev->tag = (tg);                                            \
         rev->file = strdup(__FILE__);                               \
         rev->line = __LINE__;                                       \
         opal_event_set(&rev->ev, (fid),                             \
-                       OPAL_EV_READ | OPAL_EV_PERSIST,              \
+                       OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
+            rev->active = true;                                     \
             opal_event_add(&rev->ev, 0);                            \
-            opal_list_append((revlist), &rev->super);               \
-        } else {                                                    \
-            opal_list_prepend((revlist), &rev->super);              \
         }                                                           \
     } while(0);
 
@@ -172,27 +186,25 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
         ep->tag = (tg);                                             \
         ep->wev.fd = (fid);                                         \
         opal_event_set(&(ep->wev.ev), ep->wev.fd,                   \
-                       OPAL_EV_WRITE|OPAL_EV_PERSIST,               \
+                       OPAL_EV_WRITE,                               \
                        wrthndlr, &(ep->wev));                       \
         opal_list_append((eplist), &ep->super);                     \
         *(snk) = ep;                                                \
     } while(0);
 
-#define ORTE_IOF_READ_EVENT(nm, fid, tg, cbfunc, revlist, actv)     \
+#define ORTE_IOF_READ_EVENT(rv, nm, fid, tg, cbfunc, actv)          \
     do {                                                            \
         orte_iof_read_event_t *rev;                                 \
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
+        *(rv) = rev;                                                \
         rev->tag = (tg);                                            \
         opal_event_set(&rev->ev, (fid),                             \
-                       OPAL_EV_READ | OPAL_EV_PERSIST,              \
+                       OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
             opal_event_add(&rev->ev, 0);                            \
-            opal_list_append((revlist), &rev->super);               \
-        } else {                                                    \
-            opal_list_prepend((revlist), &rev->super);              \
         }                                                           \
     } while(0);
 
