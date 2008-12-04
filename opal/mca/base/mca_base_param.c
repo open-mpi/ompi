@@ -1979,6 +1979,12 @@ static bool lookup_file(mca_base_param_t *param,
             }
             param->mbp_file_value_set = true;
 
+            /* If the caller requested to know what file we found the
+               value in, give them a copy of the filename pointer */
+            if (NULL != source_file) {
+                *source_file = param->mbp_source_file;
+            }
+
             /* Since this is now cached on the param, we might as well
                remove it from the list and make future file lookups
                faster */
