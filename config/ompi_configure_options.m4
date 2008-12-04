@@ -640,6 +640,20 @@ AM_CONDITIONAL([OMPI_WANT_SCRIPT_WRAPPER_COMPILERS],
 AC_CONFIG_FILES([ompi/tools/wrappers/ompi_wrapper_script], [chmod +x ompi/tools/wrappers/ompi_wrapper_script])
 
 #
+# Support per-user config files?
+#
+AC_ARG_ENABLE([per-user-config-files],
+   [AC_HELP_STRING([--enable-per-user-config-files],
+      [Disable per-user configuration files, to save disk accesses during job strart-up.  This is likely desirable for large jobs.  Note that this can also be acheived by environment variables at run-time.  (default: enabled)])])
+if test "$enable_per_user_config_files" = "no" ; then
+  result=0
+else
+  result=1
+fi
+AC_DEFINE_UNQUOTED([OMPI_WANT_HOME_CONFIG_FILES], [$result],
+     [Enable per-user config files])
+
+#
 # Do we want to disable IPv6 support?
 #
 AC_MSG_CHECKING([if want IPv6 support])
@@ -708,5 +722,6 @@ with_ident_string="`echo $with_ident_string | sed -e 's/%VERSION%/'$OMPI_VERSION
 AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
      [ident string for Open MPI])
 AC_MSG_RESULT([$with_ident_string])
+
 
 ])

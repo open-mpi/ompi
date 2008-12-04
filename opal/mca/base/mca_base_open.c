@@ -66,7 +66,11 @@ int mca_base_open(void)
   }
 
   /* Register some params */
+#if OMPI_WANT_HOME_CONFIG_FILES
   asprintf(&value, "%s%c%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_install_dirs.pkglibdir, OPAL_ENV_SEP, opal_home_directory() );
+#else
+  asprintf(&value, "%s", opal_install_dirs.pkglibdir); 
+#endif
 
   mca_base_param_component_path = 
     mca_base_param_reg_string_name("mca", "component_path",
