@@ -137,13 +137,13 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     SETUP:
         /* define a read event and activate it */
         if (src_tag & ORTE_IOF_STDOUT) {
-            ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, src_tag,
+            ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, ORTE_IOF_STDOUT,
                                 orte_iof_hnp_read_local_handler, true);
         } else if (src_tag & ORTE_IOF_STDERR) {
-            ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, src_tag,
+            ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, ORTE_IOF_STDERR,
                                 orte_iof_hnp_read_local_handler, true);
         } else if (src_tag & ORTE_IOF_STDDIAG) {
-            ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, src_tag,
+            ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, ORTE_IOF_STDDIAG,
                                 orte_iof_hnp_read_local_handler, true);
         }
         return ORTE_SUCCESS;
@@ -154,7 +154,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
      */
     if (ORTE_VPID_WILDCARD == dst_name->vpid) {
         /* if wildcard, define a sink with that info so it gets sent out */
-        ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
+        ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
                              stdin_write_handler,
                              &mca_iof_hnp_component.sinks);
     } else {
@@ -166,7 +166,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         procs = (orte_proc_t**)jdata->procs->addr;
         /* if it is me, then don't set this up - we'll get it on the pull */
         if (ORTE_PROC_MY_NAME->vpid != procs[dst_name->vpid]->node->daemon->name.vpid) {
-            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
+            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
                                  stdin_write_handler,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -213,7 +213,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * be dropped upon receipt at the local daemon
              */
             ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
-                                dst_name, fd, src_tag,
+                                dst_name, fd, ORTE_IOF_STDIN,
                                 orte_iof_hnp_read_local_handler, false);
             
             /* check to see if we want the stdin read event to be
@@ -231,7 +231,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * and activate it
              */
             ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
-                                dst_name, fd, src_tag,
+                                dst_name, fd, ORTE_IOF_STDIN,
                                 orte_iof_hnp_read_local_handler, true);
         }
     }
@@ -272,7 +272,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
         fcntl(fd, F_SETFL, flags);
     }
     
-    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, src_tag,
+    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler,
                          &mca_iof_hnp_component.sinks);
     sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;

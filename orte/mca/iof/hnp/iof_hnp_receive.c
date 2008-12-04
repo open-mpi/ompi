@@ -95,11 +95,24 @@ static void process_msg(int fd, short event, void *cbdata)
         /* a tool is requesting that we send it a copy of the specified stream(s)
          * from the specified process(es), so create a sink for it
          */
-        ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, stream,
-                             NULL, &mca_iof_hnp_component.sinks);
-        /* specify the name of the tool that wants this data */
-        sink->daemon.jobid = mev->sender.jobid;
-        sink->daemon.vpid = mev->sender.vpid;
+        if (ORTE_IOF_STDOUT & stream) {
+            ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDOUT,
+                                 NULL, &mca_iof_hnp_component.sinks);
+            sink->daemon.jobid = mev->sender.jobid;
+            sink->daemon.vpid = mev->sender.vpid;
+        }
+        if (ORTE_IOF_STDERR & stream) {
+            ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDERR,
+                                 NULL, &mca_iof_hnp_component.sinks);
+            sink->daemon.jobid = mev->sender.jobid;
+            sink->daemon.vpid = mev->sender.vpid;
+        }
+        if (ORTE_IOF_STDDIAG & stream) {
+            ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDDIAG,
+                                 NULL, &mca_iof_hnp_component.sinks);
+            sink->daemon.jobid = mev->sender.jobid;
+            sink->daemon.vpid = mev->sender.vpid;
+        }
         goto CLEAN_RETURN;
     }
     

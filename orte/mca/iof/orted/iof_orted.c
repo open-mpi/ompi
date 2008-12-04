@@ -123,13 +123,13 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
 SETUP:
     /* define a read event and activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
-        ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, src_tag,
+        ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, ORTE_IOF_STDOUT,
                             orte_iof_orted_read_handler, true);
     } else if (src_tag & ORTE_IOF_STDERR) {
-        ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, src_tag,
+        ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, ORTE_IOF_STDERR,
                             orte_iof_orted_read_handler, true);
     } else if (src_tag & ORTE_IOF_STDDIAG) {
-        ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, src_tag,
+        ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, ORTE_IOF_STDDIAG,
                             orte_iof_orted_read_handler, true);
     }
     
@@ -169,7 +169,7 @@ static int orted_pull(const orte_process_name_t* dst_name,
         fcntl(fd, F_SETFL, flags);
     }
 
-    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, src_tag,
+    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler,
                          &mca_iof_orted_component.sinks);
     
