@@ -28,13 +28,15 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "orte/util/show_help.h"
+#include "opal/dss/dss.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/odls/base/base.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/orted/orted.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -163,9 +165,24 @@ CLEAN_RETURN:
             if (NULL == proct->revstdout &&
                 NULL == proct->revstderr &&
                 NULL == proct->revstddiag) {
+                opal_buffer_t cmdbuf;
+                orte_daemon_cmd_flag_t command;
                 /* this proc's iof is complete */
                 opal_list_remove_item(&mca_iof_orted_component.procs, item);
-                ORTE_NOTIFY_EVENT(orte_odls_base_notify_iof_complete, &proct->name);
+                /* setup a cmd to notify that the iof is complete */
+                OBJ_CONSTRUCT(&cmdbuf, opal_buffer_t);
+                command = ORTE_DAEMON_IOF_COMPLETE;
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &command, 1, ORTE_DAEMON_CMD))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &proct->name, 1, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmdbuf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+            CLEANUP:
+                OBJ_DESTRUCT(&cmdbuf);
                 OBJ_RELEASE(proct);
             }
             break;

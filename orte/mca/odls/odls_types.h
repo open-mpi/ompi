@@ -61,6 +61,10 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* collective-based cmds */
 #define ORTE_DAEMON_COLL_CMD                (orte_daemon_cmd_flag_t) 24
 
+/* proc termination sync cmds */
+#define ORTE_DAEMON_WAITPID_FIRED           (orte_daemon_cmd_flag_t) 25
+#define ORTE_DAEMON_IOF_COMPLETE            (orte_daemon_cmd_flag_t) 26
+
 END_C_DECLS
 
 #endif
