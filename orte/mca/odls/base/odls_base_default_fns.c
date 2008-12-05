@@ -61,6 +61,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/orted/orted.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/snapc.h"
@@ -1796,22 +1797,20 @@ static void check_proc_complete(orte_odls_child_t *child)
     
 unlock:
     OBJ_DESTRUCT(&alert);
-    
 }
 
 /* receive external-to-odls notification that a proc has met some completion
  * requirements
  */
-void orte_odls_base_notify_iof_complete(int fd, short event, void *data)
+void orte_odls_base_notify_iof_complete(orte_process_name_t *proc)
 {
-    orte_notify_event_t *nev = (orte_notify_event_t*)data;
     orte_odls_child_t *child;
     opal_list_item_t *item;
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:notify_iof_complete for child %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&nev->proc)));
+                         ORTE_NAME_PRINT(proc)));
     
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -1826,8 +1825,8 @@ void orte_odls_base_notify_iof_complete(int fd, short event, void *data)
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         
-        if (child->name->jobid == nev->proc.jobid &&
-            child->name->vpid == nev->proc.vpid) { /* found it */
+        if (child->name->jobid == proc->jobid &&
+            child->name->vpid == proc->vpid) { /* found it */
             goto GOTCHILD;
         }
     }
@@ -1839,10 +1838,8 @@ void orte_odls_base_notify_iof_complete(int fd, short event, void *data)
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:proc_complete did not find child %s in table!",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&nev->proc)));
+                         ORTE_NAME_PRINT(proc)));
     
-    /* release the event */
-    OBJ_RELEASE(nev);
     /* it's just a race condition - don't error log it */
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
@@ -1851,30 +1848,20 @@ void orte_odls_base_notify_iof_complete(int fd, short event, void *data)
 GOTCHILD:
     /* flag the iof as complete */
     child->iof_complete = true;
-    /* release the event */
-    OBJ_RELEASE(nev);
     /* now check to see if the proc is truly done */
     check_proc_complete(child);
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 }
 
-
-/*
- *  Wait for a callback indicating the child has completed.
- */
-
-void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
+void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
 {
     orte_odls_child_t *child;
     opal_list_item_t *item;
     char *job, *vpid, *abort_file;
     struct stat buf;
     int rc;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:wait_local_proc child process %ld terminated",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)pid));
-    
+
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
      * by other threads. This will also be used to protect us
@@ -1888,7 +1875,8 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         
-        if (pid == child->pid) { /* found it */
+        if (proc->jobid == child->name->jobid &&
+            proc->vpid == child->name->vpid) { /* found it */
             goto GOTCHILD;
         }
     }
@@ -1898,9 +1886,9 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
      */
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:wait_local_proc did not find pid %ld in table!",
+                         "%s odls:waitpid_fired did not find child %s in table!",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)pid));
+                         ORTE_NAME_PRINT(proc)));
     
     /* it's just a race condition - don't error log it */
     opal_condition_signal(&orte_odls_globals.cond);
@@ -1913,17 +1901,11 @@ GOTCHILD:
      */
     if (!child->alive) {
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:wait_local_proc child %s was already dead",
+                             "%s odls:waitpid_fired child %s was already dead",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
         goto MOVEON;
     }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:wait_local_proc pid %ld corresponds to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)pid,
-                         ORTE_NAME_PRINT(child->name)));
     
     /* determine the state of this process */
     if(WIFEXITED(status)) {
@@ -1953,7 +1935,7 @@ GOTCHILD:
                                   orte_process_info.top_session_dir,
                                   job, vpid, "abort", NULL );
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:wait_local_proc checking abort file %s",
+                             "%s odls:waitpid_fired checking abort file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
         
         free(job);
@@ -1964,7 +1946,7 @@ GOTCHILD:
              */
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:wait_local_proc child %s died by abort",
+                                 "%s odls:waitpid_fired child %s died by abort",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
             
@@ -1981,7 +1963,7 @@ GOTCHILD:
                 child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                     "%s odls:wait_local_proc child process %s terminated normally "
+                                     "%s odls:waitpid_fired child process %s terminated normally "
                                      "but did not provide a required sync - it "
                                      "will be treated as an abnormal termination",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1993,7 +1975,7 @@ GOTCHILD:
             }
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:wait_local_proc child process %s terminated normally",
+                                 "%s odls:waitpid_fired child process %s terminated normally",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
             
@@ -2015,7 +1997,7 @@ GOTCHILD:
         child->exit_code = WTERMSIG(status) + 128;
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:wait_local_proc child process %s terminated with signal",
+                             "%s odls:waitpid_fired child process %s terminated with signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
     }
@@ -2030,6 +2012,82 @@ MOVEON:
     /* done */
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+}
+
+/*
+ *  Wait for a callback indicating the child has completed.
+ */
+
+void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
+{
+    orte_odls_child_t *child;
+    opal_list_item_t *item;
+    int rc;
+    opal_buffer_t cmdbuf;
+    orte_daemon_cmd_flag_t command;
+    int32_t istatus;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc child process %ld terminated",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)pid));
+    
+    /* since we are going to be working with the global list of
+     * children, we need to protect that list from modification
+     * by other threads. This will also be used to protect us
+     * from race conditions on any abort situation
+     */
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+    
+    /* find this child */
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        if (pid == child->pid) { /* found it */
+            /* this is an independent entry point from the event library. To avoid
+             * race conditions, we need to get back into the progression of messages
+             * and commands to be processed by the daemon. We do this by re-posting
+             * the event into the daemon cmd processor
+             */
+            OBJ_CONSTRUCT(&cmdbuf, opal_buffer_t);
+            command = ORTE_DAEMON_WAITPID_FIRED;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &command, 1, ORTE_DAEMON_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, child->name, 1, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            istatus = status;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &istatus, 1, OPAL_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmdbuf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+            /* done */
+            opal_condition_signal(&orte_odls_globals.cond);
+            OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+            return;
+        }
+    }
+    /* get here if we didn't find the child, or if the specified child
+     * is already dead. If the latter, then we have a problem as it
+     * means we are detecting it exiting multiple times
+     */
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:wait_local_proc did not find pid %ld in table!",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)pid));
+    
+    /* it's just a race condition - don't error log it */
+CLEANUP:
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+    return;
 }
 
 int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
