@@ -26,6 +26,15 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/op/op.h"
 #include "ompi/request/grequest.h"
+/*
+ * We have to include the C profiling layer to insure that we don't
+ * call the C MPI_ version from Fortran if the C profiling layer is
+ * active. Instead, in order to catch the function only once, we have
+ * to call directly the PMPI_ version when available.
+ */
+#if OMPI_PROFILE_LAYER
+#include "ompi/mpi/c/profile/defines.h"
+#endif  /* OMPI_PROFILE_LAYER */
 
 /*
  * We now build all four fortran bindings and dont care too much about 
