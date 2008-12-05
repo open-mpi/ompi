@@ -66,6 +66,7 @@
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/topo.h"
 #include "ompi/group/group.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/include/mpi.h"
