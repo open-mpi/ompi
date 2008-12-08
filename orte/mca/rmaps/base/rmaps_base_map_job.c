@@ -92,7 +92,7 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
     if (jdata->map->display_map) {
         char *output;
         opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
-        opal_output(orte_rmaps_base.map_output, "%s", output);
+        opal_output(orte_clean_output, "%s", output);
         free(output);
     }
     

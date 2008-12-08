@@ -75,7 +75,6 @@ orte_ras_base_t orte_ras_base;
 int orte_ras_base_open(void)
 {
     int value;
-    opal_output_stream_t lds;
     bool btmp;
     
     /* set default flags */
@@ -101,11 +100,6 @@ int orte_ras_base_open(void)
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
     orte_ras_base.ras_output = opal_output_open(NULL);
-    
-    OBJ_CONSTRUCT(&lds, opal_output_stream_t);
-    lds.lds_want_stdout = true;
-    orte_ras_base.alloc_output = opal_output_open(&lds);
-    OBJ_DESTRUCT(&lds);
     
     /* Open up all available components */
     if (ORTE_SUCCESS != 
