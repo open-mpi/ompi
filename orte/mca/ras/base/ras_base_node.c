@@ -122,9 +122,9 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             if (orte_show_resolved_nodenames &&
                 0 != strcmp(node->name, hnp_node->name)) {
                 if (orte_xml_output) {
-                    opal_output(0, "<noderesolve name=\"%s\" resolved=\"%s\">", node->name, hnp_node->name);
+                    opal_output(orte_clean_output, "<noderesolve name=\"%s\" resolved=\"%s\"/>", node->name, hnp_node->name);
                 } else {
-                    opal_output(0, "node name %s resolved to %s", node->name, hnp_node->name);
+                    opal_output(orte_clean_output, "node name %s resolved to %s", node->name, hnp_node->name);
                 }
             }
             
