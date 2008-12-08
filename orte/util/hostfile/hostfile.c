@@ -52,9 +52,9 @@ static const char *cur_hostfile_name = NULL;
 static void show_resolved_hostname(char *name, char *resolved)
 {
     if (orte_xml_output) {
-        opal_output(0, "<noderesolve name=\"%s\" resolved=\"%s\">", name, resolved);
+        opal_output(orte_clean_output, "<noderesolve name=\"%s\" resolved=\"%s\"/>", name, resolved);
     } else {
-        opal_output(0, "node name %s resolved to %s", name, resolved);
+        opal_output(orte_clean_output, "node name %s resolved to %s", name, resolved);
     }
 }
 

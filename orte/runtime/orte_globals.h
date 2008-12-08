@@ -438,6 +438,9 @@ ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 
+/* a clean output channel without prefix */
+ORTE_DECLSPEC extern int orte_clean_output;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
