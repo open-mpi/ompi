@@ -92,6 +92,9 @@ opal_buffer_t *orte_tree_launch_cmd = NULL;
 opal_pointer_array_t *orte_job_data;
 opal_pointer_array_t *orte_node_pool;
 
+/* a clean output channel without prefix */
+int orte_clean_output = -1;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
@@ -110,6 +113,7 @@ int orte_dt_init(void)
 
     /* set default output */
     orte_debug_output = opal_output_open(NULL);
+    
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
         (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {
@@ -177,6 +181,16 @@ int orte_dt_init(void)
     }
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+    /* get a clean output channel too */
+    {
+        opal_output_stream_t lds;
+        OBJ_CONSTRUCT(&lds, opal_output_stream_t);
+        lds.lds_want_stdout = true;
+        orte_clean_output = opal_output_open(&lds);
+        OBJ_DESTRUCT(&lds);
+        
+    }
+
     tmp = ORTE_JOB;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_job,
                                                      orte_dt_unpack_job,
