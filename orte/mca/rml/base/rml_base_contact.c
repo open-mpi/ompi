@@ -78,6 +78,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     /* unpack the data for each entry */
     num_procs = 0;
     name.jobid = ORTE_JOBID_INVALID;
+    got_name = false;
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &rml_uri, &cnt, OPAL_STRING))) {
         
