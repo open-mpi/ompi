@@ -230,7 +230,7 @@ Trunk (not on release branches yet)
 - Added support for parallel debuggers even when we have an optimized build.
   See ticket #1178.
 - Worked around a bus error in the Mac OS X 10.5.X (Leopard) linker when
-  compiling Open MPI with -g.  See ticket #1179.
+  compiling Open MPI with -g|-g[0-9].  See ticket #1179.
 - Removed some warnings about 'rm' from Mac OS X 10.5 (Leopard) builds.
 - Fix the handling of mx_finalize().  See ticket #1177.
   Thanks to Ake Sandgren for bringing this issue to our attention.
