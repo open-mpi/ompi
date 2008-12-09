@@ -105,6 +105,14 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
                     return rc;
                 }
                 got_name = true;
+                /* if this is for a different job family, update the route to this proc */
+                if (ORTE_JOB_FAMILY(name.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+                    if (ORTE_SUCCESS != (rc = orte_routed.update_route(&name, &name))) {
+                        ORTE_ERROR_LOG(rc);
+                        free(rml_uri);
+                        return rc;
+                    }
+                }
             }
             free(rml_uri);
         }
