@@ -1,0 +1,18 @@
+#!/bin/csh -f
+
+if (! -d .hg) then
+    echo "Not in top-level HG repository dir"
+    exit 1
+endif
+
+echo Setting group to openmpi...
+chgrp -R openmpi .
+
+echo Setting all files to be group writable....
+chmod -R g+w .
+
+echo Setting group "s" perms on directories...
+find . -type d -exec chmod g+ws {}
+
+echo done
+exit 0
