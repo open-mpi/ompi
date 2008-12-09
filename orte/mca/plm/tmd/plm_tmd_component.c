@@ -92,12 +92,8 @@ static int plm_tmd_open(void)
     int tmp;
     mca_base_component_t *comp = &mca_plm_tmd_component.super.base_version;
 
-    mca_base_param_reg_string(comp, "orted",
-                              "Command to use to start proxy orted",
-                              false, false, "orted",
-                              &mca_plm_tmd_component.orted);
     mca_base_param_reg_int(comp, "want_path_check",
-                           "Whether the launching process should check for the plm_tmd_orted executable in the PATH before launching (the TM API does not give an idication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
+                           "Whether the launching process should check for the plm_tmd_orted executable in the PATH before launching (the TM API does not give an indication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
                            false, false, (int) true, &tmp);
     mca_plm_tmd_component.want_path_check = OPAL_INT_TO_BOOL(tmp);
     
@@ -124,7 +120,7 @@ static int orte_plm_tmd_component_query(mca_base_module_t **module, int *priorit
     if (NULL != getenv("PBS_ENVIRONMENT") &&
         NULL != getenv("PBS_JOBID")) {
 
-        *priority = 1;
+        *priority = 2;
         *module = (mca_base_module_t *) &orte_plm_tmd_module;
         return ORTE_SUCCESS;
     }
