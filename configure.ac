@@ -1373,6 +1373,8 @@ AC_CONFIG_FILES([
     ompi/tools/wrappers/mpif90-wrapper-data.txt
     ompi/tools/ortetools/Makefile
     ompi/tools/ompi-server/Makefile
+    ompi/tools/ompi-probe/Makefile
+    ompi/tools/ompi-profiler/Makefile
 
     test/Makefile
     test/event/Makefile

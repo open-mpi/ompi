@@ -28,6 +28,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "opal/runtime/opal.h"
 
 OBJ_CLASS_INSTANCE( mca_btl_base_selected_module_t,
                     opal_list_item_t,
@@ -132,6 +133,10 @@ int mca_btl_base_select(bool enable_progress_threads,
                                     "select: init of component %s returned success",
                                     component->btl_version.mca_component_name);
 
+                if (opal_profile) {
+                    opal_output(0, "btl:%s", component->btl_version.mca_component_name);
+                }
+                
                 for (i = 0; i < num_btls; ++i) {
                     sm = OBJ_NEW(mca_btl_base_selected_module_t);
                     if (NULL == sm) {

@@ -106,6 +106,9 @@ BEGIN_C_DECLS
 /* debugger release */
 #define ORTE_RML_TAG_DEBUGGER_RELEASE       32
 
+/* profile data */
+#define ORTE_RML_TAG_GRPCOMM_PROFILE        33
+
 #define ORTE_RML_TAG_MAX                   100
 
 
