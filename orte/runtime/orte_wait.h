@@ -236,32 +236,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
 
 #endif
     
-/* Sometimes, we just need to get out of the event library so 
- * we can progress - and we need to pass a little info. For those 
- * cases, we define a zero-time event that passes info to a cbfunc 
- */ 
-typedef struct { 
-    opal_object_t super; 
-    opal_event_t *ev; 
-    orte_process_name_t proc; 
-} orte_notify_event_t; 
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t); 
-
-#define ORTE_NOTIFY_EVENT(cbfunc, data)                         \
-    do {                                                        \
-        struct timeval now;                                     \
-        orte_notify_event_t *tmp;                               \
-        tmp = OBJ_NEW(orte_notify_event_t);                     \
-        tmp->proc.jobid = (data)->jobid;                        \
-        tmp->proc.vpid = (data)->vpid;                          \
-        opal_evtimer_set(tmp->ev, (cbfunc), tmp);               \
-        now.tv_sec = 0;                                         \
-        now.tv_usec = 0;                                        \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
-                            "defining notify event at %s:%d",   \
-                            __FILE__, __LINE__));               \
-        opal_evtimer_add(tmp->ev, &now);                        \
-    } while(0);                                                 \
 
 /**
  * In a number of places within the code, we want to setup a timer
@@ -306,20 +280,20 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
  * wakeup to do something, and then go back to sleep again. Setting
  * a timer allows us to do this
  */
-#define ORTE_TIMER_EVENT(sec, usec, cbfunc)                                     \
-    do {                                                                        \
-        struct timeval now;                                                     \
-        opal_event_t *tmp;                                                      \
-        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));                      \
-        opal_evtimer_set(tmp, (cbfunc), tmp);                                   \
-        now.tv_sec = (sec);                                                     \
-        now.tv_usec = (usec);                                                   \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                              \
-                            "defining timer event: %ld sec %ld usec at %s:%d",  \
-                            (long)now.tv_sec, (long)now.tv_usec,                \
-                            __FILE__, __LINE__));                               \
-        opal_evtimer_add(tmp, &now);                                            \
-    }while(0);                                                                  \
+#define ORTE_TIMER_EVENT(time, cbfunc)                                  \
+    do {                                                                \
+        struct timeval now;                                             \
+        opal_event_t *tmp;                                              \
+        tmp = (opal_event_t*)malloc(sizeof(opal_event_t));              \
+        opal_evtimer_set(tmp, (cbfunc), tmp);                           \
+        now.tv_sec = (time);                                            \
+        now.tv_usec = 0;                                                \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                      \
+                            "defining timer event: %ld sec at %s:%d",   \
+                            (long)now.tv_sec,                           \
+                            __FILE__, __LINE__));                       \
+        opal_evtimer_add(tmp, &now);                                    \
+    }while(0);                                                          \
 
 
 /**

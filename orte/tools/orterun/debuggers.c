@@ -564,7 +564,7 @@ void orte_debugger_init_before_spawn(orte_job_t *jdata)
             /* setup a timer to wake us up periodically
              * to check for debugger attach
              */
-            ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, check_debugger);
+            ORTE_TIMER_EVENT(orte_debugger_check_rate, check_debugger);
         }
         return;
     }

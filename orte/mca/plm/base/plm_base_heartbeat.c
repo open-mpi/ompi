@@ -137,6 +137,6 @@ void orte_plm_base_start_heart(void)
 {
     /* if the heartbeat rate > 0, then start the heart */
     if (0 < orte_heartbeat_rate) {
-        ORTE_TIMER_EVENT(HEARTBEAT_CK*orte_heartbeat_rate, 0, check_heartbeat);
+        ORTE_TIMER_EVENT(HEARTBEAT_CK*orte_heartbeat_rate, check_heartbeat);
     }
 }
