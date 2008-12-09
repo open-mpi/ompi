@@ -335,9 +335,9 @@ DISPLAY:
             }
         }
         if (orte_xml_output) {
-            opal_output(orte_ras_base.alloc_output, "%s</allocation>\n", tmp);
+            opal_output(orte_clean_output, "%s</allocation>\n", tmp);
         } else {
-            opal_output(orte_ras_base.alloc_output, "%s\n\n=================================================================\n", tmp);
+            opal_output(orte_clean_output, "%s\n\n=================================================================\n", tmp);
         }
         free(tmp);
     }

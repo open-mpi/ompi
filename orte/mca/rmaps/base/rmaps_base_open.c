@@ -78,7 +78,6 @@ int orte_rmaps_base_open(void)
 {
     int param, value;
     char *policy;
-    opal_output_stream_t lds;
     bool btmp;
 
     /* init the globals */
@@ -88,11 +87,6 @@ int orte_rmaps_base_open(void)
         verbose set by the mca open system... */
     orte_rmaps_base.rmaps_output = opal_output_open(NULL);
 
-    OBJ_CONSTRUCT(&lds, opal_output_stream_t);
-    lds.lds_want_stdout = true;
-    orte_rmaps_base.map_output = opal_output_open(&lds);
-    OBJ_DESTRUCT(&lds);
-    
     /* Are we scheduling by node or by slot? */
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot | node]",
