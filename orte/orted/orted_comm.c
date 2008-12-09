@@ -67,7 +67,6 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls.h"
-#include "orte/mca/odls/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/routed/routed.h"
@@ -437,8 +436,6 @@ static int process_commands(orte_process_name_t* sender,
     opal_buffer_t *answer;
     orte_rml_cmd_flag_t rml_cmd;
     orte_job_t *jdata;
-    orte_process_name_t proc;
-    int32_t status;
 
     /* unpack the command */
     n = 1;
@@ -618,45 +615,6 @@ static int process_commands(orte_process_name_t* sender,
             }
             break;
             
-            /****    WAITPID_FIRED COMMAND     ****/
-        case ORTE_DAEMON_WAITPID_FIRED:
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received waitpid_fired cmd",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            /* unpack the name of the proc that terminated */
-            n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            /* unpack the termination status */
-            n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &status, &n, OPAL_INT32))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            /* pass it down for processing */
-            orte_base_default_waitpid_fired(&proc, status);
-            break;
-            
-            
-            /****    IOF_COMPLETE COMMAND     ****/
-        case ORTE_DAEMON_IOF_COMPLETE:
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received iof_complete cmd",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            /* unpack the name of the proc that completed */
-            n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME))) {
-                ORTE_ERROR_LOG(ret);
-                goto CLEANUP;
-            }
-            /* pass it down for processing */
-            orte_odls_base_notify_iof_complete(&proc);
-            break;
-
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_WITH_REPLY_CMD:
             if (orte_debug_daemons_flag) {

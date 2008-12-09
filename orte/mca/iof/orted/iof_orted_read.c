@@ -28,15 +28,12 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/dss/dss.h"
-
 #include "orte/util/show_help.h"
+
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/orted/orted.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -62,8 +59,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     opal_buffer_t *buf=NULL;
     int rc;
     int32_t numbytes;
-    opal_list_item_t *item;
-    orte_iof_proc_t *proct;
     
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     
@@ -79,17 +74,11 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     }
 #endif  /* !defined(__WINDOWS__) */
     
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s iof:orted:read handler read %d bytes from %s, fd %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         numbytes, ORTE_NAME_PRINT(&rev->name), fd));
-    
     if (numbytes <= 0) {
         if (0 > numbytes) {
             /* either we have a connection error or it was a non-blocking read */
             if (EAGAIN == errno || EINTR == errno) {
                 /* non-blocking, retry */
-                opal_event_add(&rev->ev, 0);
                 OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
                 return;
             } 
@@ -99,9 +88,14 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&rev->name), fd));
         }
-        /* numbytes must have been zero, so go down and close the fd etc */
         goto CLEAN_RETURN;
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                         "%s iof:orted:read handler %s %d bytes from fd %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&rev->name),
+                         numbytes, fd));
     
     /* prep the buffer */
     buf = OBJ_NEW(opal_buffer_t);
@@ -134,60 +128,16 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             0, send_cb, NULL);
     
-    /* re-add the event */
-    opal_event_add(&rev->ev, 0);
-
     OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
+    
+    /* since the event is persistent, we do not need to re-add it */
     return;
    
 CLEAN_RETURN:
-    /* must be an error, or zero bytes were read indicating that the
-     * proc terminated this IOF channel - either way, find this proc
-     * on our list and clean up
-     */
-    for (item = opal_list_get_first(&mca_iof_orted_component.procs);
-         item != opal_list_get_end(&mca_iof_orted_component.procs);
-         item = opal_list_get_next(item)) {
-        proct = (orte_iof_proc_t*)item;
-        if (proct->name.jobid == rev->name.jobid &&
-            proct->name.vpid == rev->name.vpid) {
-            /* found it - release corresponding event. This deletes
-             * the read event and closes the file descriptor
-             */
-            if (rev->tag & ORTE_IOF_STDOUT) {
-                OBJ_RELEASE(proct->revstdout);
-            } else if (rev->tag & ORTE_IOF_STDERR) {
-                OBJ_RELEASE(proct->revstderr);
-            } else if (rev->tag & ORTE_IOF_STDDIAG) {
-                OBJ_RELEASE(proct->revstddiag);
-            }
-            /* check to see if they are all done */
-            if (NULL == proct->revstdout &&
-                NULL == proct->revstderr &&
-                NULL == proct->revstddiag) {
-                opal_buffer_t cmdbuf;
-                orte_daemon_cmd_flag_t command;
-                /* this proc's iof is complete */
-                opal_list_remove_item(&mca_iof_orted_component.procs, item);
-                /* setup a cmd to notify that the iof is complete */
-                OBJ_CONSTRUCT(&cmdbuf, opal_buffer_t);
-                command = ORTE_DAEMON_IOF_COMPLETE;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &command, 1, ORTE_DAEMON_CMD))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &proct->name, 1, ORTE_NAME))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-                ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmdbuf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-            CLEANUP:
-                OBJ_DESTRUCT(&cmdbuf);
-                OBJ_RELEASE(proct);
-            }
-            break;
-        }
-    }
+    /* delete the event from the event library */
+    opal_event_del(&rev->ev);
+    close(rev->ev.ev_fd);
+    rev->ev.ev_fd = -1;
     if (NULL != buf) {
         OBJ_RELEASE(buf);
     }

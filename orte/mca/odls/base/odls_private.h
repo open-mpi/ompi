@@ -64,8 +64,6 @@ typedef struct {
     orte_exit_code_t exit_code;  /* process exit code */
     char *rml_uri;               /* contact info for this child */
     char *slot_list;             /* list of slots for this child */
-    bool waitpid_recvd;          /* waitpid has detected proc termination */
-    bool iof_complete;           /* IOF has noted proc terminating all channels */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 
