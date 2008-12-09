@@ -27,37 +27,17 @@ AC_DEFUN([OMPI_MAKE_STRIPPED_FLAGS],[
 s_arg="$1"
 s_result=
 for s_word in $s_arg; do
+    # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
+    # for an explanation of @<:@ and @:>@ -- they m4 expand to [ and ]
     case $s_word in
-    -g)    ;;
-    +K0)   ;;
-    +K1)   ;;
-    +K2)   ;;
-    +K3)   ;;
-    +K4)   ;;
-    +K5)   ;;
-    -O)    ;;
-    -O0)   ;;
-    -O1)   ;;
-    -O2)   ;;
-    -O3)   ;;
-    -O4)   ;;
-    -O5)   ;;
-    -O6)   ;;
-    -O7)   ;;
-    -O8)   ;;
-    -O9)   ;;
-    -xO)   ;;
-    -xO0)  ;;
-    -xO1)  ;;
-    -xO2)  ;;
-    -xO3)  ;;
-    -xO4)  ;;
-    -xO5)  ;;
-    -xO6)  ;;
-    -xO7)  ;;
-    -xO8)  ;;
-    -xO9)  ;;
-    -fast) ;;
+    -g)             ;;
+    -g@<:@1-3@:>@)  ;;
+    +K@<:@0-5@:>@)  ;;
+    -O)             ;;
+    -O@<:@0-9@:>@)  ;;
+    -xO)            ;;
+    -xO@<:@0-9@:>@) ;;
+    -fast)          ;;
 
     # The below Sun Studio flags require or
     # trigger -xO optimization
