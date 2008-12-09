@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -16,23 +16,12 @@
 # 
 # $HEADER$
 #
+# This is the US/English general help file for Open MPI's ompi-probe tool.
+#
+[ompiprobe:usage]
+Probe a set of nodes to determine their configuration
 
-# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
+Usage: %s [OPTIONS]
 
-EXTRA_DIST += tools/win_makefile
+%s
 
-SUBDIRS += \
-	tools/ompi_info \
-	tools/wrappers \
-	tools/ortetools \
-        tools/ompi-server \
-        tools/ompi-probe \
-        tools/ompi-profiler
-
-DIST_SUBDIRS += \
-	tools/ompi_info \
-	tools/wrappers \
-	tools/ortetools \
-	tools/ompi-server \
-        tools/ompi-probe \
-        tools/ompi-profiler

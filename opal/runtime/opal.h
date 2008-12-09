@@ -24,12 +24,14 @@
 
 #include "opal_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 /** version string of opal */
 OPAL_DECLSPEC extern const char opal_version_string[];
+
+/* profile flag */
+OPAL_DECLSPEC extern bool opal_profile;
+OPAL_DECLSPEC extern char *opal_profile_file;
 
 /**
  * Initialize the OPAL layer, including the MCA system.
@@ -80,8 +82,6 @@ OPAL_DECLSPEC int opal_finalize_util(void);
  */
 OPAL_DECLSPEC int opal_register_params(void);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif

@@ -330,6 +330,11 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
     modex_proc_data_t *proc_data;
     modex_attr_data_t *attr_data;
     
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:get_proc_attr: searching for attr %s on proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attribute_name,
+                         ORTE_NAME_PRINT(&proc)));
+
     proc_data = modex_lookup_orte_proc(&proc);
     if (NULL == proc_data) {
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
@@ -363,6 +368,11 @@ int orte_grpcomm_base_get_proc_attr(const orte_process_name_t proc,
         memcpy(copy, attr_data->attr_data, attr_data->attr_data_size);
         *val = copy;
         *size = attr_data->attr_data_size;
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                             "%s grpcomm:get_proc_attr: found %d bytes for attr %s on proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)attr_data->attr_data_size,
+                             attribute_name, ORTE_NAME_PRINT(&proc)));
+        
     }
     OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
     
@@ -451,6 +461,11 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
         goto cleanup;
     }
     
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:base:update_modex_entries: adding %d entries for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
+                         ORTE_NAME_PRINT(proc_name)));
+    
     /*
      * Extract the attribute names and values
      */
@@ -502,6 +517,57 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
         attr_data->attr_data_size = num_bytes;
         proc_data->modex_received_data = true;            
     }
+    
+cleanup:
+    OPAL_THREAD_UNLOCK(&proc_data->modex_lock);
+    return rc;
+}
+
+int orte_grpcomm_base_load_modex_data(orte_process_name_t *proc_name, char *attr_name,
+                                      void *data, int num_bytes)
+{
+    modex_proc_data_t *proc_data;
+    modex_attr_data_t *attr_data;
+    int rc = ORTE_SUCCESS;
+    void *bytes;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
+                         "%s grpcomm:base:load_modex_data: loading %ld bytes for attr %s on proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (long)num_bytes, attr_name, ORTE_NAME_PRINT(proc_name)));
+
+    /* look up the modex data structure */
+    proc_data = modex_lookup_orte_proc(proc_name);
+    if (proc_data == NULL) {
+        /* report the error */
+        opal_output(0, "grpcomm:base:update_modex: received modex info for unknown proc %s\n",
+                    ORTE_NAME_PRINT(proc_name));
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    OPAL_THREAD_LOCK(&proc_data->modex_lock);
+    
+    /*
+     * Lookup the corresponding modex structure
+     */
+    if (NULL == (attr_data = modex_lookup_attr_data(proc_data, 
+                                                    attr_name, true))) {
+        opal_output(0, "grpcomm:base:update_modex: modex_lookup_attr_data failed\n");
+        rc = ORTE_ERR_NOT_FOUND;
+        goto cleanup;
+    }
+    if (NULL != attr_data->attr_data) {
+        /* some pre-existing value must be here - release it */
+        free(attr_data->attr_data);
+    }
+    /* create space for the data - this is necessary since the data being
+     * passed to us may be static or released on the other end
+     */
+    bytes = (void*)malloc(num_bytes);
+    memcpy(bytes, data, num_bytes);
+    attr_data->attr_data = bytes;
+    attr_data->attr_data_size = num_bytes;
+    proc_data->modex_received_data = true;            
     
 cleanup:
     OPAL_THREAD_UNLOCK(&proc_data->modex_lock);

@@ -76,6 +76,11 @@ ORTE_DECLSPEC   void orte_grpcomm_base_modex_finalize(void);
 ORTE_DECLSPEC   int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *modex_reqd);
 ORTE_DECLSPEC   int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
                                                            opal_buffer_t *rbuf);
+ORTE_DECLSPEC   int orte_grpcomm_base_load_modex_data(orte_process_name_t *proc, char *attribute_name,
+                                                      void *data, int num_bytes);
+
+ORTE_DECLSPEC int orte_grpcomm_base_comm_start(void);
+ORTE_DECLSPEC int orte_grpcomm_base_comm_stop(void);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

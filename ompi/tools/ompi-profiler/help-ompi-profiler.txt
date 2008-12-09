@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -16,23 +16,22 @@
 # 
 # $HEADER$
 #
+# This is the US/English general help file for Open MPI's ompi-probe tool.
+#
+[ompi-profiler:usage]
 
-# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
+ompi-profiler (Open MPI) version %s
 
-EXTRA_DIST += tools/win_makefile
+Profile Open MPI to determine what frameworks are being used, and to
+report out information that can be used to tailor Open MPI's behavior.
 
-SUBDIRS += \
-	tools/ompi_info \
-	tools/wrappers \
-	tools/ortetools \
-        tools/ompi-server \
-        tools/ompi-probe \
-        tools/ompi-profiler
+Usage: ompi-profiler [OPTIONS]
 
-DIST_SUBDIRS += \
-	tools/ompi_info \
-	tools/wrappers \
-	tools/ortetools \
-	tools/ompi-server \
-        tools/ompi-probe \
-        tools/ompi-profiler
+Report bugs to %s
+#
+[ompi-profiler:version]
+
+ompi-profiler (Open MPI) version %s
+
+Report bugs to %s
+

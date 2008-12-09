@@ -114,6 +114,7 @@ static char *ompi_server=NULL;
 static opal_event_t *abort_exit_event=NULL;
 static bool forcibly_die = false;
 static opal_event_t *timeout_ev=NULL;
+static bool profile_is_set = false;
 
 /*
  * Globals
@@ -371,6 +372,35 @@ int orterun(int argc, char *argv[])
         return rc;
     }
 
+    /*
+     * Since this process can now handle MCA/GMCA parameters, make sure to
+     * process them.
+     */
+    mca_base_cmd_line_process_args(&cmd_line, &environ, &environ);
+    
+    /* make sure that opal_profile is -not- set for us locally as
+     * we really only want to profile MPI apps. However, if it is
+     * set, remember it so we can add it to the apps environment later
+     */
+    if (NULL != getenv("OMPI_MCA_opal_profile")) {
+        putenv("OMPI_MCA_opal_profile=0");
+        profile_is_set = true;
+        /* ensure that I know to turn on my profile receive! */
+        putenv("OMPI_MCA_orte_grpcomm_recv_on=1");
+    }
+    
+    /* Ensure that enough of OPAL is setup for us to be able to run */
+    /*
+     * NOTE: (JJH)
+     *  We need to allow 'mca_base_cmd_line_process_args()' to process command
+     *  line arguments *before* calling opal_init_util() since the command
+     *  line could contain MCA parameters that affect the way opal_init_util()
+     *  functions. AMCA parameters are one such option normally received on the
+     *  command line that affect the way opal_init_util() behaves.
+     *  It is "safe" to call mca_base_cmd_line_process_args() before 
+     *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
+     *  depend upon opal_init_util() functionality.
+     */
     /* Need to initialize OPAL so that install_dirs are filled in */
     /*
      * NOTE: (JJH)
@@ -1628,24 +1658,14 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             free(param);
         }
     }
-
+    /* if profile was set, add it back in */
+    if (profile_is_set) {
+        opal_setenv("OMPI_MCA_opal_profile", "1", true, &app->env);
+    }
+    
     /* add the ompi-server, if provided */
     if (NULL != ompi_server) {
-        bool found_serv = false;
-        asprintf(&param, "OMPI_MCA_pubsub_orte_server=%s", ompi_server);
-        /* this shouldn't exist, but if it does... */
-        for (i=0; i < opal_argv_count(app->env); i++) {
-            if (0 == strcmp(param, app->env[i])) {
-                free(app->env[i]);
-                app->env[i] = strdup(param);
-                found_serv = true;
-                break;
-            }
-        }
-        if (!found_serv) {
-            opal_argv_append_nosize(&app->env, param); /* add it */
-        }
-        free(param);
+        opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, &app->env);
     }
 
     /* Did the user request to export any environment variables? */

@@ -28,5 +28,7 @@ if !ORTE_DISABLE_FULL_SUPPORT
 
 libmca_grpcomm_la_SOURCES += \
         base/grpcomm_base_allgather.c \
-        base/grpcomm_base_modex.c
+        base/grpcomm_base_modex.c \
+        base/grpcomm_base_receive.c
+
 endif
