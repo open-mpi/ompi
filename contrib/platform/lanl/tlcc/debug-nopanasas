@@ -15,11 +15,11 @@ enable_mpi_cxx=yes
 enable_mpi_cxx_seek=yes
 enable_cxx_exceptions=yes
 enable_ft_thread=no
-enable_mca_no_build=crs,filem,grpcomm-bad,routed-direct,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm
+enable_per_user_config_files=no
+enable_mca_no_build=crs,filem,routed-direct,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm
 enable_contrib_no_build=libnbc,vt
 with_slurm=yes
-with_openib=/opt/ofed
-with_openib_libdir=/opt/ofed/lib64
+with_openib
 with_devel_headers=yes
 with_tm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
