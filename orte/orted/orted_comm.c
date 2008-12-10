@@ -71,6 +71,8 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/routed/routed.h"
 
+#include "orte/mca/odls/base/odls_private.h"
+
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
@@ -80,9 +82,6 @@
 /*
  * Globals
  */
-static bool relay_is_required;
-static bool exit_after_relay;
-
 static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
@@ -98,12 +97,9 @@ static void send_callback(int status, orte_process_name_t *peer,
     OBJ_RELEASE(buf);
 }
 
-static void send_relay(int fd, short event, void *data)
+static void send_relay(opal_buffer_t *buf, orte_jobid_t target_job, orte_rml_tag_t tag)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)data;
-    opal_buffer_t *buffer=NULL;
-    orte_rml_tag_t tag = mev->tag;
-    orte_jobid_t target_job = mev->sender.jobid;
+    opal_buffer_t *buffer = NULL;
     opal_list_t recips;
     opal_list_item_t *item;
     orte_namelist_t *nm;
@@ -149,17 +145,17 @@ static void send_relay(int fd, short event, void *data)
          * recipients can correctly process it
          */
         n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &n, ORTE_DAEMON_CMD))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buf, &command, &n, ORTE_DAEMON_CMD))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
         n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &job, &n, ORTE_JOBID))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buf, &job, &n, ORTE_JOBID))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
         n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &msg_tag, &n, ORTE_RML_TAG))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buf, &msg_tag, &n, ORTE_RML_TAG))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
@@ -167,26 +163,26 @@ static void send_relay(int fd, short event, void *data)
         if (ORTE_RML_TAG_DAEMON != tag) {
             /* remove the message_local_procs cmd data */
             n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &command, &n, ORTE_DAEMON_CMD))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buf, &command, &n, ORTE_DAEMON_CMD))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
             n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &job, &n, ORTE_JOBID))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buf, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
             n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(mev->buffer, &msg_tag, &n, ORTE_RML_TAG))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buf, &msg_tag, &n, ORTE_RML_TAG))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
         }
         buffer = OBJ_NEW(opal_buffer_t);
-        opal_dss.copy_payload(buffer, mev->buffer);
+        opal_dss.copy_payload(buffer, buf);
     } else {
         /* buffer is already setup - just point to it */
-        buffer = mev->buffer;
+        buffer = buf;
         /* tag needs to be set to daemon_tag */
         tag = ORTE_RML_TAG_DAEMON;
     }
@@ -253,13 +249,8 @@ static void send_relay(int fd, short event, void *data)
 CLEANUP:
     /* cleanup */
     OBJ_DESTRUCT(&recips);
-    if (NULL != buffer && buffer != mev->buffer) {
+    if (NULL != buffer && buffer != buf) {
         OBJ_RELEASE(buffer);
-    }
-    OBJ_RELEASE(mev);
-    /* see if we need to exit */
-    if (exit_after_relay) {
-        orte_trigger_event(&orte_exit);
     }
 }
 
@@ -295,7 +286,7 @@ static int wait_time=1;
 void orte_daemon_cmd_processor(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
-    orte_process_name_t *sender = &(mev->sender), target;
+    orte_process_name_t *sender = &(mev->sender);
     opal_buffer_t *buffer = mev->buffer;
     orte_rml_tag_t tag = mev->tag, target_tag;
     orte_jobid_t job;
@@ -378,22 +369,33 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
-        /* let the send_relay function know the target jobid */
-        target.jobid = job;
-        target.vpid = ORTE_VPID_INVALID;  /* irrelevant, but better than random */
         /* save this buffer location */
         save = buffer->unpack_ptr;
-        /* rewind the buffer so we can relay it correctly */
+        /* unpack the command that will actually be executed */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+        /* is this an add-procs cmd? */
+        if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
+            /* yes - then it contains daemon update info - process it */
+            if (ORTE_SUCCESS != (ret = orte_odls_base_default_update_daemon_info(buffer))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+            /* flag this location */
+            save = buffer->unpack_ptr;
+        }
+        
+        /* rewind the buffer to the beginning */
         buffer->unpack_ptr = unpack_ptr;
-        /* setup an event to actually perform the relay */
-        ORTE_MESSAGE_EVENT(&target, buffer, target_tag, send_relay);
-        /* flag that a relay is required */
-        relay_is_required = true;
-        /* rewind the buffer to the right place for processing */
+        /* do the relay */
+        send_relay(buffer, job, target_tag);
+        
+        /* rewind the buffer to the right place for processing the cmd */
         buffer->unpack_ptr = save;
     } else {
-        /* flag that a relay is -not- required */
-        relay_is_required = false;
         /* rewind the buffer so we can process it correctly */
         buffer->unpack_ptr = unpack_ptr;
     }
@@ -669,12 +671,7 @@ static int process_commands(orte_process_name_t* sender,
                 orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
                 OBJ_DESTRUCT(&ack);
             }
-            /* check to see if we need to relay messages */
-            if (relay_is_required) {
-                exit_after_relay = true;
-            } else {
-                orte_trigger_event(&orte_exit);
-            }
+            orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;
 
@@ -712,12 +709,7 @@ static int process_commands(orte_process_name_t* sender,
                  */
                 return ORTE_SUCCESS;
             }
-            /* check to see if we need to relay messages */
-            if (relay_is_required) {
-                exit_after_relay = true;
-            } else {
-                orte_trigger_event(&orte_exit);
-            }
+            orte_trigger_event(&orte_exit);
             return ORTE_SUCCESS;
             break;
             
