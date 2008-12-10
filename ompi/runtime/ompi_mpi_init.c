@@ -685,7 +685,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Do we need to wait for a debugger? */
+#ifndef __WINDOWS__
     ompi_wait_for_debugger();
+#endif
     
     /* check for timing request - get stop time and report elapsed
      time if so, then start the clock again */

@@ -903,8 +903,8 @@ void orte_trigger_event(orte_trigger_event_t *trig)
         return;
     }
         
-    send(trig->channel, (const char *) &data, sizeof(int), 0);
-	closesocket(trig->channel);
+    send(trig->channel, (const char*)&data, sizeof(int), 0);
+    closesocket(trig->channel);
     opal_progress();
 }
 
@@ -1117,6 +1117,9 @@ int orte_wait_event(opal_event_t **event, orte_trigger_event_t *trig,
     
     /* create the event */
     *event = (opal_event_t*)malloc(sizeof(opal_event_t));
+    
+    /* setup the trigger and its associated lock */
+    OBJ_CONSTRUCT(trig, orte_trigger_event_t);
     
     /* pass back the write end of the pipe */
     trig->channel = p[1];

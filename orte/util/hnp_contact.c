@@ -257,7 +257,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
          * See if a contact file exists in this directory and read it
          */
         contact_filename = opal_os_path( false, headdir,
-                                         dir_entry->d_name, "contact.txt", NULL );
+                                         file_data, "contact.txt", NULL );
         
         hnp = OBJ_NEW(orte_hnp_contact_t);
         if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp, connect))) {

@@ -782,8 +782,15 @@ static void job_completed(int trigpipe, short event, void *arg)
                             orte_max_timeout, timeout_callback);
     }
     
+#ifndef __WINDOWS__
     /* now wait to hear it has been done */
     opal_event_dispatch();
+#else
+    /* We are using WT_EXECUTEINWAITTHREAD mode of threading pool,
+       the other callbacks won't be triggerred until this thread finishes,
+       so just return to main thread and process the rest events there.  */
+    return;
+#endif
     
     /* if we cannot order the daemons to terminate, then
      * all we can do is cleanly exit ourselves
