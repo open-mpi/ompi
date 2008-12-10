@@ -71,6 +71,7 @@
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/hnp_contact.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
@@ -139,7 +140,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 0,
       &orterun_globals.report_pid, OPAL_CMD_LINE_TYPE_BOOL,
       "Printout pid" },
-    
+    { NULL, NULL, NULL, '\0', "report-uri", "report-uri", 0,
+      &orterun_globals.report_uri, OPAL_CMD_LINE_TYPE_BOOL,
+      "Printout URI" },
+
     /* hetero apps */
     { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -489,6 +493,16 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         return rc;
     }    
+    
+    /* check for request to report uri */
+    if (orterun_globals.report_uri) {
+        char *uri;
+        uri = orte_rml.get_contact_info();
+        printf("%s uri: %s\n", orterun_basename, (NULL == uri) ? "NULL" : uri);
+        if (NULL != uri) {
+            free(uri);
+        }
+    }
     
     /* Change the default behavior of libevent such that we want to
      continually block rather than blocking for the default timeout
@@ -1167,6 +1181,7 @@ static int init_globals(void)
     orterun_globals.verbose                    = false;
     orterun_globals.quiet                      = false;
     orterun_globals.report_pid                 = false;
+    orterun_globals.report_uri                 = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
@@ -1333,6 +1348,76 @@ static int parse_locals(int argc, char* argv[])
             fclose(fp);
             input[strlen(input)-1] = '\0';  /* remove newline */
             ompi_server = strdup(input);
+        } else if (0 == strncmp(orterun_globals.ompi_server, "pid", strlen("pid")) ||
+                   0 == strncmp(orterun_globals.ompi_server, "PID", strlen("PID"))) {
+            opal_list_t hnp_list;
+            opal_list_item_t *item;
+            orte_hnp_contact_t *hnp;
+            char *ptr;
+            pid_t pid;
+            
+            ptr = strchr(orterun_globals.ompi_server, ':');
+            if (NULL == ptr) {
+                /* pid is not correctly formatted */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
+                               orterun_basename, orterun_basename,
+                               orterun_globals.ompi_server, orterun_basename);
+                exit(1);
+            }
+            ++ptr; /* space past the : */
+            
+            if (0 >= strlen(ptr)) {
+                /* they forgot to give us the pid! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
+                               orterun_basename, orterun_basename,
+                               orterun_globals.ompi_server, orterun_basename);
+                exit(1);
+            }
+            
+            pid = strtoul(ptr, NULL, 10);
+            
+            /* to search the local mpirun's, we have to partially initialize the
+             * orte_process_info structure. This won't fully be setup until orte_init,
+             * but we finagle a little bit of it here
+             */
+            if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(NULL, &orte_process_info.tmpdir_base,
+                                                                &orte_process_info.top_session_dir,
+                                                                NULL, NULL, NULL))) {
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
+                               orterun_basename, orterun_basename);
+                exit(1);
+            }
+            
+            OBJ_CONSTRUCT(&hnp_list, opal_list_t);
+            
+            /* get the list of HNPs, but do -not- setup contact info to them in the RML */
+            if (ORTE_SUCCESS != (rc = orte_list_local_hnps(&hnp_list, false))) {
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
+                               orterun_basename, orterun_basename);
+                exit(1);
+            }
+            
+            /* search the list for the desired pid */
+            while (NULL != (item = opal_list_remove_first(&hnp_list))) {
+                hnp = (orte_hnp_contact_t*)item;
+                if (pid == hnp->pid) {
+                    ompi_server = strdup(hnp->rml_uri);
+                    goto hnp_found;
+                }
+                OBJ_RELEASE(item);
+            }
+            /* if we got here, it wasn't found */
+            orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-not-found", true,
+                           orterun_basename, orterun_basename, pid, orterun_globals.ompi_server,
+                           orterun_basename);
+            OBJ_DESTRUCT(&hnp_list);
+            exit(1);
+        hnp_found:
+            /* cleanup rest of list */
+            while (NULL != (item = opal_list_remove_first(&hnp_list))) {
+                OBJ_RELEASE(item);
+            }
+            OBJ_DESTRUCT(&hnp_list);
         } else {
             ompi_server = strdup(orterun_globals.ompi_server);
         }

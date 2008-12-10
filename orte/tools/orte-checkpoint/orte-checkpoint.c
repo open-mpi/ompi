@@ -389,9 +389,11 @@ static int find_hnp(void) {
     opal_list_item_t *item;
     orte_hnp_contact_t *hnpcandidate;
     
-    /* get the list of local hnp's available to us */
+    /* get the list of local hnp's available to us and setup
+     * contact info for them into the RML
+     */
     OBJ_CONSTRUCT(&hnp_list, opal_list_t);
-    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list) ) ) {
+    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
         goto cleanup;

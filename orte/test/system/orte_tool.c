@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
     /*
      * Get the directory listing
      */
-    if (ORTE_SUCCESS != (rc = orte_list_local_hnps(&hnp_list) ) ) {
+    if (ORTE_SUCCESS != (rc = orte_list_local_hnps(&hnp_list, true) ) ) {
         fprintf(stderr, "orte_tool: couldn't get list of HNP's on this system - error %s\n",
                 ORTE_ERROR_NAME(rc));
         goto cleanup;

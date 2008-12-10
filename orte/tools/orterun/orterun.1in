@@ -205,7 +205,7 @@ Synonym for \fI-np\fP.
 .TP
 .B -nolocal\fR,\fP --nolocal
 Do not run any copies of the launched application on the same node as
-orterun is running.  This option will override listing the localhost
+mpirun is running.  This option will override listing the localhost
 with \fB--host\fR or any other host-specifying mechanism.
 .
 .
@@ -242,22 +242,24 @@ Launch one process on each node of the allocation - equivalent to npernode 1.
 .
 .TP
 .B -ompi-server\fR,\fP --ompi-server <uri or file>
-Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that
-contains that info. The Open MPI server is used to support multi-application data exchange via
+Specify the URI of the Open MPI server (or the mpirun to be used as the server), the name
+of the file (specified as file:filename) that
+contains that info, or the PID (specified as pid:#) of the mpirun to be used as the server.
+The Open MPI server is used to support multi-application data exchange via
 the MPI-2 MPI_Publish_name and MPI_Lookup_name functions.
 .
 .
 .TP
 .B -wait-for-server\fR,\fP --wait-for-server
-Pause mpirun before launching the job until ompi-server is detected. This
-is useful in scripts where ompi-server may be started in the background, followed immediately by
+Pause mpirun before launching the job until the Open MPI server is detected. This
+is useful in scripts where the server may be started in the background, followed immediately by
 an \fImpirun\fP command that wishes to connect to it. Mpirun will pause until either the specified
-ompi-server is contacted or the server-wait-time is exceeded.
+server is contacted or the server-wait-time is exceeded.
 .
 .
 .TP
 .B -server-wait-time\fR,\fP --server-wait-time <secs>
-The max amount of time (in seconds) mpirun should wait for the ompi-server to start. The default
+The max amount of time (in seconds) mpirun should wait for the specified server to start. The default
 is 10 seconds.
 .
 .
@@ -295,7 +297,17 @@ directory. By default, the absolute and relative paths provided by --preload-fil
 .
 .TP
 .B -q\fR,\fP --quiet
-Suppress informative messages from orterun during application execution.
+Suppress informative messages from mpirun during application execution.
+.
+.
+.TP
+.B -report-uri\fR,\fP --report-uri
+Print out mpirun's URI during startup.
+.
+.
+.TP
+.B -report-pid\fR,\fP --report-pid
+Print out mpirun's PID during startup.
 .
 .
 .TP
@@ -339,7 +351,7 @@ Be verbose
 .TP
 .B -V\fR,\fP --version
 Print version number.  If no other arguments are given, this will also
-cause orterun to exit.
+cause mpirun to exit.
 .
 .
 .TP
@@ -703,14 +715,14 @@ and distance among them. See the following example of the cartofile:
  . 
 .SS No Local Launch
 .
-Using the \fB--nolocal\fR option to orterun tells the system to not
-launch any of the application processes on the same node that orterun
-is running.  While orterun typically blocks and consumes few system
+Using the \fB--nolocal\fR option to mpirun tells the system to not
+launch any of the application processes on the same node that mpirun
+is running.  While mpirun typically blocks and consumes few system
 resources, this option can be helpful for launching very large jobs
-where orterun may actually need to use noticable amounts of memory
+where mpirun may actually need to use noticable amounts of memory
 and/or processing time.  \fB--nolocal\fR allows orteun to run without
 sharing the local node with the launched applications, and likewise
-allows the launched applications to run unhindered by orterun's system
+allows the launched applications to run unhindered by mpirun's system
 usage.
 .PP
 Note that \fB--nolocal\fR will override any other specification to
@@ -721,7 +733,7 @@ application.
 .
 .TP
 shell$ mpirun -np 1 --host localhost --nolocal hostname
-This example will result in an error because orterun will not find
+This example will result in an error because mpirun will not find
 anywhere to launch the application.
 .
 .
@@ -821,14 +833,14 @@ be collected into the \fImy_output\fP file.
 .
 .SS Signal Propagation
 .
-When orterun receives a SIGTERM and SIGINT, it will attempt to kill
+When mpirun receives a SIGTERM and SIGINT, it will attempt to kill
 the entire job by sending all processes in the job a SIGTERM, waiting
 a small number of seconds, then sending all processes in the job a
 SIGKILL.
 .
-SIGUSR1 and SIGUSR2 signals received by orterun are propagated to
+SIGUSR1 and SIGUSR2 signals received by mpirun are propagated to
 all processes in the job.  Other signals are not currently propagated
-by orterun.
+by mpirun.
 .
 .
 .SS Process Termination / Signal Handling
