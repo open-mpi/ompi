@@ -95,7 +95,11 @@ static int post_send(mca_btl_openib_endpoint_t *ep,
             sr_desc->opcode = IBV_WR_SEND;
         } else {
             sr_desc->opcode = IBV_WR_SEND_WITH_IMM;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            sr_desc->imm_data = htonl(ep->rem_info.rem_index);
+#else
             sr_desc->imm_data = ep->rem_info.rem_index;
+#endif
         }
     }
 
