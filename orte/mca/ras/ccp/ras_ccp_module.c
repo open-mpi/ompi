@@ -39,6 +39,8 @@
     rename("GetJob", "GetSingleJob")                                \
     rename("AddJob", "AddSingleJob")
 
+/* Include the library for ::ConvertBSTRToString */
+#pragma comment(lib, "comsuppw.lib")
 
 /*
  * Local functions

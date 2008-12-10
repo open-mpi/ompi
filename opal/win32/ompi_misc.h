@@ -19,6 +19,7 @@
 #ifndef OMPI_MISC_H
 #define OMPI_MISC_H
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #define _SC_PAGESIZE 0
