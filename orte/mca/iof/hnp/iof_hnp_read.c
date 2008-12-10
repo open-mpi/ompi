@@ -28,18 +28,28 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "orte/util/show_help.h"
+#include "opal/dss/dss.h"
 
+#include "orte/util/show_help.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/orted/orted.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 
 #include "iof_hnp.h"
+
+static void restart_stdin(int fd, short event, void *cbdata)
+{
+    if (NULL != mca_iof_hnp_component.stdinev) {
+        opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+    }
+}
 
 /* return true if we should read stdin from fd, false otherwise */
 bool orte_iof_hnp_stdin_check(int fd)
@@ -74,6 +84,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     unsigned char data[ORTE_IOF_BASE_MSG_MAX];
     int32_t numbytes;
     opal_list_item_t *item;
+    orte_iof_proc_t *proct;
+    int rc;
     
     OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
     
@@ -94,6 +106,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
+            opal_event_add(&rev->ev, 0);
             OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
         } 
@@ -133,19 +146,21 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                  * down the pipe so it forces out any preceding data before
                  * closing the output stream
                  */
-                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &sink->wev)) {
-                    /* getting too backed up - stop the read event for now if it is still active */
-                    if (mca_iof_hnp_component.stdinev->active) {
-                        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                             "buffer backed up - holding"));
-                        opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
-                        mca_iof_hnp_component.stdinev->active = false;
+                if (NULL != sink->wev) {
+                    if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev)) {
+                        /* getting too backed up - stop the read event for now if it is still active */
+                        if (mca_iof_hnp_component.stdinev->active) {
+                            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                                 "buffer backed up - holding"));
+                            opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
+                            mca_iof_hnp_component.stdinev->active = false;
+                        }
                     }
                 }
             } else {
                 OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                     "%s sending data to daemon %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     "%s sending %d bytes from stdin to daemon %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&sink->daemon)));
                 
                 /* send the data to the daemon so it can
@@ -159,8 +174,17 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &sink->name, ORTE_IOF_STDIN, data, numbytes);
             }
         }
+        /* if num_bytes was zero, then we need to terminate the event */
+        if (0 == numbytes) {
+            /* this will also close our stdin file descriptor */
+            OBJ_RELEASE(mca_iof_hnp_component.stdinev);
+        } else {
+            ORTE_TIMER_EVENT(0, 10000, restart_stdin);
+        }
         /* nothing more to do */
-        goto CLEAN_RETURN;
+        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
+        /* since the event is persistent, we do not need to re-add it */
+        return;
     }
     
     /* this must be output from one of my local procs - see
@@ -193,28 +217,67 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
                          ORTE_NAME_PRINT(&rev->name)));
     
-    if (0 != numbytes) {
+    if (0 == numbytes) {
+        /* if we read 0 bytes from the stdout/err/diag, there is
+         * nothing to output - find this proc on our list and
+         * release the appropriate event. This will delete the
+         * read event and close the file descriptor
+         */
+        for (item = opal_list_get_first(&mca_iof_hnp_component.procs);
+             item != opal_list_get_end(&mca_iof_hnp_component.procs);
+             item = opal_list_get_next(item)) {
+            proct = (orte_iof_proc_t*)item;
+            if (proct->name.jobid == rev->name.jobid &&
+                proct->name.vpid == rev->name.vpid) {
+                /* found it - release corresponding event. This deletes
+                 * the read event and closes the file descriptor
+                 */
+                if (rev->tag & ORTE_IOF_STDOUT) {
+                    OBJ_RELEASE(proct->revstdout);
+                } else if (rev->tag & ORTE_IOF_STDERR) {
+                    OBJ_RELEASE(proct->revstderr);
+                } else if (rev->tag & ORTE_IOF_STDDIAG) {
+                    OBJ_RELEASE(proct->revstddiag);
+                }
+                /* check to see if they are all done */
+                if (NULL == proct->revstdout &&
+                    NULL == proct->revstderr &&
+                    NULL == proct->revstddiag) {
+                    opal_buffer_t cmdbuf;
+                    orte_daemon_cmd_flag_t command;
+                    /* this proc's iof is complete */
+                    opal_list_remove_item(&mca_iof_hnp_component.procs, item);
+                    /* setup a cmd to notify that the iof is complete */
+                    OBJ_CONSTRUCT(&cmdbuf, opal_buffer_t);
+                    command = ORTE_DAEMON_IOF_COMPLETE;
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &command, 1, ORTE_DAEMON_CMD))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto CLEANUP;
+                    }
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &proct->name, 1, ORTE_NAME))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto CLEANUP;
+                    }
+                    ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmdbuf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
+                CLEANUP:
+                    OBJ_DESTRUCT(&cmdbuf);
+                    OBJ_RELEASE(proct);
+                }
+                break;
+            }
+        }
+        
+    } else {
         if (ORTE_IOF_STDOUT & rev->tag) {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
         } else {
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stderr);
             
         }
-    }
-    
-CLEAN_RETURN:
-    /* if we read 0 bytes from the stdout/err/diag, there is
-     * nothing to output - close these file descriptors,
-     * and terminate the event.
-     */
-    if (0 == numbytes) {
-        close(fd);
-        opal_event_del(&rev->ev);
-        rev->ev.ev_fd = -1;
+        /* re-add the event */
+        opal_event_add(&rev->ev, 0);
     }
 
      OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
-    
-    /* since the event is persistent, we do not need to re-add it */
     return;
 }

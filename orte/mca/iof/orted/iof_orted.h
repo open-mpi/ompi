@@ -60,7 +60,7 @@ BEGIN_C_DECLS
 struct orte_iof_orted_component_t { 
     orte_iof_base_component_t super;
     opal_list_t sinks;
-    opal_list_t read_events;
+    opal_list_t procs;
     opal_mutex_t lock;
     bool xoff;
 };
