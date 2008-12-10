@@ -391,3 +391,33 @@ Error received: %s
 
 Please check to ensure that the requested server matches the actual server
 information, and that the server is in operation.
+#
+[orterun:ompi-server-pid-bad]
+%s was unable to parse the PID of the %s to be used as the ompi-server.
+The option we were given was:
+
+--ompi-server %s
+
+Please remember that the correct format for this command line option is:
+
+--ompi-server PID:pid-of-%s
+
+where PID can be either "PID" or "pid".
+#
+[orterun:ompi-server-could-not-get-hnp-list]
+%s was unable to search the list of local %s contact files to find the specified pid.
+You might check to see if your local session directory is available and
+that you have read permissions on the top of that directory tree.
+#
+[orterun:ompi-server-pid-not-found]
+%s was unable to find an %s with the specified pid of %d that was to be used as the ompi-server.
+The option we were given was:
+
+--ompi-server %s
+
+Please remember that the correct format for this command line option is:
+
+--ompi-server PID:pid-of-%s
+
+where PID can be either "PID" or "pid".
+

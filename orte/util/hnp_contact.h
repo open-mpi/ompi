@@ -53,9 +53,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_hnp_contact_t);
 
 ORTE_DECLSPEC int orte_write_hnp_contact_file(char *filename);
 
-ORTE_DECLSPEC int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp);
+ORTE_DECLSPEC int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool connect);
 
-ORTE_DECLSPEC int orte_list_local_hnps(opal_list_t *hnps);
+ORTE_DECLSPEC int orte_list_local_hnps(opal_list_t *hnps, bool connect);
 
 END_C_DECLS
 #endif

@@ -233,10 +233,11 @@ main(int argc, char *argv[])
     opal_signal_add(&int_handler, NULL);
 
     /*
-     * Get the list of available hnp's
+     * Get the list of available hnp's and setup contact info
+     * to them in the RML
      */
     OBJ_CONSTRUCT(&hnp_list, opal_list_t);
-    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list) ) ) {
+    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
         goto cleanup;
     }
 

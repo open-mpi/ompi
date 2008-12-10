@@ -43,6 +43,7 @@ struct orterun_globals_t {
     bool verbose;
     bool quiet;
     bool report_pid;
+    bool report_uri;
     bool exit;
     bool by_node;
     bool by_slot;

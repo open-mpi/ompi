@@ -94,7 +94,7 @@ int orte_write_hnp_contact_file(char *filename)
     return ORTE_SUCCESS;
 }
 
-int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp)
+int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool connect)
 {
     char *hnp_uri, *pidstr;
     FILE *fp;
@@ -125,25 +125,27 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp)
     hnp->pid = (pid_t)atol(pidstr);
     fclose(fp);
 
-    /* set the contact info into the comm hash tables*/
-    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(hnp_uri))) {
-        ORTE_ERROR_LOG(rc);
-        return(rc);
+    if (connect) {
+        /* set the contact info into the comm hash tables*/
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(hnp_uri))) {
+            ORTE_ERROR_LOG(rc);
+            return(rc);
+        }
+        
+        /* extract the HNP's name and store it */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(hnp_uri, &hnp->name, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* set the route to be direct */
+        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&hnp->name, &hnp->name))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
-
-    /* extract the HNP's name and store it */
-    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(hnp_uri, &hnp->name, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* set the route to be direct */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_route(&hnp->name, &hnp->name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     hnp->rml_uri = hnp_uri;
+    
     return ORTE_SUCCESS;
 }
 
@@ -163,7 +165,7 @@ static char *orte_getline(FILE *fp)
 }
 
 
-int orte_list_local_hnps(opal_list_t *hnps)
+int orte_list_local_hnps(opal_list_t *hnps, bool connect)
 {
     int ret;
 #ifndef __WINDOWS__
@@ -220,7 +222,7 @@ int orte_list_local_hnps(opal_list_t *hnps)
                                          dir_entry->d_name, "contact.txt", NULL );
         
         hnp = OBJ_NEW(orte_hnp_contact_t);
-        if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp))) {
+        if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp, connect))) {
             opal_list_append(hnps, &(hnp->super));
         } else {
             OBJ_RELEASE(hnp);
@@ -258,7 +260,7 @@ int orte_list_local_hnps(opal_list_t *hnps)
                                          dir_entry->d_name, "contact.txt", NULL );
         
         hnp = OBJ_NEW(orte_hnp_contact_t);
-        if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp))) {
+        if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp, connect))) {
             opal_list_append(hnps, &(hnp->super));
         } else {
             OBJ_RELEASE(hnp);

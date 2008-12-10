@@ -231,9 +231,9 @@ main(int argc, char *argv[])
      * Get the directory listing
      */
     opal_output_verbose(10, orte_ps_globals.output,
-                        "orte_ps: Acquiring list of HNPs...\n");
+                        "orte_ps: Acquiring list of HNPs and setting contact info into RML...\n");
 
-    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list) ) ) {
+    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
         exit_status = ret;
         goto cleanup;
     }
