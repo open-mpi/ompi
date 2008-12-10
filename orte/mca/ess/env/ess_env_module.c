@@ -446,7 +446,6 @@ static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_nid_t **nids = NULL;
-    orte_jmap_t *jmap = NULL;
     orte_jmap_t **jmaps = NULL;
     int32_t i;
 
