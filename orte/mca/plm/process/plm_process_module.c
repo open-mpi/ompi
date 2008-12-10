@@ -645,9 +645,7 @@ int orte_plm_process_launch(orte_job_t *jdata)
             if (NULL != param) free(param);
         }
         {
-            char* name_string;
             char** env;
-            char* var;
 
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:process: launching on node %s",
