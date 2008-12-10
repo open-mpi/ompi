@@ -126,6 +126,9 @@ orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                                           orte_jobid_t job);
 
 ORTE_DECLSPEC int
+orte_odls_base_default_update_daemon_info(opal_buffer_t *data);
+
+ORTE_DECLSPEC int
 orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                                             orte_jobid_t *job);
 
