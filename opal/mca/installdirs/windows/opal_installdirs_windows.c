@@ -66,12 +66,12 @@ opal_installdirs_base_component_t mca_installdirs_windows_component = {
 static int
 installdirs_windows_open(void)
 {
-    HKEY ompi_key, hKey = HKEY_CURRENT_USER;
+    HKEY ompi_key;
 
     /* The OPAL_PREFIX is the only one which is required to be in the registry.
      * All others can be composed starting from OPAL_PREFIX.
      */
-    if( ERROR_SUCCESS != RegOpenKeyEx( hKey, "Software\\Open MPI", 0, KEY_READ, &ompi_key) )
+    if( ERROR_SUCCESS != RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Open MPI", 0, KEY_READ, &ompi_key) )
         return 0;
 
     SET_FIELD(ompi_key, prefix, "OPAL_PREFIX");
