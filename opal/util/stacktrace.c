@@ -84,7 +84,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     /*
      * Yes, we are doing printf inside a signal-handler.
      * However, backtrace itself calls malloc (which may not be signal-safe,
-v     * under linux, printf and malloc are)
+     * under linux, printf and malloc are)
      *
      * We could use backtrace_symbols_fd and write directly into an
      * filedescriptor, however, without formatting -- also this fd 
@@ -341,7 +341,7 @@ v     * under linux, printf and malloc are)
         int i;
         /* since we have the opportunity, strip off the bottom two
            function calls, which will be this function and
-           opa_backtrace_buffer(). */
+           opal_backtrace_buffer(). */
         for (i = 2 ; i < traces_size ; ++i) {
             ret = snprintf(print_buffer, sizeof(print_buffer),
                            HOSTFORMAT "[%2d] %s\n",
