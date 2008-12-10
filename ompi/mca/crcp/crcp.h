@@ -78,7 +78,7 @@ enum ompi_crcp_base_pml_states_t {
 };
 typedef enum ompi_crcp_base_pml_states_t ompi_crcp_base_pml_states_t;
 
-OMPI_DECLSPEC struct ompi_crcp_base_pml_state_t {
+struct ompi_crcp_base_pml_state_t {
     ompi_free_list_item_t super;
     ompi_crcp_base_pml_states_t state;
     int error_code;
