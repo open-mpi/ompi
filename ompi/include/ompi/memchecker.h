@@ -99,7 +99,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), void * addr,
         uint32_t         stack_disp  = 0, elem_pos = 0, i;
         dt_elem_desc_t*  description = datatype->opt_desc.desc;
         dt_elem_desc_t*  pElem       = &(description[elem_pos]);
-        unsigned char   *source_base = addr;
+        unsigned char   *source_base = (unsigned char *) addr;
 
         if ( NULL != datatype ) 
             stack_disp = datatype->ub - datatype->lb;

@@ -310,7 +310,11 @@ opal_event_init(void)
 #ifdef __APPLE__
                                        "select",
 #else
+#  ifdef __WINDOWS__
+                                       "win32",
+#  else
                                        "poll",
+#  endif
 #endif
                                        &event_module_include);
         free(help_msg);  /* release the help message */
