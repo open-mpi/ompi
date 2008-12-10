@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,7 +63,7 @@ static char stacktrace_hostname[64];
  * FIXME: Should distinguish for systems, which don't have siginfo...
  */
 #if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
-static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
+static void show_stackframe (int signo, siginfo_t * info, void * p)
 {   
     char print_buffer[1024];
     char * tmp = print_buffer;
@@ -83,7 +84,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     /*
      * Yes, we are doing printf inside a signal-handler.
      * However, backtrace itself calls malloc (which may not be signal-safe,
-     * under linux, printf and malloc are)
+v     * under linux, printf and malloc are)
      *
      * We could use backtrace_symbols_fd and write directly into an
      * filedescriptor, however, without formatting -- also this fd 
@@ -363,8 +364,30 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 #endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
 
 
+#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
+void opal_stackframe_output(int stream)
+{   
+    int traces_size;
+    char **traces;
+
+    /* print out the stack trace */
+    if (OPAL_SUCCESS == opal_backtrace_buffer(&traces, &traces_size)) {
+        int i;
+        /* since we have the opportunity, strip off the bottom two
+           function calls, which will be this function and
+           opa_backtrace_buffer(). */
+        for (i = 2; i < traces_size; ++i) {
+            opal_output(stream, traces[i]);
+        }
+    } else {
+        opal_backtrace_print(stderr);
+    }
+}
+
+#endif /* OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) */
+
 /**
- * Here we register the opal_show_stackframe function for signals
+ * Here we register the show_stackframe function for signals
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
  *
@@ -396,7 +419,7 @@ int opal_util_register_stackhandlers (void)
     mca_base_param_lookup_string (param, &string_value);
 
     memset(&act, 0, sizeof(act));
-    act.sa_sigaction = opal_show_stackframe;
+    act.sa_sigaction = show_stackframe;
     act.sa_flags = SA_SIGINFO;
 #ifdef SA_ONESHOT
     act.sa_flags |= SA_ONESHOT;

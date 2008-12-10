@@ -96,12 +96,20 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_job_t *jdata;
     orte_proc_t **procs;
     orte_iof_sink_t *sink;
+    orte_iof_proc_t *proct;
+    opal_list_item_t *item;
     int flags;
+    int rc;
 
-    /* don't do this if the dst vpid is invalid */
-    if (ORTE_VPID_INVALID == dst_name->vpid) {
+    /* don't do this if the dst vpid is invalid or the fd is negative! */
+    if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
         return ORTE_SUCCESS;
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                         "%s iof:hnp pushing fd %d for process %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         fd, ORTE_NAME_PRINT(dst_name)));
     
     if (!(src_tag & ORTE_IOF_STDIN)) {
         /* set the file descriptor to non-blocking - do this before we setup
@@ -114,10 +122,35 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             flags |= O_NONBLOCK;
             fcntl(fd, F_SETFL, flags);
         }
+        /* do we already have this process in our list? */
+        for (item = opal_list_get_first(&mca_iof_hnp_component.procs);
+             item != opal_list_get_end(&mca_iof_hnp_component.procs);
+             item = opal_list_get_next(item)) {
+            proct = (orte_iof_proc_t*)item;
+            if (proct->name.jobid == dst_name->jobid &&
+                proct->name.vpid == dst_name->vpid) {
+                /* found it */
+                goto SETUP;
+            }
+        }
+        /* if we get here, then we don't yet have this proc in our list */
+        proct = OBJ_NEW(orte_iof_proc_t);
+        proct->name.jobid = dst_name->jobid;
+        proct->name.vpid = dst_name->vpid;
+        opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
+        
+    SETUP:
         /* define a read event and activate it */
-        ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                            orte_iof_hnp_read_local_handler,
-                            &mca_iof_hnp_component.read_events, true);
+        if (src_tag & ORTE_IOF_STDOUT) {
+            ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, ORTE_IOF_STDOUT,
+                                orte_iof_hnp_read_local_handler, true);
+        } else if (src_tag & ORTE_IOF_STDERR) {
+            ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, ORTE_IOF_STDERR,
+                                orte_iof_hnp_read_local_handler, true);
+        } else if (src_tag & ORTE_IOF_STDDIAG) {
+            ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, ORTE_IOF_STDDIAG,
+                                orte_iof_hnp_read_local_handler, true);
+        }
         return ORTE_SUCCESS;
     }
 
@@ -126,7 +159,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
      */
     if (ORTE_VPID_WILDCARD == dst_name->vpid) {
         /* if wildcard, define a sink with that info so it gets sent out */
-        ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
+        ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
                              stdin_write_handler,
                              &mca_iof_hnp_component.sinks);
     } else {
@@ -138,7 +171,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         procs = (orte_proc_t**)jdata->procs->addr;
         /* if it is me, then don't set this up - we'll get it on the pull */
         if (ORTE_PROC_MY_NAME->vpid != procs[dst_name->vpid]->node->daemon->name.vpid) {
-            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, src_tag,
+            ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
                                  stdin_write_handler,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -184,12 +217,9 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * doesn't do a corresponding pull, however, then the stdin will
              * be dropped upon receipt at the local daemon
              */
-            ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                                orte_iof_hnp_read_local_handler,
-                                &mca_iof_hnp_component.read_events, false);
-            /* save it somewhere convenient */
-            mca_iof_hnp_component.stdinev =
-            (orte_iof_read_event_t*)opal_list_get_first(&mca_iof_hnp_component.read_events);
+            ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
+                                dst_name, fd, ORTE_IOF_STDIN,
+                                orte_iof_hnp_read_local_handler, false);
             
             /* check to see if we want the stdin read event to be
              * active - we will always at least define the event,
@@ -197,26 +227,19 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              */
             if (!(src_tag & ORTE_IOF_STDIN) || orte_iof_hnp_stdin_check(fd)) {
                 mca_iof_hnp_component.stdinev->active = true;
-                opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+                if (OPAL_SUCCESS != (rc = opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
+                    ORTE_ERROR_LOG(rc);
+                }
             }
-        } else{
+        } else {
             /* if we are not looking at a tty, just setup a read event
              * and activate it
              */
-            ORTE_IOF_READ_EVENT(dst_name, fd, src_tag,
-                                orte_iof_hnp_read_local_handler,
-                                &mca_iof_hnp_component.read_events, false);
-            
-            /* save it somewhere convenient */
-            mca_iof_hnp_component.stdinev =
-            (orte_iof_read_event_t*)opal_list_get_first(&mca_iof_hnp_component.read_events);
-            /* flag that it is operational */
-            mca_iof_hnp_component.stdinev->active = true;
-            /* activate it */
-            opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+            ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
+                                dst_name, fd, ORTE_IOF_STDIN,
+                                orte_iof_hnp_read_local_handler, true);
         }
     }
-        
     return ORTE_SUCCESS;
 }
 
@@ -239,10 +262,10 @@ static int hnp_pull(const orte_process_name_t* dst_name,
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s hnp:pull setting up %s to pass stdin",
+                         "%s iof:hnp pulling fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(dst_name)));
-
+                         fd, ORTE_NAME_PRINT(dst_name)));
+    
     /* set the file descriptor to non-blocking - do this before we setup
      * the sink in case it fires right away
      */
@@ -254,7 +277,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
         fcntl(fd, F_SETFL, flags);
     }
     
-    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, src_tag,
+    ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler,
                          &mca_iof_hnp_component.sinks);
     sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -271,33 +294,27 @@ static int hnp_close(const orte_process_name_t* peer,
                      orte_iof_tag_t source_tag)
 {
     opal_list_item_t *item, *next_item;
-    orte_iof_read_event_t* rev;
-    int rev_fd;
+    orte_iof_sink_t* sink;
     
-    for( item = opal_list_get_first(&mca_iof_hnp_component.read_events);
-        item != opal_list_get_end(&mca_iof_hnp_component.read_events);
+    for(item = opal_list_get_first(&mca_iof_hnp_component.sinks);
+        item != opal_list_get_end(&mca_iof_hnp_component.sinks);
         item = next_item ) {
-        rev = (orte_iof_read_event_t*)item;
+        sink = (orte_iof_sink_t*)item;
         next_item = opal_list_get_next(item);
-        if ((rev->name.jobid == peer->jobid) &&
-            (rev->name.vpid == peer->vpid) &&
-            (source_tag & rev->tag) ) {
+        
+        if((sink->name.jobid == peer->jobid) &&
+           (sink->name.vpid == peer->vpid) &&
+           (source_tag & sink->tag)) {
             
-            /* Dont close if it's the main stdin. This will get closed
-             * in component close.
-             */
-            if( mca_iof_hnp_component.stdinev == rev ) continue;
-            
-            opal_list_remove_item(&mca_iof_hnp_component.read_events, item);
-            /* No need to delete the event, the destructor will automatically
+            /* No need to delete the event or close the file
+             * descriptor - the destructor will automatically
              * do it for us.
              */
-            rev_fd = rev->ev.ev_fd;
+            opal_list_remove_item(&mca_iof_hnp_component.sinks, item);
             OBJ_RELEASE(item);
-            close(rev_fd);
+            break;
         }
     }
-    
     return ORTE_SUCCESS;
 }
 
@@ -311,7 +328,8 @@ int hnp_ft_event(int state) {
 
 static void stdin_write_handler(int fd, short event, void *cbdata)
 {
-    orte_iof_write_event_t *wev = (orte_iof_write_event_t*)cbdata;
+    orte_iof_sink_t *sink = (orte_iof_sink_t*)cbdata;
+    orte_iof_write_event_t *wev = sink->wev;
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
     int num_written;
@@ -323,6 +341,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
     /* lock us up to protect global operations */
     OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
+    wev->pending = false;
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
@@ -330,16 +349,21 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* this indicates we are to close the fd - there is
              * nothing to write
              */
-            close(wev->fd);
-            /* be sure to delete the write event */
-            opal_event_del(&wev->ev);
-            wev->pending = false;
+            OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+                                 "%s iof:hnp closing fd %d on write event due to zero bytes output",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
+            OBJ_RELEASE(wev);
+            sink->wev = NULL;
             /* just leave - we don't want to restart the
              * read event!
              */
             goto DEPART;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
+        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                             "%s hnp:stdin:write:handler wrote %d bytes",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             num_written));
         if (num_written < 0) {
             if (EAGAIN == errno || EINTR == errno) {
                 /* push this item back on the front of the list */
@@ -347,16 +371,24 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 /* leave the write event running so it will call us again
                  * when the fd is ready.
                  */
+                wev->pending = true;
+                opal_event_add(&wev->ev, 0);
                 goto CHECK;
             }            
-            /* otherwise, something bad happened so all we can do is abort
-             * this attempt
+            /* otherwise, something bad happened so all we can do is declare an
+             * error and abort
              */
             OBJ_RELEASE(output);
-            goto ABORT;
+            OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+                                 "%s iof:hnp closing fd %d on write event due to negative bytes written",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
+            OBJ_RELEASE(wev);
+            sink->wev = NULL;
+            goto DEPART;
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                 "incomplete write %d - adjusting data", num_written));
+                                 "%s hnp:stdin:write:handler incomplete write %d - adjusting data",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_written));
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
             /* push this item back on the front of the list */
@@ -364,19 +396,16 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* leave the write event running so it will call us again
              * when the fd is ready. 
              */
+            wev->pending = true;
+            opal_event_add(&wev->ev, 0);
             goto CHECK;
         }
         OBJ_RELEASE(output);
     }
-    goto CHECK;
-    
-ABORT:
-    close(wev->fd);
-    opal_event_del(&wev->ev);
-    wev->pending = false;
-    
+
 CHECK:
-    if (!mca_iof_hnp_component.stdinev->active) {
+    if (NULL != mca_iof_hnp_component.stdinev &&
+        !mca_iof_hnp_component.stdinev->active) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                             "read event is off - checking if okay to restart"));
         /* if we have turned off the read event, check to

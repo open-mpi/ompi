@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +27,12 @@
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+
+/**
+ * Output the current stack trace (not including the call to this
+ * function) to the stream indicated.
+ */
+OPAL_DECLSPEC void opal_stackframe_output(int stream);
 
 /**
  * Here we register the opal_show_stackframe function for signals

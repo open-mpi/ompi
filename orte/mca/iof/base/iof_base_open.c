@@ -28,6 +28,8 @@
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -56,13 +58,43 @@ int orte_iof_base_open(void)
 #else
 
 /* class instances */
+static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
+{
+    ptr->revstdout = NULL;
+    ptr->revstderr = NULL;
+    ptr->revstddiag = NULL;
+}
+static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
+{
+    if (NULL != ptr->revstdout) {
+        OBJ_RELEASE(ptr->revstdout);
+    }
+    if (NULL != ptr->revstderr) {
+        OBJ_RELEASE(ptr->revstderr);
+    }
+    if (NULL != ptr->revstddiag) {
+        OBJ_RELEASE(ptr->revstddiag);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_iof_proc_t,
+                   opal_list_item_t,
+                   orte_iof_base_proc_construct,
+                   orte_iof_base_proc_destruct);
+
+
 static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 {
-    OBJ_CONSTRUCT(&ptr->wev, orte_iof_write_event_t);
+    ptr->wev = OBJ_NEW(orte_iof_write_event_t);
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
-    OBJ_DESTRUCT(&ptr->wev);
+    OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+                         "%s iof: closing sink for process %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&ptr->name)));
+    if (NULL != ptr->wev) {
+        OBJ_RELEASE(ptr->wev);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_iof_sink_t,
                    opal_list_item_t,
@@ -77,9 +109,16 @@ static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
     opal_event_del(&rev->ev);
+    if (0 <= rev->ev.ev_fd) {
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+                             "%s iof: closing fd %d for process %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             rev->ev.ev_fd, ORTE_NAME_PRINT(&rev->name)));
+        close(rev->ev.ev_fd);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
-                   opal_list_item_t,
+                   opal_object_t,
                    orte_iof_base_read_event_construct,
                    orte_iof_base_read_event_destruct);
 
@@ -91,7 +130,15 @@ static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
 }
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
-    opal_event_del(&wev->ev);
+    if (wev->pending) {
+        opal_event_del(&wev->ev);
+    }
+    if (2 < wev->fd) {
+        OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
+                             "%s iof: closing fd %d for write event",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
+        close(wev->fd);
+    }
     OBJ_DESTRUCT(&wev->outputs);
 }
 OBJ_CLASS_INSTANCE(orte_iof_write_event_t,
@@ -128,7 +175,7 @@ int orte_iof_base_open(void)
         /* create the write event, but don't add it until we need it */
         opal_event_set(&orte_iof_base.iof_write_stdout.ev,
                        orte_iof_base.iof_write_stdout.fd,
-                       OPAL_EV_WRITE|OPAL_EV_PERSIST,
+                       OPAL_EV_WRITE,
                        orte_iof_base_write_handler,
                        &orte_iof_base.iof_write_stdout);
         
@@ -138,7 +185,7 @@ int orte_iof_base_open(void)
         /* create the write event, but don't add it until we need it */
         opal_event_set(&orte_iof_base.iof_write_stderr.ev,
                        orte_iof_base.iof_write_stderr.fd,
-                       OPAL_EV_WRITE|OPAL_EV_PERSIST,
+                       OPAL_EV_WRITE,
                        orte_iof_base_write_handler,
                        &orte_iof_base.iof_write_stderr);
         /* do NOT set these file descriptors to non-blocking. If we do so,
