@@ -2836,6 +2836,10 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
         case IBV_WC_RECV:
             OPAL_OUTPUT((-1, "Got WC: RDMA_RECV, qp %d, src qp %d, WR ID %p",
                          wc->qp_num, wc->src_qp, (void*) wc->wr_id));
+
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            wc->imm_data = ntohl(wc->imm_data);
+#endif
             if(wc->wc_flags & IBV_WC_WITH_IMM) {
                 endpoint = (mca_btl_openib_endpoint_t*)
                     opal_pointer_array_get_item(device->endpoints, wc->imm_data);
