@@ -25,6 +25,8 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -272,6 +274,10 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
 {
     int ret, exit_status = OPAL_SUCCESS;
     opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
+#if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1
+    cr_checkpoint_args_t cr_args;
+    static cr_checkpoint_handle_t cr_handle = (cr_checkpoint_handle_t)(-1);
+#endif
 
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: checkpoint(%d, ---)", pid);
@@ -301,13 +307,10 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
     }
 
     /*
-     * If we can checkpointing ourselves do so
-     * Note:
-     *   If threading based checkpoint is enabled we cannot use the cr_request()
-     *   function to checkpoint ourselves. If we are a thread, then it is likely 
-     *   that we have not properly initalized this module.
+     * If we can checkpointing ourselves do so:
+     * use cr_request_checkpoint() if available, and cr_request_file() if not
      */
-#if CRS_BLCR_HAVE_CR_REQUEST == 1
+#if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1 || CRS_BLCR_HAVE_CR_REQUEST == 1
     if( pid == my_pid ) {
         char *loc_fname = NULL;
 
@@ -318,6 +321,65 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
                             "crs:blcr: checkpoint SELF <%s>",
                             loc_fname);
 
+#if CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT == 1
+        {
+            int fd = 0;
+            fd = open(loc_fname,
+                       O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE,
+                       S_IRUSR | S_IWUSR);
+            if( fd < 0 ) {
+                *state = OPAL_CRS_ERROR;
+                opal_output(mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: checkpoint(): Error: Unable to open checkpoint file (%s) for pid (%d)",
+                            loc_fname, pid);
+                exit_status = ret;
+                goto cleanup;
+            }
+
+            cr_initialize_checkpoint_args_t(&cr_args);
+            cr_args.cr_scope = CR_SCOPE_PROC;
+            cr_args.cr_fd    = fd;
+
+            ret = cr_request_checkpoint(&cr_args, &cr_handle);
+            if( ret < 0 ) {
+                close(cr_args.cr_fd);
+                *state = OPAL_CRS_ERROR;
+                opal_output(mca_crs_blcr_component.super.output_handle,
+                            "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d) to file (%s)",
+                            pid, loc_fname);
+                exit_status = ret;
+                goto cleanup;
+            }
+
+            /* Wait for checkpoint to finish */
+            do {
+                ret = cr_poll_checkpoint(&cr_handle, NULL);
+                if( ret < 0 ) {
+                    /* Check if restarting. This is not an error. */
+                    if( (ret == CR_POLL_CHKPT_ERR_POST) && (errno == CR_ERESTARTED) ) {
+                        ret = 0;
+                        break;
+                    }
+                    /* If Call was interrupted by a signal, retry the call */
+                    else if (errno == EINTR) {
+                        ;
+                    }
+                    /* Otherwise this is a real error that we need to deal with */
+                    else {
+                        *state = OPAL_CRS_ERROR;
+                        opal_output(mca_crs_blcr_component.super.output_handle,
+                                    "crs:blcr: checkpoint(): Error: Unable to checkpoint pid (%d) to file (%s) - poll failed with (%d)",
+                                    pid, loc_fname, ret);
+                        exit_status = ret;
+                        goto cleanup;
+                    }
+                }
+            } while( ret < 0 );
+
+            /* Close the file */
+            close(cr_args.cr_fd);
+        }
+#else
         /* Request a checkpoint be taken of the current process.
          * Since we are not guaranteed to finish the checkpoint before this
          * returns, we also need to wait for it.
@@ -328,6 +390,7 @@ int opal_crs_blcr_checkpoint(pid_t pid, opal_crs_base_snapshot_t *base_snapshot,
         do {
             usleep(1000); /* JJH Do we really want to sleep? */
         } while(CR_STATE_IDLE != cr_status());
+#endif
 
         *state = blcr_current_state;
         free(loc_fname);
