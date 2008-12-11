@@ -106,28 +106,51 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
 
 
     #
-    # Check for version >= 0.6.0 which has:
+    # Check for version difference which may have:
     # - working cr_request_file
+    # - working cr_request_checkpoint (which should be used instead of cr_request_file)
     # - 'requester' parameter to checkpoint_info
     #
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2], [
+           #
+           # First look for the cr_request_file function
+           #
            crs_blcr_have_working_cr_request=0
            AC_MSG_CHECKING(for BLCR working cr_request)
-           AC_TRY_COMPILE([#include <libcr.h>],
-               [#if CR_RELEASE_MAJOR <= 0 && CR_RELEASE_MINOR < 6
-                 #error Version earlier than 0.6.0
-                 #endif
-               ],
-               [crs_blcr_have_working_cr_request=1
-                   AC_MSG_RESULT([yes])],
+           OMPI_CHECK_FUNC_LIB([cr_request_file],[cr],
+               [AC_TRY_COMPILE([#include <libcr.h>],
+                       [#if CR_RELEASE_MAJOR <= 0 && CR_RELEASE_MINOR < 6
+                        #error Version earlier than 0.6.0
+                        #endif
+                           ],
+                       [crs_blcr_have_working_cr_request=1
+                           ],
+                       [crs_blcr_have_working_cr_request=0
+                           AC_MSG_WARN([This BLCR version does not contain a known working version of cr_request_file])
+                           ])],
                [crs_blcr_have_working_cr_request=0
-                   AC_MSG_RESULT([no])
-                   AC_MSG_WARN([This BLCR version does not contain a known working version of cr_request])
-               ])
+                   AC_MSG_WARN([This BLCR version does not contain the cr_request_file function])
+                   ])
            AC_DEFINE_UNQUOTED([CRS_BLCR_HAVE_CR_REQUEST], [$crs_blcr_have_working_cr_request],
-               [BLCR cr_request check])
+               [BLCR cr_request_file check])
 
+           #
+           # Look for the cr_request_checkpoint function
+           #
+           crs_blcr_have_cr_request_checkpoint=0
+           AC_MSG_CHECKING(for BLCR cr_request_checkpoint)
+           OMPI_CHECK_FUNC_LIB([cr_request_checkpoint],[cr],
+               [crs_blcr_have_cr_request_checkpoint=1
+                   ],
+               [crs_blcr_have_cr_request_checkpoint=0
+                   AC_MSG_WARN([This BLCR version does not contain the cr_request_checkpoint function])
+                   ])
+           AC_DEFINE_UNQUOTED([CRS_BLCR_HAVE_CR_REQUEST_CHECKPOINT], [$crs_blcr_have_cr_request_checkpoint],
+               [BLCR cr_request_checkpoint check])
 
+           #
+           # Look for the cr_checkpoint_info.requester member
+           #
            crs_blcr_have_info_requester=0
            AC_CHECK_MEMBER([struct cr_checkpoint_info.requester],
                [crs_blcr_have_info_requester=1],
