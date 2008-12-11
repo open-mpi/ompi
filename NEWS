@@ -29,6 +29,9 @@ version 1.0.
 1.3 (not released yet)
 ---
 
+- Extended the OS X 10.5.x (Leopard) workaround for a problem when
+  assembly code is compiled with -g[0-9].  Thanks to Barry Smith for
+  reporting the problem.  See ticket #1701.
 - Disabled MPI_REAL16 and MPI_COMPLEX32 support on platforms where the
   bit representation of REAL*16 is different than that of the C type
   of the same size (usually long double).  Thanks to Julien Devriendt

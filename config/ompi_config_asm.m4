@@ -9,6 +9,7 @@ dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -803,7 +804,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     AC_REQUIRE([OMPI_SETUP_CXX])
     AC_REQUIRE([AM_PROG_AS])
 
-    # OS X Leopard ld bus errors if you have "-g" in the link line
+    # OS X Leopard ld bus errors if you have "-g" or "-gX" in the link line
     # with our assembly (!).  So remove it from CCASFLAGS if it's
     # there (and we're on Leopard).
     OMPI_VAR_SCOPE_PUSH([ompi_config_asm_flags_new ompi_config_asm_flag])
@@ -811,9 +812,16 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     case "$host" in
         *-apple-darwin9.*)
             for ompi_config_asm_flag in $CCASFLAGS; do
-                if test "$ompi_config_asm_flag" != "-g"; then
+                # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
+                # for an explanation of @<:@ and @:>@ -- they m4 expand 
+                # to [ and ]
+                case $ompi_config_asm_flag in
+                -g)            ;;
+                -g@<:@0-9@:>@) ;;
+                *)
                     ompi_config_asm_flags_new="$ompi_config_asm_flags_new $ompi_config_asm_flag"
-                fi
+                    ;;
+                esac
             done
             CCASFLAGS="$ompi_config_asm_flags_new"
             AC_MSG_RESULT([OS X Leopard - yes ($CCASFLAGS)])

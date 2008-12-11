@@ -276,13 +276,15 @@ AC_DEFUN([OMPI_SETUP_CC],[
     CFLAGS_WITHOUT_OPTFLAGS=""
     for co_word in $CFLAGS ; do
       co_found=0
+      # See http://www.gnu.org/software/autoconf/manual/html_node/Quadrigraphs.html#Quadrigraphs
+      # for an explanation of @<:@ and @:>@ -- they m4 expand to [ and ]
       case $co_word in
-        +K[0-5])   co_found=1 ;;
-        -O)        co_found=1 ;;
-        -O[0-9])   co_found=1 ;;
-        -xO)       co_found=1 ;;
-        -xO[0-9])  co_found=1 ;;
-        -fast)     co_found=1 ;;
+        +K@<:@0-5@:>@)  co_found=1 ;;
+        -O)             co_found=1 ;;
+        -O@<:@0-9@:>@)  co_found=1 ;;
+        -xO)            co_found=1 ;;
+        -xO@<:@0-9@:>@) co_found=1 ;;
+        -fast)          co_found=1 ;;
 
         # The below Sun Studio flags require or
         # trigger -xO optimization
