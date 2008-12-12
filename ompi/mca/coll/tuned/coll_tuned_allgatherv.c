@@ -141,14 +141,11 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    blockcount = 1;
    tmpsend = (char*) rbuf;
 
-   new_rcounts = (int*) calloc(size, sizeof(int));
+   new_rcounts = (int*) calloc(4*size, sizeof(int));
    if (NULL == new_rcounts) { err = -1; line = __LINE__; goto err_hndl; }
-   new_rdispls = (int*) calloc(size, sizeof(int));
-   if (NULL == new_rdispls) { err = -1; line = __LINE__; goto err_hndl; }
-   new_scounts = (int*) calloc(size, sizeof(int));
-   if (NULL == new_scounts) { err = -1; line = __LINE__; goto err_hndl; }
-   new_sdispls = (int*) calloc(size, sizeof(int));
-   if (NULL == new_sdispls) { err = -1; line = __LINE__; goto err_hndl; }
+   new_rdispls = new_rcounts + size;
+   new_scounts = new_rdispls + size;
+   new_sdispls = new_scounts + size;
 
    for (distance = 1; distance < size; distance<<=1) {
 
@@ -193,17 +190,11 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
    }
 
    free(new_rcounts);
-   free(new_rdispls);
-   free(new_scounts);
-   free(new_sdispls);
 
    return OMPI_SUCCESS;
 
  err_hndl:
    if( NULL != new_rcounts ) free(new_rcounts);
-   if( NULL != new_rdispls ) free(new_rdispls);
-   if( NULL != new_scounts ) free(new_scounts);
-   if( NULL != new_sdispls ) free(new_sdispls);
 
    OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
                 __FILE__, line, err, rank));
