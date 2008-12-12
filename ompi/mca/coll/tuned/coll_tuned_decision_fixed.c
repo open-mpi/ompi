@@ -542,8 +542,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
                 " rank %d com_size %d msg_length %lu",
                 ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
 
-   for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
-   pow2_size >>=1;
+   for (pow2_size  = 1; pow2_size < communicator_size; pow2_size <<=1); 
 
    /* Decision based on MX 2Gb results from Grig cluster at 
       The University of Tennesse, Knoxville 
@@ -618,7 +617,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
 					       mca_coll_base_module_t *module)
 {
     int i;
-    int communicator_size, pow2_size;
+    int communicator_size;
     size_t dsize, total_dsize;
     
     communicator_size = ompi_comm_size(comm);
@@ -642,9 +641,6 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(void *sbuf, int scount,
                  " rank %d com_size %d msg_length %lu",
                  ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
     
-    for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
-    pow2_size >>=1;
-
    /* Decision based on allgather decision.   */
    if (total_dsize < 50000) {
        return ompi_coll_tuned_allgatherv_intra_bruck(sbuf, scount, sdtype, 
