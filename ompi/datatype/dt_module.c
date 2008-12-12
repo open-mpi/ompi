@@ -853,7 +853,7 @@ int32_t ompi_ddt_finalize( void )
 #if OMPI_ENABLE_DEBUG
 /*
  * Set a breakpoint to this function in your favorite debugger
- * to make it stopping on all pack and unpack errors.
+ * to make it stop on all pack and unpack errors.
  */
 int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,
                                                  const void* initial_ptr,
