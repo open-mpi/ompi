@@ -39,6 +39,27 @@ static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
 static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 #endif  /* __GNU__ */
 
+#define OMPI_DDT_COMPUTE_REQUIRED_ENTRIES( _pdtAdd, _count, _extent, _place_needed) \
+{ \
+    if( (_pdtAdd)->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */ \
+        (_place_needed) = ((_extent) == (ptrdiff_t)(_pdtAdd)->size ? 1 : 3); \
+    } else { \
+        (_place_needed) = (_pdtAdd)->desc.used; \
+        if( (_count) != 1 ) { \
+            if( (_place_needed) < (MAX_DT_COMPONENT_COUNT - 2) ) { \
+                (_place_needed) += 2;  /* for the loop markers */ \
+            } else { \
+                /* The data-type contain too many elements. We will be unable \
+                 * to handle it, so let's just complain by now. \
+                 */ \
+                opal_output( 0, "Too many elements in the datatype. The limit is %ud\n", \
+                             MAX_DT_COMPONENT_COUNT ); \
+                return OMPI_ERROR; \
+            } \
+        } \
+    } \
+}
+
 #define OMPI_DDT_LB_UB_CONT( _count, _disp, _old_lb, _old_ub, _old_extent, _new_lb, _new_ub ) \
 { \
     if( 0 == _count ) { \
@@ -88,7 +109,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     if( extent == -1 ) extent = (pdtAdd->ub - pdtAdd->lb);
 
-    /* handle special cases for DT_LB and DT_UB and their duplicate */
+    /* Deal with the special markers (DT_LB and DT_UB) */
     if( DT_LB == pdtAdd->id ) {
         pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
         if( pdtBase->flags & DT_FLAG_USER_LB ) {
@@ -100,7 +121,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
             pdtBase->flags &= ~DT_FLAG_NO_GAPS;
         }
-        return OMPI_SUCCESS;
+        return OMPI_SUCCESS; /* Just ignore the DT_LOOP and DT_END_LOOP */
     } else if( DT_UB == pdtAdd->id ) {
         pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
         if( pdtBase->flags & DT_FLAG_USER_UB ) {
@@ -112,25 +133,11 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
             pdtBase->flags &= ~DT_FLAG_NO_GAPS;
         }
-        return OMPI_SUCCESS;
+        return OMPI_SUCCESS; /* Just ignore the DT_LOOP and DT_END_LOOP */
     }
-    if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
-        place_needed = (extent == (ptrdiff_t)pdtAdd->size ? 1 : 3);
-    } else {
-        place_needed = pdtAdd->desc.used;
-        if( count != 1 ) {
-            if( place_needed < (MAX_DT_COMPONENT_COUNT - 2) ) {
-                place_needed += 2;  /* for the loop markers */
-            } else {
-                /* The data-type contain too many elements. We will be unable
-                 * to handle it, so let's just complain by now.
-                 */
-                opal_output( 0, "Too many elements in the datatype. The limit is %ud\n",
-                             MAX_DT_COMPONENT_COUNT );
-                return OMPI_ERROR;
-            }
-        }
-    }
+
+    /* Compute the number of entries we need in the datatype description */
+    OMPI_DDT_COMPUTE_REQUIRED_ENTRIES( pdtAdd, count, extent, place_needed );
 
     /*
      * Compute the lower and upper bound of the datatype. We do it in 2 steps.
@@ -139,8 +146,10 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      * update the global lb and ub.
      */
     OMPI_DDT_LB_UB_CONT( count, disp, pdtAdd->lb, pdtAdd->ub, extent, lb, ub );
-    /* The true_lb and true_ub take in account the gaps at the begining and the
-     * end of the datatype independing on the number of repetitions of the datatype.
+
+    /* Compute the true_lb and true_ub for the datatype to be added, taking
+     * in account the number of repetions. These values do not include the
+     * potential gaps at the begining and at the end of the datatype.
      */
     true_lb = lb - (pdtAdd->lb - pdtAdd->true_lb);
     true_ub = ub - (pdtAdd->ub - pdtAdd->true_ub);
@@ -150,7 +159,18 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         true_ub = old_true_ub;
     }
 
-    /* the lower bound should be inherited from the parent if and only
+#if 0
+    /* Avoid claiming overlap as much as possible. */
+    if( !(pdtBase->flags & DT_FLAG_OVERLAP) ) {
+        if( ((disp + true_lb) >= pdtBase->true_ub) ||
+            ((disp + true_ub) <= pdtBase->true_lb) ) {
+        } else {
+            /* potential overlap */
+        }
+    }
+#endif
+
+    /* The lower bound should be inherited from the parent if and only
      * if the USER has explicitly set it. The result lb is the MIN between
      * the all lb + disp if and only if all or nobody flags's contain the LB.
      */
@@ -319,18 +339,16 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     localFlags = pdtBase->flags & pdtAdd->flags;
     UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
-    if( disp != old_true_ub ) { /* is there a gap between the 2 datatypes ? */
-        if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
-    } else {
-        if( (localFlags & DT_FLAG_CONTIGUOUS)        /* both have to be contiguous */
-            && ( ((ptrdiff_t)pdtAdd->size == extent) /* the size and the extent of the
-                                                      * added type have to match */
-                 || (count < 2)) ) {                 /* if the count is bigger than 2 */
+    if( (localFlags & DT_FLAG_CONTIGUOUS)        /* both type were contiguous */
+        && (disp == old_true_ub)                 /* and there is no gap between them */
+        && ( ((ptrdiff_t)pdtAdd->size == extent) /* the size and the extent of the
+                                                  * added type have to match */
+             || (count < 2)) ) {                 /* if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
             if( (ptrdiff_t)pdtBase->size == (pdtBase->ub - pdtBase->lb) )
                 SET_NO_GAP_FLAG(pdtBase->flags);
-        }
     }
+
     /* If the NO_GAP flag is set the contiguous have to be set too */
     if( pdtBase->flags & DT_FLAG_NO_GAPS ) {
         assert( pdtBase->flags & DT_FLAG_CONTIGUOUS );
