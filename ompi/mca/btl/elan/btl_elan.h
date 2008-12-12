@@ -31,7 +31,6 @@
 #include "btl_elan_endpoint.h" 
 #include "btl_elan_frag.h"
 
-#include "elan3/elan3.h"
 #include "elan/elan.h"
 
 BEGIN_C_DECLS

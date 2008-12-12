@@ -38,17 +38,6 @@ AC_DEFUN([OMPI_CHECK_ELAN],[
 		[$ompi_check_elan_libdir],
 		[ompi_check_elan_happy="yes"],
 		[ompi_check_elan_happy="no"])
-            AS_IF([test "$ompi_check_elan_happy" = "yes"],
-	          [OMPI_CHECK_PACKAGE([$1],
-		                      [elan3/elan3.h],
-			 	      [elan3],
-				      [elan3_fini_neterr_svc],
-				      [-lelan],
-				      [$ompi_check_elan_dir],
-				      [$ompi_check_elan_libdir],
-				      [ompi_check_elan_happy="yes"],
-				      [ompi_check_elan_happy="no"])]
-	    )
 	    ],
 	[ompi_check_elan_happy="no"])
     
