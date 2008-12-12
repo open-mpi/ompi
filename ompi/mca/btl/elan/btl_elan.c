@@ -164,7 +164,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                                            &base->shm_key,  
                                            base->shm_fifodepth, 
                                            base->shm_fragsize,  
-                                           ELAN_TPORT_SHM_DISABLE | ELAN_TPORT_USERCOPY_DISABLE))) { 
+                                           0))) { 
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -181,15 +181,13 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                           mca_btl_elan_component.elan_max_posted_recv, /* int nSlots */
                           (int)mca_btl_elan_component.queue_max_size,  /* int slotSize */
                           ELAN_RAIL_ALL,                               /* int rail */
-                          (ELAN_TPORT_SHM_DISABLE |
-                           ELAN_TPORT_USERCOPY_DISABLE)                /* ELAN_FLAGS flags */);
+                          0 );                                         /* ELAN_FLAGS flags */
 
     elan_btl->tx_queue =
         elan_queueTxInit( base->state,                         /* ELAN_STATE *state */
                           elan_btl->global_queue,              /* ELAN_QUEUE *q */
                           ELAN_RAIL_ALL,                       /* int rail */
-                          (ELAN_TPORT_SHM_DISABLE |
-                           ELAN_TPORT_USERCOPY_DISABLE) );     /* ELAN_FLAGS flags */
+                          0 );                                 /* ELAN_FLAGS flags */
 
     for( i = 0; i < mca_btl_elan_component.elan_max_posted_recv; i++ ) {
         mca_btl_elan_frag_t* frag;

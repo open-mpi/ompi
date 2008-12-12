@@ -217,14 +217,10 @@ mca_btl_elan_component_init( int *num_btl_modules,
         mca_btl_elan_module_t* btl;
 
         for( index = 0; index < ELAN_MAX_BTL; index++ ) {
-            snprintf( filename, 255, "/proc/qsnet/elan3/device%d/position", index );
+            snprintf( filename, 255, "/proc/qsnet/elan4/device%d/position", index );
             position = fopen( filename, "r" );
             if( NULL == position ) {
-                snprintf( filename, 255, "/proc/qsnet/elan4/device%d/position", index );
-                position = fopen( filename, "r" );
-                if( NULL == position ) {
-                    continue;
-                }
+                continue;
             }
             if( 0 == fscanf( position, "%s%i", file_line, &positions[count] ) ) {
                 opal_output( 0, "Unable to read the network position" );
