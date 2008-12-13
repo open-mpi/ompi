@@ -657,7 +657,7 @@ __ompi_ddt_create_from_args( int32_t* i, MPI_Aint* a,
         break;
         /******************************************************************/
     case MPI_COMBINER_INDEXED_BLOCK:
-        ompi_ddt_create_indexed_block( i[0], i[1], &(i[1+i[0]]), d[0], &datatype );
+        ompi_ddt_create_indexed_block( i[0], i[1], &(i[2]), d[0], &datatype );
         break;
         /******************************************************************/
     case MPI_COMBINER_STRUCT_INTEGER:
