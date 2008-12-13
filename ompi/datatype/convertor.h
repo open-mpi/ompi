@@ -159,10 +159,12 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 }
 
 /*
- * Return:   0 if data is nor required to be packed for sending
- *           1 if data does need to be packed (src and destination are
- *             heterogenous from a data perspective, or data is not
- *             contigous.
+ * Return:   0 if no packing is required for sending (the upper layer
+ *             can use directly the pointer to the contiguous user
+ *             buffer).
+ *           1 if data does need to be packed, i.e. heterogeneous peers
+ *             (source arch != dest arch) or non contiguous memory
+ *             layout.
  */
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
