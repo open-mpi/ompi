@@ -140,7 +140,7 @@ static void process_msg(int fd, short event, void *cbdata)
                                      "%s writing data to local proc %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&sink->name)));
-                if (sink->wev.fd < 0) {
+                if (NULL == sink->wev || sink->wev->fd < 0) {
                     /* this sink was already closed - ignore this data */
                     goto CLEAN_RETURN;
                 }
@@ -148,7 +148,7 @@ static void process_msg(int fd, short event, void *cbdata)
                  * down the pipe so it forces out any preceding data before
                  * closing the output stream
                  */
-                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&target, stream, data, numbytes, &sink->wev)) {
+                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&target, stream, data, numbytes, sink->wev)) {
                     /* getting too backed up - tell the HNP to hold off any more input if we
                      * haven't already told it
                      */

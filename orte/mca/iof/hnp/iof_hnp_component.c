@@ -95,21 +95,19 @@ static int orte_iof_hnp_close(void)
     if (initialized) {
         OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
         /* if the stdin event is active, delete it */
-        if (NULL != mca_iof_hnp_component.stdinev && mca_iof_hnp_component.stdinev->active) {
-            /* this is being pedantic ... */
-            close(mca_iof_hnp_component.stdinev->ev.ev_fd);
-            opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
+        if (NULL != mca_iof_hnp_component.stdinev) {
+            OBJ_RELEASE(mca_iof_hnp_component.stdinev);
         }
         /* cleanout all registered sinks */
         while ((item = opal_list_remove_first(&mca_iof_hnp_component.sinks)) != NULL) {
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&mca_iof_hnp_component.sinks);
-        /* cleanout all pending receive events */
-        while ((item = opal_list_remove_first(&mca_iof_hnp_component.read_events)) != NULL) {
+        /* cleanout all pending proc objects holding receive events */
+        while ((item = opal_list_remove_first(&mca_iof_hnp_component.procs)) != NULL) {
             OBJ_RELEASE(item);
         }
-        OBJ_DESTRUCT(&mca_iof_hnp_component.read_events);
+        OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
         OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
         OBJ_DESTRUCT(&mca_iof_hnp_component.lock);
@@ -156,7 +154,7 @@ static int orte_iof_hnp_query(mca_base_module_t **module, int *priority)
     
     OBJ_CONSTRUCT(&mca_iof_hnp_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_iof_hnp_component.sinks, opal_list_t);
-    OBJ_CONSTRUCT(&mca_iof_hnp_component.read_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
 
     /* we must be selected */
