@@ -1,6 +1,6 @@
 enable_dlopen=no
 enable_pty_support=no
-with_openib
+with_openib=yes
 with_memory_manager=yes
 enable_mem_debug=no
 enable_mem_profile=no
