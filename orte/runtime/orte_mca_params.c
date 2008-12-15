@@ -157,7 +157,7 @@ int orte_register_params(void)
     /* default hostfile */
     mca_base_param_reg_string_name("orte", "default_hostfile",
                                    "Name of the default hostfile (relative or absolute path)",
-                                   false, false, NULL, &orte_default_hostfile);
+                                   false, false, "openmpi-default-hostfile", &orte_default_hostfile);
     
     
     /* whether or not to keep FQDN hostnames */
