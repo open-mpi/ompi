@@ -20,7 +20,7 @@ enable_mca_no_build=crs,filem,routed-direct,routed-linear,snapc,pml-dr,pml-crcp2
 enable_contrib_no_build=libnbc,vt
 with_slurm=yes
 with_tm=no
-with_openib
+with_openib=yes
 with_devel_headers=yes
 with_io_romio_flags=--with-file-system=ufs+nfs
 with_threads=posix
