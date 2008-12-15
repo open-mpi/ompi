@@ -62,27 +62,32 @@ OBJ_CLASS_DECLARATION(mca_btl_mx_frag_user_t);
  * free list(s).
  */
 
-#define MCA_BTL_MX_FRAG_ALLOC_EAGER(btl, frag, rc)                      \
-    {                                                                   \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_eager_frags, item, rc); \
-        frag = (mca_btl_mx_frag_t*) item;                               \
-        frag->mx_frag_list = &(mca_btl_mx_component.mx_send_eager_frags); \
-        frag->segment[0].seg_addr.pval = (void*)(frag+1);               \
-    }
+#define MCA_BTL_MX_FRAG_ALLOC_EAGER(btl, frag, rc)                            \
+do {                                                                          \
+    ompi_free_list_item_t *item;                                              \
+    OMPI_FREE_LIST_GET( &mca_btl_mx_component.mx_send_eager_frags, item, rc); \
+    if( OPAL_LIKELY(NULL != item) ) {                                         \
+        frag = (mca_btl_mx_frag_t*) item;                                     \
+        frag->mx_frag_list = &(mca_btl_mx_component.mx_send_eager_frags);     \
+        frag->segment[0].seg_addr.pval = (void*)(frag+1);                     \
+    }                                                                         \
+} while(0)
 
-#define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                       \
-    {                                                                   \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_user_frags, item, rc); \
-        frag = (mca_btl_mx_frag_t*) item;                               \
-        frag->mx_frag_list = &(mca_btl_mx_component.mx_send_user_frags); \
-    }
+#define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                            \
+do {                                                                         \
+    ompi_free_list_item_t *item;                                             \
+    OMPI_FREE_LIST_GET( &mca_btl_mx_component.mx_send_user_frags, item, rc); \
+    if( OPAL_LIKELY(NULL != item) ) {                                        \
+        frag = (mca_btl_mx_frag_t*) item;                                    \
+        frag->mx_frag_list = &(mca_btl_mx_component.mx_send_user_frags);     \
+    }                                                                        \
+} while(0)
 
-#define MCA_BTL_MX_FRAG_RETURN(btl, frag)                               \
-    {                                                                   \
-        OMPI_FREE_LIST_RETURN( frag->mx_frag_list, (ompi_free_list_item_t*)(frag)); \
-    }
+#define MCA_BTL_MX_FRAG_RETURN(btl, frag)                     \
+do {                                                          \
+    OMPI_FREE_LIST_RETURN( frag->mx_frag_list,                \
+                           (ompi_free_list_item_t*)(frag));   \
+} while(0)
 
 END_C_DECLS
 
