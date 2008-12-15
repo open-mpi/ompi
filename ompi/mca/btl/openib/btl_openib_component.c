@@ -1749,6 +1749,13 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             break;
         }
         if(IBV_PORT_ACTIVE == ib_port_attr.state) {
+	    /* Select the lower of the HCA and port active speed. With QLogic
+               HCAs that are capable of 4K MTU we had an issue when connected
+               to switches with 2K MTU. This fix is valid for other IB vendors
+               as well. */
+            if (ib_port_attr.active_mtu < device->mtu){
+                device->mtu = ib_port_attr.active_mtu;
+            }
             if (mca_btl_openib_component.apm_ports && device->btls > 0) {
                 init_apm_port(device, i, ib_port_attr.lid);
                 break;
