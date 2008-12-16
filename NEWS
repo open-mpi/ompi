@@ -118,7 +118,9 @@ Trunk (not on release branches yet)
 1.2.9 (unreleased)
 ------------------
 
-- Correctly take into account the MTU an openib port is running at. See #1722.
+- Correctly take into account the MTU that an OpenFabrics device port
+  is using. See #1722 and
+  https://bugs.openfabrics.org/show_bug.cgi?id=1369.
 - Fix two datatype engine bugs. See #1677.
   Thanks to Peter Kjellstrom for the bugreport.
 - Fix the bml r2 help filename so the help message can be found. See #1623.
