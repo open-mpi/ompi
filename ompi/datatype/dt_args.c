@@ -55,7 +55,7 @@ typedef struct __dt_args {
  * copy the buffer into an aligned buffer first.
  */
 #if OMPI_ALIGN_WORD_SIZE_INTEGERS
-#define OMPI_DDT_ALIGN_INT(VALUE, TYPE) \
+#define OMPI_DDT_ALIGN_INT(VALUE,  TYPE) \
     (VALUE) = OPAL_ALIGN((VALUE), sizeof(MPI_Aint), (TYPE))
 #define OMPI_DDT_ALIGN_PTR(PTR, TYPE) \
     (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(MPI_Aint), (TYPE))
@@ -228,11 +228,13 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
              */
             OBJ_RETAIN( d[pos] );
             pArgs->total_pack_size += ((ompi_ddt_args_t*)d[pos]->args)->total_pack_size;
+#if OMPI_ALIGN_WORD_SIZE_INTEGERS
             /* as total_pack_size is always aligned to MPI_Aint size their sum
              * will be aligned to ...
              */
             assert( pArgs->total_pack_size ==
                     OPAL_ALIGN(pArgs->total_pack_size, sizeof(MPI_Aint), int) );
+#endif  /* OMPI_ALIGN_WORD_SIZE_INTEGERS */
         }
     }
     return MPI_SUCCESS;
