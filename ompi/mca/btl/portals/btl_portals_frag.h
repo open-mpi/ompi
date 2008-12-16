@@ -87,7 +87,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_recv_t);
 {                                                                  \
                                                                    \
     ompi_free_list_item_t *item_macro;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_max, item_macro, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_max, item_macro, rc); \
     frag = (mca_btl_portals_frag_t*) item_macro;                         \
 }
 
