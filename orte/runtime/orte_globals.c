@@ -359,8 +359,6 @@ int orte_dt_init(void)
         return rc;
     }
 
-#endif /* !ORTE_DISABLE_FULL_SUPPORT */
-    
     tmp = ORTE_IOF_TAG;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_iof_tag,
                                                      orte_dt_unpack_iof_tag,
@@ -374,7 +372,8 @@ int orte_dt_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
+#endif /* !ORTE_DISABLE_FULL_SUPPORT */
+    
     return ORTE_SUCCESS;    
 }
 

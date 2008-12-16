@@ -158,11 +158,11 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
         case ORTE_GRPCOMM_MODE:
             orte_dt_quick_print(output, "ORTE_GRPCOMM_MODE", prefix, src, ORTE_GRPCOMM_MODE_T);
             break;
-#endif
             
         case ORTE_IOF_TAG:
             orte_dt_quick_print(output, "ORTE_IOF_TAG", prefix, src, ORTE_IOF_TAG_T);
             break;
+#endif
             
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
