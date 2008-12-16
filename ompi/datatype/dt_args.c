@@ -18,12 +18,13 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/arch.h"
+#include "opal/include/opal/align.h"
 #include "ompi/constants.h"
 
 #include "mpi.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
-#include "opal/util/arch.h"
 #include "ompi/proc/proc.h"
 
 static inline int
@@ -46,18 +47,22 @@ typedef struct __dt_args {
 } ompi_ddt_args_t;
 
 /**
- * Compute the next value which is a multiple of PWROF2. Works fine
- * only for power of 2 alignements.
+ * Some architectures really don't like having unaligned
+ * accesses.  We'll be int aligned, because any sane system will
+ * require that.  But we might not be long aligned, and some
+ * architectures will complain if a long is accessed on int
+ * alignment (but not long alignment).  On those architectures,
+ * copy the buffer into an aligned buffer first.
  */
-#define ALIGN_INT_TO( VALUE, PWROF2 )                           \
-    do {                                                        \
-        int _align = (intptr_t)((PWROF2) - 1);                  \
-        int _val = (int)(VALUE) + _align;                       \
-        (VALUE) = (_val & (~_align));                           \
-    } while(0)
-
-#define CHECK_ALIGN_TO( VALUE, PWROF2 )                 \
-    assert( 0 == ((VALUE) & ((PWROF2) - 1)) );          \
+#if OMPI_ALIGN_WORD_SIZE_INTEGERS
+#define OMPI_DDT_ALIGN_INT(VALUE, TYPE) \
+    (VALUE) = OPAL_ALIGN((VALUE), sizeof(MPI_Aint), (TYPE))
+#define OMPI_DDT_ALIGN_PTR(PTR, TYPE) \
+    (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(MPI_Aint), (TYPE))
+#else
+#define OMPI_DDT_ALIGN_INT(VALUE, TYPE)
+#define OMPI_DDT_ALIGN_PTR(PTR, TYPE)
+#endif  /* OMPI_ALIGN_WORD_SIZE_INTEGERS */
 
 /**
  * Some architecture require that 64 bits pointers (to pointers) has to
@@ -91,7 +96,7 @@ typedef struct __dt_args {
         pArgs->ref_count = 1;                                           \
         pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
             (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
-        ALIGN_INT_TO( pArgs->total_pack_size, sizeof(MPI_Aint) );       \
+        OMPI_DDT_ALIGN_INT( pArgs->total_pack_size, int );              \
         (PDATA)->args = (void*)pArgs;					\
         (PDATA)->packed_description = NULL;                             \
     } while(0)
@@ -226,7 +231,8 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
             /* as total_pack_size is always aligned to MPI_Aint size their sum
              * will be aligned to ...
              */
-            CHECK_ALIGN_TO( pArgs->total_pack_size, sizeof(MPI_Aint) );
+            assert( pArgs->total_pack_size ==
+                    OPAL_ALIGN(pArgs->total_pack_size, sizeof(MPI_Aint), int) );
         }
     }
     return MPI_SUCCESS;
@@ -495,7 +501,6 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     int number_of_length, number_of_disp, number_of_datatype, data_id;
     int create_type, i;
     char* next_buffer;
-    bool free_array_of_disp = false;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     bool need_swap = false;
@@ -507,6 +512,8 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
 #endif
 
     next_buffer = (char*)*packed_buffer;
+    /* The pointer should always be aligned on MPI_Aint */
+    OMPI_DDT_ALIGN_PTR(next_buffer, char*);
     position = (int*)next_buffer;
 
     create_type = position[0];
@@ -576,23 +583,6 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
         }
     }
 
-#if OMPI_ALIGN_WORD_SIZE_INTEGERS
-    /**
-     * some architectures really don't like having unaligned
-     * accesses.  We'll be int aligned, because any sane system will
-     * require that.  But we might not be long aligned, and some
-     * architectures will complain if a long is accessed on int
-     * alignment (but not long alignment).  On those architectures,
-     * copy the buffer into an aligned buffer first.
-     */
-    if( 0 != number_of_disp ) {
-        char* ptr = array_of_disp;
-        free_array_of_disp = true;
-        array_of_disp = malloc(sizeof(MPI_Aint) * number_of_disp);
-        memcpy(array_of_disp, ptr, sizeof(MPI_Aint) * number_of_disp);
-    }
-#endif
-
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         for (i = 0 ; i < number_of_length ; ++i) {
@@ -618,7 +608,6 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
             OBJ_RELEASE(array_of_datatype[i]);
         }
     }
-    if (free_array_of_disp) free(array_of_disp);
     free( array_of_datatype );
     return datatype;
 }
@@ -725,6 +714,8 @@ ompi_ddt_create_from_packed_description( void** packed_buffer,
 
     datatype = __ompi_ddt_create_from_packed_description( packed_buffer,
                                                           remote_processor );
+    /* Keep the pointer aligned to MPI_Aint */
+    OMPI_DDT_ALIGN_PTR(*packed_buffer, void*);
     if( NULL == datatype ) {
         return NULL;
     }
