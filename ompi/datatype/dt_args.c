@@ -56,9 +56,9 @@ typedef struct __dt_args {
  */
 #if OMPI_ALIGN_WORD_SIZE_INTEGERS
 #define OMPI_DDT_ALIGN_INT(VALUE,  TYPE) \
-    (VALUE) = OPAL_ALIGN((VALUE), sizeof(MPI_Aint), (TYPE))
+    (VALUE) = OPAL_ALIGN((VALUE), sizeof(MPI_Aint), TYPE)
 #define OMPI_DDT_ALIGN_PTR(PTR, TYPE) \
-    (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(MPI_Aint), (TYPE))
+    (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(MPI_Aint), TYPE)
 #else
 #define OMPI_DDT_ALIGN_INT(VALUE, TYPE)
 #define OMPI_DDT_ALIGN_PTR(PTR, TYPE)
