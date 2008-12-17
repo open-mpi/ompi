@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -66,7 +66,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 {                                                                  \
                                                                    \
     ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_template_module_t*)btl)->template_frag_eager, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_template_module_t*)btl)->template_frag_eager, item, rc); \
     frag = (mca_btl_template_frag_t*) item;                        \
 }
 
@@ -80,7 +80,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 {                                                                  \
                                                                    \
     ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_template_module_t*)btl)->template_frag_max, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_template_module_t*)btl)->template_frag_max, item, rc); \
     frag = (mca_btl_template_frag_t*) item;                        \
 }
 
@@ -94,7 +94,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 #define MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag, rc)            \
 {                                                                  \
     ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_template_module_t*)btl)->template_frag_user, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_template_module_t*)btl)->template_frag_user, item, rc); \
     frag = (mca_btl_template_frag_t*) item;                        \
 }
 

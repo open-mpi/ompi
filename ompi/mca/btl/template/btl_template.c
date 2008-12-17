@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -169,21 +169,19 @@ mca_btl_base_descriptor_t* mca_btl_template_alloc(
     uint32_t flags)
 {
     mca_btl_template_module_t* template_btl = (mca_btl_template_module_t*) btl; 
-    mca_btl_template_frag_t* frag;
+    mca_btl_template_frag_t* frag = NULL;
     int rc;
     
     if(size <= btl->btl_eager_limit){ 
         MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(template_btl, frag, rc); 
-        frag->segment.seg_len = 
-            size <= btl->btl_eager_limit ? 
-            size : btl->btl_eager_limit ; 
     } else { 
         MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(template_btl, frag, rc); 
-        frag->segment.seg_len = 
-            size <= btl->btl_max_send_size ? 
-            size : btl->btl_max_send_size ; 
+    }
+    if( OPAL_UNLIKELY(NULL != frag) ) {
+        return NULL;
     }
     
+    frag->segment.seg_len = size;
     frag->base.des_flags = 0; 
     return (mca_btl_base_descriptor_t*)frag;
 }
@@ -243,15 +241,15 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
      * than the eager limit pack into a fragment from the eager pool
     */
     if (max_data+reserve <= btl->btl_eager_limit) {
-                                                                                                    
+
         MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
-                                                                                                    
+
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
+
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         *size  = max_data;
         if( rc < 0 ) {
@@ -268,7 +266,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
     else {
                                                                                                     
         MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
         if(max_data + reserve > frag->size){
@@ -324,7 +322,7 @@ mca_btl_base_descriptor_t* mca_btl_template_prepare_dst(
     int rc;
 
     MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag, rc);
-    if(NULL == frag) {
+    if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
 
