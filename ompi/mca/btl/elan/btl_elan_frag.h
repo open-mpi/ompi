@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -57,32 +57,21 @@ OBJ_CLASS_DECLARATION(mca_btl_elan_frag_user_t);
  * Macros to allocate/return descriptors from module specific
  * free list(s).
  */
+#define MCA_BTL_ELAN_FRAG_ALLOC_LIST( list, frag, rc ) \
+{                                                      \
+    ompi_free_list_item_t *item;                       \
+    OMPI_FREE_LIST_GET(&(list), item, rc);             \
+    frag = (mca_btl_elan_frag_t*) item;                \
+}
 
 #define MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc)                         \
-    {                                                                   \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_btl_elan_component.elan_frag_eager, item, rc); \
-        frag = (mca_btl_elan_frag_t*) item;                             \
-        frag->my_list = &mca_btl_elan_component.elan_frag_eager;        \
-    }
-
+    MCA_BTL_ELAN_FRAG_ALLOC_LIST(mca_btl_elan_component.elan_frag_eager, frag, rc)
 
 #define MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc)                           \
-    {                                                                   \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_btl_elan_component.elan_frag_max, item, rc); \
-        frag = (mca_btl_elan_frag_t*) item;                             \
-        frag->my_list = &mca_btl_elan_component.elan_frag_max;          \
-    }
-
+    MCA_BTL_ELAN_FRAG_ALLOC_LIST(mca_btl_elan_component.elan_frag_max, frag, rc)
 
 #define MCA_BTL_ELAN_FRAG_ALLOC_USER(frag, rc)                     \
-    {                                                                   \
-        ompi_free_list_item_t *item;                                    \
-        OMPI_FREE_LIST_WAIT(&mca_btl_elan_component.elan_frag_user, item, rc); \
-        frag = (mca_btl_elan_frag_t*) item;                             \
-        frag->my_list = &mca_btl_elan_component.elan_frag_user;         \
-    }
+    MCA_BTL_ELAN_FRAG_ALLOC_LIST(mca_btl_elan_component.elan_frag_user, frag, rc)
 
 #define MCA_BTL_ELAN_FRAG_RETURN(frag)                             \
     {                                                              \
