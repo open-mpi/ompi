@@ -618,17 +618,15 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     size_t size,
     uint32_t flags)
 {
-    mca_btl_sm_frag_t* frag;
+    mca_btl_sm_frag_t* frag = NULL;
     int rc;
     if(size <= mca_btl_sm_component.eager_limit) {
-        MCA_BTL_SM_FRAG_ALLOC1(frag,rc);
+        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag,rc);
     } else if (size <= mca_btl_sm_component.max_frag_size) {
-        MCA_BTL_SM_FRAG_ALLOC2(frag,rc);
-    } else {
-        return NULL;
+        MCA_BTL_SM_FRAG_ALLOC_MAX(frag,rc);
     }
 
-    if (frag != NULL) {
+    if (OPAL_LIKELY(frag != NULL)) {
         frag->segment.seg_len = size;
         frag->base.des_flags = flags;
     }
@@ -673,8 +671,8 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     size_t max_data = *size;
     int rc;
 
-    MCA_BTL_SM_FRAG_ALLOC2(frag, rc);
-    if(NULL == frag) {
+    MCA_BTL_SM_FRAG_ALLOC_MAX(frag, rc);
+    if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
 
@@ -751,7 +749,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
     int rc;
 
     if( length < mca_btl_sm_component.eager_limit ) {
-        MCA_BTL_SM_FRAG_ALLOC1(frag, rc);
+        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, rc);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             *descriptor = NULL;
             return rc;
