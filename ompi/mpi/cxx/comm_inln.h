@@ -623,7 +623,7 @@ MPI::Comm::Free_keyval(int& comm_keyval)
 inline void
 MPI::Comm::Set_attr(int comm_keyval, const void* attribute_val) const
 {
-    (void)MPI_Attr_put(mpi_comm, comm_keyval, (void*) attribute_val);
+    (void)MPI_Attr_put(mpi_comm, comm_keyval, const_cast<void*>(attribute_val));
 }
 
 inline bool
