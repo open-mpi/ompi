@@ -175,19 +175,19 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     size_t size,
     uint32_t flags)
 {
-    mca_btl_tcp_frag_t* frag;
+    mca_btl_tcp_frag_t* frag = NULL;
     int rc;
     
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc); 
-        frag->segments[0].seg_len = size;
     } else if (size <= btl->btl_max_send_size) { 
         MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc); 
-        frag->segments[0].seg_len = size;
-    } else { 
+    }
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
     
+    frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
     frag->base.des_src = frag->segments;
