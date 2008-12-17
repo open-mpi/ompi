@@ -193,7 +193,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
         mca_btl_elan_frag_t* frag;
 
         MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc );
-        if( NULL == frag ) {
+        if( OPAL_UNLIKELY(NULL == frag) ) {
             return OMPI_ERROR; 
         }
         frag->segment.seg_addr.pval = (void*)(frag + 1);
@@ -255,9 +255,6 @@ mca_btl_elan_alloc( struct mca_btl_base_module_t* btl,
 
     if( size <= btl->btl_eager_limit ) {
         MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc);
-        if( NULL == frag ) {
-            return NULL;
-        }
         if( size <= mca_btl_elan_component.queue_max_size ) {  /* This will be going over the queue */
             hdr_skip = sizeof(mca_btl_elan_hdr_t);
         }
@@ -331,27 +328,25 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
     if( 0 != reserve ) {
         if( max_data + reserve <= btl->btl_eager_limit ) {
             MCA_BTL_ELAN_FRAG_ALLOC_EAGER(frag, rc);
-            if( NULL == frag ) {
-                return NULL;
-            }
+
             if( (max_data + reserve) <= mca_btl_elan_component.queue_max_size ) {
                 skip = sizeof(mca_btl_elan_hdr_t);
             }
         } else {
             MCA_BTL_ELAN_FRAG_ALLOC_MAX(frag, rc);
-            if( NULL == frag ) {
-                return NULL;
-            }
             
             if( (max_data + reserve) > btl->btl_max_send_size ) {
                 max_data = btl->btl_max_send_size - reserve;
             }
         }
+        if( OPAL_UNLIKELY(NULL == frag) ) {
+            return NULL;
+        }
         frag->segment.seg_addr.pval = (void*)((unsigned char*)(frag + 1) + skip);
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
         
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );                                                                                                    
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         *size  = max_data;
         if( rc < 0 ) {
             MCA_BTL_ELAN_FRAG_RETURN(frag);
@@ -360,7 +355,7 @@ mca_btl_elan_prepare_src( struct mca_btl_base_module_t* btl,
         frag->segment.seg_len = max_data + reserve;
     } else {  /* this is a real RDMA operation */
         MCA_BTL_ELAN_FRAG_ALLOC_USER(frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
         frag->type = MCA_BTL_ELAN_HDR_TYPE_PUT;
@@ -414,7 +409,7 @@ mca_btl_elan_prepare_dst( struct mca_btl_base_module_t* btl,
         *size = (size_t)UINT32_MAX;
     }
     MCA_BTL_ELAN_FRAG_ALLOC_USER(frag, rc);
-    if( NULL == frag ) {
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
 
