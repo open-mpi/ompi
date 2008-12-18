@@ -37,6 +37,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/constants.h"
+#include "opal/util/output.h"
 
 #ifndef _NSIG
 #define _NSIG 32
