@@ -60,16 +60,14 @@ struct ompi_proc_t {
     struct mca_bml_base_endpoint_t* proc_bml;
     /** architecture of this process */
     uint32_t                        proc_arch;
+    /** flags for this proc */
+    uint8_t                         proc_flags;
     /** Base convertor for the proc described by this process */
     struct ompi_convertor_t*        proc_convertor;
-    /** Lock protecting data inside the given ompi_proc_t */
-    opal_mutex_t                    proc_lock;
     /** A pointer to the name of this host - data is
      * actually stored in the RTE
      */
     char*                           proc_hostname;
-    /** flags for this proc */
-    uint8_t                         proc_flags;
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);
@@ -304,7 +302,7 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
 /**
  * Refresh the OMPI process subsystem
  *
- * Refrsh the Open MPI process subsystem. This function will update
+ * Refresh the Open MPI process subsystem. This function will update
  * the list of proc instances in the current MPI_COMM_WORLD with
  * data from the run-time environemnt.
  *
