@@ -223,6 +223,15 @@ typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(orte_jobid_t job
  */
 typedef bool (*orte_routed_module_proc_is_below_fn_t)(orte_vpid_t root, orte_vpid_t target);
 
+/*
+ * Set lifeline process
+ *
+ * Defines the lifeline to be the specified process. Should contact to
+ * that process be lost, the errmgr will be called, possibly resulting
+ * in termination of the process and job.
+ */
+typedef int (*orte_routed_module_set_lifeline_fn_t)(orte_process_name_t *proc);
+
 /**
  * Handle fault tolerance updates
  *
@@ -254,6 +263,7 @@ struct orte_routed_module_t {
     orte_routed_module_init_routes_fn_t             init_routes;
     orte_routed_module_route_lost_fn_t              route_lost;
     orte_routed_module_route_is_defined_fn_t        route_is_defined;
+    orte_routed_module_set_lifeline_fn_t            set_lifeline;
     /* fns for daemons */
     orte_routed_module_update_routing_tree_fn_t     update_routing_tree;
     orte_routed_module_get_routing_tree_fn_t        get_routing_tree;
