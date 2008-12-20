@@ -48,6 +48,7 @@ static int update_routing_tree(void);
 static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
 static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
 static int get_wireup_info(opal_buffer_t *buf);
+static int set_lifeline(orte_process_name_t *proc);
 
 #if OPAL_ENABLE_FT == 1
 static int radix_ft_event(int state);
@@ -62,6 +63,7 @@ orte_routed_module_t orte_routed_radix_module = {
     init_routes,
     route_lost,
     route_is_defined,
+    set_lifeline,
     update_routing_tree,
     get_routing_tree,
     proc_is_below,
@@ -79,6 +81,7 @@ static orte_process_name_t      wildcard_route;
 static opal_condition_t         cond;
 static opal_mutex_t             lock;
 static orte_process_name_t      *lifeline=NULL;
+static orte_process_name_t      local_lifeline;
 static orte_process_name_t      my_parent;
 static int                      num_children;
 static opal_list_t              my_children;
@@ -783,6 +786,18 @@ static bool route_is_defined(const orte_process_name_t *target)
     }
     
     return true;
+}
+
+static int set_lifeline(orte_process_name_t *proc)
+{
+    /* we have to copy the proc data because there is no
+     * guarantee that it will be preserved
+     */
+    local_lifeline.jobid = proc->jobid;
+    local_lifeline.vpid = proc->vpid;
+    lifeline = &local_lifeline;
+    
+    return ORTE_SUCCESS;
 }
 
 static void radix_tree(int rank, int *num_children,
