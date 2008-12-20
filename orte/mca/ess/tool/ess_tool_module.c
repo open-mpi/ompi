@@ -148,8 +148,8 @@ static void rte_abort(int status, bool report)
      */
     orte_proc_info_finalize();
     
-    /* Now abort */
-    abort();
+    /* Now just exit */
+    exit(0);
 }
 
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
