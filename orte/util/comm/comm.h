@@ -43,18 +43,6 @@ ORTE_DECLSPEC int orte_util_comm_query_node_info(const orte_process_name_t *hnp,
 ORTE_DECLSPEC int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
                                                  int *num_procs, orte_proc_t ***proc_info_array);
 
-ORTE_DECLSPEC int orte_util_comm_attach_stdout(const orte_process_name_t *hnp,
-                                               orte_jobid_t job, orte_vpid_t vpid, int fd);
-
-ORTE_DECLSPEC int orte_util_comm_attach_stderr(const orte_process_name_t *hnp,
-                                               orte_jobid_t job, orte_vpid_t vpid, int fd);
-
-ORTE_DECLSPEC int orte_util_comm_detach_stdout(const orte_process_name_t *hnp,
-                                               orte_jobid_t job, orte_vpid_t vpid);
-
-ORTE_DECLSPEC int orte_util_comm_detach_stderr(const orte_process_name_t *hnp,
-                                               orte_jobid_t job, orte_vpid_t vpid);
-
 ORTE_DECLSPEC int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t job);
