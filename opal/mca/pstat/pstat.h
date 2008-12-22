@@ -14,21 +14,12 @@
 /**
  * @file
  *
- * pstat (memory checker) framework component interface.
+ * pstat (process statistics) framework component interface.
  *
  * Intent
  *
- * This is a very thin framework to abstract memory checking tools,
- * such as valgrind and possibly Sun rtc (memory checking available
- * possibly only under Solaris/Sparc).
+ * To support the ompi-top utility.
  *
- * Currently, only functionality for hiding and unhiding of memory
- * is added; further functions provided by the memory checker/api
- * checker could be added, however, this comes (at least for valgrind)
- * with considerable overhead.
- * One possible option would be to have error_print_callbacks, that
- * output different error messages, depending on the memory location
- * being hit by certain error.
  */
 
 #ifndef OPAL_MCA_PSTAT_H
