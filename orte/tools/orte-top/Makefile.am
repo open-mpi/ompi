@@ -20,14 +20,13 @@
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-man_pages = orte-restart.1
-EXTRA_DIST = orte-restart.1in
+man_pages = orte-top.1
+EXTRA_DIST = orte-top.1in
 
 if !ORTE_DISABLE_FULL_SUPPORT
-if WANT_FT
 if OMPI_INSTALL_BINARIES
 
-bin_PROGRAMS = orte-restart
+bin_PROGRAMS = orte-top
 
 nodist_man_MANS = $(man_pages)
 
@@ -36,14 +35,13 @@ nodist_man_MANS = $(man_pages)
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-dist_pkgdata_DATA = help-orte-restart.txt
+dist_pkgdata_DATA = help-orte-top.txt
 
 endif # OMPI_INSTALL_BINARIES
 
-orte_restart_SOURCES = orte-restart.c
-orte_restart_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_top_SOURCES = orte-top.c
+orte_top_LDADD = $(top_builddir)/orte/libopen-rte.la
 
-endif # WANT_FT
 endif # ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:

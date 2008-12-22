@@ -308,6 +308,9 @@ OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
     int opal_dss_pack_byte_object(opal_buffer_t *buffer, const void *src,
                            int32_t num_vals, opal_data_type_t type);
 
+    int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
+                            int32_t num_vals, opal_data_type_t type);
+
     /*
      * Internal unpack functions
      */
@@ -347,6 +350,9 @@ OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
     int opal_dss_unpack_byte_object(opal_buffer_t *buffer, void *dest,
                              int32_t *num_vals, opal_data_type_t type);
 
+    int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
+                              int32_t *num_vals, opal_data_type_t type);
+
     /*
      * Internal copy functions
      */
@@ -362,6 +368,10 @@ OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
 
     int opal_dss_copy_data_value(opal_dss_value_t **dest, opal_dss_value_t *src,
                                   opal_data_type_t type);
+
+    int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
+                            opal_data_type_t type);
+
     /*
      * Internal compare functions
      */
@@ -399,6 +409,8 @@ OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
 
     int opal_dss_compare_byte_object(opal_byte_object_t *value1, opal_byte_object_t *value2, opal_data_type_t type);
 
+    int opal_dss_compare_pstat(opal_pstats_t *value1, opal_pstats_t *value2, opal_data_type_t type);
+
     /*
     * Internal size functions
     */
@@ -409,6 +421,8 @@ OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
     int opal_dss_size_data_value(size_t *size, opal_dss_value_t *src, opal_data_type_t type);
 
     int opal_dss_size_byte_object(size_t *size, opal_byte_object_t *src, opal_data_type_t type);
+
+    int opal_dss_size_pstat(size_t *size, opal_pstats_t *src, opal_data_type_t type);
 
     /*
     * Internal print functions
@@ -439,6 +453,7 @@ OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
     int opal_dss_print_data_type(char **output, char *prefix, opal_data_type_t *src, opal_data_type_t type);
     int opal_dss_print_data_value(char **output, char *prefix, opal_dss_value_t *src, opal_data_type_t type);
     int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *src, opal_data_type_t type);
+    int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_data_type_t type);
 
 
     /*

@@ -32,6 +32,9 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 
 #include <signal.h>
 
@@ -42,6 +45,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/pstat/pstat.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -2679,4 +2683,61 @@ CLEANUP:
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return rc;
+}
+
+int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
+                                  orte_process_name_t *proc)
+{
+    int rc;
+    orte_odls_child_t *child;
+    opal_list_item_t *item;
+    opal_pstats_t stats, *statsptr;
+    int j;
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls:get_proc_stats for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+    
+    /* find this child */
+    for (item = opal_list_get_first(&orte_odls_globals.children);
+         item != opal_list_get_end(&orte_odls_globals.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        if (proc->jobid == child->name->jobid &&
+            (proc->vpid == child->name->vpid ||
+             ORTE_VPID_WILDCARD == proc->vpid)) { /* found it */
+
+            OBJ_CONSTRUCT(&stats, opal_pstats_t);
+            /* record node up to first '.' */
+            for (j=0; j < (int)strlen(orte_process_info.nodename) &&
+                 j < OPAL_PSTAT_MAX_STRING_LEN-1 &&
+                 orte_process_info.nodename[j] != '.'; j++) {
+                stats.node[j] = orte_process_info.nodename[j];
+            }
+            /* record rank */
+            stats.rank = child->name->vpid;
+            /* get stats */
+            rc = opal_pstat.query(child->pid, &stats);
+            if (ORTE_SUCCESS != rc) {
+                OBJ_DESTRUCT(&stats);
+                return rc;
+            }
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, proc, 1, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&stats);
+                return rc;
+            }
+            statsptr = &stats;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &statsptr, 1, OPAL_PSTAT))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&stats);
+                return rc;
+            }
+            OBJ_DESTRUCT(&stats);
+        }
+    }
+
+    return ORTE_SUCCESS;
 }

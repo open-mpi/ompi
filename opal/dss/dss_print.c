@@ -459,3 +459,28 @@ int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *
 
     return OPAL_SUCCESS;
 }
+
+/*
+ * OPAL_PSTAT
+ */
+int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_data_type_t type)
+{
+    char *prefx;
+    
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+    
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_PSTATS\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+    
+    asprintf(output, "%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
+                     "%s\ttime: %lu VMsize: %lu PeakVMSize: %lu RSS: %lu Share: %lu\n",
+             prefx, src->node, src->rank, src->pid, src->cmd, src->state, src->priority, src->num_threads, src->processor,
+             prefx, src->time, src->vsize, src->peak_vsize, src->rss, src->shared_size);
+    
+    return OPAL_SUCCESS;
+}

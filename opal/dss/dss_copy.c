@@ -197,3 +197,34 @@ int opal_dss_copy_byte_object(opal_byte_object_t **dest, opal_byte_object_t *src
 
     return OPAL_SUCCESS;
 }
+
+/* OPAL_PSTAT */
+int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
+                        opal_data_type_t type)
+{
+    opal_pstats_t *p;
+    
+    /* create the new object */
+    *dest = OBJ_NEW(opal_pstats_t);
+    if (NULL == *dest) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    p = *dest;
+    
+    /* copy the individual fields */
+    memcpy(p->node, src->node, sizeof(src->node));
+    p->rank = src->rank;
+    p->pid = src->pid;
+    memcpy(p->cmd, src->cmd, sizeof(src->node));
+    p->state = src->state;
+    p->time = src->time;
+    p->priority = src->priority;
+    p->num_threads = src->num_threads;
+    p->vsize = src->vsize;
+    p->rss = src->rss;
+    p->peak_vsize = src->peak_vsize;
+    p->shared_size = src->shared_size;
+    p->processor = src->processor;
+    
+    return OPAL_SUCCESS;
+}

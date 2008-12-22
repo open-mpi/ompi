@@ -133,6 +133,26 @@ OBJ_CLASS_INSTANCE(opal_dss_type_info_t, opal_object_t,
                    opal_dss_type_info_destruct);
 
 
+static void opal_pstat_construct(opal_pstats_t *obj)
+{
+    memset(obj->node, 0, sizeof(obj->node));
+    memset(obj->cmd, 0, sizeof(obj->cmd));
+    obj->state = 'U';
+    obj->time = 0;
+    obj->priority = -1;
+    obj->num_threads = -1;
+    obj->vsize = 0;
+    obj->rss = 0;
+    obj->peak_vsize = 0;
+    obj->shared_size = 0;
+    obj->processor = -1;
+}
+
+OBJ_CLASS_INSTANCE(opal_pstats_t, opal_list_item_t,
+                   opal_pstat_construct,
+                   NULL);
+
+
 int opal_dss_open(void)
 {
     char *enviro_val;
@@ -418,6 +438,18 @@ int opal_dss_open(void)
         return rc;
     }
 
+    tmp = OPAL_PSTAT;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_pstat,
+                                                     opal_dss_unpack_pstat,
+                                                     (opal_dss_copy_fn_t)opal_dss_copy_pstat,
+                                                     (opal_dss_compare_fn_t)opal_dss_compare_pstat,
+                                                     (opal_dss_size_fn_t)opal_dss_size_pstat,
+                                                     (opal_dss_print_fn_t)opal_dss_print_pstat,
+                                                     (opal_dss_release_fn_t)opal_dss_std_obj_release,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "OPAL_PSTAT", &tmp))) {
+        return rc;
+    }
     /* All done */
 
     return OPAL_SUCCESS;

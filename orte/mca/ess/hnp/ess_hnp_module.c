@@ -36,6 +36,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/malloc.h"
 #include "opal/util/basename.h"
+#include "opal/mca/pstat/base/base.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -113,6 +114,20 @@ static int rte_init(char flags)
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
+        goto error;
+    }
+    
+    /* open and setup the opal_pstat framework so we can provide
+     * process stats if requested
+     */
+    if (ORTE_SUCCESS != (ret = opal_pstat_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pstat_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pstat_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pstat_base_select";
         goto error;
     }
     

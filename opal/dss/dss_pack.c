@@ -417,3 +417,64 @@ int opal_dss_pack_byte_object(opal_buffer_t *buffer, const void *src, int32_t nu
 
     return OPAL_SUCCESS;
 }
+
+/*
+ * OPAL_PSTAT
+ */
+int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
+                        int32_t num_vals, opal_data_type_t type)
+{
+    opal_pstats_t **ptr;
+    int32_t i;
+    int ret;
+    char *cptr;
+    
+    ptr = (opal_pstats_t **) src;
+    
+    for (i = 0; i < num_vals; ++i) {
+        cptr = ptr[i]->node;
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &cptr, 1, OPAL_STRING))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->rank, 1, OPAL_INT32))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->pid, 1, OPAL_PID))) {
+            return ret;
+        }
+        cptr = ptr[i]->cmd;
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &cptr, 1, OPAL_STRING))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->state, 1, OPAL_BYTE))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->time, 1, OPAL_UINT64))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->priority, 1, OPAL_INT32))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->num_threads, 1, OPAL_INT16))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->vsize, 1, OPAL_UINT64))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->rss, 1, OPAL_UINT64))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->peak_vsize, 1, OPAL_UINT64))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->shared_size, 1, OPAL_UINT64))) {
+            return ret;
+        }
+        if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->processor, 1, OPAL_INT16))) {
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+

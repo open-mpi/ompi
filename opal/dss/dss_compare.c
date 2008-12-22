@@ -253,3 +253,9 @@ int opal_dss_compare_byte_object(opal_byte_object_t *value1, opal_byte_object_t 
 
     return OPAL_EQUAL;  /* sum of both value's bytes was identical */
 }
+
+/* OPAL_PSTAT */
+int opal_dss_compare_pstat(opal_pstats_t *value1, opal_pstats_t *value2, opal_data_type_t type)
+{
+    return OPAL_EQUAL;  /* eventually compare field to field */
+}
