@@ -152,3 +152,13 @@ int opal_dss_size_byte_object(size_t *size, opal_byte_object_t *src, opal_data_t
 
     return OPAL_SUCCESS;
 }
+
+/*
+ * OPAL_PSTAT
+ */
+int opal_dss_size_pstat(size_t *size, opal_pstats_t *src, opal_data_type_t type)
+{
+    *size = sizeof(opal_pstats_t);
+    return OPAL_SUCCESS;
+}
+

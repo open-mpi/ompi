@@ -30,6 +30,7 @@
 #include "opal/types.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
 
@@ -69,8 +70,9 @@ typedef struct {
 #define    OPAL_DATA_TYPE           (opal_data_type_t)   17 /**< data type */
 #define    OPAL_NULL                (opal_data_type_t)   18 /**< don't interpret data type */
 #define    OPAL_DATA_VALUE          (opal_data_type_t)   19 /**< data value */
+#define    OPAL_PSTAT               (opal_data_type_t)   20 /**< process statistics */
 
-#define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   20
+#define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 
 /* define the results values for comparisons so we can change them in only one place */
 #define OPAL_VALUE1_GREATER  +1
@@ -86,6 +88,26 @@ typedef struct {
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_dss_value_t);
 
 #define OPAL_DATA_VALUE_EMPTY { OPAL_OBJ_STATIC_INIT(opal_dss_value_t), OPAL_UNDEF, NULL}
+
+/* Process statistics object */
+#define OPAL_PSTAT_MAX_STRING_LEN   32
+typedef struct {
+    opal_list_item_t super;                /* required for this to be on a list */
+    char node[OPAL_PSTAT_MAX_STRING_LEN];
+    int32_t rank;
+    pid_t pid;
+    char cmd[OPAL_PSTAT_MAX_STRING_LEN];
+    char state;
+    uint64_t time;
+    int32_t priority;
+    int16_t num_threads;
+    uint64_t vsize;  /* in kBytes */
+    uint64_t rss;  /* in kBytes */
+    uint64_t peak_vsize;  /* in kBytes */
+    uint64_t shared_size;  /* in kBytes */
+    int16_t processor;
+} opal_pstats_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pstats_t);
 
 /* structured-unstructured data flags */
 #define OPAL_DSS_STRUCTURED     true

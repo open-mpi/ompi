@@ -20,7 +20,7 @@
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-man_pages = orte-checkpoint.1 ompi-checkpoint.1
+man_pages = orte-checkpoint.1
 EXTRA_DIST = orte-checkpoint.1in
 
 if !ORTE_DISABLE_FULL_SUPPORT
@@ -38,12 +38,6 @@ $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
 dist_pkgdata_DATA = help-orte-checkpoint.txt
 
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f ompi-checkpoint$(EXEEXT); $(LN_S) orte-checkpoint$(EXEEXT) ompi-checkpoint$(EXEEXT))
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/ompi-checkpoint$(EXEEXT)
-
 endif # OMPI_INSTALL_BINARIES
 
 orte_checkpoint_SOURCES = orte-checkpoint.c
@@ -51,9 +45,6 @@ orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la
 
 endif # WANT_FT
 endif # !ORTE_DISABLE_FULL_SUPPORT
-
-ompi-checkpoint.1: $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1
-	cp -f $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1 ompi-checkpoint.1
 
 distclean-local:
 	rm -f $(man_pages)

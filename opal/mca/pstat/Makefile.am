@@ -1,6 +1,5 @@
-# -*- makefile -*-
 #
-# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -10,7 +9,6 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,28 +16,26 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from
-# orte/Makefile.am
+# main library setup
+noinst_LTLIBRARIES = libmca_pstat.la
+libmca_pstat_la_SOURCES =
 
-SUBDIRS += \
-	tools/orte-checkpoint \
-	tools/orte-clean \
-	tools/orte-iof \
-	tools/orte-ps \
-	tools/orte-restart \
-	tools/orted \
-	tools/orterun \
-	tools/wrappers \
-        tools/orte-top
+# header setup
+nobase_opal_HEADERS =
 
-DIST_SUBDIRS += \
-	tools/orte-checkpoint \
-	tools/orte-clean \
-	tools/orte-iof \
-	tools/orte-ps \
-	tools/orte-restart \
-	tools/orted \
-	tools/orterun \
-	tools/wrappers \
-        tools/orte-top
+# local files
+headers = pstat.h
+libmca_pstat_la_SOURCES += $(headers)
 
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+nobase_opal_HEADERS += $(headers)
+opaldir = $(includedir)/openmpi/opal/mca/pstat
+else
+opaldir = $(includedir)
+endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

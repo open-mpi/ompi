@@ -183,9 +183,14 @@ ORTE_DECLSPEC int orte_odls_base_preload_files_app_context(orte_app_context_t* c
 ORTE_DECLSPEC int orte_odls_base_default_collect_data(orte_process_name_t *proc, opal_buffer_t *buf);
 
 /*
- * Retrive the daemon map
+ * Retrieve the daemon map
  */
 ORTE_DECLSPEC opal_pointer_array_t* orte_odls_base_get_daemon_map(void);
+
+/*
+ * Obtain process stats on a child proc
+ */
+ORTE_DECLSPEC int orte_odls_base_get_proc_stats(opal_buffer_t *answer, orte_process_name_t *proc);
 
 END_C_DECLS
 

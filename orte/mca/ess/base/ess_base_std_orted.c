@@ -32,6 +32,7 @@
 #include "orte/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/mca/pstat/base/base.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -41,7 +42,6 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/errmgr/base/base.h"
 #if OPAL_ENABLE_FT == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
@@ -66,6 +66,20 @@ int orte_ess_base_orted_setup(void)
     char *error = NULL;
     char *plm_to_use;
 
+    /* open and setup the opal_pstat framework so we can provide
+     * process stats if requested
+     */
+    if (ORTE_SUCCESS != (ret = opal_pstat_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pstat_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pstat_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pstat_base_select";
+        goto error;
+    }
+    
     /* some environments allow remote launches - e.g., ssh - so
      * open the PLM and select something -only- if we are given
      * a specific module to use
@@ -290,7 +304,6 @@ int orte_ess_base_orted_finalize(void)
     if (plm_in_use) {
         orte_plm_base_close();
     }
-    orte_errmgr_base_close();
     
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();

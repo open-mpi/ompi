@@ -509,3 +509,84 @@ int opal_dss_unpack_byte_object(opal_buffer_t *buffer, void *dest, int32_t *num,
 
     return OPAL_SUCCESS;
 }
+
+/*
+ * OPAL_PSTAT
+ */
+int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
+                          int32_t *num_vals, opal_data_type_t type)
+{
+    opal_pstats_t **ptr;
+    int32_t i, n, m;
+    int ret;
+    char *cptr;
+    
+    ptr = (opal_pstats_t **) dest;
+    n = *num_vals;
+    
+    for (i = 0; i < n; ++i) {
+        /* allocate the new object */
+        ptr[i] = OBJ_NEW(opal_pstats_t);
+        if (NULL == ptr[i]) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &cptr, &m, OPAL_STRING))) {
+            return ret;
+        }
+        memmove(ptr[i]->node, cptr, strlen(cptr));
+        free(cptr);
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->rank, &m, OPAL_INT32))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->pid, &m, OPAL_PID))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &cptr, &m, OPAL_STRING))) {
+            return ret;
+        }
+        memmove(ptr[i]->cmd, cptr, strlen(cptr));
+        free(cptr);
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->state, &m, OPAL_BYTE))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->time, &m, OPAL_UINT64))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->priority, &m, OPAL_INT32))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->num_threads, &m, OPAL_INT16))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->vsize, &m, OPAL_UINT64))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->rss, &m, OPAL_UINT64))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->peak_vsize, &m, OPAL_UINT64))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->shared_size, &m, OPAL_UINT64))) {
+            return ret;
+        }
+        m=1;
+        if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->processor, &m, OPAL_INT16))) {
+            return ret;
+        }
+    }
+    
+    return OPAL_SUCCESS;
+}
