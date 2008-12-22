@@ -46,7 +46,7 @@ static int query(pid_t pid, opal_pstats_t *stats);
 static int fini(void);
 
 /*
- * Linux pstat module
+ * Darwin pstat module
  */
 const opal_pstat_base_module_t opal_pstat_darwin_module = {
     init,
