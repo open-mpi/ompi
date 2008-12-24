@@ -137,13 +137,14 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
       &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
-    { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 0,
-      &orterun_globals.report_pid, OPAL_CMD_LINE_TYPE_BOOL,
-      "Printout pid" },
-    { NULL, NULL, NULL, '\0', "report-uri", "report-uri", 0,
-      &orterun_globals.report_uri, OPAL_CMD_LINE_TYPE_BOOL,
-      "Printout URI" },
-
+    { NULL, NULL, NULL, '\0', "report-pid", "report-pid", 1,
+      &orterun_globals.report_pid, OPAL_CMD_LINE_TYPE_STRING,
+      "Printout pid on stdout [-], stderr [+], or a file [anything else]" },
+    { NULL, NULL, NULL, '\0', "report-uri", "report-uri", 1,
+      &orterun_globals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
+      "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
+    
+    
     /* hetero apps */
     { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -495,13 +496,29 @@ int orterun(int argc, char *argv[])
     }    
     
     /* check for request to report uri */
-    if (orterun_globals.report_uri) {
-        char *uri;
-        uri = orte_rml.get_contact_info();
-        printf("%s uri: %s\n", orterun_basename, (NULL == uri) ? "NULL" : uri);
-        if (NULL != uri) {
-            free(uri);
+    if (NULL != orterun_globals.report_uri) {
+        FILE *fp;
+        char *rml_uri;
+        rml_uri = orte_rml.get_contact_info();
+        if (0 == strcmp(orterun_globals.report_uri, "-")) {
+            /* if '-', then output to stdout */
+            printf("%s\n",  (NULL == rml_uri) ? "NULL" : rml_uri);
+        } else if (0 == strcmp(orterun_globals.report_uri, "+")) {
+            /* if '+', output to stderr */
+            fprintf(stderr, "%s\n",  (NULL == rml_uri) ? "NULL" : rml_uri);
+        } else {
+            fp = fopen(orterun_globals.report_uri, "w");
+            if (NULL == fp) {
+                orte_show_help("help-orterun.txt", "orterun:write_file", false,
+                               orterun_basename, "uri", orterun_globals.report_uri);
+                exit(0);
+            }
+            fprintf(fp, "%s\n", (NULL == rml_uri) ? "NULL" : rml_uri);
+            fclose(fp);
         }
+        if (NULL != rml_uri) {
+            free(rml_uri);
+        }        
     }
     
     /* Change the default behavior of libevent such that we want to
@@ -1179,6 +1196,8 @@ static int init_globals(void)
         orterun_globals.wait_for_server = false;
         orterun_globals.server_wait_timeout = 10;
         orterun_globals.stdin_target = "0";
+        orterun_globals.report_pid        = NULL;
+        orterun_globals.report_uri        = NULL;
     }
 
     /* Reset the other fields every time */
@@ -1187,8 +1206,6 @@ static int init_globals(void)
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
     orterun_globals.quiet                      = false;
-    orterun_globals.report_pid                 = false;
-    orterun_globals.report_uri                 = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
     orterun_globals.debugger                   = false;
@@ -1258,8 +1275,24 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     }
 
     /* check for request to report pid */
-    if (orterun_globals.report_pid) {
-        printf("%s pid: %d\n", orterun_basename, (int)getpid());
+    if (NULL != orterun_globals.report_pid) {
+        FILE *fp;
+        if (0 == strcmp(orterun_globals.report_pid, "-")) {
+            /* if '-', then output to stdout */
+            printf("%d\n", (int)getpid());
+        } else if (0 == strcmp(orterun_globals.report_pid, "+")) {
+            /* if '+', output to stderr */
+            fprintf(stderr, "%d\n", (int)getpid());
+        } else {
+            fp = fopen(orterun_globals.report_pid, "w");
+            if (NULL == fp) {
+                orte_show_help("help-orterun.txt", "orterun:write_file", false,
+                               orterun_basename, "pid", orterun_globals.report_pid);
+                exit(0);
+            }
+            fprintf(fp, "%d\n", (int)getpid());
+            fclose(fp);
+        }
     }
     
     /* Do we want a user-level debugger? */
