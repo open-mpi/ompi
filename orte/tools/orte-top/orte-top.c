@@ -53,6 +53,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 /*
  * Local variables & functions
@@ -69,6 +70,7 @@ static opal_event_t *my_exit_event;
 static FILE *fp = NULL;
 static bool help;
 static char *hnppidstr;
+static char *hnpuristr;
 static char *ranks;
 static orte_hnp_contact_t *target_hnp;
 static int update_rate;
@@ -117,6 +119,12 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       &hnppidstr, OPAL_CMD_LINE_TYPE_STRING,
       "The pid of the mpirun that you wish to query/monitor" },
 
+    { NULL, NULL, NULL, 
+      '\0', "uri", "uri", 
+      1,
+      &hnpuristr, OPAL_CMD_LINE_TYPE_STRING,
+      "The uri of the mpirun that you wish to query/monitor" },
+    
     { NULL, NULL, NULL, 
       '\0', "rank", "rank", 
       1,
@@ -245,28 +253,6 @@ main(int argc, char *argv[])
         return ORTE_ERROR;
     }
     
-    /*
-     * Must specify the mpirun pid
-     */
-    if (NULL == hnppidstr) {
-        orte_show_help("help-orte-top.txt", "orte-top:pid-required", true);
-        return ORTE_ERROR;
-    }
-    
-    /* convert the pid */
-    hnppid = strtoul(hnppidstr, NULL, 10);
-    
-    /* if an output file was specified, open it */
-    if (NULL != logfile) {
-        fp = fopen(logfile, "w");
-        if (NULL == fp) {
-            orte_show_help("help-orte-top.txt", "orte-top:cant-open-logfile", true, logfile);
-            return ORTE_ERROR;
-        }
-    } else {
-        fp = stdout;
-    }
-    
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
@@ -276,12 +262,15 @@ main(int argc, char *argv[])
     }
     
     OBJ_CONSTRUCT(&orte_exit, orte_trigger_event_t);
-
+    
     if (ORTE_SUCCESS != orte_wait_event(&my_exit_event, &orte_exit, "job_complete", abort_exit_callback)) {
         orte_finalize();
-        return 1;
+        exit(1);
     }
-
+    
+    /* setup the list for recvd stats */
+    OBJ_CONSTRUCT(&recvd_stats, opal_list_t);
+    
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
      * to cleanup
@@ -293,39 +282,171 @@ main(int argc, char *argv[])
                     abort_exit_callback, &int_handler);
     opal_signal_add(&int_handler, NULL);
     
-    /* setup the list for recvd stats */
-    OBJ_CONSTRUCT(&recvd_stats, opal_list_t);
-
     /*
-     * Get the list of available hnp's and setup contact info
-     * to them in the RML
+     * Must specify the mpirun pid
      */
-    OBJ_CONSTRUCT(&hnp_list, opal_list_t);
-    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
-        goto cleanup;
-    }
-    
-    /*
-     * For each hnp in the listing
-     */
-    while (NULL != (item  = opal_list_remove_first(&hnp_list))) {
-        orte_hnp_contact_t *hnp = (orte_hnp_contact_t*)item;
-        if (hnppid == hnp->pid) {
-            /* this is the one we want */
-            target_hnp = hnp;
-            break;
+    if (NULL != hnppidstr) {
+        if (0 == strncmp(hnppidstr, "file", strlen("file")) ||
+            0 == strncmp(hnppidstr, "FILE", strlen("FILE"))) {
+            char input[1024], *filename;
+            FILE *fp;
+            
+            /* it is a file - get the filename */
+            filename = strchr(hnppidstr, ':');
+            if (NULL == filename) {
+                /* filename is not correctly formatted */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "pid", hnppidstr);
+                orte_finalize();
+                exit(1);
+            }
+            ++filename; /* space past the : */
+            
+            if (0 >= strlen(filename)) {
+                /* they forgot to give us the name! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "pid", hnppidstr);
+                orte_finalize();
+                exit(1);
+            }
+            
+            /* open the file and extract the pid */
+            fp = fopen(filename, "r");
+            if (NULL == fp) { /* can't find or read file! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, filename);
+                orte_finalize();
+                exit(1);
+            }
+            if (NULL == fgets(input, 1024, fp)) {
+                /* something malformed about file */
+                fclose(fp);
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-file-bad", true, filename);
+                orte_finalize();
+                exit(1);
+            }
+            fclose(fp);
+            input[strlen(input)-1] = '\0';  /* remove newline */
+            /* convert the pid */
+            hnppid = strtoul(input, NULL, 10);
+        } else {
+            /* should just be the pid itself */
+            hnppid = strtoul(hnppidstr, NULL, 10);
         }
-        OBJ_RELEASE(hnp);
+        /*
+         * Get the list of available hnp's and setup contact info
+         * to them in the RML
+         */
+        OBJ_CONSTRUCT(&hnp_list, opal_list_t);
+        if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
+            orte_show_help("help-orte-top.txt", "orte-top:pid-not-found", true, hnppid);
+            orte_finalize();
+            exit(1);
+        }
+        
+        /*
+         * For each hnp in the listing
+         */
+        while (NULL != (item  = opal_list_remove_first(&hnp_list))) {
+            orte_hnp_contact_t *hnp = (orte_hnp_contact_t*)item;
+            if (hnppid == hnp->pid) {
+                /* this is the one we want */
+                target_hnp = hnp;
+                /* let it continue to run so we deconstruct the list */
+                continue;
+            }
+            OBJ_RELEASE(hnp);
+        }
+        OBJ_DESTRUCT(&hnp_list);
+        
+        /* if we get here without finding the one we wanted, then abort */
+        if (NULL == target_hnp) {
+            orte_show_help("help-orte-top.txt", "orte-top:pid-not-found", true, hnppid);
+            orte_finalize();
+            exit(1);
+        }
+    } else if (NULL != hnpuristr) {
+        if (0 == strncmp(hnpuristr, "file", strlen("file")) ||
+            0 == strncmp(hnpuristr, "FILE", strlen("FILE"))) {
+            char input[1024], *filename;
+            FILE *fp;
+            
+            /* it is a file - get the filename */
+            filename = strchr(hnpuristr, ':');
+            if (NULL == filename) {
+                /* filename is not correctly formatted */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", hnpuristr);
+                orte_finalize();
+                exit(1);
+            }
+            ++filename; /* space past the : */
+            
+            if (0 >= strlen(filename)) {
+                /* they forgot to give us the name! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", hnpuristr);
+                orte_finalize();
+                exit(1);
+            }
+            
+            /* open the file and extract the uri */
+            fp = fopen(filename, "r");
+            if (NULL == fp) { /* can't find or read file! */
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, filename);
+                orte_finalize();
+                exit(1);
+            }
+            if (NULL == fgets(input, 1024, fp)) {
+                /* something malformed about file */
+                fclose(fp);
+                orte_show_help("help-orte-top.txt", "orte-top:hnp-file-bad", true, filename);
+                orte_finalize();
+                exit(1);
+            }
+            fclose(fp);
+            input[strlen(input)-1] = '\0';  /* remove newline */
+            /* construct the target hnp info */
+            target_hnp = OBJ_NEW(orte_hnp_contact_t);
+            target_hnp->rml_uri = strdup(input);
+        } else {
+            /* should just be the uri itself - construct the target hnp info */
+            target_hnp = OBJ_NEW(orte_hnp_contact_t);
+            target_hnp->rml_uri = strdup(hnpuristr);
+        }
+        /* set the info in our contact table */
+        if (ORTE_SUCCESS != orte_rml.set_contact_info(target_hnp->rml_uri)) {
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
+            orte_finalize();
+            exit(1);
+        }
+        /* extract the name */
+        if (ORTE_SUCCESS != orte_rml_base_parse_uris(target_hnp->rml_uri, &target_hnp->name, NULL)) {
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
+            orte_finalize();
+            exit(1);
+        }
+        /* set the route to be direct */
+        if (ORTE_SUCCESS != orte_routed.update_route(&target_hnp->name, &target_hnp->name)) {
+            orte_show_help("help-orte-top.txt", "orte-top:hnp-uri-bad", true, target_hnp->rml_uri);
+            orte_finalize();
+            exit(1);
+        }
+    } else {
+        orte_show_help("help-orte-top.txt", "orte-top:no-contact-given", true);
+        orte_finalize();
+        exit(1);
     }
     
-    /* if we get here without finding the one we wanted, then abort */
-    if (NULL == target_hnp) {
-        orte_show_help("help-orte-top.txt", "orte-top:pid-not-found", true, hnppid);
-        goto cleanup;
-    }
-
     /* set the target hnp as our lifeline so we will terminate if it exits */
     orte_routed.set_lifeline(&target_hnp->name);
+    
+    /* if an output file was specified, open it */
+    if (NULL != logfile) {
+        fp = fopen(logfile, "w");
+        if (NULL == fp) {
+            orte_show_help("help-orte-top.txt", "orte-top:cant-open-logfile", true, logfile);
+            orte_finalize();
+            exit(1);
+        }
+    } else {
+        fp = stdout;
+    }
     
     /* setup a non-blocking recv to get answers - we don't know how
      * many daemons are going to send replies, so we just have to
@@ -415,10 +536,6 @@ cleanup:
     opal_signal_del(&term_handler);
     opal_signal_del(&int_handler);
 
-    while (NULL != (item  = opal_list_remove_first(&hnp_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&hnp_list);
     while (NULL != (item  = opal_list_remove_first(&recvd_stats))) {
         OBJ_RELEASE(item);
     }
@@ -440,10 +557,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
     opal_signal_del(&term_handler);
     opal_signal_del(&int_handler);
     
-    while (NULL != (item  = opal_list_remove_first(&hnp_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&hnp_list);
     while (NULL != (item  = opal_list_remove_first(&recvd_stats))) {
         OBJ_RELEASE(item);
     }

@@ -38,8 +38,16 @@ Display help for this command
 .
 .TP
 .B -pid | --pid \fR<value>\fP
-The pid of the mpirun whose processes you want information about. Note that
-the ompi-top command must be executed on the same node as mpirun.
+The pid of the mpirun whose processes you want information about, or the name
+of the file (specified as file:filename) that contains that info. Note that
+the ompi-top command must be executed on the same node as mpirun to use this option.
+.
+.
+.TP
+.B -uri | --uri \fR<value>\fP
+Specify the URI of the mpirun whose processes you want information about, or the name
+of the file (specified as file:filename) that contains that info. Note that
+the ompi-top command does not have to be executed on the same node as mpirun to use this option.
 .
 .
 .TP

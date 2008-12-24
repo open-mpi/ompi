@@ -420,4 +420,9 @@ Please remember that the correct format for this command line option is:
 --ompi-server PID:pid-of-%s
 
 where PID can be either "PID" or "pid".
+#
+[orterun:write_file]
+%s was unable to open a file to printout %s as requested. The file
+name given was:
 
+File: %s
