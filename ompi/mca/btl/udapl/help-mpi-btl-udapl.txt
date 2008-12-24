@@ -122,3 +122,18 @@ WARNING: Host %s, not able to determine netmask for address
 %s. Will attempt to continue assuming all addresses to 
 peer are reachable.
 #
+[relaxed order support]
+WARNING: While attempting to open interface %s the system reported
+DAT_INVALID_RO_COOKIE. This indicates the currrent system supports
+relaxed ordering. An attempt will be made to open the interface using
+the following modified interface name %s. Open MPI must not use RDMA
+for short eager messages in this scenario. Therefore, if opened
+successfully RDMA will not be used for short eager messages. This will
+negatively impact short message latency.
+#
+[dat_ia_open fail RO]
+WARNING: Failed to open "%s" [%s:%s]. 
+Attempted to call dat_ia_open() on an interface that has been prefixed
+with "RO_AWARE_" after first trying to open %s and failed with
+DAT_INVALID_RO_COOKIE.
+#

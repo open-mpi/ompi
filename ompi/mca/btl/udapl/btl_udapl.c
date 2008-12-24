@@ -154,10 +154,76 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         dat_strerror(rc, (const char**)&major,
             (const char**)&minor);
 
+#if defined(__SVR4) && defined(__sun)
+        if (strcmp(major, "DAT_INVALID_PARAMETER") == 0 &&
+            strcmp(minor, "DAT_INVALID_RO_COOKIE") == 0) {
+            /* Some platforms that Solaris runs on implement the PCI
+             * standard for relaxed ordering(RO). Using RDMA with
+             * polling on a memory location as the uDAPL (and openib
+             * BTL by the way) BTL does for short messages with
+             * relaxed ordering could potentially produce silent data
+             * corruption. For this reason we need to detect systems
+             * which support relaxed ordering and turn off RDMA for
+             * short messages. The uDAPL standard does not provide a
+             * way to inform users of this scenario so Sun has
+             * implemented the following. If a platform supports
+             * relaxed ordering when the interface name is passed into
+             * the dat_ia_open() call, the call will return
+             * DAT_INVALID_PARAMETER and DAT_INVALID_RO_COOKIE.
+             * DAT_INVALID_RO_COOKIE is not part of the uDAPL standard
+             * at this time. The only way to open this interface is to
+             * prefix the following cookie "RO_AWARE_" to the ia name
+             * that was retreived from the dat registry.
+             *
+             * Example: ia_name = "ib0", new expected name will be
+             * "RO_AWARE_ib0".
+             * 
+             * Here, since our first ia open attempt failed in the
+             * predetermined way, add the cookie and try to open again.
+             **/
+            DAT_NAME_PTR ro_ia_name;
+
+            /* prefix relaxed order cookie to ia_name */
+            asprintf(&ro_ia_name, "RO_AWARE_%s", ia_name);
+            if (NULL == ro_ia_name) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            /* because this is not standard inform user in some way */
+            BTL_UDAPL_VERBOSE_HELP(VERBOSE_INFORM,
+                ("help-mpi-btl-udapl.txt", "relaxed order support",
+                true, ia_name, ro_ia_name));
+
+            /* try and open again */
+            btl->udapl_evd_async = DAT_HANDLE_NULL;
+            rc = dat_ia_open(ro_ia_name, btl->udapl_async_evd_qlen,
+                &btl->udapl_evd_async, &btl->udapl_ia);
+
+	    dat_strerror(rc, (const char**)&major,
+		(const char**)&minor);
+
+            if (DAT_SUCCESS == rc) {
+                /* do not allow RDMA for short messages */
+                mca_btl_udapl_component.udapl_use_eager_rdma = 0;
+                free(ro_ia_name);
+            } else {
+                BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
+                    ("help-mpi-btl-udapl.txt",
+                        "dat_ia_open fail RO", true, ro_ia_name,
+                        major, minor, ia_name));
+
+                free(ro_ia_name);
+                return OMPI_ERROR;
+            }
+        } else {
+#endif
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP, ("help-mpi-btl-udapl.txt",
             "dat_ia_open fail", true, ia_name, major, minor));
 
         return OMPI_ERROR;
+#if defined(__SVR4) && defined(__sun)	    
+        }
+#endif
     }
 
     /* create a protection zone */

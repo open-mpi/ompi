@@ -738,8 +738,9 @@ static int mca_btl_udapl_endpoint_finish_eager(
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     /* establish eager rdma connection */
-    if (btl->udapl_eager_rdma_endpoint_count <
-        mca_btl_udapl_component.udapl_max_eager_rdma_peers) {
+    if ((1 == mca_btl_udapl_component.udapl_use_eager_rdma) &&
+	(btl->udapl_eager_rdma_endpoint_count <
+        mca_btl_udapl_component.udapl_max_eager_rdma_peers)) {
         mca_btl_udapl_endpoint_connect_eager_rdma(endpoint);
     }
 
