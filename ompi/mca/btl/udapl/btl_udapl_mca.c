@@ -170,6 +170,14 @@ int mca_btl_udapl_register_mca_params(void)
         &mca_btl_udapl_component.udapl_sr_win,
         REGINT_GE_ONE), tmp_rc, rc);
 
+    CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("use_eager_rdma",
+        "Use of RDMA for small messages : "
+        "1 = default, use RDMA for small messages; "
+        "0 = do not use RDMA for small messages. ",
+        1,
+        &mca_btl_udapl_component.udapl_use_eager_rdma,
+        REGINT_GE_ZERO), tmp_rc, rc); 
+
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_int("eager_rdma_num",
         "Number of RDMA buffers to allocate "
         "for small messages (must be >= 1).",
