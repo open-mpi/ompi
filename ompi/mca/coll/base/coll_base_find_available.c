@@ -196,7 +196,7 @@ static int init_query(const mca_base_component_t *m,
 
 
 /*
- * Query a specific component, coll v1.0.0
+ * Query a specific component, coll v2.0.0
  */
 static int init_query_2_0_0(const mca_base_component_t *component, 
                             mca_base_component_priority_list_item_t *entry,
