@@ -160,7 +160,7 @@ static int init_query(const mca_base_component_t * component,
     if (2 == component->mca_type_major_version &&
         0 == component->mca_type_minor_version &&
         0 == component->mca_type_release_version) {
-        ret = init_query_2_0_0(m, entry, enable_progress_threads,
+        ret = init_query_2_0_0(component, entry, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* Unrecognized coll API version */
