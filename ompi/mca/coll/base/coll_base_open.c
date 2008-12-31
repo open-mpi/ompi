@@ -43,7 +43,6 @@
  * Global variables; most of which are loaded by back-ends of MCA
  * variables
  */
-int mca_coll_base_param = -1;
 int mca_coll_base_output = -1;
 
 int mca_coll_base_crossover = 4;
@@ -73,10 +72,6 @@ int mca_coll_base_open(void)
         return OMPI_ERROR;
     }
     mca_coll_base_components_opened_valid = true;
-
-    /* Find the index of the MCA "coll" param for selection */
-
-    mca_coll_base_param = mca_base_param_find("coll", "base", NULL);
 
     /* All done */
 

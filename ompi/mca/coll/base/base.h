@@ -167,11 +167,6 @@ OMPI_DECLSPEC int mca_coll_base_close(void);
  */
 
 /**
- * Index number from the "coll" MCA parameter, created when the coll
- * framework is initialized and used during scope selection.
- */
-OMPI_DECLSPEC extern int mca_coll_base_param;
-/**
  * Coll framework debugging stream ID used with opal_output() and
  * opal_output_verbose().
  */
