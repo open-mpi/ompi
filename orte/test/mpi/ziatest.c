@@ -10,6 +10,7 @@
  *
  */
 #include <stdio.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -23,20 +24,23 @@ int main(int argc, char* argv[])
     int rank, size, my_twin;
     int ppn, my_node;
     struct timeval tv;
-    long my_timestamp;
+    unsigned long my_timestamp[2];
     long *timestamps;
     int i, maxrank;
-    long maxtime, minutes, seconds;
-    long start_sec, start_msec;
+    unsigned long maxsec, maxusec, minutes, seconds;
+    unsigned long start_sec, start_usec;
     float fsecs;
+    int nnodes;
+    bool odd_nnodes;
+    bool recvit;
     
     if (argc < 4) {
-        fprintf(stderr, "a ppn value must be provided\n");
+        fprintf(stderr, "a ppn value and start times must be provided\n");
         return 1;
     }
     ppn = strtol(argv[1], NULL, 10);
     start_sec = strtol(argv[2], NULL, 10);
-    start_msec = strtol(argv[3], NULL, 10);
+    start_usec = strtol(argv[3], NULL, 10);
     
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -51,6 +55,15 @@ int main(int argc, char* argv[])
         } else {
             goto cleanup;
         }
+    }
+    
+    /* see how many nodes we have */
+    nnodes = size / ppn;
+    
+    odd_nnodes = false;
+    if (0 != (nnodes % 2)) {
+        /* we have an odd # of nodes */
+        odd_nnodes = true;
     }
     
     /* compute the rank of the rank with which I am to exchange a message.
@@ -84,54 +97,85 @@ int main(int argc, char* argv[])
          * my rank + ppn
          */
         my_twin = rank + ppn;
+        /* if we have an odd number of nodes, then the last node will be
+         * even and will have no one above them. In this case, we wrap around
+         * and ask that node=0 take the additional connections
+         */
+        recvit = true;
+        if (my_twin >= size) {
+            my_twin = my_twin - size;
+            recvit = false;
+        }
         /* I am an even numbered node, so I send first */
         MPI_Send(&msg, 1, MPI_INT, my_twin, 1, MPI_COMM_WORLD);
-        /* now receive the reply so my twin also meets the requirement */
+        /* now receive the reply so my twin also meets the requirement - but only
+         * if we don't have an odd number of nodes. If we have an odd number of
+         * nodes, then the node=0 procs will already have met their requirement
+         */
+        if (recvit) {
+            MPI_Recv(&msg, 1, MPI_INT, my_twin, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+    }
+    
+    /* if we have an odd number of nodes and I am on node=0, then I have
+     * to take the extra recv
+     */
+    if (odd_nnodes && 0 == my_node) {
+        my_twin = size - ppn + rank;
         MPI_Recv(&msg, 1, MPI_INT, my_twin, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
     
     /* get a completion time stamp */
     gettimeofday(&tv, NULL);
-    my_timestamp = tv.tv_sec*1000000 + tv.tv_usec;
+    my_timestamp[0] = tv.tv_sec;
+    my_timestamp[1] = tv.tv_usec;
     
     /* THIS COMPLETES THE OFFICIAL TIMING POINT */
 
     /* Gather to get all the timestamps to rank 0 */
     timestamps = NULL;
     if (0 == rank) {
-        timestamps = malloc(size * sizeof(long));
+        timestamps = malloc(2 * size * sizeof(unsigned long));
         if (NULL == timestamps) {
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
     }
-    MPI_Gather(&my_timestamp, 1, MPI_LONG,
-               timestamps, 1, MPI_LONG, 0, MPI_COMM_WORLD);
+    MPI_Gather(&my_timestamp, 2, MPI_LONG,
+               timestamps, 2, MPI_LONG, 0, MPI_COMM_WORLD);
     if (0 == rank) {
         /* The "timestamps" array will now have everyone's timestamp
-         (i.e., rank 0's timestamp will be in pos 0,, rank 1's timestamp
-         will be in 1, ...etc. */
+         (i.e., rank 0's timestamp will be in pos 0 & 1,, rank 1's timestamp
+         will be in 2 & 3, ...etc. */
         /* find the maximum timestamp */
-        maxtime = -1;
+        maxsec = start_sec;
+        maxusec = start_usec;
         maxrank = -1;
-        for (i=0; i < size; i++) {
-            if (timestamps[i] > maxtime) {
-                maxtime = timestamps[i];
-                maxrank = i;
+        for (i=0; i < 2*size; i+=2) {
+            if (timestamps[i] < maxsec) {
+                continue;
             }
+            if (timestamps[i] == maxsec &&
+                timestamps[i+1] < maxusec) {
+                continue;
+            }
+            maxsec = timestamps[i];
+            maxusec = timestamps[i+1];
+            maxrank = i;
         }
         free(timestamps);
         /* subtract starting time to get time in microsecs for test */
-        maxtime = maxtime - (start_sec*1000000 + start_msec);
+        maxsec = maxsec - start_sec;
+        maxusec = maxusec - start_usec;
         /* pretty-print the result */
-        seconds = maxtime / 1000000;
-        minutes = seconds / 60;
-        seconds = seconds % 60;
+        seconds = maxsec + (maxusec / 1000000l);
+        minutes = seconds / 60l;
+        seconds = seconds % 60l;
         if (0 == minutes && 0 == seconds) {
-            fsecs = (float)(maxtime) / 1000.0;
-            fprintf(stderr, "Time test was completed in %3.2f millisecs\nSlowest rank: %d\n",
+            fsecs = ((float)(maxsec)*1000000.0 + (float)maxusec) / 1000.0;
+            fprintf(stderr, "Time test was completed in %8.2f millisecs\nSlowest rank: %d\n",
                     fsecs, maxrank);
         } else {
-            fprintf(stderr, "Time test was completed in %3ld:%02ld min:sec\nSlowest rank: %d\n",
+            fprintf(stderr, "Time test was completed in %3lu:%02lu min:sec\nSlowest rank: %d\n",
                     minutes, seconds, maxrank);
         }
     }
