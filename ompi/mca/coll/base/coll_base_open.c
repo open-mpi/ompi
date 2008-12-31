@@ -31,14 +31,12 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 
-
 /*
  * The following file was created by configure.  It contains extern
  * statements and the definition of an array of pointers to each
  * component's public mca_base_component_t struct.
  */
 #include "ompi/mca/coll/base/static-components.h"
-
 
 
 /*
@@ -68,9 +66,9 @@ int mca_coll_base_open(void)
 
     /* Open up all available components */
 
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         mca_base_components_open("coll", mca_coll_base_output,
-                                 mca_coll_base_static_components, 
+                                 mca_coll_base_static_components,
                                  &mca_coll_base_components_opened, true)) {
         return OMPI_ERROR;
     }

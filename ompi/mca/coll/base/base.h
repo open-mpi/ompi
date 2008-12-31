@@ -43,7 +43,6 @@
  */
 
 BEGIN_C_DECLS
-
 /**
  * Initialize the coll MCA framework
  *
@@ -160,7 +159,7 @@ int mca_coll_base_comm_unselect(struct ompi_communicator_t *comm);
  *
  * It must be the last function invoked on the coll MCA framework.
  */
-OMPI_DECLSPEC  int mca_coll_base_close(void);
+OMPI_DECLSPEC int mca_coll_base_close(void);
 
 
 /*
@@ -205,5 +204,4 @@ extern bool mca_coll_base_components_available_valid;
 extern opal_list_t mca_coll_base_components_available;
 
 END_C_DECLS
-
 #endif /* MCA_BASE_COLL_H */
