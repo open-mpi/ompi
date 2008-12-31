@@ -94,8 +94,8 @@ struct ompi_op_t;
  * @param[in] enable_mpi_threads  True if the component needs to
  *                                support MPI_THREAD_MULTIPLE
  *
- * @retval ORTE_SUCCESS Component successfully initialized
- * @retval ORTE_ERROR   An unspecified error occurred
+ * @retval OMPI_SUCCESS Component successfully initialized
+ * @retval OMPI_ERROR   An unspecified error occurred
  */
 typedef int (*mca_coll_base_component_init_query_fn_t)
      (bool enable_progress_threads, bool enable_mpi_threads);
@@ -231,14 +231,15 @@ typedef int (*mca_coll_base_module_scatterv_fn_t)
 
 
 /**
- * Fault Tolerance Awareness function
+ * Fault Tolerance Awareness function.
  *
- * Fault tolerance function -- called when a process / job state change is noticed
+ * Fault tolerance function -- called when a process / job state
+ * change is noticed.
  *
  * @param[in] state    State change that triggered the function
  *
- * @retval ORTE_SUCCESS Component successfully selected
- * @retval ORTE_ERROR   An unspecified error occurred
+ * @retval OMPI_SUCCESS Component successfully selected
+ * @retval OMPI_ERROR   An unspecified error occurred
  */
 typedef int (*mca_coll_base_module_ft_event_fn_t) (int state);
 
