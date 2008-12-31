@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -930,23 +930,29 @@ int ompi_op_init(void)
 
     /* Create the intrinsic ops */
 
-    if (add_intrinsic(&ompi_mpi_op_null, OMPI_OP_FORTRAN_NULL) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_max, OMPI_OP_FORTRAN_MAX) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_min, OMPI_OP_FORTRAN_MIN) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_sum, OMPI_OP_FORTRAN_SUM) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_prod, OMPI_OP_FORTRAN_PROD) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_land, OMPI_OP_FORTRAN_LAND) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_band, OMPI_OP_FORTRAN_BAND) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_lor, OMPI_OP_FORTRAN_LOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_bor, OMPI_OP_FORTRAN_BOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_lxor, OMPI_OP_FORTRAN_LXOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_bxor, OMPI_OP_FORTRAN_BXOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_maxloc, 
-                      OMPI_OP_FORTRAN_MAXLOC) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_minloc, 
-                    OMPI_OP_FORTRAN_MINLOC) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_replace, 
-                      OMPI_OP_FORTRAN_REPLACE) != OMPI_SUCCESS) {
+    if (OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_null, 
+                                      OMPI_OP_FORTRAN_NULL) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_max, OMPI_OP_FORTRAN_MAX) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_min, OMPI_OP_FORTRAN_MIN) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_sum, OMPI_OP_FORTRAN_SUM) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_prod, 
+                                      OMPI_OP_FORTRAN_PROD) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_land, 
+                                      OMPI_OP_FORTRAN_LAND) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_band, 
+                                      OMPI_OP_FORTRAN_BAND) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_lor, OMPI_OP_FORTRAN_LOR) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_bor, OMPI_OP_FORTRAN_BOR) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_lxor, 
+                                      OMPI_OP_FORTRAN_LXOR) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_bxor, 
+                                      OMPI_OP_FORTRAN_BXOR) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_maxloc, 
+                                      OMPI_OP_FORTRAN_MAXLOC) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_minloc, 
+                                      OMPI_OP_FORTRAN_MINLOC) ||
+        OMPI_SUCCESS != add_intrinsic(&ompi_mpi_op_replace, 
+                                      OMPI_OP_FORTRAN_REPLACE)) {
         return OMPI_ERROR;
     }
 
@@ -997,9 +1003,9 @@ ompi_op_t *ompi_op_create(bool commute,
 
     /* Create a new object and ensure that it's valid */
     new_op = OBJ_NEW(ompi_op_t);
-
-    if (NULL == new_op)
+    if (NULL == new_op) {
         goto error;
+    }
 
     if (OMPI_ERROR == new_op->o_f_to_c_index) {
         OBJ_RELEASE(new_op);

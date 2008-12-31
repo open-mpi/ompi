@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,40 +38,40 @@
   void ompi_mpi_op_##name##_##type_name(void *in, void *out, int *count, \
                                         MPI_Datatype *dtype)             \
   {                                                                      \
-    int i;                                                               \
-    type *a = (type *) in;                                               \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i) {                                       \
-      *(b++) op *(a++);                                                  \
-    }                                                                    \
+      int i;                                                             \
+      type *a = (type *) in;                                             \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i) {                                     \
+          *(b++) op *(a++);                                              \
+      }                                                                  \
   }
 
 #define COMPLEX_OP_FUNC_SUM(type_name, type) \
   void ompi_mpi_op_sum_##type_name(void *in, void *out, int *count,      \
                                    MPI_Datatype *dtype)                  \
   {                                                                      \
-    int i;                                                               \
-    type *a = (type *) in;                                               \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i, ++b, ++a) {                             \
-      b->real += a->real;                                                \
-      b->imag += a->imag;                                                \
-    }                                                                    \
+      int i;                                                             \
+      type *a = (type *) in;                                             \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i, ++b, ++a) {                           \
+          b->real += a->real;                                            \
+          b->imag += a->imag;                                            \
+      }                                                                  \
   }
 
 #define COMPLEX_OP_FUNC_PROD(type_name, type) \
   void ompi_mpi_op_prod_##type_name(void *in, void *out, int *count,     \
                                    MPI_Datatype *dtype)                  \
   {                                                                      \
-    int i;                                                               \
-    type *a = (type *) in;                                               \
-    type *b = (type *) out;                                              \
-    type temp;                                                           \
-    for (i = 0; i < *count; ++i, ++b, ++a) {                             \
-      temp.real = a->real * b->real - a->imag * b->imag;                 \
-      temp.imag = a->imag * b->real + a->real * b->imag;                 \
-      *b = temp;                                                         \
-    }                                                                    \
+      int i;                                                             \
+      type *a = (type *) in;                                             \
+      type *b = (type *) out;                                            \
+      type temp;                                                         \
+      for (i = 0; i < *count; ++i, ++b, ++a) {                           \
+          temp.real = a->real * b->real - a->imag * b->imag;             \
+          temp.imag = a->imag * b->real + a->real * b->imag;             \
+          *b = temp;                                                     \
+      }                                                                  \
   }
 
 
@@ -86,14 +86,14 @@
   void ompi_mpi_op_##name##_##type_name(void *in, void *out, int *count, \
                                         MPI_Datatype *dtype)             \
   {                                                                      \
-    int i;                                                               \
-    type *a = (type *) in;                                               \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i) {                                       \
-      *(b) = current_func(*(b), *(a));                                   \
-      ++b;                                                               \
-      ++a;                                                               \
-    }                                                                    \
+      int i;                                                             \
+      type *a = (type *) in;                                             \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i) {                                     \
+          *(b) = current_func(*(b), *(a));                               \
+          ++b;                                                           \
+          ++a;                                                           \
+      }                                                                  \
   }
 
 /*
@@ -105,25 +105,25 @@
  */
 #define LOC_STRUCT(type_name, type1, type2) \
   typedef struct { \
-    type1 v; \
-    type2 k; \
+      type1 v; \
+      type2 k; \
   } ompi_op_predefined_##type_name##_t;
 
 #define LOC_FUNC(name, type_name, op) \
   void ompi_mpi_op_##name##_##type_name(void *in, void *out, int *count, \
                                         MPI_Datatype *dtype) \
   { \
-    int i; \
-    ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
-    ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-    for (i = 0; i < *count; ++i, ++a, ++b) { \
-      if (a->v op b->v) { \
-        b->v = a->v; \
-        b->k = a->k; \
-      } else if (a->v == b->v) { \
-        b->k = (b->k < a->k ? b->k : a->k); \
+      int i; \
+      ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
+      ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
+      for (i = 0; i < *count; ++i, ++a, ++b) { \
+          if (a->v op b->v) { \
+              b->v = a->v; \
+              b->k = a->k; \
+          } else if (a->v == b->v) { \
+              b->k = (b->k < a->k ? b->k : a->k); \
+          } \
       } \
-    } \
   }
 
 /*************************************************************************
@@ -680,32 +680,32 @@ LOC_FUNC(minloc, long_double_int, <)
  *    routines, needed for some optimizations.
  */
 #define OP_FUNC_3BUF(name, type_name, type, op) \
-  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1, \
-          void * restrict in2, void * restrict out, int *count,            \
+  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1,  \
+          void * restrict in2, void * restrict out, int *count,          \
                                         MPI_Datatype *dtype)             \
   {                                                                      \
-    int i;                                                               \
-    type *a1 = (type *) in1;                                             \
-    type *a2 = (type *) in2;                                             \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i) {                                       \
-      *(b++) =  *(a1++) op *(a2++);                                      \
-    }                                                                    \
+      int i;                                                             \
+      type *a1 = (type *) in1;                                           \
+      type *a2 = (type *) in2;                                           \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i) {                                     \
+          *(b++) =  *(a1++) op *(a2++);                                  \
+      }                                                                  \
   }
 
 #define COMPLEX_OP_FUNC_SUM_3BUF(type_name, type) \
-  void ompi_mpi_op_three_buff_sum_##type_name(void * restrict in1,             \
-          void * restrict in2, void * restrict out, int *count,           \
+  void ompi_mpi_op_three_buff_sum_##type_name(void * restrict in1,       \
+          void * restrict in2, void * restrict out, int *count,          \
                                    MPI_Datatype *dtype)                  \
   {                                                                      \
-    int i;                                                               \
-    type *a1 = (type *) in1;                                             \
-    type *a2 = (type *) in2;                                             \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i, ++b, ++a1, ++a2) {                      \
-      b->real = a1->real + a2->real;                                     \
-      b->imag = a1->imag + a2->imag;                                     \
-    }                                                                    \
+      int i;                                                             \
+      type *a1 = (type *) in1;                                           \
+      type *a2 = (type *) in2;                                           \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i, ++b, ++a1, ++a2) {                    \
+          b->real = a1->real + a2->real;                                 \
+          b->imag = a1->imag + a2->imag;                                 \
+      }                                                                  \
   }
 
 #define COMPLEX_OP_FUNC_PROD_3BUF(type_name, type) \
@@ -713,14 +713,14 @@ LOC_FUNC(minloc, long_double_int, <)
           void * restrict in2, void * restrict out, int *count,          \
                                    MPI_Datatype *dtype)                  \
   {                                                                      \
-    int i;                                                               \
-    type *a1 = (type *) in1;                                             \
-    type *a2 = (type *) in2;                                             \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i, ++b, ++a1, ++a2) {                      \
-      b->real = a1->real * a2->real - a1->imag * a2->imag;               \
-      b->imag = a1->imag * a2->real + a1->real * a2->imag;               \
-    }                                                                    \
+      int i;                                                             \
+      type *a1 = (type *) in1;                                           \
+      type *a2 = (type *) in2;                                           \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i, ++b, ++a1, ++a2) {                    \
+          b->real = a1->real * a2->real - a1->imag * a2->imag;           \
+          b->imag = a1->imag * a2->real + a1->real * a2->imag;           \
+      }                                                                  \
   }
 
 
@@ -732,20 +732,20 @@ LOC_FUNC(minloc, long_double_int, <)
  * This macro is for (out = op(in1, in2))
  */
 #define FUNC_FUNC_3BUF(name, type_name, type) \
-  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1, \
+  void ompi_mpi_op_three_buff_##name##_##type_name(void * restrict in1,  \
           void * restrict in2, void * restrict out, int *count,          \
                                         MPI_Datatype *dtype)             \
   {                                                                      \
-    int i;                                                               \
-    type *a1 = (type *) in1;                                             \
-    type *a2 = (type *) in2;                                             \
-    type *b = (type *) out;                                              \
-    for (i = 0; i < *count; ++i) {                                       \
-      *(b) = current_func(*(a1), *(a2));                                 \
-      ++b;                                                               \
-      ++a1;                                                              \
-      ++a2;                                                              \
-    }                                                                    \
+      int i;                                                             \
+      type *a1 = (type *) in1;                                           \
+      type *a2 = (type *) in2;                                           \
+      type *b = (type *) out;                                            \
+      for (i = 0; i < *count; ++i) {                                     \
+          *(b) = current_func(*(a1), *(a2));                             \
+          ++b;                                                           \
+          ++a1;                                                          \
+          ++a2;                                                          \
+      }                                                                  \
   }
 
 /*
@@ -758,8 +758,8 @@ LOC_FUNC(minloc, long_double_int, <)
 /*
 #define LOC_STRUCT(type_name, type1, type2) \
   typedef struct { \
-    type1 v; \
-    type2 k; \
+      type1 v; \
+      type2 k; \
   } ompi_op_predefined_##type_name##_t;
 */
 
@@ -768,22 +768,22 @@ LOC_FUNC(minloc, long_double_int, <)
           void * restrict in2, void * restrict out, int *count,          \
                                         MPI_Datatype *dtype)             \
   { \
-    int i; \
-    ompi_op_predefined_##type_name##_t *a1 = (ompi_op_predefined_##type_name##_t*) in1; \
-    ompi_op_predefined_##type_name##_t *a2 = (ompi_op_predefined_##type_name##_t*) in2; \
-    ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-    for (i = 0; i < *count; ++i, ++a1, ++a2, ++b ) { \
-      if (a1->v op a2->v) { \
-        b->v = a1->v; \
-        b->k = a1->k; \
-      } else if (a1->v == a2->v) { \
-        b->v = a1->v; \
-        b->k = (a2->k < a1->k ? a2->k : a1->k); \
-      } else {  \
-        b->v = a2->v; \
-        b->k = a2->k; \
-      }  \
-    } \
+      int i; \
+      ompi_op_predefined_##type_name##_t *a1 = (ompi_op_predefined_##type_name##_t*) in1; \
+      ompi_op_predefined_##type_name##_t *a2 = (ompi_op_predefined_##type_name##_t*) in2; \
+      ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
+      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b ) { \
+          if (a1->v op a2->v) { \
+             b->v = a1->v; \
+             b->k = a1->k; \
+          } else if (a1->v == a2->v) { \
+             b->v = a1->v; \
+             b->k = (a2->k < a1->k ? a2->k : a1->k); \
+          } else {  \
+             b->v = a2->v; \
+             b->k = a2->k; \
+          }  \
+      } \
   }
 
 /*************************************************************************
