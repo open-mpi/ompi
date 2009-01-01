@@ -1064,7 +1064,6 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     /* setup descriptor */
     descriptor->des_cbfunc = rdma_send_info_send_complete;
     descriptor->des_cbdata = peer_send_info;
-    descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_src[0].seg_len = sizeof(ompi_osc_rdma_rdma_info_header_t);
 
     /* pack header */
