@@ -24,7 +24,7 @@ headers += \
         class/ompi_fifo.h \
         class/ompi_free_list.h \
         class/ompi_bitmap.h \
-	    class/ompi_rb_tree.h \
+        class/ompi_rb_tree.h \
         class/ompi_seq_tracker.h
 
 libmpi_la_SOURCES += \
