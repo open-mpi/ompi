@@ -450,7 +450,9 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
 				 "gather_algorithm",
 				 "Which gather algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 binomial, 3 linear with synchronization.",
 				 false, false, 0, NULL);
-    assert (mca_param_indices->algorithm_param_index >= 0);
+    if (mca_param_indices->algorithm_param_index < 0) {
+        return mca_param_indices->algorithm_param_index;
+    }
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, 
                               &(requested_alg));
     if( 0 > requested_alg || requested_alg > max_alg ) {
