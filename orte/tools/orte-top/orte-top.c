@@ -780,9 +780,12 @@ static void print_ranks(opal_list_t *statlist)
         }
         memset(pretty_time, 0, sizeof(pretty_time));
         if (pstats->time >= 3600) {
-            sprintf(pretty_time, "%5.1fH", (double)pstats->time / (double)(3600));
+            snprintf(pretty_time, sizeof(pretty_time), "%5.1fH", 
+                     (double)pstats->time / (double)(3600));
         } else {
-            sprintf(pretty_time, "%3ld:%02ld", (unsigned long)pstats->time/60, (unsigned long)pstats->time & 60);
+            snprintf(pretty_time, sizeof(pretty_time), "%3ld:%02ld",
+                     (unsigned long)pstats->time/60,
+                     (unsigned long)pstats->time & 60);
         }
         
         if (bynode) {
