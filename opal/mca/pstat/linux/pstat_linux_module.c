@@ -117,6 +117,10 @@ static int query(pid_t pid, opal_pstats_t *stats)
      */
     memset(data, 0, sizeof(data));
     len = read(fd, data, sizeof(data)-1);
+    if (len < 0) {
+        /* This shouldn't happen! */
+        return OPAL_ERR_FILE_OPEN_FAILURE;
+    }
     close(fd);
     
     /* remove newline at end */
