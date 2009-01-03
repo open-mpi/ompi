@@ -201,11 +201,11 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         if( frag->hdr.hdr_match.hdr_ctx != comm->c_contextid )
             continue;
 
-        /* As we now know we work on a fragment for this communicator we should
-         * remove it from the non_existing_communicator_pending list. As a result
-         * after the call item will contain the previous item so the loop will
-         * continue to work as expected. */
-        item = opal_list_remove_item( &mca_pml_ob1.non_existing_communicator_pending, item );
+        /* As we now know we work on a fragment for this communicator
+         * we should remove it from the
+         * non_existing_communicator_pending list. */
+        opal_list_remove_item( &mca_pml_ob1.non_existing_communicator_pending, 
+                               item );
 
       add_fragment_to_unexpected:
 
