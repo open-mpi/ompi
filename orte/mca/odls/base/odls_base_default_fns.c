@@ -371,7 +371,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_vpid_t j, host_daemon;
     orte_odls_child_t *child;
     orte_std_cntr_t cnt;
-    orte_process_name_t proc, daemon;
+    orte_process_name_t proc;
     orte_odls_job_t *jobdat;
     opal_byte_object_t *bo;
     opal_buffer_t alert;
@@ -576,7 +576,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     
     /* cycle through the procs and find mine */
     proc.jobid = jobdat->jobid;
-    daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
         /* get the vpid of the daemon that is to host this proc */
