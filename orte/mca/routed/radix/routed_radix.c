@@ -803,7 +803,7 @@ static int set_lifeline(orte_process_name_t *proc)
 static void radix_tree(int rank, int *num_children,
                        opal_list_t *children, opal_bitmap_t *relatives)
 {
-    int i, peer, Sum, NInLevel, rc;
+    int i, peer, Sum, NInLevel;
     orte_routed_tree_t *child;
     opal_bitmap_t *relations;
     
@@ -832,7 +832,7 @@ static void radix_tree(int rank, int *num_children,
                 relations = &child->relatives;
             } else {
                 /* we are recording someone's relatives - set the bit */
-                if (OPAL_SUCCESS != (rc = opal_bitmap_set_bit(relatives, peer))) {
+                if (OPAL_SUCCESS != opal_bitmap_set_bit(relatives, peer)) {
                     opal_output(0, "%s Error: could not set relations bit!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
                 }
                 /* point to this relations */
