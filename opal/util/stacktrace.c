@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +46,7 @@
 #define HOSTFORMAT "[%s:%05d] "
 
 static char stacktrace_hostname[64];
+static char *unable_to_print_msg = "Unable to print stack trace!\n";
 
 /**
  * This function is being called as a signal-handler in response
@@ -358,7 +359,11 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     ret = snprintf(print_buffer, sizeof(print_buffer), 
                    HOSTFORMAT "*** End of error message ***\n", 
                    stacktrace_hostname, getpid());
-    write(fileno(stderr), print_buffer, ret);
+    if (ret > 0) {
+        write(fileno(stderr), print_buffer, ret);
+    } else {
+        write(fileno(stderr), unable_to_print_msg, strlen(unable_to_print_msg));
+    }
     fflush(stderr);
 }
 
