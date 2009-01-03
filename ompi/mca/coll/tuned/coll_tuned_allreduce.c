@@ -940,7 +940,9 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
                                   "allreduce_algorithm",
                                   "Which allreduce algorithm is used. Can be locked down to any of: 0 ignore, 1 basic linear, 2 nonoverlapping (tuned reduce + tuned bcast), 3 recursive doubling, 4 ring, 5 segmented ring",
                                   false, false, 0, NULL);
-    assert (mca_param_indices->algorithm_param_index >= 0);
+    if (mca_param_indices->algorithm_param_index < 0) {
+        return mca_param_indices->algorithm_param_index;
+    }
     mca_base_param_lookup_int( mca_param_indices->algorithm_param_index, &(requested_alg));
     if( 0 > requested_alg || requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {

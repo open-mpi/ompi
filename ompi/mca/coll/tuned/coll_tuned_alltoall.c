@@ -620,7 +620,9 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                  "alltoall_algorithm",
                                  "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: linear with sync, 5:two proc only.",
                                  false, false, 0, NULL);
-    assert (mca_param_indices->algorithm_param_index >= 0);
+    if (mca_param_indices->algorithm_param_index < 0) {
+        return mca_param_indices->algorithm_param_index;
+    }
     mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
     if( 0 > requested_alg || requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
@@ -659,7 +661,9 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                 false, false, 
                                 ompi_coll_tuned_init_max_requests, /* get system wide default */
                                 NULL);
-    assert (mca_param_indices->max_requests_param_index >= 0);
+    if (mca_param_indices->max_requests_param_index < 0) {
+        return mca_param_indices->algorithm_param_index;
+    }
     mca_base_param_lookup_int(mca_param_indices->max_requests_param_index, &(max_requests));
     if( max_requests <= 1 ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
