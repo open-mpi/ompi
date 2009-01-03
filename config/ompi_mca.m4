@@ -369,7 +369,7 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                    [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
     m4_if(OMPI_EVAL_ARG([MCA_]mca_framework[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
           [m4_ifval(mca_$2_no_config_component_list,
-                   [m4_fatal([Framework $2 using STOP_AT_FIRST but at least one component has no configure.m4])])])
+                   [m4_fatal([Framework $2 using STOP_AT_FIRST_PRIORITY but at least one component has no configure.m4])])])
     m4_foreach(mca_component, [mca_$2_no_config_component_list],
                [m4_ifval(mca_component,
                   [MCA_CONFIGURE_NO_CONFIG_COMPONENT($1, $2, mca_component, 
