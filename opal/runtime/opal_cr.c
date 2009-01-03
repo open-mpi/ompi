@@ -716,6 +716,7 @@ static int extract_env_vars(int prev_pid)
             opal_output(opal_cr_output,
                         "opal_cr: extract_env_vars: Error: Parameter too long (%s)\n",
                         tmp_str);
+            free(tmp_str);
             continue;
         }
 
