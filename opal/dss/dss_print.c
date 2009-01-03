@@ -478,7 +478,7 @@ int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_d
     }
     
     asprintf(output, "%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
-                     "%s\ttime: %lu VMsize: %lu PeakVMSize: %lu RSS: %lu Share: %lu\n",
+                     "%s\ttime: %lu VMsize: %lu PeakVMSize: %lu RSS: %lu Share: %" PRIu64 "\n",
              prefx, src->node, src->rank, src->pid, src->cmd, src->state, src->priority, src->num_threads, src->processor,
              prefx, src->time, src->vsize, src->peak_vsize, src->rss, src->shared_size);
     
