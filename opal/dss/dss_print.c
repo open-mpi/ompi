@@ -18,6 +18,7 @@
 
 #include "opal_config.h"
 
+#include "opal_stdint.h"
 #include <stdio.h>
 
 #include "opal/dss/dss_internal.h"
