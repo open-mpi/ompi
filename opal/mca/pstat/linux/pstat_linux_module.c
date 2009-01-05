@@ -31,7 +31,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include <asm/page.h> /* provides conversion of pages to memory bytes */
 #include <sys/param.h>  /* for HZ to convert jiffies to actual time */
 
 #include "opal/mca/base/mca_base_param.h"
