@@ -347,7 +347,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint32_t board_num)
 
     mx_btl = malloc(sizeof(mca_btl_mx_module_t));
     if( NULL == mx_btl ) {
-        opal_output( 0, "mca_btl_mx_init: unable to allocate %d bytes of memory\n",
+        opal_output( 0, "mca_btl_mx_init: unable to allocate %lu bytes of memory\n",
                      sizeof(mca_btl_mx_module_t) );
         mx_close_endpoint(mx_endpoint);
         return NULL;
