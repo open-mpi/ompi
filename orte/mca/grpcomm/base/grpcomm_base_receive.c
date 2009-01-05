@@ -124,60 +124,32 @@ int orte_grpcomm_base_comm_stop(void)
 static void process_msg(int fd, short event, void *data)
 {
     orte_message_event_t *mev = (orte_message_event_t*)data;
-    char *attr, *nodename;
-    int32_t isize, count;
-    void *blob;
-    int32_t len, rc;
+    int32_t rc, count;
+    opal_byte_object_t *bo;
 
     /* save the info in the file */
     if (0 <= profile_fd) {
-        /* unpack the node name */
-        count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &nodename, &count, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        
-        /* unpack the attribute name */
-        count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &attr, &count, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        
-        /* unpack the data size */
-        count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &isize, &count, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        
-        /* allocate space and unpack the data itself */
-        blob = (void*)malloc(isize);
-        count = isize;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, blob, &count, OPAL_BYTE))) {
+        /* extract the byte object holding the node's modex info */
+        count=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &bo, &count, OPAL_BYTE_OBJECT))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
         
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                             "%s grpcomm:base:receive writing %d bytes of data for node %s, attribute %s",
+                             "%s grpcomm:base:receive writing %d bytes of data from proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             isize, nodename, attr));
-        len = strlen(nodename);
-        write(profile_fd, &len, sizeof(len));
-        write(profile_fd, nodename, len);
-        len = strlen(attr);
-        write(profile_fd, &len, sizeof(len));
-        write(profile_fd, attr, strlen(attr));
-        write(profile_fd, &isize, sizeof(isize));
-        write(profile_fd, blob, isize);
+                             bo->size, ORTE_NAME_PRINT(&mev->sender)));
+        
+        write(profile_fd, &bo->size, sizeof(bo->size));
+        write(profile_fd, bo->bytes, bo->size);
+        free(bo->bytes);
+        free(bo);
     }
     
 CLEANUP:
     /* release the message */
     OBJ_RELEASE(mev);
-    
 }
 
 /*
