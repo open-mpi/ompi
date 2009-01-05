@@ -55,11 +55,6 @@
 int main(int argc, char *argv[])
 {
     char * tmp_env_var = NULL;
-    char *rml_uri;
-    opal_buffer_t buffer;
-    char *attr = "oob.tcp";
-    int32_t len;
-    int rc;
 
     /* init enough of opal to use a few utilities */
     if (OPAL_SUCCESS != opal_init_util()) {
@@ -96,60 +91,6 @@ int main(int argc, char *argv[])
      */
     MPI_Init(NULL, NULL);
     
-    /* get our RML uri */
-    rml_uri = orte_rml.get_contact_info();
-    
-    if (NULL != rml_uri) {
-        char *ptr, *endip, *ipout=NULL, *tmp;
-        endip = rml_uri;
-        /* remove the non-IP info */
-        while (NULL != (ptr = strchr(endip, '/'))) {
-            /* next position is the second '/' */
-            ptr += 2;
-            /* now look for ':' */
-            endip = strchr(ptr, ':');
-            if (NULL == endip) {
-                /* got an error - just dump this */
-                free(rml_uri);
-                goto CLEANUP;
-            }
-            *endip = '\0';
-            if (NULL == ipout) {
-                ipout = strdup(ptr);
-            } else {
-                asprintf(&tmp, "%s:%s", ipout, ptr);
-                free(ipout);
-                ipout = tmp;
-            }
-            ptr = endip + 1;
-        }
-        /* send the result to the HNP*/
-        OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buffer, &orte_process_info.nodename, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto skip;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buffer, &attr, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto skip;
-        }
-        len = strlen(ipout);
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buffer, &len, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto skip;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buffer, &ipout, len, OPAL_BYTE))) {
-            ORTE_ERROR_LOG(rc);
-            goto skip;
-        }
-        orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buffer, ORTE_RML_TAG_GRPCOMM_PROFILE, 0);
-    skip:
-        OBJ_DESTRUCT(&buffer);
-        /* cleanup */
-        free(rml_uri);
-    }
-   
-CLEANUP:
     /* Finalize and clean up ourselves */
     MPI_Finalize();
     

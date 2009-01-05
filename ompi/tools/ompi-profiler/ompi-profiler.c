@@ -21,6 +21,7 @@
 
 #include "opal_config.h"
 #include "opal/constants.h"
+#include "opal/types.h"
 #include "opal/version.h"
 
 #include <stdio.h>
@@ -36,7 +37,7 @@
 #include <errno.h>
 #include <signal.h>
 
-
+#include "opal/dss/dss.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal.h"
@@ -190,9 +191,11 @@ int main(int argc, char *argv[])
     
     if (report) {
         int fd;
-        int32_t num_bytes;
+        int32_t num_bytes, cnt;
         char *nodename, *attr;
-        char data[8192];
+        opal_byte_object_t bo;
+        opal_buffer_t buf;
+        uint8_t *dump;
         
         /* just read the given file and print out a report */
         if (NULL == profilefile) {
@@ -207,49 +210,50 @@ int main(int argc, char *argv[])
         }
         
         /* loop through file until end */
-        while (0 < read(fd, &num_bytes, sizeof(num_bytes))) {
-            /* this is the number of bytes in the nodename */
-            memset(data, 0, sizeof(data));
-            if (0 > read(fd, data, num_bytes)) {
-                fprintf(stderr, "ompi-profiler: node name not found\n");
+        while (0 < read(fd, &bo.size, sizeof(bo.size))) {
+            /* this is the number of bytes in the byte object */
+            bo.bytes = malloc(bo.size);
+            if (0 > read(fd, bo.bytes, bo.size)) {
+                fprintf(stderr, "ompi-profiler: unable to read file\n");
                 close(fd);
-                exit(0);
+                exit(1);
             }
-            /* this is the nodename - save it */
-            nodename = strdup(data);
-            /* get the number of bytes in the attribute name */
-            if (0 > read(fd, &num_bytes, sizeof(num_bytes))) {
-                fprintf(stderr, "ompi-profiler: attribute size not found\n");
+            /* setup to unpack the object */
+            OBJ_CONSTRUCT(&buf, opal_buffer_t);
+            opal_dss.load(&buf, bo.bytes, bo.size);
+            /* unpack the nodename */
+            cnt = 1;
+            if (OPAL_SUCCESS != opal_dss.unpack(&buf, &nodename, &cnt, OPAL_STRING)) {
+                fprintf(stderr, "ompi-profiler: could not unpack node name\n");
                 close(fd);
-                exit(0);
+                exit(1);
             }
-            /* get the attribute name */
-            memset(data, 0, sizeof(data));
-            if (0 > read(fd, data, num_bytes)) {
-                fprintf(stderr, "ompi-profiler: attribute name not found\n");
-                close(fd);
-                exit(0);
+            /* loop through the rest of the object to unpack the attr's themselves */
+            while (OPAL_SUCCESS == opal_dss.unpack(&buf, &attr, &cnt, OPAL_STRING)) {
+                /* read the number of bytes in the blob */
+                cnt = 1;
+                if (OPAL_SUCCESS != opal_dss.unpack(&buf, &num_bytes, &cnt, OPAL_INT32)) {
+                    fprintf(stderr, "ompi-profiler: data size not found\n");
+                    close(fd);
+                    exit(0);
+                }
+                /* unpack the bytes just so we can dump them */
+                dump = malloc(num_bytes);
+                if (OPAL_SUCCESS != opal_dss.unpack(&buf, dump, &num_bytes, OPAL_BYTE)) {
+                    fprintf(stderr, "ompi-profiler: data not found\n");
+                    close(fd);
+                    exit(0);
+                }
+                free(dump);
+                /* report the results */
+                fprintf(stdout, "Node %s reported %d bytes for attribute %s\n",
+                        nodename, num_bytes, attr);
+                free(attr);
             }
-            /* remove the newline and save it */
-            attr = strdup(data);
-            /* read the number of bytes in the blob */
-            if (0 > read(fd, &num_bytes, sizeof(num_bytes))) {
-                fprintf(stderr, "ompi-profiler: data size not found\n");
-                close(fd);
-                exit(0);
-            }
-            /* read the bytes so we position ourselves */
-            if (0 > read(fd, data, num_bytes)) {
-                fprintf(stderr, "ompi-profiler: data not found\n");
-                close(fd);
-                exit(0);
-            }            
-            /* report the results */
-            fprintf(stdout, "Node %s reported %d bytes for attribute %s\n",
-                    nodename, num_bytes, attr);
             free(nodename);
-            free(attr);
+            OBJ_DESTRUCT(&buf);
         }
+        close(fd);
         exit(0);
     }
     
