@@ -12,7 +12,7 @@ echo Setting all files to be group writable....
 chmod -R g+w .
 
 echo Setting group "s" perms on directories...
-find . -type d -exec chmod g+ws {}
+find . -type d -exec chmod g+ws {} \;
 
 echo done
 exit 0
