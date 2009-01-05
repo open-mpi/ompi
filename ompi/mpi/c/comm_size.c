@@ -16,7 +16,9 @@
  * 
  * $HEADER$
  */
+
 #include "ompi_config.h"
+
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
@@ -33,7 +35,8 @@
 static const char FUNC_NAME[] = "MPI_comm_size";
 
 
-int MPI_Comm_size(MPI_Comm comm, int *size) {
+int MPI_Comm_size(MPI_Comm comm, int *size) 
+{
     MEMCHECKER(
         memchecker_comm(comm);
     );
