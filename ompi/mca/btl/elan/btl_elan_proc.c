@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -25,35 +24,35 @@ OBJ_CLASS_INSTANCE(mca_btl_elan_proc_t,
                    opal_list_item_t,mca_btl_elan_proc_construct, 
                    mca_btl_elan_proc_destruct);
 
-void mca_btl_elan_proc_construct(mca_btl_elan_proc_t* proc)
+void mca_btl_elan_proc_construct(mca_btl_elan_proc_t* elan_proc)
 {
-    proc->proc_ompi = 0;
-    proc->proc_rail_count = 0;
-    proc->proc_endpoints = 0;
-    proc->proc_endpoint_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
+    elan_proc->proc_ompi = 0;
+    elan_proc->proc_rail_count = 0;
+    elan_proc->proc_endpoints = 0;
+    elan_proc->proc_endpoint_count = 0;
+    OBJ_CONSTRUCT(&elan_proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
     OPAL_THREAD_LOCK(&mca_btl_elan_component.elan_lock);
-    opal_list_append(&mca_btl_elan_component.elan_procs, &proc->super);
+    opal_list_append(&mca_btl_elan_component.elan_procs, &elan_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_elan_component.elan_lock);
 }
 
 /*
- * Cleanup ib proc instance
+ * Cleanup elan proc instance
  */
 
-void mca_btl_elan_proc_destruct(mca_btl_elan_proc_t* proc)
+void mca_btl_elan_proc_destruct(mca_btl_elan_proc_t* elan_proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_elan_component.elan_lock);
-    opal_list_remove_item(&mca_btl_elan_component.elan_procs, &proc->super);
+    opal_list_remove_item(&mca_btl_elan_component.elan_procs, &elan_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_elan_component.elan_lock);
     /* release resources */
-    if(NULL != proc->proc_endpoints) {
-        free(proc->proc_endpoints);
+    if(NULL != elan_proc->proc_endpoints) {
+        free(elan_proc->proc_endpoints);
     }
+    OBJ_DESTRUCT(&elan_proc->proc_lock);
 }
-
 
 /*
  * Look for an existing Elan process instances based on the associated
