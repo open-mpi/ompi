@@ -1233,7 +1233,12 @@ SEND_ANSWER:
                     n = 1;
                     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc2, &n, ORTE_NAME))) {
                         ORTE_ERROR_LOG(ret);
-                        goto SEND_TOP_ANSWER;
+                        /* in this case, we are helpless - we have no idea who to send an
+                         * error message TO! All we can do is return - the tool that sent
+                         * this request is going to hang, but there isn't anything we can
+                         * do about it
+                         */
+                        goto CLEANUP;
                     }
                     return_addr = &proc2;
                 GET_TOP:
