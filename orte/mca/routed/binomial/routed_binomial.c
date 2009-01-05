@@ -76,7 +76,6 @@ orte_routed_module_t orte_routed_binomial_module = {
 
 /* local globals */
 static opal_hash_table_t        jobfam_list;
-static orte_process_name_t      wildcard_route;
 static opal_condition_t         cond;
 static opal_mutex_t             lock;
 static orte_process_name_t      *lifeline=NULL;
@@ -91,9 +90,6 @@ static int init(void)
 {
     OBJ_CONSTRUCT(&jobfam_list, opal_hash_table_t);
     opal_hash_table_init(&jobfam_list, 128);
-    
-    wildcard_route.jobid = ORTE_NAME_INVALID->jobid;
-    wildcard_route.vpid = ORTE_NAME_INVALID->vpid;
     
     /* setup the global condition and lock */
     OBJ_CONSTRUCT(&cond, opal_condition_t);
@@ -526,12 +522,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-            /* set the wildcard route for anybody whose name we don't recognize
-             * to be the HNP
-             */
-            wildcard_route.jobid = ORTE_PROC_MY_HNP->jobid;
-            wildcard_route.vpid = ORTE_PROC_MY_HNP->vpid;
-            
             /* set our lifeline to the HNP - we will abort if that connection is lost */
             lifeline = ORTE_PROC_MY_HNP;
             
@@ -698,10 +688,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
-        /* setup the route to all other procs to flow through the daemon */
-        wildcard_route.jobid = ORTE_PROC_MY_DAEMON->jobid;
-        wildcard_route.vpid = ORTE_PROC_MY_DAEMON->vpid;
         
         /* set our lifeline to the local daemon - we will abort if this connection is lost */
         lifeline = ORTE_PROC_MY_DAEMON;
