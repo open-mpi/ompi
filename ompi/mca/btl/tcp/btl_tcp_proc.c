@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -58,33 +58,33 @@ OBJ_CLASS_INSTANCE( mca_btl_tcp_proc_t,
                     mca_btl_tcp_proc_construct, 
                     mca_btl_tcp_proc_destruct );
 
-void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* proc)
+void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* tcp_proc)
 {
-    proc->proc_ompi = 0;
-    proc->proc_addrs = NULL;
-    proc->proc_addr_count = 0;
-    proc->proc_endpoints = NULL;
-    proc->proc_endpoint_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
+    tcp_proc->proc_ompi = 0;
+    tcp_proc->proc_addrs = NULL;
+    tcp_proc->proc_addr_count = 0;
+    tcp_proc->proc_endpoints = NULL;
+    tcp_proc->proc_endpoint_count = 0;
+    OBJ_CONSTRUCT(&tcp_proc->proc_lock, opal_mutex_t);
 }
 
 /*
  * Cleanup ib proc instance
  */
 
-void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* proc)
+void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     opal_hash_table_remove_value_uint64(&mca_btl_tcp_component.tcp_procs, 
-                                        orte_util_hash_name(&proc->proc_name));
+                                        orte_util_hash_name(&tcp_proc->proc_name));
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     /* release resources */
-    if(NULL != proc->proc_endpoints) {
-        free(proc->proc_endpoints);
-        OBJ_DESTRUCT(&proc->proc_lock);
+    if(NULL != tcp_proc->proc_endpoints) {
+        free(tcp_proc->proc_endpoints);
     }
+    OBJ_DESTRUCT(&tcp_proc->proc_lock);
 }
 
 /*

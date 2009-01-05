@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -38,34 +38,35 @@ OBJ_CLASS_INSTANCE(mca_btl_gm_proc_t,
         opal_list_item_t, mca_btl_gm_proc_construct, 
         mca_btl_gm_proc_destruct);
 
-void mca_btl_gm_proc_construct(mca_btl_gm_proc_t* proc)
+void mca_btl_gm_proc_construct(mca_btl_gm_proc_t* gm_proc)
 {
-    proc->proc_ompi = 0;
-    proc->proc_addr_count = 0;
-    proc->proc_endpoints = 0;
-    proc->proc_endpoint_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
+    gm_proc->proc_ompi = 0;
+    gm_proc->proc_addr_count = 0;
+    gm_proc->proc_endpoints = 0;
+    gm_proc->proc_endpoint_count = 0;
+    OBJ_CONSTRUCT(&gm_proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-    opal_list_append(&mca_btl_gm_component.gm_procs, &proc->super);
+    opal_list_append(&mca_btl_gm_component.gm_procs, &gm_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
 }
 
 /*
- * Cleanup ib proc instance
+ * Cleanup gm proc instance
  */
 
-void mca_btl_gm_proc_destruct(mca_btl_gm_proc_t* proc)
+void mca_btl_gm_proc_destruct(mca_btl_gm_proc_t* gm_proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-    opal_list_remove_item(&mca_btl_gm_component.gm_procs, &proc->super);
+    opal_list_remove_item(&mca_btl_gm_component.gm_procs, &gm_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
 
     /* release resources */
-    if(NULL != proc->proc_endpoints) {
-        free(proc->proc_endpoints);
+    if(NULL != gm_proc->proc_endpoints) {
+        free(gm_proc->proc_endpoints);
     }
+    OBJ_DESTRUCT(&gm_proc->proc_lock);
 }
 
 
@@ -79,17 +80,14 @@ static mca_btl_gm_proc_t* mca_btl_gm_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
 
-    for(gm_proc = (mca_btl_gm_proc_t*)
-            opal_list_get_first(&mca_btl_gm_component.gm_procs);
-            gm_proc != (mca_btl_gm_proc_t*)
-            opal_list_get_end(&mca_btl_gm_component.gm_procs);
-            gm_proc  = (mca_btl_gm_proc_t*)opal_list_get_next(gm_proc)) {
+    for(gm_proc = (mca_btl_gm_proc_t*)opal_list_get_first(&mca_btl_gm_component.gm_procs);
+        gm_proc != (mca_btl_gm_proc_t*)opal_list_get_end(&mca_btl_gm_component.gm_procs);
+        gm_proc  = (mca_btl_gm_proc_t*)opal_list_get_next(gm_proc)) {
 
         if(gm_proc->proc_ompi == ompi_proc) {
             OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             return gm_proc;
         }
-
     }
 
     OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);

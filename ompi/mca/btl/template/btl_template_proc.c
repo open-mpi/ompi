@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,16 +31,16 @@ OBJ_CLASS_INSTANCE(mca_btl_template_proc_t,
         opal_list_item_t, mca_btl_template_proc_construct, 
         mca_btl_template_proc_destruct);
 
-void mca_btl_template_proc_construct(mca_btl_template_proc_t* proc)
+void mca_btl_template_proc_construct(mca_btl_template_proc_t* template_proc)
 {
-    proc->proc_ompi = 0;
-    proc->proc_addr_count = 0;
-    proc->proc_endpoints = 0;
-    proc->proc_endpoint_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
+    template_proc->proc_ompi = 0;
+    template_proc->proc_addr_count = 0;
+    template_proc->proc_endpoints = 0;
+    template_proc->proc_endpoint_count = 0;
+    OBJ_CONSTRUCT(&template_proc->proc_lock, opal_mutex_t);
     /* add to list of all proc instance */
     OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
-    opal_list_append(&mca_btl_template_component.template_procs, &proc->super);
+    opal_list_append(&mca_btl_template_component.template_procs, &template_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
 }
 
@@ -48,17 +48,19 @@ void mca_btl_template_proc_construct(mca_btl_template_proc_t* proc)
  * Cleanup ib proc instance
  */
 
-void mca_btl_template_proc_destruct(mca_btl_template_proc_t* proc)
+void mca_btl_template_proc_destruct(mca_btl_template_proc_t* template_proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
-    opal_list_remove_item(&mca_btl_template_component.template_procs, &proc->super);
+    opal_list_remove_item(&mca_btl_template_component.template_procs,
+                          &template_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
 
     /* release resources */
-    if(NULL != proc->proc_endpoints) {
-        free(proc->proc_endpoints);
+    if(NULL != template_proc->proc_endpoints) {
+        free(template_proc->proc_endpoints);
     }
+    OBJ_DESTRUCT(&template_proc->proc_lock);
 }
 
 
