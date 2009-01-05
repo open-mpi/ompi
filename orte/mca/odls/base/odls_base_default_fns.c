@@ -379,7 +379,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_namelist_t *nm;
     opal_list_t daemon_tree;
     int8_t flag;
-    int8_t *app_idx;
+    int8_t *app_idx=NULL;
     char **slot_str=NULL;
     orte_jobid_t debugger;
     
@@ -396,6 +396,11 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* set the default values since they may not be included in the data */
     *job = ORTE_JOBID_INVALID;
     
+    /* setup the daemon tree so that it can properly be destructed even if
+     * we encounter an error somewhere
+     */
+    OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
+
     /* unpack the flag - are we co-locating debugger daemons? */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
@@ -571,7 +576,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     
     /* get the daemon tree */
-    OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
     orte_routed.get_routing_tree(ORTE_PROC_MY_NAME->jobid, &daemon_tree);
     
     /* cycle through the procs and find mine */
@@ -689,6 +693,24 @@ REPORT_ERROR:
     }
     OBJ_DESTRUCT(&alert);
     
+    /* cleanup */
+    if (NULL != app_idx) {
+        free(app_idx);
+        app_idx = NULL;
+    }
+    if (NULL != slot_str) {
+        for (j=0; j < jobdat->num_procs; j++) {
+            free(slot_str[j]);
+        }
+        free(slot_str);
+        slot_str = NULL;
+    }
+    
+    while (NULL != (item = opal_list_remove_first(&daemon_tree))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemon_tree);
+
     return rc;
 }
 
