@@ -79,11 +79,11 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
         case ORTE_GRPCOMM_MODE:
             *size = sizeof(orte_grpcomm_mode_t);
             break;
-#endif
             
         case ORTE_IOF_TAG:
             *size = sizeof(orte_iof_tag_t);
             break;
+#endif
             
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
