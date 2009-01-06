@@ -1085,6 +1085,7 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
 
     /* send fragment */
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
+    if (1 == ret) ret = OMPI_SUCCESS;
     goto done;
 
  cleanup:
