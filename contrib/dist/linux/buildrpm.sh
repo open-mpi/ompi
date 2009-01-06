@@ -92,6 +92,7 @@ echo "--> Found specfile: $specfile"
 
 rpmtopdir="`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"
 if test "$rpmtopdir" != ""; then
+	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'" 
     if test ! -d "$rpmtopdir"; then
 	mkdir -p "$rpmtopdir"
 	mkdir -p "$rpmtopdir/BUILD"
@@ -208,7 +209,7 @@ fi
 
 if test "$build_srpm" = "yes"; then
     echo "--> Building the Open MPI SRPM"
-    cmd="$rpm_cmd -bs $specdest"
+    cmd="$rpm_cmd $rpmbuild_options -bs $specdest"
     echo "--> $cmd"
     eval $cmd
 
