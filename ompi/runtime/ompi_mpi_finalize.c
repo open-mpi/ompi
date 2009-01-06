@@ -86,9 +86,11 @@
 
 int ompi_mpi_finalize(void)
 {
-    int ret;
+    int ret, value;
     static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
+    struct timeval ompistart, ompistop;
+    bool timing = false;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -137,6 +139,15 @@ int ompi_mpi_finalize(void)
         opal_maffinity_base_close();
     }
 
+    /* check to see if we want timing information */
+    mca_base_param_reg_int_name("ompi", "timing",
+                                "Request that critical timing loops be measured",
+                                false, false, 0, &value);
+    if (value != 0 && 0 == ORTE_PROC_MY_NAME->vpid) {
+        timing = true;
+        gettimeofday(&ompistart, NULL);
+    }
+
     /* wait for everyone to reach this point
        This is a grpcomm barrier instead of an MPI barrier because an
        MPI barrier doesn't ensure that all messages have been transmitted
@@ -145,6 +156,16 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
         ORTE_ERROR_LOG(ret);
         return ret;
+    }
+
+    /* check for timing request - get stop time and report elapsed
+     time if so */
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "ompi_mpi_finalize[%ld]: time to execute barrier %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
     }
 
     /*
