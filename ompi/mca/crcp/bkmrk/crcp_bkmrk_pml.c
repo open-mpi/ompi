@@ -3514,7 +3514,10 @@ static int traffic_message_create_drain_message(bool post_drain,
             assert( NULL != prev_content );
         }
 
-        (*posted_msg_ref)->active--;
+        /* Decrementing active occurs when we stall in the Blocking Recv, do not do so here. */
+        if( NULL != prev_content ) {
+            (*posted_msg_ref)->active--;
+        }
         (*posted_msg_ref)->active_drain++;
 
         /* Create a new content for the drained message */
