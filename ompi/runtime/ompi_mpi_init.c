@@ -693,7 +693,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      time if so, then start the clock again */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from modex thru complete oob wireup %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from modex to first barrier %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
@@ -860,7 +860,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from barrier p to complete mpi_init %ld usec",
+        opal_output(0, "ompi_mpi_init[%ld]: time from barrier to complete mpi_init %ld usec",
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
