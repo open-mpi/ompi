@@ -462,7 +462,6 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 
         /* setup descriptor */
         descriptor->des_cbfunc = ompi_osc_rdma_sendreq_send_cb;
-        descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
 
         module->m_pending_buffers[sendreq->req_target_rank].bml_btl = bml_btl;
         module->m_pending_buffers[sendreq->req_target_rank].descriptor = descriptor;
@@ -587,6 +586,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
         module->m_pending_buffers[sendreq->req_target_rank].remain_len = 0;
         
         ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
+        if (1 == ret) ret = OMPI_SUCCESS;
         goto done;
     }
 
@@ -705,7 +705,6 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     /* setup descriptor */
     descriptor->des_cbfunc = ompi_osc_rdma_replyreq_send_cb;
     descriptor->des_cbdata = (void*) replyreq;
-    descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
 
     /* pack header */
     header = (ompi_osc_rdma_reply_header_t*) descriptor->des_src[0].seg_addr.pval;
@@ -762,6 +761,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
 
     /* send fragment */
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
+    if (1 == ret) ret = OMPI_SUCCESS;
     goto done;
 
  cleanup:
@@ -1310,7 +1310,6 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
     /* setup descriptor */
     descriptor->des_cbfunc = ompi_osc_rdma_control_send_cb;
     descriptor->des_cbdata = NULL;
-    descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_src[0].seg_len = sizeof(ompi_osc_rdma_control_header_t);
 
     /* pack header */
@@ -1332,6 +1331,7 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
 
     /* send fragment */
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
+    if (1 == ret) ret = OMPI_SUCCESS;
     goto done;
 
  cleanup:
@@ -1372,7 +1372,6 @@ ompi_osc_rdma_rdma_ack_send(ompi_osc_rdma_module_t *module,
     /* setup descriptor */
     descriptor->des_cbfunc = ompi_osc_rdma_control_send_cb;
     descriptor->des_cbdata = NULL;
-    descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_src[0].seg_len = sizeof(ompi_osc_rdma_control_header_t);
 
     /* pack header */
@@ -1396,6 +1395,7 @@ ompi_osc_rdma_rdma_ack_send(ompi_osc_rdma_module_t *module,
 
     /* send fragment */
     ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
+    if (1 == ret) ret = OMPI_SUCCESS;
     goto done;
 
  cleanup:
