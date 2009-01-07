@@ -132,7 +132,7 @@ typedef struct mca_btl_openib_qp_t {
 
 typedef struct mca_btl_openib_endpoint_qp_t {
     mca_btl_openib_qp_t *qp;
-    opal_list_t pending_frags[2]; /**< put fragment here if there is no credits
+    opal_list_t no_credits_pending_frags[2]; /**< put fragment here if there is no credits
                                      available */
     opal_list_t no_wqe_pending_frags[2]; /**< put fragments here if there is no wqe
                                     available  */

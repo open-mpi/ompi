@@ -149,7 +149,7 @@ static int acquire_send_credit(mca_btl_openib_endpoint_t *endpoint,
     if(BTL_OPENIB_QP_TYPE_PP(qp)) {
         if(OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, -1) < 0) {
             OPAL_THREAD_ADD32(&endpoint->qps[qp].u.pp_qp.sd_credits, 1);
-            opal_list_append(&endpoint->qps[qp].pending_frags[prio],
+            opal_list_append(&endpoint->qps[qp].no_credits_pending_frags[prio],
                     (opal_list_item_t *)frag);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -346,8 +346,8 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
     OBJ_CONSTRUCT(&ep_qp->no_wqe_pending_frags[0], opal_list_t);
     OBJ_CONSTRUCT(&ep_qp->no_wqe_pending_frags[1], opal_list_t);
 
-    OBJ_CONSTRUCT(&ep_qp->pending_frags[0], opal_list_t);
-    OBJ_CONSTRUCT(&ep_qp->pending_frags[1], opal_list_t);
+    OBJ_CONSTRUCT(&ep_qp->no_credits_pending_frags[0], opal_list_t);
+    OBJ_CONSTRUCT(&ep_qp->no_credits_pending_frags[1], opal_list_t);
 
     switch(BTL_OPENIB_QP_TYPE(qp)) {
         case MCA_BTL_OPENIB_PP_QP:
@@ -495,10 +495,10 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 
     /* Close opened QPs if we have them*/
    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[0]);
-        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].pending_frags[1]);
-        OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
-        OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[1]);
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].no_credits_pending_frags[0]);
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(&endpoint->qps[qp].no_credits_pending_frags[1]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].no_credits_pending_frags[0]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].no_credits_pending_frags[1]);
 
         MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                 &endpoint->qps[qp].no_wqe_pending_frags[0]);
