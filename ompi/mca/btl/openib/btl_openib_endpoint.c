@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2006-2008 Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -120,10 +120,8 @@ static inline int acruire_wqe(mca_btl_openib_endpoint_t *ep,
 
     if(qp_get_wqe(ep, qp) < 0) {
         qp_put_wqe(ep, qp);
-        OPAL_THREAD_LOCK(&ep->qps[qp].qp->lock);
-        opal_list_append(&ep->qps[qp].qp->pending_frags[prio],
+        opal_list_append(&ep->qps[qp].no_wqe_pending_frags[prio],
                 (opal_list_item_t *)frag);
-        OPAL_THREAD_UNLOCK(&ep->qps[qp].qp->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -281,8 +279,6 @@ static mca_btl_openib_qp_t *endpoint_alloc_qp(void)
         return NULL;
     }
 
-    OBJ_CONSTRUCT(&qp->pending_frags[0], opal_list_t);
-    OBJ_CONSTRUCT(&qp->pending_frags[1], opal_list_t);
     OBJ_CONSTRUCT(&qp->lock, opal_mutex_t);
 
     return qp;
@@ -347,8 +343,12 @@ static void endpoint_init_qp(mca_btl_base_endpoint_t *ep, const int qp)
     ep_qp->rd_credit_send_lock = 0;
     ep_qp->credit_frag = NULL;
 
+    OBJ_CONSTRUCT(&ep_qp->no_wqe_pending_frags[0], opal_list_t);
+    OBJ_CONSTRUCT(&ep_qp->no_wqe_pending_frags[1], opal_list_t);
+
     OBJ_CONSTRUCT(&ep_qp->pending_frags[0], opal_list_t);
     OBJ_CONSTRUCT(&ep_qp->pending_frags[1], opal_list_t);
+
     switch(BTL_OPENIB_QP_TYPE(qp)) {
         case MCA_BTL_OPENIB_PP_QP:
             endpoint_init_qp_pp(ep_qp, qp);
@@ -500,15 +500,16 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
         OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[0]);
         OBJ_DESTRUCT(&endpoint->qps[qp].pending_frags[1]);
 
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                &endpoint->qps[qp].no_wqe_pending_frags[0]);
+        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
+                &endpoint->qps[qp].no_wqe_pending_frags[1]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].no_wqe_pending_frags[0]);
+        OBJ_DESTRUCT(&endpoint->qps[qp].no_wqe_pending_frags[1]);
+
+
         if(--endpoint->qps[qp].qp->users != 0)
             continue;
-
-        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                &endpoint->qps[qp].qp->pending_frags[0]);
-        MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
-                &endpoint->qps[qp].qp->pending_frags[1]);
-        OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[0]);
-        OBJ_DESTRUCT(&endpoint->qps[qp].qp->pending_frags[1]);
 
         if(endpoint->qps[qp].qp->lcl_qp != NULL)
             if(ibv_destroy_qp(endpoint->qps[qp].qp->lcl_qp))

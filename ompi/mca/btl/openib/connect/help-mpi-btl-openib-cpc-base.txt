@@ -38,19 +38,3 @@ a smaller inline data value than was requested.
   Local device:         %s
   Requested value:      %d
   Value used by device: %d
-#
-[bug #1693]
-WARNING: ConnectX XRC support was enabled together with coalescing
-mode.  This combination is not supported in this version of Open MPI
-because it may cause random seg faults (please see Open MPI bug ticket
-#1693 https://svn.open-mpi.org/trac/ompi/ticket/1693 for more
-details).  Message coalescing has been disabled in this job to prevent
-catastrophic failure.
-
-You can silence this warning either by disabling XRC (i.e., not specifying
-an "X" queue in btl_openib_receive_queues) or disabling message
-coalescing by setting the btl_openib_use_message_coalescing MCA
-parameter to 0.
-
-  Local host:           %s
-#

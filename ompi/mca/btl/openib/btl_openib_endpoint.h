@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2007-2008 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,8 +126,6 @@ typedef struct mca_btl_openib_qp_t {
     struct ibv_qp *lcl_qp;
     uint32_t lcl_psn;
     int32_t  sd_wqe;      /**< number of available send wqe entries */
-    opal_list_t pending_frags[2]; /**< put fragments here if there is no wqe
-                                    available  */
     int users;
     opal_mutex_t lock;
 } mca_btl_openib_qp_t;
@@ -136,6 +134,8 @@ typedef struct mca_btl_openib_endpoint_qp_t {
     mca_btl_openib_qp_t *qp;
     opal_list_t pending_frags[2]; /**< put fragment here if there is no credits
                                      available */
+    opal_list_t no_wqe_pending_frags[2]; /**< put fragments here if there is no wqe
+                                    available  */
     int32_t  rd_credit_send_lock;  /**< Lock credit send fragment */
     mca_btl_openib_send_control_frag_t *credit_frag;
     size_t ib_inline_max;          /**< max size of inline send*/
