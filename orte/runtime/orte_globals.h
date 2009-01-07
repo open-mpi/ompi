@@ -344,6 +344,13 @@ struct orte_proc_t {
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
+typedef struct {
+    opal_list_item_t super;
+    char *name;
+    int32_t size;
+    uint8_t *bytes;
+} orte_attr_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attr_t);
 
 typedef struct {
     /* base object */
@@ -354,6 +361,8 @@ typedef struct {
     orte_vpid_t daemon;
     /* arch of node */
     uint32_t arch;
+    /* list of attributes */
+    opal_list_t attrs;
 } orte_nid_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
 
@@ -440,6 +449,14 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
+
+/* RHC: FLAG TO SELECT WHETHER OR NOT TO SEND PROFILE FILE IN NIDMAP */
+ORTE_DECLSPEC extern bool orte_send_profile;
+
+/* Nidmap and job maps */
+ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
+ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
+
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
