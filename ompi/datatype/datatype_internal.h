@@ -69,14 +69,16 @@ static inline void DUMP( char* fmt, ... )
 #endif  /* VERBOSE */
 
 /* There 3 types of predefined data types. 
- * - the basic one composed by just one basic datatype which are definitively contiguous
- * - the derived ones where the same basic type is used multiple times. They should be most
- *   of the time contiguous.
- * - and finally the derived one where multiple basic types are used. Depending on the architecture
- *   they can be contiguous or not.
+ * - the basic one composed by just one basic datatype which are
+ *   definitively contiguous
+ * - the derived ones where the same basic type is used multiple times.
+ *   They should be most of the time contiguous.
+ * - and finally the derived one where multiple basic types are used.
+ *   Depending on the architecture they can be contiguous or not.
  *
- * At this level we do not care from which language the datatype came from (C, C++ or FORTRAN),
- * we only focus on their internal representation in the host memory.
+ * At this level we do not care from which language the datatype came from
+ * (C, C++ or FORTRAN), we only focus on their internal representation in
+ * the host memory.
  */
 #define DT_LOOP                    0x00
 #define DT_END_LOOP                0x01
