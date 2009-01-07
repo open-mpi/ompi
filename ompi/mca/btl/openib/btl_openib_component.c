@@ -2475,7 +2475,7 @@ static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
        while(ep->qps[qp].qp->sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
-            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[0]);
+            frag = opal_list_remove_first(&ep->qps[qp].no_credits_pending_frags[0]);
             if(NULL == frag)
                 break;
             mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
@@ -2501,7 +2501,7 @@ static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
     for(i = 0; i < 2; i++) {
        while((get_enpoint_credits(ep, qp) +
                    (1 - i) * ep->eager_rdma_remote.tokens) > 0) {
-            frag = opal_list_remove_first(&ep->qps[qp].pending_frags[i]);
+            frag = opal_list_remove_first(&ep->qps[qp].no_credits_pending_frags[i]);
             if(NULL == frag)
                 break;
             mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));

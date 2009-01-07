@@ -643,7 +643,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
 
         if(NULL == sfrag) {
             if(BTL_OPENIB_QP_TYPE_PP(qp)) {
-                sfrag = check_coalescing(&ep->qps[qp].pending_frags[prio],
+                sfrag = check_coalescing(&ep->qps[qp].no_credits_pending_frags[prio],
                         &ep->endpoint_lock, ep, size);
             } else {
                 sfrag = check_coalescing(
