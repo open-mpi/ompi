@@ -116,9 +116,6 @@ orte_ess_base_module_t orte_ess_env_module = {
 #endif
 };
 
-static opal_pointer_array_t nidmap;
-static opal_pointer_array_t jobmap;
-
 static int rte_init(char flags)
 {
     int ret;
@@ -163,20 +160,11 @@ static int rte_init(char flags)
             goto error;
         }
     }
-    
-    /* setup the nidmap arrays */
-    OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
-    opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
-    
-    /* setup array of jmaps */
-    OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
-    opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
-    
+
     /* if one was provided, build my nidmap */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                          &nidmap, &jobmap))) {
+    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_ess_base_build_nidmap";
+        error = "orte_util_nidmap_init";
         goto error;
     }
     
@@ -193,9 +181,6 @@ error:
 static int rte_finalize(void)
 {
     int ret;
-    orte_nid_t **nids;
-    orte_jmap_t **jmaps;
-    int32_t i;
     
     /* if I am a daemon, finalize using the default procedure */
     if (orte_process_info.daemon) {
@@ -218,19 +203,9 @@ static int rte_finalize(void)
         }
     }
     
+    /* deconstruct the nidmap and jobmap arrays */
+    orte_util_nidmap_finalize();
     
-    /* deconstruct my nidmap and jobmap arrays */
-    nids = (orte_nid_t**)nidmap.addr;
-    for (i=0; i < nidmap.size && NULL != nids[i]; i++) {
-        OBJ_RELEASE(nids[i]);
-    }
-    OBJ_DESTRUCT(&nidmap);
-    jmaps = (orte_jmap_t**)jobmap.addr;
-    for (i=0; i < jobmap.size && NULL != jmaps[i]; i++) {
-        OBJ_RELEASE(jmaps[i]);
-    }
-    OBJ_DESTRUCT(&jobmap);
-
     return ret;    
 }
 
@@ -238,7 +213,7 @@ static bool proc_is_local(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return false;
     }
@@ -264,7 +239,7 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         return ORTE_VPID_INVALID;
     }
     
@@ -281,7 +256,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
         
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return NULL;
     }
@@ -299,7 +274,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return 0;
     }
@@ -317,7 +292,7 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -337,7 +312,7 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
-    if (NULL == (pmap = orte_ess_base_lookup_pmap(&jobmap, proc))) {
+    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return UINT8_MAX;
     }    
@@ -355,7 +330,7 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
-    if (NULL == (pmap = orte_ess_base_lookup_pmap(&jobmap, proc))) {
+    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return UINT8_MAX;
     }    
@@ -378,7 +353,7 @@ static int update_pidmap(opal_byte_object_t *bo)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* build the pmap */
-    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jobmap))) {
+    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo))) {
         ORTE_ERROR_LOG(ret);
     }
     
@@ -389,7 +364,7 @@ static int update_nidmap(opal_byte_object_t *bo)
 {
     int rc;
     /* decode the nidmap - the util will know what to do */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &nidmap))) {
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo))) {
         ORTE_ERROR_LOG(rc);
     }    
     return rc;
@@ -510,18 +485,7 @@ static int rte_ft_event(int state)
         /*
          * Clear nidmap and jmap
          */
-        nids = (orte_nid_t**)nidmap.addr;
-        for (i=0; i < nidmap.size && NULL != nids[i]; i++) {
-            OBJ_RELEASE(nids[i]);
-            nids[i] = NULL;
-        }
-        OBJ_DESTRUCT(&nidmap);
-
-        jmaps = (orte_jmap_t**)jobmap.addr;
-        for (i=0; i < jobmap.size && NULL != jmaps[i]; i++) {
-            OBJ_RELEASE(jmaps[i]);
-        }
-        OBJ_DESTRUCT(&jobmap);
+        orte_util_nidmap_finalize();
 
         /*
          * - Reset Contact information
@@ -632,18 +596,8 @@ static int rte_ft_event(int state)
             goto cleanup;
         }
 
-        /*
-         * Refresh nidmap and jmaps structures
-         */
-        OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
-        opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
-
-        OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
-        opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
-
         /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
-                                                              &nidmap, &jobmap))) {
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

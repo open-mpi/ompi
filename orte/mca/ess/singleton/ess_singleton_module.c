@@ -94,9 +94,6 @@ orte_ess_base_module_t orte_ess_singleton_module = {
     NULL /* ft_event */
 };
 
-static opal_pointer_array_t nidmap;
-static opal_pointer_array_t jobmap;
-
 static int rte_init(char flags)
 {
     int rc;
@@ -157,38 +154,28 @@ static int rte_init(char flags)
      * library wrt pty's and stdin
      */
 
-    /* setup the nidmap arrays */
-    OBJ_CONSTRUCT(&nidmap, opal_pointer_array_t);
-    opal_pointer_array_init(&nidmap, 1,
-                            INT32_MAX, 8);
+    /* setup the nidmap and jobmap arrays */
+    if (ORTE_SUCCESS != (rc = orte_util_nidmap_init(NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
-    /* setup array of jmaps */
-    OBJ_CONSTRUCT(&jobmap, opal_pointer_array_t);
-    opal_pointer_array_init(&jobmap, 1, INT32_MAX, 1);
+    /* add a jmap entry for myself */
     jmap = OBJ_NEW(orte_jmap_t);
     jmap->job = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_add(&jobmap, jmap);
-    
-    /* we cannot use the std nidmap construction in the ess/base because
-     * the daemon couldn't pass us the info! Since we are a singleton, we
-     * already -know- the info, so we will construct it ourselves
-     */
+    opal_pointer_array_add(&orte_jobmap, jmap);
+    pmap.local_rank = 0;
+    pmap.node_rank = 0;
+    pmap.node = 0;
+    opal_value_array_set_item(&jmap->pmap, 0, &pmap);
+    jmap->num_procs = 1;
     
     /* create a nidmap entry for this node */
     node = OBJ_NEW(orte_nid_t);
     node->name = strdup(orte_process_info.nodename);
     node->daemon = 0;  /* the HNP co-occupies our node */
     node->arch = orte_process_info.arch;
-    opal_pointer_array_set_item(&nidmap, 0, node);
-    
-    /* likewise, we need to construct our own jobmap. Again, since we are
-     * a singleton, this is rather trivial
-     */
-    pmap.local_rank = 0;
-    pmap.node_rank = 0;
-    pmap.node = 0;
-    opal_value_array_set_item(&jmap->pmap, 0, &pmap);
-    jmap->num_procs = 1;
+    opal_pointer_array_set_item(&orte_nidmap, 0, node);
     
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup())) {
@@ -202,21 +189,9 @@ static int rte_init(char flags)
 static int rte_finalize(void)
 {
     int ret;
-    orte_nid_t **nids;
-    orte_jmap_t **jmaps;
-    int32_t i;
     
     /* deconstruct my nidmap and jobmap arrays */
-    nids = (orte_nid_t**)nidmap.addr;
-    for (i=0; i < nidmap.size && NULL != nids[i]; i++) {
-        OBJ_RELEASE(nids[i]);
-    }
-    OBJ_DESTRUCT(&nidmap);
-    jmaps = (orte_jmap_t**)jobmap.addr;
-    for (i=0; i < jobmap.size && NULL != jmaps[i]; i++) {
-        OBJ_RELEASE(jmaps[i]);
-    }
-    OBJ_DESTRUCT(&jobmap);
+    orte_util_nidmap_finalize();
     
     /* use the default procedure to finish */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
@@ -431,7 +406,7 @@ static bool proc_is_local(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return false;
     }
@@ -457,7 +432,7 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         return ORTE_VPID_INVALID;
     }
     
@@ -474,7 +449,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return NULL;
     }
@@ -492,7 +467,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return 0;
     }
@@ -510,7 +485,7 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
 {
     orte_nid_t *nid;
     
-    if (NULL == (nid = orte_ess_base_lookup_nid(&nidmap, &jobmap, proc))) {
+    if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -530,7 +505,7 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
-    if (NULL == (pmap = orte_ess_base_lookup_pmap(&jobmap, proc))) {
+    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return UINT8_MAX;
     }    
@@ -548,7 +523,7 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
-    if (NULL == (pmap = orte_ess_base_lookup_pmap(&jobmap, proc))) {
+    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return UINT8_MAX;
     }    
@@ -567,7 +542,7 @@ static int update_pidmap(opal_byte_object_t *bo)
     int ret;
     
     /* build the pmap */
-    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo, &jobmap))) {
+    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo))) {
         ORTE_ERROR_LOG(ret);
     }
     
@@ -578,7 +553,7 @@ static int update_nidmap(opal_byte_object_t *bo)
 {
     int rc;
     /* decode the nidmap - the util will know what to do */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &nidmap))) {
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo))) {
         ORTE_ERROR_LOG(rc);
     }    
     return rc;

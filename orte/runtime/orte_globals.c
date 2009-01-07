@@ -95,6 +95,13 @@ opal_pointer_array_t *orte_node_pool;
 /* a clean output channel without prefix */
 int orte_clean_output = -1;
 
+/* RHC: FLAG TO SELECT WHETHER OR NOT TO SEND PROFILE FILE IN NIDMAP */
+bool orte_send_profile;
+
+/* Nidmap and job maps */
+opal_pointer_array_t orte_nidmap;
+opal_pointer_array_t orte_jobmap;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
@@ -676,18 +683,47 @@ OBJ_CLASS_INSTANCE(orte_proc_t,
                    orte_proc_construct,
                    orte_proc_destruct);
 
+static void orte_attr_construct(orte_attr_t *ptr)
+{
+    ptr->name = NULL;
+    ptr->size = 0;
+    ptr->bytes = NULL;
+}
+
+static void orte_attr_destruct(orte_attr_t *ptr)
+{
+    if (NULL != ptr->name) {
+        free(ptr->name);
+    }
+    if (NULL != ptr->bytes) {
+        free(ptr->bytes);
+    }
+}
+
+OBJ_CLASS_INSTANCE(orte_attr_t,
+                   opal_list_item_t,
+                   orte_attr_construct,
+                   orte_attr_destruct);
+
 static void orte_nid_construct(orte_nid_t *ptr)
 {
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
     ptr->arch = orte_process_info.arch;
+    OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
 }
 
 static void orte_nid_destruct(orte_nid_t *ptr)
 {
+    opal_list_item_t *item;
+    
     if (NULL != ptr->name) {
         free(ptr->name);
     }
+    while (NULL != (item = opal_list_remove_first(&ptr->attrs))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->attrs);
 }
 
 OBJ_CLASS_INSTANCE(orte_nid_t,

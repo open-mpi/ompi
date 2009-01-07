@@ -81,19 +81,6 @@ ORTE_DECLSPEC int orte_ess_base_orted_setup(void);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
 /*
- * Job/nid/pmap support
- */
-ORTE_DECLSPEC int orte_ess_base_build_nidmap(opal_buffer_t *buffer,
-                                             opal_pointer_array_t *nidmap,
-                                             opal_pointer_array_t *jobmap);
-
-ORTE_DECLSPEC orte_pmap_t* orte_ess_base_lookup_pmap(opal_pointer_array_t *jobmap, orte_process_name_t *proc);
-
-ORTE_DECLSPEC orte_nid_t* orte_ess_base_lookup_nid(opal_pointer_array_t *nidmap,
-                                                   opal_pointer_array_t *jobmap,
-                                                   orte_process_name_t *proc);
-
-/*
  * Put functions
  */
 ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
