@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -638,7 +638,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     if(mca_btl_openib_component.use_message_coalescing &&
        (flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
-        sfrag = check_coalescing(&ep->qps[qp].qp->pending_frags[prio],
+        sfrag = check_coalescing(&ep->qps[qp].no_wqe_pending_frags[prio],
                 &ep->qps[qp].qp->lock, ep, size);
 
         if(NULL == sfrag) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -409,7 +409,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     if (qp_init_attr.cap.max_inline_data < req_inline) {
         endpoint->qps[0].ib_inline_max = qp_init_attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
-                       "inline truncated", true, orte_process_info.nodename,
+                       "inline truncated", orte_process_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
                        req_inline, qp_init_attr.cap.max_inline_data);
     } else {
@@ -715,8 +715,8 @@ static void xoob_restart_connect(mca_btl_base_endpoint_t *endpoint)
             endpoint->ib_addr->status = MCA_BTL_IB_ADDR_CLOSED;
             /* destroy the qp */
             /* the reciver site was alredy closed so all pending list must be clean ! */
-            assert (opal_list_is_empty(&endpoint->ib_addr->qp->pending_frags[0]));
-            assert (opal_list_is_empty(&endpoint->ib_addr->qp->pending_frags[1]));
+            assert (opal_list_is_empty(&endpoint->qps->no_wqe_pending_frags[0]));
+            assert (opal_list_is_empty(&endpoint->qps->no_wqe_pending_frags[1]));
             if(ibv_destroy_qp(endpoint->qps[0].qp->lcl_qp))
                 BTL_ERROR(("Failed to destroy QP"));
         case MCA_BTL_IB_ADDR_CLOSED:
@@ -953,13 +953,6 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
                             "openib BTL: xoob CPC only supported with XRC receive queues; skipped on device %s",
                             ibv_get_device_name(openib_btl->device->ib_dev));
         return OMPI_ERR_NOT_SUPPORTED;
-    }
-    
-    /* Print warning and switch off coalescing mode (ticket #1693)*/
-    if (mca_btl_openib_component.use_message_coalescing) {
-        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
-                "bug #1693", true, orte_process_info.nodename);
-        mca_btl_openib_component.use_message_coalescing = 0;
     }
 
     *cpc = malloc(sizeof(ompi_btl_openib_connect_base_module_t));

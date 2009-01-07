@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -2733,14 +2733,12 @@ progress_pending_frags_wqe(mca_btl_base_endpoint_t *ep, const int qpn)
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
     for(i = 0; i < 2; i++) {
        while(qp->sd_wqe > 0) {
-            mca_btl_base_endpoint_t *ep;
-            OPAL_THREAD_LOCK(&qp->lock);
-            frag = opal_list_remove_first(&qp->pending_frags[i]);
-            OPAL_THREAD_UNLOCK(&qp->lock);
+            mca_btl_base_endpoint_t *tmp_ep;
+            frag = opal_list_remove_first(&ep->qps[qpn].no_wqe_pending_frags[i]);
             if(NULL == frag)
                 break;
-            ep = to_com_frag(frag)->endpoint;
-            mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+            tmp_ep = to_com_frag(frag)->endpoint;
+            mca_btl_openib_endpoint_post_send(tmp_ep, to_send_frag(frag));
        }
     }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
