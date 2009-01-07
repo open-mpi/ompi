@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -60,6 +61,26 @@
 extern const int SEEK_SET;
 extern const int SEEK_CUR;
 extern const int SEEK_END;
+#endif
+
+#ifdef OMPI_HAVE_SYS_SYNCH_H
+// Solaris threads.h pulls in sys/synch.h which in certain versions 
+// defines LOCK_SHARED.  
+
+// include so that we can smash LOCK_SHARED
+#include <sys/synch.h>
+
+// a user app may be included on a system with an older version
+// sys/synch.h
+#ifdef LOCK_SHARED
+static const int ompi_synch_lock_shared = LOCK_SHARED;
+
+// smash LOCK_SHARED #defines
+#undef LOCK_SHARED
+
+// make globally scoped constants to replace smashed #defines
+static const int LOCK_SHARED = ompi_synch_lock_shared;
+#endif
 #endif
 
 // forward declare so that we can still do inlining
