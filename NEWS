@@ -118,6 +118,12 @@ Trunk (not on release branches yet)
 1.2.9 (unreleased)
 ------------------
 
+- Fix a segfault when using one-sided communications on some forms of derived
+  datatypes.  Thanks to Dorian Krause for reporting the bug. See #1715.
+- Fix an alignment problem affecting one-sided communications on
+  some architectures (e.g., SPARC64). See #1738.
+- Fix compilation on Solaris when thread support is enabled in Open MPI
+  (e.g., when using --with-threads). See #1736.
 - Correctly take into account the MTU that an OpenFabrics device port
   is using. See #1722 and
   https://bugs.openfabrics.org/show_bug.cgi?id=1369.
