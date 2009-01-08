@@ -31,11 +31,9 @@
 
 int orte_odls_base_close(void)
 {
-    /* cleanup globals */
+    /* cleanup ODLS globals */
     OBJ_DESTRUCT(&orte_odls_globals.mutex);
     OBJ_DESTRUCT(&orte_odls_globals.cond);
-    OBJ_DESTRUCT(&orte_odls_globals.children);
-    OBJ_DESTRUCT(&orte_odls_globals.jobs);
     if (NULL != orte_odls_globals.dmap && NULL != orte_odls_globals.dmap->bytes) {
         free(orte_odls_globals.dmap->bytes);
         free(orte_odls_globals.dmap);
