@@ -1144,6 +1144,25 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
         }
     }
 
+    /* Release the resources used by this job. */
+    if( NULL != jdata->map ) {
+        int i, index;
+        orte_node_t* daemon;
+        orte_proc_t* proc;
+        orte_job_map_t* map;
+
+        map = jdata->map;
+        for( index = 0; index < map->num_nodes; index++ ) {
+            daemon = opal_pointer_array_get_item( map->nodes, index );
+            for( i = 0; i < daemon->num_procs; i++ ) {
+                proc = opal_pointer_array_get_item(daemon->procs, i);
+                if( (NULL != proc) && (proc->name.jobid == jdata->jobid) ) {
+                    daemon->slots_inuse--;
+                }
+            }
+        }
+    }
+
     /* check the resulting job state and notify the appropriate places */
     
     if (ORTE_JOB_STATE_FAILED_TO_START == jdata->state) {
