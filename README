@@ -135,17 +135,13 @@ Detailed Open MPI v1.3 Feature List:
 Known issues
 ------------
 
-  o ConnectX XRC support does not work properly with message
-    coalescing.  If you attempt to use both of them together, Open MPI
-    will issue a warning and disable message coalescing.
-
   o Please also see the Open MPI bug tracker for bugs beyond version
     1.3: https://svn.open-mpi.org/trac/ompi/report.
 
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (22 December 2008):
+base as of this writing (8 January 2009):
 
 General notes
 -------------
