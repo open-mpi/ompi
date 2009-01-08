@@ -132,18 +132,18 @@ mca_btl_base_descriptor_t* mca_btl_self_alloc(
         size_t size,
         uint32_t flags)
 {
-    mca_btl_self_frag_t* frag;
+    mca_btl_self_frag_t* frag = NULL;
     int rc;
     if(size <= mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag,rc);
-        frag->segment.seg_len = size;
     } else if (size <= btl->btl_max_send_size) {
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag,rc);
-        frag->segment.seg_len = size;
-    } else { 
+    }
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL; 
     }
     
+    frag->segment.seg_len = size;
     frag->base.des_flags   = flags;
     frag->base.des_src     = &(frag->segment);
     frag->base.des_src_cnt = 1;
@@ -204,7 +204,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         reserve != 0 ) {
 
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
 
@@ -224,7 +224,7 @@ mca_btl_self_prepare_src( struct mca_btl_base_module_t* btl,
         *size = max_data;
     } else {
         MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
         iov.iov_len = max_data;
@@ -265,7 +265,7 @@ mca_btl_self_prepare_dst( struct mca_btl_base_module_t* btl,
     int rc;
 
     MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);
-    if(NULL == frag) {
+    if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
 

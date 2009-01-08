@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -24,19 +24,22 @@ static void mca_btl_elan_frag_common_constructor(mca_btl_elan_frag_t* frag)
 
 static void mca_btl_elan_frag_eager_constructor(mca_btl_elan_frag_t* frag) 
 { 
-    frag->size         = mca_btl_elan_module.super.btl_eager_limit;  
+    frag->size    = mca_btl_elan_module.super.btl_eager_limit;
+    frag->my_list = &mca_btl_elan_component.elan_frag_eager;
     mca_btl_elan_frag_common_constructor(frag); 
 }
 
 static void mca_btl_elan_frag_max_constructor(mca_btl_elan_frag_t* frag) 
 { 
-    frag->size         = mca_btl_elan_module.super.btl_max_send_size; 
+    frag->size    = mca_btl_elan_module.super.btl_max_send_size; 
+    frag->my_list = &mca_btl_elan_component.elan_frag_max;
     mca_btl_elan_frag_common_constructor(frag); 
 }
 
 static void mca_btl_elan_frag_user_constructor(mca_btl_elan_frag_t* frag) 
 { 
-    frag->size = 0; 
+    frag->size    = 0; 
+    frag->my_list = &mca_btl_elan_component.elan_frag_user;
     mca_btl_elan_frag_common_constructor(frag); 
 }
 
