@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -123,7 +123,9 @@ struct mca_btl_udapl_module_t {
 
     /* free list of fragment descriptors */
     ompi_free_list_t udapl_frag_eager;
+    ompi_free_list_t udapl_frag_eager_recv;
     ompi_free_list_t udapl_frag_max;
+    ompi_free_list_t udapl_frag_max_recv;
     ompi_free_list_t udapl_frag_user;
     ompi_free_list_t udapl_frag_control;
     
