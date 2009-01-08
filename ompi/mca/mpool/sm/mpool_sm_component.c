@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -77,6 +77,19 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
 static char *max_size_param, *min_size_param, *peer_size_param;
 static long default_max, default_min, default_peer;
 
+#if SIZEOF_LONG == 4
+/* For 32-bit libraries, set the default maximum to 2Gbytes - 1.  This
+ * is the absolute maximum possible as this is the largest value that
+ * can be given to the ftruncate() call.  This means we scale at 32
+ * Mbytes per process until np=64 where we hit the maximum.  */
+#define OMPI_MAX_SM_MPOOL_FILE_SIZE 2147483647
+#else
+/* For 64-bit libraries, set the default maximum to 8Gbytes - 1.  This
+ * allows the scaling of 32 Mbytes per process to be in effect up until
+ * about np=256 and then get capped.  */
+#define OMPI_MAX_SM_MPOOL_FILE_SIZE 8589934591
+#endif
+
 /**
   * component open/close/init function
   */
@@ -85,7 +98,7 @@ static int mca_mpool_sm_open(void)
     int value = 0;
     char *size_str = NULL;
 
-    default_max = 512*1024*1024;
+    default_max = OMPI_MAX_SM_MPOOL_FILE_SIZE;
     default_min = 128*1024*1024;
     default_peer = 32*1024*1024;
 
