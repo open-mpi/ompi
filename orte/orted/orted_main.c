@@ -36,6 +36,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
 
 
 #include "opal/event/event.h"
@@ -196,7 +199,11 @@ int orte_daemon(int argc, char *argv[])
     opal_buffer_t *buffer;
     char hostname[100];
     char *tmp_env_var = NULL;
-
+    struct timeval starttime, setuptime;
+    
+    /* get our time for first executable */
+    gettimeofday(&starttime, NULL);
+    
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
@@ -605,6 +612,56 @@ int orte_daemon(int argc, char *argv[])
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
             return ret;
+        }
+        if (orte_timing) {
+            int64_t secs, usecs;
+            /* add our start time */
+            secs = starttime.tv_sec;
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                return ret;
+            }
+            usecs = starttime.tv_usec;
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                return ret;
+            }
+            /* get and send our setup time */
+            gettimeofday(&setuptime, NULL);
+            secs = setuptime.tv_sec - starttime.tv_sec;
+            if (starttime.tv_usec <= setuptime.tv_usec) {
+                usecs = setuptime.tv_usec - starttime.tv_usec;
+            } else {
+                secs--;
+                usecs = 1000000 - starttime.tv_usec + setuptime.tv_usec;
+            }
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                return ret;
+            }
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                return ret;
+            }
+            /* include the actual timestamp so the HNP can figure out how
+             * long it took for this message to arrive
+             */
+            secs = setuptime.tv_sec;
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                return ret;
+            }
+            usecs = setuptime.tv_usec;
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                return ret;
+            }
         }
         if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
                                             ORTE_RML_TAG_ORTED_CALLBACK, 0))) {

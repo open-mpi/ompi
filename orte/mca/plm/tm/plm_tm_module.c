@@ -148,6 +148,11 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     mode_t current_umask;
     orte_jobid_t failed_job;
     
+    /* if we are timing, record the start time */
+    if (orte_timing) {
+        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
+    }
+    
     /* default to declaring the daemons as failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     

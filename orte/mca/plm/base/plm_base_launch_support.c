@@ -24,6 +24,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_progress.h"
@@ -87,29 +90,34 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     {
         opal_byte_object_t bo;
         int i;
-        orte_nid_t **nodes;
-        opal_pointer_array_t dummy;
-        
+        orte_nid_t **nd;
+        opal_list_item_t *item;
+        orte_attr_t *attr;
+
         /* construct a nodemap */
         if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        OBJ_CONSTRUCT(&dummy, opal_pointer_array_t);
-        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo, &dummy))) {
+        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /* print-out the map */
-        nodes = (orte_nid_t**)dummy.addr;
-        for (i=0; i < dummy.size; i++) {
-            if (NULL != nodes[i]) {
-                fprintf(stderr, "NIDMAP: name %s daemon %s arch %0x\n",
-                        nodes[i]->name, ORTE_VPID_PRINT(nodes[i]->daemon), nodes[i]->arch);
-                OBJ_RELEASE(nodes[i]);
+        nd = (orte_nid_t**)orte_nidmap.addr;
+        for (i=0; i < orte_nidmap.size && NULL != nd[i]; i++) {
+            fprintf(stderr, "%s node[%d].name %s daemon %s arch %0x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
+                    (NULL == nd[i]) ? "NULL" : nd[i]->name,
+                    ORTE_VPID_PRINT(nd[i]->daemon),
+                    (NULL == nd[i]) ? 0 : nd[i]->arch);
+            for (item = opal_list_get_first(&nd[i]->attrs);
+                 item != opal_list_get_end(&nd[i]->attrs);
+                 item = opal_list_get_next(item)) {
+                attr = (orte_attr_t*)item;
+                fprintf(stderr, "\tAttribute: %s #bytes: %d\n", attr->name, attr->size);
             }
         }
-        OBJ_DESTRUCT(&dummy);
     }
 #endif
     
@@ -175,6 +183,8 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     return ORTE_SUCCESS;
 }
 
+static struct timeval app_launch_start, app_launch_stop;
+
 int orte_plm_base_launch_apps(orte_jobid_t job)
 {
     orte_job_t *jdata;
@@ -189,6 +199,10 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
 
+    if (orte_timing) {
+        gettimeofday(&app_launch_start, NULL);
+    }
+    
     /* find the job's data record */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         /* bad jobid */
@@ -231,6 +245,26 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         return rc;
     }
     
+    if (orte_timing) {
+        unsigned long maxsec, maxusec, minutes, seconds;
+        float fsecs;
+
+        gettimeofday(&app_launch_stop, NULL);
+        /* subtract starting time to get time in microsecs for test */
+        maxsec = app_launch_stop.tv_sec - app_launch_start.tv_sec;
+        maxusec = app_launch_stop.tv_usec - app_launch_start.tv_usec;
+        /* pretty-print the result */
+        seconds = maxsec + (maxusec / 1000000l);
+        minutes = seconds / 60l;
+        seconds = seconds % 60l;
+        if (0 == minutes && 0 == seconds) {
+            fsecs = ((float)(maxsec)*1000000.0 + (float)maxusec) / 1000.0;
+            fprintf(orte_timing_output, "Time to launch apps: %8.2f millisecs\n", fsecs);
+        } else {
+            fprintf(orte_timing_output, "Time to launch apps: %3lu:%02lu min:sec\n", minutes, seconds);
+        }
+    }
+    
     /* complete wiring up the iof */
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch wiring up iof",
@@ -257,6 +291,7 @@ static int orted_num_callback;
 static bool orted_failed_launch;
 static orte_job_t *jdatorted;
 static orte_proc_t **pdatorted;
+static struct timeval daemonlaunchtime = {0,0}, daemonsetuptime = {0,0}, daemoncbtime = {0,0};
 
 void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
                                  int status, orte_job_state_t state)
@@ -350,11 +385,20 @@ static void process_orted_launch_report(int fd, short event, void *data)
     int rc, idx;
     int32_t arch;
     orte_node_t **nodes;
+    struct timeval recvtime;
+    long secs, usecs;
+    int64_t setupsec, setupusec;
+    int64_t startsec, startusec;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch from daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&mev->sender)));
+    
+    /* see if we need to timestamp this receipt */
+    if (orte_timing) {
+        gettimeofday(&recvtime, NULL);
+    }
     
     /* update state */
     pdatorted[mev->sender.vpid]->state = ORTE_PROC_STATE_RUNNING;
@@ -385,6 +429,81 @@ static void process_orted_launch_report(int fd, short event, void *data)
         orted_failed_launch = true;
         goto CLEANUP;
     }
+    
+    /* if we are doing a timing test, unload the start and setup times of the daemon */
+    if (orte_timing) {
+        /* get the time stamp when the daemon first started */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &startsec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &startusec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* save the latest daemon to start */
+        if (startsec > daemonlaunchtime.tv_sec) {
+            daemonlaunchtime.tv_sec = startsec;
+            daemonlaunchtime.tv_usec = startusec;
+        } else if (startsec == daemonlaunchtime.tv_sec &&
+                   startusec > daemonlaunchtime.tv_usec) {
+            daemonlaunchtime.tv_usec = startusec;
+        }
+        /* get the time required for the daemon to setup - locally computed by each daemon */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupsec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupusec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* save the longest */
+        if (setupsec > daemonsetuptime.tv_sec) {
+            daemonsetuptime.tv_sec = setupsec;
+            daemonsetuptime.tv_usec = setupusec;
+        } else if (setupsec == daemonsetuptime.tv_sec &&
+                   setupusec > daemonsetuptime.tv_usec) {
+            daemonsetuptime.tv_usec = setupusec;
+        }
+        /* get the time stamp of when the daemon started to send this message to us */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupsec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupusec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* check the time for the callback to complete and save the longest */
+        secs = recvtime.tv_sec - setupsec;
+        if (setupusec <= recvtime.tv_usec) {
+            usecs = recvtime.tv_usec - setupusec;
+        } else {
+            secs--;
+            usecs = 1000000 - setupusec + recvtime.tv_usec;
+        }
+        if (secs > daemoncbtime.tv_sec) {
+            daemoncbtime.tv_sec = secs;
+            daemoncbtime.tv_usec = usecs;
+        } else if (secs == daemoncbtime.tv_sec &&
+                   usecs > daemoncbtime.tv_usec) {
+            daemoncbtime.tv_usec = usecs;
+        }
+    }
+    
     /* lookup the node */
     nodes = (orte_node_t**)orte_node_pool->addr;
     if (NULL == nodes[mev->sender.vpid]) {
@@ -446,7 +565,9 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
 int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     int rc;
-
+    unsigned long minutes, seconds;
+    float fsecs;
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -475,6 +596,39 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         return rc;
     }
 
+    /* if we are timing, output the results */
+    if (orte_timing) {
+        seconds = (daemonlaunchtime.tv_sec - orte_plm_globals.daemonlaunchstart.tv_sec) +
+                  ((daemonlaunchtime.tv_usec - orte_plm_globals.daemonlaunchstart.tv_usec) / 1000000l);
+        minutes = seconds / 60l;
+        seconds = seconds % 60l;
+        if (0 == minutes && 0 == seconds) {
+            fsecs = ((float)(daemonlaunchtime.tv_sec - orte_plm_globals.daemonlaunchstart.tv_sec)*1000000.0 +
+                     (float)(daemonlaunchtime.tv_usec - orte_plm_globals.daemonlaunchstart.tv_usec)) / 1000.0;
+            fprintf(orte_timing_output, "Daemon initial launch was completed in %8.2f millisecs\n", fsecs);
+        } else {
+            fprintf(orte_timing_output, "Daemon initial launch was completed in %3lu:%02lu min:sec\n", minutes, seconds);
+        }
+        seconds = daemonsetuptime.tv_sec + (daemonsetuptime.tv_usec / 1000000l);
+        minutes = seconds / 60l;
+        seconds = seconds % 60l;
+        if (0 == minutes && 0 == seconds) {
+            fsecs = ((float)(daemonsetuptime.tv_sec)*1000000.0 + (float)daemonsetuptime.tv_usec) / 1000.0;
+            fprintf(orte_timing_output, "Daemon setup was completed in a maximum of %8.2f millisecs\n", fsecs);
+        } else {
+            fprintf(orte_timing_output, "Daemon setup was completed in a maximum of %3lu:%02lu min:sec\n", minutes, seconds);
+        }
+        seconds = daemoncbtime.tv_sec + (daemoncbtime.tv_usec / 1000000l);
+        minutes = seconds / 60l;
+        seconds = seconds % 60l;
+        if (0 == minutes && 0 == seconds) {
+            fsecs = ((float)(daemoncbtime.tv_sec)*1000000.0 + (float)daemoncbtime.tv_usec) / 1000.0;
+            fprintf(orte_timing_output, "Daemon callback to HNP was completed in a maximum of %8.3f millisecs\n", fsecs);
+        } else {
+            fprintf(orte_timing_output, "Daemon callback to HNP was completed in a maximum of %3lu:%02lu min:sec\n", minutes, seconds);
+        }
+    }
+    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

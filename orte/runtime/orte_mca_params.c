@@ -24,8 +24,10 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#include <stdio.h>
 
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -143,6 +145,27 @@ int orte_register_params(void)
                                 "Request that critical timing loops be measured",
                                 false, false, (int)false, &value);
     orte_timing = OPAL_INT_TO_BOOL(value);
+    
+    if (orte_process_info.hnp) {
+        char *tmp;
+        mca_base_param_reg_string_name("orte", "timing_file",
+                                       "Name of the file where timing data is to be written (relative or absolute path)",
+                                       false, false, NULL, &tmp);
+        if (orte_timing && NULL == tmp) {
+            /* send the timing output to stdout */
+            orte_timing_output = stdout;
+        } else if (NULL != tmp) {
+            /* make sure the timing flag is set */
+            orte_timing = true;
+            /* send the output to the indicated file */
+            orte_timing_output = fopen(tmp,  "w");
+            if (NULL == orte_timing_output) {
+                /* couldn't be opened */
+                opal_output(0, "File %s could not be opened", tmp);
+                orte_timing_output = stderr;
+            }
+        }        
+    }
     
     /* User-level debugger info string */
 

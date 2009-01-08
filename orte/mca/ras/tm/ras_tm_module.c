@@ -23,9 +23,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/argv.h"
 #include "orte/util/show_help.h"
@@ -122,13 +119,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
     opal_list_item_t* item;
     FILE *fp;
     char *hostname;
-    struct timeval start, stop;
 
-    /* check for timing request - get start time if so */
-    if (orte_timing) {
-        gettimeofday(&start, NULL);
-    }
-    
     /* Ignore anything that the user already specified -- we're
        getting nodes only from TM. */
 
@@ -206,15 +197,6 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
         nodeid++;
     }
 
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (orte_timing) {
-        gettimeofday(&stop, NULL);
-        opal_output(0, "ras_tm: time to allocate is %ld usec",
-                    (long int)((stop.tv_sec - start.tv_sec)*1000000 +
-                               (stop.tv_usec - start.tv_usec)));
-        gettimeofday(&start, NULL);
-    }
-    
     return ORTE_SUCCESS;
 }
 

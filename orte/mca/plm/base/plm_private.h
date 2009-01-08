@@ -27,6 +27,10 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
+
 #include "opal/class/opal_list.h"
 #include "opal/threads/condition.h"
 
@@ -49,6 +53,8 @@ typedef struct {
     opal_condition_t orted_cmd_cond;
     /* next jobid */
     orte_jobid_t next_jobid;
+    /* time when daemons started launch */
+    struct timeval daemonlaunchstart;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data
