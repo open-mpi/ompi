@@ -184,7 +184,7 @@ static void send_relay(opal_buffer_t *buf, orte_jobid_t target_job, orte_rml_tag
     } else {
         /* buffer is already setup - just point to it */
         buffer = buf;
-        /* retain it so that callback function can release it */
+        /* retain it to keep bookkeeping straight */
         OBJ_RETAIN(buffer);
         /* tag needs to be set to daemon_tag */
         tag = ORTE_RML_TAG_DAEMON;
@@ -227,6 +227,7 @@ static void send_relay(opal_buffer_t *buf, orte_jobid_t target_job, orte_rml_tag
                                  "%s orte:daemon:send_relay sending relay msg to %s tag %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&target), tag));
+            /* retain buffer so callback function can release it */
             OBJ_RETAIN(buffer);
             if (0 > (ret = orte_rml.send_buffer_nb(&target, buffer, tag, 0,
                                                    send_callback, NULL))) {
@@ -244,6 +245,7 @@ static void send_relay(opal_buffer_t *buf, orte_jobid_t target_job, orte_rml_tag
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&nm->name)));
             
+            /* retain buffer so callback function can release it */
             OBJ_RETAIN(buffer);
             if (0 > (ret = orte_rml.send_buffer_nb(&nm->name, buffer, tag, 0,
                                                    send_callback, NULL))) {

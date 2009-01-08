@@ -148,6 +148,11 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     int proc_vpid_index;
     orte_jobid_t failed_job;
     
+    /* if we are timing, record the start time */
+    if (orte_timing) {
+        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
+    }
+    
     /* flag the daemons as failing by default */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     

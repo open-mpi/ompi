@@ -22,9 +22,6 @@
 #include "orte/types.h"
 
 #include <string.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/threads/condition.h"
 #include "orte/util/show_help.h"
@@ -197,7 +194,6 @@ CLEANUP:
 
 
 static bool barrier_recvd;
-static bool barrier_timer;
 
 static void barrier_recv(int status, orte_process_name_t* sender,
                          opal_buffer_t *buffer,
@@ -207,28 +203,16 @@ static void barrier_recv(int status, orte_process_name_t* sender,
     barrier_recvd = true;
 }
 
-static void barrier_timer_recv(int status, orte_process_name_t* sender,
-                               opal_buffer_t *buffer,
-                               orte_rml_tag_t tag, void *cbdata)
-{
-    barrier_timer = true;
-}
-
 static int barrier(void)
 {
     opal_buffer_t buf;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_COLL_CMD;
     orte_grpcomm_coll_t coll_type=ORTE_GRPCOMM_BARRIER;
     int rc;
-    struct timeval ompistart, ompistop;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:bad entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (orte_timing && ORTE_PROC_MY_NAME->vpid == 0) {
-        gettimeofday(&ompistart, NULL);
-    }
     
     /* everyone sends barrier to local daemon */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -272,44 +256,7 @@ static int barrier(void)
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:bad received barrier release",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (orte_timing) {
-        if (ORTE_PROC_MY_NAME->vpid == 0) {
-            /* setup a receive to hear when the rank=N proc has received the data
-             * release - in most xcast schemes, this will always be the final recvr
-             */
-            barrier_timer = false;
-            orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLLECTIVE_TIMER,
-                                    ORTE_RML_NON_PERSISTENT, barrier_timer_recv, NULL);
-            if (rc != ORTE_SUCCESS) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            ORTE_PROGRESSED_WAIT(barrier_timer, 0, 1);
-            gettimeofday(&ompistop, NULL);
-            opal_output(0, "%s time to complete barrier %ld usec",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                                   (ompistop.tv_usec - ompistart.tv_usec)));
-        } else if (ORTE_PROC_MY_NAME->vpid == orte_process_info.num_procs-1) {
-            /* if we are rank=N, send a message back to indicate
-             * the xcast completed for timing purposes
-             */
-            orte_process_name_t name;
-            
-            name.jobid = ORTE_PROC_MY_NAME->jobid;
-            name.vpid = 0;
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            if (0 > (rc = orte_rml.send_buffer(&name,&buf,ORTE_RML_TAG_COLLECTIVE_TIMER,0))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&buf);
-                return rc;
-            }
-            rc = ORTE_SUCCESS;
-            OBJ_DESTRUCT(&buf);
-        }
-    }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -333,17 +280,12 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 {
     int rc;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_COLL_CMD;
-    struct timeval ompistart, ompistop;
     opal_buffer_t coll;
     orte_grpcomm_coll_t coll_type=ORTE_GRPCOMM_ALLGATHER;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:bad entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (orte_timing && ORTE_PROC_MY_NAME->vpid == 0) {
-        gettimeofday(&ompistart, NULL);
-    }
     
     /* everyone sends data to their local daemon */
     OBJ_CONSTRUCT(&coll, opal_buffer_t);
@@ -400,49 +342,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         return rc;
     }
     OBJ_RELEASE(allgather_buf);
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s allgather buffer received",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (orte_timing) {
-        if (ORTE_PROC_MY_NAME->vpid == 0) {
-            /* setup a receive to hear when the rank=N proc has received the data
-             * release - in most xcast schemes, this will always be the final recvr
-             */
-            barrier_timer = false;
-            rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_COLLECTIVE_TIMER,
-                                    ORTE_RML_NON_PERSISTENT, barrier_timer_recv, NULL);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            ORTE_PROGRESSED_WAIT(barrier_timer, 0, 1);
-            gettimeofday(&ompistop, NULL);
-            opal_output(0, "%s allgather: time to complete %ld usec",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                                   (ompistop.tv_usec - ompistart.tv_usec)));
-        } else if (ORTE_PROC_MY_NAME->vpid == orte_process_info.num_procs-1) {
-            /* if we are rank=N, send a message back to indicate
-             * the xcast completed for timing purposes
-             */
-            orte_process_name_t name;
-            opal_buffer_t buf;
-            
-            name.jobid = ORTE_PROC_MY_NAME->jobid;
-            name.vpid = 0;
-            OBJ_CONSTRUCT(&buf, opal_buffer_t);
-            if (0 > (rc = orte_rml.send_buffer(&name,&buf,ORTE_RML_TAG_COLLECTIVE_TIMER,0))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            rc = ORTE_SUCCESS;
-            OBJ_DESTRUCT(&buf);
-        }
-    }
-    
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:bad allgather completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
