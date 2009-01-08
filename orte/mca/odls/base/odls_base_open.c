@@ -162,11 +162,9 @@ int orte_odls_base_open(void)
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
-    /* initialize globals */
+    /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
-    OBJ_CONSTRUCT(&orte_odls_globals.children, opal_list_t);
-    OBJ_CONSTRUCT(&orte_odls_globals.jobs, opal_list_t);
     orte_odls_globals.dmap = NULL;
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;

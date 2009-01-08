@@ -90,12 +90,5 @@ int orte_odls_default_component_query(mca_base_module_t **module, int *priority)
 
 int orte_odls_default_component_close(void)
 {
-    opal_list_item_t *item;
-    
-    /* cleanup state */
-    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.children))) {
-        OBJ_RELEASE(item);
-    }
-
     return ORTE_SUCCESS;
 }

@@ -399,6 +399,7 @@ ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
 
 /* global variables used by RTE - instanced in orte_globals.c */
 ORTE_DECLSPEC extern bool orte_timing;
+ORTE_DECLSPEC extern FILE *orte_timing_output;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
@@ -456,6 +457,11 @@ ORTE_DECLSPEC extern bool orte_send_profile;
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
+
+/* list of local children on a daemon */
+ORTE_DECLSPEC extern opal_list_t orte_local_children;
+/* list of job data for local children on a daemon */
+ORTE_DECLSPEC extern opal_list_t orte_local_jobdata;
 
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */

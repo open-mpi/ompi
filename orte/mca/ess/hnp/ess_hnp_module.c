@@ -111,6 +111,10 @@ static int rte_init(char flags)
     orte_node_t *node;
     orte_proc_t *proc;
     
+    /* initialize the global list of local children and job data */
+    OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
+    OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
+    
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
@@ -447,13 +451,18 @@ error:
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
     
+    /* cleanup the global list of local children and job data */
+    OBJ_DESTRUCT(&orte_local_children);
+    OBJ_DESTRUCT(&orte_local_jobdata);
+    
     return ret;
 }
 
 static int rte_finalize(void)
 {
     char *contact_path;
-    
+    opal_list_item_t *item;
+
     /* remove my contact info file */
     contact_path = opal_os_path(false, orte_process_info.top_session_dir,
                                 "contact.txt", NULL);
@@ -487,6 +496,25 @@ static int rte_finalize(void)
     orte_routed_base_close();
     orte_rml_base_close();
     
+    /* if we were doing timing studies, close the timing file */
+    if (orte_timing) {
+        if (stdout != orte_timing_output &&
+            stderr != orte_timing_output) {
+            fclose(orte_timing_output);
+        }
+    }
+    
+    /* cleanup the global list of local children and job data */
+    while (NULL != (item = opal_list_remove_first(&orte_local_children))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_local_children);
+    while (NULL != (item = opal_list_remove_first(&orte_local_jobdata))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_local_jobdata);
+    
+    /* finalize the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     
     /* clean out the global structures */

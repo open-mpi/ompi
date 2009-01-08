@@ -46,6 +46,7 @@
 
 /* globals used by RTE */
 bool orte_timing;
+FILE *orte_timing_output = NULL;
 bool orte_debug_daemons_file_flag = false;
 bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
@@ -101,6 +102,11 @@ bool orte_send_profile;
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
 opal_pointer_array_t orte_jobmap;
+
+/* list of local children on a daemon */
+opal_list_t orte_local_children;
+/* list of job data for local children on a daemon */
+opal_list_t orte_local_jobdata;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
