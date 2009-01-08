@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -77,36 +77,35 @@ OBJ_CLASS_DECLARATION(mca_btl_sctp_frag_user_t);
  * free list(s).
  */
 
-#define MCA_BTL_SCTP_FRAG_ALLOC_EAGER(frag, rc)                             \
+#define MCA_BTL_SCTP_FRAG_ALLOC_EAGER(frag, rc)                            \
 {                                                                          \
                                                                            \
-    ompi_free_list_item_t *item;                                                \
-    OMPI_FREE_LIST_WAIT(&mca_btl_sctp_component.sctp_frag_eager, item, rc);  \
-    frag = (mca_btl_sctp_frag_t*) item;                                     \
-}
-
-#define MCA_BTL_SCTP_FRAG_ALLOC_MAX(frag, rc)                               \
-{                                                                          \
-                                                                           \
-    ompi_free_list_item_t *item;                                                \
-    OMPI_FREE_LIST_WAIT(&mca_btl_sctp_component.sctp_frag_max, item, rc);    \
-    frag = (mca_btl_sctp_frag_t*) item;                                     \
-}
-
-#define MCA_BTL_SCTP_FRAG_ALLOC_USER(frag, rc)                              \
-{                                                                          \
     ompi_free_list_item_t *item;                                           \
-    OMPI_FREE_LIST_WAIT(&mca_btl_sctp_component.sctp_frag_user, item, rc);   \
-    frag = (mca_btl_sctp_frag_t*) item;                                     \
+    OMPI_FREE_LIST_GET(&mca_btl_sctp_component.sctp_frag_eager, item, rc); \
+    frag = (mca_btl_sctp_frag_t*) item;                                    \
 }
 
-#define MCA_BTL_SCTP_FRAG_RETURN(frag)                                      \
-{                                                                          \
-    OMPI_FREE_LIST_RETURN(frag->my_list,                                   \
-        (ompi_free_list_item_t*)(frag));                                   \
+#define MCA_BTL_SCTP_FRAG_ALLOC_MAX(frag, rc)                            \
+{                                                                        \
+                                                                         \
+    ompi_free_list_item_t *item;                                         \
+    OMPI_FREE_LIST_GET(&mca_btl_sctp_component.sctp_frag_max, item, rc); \
+    frag = (mca_btl_sctp_frag_t*) item;                                  \
 }
 
-#define MCA_BTL_SCTP_FRAG_INIT_DST(frag,ep)                                 \
+#define MCA_BTL_SCTP_FRAG_ALLOC_USER(frag, rc)                            \
+{                                                                         \
+    ompi_free_list_item_t *item;                                          \
+    OMPI_FREE_LIST_GET(&mca_btl_sctp_component.sctp_frag_user, item, rc); \
+    frag = (mca_btl_sctp_frag_t*) item;                                   \
+}
+
+#define MCA_BTL_SCTP_FRAG_RETURN(frag)                                    \
+{                                                                         \
+    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t*)(frag)); \
+}
+
+#define MCA_BTL_SCTP_FRAG_INIT_DST(frag,ep)                                \
 do {                                                                       \
     frag->rc = 0;                                                          \
     frag->btl = ep->endpoint_btl;                                          \
