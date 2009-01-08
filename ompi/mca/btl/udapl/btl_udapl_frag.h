@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -124,7 +124,7 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
 #define MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag, rc)              \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager, item, rc); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
@@ -134,10 +134,17 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
         (ompi_free_list_item_t*)(frag));                           \
 }
 
+#define MCA_BTL_UDAPL_FRAG_ALLOC_EAGER_RECV(btl, frag, rc)              \
+{                                                                  \
+    ompi_free_list_item_t *item;                                   \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_eager_recv, item, rc); \
+    frag = (mca_btl_udapl_frag_t*) item;                           \
+}
+
 #define MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag, rc)                \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max, item, rc); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
@@ -147,10 +154,17 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
         (ompi_free_list_item_t*)(frag));                           \
 }
 
+#define MCA_BTL_UDAPL_FRAG_ALLOC_MAX_RECV(btl, frag, rc)                \
+{                                                                  \
+    ompi_free_list_item_t *item;                                   \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_max_recv, item, rc); \
+    frag = (mca_btl_udapl_frag_t*) item;                           \
+}
+
 #define MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc)               \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_udapl_module_t*)btl)->udapl_frag_user, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_user, item, rc); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 
@@ -163,7 +177,7 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_rdma_t);
 #define MCA_BTL_UDAPL_FRAG_ALLOC_CONTROL(btl, frag, rc)              \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_udapl_module_t*)btl)->udapl_frag_control, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_udapl_module_t*)btl)->udapl_frag_control, item, rc); \
     frag = (mca_btl_udapl_frag_t*) item;                           \
 }
 

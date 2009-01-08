@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -359,7 +359,9 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
  
     /* initialize objects */
     OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_frag_eager_recv, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_max, ompi_free_list_t);
+    OBJ_CONSTRUCT(&btl->udapl_frag_max_recv, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_control, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
@@ -391,7 +393,35 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
                            NULL,
                            NULL);
 
+    ompi_free_list_init_ex_new(&btl->udapl_frag_eager_recv,
+        sizeof(mca_btl_udapl_frag_eager_t) +
+            mca_btl_udapl_component.udapl_eager_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        OBJ_CLASS(mca_btl_udapl_frag_eager_t),
+        mca_btl_udapl_component.udapl_eager_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        mca_btl_udapl_component.udapl_free_list_num,
+        mca_btl_udapl_component.udapl_free_list_max,
+        mca_btl_udapl_component.udapl_free_list_inc,
+                           btl->super.btl_mpool,
+                           NULL,
+                           NULL);
+
     ompi_free_list_init_ex_new(&btl->udapl_frag_max,
+        sizeof(mca_btl_udapl_frag_max_t) +
+            mca_btl_udapl_component.udapl_max_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        OBJ_CLASS(mca_btl_udapl_frag_max_t),
+        mca_btl_udapl_component.udapl_max_frag_size,
+        mca_btl_udapl_component.udapl_buffer_alignment,
+        mca_btl_udapl_component.udapl_free_list_num,
+        mca_btl_udapl_component.udapl_free_list_max,
+        mca_btl_udapl_component.udapl_free_list_inc,
+                           btl->super.btl_mpool,
+                           NULL,
+                           NULL);
+
+    ompi_free_list_init_ex_new(&btl->udapl_frag_max_recv,
         sizeof(mca_btl_udapl_frag_max_t) +
             mca_btl_udapl_component.udapl_max_frag_size,
         mca_btl_udapl_component.udapl_buffer_alignment,
@@ -485,7 +515,9 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
     /* destroy objects */
     OBJ_DESTRUCT(&udapl_btl->udapl_lock);
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_eager);
+    OBJ_DESTRUCT(&udapl_btl->udapl_frag_eager_recv);
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_max);
+    OBJ_DESTRUCT(&udapl_btl->udapl_frag_max_recv);
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_user);
     OBJ_DESTRUCT(&udapl_btl->udapl_frag_control);
     OBJ_DESTRUCT(&udapl_btl->udapl_eager_rdma_lock);
@@ -909,6 +941,10 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     } else if(size <= btl->btl_max_send_size) {
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(udapl_btl, frag, rc); 
     } else {
+        return NULL;
+    }
+
+    if (NULL == frag) {
         return NULL;
     }
 

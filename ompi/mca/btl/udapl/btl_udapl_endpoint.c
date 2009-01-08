@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -790,10 +790,17 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
     OPAL_THREAD_ADD32(&(endpoint->endpoint_btl->udapl_connect_inprogress), -1);
 
     /* post eager/max recv buffers */
-    mca_btl_udapl_endpoint_post_recv(endpoint,
+    ret = mca_btl_udapl_endpoint_post_recv(endpoint,
             mca_btl_udapl_component.udapl_eager_frag_size);
-    mca_btl_udapl_endpoint_post_recv(endpoint,
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    ret = mca_btl_udapl_endpoint_post_recv(endpoint,
             mca_btl_udapl_component.udapl_max_frag_size);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
 
     /* progress eager frag queue as allowed */
     queue_len = opal_list_get_size(&(endpoint->endpoint_eager_frags));
@@ -849,14 +856,20 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
     
     for(i = 0; i < mca_btl_udapl_component.udapl_num_recvs; i++) {
         if(size == mca_btl_udapl_component.udapl_eager_frag_size) {
-            MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(endpoint->endpoint_btl, frag, rc);
+            MCA_BTL_UDAPL_FRAG_ALLOC_EAGER_RECV(endpoint->endpoint_btl, frag, rc);
             ep = endpoint->endpoint_eager;
         } else {
             assert(size == mca_btl_udapl_component.udapl_max_frag_size);
-            MCA_BTL_UDAPL_FRAG_ALLOC_MAX(endpoint->endpoint_btl, frag, rc);
+            MCA_BTL_UDAPL_FRAG_ALLOC_MAX_RECV(endpoint->endpoint_btl, frag, rc);
             ep = endpoint->endpoint_max;
         } 
     
+        if (NULL == frag) {
+            BTL_ERROR(("ERROR: %s posting recv, out of resources\n",
+                "MCA_BTL_UDAPL_ALLOC"));
+            return rc;
+        }
+
         assert(size == frag->size);
         /* Set up the LMR triplet from the frag segment */
         /* Note that this triplet defines a sub-region of a registered LMR */
