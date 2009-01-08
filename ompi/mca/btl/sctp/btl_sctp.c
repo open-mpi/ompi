@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -173,19 +173,19 @@ mca_btl_base_descriptor_t* mca_btl_sctp_alloc(
     size_t size,
     uint32_t flags)
 {
-    mca_btl_sctp_frag_t* frag;
+    mca_btl_sctp_frag_t* frag = NULL;
     int rc;
     
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_SCTP_FRAG_ALLOC_EAGER(frag, rc); 
-        frag->segments[0].seg_len = size;
     } else if (size <= btl->btl_max_send_size) { 
         MCA_BTL_SCTP_FRAG_ALLOC_MAX(frag, rc); 
-        frag->segments[0].seg_len = size;
-    } else { 
+    }
+    if( NULL == frag ) {
         return NULL;
     }
     
+    frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
     frag->base.des_src = frag->segments;
