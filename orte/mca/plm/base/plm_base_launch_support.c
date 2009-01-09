@@ -1154,7 +1154,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
         map = jdata->map;
         for( index = 0; index < map->num_nodes; index++ ) {
             daemon = opal_pointer_array_get_item( map->nodes, index );
-            for( i = 0; i < daemon->num_procs; i++ ) {
+            for( i = 0; i < (int)daemon->num_procs; i++ ) {
                 proc = opal_pointer_array_get_item(daemon->procs, i);
                 if( (NULL != proc) && (proc->name.jobid == jdata->jobid) ) {
                     daemon->slots_inuse--;
