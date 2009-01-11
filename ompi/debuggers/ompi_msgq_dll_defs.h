@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Cisco, Inc.  All rights resereved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.

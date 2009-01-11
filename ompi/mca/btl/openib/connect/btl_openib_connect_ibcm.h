@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
