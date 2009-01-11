@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2007      High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2007-2008 Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      The University of Tennessee and The University of
  *                         Tennessee Research Foundation.  All rights reserved.
  * $COPYRIGHT$

@@ -10,7 +10,7 @@
  Copyright (c) 2004-2005, High Performance Computing Center Stuttgart,
                           University of Stuttgart
  Copyright (c) 2004-2005, The Regents of the University of California
- Copyright (c) 2007,      Cisco, Inc.
+ Copyright (c) 2007,      Cisco Systems, Inc.
  Copyright (c) 2005-2008, ZIH, TU Dresden, Federal Republic of Germany
 */
 
