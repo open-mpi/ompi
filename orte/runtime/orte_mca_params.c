@@ -39,12 +39,6 @@ int orte_register_params(void)
 {
     int value;
     
-    mca_base_param_reg_int_name("orte", "send_profile",
-                                "Send profile info in launch message",
-                                false, false,
-                                (int) false, &value);
-    orte_send_profile = OPAL_INT_TO_BOOL(value);
-    
     mca_base_param_reg_int_name("orte", "base_help_aggregate",
                                 "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
                                 false, false,
@@ -60,6 +54,13 @@ int orte_register_params(void)
                                    false, false, NULL,  &orte_prohibited_session_dirs);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+    
+    mca_base_param_reg_int_name("orte", "send_profile",
+                                "Send profile info in launch message",
+                                false, false,
+                                (int) false, &value);
+    orte_send_profile = OPAL_INT_TO_BOOL(value);
+
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch (default verbosity: 1)",
                                 false, false, (int)false, &value);
