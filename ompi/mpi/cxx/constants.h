@@ -249,6 +249,12 @@ OMPI_DECLSPEC extern const int MODE_SEQUENTIAL;
 
 OMPI_DECLSPEC extern const int DISPLACEMENT_CURRENT;
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE && !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
+OMPI_DECLSPEC static const int SEEK_SET = ::SEEK_SET;
+OMPI_DECLSPEC static const int SEEK_CUR = ::SEEK_CUR;
+OMPI_DECLSPEC static const int SEEK_END = ::SEEK_END;
+#endif
+
 OMPI_DECLSPEC extern const int MAX_DATAREP_STRING;
 
 // one-sided constants
