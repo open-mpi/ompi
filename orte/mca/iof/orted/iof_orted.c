@@ -249,6 +249,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
     /* lock us up to protect global operations */
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
+    wev->pending = false;
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;

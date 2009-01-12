@@ -47,6 +47,7 @@
 static void restart_stdin(int fd, short event, void *cbdata)
 {
     if (NULL != mca_iof_hnp_component.stdinev) {
+        mca_iof_hnp_component.stdinev->active = true;
         opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
     }
 }
@@ -179,7 +180,15 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             /* this will also close our stdin file descriptor */
             OBJ_RELEASE(mca_iof_hnp_component.stdinev);
         } else {
-            ORTE_TIMER_EVENT(0, 10000, restart_stdin);
+            /* if we are looking at a tty, then we just go ahead and restart the
+             * read event assuming we are not backgrounded
+             */
+            if (orte_iof_hnp_stdin_check(fd)) {
+                restart_stdin(fd, 0, NULL);
+            } else {
+                /* delay for awhile and then restart */
+                ORTE_TIMER_EVENT(0, 10000, restart_stdin);
+            }
         }
         /* nothing more to do */
         OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
