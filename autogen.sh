@@ -449,6 +449,8 @@ EOF
    {
 EOF
 #'
+            rm -f ltdl.c.orig
+            rm -f ltdl.c.rej
         else
             echo "      -- your libtool doesn't need this! yay!"
         fi
@@ -458,6 +460,7 @@ EOF
               -z "`grep otool64 config/ltmain.sh`"; then
             patch -N -p0 < config/ltmain_otool.diff
             rm -f config/ltmain.sh.orig
+            rm -f config/ltmain.sh.rej
         else
             echo "      -- your libtool doesn't need this! yay!"
         fi
@@ -466,6 +469,7 @@ EOF
         if test -r opal/libltdl/loaders/dlopen.c && \
             test ! -z "`grep 'filename, LT_LAZY_OR_NOW' opal/libltdl/loaders/dlopen.c`"; then
             patch -N -p0 < config/libltdl_dlopen_global.diff
+            rm -f opal/libltdl/loaders/dlopen.c.rej
         else
             echo "      -- your libltdl doesn't need this! yay!"
         fi
@@ -483,6 +487,7 @@ EOF
             cd opal/libltdl/m4
             patch -N -p0 < ../../../config/lt224-icc.diff > /dev/null 2>&1
             rm -f libtool.m4.orig
+            rm -f libtool.m4.rej
             cd ../../..
         fi
     else
@@ -513,15 +518,17 @@ EOF
             echo "   ++ patching for pathscale multi-line output (LT 2.x)"
             patch -N -p0 < config/lt21a-pathCC.diff > /dev/null 2>&1
         fi
+        rm -f aclocal.m4.orig
+        rm -f aclocal.m4.rej
         # See http://lists.gnu.org/archive/html/bug-libtool/2008-05/msg00045.html
         if check_version "2.1.9999" $ompi_libtoolize_found_version ; then
             echo "   ++ patching for ifort (LT 2.2.0-4)"
             cd config
             patch -N -p0 < lt224-icc.diff > /dev/null 2>&1
             rm -f libtool.m4.orig
+            rm -f libtool.m4.rej
             cd ..
         fi
-        rm -f aclocal.m4.orig
 
 
         # Libtool 1.5.2x and 2.1x automatically link in the "Cstd" STL library
@@ -547,6 +554,8 @@ EOF
         #   http://www.open-mpi.org/community/lists/devel/2008/11/4920.php
         echo "   ++ patching for Sun Studio Fortran compilers"
         patch -N -p0 < config/lt-sun-fortran.diff > /dev/null 2>&1
+        rm -f libtool.m4.orig
+        rm -f libtool.m4.rej
     fi
 
     run_and_check $ompi_autoconf
