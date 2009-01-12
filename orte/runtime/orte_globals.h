@@ -118,6 +118,21 @@ typedef struct orte_job_t orte_job_t;
     } while(0);
 
 
+/* define a macro for computing time differences - used for timing tests
+ * across the code base
+ */
+#define ORTE_COMPUTE_TIME_DIFF(r, ur, s1, us1, s2, us2)     \
+    do {                                                    \
+        (r) = (s2) - (s1);                                  \
+        if ((us2) >= (us1)) {                               \
+            (ur) = (us2) - (us1);                           \
+        } else {                                            \
+            (r)--;                                          \
+            (ur) = 1000000 - (us1) + (us2);                 \
+        }                                                   \
+    } while(0);
+
+        
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
 /************
@@ -400,6 +415,7 @@ ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
 /* global variables used by RTE - instanced in orte_globals.c */
 ORTE_DECLSPEC extern bool orte_timing;
 ORTE_DECLSPEC extern FILE *orte_timing_output;
+ORTE_DECLSPEC extern bool orte_timing_details;
 ORTE_DECLSPEC extern bool orte_debug_daemons_flag, orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;

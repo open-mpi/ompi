@@ -22,6 +22,10 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+
 #include "opal/dss/dss_types.h"
 #include "orte/mca/rml/rml_types.h"
 
@@ -37,6 +41,9 @@ ORTE_DECLSPEC void orte_daemon_recv(int status, orte_process_name_t* sender,
 
 /* direct cmd processing entry point - used by HNP */
 ORTE_DECLSPEC void orte_daemon_cmd_processor(int fd, short event, void *data);
+
+/* a time flag that needs to be visible elsewhere */
+ORTE_DECLSPEC extern struct timeval orte_daemon_msg_recvd;
 
 END_C_DECLS
 

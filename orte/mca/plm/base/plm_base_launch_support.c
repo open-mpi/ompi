@@ -59,6 +59,8 @@
 
 static int orte_plm_base_report_launched(orte_jobid_t job);
 
+static char *pretty_print_timing(int64_t secs, int64_t usecs);
+
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
     orte_job_t *jdatorted;
@@ -183,7 +185,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     return ORTE_SUCCESS;
 }
 
-static struct timeval app_launch_start, app_launch_stop;
+static struct timeval app_launch_start, app_launch_stop, launch_msg_sent;
 
 int orte_plm_base_launch_apps(orte_jobid_t job)
 {
@@ -227,6 +229,11 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         return rc;
     }
     
+    /* if we are timing, record the time we send this message */
+    if (orte_timing) {
+        gettimeofday(&launch_msg_sent, NULL);
+    }
+    
     /* send the command to the daemons */
     if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid,
                                                  buffer, ORTE_RML_TAG_DAEMON))) {
@@ -246,23 +253,13 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     }
     
     if (orte_timing) {
-        unsigned long maxsec, maxusec, minutes, seconds;
-        float fsecs;
+        int64_t maxsec, maxusec;
 
         gettimeofday(&app_launch_stop, NULL);
         /* subtract starting time to get time in microsecs for test */
         maxsec = app_launch_stop.tv_sec - app_launch_start.tv_sec;
         maxusec = app_launch_stop.tv_usec - app_launch_start.tv_usec;
-        /* pretty-print the result */
-        seconds = maxsec + (maxusec / 1000000l);
-        minutes = seconds / 60l;
-        seconds = seconds % 60l;
-        if (0 == minutes && 0 == seconds) {
-            fsecs = ((float)(maxsec)*1000000.0 + (float)maxusec) / 1000.0;
-            fprintf(orte_timing_output, "Time to launch apps: %8.2f millisecs\n", fsecs);
-        } else {
-            fprintf(orte_timing_output, "Time to launch apps: %3lu:%02lu min:sec\n", minutes, seconds);
-        }
+        fprintf(orte_timing_output, "Time to launch apps: %s\n", pretty_print_timing(maxsec, maxusec));
     }
     
     /* complete wiring up the iof */
@@ -445,6 +442,9 @@ static void process_orted_launch_report(int fd, short event, void *data)
             orted_failed_launch = true;
             goto CLEANUP;
         }
+        if (orte_timing_details) {
+            
+        }
         /* save the latest daemon to start */
         if (startsec > daemonlaunchtime.tv_sec) {
             daemonlaunchtime.tv_sec = startsec;
@@ -488,13 +488,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
             goto CLEANUP;
         }
         /* check the time for the callback to complete and save the longest */
-        secs = recvtime.tv_sec - setupsec;
-        if (setupusec <= recvtime.tv_usec) {
-            usecs = recvtime.tv_usec - setupusec;
-        } else {
-            secs--;
-            usecs = 1000000 - setupusec + recvtime.tv_usec;
-        }
+        ORTE_COMPUTE_TIME_DIFF(secs, usecs, setupsec, setupusec, recvtime.tv_sec, recvtime.tv_usec);
         if (secs > daemoncbtime.tv_sec) {
             daemoncbtime.tv_sec = secs;
             daemoncbtime.tv_usec = usecs;
@@ -565,8 +559,6 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
 int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 {
     int rc;
-    unsigned long minutes, seconds;
-    float fsecs;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:daemon_callback",
@@ -598,35 +590,16 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 
     /* if we are timing, output the results */
     if (orte_timing) {
-        seconds = (daemonlaunchtime.tv_sec - orte_plm_globals.daemonlaunchstart.tv_sec) +
-                  ((daemonlaunchtime.tv_usec - orte_plm_globals.daemonlaunchstart.tv_usec) / 1000000l);
-        minutes = seconds / 60l;
-        seconds = seconds % 60l;
-        if (0 == minutes && 0 == seconds) {
-            fsecs = ((float)(daemonlaunchtime.tv_sec - orte_plm_globals.daemonlaunchstart.tv_sec)*1000000.0 +
-                     (float)(daemonlaunchtime.tv_usec - orte_plm_globals.daemonlaunchstart.tv_usec)) / 1000.0;
-            fprintf(orte_timing_output, "Daemon initial launch was completed in %8.2f millisecs\n", fsecs);
-        } else {
-            fprintf(orte_timing_output, "Daemon initial launch was completed in %3lu:%02lu min:sec\n", minutes, seconds);
-        }
-        seconds = daemonsetuptime.tv_sec + (daemonsetuptime.tv_usec / 1000000l);
-        minutes = seconds / 60l;
-        seconds = seconds % 60l;
-        if (0 == minutes && 0 == seconds) {
-            fsecs = ((float)(daemonsetuptime.tv_sec)*1000000.0 + (float)daemonsetuptime.tv_usec) / 1000.0;
-            fprintf(orte_timing_output, "Daemon setup was completed in a maximum of %8.2f millisecs\n", fsecs);
-        } else {
-            fprintf(orte_timing_output, "Daemon setup was completed in a maximum of %3lu:%02lu min:sec\n", minutes, seconds);
-        }
-        seconds = daemoncbtime.tv_sec + (daemoncbtime.tv_usec / 1000000l);
-        minutes = seconds / 60l;
-        seconds = seconds % 60l;
-        if (0 == minutes && 0 == seconds) {
-            fsecs = ((float)(daemoncbtime.tv_sec)*1000000.0 + (float)daemoncbtime.tv_usec) / 1000.0;
-            fprintf(orte_timing_output, "Daemon callback to HNP was completed in a maximum of %8.3f millisecs\n", fsecs);
-        } else {
-            fprintf(orte_timing_output, "Daemon callback to HNP was completed in a maximum of %3lu:%02lu min:sec\n", minutes, seconds);
-        }
+        int64_t sec, usec;
+        ORTE_COMPUTE_TIME_DIFF(sec, usec, orte_plm_globals.daemonlaunchstart.tv_sec,
+                               orte_plm_globals.daemonlaunchstart.tv_usec,
+                               daemonlaunchtime.tv_sec, daemonlaunchtime.tv_usec);
+        fprintf(orte_timing_output, "Daemon launch was completed in %s\n",
+                pretty_print_timing(sec, usec));
+        fprintf(orte_timing_output, "Daemon setup (from first exec statement to ready-for-commands) was completed in a maximum of %s\n",
+                pretty_print_timing(daemonsetuptime.tv_sec, daemonsetuptime.tv_usec));
+        fprintf(orte_timing_output, "Daemon callback message to HNP took a maximum time of %s to reach the HNP\n",
+                pretty_print_timing(daemoncbtime.tv_sec, daemoncbtime.tv_usec));
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -646,6 +619,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
  * for their local procs.
  */
 static bool app_launch_failed;
+static struct timeval max_daemon_launch_msg_recvd = {0,0};
 
 /* since the HNP also reports launch of procs, we need to separate out
  * the processing of the message vs its receipt so that the HNP
@@ -697,6 +671,42 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
     }
     procs = (orte_proc_t**)(jdata->procs->addr);
     
+    /* if we are timing, the daemon will have included the time it
+     * recvd the launch msg - the maximum time between when we sent
+     * that message and a daemon recvd it tells us the time reqd
+     * to wireup the daemon comm network
+     */
+    if (orte_timing) {
+        int64_t tmpsec, tmpusec;
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &tmpsec, &cnt, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            app_launch_failed = true;
+            goto CLEANUP;
+        }
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &tmpusec, &cnt, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            app_launch_failed = true;
+            goto CLEANUP;
+        }
+        /* keep the maximum time */
+        if (tmpsec > max_daemon_launch_msg_recvd.tv_sec) {
+            max_daemon_launch_msg_recvd.tv_sec = tmpsec;
+            max_daemon_launch_msg_recvd.tv_usec = tmpusec;
+        } else if (tmpsec == max_daemon_launch_msg_recvd.tv_sec &&
+                   tmpusec > max_daemon_launch_msg_recvd.tv_usec) {
+            max_daemon_launch_msg_recvd.tv_usec = tmpusec;
+        }
+        if (orte_timing_details) {
+            int64_t sec, usec;
+            ORTE_COMPUTE_TIME_DIFF(sec, usec, launch_msg_sent.tv_sec, launch_msg_sent.tv_usec,
+                                   tmpsec, tmpusec);
+            fprintf(orte_timing_output, "Time for launch msg to reach daemon %s: %s\n",
+                    ORTE_VPID_PRINT(mev->sender.vpid), pretty_print_timing(sec, usec));
+        }
+    }
+    
     /* the daemon will report the vpid, state, and pid of each
      * process it launches - we need the pid in particular so
      * that any debuggers can attach to the process
@@ -713,6 +723,32 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
             ORTE_ERROR_LOG(rc);
             app_launch_failed = true;
             goto CLEANUP;
+        }
+        /* if we are timing things, unpack the time this proc was started */
+        if (orte_timing) {
+            int64_t tmpsec, tmpusec;
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &tmpsec, &cnt, OPAL_INT64))) {
+                ORTE_ERROR_LOG(rc);
+                app_launch_failed = true;
+                goto CLEANUP;
+            }
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &tmpusec, &cnt, OPAL_INT64))) {
+                ORTE_ERROR_LOG(rc);
+                app_launch_failed = true;
+                goto CLEANUP;
+            }
+            if (orte_timing_details) {
+                time_t tmptime;
+                char *tmpstr;
+                tmptime = tmpsec;
+                tmpstr = ctime(&tmptime);
+                /* remove the newline and the year at the end */
+                tmpstr[strlen(tmpstr)-6] = '\0';
+                fprintf(orte_timing_output, "Time rank %s was launched: %s.%3lu\n",
+                        ORTE_VPID_PRINT(vpid), tmpstr, (unsigned long)(tmpusec/1000));
+            }
         }
         /* unpack the state */
         cnt = 1;
@@ -1260,3 +1296,24 @@ CHECK_ALL_JOBS:
     }
     
 }
+
+static char timestring[128];
+
+static char *pretty_print_timing(int64_t secs, int64_t usecs)
+{
+    unsigned long minutes, seconds;
+    float fsecs;
+    
+    seconds = secs + (usecs / 1000000l);
+    minutes = seconds / 60l;
+    seconds = seconds % 60l;
+    if (0 == minutes && 0 == seconds) {
+        fsecs = ((float)(secs)*1000000.0 + (float)usecs) / 1000.0;
+        snprintf(timestring, 128, "%8.2f millisecs", fsecs);
+    } else {
+        snprintf(timestring, 128, "%3lu:%02lu min:sec", minutes, seconds);
+    }
+    
+    return timestring;
+}
+

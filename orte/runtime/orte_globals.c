@@ -47,6 +47,7 @@
 /* globals used by RTE */
 bool orte_timing;
 FILE *orte_timing_output = NULL;
+bool orte_timing_details;
 bool orte_debug_daemons_file_flag = false;
 bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
