@@ -16,6 +16,7 @@ enable_mem_profile=no
 enable_debug_symbols=no
 enable_binaries=no
 enable_script_wrapper_compilers=yes
+ompi_cv_c_word_size_align=no
 
 ompi_cv_f77_sizeof_LOGICAL=${ompi_cv_f77_sizeof_LOGICAL=4}
 ompi_cv_f77_alignment_LOGICAL=${ompi_cv_f77_alignment_LOGICAL=4}
