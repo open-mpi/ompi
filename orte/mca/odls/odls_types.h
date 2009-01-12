@@ -97,6 +97,8 @@ typedef struct {
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /*
  * List object to locally store job related info
  */
@@ -120,6 +122,8 @@ typedef struct orte_odls_job_t {
     struct timeval      launch_msg_recvd;       /* when the launch msg for this job was recvd - for timing purposes only */
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
+
+#endif
 
 END_C_DECLS
 
