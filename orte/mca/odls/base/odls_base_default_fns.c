@@ -485,6 +485,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         opal_list_append(&orte_local_jobdata, &jobdat->super);
     }
     
+    /* if we are doing a timing test, store the time the msg was recvd */
+    if (orte_timing) {
+        jobdat->launch_msg_recvd.tv_sec = orte_daemon_msg_recvd.tv_sec;
+        jobdat->launch_msg_recvd.tv_usec = orte_daemon_msg_recvd.tv_usec;
+    }
+    
     /* UNPACK JOB-SPECIFIC DATA */
     /* unpack the number of procs in this launch */
     cnt=1;
@@ -896,7 +902,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     return ORTE_SUCCESS;
 }
 
-static int pack_state_for_proc(opal_buffer_t *alert, bool pack_pid, orte_odls_child_t *child)
+static int pack_state_for_proc(opal_buffer_t *alert, bool include_startup_info, orte_odls_child_t *child)
 {
     int rc;
     
@@ -905,11 +911,25 @@ static int pack_state_for_proc(opal_buffer_t *alert, bool pack_pid, orte_odls_ch
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    /* pack its pid if we need to report it */
-    if (pack_pid) {
+    /* pack startup info if we need to report it */
+    if (include_startup_info) {
         if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->pid, 1, OPAL_PID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
+        }
+        /* if we are timing things, pack the time the proc was launched */
+        if (orte_timing) {
+            int64_t tmp;
+            tmp = child->starttime.tv_sec;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &tmp, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            tmp = child->starttime.tv_usec;
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &tmp, 1, OPAL_INT64))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
     }
     /* pack its state */
@@ -926,7 +946,7 @@ static int pack_state_for_proc(opal_buffer_t *alert, bool pack_pid, orte_odls_ch
     return ORTE_SUCCESS;
 }
 
-static int pack_state_update(opal_buffer_t *alert, bool pack_pid, orte_jobid_t job)
+static int pack_state_update(opal_buffer_t *alert, bool include_startup_info, orte_odls_job_t *jobdat)
 {
     int rc;
     opal_list_item_t *item;
@@ -934,17 +954,31 @@ static int pack_state_update(opal_buffer_t *alert, bool pack_pid, orte_jobid_t j
     orte_vpid_t null=ORTE_VPID_INVALID;
     
     /* pack the jobid */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &job, 1, ORTE_JOBID))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &jobdat->jobid, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+    /* if we are timing things, pack the time the launch msg for this job was recvd */
+    if (include_startup_info && orte_timing) {
+        int64_t tmp;
+        tmp = jobdat->launch_msg_recvd.tv_sec;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &tmp, 1, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        tmp = jobdat->launch_msg_recvd.tv_usec;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &tmp, 1, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         /* if this child is part of the job... */
-        if (child->name->jobid == job) {
-            if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, pack_pid, child))) {
+        if (child->name->jobid == jobdat->jobid) {
+            if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, include_startup_info, child))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -1200,6 +1234,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
         free(param);
          
+        /* if we are timing things, record when we are going to launch this proc */
+        if (orte_timing) {
+            gettimeofday(&child->starttime, NULL);
+        }
+
         /* must unlock prior to fork to keep things clean in the
          * event library
          */
@@ -1265,7 +1304,7 @@ CLEANUP:
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job)));
     /* pack the launch results */
-    if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, job))) {
+    if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, jobdat))) {
         ORTE_ERROR_LOG(ret);
     }
     
@@ -1742,6 +1781,8 @@ static void check_proc_complete(orte_odls_child_t *child)
     int rc;
     opal_buffer_t alert;
     orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
+    opal_list_item_t *item;
+    orte_odls_job_t *jdat;
     
     /* is this proc fully complete? */
     if (!child->waitpid_recvd || !child->iof_complete) {
@@ -1817,7 +1858,17 @@ static void check_proc_complete(orte_odls_child_t *child)
                 goto unlock;
             }
             /* pack the data for the job */
-            if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, child->name->jobid))) {
+            for (item = opal_list_get_first(&orte_local_jobdata);
+                 item != opal_list_get_end(&orte_local_jobdata);
+                 item = opal_list_get_next(item)) {
+                 jdat = (orte_odls_job_t*)item;
+                
+                /* is this the specified job? */
+                if (jdat->jobid == child->name->jobid) {
+                    break;
+                }
+            }
+            if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, jdat))) {
                 ORTE_ERROR_LOG(rc);
                 goto unlock;
             }

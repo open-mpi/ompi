@@ -23,6 +23,10 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
 #include "orte/mca/grpcomm/grpcomm_types.h"
@@ -89,6 +93,7 @@ typedef struct {
     char *slot_list;             /* list of slots for this child */
     bool waitpid_recvd;          /* waitpid has detected proc termination */
     bool iof_complete;           /* IOF has noted proc terminating all channels */
+    struct timeval starttime;    /* when the proc was started - for timing purposes only */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 
@@ -112,6 +117,7 @@ typedef struct orte_odls_job_t {
     int32_t             num_contributors;
     int                 num_participating;
     int                 num_collected;
+    struct timeval      launch_msg_recvd;       /* when the launch msg for this job was recvd - for timing purposes only */
 } orte_odls_job_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
 

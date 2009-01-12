@@ -36,6 +36,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 
 
 #include "opal/class/opal_pointer_array.h"
@@ -88,6 +91,10 @@ static int process_commands(orte_process_name_t* sender,
                             orte_rml_tag_t tag);
 
 
+/* instantiate this - it is shared via orted.h */
+struct timeval orte_daemon_msg_recvd;
+
+static struct timeval mesg_recvd={0,0};
 
 /* local callback function for non-blocking sends */
 static void send_callback(int status, orte_process_name_t *peer,
@@ -270,6 +277,11 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
+    if (orte_timing) {
+        /* pickup the time the message was recvd by this daemon */
+        gettimeofday(&mesg_recvd, NULL);
+    }
+    
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves
      * more messaging! Instead, setup an event so that the message gets processed
@@ -343,6 +355,13 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     wait_time = 1;
     num_recursions = 0;
     
+    if (orte_timing && orte_process_info.hnp) {
+        /* if we are doing timing, and we are the HNP, then the message doesn't come
+         * through the RML recv, so we have to pickup the recv time here
+         */
+        gettimeofday(&mesg_recvd, NULL);
+    }
+    
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s orte:daemon:cmd:processor called by %s for tag %ld",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -393,6 +412,11 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             }
             /* flag this location */
             save = buffer->unpack_ptr;
+            /* store the time the cmd was recvd */
+            if (orte_timing) {
+                orte_daemon_msg_recvd.tv_sec = mesg_recvd.tv_sec;
+                orte_daemon_msg_recvd.tv_usec = mesg_recvd.tv_usec;
+            }
         }
         
         /* rewind the buffer to the beginning */

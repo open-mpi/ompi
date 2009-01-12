@@ -145,6 +145,15 @@ int orte_register_params(void)
                                 "Request that critical timing loops be measured",
                                 false, false, (int)false, &value);
     orte_timing = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int_name("orte", "timing_details",
+                                "Request that detailed timing data by reported",
+                                false, false, (int)false, &value);
+    orte_timing_details = OPAL_INT_TO_BOOL(value);
+    if (orte_timing_details) {
+        /* ensure the timing flag is set too */
+        orte_timing = true;
+    }
     
     if (orte_process_info.hnp) {
         char *tmp;
