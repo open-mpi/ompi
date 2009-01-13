@@ -8,12 +8,15 @@
 
 #
 # General config vars
+# The following vars can be set from outside and will affect script behave:
+# prefix,rpmbuild_options,configure_options,build_srpm,build_single,build_multiple,rpmtopdir
 #
 
-prefix="/opt/openmpi"
+
 specfile="openmpi.spec"
-rpmbuild_options="--define 'mflags -j4'"
-configure_options=
+prefix=${prefix:-"/opt/openmpi"}
+rpmbuild_options=${rpmbuild_options:-"--define 'mflags -j4'"}
+configure_options=${configure_options:-""}
 
 # Helpful when debugging
 #rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g' --define 'install_modulefile 1' --define 'modules_rpm_name dhcp'"
@@ -31,11 +34,11 @@ configure_options=
 # SRPM, all-in-one, multiple.
 
 # If you want to build the SRPM, put "yes" here
-build_srpm=yes
+build_srpm=${build_srpm:-"yes"}
 # If you want to build the "all in one RPM", put "yes" here
-build_single=no
+build_single=${build_single:-"no"}
 # If you want to build the "multiple" RPMs, put "yes" here
-build_multiple=no
+build_multiple=${build_multiple:-"no"}
 
 #########################################################################
 # You should not need to change anything below this line
@@ -90,7 +93,7 @@ echo "--> Found specfile: $specfile"
 # Find where the top RPM-building directory is
 #
 
-rpmtopdir="`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"
+rpmtopdir=${rpmtopdir:-"`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"}
 if test "$rpmtopdir" != ""; then
 	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'" 
     if test ! -d "$rpmtopdir"; then
