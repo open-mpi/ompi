@@ -179,21 +179,22 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     job = ll_get_objs(queryObject, LL_CM, NULL, &obj_count, &err_code);
     if(NULL == job) {
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 1 ll_get_objs faild!");
+                    "ras:loadleveler:get:hostlist: ll_get_objs LL_CM "
+                    "failed: err_code=%d", err_code);
         return ORTE_ERROR;
     }
 
     if (obj_count != 1) {  /* Only 1 Job object is expected. */
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 1 ll_get_objs: expected "
-                    "one job to match, got %d!", obj_count);
+                    "ras:loadleveler:get:hostlist: ll_get_objs LL_CM "
+                    "expected one job to match, got %d!", obj_count);
         return ORTE_ERROR;
     }
 
     if(0 != (rc = ll_get_data(job, LL_JobSchedd, &schedd_host_name))) {
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 1 ll_get_data: failure. "
-                    "RC= %d!", rc);
+                    "ras:loadleveler:get:hostlist: ll_get_data LL_JobSchedd"
+                    " failure, RC= %d!", rc);
         return ORTE_ERROR;
     }
     if (schedd_host_name != NULL) {
@@ -233,27 +234,28 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
                       &err_code);
     if(NULL == job) {
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 2 ll_get_objs faild!");
+                    "ras:loadleveler:get:hostlist: ll_get_objs LL_SCHEDD "
+                    "failed: err_code=%d", err_code);
         return ORTE_ERROR;
     }
 
     if (obj_count != 1) {  /* Only 1 Job object is expected. */
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 2 ll_get_objs: expected "
-                    "one job to match, got %d!", obj_count);
+                    "ras:loadleveler:get:hostlist: ll_get_objs LL_SCHEDD "
+                    "expected one job to match, got %d!", obj_count);
         return ORTE_ERROR;
     }
 
     if(0 != (rc = ll_get_data(job, LL_JobStepCount, &job_step_count))) {
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 2 ll_get_data: failure. "
-                    "RC= %d!", rc);
+                    "ras:loadleveler:get:hostlist: ll_get_data LL_JobStepCount"
+                    " failure, RC= %d!", rc);
         return ORTE_ERROR;
     }
     if (job_step_count != 1) { /* Only 1 Job Step object is expected. */
         opal_output(orte_ras_base.ras_output,
-                    "ras:loadleveler:get:hostlist: 2 ll_get_data: expected "
-                    "one job step to match, got %d!", job_step_count);
+                    "ras:loadleveler:get:hostlist: ll_get_data LL_JobStepCount"
+                    " expected one jobstep to match, got %d!", job_step_count);
         return ORTE_ERROR;
     }
 
