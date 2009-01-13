@@ -495,7 +495,7 @@ for a full list); a summary of the more commonly used ones follows:
 --with-elan=<directory>
   Specify the directory where the Quadrics Elan library and header
   files are located.  This option is generally only necessary if the
-  InfiniPath headers and libraries are not in default compiler/linker
+  Elan headers and libraries are not in default compiler/linker
   search paths.
 
 --with-elan-libdir=<directory>
