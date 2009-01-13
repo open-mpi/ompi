@@ -141,7 +141,7 @@ Known issues
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (8 January 2009):
+base as of this writing (13 January 2009):
 
 General notes
 -------------
@@ -151,7 +151,7 @@ General notes
   need to supply additional flags to the "configure" script in order
   to tell Open MPI where the header files, libraries, and any other
   required files are located.  As such, running "configure" by itself
-  may include support for all the devices (etc.) that you expect,
+  may not include support for all the devices (etc.) that you expect,
   especially if their support headers / libraries are installed in
   non-standard locations.  Network interconnects are an easy example
   to discuss -- Myrinet and OpenFabrics networks, for example, both
