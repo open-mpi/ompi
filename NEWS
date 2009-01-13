@@ -26,7 +26,7 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
-1.3 (not released yet)
+1.3
 ---
 
 - Extended the OS X 10.5.x (Leopard) workaround for a problem when
@@ -106,8 +106,8 @@ version 1.0.
   in cross-compile environments.
 
 
-1.2.9 (unreleased)
-------------------
+1.2.9
+-----
 
 - Fix a segfault when using one-sided communications on some forms of derived
   datatypes.  Thanks to Dorian Krause for reporting the bug. See #1715.
