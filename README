@@ -433,11 +433,14 @@ Network Support
     - InfiniPath PSM
     - Portals
 
-  Open MPI will, by default, choose to use "cm" if it finds a
-  cm-supported network at run-time.  Users can force the use of ob1 if
-  desired by setting the "pml" MCA parameter at run-time:
+  Open MPI will, by default, choose to use "cm" when the InfiniPath
+  PSM MTL can be used.  Otherwise, OB1 will be used and the
+  corresponding BTLs will be selected.  Users can force the use of ob1
+  or cm if desired by setting the "pml" MCA parameter at run-time:
 
     shell$ mpirun --mca pml ob1 ...
+    or
+    shell$ mpirun --mca pml cm ...
 
 - Myrinet MX support is shared between the 2 internal devices, the MTL
   and the BTL.  The design of the BTL interface in Open MPI assumes
