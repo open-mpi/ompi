@@ -926,7 +926,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     char * amca_param_path = NULL;
     char * amca_param_prefix = NULL;
     char * tmp_force = NULL;
-    int i, cnt;
+    int i, cnt, rc;
     orte_job_t *jdata;
     char *rml_uri;
     unsigned long num_procs;
@@ -972,7 +972,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     /* pass the daemon jobid */
     opal_argv_append(argc, argv, "-mca");
     opal_argv_append(argc, argv, "orte_ess_jobid");
-    orte_util_convert_jobid_to_string(&param, ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&param, ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     opal_argv_append(argc, argv, param);
     free(param);
     
