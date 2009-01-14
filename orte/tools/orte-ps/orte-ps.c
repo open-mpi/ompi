@@ -609,7 +609,6 @@ static int pretty_print_vpids(orte_job_t *job) {
     orte_vpid_t v;
     orte_proc_t *vpid;
     orte_app_context_t *app;
-    char *proc_name=NULL;
     char *o_proc_name;
 
     /*
@@ -688,11 +687,6 @@ static int pretty_print_vpids(orte_job_t *job) {
             (int)strlen(vpid->ckpt_snapshot_loc) > len_ckpt_l) 
             len_ckpt_l = strlen(vpid->ckpt_snapshot_loc);
 #endif
-
-        if( NULL != proc_name) {
-            free(proc_name);
-            proc_name = NULL;
-        }
     }
 
     line_len = (len_o_proc_name + 3 +
