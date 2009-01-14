@@ -372,22 +372,30 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
     /* release the descriptor and sendreq */
     btl->btl_free(btl, descriptor);
 
-    while (opal_list_get_size(&module->m_queued_sendreqs)) {
+    if (opal_list_get_size(&module->m_queued_sendreqs) > 0) {
         opal_list_item_t *item;
-        int ret;
+        int ret, i, len;
 
-        OPAL_THREAD_LOCK(&module->m_lock);
-        item = opal_list_remove_first(&module->m_queued_sendreqs);
-        OPAL_THREAD_UNLOCK(&module->m_lock);
-        if (NULL == item) break;
-
-        ret = ompi_osc_rdma_sendreq_send(module, (ompi_osc_rdma_sendreq_t*) item);
-        if (OMPI_SUCCESS != ret) {
+        len = opal_list_get_size(&module->m_queued_sendreqs);
+        OPAL_OUTPUT_VERBOSE((40, ompi_osc_base_output,
+                             "%d items in restart queue",
+                             len));
+        for (i = 0 ; i < len ; ++i) {
             OPAL_THREAD_LOCK(&module->m_lock);
-            opal_list_append(&(module->m_queued_sendreqs), item);
+            item = opal_list_remove_first(&module->m_queued_sendreqs);
             OPAL_THREAD_UNLOCK(&module->m_lock);
-            break;
+            if (NULL == item) break;
+
+            ret = ompi_osc_rdma_sendreq_send(module, (ompi_osc_rdma_sendreq_t*) item);
+            if (OMPI_SUCCESS != ret) {
+                OPAL_THREAD_LOCK(&module->m_lock);
+                opal_list_append(&(module->m_queued_sendreqs), item);
+                OPAL_THREAD_UNLOCK(&module->m_lock);
+            }
         }
+
+        /* flush so things actually get sent out and resources restored */
+        ompi_osc_rdma_flush(module);
     }
 }
 

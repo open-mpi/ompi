@@ -26,6 +26,7 @@
 #include "osc_rdma_header.h"
 #include "osc_rdma_data_move.h"
 #include "ompi/memchecker.h"
+#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
 static int
 enqueue_sendreq(ompi_osc_rdma_module_t *module,
@@ -87,7 +88,45 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
 
     sendreq->req_op_id = op->o_f_to_c_index;
 
-    if (0 && module->m_eager_send_active) {
+    if (module->m_eager_send_active) {
+        /* accumulate semantics require send to self, which is bloody
+           expensive with the extra copies.  Put a shortcut in for the
+           common case. */
+        if (target == ompi_comm_rank(sendreq->req_module->m_comm) &&
+            ompi_ddt_is_contiguous_memory_layout(sendreq->req_target_datatype,
+                                                 sendreq->req_target_count) &&
+            !ompi_convertor_need_buffers(&sendreq->req_origin_convertor) &&
+            0 == OPAL_THREAD_TRYLOCK(&module->m_acc_lock)) {
+            void *target_buffer = (unsigned char*) module->m_win->w_baseptr + 
+                ((unsigned long) target_disp * 
+                 module->m_win->w_disp_unit);
+
+            struct iovec iov;
+            uint32_t iov_count = 1;
+            size_t max_data = sendreq->req_origin_bytes_packed;
+
+            iov.iov_len = max_data;
+            iov.iov_base = NULL;
+            ret = ompi_convertor_pack(&sendreq->req_origin_convertor,
+                                      &iov, &iov_count,
+                                      &max_data);
+            if (ret < 0) {
+                OPAL_THREAD_UNLOCK(&module->m_acc_lock);
+                return OMPI_ERR_FATAL;
+            }
+
+            ret = ompi_osc_base_process_op(target_buffer,
+                                           iov.iov_base,
+                                           max_data,
+                                           target_dt,
+                                           target_count,
+                                           op);
+            /* unlock the window for accumulates */
+            OPAL_THREAD_UNLOCK(&module->m_acc_lock);
+            ompi_osc_rdma_sendreq_free(sendreq);
+            return ret;
+        }
+
         OPAL_THREAD_LOCK(&module->m_lock);
         sendreq->req_module->m_num_pending_out += 1;
         module->m_num_pending_sendreqs[sendreq->req_target_rank] += 1;
