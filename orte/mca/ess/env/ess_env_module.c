@@ -420,9 +420,6 @@ static int env_set_name(void)
 static int rte_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
-    orte_nid_t **nids = NULL;
-    orte_jmap_t **jmaps = NULL;
-    int32_t i;
 
     /******** Checkpoint Prep ********/
     if(OPAL_CRS_CHECKPOINT == state) {
