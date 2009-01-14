@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -49,7 +49,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int total_size;
     int rc=MPI_SUCCESS;
     int thigh = high;
-    ompi_proc_t **r_proc_list=NULL;
     ompi_group_t *new_group_pointer;
     
 
@@ -141,9 +140,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
 
     if ( NULL != procs ) {
         free ( procs );
-    }
-    if ( NULL != r_proc_list ) {
-        free ( r_proc_list );
     }
     if ( MPI_SUCCESS != rc ) {
         if ( MPI_COMM_NULL != newcomp && NULL != newcomp ) {
