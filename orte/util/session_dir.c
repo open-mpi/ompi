@@ -530,8 +530,6 @@ int orte_session_dir(bool create,
         free(fulldirpath);
     if(NULL != frontend)
         free(frontend);
-    if(NULL != sav)
-        free(sav);
 
     return return_code;
 }
