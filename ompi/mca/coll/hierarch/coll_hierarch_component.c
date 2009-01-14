@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 University of Houston. All rights reserved.
+ * Copyright (c) 2007-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -172,7 +172,12 @@ mca_coll_hierarch_module_destruct(mca_coll_hierarch_module_t *hierarch_module)
     for ( i=0; i<size; i++) {
         current = (struct mca_coll_hierarch_llead_t *)opal_pointer_array_get_item ( 
                   &(hierarch_module->hier_llead), i ) ;
-        if ( current->lleaders != NULL ) {
+
+        if ( NULL == current ) {
+            continue;
+        }
+
+        if ( NULL != current->lleaders ) {
             free ( current->lleaders );
         }
 	if ( MPI_COMM_NULL != current->llcomm ){
