@@ -2,13 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -627,7 +628,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
     err = comm->c_coll.coll_gatherv(send_buf,
                                     rcounts[rank], send_type,rbuf,
                                     rcounts, disps, rdtype, 0,
-                                    comm, module);
+                                    comm, comm->c_coll.coll_gatherv_module);
     
     if (MPI_SUCCESS != err) {
         return err;
@@ -655,7 +656,8 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
         return err;
     }
 
-    comm->c_coll.coll_bcast(rbuf, 1, newtype, 0, comm, module);
+    comm->c_coll.coll_bcast(rbuf, 1, newtype, 0, comm,
+			    comm->c_coll.coll_bcast_module);
 
     ompi_ddt_destroy (&newtype);
 
