@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,10 +66,10 @@ int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
 	/* rbuf on root (0) is big enough to hold whole data */
 	if (root == rank) {
 	    err = comm->c_coll.coll_reduce (MPI_IN_PLACE, tmprbuf, total_count, 
-					    dtype, op, root, comm, module);
+					    dtype, op, root, comm, comm->c_coll.coll_reduce_module);
 	} else {
 	    err = comm->c_coll.coll_reduce(tmprbuf, NULL, total_count,
-					   dtype, op, root, comm, module);
+					   dtype, op, root, comm, comm->c_coll.coll_reduce_module);
 	}
     } else {
 	if (root == rank) {
@@ -83,7 +84,7 @@ int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
 	    tmprbuf = tmprbuf_free - lb;
 	} 
 	err = comm->c_coll.coll_reduce (sbuf, tmprbuf, total_count,
-					dtype, op, root, comm, module);
+					dtype, op, root, comm, comm->c_coll.coll_reduce_module);
     }
     if (MPI_SUCCESS != err) {
 	if (NULL != tmprbuf_free) free(tmprbuf_free);
@@ -97,7 +98,7 @@ int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
     }
     err =  comm->c_coll.coll_scatterv (tmprbuf, rcounts, displs, dtype,
 				       rbuf, rcounts[rank], dtype,
-				       root, comm, module);
+				       root, comm, comm->c_coll.coll_scatterv_module);
     free(displs);
     if (NULL != tmprbuf_free) free(tmprbuf_free);
 

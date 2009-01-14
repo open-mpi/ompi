@@ -2,13 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -724,10 +725,10 @@ ompi_coll_tuned_allgather_intra_basic_linear(void *sbuf, int scount,
 
     err = comm->c_coll.coll_gather(sbuf, scount, sdtype,
 				   rbuf, rcount, rdtype,
-				   0, comm, module);
+				   0, comm, comm->c_coll.coll_gather_module);
     if (MPI_SUCCESS == err) {
         err = comm->c_coll.coll_bcast(rbuf, rcount * ompi_comm_size(comm), rdtype,
-				      0, comm, module);
+				      0, comm, comm->c_coll.coll_bcast_module);
     }
 
     /* All done */
