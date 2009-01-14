@@ -18,9 +18,15 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from
-# ompi/Makefile.am
+dist_pkgdata_DATA = base/help-mca-op-base.txt
 
-headers += op/op.h
+headers += \
+        base/base.h \
+        base/functions.h
 
-libmpi_la_SOURCES += op/op.c
+libmca_op_la_SOURCES += \
+        base/op_base_close.c \
+        base/op_base_open.c \
+        base/op_base_find_available.c \
+        base/op_base_functions.c \
+        base/op_base_op_select.c

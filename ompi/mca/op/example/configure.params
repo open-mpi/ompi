@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -18,9 +20,6 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from
-# ompi/Makefile.am
+# Files for configure to generate for this component.
 
-headers += op/op.h
-
-libmpi_la_SOURCES += op/op.c
+PARAM_CONFIG_FILES="Makefile"

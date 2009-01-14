@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -34,18 +34,18 @@ MPI::Op::~Op() { }
 
 inline
 MPI::Op& MPI::Op::operator=(const MPI::Op& op) {
-  pmpi_op = op.pmpi_op; return *this;
+    pmpi_op = op.pmpi_op; return *this;
 }
 
 // comparison
 inline bool
 MPI::Op::operator== (const MPI::Op &a) {
-  return (bool)(pmpi_op == a.pmpi_op);
+    return (bool)(pmpi_op == a.pmpi_op);
 }
 
 inline bool
 MPI::Op::operator!= (const MPI::Op &a) {
-  return (bool)!(*this == a);
+    return (bool)!(*this == a);
 }
 
 // inter-language operability
@@ -76,15 +76,15 @@ inline
 MPI::Op::~Op() 
 { 
 #if 0
-  mpi_op = MPI_OP_NULL;
-  op_user_function = 0;
+    mpi_op = MPI_OP_NULL;
+    op_user_function = 0;
 #endif
 }  
 
 inline MPI::Op&
 MPI::Op::operator=(const MPI::Op& op) {
-  mpi_op = op.mpi_op;
-  return *this;
+    mpi_op = op.mpi_op;
+    return *this;
 }
 
 // comparison
@@ -127,5 +127,14 @@ MPI::Op::Init(MPI::User_function *func, bool commute)
 inline void
 MPI::Op::Free()
 {
-  (void)MPI_Op_free(&mpi_op);
+    (void)MPI_Op_free(&mpi_op);
+}
+
+
+inline void 
+MPI::Op::Reduce_local(const void *inbuf, void *inoutbuf, int count, 
+                      const MPI::Datatype& datatype) const
+{
+    (void)MPI_Reduce_local(const_cast<void*>(inbuf), inoutbuf, count, 
+                           datatype, mpi_op);
 }

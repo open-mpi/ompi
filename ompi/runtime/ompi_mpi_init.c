@@ -65,6 +65,8 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
+#include "ompi/mca/op/op.h"
+#include "ompi/mca/op/base/base.h"
 #include "ompi/file/file.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/mca/allocator/base/base.h"
@@ -451,15 +453,24 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* initialize ops. This has to be done *after* ddt_init, but
-       befor mca_coll_base_open, since come collective modules
-       (e.g. the hierarchical) need them in the query function
-    */
+    /* Initialize the op framework. This has to be done *after*
+       ddt_init, but befor mca_coll_base_open, since some collective
+       modules (e.g., the hierarchical coll component) may need ops in
+       their query function. */
+    if (OMPI_SUCCESS != (ret = ompi_op_base_open())) {
+        error = "ompi_op_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != 
+        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                           OMPI_ENABLE_MPI_THREADS))) {
+        error = "ompi_op_base_find_available() failed";
+        goto error;
+    }
     if (OMPI_SUCCESS != (ret = ompi_op_init())) {
         error = "ompi_op_init() failed";
         goto error;
     }
-
 
     /* Open up MPI-related MCA components */
 

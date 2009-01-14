@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,30 +33,31 @@
 static const char FUNC_NAME[] = "MPI_Op_create";
 
 
-int MPI_Op_create(MPI_User_function *function, int commute,
-                  MPI_Op *op) 
+int MPI_Op_create(MPI_User_function * function, int commute, MPI_Op * op)
 {
-  int err = MPI_SUCCESS;
+    int err = MPI_SUCCESS;
 
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == op) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP, FUNC_NAME);
-    } else if (NULL == function) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == op) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP,
+                                          FUNC_NAME);
+        } else if (NULL == function) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
     }
-  }
 
-  OPAL_CR_ENTER_LIBRARY();
+    OPAL_CR_ENTER_LIBRARY();
 
-  /* Create and cache the op.  Sets a refcount of 1. */
+    /* Create and cache the op.  Sets a refcount of 1. */
 
-  *op = ompi_op_create(OPAL_INT_TO_BOOL(commute),
-                       (ompi_op_fortran_handler_fn_t*) function);
-  if (NULL == *op) {
-    err = MPI_ERR_INTERN;
-  }
-  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    *op = ompi_op_create_user(OPAL_INT_TO_BOOL(commute),
+                              (ompi_op_fortran_handler_fn_t *) function);
+    if (NULL == *op) {
+        err = MPI_ERR_INTERN;
+    }
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -231,6 +232,7 @@
 #define MPI_Recv_init PMPI_Recv_init 
 #define MPI_Recv PMPI_Recv 
 #define MPI_Reduce PMPI_Reduce
+#define MPI_Reduce_local PMPI_Reduce_local
 #define MPI_Reduce_scatter PMPI_Reduce_scatter
 #define MPI_Register_datarep PMPI_Register_datarep
 #define MPI_Request_c2f PMPI_Request_c2f

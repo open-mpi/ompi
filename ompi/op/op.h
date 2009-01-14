@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,214 +29,46 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
-#include "ompi/datatype/datatype.h"
-#include "opal/class/opal_object.h"
-#include "ompi/mpi/f77/fint_2_int.h"
-
 #include <stdio.h>
+
+#include "mpi.h"
+
+#include "opal/class/opal_object.h"
+
+#include "ompi/datatype/datatype.h"
+#include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/mca/op/op.h"
 
 BEGIN_C_DECLS
 
 /**
- * Fortran handles; must be [manually set to be] equivalent to the
- * values in mpif.h.
- */
-enum {
-    /** Corresponds to Fortran MPI_OP_NULL */
-    OMPI_OP_FORTRAN_NULL = 0,
-    /** Corresponds to Fortran MPI_MAX */
-    OMPI_OP_FORTRAN_MAX,
-    /** Corresponds to Fortran MPI_MIN */
-    OMPI_OP_FORTRAN_MIN,
-    /** Corresponds to Fortran MPI_SUM */
-    OMPI_OP_FORTRAN_SUM,
-    /** Corresponds to Fortran MPI_PROD */
-    OMPI_OP_FORTRAN_PROD,
-    /** Corresponds to Fortran MPI_LAND */
-    OMPI_OP_FORTRAN_LAND,
-    /** Corresponds to Fortran MPI_BAND */
-    OMPI_OP_FORTRAN_BAND,
-    /** Corresponds to Fortran MPI_LOR */
-    OMPI_OP_FORTRAN_LOR,
-    /** Corresponds to Fortran MPI_BOR */
-    OMPI_OP_FORTRAN_BOR,
-    /** Corresponds to Fortran MPI_LXOR */
-    OMPI_OP_FORTRAN_LXOR,
-    /** Corresponds to Fortran MPI_BXOR */
-    OMPI_OP_FORTRAN_BXOR,
-    /** Corresponds to Fortran MPI_MAXLOC */
-    OMPI_OP_FORTRAN_MAXLOC,
-    /** Corresponds to Fortran MPI_MINLOC */
-    OMPI_OP_FORTRAN_MINLOC,
-    /** Corresponds to Fortran MPI_REPLACE */
-    OMPI_OP_FORTRAN_REPLACE,
-
-    /** Maximum value */
-    OMPI_OP_FORTRAN_MAX_TYPE
-};
-
-/**
- * Corresponding to the types that we can reduce over.  See
- * MPI-1:4.9.2, p114-115 and
- * MPI-2:4.15, p76-77
- */
-enum {
-    /** C integer: unsigned char */
-    OMPI_OP_TYPE_UNSIGNED_CHAR,
-    /** C integer: signed char */
-    OMPI_OP_TYPE_SIGNED_CHAR,
-    /** C integer: int */
-    OMPI_OP_TYPE_INT,
-    /** C integer: long */
-    OMPI_OP_TYPE_LONG,
-    /** C integer: short */
-    OMPI_OP_TYPE_SHORT,
-    /** C integer: unsigned short */
-    OMPI_OP_TYPE_UNSIGNED_SHORT,
-    /** C integer: unsigned */
-    OMPI_OP_TYPE_UNSIGNED,
-    /** C integer: unsigned long */
-    OMPI_OP_TYPE_UNSIGNED_LONG,
-
-    /** C integer: long long int (optional) */
-    OMPI_OP_TYPE_LONG_LONG_INT,
-    /** C integer: unsigned long long (optional) */
-    OMPI_OP_TYPE_UNSIGNED_LONG_LONG,
-
-    /** Fortran integer */
-    OMPI_OP_TYPE_INTEGER,
-    /** Fortran integer*1 */
-    OMPI_OP_TYPE_INTEGER1,
-    /** Fortran integer*2 */
-    OMPI_OP_TYPE_INTEGER2,
-    /** Fortran integer*4 */
-    OMPI_OP_TYPE_INTEGER4,
-    /** Fortran integer*8 */
-    OMPI_OP_TYPE_INTEGER8,
-    /** Fortran integer*16 */
-    OMPI_OP_TYPE_INTEGER16,
-
-    /** Floating point: float */
-    OMPI_OP_TYPE_FLOAT,
-    /** Floating point: double */
-    OMPI_OP_TYPE_DOUBLE,
-    /** Floating point: real */
-    OMPI_OP_TYPE_REAL,
-    /** Floating point: real*2 */
-    OMPI_OP_TYPE_REAL2,
-    /** Floating point: real*4 */
-    OMPI_OP_TYPE_REAL4,
-    /** Floating point: real*8 */
-    OMPI_OP_TYPE_REAL8,
-    /** Floating point: real*16 */
-    OMPI_OP_TYPE_REAL16,
-    /** Floating point: double precision */
-    OMPI_OP_TYPE_DOUBLE_PRECISION,
-    /** Floating point: long double */
-    OMPI_OP_TYPE_LONG_DOUBLE,
-
-    /** Logical */
-    OMPI_OP_TYPE_LOGICAL,
-    /** Bool */
-    OMPI_OP_TYPE_BOOL,
-
-    /** Complex */
-    OMPI_OP_TYPE_COMPLEX,
-    /** Double complex */
-    OMPI_OP_TYPE_DOUBLE_COMPLEX,
-    /** Complex8 */
-    OMPI_OP_TYPE_COMPLEX8,
-    /** Complex16 */
-    OMPI_OP_TYPE_COMPLEX16,
-    /** Complex32 */
-    OMPI_OP_TYPE_COMPLEX32,
-
-    /** Byte */
-    OMPI_OP_TYPE_BYTE,
-
-    /** 2 location Fortran: 2 real */
-    OMPI_OP_TYPE_2REAL,
-    /** 2 location Fortran: 2 double precision */
-    OMPI_OP_TYPE_2DOUBLE_PRECISION,
-    /** 2 location Fortran: 2 integer */
-    OMPI_OP_TYPE_2INTEGER,
-
-    /** 2 location C: float int */
-    OMPI_OP_TYPE_FLOAT_INT,
-    /** 2 location C: double int */
-    OMPI_OP_TYPE_DOUBLE_INT,
-    /** 2 location C: long int */
-    OMPI_OP_TYPE_LONG_INT,
-    /** 2 location C: int int */
-    OMPI_OP_TYPE_2INT,
-    /** 2 location C: short int */
-    OMPI_OP_TYPE_SHORT_INT,
-    /** 2 location C: long double int */
-    OMPI_OP_TYPE_LONG_DOUBLE_INT,
-
-    /** 2 location C: wchar_t */
-    OMPI_OP_TYPE_WCHAR,
-
-    /** Maximum type */
-    OMPI_OP_TYPE_MAX
-};
-
-
-/**
- * Typedef for C op functions.  
+ * Typedef for C op functions for user-defined MPI_Ops.
  *
  * We don't use MPI_User_function because this would create a
  * confusing dependency loop between this file and mpi.h.  So this is
  * repeated code, but it's better this way (and this typedef will
  * never change, so there's not much of a maintenance worry).
  */
-typedef void (ompi_op_c_handler_fn_t) (void *, void *, int *,
-                                       MPI_Datatype *);
-
-/*
- *  Three buffer ( two input and one output) function prototype
- */
-typedef void (ompi_op_3buff_c_handler_fn_t) (void *restrict,
-                                             void *restrict,
-                                             void *restrict, int *,
-                                             MPI_Datatype *);
-
+typedef void (ompi_op_c_handler_fn_t)(void *, void *, int *,
+                                      struct ompi_datatype_t **);
 
 /**
- * Typedef for fortran op functions.
+ * Typedef for fortran user-defined MPI_Ops.
  */
-typedef void (ompi_op_fortran_handler_fn_t) (void *, void *,
-                                             MPI_Fint *, MPI_Fint *);
-/*
- * Three buffer (2 input one output) function prototype
- */
-typedef void (ompi_op_3buff_fortran_handler_fn_t) (void *restrict,
-                                                   void *restrict,
-                                                   void *restrict,
-                                                   MPI_Fint *, MPI_Fint *);
-
+typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
+                                            MPI_Fint *, MPI_Fint *);
 
 /**
- * Typedef for C++ op functions intercept.
+ * Typedef for C++ op functions intercept (used for user-defined
+ * MPI::Ops).
  *
  * See the lengthy explanation for why this is different than the C
  * intercept in ompi/mpi/cxx/intercepts.cc in the
  * ompi_mpi_cxx_op_intercept() function.
  */
-typedef void (ompi_op_cxx_handler_fn_t) (void *, void *, int *,
-                                         MPI_Datatype *,
-                                         MPI_User_function * op);
-
-/*
- * Three buffer (two input, one output) function prototype
- */
-typedef void (ompi_op_3buff_cxx_handler_fn_t) (void *restrict,
-                                               void *restrict,
-                                               void *restrict, int *,
-                                               MPI_Datatype *,
-                                               MPI_User_function * op);
-
+typedef void (ompi_op_cxx_handler_fn_t)(void *, void *, int *,
+                                        struct ompi_datatype_t **,
+                                        MPI_User_function * op);
 
 /*
  * Flags for MPI_Op
@@ -274,36 +106,37 @@ struct ompi_op_t {
     /** Flags about the op */
     uint32_t o_flags;
 
-    /** Array of function pointers, indexed on the operation type.
-        For non-intrinsice MPI_Op's, only the 0th element will be
-        meaningful. */
-    union {
-      /** C handler function pointer */
-        ompi_op_c_handler_fn_t *c_fn;
-      /** Fortran handler function pointer */
-        ompi_op_fortran_handler_fn_t *fort_fn;
-      /** C++ intercept function pointer -- see lengthy comment in
-          ompi/mpi/cxx/intercepts.cc::ompi_mpi_cxx_op_intercept() for
-          an explanation */
-        ompi_op_cxx_handler_fn_t *cxx_intercept_fn;
-    } o_func[OMPI_OP_TYPE_MAX];
-
     /** Index in Fortran <-> C translation array */
     int o_f_to_c_index;
 
-    /** Array of three buffer function pointers, indexed on the
-        operation type.  For non-intrinsice MPI_Op's, only the 0th
-        element will be meaningful. */
+    /** Union holding (2-buffer functions):
+        1. Function pointers for all supported datatypes when this op
+           is intrinsic
+        2. Function pointers for when this op is user-defined (only
+           need one function pointer for this; we call it for *all*
+           datatypes, even intrinsics)
+     */
     union {
-      /** C handler function pointer */
-        ompi_op_3buff_c_handler_fn_t *c_fn;
-      /** Fortran handler function pointer */
-        ompi_op_3buff_fortran_handler_fn_t *fort_fn;
-      /** C++ intercept function pointer -- see lengthy comment in
-          ompi/mpi/cxx/intercepts.cc::ompi_mpi_cxx_op_intercept() for
-          an explanation */
-        ompi_op_3buff_cxx_handler_fn_t *cxx_intercept_fn;
-    } o_3buff_func[OMPI_OP_TYPE_MAX];
+        /** Function/module pointers for intrinsic ops */
+        ompi_op_base_op_fns_t intrinsic;
+        /** C handler function pointer */
+        ompi_op_c_handler_fn_t *c_fn;
+        /** Fortran handler function pointer */
+        ompi_op_fortran_handler_fn_t *fort_fn;
+        /** C++ intercept function data -- see lengthy comment in
+            ompi/mpi/cxx/intercepts.cc::ompi_mpi_cxx_op_intercept() for
+            an explanation */
+        struct {
+            /* The user's function (it's the wrong type, but that's ok) */
+            ompi_op_c_handler_fn_t *user_fn;
+            /* The OMPI C++ callback/intercept function */
+            ompi_op_cxx_handler_fn_t *intercept_fn;
+        } cxx_data;
+    } o_func;
+    
+    /** 3-buffer functions, which is only for intrinsic ops.  No need
+        for the C/C++/Fortran user-defined functions. */
+    ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
 };
 
 /**
@@ -442,7 +275,8 @@ int ompi_op_init(void);
 int ompi_op_finalize(void);
 
 /**
- * Create a ompi_op_t
+ * Create a ompi_op_t with a user-defined callback (vs. creating an
+ * intrinsic ompi_op_t).
  *
  * @param commute Boolean indicating whether the operation is
  *        communative or not
@@ -452,8 +286,8 @@ int ompi_op_finalize(void);
  *   created and returned
  *
  * This function is called as the back-end of all the MPI_OP_CREATE
- * functions.  It creates a new ompi_op_t object, initializes it to
- * the correct object type, and sets the callback function on it.
+ * function.  It creates a new ompi_op_t object, initializes it to the
+ * correct object type, and sets the callback function on it.
  *
  * The type of the function pointer is (arbitrarily) the fortran
  * function handler type.  Since this function has to accept 2
@@ -467,8 +301,8 @@ int ompi_op_finalize(void);
  * wrapper for MPI_OP_CREATE is expected to reset this flag to true
  * manually.
  */
-ompi_op_t *ompi_op_create(bool commute,
-                          ompi_op_fortran_handler_fn_t * func);
+ompi_op_t *ompi_op_create_user(bool commute,
+                               ompi_op_fortran_handler_fn_t func);
 
 /**
  * Mark an MPI_Op as holding a C++ callback function, and cache
@@ -558,11 +392,8 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
     if (ompi_op_is_intrinsic(op)) {
         if (ompi_ddt_is_predefined(ddt)) {
             /* Intrinsic ddt on intrinsic op */
-            if ((-1 == ompi_op_ddt_map[ddt->id] ||
-                 (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC) &&
-                  NULL == op->o_func[ompi_op_ddt_map[ddt->id]].fort_fn) ||
-                 (0 == (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC) &&
-                  NULL == op->o_func[ompi_op_ddt_map[ddt->id]].c_fn))) {
+            if (-1 == ompi_op_ddt_map[ddt->id] ||
+                NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
                 asprintf(msg,
                          "%s: the reduction operation %s is not defined on the %s datatype",
                          func, op->o_name, ddt->name);
@@ -627,29 +458,31 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     /*
      * Call the reduction function.  Two dimensions: a) if both the op
      * and the datatype are intrinsic, we have a series of predefined
-     * functions for each datatype, b) if the op has a fortran callback
-     * function or not.
+     * functions for each datatype (that are *only* in C -- not
+     * Fortran or C++!), or b) the op is user-defined, and therefore
+     * we have to check whether to invoke the callback with the C,
+     * C++, or Fortran callback signature (see lengthy description of
+     * the C++ callback in ompi/mpi/cxx/intercepts.cc).
      *
-     * NOTE: We assume here that we will get a valid result back from
-     * the ompi_op_ddt_map[] (and not -1) -- if we do, then the
-     * parameter check in the top-level MPI function should have caught
-     * it.  If we get -1 because the top-level parameter check is turned
+     * NOTE: We *assume* the following:
+     *
+     * 1. If the op is intrinsic, the op is pre-defined
+     * 2. That we will get a valid result back from the
+     * ompi_op_ddt_map[] (and not -1).
+     *
+     * Failures in these assumptions should have been caught by the
+     * upper layer (i.e., they should never have called this
+     * function).  If either of these assumptions are wrong, it's
+     * likely that the MPI API function parameter checking is turned
      * off, then it's an erroneous program and it's the user's fault.
      * :-)
      */
 
-    if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
-        ompi_ddt_is_predefined(dtype)) {
-        if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
-            f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
-            f_count = OMPI_INT_2_FINT(count);
-            op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn(source, target,
-                                                           &f_count,
-                                                           &f_dtype);
-        } else {
-            op->o_func[ompi_op_ddt_map[dtype->id]].c_fn(source, target,
-                                                        &count, &dtype);
-        }
+    /* For intrinsics, we also pass the corresponding op module */
+    if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
+        op->o_func.intrinsic.fns[ompi_op_ddt_map[dtype->id]](source, target,
+                                                             &count, &dtype,
+                                                             op->o_func.intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
     }
 
     /* User-defined function */
@@ -657,12 +490,12 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     else if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
         f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
         f_count = OMPI_INT_2_FINT(count);
-        op->o_func[0].fort_fn(source, target, &f_count, &f_dtype);
+        op->o_func.fort_fn(source, target, &f_count, &f_dtype);
     } else if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
-        op->o_func[0].cxx_intercept_fn(source, target, &count, &dtype,
-                                       op->o_func[1].c_fn);
+        op->o_func.cxx_data.intercept_fn(source, target, &count, &dtype,
+                                         op->o_func.cxx_data.user_fn);
     } else {
-        op->o_func[0].c_fn(source, target, &count, &dtype);
+        op->o_func.c_fn(source, target, &count, &dtype);
     }
 }
 
@@ -685,23 +518,14 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
  * with the values in the source buffer and the result is stored in
  * the target buffer).
  *
- * This function figures out which reduction operation function to
- * invoke and whether to invoke it with C- or Fortran-style invocation
- * methods.  If the op is intrinsic and has the operation defined for
- * dtype, the appropriate back-end function will be invoked.
- * Otherwise, the op is assumed to be a user op and the first function
- * pointer in the op array will be used.
+ * This function will *only* be invoked on intrinsic MPI_Ops.
  *
- * NOTE: This function assumes that a correct combination will be
- * given to it; it makes no provision for errors (in the name of
- * optimization).  If you give it an intrinsic op with a datatype that
- * is not defined to have that operation, it is likely to seg fault.
+ * Otherwise, this function is the same as ompi_op_reduce.
  */
 static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
                                         void *source2, void *target,
                                         int count, ompi_datatype_t * dtype)
 {
-    MPI_Fint f_dtype, f_count;
     void *restrict src1;
     void *restrict src2;
     void *restrict tgt;
@@ -709,49 +533,10 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     src2 = source2;
     tgt = target;
 
-    /*
-     * Call the reduction function.  Two dimensions: a) if both the op
-     * and the datatype are intrinsic, we have a series of predefined
-     * functions for each datatype, b) if the op has a fortran callback
-     * function or not.
-     *
-     * NOTE: We assume here that we will get a valid result back from
-     * the ompi_op_ddt_map[] (and not -1) -- if we do, then the
-     * parameter check in the top-level MPI function should have caught
-     * it.  If we get -1 because the top-level parameter check is turned
-     * off, then it's an erroneous program and it's the user's fault.
-     * :-)
-     */
-
-    if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
-        ompi_ddt_is_predefined(dtype)) {
-        if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
-            f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
-            f_count = OMPI_INT_2_FINT(count);
-            op->o_3buff_func[ompi_op_ddt_map[dtype->id]].fort_fn(src1,
-                                                                 src2, tgt,
-                                                                 &f_count,
-                                                                 &f_dtype);
-        } else {
-            op->o_3buff_func[ompi_op_ddt_map[dtype->id]].c_fn(src1, src2,
-                                                              tgt, &count,
-                                                              &dtype);
-        }
-    }
-
-    /* User-defined function - this can't work, will never be called.
-     *  need to take this out soon. */
-
-    else if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
-        f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
-        f_count = OMPI_INT_2_FINT(count);
-        op->o_3buff_func[0].fort_fn(src1, src2, tgt, &f_count, &f_dtype);
-    } else if (0 != (op->o_flags & OMPI_OP_FLAGS_CXX_FUNC)) {
-        op->o_3buff_func[0].cxx_intercept_fn(src1, src2, tgt, &count,
-                                             &dtype, op->o_func[1].c_fn);
-    } else {
-        op->o_3buff_func[0].c_fn(src1, src2, tgt, &count, &dtype);
-    }
+    op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
+                                                          tgt, &count,
+                                                          &dtype,
+                                                          op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
 }
 
 END_C_DECLS

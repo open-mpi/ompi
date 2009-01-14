@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -178,6 +179,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         precv_f.c \
         precv_init_f.c \
         preduce_f.c \
+        preduce_local_f.c \
         preduce_scatter_f.c \
         prequest_free_f.c \
         prequest_get_status_f.c \

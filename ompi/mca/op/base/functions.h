@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,33 +17,33 @@
  * $HEADER$
  */
 
-#ifndef OMPI_OP_PREDEFINED_H
-#define OMPI_OP_PREDEFINED_H
+#ifndef OMPI_OP_BASE_FUNCTIONS_H
+#define OMPI_OP_BASE_FUNCTIONS_H
 
-#include "ompi/op/op.h"
+#include "ompi/mca/op/op.h"
 
 /*
  * Since we have so many of these, and they're all identical except
  * for the name, use macros to prototype them.
  */
-#define OMPI_OP_PROTO (void *in, void *out, int *count, MPI_Datatype *dtype)
+#define OMPI_OP_PROTO (void *in, void *out, int *count, struct ompi_datatype_t **dtype, struct ompi_op_base_module_1_0_0_t *module)
 
 /* C integer */
 
 #define OMPI_OP_HANDLER_C_INTEGER_INTRINSIC(name) \
-  void ompi_mpi_op_##name##_unsigned_char OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_signed_char OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_long OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_short OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_unsigned_short OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_unsigned OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_unsigned_long OMPI_OP_PROTO;
+  void ompi_op_base_##name##_unsigned_char OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_signed_char OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_long OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_short OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_unsigned_short OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_unsigned OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_unsigned_long OMPI_OP_PROTO;
 #if HAVE_LONG_LONG
 #define OMPI_OP_HANDLER_C_INTEGER_OPTIONAL(name) \
-  void ompi_mpi_op_##name##_long_long_int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_long_long OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_unsigned_long_long OMPI_OP_PROTO;
+  void ompi_op_base_##name##_long_long_int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_long_long OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_unsigned_long_long OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_C_INTEGER_OPTIONAL(name)
 #endif
@@ -53,34 +54,34 @@
 /* Fortran integer */
 
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER_INTRINSIC(name) \
-  void ompi_mpi_op_##name##_fortran_integer OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_integer OMPI_OP_PROTO;
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER1(name) \
-  void ompi_mpi_op_##name##_fortran_integer1 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_integer1 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER1(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER2(name) \
-  void ompi_mpi_op_##name##_fortran_integer2 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_integer2 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER2(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER4(name) \
-  void ompi_mpi_op_##name##_fortran_integer4 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_integer4 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER4(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER8(name) \
-  void ompi_mpi_op_##name##_fortran_integer8 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_integer8 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER8(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER16(name) \
-  void ompi_mpi_op_##name##_fortran_integer16 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_integer16 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FORTRAN_INTEGER16(name)
 #endif
@@ -95,32 +96,32 @@
 /* Floating point */
 
 #define OMPI_OP_HANDLER_FLOATING_POINT_INTRINSIC(name) \
-  void ompi_mpi_op_##name##_float OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_double OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_fortran_real OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_fortran_double_precision OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_long_double OMPI_OP_PROTO;
+  void ompi_op_base_##name##_float OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_double OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_fortran_real OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_fortran_double_precision OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_long_double OMPI_OP_PROTO;
 #if OMPI_HAVE_FORTRAN_REAL2
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL2(name) \
-  void ompi_mpi_op_##name##_fortran_real2 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_real2 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL2(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL4(name) \
-  void ompi_mpi_op_##name##_fortran_real4 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_real4 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL4(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL8(name) \
-  void ompi_mpi_op_##name##_fortran_real8 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_real8 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL8(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL16(name) \
-  void ompi_mpi_op_##name##_fortran_real16 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_real16 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_FLOATING_POINT_REAL16(name)
 #endif
@@ -133,38 +134,38 @@
 /* Logical */
 
 #define OMPI_OP_HANDLER_LOGICAL(name) \
-  void ompi_mpi_op_##name##_fortran_logical OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_bool OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_logical OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_bool OMPI_OP_PROTO;
 
 /* Complex */
 
 #if OMPI_HAVE_FORTRAN_REAL
 #define OMPI_OP_HANDLER_COMPLEX_INTRINSIC(name) \
-  void ompi_mpi_op_##name##_fortran_complex OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_complex OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX_INTRINSIC(name)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 #define OMPI_OP_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name) \
-  void ompi_mpi_op_##name##_fortran_double_complex OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_double_complex OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_HANDLER_COMPLEX8(name) \
-  void ompi_mpi_op_##name##_fortran_complex8 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_complex8 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX8(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_HANDLER_COMPLEX16(name) \
-  void ompi_mpi_op_##name##_fortran_complex16 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_complex16 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX16(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_HANDLER_COMPLEX32(name) \
-  void ompi_mpi_op_##name##_fortran_complex32 OMPI_OP_PROTO;
+  void ompi_op_base_##name##_fortran_complex32 OMPI_OP_PROTO;
 #else
 #define OMPI_OP_HANDLER_COMPLEX32(name)
 #endif
@@ -178,20 +179,20 @@
 /* Byte */
 
 #define OMPI_OP_HANDLER_BYTE(name) \
-  void ompi_mpi_op_##name##_byte OMPI_OP_PROTO;
+  void ompi_op_base_##name##_byte OMPI_OP_PROTO;
 
 /* "2 type" */
 
 #define OMPI_OP_HANDLER_2TYPE(name) \
-  void ompi_mpi_op_##name##_2real OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_2double_precision OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_2integer OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_float_int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_double_int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_long_int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_2int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_short_int OMPI_OP_PROTO; \
-  void ompi_mpi_op_##name##_long_double_int OMPI_OP_PROTO;
+  void ompi_op_base_##name##_2real OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_2double_precision OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_2integer OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_float_int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_double_int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_long_int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_2int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_short_int OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_long_double_int OMPI_OP_PROTO;
 
 BEGIN_C_DECLS
 
@@ -279,24 +280,25 @@ BEGIN_C_DECLS
  */
 #define OMPI_OP_PROTO_3BUF  \
   ( void * restrict in1, void * restrict in2, void * restrict out, \
-   int *count, MPI_Datatype *dtype)
+   int *count, struct ompi_datatype_t **dtype, \
+   struct ompi_op_base_module_1_0_0_t *module)
 
 /* C integer */
 
 #define OMPI_OP_3BUFF_HANDLER_C_INTEGER_INTRINSIC(name) \
-  void ompi_mpi_op_three_buff_##name##_unsigned_char OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_signed_char OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_long OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_short OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_unsigned_short OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_unsigned OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_unsigned_long OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_unsigned_char OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_signed_char OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_long OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_short OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_unsigned_short OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_unsigned OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_unsigned_long OMPI_OP_PROTO_3BUF;
 #if HAVE_LONG_LONG
 #define OMPI_OP_3BUFF_HANDLER_C_INTEGER_OPTIONAL(name) \
-  void ompi_mpi_op_three_buff_##name##_long_long_int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_long_long OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_unsigned_long_long OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_long_long_int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_long_long OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_unsigned_long_long OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_C_INTEGER_OPTIONAL(name)
 #endif
@@ -307,34 +309,34 @@ BEGIN_C_DECLS
 /* Fortran integer */
 
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER_INTRINSIC(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_integer OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_integer OMPI_OP_PROTO_3BUF;
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER1(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_integer1 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_integer1 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER1(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER2(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_integer2 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_integer2 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER2(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER4(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_integer4 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_integer4 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER4(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER8(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_integer8 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_integer8 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER8(name)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER16(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_integer16 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_integer16 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FORTRAN_INTEGER16(name)
 #endif
@@ -349,32 +351,32 @@ BEGIN_C_DECLS
 /* Floating point */
 
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_INTRINSIC(name) \
-  void ompi_mpi_op_three_buff_##name##_float OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_double OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_fortran_real OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_fortran_double_precision OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_long_double OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_float OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_double OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_fortran_real OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_fortran_double_precision OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_long_double OMPI_OP_PROTO_3BUF;
 #if OMPI_HAVE_FORTRAN_REAL2
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL2(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_real2 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_real2 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL2(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL4(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_real4 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_real4 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL4(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL8(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_real8 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_real8 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL8(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL16(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_real16 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_real16 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_FLOATING_POINT_REAL16(name)
 #endif
@@ -387,38 +389,38 @@ BEGIN_C_DECLS
 /* Logical */
 
 #define OMPI_OP_3BUFF_HANDLER_LOGICAL(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_logical OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_bool OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_logical OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_bool OMPI_OP_PROTO_3BUF;
 
 /* Complex */
 
 #if OMPI_HAVE_FORTRAN_REAL
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX_INTRINSIC(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_complex OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_complex OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX_INTRINSIC(name)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 #define OMPI_OP_3BUFF_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_double_complex OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_double_complex OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_DOUBLE_COMPLEX_INTRINSIC(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX8(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_complex8 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_complex8 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX8(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX16(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_complex16 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_complex16 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX16(name)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX32(name) \
-  void ompi_mpi_op_three_buff_##name##_fortran_complex32 OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_fortran_complex32 OMPI_OP_PROTO_3BUF;
 #else
 #define OMPI_OP_3BUFF_HANDLER_COMPLEX32(name)
 #endif
@@ -432,20 +434,20 @@ BEGIN_C_DECLS
 /* Byte */
 
 #define OMPI_OP_3BUFF_HANDLER_BYTE(name) \
-  void ompi_mpi_op_three_buff_##name##_byte OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_byte OMPI_OP_PROTO_3BUF;
 
 /* "2 type" */
 
 #define OMPI_OP_3BUFF_HANDLER_2TYPE(name) \
-  void ompi_mpi_op_three_buff_##name##_2real OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_2double_precision OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_2integer OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_float_int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_double_int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_long_int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_2int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_short_int OMPI_OP_PROTO_3BUF; \
-  void ompi_mpi_op_three_buff_##name##_long_double_int OMPI_OP_PROTO_3BUF;
+  void ompi_op_base_3buff_##name##_2real OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_2double_precision OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_2integer OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_float_int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_double_int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_long_int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_2int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_short_int OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_long_double_int OMPI_OP_PROTO_3BUF;
 
 /**
  * Handler functions for MPI_MAX
@@ -526,6 +528,15 @@ BEGIN_C_DECLS
  */
   OMPI_OP_3BUFF_HANDLER_2TYPE(minloc)
 
+/**
+ * Globals holding all the "base" function pointers, indexed by op and
+ * datatype.
+ */
+OMPI_DECLSPEC extern ompi_op_base_handler_fn_t 
+    ompi_op_base_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
+OMPI_DECLSPEC extern ompi_op_base_3buff_handler_fn_t 
+    ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
+
 END_C_DECLS
 
-#endif /* OMPI_OP_PREDEFINED_H */
+#endif /* OMPI_OP_BASE_FUNCTIONS_H */
