@@ -144,10 +144,11 @@ static bool opened_components = false;
 void ompi_info::open_components()
 {
   ompi_info::type_vector_t::size_type i;
-  string env;
+  string env, str;
   char *target, *save;
   vector<std::string> env_save;
   vector<std::string>::iterator esi;
+  bool need_close_components = false;
 
   if (opened_components) {
       return;
@@ -169,62 +170,99 @@ void ompi_info::open_components()
 
   // some components require the event library be active, so activate
   // it.
-  opal_event_init();
+  if (OPAL_SUCCESS != opal_event_init()) {
+      str = "opal_event_init failed";
+      return;
+  }
 
   // Open the DSS
 
   if (ORTE_SUCCESS != opal_dss_open()) {
-     printf( "Unable to initialize the DSS\n" );
-     return;
+      str = "Unable to initialize the DSS";
+      return;
   }
     
   // Open up the MCA
 
-  mca_base_open();
+  if (OPAL_SUCCESS != mca_base_open()) {
+      str = "mca_base_open failed";
+      return;
+  }
 
   // Register the OPAL layer's MCA parameters
 
-  opal_register_params();
+  if (OPAL_SUCCESS != opal_register_params()) {
+      str = "opal_register_params failed";
+      return;
+  }
 
   // Register the ORTE layer's MCA parameters
 
-  orte_register_params();
+  if (ORTE_SUCCESS != orte_register_params()) {
+      str = "orte_register_params failed";
+      return;
+  }
 
   // Initialize the opal_output system
-  opal_output_init();
+  if (!opal_output_init()) {
+      str = "opal_output_init failed";
+      return;
+  }
     
   // Register the MPI layer's MCA parameters
 
-  ompi_mpi_register_params();
+  if (OMPI_SUCCESS != ompi_mpi_register_params()) {
+      str = "ompi_mpi_Register_params failed";
+      return;
+  }
 
   // Find / open all components
 
   component_map["base"] = NULL;
+  need_close_components = true;
 
   // OPAL frameworks
 
-  opal_backtrace_base_open();
+  str = "A component framework failed to open properly.";
+  if (OPAL_SUCCESS != opal_backtrace_base_open()) {
+      goto error;
+  }
   component_map["backtrace"] = &opal_backtrace_base_components_opened;
 
-  opal_memory_base_open();
+  if (OPAL_SUCCESS != opal_memory_base_open()) {
+      goto error;
+  }
   component_map["memory"] = &opal_memory_base_components_opened;
 
-  opal_memchecker_base_open();
+  if (OPAL_SUCCESS != opal_memchecker_base_open()) {
+      goto error;
+  }
   component_map["memchecker"] = &opal_memchecker_base_components_opened;
 
-  opal_paffinity_base_open();
+  if (OPAL_SUCCESS != opal_paffinity_base_open()) {
+      goto error;
+  }
   component_map["paffinity"] = &opal_paffinity_base_components_opened;
 
-  opal_carto_base_open();
+  if (OPAL_SUCCESS != opal_carto_base_open()) {
+      goto error;
+  }
   component_map["carto"] = &opal_carto_base_components_opened;
 
-  opal_maffinity_base_open();
+  if (OPAL_SUCCESS != opal_maffinity_base_open()) {
+      goto error;
+  }
   component_map["maffinity"] = &opal_maffinity_base_components_opened;
 
-  opal_timer_base_open();
+  if (OPAL_SUCCESS != opal_timer_base_open()) {
+      goto error;
+  }
   component_map["timer"] = &opal_timer_base_components_opened;
+
 #if OPAL_ENABLE_FT == 1
-  opal_crs_base_open();
+  if (OPAL_SUCCESS != opal_crs_base_open()) {
+      goto error;
+  }
   component_map["crs"] = &opal_crs_base_components_available;
 #endif
 
@@ -237,93 +275,145 @@ void ompi_info::open_components()
   // open components
   orte_process_info.hnp = true;
 
-  orte_errmgr_base_open();
+  if (ORTE_SUCCESS != orte_errmgr_base_open()) {
+      goto error;
+  }
   component_map["errmgr"] = &orte_errmgr_base_components_available;
     
-  orte_grpcomm_base_open();
+  if (ORTE_SUCCESS != orte_grpcomm_base_open()) {
+      goto error;
+  }
   component_map["grpcomm"] = &mca_grpcomm_base_components_available;
     
-  orte_ess_base_open();
+  if (ORTE_SUCCESS != orte_ess_base_open()) {
+      goto error;
+  }
   component_map["ess"] = &orte_ess_base_components_available;
     
 #if !ORTE_DISABLE_FULL_SUPPORT
-  mca_oob_base_open();
+  if (ORTE_SUCCESS != mca_oob_base_open()) {
+      goto error;
+  }
   component_map["oob"] = &mca_oob_base_components;
 
-  orte_odls_base_open();
+  if (ORTE_SUCCESS != orte_odls_base_open()) {
+      goto error;
+  }
   component_map["odls"] = &orte_odls_base.available_components;
 
-  orte_iof_base_open();
+  if (ORTE_SUCCESS != orte_iof_base_open()) {
+      goto error;
+  }
   component_map["iof"] = &orte_iof_base.iof_components_opened;
 
-  orte_ras_base_open();
+  if (ORTE_SUCCESS != orte_ras_base_open()) {
+      goto error;
+  }
   component_map["ras"] = &orte_ras_base.ras_opened;
 
-  orte_rmaps_base_open();
+  if (ORTE_SUCCESS != orte_rmaps_base_open()) {
+      goto error;
+  }
   component_map["rmaps"] = &orte_rmaps_base.available_components;
 
-  orte_rml_base_open();
+  if (ORTE_SUCCESS != orte_rml_base_open()) {
+      goto error;
+  }
   component_map["rml"] = &orte_rml_base_components;
 
-  orte_routed_base_open();
+  if (ORTE_SUCCESS != orte_routed_base_open()) {
+      goto error;
+  }
   component_map["routed"] = &orte_routed_base_components;
   
-  orte_plm_base_open();
+  if (ORTE_SUCCESS != orte_plm_base_open()) {
+      goto error;
+  }
   component_map["plm"] = &orte_plm_base.available_components;
 
 #if OPAL_ENABLE_FT == 1
-  orte_snapc_base_open();
+  if (ORTE_SUCCESS != orte_snapc_base_open()) {
+      goto error;
+  }
   component_map["snapc"] = &orte_snapc_base_components_available;
 #endif
 
-  orte_filem_base_open();
+  if (ORTE_SUCCESS != orte_filem_base_open()) {
+      goto error;
+  }
   component_map["filem"] = &orte_filem_base_components_available;
 #endif
 
   // MPI frameworks
 
-  mca_allocator_base_open();
+  if (OMPI_SUCCESS != mca_allocator_base_open()) {
+      goto error;
+  }
   component_map["allocator"] = &mca_allocator_base_components;
 
-  mca_coll_base_open();
+  if (OMPI_SUCCESS != mca_coll_base_open()) {
+      goto error;
+  }
   component_map["coll"] = &mca_coll_base_components_opened;
 
-  mca_io_base_open();
+  if (OMPI_SUCCESS != mca_io_base_open()) {
+      goto error;
+  }
   component_map["io"] = &mca_io_base_components_opened;
 
-  mca_rcache_base_open();
+  if (OMPI_SUCCESS != mca_rcache_base_open()) {
+      goto error;
+  }
   component_map["rcache"] = &mca_rcache_base_components;
 
-  mca_mpool_base_open();
+  if (OMPI_SUCCESS != mca_mpool_base_open()) {
+      goto error;
+  }
   component_map["mpool"] = &mca_mpool_base_components;
 
-  mca_pml_base_open();
+  if (OMPI_SUCCESS != mca_pml_base_open()) {
+      goto error;
+  }
   component_map["pml"] = &mca_pml_base_components_available;
 
   // No need to call the bml_base_open() because the ob1 pml calls it.
   //mca_bml_base_open();
   component_map["bml"] = &mca_bml_base_components_available;
 
-  ompi_osc_base_open();
+  if (OMPI_SUCCESS != ompi_osc_base_open()) {
+      goto error;
+  }
   component_map["osc"] = &ompi_osc_base_open_components;
 
-  mca_btl_base_open();
+  if (OMPI_SUCCESS != mca_btl_base_open()) {
+      goto error;
+  }
   component_map["btl"] = &mca_btl_base_components_opened;
 
-  ompi_mtl_base_open();
+  if (OMPI_SUCCESS != ompi_mtl_base_open()) {
+      goto error;
+  }
   component_map["mtl"] = &ompi_mtl_base_components_opened;
 
-  mca_topo_base_open();
+  if (OMPI_SUCCESS != mca_topo_base_open()) {
+      goto error;
+  }
   component_map["topo"] = &mca_topo_base_components_opened;
 
-  ompi_pubsub_base_open();
+  if (OMPI_SUCCESS != ompi_pubsub_base_open()) {
+      goto error;
+  }
   component_map["pubsub"] = &ompi_pubsub_base_components_available;
   
-  ompi_dpm_base_open();
+  if (OMPI_SUCCESS != ompi_dpm_base_open()) {
+      goto error;
+  }
   component_map["dpm"] = &ompi_dpm_base_components_available;
 
 #if OPAL_ENABLE_FT == 1
-  ompi_crcp_base_open();
+  if (OMPI_SUCCESS != ompi_crcp_base_open()) {
+      goto error;
+  }
   component_map["crcp"] = &ompi_crcp_base_components_available;
 #endif
 
@@ -341,6 +431,16 @@ void ompi_info::open_components()
   // All done
 
   opened_components = true;
+  return;
+
+ error:
+  cerr << str << endl;
+  cerr << "ompi_info will likely not display all configuration information"
+       << endl;
+  if (need_close_components) {
+      opened_components = true;
+      ompi_info::close_components();
+  }
 }
 
 
@@ -353,51 +453,54 @@ void ompi_info::close_components()
         // there are no dependencies between the frameworks.  We list
         // them generally "in order", but it doesn't really matter.
 
-#if OPAL_ENABLE_FT == 1
-        ompi_crcp_base_close();
-#endif
-        ompi_dpm_base_close();
-        ompi_pubsub_base_close();
-        mca_topo_base_close();
-        // the PML has to call the base PTL close function.
-        mca_btl_base_close();
-        ompi_mtl_base_close();
-        mca_pml_base_close();
-        mca_mpool_base_close();
-        mca_rcache_base_close();
-        mca_io_base_close();
-        mca_coll_base_close();
-        mca_allocator_base_close();
-        ompi_osc_base_close();
+        // We also explicitly ignore the return values from the
+        // close() functions -- what would we do if there was an
+        // error?
 
-        orte_grpcomm_base_close();
-        orte_ess_base_close();
-        orte_show_help_finalize();
+#if OPAL_ENABLE_FT == 1
+        (void) ompi_crcp_base_close();
+#endif
+        (void) ompi_dpm_base_close();
+        (void) ompi_pubsub_base_close();
+        (void) mca_topo_base_close();
+        (void) mca_btl_base_close();
+        (void) ompi_mtl_base_close();
+        (void) mca_pml_base_close();
+        (void) mca_mpool_base_close();
+        (void) mca_rcache_base_close();
+        (void) mca_io_base_close();
+        (void) mca_coll_base_close();
+        (void) mca_allocator_base_close();
+        (void) ompi_osc_base_close();
+
+        (void) orte_grpcomm_base_close();
+        (void) orte_ess_base_close();
+        (void) orte_show_help_finalize();
 #if !ORTE_DISABLE_FULL_SUPPORT
 #if OPAL_ENABLE_FT == 1
-        orte_snapc_base_close();
+        (void) orte_snapc_base_close();
 #endif
-        orte_filem_base_close();
-        orte_iof_base_close();
-        orte_plm_base_close();
-        orte_odls_base_close();
-        orte_rmaps_base_close();
-        orte_ras_base_close();
-        orte_rml_base_close();
-        orte_routed_base_close();
-        mca_oob_base_close();
+        (void) orte_filem_base_close();
+        (void) orte_iof_base_close();
+        (void) orte_plm_base_close();
+        (void) orte_odls_base_close();
+        (void) orte_rmaps_base_close();
+        (void) orte_ras_base_close();
+        (void) orte_rml_base_close();
+        (void) orte_routed_base_close();
+        (void) mca_oob_base_close();
 #endif
-        orte_errmgr_base_close();
+        (void) orte_errmgr_base_close();
       
-        opal_backtrace_base_close();
-        opal_memory_base_close();
-        opal_memchecker_base_close();
-        opal_paffinity_base_close();
-        opal_carto_base_close();
-        opal_maffinity_base_close();
-        opal_timer_base_close();
+        (void) opal_backtrace_base_close();
+        (void) opal_memory_base_close();
+        (void) opal_memchecker_base_close();
+        (void) opal_paffinity_base_close();
+        (void) opal_carto_base_close();
+        (void) opal_maffinity_base_close();
+        (void) opal_timer_base_close();
 #if OPAL_ENABLE_FT == 1
-        opal_crs_base_close();
+        (void) opal_crs_base_close();
 #endif
 
         // Do not call OPAL's installdirs close; it will be handled in
