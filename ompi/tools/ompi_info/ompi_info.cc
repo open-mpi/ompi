@@ -210,6 +210,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("mtl");
   ompi_info::mca_types.push_back("topo");
   ompi_info::mca_types.push_back("osc");
+  ompi_info::mca_types.push_back("op");
   ompi_info::mca_types.push_back("common");
 #if OPAL_ENABLE_FT == 1
   ompi_info::mca_types.push_back("crcp");

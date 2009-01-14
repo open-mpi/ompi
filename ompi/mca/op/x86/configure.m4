@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -18,9 +18,16 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from
-# ompi/Makefile.am
+# MCA_op_x86_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
+AC_DEFUN([MCA_op_x86_CONFIG],[
 
-headers += op/op.h
-
-libmpi_la_SOURCES += op/op.c
+    # check for sockaddr_in (a good sign we have TCP)
+    AC_CHECK_TYPES([struct sockaddr_in], 
+                   [$1],
+                   [$2], 
+                   [AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+])dnl

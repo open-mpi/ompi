@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -216,6 +216,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Recv.3 \
         mpi/man/man3/MPI_Recv_init.3 \
         mpi/man/man3/MPI_Reduce.3 \
+        mpi/man/man3/MPI_Reduce_local.3 \
         mpi/man/man3/MPI_Reduce_scatter.3 \
         mpi/man/man3/MPI_Register_datarep.3 \
         mpi/man/man3/MPI_Request_c2f.3 \

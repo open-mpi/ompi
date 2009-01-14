@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -211,6 +211,7 @@ libmpi_f77_la_SOURCES += \
         recv_f.c \
         recv_init_f.c \
         reduce_f.c \
+        reduce_local_f.c \
         reduce_scatter_f.c \
         request_free_f.c \
         request_get_status_f.c \

@@ -10,13 +10,13 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
 
 #
 # OMPI_PROFILING_DEFINES flag s enabled when we want our MPI_* symbols
@@ -186,6 +186,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         precv_init.c \
         precv.c \
         preduce.c \
+        preduce_local.c \
         preduce_scatter.c \
         prequest_c2f.c \
         prequest_f2c.c \

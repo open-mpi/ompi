@@ -101,6 +101,7 @@ typedef int (*mca_coll_base_component_init_query_fn_t)
      (bool enable_progress_threads, bool enable_mpi_threads);
 
 
+
 /**
  * Query whether a component is available for the given communicator
  *

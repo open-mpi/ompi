@@ -78,6 +78,7 @@
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/pubsub/base/base.h"
 #include "ompi/mca/dpm/base/base.h"
+#include "ompi/mca/op/base/base.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -410,6 +411,9 @@ void ompi_info::open_components()
   }
   component_map["dpm"] = &ompi_dpm_base_components_available;
 
+  ompi_op_base_open();
+  component_map["op"] = &ompi_op_base_components_opened;
+
 #if OPAL_ENABLE_FT == 1
   if (OMPI_SUCCESS != ompi_crcp_base_open()) {
       goto error;
@@ -460,6 +464,7 @@ void ompi_info::close_components()
 #if OPAL_ENABLE_FT == 1
         (void) ompi_crcp_base_close();
 #endif
+        (void) ompi_op_base_close();
         (void) ompi_dpm_base_close();
         (void) ompi_pubsub_base_close();
         (void) mca_topo_base_close();
@@ -472,7 +477,6 @@ void ompi_info::close_components()
         (void) mca_coll_base_close();
         (void) mca_allocator_base_close();
         (void) ompi_osc_base_close();
-
         (void) orte_grpcomm_base_close();
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();
