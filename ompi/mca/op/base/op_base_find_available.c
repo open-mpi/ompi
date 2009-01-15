@@ -121,21 +121,8 @@ int ompi_op_base_find_available(bool enable_progress_threads,
     OBJ_DESTRUCT(&ompi_op_base_components_opened);
     ompi_op_base_components_opened_valid = false;
 
-    /* If we have no op components available, it's an error.  Thanks
-       for playing! */
-
-    if (!found) {
-        /* Need to free all items in the list */
-        OBJ_DESTRUCT(&ompi_op_base_components_available);
-        ompi_op_base_components_available_valid = false;
-        opal_output_verbose(10, ompi_op_base_output,
-                            "op:find_available: no op components available!");
-        orte_show_help("help-mca-base", "find-available:none-found", true,
-                       "op");
-        return OMPI_ERROR;
-    }
-
-    /* All done */
+    /* It is not an error if there are no components available; we'll
+       just fall back to the base functions. */
 
     return OMPI_SUCCESS;
 }
