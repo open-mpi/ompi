@@ -255,7 +255,13 @@ extern int mca_oob_tcp_output_handle;
 #if defined(__WINDOWS__)
 #define CLOSE_THE_SOCKET(socket)    closesocket(socket)
 #else
-#define CLOSE_THE_SOCKET(socket)    close(socket)
+
+#define CLOSE_THE_SOCKET(socket)    \
+    do {                            \
+        shutdown(socket, 2);        \
+        close(socket);              \
+    } while(0)
+
 #endif  /* defined(__WINDOWS__) */
 
 
