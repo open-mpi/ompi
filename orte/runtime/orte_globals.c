@@ -587,6 +587,7 @@ OBJ_CLASS_INSTANCE(orte_job_t,
 static void orte_node_construct(orte_node_t* node)
 {
     node->name = NULL;
+    node->alias = NULL;
     node->index = -1;
     node->daemon = NULL;
     node->daemon_launched = false;
@@ -619,6 +620,10 @@ static void orte_node_destruct(orte_node_t* node)
         free(node->name);
     }
 
+    if (NULL != node->alias) {
+        opal_argv_free(node->alias);
+    }
+    
     if (NULL != node->daemon) OBJ_RELEASE(node->daemon);
     
     for (i=0; i < node->num_procs; i++) {

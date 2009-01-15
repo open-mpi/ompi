@@ -189,6 +189,8 @@ typedef struct {
     orte_std_cntr_t index;
     /** String node name */
     char *name;
+    /* argv-like array of aliases for this node */
+    char **alias;
     /* daemon on this node */
     struct orte_proc_t *daemon;
     /* whether or not this daemon has been launched */
