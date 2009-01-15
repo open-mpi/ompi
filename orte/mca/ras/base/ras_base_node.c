@@ -64,7 +64,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
 {
     opal_list_item_t* item;
     orte_std_cntr_t num_nodes;
-    int rc;
+    int rc, i;
     orte_node_t *node, *hnp_node;
 
     /* get the number of nodes */
@@ -116,18 +116,22 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
              */
             hnp_node->slots_alloc = node->slots;
             /* use the local name for our node - don't trust what
-             * we got from an RM. If requested, display the resolved
+             * we got from an RM. If requested, store the resolved
              * nodename info
              */
-            if (orte_show_resolved_nodenames &&
-                0 != strcmp(node->name, hnp_node->name)) {
-                if (orte_xml_output) {
-                    opal_output(orte_clean_output, "<noderesolve name=\"%s\" resolved=\"%s\"/>", node->name, hnp_node->name);
-                } else {
-                    opal_output(orte_clean_output, "node name %s resolved to %s", node->name, hnp_node->name);
+            if (orte_show_resolved_nodenames) {
+                /* if the node name is different, store it as an alias */
+                if (0 != strcmp(node->name, hnp_node->name)) {
+                    /* add to list of aliases for this node - only add if unique */
+                    opal_argv_append_unique_nosize(&hnp_node->alias, node->name);
+                }
+                if (NULL != node->alias) {
+                    /* now copy over any aliases that are unique */
+                    for (i=0; NULL != node->alias[i]; i++) {
+                        opal_argv_append_unique_nosize(&hnp_node->alias, node->alias[i]);
+                    }
                 }
             }
-            
             /* update the total slots in the job */
             jdata->total_slots_alloc += hnp_node->slots;
             /* don't keep duplicate copy */

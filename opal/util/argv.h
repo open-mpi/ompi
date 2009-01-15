@@ -85,7 +85,23 @@ OPAL_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg) __
    */
 OPAL_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
 
-  /**
+/**
+ * Append to an argv-style array, but only if the provided argument
+ * doesn't already exist somewhere in the array. Ignore the size of the array.
+ *
+ * @param argv Pointer to an argv array.
+ * @param str Pointer to the string to append.
+ *
+ * @retval OPAL_SUCCESS On success
+ * @retval OPAL_ERROR On failure
+ *
+ * This function is identical to the opal_argv_append_nosize() function
+ * except that it only appends the provided argument if it does not already
+ * exist in the provided array.
+ */
+OPAL_DECLSPEC  int opal_argv_append_unique_nosize(char ***argv, const char *arg);
+
+/**
    * Free a NULL-terminated argv array.
    *
    * @param argv Argv array to free.
