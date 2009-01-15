@@ -1011,7 +1011,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_t);
 
-        init_data.order = MCA_BTL_NO_ORDER;
+        init_data.order = mca_btl_openib_component.credits_qp;
         init_data.list = NULL;
 
         mca_btl_openib_frag_init(item, &init_data);
