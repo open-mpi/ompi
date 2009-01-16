@@ -213,6 +213,7 @@
 #define mpi_recv_init_f pmpi_recv_init_f
 #define mpi_recv_f pmpi_recv_f
 #define mpi_reduce_f pmpi_reduce_f
+#define mpi_reduce_local_f pmpi_reduce_local_f
 #define mpi_reduce_scatter_f pmpi_reduce_scatter_f
 #define mpi_register_datarep_f pmpi_register_datarep_f
 #define mpi_request_free_f pmpi_request_free_f
