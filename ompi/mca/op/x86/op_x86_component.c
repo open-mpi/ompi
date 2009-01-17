@@ -28,6 +28,7 @@
 #include "ompi_config.h"
 
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/output.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"
