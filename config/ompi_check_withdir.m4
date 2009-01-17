@@ -5,7 +5,7 @@ dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -22,7 +22,7 @@ AC_DEFUN([OMPI_CHECK_WITHDIR],[
           [AS_IF([test ! -d "$2"],
                  [AC_MSG_RESULT([not found])
                   AC_MSG_WARN([Directory $2 not found])
-                  AC_MSG_ERROR([Cannot continue])]
+                  AC_MSG_ERROR([Cannot continue])],
                  [AS_IF([test "x`ls $2/$3`" = "x"],
                         [AC_MSG_RESULT([not found])
                          AC_MSG_WARN([Expected file $2/$3 not found])
