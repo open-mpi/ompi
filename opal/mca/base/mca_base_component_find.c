@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -506,6 +506,22 @@ static int open_component(component_file_item_t *target_file,
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
     return OPAL_ERR_BAD_PARAM;
+  }
+
+  /* Also check that the component struct framework and component
+     names match the expected names from the filename */
+  if (0 != strcmp(component_struct->mca_type_name, target_file->type) ||
+      0 != strcmp(component_struct->mca_component_name, target_file->name)) {
+      opal_output_verbose(vl, 0, "Component file data does not match filename: %s (%s / %s) != %s %s -- ignored",
+                          target_file->filename, target_file->type, target_file->name,
+                          component_struct->mca_type_name, 
+                          component_struct->mca_component_name);
+      free(mitem);
+      free(struct_name);
+      lt_dlclose(component_handle);
+      target_file->status = FAILED_TO_LOAD;
+      free_dependency_list(&dependencies);
+      return OPAL_ERR_BAD_PARAM;
   }
 
   /* Alles gut.  Save the component struct, and register this
