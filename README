@@ -135,8 +135,14 @@ Detailed Open MPI v1.3 Feature List:
 Known issues
 ------------
 
-  o Please also see the Open MPI bug tracker for bugs beyond version
-    1.3: https://svn.open-mpi.org/trac/ompi/report.
+  o Please see the Open MPI bug tracker for bugs beyond version 1.3:
+    https://svn.open-mpi.org/trac/ompi/report.
+
+  o There is a segfault that sometimes occurs on one of our x86_64 test
+    clusters when using MPI onesided communications over Myrinet MX.
+    Since no one else has reported this problem we are not holding
+    up the 1.3 release.  See ticket #1757 for the details, and any
+    possible workarounds.
 
 ===========================================================================
 
