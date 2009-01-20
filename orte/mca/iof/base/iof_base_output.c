@@ -42,9 +42,9 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
                                 unsigned char *data, int numbytes,
                                orte_iof_write_event_t *channel)
 {
-    char tag[ORTE_IOF_BASE_TAG_MAX], *suffix;
+    char starttag[ORTE_IOF_BASE_TAG_MAX], endtag[ORTE_IOF_BASE_TAG_MAX], *suffix;
     orte_iof_write_output_t *output;
-    int i, j, k, taglen, num_buffered;
+    int i, j, k, starttaglen, endtaglen, num_buffered;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s write:output setting up to write %d bytes to %s of %s",
@@ -60,13 +60,13 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
         suffix = NULL;
     } else if (ORTE_IOF_STDOUT & stream) {
         /* write the bytes to stdout */
-        suffix = "<stdout>";
+        suffix = "stdout";
     } else if (ORTE_IOF_STDERR & stream) {
         /* write the bytes to stderr */
-        suffix = "<stderr>";
+        suffix = "stderr";
     } else if (ORTE_IOF_STDDIAG & stream) {
         /* write the bytes to stderr */
-        suffix = "<stddiag>";
+        suffix = "stddiag";
     } else {
         /* error - this should never happen */
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
@@ -77,29 +77,43 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     
     /* see if data is to be tagged */
     if (orte_tag_output && NULL != suffix) {
-        snprintf(tag, ORTE_IOF_BASE_TAG_MAX, "[%s,%s]%s",
-                 ORTE_LOCAL_JOBID_PRINT(name->jobid),
-                 ORTE_VPID_PRINT(name->vpid), suffix);
-        taglen = strlen(tag);
+        /* if this is to be xml tagged, create a tag with the correct syntax */
+        if (orte_xml_output) {
+            snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "<%s rank=\"%s\">", suffix, ORTE_VPID_PRINT(name->vpid));
+            snprintf(endtag, ORTE_IOF_BASE_TAG_MAX, "</%s>", suffix);
+        } else {
+            snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "[%s,%s]<%s>",
+                     ORTE_LOCAL_JOBID_PRINT(name->jobid),
+                     ORTE_VPID_PRINT(name->vpid), suffix);
+            memset(endtag, '\0', ORTE_IOF_BASE_TAG_MAX);
+        }
+        starttaglen = strlen(starttag);
+        endtaglen = strlen(endtag);
         /* start with the tag */
-        for (j=0, k=0; j < taglen; j++) {
-            output->data[k++] = tag[j];
+        for (j=0, k=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+            output->data[k++] = starttag[j];
         }        
         /* cycle through the data looking for <cr>
          * and replace those with the tag
          */
-        for (i=0; i < numbytes-1; i++) {
+        for (i=0; i < numbytes && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; i++) {
             if ('\n' == data[i]) {
-                /* move the <cr> first */
+                /* we need to break the line with the end tag */
+                for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                    output->data[k++] = endtag[j];
+                }
+                /* move the <cr> over */
                 output->data[k++] = '\n';
-                for (j=0; j < taglen; j++) {
-                    output->data[k++] = tag[j];
+                /* if this isn't the end of the line, add a new start tag */
+                if (i < numbytes-1) {
+                    for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                        output->data[k++] = starttag[j];
+                    }
                 }
             } else {
                 output->data[k++] = data[i];
             }
         }
-        output->data[k++] = data[numbytes-1];
         output->numbytes = k;
     } else {
         /* copy over the data to be written */

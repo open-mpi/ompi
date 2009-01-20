@@ -219,6 +219,10 @@ int orte_register_params(void)
                                 "Display all output in XML format (default: false)",
                                 false, false, (int) false, &value);
     orte_xml_output = OPAL_INT_TO_BOOL(value);
+    /* if we requested xml output, be sure to tag the output as well */
+    if (orte_xml_output) {
+        orte_tag_output = true;
+    }
 
     mca_base_param_reg_int_name("orte", "show_resolved_nodenames",
                                 "Display any node names that are resolved to a different name (default: false)",
