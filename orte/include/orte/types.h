@@ -47,8 +47,10 @@ typedef uint16_t orte_local_rank_t;
 typedef uint16_t orte_node_rank_t;
 #define ORTE_LOCAL_RANK         OPAL_UINT16
 #define ORTE_NODE_RANK          OPAL_UINT16
-#define ORTE_LOCAL_RANK_MAX     UINT16_MAX
-#define ORTE_NODE_RANK_MAX      UINT16_MAX
+#define ORTE_LOCAL_RANK_MAX     UINT16_MAX-1
+#define ORTE_NODE_RANK_MAX      UINT16_MAX-1
+#define ORTE_LOCAL_RANK_INVALID UINT16_MAX
+#define ORTE_NODE_RANK_INVALID  UINT16_MAX
 
 
 /*
