@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,9 +34,13 @@ int mca_base_close(void)
   if (mca_base_opened) {
 
     /* Close down the component repository */
-
     mca_base_component_repository_finalize();
-    opal_output_close (0);
+
+    /* Shut down the dynamic component finder */
+    mca_base_component_find_finalize();
+
+    /* Close opal output stream 0 */
+    opal_output_close(0);
   }
   mca_base_opened = false;
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -127,6 +128,11 @@ OPAL_DECLSPEC int mca_base_component_find(const char *directory, const char *typ
                                           bool include_mode,
                                           opal_list_t *found_components,
                                           bool open_dso_components);
+
+/* Safely release some memory allocated by mca_base_component_find()
+   (i.e., is safe to call even if you never called
+   mca_base_component_find()). */
+OPAL_DECLSPEC int mca_base_component_find_finalize(void);
 
 /* mca_base_components_open.c */
 
