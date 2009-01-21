@@ -507,7 +507,7 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
     
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return UINT8_MAX;
+        return ORTE_LOCAL_RANK_INVALID;
     }    
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
@@ -525,7 +525,7 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return UINT8_MAX;
+        return ORTE_NODE_RANK_INVALID;
     }    
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
