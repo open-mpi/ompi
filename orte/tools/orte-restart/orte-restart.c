@@ -519,7 +519,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
         goto cleanup;
     }
     if( NULL != orte_restart_globals.hostfile ) {
-        if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "--hostfile")) ) {
+        if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "--default-hostfile")) ) {
             exit_status = ret;
             goto cleanup;
         }
