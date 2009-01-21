@@ -1219,10 +1219,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
          * We know - just live with it
          */
-        local_rank = orte_ess.get_local_rank(child->name);
-        asprintf(&value, "%lu", (unsigned long) local_rank);
-        opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
-        free(value);
+        if (ORTE_LOCAL_RANK_INVALID != (local_rank = orte_ess.get_local_rank(child->name))) {
+            asprintf(&value, "%lu", (unsigned long) local_rank);
+            opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
+            free(value);
+        }
 
         param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
         if ( NULL != child->slot_list ) {
