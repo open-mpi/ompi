@@ -39,6 +39,7 @@
 #endif
 
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
@@ -82,12 +83,6 @@ typedef struct dependency_item_t dependency_item_t;
 
 static OBJ_CLASS_INSTANCE(dependency_item_t, opal_list_item_t, NULL, NULL);
 
-struct ltfn_data_holder_t {
-  char type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
-  char name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
-};
-typedef struct ltfn_data_holder_t ltfn_data_holder_t;
-
 #if OPAL_HAVE_LTDL_ADVISE
 extern lt_dladvise opal_mca_dladvise;
 #endif
@@ -99,7 +94,7 @@ extern lt_dladvise opal_mca_dladvise;
  * Private functions
  */
 static void find_dyn_components(const char *path, const char *type, 
-                                const char **name, bool include_mode,
+                                const char **names, bool include_mode,
                                 opal_list_t *found_components);
 static int save_filename(const char *filename, lt_ptr data);
 static int open_component(component_file_item_t *target_file, 
@@ -119,6 +114,7 @@ static const char *ompi_info_suffix = ".ompi_info";
 static const char *key_dependency = "dependency=";
 static const char component_template[] = "mca_%s_";
 static opal_list_t found_files;
+static char **found_filenames = NULL;
 #endif /* OMPI_WANT_LIBLTDL */
 
 static bool use_component(const bool include_mode,
@@ -209,6 +205,15 @@ int mca_base_component_find(const char *directory, const char *type,
     return OPAL_SUCCESS;
 }
 
+int mca_base_component_find_finalize(void)
+{
+    if (NULL != found_filenames) {
+        opal_argv_free(found_filenames);
+        found_filenames = NULL;
+    }
+    return OPAL_SUCCESS;
+}
+
 #if OMPI_WANT_LIBLTDL
 
 /*
@@ -223,25 +228,22 @@ int mca_base_component_find(const char *directory, const char *type,
  * finally opened in recursive dependency traversals.
  */
 static void find_dyn_components(const char *path, const char *type_name, 
-                                const char **name, bool include_mode,
+                                const char **names, bool include_mode,
                                 opal_list_t *found_components)
 {
-    ltfn_data_holder_t params;
+    int i, len;
     char *path_to_use, *dir, *end;
     component_file_item_t *file;
     opal_list_item_t *cur;
+    char prefix[32 + MCA_BASE_MAX_TYPE_NAME_LEN], *basename;
 
-    strncpy(params.type, type_name, MCA_BASE_MAX_TYPE_NAME_LEN);
-    params.type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-
-    params.name[0] = '\0';
-  
     /* If path is NULL, iterate over the set of directories specified by
        the MCA param mca_base_component_path.  If path is not NULL, then
        use that as the path. */
   
     if (NULL == path) {
-        mca_base_param_lookup_string(mca_base_param_component_path, &path_to_use);
+        mca_base_param_lookup_string(mca_base_param_component_path, 
+                                     &path_to_use);
         if (NULL == path_to_use) {
             /* If there's no path, then there's nothing to search -- we're
                done */
@@ -251,31 +253,68 @@ static void find_dyn_components(const char *path, const char *type_name,
         path_to_use = strdup(path);
     }
   
-    /* Iterate over all the files in the directories in the path and
-       make a master array of all the matching filenames that we
-       find. */
-  
-    OBJ_CONSTRUCT(&found_files, opal_list_t);
-    dir = path_to_use;
-    if (NULL != dir) {
-        do {
-            end = strchr(dir, OPAL_ENV_SEP);
-            if (NULL != end) {
-                *end = '\0';
-            }
-            if (0 != lt_dlforeachfile(dir, save_filename, &params)) {
-                break;
-            }
-            dir = end + 1;
-        } while (NULL != end);
+    /* If we haven't done so already, iterate over all the files in
+       the directories in the path and make a master array of all the
+       matching filenames that we find.  Save the filenames in an
+       argv-style array. */
+    if (NULL == found_filenames) {
+        dir = path_to_use;
+        if (NULL != dir) {
+            do {
+                end = strchr(dir, OPAL_ENV_SEP);
+                if (NULL != end) {
+                    *end = '\0';
+                }
+                if (0 != lt_dlforeachfile(dir, save_filename, NULL)) {
+                    break;
+                }
+                dir = end + 1;
+            } while (NULL != end);
+        }
     }
   
-    /* Iterate through all the filenames that we found.  Since one
-       component may [try to] call another to be loaded, only try to load
-       the UNVISITED files.  Also, ignore the return code -- basically,
-       give every file one chance to try to load.  If they load, great.
-       If not, great. */
+    /* Look through the list of found files and find those that match
+       the desired framework name */
+    snprintf(prefix, sizeof(prefix) - 1, component_template, type_name);
+    len = strlen(prefix);
+    OBJ_CONSTRUCT(&found_files, opal_list_t);
+    for (i = 0; NULL != found_filenames && NULL != found_filenames[i]; ++i) {
+        basename = strrchr(found_filenames[i], '/');
+        if (NULL == basename) {
+            basename = found_filenames[i];
+        } else {
+            basename += 1;
+        }
+        
+        if (0 != strncmp(basename, prefix, len)) {
+            continue;
+        }
+        
+        /* We found a match; save all the relevant details in the
+           found_files list */
+        file = OBJ_NEW(component_file_item_t);
+        if (NULL == file) {
+            return;
+        }
+        strncpy(file->type, type_name, MCA_BASE_MAX_TYPE_NAME_LEN);
+        file->type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
+        strncpy(file->name, basename + len, MCA_BASE_MAX_COMPONENT_NAME_LEN);
+        file->name[MCA_BASE_MAX_COMPONENT_NAME_LEN] = '\0';
+        strncpy(file->basename, basename, OMPI_PATH_MAX);
+        file->basename[OMPI_PATH_MAX] = '\0';
+        strncpy(file->filename, found_filenames[i], OMPI_PATH_MAX);
+        file->filename[OMPI_PATH_MAX] = '\0';
+        file->status = UNVISITED;
+        opal_list_append(&found_files, (opal_list_item_t *) 
+                         file);
+    }
 
+    /* Iterate through all the filenames that we found that matched
+       the framework we were looking for.  Since one component may
+       [try to] call another to be loaded, only try to load the
+       UNVISITED files.  Also, ignore the return code -- basically,
+       give every file one chance to try to load.  If they load,
+       great.  If not, great. */
     for (cur = opal_list_get_first(&found_files); 
          opal_list_get_end(&found_files) != cur;
          cur = opal_list_get_next(cur)) {
@@ -285,93 +324,35 @@ static void find_dyn_components(const char *path, const char *type_name,
             bool op = true;
             file->status = CHECKING_CYCLE;
 
-            op = use_component(include_mode, name, file->name);
+            op = use_component(include_mode, names, file->name);
             if( true == op ) {
                 open_component(file, found_components);
             }
         }
     }
     
-
     /* So now we have a final list of loaded components.  We can free all
        the file information. */
-  
     for (cur = opal_list_remove_first(&found_files); 
          NULL != cur;
          cur = opal_list_remove_first(&found_files)) {
         OBJ_RELEASE(cur);
     }
+    OBJ_DESTRUCT(&found_files);
 
     /* All done, now let's cleanup */
     free(path_to_use);
-
-    OBJ_DESTRUCT(&found_files);
 }
 
 
 /*
- * Given a filename, see if it appears to be of the proper filename
- * format.  If so, save it in the array so that we can process it
- * later.
+ * Blindly save all filenames into an argv-style list.  This function
+ * is the callback from lt_dlforeachfile().
  */
 static int save_filename(const char *filename, lt_ptr data)
 {
-  size_t len, prefix_len, total_len;
-  char *prefix;
-  const char *basename;
-  component_file_item_t *component_file;
-  ltfn_data_holder_t *params = (ltfn_data_holder_t *) data;
-
-  /* Check to see if the file is named what we expect it to be
-     named */
-
-  len = sizeof(component_template) + strlen(params->type) + 32;
-  if ( 0 < strlen(params->name) ) {
-    len += strlen(params->name);
-  }
-  prefix = (char*)malloc(len);
-  snprintf(prefix, len, component_template, params->type);
-  prefix_len = strlen(prefix);
-  if (0 < strlen(params->name)) {
-    strncat(prefix, params->name, len - prefix_len);
-  }
-  total_len = strlen(prefix);
-
-  basename = strrchr(filename, '/');
-  if (NULL == basename) {
-    basename = filename;
-  } else {
-    basename += 1;
-  }
-
-  if (0 != strncmp(basename, prefix, total_len)) {
-    free(prefix);
+    opal_argv_append_nosize(&found_filenames, filename);
     return 0;
-  }
-
-  /* Save all the info and put it in the list of found components */
-
-  component_file = OBJ_NEW(component_file_item_t);
-  if (NULL == component_file) {
-    free(prefix);
-    return OPAL_ERR_OUT_OF_RESOURCE;
-  }
-  strncpy(component_file->type, params->type, MCA_BASE_MAX_TYPE_NAME_LEN);
-  component_file->type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
-  strncpy(component_file->name, basename + prefix_len,
-          MCA_BASE_MAX_COMPONENT_NAME_LEN);
-  component_file->name[MCA_BASE_MAX_COMPONENT_NAME_LEN] = '\0';
-  strncpy(component_file->basename, basename, OMPI_PATH_MAX);
-  component_file->basename[OMPI_PATH_MAX] = '\0';
-  strncpy(component_file->filename, filename, OMPI_PATH_MAX);
-  component_file->filename[OMPI_PATH_MAX] = '\0';
-  component_file->status = UNVISITED;
-  opal_list_append(&found_files, (opal_list_item_t *) component_file);
-
-  /* All done */
-
-  free(prefix);
-  return 0;
 }
 
 
