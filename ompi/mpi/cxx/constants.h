@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -19,56 +20,56 @@
 
 
 // return  codes
-OMPI_DECLSPEC extern const int SUCCESS;
-OMPI_DECLSPEC extern const int ERR_BUFFER;
-OMPI_DECLSPEC extern const int ERR_COUNT;
-OMPI_DECLSPEC extern const int ERR_TYPE;
-OMPI_DECLSPEC extern const int ERR_TAG ;
-OMPI_DECLSPEC extern const int ERR_COMM;
-OMPI_DECLSPEC extern const int ERR_RANK;
-OMPI_DECLSPEC extern const int ERR_REQUEST;
-OMPI_DECLSPEC extern const int ERR_ROOT;
-OMPI_DECLSPEC extern const int ERR_GROUP;
-OMPI_DECLSPEC extern const int ERR_OP;
-OMPI_DECLSPEC extern const int ERR_TOPOLOGY;
-OMPI_DECLSPEC extern const int ERR_DIMS;
-OMPI_DECLSPEC extern const int ERR_ARG;
-OMPI_DECLSPEC extern const int ERR_UNKNOWN;
-OMPI_DECLSPEC extern const int ERR_TRUNCATE;
-OMPI_DECLSPEC extern const int ERR_OTHER;
-OMPI_DECLSPEC extern const int ERR_INTERN;
-OMPI_DECLSPEC extern const int ERR_PENDING;
-OMPI_DECLSPEC extern const int ERR_IN_STATUS;
-OMPI_DECLSPEC extern const int ERR_LASTCODE;
+static const int SUCCESS = MPI_SUCCESS;
+static const int ERR_BUFFER = MPI_ERR_BUFFER;
+static const int ERR_COUNT = MPI_ERR_COUNT;
+static const int ERR_TYPE = MPI_ERR_TYPE;
+static const int ERR_TAG  = MPI_ERR_TAG ;
+static const int ERR_COMM = MPI_ERR_COMM;
+static const int ERR_RANK = MPI_ERR_RANK;
+static const int ERR_REQUEST = MPI_ERR_REQUEST;
+static const int ERR_ROOT = MPI_ERR_ROOT;
+static const int ERR_GROUP = MPI_ERR_GROUP;
+static const int ERR_OP = MPI_ERR_OP;
+static const int ERR_TOPOLOGY = MPI_ERR_TOPOLOGY;
+static const int ERR_DIMS = MPI_ERR_DIMS;
+static const int ERR_ARG = MPI_ERR_ARG;
+static const int ERR_UNKNOWN = MPI_ERR_UNKNOWN;
+static const int ERR_TRUNCATE = MPI_ERR_TRUNCATE;
+static const int ERR_OTHER = MPI_ERR_OTHER;
+static const int ERR_INTERN = MPI_ERR_INTERN;
+static const int ERR_PENDING = MPI_ERR_PENDING;
+static const int ERR_IN_STATUS = MPI_ERR_IN_STATUS;
+static const int ERR_LASTCODE = MPI_ERR_LASTCODE;
 
-OMPI_DECLSPEC extern const int ERR_BASE;
-OMPI_DECLSPEC extern const int ERR_INFO_VALUE;
-OMPI_DECLSPEC extern const int ERR_INFO_KEY;
-OMPI_DECLSPEC extern const int ERR_INFO_NOKEY;
-OMPI_DECLSPEC extern const int ERR_KEYVAL;
-OMPI_DECLSPEC extern const int ERR_NAME;
-OMPI_DECLSPEC extern const int ERR_NO_MEM;
-OMPI_DECLSPEC extern const int ERR_SERVICE;
-OMPI_DECLSPEC extern const int ERR_SPAWN;
-OMPI_DECLSPEC extern const int ERR_WIN;
+static const int ERR_BASE = MPI_ERR_BASE;
+static const int ERR_INFO_VALUE = MPI_ERR_INFO_VALUE;
+static const int ERR_INFO_KEY = MPI_ERR_INFO_KEY;
+static const int ERR_INFO_NOKEY = MPI_ERR_INFO_NOKEY;
+static const int ERR_KEYVAL = MPI_ERR_KEYVAL;
+static const int ERR_NAME = MPI_ERR_NAME;
+static const int ERR_NO_MEM = MPI_ERR_NO_MEM;
+static const int ERR_SERVICE = MPI_ERR_SERVICE;
+static const int ERR_SPAWN = MPI_ERR_SPAWN;
+static const int ERR_WIN = MPI_ERR_WIN;
 
 
 // assorted constants
 OMPI_DECLSPEC extern void* const BOTTOM;
 OMPI_DECLSPEC extern void* const IN_PLACE;
-OMPI_DECLSPEC extern const int PROC_NULL;
-OMPI_DECLSPEC extern const int ANY_SOURCE;
-OMPI_DECLSPEC extern const int ROOT;
-OMPI_DECLSPEC extern const int ANY_TAG;
-OMPI_DECLSPEC extern const int UNDEFINED;
-OMPI_DECLSPEC extern const int BSEND_OVERHEAD;
-OMPI_DECLSPEC extern const int KEYVAL_INVALID;
-OMPI_DECLSPEC extern const int ORDER_C;
-OMPI_DECLSPEC extern const int ORDER_FORTRAN;
-OMPI_DECLSPEC extern const int DISTRIBUTE_BLOCK;
-OMPI_DECLSPEC extern const int DISTRIBUTE_CYCLIC;
-OMPI_DECLSPEC extern const int DISTRIBUTE_NONE;
-OMPI_DECLSPEC extern const int DISTRIBUTE_DFLT_DARG;
+static const int PROC_NULL = MPI_PROC_NULL;
+static const int ANY_SOURCE = MPI_ANY_SOURCE;
+static const int ROOT = MPI_ROOT;
+static const int ANY_TAG = MPI_ANY_TAG;
+static const int UNDEFINED = MPI_UNDEFINED;
+static const int BSEND_OVERHEAD = MPI_BSEND_OVERHEAD;
+static const int KEYVAL_INVALID = MPI_KEYVAL_INVALID;
+static const int ORDER_C = MPI_ORDER_C;
+static const int ORDER_FORTRAN = MPI_ORDER_FORTRAN;
+static const int DISTRIBUTE_BLOCK = MPI_DISTRIBUTE_BLOCK;
+static const int DISTRIBUTE_CYCLIC = MPI_DISTRIBUTE_CYCLIC;
+static const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE;
+static const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG;
 
 // error-handling specifiers
 OMPI_DECLSPEC extern const Errhandler  ERRORS_ARE_FATAL;
@@ -76,17 +77,17 @@ OMPI_DECLSPEC extern const Errhandler  ERRORS_RETURN;
 OMPI_DECLSPEC extern const Errhandler  ERRORS_THROW_EXCEPTIONS;
 
 // typeclass definitions for MPI_Type_match_size
-OMPI_DECLSPEC extern const int TYPECLASS_INTEGER;
-OMPI_DECLSPEC extern const int TYPECLASS_REAL;
-OMPI_DECLSPEC extern const int TYPECLASS_COMPLEX;
+static const int TYPECLASS_INTEGER = MPI_TYPECLASS_INTEGER;
+static const int TYPECLASS_REAL = MPI_TYPECLASS_REAL;
+static const int TYPECLASS_COMPLEX = MPI_TYPECLASS_COMPLEX;
 
 // maximum sizes for strings
-OMPI_DECLSPEC extern const int MAX_PROCESSOR_NAME;
-OMPI_DECLSPEC extern const int MAX_ERROR_STRING;
-OMPI_DECLSPEC extern const int MAX_INFO_KEY;
-OMPI_DECLSPEC extern const int MAX_INFO_VAL;
-OMPI_DECLSPEC extern const int MAX_PORT_NAME;
-OMPI_DECLSPEC extern const int MAX_OBJECT_NAME;
+static const int MAX_PROCESSOR_NAME = MPI_MAX_PROCESSOR_NAME;
+static const int MAX_ERROR_STRING = MPI_MAX_ERROR_STRING;
+static const int MAX_INFO_KEY = MPI_MAX_INFO_KEY;
+static const int MAX_INFO_VAL = MPI_MAX_INFO_VAL;
+static const int MAX_PORT_NAME = MPI_MAX_PORT_NAME;
+static const int MAX_OBJECT_NAME = MPI_MAX_OBJECT_NAME;
 
 // elementary datatypes (C / C++)
 OMPI_DECLSPEC extern const Datatype CHAR;
@@ -149,30 +150,30 @@ OMPI_DECLSPEC extern const Datatype UB;
 OMPI_DECLSPEC extern const Datatype LB;
 
 // datatype decoding constants
-OMPI_DECLSPEC extern const int COMBINER_NAMED;
-OMPI_DECLSPEC extern const int COMBINER_DUP;
-OMPI_DECLSPEC extern const int COMBINER_CONTIGUOUS;
-OMPI_DECLSPEC extern const int COMBINER_VECTOR;
-OMPI_DECLSPEC extern const int COMBINER_HVECTOR_INTEGER;
-OMPI_DECLSPEC extern const int COMBINER_HVECTOR;
-OMPI_DECLSPEC extern const int COMBINER_INDEXED;
-OMPI_DECLSPEC extern const int COMBINER_HINDEXED_INTEGER;
-OMPI_DECLSPEC extern const int COMBINER_HINDEXED;
-OMPI_DECLSPEC extern const int COMBINER_INDEXED_BLOCK;
-OMPI_DECLSPEC extern const int COMBINER_STRUCT_INTEGER;
-OMPI_DECLSPEC extern const int COMBINER_STRUCT;
-OMPI_DECLSPEC extern const int COMBINER_SUBARRAY;
-OMPI_DECLSPEC extern const int COMBINER_DARRAY;
-OMPI_DECLSPEC extern const int COMBINER_F90_REAL;
-OMPI_DECLSPEC extern const int COMBINER_F90_COMPLEX;
-OMPI_DECLSPEC extern const int COMBINER_F90_INTEGER;
-OMPI_DECLSPEC extern const int COMBINER_RESIZED;
+static const int COMBINER_NAMED = MPI_COMBINER_NAMED;
+static const int COMBINER_DUP = MPI_COMBINER_DUP;
+static const int COMBINER_CONTIGUOUS = MPI_COMBINER_CONTIGUOUS;
+static const int COMBINER_VECTOR = MPI_COMBINER_VECTOR;
+static const int COMBINER_HVECTOR_INTEGER = MPI_COMBINER_HVECTOR_INTEGER;
+static const int COMBINER_HVECTOR = MPI_COMBINER_HVECTOR;
+static const int COMBINER_INDEXED = MPI_COMBINER_INDEXED;
+static const int COMBINER_HINDEXED_INTEGER = MPI_COMBINER_HINDEXED_INTEGER;
+static const int COMBINER_HINDEXED = MPI_COMBINER_HINDEXED;
+static const int COMBINER_INDEXED_BLOCK = MPI_COMBINER_INDEXED_BLOCK;
+static const int COMBINER_STRUCT_INTEGER = MPI_COMBINER_STRUCT_INTEGER;
+static const int COMBINER_STRUCT = MPI_COMBINER_STRUCT;
+static const int COMBINER_SUBARRAY = MPI_COMBINER_SUBARRAY;
+static const int COMBINER_DARRAY = MPI_COMBINER_DARRAY;
+static const int COMBINER_F90_REAL = MPI_COMBINER_F90_REAL;
+static const int COMBINER_F90_COMPLEX = MPI_COMBINER_F90_COMPLEX;
+static const int COMBINER_F90_INTEGER = MPI_COMBINER_F90_INTEGER;
+static const int COMBINER_RESIZED = MPI_COMBINER_RESIZED;
 
 // thread constants
-OMPI_DECLSPEC extern const int THREAD_SINGLE;
-OMPI_DECLSPEC extern const int THREAD_FUNNELED;
-OMPI_DECLSPEC extern const int THREAD_SERIALIZED;
-OMPI_DECLSPEC extern const int THREAD_MULTIPLE;
+static const int THREAD_SINGLE = MPI_THREAD_SINGLE;
+static const int THREAD_FUNNELED = MPI_THREAD_FUNNELED;
+static const int THREAD_SERIALIZED = MPI_THREAD_SERIALIZED;
+static const int THREAD_MULTIPLE = MPI_THREAD_MULTIPLE;
 
 // reserved communicators
 // JGS these can not be const because Set_errhandler is not const
@@ -180,22 +181,22 @@ OMPI_DECLSPEC extern Intracomm COMM_WORLD;
 OMPI_DECLSPEC extern Intracomm COMM_SELF;
 
 // results of communicator and group comparisons
-OMPI_DECLSPEC extern const int IDENT;
-OMPI_DECLSPEC extern const int CONGRUENT;
-OMPI_DECLSPEC extern const int SIMILAR;
-OMPI_DECLSPEC extern const int UNEQUAL;
+static const int IDENT = MPI_IDENT;
+static const int CONGRUENT = MPI_CONGRUENT;
+static const int SIMILAR = MPI_SIMILAR;
+static const int UNEQUAL = MPI_UNEQUAL;
 
 // environmental inquiry keys
-OMPI_DECLSPEC extern const int TAG_UB;
-OMPI_DECLSPEC extern const int HOST;
-OMPI_DECLSPEC extern const int IO;
-OMPI_DECLSPEC extern const int WTIME_IS_GLOBAL;
-OMPI_DECLSPEC extern const int APPNUM;
-OMPI_DECLSPEC extern const int LASTUSEDCODE;
-OMPI_DECLSPEC extern const int UNIVERSE_SIZE;
-OMPI_DECLSPEC extern const int WIN_BASE;
-OMPI_DECLSPEC extern const int WIN_SIZE;
-OMPI_DECLSPEC extern const int WIN_DISP_UNIT;
+static const int TAG_UB = MPI_TAG_UB;
+static const int HOST = MPI_HOST;
+static const int IO = MPI_IO;
+static const int WTIME_IS_GLOBAL = MPI_WTIME_IS_GLOBAL;
+static const int APPNUM = MPI_APPNUM;
+static const int LASTUSEDCODE = MPI_LASTUSEDCODE;
+static const int UNIVERSE_SIZE = MPI_UNIVERSE_SIZE;
+static const int WIN_BASE = MPI_WIN_BASE;
+static const int WIN_SIZE = MPI_WIN_SIZE;
+static const int WIN_DISP_UNIT = MPI_WIN_DISP_UNIT;
 
 // collective operations
 OMPI_DECLSPEC extern const Op MAX;
@@ -233,21 +234,21 @@ OMPI_DECLSPEC extern const char***      ARGVS_NULL;
 OMPI_DECLSPEC extern const Group  GROUP_EMPTY;
 
 // topologies
-OMPI_DECLSPEC extern const int GRAPH;
-OMPI_DECLSPEC extern const int CART;
+static const int GRAPH = MPI_GRAPH;
+static const int CART = MPI_CART;
 
 // MPI-2 IO
-OMPI_DECLSPEC extern const int MODE_CREATE;
-OMPI_DECLSPEC extern const int MODE_RDONLY;
-OMPI_DECLSPEC extern const int MODE_WRONLY;
-OMPI_DECLSPEC extern const int MODE_RDWR;
-OMPI_DECLSPEC extern const int MODE_DELETE_ON_CLOSE;
-OMPI_DECLSPEC extern const int MODE_UNIQUE_OPEN;
-OMPI_DECLSPEC extern const int MODE_EXCL;
-OMPI_DECLSPEC extern const int MODE_APPEND;
-OMPI_DECLSPEC extern const int MODE_SEQUENTIAL;
+static const int MODE_CREATE = MPI_MODE_CREATE;
+static const int MODE_RDONLY = MPI_MODE_RDONLY;
+static const int MODE_WRONLY = MPI_MODE_WRONLY;
+static const int MODE_RDWR = MPI_MODE_RDWR;
+static const int MODE_DELETE_ON_CLOSE = MPI_MODE_DELETE_ON_CLOSE;
+static const int MODE_UNIQUE_OPEN = MPI_MODE_UNIQUE_OPEN;
+static const int MODE_EXCL = MPI_MODE_EXCL;
+static const int MODE_APPEND = MPI_MODE_APPEND;
+static const int MODE_SEQUENTIAL = MPI_MODE_SEQUENTIAL;
 
-OMPI_DECLSPEC extern const int DISPLACEMENT_CURRENT;
+static const int DISPLACEMENT_CURRENT = MPI_DISPLACEMENT_CURRENT;
 
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE && !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
 static const int SEEK_SET = ::SEEK_SET;
@@ -255,14 +256,14 @@ static const int SEEK_CUR = ::SEEK_CUR;
 static const int SEEK_END = ::SEEK_END;
 #endif
 
-OMPI_DECLSPEC extern const int MAX_DATAREP_STRING;
+static const int MAX_DATAREP_STRING = MPI_MAX_DATAREP_STRING;
 
 // one-sided constants
-OMPI_DECLSPEC extern const int MODE_NOCHECK;
-OMPI_DECLSPEC extern const int MODE_NOPRECEDE;
-OMPI_DECLSPEC extern const int MODE_NOPUT;
-OMPI_DECLSPEC extern const int MODE_NOSTORE;
-OMPI_DECLSPEC extern const int MODE_NOSUCCEED;
+static const int MODE_NOCHECK = MPI_MODE_NOCHECK;
+static const int MODE_NOPRECEDE = MPI_MODE_NOPRECEDE;
+static const int MODE_NOPUT = MPI_MODE_NOPUT;
+static const int MODE_NOSTORE = MPI_MODE_NOSTORE;
+static const int MODE_NOSUCCEED = MPI_MODE_NOSUCCEED;
 
-OMPI_DECLSPEC extern const int LOCK_EXCLUSIVE;
-OMPI_DECLSPEC extern const int LOCK_SHARED;
+static const int LOCK_EXCLUSIVE = MPI_LOCK_EXCLUSIVE;
+static const int LOCK_SHARED = MPI_LOCK_SHARED;
