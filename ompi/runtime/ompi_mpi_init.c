@@ -414,8 +414,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     else if (ompi_mpi_paffinity_alone) {
         opal_paffinity_base_cpu_set_t mask;
         int phys_cpu;
+        orte_node_rank_t nrank;
+        if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
+            error = "Could not get node rank - cannot set processor affinity";
+            goto error;
+        }
         OPAL_PAFFINITY_CPU_ZERO(mask);
-        phys_cpu = opal_paffinity_base_get_physical_processor_id(orte_ess.get_node_rank(ORTE_PROC_MY_NAME));
+        phys_cpu = opal_paffinity_base_get_physical_processor_id(nrank);
         if (0 > phys_cpu) {
             error = "Could not get physical processor id - cannot set processor affinity";
             goto error;
