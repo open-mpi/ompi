@@ -44,7 +44,9 @@ Trunk (not on release branches yet)
 - Fixed mpirun's -wdir switch to ensure that working directories for
   multiple app contexts are properly handled.  Thanks to Geoffroy
   Pignot for reporting the problem.
-- Allow MPI::SEEK_* constants to be used as constants.
+- Improvements to the MPI C++ integer constants:
+  - Allow MPI::SEEK_* constants to be used as constants
+  - Allow other MPI C++ constants to be used as array sizes
 
 
 1.3
