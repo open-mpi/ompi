@@ -35,7 +35,19 @@ Trunk (not on release branches yet)
   details.
   --> Expected: ???
 
-1.3 (not released yet)
+1.3.1
+-----
+
+- Fixed missing MPI_Comm_accept.3 man page; fixed minor issue in
+  orterun.1 man page.  Thanks to Dirk Eddelbuettel for identifying the
+  problem and submitting a patch.
+- Fixed mpirun's -wdir switch to ensure that working directories for
+  multiple app contexts are properly handled.  Thanks to Geoffroy
+  Pignot for reporting the problem.
+- Allow MPI::SEEK_* constants to be used as constants.
+
+
+1.3
 ---
 
 - Extended the OS X 10.5.x (Leopard) workaround for a problem when
