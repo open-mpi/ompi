@@ -51,15 +51,6 @@ static opal_mutex_t hostfile_mutex;
 
 static const char *cur_hostfile_name = NULL;
 
-static void show_resolved_hostname(char *name, char *resolved)
-{
-    if (orte_xml_output) {
-        opal_output(orte_clean_output, "<noderesolve name=\"%s\" resolved=\"%s\"/>", name, resolved);
-    } else {
-        opal_output(orte_clean_output, "node name %s resolved to %s", name, resolved);
-    }
-}
-
 static void hostfile_parse_error(int token)
 {
     switch (token) {
@@ -143,6 +134,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
     char* value;
     char** argv;
     char* node_name = NULL;
+    char* node_alias = NULL;
     char* username = NULL;
     int cnt;
     int number_of_slots = 0;
@@ -194,7 +186,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
                 /* Nodename has been allocated, that is for sure */
                 if (orte_show_resolved_nodenames &&
                     0 != strcmp(node_name, orte_process_info.nodename)) {
-                    show_resolved_hostname(node_name, orte_process_info.nodename);
+                    node_alias = strdup(node_name);
                 }
                 free (node_name);
                 node_name = strdup(orte_process_info.nodename);
@@ -214,12 +206,14 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             return ORTE_SUCCESS;
         }
         
-        /* convert this into something globally unique */
+        /* this is not a node to be excluded, so we need to process it and
+         * add it to the "include" list. See if this host is actually us.
+         */
         if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
             /* Nodename has been allocated, that is for sure */
             if (orte_show_resolved_nodenames &&
                 0 != strcmp(node_name, orte_process_info.nodename)) {
-                show_resolved_hostname(node_name, orte_process_info.nodename);
+                node_alias = strdup(node_name);
             }
             free (node_name);
             node_name = strdup(orte_process_info.nodename);
@@ -239,6 +233,12 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         if (keep_all || NULL == (node = hostfile_lookup(updates, node_name))) {
             node = OBJ_NEW(orte_node_t);
             node->name = node_name;
+        }
+        /* do we need to record an alias for this node? */
+        if (NULL != node_alias) {
+            /* add to list of aliases for this node - only add if unique */
+            opal_argv_append_unique_nosize(&node->alias, node_alias);
+            free(node_alias);
         }
     } else if (ORTE_HOSTFILE_RELATIVE == token) {
         /* store this for later processing */

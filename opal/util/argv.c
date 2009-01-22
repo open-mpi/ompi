@@ -90,6 +90,29 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
     return OPAL_SUCCESS;
 }
 
+int opal_argv_append_unique_nosize(char ***argv, const char *arg)
+{
+    int i;
+    
+    /* if the provided array is NULL, then the arg cannot be present,
+     * so just go ahead and append
+     */
+    if (NULL == *argv) {
+        return opal_argv_append_nosize(argv, arg);
+    }
+    
+    /* see if this arg is already present in the array */
+    for (i=0; NULL != (*argv)[i]; i++) {
+        if (0 == strcmp(arg, (*argv)[i])) {
+            /* already exists - nothing to do */
+            return OPAL_SUCCESS;
+        }
+    }
+
+    /* we get here if the arg is not in the array - so add it */
+    return opal_argv_append_nosize(argv, arg);
+}
+
 /*
  * Free a NULL-terminated argv array.
  */

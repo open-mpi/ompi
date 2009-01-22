@@ -294,9 +294,18 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
 
     if (orte_xml_output) {
         /* need to create the output in XML format */
-        asprintf(output, "%s<host name=\"%s\" slots=\"%d\" max_slots=\"%d\">\n", pfx2,
+        asprintf(&tmp, "%s<host name=\"%s\" slots=\"%d\" max_slots=\"%d\">\n", pfx2,
                  (NULL == src->name) ? "UNKNOWN" : src->name,
                  (int)src->slots, (int)src->slots_max);
+        /* does this node have any aliases? */
+        if (NULL != src->alias) {
+            for (i=0; NULL != src->alias[i]; i++) {
+                asprintf(&tmp2, "%s%s\t<noderesolve resolved=\"%s\"/>\n", tmp, pfx2, src->alias[i]);
+                free(tmp);
+                tmp = tmp2;
+            }
+        }
+        *output = tmp;
         free(pfx2);
         return ORTE_SUCCESS;
     }
@@ -308,6 +317,14 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
             asprintf(&tmp, "\n%sData for node: Name: %s\tNum slots: %ld\tMax slots: %ld",
                      pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
                      (long)src->slots, (long)src->slots_max);
+            /* does this node have any aliases? */
+            if (NULL != src->alias) {
+                for (i=0; NULL != src->alias[i]; i++) {
+                    asprintf(&tmp2, "%s\n%s\tresolved from %s", tmp, pfx2, src->alias[i]);
+                    free(tmp);
+                    tmp = tmp2;
+                }
+            }
             free(pfx2);
             *output = tmp;
             return ORTE_SUCCESS;
@@ -315,6 +332,14 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         asprintf(&tmp, "\n%sData for node: Name: %s\tNum procs: %ld",
                  pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
                  (long)src->num_procs);
+        /* does this node have any aliases? */
+        if (NULL != src->alias) {
+            for (i=0; NULL != src->alias[i]; i++) {
+                asprintf(&tmp2, "%s\n%s\tresolved from %s", tmp, pfx2, src->alias[i]);
+                free(tmp);
+                tmp = tmp2;
+            }
+        }
         goto PRINT_PROCS;
     }
     
@@ -322,6 +347,14 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
              pfx2, (NULL == src->name) ? "UNKNOWN" : src->name,
              pfx2, (long)src->launch_id,
              src->arch, src->state);
+    /* does this node have any aliases? */
+    if (NULL != src->alias) {
+        for (i=0; NULL != src->alias[i]; i++) {
+            asprintf(&tmp2, "%s\n%s\tresolved from %s", tmp, pfx2, src->alias[i]);
+            free(tmp);
+            tmp = tmp2;
+        }
+    }
     
     if (NULL == src->daemon) {
         asprintf(&tmp2, "%s\n%s\tDaemon: %s\tDaemon launched: %s", tmp, pfx2,
