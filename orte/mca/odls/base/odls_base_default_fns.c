@@ -1219,7 +1219,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
          * We know - just live with it
          */
-        if (ORTE_LOCAL_RANK_INVALID != (local_rank = orte_ess.get_local_rank(child->name))) {
+        if (ORTE_LOCAL_RANK_INVALID == (local_rank = orte_ess.get_local_rank(child->name))) {
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
             rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
             goto CLEANUP;
