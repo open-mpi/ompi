@@ -26,14 +26,15 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
                                 [Search for BLCR libraries in DIR])])
 
     check_crs_blcr_good="no"
-    # If we do not want BLCR, then do not compile it
-    AS_IF([test "$with_blcr" = "no"],
+
+    # If we do not want FT, don't compile this component
+    AS_IF([test "$ompi_want_ft" = "0"],
           [$2
            check_crs_blcr_good="no"],
           [check_crs_blcr_good="yes"])
 
-    # If we do not want FT, don't compile this component
-    AS_IF([test "$ompi_want_ft" = "0"],
+    # If we do not want BLCR, then do not compile it
+    AS_IF([test "$with_blcr" = "no" -o "$check_crs_blcr_good" = "no"],
           [$2
            check_crs_blcr_good="no"],
           [check_crs_blcr_good="yes"])
