@@ -168,15 +168,21 @@ static int orte_odls_base_preload_append_binary(orte_app_context_t* context,
 
  cleanup:
     /*
-     * Adjust the process name to point to the new local version
+     * Adjust the process name to point to the new local version (and argv[0])
      */
     if( NULL != local_bin ) {
         if(NULL != context->app) {
             free(context->app);
             context->app = NULL;
         }
+        if(NULL != context->argv[0]) {
+            free(context->argv[0]);
+            context->argv[0] = NULL;
+        }
 
-        context->app = strdup(local_bin);
+        context->app     = strdup(local_bin);
+        context->argv[0] = strdup(local_bin);
+
         free(local_bin);
     }
     
