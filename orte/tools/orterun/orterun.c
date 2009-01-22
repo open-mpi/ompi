@@ -149,6 +149,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide all output in XML format" },
     
+    /* tag output */
+    { "orte", "tag", "output", '\0', "tag-output", "tag-output", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Tag all output with [job,rank]" },
+
     /* select stdin option */
     { NULL, NULL, NULL, '\0', "stdin", "stdin", 1,
       &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
