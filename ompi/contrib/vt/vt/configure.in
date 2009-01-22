@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.6, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.6)
+AC_INIT(VampirTrace, 5.4.7, vampirsupport@zih.tu-dresden.de)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.7)
 AM_CONFIG_HEADER(config.h)
 
 ACVT_CONF_INIT
