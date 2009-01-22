@@ -207,10 +207,12 @@ int mca_base_component_find(const char *directory, const char *type,
 
 int mca_base_component_find_finalize(void)
 {
+#if OMPI_WANT_LIBLTDL
     if (NULL != found_filenames) {
         opal_argv_free(found_filenames);
         found_filenames = NULL;
     }
+#endif
     return OPAL_SUCCESS;
 }
 
