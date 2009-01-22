@@ -1220,11 +1220,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * We know - just live with it
          */
         if (ORTE_LOCAL_RANK_INVALID != (local_rank = orte_ess.get_local_rank(child->name))) {
-            asprintf(&value, "%lu", (unsigned long) local_rank);
-            opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
-            free(value);
+            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+            rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+            goto CLEANUP;
         }
-
+        asprintf(&value, "%lu", (unsigned long) local_rank);
+        opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
+        free(value);
+        
         param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
         if ( NULL != child->slot_list ) {
             asprintf(&value, "%s", child->slot_list);
