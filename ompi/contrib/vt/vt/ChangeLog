@@ -225,3 +225,8 @@
 	- bugfix: added configure check for I/O functions functions 'fseeko()'
 	  (this function is not available on NEC SX platforms)
 	- enhancement to OPARI (see tools/opari/ChangeLog:14,15)
+
+5.4.7
+	- fixed faulty timer selection in configure
+	  (the cycle counter timer is not available on all Linux platforms)
+
