@@ -26,16 +26,8 @@ Will continue attempting to launch the process.
 [orte-odls-base:could-not-preload]
 WARNING: Could not preload the requested files and directories.
 
+Binary : %s
 Fileset: %s
-Fileset: %s
-
-Will continue attempting to launch the process.
-
-[orte-odls-base:preload-file-exists]
-WARNING: Could not preload specified file: File already exists.
-
-Fileset: %s
-Host: %s
 
 Will continue attempting to launch the process.
 

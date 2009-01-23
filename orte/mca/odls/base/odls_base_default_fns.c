@@ -1027,7 +1027,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
            NULL != apps[i]->preload_files) {
             if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(apps[i])) ) {
                 ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
+                /* JJH: Do not fail here, instead try to execute without the preloaded options*/
             }
         }
     }
