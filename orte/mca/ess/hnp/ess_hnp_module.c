@@ -587,7 +587,7 @@ static bool proc_is_local(orte_process_name_t *proc)
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s is REMOTE",
+                         "%s ess:hnp: proc %s is REMOTE",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
@@ -623,7 +623,7 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
      }
      
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s is hosted by daemon %s",
+                         "%s ess:hnp: proc %s is hosted by daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          ORTE_VPID_PRINT(pdata->node->daemon->name.vpid)));
