@@ -82,6 +82,14 @@ ORTE_DECLSPEC   int orte_grpcomm_base_load_modex_data(orte_process_name_t *proc,
 ORTE_DECLSPEC int orte_grpcomm_base_comm_start(void);
 ORTE_DECLSPEC int orte_grpcomm_base_comm_stop(void);
 
+/* Tuned collectives */
+ORTE_DECLSPEC void orte_grpcomm_base_coll_recv(int status, orte_process_name_t* sender,
+                                               opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                               void* cbdata);
+ORTE_DECLSPEC int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
+                                              orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step);
+
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
