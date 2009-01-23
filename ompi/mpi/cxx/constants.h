@@ -237,6 +237,7 @@ OMPI_DECLSPEC extern const Group  GROUP_EMPTY;
 static const int GRAPH = MPI_GRAPH;
 static const int CART = MPI_CART;
 
+#if OMPI_PROVIDE_MPI_FILE_INTERFACE
 // MPI-2 IO
 static const int MODE_CREATE = MPI_MODE_CREATE;
 static const int MODE_RDONLY = MPI_MODE_RDONLY;
@@ -250,13 +251,14 @@ static const int MODE_SEQUENTIAL = MPI_MODE_SEQUENTIAL;
 
 static const int DISPLACEMENT_CURRENT = MPI_DISPLACEMENT_CURRENT;
 
-#if OMPI_PROVIDE_MPI_FILE_INTERFACE && !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
+#if !defined(OMPI_IGNORE_CXX_SEEK) && OMPI_WANT_MPI_CXX_SEEK
 static const int SEEK_SET = ::SEEK_SET;
 static const int SEEK_CUR = ::SEEK_CUR;
 static const int SEEK_END = ::SEEK_END;
 #endif
 
 static const int MAX_DATAREP_STRING = MPI_MAX_DATAREP_STRING;
+#endif
 
 // one-sided constants
 static const int MODE_NOCHECK = MPI_MODE_NOCHECK;
