@@ -89,7 +89,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
                              "%s) Preload Binary...",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if( ORTE_SUCCESS != (ret = orte_odls_base_preload_append_binary(app_context, 
-                                                                       filem_request) ) ){
+                                                                        filem_request) ) ){
             orte_show_help("help-orte-odls-base.txt",
                            "orte-odls-base:could-not-preload-binary",
                            true, app_context->app);
@@ -195,7 +195,6 @@ static int orte_odls_base_preload_append_files(orte_app_context_t* context,
     char * local_ref = NULL;
     int i, remote_argc = 0;
     char **remote_targets = NULL;
-    char * temp = NULL;
     orte_filem_base_file_set_t * f_set = NULL;
 
     remote_targets = opal_argv_split(context->preload_files, ',');
@@ -218,26 +217,16 @@ static int orte_odls_base_preload_append_files(orte_app_context_t* context,
             if('/' == remote_targets[i][0]) {
                 asprintf(&local_ref, "%s", remote_targets[i]);
             } else {
-                asprintf(&local_ref, "%s/%s", context->cwd, opal_basename(remote_targets[i]) );
+                asprintf(&local_ref, "%s/%s", context->cwd, remote_targets[i] );
+            }
+
+            /* If this is the HNP, then source = sink, so use the same path for each local and remote */
+            if( orte_process_info.hnp ) {
+                free(remote_targets[i]);
+                remote_targets[i] = strdup(local_ref);
             }
         }
 
-        asprintf(&temp, "test -e %s", local_ref);
-        if(0 == system(temp)) {
-            char hostname[MAXHOSTNAMELEN];
-            gethostname(hostname, sizeof(hostname));
-            orte_show_help("help-orte-odls-base.txt",
-                           "orte-odls-base:preload-file-exists",
-                           true, local_ref, hostname);
-            free(temp);
-            temp = NULL;
-            free(local_ref);
-            local_ref = NULL;
-            continue;
-        }
-        free(temp);
-        temp = NULL;
-        
         /*
          * Is this a duplicate
          */
