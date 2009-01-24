@@ -732,6 +732,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     char *full_search;
     char *pathenv = NULL, *mpiexec_pathenv = NULL;
     char **argvptr;
+    char dir[MAXPATHLEN];
 
     /* check the system limits - if we are at our max allowed children, then
      * we won't be allowed to do this anyway, so we may as well abort now.
@@ -754,6 +755,31 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     } else {
         *environ_copy = opal_argv_copy(orte_launch_environ);
     }
+
+    /* Try to change to the context cwd and check that the app
+        exists and is executable The function will
+        take care of outputting a pretty error message, if required
+        */
+    if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(context, true))) {
+        /* do not ERROR_LOG - it will be reported elsewhere */
+        return rc;
+    }
+
+    /* The prior function will have done a chdir() to jump us to
+     * wherever the app is to be executed. This could be either where
+     * the user specified (via -wdir), or to the user's home directory
+     * on this node if nothing was provided. It seems that chdir doesn't
+     * adjust the $PWD enviro variable when it changes the directory. This
+     * can cause a user to get a different response when doing getcwd vs
+     * looking at the enviro variable. To keep this consistent, we explicitly
+     * ensure that the PWD enviro variable matches the CWD we moved to.
+     *
+     * NOTE: if a user's program does a chdir(), then $PWD will once
+     * again not match getcwd! This is beyond our control - we are only
+     * ensuring they start out matching.
+     */
+    getcwd(dir, sizeof(dir));
+    opal_setenv("PWD", dir, true, environ_copy);
 
     /* Search for the OMPI_exec_path and PATH settings in the environment. */
     for (argvptr = *environ_copy; *argvptr != NULL; argvptr++) { 
@@ -984,8 +1010,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
     orte_local_rank_t local_rank;
-    char dir[MAXPATHLEN];
-
+    
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
 
@@ -1148,31 +1173,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             goto CLEANUP;
         }
         app = apps[child->app_idx];
-        
-        /* Try to change to the context cwd and check that the app
-         exists and is executable The function will
-         take care of outputting a pretty error message, if required
-         */
-        if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
-            /* do not ERROR_LOG - it will be reported elsewhere */
-            goto CLEANUP;
-        }
-        
-        /* The prior function will have done a chdir() to jump us to
-         * wherever the app is to be executed. This could be either where
-         * the user specified (via -wdir), or to the user's home directory
-         * on this node if nothing was provided. It seems that chdir doesn't
-         * adjust the $PWD enviro variable when it changes the directory. This
-         * can cause a user to get a different response when doing getcwd vs
-         * looking at the enviro variable. To keep this consistent, we explicitly
-         * ensure that the PWD enviro variable matches the CWD we moved to.
-         *
-         * NOTE: if a user's program does a chdir(), then $PWD will once
-         * again not match getcwd! This is beyond our control - we are only
-         * ensuring they start out matching.
-         */
-        getcwd(dir, sizeof(dir));
-        opal_setenv("PWD", dir, true, &app->env);
         
         /* setup the rest of the environment with the proc-specific items - these
          * will be overwritten for each child
