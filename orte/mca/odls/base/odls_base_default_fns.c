@@ -726,13 +726,8 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
                                         orte_std_cntr_t total_slots_alloc,
                                         bool oversubscribed, char ***environ_copy)
 {
-    int rc;
     int i;
     char *param, *param2;
-    char *full_search;
-    char *pathenv = NULL, *mpiexec_pathenv = NULL;
-    char **argvptr;
-    char dir[MAXPATHLEN];
 
     /* check the system limits - if we are at our max allowed children, then
      * we won't be allowed to do this anyway, so we may as well abort now.
@@ -754,70 +749,6 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         *environ_copy = opal_environ_merge(orte_launch_environ, context->env);
     } else {
         *environ_copy = opal_argv_copy(orte_launch_environ);
-    }
-
-    /* Try to change to the context cwd and check that the app
-        exists and is executable The function will
-        take care of outputting a pretty error message, if required
-        */
-    if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(context, true))) {
-        /* do not ERROR_LOG - it will be reported elsewhere */
-        return rc;
-    }
-
-    /* The prior function will have done a chdir() to jump us to
-     * wherever the app is to be executed. This could be either where
-     * the user specified (via -wdir), or to the user's home directory
-     * on this node if nothing was provided. It seems that chdir doesn't
-     * adjust the $PWD enviro variable when it changes the directory. This
-     * can cause a user to get a different response when doing getcwd vs
-     * looking at the enviro variable. To keep this consistent, we explicitly
-     * ensure that the PWD enviro variable matches the CWD we moved to.
-     *
-     * NOTE: if a user's program does a chdir(), then $PWD will once
-     * again not match getcwd! This is beyond our control - we are only
-     * ensuring they start out matching.
-     */
-    getcwd(dir, sizeof(dir));
-    opal_setenv("PWD", dir, true, environ_copy);
-
-    /* Search for the OMPI_exec_path and PATH settings in the environment. */
-    for (argvptr = *environ_copy; *argvptr != NULL; argvptr++) { 
-        if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
-            mpiexec_pathenv = *argvptr + 15;
-        }
-        if (0 == strncmp("PATH=", *argvptr, 5)) {
-            pathenv = *argvptr + 5;
-        }
-    }
-
-    /* If OMPI_exec_path is set (meaning --path was used), then create a
-       temporary environment to be used in the search for the executable.
-       The PATH setting in this temporary environment is a combination of
-       the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
-       then just use existing environment with PATH in it.  */
-    if (mpiexec_pathenv) {
-        argvptr = NULL;
-        if (pathenv != NULL) {
-            asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
-        } else {
-            asprintf(&full_search, "%s", mpiexec_pathenv);
-        }
-        opal_setenv("PATH", full_search, true, &argvptr);
-        free(full_search);
-    } else {
-        argvptr = *environ_copy;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_util_check_context_app(context, argvptr))) {
-        /* do not ERROR_LOG - it will be reported elsewhere */
-        if (mpiexec_pathenv) {
-            opal_argv_free(argvptr);
-        }
-        return rc;
-    }
-    if (mpiexec_pathenv) {
-        opal_argv_free(argvptr);
     }
 
     /* special case handling for --prefix: this is somewhat icky,
@@ -1010,9 +941,20 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_std_cntr_t proc_rank;
     orte_odls_job_t *jobdat;
     orte_local_rank_t local_rank;
-    
+    char *pathenv = NULL, *mpiexec_pathenv = NULL;
+    char basedir[MAXPATHLEN];
+    char dir[MAXPATHLEN];
+    char **argvptr;
+    char *full_search;
+
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+
+    /* establish our baseline working directory - we will be potentially
+     * bouncing around as we execute various apps, but we will always return
+     * to this place as our default directory
+     */
+    getcwd(basedir, sizeof(basedir));
 
     /* find the jobdat for this job */
     jobdat = NULL;
@@ -1174,6 +1116,72 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
         app = apps[child->app_idx];
         
+        /* Try to change to the app's cwd and check that the app
+         exists and is executable The function will
+         take care of outputting a pretty error message, if required
+         */
+        if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
+            /* do not ERROR_LOG - it will be reported elsewhere */
+            child->exit_code = rc;
+            goto CLEANUP;
+        }
+        
+        /* The prior function will have done a chdir() to jump us to
+         * wherever the app is to be executed. This could be either where
+         * the user specified (via -wdir), or to the user's home directory
+         * on this node if nothing was provided. It seems that chdir doesn't
+         * adjust the $PWD enviro variable when it changes the directory. This
+         * can cause a user to get a different response when doing getcwd vs
+         * looking at the enviro variable. To keep this consistent, we explicitly
+         * ensure that the PWD enviro variable matches the CWD we moved to.
+         *
+         * NOTE: if a user's program does a chdir(), then $PWD will once
+         * again not match getcwd! This is beyond our control - we are only
+         * ensuring they start out matching.
+         */
+        getcwd(dir, sizeof(dir));
+        opal_setenv("PWD", dir, true, &app->env);
+        
+        /* Search for the OMPI_exec_path and PATH settings in the environment. */
+        for (argvptr = app->env; *argvptr != NULL; argvptr++) { 
+            if (0 == strncmp("OMPI_exec_path=", *argvptr, 15)) {
+                mpiexec_pathenv = *argvptr + 15;
+            }
+            if (0 == strncmp("PATH=", *argvptr, 5)) {
+                pathenv = *argvptr + 5;
+            }
+        }
+        
+        /* If OMPI_exec_path is set (meaning --path was used), then create a
+         temporary environment to be used in the search for the executable.
+         The PATH setting in this temporary environment is a combination of
+         the OMPI_exec_path and PATH values.  If OMPI_exec_path is not set,
+         then just use existing environment with PATH in it.  */
+        if (NULL != mpiexec_pathenv) {
+            argvptr = NULL;
+            if (pathenv != NULL) {
+                asprintf(&full_search, "%s:%s", mpiexec_pathenv, pathenv);
+            } else {
+                asprintf(&full_search, "%s", mpiexec_pathenv);
+            }
+            opal_setenv("PATH", full_search, true, &argvptr);
+            free(full_search);
+        } else {
+            argvptr = app->env;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_util_check_context_app(app, argvptr))) {
+            /* do not ERROR_LOG - it will be reported elsewhere */
+            if (NULL != mpiexec_pathenv) {
+                opal_argv_free(argvptr);
+            }
+            child->exit_code = rc;
+            goto CLEANUP;
+        }
+        if (NULL != mpiexec_pathenv) {
+            opal_argv_free(argvptr);
+        }
+        
         /* setup the rest of the environment with the proc-specific items - these
          * will be overwritten for each child
          */
@@ -1297,6 +1305,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             child->alive = true;
             child->state = ORTE_PROC_STATE_LAUNCHED;
         }
+        /* reset our working directory back to our default location - if we
+         * don't do this, then we will be looking for relative paths starting
+         * from the last wdir option specified by the user. Thus, we would
+         * be requiring that the user keep track on the cmd line of where
+         * each app was located relative to the prior app, instead of relative
+         * to their current location
+         */
+        chdir(basedir);
         /* move to next processor */
         proc_rank++;
     }
