@@ -1654,20 +1654,12 @@ See \`config.log' for more details.])
 		[
 			AC_DEFINE([TIMER_PAPI_REAL_CYC], [10], [PAPI_get_real_cyc])
 			AC_DEFINE([TIMER_PAPI_REAL_USEC], [11], [PAPI_get_real_usec])
-			case $PLATFORM in
-				crayx1 | origin | generic)
-					AC_DEFINE([TIMER], [TIMER_PAPI_REAL_CYC], [Use timer (see below)])
-					AC_MSG_NOTICE([reselected timer: TIMER_PAPI_REAL_CYC])
-					;;
-				linux)
-					case $host_cpu in
-						mips*)
-							AC_DEFINE([TIMER], [TIMER_PAPI_REAL_CYC], [Use timer (see below)])
-							AC_MSG_NOTICE([reselected timer: TIMER_PAPI_REAL_CYC])
-							;;
-					esac
-					;;
-			esac
+			AS_IF([test x"$pform_timer" = "xTIMER_GETTIMEOFDAY"],
+			[
+				pform_timer=TIMER_PAPI_REAL_CYC
+				AC_DEFINE_UNQUOTED([TIMER], [$pform_timer], [Use timer (see below)])
+				AC_MSG_NOTICE([reselected timer: $pform_timer])
+			])
 			have_papi="yes"
 		])
 	])
@@ -1680,6 +1672,8 @@ See \`config.log' for more details.])
 AC_DEFUN([ACVT_PLATFORM],
 [
 	PLATFORM=
+
+	pform_timer=
 
 	AC_MSG_CHECKING([for platform])
 
@@ -1734,78 +1728,73 @@ AC_DEFUN([ACVT_PLATFORM],
 
 	case $PLATFORM in
 	linux)
-		AC_DEFINE([TIMER_GETTIMEOFDAY], [1], [Use `gettimeofday' function])
-		AC_DEFINE([TIMER_CLOCK_GETTIME], [2], [Use `clock_gettime' function])
+		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
+		AC_DEFINE([TIMER_GETTIMEOFDAY], [2], [Use `gettimeofday' function])
+		pform_timer=TIMER_GETTIMEOFDAY
+
 		case $host_cpu in
-			mips*)
-				AC_DEFINE([TIMER], [TIMER_GETTIMEOFDAY], [Use timer (see below)])
-				AC_MSG_NOTICE([selected timer: TIMER_GETTIMEOFDAY])
+			i*86 | x86* | ia64 | powerpc*)
+				AC_DEFINE([TIMER_CYCLE_COUNTER], [3], [Cycle counter (e.g. TSC)])
+				pform_timer=TIMER_CYCLE_COUNTER
 				;;
 			*)
-				AC_DEFINE([TIMER_CYCLE_COUNTER], [3], [Cycle counter (e.g. TSC)])
-				AC_DEFINE([TIMER], [TIMER_CYCLE_COUNTER], [Use timer (see below)])
-				AC_MSG_NOTICE([selected timer: TIMER_CYCLE_COUNTER])
 				;;
 		esac
 		;;
 	macos)
 		AC_DEFINE([TIMER_CYCLE_COUNTER], [1], [Cycle counter (e.g. TSC)])
 		AC_DEFINE([TIMER_GETTIMEOFDAY], [2], [Use `gettimeofday' function])
-		AC_DEFINE([TIMER], [TIMER_CYCLE_COUNTER], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_CYCLE_COUNTER])
+		pform_timer=TIMER_CYCLE_COUNTER
 		;;
 	altix)
-		mmtimer_found=no
-		AC_CHECK_HEADERS([linux/mmtimer.h], [mmtimer_found=yes],
-		[AC_CHECK_HEADERS([sn/mmtimer.h], [mmtimer_found=yes],
-		[AC_CHECK_HEADERS([mmtimer.h], [mmtimer_found=yes])])])
-		AS_IF([test x"$mmtimer_found" = "xyes"],
+		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
+		pform_timer=TIMER_CLOCK_GETTIME
+
+		mmtimer_h_found=no
+		AC_CHECK_HEADERS([linux/mmtimer.h], [mmtimer_h_found=yes],
+		[AC_CHECK_HEADERS([sn/mmtimer.h], [mmtimer_h_found=yes],
+		[AC_CHECK_HEADERS([mmtimer.h], [mmtimer_h_found=yes])])])
+		AS_IF([test x"$mmtimer_h_found" = "xyes"],
 		[
-			use_timer=TIMER_MMTIMER
-		],
-		[
-			AC_MSG_WARN([no mmtimer.h found; using `clock_gettime'])
-			use_timer=TIMER_CLOCK_GETTIME
+			AC_CHECK_FILE([/dev/mmtimer],
+			[
+				AC_DEFINE([TIMER_MMTIMER], [2], [Intel Multimedia Timer])
+				pform_timer=TIMER_MMTIMER
+			])
 		])
-		AC_DEFINE([TIMER_MMTIMER], [1], [Intel Multimedia Timer])
-		AC_DEFINE([TIMER_CLOCK_GETTIME], [2], [Use `clock_gettime' function])
-		AC_DEFINE_UNQUOTED([TIMER], [$use_timer], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: $use_timer])
 		;;
 	bgl)
 		AC_DEFINE([TIMER_RTS_GET_TIMEBASE], [1], [Read PowerPC 440 time base registers])
-		AC_DEFINE([TIMER], [TIMER_RTS_GET_TIMEBASE], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_RTS_GET_TIMEBASE])
+		pform_timer=TIMER_RTS_GET_TIMEBASE
 		;;
 	ibm)
 		AC_DEFINE([TIMER_POWER_REALTIME], [1], [IBM Power family Real-Time-Clock])
 		AC_DEFINE([TIMER_SWITCH_CLOCK], [2], [Hardware Switch-Clock (it's necessary to link your application with '-lswclock')])
-		AC_DEFINE([TIMER], [TIMER_POWER_REALTIME], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_POWER_REALTIME])
+		pform_timer=TIMER_POWER_REALTIME
 		;;
 	sun)
 		AC_DEFINE([TIMER_GETHRTIME], [1], [gethrtime])
-		AC_DEFINE([TIMER], [TIMER_GETHRTIME], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_GETHRTIME])
+		pform_timer=TIMER_GETHRTIME
 		;;
 	necsx)
 		AC_DEFINE([TIMER_SYSSX_HGTIME], [1], [NEC SX HGTIME])
-		AC_DEFINE([TIMER], [TIMER_SYSSX_HGTIME], [Use time (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_SYSSX_HGTIME])
+		pform_timer=TIMER_SYSSX_HGTIME
 		;;
 	crayt3e)
 		AC_DEFINE([TIMER_CRAY_RTCLOCK],[1], [CRAY Real-Time-Clock])
-		AC_DEFINE([TIMER], [TIMER_CRAY_RTCLOCK], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_CRAY_RTCLOCK])
+		pform_timer=TIMER_CRAY_RTCLOCK
 		;;
 	crayx1)
 		AC_DEFINE([TIMER_GETTIMEOFDAY], [1], [Use `gettimeofday' function])
 		AC_DEFINE([TIMER_RTC], [2], [RTC (DOES NOT WORK YET WITH FORTRAN CODES)])
-		AC_DEFINE([TIMER], [TIMER_GETTIMEOFDAY], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_GETTIMEOFDAY])
+		pform_timer=TIMER_GETTIMEOFDAY
 		;;
 	crayxt)
-		use_timer=TIMER_CYCLE_COUNTER
+		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
+		AC_DEFINE([TIMER_CYCLE_COUNTER], [2], [Cycle counter (e.g. TSC)])
+		AC_DEFINE([TIMER_GETTIMEOFDAY], [3], [Use `gettimeofday' function])
+		pform_timer=TIMER_CYCLE_COUNTER
+
 		AC_TRY_COMPILE([],
 [
 #ifndef __LIBCATAMOUNT__
@@ -1813,26 +1802,24 @@ AC_DEFUN([ACVT_PLATFORM],
 #endif
 ],
 		[AC_CHECK_HEADERS([catamount/dclock.h],
-		[AC_CHECK_HEADERS([catamount/data.h], [use_timer=TIMER_DCLOCK])])])
-
-		AC_DEFINE([TIMER_GETTIMEOFDAY], [1], [Use `gettimeofday' function])
-		AC_DEFINE([TIMER_CLOCK_GETTIME], [2], [Use `clock_gettime' function])
-		AC_DEFINE([TIMER_DCLOCK], [3], [Use `dclock' function])
-		AC_DEFINE([TIMER_CYCLE_COUNTER], [4], [Cycle counter (e.g. TSC)])
-		AC_DEFINE_UNQUOTED([TIMER], [$use_timer], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: $use_timer])
+		[AC_CHECK_HEADERS([catamount/data.h],
+		[
+			AC_DEFINE([TIMER_DCLOCK], [4], [Use `dclock' function])
+			pform_timer=TIMER_DCLOCK
+		])])])
 		;;
 	origin)
 		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
-		AC_DEFINE([TIMER], [TIMER_CLOCK_GETTIME], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_CLOCK_GETTIME])
+		pform_timer=TIMER_CLOCK_GETTIME
 		;;
 	generic)
 		AC_DEFINE([TIMER_GETTIMEOFDAY], [1], [Use `gettimeofday' function])
-		AC_DEFINE([TIMER], [TIMER_GETTIMEOFDAY], [Use timer (see below)])
-		AC_MSG_NOTICE([selected timer: TIMER_GETTIMEOFDAY])
+		pform_timer=TIMER_GETTIMEOFDAY
 		;;
 	esac
+
+	AC_DEFINE_UNQUOTED([TIMER], [$pform_timer], [Use timer (see below)])
+	AC_MSG_NOTICE([selected timer: $pform_timer])
 
 	AC_SUBST(PLATFORM)
 ])
