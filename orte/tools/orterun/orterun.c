@@ -64,6 +64,7 @@
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/os_path.h"
+#include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
@@ -1830,7 +1831,19 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* Did the user request a specific wdir? */
 
     if (NULL != orterun_globals.wdir) {
-        app->cwd = strdup(orterun_globals.wdir);
+        /* if this is a relative path, convert it to an absolute path */
+        if (opal_path_is_absolute(orterun_globals.wdir)) {
+            app->cwd = strdup(orterun_globals.wdir);
+        } else {
+            /* get the cwd */
+            if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
+                orte_show_help("help-orterun.txt", "orterun:init-failure",
+                               true, "get the cwd", rc);
+                goto cleanup;
+            }
+            /* construct the absolute path */
+            app->cwd = opal_os_path(false, cwd, orterun_globals.wdir, NULL);
+        }
         app->user_specified_cwd = true;
     } else {
         if (OPAL_SUCCESS != (rc = opal_getcwd(cwd, sizeof(cwd)))) {
