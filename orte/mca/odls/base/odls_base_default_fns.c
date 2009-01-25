@@ -620,6 +620,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             if (NULL != slot_str && NULL != slot_str[j]) {
                 child->slot_list = strdup(slot_str[j]);
             }
+            /* mark that this app_context is being used on this node */
+            jobdat->apps[app_idx[j]]->used_on_node = true;
             /* protect operation on the global list of children */
             OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
             opal_list_append(&orte_local_children, &child->super);
@@ -1030,14 +1032,21 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
-    /* setup the environment for each context */
     for (i=0; i < num_apps; i++) {
-        if (ORTE_SUCCESS != (rc = odls_base_default_setup_fork(apps[i],
+        app = apps[i];
+        
+        /* if this app isn't being used on our node, skip it */
+        if (!app->used_on_node) {
+            continue;
+        }
+        
+        /* setup the environment for this app */
+        if (ORTE_SUCCESS != (rc = odls_base_default_setup_fork(app,
                                                                jobdat->num_local_procs,
                                                                jobdat->num_procs,
                                                                jobdat->total_slots_alloc,
                                                                oversubscribed,
-                                                               &apps[i]->env))) {
+                                                               &app->env))) {
             
             OPAL_OUTPUT_VERBOSE((10, orte_odls_globals.output,
                                  "%s odls:launch:setup_fork failed with error %s",
@@ -1068,53 +1077,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             /* okay, now tell the HNP we couldn't do it */
             goto CLEANUP;
         }
-    }
-    
-    
-    /* okay, now let's launch our local procs using the provided fork_local fn */
-    for (proc_rank = 0, item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
         
-        /* is this child already alive? This can happen if
-         * we are asked to launch additional processes.
-         * If it has been launched, then do nothing
-         */
-        if (child->alive) {
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch child %s is already alive",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
-            
-            continue;
-        }
-        
-        /* do we have a child from the specified job. Because the
-         * job could be given as a WILDCARD value, we must use
-         * the dss.compare function to check for equality.
-         */
-        if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch child %s is not in job %s being launched",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name),
-                                 ORTE_JOBID_PRINT(job)));
-            
-            continue;
-        }
-
-        /* find the app context for this child */
-        if (child->app_idx > num_apps ||
-            NULL == apps[child->app_idx]) {
-            /* get here if we couldn't find the app_context */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto CLEANUP;
-        }
-        app = apps[child->app_idx];
         
         /* Try to change to the app's cwd and check that the app
          exists and is executable The function will
@@ -1182,129 +1145,172 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_argv_free(argvptr);
         }
         
-        /* setup the rest of the environment with the proc-specific items - these
-         * will be overwritten for each child
-         */
-        if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job_str, child->name->jobid))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid_str, child->name->vpid))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        if(NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        opal_setenv(param, job_str, true, &app->env);
-        free(param);
-        free(job_str);
-        
-        if(NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto CLEANUP;
-        }
-        opal_setenv(param, vpid_str, true, &app->env);
-        free(param);
-        /* although the vpid IS the process' rank within the job, users
-         * would appreciate being given a public environmental variable
-         * that also represents this value - something MPI specific - so
-         * do that here.
-         *
-         * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
-         * We know - just live with it
-         */
-        opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
-        free(vpid_str);  /* done with this now */
-        
-        /* users would appreciate being given a public environmental variable
-         * that also represents the local rank value - something MPI specific - so
-         * do that here.
-         *
-         * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
-         * We know - just live with it
-         */
-        if (ORTE_LOCAL_RANK_INVALID == (local_rank = orte_ess.get_local_rank(child->name))) {
-            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-            rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-            goto CLEANUP;
-        }
-        asprintf(&value, "%lu", (unsigned long) local_rank);
-        opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
-        free(value);
-        
-        param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
-        if ( NULL != child->slot_list ) {
-            asprintf(&value, "%s", child->slot_list);
-            opal_setenv(param, value, true, &app->env);
-            free(value);
-        } else {
-            opal_unsetenv(param,  &app->env);
-        }
-        free(param);
-         
-        /* if we are timing things, record when we are going to launch this proc */
-        if (orte_timing) {
-            gettimeofday(&child->starttime, NULL);
-        }
-
-        /* must unlock prior to fork to keep things clean in the
-         * event library
-         */
-        opal_condition_signal(&orte_odls_globals.cond);
-        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-
-#if OPAL_ENABLE_FT    == 1
-#if OPAL_ENABLE_FT_CR == 1
-        /*
-         * OPAL CRS components need the opportunity to take action before a process
-         * is forked.
-         * Needs access to:
-         *   - Environment
-         *   - Rank/ORTE Name
-         *   - Binary to exec
-         */
-        if( NULL != opal_crs.crs_prelaunch ) {
-            if( OPAL_SUCCESS != (rc = opal_crs.crs_prelaunch(child->name->vpid,
-                                                             orte_snapc_base_global_snapshot_loc,
-                                                             &(app->app),
-                                                             &(app->cwd),
-                                                             &(app->argv),
-                                                             &(app->env) ) ) ) {
+        /* okay, now let's launch all the local procs for this app using the provided fork_local fn */
+        for (proc_rank = 0, item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            
+            /* does this child belong to this app? */
+            if (i != child->app_idx) {
+                continue;
+            }
+            
+            /* is this child already alive? This can happen if
+             * we are asked to launch additional processes.
+             * If it has been launched, then do nothing
+             */
+            if (child->alive) {
+                
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:launch child %s is already alive",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                
+                continue;
+            }
+            
+            /* do we have a child from the specified job. Because the
+             * job could be given as a WILDCARD value, we must use
+             * the dss.compare function to check for equality.
+             */
+            if (OPAL_EQUAL != opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+                
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:launch child %s is not in job %s being launched",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name),
+                                     ORTE_JOBID_PRINT(job)));
+                
+                continue;
+            }
+            
+          /* setup the rest of the environment with the proc-specific items - these
+             * will be overwritten for each child
+             */
+            if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job_str, child->name->jobid))) {
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
-        }
-#endif
-#endif
-        if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
-            opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name));
-            
-            /* dump what is going to be exec'd */
-            if (7 < opal_output_get_verbosity(orte_odls_globals.output)) {
-                opal_dss.dump(orte_odls_globals.output, app, ORTE_APP_CONTEXT);
+            if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&vpid_str, child->name->vpid))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
             }
-        }
-
-        rc = fork_local(app, child, app->env, jobdat->controls, jobdat->stdin_target);
-        /* reaquire lock so we don't double unlock... */
-        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-        if (ORTE_SUCCESS != rc) {
-            /* do NOT ERROR_LOG this error - it generates
-             * a message/node as most errors will be common
-             * across the entire cluster. Instead, we let orterun
-             * output a consolidated error message for us
+            if(NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto CLEANUP;
+            }
+            opal_setenv(param, job_str, true, &app->env);
+            free(param);
+            free(job_str);
+            
+            if(NULL == (param = mca_base_param_environ_variable("orte","ess","vpid"))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto CLEANUP;
+            }
+            opal_setenv(param, vpid_str, true, &app->env);
+            free(param);
+            /* although the vpid IS the process' rank within the job, users
+             * would appreciate being given a public environmental variable
+             * that also represents this value - something MPI specific - so
+             * do that here.
+             *
+             * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+             * We know - just live with it
              */
-            goto CLEANUP;
-        } else {
-            child->alive = true;
-            child->state = ORTE_PROC_STATE_LAUNCHED;
-        }
+            opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
+            free(vpid_str);  /* done with this now */
+            
+            /* users would appreciate being given a public environmental variable
+             * that also represents the local rank value - something MPI specific - so
+             * do that here.
+             *
+             * AND YES - THIS BREAKS THE ABSTRACTION BARRIER TO SOME EXTENT.
+             * We know - just live with it
+             */
+            if (ORTE_LOCAL_RANK_INVALID == (local_rank = orte_ess.get_local_rank(child->name))) {
+                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                goto CLEANUP;
+            }
+            asprintf(&value, "%lu", (unsigned long) local_rank);
+            opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
+            free(value);
+            
+            param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
+            if ( NULL != child->slot_list ) {
+                asprintf(&value, "%s", child->slot_list);
+                opal_setenv(param, value, true, &app->env);
+                free(value);
+            } else {
+                opal_unsetenv(param,  &app->env);
+            }
+            free(param);
+            
+            /* if we are timing things, record when we are going to launch this proc */
+            if (orte_timing) {
+                gettimeofday(&child->starttime, NULL);
+            }
+            
+            /* must unlock prior to fork to keep things clean in the
+             * event library
+             */
+            opal_condition_signal(&orte_odls_globals.cond);
+            OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+            
+#if OPAL_ENABLE_FT    == 1
+#if OPAL_ENABLE_FT_CR == 1
+            /*
+             * OPAL CRS components need the opportunity to take action before a process
+             * is forked.
+             * Needs access to:
+             *   - Environment
+             *   - Rank/ORTE Name
+             *   - Binary to exec
+             */
+            if( NULL != opal_crs.crs_prelaunch ) {
+                if( OPAL_SUCCESS != (rc = opal_crs.crs_prelaunch(child->name->vpid,
+                                                                 orte_snapc_base_global_snapshot_loc,
+                                                                 &(app->app),
+                                                                 &(app->cwd),
+                                                                 &(app->argv),
+                                                                 &(app->env) ) ) ) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+            }
+#endif
+#endif
+            if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
+                opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(child->name));
+                
+                /* dump what is going to be exec'd */
+                if (7 < opal_output_get_verbosity(orte_odls_globals.output)) {
+                    opal_dss.dump(orte_odls_globals.output, app, ORTE_APP_CONTEXT);
+                }
+            }
+            
+            rc = fork_local(app, child, app->env, jobdat->controls, jobdat->stdin_target);
+            /* reaquire lock so we don't double unlock... */
+            OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+            if (ORTE_SUCCESS != rc) {
+                /* do NOT ERROR_LOG this error - it generates
+                 * a message/node as most errors will be common
+                 * across the entire cluster. Instead, we let orterun
+                 * output a consolidated error message for us
+                 */
+                goto CLEANUP;
+            } else {
+                child->alive = true;
+                child->state = ORTE_PROC_STATE_LAUNCHED;
+            }
+            /* move to next processor */
+            proc_rank++;
+        }  /* complete launching all children for this app */
         /* reset our working directory back to our default location - if we
          * don't do this, then we will be looking for relative paths starting
          * from the last wdir option specified by the user. Thus, we would
@@ -1313,8 +1319,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * to their current location
          */
         chdir(basedir);
-        /* move to next processor */
-        proc_rank++;
     }
     launch_failed = false;
 

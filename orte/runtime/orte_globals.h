@@ -177,6 +177,8 @@ typedef struct {
     /** Destination directory for the preloaded files 
         * If NULL then the absolute and relative paths are obeyed */
     char * preload_files_dest_dir;
+    /* is being used on the local node */
+    bool used_on_node;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
