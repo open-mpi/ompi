@@ -54,6 +54,7 @@ if !ORTE_DISABLE_FULL_SUPPORT
 
 headers += \
 	util/context_fns.h \
+	util/parse_options.h \
 	util/pre_condition_transports.h \
         util/hnp_contact.h \
         util/hostfile/hostfile.h \
@@ -64,6 +65,7 @@ headers += \
 
 libopen_rte_la_SOURCES += \
 	util/context_fns.c \
+	util/parse_options.c \
 	util/pre_condition_transports.c \
         util/hnp_contact.c \
         util/hostfile/hostfile_lex.l \

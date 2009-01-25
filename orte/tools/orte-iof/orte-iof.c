@@ -75,6 +75,7 @@
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/parse_options.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #if OPAL_ENABLE_FT == 1
@@ -129,10 +130,10 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       "Display stddiag from specified process" },
     
     { NULL, NULL, NULL, 
-      '\0', "rank", "rank", 
+      '\0', "ranks", "ranks", 
       1,
       &my_globals.ranks, OPAL_CMD_LINE_TYPE_STRING,
-     "Rank whose output is to be displayed" },
+     "Ranks whose output is to be displayed (Comma separated list, each element can contain range)" },
     
     { "orte", "tag", "output", 
      '\0', "tag-output", "tag-output", 
@@ -161,11 +162,12 @@ static orte_process_name_t target_proc;
 int
 main(int argc, char *argv[])
 {
-    int ret;
+    int ret, i;
     opal_cmd_line_t cmd_line;
     opal_list_item_t* item = NULL;
     orte_iof_tag_t stream;
-
+    char **ranks=NULL;
+    
     /***************
      * Initialize
      ***************/
@@ -270,12 +272,20 @@ main(int argc, char *argv[])
         stream |= ORTE_IOF_STDOUT;
     }
     
-    /* we have our target - pull the specified output streams and dump to our stdout */
-    target_proc.jobid = my_globals.target_hnp->name.jobid + 1;
-    target_proc.vpid = strtol(my_globals.ranks, NULL, 10);
-    if (ORTE_SUCCESS != (ret = orte_iof.pull(&target_proc, stream, 1))) {
+    /* parse the input ranks */
+    if (ORTE_SUCCESS != (ret = orte_util_parse_rank_options(my_globals.ranks, &ranks))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
+    }
+    
+    /* pull the specified output streams and dump to our stdout */
+    for (i=0; i < opal_argv_count(ranks); i++) {
+        target_proc.jobid = my_globals.target_hnp->name.jobid + 1;
+        target_proc.vpid = strtol(ranks[i], NULL, 10);
+        if (ORTE_SUCCESS != (ret = orte_iof.pull(&target_proc, stream, 1))) {
+            ORTE_ERROR_LOG(ret);
+            goto cleanup;
+        }
     }
     
     /* just wait until the abort is fired */
@@ -289,6 +299,7 @@ main(int argc, char *argv[])
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&hnp_list);
+    opal_argv_free(ranks);
     orte_finalize();
 
     return ret;
