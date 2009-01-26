@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -564,6 +565,20 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #endif
 #endif
 
+#endif
+
+/* 
+ * The following is a workaround for a workaround in autoconf for the
+ * Sun Studio C++ compiler.  The Sun Studio C++ compiler does not
+ * support restrict whereas the Sun Studio C compiler does.  Initially,
+ * Sun Studio C only supported _Restrict, but later version started
+ * supporting __restrict__ also.  Currently, autoconf handles turning
+ * off _Restrict but not __restrict__ for the Sun Studio C++ compiler.
+ * Therefore, we are handling it here.  When autoconf gets fixed, this
+ * code can be removed.
+ */
+#if defined __SUNPRO_CC && !defined __RESTRICT
+# define __restrict__
 #endif
 
 #endif /* OMPI_BUILDING */
