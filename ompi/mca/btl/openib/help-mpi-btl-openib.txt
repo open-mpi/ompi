@@ -354,10 +354,10 @@ WARNING: An invalid per-peer receive queue specification was detected
 as part of the btl_openib_receive_queues MCA parameter.  The
 OpenFabrics (openib) BTL will therefore be deactivated for this run.
 
-Per-peer receive queues require between 1 and 5 parameters:
+Per-peer receive queues require between 2 and 5 parameters:
 
   1. Buffer size in bytes (mandatory)
-  2. Number of buffers (optional; defaults to 8)
+  2. Number of buffers (mandatory)
   3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
   4. Credit window size (optional; defaults to (low_watermark / 2))
   5. Number of buffers reserved for credit messages (optional;
@@ -384,7 +384,7 @@ part of the btl_openib_receive_queues MCA parameter.  The OpenFabrics
 Shared receive queues can take between 2 and 4 parameters:
 
   1. Buffer size in bytes (mandatory)
-  2. Number of buffers (optional; defaults to 16)
+  2. Number of buffers (mandatory)
   3. Low buffer count watermark (optional; defaults to (num_buffers / 2))
   4. Maximum number of outstanding sends a sender can have (optional;
      defaults to (low_watermark / 4)
