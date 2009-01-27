@@ -19,7 +19,6 @@
  */
 
 #include "ompi_config.h"
-#include "orte/util/show_help.h"
 #include "allocator_basic.h"
 #include "ompi/constants.h"
 
