@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -188,7 +188,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
     int i;
     char *line, *full_line = strdup(orig_line);
     char *user_argv, *tmp, *tmp2, **tmp_argv, **executable;
-    char cwd[PATH_MAX];
+    char cwd[OMPI_PATH_MAX];
     bool used_num_procs = false;
     bool single_app = false;
     bool fail_needed_executable = false;
@@ -317,7 +317,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 
     /* Can we find argv[0] in the path? */
 
-    getcwd(cwd, PATH_MAX);
+    getcwd(cwd, OMPI_PATH_MAX);
     tmp = opal_path_findv((*new_argv)[0], X_OK, environ, cwd);
     if (NULL != tmp) {
         free(tmp);
