@@ -42,7 +42,8 @@ typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t;
 
 struct mca_rcache_vma_component_t { 
     mca_rcache_base_component_t super; 
-}; typedef struct mca_rcache_vma_component_t mca_rcache_vma_component_t; 
+};
+typedef struct mca_rcache_vma_component_t mca_rcache_vma_component_t; 
 
 OMPI_DECLSPEC extern mca_rcache_vma_component_t mca_rcache_vma_component;
 
