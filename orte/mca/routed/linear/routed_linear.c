@@ -42,8 +42,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
-static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
-static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
+static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 
@@ -63,7 +62,6 @@ orte_routed_module_t orte_routed_linear_module = {
     set_lifeline,
     update_routing_tree,
     get_routing_tree,
-    proc_is_below,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
     linear_ft_event
@@ -767,9 +765,10 @@ static int update_routing_tree(void)
     return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
+static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
-    orte_namelist_t *nm;
+    orte_routed_tree_t *nm;
+    orte_vpid_t v;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -784,10 +783,15 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
      */
     if (NULL != children &&
         ORTE_PROC_MY_NAME->vpid < orte_process_info.num_procs-1) {
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        nm->name.vpid = ORTE_PROC_MY_NAME->vpid + 1;
-        opal_list_append(children, &nm->item);
+        /* my child is just the vpid+1 daemon */
+        nm = OBJ_NEW(orte_routed_tree_t);
+        opal_bitmap_init(&nm->relatives, orte_process_info.num_procs);
+        nm->vpid = ORTE_PROC_MY_NAME->vpid + 1;
+        /* my relatives are everyone above that point */
+        for (v=nm->vpid+1; v < orte_process_info.num_procs; v++) {
+            opal_bitmap_set_bit(&nm->relatives, v);
+        }
+        opal_list_append(children, &nm->super);
     }
     
     if (orte_process_info.hnp) {
@@ -797,21 +801,6 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
     
     /* my parent is the my_vpid-1 daemon */
     return (ORTE_PROC_MY_NAME->vpid - 1);
-}
-
-
-static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
-{
-    /* if the target is less than the root, then the path
-     * cannot lie through the root
-     */
-    
-    if (target < root) {
-        return false;
-    }
-
-    /* otherwise, it does! */
-    return true;
 }
 
 

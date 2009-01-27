@@ -24,15 +24,6 @@ ORTE_DECLSPEC int orte_routed_base_open(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
-/* struct for tracking routing trees */
-typedef struct {
-    opal_list_item_t super;
-    orte_vpid_t vpid;
-    opal_bitmap_t relatives;
-} orte_routed_tree_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_routed_tree_t);
-
-
 /*
  * Global functions for the ROUTED
  */

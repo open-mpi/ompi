@@ -18,7 +18,7 @@ libmca_routed_la_SOURCES =
 nobase_orte_HEADERS =
 
 # local files
-headers = routed.h
+headers = routed.h routed_types.h
 libmca_routed_la_SOURCES += $(headers)
 
 # Conditionally install the header files

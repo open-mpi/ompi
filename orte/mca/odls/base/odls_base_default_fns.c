@@ -376,8 +376,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     opal_byte_object_t *bo;
     opal_buffer_t alert;
     opal_list_item_t *item;
-    orte_namelist_t *nm;
-    opal_list_t daemon_tree;
     int8_t flag;
     int8_t *app_idx=NULL;
     char **slot_str=NULL;
@@ -396,11 +394,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* set the default values since they may not be included in the data */
     *job = ORTE_JOBID_INVALID;
     
-    /* setup the daemon tree so that it can properly be destructed even if
-     * we encounter an error somewhere
-     */
-    OBJ_CONSTRUCT(&daemon_tree, opal_list_t);
-
     /* unpack the flag - are we co-locating debugger daemons? */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
@@ -581,9 +574,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         }
     }
     
-    /* get the daemon tree */
-    orte_routed.get_routing_tree(ORTE_PROC_MY_NAME->jobid, &daemon_tree);
-    
     /* cycle through the procs and find mine */
     proc.jobid = jobdat->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
@@ -627,35 +617,11 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             opal_list_append(&orte_local_children, &child->super);
             opal_condition_signal(&orte_odls_globals.cond);
             OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-        } else {            
-            /* is this proc on a daemon in a branch of the daemon tree
-             * that is below me? If so, then the daemon collective will
-             * receive a message via that direct child
-             */
-            for (item = opal_list_get_first(&daemon_tree);
-                 item != opal_list_get_end(&daemon_tree);
-                 item = opal_list_get_next(item)) {
-                nm = (orte_namelist_t*)item;
-                if (orte_routed.proc_is_below(nm->name.vpid, host_daemon)) {
-                    /* add to the count for collectives */
-                    jobdat->num_participating++;
-                    /* remove this node from the tree so we don't count it again */
-                    opal_list_remove_item(&daemon_tree, item);
-                    OBJ_RELEASE(item);
-                    break;
-                }
-            }
         }
     }
     
-    /* if I have local procs, mark me as participating */
-    if (0 < jobdat->num_local_procs) {
-        jobdat->num_participating++;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:construct:child: num_participating %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), jobdat->num_participating));
+    /* flag that the launch msg has been processed so daemon collectives can proceed */
+    jobdat->launch_msg_processed = true;
     
     if (NULL != app_idx) {
         free(app_idx);
@@ -668,11 +634,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         free(slot_str);
         slot_str = NULL;
     }
-    
-    while (NULL != (item = opal_list_remove_first(&daemon_tree))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemon_tree);
     
     return ORTE_SUCCESS;
 
@@ -714,11 +675,6 @@ REPORT_ERROR:
         slot_str = NULL;
     }
     
-    while (NULL != (item = opal_list_remove_first(&daemon_tree))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&daemon_tree);
-
     return rc;
 }
 
@@ -1557,7 +1513,7 @@ static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
     
 }
 
-static void setup_singleton_jobdat(orte_jobid_t jobid)
+void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
 {
     orte_odls_job_t *jobdat;
     int32_t one32;
@@ -1617,8 +1573,10 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
         }
         free(bo);
     }
-    /* setup the daemon collectives */
-    jobdat->num_participating = 1;    
+    /* flag that the "launch msg" has been processed so that daemon
+     * collectives can proceed
+     */
+    jobdat->launch_msg_processed = true;
 }
 
 int orte_odls_base_default_require_sync(orte_process_name_t *proc,
@@ -1668,7 +1626,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
          */
         child->alive = true;
         /* setup jobdat object for its job so daemon collectives work */
-        setup_singleton_jobdat(proc->jobid);
+        orte_odls_base_setup_singleton_jobdat(proc->jobid);
     }
     
     /* if the contact info is already set, then we are "de-registering" the child
@@ -2417,368 +2375,6 @@ CLEANUP:
     OBJ_DESTRUCT(&alert);
     
     return rc;    
-}
-
-static bool all_children_participated(orte_jobid_t job)
-{
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
-    
-    /* the thread is locked elsewhere - don't try to do it again here */
-    
-    for (item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        
-        /* is this child part of the specified job? */
-        if (child->name->jobid == job && !child->coll_recvd) {
-            /* if this child has *not* participated yet, return false */
-            return false;
-        }
-    }
-    
-    /* if we get here, then everyone in the job has participated */
-    return true;
-    
-}
-
-static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
-{
-    orte_jobid_t jobid;
-    orte_odls_job_t *jobdat;
-    orte_daemon_cmd_flag_t command=ORTE_DAEMON_COLL_CMD;
-    orte_std_cntr_t n;
-    opal_list_item_t *item;
-    int32_t num_contributors;
-    opal_buffer_t buf;
-    bool do_not_send = false;
-    orte_process_name_t my_parent;
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls: daemon collective called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    /* unpack the jobid using this collective */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobid, &n, ORTE_JOBID))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* lookup the job record for it */
-    jobdat = NULL;
-    for (item = opal_list_get_first(&orte_local_jobdata);
-         item != opal_list_get_end(&orte_local_jobdata);
-         item = opal_list_get_next(item)) {
-        jobdat = (orte_odls_job_t*)item;
-        
-        /* is this the specified job? */
-        if (jobdat->jobid == jobid) {
-            break;
-        }
-    }
-    if (NULL == jobdat) {
-        /* race condition - someone sent us a collective before we could
-         * parse the add_local_procs cmd. Just add the jobdat object
-         * and continue
-         */
-        jobdat = OBJ_NEW(orte_odls_job_t);
-        jobdat->jobid = jobid;
-        opal_list_append(&orte_local_jobdata, &jobdat->super);
-        /* flag that we entered this so we don't try to send it
-         * along before we unpack the launch cmd!
-         */
-        do_not_send = true;
-    }
-    
-    /* unpack the collective type */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->collective_type, &n, ORTE_GRPCOMM_COLL_T))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* unpack the number of contributors in this data bucket */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &num_contributors, &n, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    jobdat->num_contributors += num_contributors;
-    
-    /* xfer the data */
-    opal_dss.copy_payload(&jobdat->collection_bucket, data);
-    
-    /* count the number of participants collected */
-    jobdat->num_collected++;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls: daemon collective for job %s from %s type %ld num_collected %d num_participating %d num_contributors %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(jobid),
-                         ORTE_NAME_PRINT(sender),
-                         (long)jobdat->collective_type, jobdat->num_collected,
-                         jobdat->num_participating, jobdat->num_contributors));
-
-    /* if we locally created this, do not send it! */
-    if (do_not_send) {
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls: daemon collective do not send!",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return ORTE_SUCCESS;
-    }
-
-    if (jobdat->num_collected == jobdat->num_participating) {
-        /* if I am the HNP, go process the results */
-        if (orte_process_info.hnp) {
-            goto hnp_process;
-        }
-        
-        /* if I am not the HNP, send to my parent */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        /* add the requisite command header */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the jobid */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jobid, 1, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the collective type */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jobdat->collective_type, 1, ORTE_GRPCOMM_COLL_T))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the number of contributors */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jobdat->num_contributors, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* xfer the payload*/
-        opal_dss.copy_payload(&buf, &jobdat->collection_bucket);
-        /* reset everything for next collective */
-        jobdat->num_contributors = 0;
-        jobdat->num_collected = 0;
-        OBJ_DESTRUCT(&jobdat->collection_bucket);
-        OBJ_CONSTRUCT(&jobdat->collection_bucket, opal_buffer_t);
-        /* send it */
-        my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
-        my_parent.vpid = orte_routed.get_routing_tree(ORTE_PROC_MY_NAME->jobid, NULL);
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls: daemon collective not the HNP - sending to parent %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&my_parent)));
-        if (0 > (rc = orte_rml.send_buffer(&my_parent, &buf, ORTE_RML_TAG_DAEMON, 0))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        OBJ_DESTRUCT(&buf);
-    }
-    return ORTE_SUCCESS;
-    
-hnp_process:
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls: daemon collective HNP - xcasting to job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jobid)));
-    /* setup a buffer to send the results back to the job members */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    
-    if (ORTE_GRPCOMM_BARRIER == jobdat->collective_type) {
-        /* reset everything for next collective */
-        jobdat->num_contributors = 0;
-        jobdat->num_collected = 0;
-        OBJ_DESTRUCT(&jobdat->collection_bucket);
-        OBJ_CONSTRUCT(&jobdat->collection_bucket, opal_buffer_t);
-        /* don't need anything in this for a barrier */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(jobid, &buf, ORTE_RML_TAG_BARRIER))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    } else if (ORTE_GRPCOMM_ALLGATHER == jobdat->collective_type) {
-        /* add the data */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jobdat->num_contributors, 1, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&buf, &jobdat->collection_bucket))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        /* reset everything for next collective */
-        jobdat->num_contributors = 0;
-        jobdat->num_collected = 0;
-        OBJ_DESTRUCT(&jobdat->collection_bucket);
-        OBJ_CONSTRUCT(&jobdat->collection_bucket, opal_buffer_t);
-        /* send the buffer */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(jobid, &buf, ORTE_RML_TAG_ALLGATHER))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    } else {
-        /* no other collectives currently supported! */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-        rc = ORTE_ERR_NOT_IMPLEMENTED;
-    }
-    
-cleanup:
-    OBJ_DESTRUCT(&buf);
-    
-    return ORTE_SUCCESS;    
-}
-
-
-static void reset_child_participation(orte_jobid_t job)
-{
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
-    
-    for (item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        
-        /* is this child part of the specified job? */
-        if (child->name->jobid == job) {
-            /* clear flag */
-            child->coll_recvd = false;
-        }
-    }    
-}
-
-int orte_odls_base_default_collect_data(orte_process_name_t *proc,
-                                        opal_buffer_t *buf)
-{
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
-    int rc= ORTE_SUCCESS;
-    bool found=false;
-    orte_std_cntr_t n;
-    orte_odls_job_t *jobdat;
-    opal_buffer_t relay;
-
-    /* protect operations involving the global list of children */
-    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-    
-    /* is the sender a local proc, or a daemon relaying the collective? */
-    if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
-        /* this is a relay - call that code */
-        if (ORTE_SUCCESS != (rc = daemon_collective(proc, buf))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        goto CLEANUP;
-    }
-    
-    for (item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        
-        /* find this child */
-        if (OPAL_EQUAL == opal_dss.compare(proc, child->name, ORTE_NAME)) {
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls: collecting data from child %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
-            
-            found = true;
-            break;
-        }
-    }
-    
-    /* if it wasn't found on the list, then we need to add it - must have
-     * come from a singleton
-     */
-    if (!found) {
-        child = OBJ_NEW(orte_odls_child_t);
-        if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, proc, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        opal_list_append(&orte_local_children, &child->super);
-        /* we don't know any other info about the child, so just indicate it's
-         * alive
-         */
-        child->alive = true;
-        /* setup a jobdat for it */
-        setup_singleton_jobdat(proc->jobid);
-    }
-   
-    /* this was one of our local procs - find the jobdat for this job */
-    jobdat = NULL;
-    for (item = opal_list_get_first(&orte_local_jobdata);
-         item != opal_list_get_end(&orte_local_jobdata);
-         item = opal_list_get_next(item)) {
-        jobdat = (orte_odls_job_t*)item;
-        
-        /* is this the specified job? */
-        if (jobdat->jobid == proc->jobid) {
-            break;
-        }
-    }
-    if (NULL == jobdat) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        rc = ORTE_ERR_NOT_FOUND;
-        goto CLEANUP;
-    }
-    
-    /* unpack the collective type */
-    n = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &jobdat->collective_type, &n, ORTE_GRPCOMM_COLL_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-
-    /* collect the provided data */
-    opal_dss.copy_payload(&jobdat->local_collection, buf);
-    
-    /* flag this proc as having participated */
-    child->coll_recvd = true;
-
-    /* now check to see if all local procs in this job have participated */
-    if (all_children_participated(proc->jobid)) {
-       
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls: executing collective",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        /* prep a buffer to pass it all along */
-        OBJ_CONSTRUCT(&relay, opal_buffer_t);
-        /* pack the jobid */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&relay, &proc->jobid, 1, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the collective type */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&relay, &jobdat->collective_type, 1, ORTE_GRPCOMM_COLL_T))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the number of contributors */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&relay, &jobdat->num_local_procs, 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* xfer the payload*/
-        opal_dss.copy_payload(&relay, &jobdat->local_collection);
-        /* refresh the collection bucket for reuse */
-        OBJ_DESTRUCT(&jobdat->local_collection);
-        OBJ_CONSTRUCT(&jobdat->local_collection, opal_buffer_t);
-        reset_child_participation(proc->jobid);
-        /* pass this to the daemon collective operation */
-        daemon_collective(ORTE_PROC_MY_NAME, &relay);
-        
-        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
-                             "%s odls: collective completed",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    }
-    
-CLEANUP:
-    opal_condition_signal(&orte_odls_globals.cond);
-    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-    return rc;
 }
 
 int orte_odls_base_get_proc_stats(opal_buffer_t *answer,

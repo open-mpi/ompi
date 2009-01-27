@@ -36,6 +36,8 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+#include "orte/mca/routed/routed_types.h"
+
 BEGIN_C_DECLS
 
 
@@ -198,30 +200,10 @@ typedef int (*orte_routed_module_update_routing_tree_fn_t)(void);
  *
  * Fills the provided list with the direct children of this process
  * in the routing tree, and returns the vpid of the parent. Only valid
- * when called by a daemon or the HNP.
+ * when called by a daemon or the HNP. Passing a NULL pointer will result
+ * in onlly the parent vpid being returned.
  */
-typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(orte_jobid_t job, opal_list_t *children);
-
-/*
- * Is the specified process below the given root in the routing tree graph?
- *
- * Checks the routing tree to see if the specified process lies below the root
- * in the graph. This is required to support the daemon collective process.
- * It differs from get_route in that it is not concerned with identifying
- * the next hop to take in communication routing, thus allowing the two
- * (routing vs collective) to differ.
- *
- * RHC: eventually, we may want to merge the two functions. However, it is
- * also possible we may want to maintain separation so that we can have
- * daemon collectives that follow an initial wiring pattern, but also allow
- * for dynamically defined comm patterns.
- *
- * @retval TRUE Path flows through the root. The path
- * may require multiple steps before reaching the specified process.
- * @retval FALSE Path does not lie below.
- *
- */
-typedef bool (*orte_routed_module_proc_is_below_fn_t)(orte_vpid_t root, orte_vpid_t target);
+typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(opal_list_t *children);
 
 /*
  * Set lifeline process
@@ -267,7 +249,6 @@ struct orte_routed_module_t {
     /* fns for daemons */
     orte_routed_module_update_routing_tree_fn_t     update_routing_tree;
     orte_routed_module_get_routing_tree_fn_t        get_routing_tree;
-    orte_routed_module_proc_is_below_fn_t           proc_is_below;
     orte_routed_module_get_wireup_info_fn_t         get_wireup_info;
     /* FT Notification */
     orte_routed_module_ft_event_fn_t                ft_event;
