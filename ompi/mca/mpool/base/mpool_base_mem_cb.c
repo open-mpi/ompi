@@ -20,7 +20,6 @@
  * @file
  */
 #include "ompi_config.h"
-#include "orte/util/show_help.h"
 #include "mpool_base_mem_cb.h"
 #include "base.h"
 #include "orte/types.h"

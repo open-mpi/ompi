@@ -20,7 +20,6 @@
 
 #define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "mpool_fake.h"
