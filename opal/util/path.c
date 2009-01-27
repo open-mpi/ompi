@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -330,8 +331,8 @@ char* opal_find_absolute_path( char* app_name )
     if( opal_path_is_absolute(app_name) ) { /* already absolute path */
         abs_app_name = app_name;
     } else if( '.' == app_name[0] ) { /* the app is in the current directory */
-        char cwd[PATH_MAX], *pcwd;
-        pcwd = getcwd( cwd, PATH_MAX );
+        char cwd[OMPI_PATH_MAX], *pcwd;
+        pcwd = getcwd( cwd, OMPI_PATH_MAX );
         if( NULL == pcwd ) {
             /* too bad there is no way we can get the app absolute name */
             return NULL;
@@ -343,7 +344,7 @@ char* opal_find_absolute_path( char* app_name )
     }
     
     if( NULL != abs_app_name ) {
-        char* resolved_path = (char*)malloc(PATH_MAX);
+        char* resolved_path = (char*)malloc(OMPI_PATH_MAX);
 #if !defined(__WINDOWS__)
         realpath( abs_app_name, resolved_path );
 #else

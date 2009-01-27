@@ -318,6 +318,9 @@ typedef long long bool;
  * Maximum size of a filename path.
  */
 #include <limits.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 #if defined(PATH_MAX)
 #define OMPI_PATH_MAX	(PATH_MAX + 1)
 #elif defined(_POSIX_PATH_MAX)

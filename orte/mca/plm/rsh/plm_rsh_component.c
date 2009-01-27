@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -286,9 +287,9 @@ static char **search(const char* agent_list)
     int i, j;
     char *line, **lines = opal_argv_split(agent_list, ':');
     char **tokens, *tmp;
-    char cwd[PATH_MAX];
+    char cwd[OMPI_PATH_MAX];
 
-    getcwd(cwd, PATH_MAX);
+    getcwd(cwd, OMPI_PATH_MAX);
     for (i = 0; NULL != lines[i]; ++i) {
         line = lines[i];
 
