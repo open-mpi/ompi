@@ -25,7 +25,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
 #include "mpool_fake.h"
 #include <errno.h>
 #include <string.h>

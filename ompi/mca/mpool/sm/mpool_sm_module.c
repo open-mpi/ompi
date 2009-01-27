@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 #include <string.h>
-#include "orte/util/show_help.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #ifdef HAVE_UNISTD_H
