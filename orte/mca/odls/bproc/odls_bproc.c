@@ -63,8 +63,7 @@ orte_odls_base_module_t orte_odls_bproc_module = {
     orte_odls_bproc_kill_local_procs,
     orte_odls_bproc_signal_local_procs,
     orte_odls_base_default_deliver_message,
-    orte_odls_base_default_require_sync,
-    orte_odls_base_default_collect_data
+    orte_odls_base_default_require_sync
 };
 
 static int odls_bproc_make_dir(char *directory);

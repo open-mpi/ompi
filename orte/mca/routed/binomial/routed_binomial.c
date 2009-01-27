@@ -44,8 +44,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
 static int update_routing_tree(void);
-static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children);
-static bool proc_is_below(orte_vpid_t root, orte_vpid_t target);
+static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 
@@ -65,7 +64,6 @@ orte_routed_module_t orte_routed_binomial_module = {
     set_lifeline,
     update_routing_tree,
     get_routing_tree,
-    proc_is_below,
     get_wireup_info,
 #if OPAL_ENABLE_FT == 1
     binomial_ft_event
@@ -866,11 +864,10 @@ static int update_routing_tree(void)
     return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
+static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
     opal_list_item_t *item;
-    orte_namelist_t *nm;
-    orte_routed_tree_t *child;
+    orte_routed_tree_t *child, *nm;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -887,51 +884,15 @@ static orte_vpid_t get_routing_tree(orte_jobid_t job, opal_list_t *children)
              item != opal_list_get_end(&my_children);
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
-            nm = OBJ_NEW(orte_namelist_t);
-            nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-            nm->name.vpid = child->vpid;
-            opal_list_append(children, &nm->item);
+            nm = OBJ_NEW(orte_routed_tree_t);
+            nm->vpid = child->vpid;
+            opal_bitmap_copy(&nm->relatives, &child->relatives);
+            opal_list_append(children, &nm->super);
         }
     }
     
     /* return my parent's vpid */
     return my_parent.vpid;
-}
-
-static bool proc_is_below(orte_vpid_t root, orte_vpid_t target)
-{
-    opal_list_item_t *item;
-    orte_routed_tree_t *child;
-    
-    /* if I am anything other than a daemon or the HNP, this
-     * is a meaningless command as I am not allowed to route
-     */
-    if (!orte_process_info.daemon && !orte_process_info.hnp) {
-        return false;
-    }
-    
-    /* quick check: if root == target, then the answer is always true! */
-    if (root == target) {
-        return true;
-    }
-    
-    /* check the list of children to see if either their vpid
-     * matches target, or the target bit is set in their bitmap
-     */
-    
-    /* first find the specified child */
-    for (item = opal_list_get_first(&my_children);
-         item != opal_list_get_end(&my_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_routed_tree_t*)item;
-        if (child->vpid == root) {
-            /* now see if the target lies below this child */
-            return opal_bitmap_is_set_bit(&child->relatives, target);
-        }
-    }
-    
-    /* only get here if we have no children or we didn't find anything */
-    return false;
 }
 
 static int get_wireup_info(opal_buffer_t *buf)

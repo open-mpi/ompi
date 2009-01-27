@@ -128,16 +128,6 @@ ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc,
 ORTE_DECLSPEC int orte_odls_base_preload_files_app_context(orte_app_context_t* context);
 
 /*
- * Collect data to support collective operations across the procs
- */
-ORTE_DECLSPEC int orte_odls_base_default_collect_data(orte_process_name_t *proc, opal_buffer_t *buf);
-
-/*
- * Retrieve the daemon map
- */
-ORTE_DECLSPEC opal_pointer_array_t* orte_odls_base_get_daemon_map(void);
-
-/*
  * Obtain process stats on a child proc
  */
 ORTE_DECLSPEC int orte_odls_base_get_proc_stats(opal_buffer_t *answer, orte_process_name_t *proc);

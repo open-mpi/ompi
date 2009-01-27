@@ -54,6 +54,7 @@ ORTE_DECLSPEC extern int orte_grpcomm_base_output;
 ORTE_DECLSPEC extern bool mca_grpcomm_base_selected;
 ORTE_DECLSPEC extern opal_list_t mca_grpcomm_base_components_available;
 ORTE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
+ORTE_DECLSPEC extern int orte_grpcomm_profile_fd;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
@@ -78,9 +79,6 @@ ORTE_DECLSPEC   int orte_grpcomm_base_update_modex_entries(orte_process_name_t *
                                                            opal_buffer_t *rbuf);
 ORTE_DECLSPEC   int orte_grpcomm_base_load_modex_data(orte_process_name_t *proc, char *attribute_name,
                                                       void *data, int num_bytes);
-
-ORTE_DECLSPEC int orte_grpcomm_base_comm_start(void);
-ORTE_DECLSPEC int orte_grpcomm_base_comm_stop(void);
 
 /* Tuned collectives */
 ORTE_DECLSPEC void orte_grpcomm_base_coll_recv(int status, orte_process_name_t* sender,

@@ -101,6 +101,7 @@ OBJ_CLASS_INSTANCE(orte_odls_child_t,
 static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 {
     ptr->jobid = ORTE_JOBID_INVALID;
+    ptr->launch_msg_processed = false;
     ptr->apps = NULL;
     ptr->num_apps = 0;
     ptr->controls = 0;
@@ -113,7 +114,7 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
     ptr->collective_type = ORTE_GRPCOMM_COLL_NONE;
     ptr->num_contributors = 0;
-    ptr->num_participating = 0;
+    ptr->num_participating = -1;
     ptr->num_collected = 0;
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)

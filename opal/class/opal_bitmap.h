@@ -147,6 +147,21 @@ static inline int opal_bitmap_size(opal_bitmap_t *bm)
     return (NULL == bm) ? 0 : (bm->array_size * ((int) (sizeof(char) * 8)));
 }
 
+
+/**
+ * Copy a bitmap
+ *
+ * @param dest Pointer to the destination bitmap
+ * @param src Pointer to the source bitmap
+ * @ return OPAL error code if something goes wrong
+ */
+static inline void opal_bitmap_copy(opal_bitmap_t *dest, opal_bitmap_t *src)
+{
+    dest->bitmap = (unsigned char*)malloc(src->array_size);
+    memcpy(dest->bitmap, src->bitmap, src->array_size);
+    dest->array_size = src->array_size;
+}
+
 END_C_DECLS
 
 #endif

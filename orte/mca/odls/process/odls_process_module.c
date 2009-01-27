@@ -221,6 +221,5 @@ orte_odls_base_module_t orte_odls_process_module = {
     odls_process_kill_local_procs,
     odls_process_signal_local_proc,
     orte_odls_base_default_deliver_message,
-    orte_odls_base_default_require_sync,
-    orte_odls_base_default_collect_data
+    orte_odls_base_default_require_sync
 };

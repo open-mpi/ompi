@@ -64,15 +64,12 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 18
 #define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 19
 
-/* collective-based cmds */
-#define ORTE_DAEMON_COLL_CMD                (orte_daemon_cmd_flag_t) 20
-
 /* proc termination sync cmds */
-#define ORTE_DAEMON_WAITPID_FIRED           (orte_daemon_cmd_flag_t) 21
-#define ORTE_DAEMON_IOF_COMPLETE            (orte_daemon_cmd_flag_t) 22
+#define ORTE_DAEMON_WAITPID_FIRED           (orte_daemon_cmd_flag_t) 20
+#define ORTE_DAEMON_IOF_COMPLETE            (orte_daemon_cmd_flag_t) 21
 
 /* request proc resource usage */
-#define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 23
+#define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 22
 
     
 /*
@@ -105,6 +102,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 typedef struct orte_odls_job_t {
     opal_list_item_t    super;                  /* required to place this on a list */
     orte_jobid_t        jobid;                  /* jobid for this data */
+    bool                launch_msg_processed;   /* launch msg has been fully processed */
     orte_app_context_t  **apps;                 /* app_contexts for this job */
     orte_std_cntr_t     num_apps;               /* number of app_contexts */
     orte_job_controls_t controls;               /* control flags for job */

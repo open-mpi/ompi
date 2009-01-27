@@ -46,7 +46,7 @@ bool mca_grpcomm_base_selected;
 orte_grpcomm_base_module_t orte_grpcomm;
 opal_list_t mca_grpcomm_base_components_available;
 orte_grpcomm_base_component_t mca_grpcomm_base_selected_component;
-
+int orte_grpcomm_profile_fd = -1;
 
 /**
  * Function for finding and opening either all MCA components, or the one
