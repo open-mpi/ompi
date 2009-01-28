@@ -71,6 +71,7 @@ static int test_upper( unsigned int length )
         iov_count = 5;
         max_data = 0;
         ompi_convertor_raw( pConv, iov, &iov_count, &max_data );
+	i -= max_data;
     }
     GET_TIME( end );
     total_time = ELAPSED_TIME( start, end );
@@ -100,7 +101,7 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
     long total_time;
     int i;
     uint32_t iov_count = iov_num;
-    size_t max_data;
+    size_t max_data = 0, remaining_length;
 
     iov = (struct iovec*)malloc(iov_num * sizeof(struct iovec));
 
@@ -110,14 +111,28 @@ static int local_copy_ddt_raw( ompi_datatype_t* pdt, int count, int iov_num )
         return OMPI_ERROR;
     }
 
+    remaining_length = count * pdt->size;
     GET_TIME( start );
-    while( 0 != ompi_convertor_raw(convertor, iov, &iov_count, &max_data) ) {
+    while( 0 == ompi_convertor_raw(convertor, iov, &iov_count, &max_data) ) {
+#if 0
+	printf( "New raw extraction (iov_count = %d, max_data = %lu)\n",
+		iov_count, max_data );
+	for( i = 0; i < iov_count; i++ ) {
+	    printf( "\t{%p, %d}\n", iov[i].iov_base, iov[i].iov_len );
+	}
+#endif
+	remaining_length -= max_data;
         iov_count = iov_num;
     }
+    remaining_length -= max_data;
     GET_TIME( end );
     total_time = ELAPSED_TIME( start, end );
     printf( "raw extraction in %ld microsec\n", total_time );
     OBJ_RELEASE( convertor );
+    if( remaining_length != 0 ) {
+	printf( "Not all raw description was been extracted (%ld bytes missing)\n",
+		remaining_length );
+    }
     return OMPI_SUCCESS;
 }
 
@@ -253,7 +268,9 @@ int main( int argc, char* argv[] )
     printf( ">>--------------------------------------------<<\n" );
     printf( "Vector data-type (450 times 10 double stride 11)\n" );
     pdt = create_vector_type( MPI_DOUBLE, 450, 10, 11 );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+	ompi_ddt_dump( pdt );
+    }
     if( outputFlags & CHECK_PACK_UNPACK ) {
         local_copy_ddt_raw(pdt, 1, iov_num);
     }
@@ -279,7 +296,9 @@ int main( int argc, char* argv[] )
     printf( ">>--------------------------------------------<<\n" );
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
-        ompi_ddt_dump( pdt );
+	if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+	    ompi_ddt_dump( pdt );
+	}
         local_copy_ddt_raw(pdt, 4500, iov_num);
     }
     printf( ">>--------------------------------------------<<\n" );
@@ -292,7 +311,6 @@ int main( int argc, char* argv[] )
     }
     printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
-    OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
     /* clean-ups all data allocations */
     ompi_ddt_finalize();
