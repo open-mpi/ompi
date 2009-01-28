@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -255,6 +255,15 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
 
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
+
+/*
+ * Give access to the raw memory layout based on the datatype.
+ */
+OMPI_DECLSPEC int32_t
+ompi_convertor_raw( ompi_convertor_t* convertor,  /* [IN/OUT] */
+                    struct iovec* iov,            /* [IN/OUT] */
+                    uint32_t* iov_count,          /* [IN/OUT] */
+                    size_t* length );             /* [OUT]    */
 
 /*
  * Upper level does not need to call the _nocheck function directly.
