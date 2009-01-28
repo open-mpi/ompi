@@ -175,6 +175,24 @@ AM_DISABLE_STATIC
 
 OMPI_SETUP_WRAPPER_INIT
 
+##################################
+# Check for known incompatibility
+##################################
+
+# Do *not* print a message that we're checking the OS because this
+# test is *not* meant to be an all-inclusive "if it passes this test,
+# then configure must succeed" test.  This test is *only* mean to
+# screen out the versions of OS X where we know OMPI will cause kernel
+# panics because of bad implementations of pty's.  See
+# https://svn.open-mpi.org/trac/ompi/ticket/1637 for details.
+
+# We do not support OS X before version 10.4 (Tiger)
+case $host_os in
+# Corresponds to OS X 10.0 - 10.3 (additional [] quoting for m4)
+darwin[[4567]]*) 
+    AC_MSG_WARN([Open MPI does not support OS X prior to version 10.4 (Tiger)])
+    AC_MSG_ERROR([Cannot continue])
+esac
 
 ############################################################################
 # Check for compilers and preprocessors
