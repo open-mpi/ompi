@@ -85,17 +85,20 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
 	    size_t blength = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
 	    source_base += pElem->elem.disp;
 	    if( blength == pElem->elem.extent ) { /* no resized data */
-	        blength *= count_desc;
-		/* now here we have a basic datatype */
-		OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
-					    pConvertor->pDesc, pConvertor->count );
-		DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
-				       index, source_base, (unsigned long)blength ); );
-		iov[index].iov_base = source_base;
-		iov[index].iov_len  = blength;
-		source_base += blength;
-		raw_data += blength;
-		index++;
+		if( index < *iov_count ) {
+		    blength *= count_desc;
+		    /* now here we have a basic datatype */
+		    OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
+						pConvertor->pDesc, pConvertor->count );
+		    DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
+					   index, source_base, (unsigned long)blength ); );
+		    iov[index].iov_base = source_base;
+		    iov[index].iov_len  = blength;
+		    source_base += blength;
+		    raw_data += blength;
+		    index++;
+		    count_desc = 0;
+		}
 	    } else {
 	        for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
 		    OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
@@ -172,7 +175,6 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
 		    pos_desc += pElem->loop.items + 1;
 		    goto update_loop_description;
 		}
-		/* Save the stack with the correct last_count value. */
 	    }
 	    local_disp = (ptrdiff_t)source_base - local_disp;
 	    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, count_desc,
