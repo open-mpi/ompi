@@ -13,10 +13,6 @@
 #ifndef DATATYPE_PACK_H_HAS_BEEN_INCLUDED
 #define DATATYPE_PACK_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
-
-#include "ompi/datatype/datatype_checksum.h"
-
 static inline void pack_predefined_data( ompi_convertor_t* CONVERTOR,
                                          dt_elem_desc_t* ELEM,
                                          uint32_t* COUNT,

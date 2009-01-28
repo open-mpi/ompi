@@ -21,8 +21,6 @@ extern int ompi_pack_debug;
 #define DO_DEBUG(INST)
 #endif  /* OMPI_ENABLE_DEBUG */
 
-#include "ompi/datatype/datatype_pack.h"
-
 /**
  * This function always work in local representation. This means no representation
  * conversion (i.e. no heterogeneity) has to be taken into account, and that all
