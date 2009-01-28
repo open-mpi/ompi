@@ -275,7 +275,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     pElem = &(description[pos_desc]);
     source_base += pStack->disp;
 
-    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
+    DO_DEBUG( opal_output( 0, "pack start pos_desc %d count_desc %d disp %ld\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pos_desc, count_desc, (long)(source_base - pConvertor->pBaseBuf),
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
@@ -297,8 +297,10 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                 goto complete_loop;
             }
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-                DO_DEBUG( opal_output( 0, "pack end_loop count %d stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                       (int)pStack->count, pConvertor->stack_pos, pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
+                DO_DEBUG( opal_output( 0, "pack end_loop count %d stack_pos %d"
+				       " pos_desc %d disp %ld space %lu\n",
+                                       (int)pStack->count, pConvertor->stack_pos,
+				       pos_desc, (long)pStack->disp, (unsigned long)iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
                         /* we lie about the size of the next element in order to
