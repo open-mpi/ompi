@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,13 +18,13 @@
 # $HEADER$
 #
 
-
 # OMPI_CHECK_LOADLEVELER(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([OMPI_CHECK_LOADLEVELER],[
     AC_ARG_WITH([loadleveler],
                 [AC_HELP_STRING([--with-loadleveler(=DIR)],
                                 [Directory where the loadleveler software is installed])])
+    OMPI_CHECK_WITHDIR([loadleveler], [$with_loadleveler], [include/llapi.h])
 
     AS_IF([test "$with_loadleveler" = "no"],
           [ompi_check_loadleveler_happy="no"],

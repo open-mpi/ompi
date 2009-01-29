@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,9 +25,11 @@ AC_DEFUN([OMPI_CHECK_LSF],[
     AC_ARG_WITH([lsf],
         [AC_HELP_STRING([--with-lsf(=DIR)],
              [Build LSF support])])
+    OMPI_CHECK_WITHDIR([lsf], [$with_lsf], [include/lsf/lsbatch.h])
     AC_ARG_WITH([lsf-libdir],
        [AC_HELP_STRING([--with-lsf-libdir=DIR],
              [Search for LSF libraries in DIR])])
+    OMPI_CHECK_WITHDIR([lsf-libdir], [$with_lsf_libdir], [libbat.*])
 
     # Defaults
     ompi_check_lsf_dir_msg="compiler default"

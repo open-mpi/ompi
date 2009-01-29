@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -40,6 +41,7 @@ AC_DEFUN([OMPI_CHECK_PORTALS],[
     AC_ARG_WITH([portals],
         [AC_HELP_STRING([--with-portals(=DIR)],
              [Build Portals support, searching for installation in DIR])])
+    OMPI_CHECK_WITHDIR([portals], [$with_portals], [include/portals3.h])
     AC_ARG_WITH([portals-config],
             AC_HELP_STRING([--with-portals-config],
                            [configuration to use for Portals support.

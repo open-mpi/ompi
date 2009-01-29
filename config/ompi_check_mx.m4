@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -67,9 +68,11 @@ AC_DEFUN([OMPI_CHECK_MX],[
     AC_ARG_WITH([mx],
         [AC_HELP_STRING([--with-mx(=DIR)],
              [Build MX (Myrinet Express) support, searching for libraries in DIR])])
+    OMPI_CHECK_WITHDIR([mx], [$with_mx], [include/myriexpress.h])
     AC_ARG_WITH([mx-libdir],
         [AC_HELP_STRING([--with-mx-libdir=DIR],
              [Search for MX (Myrinet Express) libraries in DIR])])
+    OMPI_CHECK_WITHDIR([mx-libdir], [$with_mx_libdir], [libmyriexpress.*])
 
     ompi_check_mx_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_mx_$1_save_LDFLAGS="$LDFLAGS"
