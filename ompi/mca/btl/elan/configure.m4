@@ -3,6 +3,7 @@
 # Copyright (c) 2007      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,9 +20,11 @@ AC_DEFUN([OMPI_CHECK_ELAN],[
     AC_ARG_WITH([elan],
 	[AC_HELP_STRING([--with-elan(=DIR)],
 		[Build Elan (QsNet2) support, searching for libraries in DIR])])
+    OMPI_CHECK_WITHDIR([elan], [$with_elan], [include/elan/elan.h])
     AC_ARG_WITH([elan-libdir],
 	[AC_HELP_STRING([--with-elan-libdir=DIR],
 		[Search for Elan (QsNet2) libraries in DIR])])
+    OMPI_CHECK_WITHDIR([elan-libdir], [$with_elan_libdir], [libelan.*])
     
     AS_IF([test "$with_elan" != "no"],
 	[AS_IF([test ! -z "$with_elan" -a "$with_elan" != "yes"],

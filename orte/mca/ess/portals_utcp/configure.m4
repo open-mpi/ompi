@@ -10,13 +10,13 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
 
 # MCA_ess_portals_utcp_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
@@ -32,6 +32,7 @@ AC_DEFUN([MCA_ess_portals_utcp_CONFIG],[
     AC_ARG_WITH(portals, 
         AC_HELP_STRING([--with-portals=DIR],
                        [Specify the installation directory of PORTALS]))
+    OMPI_CHECK_WITHDIR([portals], [$with_portals], [include/portals3.h])
 
     AS_IF([test -n "$with_portals"],
           [AS_IF([test -d "$with_portals/include"],

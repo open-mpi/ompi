@@ -10,14 +10,13 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
 # 
 # $HEADER$
 #
-
 
 # OMPI_CHECK_UDAPL(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
@@ -28,9 +27,11 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
     AC_ARG_WITH([udapl],
         [AC_HELP_STRING([--with-udapl(=DIR)],
              [Build uDAPL support, searching for libraries in DIR])])
+    OMPI_CHECK_WITHDIR([udapl], [$with_udapl], [include/dat/udat.h])
     AC_ARG_WITH([udapl-libdir],
        [AC_HELP_STRING([--with-udapl-libdir=DIR],
              [Search for uDAPL libraries in DIR])])
+    OMPI_CHECK_WITHDIR([udapl-libdir], [$with_udapl_libdir], [libdat.*])
 
     # Special case for OFED/Linux: the default /etc/dat.conf that
     # ships with OFED is broken in that it includes DAT providers that
