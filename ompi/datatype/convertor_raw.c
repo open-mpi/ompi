@@ -43,27 +43,27 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
     assert( (*iov_count) > 0 );
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP) ) {
         /* The convertor contain minimal informations, we only use the bConverted
-	 * to manage the conversion. This function work even after the convertor
-	 * was moved to a specific position.
+         * to manage the conversion. This function work even after the convertor
+         * was moved to a specific position.
          */
         ompi_convertor_get_current_pointer( pConvertor, (void**)&iov[0].iov_base );
         iov[0].iov_len = pConvertor->local_size - pConvertor->bConverted;
-	*length = iov[0].iov_len;
-	pConvertor->bConverted = pConvertor->local_size;
-	pConvertor->flags |= CONVERTOR_COMPLETED;
-	*iov_count = 1;
-	return 1;  /* we're done */
+        *length = iov[0].iov_len;
+        pConvertor->bConverted = pConvertor->local_size;
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        *iov_count = 1;
+        return 1;  /* we're done */
     }
 
-    DO_DEBUG( opal_output( 0, "ompi_convertor_raw( %p, {%p, %lu}, %p )\n", (void*)pConvertor,
-                           iov, *iov_count, *length ); );
+    DO_DEBUG( opal_output( 0, "ompi_convertor_raw( %p, {%p, %u}, %lu )\n", (void*)pConvertor,
+                           (void*)iov, *iov_count, *length ); );
 
     description = pConvertor->use_desc->desc;
 
     /* For the first step we have to add both displacement to the source. After in the
-     * main while loop we will set back the source_base to the correct value. This is
-     * due to the fact that the convertor can stop in the middle of a data with a count
-     */
+    * main while loop we will set back the source_base to the correct value. This is
+    * due to the fact that the convertor can stop in the middle of a data with a count
+    */
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc     = pStack->index;
     source_base  = pConvertor->pBaseBuf + pStack->disp;
@@ -72,124 +72,120 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
     source_base += pStack->disp;
-
     DO_DEBUG( opal_output( 0, "raw start pos_desc %d count_desc %d disp %ld\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pos_desc, count_desc, (long)(source_base - pConvertor->pBaseBuf),
                            pConvertor->stack_pos, pStack->index, (int)pStack->count, (long)pStack->disp ); );
-
     while( 1 ) {
         while( pElem->elem.common.flags & DT_FLAG_DATA ) {
-	    size_t blength = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
-	    source_base += pElem->elem.disp;
-	    if( blength == pElem->elem.extent ) { /* no resized data */
-		if( index < *iov_count ) {
-		    blength *= count_desc;
-		    /* now here we have a basic datatype */
-		    OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
-						pConvertor->pDesc, pConvertor->count );
-		    DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
-					   index, source_base, (unsigned long)blength ); );
-		    iov[index].iov_base = source_base;
-		    iov[index].iov_len  = blength;
-		    source_base += blength;
-		    raw_data += blength;
-		    index++;
-		    count_desc = 0;
-		}
-	    } else {
-	        for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
-		    OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
-						pConvertor->pDesc, pConvertor->count );
-		    DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %lu}\n",
-					   index, source_base, (unsigned long)blength ); );
-		    iov[index].iov_base = source_base;
-		    iov[index].iov_len  = blength;
-		    source_base += blength;
-		    raw_data += blength;
-		    count_desc--;
-		}
-	    }
-	    source_base -= pElem->elem.disp;
-	    if( 0 == count_desc ) {  /* completed */
-	        source_base = pConvertor->pBaseBuf + pStack->disp;
-		pos_desc++;  /* advance to the next data */
-		UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-		continue;
-	    }
-	    goto complete_loop;
-	}
-	if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-	    DO_DEBUG( opal_output( 0, "raw end_loop count %d stack_pos %d"
-				   " pos_desc %d disp %ld space %lu\n",
-				   (int)pStack->count, pConvertor->stack_pos,
-				   pos_desc, (long)pStack->disp, (unsigned long)raw_data ); );
-	    if( --(pStack->count) == 0 ) { /* end of loop */
-	        if( pConvertor->stack_pos == 0 ) {
-		  /* we lie about the size of the next element in order to
-		   * make sure we exit the main loop.
-		   */
-		  *iov_count = index;
-		  goto complete_loop;  /* completed */
-		}
-		pConvertor->stack_pos--;
-		pStack--;
-		pos_desc++;
-	    } else {
-	        pos_desc = pStack->index + 1;
-		if( pStack->index == -1 ) {
-		  pStack->disp += (pData->ub - pData->lb);
-		} else {
-		    assert( DT_LOOP == description[pStack->index].loop.common.type );
-		    pStack->disp += description[pStack->index].loop.extent;
-		}
-	    }
-	    source_base = pConvertor->pBaseBuf + pStack->disp;
-	    UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-	    DO_DEBUG( opal_output( 0, "raw new_loop count %d stack_pos %d "
-				   "pos_desc %d disp %ld space %lu\n",
-				   (int)pStack->count, pConvertor->stack_pos,
-				   pos_desc, (long)pStack->disp, (unsigned long)raw_data ); );
-	}
-	if( DT_LOOP == pElem->elem.common.type ) {
-	    ptrdiff_t local_disp = (ptrdiff_t)source_base;
-	    ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)(pElem + pElem->loop.items);
-	    
-	    if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
-	        uint32_t i;
+            size_t blength = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
+            source_base += pElem->elem.disp;
+            if( blength == (size_t)pElem->elem.extent ) { /* no resized data */
+                if( index < *iov_count ) {
+                    blength *= count_desc;
+                    /* now here we have a basic datatype */
+                    OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
+                                                pConvertor->pDesc, pConvertor->count );
+                    DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
+                                           index, source_base, (unsigned long)blength ); );
+                    iov[index].iov_base = source_base;
+                    iov[index].iov_len  = blength;
+                    source_base += blength;
+                    raw_data += blength;
+                    index++;
+                    count_desc = 0;
+                }
+            } else {
+                for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( source_base, blength, pConvertor->pBaseBuf,
+                                                pConvertor->pDesc, pConvertor->count );
+                    DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %lu}\n",
+                                           index, source_base, (unsigned long)blength ); );
+                    iov[index].iov_base = source_base;
+                    iov[index].iov_len  = blength;
+                    source_base += blength;
+                    raw_data += blength;
+                    count_desc--;
+                }
+            }
+            source_base -= pElem->elem.disp;
+            if( 0 == count_desc ) {  /* completed */
+                source_base = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;  /* advance to the next data */
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+                continue;
+            }
+            goto complete_loop;
+        }
+        if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
+            DO_DEBUG( opal_output( 0, "raw end_loop count %d stack_pos %d"
+                                   " pos_desc %d disp %ld space %lu\n",
+                                   (int)pStack->count, pConvertor->stack_pos,
+                                   pos_desc, (long)pStack->disp, (unsigned long)raw_data ); );
+            if( --(pStack->count) == 0 ) { /* end of loop */
+                if( pConvertor->stack_pos == 0 ) {
+                    /* we lie about the size of the next element in order to
+                    * make sure we exit the main loop.
+                    */
+                    *iov_count = index;
+                    goto complete_loop;  /* completed */
+                }
+                pConvertor->stack_pos--;
+                pStack--;
+                pos_desc++;
+            } else {
+                pos_desc = pStack->index + 1;
+                if( pStack->index == -1 ) {
+                    pStack->disp += (pData->ub - pData->lb);
+                } else {
+                    assert( DT_LOOP == description[pStack->index].loop.common.type );
+                    pStack->disp += description[pStack->index].loop.extent;
+                }
+            }
+            source_base = pConvertor->pBaseBuf + pStack->disp;
+            UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            DO_DEBUG( opal_output( 0, "raw new_loop count %d stack_pos %d "
+                                   "pos_desc %d disp %ld space %lu\n",
+                                   (int)pStack->count, pConvertor->stack_pos,
+                                   pos_desc, (long)pStack->disp, (unsigned long)raw_data ); );
+        }
+        if( DT_LOOP == pElem->elem.common.type ) {
+            ptrdiff_t local_disp = (ptrdiff_t)source_base;
+            ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)(pElem + pElem->loop.items);
 
-		source_base += end_loop->first_elem_disp;
-		for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
-		    OMPI_DDT_SAFEGUARD_POINTER( source_base, end_loop->size, pConvertor->pBaseBuf,
-						pConvertor->pDesc, pConvertor->count );
-		    iov[index].iov_base = source_base;
-		    iov[index].iov_len  = end_loop->size;
-		    source_base += pElem->loop.extent;
-		    raw_data += end_loop->size;
-		    count_desc--;
-		}
-		source_base -= end_loop->first_elem_disp;
-		if( 0 == count_desc ) {  /* completed */
-		    pos_desc += pElem->loop.items + 1;
-		    goto update_loop_description;
-		}
-	    }
-	    local_disp = (ptrdiff_t)source_base - local_disp;
-	    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, count_desc,
-			pStack->disp + local_disp);
-	    pos_desc++;
-	update_loop_description:  /* update the current state */
-	    source_base = pConvertor->pBaseBuf + pStack->disp;
-	    UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-	    DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
-	    continue;
-	}
+            if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
+                uint32_t i;
+                source_base += end_loop->first_elem_disp;
+                for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( source_base, end_loop->size, pConvertor->pBaseBuf,
+                                                pConvertor->pDesc, pConvertor->count );
+                    iov[index].iov_base = source_base;
+                    iov[index].iov_len  = end_loop->size;
+                    source_base += pElem->loop.extent;
+                    raw_data += end_loop->size;
+                    count_desc--;
+                }
+                source_base -= end_loop->first_elem_disp;
+                if( 0 == count_desc ) {  /* completed */
+                    pos_desc += pElem->loop.items + 1;
+                    goto update_loop_description;
+                }
+            }
+            local_disp = (ptrdiff_t)source_base - local_disp;
+            PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, count_desc,
+                        pStack->disp + local_disp);
+            pos_desc++;
+          update_loop_description:  /* update the current state */
+            source_base = pConvertor->pBaseBuf + pStack->disp;
+            UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
+            continue;
+        }
     }
- complete_loop:
+complete_loop:
     pConvertor->bConverted += raw_data;  /* update the already converted bytes */
     *length = raw_data;
     *iov_count = index;
-
     if( pConvertor->bConverted == pConvertor->local_size ) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
