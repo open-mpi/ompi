@@ -203,7 +203,11 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
          item != opal_list_get_end(&mca_iof_hnp_component.sinks);
          item = opal_list_get_next(item)) {
         orte_iof_sink_t *sink = (orte_iof_sink_t*)item;
-        if (sink->tag & rev->tag &&
+        /* if the target isn't set, then this sink is for another purpose - ignore it */
+        if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
+            continue;
+        }
+        if ((sink->tag & rev->tag) &&
             sink->name.jobid == rev->name.jobid &&
             (ORTE_VPID_WILDCARD == sink->name.vpid || sink->name.vpid == rev->name.vpid)) {
             /* need to send the data to the remote endpoint - if
@@ -275,17 +279,45 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 break;
             }
         }
-        
-    } else {
-        if (ORTE_IOF_STDOUT & rev->tag) {
-            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stdout);
-        } else {
-            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, &orte_iof_base.iof_write_stderr);
-            
-        }
-        /* re-add the event */
-        opal_event_add(&rev->ev, 0);
+        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
+        return;
     }
+    
+    /* see if the user wanted the output directed to files */
+    if (NULL != orte_output_filename) {
+        /* find the sink for this rank */
+        for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
+             item != opal_list_get_end(&mca_iof_hnp_component.sinks);
+             item = opal_list_get_next(item)) {
+            orte_iof_sink_t *sink = (orte_iof_sink_t*)item;
+            /* if the target is set, then this sink is for another purpose - ignore it */
+            if (ORTE_JOBID_INVALID != sink->daemon.jobid) {
+                continue;
+            }
+            /* if this sink isn't for output, ignore it */
+            if (ORTE_IOF_STDIN & sink->tag) {
+                continue;
+            }
+            /* is this the desired proc? */
+            if (sink->name.jobid == rev->name.jobid &&
+                sink->name.vpid == rev->name.vpid) {
+                /* output to the corresponding file */
+                orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev);
+                /* done */
+                break;
+            }
+        }
+    } else {
+        /* output this to our local output */
+        if (ORTE_IOF_STDOUT & rev->tag) {
+            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stdout->wev);
+        } else {
+            orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
+        }
+    }
+    
+    /* re-add the event */
+    opal_event_add(&rev->ev, 0);
 
      OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
     return;

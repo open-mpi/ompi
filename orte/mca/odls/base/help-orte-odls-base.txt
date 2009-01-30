@@ -31,3 +31,21 @@ Fileset: %s
 
 Will continue attempting to launch the process.
 
+#
+[orte-odls-base:xterm-neg-rank]
+The xterm option was given a negative rank to display:
+
+Rank: %d
+
+Note that a value of -1 represents "all", but all other values
+must range from 0 to #procs-1.
+#
+[orte-odls-base:xterm-rank-out-of-bounds]
+The xterm option was asked to display a rank that is larger
+than the number of procs in the job:
+
+Rank:     %d
+#procs:   %d
+
+Note that ranks start with 0, not 1, and must be specified
+accordingly.

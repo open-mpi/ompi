@@ -55,7 +55,6 @@ bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
 bool orte_static_ports = false;
 bool orte_keep_fqdn_hostnames = false;
-bool orte_tag_output;
 bool orte_show_resolved_nodenames;
 int orted_debug_failure;
 int orted_debug_failure_delay;
@@ -109,6 +108,13 @@ opal_pointer_array_t orte_jobmap;
 opal_list_t orte_local_children;
 /* list of job data for local children on a daemon */
 opal_list_t orte_local_jobdata;
+
+/* IOF controls */
+bool orte_tag_output;
+bool orte_timestamp_output;
+char *orte_output_filename;
+/* generate new xterm windows to display output from specified ranks */
+char *orte_xterm;
 
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 bool orte_forward_job_control;

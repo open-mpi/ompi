@@ -103,6 +103,33 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
         goto CLEAN_RETURN;
     }
     
+    /* see if the user wanted the output directed to files */
+    if (NULL != orte_output_filename) {
+        /* find the sink for this rank */
+        for (item = opal_list_get_first(&mca_iof_orted_component.sinks);
+             item != opal_list_get_end(&mca_iof_orted_component.sinks);
+             item = opal_list_get_next(item)) {
+            orte_iof_sink_t *sink = (orte_iof_sink_t*)item;
+            /* if the target is set, then this sink is for another purpose - ignore it */
+            if (ORTE_JOBID_INVALID != sink->daemon.jobid) {
+                continue;
+            }
+            /* if this sink isn't for output, ignore it */
+            if (ORTE_IOF_STDIN & sink->tag) {
+                continue;
+            }
+            /* is this the desired proc? */
+            if (sink->name.jobid == rev->name.jobid &&
+                sink->name.vpid == rev->name.vpid) {
+                /* output to the corresponding file */
+                orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev);
+                /* done */
+                break;
+            }
+        }
+        goto RESTART;
+    }
+    
     /* prep the buffer */
     buf = OBJ_NEW(opal_buffer_t);
     
@@ -134,6 +161,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             0, send_cb, NULL);
     
+RESTART:
     /* re-add the event */
     opal_event_add(&rev->ev, 0);
 

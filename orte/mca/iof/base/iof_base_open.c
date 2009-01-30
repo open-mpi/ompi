@@ -25,6 +25,8 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/os_dirpath.h"
+#include "opal/util/basename.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -84,6 +86,8 @@ OBJ_CLASS_INSTANCE(orte_iof_proc_t,
 
 static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 {
+    ptr->daemon.jobid = ORTE_JOBID_INVALID;
+    ptr->daemon.vpid = ORTE_VPID_INVALID;
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
@@ -163,31 +167,38 @@ orte_iof_base_t orte_iof_base;
  */
 int orte_iof_base_open(void)
 {
+    int rc;
+    
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, opal_list_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_write_output_lock, opal_mutex_t);
 
+    /* did the user request we print output to files? */
+    if (NULL != orte_output_filename) {
+        /* we will setup the files themselves as needed in the iof
+         * module. For now, let's see if the filename contains a
+         * path, or just a name
+         */
+        char *path;
+        path = opal_dirname(orte_output_filename);
+        if (0 != strcmp(path, orte_output_filename)) {
+            /* there is a path in this name - ensure that the directory
+             * exists, and create it if not
+             */
+            if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(path, S_IRWXU))) {
+                return rc;
+            }
+        }
+    }
+    
     /* daemons do not need to do this as they do not write out stdout/err */
     if (!orte_process_info.daemon) {
         /* setup the stdout event */
-        OBJ_CONSTRUCT(&orte_iof_base.iof_write_stdout, orte_iof_write_event_t);
-        orte_iof_base.iof_write_stdout.fd = 1;
-        /* create the write event, but don't add it until we need it */
-        opal_event_set(&orte_iof_base.iof_write_stdout.ev,
-                       orte_iof_base.iof_write_stdout.fd,
-                       OPAL_EV_WRITE,
-                       orte_iof_base_write_handler,
-                       &orte_iof_base.iof_write_stdout);
-        
+        ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
+                             1, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);        
         /* setup the stderr event */
-        OBJ_CONSTRUCT(&orte_iof_base.iof_write_stderr, orte_iof_write_event_t);
-        orte_iof_base.iof_write_stderr.fd = 2;
-        /* create the write event, but don't add it until we need it */
-        opal_event_set(&orte_iof_base.iof_write_stderr.ev,
-                       orte_iof_base.iof_write_stderr.fd,
-                       OPAL_EV_WRITE,
-                       orte_iof_base_write_handler,
-                       &orte_iof_base.iof_write_stderr);
+        ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stderr, ORTE_PROC_MY_NAME,
+                             2, ORTE_IOF_STDERR, orte_iof_base_write_handler, NULL);        
         /* do NOT set these file descriptors to non-blocking. If we do so,
          * we set the file descriptor to non-blocking for everyone that has
          * that file descriptor, which includes everyone else in our shell

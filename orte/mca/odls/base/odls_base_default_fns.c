@@ -904,6 +904,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     char dir[MAXPATHLEN];
     char **argvptr;
     char *full_search;
+    char **argvsav=NULL;
+    int inm;
 
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -1141,7 +1143,57 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 continue;
             }
             
-          /* setup the rest of the environment with the proc-specific items - these
+            /* did the user request we display output in xterms? */
+            if (NULL != orte_xterm) {
+                opal_list_item_t *nmitem;
+                orte_namelist_t *nm;
+                /* see if this rank is one of those requested */
+                for (nmitem = opal_list_get_first(&orte_odls_globals.xterm_ranks);
+                     nmitem != opal_list_get_end(&orte_odls_globals.xterm_ranks);
+                     nmitem = opal_list_get_next(nmitem)) {
+                    nm = (orte_namelist_t*)nmitem;
+                    /* check for bozo case */
+                    if (jobdat->num_procs <= nm->name.vpid) {
+                        /* can't be done! */
+                        orte_show_help("help-odls-base.txt",
+                                       "orte-odls-base:xterm-rank-out-of-bounds",
+                                       true, nm->name.vpid, jobdat->num_procs);
+                        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                        goto CLEANUP;
+                    }
+                    if (ORTE_VPID_WILDCARD == nm->name.vpid ||
+                        child->name->vpid == nm->name.vpid) {
+                        /* we want this one - modify the app's command to include
+                         * the orte xterm cmd. Need to be careful, though, that we
+                         * don't modify the app for ALL ranks that use it! So we
+                         * will create a copy of the argv so we can restore it later
+                         */
+                        argvsav = opal_argv_copy(app->argv);
+                        /* free the argv */
+                        opal_argv_free(app->argv);
+                        app->argv = NULL;
+                        /* now create a new one that starts with the xtermcmd */
+                        for (inm=0; inm < opal_argv_count(orte_odls_globals.xtermcmd); inm++) {
+                            opal_argv_append_nosize(&app->argv, orte_odls_globals.xtermcmd[inm]);
+                        }
+                        /* insert the rank into the correct place as a window title */
+                        free(app->argv[2]);
+                        asprintf(&app->argv[2], "Rank %s", ORTE_VPID_PRINT(child->name->vpid));
+                        /* add back the original argv */
+                        for (inm=0; inm < opal_argv_count(argvsav); inm++) {
+                            opal_argv_append_nosize(&app->argv, argvsav[inm]);
+                        }
+                        /* the app exe name itself is in the argvsav array, so
+                         * we can recover it from there later
+                         */
+                        free(app->app);
+                        app->app = strdup(orte_odls_globals.xtermcmd[0]);
+                        break;
+                    }
+                }
+            }
+            
+            /* setup the rest of the environment with the proc-specific items - these
              * will be overwritten for each child
              */
             if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job_str, child->name->jobid))) {
@@ -1168,6 +1220,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             }
             opal_setenv(param, vpid_str, true, &app->env);
             free(param);
+
             /* although the vpid IS the process' rank within the job, users
              * would appreciate being given a public environmental variable
              * that also represents this value - something MPI specific - so
@@ -1179,7 +1232,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_setenv("OMPI_COMM_WORLD_RANK", vpid_str, true, &app->env);
             free(vpid_str);  /* done with this now */
             
-            /* users would appreciate being given a public environmental variable
+           /* users would appreciate being given a public environmental variable
              * that also represents the local rank value - something MPI specific - so
              * do that here.
              *
@@ -1195,7 +1248,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
             free(value);
             
-            param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
+           param = mca_base_param_environ_variable("opal", NULL, "paffinity_base_slot_list");
             if ( NULL != child->slot_list ) {
                 asprintf(&value, "%s", child->slot_list);
                 opal_setenv(param, value, true, &app->env);
@@ -1205,7 +1258,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             }
             free(param);
             
-            /* if we are timing things, record when we are going to launch this proc */
+           /* if we are timing things, record when we are going to launch this proc */
             if (orte_timing) {
                 gettimeofday(&child->starttime, NULL);
             }
@@ -1266,6 +1319,17 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             }
             /* move to next processor */
             proc_rank++;
+            /* reset the exe name, if necessary */
+            if (NULL != argvsav) {
+                /* release the current argv array */
+                opal_argv_free(app->argv);
+                /* restore the original one */
+                app->argv = argvsav;
+                argvsav = NULL;
+                /* the app exe name itself is now in the argv[0] posn */
+                free(app->app);
+                app->app = strdup(app->argv[0]);
+            }
         }  /* complete launching all children for this app */
         /* reset our working directory back to our default location - if we
          * don't do this, then we will be looking for relative paths starting

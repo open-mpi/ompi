@@ -37,6 +37,8 @@ typedef uint8_t orte_iof_tag_t;
 #define ORTE_IOF_STDOUT     0x02
 #define ORTE_IOF_STDERR     0x04
 #define ORTE_IOF_STDDIAG    0x08
+#define ORTE_IOF_STDOUTALL  0x0e
+
 /* flow control flags */
 #define ORTE_IOF_XON        0x10
 #define ORTE_IOF_XOFF       0x20

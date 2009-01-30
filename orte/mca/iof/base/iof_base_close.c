@@ -36,6 +36,7 @@ int orte_iof_base_close(void)
     bool dump;
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
+    orte_iof_write_event_t *wev;
     int num_written;
     
     /* shutdown any remaining opened components */
@@ -48,13 +49,14 @@ int orte_iof_base_close(void)
     OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
     if (!orte_process_info.daemon) {
         /* check if anything is still trying to be written out */
-        if (!opal_list_is_empty(&orte_iof_base.iof_write_stdout.outputs)) {
+        wev = orte_iof_base.iof_write_stdout->wev;
+        if (!opal_list_is_empty(&wev->outputs)) {
             dump = false;
             /* make one last attempt to write this out */
-            while (NULL != (item = opal_list_remove_first(&orte_iof_base.iof_write_stdout.outputs))) {
+            while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
                 output = (orte_iof_write_output_t*)item;
                 if (!dump) {
-                    num_written = write(orte_iof_base.iof_write_stdout.fd, output->data, output->numbytes);
+                    num_written = write(wev->fd, output->data, output->numbytes);
                     if (num_written < output->numbytes) {
                         /* don't retry - just cleanout the list and dump it */
                         dump = true;
@@ -63,14 +65,15 @@ int orte_iof_base_close(void)
                 OBJ_RELEASE(output);
             }
         }
-        OBJ_DESTRUCT(&orte_iof_base.iof_write_stdout);
-        if (!opal_list_is_empty(&orte_iof_base.iof_write_stderr.outputs)) {
+        OBJ_RELEASE(orte_iof_base.iof_write_stdout);
+        wev = orte_iof_base.iof_write_stderr->wev;
+        if (!opal_list_is_empty(&wev->outputs)) {
             dump = false;
             /* make one last attempt to write this out */
-            while (NULL != (item = opal_list_remove_first(&orte_iof_base.iof_write_stderr.outputs))) {
+            while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
                 output = (orte_iof_write_output_t*)item;
                 if (!dump) {
-                    num_written = write(orte_iof_base.iof_write_stderr.fd, output->data, output->numbytes);
+                    num_written = write(wev->fd, output->data, output->numbytes);
                     if (num_written < output->numbytes) {
                         /* don't retry - just cleanout the list and dump it */
                         dump = true;
@@ -79,7 +82,7 @@ int orte_iof_base_close(void)
                 OBJ_RELEASE(output);
             }
         }
-        OBJ_DESTRUCT(&orte_iof_base.iof_write_stderr);
+        OBJ_RELEASE(orte_iof_base.iof_write_stderr);
     }
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
 

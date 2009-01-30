@@ -23,6 +23,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
@@ -31,9 +32,15 @@
 
 int orte_odls_base_close(void)
 {
+    opal_list_item_t *item;
+    
     /* cleanup ODLS globals */
     OBJ_DESTRUCT(&orte_odls_globals.mutex);
     OBJ_DESTRUCT(&orte_odls_globals.cond);
+    while (NULL != (item = opal_list_remove_first(&orte_odls_globals.xterm_ranks))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_odls_globals.xterm_ranks);
     if (NULL != orte_odls_globals.dmap && NULL != orte_odls_globals.dmap->bytes) {
         free(orte_odls_globals.dmap->bytes);
         free(orte_odls_globals.dmap);

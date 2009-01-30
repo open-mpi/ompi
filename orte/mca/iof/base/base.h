@@ -71,15 +71,6 @@ typedef struct {
 } orte_iof_write_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_event_t);
 
-struct orte_iof_base_t {
-    int                     iof_output;
-    opal_list_t             iof_components_opened;
-    opal_mutex_t            iof_write_output_lock;
-    orte_iof_write_event_t  iof_write_stdout;
-    orte_iof_write_event_t  iof_write_stderr;
-};
-typedef struct orte_iof_base_t orte_iof_base_t;
-
 typedef struct {
     opal_list_item_t super;
     orte_process_name_t name;
@@ -122,14 +113,25 @@ typedef struct {
 } orte_iof_write_output_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 
+/* the iof globals struct */
+struct orte_iof_base_t {
+    int                     iof_output;
+    opal_list_t             iof_components_opened;
+    opal_mutex_t            iof_write_output_lock;
+    orte_iof_sink_t         *iof_write_stdout;
+    orte_iof_sink_t         *iof_write_stderr;
+};
+typedef struct orte_iof_base_t orte_iof_base_t;
+
+
 #if OMPI_ENABLE_DEBUG
 
 #define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
     do {                                                            \
         orte_iof_sink_t *ep;                                        \
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
-                            "defining endpoint: %s %d",             \
-                            __FILE__, __LINE__));                   \
+                            "defining endpt: file %s line %d fd %d",\
+                            __FILE__, __LINE__, (fid)));            \
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
@@ -138,9 +140,11 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
             ep->wev->fd = (fid);                                    \
             opal_event_set(&(ep->wev->ev), ep->wev->fd,             \
                            OPAL_EV_WRITE,                           \
-                           wrthndlr, ep)     ;                      \
+                           wrthndlr, ep);                           \
         }                                                           \
-        opal_list_append((eplist), &ep->super);                     \
+        if (NULL != (eplist)) {                                     \
+            opal_list_append((eplist), &ep->super);                 \
+        }                                                           \
         *(snk) = ep;                                                \
         ep->file = strdup(__FILE__);                                \
         ep->line = __LINE__;                                        \
