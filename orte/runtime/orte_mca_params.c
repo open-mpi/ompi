@@ -211,6 +211,7 @@ int orte_register_params(void)
                                 "Number of nodes after which contiguous nodename encoding will automatically be used [default: INT_MAX]",
                                 false, false, INT32_MAX, &orte_contiguous_nodes);
     
+    /* whether to tag output */
     mca_base_param_reg_int_name("orte", "tag_output",
                                 "Tag all output with [job,rank] (default: false)",
                                 false, false, (int) false, &value);
@@ -224,7 +225,18 @@ int orte_register_params(void)
     if (orte_xml_output) {
         orte_tag_output = true;
     }
-
+    
+    /* whether to timestamp output */
+    mca_base_param_reg_int_name("orte", "timestamp_output",
+                                "Timestamp all application process output (default: false)",
+                                false, false, (int) false, &value);
+    orte_timestamp_output = OPAL_INT_TO_BOOL(value);
+    
+    /* redirect output into files */
+    mca_base_param_reg_string_name("orte", "output_filename",
+                                   "Redirect output from application processes into filename.rank [default: NULL]",
+                                   false, false, NULL, &orte_output_filename);
+    
     mca_base_param_reg_int_name("orte", "show_resolved_nodenames",
                                 "Display any node names that are resolved to a different name (default: false)",
                                 false, false, (int) false, &value);
@@ -245,6 +257,11 @@ int orte_register_params(void)
                                 "Whether or not an allocation by a resource manager is required [default: no]",
                                 false, false, (int)false, &value);
     orte_allocation_required = OPAL_INT_TO_BOOL(value);
+
+    /* generate new terminal windows to display output from specified ranks */
+    mca_base_param_reg_string_name("orte", "xterm",
+                                   "Create a new xterm window and display output from the specified ranks there [default: none]",
+                                   false, false, NULL, &orte_xterm);
 
     /* whether or not to forward SIGTSTP and SIGCONT signals */
     mca_base_param_reg_int_name("orte", "forward_job_control",

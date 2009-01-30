@@ -42,6 +42,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -91,6 +92,11 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     int flags;
     opal_list_item_t *item;
     orte_iof_proc_t *proct;
+    orte_iof_sink_t *sink;
+    char *outfile;
+    int fdout;
+    orte_odls_job_t *jobdat;
+    int np, numdigs;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted pushing fd %d for process %s",
@@ -124,20 +130,65 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
+    /* see if we are to output to a file */
+    if (NULL != orte_output_filename) {
+        /* get the local jobdata for this proc */
+        for (item = opal_list_get_first(&orte_local_jobdata);
+             item != opal_list_get_end(&orte_local_jobdata);
+             item = opal_list_get_next(item)) {
+            jobdat = (orte_odls_job_t*)item;
+            if (jobdat->jobid == proct->name.jobid) {
+                break;
+            }
+        }
+        np = jobdat->num_procs / 10;
+        /* determine the number of digits required for max vpid */
+        numdigs = 1;
+        while (np > 0) {
+            numdigs++;
+            np = np / 10;
+        }
+        /* construct the filename */
+        asprintf(&outfile, "%s.%*0lu", orte_output_filename, numdigs, (unsigned long)proct->name.vpid);
+        /* create the file */
+        fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
+        free(outfile);
+        if (fdout < 0) {
+            /* couldn't be opened */
+            ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+            return ORTE_ERR_FILE_OPEN_FAILURE;
+        }
+        /* define a sink to that file descriptor */
+        ORTE_IOF_SINK_DEFINE(&sink, dst_name, fdout, ORTE_IOF_STDOUTALL,
+                             orte_iof_base_write_handler,
+                             &mca_iof_orted_component.sinks);
+    }
     
 SETUP:
     /* define a read event and activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
         ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, ORTE_IOF_STDOUT,
-                            orte_iof_orted_read_handler, true);
+                            orte_iof_orted_read_handler, false);
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, ORTE_IOF_STDERR,
-                            orte_iof_orted_read_handler, true);
+                            orte_iof_orted_read_handler, false);
     } else if (src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, ORTE_IOF_STDDIAG,
-                            orte_iof_orted_read_handler, true);
+                            orte_iof_orted_read_handler, false);
     }
-    
+    /* if -all- of the readevents for this proc have been defined, then
+     * activate them. Otherwise, we can think that the proc is complete
+     * because one of the readevents fires -prior- to all of them having
+     * been defined!
+     */
+    if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+        proct->revstdout->active = true;
+        opal_event_add(&(proct->revstdout->ev), 0);
+        proct->revstderr->active = true;
+        opal_event_add(&(proct->revstderr->ev), 0);
+        proct->revstddiag->active = true;
+        opal_event_add(&(proct->revstddiag->ev), 0);
+    }
     return ORTE_SUCCESS;
 }
 

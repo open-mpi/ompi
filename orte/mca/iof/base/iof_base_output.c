@@ -30,6 +30,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #include <errno.h>
 
 #include "orte/util/name_fns.h"
@@ -47,17 +50,26 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     int i, j, k, starttaglen, endtaglen, num_buffered;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s write:output setting up to write %d bytes to %s of %s",
+                         "%s write:output setting up to write %d bytes to %s for %s on fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDIN & stream) ? "stdin" : ((ORTE_IOF_STDOUT & stream) ? "stdout" : ((ORTE_IOF_STDERR & stream) ? "stderr" : "stddiag")),
-                         ORTE_NAME_PRINT(name)));
+                         ORTE_NAME_PRINT(name), channel->fd));
 
     /* setup output object */
     output = OBJ_NEW(orte_iof_write_output_t);
     
     /* write output data to the corresponding tag */
     if (ORTE_IOF_STDIN & stream) {
-        suffix = NULL;
+        /* copy over the data to be written */
+        if (0 < numbytes) {
+            /* don't copy 0 bytes - we just need to pass
+             * the zero bytes so the fd can be closed
+             * after it writes everything out
+             */
+            memcpy(output->data, data, numbytes);
+        }
+        output->numbytes = numbytes;
+        goto process;
     } else if (ORTE_IOF_STDOUT & stream) {
         /* write the bytes to stdout */
         suffix = "stdout";
@@ -74,59 +86,92 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
                              "%s stream %0x", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), stream));
         return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
     }
-    
-    /* see if data is to be tagged */
-    if (orte_tag_output && NULL != suffix) {
-        /* if this is to be xml tagged, create a tag with the correct syntax */
-        if (orte_xml_output) {
-            snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "<%s rank=\"%s\">", suffix, ORTE_VPID_PRINT(name->vpid));
-            snprintf(endtag, ORTE_IOF_BASE_TAG_MAX, "</%s>", suffix);
-        } else {
-            snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "[%s,%s]<%s>",
-                     ORTE_LOCAL_JOBID_PRINT(name->jobid),
-                     ORTE_VPID_PRINT(name->vpid), suffix);
-            memset(endtag, '\0', ORTE_IOF_BASE_TAG_MAX);
-        }
-        starttaglen = strlen(starttag);
-        endtaglen = strlen(endtag);
-        /* start with the tag */
-        for (j=0, k=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
-            output->data[k++] = starttag[j];
-        }        
-        /* cycle through the data looking for <cr>
-         * and replace those with the tag
-         */
-        for (i=0; i < numbytes && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; i++) {
-            if ('\n' == data[i]) {
-                /* we need to break the line with the end tag */
-                for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
-                    output->data[k++] = endtag[j];
-                }
-                /* move the <cr> over */
-                output->data[k++] = '\n';
-                /* if this isn't the end of the line, add a new start tag */
-                if (i < numbytes-1) {
-                    for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
-                        output->data[k++] = starttag[j];
-                    }
-                }
-            } else {
-                output->data[k++] = data[i];
-            }
-        }
-        output->numbytes = k;
-    } else {
-        /* copy over the data to be written */
-        if (0 < numbytes) {
-            /* don't copy 0 bytes - we just need to pass
-             * the zero bytes so the fd can be closed
-             * after it writes everything out
-             */
-            memcpy(output->data, data, numbytes);
-        }
-        output->numbytes = numbytes;
+
+    /* if this is to be xml tagged, create a tag with the correct syntax - we do not allow
+     * timestamping of xml output
+     */
+    if (orte_xml_output) {
+        snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "<%s rank=\"%s\">", suffix, ORTE_VPID_PRINT(name->vpid));
+        snprintf(endtag, ORTE_IOF_BASE_TAG_MAX, "</%s>", suffix);
+        goto construct;
     }
     
+    /* if we are to timestamp output, start the tag with that */
+    if (orte_timestamp_output) {
+        time_t mytime;
+        char *cptr;
+        /* get the timestamp */
+        time(&mytime);
+        cptr = ctime(&mytime);
+        cptr[strlen(cptr)-1] = '\0';  /* remove trailing newline */
+        
+        if (orte_tag_output) {
+            /* if we want it tagged as well, use both */
+            snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "%s[%s,%s]<%s>:",
+                     cptr, ORTE_LOCAL_JOBID_PRINT(name->jobid),
+                     ORTE_VPID_PRINT(name->vpid), suffix);
+        } else {
+            /* only use timestamp */
+            snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "%s<%s>:", cptr, suffix);
+        }
+        /* no endtag for this option */
+        memset(endtag, '\0', ORTE_IOF_BASE_TAG_MAX);
+        goto construct;
+    }
+    
+    if (orte_tag_output) {
+        snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "[%s,%s]<%s>:",
+                 ORTE_LOCAL_JOBID_PRINT(name->jobid),
+                 ORTE_VPID_PRINT(name->vpid), suffix);
+        /* no endtag for this option */
+        memset(endtag, '\0', ORTE_IOF_BASE_TAG_MAX);
+        goto construct;
+    }
+    
+    /* if we get here, then the data is not to be tagged - just copy it
+     * and move on to processing
+     */
+    if (0 < numbytes) {
+        /* don't copy 0 bytes - we just need to pass
+         * the zero bytes so the fd can be closed
+         * after it writes everything out
+         */
+        memcpy(output->data, data, numbytes);
+    }
+    output->numbytes = numbytes;
+    goto process;
+
+construct:
+    starttaglen = strlen(starttag);
+    endtaglen = strlen(endtag);
+    /* start with the tag */
+    for (j=0, k=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+        output->data[k++] = starttag[j];
+    }        
+    /* cycle through the data looking for <cr>
+     * and replace those with the tag
+     */
+    for (i=0; i < numbytes && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; i++) {
+        if ('\n' == data[i]) {
+            /* we need to break the line with the end tag */
+            for (j=0; j < endtaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                output->data[k++] = endtag[j];
+            }
+            /* move the <cr> over */
+            output->data[k++] = '\n';
+            /* if this isn't the end of the line, add a new start tag */
+            if (i < numbytes-1) {
+                for (j=0; j < starttaglen && k < ORTE_IOF_BASE_TAGGED_OUT_MAX; j++) {
+                    output->data[k++] = starttag[j];
+                }
+            }
+        } else {
+            output->data[k++] = data[i];
+        }
+    }
+    output->numbytes = k;
+    
+process:
     /* lock us up to protect global operations */
     OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
     
@@ -154,7 +199,8 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
 
 void orte_iof_base_write_handler(int fd, short event, void *cbdata)
 {
-    orte_iof_write_event_t *wev = (orte_iof_write_event_t*)cbdata;
+    orte_iof_sink_t *sink = (orte_iof_sink_t*)cbdata;
+    orte_iof_write_event_t *wev = sink->wev;
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
     int num_written;

@@ -37,6 +37,8 @@
 
 BEGIN_C_DECLS
 
+#define ORTE_MAX_HOSTNAME_SIZE  512
+
 /**
  * Process information structure
  *

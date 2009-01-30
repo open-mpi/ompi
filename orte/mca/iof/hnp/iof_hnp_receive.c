@@ -27,6 +27,13 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#else
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#endif
 
 #include "orte/util/show_help.h"
 
@@ -129,9 +136,12 @@ static void process_msg(int fd, short event, void *cbdata)
         while (item != opal_list_get_end(&mca_iof_hnp_component.sinks)) {
             next = opal_list_get_next(item);
             sink = (orte_iof_sink_t*)item;
-            
+            /* if the target isn't set, then this sink is for another purpose - ignore it */
+            if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
+                continue;
+            }
             /* if this sink is the designated one, then remove it from list */
-            if (stream & sink->tag &&
+            if ((stream & sink->tag) &&
                 sink->name.jobid == origin.jobid &&
                 (ORTE_VPID_WILDCARD == sink->name.vpid ||
                  ORTE_VPID_WILDCARD == origin.vpid ||
@@ -161,19 +171,23 @@ static void process_msg(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&origin)));
     
-    /* write the output locally */
+    /* output this to our local output */
     if (ORTE_IOF_STDOUT & stream) {
-        orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stdout);
+        orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stdout->wev);
     } else {
-        orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stderr);
+        orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stderr->wev);
     }
     
     /* cycle through the endpoints to see if someone else wants a copy */
     for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
          item != opal_list_get_end(&mca_iof_hnp_component.sinks);
          item = opal_list_get_next(item)) {
-        orte_iof_sink_t* sink = (orte_iof_sink_t*)item;
-        if (stream & sink->tag &&
+        sink = (orte_iof_sink_t*)item;
+        /* if the target isn't set, then this sink is for another purpose - ignore it */
+        if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
+            continue;
+        }
+        if ((stream & sink->tag) &&
             sink->name.jobid == origin.jobid &&
             (ORTE_VPID_WILDCARD == sink->name.vpid ||
              ORTE_VPID_WILDCARD == origin.vpid ||

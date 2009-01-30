@@ -63,6 +63,10 @@ typedef struct {
     orte_odls_job_t *debugger;
     /* debugger launched */
     bool debugger_launched;
+    /* list of ranks to be displayed on separate xterms */
+    opal_list_t xterm_ranks;
+    /* the xterm cmd to be used */
+    char **xtermcmd;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;

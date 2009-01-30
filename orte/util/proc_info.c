@@ -64,7 +64,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .sock_stderr =          */   NULL
 };
 
-#define ORTE_MAX_HOSTNAME_SIZE  512
 static bool init=false;
 
 int orte_proc_info(void)

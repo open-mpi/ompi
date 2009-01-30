@@ -25,6 +25,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/trace.h"
+#include "opal/util/path.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_pointer_array.h"
@@ -35,6 +36,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+#include "orte/util/parse_options.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 
@@ -155,6 +157,10 @@ orte_odls_globals_t orte_odls_globals;
  */
 int orte_odls_base_open(void)
 {
+    char **ranks=NULL, *tmp;
+    int i, rank;
+    orte_namelist_t *nm;
+    
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
     orte_odls_globals.output = opal_output_open(NULL);
@@ -166,9 +172,50 @@ int orte_odls_base_open(void)
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_odls_globals.xterm_ranks, opal_list_t);
+    orte_odls_globals.xtermcmd = NULL;
     orte_odls_globals.dmap = NULL;
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
+    
+    /* check if the user requested that we display output in xterms */
+    if (NULL != orte_xterm) {
+        /* construct a list of ranks to be displayed */
+        orte_util_parse_range_options(orte_xterm, &ranks);
+        for (i=0; i < opal_argv_count(ranks); i++) {
+            nm = OBJ_NEW(orte_namelist_t);
+            rank = strtol(ranks[i], NULL, 10);
+            if (-1 == rank) {
+                /* wildcard */
+                nm->name.vpid = ORTE_VPID_WILDCARD;
+            } else if (rank < 0) {
+                /* error out on bozo case */
+                orte_show_help("help-odls-base.txt",
+                               "orte-odls-base:xterm-neg-rank",
+                               true, rank);
+                return ORTE_ERROR;
+            } else {
+                /* we can't check here if the rank is out of
+                 * range as we don't yet know how many ranks
+                 * will be in the job - we'll check later
+                 */
+                nm->name.vpid = rank;
+            }
+            opal_list_append(&orte_odls_globals.xterm_ranks, &nm->item);
+        }
+        opal_argv_free(ranks);
+        /* construct the xtermcmd */
+        orte_odls_globals.xtermcmd = NULL;
+        tmp = opal_find_absolute_path("xterm");
+        if (NULL == tmp) {
+            return ORTE_ERROR;
+        }
+        opal_argv_append_nosize(&orte_odls_globals.xtermcmd, tmp);
+        free(tmp);
+        opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-T");
+        opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "save");
+        opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
+    }
     
     /* Open up all available components */
 

@@ -63,6 +63,7 @@
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/class/opal_pointer_array.h"
@@ -73,6 +74,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/hnp_contact.h"
+#include "orte/util/parse_options.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
@@ -162,7 +164,16 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "tag", "output", '\0', "tag-output", "tag-output", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Tag all output with [job,rank]" },
-    
+    { "orte", "timestamp", "output", '\0', "timestamp-output", "timestamp-output", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Timestamp all application process output" },
+    { "orte", "output", "filename", '\0', "output-filename", "output-filename", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Redirect output from application processes into filename.rank" },
+    { "orte", "xterm", NULL, '\0', "xterm", "xterm", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Create a new xterm window and display output from the specified ranks there" },
+
     /* select stdin option */
     { NULL, NULL, NULL, '\0', "stdin", "stdin", 1,
       &orterun_globals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,

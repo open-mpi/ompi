@@ -265,6 +265,14 @@ is 10 seconds.
 .
 .
 .TP
+.B -output-filename\fR,\fP --output-filename \fR<filename>\fP
+Redirect the stdout, stderr, and stddiag of all ranks to a rank-unique version of
+the specified filename. Any directories in the filename will automatically be created.
+Each output file will consist of filename.rank, where the rank will be left-filled with
+zero's for correct ordering in listings.
+.
+.
+.TP
 .B -path\fR,\fP --path \fR<path>\fP
 <path> that will be used when attempting to locate the requested
 executables.  This is used prior to using the local PATH setting.
@@ -341,8 +349,13 @@ indicating that no ranks are to receive stdin.
 .
 .TP
 .B -tag-output\fR,\fP --tag-output
-Tag each line output to stdout, stderr, and stddiag with \fB[jobid, rank]<stdxxx>\fP indicating the process jobid
+Tag each line of output to stdout, stderr, and stddiag with \fB[jobid, rank]<stdxxx>\fP indicating the process jobid
 and rank that generated the output, and the channel which generated it.
+.
+.
+.TP
+.B -timestamp-output\fR,\fP --timestamp-output
+Timestamp each line of output to stdout, stderr, and stddiag.
 .
 .
 .TP
@@ -377,7 +390,10 @@ See the "Current Working Directory" section for notes on relative paths.
 .B Note:
 If the \fI-wdir\fP option appears both on the command line and in an
 application context, the context will take precedence over the command
-line.
+line. Relative paths are converted to absolute paths on the node where
+mpirun is executed. Thus, if the path to the desired wdir is different
+on the backend nodes, then it must be specified as an absolute path that
+is correct for the backend node.
 .
 .
 .TP
@@ -394,6 +410,20 @@ then use \fI-x\fP to export (not define) them.
 .TP
 .B -xml\fR,\fP --xml
 Provide all output to stdout, stderr, and stddiag in an xml format.
+.
+.
+.TP
+.B -xterm\fR,\fP --xterm \fR<ranks>\fP
+Display the specified ranks in separate xterm windows. The ranks are specified
+as a comma-separated list of ranges, with a -1 indicating all. A separate
+window will be created for each specified rank.
+.B Note:
+In some environments, xterm may require that the executable be in the user's
+path, or be specified in absolute or relative terms. Thus, it may be necessary
+to specify a local executable as "./foo" instead of just "foo". If xterm fails to
+find the executable, mpirun will hang, but still respond correctly to a ctrl-c.
+If this happens, please check that the executable is being specified correctly
+and try again.
 .
 .
 .P
