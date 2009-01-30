@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -244,6 +245,13 @@ int orte_register_params(void)
                                 "Whether or not an allocation by a resource manager is required [default: no]",
                                 false, false, (int)false, &value);
     orte_allocation_required = OPAL_INT_TO_BOOL(value);
+
+    /* whether or not to forward SIGTSTP and SIGCONT signals */
+    mca_base_param_reg_int_name("orte", "forward_job_control",
+                                "Forward SIGTSTP (after converting to SIGSTOP) and SIGCONT signals to the application procs [default: no]",
+                                false, false,
+                                (int) false, &value);
+    orte_forward_job_control = OPAL_INT_TO_BOOL(value);
         
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     

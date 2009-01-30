@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -482,6 +482,8 @@ ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
 ORTE_DECLSPEC extern opal_list_t orte_local_children;
 /* list of job data for local children on a daemon */
 ORTE_DECLSPEC extern opal_list_t orte_local_jobdata;
+/* whether or not to forward SIGTSTP and SIGCONT signals */
+ORTE_DECLSPEC extern bool orte_forward_job_control;
 
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */

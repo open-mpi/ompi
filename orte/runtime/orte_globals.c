@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -108,6 +109,9 @@ opal_pointer_array_t orte_jobmap;
 opal_list_t orte_local_children;
 /* list of job data for local children on a daemon */
 opal_list_t orte_local_jobdata;
+
+/* whether or not to forward SIGTSTP and SIGCONT signals */
+bool orte_forward_job_control;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 

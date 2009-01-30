@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -101,6 +101,8 @@ static struct opal_event int_handler;
 #ifndef __WINDOWS__
 static struct opal_event sigusr1_handler;
 static struct opal_event sigusr2_handler;
+static struct opal_event sigtstp_handler;
+static struct opal_event sigcont_handler;
 #endif  /* __WINDOWS__ */
 static orte_job_t *jdata;
 static char *orterun_basename = NULL;
@@ -569,7 +571,7 @@ int orterun(int argc, char *argv[])
     opal_signal_set(&int_handler, SIGINT,
                     abort_signal_callback, &int_handler);
     opal_signal_add(&int_handler, NULL);
-    
+
 #ifndef __WINDOWS__
     /** setup callbacks for signals we should foward */
     opal_signal_set(&sigusr1_handler, SIGUSR1,
@@ -578,6 +580,14 @@ int orterun(int argc, char *argv[])
     opal_signal_set(&sigusr2_handler, SIGUSR2,
                     signal_forward_callback, &sigusr2_handler);
     opal_signal_add(&sigusr2_handler, NULL);
+    if (orte_forward_job_control) {
+        opal_signal_set(&sigtstp_handler, SIGTSTP,
+                        signal_forward_callback, &sigtstp_handler);
+        opal_signal_add(&sigtstp_handler, NULL);
+        opal_signal_set(&sigcont_handler, SIGCONT,
+                        signal_forward_callback, &sigcont_handler);
+        opal_signal_add(&sigcont_handler, NULL);
+    }
 #endif  /* __WINDOWS__ */
     
     /* we are an hnp, so update the contact info field for later use */
@@ -845,6 +855,10 @@ static void terminated(int trigpipe, short event, void *arg)
     /** Remove the USR signal handlers */
     opal_signal_del(&sigusr1_handler);
     opal_signal_del(&sigusr2_handler);
+    if (orte_forward_job_control) {
+        opal_signal_del(&sigtstp_handler);
+        opal_signal_del(&sigcont_handler);
+    }
 #endif  /* __WINDOWS__ */
     
     /* get the daemon job object */

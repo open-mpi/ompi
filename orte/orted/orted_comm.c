@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -393,10 +394,6 @@ static int process_commands(orte_process_name_t* sender,
             
         /****    SIGNAL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_SIGNAL_LOCAL_PROCS:
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received signal_local_procs",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
             /* unpack the jobid */
             n = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
@@ -410,7 +407,22 @@ static int process_commands(orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
-                
+
+            /* Convert SIGTSTP to SIGSTOP so we can suspend a.out */
+            if (SIGTSTP == signal) {
+                if (orte_debug_daemons_flag) {
+                    opal_output(0, "%s orted_cmd: converted SIGTSTP to SIGSTOP before delivering",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                }
+                signal = SIGSTOP;
+            }
+
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received signal_local_procs, delivering signal %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            signal);
+            }
+
             /* signal them */
             if (ORTE_SUCCESS != (ret = orte_odls.signal_local_procs(NULL, signal))) {
                 ORTE_ERROR_LOG(ret);
