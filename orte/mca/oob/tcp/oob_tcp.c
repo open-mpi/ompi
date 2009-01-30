@@ -48,12 +48,15 @@
 #include "orte/util/show_help.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
+#include "opal/util/argv.h"
 #include "opal/class/opal_hash_table.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/parse_options.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
@@ -310,16 +313,25 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_listen_thread_sds[0] = -1;
     mca_oob_tcp_component.tcp_listen_thread_sds[1] = -1;
 
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "port_min_v4", "Starting port allowed (IPv4)",
-                           false, false,
-                           0,
-                           &mca_oob_tcp_component.tcp_port_min);
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "port_range_v4", "Range of allowed ports (IPv4)",
-                           false, false,
-                           64*1024 - 1 - mca_oob_tcp_component.tcp_port_min,
-                           &mca_oob_tcp_component.tcp_port_range);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "static_ports", "Static ports for daemons and procs (IPv4)",
+                              false, false,
+                              NULL,
+                              &str);
+    /* if ports were provided, parse the provided range */
+    if (NULL != str) {
+        orte_static_ports = true;
+        orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp4_static_ports);
+        if (0 == strcmp(mca_oob_tcp_component.tcp4_static_ports[0], "-1")) {
+            opal_argv_free(mca_oob_tcp_component.tcp4_static_ports);
+            mca_oob_tcp_component.tcp4_static_ports = NULL;
+            orte_static_ports = false;
+        }
+    } else {
+        orte_static_ports = false;
+        mca_oob_tcp_component.tcp4_static_ports = NULL;
+    }
+    
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "disable_family", "Disable IPv4 (4) or IPv6 (6)",
                            false, false,
@@ -327,15 +339,22 @@ int mca_oob_tcp_component_open(void)
                            &mca_oob_tcp_component.disable_family);
 #if OPAL_WANT_IPV6
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "port_min_v6", "Starting port allowed (IPv6)",
+                           "static_ports_v6", "Static ports for daemons and procs (IPv6)",
                            false, false,
-                           0,
-                           &mca_oob_tcp_component.tcp6_port_min);
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "port_range_v6", "Range of allowed ports (IPv6)",
-                           false, false,
-                           64*1024 - 1 - mca_oob_tcp_component.tcp6_port_min,
-                           &mca_oob_tcp_component.tcp6_port_range);
+                           NULL,
+                           &str);
+    if (NULL != str) {
+        orte_static_ports = true;
+        orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp6_static_ports);
+        if (0 == strcmp(mca_oob_tcp_component.tcp6_static_ports[0], "-1")) {
+            opal_argv_free(mca_oob_tcp_component.tcp6_static_ports);
+            mca_oob_tcp_component.tcp6_static_ports = NULL;
+            orte_static_ports = false;
+        }
+    } else {
+        orte_static_ports = false;
+        mca_oob_tcp_component.tcp6_static_ports = NULL;
+    }
     mca_oob_tcp_component.tcp6_listen_sd = -1;
 #endif  /* OPAL_WANT_IPV6 */
 
@@ -459,7 +478,8 @@ static void mca_oob_tcp_accept(int incoming_sd)
 static int
 mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t af_family)
 {
-    int flags, index, range = 0, port=0;
+    int flags;
+    uint16_t port=0;
     struct sockaddr_storage inaddr;
     opal_socklen_t addrlen;
 
@@ -520,79 +540,145 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     addrlen = sizeof(struct sockaddr_in);
 #endif
 
-    /* Disable reusing ports */
-    flags = 0;
+    /* If an explicit range of ports was given, find the first open
+       port in the range.  Otherwise, tcp_port_min will be 0, which
+       means "pick any port" */
+    if (AF_INET == af_family) {
+        if (orte_process_info.daemon) {
+            /* if static ports were provided, the daemon takes the
+             * first entry in the list - otherwise, we "pick any port"
+             */
+            if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
+                port = strtol(mca_oob_tcp_component.tcp4_static_ports[0], NULL, 10);
+                /* save the port for later use */
+                orte_process_info.my_port = port;
+                /* convert it to network-byte-order */
+                port = htons(port);
+                /* flag that we are using static ports */
+                orte_static_ports = true;
+            } else {
+                port = 0;
+                orte_static_ports = false;
+            }
+        } else if (orte_process_info.mpi_proc) {
+            /* if static ports were provided, an mpi proc takes its
+             * node_local_rank entry in the list IF it has that info
+             * AND enough ports were provided - otherwise, we "pick any port"
+             */
+            if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
+                orte_node_rank_t nrank;
+                /* do I know my node_local_rank yet? */
+                if (ORTE_NODE_RANK_INVALID != (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) &&
+                    nrank < opal_argv_count(mca_oob_tcp_component.tcp4_static_ports)) {
+                    /* any daemon takes the first entry, so we start with the second */
+                    port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
+                    /* save the port for later use */
+                    orte_process_info.my_port = port;
+                    /* convert it to network-byte-order */
+                    port = htons(port);
+                    /* flag that we are using static ports */
+                    orte_static_ports = true;
+                } else {
+                    port = 0;
+                    orte_static_ports = false;
+                }
+            } else {
+                port = 0;
+                orte_static_ports = false;
+            }
+        } else {
+            /* if we are the HNP or a tool, then we must let the
+             * system pick any port
+             */
+            port = 0;
+            orte_static_ports = false;
+        }
+    }
+
+#if OPAL_WANT_IPV6
+    if (AF_INET6 == af_family) {
+        if(orte_process_info.daemon) {
+            /* if static ports were provided, the daemon takes the
+             * first entry in the list - otherwise, we "pick any port"
+             */
+            if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
+                port = strtol(mca_oob_tcp_component.tcp6_static_ports[0], NULL, 10);
+                /* save the port for later use */
+                orte_process_info.my_port = port;
+                /* convert it to network-byte-order */
+                port = htons(port);
+                /* flag that we are using static ports */
+                orte_static_ports = true;
+            } else {
+                port = 0;
+                orte_static_ports = false;
+            }
+        } else if (orte_process_info.mpi_proc) {
+            /* if static ports were provided, an mpi proc takes its
+             * node_local_rank entry in the list IF it has that info
+             * AND enough ports were provided - otherwise, we "pick any port"
+             */
+            if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
+                orte_node_rank_t nrank;
+                /* do I know my node_local_rank yet? */
+                if (ORTE_NODE_RANK_INVALID != (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) &&
+                    nrank < opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
+                    /* any daemon takes the first entry, so we start with the second */
+                    port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
+                    /* save the port for later use */
+                    orte_process_info.my_port = port;
+                    /* convert it to network-byte-order */
+                    port = htons(port);
+                    /* flag that we are using static ports */
+                    orte_static_ports = true;
+                } else {
+                    port = 0;
+                    orte_static_ports = false;
+                }
+            } else {
+                port = 0;
+                orte_static_ports = false;
+           }
+        } else {
+            /* if we are the HNP or a tool, then we must let the
+             * system pick any port
+             */
+            port = 0;
+            orte_static_ports = false;
+        }
+    }
+#endif  /* OPAL_WANT_IPV6 */
+
+    /* Enable/disable reusing ports */
+    if (orte_static_ports) {
+        flags = 1;
+    } else {
+        flags = 0;
+    }
     if (setsockopt (*target_sd, SOL_SOCKET, SO_REUSEADDR, (const char *)&flags, sizeof(flags)) < 0) {
-        opal_output(0, "mca_oob_tcp_create_listen: unable to unset the "
+        opal_output(0, "mca_oob_tcp_create_listen: unable to set the "
                     "SO_REUSEADDR option (%s:%d)\n",
                     strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(*target_sd);
         return ORTE_ERROR;
     }
-
-    /* If an explicit range of ports was given, find the first open
-       port in the range.  Otherwise, tcp_port_min will be 0, which
-       means "pick any port" */
-    if (AF_INET == af_family) {
-        range = mca_oob_tcp_component.tcp_port_range;
-        port = mca_oob_tcp_component.tcp_port_min;
-    }
-#if OPAL_WANT_IPV6
-    if (AF_INET6 == af_family) {
-        range = mca_oob_tcp_component.tcp6_port_range;
-        port = mca_oob_tcp_component.tcp6_port_min;
-    }
-#endif  /* OPAL_WANT_IPV6 */
-
-#if 0
-    /* flag whether or not static ports are in use so that other
-     * parts of ORTE can act appropriately
-     * LEAVE OFF FOR MOMENT PENDING FURTHER TEST
-     */
-    if (0 != port) {
-        orte_static_ports = true;
-    }
-#endif
     
-    for (index = 0;  index < range; index++ ) {
-        if (AF_INET == af_family) {
-            ((struct sockaddr_in*) &inaddr)->sin_port = port + index;
-        } else if (AF_INET6 == af_family) {
-            ((struct sockaddr_in6*) &inaddr)->sin6_port = port + index;
-        } else {
-            return ORTE_ERROR;
-        }
-
-        if(bind(*target_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
-            if( (EADDRINUSE == opal_socket_errno) || (EADDRNOTAVAIL == opal_socket_errno) ) {
-                continue;
-            }
-            opal_output(0, "bind() failed: %s (%d)",
-                        strerror(opal_socket_errno),
-                        opal_socket_errno );
-            CLOSE_THE_SOCKET(*target_sd);
-            return ORTE_ERROR;
-        }
-        goto socket_binded;
+    if (AF_INET == af_family) {
+        ((struct sockaddr_in*) &inaddr)->sin_port = port;
+    } else if (AF_INET6 == af_family) {
+        ((struct sockaddr_in6*) &inaddr)->sin6_port = port;
+    } else {
+        return ORTE_ERROR;
+    }
+    
+    if(bind(*target_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
+        opal_output(0, "bind() failed: %s (%d)",
+                    strerror(opal_socket_errno),
+                    opal_socket_errno );
+        CLOSE_THE_SOCKET(*target_sd);
+        return ORTE_ERROR;
     }
 
-    if (AF_INET == af_family ) {
-        opal_output(0, "bind() failed: no port available in the range [%d..%d]",
-                    mca_oob_tcp_component.tcp_port_min,
-                    mca_oob_tcp_component.tcp_port_min + range);
-    }
-#if OPAL_WANT_IPV6
-    if (AF_INET6 == af_family) {
-        opal_output(0, "bind6() failed: no port available in the range [%d..%d]",
-                    mca_oob_tcp_component.tcp6_port_min,
-                    mca_oob_tcp_component.tcp6_port_min + range);
-    }
-#endif  /* OPAL_WANT_IPV6 */
-
-    CLOSE_THE_SOCKET(*target_sd);
-    return ORTE_ERROR;
-
- socket_binded:
     /* resolve assigned port */
     if (getsockname(*target_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         opal_output(0, "mca_oob_tcp_create_listen: getsockname(): %s (%d)", 
@@ -601,12 +687,19 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
         return ORTE_ERROR;
     }
 
+    /* record the assigned port */
     if (AF_INET == af_family) {
         *target_port = ((struct sockaddr_in*) &inaddr)->sin_port;
     } else {
         *target_port = ((struct sockaddr_in6*) &inaddr)->sin6_port;
     }
-
+    if (0 == port) {
+        /* if we dynamically assigned the port, save it here,
+         * remembering to convert it back from network byte order first
+         */
+        orte_process_info.my_port = ntohs(*target_port);
+    }
+    
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(*target_sd, SOMAXCONN) < 0) {
         opal_output(0, "mca_oob_tcp_component_init: listen(): %s (%d)", 

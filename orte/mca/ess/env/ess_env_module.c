@@ -331,7 +331,6 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     orte_pmap_t *pmap;
     
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_NODE_RANK_INVALID;
     }    
     

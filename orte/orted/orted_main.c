@@ -591,21 +591,14 @@ int orte_daemon(int argc, char *argv[])
          */
 
         buffer = OBJ_NEW(opal_buffer_t);
-        /* if we are using static ports, there is no need to send our
-         * contact info back to HNP - it already knows how to reach us
-         * Instead, just send a zero-byte buffer for barrier purposes
+        /* for now, always include our contact info, even if we are using
+         * static ports. Eventually, this will be removed
          */
-        if (!orte_static_ports) {
-            if (orte_debug_daemons_flag) {
-                fprintf(stderr, "Daemon %s not using static ports\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-            rml_uri = orte_rml.get_contact_info();
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                return ret;
-            }
+        rml_uri = orte_rml.get_contact_info();
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            return ret;
         }
         /* send our architecture */
         if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_process_info.arch, 1, OPAL_INT32))) {

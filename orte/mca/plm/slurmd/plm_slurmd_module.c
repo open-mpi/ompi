@@ -280,7 +280,7 @@ static int plm_slurmd_launch_job(orte_job_t *jdata)
     
    /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          "slurmd", 
+                                          "slurm", 
                                           &proc_vpid_index,
                                           false);
 
@@ -344,7 +344,7 @@ static int plm_slurmd_launch_job(orte_job_t *jdata)
     env = opal_argv_copy(orte_launch_environ);
 
     /* add the nodelist */
-    var = mca_base_param_environ_variable("orte", "slurmd", "nodelist");
+    var = mca_base_param_environ_variable("orte", "slurm", "nodelist");
     opal_setenv(var, nodelist_flat, true, &env);
     free(nodelist_flat);
     free(var);

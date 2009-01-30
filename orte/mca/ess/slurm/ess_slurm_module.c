@@ -28,11 +28,21 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 #include <ctype.h>
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
+
 
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/if.h"
+#include "opal/util/net.h"
+#include "opal/dss/dss.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -40,6 +50,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/nidmap.h"
+#include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -47,6 +58,7 @@
 
 static char *get_slurm_nodename(int nodeid);
 static int slurm_set_name(void);
+static int build_daemon_nidmap(void);
 
 static int rte_init(char flags);
 static int rte_finalize(void);
@@ -99,6 +111,27 @@ static int rte_init(char flags)
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
+        }
+        /* if we are using static ports, then we need to setup
+         * the daemon info so the RML can function properly
+         * without requiring a wireup stage
+         */
+        if (orte_static_ports) {
+            /* construct the nidmap arrays */
+            if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_util_nidmap_init";
+                goto error;
+            }
+            /* extract the node info from the environment and
+             * build a nidmap from it
+             */
+            if (ORTE_SUCCESS != (ret = build_daemon_nidmap())) {
+                ORTE_ERROR_LOG(ret);
+                error = "construct daemon map from static ports";
+                goto error;
+            }
+            return ORTE_SUCCESS;
         }
     } else if (orte_process_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
@@ -295,7 +328,6 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     orte_pmap_t *pmap;
     
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_NODE_RANK_INVALID;
     }    
     
@@ -430,4 +462,106 @@ get_slurm_nodename(int nodeid)
 
     /* All done */
     return ret;
+}
+
+static int build_daemon_nidmap(void)
+{
+    char **names = NULL;
+    char *slurm_nodelist;
+    orte_nid_t *node;
+    int i, num_nodes;
+    int rc;
+    struct hostent *h;
+    opal_buffer_t buf;
+    orte_process_name_t proc;
+    char *uri, *addr;
+    char *proc_name;
+    
+    OPAL_OUTPUT_VERBOSE((0, orte_ess_base_output,
+                         "ess:slurm build daemon nidmap"));
+    
+    slurm_nodelist = getenv("OMPI_MCA_orte_slurm_nodelist");
+    
+    if (NULL == slurm_nodelist) {
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* split the node list into an argv array */
+    names = opal_argv_split(slurm_nodelist, ',');
+    if (NULL == names) {  /* got an error */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    num_nodes = opal_argv_count(names);
+    
+    OPAL_OUTPUT_VERBOSE((0, orte_ess_base_output,
+                         "ess:slurm:build:daemon:nidmap found %d nodes", num_nodes));
+
+    /* set the size of the nidmap storage so we minimize realloc's */
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(&orte_nidmap, num_nodes+1))) {
+        return rc;
+    }
+
+    /* install the entry for the HNP */
+    node = OBJ_NEW(orte_nid_t);
+    node->name = strdup("HNP");
+    node->daemon = 0;
+    /* the arch defaults to our arch so that non-hetero
+     * case will yield correct behavior
+     */
+    opal_pointer_array_set_item(&orte_nidmap, 0, node);        
+    
+    /* the daemon vpids will be assigned in order,
+     * starting with vpid=1 for the first node in
+     * the list
+     */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    proc.jobid = ORTE_PROC_MY_NAME->jobid;
+    for (i=0; i < num_nodes; i++) {
+        node = OBJ_NEW(orte_nid_t);
+        node->name = strdup(names[i]);
+        node->daemon = i+1;
+        /* the arch defaults to our arch so that non-hetero
+         * case will yield correct behavior
+         */
+        opal_pointer_array_set_item(&orte_nidmap, node->daemon, node);        
+        
+        opal_output(0, "%s lookup address for node %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name);
+        /* lookup the address of this node */
+        if (NULL == (h = gethostbyname(node->name))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+                         
+        OPAL_OUTPUT_VERBOSE((0, orte_ess_base_output,
+                             "ess:slurm:build:daemon:nidmap node %s daemon %d addr %s",
+                             node->name, (int)node->daemon, addr));
+        
+        /* since we are using static ports, all my fellow daemons will be on my
+         * port. Setup the contact info for each daemon in my hash tables. Note
+         * that this will -not- open a port to those daemons, but will only
+         * define the info necessary for opening such a port if/when I communicate
+         * to them
+         */
+        /* construct the URI */
+        proc.vpid = node->daemon;
+orte_util_convert_process_name_to_string(&proc_name, &proc);
+        asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
+opal_output(0, "contact info %s", uri);
+        opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
+        free(proc_name);
+        free(uri);
+    }
+
+    /* load the hash tables */
+    if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&buf);
+    
+    opal_argv_free(names);
+    
+    /* All done */
+    return ORTE_SUCCESS;
 }

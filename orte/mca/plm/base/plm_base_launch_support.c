@@ -516,10 +516,13 @@ static void process_orted_launch_report(int fd, short event, void *data)
 CLEANUP:
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:orted_report_launch %s for daemon %s",
+                         "%s plm:base:orted_report_launch %s for daemon %s at contact %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
-                         ORTE_NAME_PRINT(&mev->sender)));
+                         ORTE_NAME_PRINT(&mev->sender), pdatorted[mev->sender.vpid]->rml_uri));
+
+    /* release the message */
+    OBJ_RELEASE(mev);
 
     if (orted_failed_launch) {
         orte_errmgr.incomplete_start(ORTE_PROC_MY_NAME->jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
