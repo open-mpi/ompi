@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -2290,6 +2290,12 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             
             goto MOVEON;
         }
+
+       /* First send a SIGCONT in case the process is in stopped state.
+          If it is in a stopped state and we do not first change it to
+          running, then SIGTERM will not get delivered.  Ignore return
+          value. */
+        kill_local(child->pid, SIGCONT);
         
         /* Send a sigterm to the process.  If we get ESRCH back, that
             means the process is already dead, so just move on. */
