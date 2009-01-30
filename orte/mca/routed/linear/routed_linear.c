@@ -319,8 +319,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
     
-    /* if this is going to the HNP, send direct */
-    if (ORTE_PROC_MY_HNP->jobid == target->jobid &&
+    /* if we are not using static ports and this is going to the HNP, send direct */
+    if (!orte_static_ports &&
+        ORTE_PROC_MY_HNP->jobid == target->jobid &&
         ORTE_PROC_MY_HNP->vpid == target->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routing not enabled - going direct",
@@ -362,7 +363,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
  found:
 
-    OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((0, orte_routed_base_output,
                          "%s routed_linear_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 

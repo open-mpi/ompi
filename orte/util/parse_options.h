@@ -29,7 +29,7 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC int orte_util_parse_rank_options(char *input, char ***output);
+ORTE_DECLSPEC void orte_util_parse_range_options(char *input, char ***output);
 
 END_C_DECLS
 #endif

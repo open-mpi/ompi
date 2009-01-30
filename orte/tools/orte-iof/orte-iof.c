@@ -273,10 +273,7 @@ main(int argc, char *argv[])
     }
     
     /* parse the input ranks */
-    if (ORTE_SUCCESS != (ret = orte_util_parse_rank_options(my_globals.ranks, &ranks))) {
-        ORTE_ERROR_LOG(ret);
-        goto cleanup;
-    }
+    orte_util_parse_range_options(my_globals.ranks, &ranks);
     
     /* pull the specified output streams and dump to our stdout */
     for (i=0; i < opal_argv_count(ranks); i++) {

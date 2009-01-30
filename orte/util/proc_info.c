@@ -54,6 +54,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .tool =                 */   false,
     /*  .mpi_proc =             */   false,
     /*  .sync_buf =             */   NULL,
+    /*  .my_port =              */   0,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .job_session_dir =      */   NULL,

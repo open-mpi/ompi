@@ -35,11 +35,12 @@
 
 #include "orte/util/parse_options.h"
 
-int orte_util_parse_rank_options(char *input, char ***output)
+void orte_util_parse_range_options(char *input, char ***output)
 {
     char **r1=NULL, **r2=NULL;
     int i, vint;
-    orte_vpid_t start, end, vpid;
+    int start, end, n;
+    char nstr[32];
     
     /* split on commas */
     r1 = opal_argv_split(input, ',');
@@ -61,10 +62,11 @@ int orte_util_parse_rank_options(char *input, char ***output)
                 goto cleanup;
             }
             start = strtol(r2[0], NULL, 10);
-            end = start + 1;
+            end = start;
         }
-        for (vpid = start; vpid < end; vpid++) {
-            opal_argv_append_nosize(output, ORTE_VPID_PRINT(vpid));
+        for (n = start; n <= end; n++) {
+            snprintf(nstr, 32, "%d", n);
+            opal_argv_append_nosize(output, nstr);
         }
     }
     
@@ -72,6 +74,4 @@ cleanup:
     opal_argv_free(r1);
     opal_argv_free(r2);
 
-    /* All was good */
-    return ORTE_SUCCESS;
 }
