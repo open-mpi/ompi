@@ -569,7 +569,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                 orte_node_rank_t nrank;
                 /* do I know my node_local_rank yet? */
                 if (ORTE_NODE_RANK_INVALID != (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) &&
-                    nrank < opal_argv_count(mca_oob_tcp_component.tcp4_static_ports)) {
+                    (nrank+1) < opal_argv_count(mca_oob_tcp_component.tcp4_static_ports)) {
                     /* any daemon takes the first entry, so we start with the second */
                     port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
                     /* save the port for later use */
@@ -622,7 +622,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                 orte_node_rank_t nrank;
                 /* do I know my node_local_rank yet? */
                 if (ORTE_NODE_RANK_INVALID != (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) &&
-                    nrank < opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
+                    (nrank+1) < opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
                     /* any daemon takes the first entry, so we start with the second */
                     port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
                     /* save the port for later use */
