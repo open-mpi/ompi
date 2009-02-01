@@ -196,7 +196,9 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                            OPAL_EV_WRITE,                           \
                            wrthndlr, ep);                           \
         }                                                           \
-        opal_list_append((eplist), &ep->super);                     \
+        if (NULL != (eplist)) {                                     \
+            opal_list_append((eplist), &ep->super);                 \
+        }                                                           \
         *(snk) = ep;                                                \
     } while(0);
 
