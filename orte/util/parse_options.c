@@ -35,12 +35,23 @@
 
 #include "orte/util/parse_options.h"
 
-void orte_util_parse_range_options(char *input, char ***output)
+void orte_util_parse_range_options(char *inp, char ***output)
 {
     char **r1=NULL, **r2=NULL;
     int i, vint;
     int start, end, n;
     char nstr[32];
+    char *input, *bang;
+    bool bang_option=false;
+    
+    /* protect the provided input */
+    input = strdup(inp);
+    
+    /* check for the special '!' operator */
+    if (NULL != (bang = strchr(input, '!'))) {
+        bang_option = true;
+        *bang = '\0';
+    }
     
     /* split on commas */
     r1 = opal_argv_split(input, ',');
@@ -58,6 +69,7 @@ void orte_util_parse_range_options(char *input, char ***output)
             vint = strtol(r1[i], NULL, 10);
             if (-1 == vint) {
                 opal_argv_free(*output);
+                *output = NULL;
                 opal_argv_append_nosize(output, "-1");
                 goto cleanup;
             }
@@ -71,6 +83,10 @@ void orte_util_parse_range_options(char *input, char ***output)
     }
     
 cleanup:
+    if (bang_option) {
+        opal_argv_append_nosize(output, "BANG");
+    }
+    free(input);
     opal_argv_free(r1);
     opal_argv_free(r2);
 

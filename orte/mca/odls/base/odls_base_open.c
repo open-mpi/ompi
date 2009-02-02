@@ -160,6 +160,7 @@ int orte_odls_base_open(void)
     char **ranks=NULL, *tmp;
     int i, rank;
     orte_namelist_t *nm;
+    bool xterm_hold;
     
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
@@ -181,8 +182,13 @@ int orte_odls_base_open(void)
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {
         /* construct a list of ranks to be displayed */
+        xterm_hold = false;
         orte_util_parse_range_options(orte_xterm, &ranks);
         for (i=0; i < opal_argv_count(ranks); i++) {
+            if (0 == strcmp(ranks[i], "BANG")) {
+                xterm_hold = true;
+                continue;
+            }
             nm = OBJ_NEW(orte_namelist_t);
             rank = strtol(ranks[i], NULL, 10);
             if (-1 == rank) {
@@ -214,6 +220,9 @@ int orte_odls_base_open(void)
         free(tmp);
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-T");
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "save");
+        if (xterm_hold) {
+            opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-hold");
+        }
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
     
