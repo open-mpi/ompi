@@ -163,7 +163,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                 np = np / 10;
             }
             /* construct the filename */
-            asprintf(&outfile, "%s.%*0lu", orte_output_filename, numdigs, (unsigned long)proct->name.vpid);
+            asprintf(&outfile, "%s.%0*lu", orte_output_filename, numdigs, (unsigned long)proct->name.vpid);
             /* create the file */
             fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
             free(outfile);
