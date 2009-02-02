@@ -194,7 +194,7 @@ main(int argc, char *argv[])
     
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
     
     /**
      * Now start parsing our specific arguments
