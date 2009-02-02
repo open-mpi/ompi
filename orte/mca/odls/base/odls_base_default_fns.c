@@ -1158,15 +1158,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                      nmitem != opal_list_get_end(&orte_odls_globals.xterm_ranks);
                      nmitem = opal_list_get_next(nmitem)) {
                     nm = (orte_namelist_t*)nmitem;
-                    /* check for bozo case */
-                    if (jobdat->num_procs <= nm->name.vpid) {
-                        /* can't be done! */
-                        orte_show_help("help-odls-base.txt",
-                                       "orte-odls-base:xterm-rank-out-of-bounds",
-                                       true, nm->name.vpid, jobdat->num_procs);
-                        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                        goto CLEANUP;
-                    }
                     if (ORTE_VPID_WILDCARD == nm->name.vpid ||
                         child->name->vpid == nm->name.vpid) {
                         /* we want this one - modify the app's command to include
@@ -1195,7 +1186,15 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                         free(app->app);
                         app->app = strdup(orte_odls_globals.xtermcmd[0]);
                         break;
+                    } else if (jobdat->num_procs <= nm->name.vpid) {  /* check for bozo case */
+                        /* can't be done! */
+                        orte_show_help("help-orte-odls-base.txt",
+                                       "orte-odls-base:xterm-rank-out-of-bounds",
+                                       true, nm->name.vpid, jobdat->num_procs);
+                        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                        goto CLEANUP;
                     }
+                    
                 }
             }
             
