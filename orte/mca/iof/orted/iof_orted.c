@@ -95,7 +95,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     orte_iof_sink_t *sink;
     char *outfile;
     int fdout;
-    orte_odls_job_t *jobdat;
+    orte_odls_job_t *jobdat=NULL;
     int np, numdigs;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
@@ -140,6 +140,10 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
             if (jobdat->jobid == proct->name.jobid) {
                 break;
             }
+        }
+        if (NULL == jobdat) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
         }
         np = jobdat->num_procs / 10;
         /* determine the number of digits required for max vpid */

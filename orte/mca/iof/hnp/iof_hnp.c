@@ -103,7 +103,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     int flags;
     char *outfile;
     int fdout;
-    orte_odls_job_t *jobdat;
+    orte_odls_job_t *jobdat=NULL;
     int np, numdigs;
     int rc;
 
@@ -154,6 +154,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                 if (jobdat->jobid == proct->name.jobid) {
                     break;
                 }
+            }
+            if (NULL == jobdat) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                return ORTE_ERR_NOT_FOUND;
             }
             np = jobdat->num_procs / 10;
             /* determine the number of digits required for max vpid */
