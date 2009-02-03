@@ -165,6 +165,12 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
     child->pid = pid;
     child->alive = true;
         
+    /* Windows automatically forwards IO, so we don't need to do so here. However,
+     * we need to flag that IO termination conditions are met so that the daemon
+     * knows the proc is done
+     */
+    orte_odls_base_notify_iof_complete(&child->name);
+    
     return ORTE_SUCCESS;
 }
 
