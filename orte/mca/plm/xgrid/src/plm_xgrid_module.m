@@ -33,6 +33,8 @@
 
 #import "orte/constants.h"
 #import "opal/util/argv.h"
+#import "opal/class/opal_pointer_array.h"
+
 #import "orte/util/show_help.h"
 #import "orte/util/session_dir.h"
 #import "opal/event/event.h"
@@ -95,7 +97,7 @@ orte_plm_xgrid_make_nodes(orte_job_t *jdata)
     }
 
     /* Create node entries for the orteds we're going to spawn. */
-    if (ORTE_SUCCESS != (rc = orte_pointer_array_set_size(orte_node_pool, num_nodes))) {
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(orte_node_pool, num_nodes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -111,8 +113,8 @@ orte_plm_xgrid_make_nodes(orte_job_t *jdata)
         node->slots_inuse = 0;
         node->slots_max = 0;
         node->slots = 1;
-        if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&node->index, 
-                                                         orte_node_pool, 
+        node->index = i;
+        if (ORTE_SUCCESS != (rc = opal_pointer_array_add(orte_node_pool, 
                                                          (void*)node))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -130,7 +132,6 @@ int
 orte_plm_xgrid_spawn(orte_job_t *jdata)
 {
     int rc;
-    orte_std_cntr_t index;
     orte_process_name_t name = {ORTE_JOBID_INVALID, 0};
     bool failed_launch = true;
     
@@ -146,7 +147,7 @@ orte_plm_xgrid_spawn(orte_job_t *jdata)
                          ORTE_JOBID_PRINT(jdata->jobid)));
     
     /* insert the job object into the global pool */
-    orte_pointer_array_add(&index, orte_job_data, jdata);
+    opal_pointer_array_add(orte_job_data, jdata);
 
     if (ORTE_SUCCESS != (rc = orte_plm_xgrid_make_nodes(jdata))) {
         ORTE_ERROR_LOG(rc);
