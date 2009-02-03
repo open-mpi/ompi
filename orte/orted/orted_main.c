@@ -182,6 +182,14 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.singleton_died_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Watch on indicated pipe for singleton termination"},
     
+    { "orte", "output", "filename", '\0', "output-filename", "output-filename", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Redirect output from application processes into filename.rank" },
+    
+    { "orte", "xterm", NULL, '\0', "xterm", "xterm", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Create a new xterm window and display output from the specified ranks there" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }

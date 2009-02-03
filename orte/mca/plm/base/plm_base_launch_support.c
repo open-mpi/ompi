@@ -1048,6 +1048,18 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         }
     }
 
+    /* if output-filename was specified, pass that along */
+    if (NULL != orte_output_filename) {
+        opal_argv_append(argc, argv, "--output-filename");
+        opal_argv_append(argc, argv, orte_output_filename);
+    }
+    
+    /* if --xterm was specified, pass that along */
+    if (NULL != orte_xterm) {
+        opal_argv_append(argc, argv, "--xterm");
+        opal_argv_append(argc, argv, orte_xterm);
+    }
+    
     /* 
      * Pass along the Aggregate MCA Parameter Sets
      */

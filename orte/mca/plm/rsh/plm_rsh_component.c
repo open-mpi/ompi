@@ -193,20 +193,28 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
            automatically add "-x" */
 
         bname = opal_basename(mca_plm_rsh_component.agent_argv[0]);
-        if (NULL != bname && 0 == strcmp(bname, "ssh")
-            && 0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
-            for (i = 1; NULL != mca_plm_rsh_component.agent_argv[i]; ++i) {
-                if (0 == strcasecmp("-x", 
-                                    mca_plm_rsh_component.agent_argv[i])) {
-                    break;
+        if (NULL != bname && 0 == strcmp(bname, "ssh")) {
+            /* if xterm option was given, add '-X' */
+            if (NULL != orte_xterm) {
+                opal_argv_append(&mca_plm_rsh_component.agent_argc, 
+                                 &mca_plm_rsh_component.agent_argv, "-X");
+            } else if (0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
+                /* if debug was not specified, and the user didn't explicitly
+                 * specify X11 forwarding/non-forwarding, add "-x"
+                 */
+                for (i = 1; NULL != mca_plm_rsh_component.agent_argv[i]; ++i) {
+                    if (0 == strcasecmp("-x", 
+                                        mca_plm_rsh_component.agent_argv[i])) {
+                        break;
+                    }
+                }
+                if (NULL == mca_plm_rsh_component.agent_argv[i]) {
+                    opal_argv_append(&mca_plm_rsh_component.agent_argc, 
+                                     &mca_plm_rsh_component.agent_argv, "-x");
                 }
             }
-            if (NULL == mca_plm_rsh_component.agent_argv[i]) {
-                opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                                 &mca_plm_rsh_component.agent_argv, "-x");
-            }
         }
-
+        
         /* If the agent is qrsh, then automatically add -inherit 
          * and grid engine PE related flags */
         if (NULL != bname && 0 == strcmp(bname, "qrsh")) {
