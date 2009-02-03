@@ -42,6 +42,7 @@
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/util/name_fns.h"
 
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/process/odls_process.h"
 
@@ -169,7 +170,7 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
      * we need to flag that IO termination conditions are met so that the daemon
      * knows the proc is done
      */
-    orte_odls_base_notify_iof_complete(&child->name);
+    orte_odls_base_notify_iof_complete(child->name);
     
     return ORTE_SUCCESS;
 }
