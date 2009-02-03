@@ -62,4 +62,4 @@ AC_DEFUN([MCA_maffinity_libnuma_CONFIG],[
     AC_SUBST([maffinity_libnuma_LDFLAGS])
     AC_SUBST([maffinity_libnuma_LIBS])
 ])dnl
->
+
