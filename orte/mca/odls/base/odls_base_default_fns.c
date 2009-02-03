@@ -372,7 +372,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_odls_child_t *child;
     orte_std_cntr_t cnt;
     orte_process_name_t proc;
-    orte_odls_job_t *jobdat;
+    orte_odls_job_t *jobdat=NULL;
     opal_byte_object_t *bo;
     opal_buffer_t alert;
     opal_list_item_t *item;
@@ -454,7 +454,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
      * to our unpacking add_local_procs. So lookup the job record for this jobid
      * and see if it already exists
      */
-    jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
          item != opal_list_get_end(&orte_local_jobdata);
          item = opal_list_get_next(item)) {
@@ -667,7 +666,7 @@ REPORT_ERROR:
         free(app_idx);
         app_idx = NULL;
     }
-    if (NULL != slot_str) {
+    if (NULL != slot_str && NULL != jobdat) {
         for (j=0; j < jobdat->num_procs; j++) {
             free(slot_str[j]);
         }
@@ -1909,6 +1908,7 @@ static void check_proc_complete(orte_odls_child_t *child)
                 goto unlock;
             }
             /* pack the data for the job */
+            jdat = NULL;
             for (item = opal_list_get_first(&orte_local_jobdata);
                  item != opal_list_get_end(&orte_local_jobdata);
                  item = opal_list_get_next(item)) {
@@ -1918,6 +1918,10 @@ static void check_proc_complete(orte_odls_child_t *child)
                 if (jdat->jobid == child->name->jobid) {
                     break;
                 }
+            }
+            if (NULL == jdat) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                goto unlock;
             }
             if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, jdat))) {
                 ORTE_ERROR_LOG(rc);
