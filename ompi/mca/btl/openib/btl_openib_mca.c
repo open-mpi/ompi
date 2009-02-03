@@ -152,7 +152,7 @@ int btl_openib_register_mca_params(void)
                   "warn_no_hca_params_found",
                   "Warn when no device-specific parameters are found in the INI file specified by the btl_openib_device_param_files MCA parameter (0 = do not warn; any other value = warn)",
                   1, &ival, 0));
-
+    mca_btl_openib_component.warn_no_device_params_found = (0 != ival);
     CHECK(reg_int("warn_default_gid_prefix", NULL,
                   "Warn when there is more than one active ports and at least one of them connected to the network with only default GID prefix configured (0 = do not warn; any other value = warn)",
                   1, &ival, 0));
