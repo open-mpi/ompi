@@ -51,16 +51,39 @@ AC_DEFUN([MCA_memory_mallopt_CONFIG],[
 
            AC_CHECK_FUNCS([__munmap], [memory_mallopt_munmap=1])
 
-           # only allow dlsym (and therefore add -ldl) if we
-           # really need to
+           # only allow dlsym (and therefore add -ldl) if the others
+           # were not found
            AS_IF([test "$memory_mallopt_munmap" = "0"],
-                 [memory_mallopt_LIBS_SAVE="$LIBS"
-                  AC_CHECK_LIB([dl],
-                               [dlsym],
-                               [memory_mallopt_LIBS="-ldl"
-                                memory_mallopt_munmap=1])
-                  AC_CHECK_FUNCS([dlsym])
-                  LIBS="$memory_mallopt_LIBS_SAVE"])
+                 [AC_CHECK_LIB([dl],
+                      [dlsym],
+                      [memory_mallopt_LIBS="-ldl"
+
+                       # Set HAVE_DLSYM
+                       memory_mallopt_LIBS_SAVE="$LIBS"
+                       LIBS="$LIBS -ldl"
+                       AC_CHECK_FUNCS([dlsym])
+                       LIBS="$memory_mallopt_LIBS_SAVE"
+
+                       # Since we have dlsym, check that we also have
+                       # RTLD_NEXT (cygwin has dlsym but not RTLD_NEXT
+                       # -- see
+                       # https://svn.open-mpi.org/trac/ompi/ticket/1618).
+                       # If we don't have RTLD_NEXT, then skip this
+                       # method.
+                       AS_IF([test "$memory_mallopt_munmap" = "1"],
+                           [AC_CHECK_HEADER([dlfcn.h],
+                               [AC_DEFINE(HAVE_DLFCN_H)
+                                AC_CHECK_DECLS([RTLD_NEXT], [], 
+                                    [memory_mallopt_munmap=0],
+                                [AC_INCLUDES_DEFAULT
+[#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif]]
+)
+                               ])
+                           ])
+                      ])
+                  ])
 
            AS_IF([test "$memory_mallopt_munmap" = "0"],
                  [memory_mallopt_happy="no"])])

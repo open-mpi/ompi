@@ -96,7 +96,7 @@ munmap(void* addr, size_t len)
     return __munmap(addr, len);
 #elif defined(HAVE_SYSCALL) && defined(__NR_munmap)
     return syscall(__NR_munmap, addr, len);
-#elif defined(HAVE_DLSYM)
+#elif defined(HAVE_DLSYM) && defined(HAVE_RTLD_NEXT)
     if (NULL == realmunmap) {
         union { 
             int (*munmap_fp)(void*, size_t);
