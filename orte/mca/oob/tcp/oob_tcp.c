@@ -338,11 +338,11 @@ int mca_oob_tcp_component_open(void)
                            0,
                            &mca_oob_tcp_component.disable_family);
 #if OPAL_WANT_IPV6
-    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
-                           "static_ports_v6", "Static ports for daemons and procs (IPv6)",
-                           false, false,
-                           NULL,
-                           &str);
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "static_ports_v6", "Static ports for daemons and procs (IPv6)",
+                              false, false,
+                              NULL,
+                              &str);
     if (NULL != str) {
         orte_static_ports = true;
         orte_util_parse_range_options(str, &mca_oob_tcp_component.tcp6_static_ports);
