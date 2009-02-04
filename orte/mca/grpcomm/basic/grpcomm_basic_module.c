@@ -444,7 +444,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 static int do_modex(opal_list_t *procs)
 {
     opal_buffer_t buf, rbuf;
-    orte_std_cntr_t i, num_procs;
+    int32_t i, num_procs;
     orte_std_cntr_t cnt, j, num_recvd_entries;
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
@@ -501,7 +501,7 @@ static int do_modex(opal_list_t *procs)
     /* process the results */
     /* extract the number of procs that put data in the buffer */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -1163,8 +1163,10 @@ hnp_process:
             ORTE_ERROR_LOG(rc);
         }
     } else if (ORTE_GRPCOMM_ALLGATHER == jobdat->collective_type) {
+        int32_t numc;
         /* add the data */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jobdat->num_contributors, 1, ORTE_STD_CNTR))) {
+        numc = jobdat->num_contributors;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &numc, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
