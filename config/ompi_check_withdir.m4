@@ -23,7 +23,7 @@ AC_DEFUN([OMPI_CHECK_WITHDIR],[
                  [AC_MSG_RESULT([not found])
                   AC_MSG_WARN([Directory $2 not found])
                   AC_MSG_ERROR([Cannot continue])],
-                 [AS_IF([test "x`ls $2/$3` 2> /dev/null" = "x"],
+                 [AS_IF([test "x`ls $2/$3 2> /dev/null`" = "x"],
                         [AC_MSG_RESULT([not found])
                          AC_MSG_WARN([Expected file $2/$3 not found])
                          AC_MSG_ERROR([Cannot continue])],
