@@ -474,18 +474,26 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     int rc;
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
-    if (ORTE_JOB_FAMILY(msg->msg_hdr.msg_origin.jobid) !=
-        ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
-        /* this message came from a different job family, so we may
-         * not know how to route any reply back to the originator. Update
-         * our route so we can dynamically build the routing table
-         */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_route(&(msg->msg_hdr.msg_origin),
-                                                           &(msg->msg_hdr.msg_src)))) {
-            /* Nothing we can do about errors here as we definitely want
-             * the receive to complete, but at least bark loudly
+    /* if I'm not a proc, check if this message came from
+     * another job family - procs dont' need to do this because
+     * they always route through their daemons anyway
+     */
+    if (!orte_process_info.mpi_proc) {
+        if ((ORTE_JOB_FAMILY(msg->msg_hdr.msg_origin.jobid) !=
+             ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) &&
+            (0 != ORTE_JOB_FAMILY(msg->msg_hdr.msg_origin.jobid))) {
+            /* this message came from a different job family that is not
+             * a local slave, so we may
+             * not know how to route any reply back to the originator. Update
+             * our route so we can dynamically build the routing table
              */
-            ORTE_ERROR_LOG(rc);
+            if (ORTE_SUCCESS != (rc = orte_routed.update_route(&(msg->msg_hdr.msg_origin),
+                                                               &(msg->msg_hdr.msg_src)))) {
+                /* Nothing we can do about errors here as we definitely want
+                 * the receive to complete, but at least bark loudly
+                 */
+                ORTE_ERROR_LOG(rc);
+            }
         }
     }
     
