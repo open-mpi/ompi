@@ -170,7 +170,7 @@ typedef struct {
     char ** dash_host;
     /** Prefix directory for this app (or NULL if no override necessary) */
     char *prefix_dir;
-    /** Preload the binary on the remote machine (in PLS via FileM) */
+    /** Preload the binary on the remote machine (in PLM via FileM) */
     bool preload_binary;
     /** Preload the comma separated list of files to the remote machines cwd */
     char * preload_files;
@@ -248,7 +248,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 typedef uint8_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL    OPAL_UINT8
 
-#define ORTE_JOB_CONTROL_LOCAL_SPAWN        0x01
+#define ORTE_JOB_CONTROL_LOCAL_SLAVE        0x01
 #define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x02
 #define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x04
 #define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x08
