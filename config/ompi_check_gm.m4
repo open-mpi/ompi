@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -124,9 +125,11 @@ AC_DEFUN([OMPI_CHECK_GM],[
     AC_ARG_WITH([gm],
         [AC_HELP_STRING([--with-gm(=DIR)],
              [Build GM (Myrinet) support, searching for libraries in DIR])])
+    OMPI_CHECK_WITHDIR([gm], [$with_gm], [include/gm.h])
     AC_ARG_WITH([gm-libdir],
         [AC_HELP_STRING([--with-gm-libdir=DIR],
              [Search for GM (Myrinet) libraries in DIR])])
+    OMPI_CHECK_WITHDIR([gm-libdir], [$with_gm_libdir], [libgm.*])
 
     AS_IF([test "$with_gm" != "no"],
           [AS_IF([test ! -z "$with_gm" -a "$with_gm" != "yes"],

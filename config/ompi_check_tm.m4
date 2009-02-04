@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -42,6 +42,7 @@ AC_DEFUN([OMPI_CHECK_TM],[
     AC_ARG_WITH([tm],
                 [AC_HELP_STRING([--with-tm(=DIR)],
                                 [Directory where the tm software is installed])])
+    OMPI_CHECK_WITHDIR([tm], [$with_tm], [include/tm.h])
 
     ompi_check_tm_found=no
     AS_IF([test "$with_tm" = "no"],

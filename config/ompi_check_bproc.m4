@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,8 +25,9 @@
 # --------------------------------------------------------
 AC_DEFUN([OMPI_CHECK_BPROC],[
     AC_ARG_WITH([bproc],
-                [AC_HELP_STRING([--with-bproc],
+                [AC_HELP_STRING([--with-bproc(=DIR)],
                                 [Directory where the BProc software is installed])])
+    OMPI_CHECK_WITHDIR([bproc], [$with_bproc], [include/sys/bproc.h])
 
     AS_IF([test ! -z "$with_bproc" -a "$with_bproc" = "no"],[$4], [ 
         ompi_check_bproc_save_CPPFLAGS="$CPPFLAGS"

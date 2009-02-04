@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
-#
+# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,9 +28,11 @@ AC_DEFUN([OMPI_CHECK_PSM],[
     AC_ARG_WITH([psm],
         [AC_HELP_STRING([--with-psm(=DIR)],
              [Build PSM (QLogic InfiniPath PSM) support, searching for libraries in DIR])])
+    OMPI_CHECK_WITHDIR([psm], [$with_psm], [include/psm.h])
     AC_ARG_WITH([psm-libdir],
         [AC_HELP_STRING([--with-psm-libdir=DIR],
              [Search for PSM (QLogic InfiniPath PSM) libraries in DIR])])
+    OMPI_CHECK_WITHDIR([psm-libdir], [$with_psm_libdir], [libpsm_infinipath.*])
 
     ompi_check_psm_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_psm_$1_save_LDFLAGS="$LDFLAGS"
