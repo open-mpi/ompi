@@ -109,7 +109,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
 {
     opal_list_item_t *item;
     orte_namelist_t *peer, *root;
-    orte_std_cntr_t num_peers;
+    int32_t num_peers;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
@@ -181,10 +181,10 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     
     /***   ROOT   ***/
     /* count how many peers are participating, including myself */
-    num_peers = (orte_std_cntr_t)opal_list_get_size(names);
+    num_peers = (int32_t)opal_list_get_size(names);
 
     /* seed the outgoing buffer with the num_procs so it can be unpacked */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(rbuf, &num_peers, 1, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(rbuf, &num_peers, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
