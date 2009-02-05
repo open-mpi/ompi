@@ -66,7 +66,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     }
     
     /* identify who gets this command - the HNP or the local orted */
-    if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SPAWN) {
+    if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* for now, this is unsupported */
         opal_output(0, "LOCAL DAEMON SPAWN IS CURRENTLY UNSUPPORTED");
         target = ORTE_PROC_MY_HNP;
