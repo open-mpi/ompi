@@ -31,6 +31,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/dss/dss_types.h"
 
+BEGIN_C_DECLS
 
 /**
  * Module initialization function.  Should return OPAL_SUCCESS.
@@ -82,5 +83,7 @@ typedef struct opal_pstat_base_module_1_0_0_t opal_pstat_base_module_t;
 
 /* Global structure for accessing pstat functions */
 OPAL_DECLSPEC extern opal_pstat_base_module_t opal_pstat;
+
+END_C_DECLS
 
 #endif /* OPAL_MCA_PSTAT_H */
