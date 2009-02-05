@@ -428,7 +428,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         bptr = &bo;
         while (0 < read(fd, &bo.size, sizeof(bo.size))) {
             /* this is the number of bytes in the byte object */
-            bo.bytes = malloc(bo.size);
+            bo.bytes = (uint8_t *) malloc(bo.size);
             if (0 > read(fd, bo.bytes, bo.size)) {
                 orte_show_help("help-orte-runtime.txt", "orte_nidmap:unable-read-file", true, opal_profile_file);
                 close(fd);
@@ -742,7 +742,7 @@ process_daemons:
                 return rc;
             }
             /* unpack the bytes */
-            attrdata->bytes = malloc(attrdata->size);
+            attrdata->bytes = (uint8_t *) malloc(attrdata->size);
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, attrdata->bytes, &attrdata->size, OPAL_BYTE))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;

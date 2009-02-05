@@ -601,7 +601,7 @@ static int do_modex(opal_list_t *procs)
             attr->size = num_bytes;
             
             if (num_bytes != 0) {
-                if (NULL == (attr->bytes = malloc(num_bytes))) {
+                if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                     goto cleanup;
@@ -726,7 +726,7 @@ static int modex(opal_list_t *procs)
     nd = (orte_nid_t**)orte_nidmap.addr;
     while (0 < read(fd, &bo.size, sizeof(bo.size))) {
         /* this is the number of bytes in the byte object */
-        bo.bytes = malloc(bo.size);
+        bo.bytes = (uint8_t *) malloc(bo.size);
         if (0 > read(fd, bo.bytes, bo.size)) {
             orte_show_help("help-orte-runtime.txt", "orte_nidmap:unable-read-file", true, opal_profile_file);
             close(fd);
@@ -770,7 +770,7 @@ static int modex(opal_list_t *procs)
                 return rc;
             }
             /* unpack the bytes */
-            attrdata->bytes = malloc(attrdata->size);
+            attrdata->bytes = (uint8_t *) malloc(attrdata->size);
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, attrdata->bytes, &attrdata->size, OPAL_BYTE))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
