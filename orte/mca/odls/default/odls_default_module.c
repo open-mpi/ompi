@@ -175,7 +175,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     int rc;
     sigset_t sigs;
     int i, p[2];
-    pid_t pid;
 
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -200,6 +199,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         }
     }
     
+    if (ORTE_SUCCESS != (rc = orte_iof_base_setup_prefork(&opts))) {
+        ORTE_ERROR_LOG(rc);
+        child->state = ORTE_PROC_STATE_FAILED_TO_START;
+        child->exit_code = rc;
+        return rc;
+    }
+    
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
@@ -210,25 +216,21 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
        the pipe, then the child was letting us know that it failed. */
     if (pipe(p) < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
-        if (NULL != child) {
-            child->state = ORTE_PROC_STATE_FAILED_TO_START;
-            child->exit_code = ORTE_ERR_SYS_LIMITS_PIPES;
-        }
+        child->state = ORTE_PROC_STATE_FAILED_TO_START;
+        child->exit_code = ORTE_ERR_SYS_LIMITS_PIPES;
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
 
     /* Fork off the child */
-    pid = fork();
-    if (pid < 0) {
+    child->pid = fork();
+    if(child->pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
-        if (NULL != child) {
-            child->state = ORTE_PROC_STATE_FAILED_TO_START;
-            child->exit_code = ORTE_ERR_SYS_LIMITS_CHILDREN;
-        }
+        child->state = ORTE_PROC_STATE_FAILED_TO_START;
+        child->exit_code = ORTE_ERR_SYS_LIMITS_CHILDREN;
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
 
-    if (pid == 0) {
+    if (child->pid == 0) {
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
         /* Setup the pipe to be close-on-exec */
@@ -314,11 +316,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         exit(1);
     } else {
 
-        /* record the pid */
-        if (NULL != child) {
-            child->pid = pid;
-        }
-        
         if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
             /* connect endpoints IOF */
             rc = orte_iof_base_setup_parent(child->name, &opts);
@@ -338,10 +335,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     continue;
                 }
                 /* Other errno's are bad */
-                if (NULL != child) {
-                    child->state = ORTE_PROC_STATE_FAILED_TO_START;
-                    child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
-                }
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                child->exit_code = ORTE_ERR_PIPE_READ_FAILURE;
                 
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
@@ -360,10 +355,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     failure to launch this process through the SMR or else
                     everyone else will hang.
                 */
-                if (NULL != child) {
-                    child->state = ORTE_PROC_STATE_FAILED_TO_START;
-                    child->exit_code = i;
-                }
+                child->state = ORTE_PROC_STATE_FAILED_TO_START;
+                child->exit_code = i;
                 
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
@@ -373,11 +366,9 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
             }
         }
 
-        if (NULL != child) {
-            /* set the proc state to LAUNCHED */
-            child->state = ORTE_PROC_STATE_LAUNCHED;
-            child->alive = true;
-        }
+        /* set the proc state to LAUNCHED */
+        child->state = ORTE_PROC_STATE_LAUNCHED;
+        child->alive = true;
         close(p[0]);
     }
     
