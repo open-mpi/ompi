@@ -38,15 +38,13 @@ static const char FUNC_NAME[] = "MPI_Reduce_local";
 int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count, 
                      MPI_Datatype datatype, MPI_Op op)
 {
-    int err;
-
     MEMCHECKER(
         memchecker_datatype(datatype);
     );
 
     if (MPI_PARAM_CHECK) {
         char *msg;
-        err = MPI_SUCCESS;
+        int err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (MPI_OP_NULL == op || NULL == op) {
@@ -58,6 +56,7 @@ int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
         }
+        OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
     }
 
     /* If the count is 0, just return */
@@ -72,5 +71,5 @@ int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
     ompi_op_reduce(op, inbuf, inoutbuf, count, datatype);
     OBJ_RELEASE(op);
 
-    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
+    return MPI_SUCCESS;
 }
