@@ -61,7 +61,7 @@
     do { \
       int __n = (int)(n); \
       OMPI_ARRAY_NAME_CONVERT(in) = malloc(__n * sizeof(int)); \
-      while(--__n > 0) { \
+      while(--__n >= 0) { \
         OMPI_ARRAY_NAME_CONVERT(in)[__n] = (int) in[__n]; \
       } \
     } while (0)
@@ -94,7 +94,7 @@
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     do { \
       int __n = (int)(n); \
-      while(--__n > 0) { \
+      while(--__n >= 0) { \
         in[__n] = OMPI_ARRAY_NAME_CONVERT(in)[__n]; \
       } \
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
