@@ -93,7 +93,7 @@
   /* This is for OUT/IN-OUT parametes. Does back assignment and free */
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     do { \
-      int __n = (n); \
+      int __n = (int)(n); \
       while(--__n > 0) { \
         in[__n] = OMPI_ARRAY_NAME_CONVERT(in)[__n]; \
       } \
