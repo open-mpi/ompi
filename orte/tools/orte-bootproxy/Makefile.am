@@ -25,7 +25,7 @@ if OMPI_INSTALL_BINARIES
 
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	cp $(top_builddir)/orte/tools/orte-bootproxy/orte-bootproxy.sh $(DESTDIR)$(bindir)
+	cp $(top_srcdir)/orte/tools/orte-bootproxy/orte-bootproxy.sh $(DESTDIR)$(bindir)
 	chmod 755 $(DESTDIR)$(bindir)/orte-bootproxy.sh
 
 endif # OMPI_INSTALL_BINARIES
