@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  *
@@ -150,6 +150,7 @@ static int rdmacm_priority = 30;
 static uint16_t rdmacm_port = 0;
 static uint32_t rdmacm_addr = 0;
 static int rdmacm_resolve_timeout = 2000;
+static bool rdmacm_ignore_connect_errors = false;
 static volatile int disconnect_callbacks = 0;
 static bool rdmacm_component_initialized = false;
 
@@ -242,6 +243,12 @@ static void rdmacm_component_register(void)
         orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "illegal timeout", true, value);
     }
+
+    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
+                           "connect_rdmacm_ignore_connect_errors",
+                           "Some devices do not implement all aspects of the RDMA CM properly (e.g., REJECTs are not handled properly).  Setting this MCA parameter to true tells Open MPI to ignore RDMA CM CONNECT_ERROR events (default: false).",
+                           false, false, 0, &value);
+    rdmacm_ignore_connect_errors = (bool) (value != 0);
 }
 
 /*
@@ -1127,42 +1134,45 @@ static int rdmacm_disconnected(id_context_t *context)
 /*
  * Runs in service thread
  */
+static int rdmacm_destroy_dummy_qp(id_context_t *context)
+{
+    if (NULL != context->id->qp) {
+        ibv_destroy_qp(context->id->qp);
+        context->id->qp = NULL;
+    }
+    if (NULL != context->contents->dummy_cq) {
+        ibv_destroy_cq(context->contents->dummy_cq);
+    }
+    /* This item was appended to the contents->ids list (the list will
+       only have just this one item), so remove it before RELEASEing
+       the item */
+    opal_list_remove_first(&(context->contents->ids));
+    OBJ_RELEASE(context);
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ * Runs in service thread
+ */
 static int rdmacm_rejected(id_context_t *context, struct rdma_cm_event *event)
 {
-    int rc = 0;
-    rdmacm_contents_t *contents;
-    int qpnum;
-
     if (NULL != event->param.conn.private_data) {
-        contents = context->contents;
-        qpnum = context->qpnum;
-
         /* Why were we rejected? */
         switch (*((reject_reason_t*) event->param.conn.private_data)) {
         case REJECT_WRONG_DIRECTION:
-            BTL_VERBOSE(("A good reject! for qp %d", qpnum));
-            OPAL_OUTPUT((-1, "SERVICE A good reject! for qp %d, id 0x%p", qpnum, (void*) context->id));
-            if (NULL != context->id->qp) {
-                ibv_destroy_qp(context->id->qp);
-                context->id->qp = NULL;
-            }
-            if (NULL != contents->dummy_cq) {
-                ibv_destroy_cq(contents->dummy_cq);
-            }
-            /* This item was appended to the contents->ids list (the
-               list will only have just this one item), so remove it
-               before RELEASEing the item */
-            opal_list_remove_first(&(context->contents->ids));
-            OBJ_RELEASE(context);
-            rc = 0;
+            OPAL_OUTPUT((-1, "SERVICE A good reject! for qp %d, id 0x%p", 
+                         context->qpnum, (void*) context->id));
+            rdmacm_destroy_dummy_qp(context);
             break;
-            
-        case REJECT_TRY_AGAIN:
+
+        default:
+            /* Just so compilers won't complain */
             break;
         }
     }
 
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -1487,11 +1497,23 @@ static int event_handler(struct rdma_cm_event *event)
         rc = rdmacm_rejected(context, event);
         break;
 
+    case RDMA_CM_EVENT_CONNECT_ERROR:
+        /* Workaround for broken NetEffect/Intel driver: if we get a
+           CONNECT_ERROR on a connection that we're expecting a reject
+           on, then it's ok (their driver just doesn't handle reject
+           properly at all).  */
+        if (rdmacm_ignore_connect_errors) {
+            OPAL_OUTPUT((-1, "SERVICE Got CONNECT_ERROR, but ignored: %p", (void*) event->id));
+            rc = rdmacm_destroy_dummy_qp(context);
+            break;
+        }
+
+        /* Otherwise, fall through and handle the error as normal */
+
     case RDMA_CM_EVENT_UNREACHABLE:
     case RDMA_CM_EVENT_CONNECT_RESPONSE:
     case RDMA_CM_EVENT_ADDR_ERROR:
     case RDMA_CM_EVENT_ROUTE_ERROR:
-    case RDMA_CM_EVENT_CONNECT_ERROR:
     case RDMA_CM_EVENT_DEVICE_REMOVAL:
         ompi_btl_openib_fd_run_in_main(show_help_rdmacm_event_error, event);
         rc = OMPI_ERROR;
