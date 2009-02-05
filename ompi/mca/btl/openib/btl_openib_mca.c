@@ -187,26 +187,6 @@ int btl_openib_register_mca_params(void)
     if (NULL == str) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    if (OMPI_HAVE_IBV_FORK_INIT) {
-        ival2 = -1;
-    } else {
-        ival2 = 0;
-    }
-    CHECK(reg_int("want_fork_support", NULL,
-                  "Whether fork support is desired or not "
-                  "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
-                  ival2, &ival, 0));
-    if (OMPI_HAVE_IBV_FORK_INIT) {
-        mca_btl_openib_component.want_fork_support = ival;
-    } else {
-        if (0 != ival) {
-            orte_show_help("help-mpi-btl-openib.txt",
-                           "ibv_fork requested but not supported", true,
-                           orte_process_info.nodename);
-            return OMPI_ERROR;
-        }
-    }
-
     CHECK(reg_string("device_param_files", "hca_param_files",
                      "Colon-delimited list of INI-style files that contain device vendor/part-specific parameters",
                      str, &mca_btl_openib_component.device_params_file_names, 
