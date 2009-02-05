@@ -348,7 +348,9 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
             ret = snprintf(print_buffer, sizeof(print_buffer),
                            HOSTFORMAT "[%2d] %s\n",
                            stacktrace_hostname, getpid(), i - 2, traces[i]);
-            write(fileno(stderr), print_buffer, ret);
+            if (ret > 0) {
+                write(fileno(stderr), print_buffer, ret);
+            }
         }
     } else {
         opal_backtrace_print(stderr);
