@@ -427,6 +427,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             if (NULL != slot_str && NULL != slot_str[j]) {
                 child->slot_list = strdup(slot_str[j]);
             }
+            /* mark that this app_context is being used on this node */
+            jobdat->apps[app_idx[j]]->used_on_node = true;
             /* protect operation on the global list of children */
             OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
             opal_list_append(&orte_odls_globals.children, &child->super);

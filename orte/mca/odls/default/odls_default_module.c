@@ -175,6 +175,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     int rc;
     sigset_t sigs;
     int i, p[2];
+    pid_t pid;
 
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -222,15 +223,15 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     }
 
     /* Fork off the child */
-    child->pid = fork();
-    if(child->pid < 0) {
+    pid = fork();
+    if (pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
         child->state = ORTE_PROC_STATE_FAILED_TO_START;
         child->exit_code = ORTE_ERR_SYS_LIMITS_CHILDREN;
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
 
-    if (child->pid == 0) {
+    if (pid == 0) {
         long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
         /* Setup the pipe to be close-on-exec */
@@ -316,6 +317,9 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         exit(1);
     } else {
 
+        /* record the pid */
+        child->pid = pid;
+        
         if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & controls)) {
             /* connect endpoints IOF */
             rc = orte_iof_base_setup_parent(child->name, &opts);
