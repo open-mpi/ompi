@@ -1364,6 +1364,7 @@ AC_CONFIG_FILES([
     orte/tools/orte-ps/Makefile
     orte/tools/orte-clean/Makefile
     orte/tools/orte-top/Makefile
+    orte/tools/orte-bootproxy/Makefile
 
     ompi/Makefile
     ompi/etc/Makefile
