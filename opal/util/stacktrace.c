@@ -350,6 +350,9 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
                            stacktrace_hostname, getpid(), i - 2, traces[i]);
             if (ret > 0) {
                 write(fileno(stderr), print_buffer, ret);
+            } else {
+                write(fileno(stderr), unable_to_print_msg, 
+                      strlen(unable_to_print_msg));
             }
         }
     } else {
