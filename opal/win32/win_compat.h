@@ -194,6 +194,8 @@ typedef unsigned int uint;
 #define SIGCHLD SIGILL
 #define SIGKILL WM_QUIT
 #define SIGCONT 18
+#define SIGSTOP 19
+#define SIGTSTP 20
 
 /* Note: 
  *   The two defines below are likely to break the orte_wait
