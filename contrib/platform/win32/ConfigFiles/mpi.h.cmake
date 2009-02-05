@@ -1146,6 +1146,8 @@ OMPI_DECLSPEC  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int sou
                             int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Reduce(void *sendbuf, void *recvbuf, int count, 
                               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+OMPI_DECLSPEC  int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
+                                    MPI_Datatype datatype, MPI_Op op); 
 OMPI_DECLSPEC  int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts, 
                                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Register_datarep(char *datarep, 
@@ -1656,6 +1658,8 @@ OMPI_DECLSPEC  int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int so
                              int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Reduce(void *sendbuf, void *recvbuf, int count, 
                                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
+                                     MPI_Datatype datatype, MPI_Op); 
 OMPI_DECLSPEC  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts, 
                                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Register_datarep(char *datarep, 
