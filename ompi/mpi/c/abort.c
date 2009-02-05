@@ -52,7 +52,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
 
     orte_show_help("help-mpi-api.txt", "mpi-abort", true,
                    ompi_comm_rank(comm), 
-                   (NULL != comm->c_name) ? comm->c_name : "<Unknown>",
+                   ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
                    errorcode);
     return ompi_mpi_abort(comm, errorcode, true);
 }
