@@ -59,21 +59,21 @@
   /* This is for IN/IN-OUT parameters. Does alloc and assignment */
   #define OMPI_ARRAY_FINT_2_INT(in, n) \
     do { \
-      int __n = (int)(n); \
-      OMPI_ARRAY_NAME_CONVERT(in) = malloc(__n * sizeof(int)); \
-      while(--__n >= 0) { \
-        OMPI_ARRAY_NAME_CONVERT(in)[__n] = (int) in[__n]; \
+      int converted_n = (int)(n); \
+      OMPI_ARRAY_NAME_CONVERT(in) = malloc(converted_n * sizeof(int)); \
+      while(--converted_n >= 0) { \
+        OMPI_ARRAY_NAME_CONVERT(in)[converted_n] = (int) in[converted_n]; \
       } \
     } while (0)
 
   /* This is for 2-dim arrays */
   #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) \
     do { \
-      int __n = (int)(n); \
-      OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(__n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
-      while(--__n >= 0) { \
+      int converted_n = (int)(n); \
+      OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(converted_n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
+      while(--converted_n >= 0) { \
         for(dim2_index = 0; dim2_index < dim2; ++dim2_index) { \
-          OMPI_ARRAY_NAME_CONVERT(in)[__n][dim2_index] = (int)in[__n][dim2_index]; \
+          OMPI_ARRAY_NAME_CONVERT(in)[converted_n][dim2_index] = (int)in[converted_n][dim2_index]; \
         } \
       } \
     } while (0)
@@ -93,9 +93,9 @@
   /* This is for OUT/IN-OUT parametes. Does back assignment and free */
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     do { \
-      int __n = (int)(n); \
-      while(--__n >= 0) { \
-        in[__n] = OMPI_ARRAY_NAME_CONVERT(in)[__n]; \
+      int converted_n = (int)(n); \
+      while(--converted_n >= 0) { \
+        in[converted_n] = OMPI_ARRAY_NAME_CONVERT(in)[converted_n]; \
       } \
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
     } while (0)
@@ -114,20 +114,20 @@
 
   #define OMPI_ARRAY_FINT_2_INT(in, n) \
     do { \
-      int __n = (int)(n); \
-      OMPI_ARRAY_NAME_CONVERT(in) = malloc(__n * sizeof(int)); \
-      while(--__n >= 0) { \
-        OMPI_ARRAY_NAME_CONVERT(in)[__n] = in[__n]; \
+      int converted_n = (int)(n); \
+      OMPI_ARRAY_NAME_CONVERT(in) = malloc(converted_n * sizeof(int)); \
+      while(--converted_n >= 0) { \
+        OMPI_ARRAY_NAME_CONVERT(in)[converted_n] = in[converted_n]; \
       } \
     } while (0)
 
   #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) \
     do { \
-      int __n = (int)(n); \
-      OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(__n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
-      while(--__n >= 0) { \
+      int converted_n = (int)(n); \
+      OMPI_ARRAY_NAME_CONVERT(in) = (int (*)[dim2]) malloc(converted_n * sizeof(*OMPI_ARRAY_NAME_CONVERT(in))); \
+      while(--converted_n >= 0) { \
         for(dim2_index = 0; dim2_index < dim2; ++dim2_index) { \
-          OMPI_ARRAY_NAME_CONVERT(in)[__n][dim2_index] = in[__n][dim2_index]; \
+          OMPI_ARRAY_NAME_CONVERT(in)[converted_n][dim2_index] = in[converted_n][dim2_index]; \
         } \
       } \
     } while (0)
@@ -143,9 +143,9 @@
 
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     do { \
-      int __n = (int)(n); \
-      while(--__n >= 0) { \
-        in[__n] = OMPI_ARRAY_NAME_CONVERT(in)[__n]; \
+      int converted_n = (int)(n); \
+      while(--converted_n >= 0) { \
+        in[converted_n] = OMPI_ARRAY_NAME_CONVERT(in)[converted_n]; \
       } \
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
     } while (0)
@@ -178,16 +178,16 @@
 #    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(*a))
 #    define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
-       int __n = (int)(n); \
-       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n + 1); \
-       while (--__n >= 0) { \
-         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
+       int converted_n = (int)(n); \
+       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, converted_n + 1); \
+       while (--converted_n >= 0) { \
+         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]=OMPI_LOGICAL_2_INT(in[converted_n]); \
        } \
      } while (0)
 #    define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
-       int __n = (int)(n); \
-       while (__n >= 0) { \
-         in[__n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]); \
+       int converted_n = (int)(n); \
+       while (converted_n >= 0) { \
+         in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
      }  while (0) \
      /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
@@ -218,16 +218,16 @@
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
 #  endif
 #  define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
-       int __n = (int)(n); \
-       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n + 1); \
-       while (--__n >= 0) { \
-         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
+       int converted_n = (int)(n); \
+       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, converted_n + 1); \
+       while (--converted_n >= 0) { \
+         OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]=OMPI_LOGICAL_2_INT(in[converted_n]); \
        } \
      } while (0)
 #  define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
-       int __n = (int)(n); \
-       while (--__n >= 0) { \
-         in[__n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]); \
+       int converted_n = (int)(n); \
+       while (--converted_n >= 0) { \
+         in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
      }  while (0) \
      /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
