@@ -113,9 +113,10 @@ orte_plm_xgrid_make_nodes(orte_job_t *jdata)
         node->slots_inuse = 0;
         node->slots_max = 0;
         node->slots = 1;
+        node->slots_alloc = 1;
         node->index = opal_pointer_array_add(orte_node_pool, (void*)node);
         /* update the total slots in the job */
-        jdata->total_slots_alloc += node->slots;
+        jdata->total_slots_alloc += node->slots_alloc;
     }
     jdata->oversubscribe_override = true;
 
