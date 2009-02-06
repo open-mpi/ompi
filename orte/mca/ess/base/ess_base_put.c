@@ -40,7 +40,7 @@ int orte_ess_env_put(orte_std_cntr_t num_procs,
     char* param;
     char* value;
 
-    /* tell the SDS to select the env component */
+    /* tell the ESS to select the env component */
     if(NULL == (param = mca_base_param_environ_variable("ess",NULL,NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;

@@ -97,9 +97,6 @@ orte_ess_base_module_t orte_ess_singleton_module = {
 static int rte_init(char flags)
 {
     int rc;
-    orte_nid_t *node;
-    orte_jmap_t *jmap;
-    orte_pmap_t pmap;
     
     /* run the prolog */
     if (ORTE_SUCCESS != (rc = orte_ess_base_std_prolog())) {
@@ -159,23 +156,6 @@ static int rte_init(char flags)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    /* add a jmap entry for myself */
-    jmap = OBJ_NEW(orte_jmap_t);
-    jmap->job = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_add(&orte_jobmap, jmap);
-    pmap.local_rank = 0;
-    pmap.node_rank = 0;
-    pmap.node = 0;
-    opal_value_array_set_item(&jmap->pmap, 0, &pmap);
-    jmap->num_procs = 1;
-    
-    /* create a nidmap entry for this node */
-    node = OBJ_NEW(orte_nid_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->daemon = 0;  /* the HNP co-occupies our node */
-    node->arch = orte_process_info.arch;
-    opal_pointer_array_set_item(&orte_nidmap, 0, node);
     
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup())) {
