@@ -808,6 +808,8 @@ CLEANUP:
     if (app_launch_failed) {
         if (NULL == jdata) {
             orte_errmgr.incomplete_start(ORTE_JOBID_INVALID, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else if (NULL == jdata->aborted_proc) {
+            orte_errmgr.incomplete_start(jdata->jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
         } else {
             orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
         }
