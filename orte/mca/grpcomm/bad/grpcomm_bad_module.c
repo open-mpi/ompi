@@ -367,123 +367,21 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 /***   MODEX SECTION ***/
 static int modex(opal_list_t *procs)
 {
-    opal_buffer_t buf, rbuf;
-    int32_t i, num_procs;
-    orte_std_cntr_t cnt;
-    orte_process_name_t proc_name;
     int rc;
-    int32_t arch;
-    bool modex_reqd;  /* going to ignore this anyway */
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:bad: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* setup the buffer that will actually be sent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
-    
-    /* put our process name in the buffer so it can be unpacked later */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* add our architecture - we always send it in this module! */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* pack the entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf, &modex_reqd))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:bad:modex: executing allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* exchange the buffer with the list of peers (if provided) or all my peers */
     if (NULL == procs) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(true))) {
             ORTE_ERROR_LOG(rc);
-            goto cleanup;
         }
     } else {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs, true))) {
             ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+        }        
     }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:bad:modex: processing modex info",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* process the results */
-    /* extract the number of procs that put data in the buffer */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s grpcomm:bad:modex: received %ld data bytes from %ld procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), (long)num_procs));
-    
-    /* if the buffer doesn't have any more data, ignore it */
-    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
-        goto cleanup;
-    }
-    
-    /* otherwise, process it */
-    for (i=0; i < num_procs; i++) {
-        /* unpack the process name */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* unpack its architecture */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* update the arch in the ESS
-         * RHC: DO NOT UPDATE ARCH IF THE PROC IS NOT IN OUR JOB. THIS IS A TEMPORARY
-         * FIX TO COMPENSATE FOR A PROBLEM IN THE CONNECT/ACCEPT CODE WHERE WE EXCHANGE
-         * INFO INCLUDING THE ARCH, BUT THEN DO A MODEX THAT ALSO INCLUDES THE ARCH. WE
-         * CANNOT UPDATE THE ARCH FOR JOBS OUTSIDE OUR OWN AS THE ESS HAS NO INFO ON
-         * THOSE PROCS/NODES - AND DOESN'T NEED IT AS THE MPI LAYER HAS ALREADY SET
-         * ITSELF UP AND DOES NOT NEED ESS SUPPORT FOR PROCS IN THE OTHER JOB
-         *
-         * EVENTUALLY, WE WILL SUPPORT THE ESS HAVING INFO ON OTHER JOBS FOR
-         * FAULT TOLERANCE PURPOSES - BUT NOT RIGHT NOW
-         */
-        if (proc_name.jobid == ORTE_PROC_MY_NAME->jobid) {
-            if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        }
-            
-        /* update the modex database */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-    
-cleanup:
-    OBJ_DESTRUCT(&buf);
-    OBJ_DESTRUCT(&rbuf);
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:bad: modex completed",
