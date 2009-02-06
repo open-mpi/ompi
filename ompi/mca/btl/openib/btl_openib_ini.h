@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,9 @@ typedef struct ompi_btl_openib_ini_values_t {
 
     int32_t max_inline_data;
     bool max_inline_data_set;
+
+    bool rdmacm_reject_causes_connect_error;
+    bool rdmacm_reject_causes_connect_error_set;
 } ompi_btl_openib_ini_values_t;
 
 
