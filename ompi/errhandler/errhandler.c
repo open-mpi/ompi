@@ -114,15 +114,24 @@ int ompi_errhandler_init(void)
   strncpy (ompi_mpi_errors_return.eh_name, "MPI_ERRORS_RETURN", 
 	   strlen("MPI_ERRORS_RETURN")+1 );
 
-  /* If we're going to use C++, functions will be fixed up during MPI::Init */
+  /* If we're going to use C++, functions will be fixed up during
+     MPI::Init.  Note that it is proper to use ERRHANDLER_LANG_C here;
+     the dispatch function is in C (although in libmpi_cxx); the
+     conversion from C handles to C++ handles happens in that dispatch
+     function -- not the errhandler_invoke.c stuff here in libmpi. */
   OBJ_CONSTRUCT( &ompi_mpi_errors_throw_exceptions, ompi_errhandler_t );
-  ompi_mpi_errors_are_fatal.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_are_fatal.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_are_fatal.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
-  ompi_mpi_errors_are_fatal.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
-  ompi_mpi_errors_are_fatal.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
-  ompi_mpi_errors_are_fatal.eh_fort_fn = NULL;
-  strncpy (ompi_mpi_errors_are_fatal.eh_name, "MPI_ERRORS_THROW_EXCEPTIONS", 
+  ompi_mpi_errors_throw_exceptions.eh_mpi_object_type = 
+      OMPI_ERRHANDLER_TYPE_PREDEFINED;
+  ompi_mpi_errors_throw_exceptions.eh_lang = OMPI_ERRHANDLER_LANG_C;
+  ompi_mpi_errors_throw_exceptions.eh_comm_fn = 
+      ompi_mpi_errors_are_fatal_comm_handler;
+  ompi_mpi_errors_throw_exceptions.eh_file_fn = 
+      ompi_mpi_errors_are_fatal_file_handler;
+  ompi_mpi_errors_throw_exceptions.eh_win_fn  = 
+      ompi_mpi_errors_are_fatal_win_handler ;
+  ompi_mpi_errors_throw_exceptions.eh_fort_fn = NULL;
+  strncpy (ompi_mpi_errors_throw_exceptions.eh_name,
+           "MPI_ERRORS_THROW_EXCEPTIONS", 
 	   strlen("MPI_ERRORS_THROW_EXCEPTIONS")+1 );
 
   /* All done */
