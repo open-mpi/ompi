@@ -151,7 +151,7 @@ static int rdmacm_priority = 30;
 static uint16_t rdmacm_port = 0;
 static uint32_t rdmacm_addr = 0;
 static int rdmacm_resolve_timeout = 2000;
-static bool rdmacm_ignore_connect_errors = false;
+static bool rdmacm_reject_causes_connect_error = false;
 static volatile int disconnect_callbacks = 0;
 static bool rdmacm_component_initialized = false;
 
@@ -249,7 +249,7 @@ static void rdmacm_component_register(void)
                            "connect_rdmacm_reject_causes_connect_error",
                            "The drivers for some devices are buggy such that an RDMA REJECT action may result in a CONNECT_ERROR event instead of a REJECTED event.  Setting this MCA parameter to true tells Open MPI to treat CONNECT_ERROR events on connections where a REJECT is expected as a REJECT (default: false)",
                            false, false, 0, &value);
-    rdmacm_ignore_connect_errors = (bool) (value != 0);
+    rdmacm_reject_causes_connect_error = (bool) (value != 0);
 }
 
 /*
@@ -1523,7 +1523,7 @@ static int event_handler(struct rdma_cm_event *event)
                 ini.rdmacm_reject_causes_connect_error) {
                 found = true;
             }
-            if (rdmacm_ignore_connect_errors) {
+            if (rdmacm_reject_causes_connect_error) {
                 found = true;
             }
             
