@@ -228,6 +228,13 @@ static int update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
 
+    /* if the job family is zero, then this is going to a local slave,
+     * so the path is direct and there is nothing to do here
+     */
+    if (0 == ORTE_JOB_FAMILY(target->jobid)) {
+        return ORTE_SUCCESS;
+    }
+    
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_binomial_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -317,6 +324,14 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
 
     /******     HNP AND DAEMONS ONLY     ******/
+    
+    /* if the job family is zero, then this is going to a local slave,
+     * so the path is direct
+     */
+    if (0 == ORTE_JOB_FAMILY(target->jobid)) {
+        ret = target;
+        goto found;
+    }
     
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
@@ -600,6 +615,15 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_binomial: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
+            /* if this is for a job family of zero, then we know that the enclosed
+             * procs are local slaves to our daemon. In that case, we can just ignore this
+             * as our daemon - given that it had to spawn the local slave - already
+             * knows how to talk to them
+             */
+            if (0 == ORTE_JOB_FAMILY(job)) {
+                return ORTE_SUCCESS;
+            }
             
             if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) != ORTE_JOB_FAMILY(job)) {
                 /* if this is for a different job family, then we route via our HNP
