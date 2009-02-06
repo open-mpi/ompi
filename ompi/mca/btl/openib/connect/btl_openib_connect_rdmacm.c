@@ -37,6 +37,7 @@
 #include "btl_openib_endpoint.h"
 #include "connect/connect.h"
 #include "btl_openib_iwarp.h"
+#include "btl_openib_ini.h"
 
 /* JMS to be removed: see #1264 */
 #undef event
@@ -245,8 +246,8 @@ static void rdmacm_component_register(void)
     }
 
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-                           "connect_rdmacm_ignore_connect_errors",
-                           "Some devices do not implement all aspects of the RDMA CM properly (e.g., REJECTs are not handled properly).  Setting this MCA parameter to true tells Open MPI to ignore RDMA CM CONNECT_ERROR events (default: false).",
+                           "connect_rdmacm_reject_causes_connect_error",
+                           "The drivers for some devices are buggy such that an RDMA REJECT action may result in a CONNECT_ERROR event instead of a REJECTED event.  Setting this MCA parameter to true tells Open MPI to treat CONNECT_ERROR events on connections where a REJECT is expected as a REJECT (default: false)",
                            false, false, 0, &value);
     rdmacm_ignore_connect_errors = (bool) (value != 0);
 }
@@ -1212,9 +1213,11 @@ out:
 /*
  * Runs in service thread
  */
-static int create_dummy_cq(rdmacm_contents_t *contents, mca_btl_openib_module_t *openib_btl)
+static int create_dummy_cq(rdmacm_contents_t *contents, 
+                           mca_btl_openib_module_t *openib_btl)
 {
-    contents->dummy_cq = ibv_create_cq(openib_btl->device->ib_dev_context, 1, NULL, NULL, 0);
+    contents->dummy_cq = 
+        ibv_create_cq(openib_btl->device->ib_dev_context, 1, NULL, NULL, 0);
     if (NULL == contents->dummy_cq) {
         BTL_ERROR(("dummy_cq not created"));
         goto out;
@@ -1228,7 +1231,8 @@ out:
 /*
  * Runs in service thread
  */
-static int create_dummy_qp(rdmacm_contents_t *contents, struct rdma_cm_id *id, int qpnum)
+static int create_dummy_qp(rdmacm_contents_t *contents, 
+                           struct rdma_cm_id *id, int qpnum)
 {
     struct ibv_qp_init_attr attr;
     struct ibv_qp *qp;
@@ -1446,6 +1450,8 @@ static int event_handler(struct rdma_cm_event *event)
     struct sockaddr *peeraddr, *localaddr;
     uint32_t peeripaddr, localipaddr;
     int rc = -1, qpnum;
+    ompi_btl_openib_ini_values_t ini;
+    bool found;
 
     if (NULL == context) {
         return rc;
@@ -1498,14 +1504,34 @@ static int event_handler(struct rdma_cm_event *event)
         break;
 
     case RDMA_CM_EVENT_CONNECT_ERROR:
-        /* Workaround for broken NetEffect/Intel driver: if we get a
-           CONNECT_ERROR on a connection that we're expecting a reject
-           on, then it's ok (their driver just doesn't handle reject
-           properly at all).  */
-        if (rdmacm_ignore_connect_errors) {
-            OPAL_OUTPUT((-1, "SERVICE Got CONNECT_ERROR, but ignored: %p", (void*) event->id));
-            rc = rdmacm_destroy_dummy_qp(context);
-            break;
+        /* Some adapters have broken REJECT behavior; the recipient
+           gets a CONNECT_ERROR event instead of the expected REJECTED
+           event.  So if we get a CONNECT_ERROR, see if it's on a
+           connection that we're expecting a REJECT (i.e., we have a
+           dummy_cq setup).  If it is, and if a) the MCA param
+           btl_openib_connect_rdmacm_reject_causes_connect_error is
+           true, or b) if rdmacm_reject_causes_connect_error set on
+           the device INI values, then just treat this CONNECT_ERROR
+           as if it were the REJECT. */
+        if (NULL != context->contents->dummy_cq) {
+            struct ibv_device_attr *attr =
+                &(context->endpoint->endpoint_btl->device->ib_dev_attr);
+            found = false;
+            if (OMPI_SUCCESS == ompi_btl_openib_ini_query(attr->vendor_id,
+                                                          attr->vendor_part_id,
+                                                          &ini) && 
+                ini.rdmacm_reject_causes_connect_error) {
+                found = true;
+            }
+            if (rdmacm_ignore_connect_errors) {
+                found = true;
+            }
+            
+            if (found) {
+                OPAL_OUTPUT((-1, "SERVICE Got CONNECT_ERROR, but ignored: %p", (void*) event->id));
+                rc = rdmacm_destroy_dummy_qp(context);
+                break;
+            }
         }
 
         /* Otherwise, fall through and handle the error as normal */

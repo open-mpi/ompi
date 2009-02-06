@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
@@ -401,6 +401,13 @@ static int parse_line(parsed_section_values_t *sv)
         sv->values.max_inline_data_set = true;
     }
 
+    else if (0 == strcasecmp(key_buffer, "rdmacm_reject_causes_connect_error")) {
+        /* Single value */
+        sv->values.rdmacm_reject_causes_connect_error = 
+            (bool) ompi_btl_openib_ini_intify(value);
+        sv->values.rdmacm_reject_causes_connect_error_set = true;
+    }
+
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -490,6 +497,9 @@ static void reset_values(ompi_btl_openib_ini_values_t *v)
 
     v->max_inline_data = 0;
     v->max_inline_data_set = false;
+
+    v->rdmacm_reject_causes_connect_error = false;
+    v->rdmacm_reject_causes_connect_error_set = false;
 }
 
 
@@ -544,6 +554,13 @@ static int save_section(parsed_section_values_t *s)
                     if (s->values.max_inline_data_set) {
                         h->values.max_inline_data = s->values.max_inline_data;
                         h->values.max_inline_data_set = true;
+                    }
+
+                    if (s->values.rdmacm_reject_causes_connect_error_set) {
+                        h->values.rdmacm_reject_causes_connect_error = 
+                            s->values.rdmacm_reject_causes_connect_error;
+                        h->values.rdmacm_reject_causes_connect_error_set = 
+                            true;
                     }
 
                     found = true;
