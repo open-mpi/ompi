@@ -18,3 +18,29 @@
 #
 # This is the US/English general help file for ORTE FileM framework.
 #
+[orte-filem-rsh:get-file-exists]
+WARNING: Could not preload specified file: File already exists.
+
+Fileset: %s
+Host: %s
+
+Will continue attempting to launch the process.
+
+[orte-filem-rsh:put-file-not-exist]
+WARNING: Could not preload specified file: File does not exist.
+
+Fileset: %s
+Host: %s
+
+Will continue attempting to launch the process.
+
+[orte-filem-rsh:remote-get-failed]
+WARNING: Remote peer (%s) failed to preload a file.
+
+Exit Status: %d
+Local  File: %s
+Remote File: %s
+Command:
+  %s
+
+Will continue attempting to launch the process(es).
