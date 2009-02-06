@@ -128,57 +128,69 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             OBJ_CONSTRUCT(&answer, opal_buffer_t);
             job = ORTE_JOBID_INVALID;
             
-            /* get the job object */
+            /* unpack the job object */
             count = 1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &jdata, &count, ORTE_JOB))) {
                 ORTE_ERROR_LOG(rc);
                 goto ANSWER_LAUNCH;
             }
+            
+            /* if is a LOCAL slave cmd */
+            if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
+                /* In this case, I cannot lookup job info. All I do is pass
+                 * this along to the local launcher
+                 */
+                if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto ANSWER_LAUNCH;
+                }
+                job = jdata->jobid;
+            } else {  /* this is a GLOBAL launch cmd */
+                /* get the parent's job object */
+                if (NULL == (parent = orte_get_job_data_object(mev->sender.jobid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    goto ANSWER_LAUNCH;
+                }
                 
-            /* get the parent's job object */
-            if (NULL == (parent = orte_get_job_data_object(mev->sender.jobid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                goto ANSWER_LAUNCH;
-            }
-            
-            /* if the prefix was set in the parent's job, we need to transfer
-             * that prefix to the child's app_context so any further launch of
-             * orteds can find the correct binary. There always has to be at
-             * least one app_context in both parent and child, so we don't
-             * need to check that here. However, be sure not to overwrite
-             * the prefix if the user already provide it!
-             */
-            apps = (orte_app_context_t**)parent->apps->addr;
-            child_apps = (orte_app_context_t**)jdata->apps->addr;
-            if (NULL != apps[0]->prefix_dir &&
-                NULL == child_apps[0]->prefix_dir) {
-                child_apps[0]->prefix_dir = strdup(apps[0]->prefix_dir);
-            }
-            
-            /* find the sender's node in the job map */
-            procs = (orte_proc_t**)parent->procs->addr;
-            /* set the bookmark so the child starts from that place - this means
-             * that the first child process could be co-located with the proc
-             * that called comm_spawn, assuming slots remain on that node. Otherwise,
-             * the procs will start on the next available node
-             */
-            jdata->bookmark = procs[mev->sender.vpid]->node;
+                /* if the prefix was set in the parent's job, we need to transfer
+                 * that prefix to the child's app_context so any further launch of
+                 * orteds can find the correct binary. There always has to be at
+                 * least one app_context in both parent and child, so we don't
+                 * need to check that here. However, be sure not to overwrite
+                 * the prefix if the user already provide it!
+                 */
+                apps = (orte_app_context_t**)parent->apps->addr;
+                child_apps = (orte_app_context_t**)jdata->apps->addr;
+                if (NULL != apps[0]->prefix_dir &&
+                    NULL == child_apps[0]->prefix_dir) {
+                    child_apps[0]->prefix_dir = strdup(apps[0]->prefix_dir);
+                }
                 
-            /* launch it */
-            if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
-                ORTE_ERROR_LOG(rc);
-                goto ANSWER_LAUNCH;
-            }
-            job = jdata->jobid;
-            
-            /* return the favor so that any repetitive comm_spawns track each other */
-            parent->bookmark = jdata->bookmark;
-
+                /* find the sender's node in the job map */
+                procs = (orte_proc_t**)parent->procs->addr;
+                /* set the bookmark so the child starts from that place - this means
+                 * that the first child process could be co-located with the proc
+                 * that called comm_spawn, assuming slots remain on that node. Otherwise,
+                 * the procs will start on the next available node
+                 */
+                jdata->bookmark = procs[mev->sender.vpid]->node;
+                
+                /* launch it */
+                if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto ANSWER_LAUNCH;
+                }
+                job = jdata->jobid;
+                
+                /* return the favor so that any repetitive comm_spawns track each other */
+                parent->bookmark = jdata->bookmark;
+             }
+           
             /* if the child is an ORTE job, wait for the procs to report they are alive */
             if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {
                 ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
             }
-            
+
         ANSWER_LAUNCH:
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job %s launched",
