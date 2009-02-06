@@ -30,6 +30,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
+#include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
@@ -46,6 +47,9 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     int32_t cnt;
     int rc;
     opal_byte_object_t *bo;
+    orte_nid_t *node;
+    orte_jmap_t *jmap;
+    orte_pmap_t pmap;
     
     if (!initialized) {
         /* need to construct the global arrays */
@@ -61,8 +65,30 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
         initialized = true;
     }
     
-    /* it is okay if the buffer is empty - could be a non-MPI proc */
+    /* it is okay if the buffer is empty */
     if (NULL == buffer || 0 == buffer->bytes_used) {
+        /* if the buffer is empty, add a jmap entry for myself */
+        jmap = OBJ_NEW(orte_jmap_t);
+        jmap->job = ORTE_PROC_MY_NAME->jobid;
+        opal_pointer_array_add(&orte_jobmap, jmap);
+        jmap->num_procs = 1;
+        
+        /* create a nidmap entry for this node */
+        node = OBJ_NEW(orte_nid_t);
+        node->name = strdup(orte_process_info.nodename);
+        node->daemon = ORTE_PROC_MY_DAEMON->vpid;
+        node->arch = orte_process_info.arch;
+        OBJ_CONSTRUCT(&pmap, orte_pmap_t);
+        pmap.local_rank = 0;
+        pmap.node_rank = 0;
+        pmap.node = opal_pointer_array_add(&orte_nidmap, node);
+        /* value array copies values, so everything must be set before
+         * calling the set_item function
+         */
+        opal_value_array_set_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid, &pmap);
+        OBJ_DESTRUCT(&pmap);
+  
+        /* all done */
         return ORTE_SUCCESS;
     }
     
@@ -971,25 +997,38 @@ cleanup:
 
 
 /***   NIDMAP UTILITIES   ***/
-orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc)
+orte_jmap_t* orte_util_lookup_jmap(orte_jobid_t job)
 {
     int i;
     orte_jmap_t **jmaps;
-    orte_pmap_t *pmap;
     
     jmaps = (orte_jmap_t**)orte_jobmap.addr;
     for (i=0; i < orte_jobmap.size && NULL != jmaps[i]; i++) {
         OPAL_OUTPUT_VERBOSE((10, orte_debug_output,
                              "%s lookup:pmap: checking job %s for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jmaps[i]->job), ORTE_JOBID_PRINT(proc->jobid)));
-        if (proc->jobid == jmaps[i]->job) {
-            pmap = (orte_pmap_t*)opal_value_array_get_item(&jmaps[i]->pmap, proc->vpid);
-            return pmap;
+                             ORTE_JOBID_PRINT(jmaps[i]->job), ORTE_JOBID_PRINT(job)));
+        if (job == jmaps[i]->job) {
+            return jmaps[i];
         }
     }
     
+    /* if we didn't find it, return NULL */
     return NULL;
+}
+
+orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc)
+{
+    orte_jmap_t *jmap;
+    
+    if (NULL == (jmap = orte_util_lookup_jmap(proc->jobid))) {
+        return NULL;
+    }
+    if (proc->vpid >= jmap->num_procs) {
+        return NULL;
+    }
+    
+    return (orte_pmap_t*)opal_value_array_get_item(&jmap->pmap, proc->vpid);
 }
 
 /* the daemon's vpid does not necessarily correlate
@@ -1014,12 +1053,13 @@ static orte_nid_t* find_daemon_node(orte_process_name_t *proc)
         }
     }
     
+    /* if we didn't find it, return NULL */
     return NULL;
 }
 
 orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
 {
-    orte_nid_t **nids, *nid;
+    orte_nid_t **nids;
     orte_pmap_t *pmap;
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
@@ -1027,38 +1067,13 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
-    /* if the proc is from a different job family, we always
-     * return NULL - we cannot know info for procs in other
-     * job families.
-     */
-    if (ORTE_JOB_FAMILY(proc->jobid) !=
-        ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
-        /* this isn't an error - let the caller decide if an
-         * error message is required
-         */
-        OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                             "%s lookup:nid: different job family",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return NULL;
-    }
-    
     if (ORTE_PROC_IS_DAEMON(proc->jobid)) {
-        /* looking for a daemon in my family */
-        if (NULL == (nid = find_daemon_node(proc))) {
-            OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
-                                 "%s lookup:nid: couldn't find daemon node",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        }
-        return nid;
+        /* looking for a daemon */
+        return find_daemon_node(proc);
     }
     
     /* looking for an application proc */
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-        /* if the proc is in my job family, then this definitely is
-         * an error - we should always know the node of a proc
-         * in our job family
-         */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return NULL;
     }
     
