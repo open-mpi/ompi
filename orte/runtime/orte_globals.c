@@ -757,8 +757,8 @@ OBJ_CLASS_INSTANCE(orte_nid_t,
 static void orte_pmap_construct(orte_pmap_t *ptr)
 {
     ptr->node = -1;
-    ptr->local_rank = 0;
-    ptr->node_rank = 0;
+    ptr->local_rank = ORTE_LOCAL_RANK_INVALID;
+    ptr->node_rank = ORTE_NODE_RANK_INVALID;
 }
 
 OBJ_CLASS_INSTANCE(orte_pmap_t,
