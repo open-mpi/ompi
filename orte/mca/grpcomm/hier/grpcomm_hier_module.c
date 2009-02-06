@@ -432,188 +432,6 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 }
 
 /***   MODEX SECTION ***/
-static int do_modex(opal_list_t *procs)
-{
-    opal_buffer_t buf, rbuf;
-    int32_t i, num_procs;
-    orte_std_cntr_t cnt, j, num_recvd_entries;
-    orte_process_name_t proc_name;
-    int rc=ORTE_SUCCESS;
-    int32_t arch;
-    bool modex_reqd;
-    orte_nid_t *nid;
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
-                         "%s grpcomm:hier:modex: performing modex",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* setup the buffer that will actually be sent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
-    
-    /* put our process name in the buffer so it can be unpacked later */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }        
-    
-    /* pack the entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf, &modex_reqd))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:hier:modex: executing allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* exchange the buffer with the list of peers (if provided) or all my peers */
-    if (NULL == procs) {
-        if (ORTE_SUCCESS != (rc = allgather(&buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_allgather_list(procs, &buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
-                         "%s grpcomm:hier:modex: processing modex info",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* process the results */
-    /* extract the number of procs that put data in the buffer */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s grpcomm:hier:modex: received %ld data bytes from %d procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), num_procs));
-    
-    /* if the buffer doesn't have any more data, ignore it */
-    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
-        goto cleanup;
-    }
-    
-    /* otherwise, process it */
-    for (i=0; i < num_procs; i++) {
-        /* unpack the process name */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* unpack its architecture */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &arch, &cnt, OPAL_UINT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* update the arch in the ESS
-         * RHC: DO NOT UPDATE ARCH IF THE PROC IS NOT IN OUR JOB. THIS IS A TEMPORARY
-         * FIX TO COMPENSATE FOR A PROBLEM IN THE CONNECT/ACCEPT CODE WHERE WE EXCHANGE
-         * INFO INCLUDING THE ARCH, BUT THEN DO A MODEX THAT ALSO INCLUDES THE ARCH. WE
-         * CANNOT UPDATE THE ARCH FOR JOBS OUTSIDE OUR OWN AS THE ESS HAS NO INFO ON
-         * THOSE PROCS/NODES - AND DOESN'T NEED IT AS THE MPI LAYER HAS ALREADY SET
-         * ITSELF UP AND DOES NOT NEED ESS SUPPORT FOR PROCS IN THE OTHER JOB
-         *
-         * EVENTUALLY, WE WILL SUPPORT THE ESS HAVING INFO ON OTHER JOBS FOR
-         * FAULT TOLERANCE PURPOSES - BUT NOT RIGHT NOW
-         */
-        if (proc_name.jobid == ORTE_PROC_MY_NAME->jobid) {
-            if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        }
-        
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                             "%s grpcomm:hier:modex: adding modex entry for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc_name)));
-        
-        /* unpack the number of entries for this proc */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                             "%s grpcomm:hier:modex adding %d entries for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
-                             ORTE_NAME_PRINT(&proc_name)));
-        
-        /* find this proc's node in the nidmap */
-        if (NULL == (nid = orte_util_lookup_nid(&proc_name))) {
-            /* proc wasn't found - return error */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                                 "%s grpcomm:hier:modex no nidmap entry for proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto cleanup;
-        }
-        
-        /*
-         * Extract the attribute names and values
-         */
-        for (j = 0; j < num_recvd_entries; j++) {
-            size_t num_bytes;
-            orte_attr_t *attr;
-            
-            attr = OBJ_NEW(orte_attr_t);
-            cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &(attr->name), &cnt, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            attr->size = num_bytes;
-            
-            if (num_bytes != 0) {
-                if (NULL == (attr->bytes = malloc(num_bytes))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    rc = ORTE_ERR_OUT_OF_RESOURCE;
-                    goto cleanup;
-                }
-                cnt = (orte_std_cntr_t) num_bytes;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, attr->bytes, &cnt, OPAL_BYTE))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-            }
-            
-            /* add this to the node's attribute list */
-            opal_list_append(&nid->attrs, &attr->super);
-        }
-    }
-    
-cleanup:
-    OBJ_DESTRUCT(&buf);
-    OBJ_DESTRUCT(&rbuf);
-    return rc;
-}
 
 static int modex(opal_list_t *procs)
 {
@@ -643,18 +461,29 @@ static int modex(opal_list_t *procs)
      *     child job. Thus, it cannot know where the child procs are located,
      *     and cannot use the profile_file to determine their contact info
      *
-     * We also do the modex if we are doing an opal_profile so that the
-     * HNP can collect our modex info.
      */
-    if (NULL != procs || opal_profile) {
-        if (ORTE_SUCCESS != (rc = do_modex(procs))) {
+    if (NULL != procs) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs, false))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
-    } else if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
-        /* decide if we need to add the architecture to the modex. Check
-         * first to see if hetero is enabled - if not, then we clearly
-         * don't need to exchange arch's as they are all identical
+    }
+    
+    /* Do a modex across our peers if we are doing an opal_profile so that the
+     * HNP can collect our modex info
+     */
+
+    if (opal_profile) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
+    }
+    
+    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT) {
+        /* decide if we need to do a modex. Check
+         * first to see if hetero is enabled - if yes, then we
+         * may need to exchange arch's as they may be different
          */
         /* Case 1: If different apps in this job were built differently - e.g., some
          * are built 32-bit while others are built 64-bit - then we need to modex
@@ -672,7 +501,7 @@ static int modex(opal_list_t *procs)
                                  "%s grpcomm:hier: modex is required",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
-            if (ORTE_SUCCESS != (rc = do_modex(procs))) {
+            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
                 ORTE_ERROR_LOG(rc);
             }
             return rc;
@@ -687,7 +516,7 @@ static int modex(opal_list_t *procs)
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                              "%s grpcomm:hier: modex is required",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        if (ORTE_SUCCESS != (rc = do_modex(procs))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
