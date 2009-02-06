@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +33,7 @@
  */
 struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_frag(struct mca_btl_sctp_frag_t *frag) {
     struct sockaddr_in btl_sockaddr;
-    bzero(&btl_sockaddr, sizeof(struct sockaddr_in));
+    memset(&btl_sockaddr, 0, sizeof(struct sockaddr_in));
     btl_sockaddr.sin_family = AF_INET;
     btl_sockaddr.sin_port = frag->endpoint->endpoint_addr->addr_port;
     btl_sockaddr.sin_addr.s_addr = frag->endpoint->endpoint_addr->addr_inet.s_addr;
@@ -48,7 +48,7 @@ struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_frag(struct mca_btl_sctp_fra
  */
 struct sockaddr_in mca_btl_sctp_utils_sockaddr_from_endpoint(struct mca_btl_base_endpoint_t *ep) {
     struct sockaddr_in btl_sockaddr;
-    bzero(&btl_sockaddr, sizeof(struct sockaddr_in));
+    memset(&btl_sockaddr, 0, sizeof(struct sockaddr_in));
     btl_sockaddr.sin_family = AF_INET;
     btl_sockaddr.sin_port = ep->endpoint_addr->addr_port;
     btl_sockaddr.sin_addr.s_addr = ep->endpoint_addr->addr_inet.s_addr;

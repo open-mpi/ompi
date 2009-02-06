@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -859,7 +860,7 @@ int mca_btl_sctp_set_socket_options(int sd)
 
     /* register io event here to see populated sndrcvinfo struct */
 
-    bzero(&evnts, sizeof(evnts));
+    memset(&evnts, 0, sizeof(evnts));
     evnts.sctp_data_io_event = 1;
     if(setsockopt(sd, IPPROTO_SCTP, SCTP_EVENTS, &evnts, sizeof(evnts)) < 0) {
         BTL_ERROR(("setsockopt(SCTP_EVENTS) failed with errno=%d", opal_socket_errno));
