@@ -31,7 +31,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "ompi/mca/dpm/dpm.h"
 
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h" 
