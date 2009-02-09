@@ -71,7 +71,6 @@ int orte_proc_info(void)
     
     int tmp;
     char *uri, *ptr;
-    size_t len, i;
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
     
     if (init) {
@@ -89,28 +88,34 @@ int orte_proc_info(void)
         */
         if ('"' == uri[0]) {
             /* if the first char is a quote, then so will the last one be */
+            uri[strlen(uri)-1] = '\0';
             ptr = &uri[1];
-            len = strlen(ptr) - 1;
         } else {
             ptr = &uri[0];
-            len = strlen(uri);
         }
-        
-        /* we have to copy the string by hand as strndup is a GNU extension
-         * and may not be generally available
-         */
-        orte_process_info.my_hnp_uri = (char*)malloc(len+1);
-        for (i=0; i < len; i++) {
-            orte_process_info.my_hnp_uri[i] = ptr[i];
-        }
-        orte_process_info.my_hnp_uri[len] = '\0';  /* NULL terminate */
+        orte_process_info.my_hnp_uri = strdup(ptr);
         free(uri);
-
     }
     
     mca_base_param_reg_string_name("orte", "local_daemon_uri",
                                    "Daemon contact info",
-                                   true, false, NULL,  &(orte_process_info.my_daemon_uri));
+                                   true, false, NULL,  &(uri));
+    
+    if (NULL != uri) {
+        /* the uri value passed to us may have quote marks around it to protect
+         * the value if passed on the command line. We must remove those
+         * to have a correct uri string
+         */
+        if ('"' == uri[0]) {
+            /* if the first char is a quote, then so will the last one be */
+            uri[strlen(uri)-1] = '\0';
+            ptr = &uri[1];
+        } else {
+            ptr = &uri[0];
+        }
+        orte_process_info.my_daemon_uri = strdup(ptr);
+        free(uri);
+    }
     
     mca_base_param_reg_int_name("orte", "app_num",
                                 "Index of the app_context that defines this proc",
