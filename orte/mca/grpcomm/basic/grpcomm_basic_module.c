@@ -1050,7 +1050,7 @@ static void process_coll_msg(int fd, short event, void *data)
     int32_t rc, n;
     opal_list_item_t *item;
     orte_odls_child_t *child;
-    bool found;
+    bool found = false;
     orte_odls_job_t *jobdat;
     
     proc = &mev->sender;
