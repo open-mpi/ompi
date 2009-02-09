@@ -55,6 +55,12 @@ typedef struct {
     orte_jobid_t next_jobid;
     /* time when daemons started launch */
     struct timeval daemonlaunchstart;
+    /* rsh launch agent path */
+    char *rsh_agent_path;
+    /* rsh launch agent argv */
+    char **rsh_agent_argv;
+    /* jobid for local slaves */
+    orte_jobid_t local_slaves;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data
@@ -83,6 +89,12 @@ ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
 ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_jobid_t *jobid);
 
 ORTE_DECLSPEC int orte_plm_base_setup_orted_cmd(int *argc, char ***argv);
+
+/**
+ * Local slave launch
+ */
+ORTE_DECLSPEC int orte_plm_base_local_slave_launch(orte_job_t *jdata);
+ORTE_DECLSPEC int orte_plm_base_rsh_launch_agent_setup(void);
 
 /**
  * Heartbeat support

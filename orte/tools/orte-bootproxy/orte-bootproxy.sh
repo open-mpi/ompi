@@ -13,9 +13,13 @@ var=$1
 
 # push all MCA params to the environment
 while [ "${var:0:5}" = "OMPI_" ]; do
-    export $var
-    shift 1
-    var=$1
+    if [ "${var:6:6}" = "PREFIX" ]; then
+        export LD_LIBRARY_PATH="${var:12}":$LD_LIBRARY_PATH
+    else
+        export $var
+        shift 1
+        var=$1
+    fi
 done
 
 # extract the application to be executed

@@ -23,6 +23,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -64,6 +65,14 @@ int orte_plm_base_close(void)
     /* clearout the orted cmd locks */
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_lock);
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_cond);
+    
+    /* clearout the rsh support */
+    if (NULL != orte_plm_globals.rsh_agent_argv) {
+        opal_argv_free(orte_plm_globals.rsh_agent_argv);
+    }
+    if (NULL != orte_plm_globals.rsh_agent_path) {
+        free(orte_plm_globals.rsh_agent_path);
+    }
     
     return ORTE_SUCCESS;
 }

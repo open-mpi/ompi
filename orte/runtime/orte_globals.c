@@ -119,6 +119,9 @@ char *orte_xterm;
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 bool orte_forward_job_control;
 
+/* rsh support */
+char *orte_rsh_agent;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

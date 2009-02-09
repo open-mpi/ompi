@@ -38,7 +38,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
-#include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -49,11 +48,6 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/rsh/plm_rsh.h"
-
-/*
- * Local function
- */
-static char **search(const char* agent_list);
 
 
 /*
@@ -105,9 +99,6 @@ int orte_plm_rsh_component_open(void)
     OBJ_CONSTRUCT(&mca_plm_rsh_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_plm_rsh_component.cond, opal_condition_t);
     mca_plm_rsh_component.num_children = 0;
-    mca_plm_rsh_component.agent_argv = NULL;
-    mca_plm_rsh_component.agent_argc = 0;
-    mca_plm_rsh_component.agent_path = NULL;
     OBJ_CONSTRUCT(&mca_plm_rsh_component.children, opal_list_t);
 
     /* lookup parameters */
@@ -142,12 +133,6 @@ int orte_plm_rsh_component_open(void)
                            "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
     mca_plm_rsh_component.assume_same_shell = OPAL_INT_TO_BOOL(tmp);
-
-    tmp = mca_base_param_reg_string(c, "agent",
-                              "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
-                              false, false, "ssh : rsh", NULL);
-    mca_base_param_reg_syn_name(tmp, "pls", "rsh_agent", true);
-    mca_base_param_lookup_string(tmp, &mca_plm_rsh_component.agent_param);
     
     mca_base_param_reg_int(c, "tree_spawn",
                            "If set to 1, launch via a tree-based topology",
@@ -160,106 +145,56 @@ int orte_plm_rsh_component_open(void)
 
 int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
 {
-    char *bname;
-    size_t i;
-
-    /* Take the string that was given to us by the plm_rsh_agent MCA
-       param and search for it */
-    mca_plm_rsh_component.agent_argv = 
-        search(mca_plm_rsh_component.agent_param);
-    mca_plm_rsh_component.agent_argc = 
-        opal_argv_count(mca_plm_rsh_component.agent_argv);
-    mca_plm_rsh_component.agent_path = NULL;
-
-
     /* To be absolutely sure that we are under an SGE parallel env */
     if (!mca_plm_rsh_component.disable_qrsh &&
         NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
         /* setting exec_argv and exec_path for qrsh */
-        asprintf(&mca_plm_rsh_component.agent_param, "qrsh");
-        asprintf(&mca_plm_rsh_component.agent_path, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
-        asprintf(&mca_plm_rsh_component.agent_argv[0], "%s/bin/%s/qrsh", getenv("SGE_ROOT"), getenv("ARC"));
+        asprintf(&orte_plm_globals.rsh_agent_path, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        asprintf(&orte_plm_globals.rsh_agent_argv[0], "%s/bin/%s/qrsh", getenv("SGE_ROOT"), getenv("ARC"));
+        /* double check that we have access and permissions for the qrsh agent */
+        if (NULL == opal_path_findv(orte_plm_globals.rsh_agent_argv[0], X_OK,
+                                    environ, NULL)) {
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:rsh: unable to be used: cannot find path "
+                                 "or execution permissions not set for launching agent \"%s\"\n", 
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_plm_globals.rsh_agent_argv[0]));
+            *module = NULL;
+            return ORTE_ERROR;
+        }
+        /* automatically add -inherit and grid engine PE related flags */
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-inherit");
+        /* Don't use the "-noshell" flag as qrsh would have a problem 
+         * swallowing a long command */
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-nostdin");
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-V");
         if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+            opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-verbose");
             opal_output_verbose(1, orte_plm_globals.output,
-               "%s plm:rsh: using %s for launching\n",
-               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-               mca_plm_rsh_component.agent_argv[0]);
+                                "%s plm:rsh: using %s for launching\n",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                orte_plm_globals.rsh_agent_argv[0]);
         }
+        *priority = mca_plm_rsh_component.priority;
+        *module = (mca_base_module_t *) &orte_plm_rsh_module;
+        return ORTE_SUCCESS;
     }
-
-    if (mca_plm_rsh_component.agent_argc > 0) {
-        /* If the agent is ssh, and debug was not selected, then
-           automatically add "-x" */
-
-        bname = opal_basename(mca_plm_rsh_component.agent_argv[0]);
-        if (NULL != bname && 0 == strcmp(bname, "ssh")) {
-            /* if xterm option was given, add '-X' */
-            if (NULL != orte_xterm) {
-                opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                                 &mca_plm_rsh_component.agent_argv, "-X");
-            } else if (0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
-                /* if debug was not specified, and the user didn't explicitly
-                 * specify X11 forwarding/non-forwarding, add "-x"
-                 */
-                for (i = 1; NULL != mca_plm_rsh_component.agent_argv[i]; ++i) {
-                    if (0 == strcasecmp("-x", 
-                                        mca_plm_rsh_component.agent_argv[i])) {
-                        break;
-                    }
-                }
-                if (NULL == mca_plm_rsh_component.agent_argv[i]) {
-                    opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                                     &mca_plm_rsh_component.agent_argv, "-x");
-                }
-            }
-        }
-        
-        /* If the agent is qrsh, then automatically add -inherit 
-         * and grid engine PE related flags */
-        if (NULL != bname && 0 == strcmp(bname, "qrsh")) {
-            opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                             &mca_plm_rsh_component.agent_argv, "-inherit");
-            /* Don't use the "-noshell" flag as qrsh would have a problem 
-             * swallowing a long command */
-            opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                             &mca_plm_rsh_component.agent_argv, "-nostdin");
-            opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                             &mca_plm_rsh_component.agent_argv, "-V");
-            if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
-                opal_argv_append(&mca_plm_rsh_component.agent_argc, 
-                                 &mca_plm_rsh_component.agent_argv, "-verbose");
-            }
-        }
-        if (NULL != bname) {
-            free(bname);
-        }
-    }
-
-    /* If we didn't find the agent in the path, then don't use this
-       component */
-    if (NULL == mca_plm_rsh_component.agent_argv || 
-        NULL == mca_plm_rsh_component.agent_argv[0]) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:rsh: unable to be used: cannot find the "
-                             "launching agent. Looked for: %s\n", 
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             mca_plm_rsh_component.agent_param));
-        *module = NULL;
-        return ORTE_ERROR;
-    }
-    mca_plm_rsh_component.agent_path = 
-        opal_path_findv(mca_plm_rsh_component.agent_argv[0], X_OK,
-                        environ, NULL);
-    if (NULL == mca_plm_rsh_component.agent_path) {
+    
+    /* if this isn't an SGE environment, see if rsh/ssh is available */
+    
+    if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_setup()) {
+        /* this isn't an error - we just cannot be selected */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find path "
                              "for launching agent \"%s\"\n", 
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             mca_plm_rsh_component.agent_argv[0]));
+                             orte_plm_globals.rsh_agent_argv[0]));
         *module = NULL;
         return ORTE_ERROR;
     }
+    
+    /* we are good - make ourselves available */
     *priority = mca_plm_rsh_component.priority;
     *module = (mca_base_module_t *) &orte_plm_rsh_module;
     return ORTE_SUCCESS;
@@ -272,63 +207,6 @@ int orte_plm_rsh_component_close(void)
     OBJ_DESTRUCT(&mca_plm_rsh_component.lock);
     OBJ_DESTRUCT(&mca_plm_rsh_component.cond);
     OBJ_DESTRUCT(&mca_plm_rsh_component.children);
-    if (NULL != mca_plm_rsh_component.agent_param) {
-        free(mca_plm_rsh_component.agent_param);
-    }
-    if (NULL != mca_plm_rsh_component.agent_argv) {
-        opal_argv_free(mca_plm_rsh_component.agent_argv);
-    }
-    if (NULL != mca_plm_rsh_component.agent_path) {
-        free(mca_plm_rsh_component.agent_path);
-    }
+
     return ORTE_SUCCESS;
-}
-
-
-/*
- * Take a colon-delimited list of agents and locate the first one that
- * we are able to find in the PATH.  Split that one into argv and
- * return it.  If nothing found, then return NULL.
- */
-static char **search(const char* agent_list)
-{
-    int i, j;
-    char *line, **lines = opal_argv_split(agent_list, ':');
-    char **tokens, *tmp;
-    char cwd[OMPI_PATH_MAX];
-
-    getcwd(cwd, OMPI_PATH_MAX);
-    for (i = 0; NULL != lines[i]; ++i) {
-        line = lines[i];
-
-        /* Trim whitespace at the beginning and end of the line */
-        for (j = 0; '\0' != line[j] && isspace(line[j]); ++line) {
-            continue;
-        }
-        for (j = strlen(line) - 2; j > 0 && isspace(line[j]); ++j) {
-            line[j] = '\0';
-        }
-        if (strlen(line) <= 0) {
-            continue;
-        }
-
-        /* Split it */
-        tokens = opal_argv_split(line, ' ');
-
-        /* Look for the first token in the PATH */
-        tmp = opal_path_findv(tokens[0], X_OK, environ, cwd);
-        if (NULL != tmp) {
-            free(tokens[0]);
-            tokens[0] = tmp;
-            opal_argv_free(lines);
-            return tokens;
-        }
-
-        /* Didn't find it */
-        opal_argv_free(tokens);
-    }
-
-    /* Doh -- didn't find anything */
-    opal_argv_free(lines);
-    return NULL;
 }
