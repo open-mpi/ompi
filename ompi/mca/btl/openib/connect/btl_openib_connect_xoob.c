@@ -17,7 +17,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "ompi/mca/dpm/dpm.h"
 
 #include "btl_openib.h"
 #include "btl_openib_endpoint.h"
