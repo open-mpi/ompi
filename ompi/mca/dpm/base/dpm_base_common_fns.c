@@ -35,13 +35,27 @@
 
 char* ompi_dpm_base_dyn_init (void)
 {
-    char *envvarname=NULL, *port_name=NULL;
+    char *envvarname=NULL, *port_name=NULL, *tmp, *ptr;
 
     /* check for appropriate env variable */
     asprintf(&envvarname, "OMPI_PARENT_PORT");
-    port_name = getenv(envvarname);
+    tmp = getenv(envvarname);
     free (envvarname);
-
+    if (NULL != tmp) {
+        /* the value passed to us may have quote marks around it to protect
+         * the value if passed on the command line. We must remove those
+         * to have a correct string
+         */
+        if ('"' == tmp[0]) {
+            /* if the first char is a quote, then so will the last one be */
+            tmp[strlen(tmp)-1] = '\0';
+            ptr = &tmp[1];
+        } else {
+            ptr = &tmp[0];
+        }
+        port_name = strdup(ptr);
+    }
+    
     return port_name;
 }
 

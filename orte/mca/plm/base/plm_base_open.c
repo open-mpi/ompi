@@ -103,6 +103,11 @@ int orte_plm_base_open(void)
     /* init the next jobid */
     orte_plm_globals.next_jobid = 0;
     
+    /* init the rsh support */
+    orte_plm_globals.rsh_agent_argv = NULL;
+    orte_plm_globals.rsh_agent_path = NULL;
+    orte_plm_globals.local_slaves = 0;
+    
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 

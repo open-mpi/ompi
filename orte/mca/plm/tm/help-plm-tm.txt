@@ -50,3 +50,13 @@ If you do not understand this error mesage, please try the following:
 2. Use the --prefix option to indicate where we can
    find that executable
 3. Talk to your local system administrator
+#
+[no-local-slave-support]
+A call was made to launch a local slave process, but no support
+is available for doing so. Launching a local slave requires support
+for either rsh or ssh on the backend nodes where MPI processes
+are running.
+
+Please consult with your system administrator about obtaining
+such support.
+

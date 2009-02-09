@@ -496,6 +496,9 @@ ORTE_DECLSPEC extern char *orte_output_filename;
 /* generate new xterm windows to display output from specified ranks */
 ORTE_DECLSPEC extern char *orte_xterm;
 
+/* rsh support */
+ORTE_DECLSPEC extern char *orte_rsh_agent;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

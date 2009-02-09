@@ -113,10 +113,14 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     struct timeval beat;
     orte_app_context_t **apps, **child_apps;
     
+    /* setup a default response */
+    OBJ_CONSTRUCT(&answer, opal_buffer_t);
+    job = ORTE_JOBID_INVALID;
+
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_PLM_CMD))) {
         ORTE_ERROR_LOG(rc);
-        return;
+        goto ANSWER_LAUNCH;
     }
     
     switch (command) {
@@ -124,9 +128,6 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job launch command",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            /* setup a default response */
-            OBJ_CONSTRUCT(&answer, opal_buffer_t);
-            job = ORTE_JOBID_INVALID;
             
             /* unpack the job object */
             count = 1;
@@ -138,8 +139,14 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             /* if is a LOCAL slave cmd */
             if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
                 /* In this case, I cannot lookup job info. All I do is pass
-                 * this along to the local launcher
+                 * this along to the local launcher, IF it is available
                  */
+                if (NULL == orte_plm.spawn) {
+                    /* can't do this operation */
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+                    rc = ORTE_ERR_NOT_SUPPORTED;
+                    goto ANSWER_LAUNCH;
+                }
                 if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
                     ORTE_ERROR_LOG(rc);
                     goto ANSWER_LAUNCH;
@@ -206,7 +213,6 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             if (0 > (ret = orte_rml.send_buffer(&mev->sender, &answer, ORTE_RML_TAG_PLM_PROXY, 0))) {
                 ORTE_ERROR_LOG(ret);
             }
-            OBJ_DESTRUCT(&answer);
             break;
             
         case ORTE_PLM_UPDATE_PROC_STATE:
@@ -303,9 +309,10 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     
     /* release the message */
     OBJ_RELEASE(mev);
-    
-    /* see if an error occurred - if so, wakeup so we can exit */
-    if (ORTE_SUCCESS != rc) {
+    OBJ_DESTRUCT(&answer);
+
+    /* see if an error occurred - if so, wakeup the HNP so we can exit */
+    if (orte_process_info.hnp && ORTE_SUCCESS != rc) {
         orte_trigger_event(&orte_exit);
     }
 }

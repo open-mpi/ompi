@@ -80,6 +80,7 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ess/ess.h"
+#include "orte/mca/ess/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/routed/routed.h"
@@ -147,6 +148,7 @@ static struct timeval joblaunchstart, joblaunchstop;
 
 /* local global storage */
 static orte_jobid_t active_job=ORTE_JOBID_INVALID;
+static orte_jobid_t local_slaves;
 
 /**
  * Init the module
@@ -158,6 +160,13 @@ int orte_plm_rsh_init(void)
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
+    
+    /* we set the local slaves up to have a job family of zero.
+     * this provides a convenient way of checking whether or
+     * not a process is a local slave
+     */
+    local_slaves = 0;
+    
     return rc;
 }
 
@@ -204,8 +213,8 @@ static int orte_plm_rsh_probe(char *nodename,
             exit(01);
         }
         /* Build argv array */
-        argv = opal_argv_copy(mca_plm_rsh_component.agent_argv);
-        argc = mca_plm_rsh_component.agent_argc;
+        argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+        argc = opal_argv_count(orte_plm_globals.rsh_agent_argv);
         opal_argv_append(&argc, &argv, nodename);
         opal_argv_append(&argc, &argv, "echo $SHELL");
 
@@ -345,21 +354,13 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
 }
 
-static int setup_launch(int *argcptr, char ***argvptr,
-                        char *nodename,
-                        int *node_name_index1,
-                        int *proc_vpid_index, char *prefix_dir)
+static int setup_shell(orte_plm_rsh_shell_t *rshell,
+                       orte_plm_rsh_shell_t *lshell,
+                       char *nodename, int *argc, char ***argv)
 {
-    struct passwd *p;
-    int argc;
-    char **argv;
-    char *param;
     orte_plm_rsh_shell_t remote_shell, local_shell;
-    char *lib_base, *bin_base;
-    int orted_argc;
-    char **orted_argv;
-    char *orted_cmd, *orted_prefix, *final_cmd;
-    int orted_index;
+    struct passwd *p;
+    char *param;
     int rc;
 
     /* What is our local shell? */
@@ -409,7 +410,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
         }
         
         if (ORTE_PLM_RSH_SHELL_UNKNOWN == remote_shell) {
-                opal_output(0, "WARNING: rsh probe returned unhandled shell; assuming bash\n");
+            opal_output(0, "WARNING: rsh probe returned unhandled shell; assuming bash\n");
             remote_shell = ORTE_PLM_RSH_SHELL_BASH;
         }
     }
@@ -418,6 +419,52 @@ static int setup_launch(int *argcptr, char ***argvptr,
                          "%s plm:rsh: remote shell: %d (%s)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          remote_shell, orte_plm_rsh_shell_name[remote_shell]));
+    
+    /* Do we need to source .profile on the remote side?
+     - sh: yes (see bash(1))
+     - ksh: yes (see ksh(1))
+     - bash: no (see bash(1))
+     - [t]csh: no (see csh(1) and tcsh(1))
+     - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
+     */
+    
+    if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+        ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
+        int i;
+        char **tmp;
+        tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
+        if (NULL == tmp) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        for (i = 0; NULL != tmp[i]; ++i) {
+            opal_argv_append(argc, argv, tmp[i]);
+        }
+        opal_argv_free(tmp);
+    }
+    
+    /* pass results back */
+    *rshell = remote_shell;
+    *lshell = local_shell;
+    
+    return ORTE_SUCCESS;
+}
+
+static int setup_launch(int *argcptr, char ***argvptr,
+                        char *nodename,
+                        int *node_name_index1,
+                        int *proc_vpid_index, char *prefix_dir)
+{
+    int argc;
+    char **argv;
+    char *param;
+    orte_plm_rsh_shell_t remote_shell, local_shell;
+    char *lib_base, *bin_base;
+    int orted_argc;
+    char **orted_argv;
+    char *orted_cmd, *orted_prefix, *final_cmd;
+    int orted_index;
+    int rc;
+
     
     /* Figure out the basenames for the libdir and bindir.  This
      requires some explanation:
@@ -452,31 +499,16 @@ static int setup_launch(int *argcptr, char ***argvptr,
     /*
      * Build argv array
      */
-    argv = opal_argv_copy(mca_plm_rsh_component.agent_argv);
-    argc = mca_plm_rsh_component.agent_argc;
+    argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+    argc = opal_argv_count(orte_plm_globals.rsh_agent_argv);
     *node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
     
-    /* Do we need to source .profile on the remote side?
-        - sh: yes (see bash(1))
-        - ksh: yes (see ksh(1))
-        - bash: no (see bash(1))
-        - [t]csh: no (see csh(1) and tcsh(1))
-        - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
-     */
-    
-    if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
-        ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
-        int i;
-        char **tmp;
-        tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
-        if (NULL == tmp) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        for (i = 0; NULL != tmp[i]; ++i) {
-            opal_argv_append(&argc, &argv, tmp[i]);
-        }
-        opal_argv_free(tmp);
+    /* setup the correct shell info */
+    if (ORTE_SUCCESS != (rc = setup_shell(&remote_shell, &local_shell,
+                                          nodename, &argc, &argv))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     /* now get the orted cmd - as specified by user - into our tmp array.
@@ -706,7 +738,7 @@ static void ssh_child(int argc, char **argv,
      * about remote launches here
      */
     exec_argv = argv;
-    exec_path = strdup(mca_plm_rsh_component.agent_path);
+    exec_path = strdup(orte_plm_globals.rsh_agent_path);
     
     /* pass the vpid */
     rc = orte_util_convert_vpid_to_string(&var, vpid);
@@ -941,6 +973,17 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
+    
+    if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
+        /* if this is a request to launch a local slave,
+         * then we will not be launching an orted - we will
+         * directly ssh the slave process itself. No mapping
+         * is performed to support this - the caller must
+         * provide all the info required to launch the job,
+         * including the target hosts
+         */
+        return orte_plm_base_local_slave_launch(jdata);
+    }
     
     /* default to declaring the daemon launch as having failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
@@ -1453,3 +1496,4 @@ static orte_plm_rsh_shell_t find_shell(char *shell)
     /* We didn't find it */
     return ORTE_PLM_RSH_SHELL_UNKNOWN;
 }
+

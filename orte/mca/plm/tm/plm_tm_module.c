@@ -92,6 +92,7 @@ static void failed_start(int fd, short event, void *arg);
  * Local "global" variables
  */
 static opal_event_t *ev=NULL;
+static bool local_launch_available = false;
 
 /*
  * Global variable
@@ -117,6 +118,11 @@ static int plm_tm_init(void)
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
+
+    if (ORTE_SUCCESS == orte_plm_base_rsh_launch_agent_setup()) {
+        local_launch_available = true;
+    }
+    
     return rc;
 }
 
@@ -148,6 +154,22 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     mode_t current_umask;
     orte_jobid_t failed_job;
     
+    if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
+        /* if this is a request to launch a local slave,
+         * then we will not be launching an orted - we will
+         * directly ssh the slave process itself. No mapping
+         * is performed to support this - the caller must
+         * provide all the info required to launch the job,
+         * including the target hosts
+         */
+        if (!local_launch_available) {
+            /* if we can't support this, then abort */
+            orte_show_help("help-plm-tm.txt", "no-local-slave-support", true);
+            return ORTE_ERR_FAILED_TO_START;
+        }
+        return orte_plm_base_local_slave_launch(jdata);
+    }
+
     /* if we are timing, record the start time */
     if (orte_timing) {
         gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
@@ -233,6 +255,11 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
 
+    /* enable local launch by the orteds */
+    var = mca_base_param_environ_variable("plm", NULL, NULL);
+    opal_setenv(var, "rsh", true, &env);
+    free(var);
+    
     /* add our umask -- see big note in orted.c */
     current_umask = umask(0);
     umask(current_umask);

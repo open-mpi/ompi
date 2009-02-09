@@ -69,10 +69,6 @@ struct orte_plm_rsh_component_t {
     bool disable_qrsh;
     int delay;
     int priority;
-    char *agent_param;
-    char** agent_argv;
-    int agent_argc;
-    char* agent_path;
     bool tree_spawn;
     opal_list_t children;
     orte_std_cntr_t num_children;
