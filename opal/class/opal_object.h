@@ -35,13 +35,13 @@
  * In a interface (.h) file, define the class.  The first element
  * should always be the parent class, for example
  * @code
- *   typedef struct sally_t sally_t;
  *   struct sally_t
  *   {
  *     parent_t parent;
  *     void *first_member;
  *     ...
  *   };
+ *   typedef struct sally_t sally_t;
  *
  *   OBJ_CLASS_DECLARATION(sally_t);
  * @endcode
@@ -59,7 +59,8 @@
  *     OBJ_CLASS(parent_t),  // pointer to parent_t_class
  *     sally_construct,
  *     sally_destruct,
- *     0, 0, NULL, NULL
+ *     0, 0, NULL, NULL,
+ *     sizeof ("sally_t")
  *   };
  * @endcode
  * This variable should be declared in the interface (.h) file using
