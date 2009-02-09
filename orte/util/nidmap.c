@@ -896,6 +896,8 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     int j;
     int rc;
     
+    OBJ_CONSTRUCT(&pmap, orte_pmap_t);
+    
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     if (ORTE_SUCCESS != (rc = opal_dss.load(&buf, bo->bytes, bo->size))) {
@@ -992,6 +994,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     
 cleanup:
     OBJ_DESTRUCT(&buf);
+    OBJ_DESTRUCT(&pmap);
     return rc;
 }
 
