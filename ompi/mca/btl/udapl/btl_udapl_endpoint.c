@@ -36,6 +36,7 @@
 
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/dpm/dpm.h"
 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_udapl.h"
