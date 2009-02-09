@@ -1051,6 +1051,7 @@ SEND_ANSWER:
             hnp_accounted_for = false;
             
             n = 1;
+            return_addr = NULL;
             while (ORTE_SUCCESS == opal_dss.unpack(buffer, &proc, &n, ORTE_NAME)) {
                 /* the jobid provided will, of course, have the job family of
                  * the requestor. We need to convert that to our own job family
@@ -1194,6 +1195,12 @@ SEND_ANSWER:
                 opal_dss.copy_payload(relay_msg, answer);
                 OBJ_RELEASE(answer);
                 answer = relay_msg;
+            }
+            /* if we don't have a return address, then we are helpless */
+            if (NULL == return_addr) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                ret = ORTE_ERR_COMM_FAILURE;
+                break;
             }
             if (0 > orte_rml.send_buffer_nb(return_addr, answer, ORTE_RML_TAG_TOOL, 0,
                                             send_callback, NULL)) {
