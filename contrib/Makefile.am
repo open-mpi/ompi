@@ -49,6 +49,8 @@ EXTRA_DIST = \
         platform/lanl/rr-class/optimized.conf \
         platform/lanl/rr-class/optimized-nopanasas.conf \
         platform/lanl/rr-class/optimized-panasas.conf \
+        platform/lanl/rr-class/slave \
+        platform/lanl/rr-class/slave.conf \
         platform/lanl/tlcc/debug-nopanasas \
         platform/lanl/tlcc/debug-panasas \
         platform/lanl/tlcc/debug.conf \
