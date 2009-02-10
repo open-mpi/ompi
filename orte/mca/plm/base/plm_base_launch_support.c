@@ -263,14 +263,6 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
         sts = status;
     }
     
-    /* if we didn't even attempt to launch, then just quietly update
-     * the job record and leave
-     */
-    if (ORTE_JOB_NEVER_LAUNCHED == state) {
-        orte_never_launched = true;
-        goto PROCESS;
-    }
-    
     /* if this is the daemon job that failed, set the flag indicating
      * that a daemon failed so we use the proper
      * methods for attempting to shutdown the rest of the system
