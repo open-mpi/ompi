@@ -27,7 +27,6 @@ SUBDIRS = \
 DIST_SUBDIRS = \
 	include \
 	etc \
-	test \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
 	$(MCA_orte_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
@@ -57,7 +56,12 @@ else
 ortedir = $(includedir)
 endif
 
+# setup to catch extra files to be included in tarballs
+EXTRA_DIST = 
+
 include runtime/Makefile.am
 include util/Makefile.am
 include tools/Makefile.am
 include orted/Makefile.am
+include test/mpi/Makefile.include
+include test/system/Makefile.include
