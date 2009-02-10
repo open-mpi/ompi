@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -300,7 +300,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                 attr->size = num_bytes;
                 
                 if (num_bytes != 0) {
-                    if (NULL == (attr->bytes = malloc(num_bytes))) {
+                    if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto cleanup;
@@ -476,7 +476,7 @@ int orte_grpcomm_base_peer_modex(bool modex_db)
                 attr->size = num_bytes;
                 
                 if (num_bytes != 0) {
-                    if (NULL == (attr->bytes = malloc(num_bytes))) {
+                    if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto cleanup;

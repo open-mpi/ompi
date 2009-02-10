@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -128,7 +128,7 @@ ENDIF(OMPI_WANT_F77_BINDINGS)
 
 
 INCLUDE (check_mca_subdirs)
-SET (OMPI_SOURCE_FILES ${OMPI_SOURCE_FILES} ${OMPI_MCA_FILES})
+SET (OMPI_SOURCE_FILES ${OMPI_SOURCE_FILES} ${MCA_FILES})
 
 ADD_LIBRARY (libmpi ${OMPI_SOURCE_FILES})
 
