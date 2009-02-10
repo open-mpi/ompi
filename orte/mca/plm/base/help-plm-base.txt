@@ -87,3 +87,42 @@ target, or by mistyping the desired rank. Remember that MPI ranks begin
 with 0, not 1.
 
 Please correct the cmd line and try again.
+#
+[too-many-hosts]
+A call was made to launch a local slave process, but more than one
+target host was provided. Currently, each launch of a local slave
+can only be to a single host. To launch slaves on multiple hosts,
+you must issue one call/host.
+
+Num hosts specified: %d
+
+#
+[abs-path-reqd]
+A call was made to launch a local slave process that requested the
+binaries be pre-positioned on the remote host. However, an absolute
+path to the target directory was either not specified, or was provided
+in a relative path format.
+
+Path provided: %s
+
+The path to the target directory must be given as an absolute path. The
+target directory does NOT need to exist - the path to the target will
+be created, if required.
+
+#
+[exec-not-found]
+A call was made to launch a local slave process, but the specified
+executable could not be found:
+
+Exec: %s
+
+Please either specify an absolute path to the executable, or check
+that the executable is in your PATH.
+
+#
+[cp-not-found]
+A call was made to launch a local slave process that requested the
+binaries be pre-positioned on the remote host. However, we could not
+find the %s command in your path.
+
+Please check that %s is in your PATH and try again.
