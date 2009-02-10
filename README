@@ -112,7 +112,8 @@ Detailed Open MPI v1.3 Feature List:
 
   o Collectives
     - Performance improvements
-    - Support for hierarchical collectives
+    - Support for hierarchical collectives (must be activated
+      manually; see below)
 
   o Miscellaneous
     - MPI 2.1 compliant 
@@ -388,6 +389,28 @@ MPI Functionality and Features
   Asynchronous message passing progress is only supported with devices
   that support MPI_THREAD_MULTIPLE, but is only very lightly tested
   (and may not provide very much performance benefit).
+
+
+Collectives
+-----------
+
+- The "hierarch" coll component (i.e., an implementation of MPI
+  collective operations) attempts to discover network layers of
+  latency in order to segregate individual "local" and "global"
+  operations as part of the overall collective operation.  In this
+  way, network traffic can be reduced -- or possibly even minimized
+  (similar to MagPIe).  The current "hierarch" component only
+  separates MPI processes into on- and off-node groups.
+
+  Hierarch has had sufficient correctness testing, but has not
+  received much performance tuning.  As such, hierarch is not
+  activated by default -- it must be enabled manually by setting its
+  priority level to 100:
+
+    mpirun --mca coll_hierarch_priority 100 ...
+
+  We would appreciate feedback from the user community about how well
+  hierarch works for your applications.
 
 
 Network Support
