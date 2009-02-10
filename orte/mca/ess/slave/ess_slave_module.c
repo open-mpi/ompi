@@ -34,6 +34,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
@@ -81,7 +82,7 @@ static int slave_set_name(void);
 
 static int rte_init(char flags);
 static int rte_finalize(void);
-static bool proc_is_local(orte_process_name_t *proc);
+static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
@@ -100,7 +101,7 @@ orte_ess_base_module_t orte_ess_slave_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
-    proc_is_local,
+    proc_get_locality,
     proc_get_daemon,
     proc_get_hostname,
     proc_get_arch,
@@ -172,7 +173,7 @@ static int rte_finalize(void)
     return ret;    
 }
 
-static bool proc_is_local(orte_process_name_t *proc)
+static uint8_t proc_get_locality(orte_process_name_t *proc)
 {
     /* no proc can be local */
     
@@ -181,7 +182,7 @@ static bool proc_is_local(orte_process_name_t *proc)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
-    return false;
+    return OPAL_PROC_NON_LOCAL;
     
 }
 

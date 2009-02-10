@@ -90,6 +90,27 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+/* ******************************************************************** */
+
+/** Process locality definitions */
+#define OPAL_PROC_ON_CLUSTER    0x10
+#define OPAL_PROC_ON_CU         0x08
+#define OPAL_PROC_ON_NODE       0x04
+#define OPAL_PROC_ON_BOARD      0x02
+#define OPAL_PROC_ON_SOCKET     0x01
+#define OPAL_PROC_NON_LOCAL     0x00
+#define OPAL_PROC_ALL_LOCAL     0x1f
+
+/** Process locality macros */
+#define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
+#define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
+#define OPAL_PROC_ON_LOCAL_NODE(n)      ((n) & OPAL_PROC_ON_NODE)
+#define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)
+#define OPAL_PROC_ON_LOCAL_CLUSTER(n)   ((n) & OPAL_PROC_ON_CLUSTER)
+
+/* ******************************************************************** */
+
+
 /**
  * Buffer type for paffinity processor masks.
  * Copied almost directly from PLPA.

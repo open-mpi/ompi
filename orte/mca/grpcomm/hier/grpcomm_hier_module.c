@@ -29,6 +29,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -313,7 +314,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
                 continue;
             }
             proc.vpid = v;
-            if (!orte_ess.proc_is_local(&proc)) {
+            if (!OPAL_PROC_ON_LOCAL_NODE(orte_ess.proc_get_locality(&proc))) {
                 continue;
             }
             /* add this proc to our list of local peers */

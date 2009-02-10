@@ -108,14 +108,13 @@ int ompi_proc_init(void)
         proc->proc_name.vpid = i;
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
-            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+            proc->proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->proc_hostname = orte_process_info.nodename;
             proc->proc_arch = orte_process_info.arch;
         } else {
-            if (orte_ess.proc_is_local(&proc->proc_name)) {
-                /* flag all local procs */
-                proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
-            }
+            /* get the locality information */
+            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
+            /* get the name of the node it is on */
             proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
         }
     }
@@ -354,13 +353,11 @@ int ompi_proc_refresh(void) {
 
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
-            proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+            proc->proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->proc_hostname = orte_process_info.nodename;
             proc->proc_arch = orte_process_info.arch;
         } else {
-            if (orte_ess.proc_is_local(&proc->proc_name)) {
-                proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
-            }
+            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
             proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
             proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
@@ -552,7 +549,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #endif
             }
             if (0 == strcmp(ompi_proc_local_proc->proc_hostname,new_hostname)) {
-                plist[i]->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+                plist[i]->proc_flags |= (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
             }
             
             /* Save the hostname */

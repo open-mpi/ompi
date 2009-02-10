@@ -25,6 +25,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -40,7 +41,7 @@ static int alps_set_name(void);
 
 static int rte_init(char flags);
 static int rte_finalize(void);
-static bool proc_is_local(orte_process_name_t *proc);
+static uint8_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static uint32_t proc_get_arch(orte_process_name_t *proc);
@@ -54,7 +55,7 @@ orte_ess_base_module_t orte_ess_alps_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
-    proc_is_local,
+    proc_get_locality,
     proc_get_daemon,
     proc_get_hostname,
     proc_get_arch,
@@ -159,21 +160,21 @@ static int rte_finalize(void)
     return ret;    
 }
 
-static bool proc_is_local(orte_process_name_t *proc)
+static uint8_t proc_get_locality(orte_process_name_t *proc)
 {
     orte_nid_t *nid;
     
     if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return false;
+        return OPAL_PROC_NON_LOCAL;
     }
     
     if (nid->daemon == ORTE_PROC_MY_DAEMON->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                             "%s ess:alps: proc %s is LOCAL",
+                             "%s ess:alps: proc %s on LOCAL NODE",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(proc)));
-        return true;
+        return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
@@ -181,7 +182,7 @@ static bool proc_is_local(orte_process_name_t *proc)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
     
-    return false;
+    return OPAL_PROC_NON_LOCAL;
     
 }
 

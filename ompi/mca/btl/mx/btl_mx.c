@@ -53,7 +53,7 @@ int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl,
          * other processes on the same node. The BTL self and sm are
          * supposed to take care of such communications.
          */
-        if( ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL ) {
+        if( OPAL_PROC_ON_LOCAL_NODE(ompi_procs[i]->proc_flags) ) {
             if( ompi_procs[i] == ompi_proc_local_proc ) {
                 if( 0 == mca_btl_mx_component.mx_support_self )
                     continue;

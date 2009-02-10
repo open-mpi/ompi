@@ -347,7 +347,7 @@ int mca_btl_openib_add_procs(
            we'll just mark any local peer on an iWARP NIC as
            unreachable.  See trac ticket #1352. */
         if (IBV_TRANSPORT_IWARP == openib_btl->device->ib_dev->transport_type &&
-            0 != (ompi_proc->proc_flags && OMPI_PROC_FLAG_LOCAL)) {
+            !OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
             continue;
         }
 #endif

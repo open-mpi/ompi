@@ -131,7 +131,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     procs = ompi_proc_world(&n_total_procs);
 
     for(p=0; p < n_total_procs; p++) {
-        if(procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
+        if(OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags)) {
             procs[n_local_procs++] = procs[p];
         }
     }

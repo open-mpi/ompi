@@ -181,7 +181,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
        spawned ones) are to talk using shared memory */
     procs = ompi_proc_world(&num_all_procs);
     for (i = 0 ; i < num_all_procs ; ++i) {
-        if (procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
+        if (OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
             num_local_procs++;
         }
     }
