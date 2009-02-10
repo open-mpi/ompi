@@ -27,6 +27,7 @@ SUBDIRS = \
 DIST_SUBDIRS = \
 	include \
 	etc \
+	test \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \
 	$(MCA_orte_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
