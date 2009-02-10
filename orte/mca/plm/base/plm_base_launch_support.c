@@ -241,6 +241,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
 {
     orte_job_t *jdata;
     char *pidstr;
+    int sts;
     
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -251,10 +252,25 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:launch_failed for job %s",
+                         "%s plm:base:launch_failed for job %s, status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job)));
+                         ORTE_JOBID_PRINT(job), status));
 
+    /* no matter what, we must exit with a non-zero status */
+    if (0 == status) {
+        sts = ORTE_ERROR_DEFAULT_EXIT_CODE;
+    } else {
+        sts = status;
+    }
+    
+    /* if we didn't even attempt to launch, then just quietly update
+     * the job record and leave
+     */
+    if (ORTE_JOB_NEVER_LAUNCHED == state) {
+        orte_never_launched = true;
+        goto PROCESS;
+    }
+    
     /* if this is the daemon job that failed, set the flag indicating
      * that a daemon failed so we use the proper
      * methods for attempting to shutdown the rest of the system
@@ -277,17 +293,21 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
             if (WCOREDUMP(status)) {
                 orte_show_help("help-plm-base.txt", "daemon-died-signal-core", true,
                                pidstr, WTERMSIG(status));
+                sts = WTERMSIG(status);
             } else {
                 orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
                                pidstr, WTERMSIG(status));
+                sts = WTERMSIG(status);
             }
 #else
             orte_show_help("help-plm-base.txt", "daemon-died-signal", true,
                             pidstr, WTERMSIG(status));
+            sts = WTERMSIG(status);
 #endif /* WCOREDUMP */
         } else {
             orte_show_help("help-plm-base.txt", "daemon-died-no-signal", true,
                            pidstr, WEXITSTATUS(status));
+            sts = WEXITSTATUS(status);
         }
         orted_failed_launch = true;
         free(pidstr);
@@ -308,7 +328,7 @@ void orte_plm_base_launch_failed(orte_jobid_t job, pid_t pid,
     
 WAKEUP:
     /* set orterun's exit code and wakeup so it can exit */
-    ORTE_UPDATE_EXIT_STATUS(status);
+    ORTE_UPDATE_EXIT_STATUS(sts);
     orte_trigger_event(&orte_exit);
 }
 
@@ -605,6 +625,10 @@ void orte_plm_base_app_report_launch(int fd, short event, void *data)
                 jdata->aborted_proc = procs[vpid];  /* only store this once */
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START; /* update the job state */
             }
+            /* ensure we have a non-zero exit code */
+            if (0 == jdata->aborted_proc->exit_code) {
+                jdata->aborted_proc->exit_code = ORTE_ERROR_DEFAULT_EXIT_CODE;
+            }
             app_launch_failed = true;
             goto CLEANUP;
         }
@@ -624,6 +648,8 @@ CLEANUP:
     if (app_launch_failed) {
         if (NULL == jdata) {
             orte_errmgr.incomplete_start(ORTE_JOBID_INVALID, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else if (NULL == jdata->aborted_proc) {
+            orte_errmgr.incomplete_start(jdata->jobid, ORTE_ERROR_DEFAULT_EXIT_CODE);
         } else {
             orte_errmgr.incomplete_start(jdata->jobid, jdata->aborted_proc->exit_code);
         }
