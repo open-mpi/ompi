@@ -533,7 +533,7 @@ mca_coll_hierarch_checkfor_sm ( struct ompi_communicator_t *comm, int *color,  i
     procs = comm->c_local_group->grp_proc_pointers;
     for ( i = 0 ; i < size ; i++) {
 	if ( procs[i]->proc_name.jobid == my_proc->proc_name.jobid &&
-	     ( (procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL)) ) {
+	     ( OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) ) {
 	    lncount++;
 	    if ( *color == -1){
 		 *color = i;

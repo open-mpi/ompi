@@ -59,16 +59,13 @@ typedef int (*orte_ess_base_module_finalize_fn_t)(void);
 typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report) __opal_attribute_noreturn__;
 
 /**
- * Determine if a process is local to me
+ * Get the locality flag of the specified process
  *
- * MPI procs need to know if a process is "local" or not - i.e.,
- * if they share the same node. Different environments are capable
- * of making that determination in different ways - e.g., they may
- * provide a callable utility to return the answer, or download
- * a map of information into each process. This API provides a
- * means for each environment to do the "right thing".
+ * MPI procs need to know whether a proc shares a common socket,
+ * board, node, computing unit, or cluster. This function provides
+ * a means for an MPI proc to query the locality of another proc.
  */
-typedef bool (*orte_ess_base_module_proc_is_local_fn_t)(orte_process_name_t *proc);
+typedef uint8_t (*orte_ess_base_module_get_proc_locality_fn_t)(orte_process_name_t *proc);
 
 /**
  * Get the vpid of the daemon who hosts the specified proc
@@ -158,7 +155,7 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_init_fn_t                  init;
     orte_ess_base_module_finalize_fn_t              finalize;
     orte_ess_base_module_abort_fn_t                 abort;
-    orte_ess_base_module_proc_is_local_fn_t         proc_is_local;
+    orte_ess_base_module_get_proc_locality_fn_t     proc_get_locality;
     orte_ess_base_module_proc_get_daemon_fn_t       proc_get_daemon;
     orte_ess_base_module_proc_get_hostname_fn_t     proc_get_hostname;
     orte_ess_base_module_proc_get_arch_fn_t         proc_get_arch;

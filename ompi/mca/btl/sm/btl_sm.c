@@ -446,7 +446,7 @@ int mca_btl_sm_add_procs(
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
-                 0 == (procs[proc]->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
+            OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
             continue;
         }

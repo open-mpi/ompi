@@ -35,6 +35,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "opal/dss/dss_types.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/runtime/orte_globals.h"
 
@@ -85,13 +86,6 @@ OBJ_CLASS_DECLARATION(ompi_proc_t);
  * Please use ompi_proc_local() instead.
  */
 OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
-
-
-/* ******************************************************************** */
-
-
-/** Process is on the same node as the local process */
-#define OMPI_PROC_FLAG_LOCAL  0x01
 
 
 /* ******************************************************************** */
