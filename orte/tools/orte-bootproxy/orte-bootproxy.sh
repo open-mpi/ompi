@@ -14,7 +14,8 @@ var=$1
 # push all MCA params to the environment
 while [ "${var:0:5}" = "OMPI_" ]; do
     if [ "${var:6:6}" = "PREFIX" ]; then
-        export LD_LIBRARY_PATH="${var:12}":$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH="${var:12}"/lib:$LD_LIBRARY_PATH
+        export PATH="${var:12}"/bin:$PATH
     else
         export $var
         shift 1
