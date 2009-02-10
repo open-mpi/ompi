@@ -441,12 +441,29 @@ static int plm_slurmd_terminate_job(orte_jobid_t jobid)
 static int plm_slurmd_terminate_orteds(void)
 {
     int rc;
+    orte_job_t *jdata;
     
     /* tell them to die without sending a reply - we will rely on the
      * waitpid to tell us when they have exited!
      */
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_NO_REPLY_CMD))) {
         ORTE_ERROR_LOG(rc);
+    }
+
+    /* check to see if the primary pid is set. If not, this indicates
+     * that we never launched any additional daemons, so we cannot
+     * not wait for a waitpid to fire and tell us it's okay to
+     * exit. Instead, we simply trigger an exit for ourselves
+     */
+    if (!primary_pid_set) {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:slurmd: primary daemons complete!",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+        jdata->state = ORTE_JOB_STATE_TERMINATED;
+        /* need to set the #terminated value to avoid an incorrect error msg */
+        jdata->num_terminated = jdata->num_procs;
+        orte_trigger_event(&orteds_exit);
     }
     
     return rc;
