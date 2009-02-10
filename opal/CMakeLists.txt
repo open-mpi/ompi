@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -94,7 +94,7 @@ ENDIF(BUILD_SHARED_LIBS)
 
 # Add source files from mca subdirectories.
 INCLUDE (check_mca_subdirs)
-SET (OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${OPAL_MCA_FILES})
+SET (OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${MCA_FILES})
 
 
 # This has to be added for opal explicitly, as it's required for

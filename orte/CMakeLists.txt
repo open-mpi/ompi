@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -54,7 +54,7 @@ SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/hostfile/hostfile_lex.c
                             PROPERTIES COMPILE_DEFINITIONS YY_NO_UNISTD_H)
 
 INCLUDE (check_mca_subdirs)
-SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${ORTE_MCA_FILES})
+SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${MCA_FILES})
 SET_SOURCE_FILES_PROPERTIES(${ORTE_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
 
 ADD_LIBRARY (libopen-rte ${ORTE_SOURCE_FILES})
