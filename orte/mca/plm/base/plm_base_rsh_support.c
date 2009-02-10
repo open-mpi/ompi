@@ -232,7 +232,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             free(cmd);
             /* start the argv with the bootproxy cmd */
             argv = NULL;
-            opal_argv_append_nosize(&argv, "orte-bootproxy.sh");
+            opal_argv_append_nosize(&argv, bppath);
             /* set the exec path to bppath */
             exec_path = strdup(bppath);
         } else {
@@ -256,9 +256,28 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             /* add the hostname */
             opal_argv_append_nosize(&argv, nodename);
             /* add the bootproxy cmd */
-            opal_argv_append_nosize(&argv, bootproxy);
+            opal_argv_append_nosize(&argv, bppath);
+        }
+    } else {
+        /* if we are not preloading the binaries, just setup
+         * the path to the bootproxy script
+         */
+        /* set the exec path to the agent path */
+        exec_path = strdup(orte_plm_globals.rsh_agent_path);
+        /* Start the argv with the rsh/ssh command */
+        argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+        /* add the hostname */
+        opal_argv_append_nosize(&argv, nodename);
+        /* add the bootproxy cmd */
+        if (NULL != app->prefix_dir) {
+            asprintf(&cmd, "%s/bin/%s", app->prefix_dir, "orte-bootproxy.sh");
+            opal_argv_append_nosize(&argv, cmd);
+            free(cmd);
+        } else {
+            opal_argv_append_nosize(&argv, "orte-bootproxy.sh");
         }
     }
+
     if (NULL != exefile) {
         free(exefile);
     }
