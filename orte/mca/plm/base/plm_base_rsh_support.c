@@ -170,7 +170,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         return rc;
     }
     if (1 < opal_list_get_size(&hosts)) {
-        opal_output(0, "too many hosts: %d", (int)opal_list_get_size(&hosts));
+        orte_show_help("help-plm-base.txt", "too-many-hosts", true, (int)opal_list_get_size(&hosts));
         return ORTE_ERROR;
     }
     node = (orte_node_t*)opal_list_remove_first(&hosts);
@@ -179,7 +179,6 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     OBJ_DESTRUCT(&hosts);
     
     /* is this a local operation? */
-    opal_output(0, "local: %s node: %s", orte_process_info.nodename, nodename);
     if (0 == strcmp(orte_process_info.nodename, nodename)) {
         local_op = true;
     }
@@ -192,8 +191,8 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         /* the target location -must- be an absolute path */
         if (NULL == app->preload_files_dest_dir ||
             !opal_path_is_absolute(app->preload_files_dest_dir)) {
-            opal_output(0, "target location must be given and an absolute path: %s",
-                        (NULL == app->preload_files_dest_dir) ? "NULL" : app->preload_files_dest_dir);
+            orte_show_help("help-plm-base.txt", "abs-path-reqd", true,
+                           (NULL == app->preload_files_dest_dir) ? "NULL" : app->preload_files_dest_dir);
             return ORTE_ERROR;
         }
         /* if the binary is not given in absolute path form,
@@ -202,7 +201,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         if (!opal_path_is_absolute(app->app)) {
             exefile = opal_find_absolute_path(app->app);
             if (NULL == exefile) {
-                opal_output(0, "could not find executable %s", app->app);
+                orte_show_help("help-plm-base.txt", "exec-not-found", true, app->app);
                 return ORTE_ERROR;
             }
         } else {
@@ -220,7 +219,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         if (local_op) {
             scp = opal_find_absolute_path("cp");
             if (NULL == scp) {
-                opal_output(0, "could not find cp");
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
                 return ORTE_ERROR;
             }
             /* form and execute the cp commands */
@@ -239,7 +238,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             /* find the scp command */
             scp = opal_find_absolute_path("scp");
             if (NULL == scp) {
-                opal_output(0, "could not find scp");
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
                 return ORTE_ERROR;
             }
             /* form and execute the scp commands */
@@ -262,19 +261,34 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         /* if we are not preloading the binaries, just setup
          * the path to the bootproxy script
          */
-        /* set the exec path to the agent path */
-        exec_path = strdup(orte_plm_globals.rsh_agent_path);
-        /* Start the argv with the rsh/ssh command */
-        argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
-        /* add the hostname */
-        opal_argv_append_nosize(&argv, nodename);
-        /* add the bootproxy cmd */
-        if (NULL != app->prefix_dir) {
-            asprintf(&cmd, "%s/bin/%s", app->prefix_dir, "orte-bootproxy.sh");
-            opal_argv_append_nosize(&argv, cmd);
-            free(cmd);
+        if (local_op) {
+            /* if this is a local operation, then just set
+             * the exec_path to be the bootproxy
+             */
+            argv = NULL;
+            if (NULL != app->prefix_dir) {
+                asprintf(&cmd, "%s/bin/%s", app->prefix_dir, "orte-bootproxy.sh");
+                opal_argv_append_nosize(&argv, cmd);
+                free(cmd);
+            } else {
+                opal_argv_append_nosize(&argv, "orte-bootproxy.sh");
+            }
+            exec_path = strdup(argv[0]);
         } else {
-            opal_argv_append_nosize(&argv, "orte-bootproxy.sh");
+            /* for remote execution, set the exec path to the agent path */
+            exec_path = strdup(orte_plm_globals.rsh_agent_path);
+            /* Start the argv with the rsh/ssh command */
+            argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+            /* add the hostname */
+            opal_argv_append_nosize(&argv, nodename);
+            /* add the bootproxy cmd */
+            if (NULL != app->prefix_dir) {
+                asprintf(&cmd, "%s/bin/%s", app->prefix_dir, "orte-bootproxy.sh");
+                opal_argv_append_nosize(&argv, cmd);
+                free(cmd);
+            } else {
+                opal_argv_append_nosize(&argv, "orte-bootproxy.sh");
+            }
         }
     }
 
@@ -410,11 +424,13 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         opal_argv_append_nosize(&argv, app->argv[i]);
     }
     
-    param = opal_argv_join(argv, ' ');
-    opal_output(0, "%s plm:rsh: final bootproxy cmd:\n\t%s",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                (NULL == param) ? "NULL" : param);
-    if (NULL != param) free(param);
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        param = opal_argv_join(argv, ' ');
+        opal_output(0, "%s plm:rsh: final bootproxy cmd:\n\t%s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    (NULL == param) ? "NULL" : param);
+        if (NULL != param) free(param);
+    }
     
     /* fork a child to exec the rsh/ssh session */
     pid = fork();
