@@ -145,13 +145,18 @@ int orte_plm_rsh_component_open(void)
 
 int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
 {
+    char *tmp;
+    
     /* To be absolutely sure that we are under an SGE parallel env */
     if (!mca_plm_rsh_component.disable_qrsh &&
         NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
         /* setting exec_argv and exec_path for qrsh */
         asprintf(&orte_plm_globals.rsh_agent_path, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
-        asprintf(&orte_plm_globals.rsh_agent_argv[0], "%s/bin/%s/qrsh", getenv("SGE_ROOT"), getenv("ARC"));
+        asprintf(&tmp, "%s/bin/%s/qrsh", getenv("SGE_ROOT"), getenv("ARC"));
+        orte_plm_globals.rsh_agent_argv = NULL;
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, tmp);
+        free(tmp);
         /* double check that we have access and permissions for the qrsh agent */
         if (NULL == opal_path_findv(orte_plm_globals.rsh_agent_argv[0], X_OK,
                                     environ, NULL)) {
@@ -171,10 +176,11 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-V");
         if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
             opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-verbose");
+            tmp = opal_argv_join(orte_plm_globals.rsh_agent_argv, ' ');
             opal_output_verbose(1, orte_plm_globals.output,
-                                "%s plm:rsh: using %s for launching\n",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                orte_plm_globals.rsh_agent_argv[0]);
+                                "%s plm:rsh: using \"%s\" for launching\n",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
+            free(tmp);
         }
         *priority = mca_plm_rsh_component.priority;
         *module = (mca_base_module_t *) &orte_plm_rsh_module;
