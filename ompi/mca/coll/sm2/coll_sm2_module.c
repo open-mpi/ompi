@@ -180,7 +180,7 @@ static bool have_local_peers(ompi_group_t *group, size_t size)
 
     for (i = 0; i < size; ++i) {
         proc = ompi_group_peer_lookup(group,i);
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
             return false;
         }
     }
