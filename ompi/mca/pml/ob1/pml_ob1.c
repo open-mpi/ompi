@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -76,7 +77,9 @@ void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
 
 int mca_pml_ob1_enable(bool enable)
 {
-    if( false == enable ) return OMPI_SUCCESS;
+    if( false == enable ) {
+        return OMPI_SUCCESS;
+    }
 
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
 
@@ -600,6 +603,9 @@ int mca_pml_ob1_ft_event( int state )
                 opal_output(0,
                             "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
                             ret);
+                for(p = 0; p < (int)num_procs; ++p) {
+                    OBJ_RELEASE(procs[p]);
+                }
                 free (procs);
                 return ret;
             }
@@ -636,6 +642,9 @@ int mca_pml_ob1_ft_event( int state )
             opal_output(0,
                         "pml:ob1: ft_event(Restart): proc_refresh Failed %d",
                         ret);
+            for(p = 0; p < (int)num_procs; ++p) {
+                OBJ_RELEASE(procs[p]);
+            }
             free (procs);
             return ret;
         }
