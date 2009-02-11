@@ -41,7 +41,16 @@ MPI_Fint MPI_File_c2f(MPI_File file)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_file_invalid(file)) {
+
+        /* Note that ompi_file_invalid() explicitly checks for
+           MPI_FILE_NULL, but MPI_FILE_C2F is supposed to treat
+           MPI_FILE_NULL as a valid file (and therefore return a valid
+           Fortran handle for it).  Hence, this function should not
+           return an error if MPI_FILE_NULL is passed in.
+
+           See a big comment in ompi/communicator/communicator.h about
+           this. */
+        if (ompi_file_invalid(file) && MPI_FILE_NULL != file) {
             return OMPI_INT_2_FINT(-1);
         }
     }
