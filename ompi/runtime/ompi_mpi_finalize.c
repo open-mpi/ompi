@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -340,6 +341,10 @@ int ompi_mpi_finalize(void)
     /* Leave the RTE */
 
     if (OMPI_SUCCESS != (ret = orte_finalize())) {
+        return ret;
+    }
+
+    if (OMPI_SUCCESS != (ret = opal_finalize_util())) {
         return ret;
     }
 
