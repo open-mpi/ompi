@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -95,10 +96,8 @@ static void opal_buffer_construct (opal_buffer_t* buffer)
 
 static void opal_buffer_destruct (opal_buffer_t* buffer)
 {
-    if (NULL != buffer) {
-        if (NULL != buffer->base_ptr) {
-            free (buffer->base_ptr);
-        }
+    if (NULL != buffer->base_ptr) {
+        free (buffer->base_ptr);
     }
 }
 
@@ -465,6 +464,7 @@ int opal_dss_close(void)
     for (i = 0 ; i < opal_pointer_array_get_size(&opal_dss_types) ; ++i) {
         opal_dss_type_info_t *info = (opal_dss_type_info_t*)opal_pointer_array_get_item(&opal_dss_types, i);
         if (NULL != info) {
+            opal_pointer_array_set_item(&opal_dss_types, i, NULL);
             OBJ_RELEASE(info);
         }
     }
