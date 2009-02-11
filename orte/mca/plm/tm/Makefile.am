@@ -45,6 +45,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_plm_tm_la_SOURCES = $(component_sources)
 mca_plm_tm_la_LDFLAGS = -module -avoid-version $(plm_tm_LDFLAGS)
+mca_plm_tm_la_LIBADD = $(plm_tm_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_plm_tm_la_SOURCES = $(lib_sources)
