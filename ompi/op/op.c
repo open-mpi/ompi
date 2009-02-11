@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -194,7 +194,7 @@ int ompi_op_init(void)
 int ompi_op_finalize(void)
 {
     /* clean up the intrinsic ops */
-
+    OBJ_DESTRUCT(&ompi_mpi_op_replace);
     OBJ_DESTRUCT(&ompi_mpi_op_minloc);
     OBJ_DESTRUCT(&ompi_mpi_op_maxloc);
     OBJ_DESTRUCT(&ompi_mpi_op_bxor);
@@ -332,6 +332,8 @@ static void ompi_op_construct(ompi_op_t *new_op)
  */
 static void ompi_op_destruct(ompi_op_t *op)
 {
+    int i;
+
     /* reset the ompi_op_f_to_c_table entry - make sure that the
        entry is in the table */
 
@@ -339,5 +341,18 @@ static void ompi_op_destruct(ompi_op_t *op)
                                             op->o_f_to_c_index)) {
         opal_pointer_array_set_item(ompi_op_f_to_c_table,
                                     op->o_f_to_c_index, NULL);
+    }
+
+    for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
+        op->o_func.intrinsic.fns[i] = NULL;
+        if( NULL != op->o_func.intrinsic.modules[i] ) {
+            OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+            op->o_func.intrinsic.modules[i] = NULL;
+        }
+        op->o_3buff_intrinsic.fns[i] = NULL;
+        if( NULL != op->o_3buff_intrinsic.modules[i] ) {
+            OBJ_RELEASE(op->o_3buff_intrinsic.modules[i]);
+            op->o_3buff_intrinsic.modules[i] = NULL;
+        }
     }
 }
