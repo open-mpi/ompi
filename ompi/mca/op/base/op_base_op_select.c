@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -88,17 +89,14 @@ static OBJ_CLASS_INSTANCE(avail_op_t, opal_list_item_t, NULL, NULL);
 int ompi_op_base_op_select(ompi_op_t *op)
 {
     int i, ret;
-    char name[MPI_MAX_OBJECT_NAME + 32];
     opal_list_t *selectable;
     opal_list_item_t *item;
     ompi_op_base_module_t *module;
 
     /* Announce */
-    snprintf(name, sizeof(name), "%s", op->o_name);
-    name[sizeof(name) - 1] = '\0';
     opal_output_verbose(10, ompi_op_base_output,
                         "op:base:op_select: new op: %s", 
-                        name);
+                        op->o_name);
 
     /* Make a module for all the base functions so that other modules
        can RETAIN it (vs. having NULL for the base function modules,
@@ -156,9 +154,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
         for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
             /* 2-buffer variants */
             if (NULL != avail->ao_module->opm_fns[i]) {
-                if (NULL != op->o_func.intrinsic.modules[i]) {
-                    OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                }
+	        OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
                 op->o_func.intrinsic.fns[i] = avail->ao_module->opm_fns[i];
                 op->o_func.intrinsic.modules[i] = avail->ao_module;
                 OBJ_RETAIN(avail->ao_module);
@@ -166,9 +162,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
 
             /* 3-buffer variants */
             if (NULL != avail->ao_module->opm_3buff_fns[i]) {
-                if (NULL != op->o_3buff_intrinsic.modules[i]) {
-                    OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                }
+	        OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
                 op->o_3buff_intrinsic.fns[i] = 
                     avail->ao_module->opm_3buff_fns[i];
                 op->o_3buff_intrinsic.modules[i] = avail->ao_module;
@@ -199,10 +193,8 @@ int ompi_op_base_op_select(ompi_op_t *op)
                the "i" index because we're going to return without
                completing the outter loop). */
             for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
-                if (NULL != op->o_func.intrinsic.modules[i]) {
-                    OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                    op->o_func.intrinsic.modules[i] = NULL;
-                }
+	        OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+		op->o_func.intrinsic.modules[i] = NULL;
                 op->o_func.intrinsic.fns[i] = NULL;
                 return OMPI_ERR_NOT_FOUND;
             }
