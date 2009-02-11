@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -127,6 +128,7 @@ static int mca_pml_ob1_component_open(void)
         opal_output(0, "mca_pml_ob1_component_open: can't find allocator: %s\n", mca_pml_ob1.allocator_name);
         return OMPI_ERROR;
     }
+
     mca_pml_ob1.allocator = allocator_component->allocator_init(true,
                                                                 mca_pml_ob1_seg_alloc,
                                                                 mca_pml_ob1_seg_free, NULL);

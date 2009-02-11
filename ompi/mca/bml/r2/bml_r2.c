@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -620,11 +621,16 @@ int mca_bml_r2_finalize( void )
         bml_r2_remove_btl_progress(btl);
 
         /* dont use this btl for any peers */
-        for(p=0; p<num_procs; p++) {
+        for( p = 0; p < num_procs; p++ ) {
             ompi_proc_t* proc = procs[p];
             mca_bml_r2_del_proc_btl(proc, sm->btl_module);
         }
     }
+    /* Release the procs as the ompi_proc_all increase their ref_count */
+    for( p = 0; p < num_procs; p++ ) {
+        OBJ_RELEASE(procs[p]);
+    }
+    free(procs);
 
  CLEANUP:
     mca_bml_r2.num_btl_modules = 0;
@@ -658,14 +664,14 @@ static int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     mca_btl_base_module_t** modules;
     bool found = false;
     
+    if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2) { 
+        opal_output(0, "only one BTL left, can't failover");
+        return OMPI_SUCCESS;
+    }
+    
     procs = ompi_proc_all(&num_procs);
     if(NULL == procs)
         return OMPI_SUCCESS;
-    
-    if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2) { 
-        opal_output(0, "only one BTL left, can't failover");
-        goto CLEANUP; 
-    }
     
     /* Get rid of the associated progress function */
     bml_r2_remove_btl_progress(btl);
@@ -706,6 +712,10 @@ static int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     /* cleanup */
     btl->btl_finalize(btl);
 CLEANUP:
+    /* Decrease the ref_count increased by the call to ompi_proc_all */
+    for( p = 0; p < num_procs; p++ ) {
+        OBJ_RELEASE(procs[p]);
+    }
     free(procs);
     return OMPI_SUCCESS;
 }
