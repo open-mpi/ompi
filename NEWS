@@ -38,6 +38,8 @@ Trunk (not on release branches yet)
 1.3.1
 -----
 
+- Fix MPI_File_c2f(MPI_FILE_NULL) to return 0, not -1.  Thanks to
+  Lisandro Dalcin for the bug report.
 - Re-enable the btl_openib_warn_no_device_params_found MCA parameter; its
   value was accidentally being ignored.
 - Added a configure check for RTLD_NEXT in order to better support systems
