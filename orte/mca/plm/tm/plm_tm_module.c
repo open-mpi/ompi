@@ -447,7 +447,7 @@ int plm_tm_terminate_orteds(void)
     int rc;
     
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit())) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_WITH_REPLY_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
     

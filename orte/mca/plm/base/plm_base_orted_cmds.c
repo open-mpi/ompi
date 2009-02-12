@@ -87,11 +87,10 @@ static void send_callback(int status,
     }
 }
 
-int orte_plm_base_orted_exit(void)
+int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
 {
     int rc;
     opal_buffer_t cmd;
-    orte_daemon_cmd_flag_t command = ORTE_DAEMON_EXIT_CMD;
     orte_job_t *daemons;
     orte_proc_t **procs;
     

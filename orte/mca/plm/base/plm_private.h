@@ -33,6 +33,7 @@
 #include "opal/dss/dss_types.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/runtime/orte_globals.h"
 
 
@@ -86,7 +87,7 @@ ORTE_DECLSPEC void orte_plm_base_start_heart(void);
 /**
  * Utilities for plm components that use proxy daemons
  */
-ORTE_DECLSPEC int orte_plm_base_orted_exit(void);
+ORTE_DECLSPEC int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command);
 ORTE_DECLSPEC int orte_plm_base_orted_kill_local_procs(orte_jobid_t job);
 ORTE_DECLSPEC int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal);
 

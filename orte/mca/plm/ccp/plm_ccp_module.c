@@ -71,7 +71,7 @@
 static int plm_ccp_init(void);
 static int plm_ccp_launch_job(orte_job_t *jdata);
 static int plm_ccp_terminate_job(orte_jobid_t jobid);
-static int plm_ccp_terminate_orteds();
+static int plm_ccp_terminate_orteds(void);
 static int plm_ccp_signal_job(orte_jobid_t jobid, int32_t signal);
 static int plm_ccp_finalize(void);
 
@@ -606,12 +606,12 @@ static int plm_ccp_terminate_job(orte_jobid_t jobid)
 /**
  * Terminate the orteds for a given job
  */
-int plm_ccp_terminate_orteds()
+int plm_ccp_terminate_orteds(void)
 {
     int rc;
     
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit())) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_WITH_REPLY_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
     

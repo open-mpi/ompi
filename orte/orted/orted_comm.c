@@ -82,6 +82,9 @@
 /*
  * Globals
  */
+static bool relay_is_required;
+static bool exit_after_relay;
+
 static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
@@ -256,6 +259,10 @@ CLEANUP:
         OBJ_RELEASE(buffer);
     }
     OBJ_RELEASE(mev);
+    /* see if we need to exit */
+    if (exit_after_relay) {
+        orte_trigger_event(&orte_exit);
+    }
 }
 
 void orte_daemon_recv(int status, orte_process_name_t* sender,
@@ -382,9 +389,13 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         buffer->unpack_ptr = unpack_ptr;
         /* setup an event to actually perform the relay */
         ORTE_MESSAGE_EVENT(&target, buffer, target_tag, send_relay);
+        /* flag that a relay is required */
+        relay_is_required = true;
         /* rewind the buffer to the right place for processing */
         buffer->unpack_ptr = save;
     } else {
+        /* flag that a relay is -not- required */ 
+        relay_is_required = false;
         /* rewind the buffer so we can process it correctly */
         buffer->unpack_ptr = unpack_ptr;
     }
@@ -659,7 +670,14 @@ static int process_commands(orte_process_name_t* sender,
             break;
 
             /****    EXIT COMMAND    ****/
-        case ORTE_DAEMON_EXIT_CMD:
+        case ORTE_DAEMON_EXIT_WITH_REPLY_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received exit",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* if we are the HNP, kill our local procs and
+             * flag we are exited - but don't yet exit
+             */
             if (orte_process_info.hnp) {
                 orte_job_t *daemons;
                 orte_proc_t **procs;
@@ -678,25 +696,73 @@ static int process_commands(orte_process_name_t* sender,
                  * get triggered in single-daemon systems
                  */
                 orte_plm_base_check_job_completed(daemons);
-                /* all done! */
+               /* all done! */
                 return ORTE_SUCCESS;
             }
-            /* eventually, we need to revise this so we only
-             * exit if all our children are dead. For now, treat
-             * the same as a "hard kill" command
+            /* if we are not the HNP, send a message to the HNP telling
+             * it we are leaving - and then trigger our exit
              */
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received exit",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            {
+                opal_buffer_t ack;
+                orte_proc_state_t state=ORTE_PROC_STATE_TERMINATED;
+                orte_exit_code_t exit_code=0;
+                orte_plm_cmd_flag_t cmd = ORTE_PLM_UPDATE_PROC_STATE;
+                
+                OBJ_CONSTRUCT(&ack, opal_buffer_t);
+                opal_dss.pack(&ack, &cmd, 1, ORTE_PLM_CMD);
+                opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->jobid), 1, ORTE_JOBID);        
+                opal_dss.pack(&ack, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID);        
+                opal_dss.pack(&ack, &state, 1, ORTE_PROC_STATE);        
+                opal_dss.pack(&ack, &exit_code, 1, ORTE_EXIT_CODE);
+                orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
+                OBJ_DESTRUCT(&ack);
             }
-            /* trigger our appropriate exit procedure
-             * NOTE: this event will fire -after- any zero-time events
-             * so any pending relays -do- get sent first
-             */
-            orte_trigger_event(&orte_exit);
+            /* check to see if we need to relay messages */ 
+            if (relay_is_required) { 
+                exit_after_relay = true; 
+            } else { 
+                orte_trigger_event(&orte_exit); 
+            }
             return ORTE_SUCCESS;
             break;
-
+            
+            /****    EXIT_NO_REPLY COMMAND    ****/
+        case ORTE_DAEMON_EXIT_NO_REPLY_CMD:
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: received exit_no_reply",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            /* if we are the HNP, kill our local procs and
+             * flag we are exited - but don't yet exit
+             */
+            if (orte_process_info.hnp) {
+                orte_job_t *daemons;
+                orte_proc_t **procs;
+                /* if we are the HNP, ensure our local procs are terminated */
+                orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
+                /* now lookup the daemon job object */
+                if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    return ORTE_ERR_NOT_FOUND;
+                }
+                procs = (orte_proc_t**)daemons->procs->addr;
+                /* declare us terminated so things can exit cleanly */
+                procs[0]->state = ORTE_PROC_STATE_TERMINATED;
+                daemons->num_terminated++;
+                /* There is nothing more to do here - actual exit will be
+                 * accomplished by the plm
+                 */
+                return ORTE_SUCCESS;
+            }
+            /* check to see if we need to relay messages */ 
+            if (relay_is_required) { 
+                exit_after_relay = true; 
+            } else { 
+                orte_trigger_event(&orte_exit); 
+            }
+            return ORTE_SUCCESS;
+            break;
+            
             /****    HALT VM COMMAND    ****/
         case ORTE_DAEMON_HALT_VM_CMD:
             if (orte_debug_daemons_flag) {
@@ -1031,103 +1097,6 @@ SEND_ANSWER:
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
             }
-            break;
-            
-            /****     ATTACH_STDIO COMMAND    ****/
-        case ORTE_DAEMON_ATTACH_STDOUT_CMD:
-            if (orte_debug_daemons_flag) {
-                opal_output(0, "%s orted_cmd: received attach stdio cmd",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            }
-#if 0
-            /* if we are not the HNP, we can do nothing - report
-             * back error so the tool won't hang
-             */
-            if (!orte_process_info.hnp) {
-                int status=ORTE_ERR_NOT_SUPPORTED;
-                
-                answer = OBJ_NEW(opal_buffer_t);
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &status, 1, OPAL_INT))) {
-                    ORTE_ERROR_LOG(ret);
-                    OBJ_RELEASE(answer);
-                    goto CLEANUP;
-                }
-                /* callback function will release buffer */
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-                    ret = ORTE_ERR_COMM_FAILURE;
-                }
-            } else {
-                /* if we are the HNP, process the request */
-                int fd, status;
-                orte_vpid_t vpid;
-                orte_process_name_t source;
-                
-                /* setup the answer */
-                answer = OBJ_NEW(opal_buffer_t);
-                
-                /* unpack the jobid */
-                n = 1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto CLEANUP;
-                }
-                
-                /* unpack the vpid */
-                n = 1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &vpid, &n, ORTE_VPID))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto PACK_ANSWER;
-                }
-                
-                /* unpack the file descriptor */
-                n = 1;
-                if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &fd, &n, OPAL_INT))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto PACK_ANSWER;
-                }
-                
-                /* tell the iof to attach it */
-                status = orte_iof.pull(
-                /* if they asked for a specific proc, then just get that info */
-                if (ORTE_VPID_WILDCARD != vpid) {
-                    /* find this proc */
-                    procs = (orte_proc_t**)jdata->procs->addr;
-                    for (i=0; i < jdata->procs->size; i++) {
-                        if (NULL == procs[i]) break; /* stop when we get past the end of data */
-                        if (vpid == procs[i]->name.vpid) {
-                            procs = &procs[i];
-                            num_procs = 1;
-                            break;
-                        }
-                    }
-                } else {
-                    procs = (orte_proc_t**)jdata->procs->addr;
-                    num_procs = jdata->num_procs;
-                }
-                
-PACK_ANSWER:
-                /* pack number of procs */
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_procs, 1, ORTE_VPID))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto SEND_ANSWER;
-                }
-                if (0 < num_procs) {
-                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, procs, jdata->num_procs, ORTE_PROC))) {
-                        ORTE_ERROR_LOG(ret);
-                        goto SEND_ANSWER;
-                    }
-                }
-SEND_ANSWER:
-                /* callback function will release buffer */
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-                    ret = ORTE_ERR_COMM_FAILURE;
-                }
-            }
-#endif
             break;
 
             /****     HEARTBEAT COMMAND    ****/
