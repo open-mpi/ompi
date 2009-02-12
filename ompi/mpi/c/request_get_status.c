@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,7 +51,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( (NULL == flag) || (NULL == status) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-        } else if (NULL == request) {
+        } else if (NULL == request || MPI_REQUEST_NULL == request) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST,
                                           FUNC_NAME);
         }
