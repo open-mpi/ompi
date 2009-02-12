@@ -318,12 +318,21 @@ static int add_intrinsic(ompi_op_t *op, int fort_handle, int flags,
  */
 static void ompi_op_construct(ompi_op_t *new_op)
 {
-    int ret_val;
+    int i;
 
     /* assign entry in fortran <-> c translation array */
 
-    ret_val = opal_pointer_array_add(ompi_op_f_to_c_table, new_op);
-    new_op->o_f_to_c_index = ret_val;
+    new_op->o_f_to_c_index = 
+        opal_pointer_array_add(ompi_op_f_to_c_table, new_op);
+
+    /* Set everything to NULL so that we can intelligently free
+       non-NULL's in the destructor */
+    for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
+        new_op->o_func.intrinsic.fns[i] = NULL;
+        new_op->o_func.intrinsic.modules[i] = NULL;
+        new_op->o_3buff_intrinsic.fns[i] = NULL;
+        new_op->o_3buff_intrinsic.modules[i] = NULL;
+    }
 }
 
 
