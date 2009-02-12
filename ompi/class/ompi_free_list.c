@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -68,24 +69,22 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     }
 #endif
 
-    while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
-        fl_mem = (ompi_free_list_memory_t*)item;
-        if(fl->fl_mpool != NULL) {
+    if( NULL != fl->fl_mpool ) {
+        while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
+            fl_mem = (ompi_free_list_memory_t*)item;
+
             fl->fl_mpool->mpool_free(fl->fl_mpool, fl_mem->ptr,
-                    fl_mem->registration);
+                                     fl_mem->registration);
+
+            /* destruct the item (we constructed it), then free the memory chunk */
+            OBJ_DESTRUCT(item);
+            free(item);
         }
-       /* destruct the item (we constructed it), then free the memory chunk */
-        OBJ_DESTRUCT(item);
-        free(item);
     }
 
     OBJ_DESTRUCT(&fl->fl_allocations);
     OBJ_DESTRUCT(&fl->fl_condition);
     OBJ_DESTRUCT(&fl->fl_lock);
-    if(fl->ctx) { 
-        free(fl->ctx);
-    }
-
 }
 
 int ompi_free_list_init_ex(
