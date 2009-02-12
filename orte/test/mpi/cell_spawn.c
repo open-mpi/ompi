@@ -53,6 +53,8 @@ int main(int argc, char* argv[])
 #if 0
     MPI_Info_set(info, "ompi_preload_binary", "true");
     MPI_Info_set(info, "ompi_preload_files_dest_dir", rdir);
+    MPI_Info_set(info, "ompi_preload_files", list-of-files);
+    MPI_Info_set(info, "ompi_preload_files_src_dir", getcwd(cwd, 256));
 #endif
     
     app = strdup("/usr/projects/packages/openmpi/rhc/cell_slave");
