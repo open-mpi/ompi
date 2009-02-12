@@ -43,6 +43,7 @@
 #include "opal/mca/base/base.h"
 #include "orte/util/show_help.h"
 #include "opal/sys/atomic.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/oob/base/base.h"
