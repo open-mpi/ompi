@@ -548,7 +548,7 @@ int mca_base_param_set_string(int index, char *value)
     mca_base_param_storage_t storage;
 
     mca_base_param_unset(index);
-    storage.stringval = strdup(value);
+    storage.stringval = value;
     param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_STRING);
     return OPAL_SUCCESS;
 }
