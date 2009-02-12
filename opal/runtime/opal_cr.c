@@ -433,6 +433,11 @@ int opal_cr_finalize(void)
         opal_cr_checkpoint_request  = OPAL_CR_STATUS_TERM;
     }
 
+    if (NULL != opal_cr_pipe_dir) {
+        free(opal_cr_pipe_dir);
+        opal_cr_pipe_dir = NULL;
+    }
+
 #if OPAL_ENABLE_FT    == 1
     /*
      * Close the checkpoint / restart service components
