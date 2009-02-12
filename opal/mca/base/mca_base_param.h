@@ -325,6 +325,9 @@ extern "C" {
      * never be NULL. It will always have a value, even if that value is
      * the empty string.
      *
+     * Strings returned in the \em current_value parameter should later
+     * be free()'ed.
+     *
      * This function is identical to mca_base_param_reg_int() except
      * that you are registering a string parameter with an associated
      * string default value (which is \em not allowed to be NULL).
@@ -513,7 +516,7 @@ extern "C" {
      * never be NULL. It will always have a value, even if that value is
      * the empty string.
      * 
-     * Strings returns in the \em value parameter should later be
+     * Strings returned in the \em value parameter should later be
      * free()'ed.
      *
      * The value of a specific MCA parameter can be looked up using the
