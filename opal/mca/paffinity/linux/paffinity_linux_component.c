@@ -26,6 +26,8 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
+#include "opal/mca/base/mca_base_param.h"
+
 #include "opal/mca/paffinity/paffinity.h"
 #include "paffinity_linux.h"
 
