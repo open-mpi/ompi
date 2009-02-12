@@ -126,3 +126,16 @@ binaries be pre-positioned on the remote host. However, we could not
 find the %s command in your path.
 
 Please check that %s is in your PATH and try again.
+
+#
+[file-not-found]
+A call was made to launch a local slave process that requested pre-positioning
+of one or more files, but the specified files could not be found:
+
+File: %s
+Source directory: %s
+
+Please either specify an absolute path to the file, or check
+that the file is in your current working directory...and ensure
+that you have read permissions on the file.
+

@@ -726,6 +726,23 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             app_context[i]->preload_files_dest_dir = NULL;
         }
 
+        /* Unpack the preload_files_src_dir set */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &have_preload_files_dest_dir,
+                                                         &max_n, OPAL_INT8))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (have_preload_files_dest_dir) {
+            if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->preload_files_src_dir,
+                                                             &max_n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            app_context[i]->preload_files_src_dir = NULL;
+        }
+        
     }
 
     return ORTE_SUCCESS;
