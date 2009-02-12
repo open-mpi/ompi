@@ -31,6 +31,7 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/os_path.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
@@ -148,6 +149,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     char *exefile=NULL, *basename, *param, *path=NULL, *bppath=NULL;
     char *exec_path=NULL;
     char *tmp;
+    char **files;
     bool flag;
     orte_app_context_t **apps, *app;
     int i;
@@ -156,6 +158,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
     sigset_t sigs;
     bool local_op = false;
+    char cwd[OMPI_PATH_MAX];
     
     /* increment the local slave jobid */
     orte_plm_globals.local_slaves++;
@@ -201,6 +204,14 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
          * then convert it to one
          */
         if (!opal_path_is_absolute(app->app)) {
+            /* see if a source directory was given */
+            if (NULL!= app->preload_files_src_dir) {
+                /* prepend the src dir to the executable name */
+                path = opal_os_path(false, app->preload_files_src_dir, app->app, NULL);
+                free(app->app);
+                app->app = path;
+            }
+            /* now check for absolute path */
             exefile = opal_find_absolute_path(app->app);
             if (NULL == exefile) {
                 orte_show_help("help-plm-base.txt", "exec-not-found", true, app->app);
@@ -213,6 +224,11 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         basename = opal_basename(exefile);
         path = opal_os_path(false, app->preload_files_dest_dir, basename, NULL);
         free(basename);
+        /* ensure the path exists */
+        if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(app->preload_files_dest_dir, S_IRWXU))) {
+            orte_show_help("help-plm-base.txt", "path-not-created", true, path);
+            return rc;
+        }
         /* we are going to use the "bootproxy" script to launch
          * this job - so move it over to the target host as well
          */
@@ -259,6 +275,10 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             /* add the bootproxy cmd */
             opal_argv_append_nosize(&argv, bppath);
         }
+        free(exefile);
+        free(path);
+        free(bppath);
+        free(scp);
     } else {
         /* if we are not preloading the binaries, just setup
          * the path to the bootproxy script
@@ -294,23 +314,85 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         }
     }
 
-    if (NULL != exefile) {
-        free(exefile);
-    }
-    if (NULL != path) {
-        free(path);
-    }
-    if (NULL != bppath) {
-        free(bppath);
-    }
-    /* release the scp command */
-    if (NULL != scp) {
-        free(scp);
-    }
-    
     /* done with bootproxy */
     free(bootproxy);
     
+    /* do we need to pre-position supporting files? */
+    if (NULL != app->preload_files) {
+        /* the target location -must- be an absolute path */
+        if (NULL == app->preload_files_dest_dir ||
+            !opal_path_is_absolute(app->preload_files_dest_dir)) {
+            orte_show_help("help-plm-base.txt", "abs-path-reqd", true, "files", "target", "target",
+                           (NULL == app->preload_files_dest_dir) ? "NULL" : app->preload_files_dest_dir);
+            return ORTE_ERROR;
+        }
+        if (local_op) {
+            scp = opal_find_absolute_path("cp");
+            if (NULL == scp) {
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "cp", "cp");
+                return ORTE_ERROR;
+            }
+        } else {
+            /* find the scp command */
+            scp = opal_find_absolute_path("scp");
+            if (NULL == scp) {
+                orte_show_help("help-plm-base.txt", "cp-not-found", true, "scp", "scp");
+                return ORTE_ERROR;
+            }
+        }
+        /* break apart the comma-separated list of files */
+        files = opal_argv_split(app->preload_files, ',');
+        /* setup the path to the destination */
+        path = opal_os_path(false, app->preload_files_dest_dir, NULL);
+        /* ensure the path exists */
+        if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(path, S_IRWXU))) {
+            orte_show_help("help-plm-base.txt", "path-not-created", true, path);
+            return rc;
+        }
+        /* copy each file across */
+        for (i=0; i < opal_argv_count(files); i++) {
+            /* if the file is not given in absolute path form,
+             * then convert it to one
+             */
+            if (!opal_path_is_absolute(files[i])) {
+                /* see if a source directory was given */
+                if (NULL!= app->preload_files_src_dir) {
+                    /* look for the file there */
+                    exefile = opal_path_access(files[i], app->preload_files_src_dir, R_OK);
+                } else {
+                    /* look for it in the cwd */
+                    getcwd(cwd, OMPI_PATH_MAX);
+                    exefile = opal_path_access(files[i], cwd, R_OK);
+                }
+            } else {
+                exefile = opal_path_access(files[i], NULL, R_OK);
+            }
+            if (NULL == exefile) {
+                getcwd(cwd, OMPI_PATH_MAX);
+                orte_show_help("help-plm-base.txt", "file-not-found", true, files[i],
+                               (NULL == app->preload_files_dest_dir) ? cwd : app->preload_files_dest_dir);
+                return ORTE_ERROR;
+            }
+            if (local_op) {
+                /* form and execute the cp command */
+                asprintf(&cmd, "%s %s %s/%s", scp, files[i], path, files[i]);
+                system(cmd);
+                free(cmd);
+            } else {
+                /* form and execute the scp commands */
+                asprintf(&cmd, "%s %s %s:%s/%s", scp, files[i], nodename, path, files[i]);
+                system(cmd);
+                free(cmd);
+            }
+        }
+        free(path);
+        opal_argv_free(files);
+        free(scp);
+    }
+    
+    /* done with nodename */
+    free(nodename);
+
     /* if there is a prefix, add it in a special way so the bootproxy
      * can deal with it
      */

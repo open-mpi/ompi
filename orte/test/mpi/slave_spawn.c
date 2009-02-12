@@ -12,9 +12,10 @@ int main(int argc, char* argv[])
     int rank, size;
     pid_t pid;
     char *host, *app, *rdir, *prefix;
+    char cwd[256];
     
-    if (argc != 5) {
-        printf("Usage: slave_spawn host prefix-for-host abs-path-to-exe remote-tmp-dir\n");
+    if (argc < 5) {
+        printf("Usage: slave_spawn host prefix-for-host abs-path-to-exe remote-tmp-dir <files-to-move>\n");
         return 1;
     }
 
@@ -35,6 +36,12 @@ int main(int argc, char* argv[])
     MPI_Info_set(info, "ompi_local_slave", "true");
     MPI_Info_set(info, "ompi_preload_binary", "true");
     MPI_Info_set(info, "ompi_preload_files_dest_dir", rdir);
+    
+    if (argc == 6) {
+        /* files were specified */
+        MPI_Info_set(info, "ompi_preload_files", argv[5]);
+        MPI_Info_set(info, "ompi_preload_files_src_dir", getcwd(cwd, 256));
+    }
     
     pid = getpid();
     printf("Slave_spawn [pid %ld] about to spawn!\n", (long)pid);

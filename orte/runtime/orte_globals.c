@@ -474,6 +474,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->preload_binary = false;
     app_context->preload_files  = NULL;
     app_context->preload_files_dest_dir  = NULL;
+    app_context->preload_files_src_dir  = NULL;
     app_context->used_on_node = false;
 }
 
@@ -520,6 +521,10 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
     
     if(NULL != app_context->preload_files_dest_dir) {
         free(app_context->preload_files_dest_dir);
+    }
+
+    if(NULL != app_context->preload_files_src_dir) {
+        free(app_context->preload_files_src_dir);
     }
 }
 

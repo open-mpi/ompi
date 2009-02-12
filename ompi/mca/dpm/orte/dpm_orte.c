@@ -670,6 +670,12 @@ static int spawn(int count, char **array_of_commands,
                 app->preload_files_dest_dir = strdup(cwd);
             }
             
+            /* check for 'preload_files_src_dir' */ 
+            ompi_info_get (array_of_info[i], "ompi_preload_files_src_dir", valuelen, cwd, &flag);
+            if ( flag ) {
+                app->preload_files_src_dir = strdup(cwd);
+            }
+            
             /* see if this is a non-mpi job - if so, then set the flag so ORTE
              * knows what to do
              */
@@ -694,15 +700,21 @@ static int spawn(int count, char **array_of_commands,
         }
 
         /* default value: If the user did not tell us where to look for the
-           executable, we assume the current working directory  */
+         * executable, we assume the current working directory, or the preload destination
+         * if it was given
+         */
         if ( !have_wdir ) {
-            if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OMPI_PATH_MAX))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(jdata);
-                opal_progress_event_users_decrement();
-                return rc;
+            if (NULL != app->preload_files_dest_dir) {
+                app->cwd = strdup(app->preload_files_dest_dir);
+            } else {
+                if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OMPI_PATH_MAX))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(jdata);
+                    opal_progress_event_users_decrement();
+                    return rc;
+                }
+                app->cwd = strdup(cwd);
             }
-            app->cwd = strdup(cwd);
         }
         
         /* leave the map info alone - the launcher will
