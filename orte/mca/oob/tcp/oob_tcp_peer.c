@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -118,6 +119,9 @@ static void mca_oob_tcp_peer_destruct(mca_oob_tcp_peer_t * peer)
     mca_oob_tcp_peer_shutdown(peer); 
     OBJ_DESTRUCT(&(peer->peer_send_queue));
     OBJ_DESTRUCT(&(peer->peer_lock));
+    if (NULL != peer->peer_addr) {
+        OBJ_RELEASE(peer->peer_addr);
+    }
 }
 
 /*

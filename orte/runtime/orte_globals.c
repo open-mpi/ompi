@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -69,7 +69,7 @@ char **orte_launch_environ;
 bool orte_hnp_is_allocated = false;
 bool orte_allocation_required;
 
-char *orte_launch_agent;
+char *orte_launch_agent = NULL;
 char **orted_cmd_line=NULL;
 
 orte_job_t *orte_debugger_daemon=NULL;
@@ -120,7 +120,7 @@ char *orte_xterm;
 bool orte_forward_job_control;
 
 /* rsh support */
-char *orte_rsh_agent;
+char *orte_rsh_agent = NULL;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 

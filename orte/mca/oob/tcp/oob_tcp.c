@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -287,6 +288,7 @@ int mca_oob_tcp_component_open(void)
                     listen_type);
         return ORTE_ERROR;
     }
+    free(listen_type);
 
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "listen_thread_max_queue",
@@ -400,6 +402,8 @@ int mca_oob_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_names);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peers);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
+
+    opal_output_close(mca_oob_tcp_output_handle);
 
     return ORTE_SUCCESS;
 }
@@ -1224,14 +1228,16 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
                          &dev->super);
     }
     if (found_local && found_nonlocal) {
-        opal_list_item_t *item;
+        opal_list_item_t *item, *next;
         for (item = opal_list_get_first(&mca_oob_tcp_component.tcp_available_devices) ;
              item != opal_list_get_end(&mca_oob_tcp_component.tcp_available_devices) ;
-             item = opal_list_get_next(item)) {
+             item = next) {
             mca_oob_tcp_device_t *dev = (mca_oob_tcp_device_t*) item;
+            next = opal_list_get_next(item);
             if (dev->if_local) {
                 item = opal_list_remove_item(&mca_oob_tcp_component.tcp_available_devices,
                                              item);
+                OBJ_RELEASE(dev);
             }
         }
     }
