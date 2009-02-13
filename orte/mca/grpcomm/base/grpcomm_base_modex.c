@@ -1,8 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -894,7 +895,6 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
     int rc = ORTE_SUCCESS;
     orte_std_cntr_t num_recvd_entries;
     orte_std_cntr_t cnt;
-    void *bytes = NULL;
     orte_std_cntr_t j;
 
     /* look up the modex data structure */
@@ -925,6 +925,7 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
      */
     for (j = 0; j < num_recvd_entries; j++) {
         size_t num_bytes;
+        void *bytes = NULL;
         char *attr_name;
         
         cnt = 1;
@@ -950,8 +951,6 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
                 goto cleanup;
             }
             num_bytes = cnt;
-        } else {
-            bytes = NULL;
         }
         
         /*
