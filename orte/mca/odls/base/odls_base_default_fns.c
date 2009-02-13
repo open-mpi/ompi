@@ -845,9 +845,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
                     if (i == child->app_idx) {
                         child->exit_code = rc;
-                    } else {
-                        child->state = ORTE_PROC_STATE_UNDEF;
-                        child->exit_code = 0;
                     }
                 }
             }
@@ -861,12 +858,17 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
             /* do not ERROR_LOG - it will be reported elsewhere */
-            child->exit_code = rc;
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch:check_context_cwd failed with error %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_ERROR_NAME(rc)));
-            
+            /* cycle through children to find those for this jobid */
+            for (item = opal_list_get_first(&orte_odls_globals.children);
+                 item != opal_list_get_end(&orte_odls_globals.children);
+                 item = opal_list_get_next(item)) {
+                child = (orte_odls_child_t*)item;
+                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID) &&
+                    i == child->app_idx) {
+                    child->exit_code = rc;
+                }
+            }
+            goto CLEANUP;
         }
         
         /* The prior function will have done a chdir() to jump us to
@@ -922,7 +924,16 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             if (NULL != mpiexec_pathenv) {
                 opal_argv_free(argvptr);
             }
-            child->exit_code = rc;
+            /* cycle through children to find those for this jobid */
+            for (item = opal_list_get_first(&orte_odls_globals.children);
+                 item != opal_list_get_end(&orte_odls_globals.children);
+                 item = opal_list_get_next(item)) {
+                child = (orte_odls_child_t*)item;
+                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID) &&
+                    i == child->app_idx) {
+                    child->exit_code = rc;
+                }
+            }
             goto CLEANUP;
         }
         if (NULL != mpiexec_pathenv) {
