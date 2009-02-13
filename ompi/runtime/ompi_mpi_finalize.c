@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -337,6 +337,11 @@ int ompi_mpi_finalize(void)
     }
     if (OMPI_SUCCESS != (ret = mca_rcache_base_close())) { 
         return ret;
+    }
+
+    /* Free some OMPI MCA string params */
+    if (NULL != ompi_mpi_show_mca_params_file) {
+        free(ompi_mpi_show_mca_params_file);
     }
     
     /* Leave the RTE */
