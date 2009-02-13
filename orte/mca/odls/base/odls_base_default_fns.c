@@ -1038,7 +1038,16 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         if (ORTE_SUCCESS != (rc = orte_util_check_context_cwd(app, true))) {
             /* do not ERROR_LOG - it will be reported elsewhere */
-            child->exit_code = rc;
+            /* cycle through children to find those for this jobid */
+            for (item = opal_list_get_first(&orte_local_children);
+                 item != opal_list_get_end(&orte_local_children);
+                 item = opal_list_get_next(item)) {
+                child = (orte_odls_child_t*)item;
+                if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID) &&
+                    i == child->app_idx) {
+                    child->exit_code = rc;
+                }
+            }
             goto CLEANUP;
         }
         
