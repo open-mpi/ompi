@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -186,6 +187,16 @@ int orte_proc_info_finalize(void)
     if (NULL != orte_process_info.sock_stderr) {
         free(orte_process_info.sock_stderr);
         orte_process_info.sock_stderr = NULL;
+    }
+
+    if (NULL != orte_process_info.my_hnp_uri) {
+        free(orte_process_info.my_hnp_uri);
+        orte_process_info.my_hnp_uri = NULL;
+    }
+
+    if (NULL != orte_process_info.my_daemon_uri) {
+        free(orte_process_info.my_daemon_uri);
+        orte_process_info.my_daemon_uri = NULL;
     }
 
     orte_process_info.hnp = false;
