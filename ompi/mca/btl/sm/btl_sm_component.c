@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -245,6 +246,9 @@ int mca_btl_sm_component_close(void)
     }
 #endif
 
+    if (NULL != mca_btl_sm_component.sm_mpool_name) {
+        free(mca_btl_sm_component.sm_mpool_name);
+    }
 
 CLEANUP:
 
