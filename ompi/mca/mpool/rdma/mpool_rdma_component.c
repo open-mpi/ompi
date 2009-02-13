@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -35,8 +35,10 @@
 /*
  * Local functions
  */
-static int mca_mpool_rdma_open(void);
-static mca_mpool_base_module_t* mca_mpool_rdma_init(
+static int rdma_open(void);
+static int rdma_close(void);
+static int rdma_register(void);
+static mca_mpool_base_module_t* rdma_init(
         struct mca_mpool_base_resources_t* resources);
 
 mca_mpool_rdma_component_t mca_mpool_rdma_component = {
@@ -51,22 +53,30 @@ mca_mpool_rdma_component_t mca_mpool_rdma_component = {
           OMPI_MAJOR_VERSION,  /* MCA component major version */
           OMPI_MINOR_VERSION,  /* MCA component minor version */
           OMPI_RELEASE_VERSION,  /* MCA component release version */
-          mca_mpool_rdma_open,  /* component open  */
-          NULL
+          rdma_open,  /* component open  */
+          rdma_close,
+          NULL,
+          rdma_register
       },
       {
           /* The component is checkpoint ready */
           MCA_BASE_METADATA_PARAM_CHECKPOINT
       },
 
-      mca_mpool_rdma_init
+      rdma_init
     }
 };
 
 /**
   * component open/close/init function
   */
-static int mca_mpool_rdma_open(void)
+static int rdma_open(void)
+{
+    return OMPI_SUCCESS;
+}
+
+
+static int rdma_register(void)
 {
     int val;
 
@@ -92,7 +102,18 @@ static int mca_mpool_rdma_open(void)
     return OMPI_SUCCESS;
 }
 
-static mca_mpool_base_module_t* mca_mpool_rdma_init(
+
+static int rdma_close(void)
+{
+    if (NULL != mca_mpool_rdma_component.rcache_name) {
+        free(mca_mpool_rdma_component.rcache_name);
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+static mca_mpool_base_module_t* rdma_init(
      struct mca_mpool_base_resources_t *resources)
 {
     mca_mpool_rdma_module_t* mpool_module;

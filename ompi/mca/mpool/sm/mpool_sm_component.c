@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +72,7 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
     }
 };
 
-static char *max_size_param, *min_size_param, *peer_size_param;
+static char *max_size_param = NULL, *min_size_param = NULL, *peer_size_param = NULL;
 static long default_max, default_min, default_peer;
 
 #if SIZEOF_LONG == 4
@@ -162,6 +162,19 @@ static int mca_mpool_sm_close( void )
 #endif
         }
         OBJ_RELEASE( mca_common_sm_mmap );
+    }
+
+    if (NULL != mca_mpool_sm_component.sm_allocator_name) {
+        free(mca_mpool_sm_component.sm_allocator_name);
+    }
+    if (NULL != max_size_param) {
+        free(max_size_param);
+    }
+    if (NULL != min_size_param) {
+        free(min_size_param);
+    }
+    if (NULL != peer_size_param) {
+        free(peer_size_param);
     }
     return OMPI_SUCCESS;
 }
