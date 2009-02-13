@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -157,7 +158,7 @@ int mca_pml_base_open(void)
                                    false, false,
                                    NULL, &wrapper_pml);
     if( NULL != wrapper_pml ) {
-        opal_pointer_array_add(&mca_pml_base_pml, strdup(wrapper_pml));
+        opal_pointer_array_add(&mca_pml_base_pml, wrapper_pml);
     }
 #endif
 
