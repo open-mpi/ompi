@@ -73,7 +73,10 @@ int orte_finalize(void)
     if (NULL != orte_rsh_agent) {
         free(orte_rsh_agent);
     }
-    
+    if( NULL != orte_default_hostfile ) {
+        free(orte_default_hostfile);
+    }
+
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
     

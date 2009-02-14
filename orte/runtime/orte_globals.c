@@ -87,7 +87,7 @@ int orte_startup_timeout;
 
 int orte_timeout_usec_per_proc;
 float orte_max_timeout;
-char *orte_default_hostfile;
+char *orte_default_hostfile = NULL;
 
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
