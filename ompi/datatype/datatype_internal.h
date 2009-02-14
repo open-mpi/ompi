@@ -23,7 +23,7 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 
 extern int ompi_ddt_dfd;
 

@@ -51,6 +51,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"

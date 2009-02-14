@@ -15,9 +15,9 @@
  */
 
 #include "orte_config.h"
+#include "opal/util/output.h"
 
 #include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"

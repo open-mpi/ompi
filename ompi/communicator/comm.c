@@ -26,11 +26,12 @@
 
 #include "opal/dss/dss.h"
 #include "orte/util/name_fns.h"
+#include "orte/mca/rml/rml_types.h"
 
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal/util/convert.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"

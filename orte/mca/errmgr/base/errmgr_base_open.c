@@ -23,10 +23,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
+#include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"

@@ -19,6 +19,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -33,7 +34,6 @@
 #include "ompi/constants.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/params.h"
-#include "orte/util/show_help.h"
 
 
 /*

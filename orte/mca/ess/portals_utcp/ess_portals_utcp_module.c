@@ -22,7 +22,6 @@
 
 #include <string.h>
 
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/mca/paffinity/paffinity.h"
 

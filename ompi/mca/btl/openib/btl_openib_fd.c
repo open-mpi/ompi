@@ -34,7 +34,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
-#include "orte/util/show_help.h"
 
 #include "ompi/constants.h"
 

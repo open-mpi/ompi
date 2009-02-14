@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"

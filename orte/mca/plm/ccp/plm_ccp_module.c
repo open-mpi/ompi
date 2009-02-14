@@ -44,7 +44,7 @@
 #include "opal/threads/condition.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"

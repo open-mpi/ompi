@@ -48,6 +48,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/daemon_init.h"
 #include "opal/util/opal_environ.h"
@@ -60,7 +61,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/dss/dss.h"
 
-#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -68,6 +68,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"

@@ -42,6 +42,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/threads.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
 #include "opal/util/show_help.h"

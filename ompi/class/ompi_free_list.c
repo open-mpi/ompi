@@ -22,8 +22,8 @@
 
 #include "ompi/class/ompi_free_list.h"
 #include "opal/include/opal/align.h"
+#include "opal/util/output.h"
 #include "opal/sys/cache.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/mpool/mpool.h"
 
 static void ompi_free_list_construct(ompi_free_list_t* fl);

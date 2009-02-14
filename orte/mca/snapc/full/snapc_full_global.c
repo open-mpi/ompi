@@ -23,6 +23,7 @@
 #endif  /* HAVE_UNISTD_H */
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
 #include "opal/mca/mca.h"
@@ -31,10 +32,10 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/grpcomm/grpcomm.h"

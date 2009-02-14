@@ -62,6 +62,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
+#include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
@@ -79,6 +80,7 @@
 #include "orte/util/nidmap.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"

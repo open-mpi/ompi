@@ -37,7 +37,6 @@
 #include <unistd.h>
 #endif
 
-#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -45,6 +44,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"

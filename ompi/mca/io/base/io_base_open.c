@@ -21,12 +21,11 @@
 #include <stdio.h>
 
 #include "ompi/class/ompi_free_list.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/show_help.h"
 
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"

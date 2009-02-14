@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"

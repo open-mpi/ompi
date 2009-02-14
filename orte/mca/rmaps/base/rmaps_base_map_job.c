@@ -21,15 +21,14 @@
 
 #include <string.h>
 
-#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"

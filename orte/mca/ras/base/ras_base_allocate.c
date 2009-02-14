@@ -23,6 +23,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/output.h"
 
 #include "orte/util/show_help.h"
 #include "opal/dss/dss.h"

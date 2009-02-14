@@ -31,7 +31,6 @@
 #include "opal/util/output.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"

@@ -39,6 +39,7 @@
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/grpcomm.h"

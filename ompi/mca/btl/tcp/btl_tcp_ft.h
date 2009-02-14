@@ -24,7 +24,6 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "orte/util/show_help.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

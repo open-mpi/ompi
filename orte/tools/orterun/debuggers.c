@@ -105,6 +105,7 @@
 #include <ctype.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
 #include "opal/class/opal_pointer_array.h"
@@ -113,6 +114,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/runtime/orte_globals.h"

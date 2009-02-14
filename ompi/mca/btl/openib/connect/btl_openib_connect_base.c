@@ -27,6 +27,7 @@
 
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 
 /*
  * Array of all possible connection functions

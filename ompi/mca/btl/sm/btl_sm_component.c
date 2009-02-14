@@ -42,8 +42,8 @@
 #include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
+#include "opal/util/output.h"
 #include "opal/util/argv.h"
-#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 

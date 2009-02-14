@@ -27,7 +27,6 @@
 #include "orte/constants.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 
 #include "orte/util/proc_info.h"

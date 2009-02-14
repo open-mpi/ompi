@@ -67,6 +67,7 @@
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/params.h"

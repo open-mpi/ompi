@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "opal/threads/condition.h"
-#include "orte/util/show_help.h"
 #include "opal/util/bit_ops.h"
 
 #include "opal/class/opal_hash_table.h"
@@ -34,6 +33,7 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"

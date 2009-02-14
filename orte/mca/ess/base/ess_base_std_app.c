@@ -31,6 +31,7 @@
 #include "opal/event/event.h"
 #include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
+#include "opal/util/output.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 

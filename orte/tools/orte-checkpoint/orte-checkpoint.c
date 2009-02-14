@@ -53,6 +53,7 @@
 
 
 #include "opal/util/cmd_line.h"
+#include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
@@ -71,6 +72,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/snapc/snapc.h"

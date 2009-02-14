@@ -17,8 +17,8 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
 
 #include "mtl_portals.h"
 #include "mtl_portals_request.h"

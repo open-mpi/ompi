@@ -7,8 +7,8 @@
 
 #include <stdio.h>
 #include "mpi.h"
+#include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
 
 int main(int argc, char* argv[])
 {

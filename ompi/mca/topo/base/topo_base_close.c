@@ -19,9 +19,9 @@
 
 #include <stdio.h>
 
-#include "orte/util/show_help.h"
 #include "ompi/constants.h"
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"

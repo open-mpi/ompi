@@ -38,6 +38,7 @@
 #include "ompi/win/win.h"
 #include "orte/runtime/runtime.h"
 #include "opal/util/printf.h"
+#include "opal/util/output.h"
 
 /*
  * Local functions

@@ -38,6 +38,7 @@
 #endif
 
 #include "opal/event/event.h"
+#include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"

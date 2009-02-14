@@ -35,8 +35,8 @@
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
 
-#include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
+#include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"
 
 #include "orte/mca/errmgr/errmgr.h"

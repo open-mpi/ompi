@@ -41,8 +41,8 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "orte/util/show_help.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -54,7 +54,6 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"

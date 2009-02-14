@@ -29,14 +29,15 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/output.h"
 #include "opal/util/basename.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 

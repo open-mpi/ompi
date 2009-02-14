@@ -26,7 +26,6 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
-#include "orte/util/show_help.h"
 #include "coll_tuned.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */

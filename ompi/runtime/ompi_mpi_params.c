@@ -32,6 +32,7 @@
 #include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 
 /*
  * Global variables

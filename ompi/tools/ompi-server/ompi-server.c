@@ -41,6 +41,7 @@
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"

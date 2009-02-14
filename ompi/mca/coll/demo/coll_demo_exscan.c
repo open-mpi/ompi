@@ -17,10 +17,10 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"

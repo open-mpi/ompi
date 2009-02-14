@@ -35,7 +35,6 @@
 
 /* Open MPI includes */
 #include "opal/event/event.h"
-#include "orte/util/show_help.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/pml/pml.h"

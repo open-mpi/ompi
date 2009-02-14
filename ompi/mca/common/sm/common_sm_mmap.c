@@ -46,7 +46,7 @@
 #include "ompi/proc/proc.h"
 #include "common_sm_mmap.h"
 #include "opal/util/basename.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal/align.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml_types.h"

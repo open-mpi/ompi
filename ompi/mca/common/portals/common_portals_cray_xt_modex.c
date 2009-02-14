@@ -22,7 +22,7 @@
 #include "common_portals.h"
 #include "ompi/constants.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 
 

@@ -29,6 +29,7 @@
 #include <malloc.h>
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "orte/util/show_help.h"
 

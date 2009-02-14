@@ -23,8 +23,8 @@
 #include <catamount/cnos_mpi_os.h>
 
 #include "opal/mca/paffinity/paffinity.h"
+#include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/name_fns.h"

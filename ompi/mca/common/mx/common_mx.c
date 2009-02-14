@@ -20,7 +20,6 @@
  */
 
 #include "ompi_config.h"
-#include "orte/util/show_help.h"
 #include "ompi/constants.h"
 #include "common_mx.h"
 
@@ -29,6 +28,7 @@
 #include <malloc.h>
 #endif
 #include "opal/memoryhooks/memory.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/mpool.h"

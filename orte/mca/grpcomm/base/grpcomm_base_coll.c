@@ -33,7 +33,6 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/threads/condition.h"
-#include "orte/util/show_help.h"
 #include "opal/util/bit_ops.h"
 
 #include "opal/class/opal_hash_table.h"
@@ -42,6 +41,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/orted/orted.h"
