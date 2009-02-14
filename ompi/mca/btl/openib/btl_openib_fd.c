@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -34,6 +34,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
+#include "opal/util/output.h"
 
 #include "ompi/constants.h"
 

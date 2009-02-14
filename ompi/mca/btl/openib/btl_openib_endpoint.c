@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -31,9 +31,10 @@
 #include <string.h>
 
 #include "opal_stdint.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/types.h"
