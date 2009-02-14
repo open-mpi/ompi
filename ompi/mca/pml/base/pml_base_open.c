@@ -26,10 +26,9 @@
 #include <unistd.h>
 #endif  /* HAVE_UNIST_H */
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 
-#include "orte/util/show_help.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"

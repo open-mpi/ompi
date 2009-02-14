@@ -23,8 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/oob/oob.h"

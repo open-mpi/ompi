@@ -23,8 +23,8 @@
 #include "osc_pt2pt_data_move.h"
 #include "osc_pt2pt_buffer.h"
 
-#include "orte/util/show_help.h"
 #include "opal/util/arch.h"
+#include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/datatype.h"

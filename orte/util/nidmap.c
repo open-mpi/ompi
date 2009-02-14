@@ -31,6 +31,7 @@
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"

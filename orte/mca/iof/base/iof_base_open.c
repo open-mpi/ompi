@@ -26,9 +26,9 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/output.h"
 #include "opal/util/basename.h"
 
-#include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"

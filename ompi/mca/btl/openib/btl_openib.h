@@ -36,10 +36,10 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 

@@ -35,9 +35,9 @@
 #endif
 #endif
 
-#include "orte/util/show_help.h"
 
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

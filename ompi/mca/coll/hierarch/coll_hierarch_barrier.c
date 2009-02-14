@@ -23,7 +23,6 @@
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 

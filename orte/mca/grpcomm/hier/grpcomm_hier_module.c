@@ -35,6 +35,7 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"

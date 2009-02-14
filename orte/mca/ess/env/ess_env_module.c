@@ -41,11 +41,13 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/os_path.h"
+#include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/malloc.h"
 #include "opal/util/argv.h"
 
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"

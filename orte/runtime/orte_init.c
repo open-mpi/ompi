@@ -32,6 +32,7 @@
 #endif
 
 #include "opal/util/error.h"
+#include "opal/util/output.h"
 #include "opal/runtime/opal.h"
 
 #include "orte/util/show_help.h"

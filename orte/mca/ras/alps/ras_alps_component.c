@@ -19,8 +19,8 @@
 
 #include "orte_config.h"
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/constants.h"
 #include "orte/util/proc_info.h"

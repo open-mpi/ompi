@@ -20,11 +20,12 @@
 
 #include "orte/util/name_fns.h"
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/rml.h"
 
 #include "rml_ftrm.h"

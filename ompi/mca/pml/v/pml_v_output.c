@@ -9,8 +9,8 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
 
 #include "pml_v_output.h"
 

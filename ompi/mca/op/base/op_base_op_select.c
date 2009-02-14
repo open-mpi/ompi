@@ -31,12 +31,12 @@
 #include "ompi/constants.h"
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/show_help.h"
 
 #include "ompi/op/op.h"
 #include "ompi/mca/op/op.h"

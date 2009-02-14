@@ -11,7 +11,7 @@
 #ifndef PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 #define PML_V_OUTPUT_H_HAS_BEEN_INCLUDED
 
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal_stdint.h"
 #include <stdio.h>
 #include "pml_v.h"

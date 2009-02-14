@@ -20,12 +20,13 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
 
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"

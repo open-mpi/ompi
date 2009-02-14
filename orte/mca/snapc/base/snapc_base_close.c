@@ -20,7 +20,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/snapc/snapc.h"

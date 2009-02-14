@@ -30,11 +30,12 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
+#include "orte/mca/rml/rml_types.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/runtime_internals.h"

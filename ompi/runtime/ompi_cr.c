@@ -39,8 +39,8 @@
 #include <sys/stat.h>  /* for mkfifo */
 #endif  /* HAVE_SYS_STAT_H */
 
-#include "orte/util/show_help.h"
 #include "opal/event/event.h"
+#include "opal/util/output.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 #include "opal/runtime/opal_cr.h"
@@ -49,7 +49,6 @@
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 #include "orte/runtime/runtime.h"
-#include "orte/util/show_help.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 
 #include "ompi/constants.h"

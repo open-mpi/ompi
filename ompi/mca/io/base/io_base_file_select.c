@@ -26,7 +26,7 @@
 #include "mpi.h"
 #include "ompi/file/file.h"
 #include "opal/util/argv.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/mca.h"

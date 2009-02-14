@@ -63,6 +63,7 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"

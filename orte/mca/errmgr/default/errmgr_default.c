@@ -25,7 +25,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/util/trace.h"
-#include "orte/util/show_help.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"

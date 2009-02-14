@@ -18,12 +18,13 @@
 
 #include "orte_config.h"
 
-#include "orte/util/show_help.h"
 
 #include "orte/mca/routed/routed.h"
 #include "opal/dss/dss.h"
+#include "opal/util/output.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 

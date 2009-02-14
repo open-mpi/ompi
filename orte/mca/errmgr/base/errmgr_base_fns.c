@@ -25,8 +25,8 @@
 #endif
 #include <stdlib.h>
 
-#include "orte/util/show_help.h"
 #include "opal/util/trace.h"
+#include "opal/util/output.h"
 #include "opal/util/error.h"
 
 #include "orte/runtime/orte_globals.h"

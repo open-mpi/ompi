@@ -58,7 +58,6 @@
 #include "opal/util/opal_pty.h"
 #include "opal/util/opal_environ.h"
 
-#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/iof/iof.h"

@@ -50,6 +50,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/basename.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
@@ -80,6 +81,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/errmgr/errmgr.h"
 

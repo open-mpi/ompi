@@ -21,7 +21,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "rmaps_topo.h"

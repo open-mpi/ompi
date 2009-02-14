@@ -36,6 +36,7 @@
 
 #include "orte/runtime/orte_cr.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -43,7 +44,6 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
-#include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/snapc/snapc.h"

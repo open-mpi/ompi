@@ -23,7 +23,6 @@
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/ras/ras_types.h"
-#include "orte/util/show_help.h"
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"

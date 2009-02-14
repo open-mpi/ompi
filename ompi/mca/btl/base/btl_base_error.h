@@ -28,7 +28,6 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
 
 OMPI_DECLSPEC extern int mca_btl_base_verbose;

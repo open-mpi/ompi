@@ -23,7 +23,7 @@
 
 #include "ompi_config.h"
 #include "opal/prefetch.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/mca/btl/btl.h"

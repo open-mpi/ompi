@@ -23,6 +23,7 @@
 #include "orte/constants.h"
 
 #include "opal/runtime/opal.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"

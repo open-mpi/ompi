@@ -28,9 +28,9 @@
 #ifndef OMPI_GROUP_H
 #define OMPI_GROUP_H
 
-#include "orte/util/show_help.h"
 #include "mpi.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/output.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

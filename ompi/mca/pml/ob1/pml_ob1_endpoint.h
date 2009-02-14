@@ -21,7 +21,6 @@
 #ifndef MCA_PML_OB1_ENDPOINT_H
 #define MCA_PML_OB1_ENDPOINT_H
 
-#include "orte/util/show_help.h"
 #include "ompi/mca/btl/btl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

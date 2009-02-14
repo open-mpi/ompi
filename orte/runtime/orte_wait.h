@@ -42,7 +42,6 @@
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 
-#include "orte/util/show_help.h"
 #include "orte/mca/rml/rml_types.h"
 
 BEGIN_C_DECLS

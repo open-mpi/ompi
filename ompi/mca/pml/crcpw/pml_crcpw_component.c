@@ -18,9 +18,9 @@
 
 #include "ompi_config.h"
 #include "opal/sys/cache.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 
-#include "orte/util/show_help.h"
 
 #include "mpi.h"
 #include "ompi/mca/pml/pml.h"

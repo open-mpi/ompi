@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 
@@ -34,6 +33,7 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"

@@ -19,7 +19,6 @@
  */
 
 #include "ompi_config.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_udapl.h"
 #include "btl_udapl_mca.h"

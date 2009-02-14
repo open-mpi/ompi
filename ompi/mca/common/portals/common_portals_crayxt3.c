@@ -18,10 +18,10 @@
 
 #include <catamount/cnos_mpi_os.h>
 
-#include "orte/util/show_help.h"
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 
 static bool use_accelerated;
 

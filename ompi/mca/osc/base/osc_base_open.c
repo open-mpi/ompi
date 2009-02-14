@@ -18,10 +18,10 @@
 #include "ompi/constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/show_help.h"
 
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"

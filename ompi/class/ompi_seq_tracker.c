@@ -20,7 +20,6 @@
 
 #include "ompi/class/ompi_seq_tracker.h"
 #include "opal/sys/cache.h"
-#include "orte/util/show_help.h"
 
 
 

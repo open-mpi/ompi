@@ -18,6 +18,7 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "opal/util/output.h"
 #include "orte/constants.h"
 
 #include <errno.h>
@@ -36,7 +37,6 @@
 #endif
 #endif
 
-#include "orte/util/show_help.h"
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/runtime/orte_globals.h"

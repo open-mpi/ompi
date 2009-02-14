@@ -30,6 +30,7 @@
 #include "ompi/tools/ompi_info/ompi_info.h"
 
 #include "opal/event/event.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/backtrace/base/base.h"

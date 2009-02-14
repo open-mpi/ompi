@@ -24,11 +24,11 @@
 #if !ORTE_DISABLE_FULL_SUPPORT
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"

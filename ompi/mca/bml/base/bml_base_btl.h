@@ -23,7 +23,6 @@
 
 #include "opal/mca/mca.h"
 
-#include "orte/util/show_help.h" 
 
 /*
  * Global functions for the BML

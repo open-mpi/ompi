@@ -52,6 +52,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/base/rml_contact.h"
 

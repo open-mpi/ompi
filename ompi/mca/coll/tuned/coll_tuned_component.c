@@ -25,15 +25,14 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 #include "coll_tuned.h"
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_tuned.h"
 
-#include "orte/util/show_help.h"
 
-#include "orte/util/show_help.h"
 
 /*
  * Public string showing the coll ompi_tuned component version number

@@ -49,13 +49,13 @@
 
 #include "opal/dss/dss_types.h"
 #include "opal/class/opal_object.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/sys/atomic.h"
 
-#include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

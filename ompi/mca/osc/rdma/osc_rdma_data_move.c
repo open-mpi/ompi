@@ -24,8 +24,8 @@
 #include "osc_rdma_data_move.h"
 #include "osc_rdma_obj_convert.h"
 
-#include "orte/util/show_help.h"
 #include "opal/util/arch.h"
+#include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"

@@ -46,6 +46,7 @@
 #endif  /* HAVE_PWD_H */
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"

@@ -24,8 +24,8 @@
 #include <stdio.h>
 
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"

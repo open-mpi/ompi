@@ -22,10 +22,10 @@
 
 #include "ompi/file/file.h"
 #include "opal/class/opal_list.h"
+#include "opal/util/output.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/info/info.h"
-#include "orte/util/show_help.h"
 
 /*
  * Table for Fortran <-> C file handle conversion

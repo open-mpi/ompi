@@ -18,10 +18,10 @@
 
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
-#include "orte/util/show_help.h"
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h" 

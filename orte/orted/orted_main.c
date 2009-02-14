@@ -46,6 +46,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
@@ -65,6 +66,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"

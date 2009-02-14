@@ -21,7 +21,7 @@
 #include <p3api/debug.h>
 
 #include "opal/mca/mca.h"
-#include "orte/util/show_help.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
 #include "ompi/constants.h"

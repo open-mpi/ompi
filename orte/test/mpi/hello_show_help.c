@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "mpi.h"
+#include "opal/util/output.h"
 
 #include "orte/util/show_help.h"
 

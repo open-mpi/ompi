@@ -45,8 +45,8 @@
 #endif
 
 #include "opal/util/error.h"
+#include "opal/util/output.h"
 #include "opal/opal_socket_errno.h"
-#include "orte/util/show_help.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 #include "opal/util/argv.h"
@@ -56,7 +56,6 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
 #include "orte/util/parse_options.h"
 #include "orte/runtime/orte_globals.h"
 

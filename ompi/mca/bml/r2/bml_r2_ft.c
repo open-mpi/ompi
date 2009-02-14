@@ -20,11 +20,11 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/output.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "orte/util/show_help.h"
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"

@@ -34,6 +34,7 @@
 #include "opal/runtime/opal_cr.h"
 
 #include "opal/util/os_path.h"
+#include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
@@ -41,6 +42,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"

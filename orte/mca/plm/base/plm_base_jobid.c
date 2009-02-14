@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 
-#include "orte/util/show_help.h"
 #include "opal/hash_string.h"
 
 #include "orte/mca/errmgr/errmgr.h"

@@ -76,13 +76,13 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#include "orte/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/util/output.h"
 
 BEGIN_C_DECLS
 

@@ -24,7 +24,6 @@
 #include "ompi_config.h"
 #include <errno.h> 
 #include <string.h>
-#include "orte/util/show_help.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
