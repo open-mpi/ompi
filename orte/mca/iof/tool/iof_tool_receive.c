@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -96,9 +96,9 @@ static void process_msg(int fd, short event, void *cbdata)
     if (0 < numbytes) {
         /* write the output locally */
         if (ORTE_IOF_STDOUT & stream) {
-            orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stdout);
+            orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stdout->wev);
         } else {
-            orte_iof_base_write_output(&origin, stream, data, numbytes, &orte_iof_base.iof_write_stderr);
+            orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stderr->wev);
         }
     }
     

@@ -109,6 +109,7 @@ static int orte_iof_hnp_close(void)
         }
         OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
+        /* release and cleanup the lock */
         OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
         OBJ_DESTRUCT(&mca_iof_hnp_component.lock);
     }
@@ -156,7 +157,7 @@ static int orte_iof_hnp_query(mca_base_module_t **module, int *priority)
     OBJ_CONSTRUCT(&mca_iof_hnp_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
-
+    
     /* we must be selected */
     *priority = 100;
     *module = (mca_base_module_t *) &orte_iof_hnp_module;

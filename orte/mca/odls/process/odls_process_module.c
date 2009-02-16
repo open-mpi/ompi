@@ -108,7 +108,7 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
      */
     if (opal_sys_limits.initialized) {
         if (0 < opal_sys_limits.num_procs &&
-            opal_sys_limits.num_procs <= (int)opal_list_get_size(&orte_odls_globals.children)) {
+            opal_sys_limits.num_procs <= (int)opal_list_get_size(&orte_local_children)) {
             /* at the system limit - abort */
             ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
             child->state = ORTE_PROC_STATE_FAILED_TO_START;

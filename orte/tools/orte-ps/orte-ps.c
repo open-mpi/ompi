@@ -54,6 +54,7 @@
 #endif  /* HAVE_DIRENT_H */
 
 #include "opal/util/cmd_line.h"
+#include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
@@ -231,9 +232,9 @@ main(int argc, char *argv[])
      * Get the directory listing
      */
     opal_output_verbose(10, orte_ps_globals.output,
-                        "orte_ps: Acquiring list of HNPs...\n");
+                        "orte_ps: Acquiring list of HNPs and setting contact info into RML...\n");
 
-    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list) ) ) {
+    if (ORTE_SUCCESS != (ret = orte_list_local_hnps(&hnp_list, true) ) ) {
         exit_status = ret;
         goto cleanup;
     }
@@ -609,7 +610,6 @@ static int pretty_print_vpids(orte_job_t *job) {
     orte_vpid_t v;
     orte_proc_t *vpid;
     orte_app_context_t *app;
-    char *proc_name=NULL;
     char *o_proc_name;
 
     /*
@@ -688,11 +688,6 @@ static int pretty_print_vpids(orte_job_t *job) {
             (int)strlen(vpid->ckpt_snapshot_loc) > len_ckpt_l) 
             len_ckpt_l = strlen(vpid->ckpt_snapshot_loc);
 #endif
-
-        if( NULL != proc_name) {
-            free(proc_name);
-            proc_name = NULL;
-        }
     }
 
     line_len = (len_o_proc_name + 3 +

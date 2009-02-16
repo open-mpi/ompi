@@ -66,6 +66,10 @@ int orte_ess_base_orted_setup(void)
     char *error = NULL;
     char *plm_to_use;
 
+    /* initialize the global list of local children and job data */
+    OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
+    OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
+    
     /* some environments allow remote launches - e.g., ssh - so
      * open the PLM and select something -only- if we are given
      * a specific module to use
@@ -272,6 +276,8 @@ error:
 
 int orte_ess_base_orted_finalize(void)
 {
+    opal_list_item_t *item;
+    
     orte_notifier_base_close();
     
     orte_cr_finalize();
@@ -297,6 +303,16 @@ int orte_ess_base_orted_finalize(void)
     orte_routed_base_close();
     orte_rml_base_close();
         
+    /* cleanup the global list of local children and job data */
+    while (NULL != (item = opal_list_remove_first(&orte_local_children))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_local_children);
+    while (NULL != (item = opal_list_remove_first(&orte_local_jobdata))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_local_jobdata);
+    
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     

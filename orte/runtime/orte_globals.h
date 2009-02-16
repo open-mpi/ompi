@@ -399,7 +399,6 @@ ORTE_DECLSPEC extern bool orted_spin_flag;
 ORTE_DECLSPEC extern bool orte_static_ports;
 ORTE_DECLSPEC extern int32_t orte_contiguous_nodes;
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
-ORTE_DECLSPEC extern bool orte_tag_output;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
@@ -441,6 +440,20 @@ ORTE_DECLSPEC extern int orte_clean_output;
 
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 ORTE_DECLSPEC extern bool orte_forward_job_control;
+
+/* list of local children on a daemon */
+ORTE_DECLSPEC extern opal_list_t orte_local_children;
+/* list of job data for local children on a daemon */
+ORTE_DECLSPEC extern opal_list_t orte_local_jobdata;
+/* whether or not to forward SIGTSTP and SIGCONT signals */
+ORTE_DECLSPEC extern bool orte_forward_job_control;
+
+/* IOF controls */
+ORTE_DECLSPEC extern bool orte_tag_output;
+ORTE_DECLSPEC extern bool orte_timestamp_output;
+ORTE_DECLSPEC extern char *orte_output_filename;
+/* generate new xterm windows to display output from specified ranks */
+ORTE_DECLSPEC extern char *orte_xterm;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
