@@ -386,10 +386,7 @@ int opal_event_fini(void)
     if (NULL != opal_event_module_include) {
         opal_argv_free(opal_event_module_include);
     }
-    if( NULL != opal_current_base ) {
-        event_base_free(opal_current_base);
-        opal_current_base = NULL;
-    }
+
     return OPAL_SUCCESS;
 }
 
