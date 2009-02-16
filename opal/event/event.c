@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
@@ -385,6 +388,10 @@ int opal_event_fini(void)
     opal_event_inited--;
     if (NULL != opal_event_module_include) {
         opal_argv_free(opal_event_module_include);
+    }
+    if( NULL != opal_current_base ) {
+        event_base_free(opal_current_base);
+        opal_current_base = NULL;
     }
 
     return OPAL_SUCCESS;
