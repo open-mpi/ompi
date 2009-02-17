@@ -135,29 +135,29 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("sm_extra_procs", -1);
     mca_btl_sm_component.sm_mpool_name =
         mca_btl_sm_param_register_string("mpool", "sm");
-    mca_btl_sm_component.size_of_cb_queue =
-        mca_btl_sm_param_register_int("size_of_cb_queue", 128);
-    mca_btl_sm_component.cb_lazy_free_freq =
-        mca_btl_sm_param_register_int("cb_lazy_free_freq", 120);
-    mca_btl_sm_component.cb_max_num =
-        mca_btl_sm_param_register_int("cb_max_num", -1);
-    /* make sure that queue size and lazy free frequency are consistent -
-     * want to make sure that slots are freed at a rate they can be
-     * reused, w/o allocating extra new circular buffer fifo arrays */
-    if( (float)(mca_btl_sm_component.cb_lazy_free_freq) >=
-            0.95*(float)(mca_btl_sm_component.size_of_cb_queue) ) {
-        /* upper limit */
-        mca_btl_sm_component.cb_lazy_free_freq=
-            (int)(0.95*(float)(mca_btl_sm_component.size_of_cb_queue));
-        /* lower limit */
-        if( 0>= mca_btl_sm_component.cb_lazy_free_freq ) {
-            mca_btl_sm_component.cb_lazy_free_freq=1;
-        }
+    mca_btl_sm_component.fifo_size =
+        mca_btl_sm_param_register_int("fifo_size", 4096);
+    mca_btl_sm_component.nfifos =
+        mca_btl_sm_param_register_int("num_fifos", 1);
+    /* make sure the number of fifos is a power of 2 */
+    {
+      int i = 1;
+      while ( i < mca_btl_sm_component.nfifos )
+        i <<= 1;
+      mca_btl_sm_component.nfifos = i;
     }
+    mca_btl_sm_component.fifo_lazy_free =
+        mca_btl_sm_param_register_int("fifo_lazy_free", 120);
+
+    /* make sure that queue size and lazy free parameter are compatible */
+    if (mca_btl_sm_component.fifo_lazy_free >= (mca_btl_sm_component.fifo_size >> 1) )
+        mca_btl_sm_component.fifo_lazy_free  = (mca_btl_sm_component.fifo_size >> 1);
+    if (mca_btl_sm_component.fifo_lazy_free <= 0)
+        mca_btl_sm_component.fifo_lazy_free  = 1;
 
     /* default number of extra procs to allow for future growth */
     mca_btl_sm_component.sm_extra_procs =
-        mca_btl_sm_param_register_int("sm_extra_procs", 2);
+        mca_btl_sm_param_register_int("sm_extra_procs", 0);
 
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
     mca_btl_sm.super.btl_eager_limit = 4*1024;
@@ -380,37 +380,28 @@ int mca_btl_sm_component_progress(void)
     /* local variables */
     mca_btl_sm_frag_t *frag;
     mca_btl_sm_frag_t Frag;
-    ompi_fifo_t *fifo = NULL;
+    sm_fifo_t *fifo = NULL;
     mca_btl_sm_hdr_t *hdr;
     int my_smp_rank = mca_btl_sm_component.my_smp_rank;
-    int peer_smp_rank, rc = 0;
+    int peer_smp_rank, j, rc = 0;
 
     /* poll each fifo */
-    for(peer_smp_rank = 0; peer_smp_rank < mca_btl_sm_component.num_smp_procs;
-        peer_smp_rank++) {
-        if(peer_smp_rank == mca_btl_sm_component.my_smp_rank)
-            continue;
-
-        fifo = &(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]);
+    for(j = 0; j < FIFO_MAP_NUM(mca_btl_sm_component.num_smp_procs); j++) {
+        fifo = &(mca_btl_sm_component.fifo[my_smp_rank][j]);
       recheck_peer:
-        /* if fifo is not yet setup - continue - not data has been sent*/
-        if(OMPI_CB_FREE == fifo->tail){
-            continue;
-        }
-
         /* aquire thread lock */
         if(opal_using_threads()) {
-            opal_atomic_lock(fifo->tail_lock);
+            opal_atomic_lock(&(fifo->tail_lock));
         }
 
-        hdr = (mca_btl_sm_hdr_t *)ompi_fifo_read_from_tail(fifo);
+        hdr = (mca_btl_sm_hdr_t *)sm_fifo_read(fifo);
 
         /* release thread lock */
         if(opal_using_threads()) {
-            opal_atomic_unlock(fifo->tail_lock);
+            opal_atomic_unlock(&(fifo->tail_lock));
         }
 
-        if(OMPI_CB_FREE == hdr) {
+        if(SM_FIFO_FREE == hdr) {
             continue;
         }
 
@@ -422,8 +413,12 @@ int mca_btl_sm_component_progress(void)
                 mca_btl_active_message_callback_t* reg;
                 /* change the address from address relative to the shared
                  * memory address, to a true virtual address */
-                hdr = (mca_btl_sm_hdr_t *)((char *)hdr +
-                        mca_btl_sm_component.sm_offset[peer_smp_rank]);
+                hdr = (mca_btl_sm_hdr_t *) RELATIVE2VIRTUAL(hdr);
+                peer_smp_rank = hdr->my_smp_rank;
+                if ( FIFO_MAP(peer_smp_rank) != j )
+                    opal_output(0, "mca_btl_sm_component_progress: "
+                        "rank %d got %d on FIFO %d, but this sender should send to FIFO %d\n",
+                        my_smp_rank, peer_smp_rank, j, FIFO_MAP(peer_smp_rank));
                 /* recv upcall */
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 Frag.segment.seg_addr.pval = ((char*)hdr) +
@@ -467,6 +462,19 @@ int mca_btl_sm_component_progress(void)
             }
             default:
                 /* unknown */
+                /*
+                 * This code path should presumably never be called.
+                 * It's unclear how it should be written.
+                 * If we want to return it to the sending process,
+                 * we have to figure out who the sender is.
+                 * It seems we need to subtract the mask bits.
+                 * Then, hopefully this is an sm header that has an smp_rank field.
+                 * Presumably that means the received header was relative.
+                 * Or, maybe this code should just be removed.
+                 */
+                opal_output(0, "mca_btl_sm_component_progress read an unknown type of header");
+                hdr = (mca_btl_sm_hdr_t *) RELATIVE2VIRTUAL(hdr);
+                peer_smp_rank = hdr->my_smp_rank;
                 hdr = (mca_btl_sm_hdr_t*)((uintptr_t)hdr->frag |
                         MCA_BTL_SM_FRAG_STATUS_MASK);
                 MCA_BTL_SM_FIFO_WRITE(

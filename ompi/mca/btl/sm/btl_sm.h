@@ -39,7 +39,6 @@
 #include "opal/class/opal_free_list.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
-#include "ompi/class/ompi_fifo.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -53,6 +52,30 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/*
+ * Shared Memory FIFOs
+ */
+
+struct sm_fifo_t {
+    /* This queue pointer is used only by the heads. */
+    volatile void **queue;           char pad0[CACHE_LINE_SIZE - sizeof(void **)           ];
+    /* This lock is used by the heads. */
+    opal_atomic_lock_t head_lock;    char pad1[CACHE_LINE_SIZE - sizeof(opal_atomic_lock_t)];
+    /* This index is used by the head holding the head lock. */
+    volatile int head;               char pad2[CACHE_LINE_SIZE - sizeof(int)               ];
+    /* This mask is used "read only" by all processes. */
+    unsigned int mask;               char pad3[CACHE_LINE_SIZE - sizeof(int)               ];
+    /* The following are used only by the tail. */
+    volatile void **queue_recv;
+    opal_atomic_lock_t tail_lock;
+    volatile int tail;
+    int num_to_clear;
+    int lazy_free;                   char pad4[CACHE_LINE_SIZE - sizeof(void **)
+                                                               - sizeof(opal_atomic_lock_t)
+                                                               - sizeof(int) * 3           ];
+};
+typedef struct sm_fifo_t sm_fifo_t;
 
 /*
  * Shared Memory resource managment
@@ -87,18 +110,18 @@ struct mca_btl_sm_component_t {
     mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
     mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
                                                     shared memory */
-    ompi_fifo_t **shm_fifo;            /**< pointer to fifo 2D array in shared memory */
+    sm_fifo_t **shm_fifo;              /**< pointer to fifo 2D array in shared memory */
     char **shm_bases;                  /**< pointer to base pointers in shared memory */
     uint16_t *shm_mem_nodes;           /**< pointer to mem noded in shared memory */
-    ompi_fifo_t **fifo;                /**< cached copy of the pointer to the 2D
+    sm_fifo_t **fifo;                  /**< cached copy of the pointer to the 2D
                                           fifo array.  The address in the shared
                                           memory segment sm_ctl_header is a relative,
                                           but this one, in process private memory, is
                                           a real virtual address */
-    uint16_t *mem_nodes;                /**< cached copy of mem nodes of each local rank */
-    size_t size_of_cb_queue;           /**< size of each circular buffer queue array */
-    size_t cb_lazy_free_freq;          /**< frequency of lazy free */
-    int cb_max_num;                    /**< max number of circular buffers for each peer */
+    uint16_t *mem_nodes;               /**< cached copy of mem nodes of each local rank */
+    size_t fifo_size;                  /**< number of FIFO queue entries */
+    size_t fifo_lazy_free;             /**< number of reads before lazy fifo free is triggered */
+    int nfifos;                        /**< number of FIFOs per receiver */
     ptrdiff_t *sm_offset;              /**< offset to be applied to shared memory
                                           addresses, per local process value */
     int32_t num_smp_procs;             /**< current number of smp procs on this host */
@@ -130,6 +153,116 @@ struct btl_sm_pending_send_item_t
     void *data;
 };
 typedef struct btl_sm_pending_send_item_t btl_sm_pending_send_item_t;
+
+/***
+ * FIFO support for sm BTL.
+ */
+
+/***
+ * One or more FIFO components may be a pointer that must be
+ * accessed by multiple processes.  Since the shared region may
+ * be mmapped differently into each process's address space,
+ * these pointers will be relative to some base address.  Here,
+ * we define macros to translate between relative addresses and
+ * virtual addresses.
+ */
+#define VIRTUAL2RELATIVE(VADDR ) ((long)(VADDR)  - (long)mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank])
+#define RELATIVE2VIRTUAL(OFFSET) ((long)(OFFSET) + (long)mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank])
+
+/* ================================================== */
+/* ================================================== */
+/* ================================================== */
+
+#define SM_FIFO_FREE  (void *) (-2)
+
+static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
+                               sm_fifo_t *fifo, int lazy_free)
+{
+    int i, qsize;
+
+    /* figure out the queue size (a power of two that is at least 1) */
+    qsize = 1;
+    while ( qsize < fifo_size )
+        qsize <<= 1;
+
+    /* allocate the queue in the receiver's address space */
+    fifo->queue_recv = (volatile void **)mpool->mpool_alloc(
+            mpool, sizeof(void *) * qsize, CACHE_LINE_SIZE, 0, NULL);
+    if(NULL == fifo->queue_recv) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* initialize the queue */
+    for ( i = 0; i < qsize; i++ )
+        fifo->queue_recv[i] = SM_FIFO_FREE;
+
+    /* shift queue address to be relative */
+    fifo->queue = (volatile void **) VIRTUAL2RELATIVE(fifo->queue_recv);
+
+    /* initialize the locks */
+    opal_atomic_init(&(fifo->head_lock), OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_init(&(fifo->tail_lock), OPAL_ATOMIC_UNLOCKED);
+    opal_atomic_unlock(&(fifo->head_lock));  /* should be unnecessary */
+    opal_atomic_unlock(&(fifo->tail_lock));  /* should be unnecessary */
+
+    /* other initializations */
+    fifo->head = 0;
+    fifo->mask = qsize - 1;
+    fifo->tail = 0;
+    fifo->num_to_clear = 0;
+    fifo->lazy_free = lazy_free;
+
+    return OMPI_SUCCESS;
+}
+
+
+static inline int sm_fifo_write(void *value, sm_fifo_t *fifo)
+{
+    volatile void **q = (volatile void **) RELATIVE2VIRTUAL(fifo->queue);
+
+    /* if there is no free slot to write, report exhausted resource */
+    if ( SM_FIFO_FREE != q[fifo->head] )
+        return OMPI_ERR_OUT_OF_RESOURCE;
+
+    /* otherwise, write to the slot and advance the head index */
+    opal_atomic_rmb();
+    q[fifo->head] = value;
+    fifo->head = (fifo->head + 1) & fifo->mask;
+    opal_atomic_wmb(); 
+    return OMPI_SUCCESS;
+}
+
+
+static inline void *sm_fifo_read(sm_fifo_t *fifo)
+{
+    void *value;
+
+    /* read the next queue entry */
+    value = (void *) fifo->queue_recv[fifo->tail];
+
+    opal_atomic_rmb();
+
+    /* if you read a non-empty slot, advance the tail pointer */
+    if ( SM_FIFO_FREE != value ) {
+
+        fifo->tail = ( fifo->tail + 1 ) & fifo->mask;
+        fifo->num_to_clear += 1;
+
+        /* check if it's time to free slots, which we do lazily */
+        if ( fifo->num_to_clear >= fifo->lazy_free ) {
+            int i = (fifo->tail - fifo->num_to_clear ) & fifo->mask;
+
+            while ( fifo->num_to_clear > 0 ) {
+                fifo->queue_recv[i] = SM_FIFO_FREE;
+                i = (i+1) & fifo->mask;
+                fifo->num_to_clear -= 1;
+            }
+            opal_atomic_wmb();
+        }
+    }
+
+    return value;
+}
 
 /**
  * Register shared memory module parameters with the MCA framework

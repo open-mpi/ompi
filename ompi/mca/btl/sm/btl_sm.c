@@ -37,7 +37,6 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/printf.h"
-#include "ompi/class/ompi_fifo.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -115,31 +114,6 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     return buf;
 }
 
-static int init_fifos(ompi_fifo_t *f, int n)
-{
-    int j;
-    for(j=0; j < n; j++) {
-        f[j].head = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
-        f[j].tail = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
-        if(opal_using_threads()) {
-            char *buf = (char *) mpool_calloc(2, CACHE_LINE_SIZE);
-            /* allocate head and tail locks on different cache lines */
-            if(NULL == buf)
-                return OMPI_ERROR;
-
-            f[j].head_lock = (opal_atomic_lock_t*)buf;
-            f[j].tail_lock = (opal_atomic_lock_t*)(buf + CACHE_LINE_SIZE);
-            opal_atomic_init(f[j].head_lock, OPAL_ATOMIC_UNLOCKED);
-            opal_atomic_init(f[j].tail_lock, OPAL_ATOMIC_UNLOCKED);
-        } else {
-            f[j].head_lock = NULL;
-            f[j].tail_lock = NULL;
-        }
-    }
-
-    return OMPI_SUCCESS;
-}
-
 static void init_maffinity(int *my_mem_node, int *max_mem_node)
 {
     static opal_carto_graph_t *topo;
@@ -199,7 +173,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 {
     size_t size, length, length_payload;
     char *sm_ctl_file;
-    ompi_fifo_t *my_fifos;
+    sm_fifo_t *my_fifos;
     int my_mem_node=-1, num_mem_nodes=-1, i;
 
     init_maffinity(&my_mem_node, &num_mem_nodes);
@@ -253,7 +227,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
     size = sizeof(mca_common_sm_file_header_t) +
-        n * (sizeof(ompi_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
+        n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + CACHE_LINE_SIZE;
     if(!(mca_btl_sm_component.mmap_file =
          mca_common_sm_mmap_init(size, sm_ctl_file,
                                  sizeof(mca_common_sm_file_header_t),
@@ -280,7 +254,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERROR;
     }
 
-    mca_btl_sm_component.shm_fifo = (ompi_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_fifo = (sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
     mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
@@ -304,17 +278,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     mca_btl_sm_component.shm_mem_nodes[mca_btl_sm_component.my_smp_rank] =
         (uint16_t)my_mem_node;
 
-    /*
-     * initialize the array of fifo's "owned" by this process
-     * The virtual addresses are valid only in the sender's
-     * address space - unless the base of the shared memory
-     * segment is mapped at the same location in the reader's
-     * virtual address space.
-     */
-    if(NULL == (my_fifos = (ompi_fifo_t*)mpool_calloc(n, sizeof(ompi_fifo_t))))
-        return OMPI_ERR_OUT_OF_RESOURCE;
-
-    if(init_fifos(my_fifos, n) != OMPI_SUCCESS)
+    /* initialize the array of fifo's "owned" by this process */
+    if(NULL == (my_fifos = (sm_fifo_t*)mpool_calloc(FIFO_MAP_NUM(n), sizeof(sm_fifo_t))))
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     mca_btl_sm_component.shm_fifo[mca_btl_sm_component.my_smp_rank] = my_fifos;
@@ -323,7 +288,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* cache the pointer to the 2d fifo array.  These addresses
      * are valid in the current process space */
-    mca_btl_sm_component.fifo = (ompi_fifo_t**)malloc(sizeof(ompi_fifo_t*) * n);
+    mca_btl_sm_component.fifo = (sm_fifo_t**)malloc(sizeof(sm_fifo_t*) * n);
 
     if(NULL == mca_btl_sm_component.fifo)
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -502,15 +467,30 @@ int mca_btl_sm_add_procs(
 
     bases = mca_btl_sm_component.shm_bases;
 
+    /* initialize own FIFOs */
+    /*
+     * The receiver initializes all its FIFOs.  All components will
+     * be allocated near the receiver.  Nothing will be local to
+     * "the sender" since there will be many senders.
+     */
+    for(j = mca_btl_sm_component.num_smp_procs;
+        j < mca_btl_sm_component.num_smp_procs + FIFO_MAP_NUM(n_local_procs); j++) {
+
+        return_code = sm_fifo_init( mca_btl_sm_component.fifo_size,
+                                    mca_btl_sm_component.sm_mpool,
+                                   &mca_btl_sm_component.fifo[my_smp_rank][j],
+                                    mca_btl_sm_component.fifo_lazy_free);
+        if(return_code != OMPI_SUCCESS)
+            goto CLEANUP;
+    }
+
+    /* coordinate with other processes */
     for(j = mca_btl_sm_component.num_smp_procs;
         j < mca_btl_sm_component.num_smp_procs + n_local_procs; j++) {
         ptrdiff_t diff;
-        int peer_mem_node;
-
-        if(j == my_smp_rank)
-            continue;
 
         /* spin until this element is allocated */
+        /* doesn't really wait for that process... FIFO might be allocated, but not initialized */
         while(NULL == mca_btl_sm_component.shm_fifo[j]) {
             opal_atomic_rmb();
             opal_progress();
@@ -522,33 +502,10 @@ int mca_btl_sm_add_procs(
 
         /* store local address of remote fifos */
         mca_btl_sm_component.fifo[j] =
-            (ompi_fifo_t*)OFFSET2ADDR(diff, mca_btl_sm_component.shm_fifo[j]);
-
-        /* don't forget to update the head_lock if allocated because this
-         * address is also in the remote process */
-        if(mca_btl_sm_component.fifo[j][my_smp_rank].head_lock != NULL) {
-            mca_btl_sm_component.fifo[j][my_smp_rank].head_lock =
-                (opal_atomic_lock_t*)OFFSET2ADDR(diff, mca_btl_sm_component.fifo[j][my_smp_rank].head_lock);
-        }
+            (sm_fifo_t*)OFFSET2ADDR(diff, mca_btl_sm_component.shm_fifo[j]);
 
         /* cache local copy of peer memory node number */
-        peer_mem_node = mca_btl_sm_component.mem_nodes[j] = mca_btl_sm_component.shm_mem_nodes[j];
-
-        /* Initialize fifo for use. Note that sender does initialization */
-        return_code = ompi_fifo_init(mca_btl_sm_component.size_of_cb_queue,
-                                     mca_btl_sm_component.cb_lazy_free_freq,
-                                     mca_btl_sm_component.cb_max_num,
-                                     /* fifo mpool */
-                                     mca_btl_sm_component.sm_mpools[peer_mem_node],
-                                     /* head mpool */
-                                     mca_btl_sm_component.sm_mpool,
-                                     /* tail mpool */
-                                     mca_btl_sm_component.sm_mpools[peer_mem_node],
-                                     &mca_btl_sm_component.fifo[j][my_smp_rank],
-                                     mca_btl_sm_component.sm_offset[j]);
-
-        if(return_code != OMPI_SUCCESS)
-            goto CLEANUP;
+        mca_btl_sm_component.mem_nodes[j] = mca_btl_sm_component.shm_mem_nodes[j];
     }
 
     /* update the local smp process count */
@@ -781,7 +738,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
          * address
          */
         MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                              endpoint->peer_smp_rank, frag->hdr, false, rc);
+                              endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
         return rc;
     }
     *descriptor = mca_btl_sm_alloc( btl, endpoint, order,
@@ -817,7 +774,7 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
      * address
      */
     MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
-                          endpoint->peer_smp_rank, frag->hdr, false, rc);
+                          endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
     if( OPAL_LIKELY(0 == rc) ) {
         return 1;  /* the data is completely gone */
     }
