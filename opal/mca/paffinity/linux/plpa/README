@@ -404,6 +404,35 @@ shell$ make install
 Depending on your --prefix, you may need to run the "make install"
 step as root or some other privileged user.
 
+There are a few noteworthy configure options listed below.  The
+enable/disable options are shown in their non-default form.  For
+example, if --enable-foo is shown below, it is because --disable-foo
+is the default.
+
+--enable-emulate: allow using PLPA on platforms that do not have
+  __NR_sched_setaffinity (e.g., OS X); usually only useful in
+  development / testing scenarios.
+
+--disable-executables: do not build the PLPA executables; only build
+  the library.
+
+--enable-included-mode: build PLPA in the "included" mode (see
+  below).
+
+--enable-debug: this option is probably only helpful for PLPA
+  developers.
+
+--with-plpa-symbol-prefix=STRING: a string prefix to add to all public
+  PLPA symbols.  This is usually only useful in included mode (see
+  below).
+
+--with-valgrind(=DIR): require building PLPA with Valgrind support
+  (requires finding include/valgrind/memcheck.h).  This will add a
+  small number of Valgrind annotations in the PLPA code base that
+  remove false/irrelevant Valgrind warnings.  The =DIR clause is only
+  necessary if Valgrind's header files cannot be found by the
+  preprocessor's default search path.
+
 "make install" will install the following:
 
 - <plpa.h> in $includedir (typically $prefix/include)

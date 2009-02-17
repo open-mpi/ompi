@@ -5,7 +5,9 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -294,6 +296,42 @@ AC_DEFUN([_PLPA_INIT],[
     AC_DEFINE_UNQUOTED(PLPA_SYM_PREFIX_CAPS, [$plpa_symbol_prefix_value_caps],
                        [The PLPA symbol prefix in all caps])
     AC_MSG_RESULT([$plpa_symbol_prefix_value])
+
+    # Build with valgrind support if we can find it, unless it was
+    # explicitly disabled
+    AC_ARG_WITH([valgrind],
+                [AC_HELP_STRING([--with-valgrind(=DIR)],
+                [Directory where the valgrind software is installed])])
+    CPPFLAGS_save="$CPPFLAGS"
+    valgrind_happy=no
+    AS_IF([test "$with_valgrind" != "no"],
+          [AS_IF([test ! -z "$with_valgrind" -a "$with_valgrind" != "yes"],
+                 [CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"])
+           AC_CHECK_HEADERS([valgrind/valgrind.h], 
+                 [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
+                  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
+#include "valgrind/memcheck.h"
+]],
+                     [[char buffer = 0xff;
+                       VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]]),
+                     [AC_MSG_RESULT([yes])
+                      valgrind_happy=yes],
+                     [AC_MSG_RESULT([no])
+                      AC_MSG_ERROR([Need Valgrind version 3.2.0 or later.])]
+                     [AC_MSG_RESULT([cross-compiling; assume yes...?])
+                      AC_MSG_WARN([PLPA will fail to compile if you do not have Valgrind version 3.2.0 or later])
+                      valgrind_happy=yes]),
+                 ],
+                 [AC_MSG_WARN([valgrind.h not found])])
+           AS_IF([test "$valgrind_happy" = "no" -a "x$with_valgrind" != "x"],
+                 [AC_MSG_WARN([Valgrind support requested but not possible])
+                  AC_MSG_ERROR([Cannot continue])])])
+    AS_IF([test "$valgrind_happy" = "no"],
+          [CPPFLAGS="$CPPFLAGS_save"
+           valgrind_define=0],
+          [valgrind_define=1])
+    AC_DEFINE_UNQUOTED([PLPA_WANT_VALGRIND_SUPPORT], [$valgrind_define],
+                       [Whether we want Valgrind support or not])
 
 dnl JMS: No fortran bindings yet
 dnl    # Check for fortran
