@@ -754,6 +754,14 @@ static void shutdown_callback(int fd, short flags, void *arg)
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
+    /* Release all local signal handlers */
+    opal_event_del(&term_handler);
+    opal_event_del(&int_handler);
+#ifndef __WINDOWS__
+    opal_signal_del(&sigusr1_handler);
+    opal_signal_del(&sigusr2_handler);
+#endif  /* __WINDOWS__ */
+
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
     exit(ret);
