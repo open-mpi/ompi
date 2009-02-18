@@ -120,7 +120,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
     if( (NULL != cbfunc) && ( 0 == mca_btl_mx_component.mx_use_unexpected) ) {
 #endif
     if( NULL != cbfunc ) {
-        mca_btl_mx_frag_t* frag;
+        mca_btl_mx_frag_t* frag = NULL;
         mx_return_t mx_return;
         mx_segment_t mx_segment;
         int i, rc;
@@ -174,7 +174,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
                                              uint32_t flags)
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
-    mca_btl_mx_frag_t* frag;
+    mca_btl_mx_frag_t* frag = NULL;
     int rc;
     
     MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag, rc);
@@ -225,7 +225,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
                         size_t* size,
                         uint32_t flags)
 {
-    mca_btl_mx_frag_t* frag;
+    mca_btl_mx_frag_t* frag = NULL;
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data;
@@ -311,7 +311,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
                                                    uint32_t flags)
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
-    mca_btl_mx_frag_t* frag;
+    mca_btl_mx_frag_t* frag = NULL;
     mx_return_t mx_return;
     mx_segment_t mx_segment;
     int rc;
