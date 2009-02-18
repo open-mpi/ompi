@@ -67,6 +67,8 @@ struct orte_plm_rsh_component_t {
     bool assume_same_shell;
     bool force_rsh;
     bool disable_qrsh;
+    bool using_qrsh;
+    bool daemonize_qrsh;
     int delay;
     int priority;
     bool tree_spawn;

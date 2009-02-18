@@ -101,6 +101,7 @@ int orte_plm_rsh_component_open(void)
     OBJ_CONSTRUCT(&mca_plm_rsh_component.cond, opal_condition_t);
     mca_plm_rsh_component.num_children = 0;
     OBJ_CONSTRUCT(&mca_plm_rsh_component.children, opal_list_t);
+    mca_plm_rsh_component.using_qrsh = false;
 
     /* lookup parameters */
     mca_base_param_reg_int(c, "num_concurrent",
@@ -120,7 +121,12 @@ int orte_plm_rsh_component_open(void)
     mca_base_param_reg_int(c, "disable_qrsh",
                            "Disable the launcher to use qrsh when under the SGE parallel environment",
                            false, false, false, &tmp);
-    mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);  
+    mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);
+
+    mca_base_param_reg_int(c, "daemonize_qrsh",
+                           "Daemonize the orted under the SGE parallel environment",
+                           false, false, false, &tmp);
+    mca_plm_rsh_component.daemonize_qrsh = OPAL_INT_TO_BOOL(tmp);
     
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rsh plm component",
@@ -184,6 +190,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
             free(tmp);
         }
+        mca_plm_rsh_component.using_qrsh = true;
         *priority = mca_plm_rsh_component.priority;
         *module = (mca_base_module_t *) &orte_plm_rsh_module;
         return ORTE_SUCCESS;

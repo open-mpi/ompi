@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,6 +84,9 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
     /* parse the pe_hostfile for hostname, slots, etc, then compare the
      * current node with a list of hosts in the nodelist, if the current
      * node is not found in nodelist, add it in */
+    opal_output(mca_ras_gridengine_component.verbose, 
+		"ras:gridengine: PE_HOSTFILE: %s", pe_hostfile);
+
     while (fgets(buf, sizeof(buf), fp)) {
         ptr = strtok_r(buf, " \n", &tok);
         num = strtok_r(NULL, " \n", &tok);

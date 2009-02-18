@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -651,7 +651,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
         !orte_debug_flag &&
         !orte_debug_daemons_flag &&
         !orte_debug_daemons_file_flag &&
-        !orte_leave_session_attached) {
+        !orte_leave_session_attached &&
+        /* Daemonize when not using qrsh.  Or, if using qrsh, only
+         * daemonize if told to by user with daemonize_qrsh flag. */
+        ((!mca_plm_rsh_component.using_qrsh) ||
+        (mca_plm_rsh_component.using_qrsh && mca_plm_rsh_component.daemonize_qrsh))) {
         opal_argv_append(&argc, &argv, "--daemonize");
     }
     
