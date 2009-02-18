@@ -121,7 +121,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
 
             ret = ompi_osc_rdma_sendreq_send(module, req);
             if (OMPI_SUCCESS != ret) {
-                opal_list_append(&(module->m_copy_pending_sendreqs), req);
+                opal_list_append(&(module->m_copy_pending_sendreqs), (opal_list_item_t*)req);
             } else {
                 started_send = 1;
             }
@@ -140,7 +140,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
 
                 ret = ompi_osc_rdma_sendreq_send(module, req);
                 if (OMPI_SUCCESS != ret) {
-                    opal_list_append(&(module->m_copy_pending_sendreqs), req);
+                    opal_list_append(&(module->m_copy_pending_sendreqs), (opal_list_item_t*)req);
                 } else {
                     started_send = 1;
                 }
