@@ -70,8 +70,6 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
         }
 
     } else {
-        opal_list_item_t *item;
-
         /* "atomically" copy all the data we're going to be modifying
            into the copy... */
         OPAL_THREAD_LOCK(&module->m_lock);
@@ -123,7 +121,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
 
             ret = ompi_osc_rdma_sendreq_send(module, req);
             if (OMPI_SUCCESS != ret) {
-                opal_list_append(&(module->m_copy_pending_sendreqs), item);
+                opal_list_append(&(module->m_copy_pending_sendreqs), req);
             } else {
                 started_send = 1;
             }
@@ -142,7 +140,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
 
                 ret = ompi_osc_rdma_sendreq_send(module, req);
                 if (OMPI_SUCCESS != ret) {
-                    opal_list_append(&(module->m_copy_pending_sendreqs), item);
+                    opal_list_append(&(module->m_copy_pending_sendreqs), req);
                 } else {
                     started_send = 1;
                 }
