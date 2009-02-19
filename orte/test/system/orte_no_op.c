@@ -6,7 +6,7 @@
  */
 
 #include <stdio.h>
-
+#include "orte/constants.h"
 #include "orte/runtime/runtime.h"
 
 int main(int argc, char* argv[])
