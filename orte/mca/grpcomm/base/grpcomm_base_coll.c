@@ -53,11 +53,11 @@
 
 /****    AVAILABLE ALGORITHMS    ****/
 static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                   orte_jobid_t jobid, orte_vpid_t step);
+                   orte_jobid_t jobid, orte_vpid_t *vpids);
 static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                 orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step);
+                 orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids);
 static int recursivedoubling(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                             orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step);
+                             orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids);
 
 /****    LOCAL VARIABLES USED IN COLLECTIVES    ****/
 static int num_recvd;
@@ -105,15 +105,15 @@ void orte_grpcomm_base_coll_recv(int status, orte_process_name_t* sender,
  * Switchyard for selecting the collective algorithm to use
  */
 int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                                orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step)
+                                orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids)
 {
     bool has_one;
     orte_vpid_t n;
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
-                         "%s grpcomm:coll:allgather called with %d entries np %d step %d",
+                         "%s grpcomm:coll:allgather called with %d entries np %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         num_entries, (int)np, (int)step));
+                         num_entries, (int)np));
     
     /* if we only have one proc participating, just copy the data across and return */
     if (1 == np) {
@@ -123,7 +123,7 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, 
     
     if (2 == np) {
         /* only two procs in collective */
-        return twoproc(sendbuf, recvbuf, num_entries, jobid, step);
+        return twoproc(sendbuf, recvbuf, num_entries, jobid, vpids);
     }
     
     /* if we have power of 2 participants, use recursive doubling - otherwise,
@@ -134,14 +134,14 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, 
     for ( ; n > 0; n >>= 1) {
         if (n & 0x1) {
             if (has_one) {
-                return bruck(sendbuf, recvbuf, num_entries, jobid, np, step);
+                return bruck(sendbuf, recvbuf, num_entries, jobid, np, vpids);
             }
             has_one = true;
         }
     }
     
     /* must be power of two! */
-    return recursivedoubling(sendbuf, recvbuf, num_entries, jobid, np, step);
+    return recursivedoubling(sendbuf, recvbuf, num_entries, jobid, np, vpids);
 }
 
 
@@ -152,7 +152,7 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, 
  * Zero adds its data to message, sends result back to one
  */
 static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                   orte_jobid_t jobid, orte_vpid_t step)
+                   orte_jobid_t jobid, orte_vpid_t *vpids)
 {
     orte_process_name_t peer;
     int32_t num_remote, cnt;
@@ -165,9 +165,9 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
                          "%s grpcomm:coll:two-proc algo employed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (0 == ORTE_PROC_MY_NAME->vpid) {
+    if (vpids[0] == ORTE_PROC_MY_NAME->vpid) {
         /* I send first */
-        peer.vpid = step;
+        peer.vpid = vpids[1];
         /* setup a temp buffer so I can inform the other side as to the
          * number of entries in my buffer
          */
@@ -222,7 +222,7 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &num_entries, 1, OPAL_INT32);
         opal_dss.copy_payload(&buf, sendbuf);
-        peer.vpid = 0;
+        peer.vpid = vpids[0];
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:two-proc sending to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -264,9 +264,9 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
  * ompi/mca/coll/tuned/coll_tuned_allgather.c
  */
 static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                 orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step)
+                 orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids)
 {
-    orte_vpid_t rank, distance, stp;
+    orte_vpid_t rank, distance, nv;
     orte_process_name_t peer;
     int32_t num_remote, total_entries, cnt;
     opal_buffer_t collection, buf;
@@ -292,16 +292,28 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
      - sends message containing all data collected so far to rank r - distance
      - receives message containing all data collected so far from rank (r + distance)
      */
-    /* find my position in the group of participants - it always starts at rank=0. This
+    /* find my position in the group of participants. This
      * value is the "rank" we will use in the algo
      */
-    rank = (ORTE_PROC_MY_NAME->vpid) / step;
+    rank = ORTE_VPID_INVALID;
+    for (nv=0; nv < np; nv++) {
+        if (vpids[nv] == ORTE_PROC_MY_NAME->vpid) {
+            rank = nv;
+            break;
+        }
+    }
 
+    /* check for bozo case */
+    if (ORTE_VPID_INVALID == rank) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     for (distance = 1; distance < np; distance <<= 1) {
 
         /* first send my current contents */
-        stp = (rank - distance + np) % np;
-        peer.vpid = (stp * step);
+        nv = (rank - distance + np) % np;
+        peer.vpid = vpids[nv];
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &total_entries, 1, OPAL_INT32);
         opal_dss.copy_payload(&buf, &collection);
@@ -317,8 +329,8 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
         
         /* now setup to recv from my other partner */
         num_recvd = 0;
-        stp = (rank + distance) % np;
-        peer.vpid = (stp * step);
+        nv = (rank + distance) % np;
+        peer.vpid = vpids[nv];
         OBJ_CONSTRUCT(&bucket, opal_buffer_t);
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(&peer,
                                                           ORTE_RML_TAG_DAEMON_COLLECTIVE,
@@ -367,9 +379,9 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
  * ompi/mca/coll/tuned/coll_tuned_allgather.c
  */
 static int recursivedoubling(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                             orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step)
+                             orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids)
 {
-    orte_vpid_t rank, distance, stp;
+    orte_vpid_t rank, distance, nv;
     int32_t num_remote, total_entries, cnt;
     opal_buffer_t collection, buf;
     orte_process_name_t peer;
@@ -393,16 +405,28 @@ static int recursivedoubling(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int
      At every step i, rank r:
      - exchanges message containing all data collected so far with rank peer = (r ^ 2^i).
      */
-    /* find my position in the group of participants - it always starts at rank=0. This
+    /* find my position in the group of participants. This
      * value is the "rank" we will use in the algo
      */
-    rank = (ORTE_PROC_MY_NAME->vpid) / step;
-
+    rank = ORTE_VPID_INVALID;
+    for (nv=0; nv < np; nv++) {
+        if (vpids[nv] == ORTE_PROC_MY_NAME->vpid) {
+            rank = nv;
+            break;
+        }
+    }
+    
+    /* check for bozo case */
+    if (ORTE_VPID_INVALID == rank) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     for (distance = 0x1; distance < np; distance<<=1) {
         
         /* first send my current contents */
-        stp = rank ^ distance;
-        peer.vpid = (stp * step);
+        nv = rank ^ distance;
+        peer.vpid = vpids[nv];
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &total_entries, 1, OPAL_INT32);
         opal_dss.copy_payload(&buf, &collection);

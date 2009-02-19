@@ -83,6 +83,8 @@ static opal_list_t my_local_peers;
 static orte_process_name_t my_local_rank_zero_proc;
 static int num_local_peers;
 static bool coll_initialized = false;
+static orte_vpid_t *my_coll_peers=NULL;
+static int cpeers=0;
 
 /**
  * Initialize the module
@@ -114,6 +116,10 @@ static void finalize(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&my_local_peers);
+    
+    if (NULL != my_coll_peers) {
+        free(my_coll_peers);
+    }
 }
 
 /**
@@ -293,7 +299,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     opal_list_item_t *item;
     orte_namelist_t *nm;
     opal_buffer_t final_buf;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -301,21 +307,31 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     /* have I initialized my local info? */
     if (!coll_initialized) {
         orte_process_name_t proc;
-        orte_vpid_t v, vmax;
+        orte_vpid_t v;
         
-        /* no -  cycle through the procs to find those that are local */
+        /* get my local rank so I can locally cache it */
+        my_local_rank = orte_ess.get_local_rank(ORTE_PROC_MY_NAME);
+        
+        /* if I am local_rank=0 for this node and job, then setup
+         * my array of local_rank=0 peers
+         */
+        if (0 == my_local_rank) {
+            /* we need one entry/node in this job */
+            my_coll_peers = (orte_vpid_t*)malloc(orte_process_info.num_nodes * sizeof(orte_vpid_t));
+            cpeers = 0;
+        }
+        
+        /* cycle through the procs to create a list of those that are local to me */
         proc.jobid = ORTE_PROC_MY_NAME->jobid;
-        vmax = ORTE_VPID_MAX;
-        my_local_rank = 0;
-        num_local_peers = 0;  /* don't count myself */
-        
         for (v=0; v < orte_process_info.num_procs; v++) {
-            /* ignore if this is me */
-            if (v == ORTE_PROC_MY_NAME->vpid) {
-                continue;
-            }
             proc.vpid = v;
-            if (!OPAL_PROC_ON_LOCAL_NODE(orte_ess.proc_get_locality(&proc))) {
+            /* is this proc local_rank=0 on its node? */
+            if (0 == my_local_rank && 0 == orte_ess.get_local_rank(&proc)) {
+                my_coll_peers[cpeers++] = v;
+            }
+            /* if this is me, or this proc isn't on our node, ignore it */
+            if (v == ORTE_PROC_MY_NAME->vpid ||
+                !OPAL_PROC_ON_LOCAL_NODE(orte_ess.proc_get_locality(&proc))) {
                 continue;
             }
             /* add this proc to our list of local peers */
@@ -323,23 +339,16 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
             nm->name.jobid = proc.jobid;
             nm->name.vpid = proc.vpid;
             opal_list_append(&my_local_peers, &nm->item);
-            /* keep count */
-            num_local_peers++;
-            /* is this our locally lowest rank? */
-            if (v < vmax) {
-                vmax = v;
-            }
-            /* is this rank lower than mine? */
-            if (v < ORTE_PROC_MY_NAME->vpid) {
-                my_local_rank++;
+            /* if I am not local_rank=0, is this one? */
+            if (0 != my_local_rank &&
+                0 == orte_ess.get_local_rank(&proc)) {
+                my_local_rank_zero_proc.jobid = proc.jobid;
+                my_local_rank_zero_proc.vpid = proc.vpid;
             }
         }
-        
-        /* if I am not the local_rank=0 proc, record who is */
-        if (0 != my_local_rank) {
-            my_local_rank_zero_proc.jobid = ORTE_PROC_MY_NAME->jobid;
-            my_local_rank_zero_proc.vpid = vmax;
-        }
+
+        /* compute the number of local peers */
+        num_local_peers = opal_list_get_size(&my_local_peers);
         
         /* flag that I have initialized things */
         coll_initialized = true;
@@ -405,8 +414,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         OBJ_CONSTRUCT(&final_buf, opal_buffer_t);
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_allgather(&allgather_buf, rbuf, num_local_peers + 1,
                                                               ORTE_PROC_MY_NAME->jobid,
-                                                              mca_grpcomm_hier_component.num_nodes,
-                                                              mca_grpcomm_hier_component.step))) {
+                                                              cpeers, my_coll_peers))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&allgather_buf);
             OBJ_DESTRUCT(&final_buf);

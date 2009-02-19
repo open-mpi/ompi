@@ -86,7 +86,7 @@ ORTE_DECLSPEC void orte_grpcomm_base_coll_recv(int status, orte_process_name_t* 
                                                opal_buffer_t* buffer, orte_rml_tag_t tag,
                                                void* cbdata);
 ORTE_DECLSPEC int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_entries,
-                                              orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t step);
+                                              orte_jobid_t jobid, orte_vpid_t np, orte_vpid_t *vpids);
 
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */

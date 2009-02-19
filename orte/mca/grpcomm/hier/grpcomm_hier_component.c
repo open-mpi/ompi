@@ -41,9 +41,8 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-orte_grpcomm_hier_component_t mca_grpcomm_hier_component = {
+orte_grpcomm_base_component_t mca_grpcomm_hier_component = {
     {
-        {
         ORTE_GRPCOMM_BASE_VERSION_2_0_0,
 
         "hier", /* MCA module name */
@@ -53,11 +52,10 @@ orte_grpcomm_hier_component_t mca_grpcomm_hier_component = {
         orte_grpcomm_hier_open,  /* module open */
         orte_grpcomm_hier_close, /* module close */
         orte_grpcomm_hier_component_query /* module query */
-        },
-        {
+    },
+    {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
     }
 };
 
@@ -74,30 +72,8 @@ int orte_grpcomm_hier_close(void)
 
 int orte_grpcomm_hier_component_query(mca_base_module_t **module, int *priority)
 {
-    mca_base_component_t *c = &mca_grpcomm_hier_component.super.base_version;
-    int tmp;
-    
-    /* check for required params */
-    mca_base_param_reg_int(c, "num_nodes",
-                           "How many nodes are in the job (must be > 0)",
-                           false, false, -1, &tmp);
-    if (tmp < 0) {
-        *module = NULL;
-        return ORTE_ERROR;
-    }
-    mca_grpcomm_hier_component.num_nodes = tmp;
-
-    mca_base_param_reg_int(c, "step",
-                           "Step in local_rank=0 vpids between nodes (must be > 0)",
-                           false, false, -1, &tmp);
-    if (tmp < 0) {
-        *module = NULL;
-        return ORTE_ERROR;
-    }
-    mca_grpcomm_hier_component.step = tmp;
-
-    /* we need to be selected */
-    *priority = 100;
+    /* only selected upon request */
+    *priority = 0;
     *module = (mca_base_module_t *)&orte_grpcomm_hier_module;
     return ORTE_SUCCESS;    
 }

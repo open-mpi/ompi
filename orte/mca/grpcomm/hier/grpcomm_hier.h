@@ -38,18 +38,11 @@ int orte_grpcomm_hier_open(void);
 int orte_grpcomm_hier_close(void);
 int orte_grpcomm_hier_component_query(mca_base_module_t **module, int *priority);
 
-/* Hier component */
-typedef struct {
-    orte_grpcomm_base_component_t super;
-    orte_vpid_t num_nodes;
-    orte_vpid_t step;
-} orte_grpcomm_hier_component_t;
-
 /*
  * Grpcomm interfaces
  */
 
-ORTE_MODULE_DECLSPEC extern orte_grpcomm_hier_component_t mca_grpcomm_hier_component;
+ORTE_MODULE_DECLSPEC extern orte_grpcomm_base_component_t mca_grpcomm_hier_component;
 extern orte_grpcomm_base_module_t orte_grpcomm_hier_module;
 
 END_C_DECLS
