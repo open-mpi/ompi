@@ -23,7 +23,6 @@
 
 int mca_bml_base_close( void )
 {
-    int rc; 
     if (mca_bml_base_already_opened <= 0) {
         return OMPI_ERROR;
     } else if (--mca_bml_base_already_opened > 0) {
