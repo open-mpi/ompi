@@ -22,7 +22,8 @@
 include $(top_srcdir)/Makefile.man-page-rules
 
 dist_pkgdata_DATA += util/hostfile/help-hostfile.txt \
-                     util/dash_host/help-dash-host.txt
+                     util/dash_host/help-dash-host.txt \
+                     util/help-regex.txt
 
 nodist_man_MANS = util/hostfile/orte_hosts.7
 
@@ -61,7 +62,8 @@ headers += \
         util/hostfile/hostfile_lex.h \
         util/dash_host/dash_host.h \
         util/comm/comm.h \
-        util/nidmap.h
+        util/nidmap.h \
+        util/regex.h
 
 libopen_rte_la_SOURCES += \
 	util/context_fns.c \
@@ -72,7 +74,9 @@ libopen_rte_la_SOURCES += \
         util/hostfile/hostfile.c \
         util/dash_host/dash_host.c \
         util/comm/comm.c \
-        util/nidmap.c
+        util/nidmap.c \
+        util/regex.c
+
 endif
 
 # Remove the generated man pages
