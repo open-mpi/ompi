@@ -108,6 +108,7 @@ typedef struct orte_odls_job_t {
     orte_job_controls_t controls;               /* control flags for job */
     orte_vpid_t         stdin_target;           /* where stdin is to go */
     orte_std_cntr_t     total_slots_alloc;
+    orte_std_cntr_t     num_nodes;              /* number of nodes involved in the job */
     orte_vpid_t         num_procs;
     int32_t             num_local_procs;
     opal_byte_object_t  *pmap;                  /* local copy of pidmap byte object */

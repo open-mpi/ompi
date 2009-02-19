@@ -208,6 +208,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the number of nodes involved in this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->num_nodes, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the number of procs in this launch */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_procs, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
@@ -485,6 +491,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     
     /* UNPACK JOB-SPECIFIC DATA */
+    /* unpack the number of nodes involved in this job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_nodes, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }    
     /* unpack the number of procs in this launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_procs, &cnt, ORTE_VPID))) {
@@ -682,6 +694,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
                                         int32_t num_local_procs,
                                         orte_vpid_t vpid_range,
                                         orte_std_cntr_t total_slots_alloc,
+                                        int num_nodes,
                                         bool oversubscribed, char ***environ_copy)
 {
     int i;
@@ -780,6 +793,13 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     opal_setenv("OMPI_UNIVERSE_SIZE", param2, true, environ_copy);
     free(param2);
     
+    /* pass the number of nodes involved in this job */
+    param = mca_base_param_environ_variable("orte","num","nodes");
+    asprintf(&param2, "%ld", (long)num_nodes);
+    opal_setenv(param, param2, true, environ_copy);
+    free(param);
+    free(param2);
+
     /* push data into environment - don't push any single proc
      * info, though. We are setting the environment up on a
      * per-context basis, and will add the individual proc
@@ -1003,6 +1023,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                                                jobdat->num_local_procs,
                                                                jobdat->num_procs,
                                                                jobdat->total_slots_alloc,
+                                                               jobdat->num_nodes,
                                                                oversubscribed,
                                                                &app->env))) {
             
