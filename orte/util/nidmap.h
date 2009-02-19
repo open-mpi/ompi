@@ -45,6 +45,8 @@ BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_util_nidmap_init(opal_buffer_t *buffer);
 ORTE_DECLSPEC void orte_util_nidmap_finalize(void);
+ORTE_DECLSPEC int orte_util_setup_local_nidmap_entries(void);
+
 ORTE_DECLSPEC orte_jmap_t* orte_util_lookup_jmap(orte_jobid_t job);
 ORTE_DECLSPEC orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc);

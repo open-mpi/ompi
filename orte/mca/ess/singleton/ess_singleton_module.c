@@ -157,7 +157,11 @@ static int rte_init(char flags)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+    if (ORTE_SUCCESS != (rc = orte_util_setup_local_nidmap_entries())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+        
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup())) {
         ORTE_ERROR_LOG(rc);
