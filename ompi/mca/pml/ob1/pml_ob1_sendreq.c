@@ -645,30 +645,28 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
  *  available nics.
  */
 
-int mca_pml_ob1_send_request_start_rdma(
-                                        mca_pml_ob1_send_request_t* sendreq,
-                                        mca_bml_base_btl_t* bml_btl,
-                                        size_t size)
+int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
+                                         mca_bml_base_btl_t* bml_btl,
+                                         size_t size )
 {
     /*
-     * When req_rdma array is constructed the firs element of the array always
+     * When req_rdma array is constructed the first element of the array always
      * assigned different btl in round robin fashion (if there are more than
      * one RDMA capable BTLs). This way round robin distribution of RDMA
      * operation is achieved.
      */
 
-    mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
-    mca_btl_base_descriptor_t* src;
     mca_btl_base_descriptor_t* des;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
-    size_t i;
+    bool need_local_cb = false;
     int rc;
 
-
     bml_btl = sendreq->req_rdma[0].bml_btl;
-    if(sendreq->req_rdma_cnt == 1 &&
-       bml_btl->btl_flags & MCA_BTL_FLAGS_GET) {
+    if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & MCA_BTL_FLAGS_GET)) {
+        mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
+        mca_btl_base_descriptor_t* src;
+        size_t i;
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
         MEMCHECKER(
@@ -704,9 +702,9 @@ int mca_pml_ob1_send_request_start_rdma(
 
         /* allocate space for get hdr + segment list */
         mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
-                sizeof(mca_pml_ob1_rget_hdr_t) +
-                (sizeof(mca_btl_base_segment_t) * (src->des_src_cnt-1)),
-                MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                           sizeof(mca_pml_ob1_rget_hdr_t) +
+                           (sizeof(mca_btl_base_segment_t) * (src->des_src_cnt-1)),
+                           MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if( OPAL_UNLIKELY(NULL == des) ) {
             ompi_convertor_set_position( &sendreq->req_send.req_base.req_convertor,
                                          &old_position );
@@ -729,7 +727,7 @@ int mca_pml_ob1_send_request_start_rdma(
         hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
 
         ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_RGET,
-                sendreq->req_send.req_base.req_proc);
+                     sendreq->req_send.req_base.req_proc);
 
         for( i = 0; i < src->des_src_cnt; i++ ) {
             hdr->hdr_rget.hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(src->des_src[i].seg_addr.pval);
@@ -776,13 +774,14 @@ int mca_pml_ob1_send_request_start_rdma(
         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
         ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_RNDV,
-                sendreq->req_send.req_base.req_proc);
+                     sendreq->req_send.req_base.req_proc);
 
         /* update lengths with number of bytes actually packed */
         segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t);
     
         /* first fragment of a long message */
         des->des_cbfunc = mca_pml_ob1_rndv_completion;
+        need_local_cb = true;
 
         /* wait for ack and completion */
         sendreq->req_state = 2;
@@ -793,7 +792,7 @@ int mca_pml_ob1_send_request_start_rdma(
     /* send */
     rc = mca_bml_base_send(bml_btl, des, hdr->hdr_common.hdr_type);
     if( OPAL_LIKELY( rc >= 0 ) ) {
-        if( OPAL_LIKELY( 1 == rc ) ) {
+        if( OPAL_LIKELY( 1 == rc ) && (true == need_local_cb)) {
             mca_pml_ob1_rndv_completion_request( bml_btl, sendreq, 0 );
         }
         return OMPI_SUCCESS;
