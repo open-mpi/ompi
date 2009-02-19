@@ -317,7 +317,7 @@ AC_DEFUN([_PLPA_INIT],[
                      [AC_MSG_RESULT([yes])
                       valgrind_happy=yes],
                      [AC_MSG_RESULT([no])
-                      AC_MSG_WARN([Need Valgrind version 3.2.0 or later.])]
+                      AC_MSG_WARN([Need Valgrind version 3.2.0 or later.])],
                      [AC_MSG_RESULT([cross-compiling; assume yes...?])
                       AC_MSG_WARN([PLPA will fail to compile if you do not have Valgrind version 3.2.0 or later])
                       valgrind_happy=yes]),
