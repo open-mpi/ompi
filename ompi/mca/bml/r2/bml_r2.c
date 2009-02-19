@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -646,7 +646,8 @@ int mca_bml_r2_finalize( void )
         mca_bml_r2.btl_progress = NULL;
     }
 
-    mca_btl_base_close();
+    /* Do not close the BTL base here; the BML upper layer will take
+       care of that. */
 
     return OMPI_SUCCESS;
 } 

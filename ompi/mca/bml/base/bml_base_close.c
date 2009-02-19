@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,10 +24,12 @@
 int mca_bml_base_close( void )
 {
     int rc; 
+    if (mca_bml_base_already_opened <= 0) {
+        return OMPI_ERROR;
+    } else if (--mca_bml_base_already_opened > 0) {
+        return OMPI_SUCCESS;
+    }
 
-    if(OMPI_SUCCESS != (rc = mca_btl_base_close()))
-        return rc;
-
-    return OMPI_SUCCESS; 
+    return mca_btl_base_close();
 }
 
