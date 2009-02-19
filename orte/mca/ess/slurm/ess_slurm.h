@@ -30,17 +30,6 @@ int orte_ess_slurm_component_open(void);
 int orte_ess_slurm_component_close(void);
 int orte_ess_slurm_component_query(mca_base_module_t **module, int *priority);
 
-/*
- * Startup / Shutdown
- */
-int orte_ess_slurm_finalize(void);
-
-/*
- * Module functions
- */
-int orte_ess_slurm_set_name(void);
-
-
 END_C_DECLS
 
 #endif /* ORTE_ESS_SLURM_H */

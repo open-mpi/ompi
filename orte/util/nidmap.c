@@ -48,9 +48,6 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     int32_t cnt;
     int rc;
     opal_byte_object_t *bo;
-    orte_nid_t *node;
-    orte_jmap_t *jmap;
-    orte_pmap_t pmap;
     
     if (!initialized) {
         /* need to construct the global arrays */
@@ -68,28 +65,6 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     
     /* it is okay if the buffer is empty */
     if (NULL == buffer || 0 == buffer->bytes_used) {
-        /* if the buffer is empty, add a jmap entry for myself */
-        jmap = OBJ_NEW(orte_jmap_t);
-        jmap->job = ORTE_PROC_MY_NAME->jobid;
-        opal_pointer_array_add(&orte_jobmap, jmap);
-        jmap->num_procs = 1;
-        
-        /* create a nidmap entry for this node */
-        node = OBJ_NEW(orte_nid_t);
-        node->name = strdup(orte_process_info.nodename);
-        node->daemon = ORTE_PROC_MY_DAEMON->vpid;
-        node->arch = orte_process_info.arch;
-        OBJ_CONSTRUCT(&pmap, orte_pmap_t);
-        pmap.local_rank = 0;
-        pmap.node_rank = 0;
-        pmap.node = opal_pointer_array_add(&orte_nidmap, node);
-        /* value array copies values, so everything must be set before
-         * calling the set_item function
-         */
-        opal_value_array_set_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid, &pmap);
-        OBJ_DESTRUCT(&pmap);
-  
-        /* all done */
         return ORTE_SUCCESS;
     }
     
@@ -147,6 +122,38 @@ void orte_util_nidmap_finalize(void)
     
     /* flag that these are no longer initialized */
     initialized = false;
+}
+
+int orte_util_setup_local_nidmap_entries(void)
+{
+    orte_nid_t *node;
+    orte_jmap_t *jmap;
+    orte_pmap_t pmap;
+
+    /* add a jmap entry for myself */
+    jmap = OBJ_NEW(orte_jmap_t);
+    jmap->job = ORTE_PROC_MY_NAME->jobid;
+    opal_pointer_array_add(&orte_jobmap, jmap);
+    jmap->num_procs = 1;
+    
+    /* create a nidmap entry for this node */
+    node = OBJ_NEW(orte_nid_t);
+    node->name = strdup(orte_process_info.nodename);
+    node->daemon = ORTE_PROC_MY_DAEMON->vpid;
+    node->arch = orte_process_info.arch;
+    OBJ_CONSTRUCT(&pmap, orte_pmap_t);
+    pmap.local_rank = 0;
+    pmap.node_rank = 0;
+    node->index = opal_pointer_array_add(&orte_nidmap, node);
+    /* value array copies values, so everything must be set before
+     * calling the set_item function
+     */
+    pmap.node = node->index;
+    opal_value_array_set_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid, &pmap);
+    OBJ_DESTRUCT(&pmap);
+    
+    /* all done */
+    return ORTE_SUCCESS;
 }
 
 int orte_util_encode_nodemap(opal_byte_object_t *boptr)

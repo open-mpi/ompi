@@ -125,6 +125,11 @@ static int rte_init(char flags)
                 error = "orte_util_nidmap_init";
                 goto error;
             }
+            if (ORTE_SUCCESS != (ret = orte_util_setup_local_nidmap_entries())) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_util_nidmap_init";
+                goto error;
+            }
             /* extract the node info from the environment and
              * build a nidmap from it
              */
