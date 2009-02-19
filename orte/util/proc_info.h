@@ -57,6 +57,7 @@ struct orte_proc_info_t {
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_std_cntr_t app_num;            /**< our index into the app_context array */
     orte_vpid_t num_procs;              /**< number of processes in this job */
+    int num_nodes;                      /**< number of nodes in the job */
     char *nodename;                     /**< string name for this node */
     uint32_t arch;                      /**< arch for this node */
     pid_t pid;                          /**< Local process ID for this process */

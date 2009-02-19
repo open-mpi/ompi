@@ -46,6 +46,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .hnp_pid =              */    0,
     /*  .app_num =              */   -1,
     /*  .num_procs =            */   1,
+    /*  .num_nodes =            */   1,
     /*  .nodename =             */   NULL,
     /*  .arch =                 */   0,
     /*  .pid =                  */   0,
@@ -135,6 +136,13 @@ int orte_proc_info(void)
         opal_output(0, "Process on node %s could not obtain local architecture - aborting", orte_process_info.nodename);
         return ORTE_ERROR;
     }
+    
+    /* get the number of nodes in the job */
+    mca_base_param_reg_int_name("orte", "num_nodes",
+                                "Number of nodes in the job",
+                                true, false,
+                                orte_process_info.num_nodes, &tmp);
+    orte_process_info.num_nodes = tmp;
     
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
