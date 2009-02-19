@@ -600,7 +600,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 
 #if OPAL_WANT_IPV6
     if (AF_INET6 == af_family) {
-        if(orte_process_info.daemon) {
+        if (orte_process_info.daemon) {
             /* if static ports were provided, the daemon takes the
              * first entry in the list - otherwise, we "pick any port"
              */
@@ -674,8 +674,10 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
         return ORTE_ERROR;
     }
     
-    if(bind(*target_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
-        opal_output(0, "bind() failed: %s (%d)",
+    if (bind(*target_sd, (struct sockaddr*)&inaddr, addrlen) < 0) {
+        opal_output(0, "%s bind() failed for port %d: %s (%d)",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    (int)ntohs(*target_port),
                     strerror(opal_socket_errno),
                     opal_socket_errno );
         CLOSE_THE_SOCKET(*target_sd);
@@ -1278,19 +1280,83 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_addr_t* addr = NULL;
+    char *host, *haddr;
+    orte_node_rank_t nrank;
+    struct hostent *h;
+    int port;
+    char *uri;
+    int rc=ORTE_ERR_ADDRESSEE_UNKNOWN;
 
     /* if the address is already cached - simply return it */
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     opal_hash_table_get_value_uint64(&mca_oob_tcp_component.tcp_peer_names,
-         orte_util_hash_name(&peer->peer_name), (void**)&addr);
+                                     orte_util_hash_name(&peer->peer_name), (void**)&addr);
     OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-    if(NULL != addr) {
-         mca_oob_tcp_peer_resolved(peer, addr);
-         return ORTE_SUCCESS;
+    if (NULL != addr) {
+        mca_oob_tcp_peer_resolved(peer, addr);
+        return ORTE_SUCCESS;
     }
-
-    /* if we don't know it, then report unknown - don't try to go get it */
-    return ORTE_ERR_ADDRESSEE_UNKNOWN;
+    
+    /* if we don't know it, and we are using static ports, try
+     * to compute the address and port
+     */
+    if (orte_static_ports) {
+        if (NULL != (host = orte_ess.proc_get_hostname(&peer->peer_name))) {
+            /* lookup the address of this node */
+            if (NULL == (h = gethostbyname(host))) {
+                /* this isn't an error - it just means we don't know
+                 * how to compute a contact info for this proc
+                 */
+                goto unlock;
+            }
+            haddr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
+            /* we can't know which af_family we are using, so for now, let's
+             * just look to see which static port family was provided
+             */
+            if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
+                /* lookup the node rank of the proc */
+                if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
+                    (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp4_static_ports)) {
+                    /* this isn't an error - it just means we don't know
+                     * how to compute a contact info for this proc
+                     */
+                    rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                    goto unlock;
+                }
+                /* any daemon takes the first entry, so we start with the second */
+                port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
+                /* create the uri */
+                asprintf(&uri, "tcp://%s:%d", haddr, port);
+#if OPAL_WANT_IPV6
+            } else if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
+                /* lookup the node rank of the proc */
+                if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(&peer->peer_name)) ||
+                    (nrank+1) > opal_argv_count(mca_oob_tcp_component.tcp6_static_ports)) {
+                    /* this isn't an error - it just means we don't know
+                     * how to compute a contact info for this proc
+                     */
+                    rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                    goto unlock;
+                }
+                /* any daemon takes the first entry, so we start with the second */
+                port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
+                /* create the uri */
+                asprintf(&uri, "tcp6://%s:%d", haddr, port);
+#endif  /* OPAL_WANT_IPV6 */
+            } else {
+                /* can't do anything with this - no idea how static ports got set! */
+                rc = ORTE_ERR_ADDRESSEE_UNKNOWN;
+                goto unlock;
+            }
+            /* set the contact info */
+            rc = mca_oob_tcp_set_addr(&peer->peer_name, uri);
+            /* release memory */
+            free(uri);
+        }
+    }
+    
+unlock:
+    return rc;
 }
 
 
