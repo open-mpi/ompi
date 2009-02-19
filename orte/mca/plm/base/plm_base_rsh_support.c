@@ -440,11 +440,8 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     opal_setenv(param, "hier", true, &argv);
     free(param);
     
-    /* must tell "hier" two pieces of info */
-    param = mca_base_param_environ_variable("grpcomm","hier","num_nodes");
-    opal_setenv(param, "1", true, &argv);
-    free(param);
-    param = mca_base_param_environ_variable("grpcomm","hier","step");
+    /* must pass the number of nodes */
+    param = mca_base_param_environ_variable("orte","num","nodes");
     opal_setenv(param, "1", true, &argv);
     free(param);
     
