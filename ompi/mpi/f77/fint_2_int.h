@@ -186,7 +186,7 @@
      } while (0)
 #    define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
        int converted_n = (int)(n); \
-       while (converted_n >= 0) { \
+       while (--converted_n >= 0) { \
          in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
      }  while (0) \
