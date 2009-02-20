@@ -35,6 +35,7 @@
 #endif
 
 #include "orte/runtime/orte_cr.h"
+#include "orte/runtime/orte_globals.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"

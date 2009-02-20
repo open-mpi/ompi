@@ -52,6 +52,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"

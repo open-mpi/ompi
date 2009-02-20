@@ -27,6 +27,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "orte/util/show_help.h"
+#include "orte/runtime/orte_globals.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"

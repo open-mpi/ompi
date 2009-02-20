@@ -47,6 +47,7 @@
 #include "opal/mca/mca.h"
 
 #include "orte/mca/iof/iof.h"
+#include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 

@@ -46,6 +46,7 @@
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/session_dir.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 #include "odls_bproc.h"

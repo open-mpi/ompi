@@ -67,6 +67,7 @@
 #include "orte/util/session_dir.h"
 
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/params.h"
 #include "opal/dss/dss.h"
 

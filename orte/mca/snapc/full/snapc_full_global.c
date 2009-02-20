@@ -33,6 +33,7 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
