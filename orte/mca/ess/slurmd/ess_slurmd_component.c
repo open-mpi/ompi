@@ -67,14 +67,15 @@ orte_ess_slurmd_component_open(void)
 
 int orte_ess_slurmd_component_query(mca_base_module_t **module, int *priority)
 {
-    /* Are we running under a SLURM job? Were
+    /* Are we an MPI proc running under a SLURM job? Were
      * we given a path back to the HNP? If the
      * answer to the first is "yes" and the second
      * is "no", then we were not launched
      * by mpirun but are in a slurm world
      */
     
-    if (NULL != getenv("SLURM_JOBID") &&
+    if (orte_process_info.mpi_proc &&
+        NULL != getenv("SLURM_JOBID") &&
         NULL == orte_process_info.my_hnp_uri) {
         *priority = 30;
         *module = (mca_base_module_t *)&orte_ess_slurmd_module;
