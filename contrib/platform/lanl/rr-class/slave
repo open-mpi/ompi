@@ -16,7 +16,7 @@ enable_mpi_cxx_seek=yes
 enable_cxx_exceptions=no
 enable_ft_thread=no
 enable_per_user_config_files=no
-enable_mca_no_build=crs,routed-direct,routed-linear,routed-radix,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,btl-openib,btl-sm,filem,plm-tm
+enable_mca_no_build=crs,routed-linear,routed-radix,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,btl-openib,btl-sm,filem,plm-tm
 enable_contrib_no_build=libnbc,vt
 with_tm=no
 with_openib=no
@@ -24,4 +24,10 @@ with_devel_headers=yes
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
 with_threads=posix
-LDFLAGS=-L/opt/PBS/lib64
+CC=/opt/cell/toolchain/bin/ppu-gcc
+CXX=/opt/cell/toolchain/bin/ppu-g++
+F77=/opt/cell/toolchain/bin/ppu-gfortran
+build=x86_64-unknown-linux-gnu
+host=ppc64-redhat-linux
+NM=/opt/cell/toolchain/bin/ppu-nm
+
