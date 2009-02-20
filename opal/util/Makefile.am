@@ -49,7 +49,6 @@ headers = \
         os_path.h \
         output.h \
         path.h \
-        pow2.h \
         printf.h \
         qsort.h \
         show_help.h \
@@ -82,7 +81,6 @@ libopalutil_la_SOURCES = \
         os_path.c \
         output.c \
         path.c \
-        pow2.c \
         printf.c \
         qsort.c \
         show_help.c \

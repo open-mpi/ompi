@@ -76,8 +76,7 @@ void* mca_mpool_sm_alloc(
     opal_maffinity_base_segment_t mseg;
 
     mseg.mbs_start_addr =
-        mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, 
-                OPAL_ALIGN(align, getpagesize(), size_t), registration);
+        mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, registration);
 
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
