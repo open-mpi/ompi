@@ -74,6 +74,7 @@
 #include "orte/util/name_fns.h"
 
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_globals.h"
 #include "opal/dss/dss.h"
 
 #include "orte/mca/rml/rml.h"

@@ -29,6 +29,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/util/show_help.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 
 #include "ess_bproc.h"

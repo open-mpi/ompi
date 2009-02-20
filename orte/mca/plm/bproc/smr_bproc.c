@@ -32,6 +32,7 @@
 #include "opal/class/opal_list.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/base/base.h"
