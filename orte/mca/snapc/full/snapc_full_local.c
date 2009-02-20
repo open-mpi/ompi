@@ -41,6 +41,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
@@ -55,6 +56,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
@@ -898,8 +900,8 @@ static int snapc_full_local_get_vpids(void)
     /*
      * Otherwise update or populate the list
      */
-    for (item = opal_list_get_first(&orte_odls_globals.children);
-         item != opal_list_get_end(&orte_odls_globals.children);
+    for (item = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
 
