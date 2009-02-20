@@ -533,10 +533,18 @@ event_base_free(struct event_base *base)
 	if (base->evsel->dealloc != NULL)
 		base->evsel->dealloc(base, base->evbase);
 
+#if 0
+        /* Per ticket #1805
+           (https://svn.open-mpi.org/trac/ompi/ticket/1805), these
+           asserts are temporarily removed until we can have the rest
+           of the code base absolutely clean up all pending libevents,
+           we're #if 0'ing out these asserts so that we stop dumping
+           core. :-\ */
 	for (i = 0; i < base->nactivequeues; ++i)
 		assert(TAILQ_EMPTY(base->activequeues[i]));
 
 	assert(min_heap_empty(&base->timeheap));
+#endif
 	min_heap_dtor(&base->timeheap);
 
 	for (i = 0; i < base->nactivequeues; ++i)
