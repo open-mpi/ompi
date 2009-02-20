@@ -38,6 +38,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "orte/util/show_help.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/btl/btl.h"
@@ -227,12 +228,7 @@ typedef struct mca_btl_udapl_reg_t mca_btl_udapl_reg_t;
 #define BTL_UDAPL_VERBOSE_OUTPUT(verbose_level, args)               \
 do {                                                                \
     if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
-        mca_btl_base_out("[%s]%s[%s:%d:%s] ",                       \
-            orte_process_info.nodename,                              \
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                     \
-            __FILE__, __LINE__, __func__);                          \
-        mca_btl_base_out args;                                      \
-        mca_btl_base_out("\n");                                     \
+        BTL_OUTPUT(args);                                           \
     }                                                               \
 } while(0);
 
