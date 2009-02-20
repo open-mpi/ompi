@@ -20,10 +20,8 @@
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
 headers += \
-        class/ompi_circular_buffer_fifo.h \
-        class/ompi_fifo.h \
-        class/ompi_free_list.h \
         class/ompi_bitmap.h \
+        class/ompi_free_list.h \
         class/ompi_rb_tree.h \
         class/ompi_seq_tracker.h
 

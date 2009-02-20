@@ -131,8 +131,6 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("free_list_inc", 64);
     mca_btl_sm_component.sm_max_procs =
         mca_btl_sm_param_register_int("max_procs", -1);
-    mca_btl_sm_component.sm_extra_procs =
-        mca_btl_sm_param_register_int("sm_extra_procs", -1);
     mca_btl_sm_component.sm_mpool_name =
         mca_btl_sm_param_register_string("mpool", "sm");
     mca_btl_sm_component.fifo_size =
@@ -415,10 +413,13 @@ int mca_btl_sm_component_progress(void)
                  * memory address, to a true virtual address */
                 hdr = (mca_btl_sm_hdr_t *) RELATIVE2VIRTUAL(hdr);
                 peer_smp_rank = hdr->my_smp_rank;
-                if ( FIFO_MAP(peer_smp_rank) != j )
+#if OMPI_ENABLE_DEBUG
+                if ( FIFO_MAP(peer_smp_rank) != j ) {
                     opal_output(0, "mca_btl_sm_component_progress: "
                         "rank %d got %d on FIFO %d, but this sender should send to FIFO %d\n",
                         my_smp_rank, peer_smp_rank, j, FIFO_MAP(peer_smp_rank));
+                }
+#endif
                 /* recv upcall */
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
                 Frag.segment.seg_addr.pval = ((char*)hdr) +
@@ -428,6 +429,7 @@ int mca_btl_sm_component_progress(void)
                 Frag.base.des_dst = &(Frag.segment);
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
+                /* return the fragment */
                 MCA_BTL_SM_FIFO_WRITE(
                         mca_btl_sm_component.sm_peers[peer_smp_rank],
                         my_smp_rank, peer_smp_rank, hdr->frag, false, rc);
@@ -464,7 +466,7 @@ int mca_btl_sm_component_progress(void)
                 /* unknown */
                 /*
                  * This code path should presumably never be called.
-                 * It's unclear how it should be written.
+                 * It's unclear if it should exist or, if so, how it should be written.
                  * If we want to return it to the sending process,
                  * we have to figure out who the sender is.
                  * It seems we need to subtract the mask bits.

@@ -32,7 +32,6 @@
 #include "opal/util/if.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/printf.h"
-#include "ompi/class/ompi_fifo.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"

@@ -187,8 +187,21 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* create mpool for each memory node */
     for(i = 0; i < num_mem_nodes; i++) {
         mca_mpool_base_resources_t res;
+        mca_btl_sm_component_t* m = &mca_btl_sm_component;
+
         /* disable memory binding if there is only one memory node */
         res.mem_node = (num_mem_nodes == 1) ? -1 : i;
+
+        /* determine how much memory to create */
+        res.size = m->nfifos * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size )
+            + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + CACHE_LINE_SIZE )
+            +           m->sm_free_list_num   * ( m->max_frag_size + CACHE_LINE_SIZE );
+        if ( ((double) res.size) * n > LONG_MAX )
+            res.size  = LONG_MAX;
+        else
+            res.size *= n;
+
+        /* now, create it */
         mca_btl_sm_component.sm_mpools[i] =
             mca_mpool_base_module_create(mca_btl_sm_component.sm_mpool_name,
                                          sm_btl, &res);
@@ -305,29 +318,35 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     length = sizeof(mca_btl_sm_frag1_t);
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.eager_limit;
-    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_eager, length,
-                            CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag1_t),
-                            length_payload, CACHE_LINE_SIZE,
-                            mca_btl_sm_component.sm_free_list_num,
-                            mca_btl_sm_component.sm_free_list_max,
-                            mca_btl_sm_component.sm_free_list_inc,
-                            mca_btl_sm_component.sm_mpool);
+    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_eager, length,
+                                CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag1_t),
+                                length_payload, CACHE_LINE_SIZE,
+                                mca_btl_sm_component.sm_free_list_num,
+                                mca_btl_sm_component.sm_free_list_max,
+                                mca_btl_sm_component.sm_free_list_inc,
+                                mca_btl_sm_component.sm_mpool);
+    if ( OMPI_SUCCESS != i )
+        return i;
 
     length = sizeof(mca_btl_sm_frag2_t);
     length_payload =
         sizeof(mca_btl_sm_hdr_t) + mca_btl_sm_component.max_frag_size;
-    ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_max, length,
-                            CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag2_t),
-                            length_payload, CACHE_LINE_SIZE,
-                            mca_btl_sm_component.sm_free_list_num,
-                            mca_btl_sm_component.sm_free_list_max,
-                            mca_btl_sm_component.sm_free_list_inc,
-                            mca_btl_sm_component.sm_mpool);
+    i = ompi_free_list_init_new(&mca_btl_sm_component.sm_frags_max, length,
+                                CACHE_LINE_SIZE, OBJ_CLASS(mca_btl_sm_frag2_t),
+                                length_payload, CACHE_LINE_SIZE,
+                                mca_btl_sm_component.sm_free_list_num,
+                                mca_btl_sm_component.sm_free_list_max,
+                                mca_btl_sm_component.sm_free_list_inc,
+                                mca_btl_sm_component.sm_mpool);
+    if ( OMPI_SUCCESS != i )
+        return i;
 
-    opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
-                        sizeof(btl_sm_pending_send_item_t),
-                        OBJ_CLASS(opal_free_list_item_t),
-                        16, -1, 32);
+    i = opal_free_list_init(&mca_btl_sm_component.pending_send_fl,
+                            sizeof(btl_sm_pending_send_item_t),
+                            OBJ_CLASS(opal_free_list_item_t),
+                            16, -1, 32);
+    if ( OMPI_SUCCESS != i )
+        return i;
 
     /* set flag indicating btl has been inited */
     sm_btl->btl_inited = true;
@@ -628,7 +647,11 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     size_t max_data = *size;
     int rc;
 
-    MCA_BTL_SM_FRAG_ALLOC_MAX(frag, rc);
+    if ( reserve + max_data <= mca_btl_sm_component.eager_limit ) {
+        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag,rc);
+    } else {
+        MCA_BTL_SM_FRAG_ALLOC_MAX(frag, rc);
+    }
     if(OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }

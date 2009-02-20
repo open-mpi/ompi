@@ -43,6 +43,7 @@ struct mca_mpool_sm_component_t {
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 
 typedef struct mca_mpool_base_resources_t {
+    size_t  size;
     int32_t mem_node;
 } mca_mpool_base_resources_t;
 

@@ -29,7 +29,6 @@
 #endif  /* HAVE_SYS_TYPES_H */
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
-#include "ompi/class/ompi_fifo.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"

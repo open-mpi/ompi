@@ -72,21 +72,8 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
     }
 };
 
-static char *max_size_param = NULL, *min_size_param = NULL, *peer_size_param = NULL;
-static long default_max, default_min, default_peer;
-
-#if SIZEOF_LONG == 4
-/* For 32-bit libraries, set the default maximum to 2Gbytes - 1.  This
- * is the absolute maximum possible as this is the largest value that
- * can be given to the ftruncate() call.  This means we scale at 32
- * Mbytes per process until np=64 where we hit the maximum.  */
-#define OMPI_MAX_SM_MPOOL_FILE_SIZE 2147483647
-#else
-/* For 64-bit libraries, set the default maximum to 8Gbytes - 1.  This
- * allows the scaling of 32 Mbytes per process to be in effect up until
- * about np=256 and then get capped.  */
-#define OMPI_MAX_SM_MPOOL_FILE_SIZE 8589934591
-#endif
+static char *min_size_param = NULL;
+static long default_min;
 
 /**
   * component open/close/init function
@@ -96,9 +83,7 @@ static int mca_mpool_sm_open(void)
     int value = 0;
     char *size_str = NULL;
 
-    default_max = OMPI_MAX_SM_MPOOL_FILE_SIZE;
-    default_min = 128*1024*1024;
-    default_peer = 32*1024*1024;
+    default_min = 0;
 
     /* register SM component parameters */
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
@@ -109,27 +94,13 @@ static int mca_mpool_sm_open(void)
                               &mca_mpool_sm_component.sm_allocator_name);
 
     /* register values as string instead of int. A string-converted
-     * signed long int allows the max_size or the sm_size
+     * signed long int allows the min_size or the sm_size
      * to be set up to 2GB-1 for 32 bit and much greater for 64 bit. */
-    asprintf(&size_str, "%ld", default_max);
-    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
-                               "max_size",
-                               "Maximum size of the sm mpool shared memory file",
-                               false, false, size_str, &max_size_param);
-    free(size_str);
     asprintf(&size_str, "%ld", default_min);
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
                                "min_size",
                                "Minimum size of the sm mpool shared memory file",
                                false, false, size_str, &min_size_param);
-    free(size_str);
-    asprintf(&size_str, "%ld", default_peer);
-    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
-                               "per_peer_size",
-                               "Size (in bytes) to allocate per local peer in "
-                               "the sm mpool shared memory file, bounded by "
-                               "min_size and max_size",
-                               false, false, size_str, &peer_size_param);
     free(size_str);
     mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
                                "verbose",
@@ -167,14 +138,8 @@ static int mca_mpool_sm_close( void )
     if (NULL != mca_mpool_sm_component.sm_allocator_name) {
         free(mca_mpool_sm_component.sm_allocator_name);
     }
-    if (NULL != max_size_param) {
-        free(max_size_param);
-    }
     if (NULL != min_size_param) {
         free(min_size_param);
-    }
-    if (NULL != peer_size_param) {
-        free(peer_size_param);
     }
     return OMPI_SUCCESS;
 }
@@ -186,7 +151,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     int len;
     mca_mpool_sm_module_t* mpool_module;
     mca_allocator_base_component_t* allocator_component;
-    long max_size, min_size, peer_size;
+    long min_size;
     ompi_proc_t **procs;
     size_t num_all_procs, i, num_local_procs = 0;
 
@@ -200,18 +165,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     }
     free(procs);
 
-    /* parse the max, min and peer sizes, and validate them */
-    /* absolutely necessary to reset errno each time */
-    errno = 0;
-    max_size  = strtol(max_size_param, (char **)NULL, 10);
-    if (errno == ERANGE) {
-        opal_output(0, "mca_mpool_sm_init: max_size overflows! set to default (%ld)", default_max);
-        max_size = default_max;
-    } else if (errno == EINVAL) {
-        opal_output(0, "mca_mpool_sm_init: invalid max_size entered. set it to (%ld)", default_max);
-        max_size = default_max;
-    }
-
+    /* parse the min size and validate it */
+    /* if other parameters are added, absolutely necessary to reset errno each time */
     errno = 0;
     min_size  = strtol(min_size_param, (char **)NULL, 10);
     if (errno == ERANGE) {
@@ -222,44 +177,12 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
         min_size = default_min;
     }
 
-    errno = 0;
-    peer_size  = strtol(peer_size_param, (char **)NULL, 10);
-    if (errno == ERANGE) {
-        opal_output(0, "mca_mpool_sm_init: peer_size overflows! set to default (%ld)", default_peer);
-        peer_size = default_peer;
-    } else if (errno == EINVAL) {
-        opal_output(0, "mca_mpool_sm_init: invalid peer_size entered. set it to (%ld)", default_peer);
-        peer_size = default_peer;
-    }
+    /* set sm_size */
+    mca_mpool_sm_component.sm_size = resources->size;
 
-    /* more checks... */
-    if (min_size > max_size) {
-        opal_output(0, "mca_mpool_sm_init: adjusting max_size to be min_size (%ld)",
-                    min_size);
-        max_size = min_size;
-    }
-
-    /* sm_size is a product of peer_size * num_local_procs. To prevent the
-     * sm_size from overflowing SIZE_MAX, we first calculate the quotient.
-     * If quotient is less than the peer_size, it means the product
-     * (peer_size * num_local_procs) is going to overflow SIZE_MAX, then we'll
-     * set sm_size to max_size. */
-    if ((double)LONG_MAX / num_local_procs < peer_size) {
-        /* enable verbose would show if sm_size overflows */ 
-        opal_output(mca_mpool_sm_component.verbose,
-            "mca_mpool_sm_init: sm_size overflows, set sm_size to max_size (%ld)",
-            LONG_MAX);
-        mca_mpool_sm_component.sm_size = max_size;
-    } else {
-        mca_mpool_sm_component.sm_size = peer_size * num_local_procs;
-    }
-
-    if (min_size > mca_mpool_sm_component.sm_size) {
-        mca_mpool_sm_component.sm_size = min_size;
-    }
-    if (max_size < mca_mpool_sm_component.sm_size) {
-        mca_mpool_sm_component.sm_size = max_size;
-    }
+    /* clip at the min size */
+    if ( mca_mpool_sm_component.sm_size < min_size )
+         mca_mpool_sm_component.sm_size = min_size;
 
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
