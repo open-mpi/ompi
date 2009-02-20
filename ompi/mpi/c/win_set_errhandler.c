@@ -43,7 +43,8 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN,
+                                          FUNC_NAME);
         } else if (NULL == errhandler ||
                    MPI_ERRHANDLER_NULL == errhandler ||
                    (OMPI_ERRHANDLER_TYPE_WIN != errhandler->eh_mpi_object_type && 
