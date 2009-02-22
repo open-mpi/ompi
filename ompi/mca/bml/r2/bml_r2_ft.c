@@ -146,6 +146,10 @@ int mca_bml_r2_ft_event(int state)
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
                 return ret;
             }
+            if( OMPI_SUCCESS != (ret = mca_btl_base_close()) ) {
+                opal_output(0, "bml:r2: ft_event(Restart): Failed to close BTL framework\n");
+                return ret;
+            }
         }
         /* Matches OPAL_CRS_RESTART */
         else if( ompi_cr_continue_like_restart && !first_continue_pass ) {
