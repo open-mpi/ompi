@@ -1733,11 +1733,19 @@ AC_DEFUN([ACVT_PLATFORM],
 		pform_timer=TIMER_GETTIMEOFDAY
 
 		case $host_cpu in
-			i*86 | x86* | ia64 | powerpc*)
+			i*86 | x86* | powerpc*)
 				AC_DEFINE([TIMER_CYCLE_COUNTER], [3], [Cycle counter (e.g. TSC)])
 				pform_timer=TIMER_CYCLE_COUNTER
 				;;
-			*)
+			ia64)
+				AC_CHECK_HEADERS([asm/intrinsics.h],
+				[
+					AC_CHECK_DECL([_IA64_REG_AR_ITC],
+					[
+						AC_DEFINE([TIMER_CYCLE_COUNTER], [3], [Cycle counter (e.g. ITC)])
+						pform_timer=TIMER_CYCLE_COUNTER
+					], [], [#include <asm/intrinsics.h>])
+				])
 				;;
 		esac
 		;;
