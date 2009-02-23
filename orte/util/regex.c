@@ -267,7 +267,7 @@ static int regex_parse_node_range(char *base, char *range, char ***names)
     /* Make strings for all values in the range */
     
     len = base_len + num_str_len + 32;
-    str = malloc(len);
+    str = (char *) malloc(len);
     if (NULL == str) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -313,7 +313,7 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
     /* init null answer */
     *ppn = NULL;
     
-    tmp = malloc(sizeof(int) * num_nodes);
+    tmp = (int *) malloc(sizeof(int) * num_nodes);
     if (NULL == tmp) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
