@@ -88,7 +88,7 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
                                                 pConvertor->pDesc, pConvertor->count );
                     DO_DEBUG( opal_output( 0, "raw 1. iov[%d] = {base %p, length %lu}\n",
                                            index, source_base, (unsigned long)blength ); );
-                    iov[index].iov_base = source_base;
+                    iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
                     source_base += blength;
                     raw_data += blength;
@@ -101,7 +101,7 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
                                                 pConvertor->pDesc, pConvertor->count );
                     DO_DEBUG( opal_output( 0, "raw 2. iov[%d] = {base %p, length %lu}\n",
                                            index, source_base, (unsigned long)blength ); );
-                    iov[index].iov_base = source_base;
+                    iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
                     source_base += blength;
                     raw_data += blength;
@@ -159,7 +159,7 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
                 for( i = count_desc; (i > 0) && (index < *iov_count); i--, index++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( source_base, end_loop->size, pConvertor->pBaseBuf,
                                                 pConvertor->pDesc, pConvertor->count );
-                    iov[index].iov_base = source_base;
+                    iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = end_loop->size;
                     source_base += pElem->loop.extent;
                     raw_data += end_loop->size;
