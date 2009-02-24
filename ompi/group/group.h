@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -96,6 +97,19 @@ struct ompi_group_t {
 typedef struct ompi_group_t ompi_group_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
 
+/**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_GROUP_PAD (sizeof(void*) * 32)
+
+struct ompi_predefined_group_t {
+    struct ompi_group_t group;
+    char padding[PREDEFINED_GROUP_PAD - sizeof(ompi_group_t)];
+};
+
+typedef struct ompi_predefined_group_t ompi_predefined_group_t;
 
 /* Some definitions for the flags */
 #define OMPI_GROUP_ISFREED       0x00000001
@@ -122,11 +136,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
  * Table for Fortran <-> C group handle conversion
  */
 OMPI_DECLSPEC extern struct opal_pointer_array_t ompi_group_f_to_c_table;
-OMPI_DECLSPEC extern ompi_group_t ompi_mpi_group_null;
+OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 
 
 /*
- * function prototypes
+ * function prototype
+s
  */
 
 /**

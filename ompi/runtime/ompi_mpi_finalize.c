@@ -14,6 +14,7 @@
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -119,11 +120,11 @@ int ompi_mpi_finalize(void)
        anything else in MPI_FINALIZE (to include setting up such that
        MPI_FINALIZED will return true). */
 
-    if (NULL != ompi_mpi_comm_self.c_keyhash) {
+    if (NULL != ompi_mpi_comm_self.comm.c_keyhash) {
         ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_self,
-                             ompi_mpi_comm_self.c_keyhash);
-        OBJ_RELEASE(ompi_mpi_comm_self.c_keyhash);
-        ompi_mpi_comm_self.c_keyhash = NULL;
+                             ompi_mpi_comm_self.comm.c_keyhash);
+        OBJ_RELEASE(ompi_mpi_comm_self.comm.c_keyhash);
+        ompi_mpi_comm_self.comm.c_keyhash = NULL;
     }
 
     /* Proceed with MPI_FINALIZE */

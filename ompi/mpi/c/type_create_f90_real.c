@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -70,12 +70,12 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
      * cache.
      */
 
-    if( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) )    *newtype = &ompi_mpi_datatype_null;
-    else if( (DBL_DIG < p) || (DBL_MAX_10_EXP < r) ) *newtype = &ompi_mpi_long_double;
-    else if( (FLT_DIG < p) || (FLT_MAX_10_EXP < r) ) *newtype = &ompi_mpi_double;
-    else                                             *newtype = &ompi_mpi_float;
+    if( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) )    *newtype = &ompi_mpi_datatype_null.dt;
+    else if( (DBL_DIG < p) || (DBL_MAX_10_EXP < r) ) *newtype = &ompi_mpi_long_double.dt;
+    else if( (FLT_DIG < p) || (FLT_MAX_10_EXP < r) ) *newtype = &ompi_mpi_double.dt;
+    else                                             *newtype = &ompi_mpi_float.dt;
 
-    if( *newtype != &ompi_mpi_datatype_null ) {
+    if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
         int* a_i[2];
         int rc;

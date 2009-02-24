@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +37,7 @@
  */
 opal_pointer_array_t ompi_mpi_windows; 
 
-ompi_win_t ompi_mpi_win_null;
+ompi_predefined_win_t ompi_mpi_win_null;
 
 static void ompi_win_construct(ompi_win_t *win);
 static void ompi_win_destruct(ompi_win_t *win);
@@ -55,12 +56,12 @@ ompi_win_init(void)
     }
 
     /* Setup MPI_WIN_NULL */
-    OBJ_CONSTRUCT(&ompi_mpi_win_null, ompi_win_t);
-    ompi_mpi_win_null.w_flags = OMPI_WIN_INVALID;
-    ompi_mpi_win_null.w_group = &ompi_mpi_group_null;
+    OBJ_CONSTRUCT(&ompi_mpi_win_null.win, ompi_win_t);
+    ompi_mpi_win_null.win.w_flags = OMPI_WIN_INVALID;
+    ompi_mpi_win_null.win.w_group = &ompi_mpi_group_null.group;
     OBJ_RETAIN(&ompi_mpi_group_null);
-    ompi_win_set_name(&ompi_mpi_win_null, "MPI_WIN_NULL");
-    opal_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null);
+    ompi_win_set_name(&ompi_mpi_win_null.win, "MPI_WIN_NULL");
+    opal_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null.win);
 
     return OMPI_SUCCESS;
 }
@@ -69,7 +70,7 @@ ompi_win_init(void)
 int
 ompi_win_finalize(void)
 {
-    OBJ_DESTRUCT(&ompi_mpi_win_null);
+    OBJ_DESTRUCT(&ompi_mpi_win_null.win);
     OBJ_DESTRUCT(&ompi_mpi_windows);
 
     return OMPI_SUCCESS;
@@ -208,8 +209,8 @@ ompi_win_construct(ompi_win_t *win)
 
     /* every new window defaults to MPI_ERRORS_ARE_FATAL (MPI-2 6.6.1,
        pg. 137) */
-    OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
-    win->error_handler = &ompi_mpi_errors_are_fatal;
+    OBJ_RETAIN(&ompi_mpi_errors_are_fatal.eh);
+    win->error_handler = &ompi_mpi_errors_are_fatal.eh;
     win->errhandler_type = OMPI_ERRHANDLER_TYPE_WIN;
 
     win->w_disp_unit = 0;

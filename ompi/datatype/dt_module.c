@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,37 +54,35 @@ int ompi_ddt_dfd = -1;
  * correct information. This macro should be used for all composed types.
  */
 #define INIT_BASIC_TYPE( TYPE, NAME )                                        \
-    { BASEOBJ_DATA, 0/*size*/, 0 /*align*/, 0/*true_lb*/, 0/*true_ub*/,      \
-            0/*lb*/, 0/*ub*/, DT_FLAG_PREDEFINED, TYPE, 1,                   \
+    { BASEOBJ_DATA, DT_FLAG_PREDEFINED, TYPE, 0/*size*/,                     \
+            0/*true_lb*/, 0/*true_ub*/, 0/*lb*/, 0/*ub*/, 0 /* align */, 1,  \
       (((uint64_t)1)<<(TYPE)), EMPTY_DATA(NAME) }
 
-#define INIT_BASIC_DATA( TYPE, ALIGN, NAME, FLAGS )                                \
-    { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),                          \
-            0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
-            DT_##NAME, 1, (((uint64_t)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+#define INIT_BASIC_DATA( TYPE, ALIGN, NAME, FLAGS )                          \
+    { BASEOBJ_DATA, DT_FLAG_BASIC | (FLAGS), DT_##NAME, sizeof(TYPE), 0,     \
+            sizeof(TYPE), 0, sizeof(TYPE), (ALIGN),                          \
+            1, (((uint64_t)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
 
-#define INIT_BASIC_DATA_WITH_NAME( TYPE, ALIGN, INTERNAL_NAME, NAME, FLAGS )       \
-    { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),                          \
-            0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
-            DT_##INTERNAL_NAME, 1, (((uint64_t)1)<<(DT_##INTERNAL_NAME)),          \
-            EMPTY_DATA(NAME) }
+#define INIT_BASIC_DATA_WITH_NAME( TYPE, ALIGN, INTERNAL_NAME, NAME, FLAGS )  \
+    { BASEOBJ_DATA, DT_FLAG_BASIC | (FLAGS),DT_##INTERNAL_NAME, sizeof(TYPE), \
+            0, sizeof(TYPE), 0, sizeof(TYPE), (ALIGN),                        \
+            1, (((uint64_t)1)<<(DT_##INTERNAL_NAME)), EMPTY_DATA(NAME) }
 
 #define INIT_UNAVAILABLE_DATA( NAME )                                           \
-    { BASEOBJ_DATA, 0, 0, 0, 0, 0, 0, DT_FLAG_UNAVAILABLE | DT_FLAG_PREDEFINED, \
-            DT_UNAVAILABLE, 1, 0, EMPTY_DATA( "UNAVAILABLE_" # NAME ) }
+    { BASEOBJ_DATA, DT_FLAG_UNAVAILABLE | DT_FLAG_PREDEFINED, DT_UNAVAILABLE, 0,\
+            0, 0, 0, 0, 0, 1, 0, EMPTY_DATA( "UNAVAILABLE_" # NAME ) }
 
 /* The upper bound and the true UB are set to the size of the datatype.
  * If it's not the case then they should be modified in the initialization
  * function.
  */
 #if OMPI_WANT_F77_BINDINGS
-#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                  \
-    { BASEOBJ_DATA, SIZE, ALIGN, 0/*true_lb*/, SIZE/*true_ub*/,                                    \
-            0/*lb*/, SIZE/*ub*/,                                                                   \
-            DT_FLAG_BASIC | DT_FLAG_DATA_FORTRAN | (FLAGS), \
-            (TYPE), 1, (((uint64_t)1)<<(TYPE)), EMPTY_DATA(NAME) }
+#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )             \
+    { BASEOBJ_DATA, DT_FLAG_BASIC | DT_FLAG_DATA_FORTRAN | (FLAGS),           \
+            (TYPE), SIZE, 0/*true_lb*/, SIZE/*true_ub*/, 0/*lb*/, SIZE/*ub*/, \
+            (ALIGN), 1, (((uint64_t)1)<<(TYPE)), EMPTY_DATA(NAME) }
 #else
-#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                          \
+#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )             \
     INIT_BASIC_TYPE( TYPE, NAME )
 #endif  /* OMPI_WANT_F77_BINDINGS */
 
@@ -93,170 +92,169 @@ int ompi_ddt_dfd = -1;
  */
 int32_t ompi_ddt_number_of_predefined_data = 0;
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_datatype_null =
-    { BASEOBJ_DATA, 0, 0, 0, 0,
-      0, 0, DT_FLAG_PREDEFINED, 0, 1,
-      ((long long)0), EMPTY_DATA(DATATYPE_NULL) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_datatype_null = {
+    { BASEOBJ_DATA, DT_FLAG_PREDEFINED, 0, 0, 0, 0,
+      0, 0, 0, 1, ((long long)0), EMPTY_DATA(DATATYPE_NULL) }};
 
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_loop = INIT_BASIC_TYPE( DT_LOOP, LOOP );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_end_loop = INIT_BASIC_TYPE( DT_END_LOOP, END_LOOP );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ub = INIT_BASIC_TYPE( DT_UB, UB );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_lb = INIT_BASIC_TYPE( DT_LB, LB );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_char = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHAR, DT_FLAG_DATA_C );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_character = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHARACTER, DT_FLAG_DATA_FORTRAN );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_char = INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, UNSIGNED_CHAR, DT_FLAG_DATA_C );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_signed_char = INIT_BASIC_DATA( signed char, OMPI_ALIGNMENT_CHAR, SIGNED_CHAR, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_byte = INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, BYTE, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_short = INIT_BASIC_DATA( short, OMPI_ALIGNMENT_SHORT, SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_short = INIT_BASIC_DATA( unsigned short, OMPI_ALIGNMENT_SHORT, UNSIGNED_SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_int = INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned = INIT_BASIC_DATA_WITH_NAME( unsigned int, OMPI_ALIGNMENT_INT, UNSIGNED_INT, UNSIGNED, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long = INIT_BASIC_DATA( long, OMPI_ALIGNMENT_LONG, LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long = INIT_BASIC_DATA( unsigned long, OMPI_ALIGNMENT_LONG, UNSIGNED_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ub = { INIT_BASIC_TYPE( DT_UB, UB) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_lb = { INIT_BASIC_TYPE( DT_LB, LB) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_char = { INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHAR, DT_FLAG_DATA_C ) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_character = { INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHARACTER, DT_FLAG_DATA_FORTRAN) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_char = { INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, UNSIGNED_CHAR, DT_FLAG_DATA_C) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_signed_char = { INIT_BASIC_DATA( signed char, OMPI_ALIGNMENT_CHAR, SIGNED_CHAR, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_byte = { INIT_BASIC_DATA( unsigned char, OMPI_ALIGNMENT_CHAR, BYTE, DT_FLAG_DATA_C | DT_FLAG_DATA_INT ) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_short = { INIT_BASIC_DATA( short, OMPI_ALIGNMENT_SHORT, SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_short = { INIT_BASIC_DATA( unsigned short, OMPI_ALIGNMENT_SHORT, UNSIGNED_SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_int = { INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned = { INIT_BASIC_DATA_WITH_NAME( unsigned int, OMPI_ALIGNMENT_INT, UNSIGNED_INT, UNSIGNED, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long = { INIT_BASIC_DATA( long, OMPI_ALIGNMENT_LONG, LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long = { INIT_BASIC_DATA( unsigned long, OMPI_ALIGNMENT_LONG, UNSIGNED_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
 #if HAVE_LONG_LONG
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_BASIC_DATA_WITH_NAME( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG_INT, LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long_long = INIT_BASIC_DATA( unsigned long long, OMPI_ALIGNMENT_LONG_LONG, UNSIGNED_LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_long_int = { INIT_BASIC_DATA_WITH_NAME( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG_INT, LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = { INIT_BASIC_DATA( unsigned long long, OMPI_ALIGNMENT_LONG_LONG, UNSIGNED_LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_UNAVAILABLE_DATA( LONG_LONG_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long_long = INIT_UNAVAILABLE_DATA( UNIGNED_LONG_LONG );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_long_int = { INIT_UNAVAILABLE_DATA( LONG_LONG_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unsigned_long_long = { INIT_UNAVAILABLE_DATA( UNIGNED_LONG_LONG) };
 #endif  /* HAVE_LONG_LONG */
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_float = INIT_BASIC_DATA( float, OMPI_ALIGNMENT_FLOAT, FLOAT, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_double = INIT_BASIC_DATA( double, OMPI_ALIGNMENT_DOUBLE, DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_float = { INIT_BASIC_DATA( float, OMPI_ALIGNMENT_FLOAT, FLOAT, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_double = { INIT_BASIC_DATA( double, OMPI_ALIGNMENT_DOUBLE, DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_double = INIT_BASIC_DATA( long double, OMPI_ALIGNMENT_LONG_DOUBLE, LONG_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_double = { INIT_BASIC_DATA( long double, OMPI_ALIGNMENT_LONG_DOUBLE, LONG_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_FLOAT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_double = INIT_UNAVAILABLE_DATA( LONG_DOUBLE );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_double = { INIT_UNAVAILABLE_DATA( LONG_DOUBLE) };
 #endif  /* HAVE_LONG_DOUBLE */
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_packed = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, PACKED, 0 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_packed = { INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, PACKED, 0) };
 #if OMPI_ALIGNMENT_WCHAR != 0
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_BASIC_DATA( wchar_t, OMPI_ALIGNMENT_WCHAR, WCHAR, DT_FLAG_DATA_C );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_wchar = { INIT_BASIC_DATA( wchar_t, OMPI_ALIGNMENT_WCHAR, WCHAR, DT_FLAG_DATA_C) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_wchar = INIT_UNAVAILABLE_DATA( WCHAR );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_wchar = { INIT_UNAVAILABLE_DATA( WCHAR) };
 #endif  /* OMPI_ALIGNMENT_WCHAR */
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( bool, OMPI_ALIGNMENT_CXX_BOOL, CXX_BOOL, DT_FLAG_DATA_CPP );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logic = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL, 0 );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer = INIT_BASIC_FORTRAN_TYPE( DT_INTEGER, INTEGER, OMPI_SIZEOF_FORTRAN_INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER, DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real = INIT_BASIC_FORTRAN_TYPE( DT_REAL, REAL, OMPI_SIZEOF_FORTRAN_REAL, OMPI_ALIGNMENT_FORTRAN_REAL, DT_FLAG_DATA_FLOAT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblprec = INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DOUBLE_PRECISION, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_bool = { INIT_BASIC_DATA( bool, OMPI_ALIGNMENT_CXX_BOOL, CXX_BOOL, DT_FLAG_DATA_CPP) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logic = { INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL, 0) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer = { INIT_BASIC_FORTRAN_TYPE( DT_INTEGER, INTEGER, OMPI_SIZEOF_FORTRAN_INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER, DT_FLAG_DATA_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real = { INIT_BASIC_FORTRAN_TYPE( DT_REAL, REAL, OMPI_SIZEOF_FORTRAN_REAL, OMPI_ALIGNMENT_FORTRAN_REAL, DT_FLAG_DATA_FLOAT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_dblprec = { INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DOUBLE_PRECISION, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, DT_FLAG_DATA_FLOAT) };
 
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ldblcplex = { INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_ldblcplex = { INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE) };
 #endif  /* HAVE_LONG_DOUBLE */
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cplex = INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblcplex = INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_float_int = INIT_BASIC_TYPE( DT_FLOAT_INT, FLOAT_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_double_int = INIT_BASIC_TYPE( DT_DOUBLE_INT, DOUBLE_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cplex = { INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_dblcplex = { INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_float_int = { INIT_BASIC_TYPE( DT_FLOAT_INT, FLOAT_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_double_int = { INIT_BASIC_TYPE( DT_DOUBLE_INT, DOUBLE_INT) };
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_longdbl_int = INIT_BASIC_TYPE( DT_LONG_DOUBLE_INT, LONG_DOUBLE_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_longdbl_int = { INIT_BASIC_TYPE( DT_LONG_DOUBLE_INT, LONG_DOUBLE_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_longdbl_int = INIT_UNAVAILABLE_DATA( LONG_DOUBLE_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_longdbl_int = { INIT_UNAVAILABLE_DATA( LONG_DOUBLE_INT) };
 #endif  /* HAVE_LONG_DOUBLE */
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_int = INIT_BASIC_TYPE( DT_LONG_INT, LONG_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_short_int = INIT_BASIC_TYPE( DT_SHORT_INT, SHORT_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_long_int = { INIT_BASIC_TYPE( DT_LONG_INT, LONG_INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_short_int = { INIT_BASIC_TYPE( DT_SHORT_INT, SHORT_INT) };
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2int = INIT_BASIC_TYPE( DT_2INT, 2INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2real = INIT_BASIC_TYPE( DT_2REAL, 2REAL );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2dblprec = INIT_BASIC_TYPE( DT_2DBLPREC, 2DBLPREC );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2integer = INIT_BASIC_TYPE( DT_2INTEGER, 2INTEGER );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2int = { INIT_BASIC_TYPE( DT_2INT, 2INT) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2real = { INIT_BASIC_TYPE( DT_2REAL, 2REAL) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2dblprec = { INIT_BASIC_TYPE( DT_2DBLPREC, 2DBLPREC) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2integer = { INIT_BASIC_TYPE( DT_2INTEGER, 2INTEGER) };
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_cplex = INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_dblcplex = INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_cplex = { INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_dblcplex = { INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex = { INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_ldblcplex = INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex = { INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE) };
 #endif  /* HAVE_LONG_DOUBLE */
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2cplex = INIT_BASIC_TYPE( DT_2COMPLEX, 2COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_2dblcplex = INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unavailable = INIT_UNAVAILABLE_DATA( UNAVAILABLE );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2cplex = { INIT_BASIC_TYPE( DT_2COMPLEX, 2COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_2dblcplex = { INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX) };
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_unavailable = { INIT_UNAVAILABLE_DATA( UNAVAILABLE) };
 
 #if OMPI_HAVE_FORTRAN_LOGICAL1
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical1 = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL1, OMPI_SIZEOF_FORTRAN_LOGICAL1, OMPI_ALIGNMENT_FORTRAN_LOGICAL1, 0 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical1 = { INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL1, OMPI_SIZEOF_FORTRAN_LOGICAL1, OMPI_ALIGNMENT_FORTRAN_LOGICAL1, 0) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical1 = INIT_UNAVAILABLE_DATA( LOGICAL1 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical1 = { INIT_UNAVAILABLE_DATA( LOGICAL1) };
 #endif  /* OMPI_HAVE_FORTRAN_LOGICAL1 */
 #if OMPI_HAVE_FORTRAN_LOGICAL2
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical2 = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL2, OMPI_SIZEOF_FORTRAN_LOGICAL2, OMPI_ALIGNMENT_FORTRAN_LOGICAL2, 0 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical2 = { INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL2, OMPI_SIZEOF_FORTRAN_LOGICAL2, OMPI_ALIGNMENT_FORTRAN_LOGICAL2, 0) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical2 = INIT_UNAVAILABLE_DATA( LOGICAL2 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical2 = { INIT_UNAVAILABLE_DATA( LOGICAL2) };
 #endif  /* OMPI_HAVE_FORTRAN_LOGICAL2 */
 #if OMPI_HAVE_FORTRAN_LOGICAL4
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical4 = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL4, OMPI_SIZEOF_FORTRAN_LOGICAL4, OMPI_ALIGNMENT_FORTRAN_LOGICAL4, 0 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical4 = { INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL4, OMPI_SIZEOF_FORTRAN_LOGICAL4, OMPI_ALIGNMENT_FORTRAN_LOGICAL4, 0) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical4 = INIT_UNAVAILABLE_DATA( LOGICAL4 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical4 = { INIT_UNAVAILABLE_DATA( LOGICAL4) };
 #endif  /* OMPI_HAVE_FORTRAN_LOGICAL4 */
 #if OMPI_HAVE_FORTRAN_LOGICAL8
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical8 = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL8, OMPI_SIZEOF_FORTRAN_LOGICAL8, OMPI_ALIGNMENT_FORTRAN_LOGICAL8, 0 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical8 = { INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGICAL8, OMPI_SIZEOF_FORTRAN_LOGICAL8, OMPI_ALIGNMENT_FORTRAN_LOGICAL8, 0) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logical8 = INIT_UNAVAILABLE_DATA( LOGICAL8 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_logical8 = { INIT_UNAVAILABLE_DATA( LOGICAL8) };
 #endif  /* OMPI_HAVE_FORTRAN_LOGICAL8 */
 
 #if OMPI_HAVE_FORTRAN_REAL2
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real2 = INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL2, OMPI_SIZEOF_FORTRAN_REAL2, OMPI_ALIGNMENT_FORTRAN_REAL2, DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real2 = { INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL2, OMPI_SIZEOF_FORTRAN_REAL2, OMPI_ALIGNMENT_FORTRAN_REAL2, DT_FLAG_DATA_FLOAT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real2 = INIT_UNAVAILABLE_DATA( REAL2 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real2 = { INIT_UNAVAILABLE_DATA( REAL2) };
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real4 = INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL4, OMPI_SIZEOF_FORTRAN_REAL4, OMPI_ALIGNMENT_FORTRAN_REAL4, DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real4 = { INIT_BASIC_FORTRAN_TYPE( DT_FLOAT, REAL4, OMPI_SIZEOF_FORTRAN_REAL4, OMPI_ALIGNMENT_FORTRAN_REAL4, DT_FLAG_DATA_FLOAT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real4 = INIT_UNAVAILABLE_DATA( REAL4 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real4 = { INIT_UNAVAILABLE_DATA( REAL4) };
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real8 = INIT_BASIC_FORTRAN_TYPE( DT_DOUBLE, REAL8, OMPI_SIZEOF_FORTRAN_REAL8, OMPI_ALIGNMENT_FORTRAN_REAL8, DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real8 = { INIT_BASIC_FORTRAN_TYPE( DT_DOUBLE, REAL8, OMPI_SIZEOF_FORTRAN_REAL8, OMPI_ALIGNMENT_FORTRAN_REAL8, DT_FLAG_DATA_FLOAT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real8 = INIT_UNAVAILABLE_DATA( REAL8 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real8 = { INIT_UNAVAILABLE_DATA( REAL8) };
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real16 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_DOUBLE, REAL16, OMPI_SIZEOF_FORTRAN_REAL16, OMPI_ALIGNMENT_FORTRAN_REAL16, DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real16 = { INIT_BASIC_FORTRAN_TYPE( DT_LONG_DOUBLE, REAL16, OMPI_SIZEOF_FORTRAN_REAL16, OMPI_ALIGNMENT_FORTRAN_REAL16, DT_FLAG_DATA_FLOAT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real16 = INIT_UNAVAILABLE_DATA( REAL16 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_real16 = { INIT_UNAVAILABLE_DATA( REAL16) };
 #endif
 
 #if OMPI_HAVE_FORTRAN_INTEGER1
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer1 = INIT_BASIC_FORTRAN_TYPE( DT_CHAR, INTEGER1, OMPI_SIZEOF_FORTRAN_INTEGER1, OMPI_ALIGNMENT_FORTRAN_INTEGER1, DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer1 = { INIT_BASIC_FORTRAN_TYPE( DT_CHAR, INTEGER1, OMPI_SIZEOF_FORTRAN_INTEGER1, OMPI_ALIGNMENT_FORTRAN_INTEGER1, DT_FLAG_DATA_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer1 = INIT_UNAVAILABLE_DATA( INTEGER1 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer1 = { INIT_UNAVAILABLE_DATA( INTEGER1) };
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer2 = INIT_BASIC_FORTRAN_TYPE( DT_SHORT, INTEGER2, OMPI_SIZEOF_FORTRAN_INTEGER2, OMPI_ALIGNMENT_FORTRAN_INTEGER2, DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer2 = { INIT_BASIC_FORTRAN_TYPE( DT_SHORT, INTEGER2, OMPI_SIZEOF_FORTRAN_INTEGER2, OMPI_ALIGNMENT_FORTRAN_INTEGER2, DT_FLAG_DATA_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer2 = INIT_UNAVAILABLE_DATA( INTEGER2 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer2 = { INIT_UNAVAILABLE_DATA( INTEGER2) };
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer4 = INIT_BASIC_FORTRAN_TYPE( DT_INT, INTEGER4, OMPI_SIZEOF_FORTRAN_INTEGER4, OMPI_ALIGNMENT_FORTRAN_INTEGER4, DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer4 = { INIT_BASIC_FORTRAN_TYPE( DT_INT, INTEGER4, OMPI_SIZEOF_FORTRAN_INTEGER4, OMPI_ALIGNMENT_FORTRAN_INTEGER4, DT_FLAG_DATA_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer4 = INIT_UNAVAILABLE_DATA( INTEGER4 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer4 = { INIT_UNAVAILABLE_DATA( INTEGER4) };
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG_INT, INTEGER8, OMPI_SIZEOF_FORTRAN_INTEGER8, OMPI_ALIGNMENT_FORTRAN_INTEGER8, DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer8 = { INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG_INT, INTEGER8, OMPI_SIZEOF_FORTRAN_INTEGER8, OMPI_ALIGNMENT_FORTRAN_INTEGER8, DT_FLAG_DATA_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer8 = INIT_UNAVAILABLE_DATA( INTEGER8 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer8 = { INIT_UNAVAILABLE_DATA( INTEGER8) };
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer16 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG_INT, INTEGER16, OMPI_SIZEOF_FORTRAN_INTEGER16, OMPI_ALIGNMENT_FORTRAN_INTEGER16, DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer16 = { INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG_INT, INTEGER16, OMPI_SIZEOF_FORTRAN_INTEGER16, OMPI_ALIGNMENT_FORTRAN_INTEGER16, DT_FLAG_DATA_INT) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer16 = INIT_UNAVAILABLE_DATA( INTEGER16 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_integer16 = { INIT_UNAVAILABLE_DATA( INTEGER16) };
 #endif
 
 #if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex8 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_FLOAT, COMPLEX8, OMPI_SIZEOF_FORTRAN_COMPLEX, OMPI_ALIGNMENT_FORTRAN_REAL, DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_complex8 = { INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_FLOAT, COMPLEX8, OMPI_SIZEOF_FORTRAN_COMPLEX, OMPI_ALIGNMENT_FORTRAN_REAL, DT_FLAG_DATA_COMPLEX) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex8 = INIT_UNAVAILABLE_DATA( COMPLEX8 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_complex8 = { INIT_UNAVAILABLE_DATA( COMPLEX8) };
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex16 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_DOUBLE, COMPLEX16, OMPI_SIZEOF_FORTRAN_COMPLEX16, OMPI_ALIGNMENT_FORTRAN_COMPLEX16, DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_complex16 = { INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_DOUBLE, COMPLEX16, OMPI_SIZEOF_FORTRAN_COMPLEX16, OMPI_ALIGNMENT_FORTRAN_COMPLEX16, DT_FLAG_DATA_COMPLEX) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex16 = INIT_UNAVAILABLE_DATA( COMPLEX16 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_complex16 = { INIT_UNAVAILABLE_DATA( COMPLEX16) };
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32 && OMPI_REAL16_MATCHES_C
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_LONG_DOUBLE, COMPLEX32, OMPI_SIZEOF_FORTRAN_COMPLEX32, OMPI_ALIGNMENT_FORTRAN_COMPLEX32, DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_complex32 = { INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_LONG_DOUBLE, COMPLEX32, OMPI_SIZEOF_FORTRAN_COMPLEX32, OMPI_ALIGNMENT_FORTRAN_COMPLEX32, DT_FLAG_DATA_COMPLEX) };
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex32 = INIT_UNAVAILABLE_DATA( COMPLEX32 );
+OMPI_DECLSPEC ompi_predefined_datatype_t ompi_mpi_complex32 = { INIT_UNAVAILABLE_DATA( COMPLEX32) };
 #endif
 
 /*
@@ -266,46 +264,46 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_complex32 = INIT_UNAVAILABLE_DATA( COMPLE
 const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
     &ompi_mpi_loop,
     &ompi_mpi_end_loop,
-    &ompi_mpi_lb,
-    &ompi_mpi_ub,
-    &ompi_mpi_char,
-    &ompi_mpi_character,
-    &ompi_mpi_unsigned_char,
-    &ompi_mpi_signed_char,
-    &ompi_mpi_byte,
-    &ompi_mpi_short,
-    &ompi_mpi_unsigned_short,
-    &ompi_mpi_int,
-    &ompi_mpi_unsigned,
-    &ompi_mpi_long,
-    &ompi_mpi_unsigned_long,
-    &ompi_mpi_long_long_int,
-    &ompi_mpi_unsigned_long_long,
-    &ompi_mpi_float,
-    &ompi_mpi_double,
-    &ompi_mpi_long_double,
-    &ompi_mpi_packed,
-    &ompi_mpi_wchar,
-    &ompi_mpi_cxx_bool,
-    &ompi_mpi_logic,
-    &ompi_mpi_integer,
-    &ompi_mpi_real,
-    &ompi_mpi_dblprec,
-    &ompi_mpi_cplex,
-    &ompi_mpi_dblcplex,
-    &ompi_mpi_ldblcplex,
-    &ompi_mpi_2int,
-    &ompi_mpi_2integer,
-    &ompi_mpi_2real,
-    &ompi_mpi_2dblprec,
-    &ompi_mpi_2cplex,
-    &ompi_mpi_2dblcplex,
-    &ompi_mpi_float_int,
-    &ompi_mpi_double_int,
-    &ompi_mpi_longdbl_int,
-    &ompi_mpi_long_int,
-    &ompi_mpi_short_int,
-    &ompi_mpi_unavailable
+    &ompi_mpi_lb.dt,
+    &ompi_mpi_ub.dt,
+    &ompi_mpi_char.dt,
+    &ompi_mpi_character.dt,
+    &ompi_mpi_unsigned_char.dt,
+    &ompi_mpi_signed_char.dt,
+    &ompi_mpi_byte.dt,
+    &ompi_mpi_short.dt,
+    &ompi_mpi_unsigned_short.dt,
+    &ompi_mpi_int.dt,
+    &ompi_mpi_unsigned.dt,
+    &ompi_mpi_long.dt,
+    &ompi_mpi_unsigned_long.dt,
+    &ompi_mpi_long_long_int.dt,
+    &ompi_mpi_unsigned_long_long.dt,
+    &ompi_mpi_float.dt,
+    &ompi_mpi_double.dt,
+    &ompi_mpi_long_double.dt,
+    &ompi_mpi_packed.dt,
+    &ompi_mpi_wchar.dt,
+    &ompi_mpi_cxx_bool.dt,
+    &ompi_mpi_logic.dt,
+    &ompi_mpi_integer.dt,
+    &ompi_mpi_real.dt,
+    &ompi_mpi_dblprec.dt,
+    &ompi_mpi_cplex.dt,
+    &ompi_mpi_dblcplex.dt,
+    &ompi_mpi_ldblcplex.dt,
+    &ompi_mpi_2int.dt,
+    &ompi_mpi_2integer.dt,
+    &ompi_mpi_2real.dt,
+    &ompi_mpi_2dblprec.dt,
+    &ompi_mpi_2cplex.dt,
+    &ompi_mpi_2dblcplex.dt,
+    &ompi_mpi_float_int.dt,
+    &ompi_mpi_double_int.dt,
+    &ompi_mpi_longdbl_int.dt,
+    &ompi_mpi_long_int.dt,
+    &ompi_mpi_short_int.dt,
+    &ompi_mpi_unavailable.dt
 };
 
 opal_pointer_array_t ompi_datatype_f_to_c_table;
@@ -314,14 +312,14 @@ size_t ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
 #define COPY_DATA_DESC( PDST, PSRC )                                    \
     do {                                                                \
+        (PDST)->flags    = (PSRC)->flags;                               \
+        (PDST)->id       = (PSRC)->id;                                  \
         (PDST)->size     = (PSRC)->size;                                \
         (PDST)->true_lb  = (PSRC)->true_lb;                             \
         (PDST)->true_ub  = (PSRC)->true_ub;                             \
-        (PDST)->align    = (PSRC)->align;                               \
         (PDST)->lb       = (PSRC)->lb;                                  \
         (PDST)->ub       = (PSRC)->ub;                                  \
-        (PDST)->flags    = (PSRC)->flags;                               \
-        (PDST)->id       = (PSRC)->id;                                  \
+        (PDST)->align    = (PSRC)->align;                               \
         (PDST)->nbElems  = (PSRC)->nbElems;                             \
         (PDST)->bdt_used = (PSRC)->bdt_used;                            \
         if( NULL != (PDST)->desc.desc )                                 \
@@ -467,41 +465,41 @@ int32_t ompi_ddt_init( void )
      */
 
     /* the 2 complex datatypes (float and double) */
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex.dt, DT_COMPLEX_FLOAT, "MPI_COMPLEX",
 				      float, float, DT_FLOAT, DT_FLOAT,
 				      DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex.dt, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX",
 				      double, double, DT_DOUBLE, DT_DOUBLE,
 				      DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
 #if HAVE_LONG_DOUBLE
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_LONG_DOUBLE_COMPLEX",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex.dt, DT_COMPLEX_LONG_DOUBLE, "MPI_LONG_DOUBLE_COMPLEX",
 				      long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE,
 				      DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
 #endif  /* HAVE_LONG_DOUBLE */
 
     /* Now the predefined MPI2 datatypes (they should last forever!) */
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_float_int, DT_FLOAT_INT, "MPI_FLOAT_INT",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_float_int.dt, DT_FLOAT_INT, "MPI_FLOAT_INT",
 				      float, int, DT_FLOAT, DT_INT, DT_FLAG_DATA_C );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_double_int, DT_DOUBLE_INT, "MPI_DOUBLE_INT",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_double_int.dt, DT_DOUBLE_INT, "MPI_DOUBLE_INT",
 				      double, int, DT_DOUBLE, DT_INT, DT_FLAG_DATA_C );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_long_int, DT_LONG_INT, "MPI_LONG_INT",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_long_int.dt, DT_LONG_INT, "MPI_LONG_INT",
 				      long, int, DT_LONG, DT_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_short_int.dt, DT_SHORT_INT, "MPI_SHORT_INT",
 				      short, int, DT_SHORT, DT_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT",
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_longdbl_int.dt, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT",
 				      long double, int, DT_LONG_DOUBLE, DT_INT, DT_FLAG_DATA_C );
 
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT,
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2int.dt, DT_2INT, "MPI_2INT", DT_INT,
 				     DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT,
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2integer.dt, DT_2INTEGER, "MPI_2INTEGER", DT_INT,
 				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT);
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT,
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2real.dt, DT_2REAL, "MPI_2REAL", DT_FLOAT,
 				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE,
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblprec.dt, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE,
 				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT,
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2cplex.dt, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT,
 				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT);
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX",
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblcplex.dt, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX",
                                      DT_COMPLEX_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
 
     for( i = 0; i < DT_MAX_PREDEFINED; ++i ) {
@@ -512,206 +510,206 @@ int32_t ompi_ddt_init( void )
        the synonym types */
 
     /* C++ complex types */
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_cplex, "MPI_CXX_COMPLEX", &ompi_mpi_cplex );
-    ompi_mpi_cxx_cplex.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_dblcplex, "MPI_CXX_DOUBLE_COMPLEX", &ompi_mpi_dblcplex );
-    ompi_mpi_cxx_dblcplex.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_cplex.dt, "MPI_CXX_COMPLEX", &ompi_mpi_cplex.dt );
+    ompi_mpi_cxx_cplex.dt.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_dblcplex.dt, "MPI_CXX_DOUBLE_COMPLEX", &ompi_mpi_dblcplex.dt );
+    ompi_mpi_cxx_dblcplex.dt.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
 #if HAVE_LONG_DOUBLE
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_ldblcplex, "MPI_CXX_LONG_DOUBLE_COMPLEX", &ompi_mpi_ldblcplex );
-    ompi_mpi_cxx_ldblcplex.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_cxx_ldblcplex.dt, "MPI_CXX_LONG_DOUBLE_COMPLEX", &ompi_mpi_ldblcplex.dt );
+    ompi_mpi_cxx_ldblcplex.dt.flags |= DT_FLAG_DATA_CPP | DT_FLAG_DATA_COMPLEX;
 #endif  /* HAVE_LONG_DOUBLE */
 
     /* Optional Fortran LOGICAL types */
 #if OMPI_HAVE_FORTRAN_LOGICAL1
 #if (OMPI_SIZEOF_FORTRAN_LOGICAL1 == SIZEOF_CHAR)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1, "MPI_LOGICAL1", &ompi_mpi_char );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1.dt, "MPI_LOGICAL1", &ompi_mpi_char.dt );
 #elif (OMPI_SIZEOF_FORTRAN_LOGICAL1 == SIZEOF_SHORT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1, "MPI_LOGICAL1", &ompi_mpi_short );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1.dt, "MPI_LOGICAL1", &ompi_mpi_short.dt );
 #elif (OMPI_SIZEOF_FORTRAN_LOGICAL1 == SIZEOF_INT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1, "MPI_LOGICAL1", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1.dt, "MPI_LOGICAL1", &ompi_mpi_int.dt );
 #else
 #   warning "No proper C type found for LOGICAL1"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1, "MPI_LOGICAL1", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical1.dt, "MPI_LOGICAL1", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_logical1.flags |= DT_FLAG_DATA_FORTRAN;
+    ompi_mpi_logical1.dt.flags |= DT_FLAG_DATA_FORTRAN;
 #endif /* OMPI_HAVE_FORTRAN_LOGICAL1 */
 
 #if OMPI_HAVE_FORTRAN_LOGICAL2
 #if (OMPI_SIZEOF_FORTRAN_LOGICAL2 == SIZEOF_SHORT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical2, "MPI_LOGICAL2", &ompi_mpi_short );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical2.dt, "MPI_LOGICAL2", &ompi_mpi_short.dt );
 #elif (OMPI_SIZEOF_FORTRAN_LOGICAL2 == SIZEOF_INT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical2, "MPI_LOGICAL2", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical2.dt, "MPI_LOGICAL2", &ompi_mpi_int.dt );
 #else
 #   warning "No proper C type found for LOGICAL2"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical2, "MPI_LOGICAL2", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical2.dt, "MPI_LOGICAL2", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_logical2.flags |= DT_FLAG_DATA_FORTRAN;
+    ompi_mpi_logical2.dt.flags |= DT_FLAG_DATA_FORTRAN;
 #endif /* OMPI_HAVE_FORTRAN_LOGICAL2 */
 
 #if OMPI_HAVE_FORTRAN_LOGICAL4
 #if (OMPI_SIZEOF_FORTRAN_LOGICAL4 == SIZEOF_INT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical4, "MPI_LOGICAL4", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical4.dt, "MPI_LOGICAL4", &ompi_mpi_int.dt );
 #elif (OMPI_SIZEOF_FORTRAN_LOGICAL4 == SIZEOF_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical4, "MPI_LOGICAL4", &ompi_mpi_long );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical4.dt, "MPI_LOGICAL4", &ompi_mpi_long.dt );
 #else
 #   warning "No proper C type found for LOGICAL4"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical4, "MPI_LOGICAL4", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical4.dt, "MPI_LOGICAL4", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_logical4.flags |= DT_FLAG_DATA_FORTRAN;
+    ompi_mpi_logical4.dt.flags |= DT_FLAG_DATA_FORTRAN;
 #endif /* OMPI_HAVE_FORTRAN_LOGICAL4 */
 
 #if OMPI_HAVE_FORTRAN_LOGICAL8
 #if (OMPI_SIZEOF_FORTRAN_LOGICAL8 == SIZEOF_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical8, "MPI_LOGICAL8", &ompi_mpi_long );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical8.dt, "MPI_LOGICAL8", &ompi_mpi_long.dt );
 #elif (OMPI_SIZEOF_FORTRAN_LOGICAL8 == SIZEOF_LONG_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical8, "MPI_LOGICAL8", &ompi_mpi_long_long_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical8.dt, "MPI_LOGICAL8", &ompi_mpi_long_long_int.dt );
 #else
 #   warning "No proper C type found for LOGICAL8"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical8, "MPI_LOGICAL8", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_logical8.dt, "MPI_LOGICAL8", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_logical8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+    ompi_mpi_logical8.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
 #endif /* OMPI_HAVE_FORTRAN_INTEGER8 */
 
     /* Optional Fortran REAL types */
 
 #if OMPI_HAVE_FORTRAN_REAL2
 #if (OMPI_SIZEOF_FORTRAN_REAL2 == SIZEOF_FLOAT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real2, "MPI_REAL2", &ompi_mpi_float );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real2.dt, "MPI_REAL2", &ompi_mpi_float.dt );
 #else
 #   warning "No proper C type found for REAL2"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real2, "MPI_REAL2", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real2.dt, "MPI_REAL2", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_real2.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+    ompi_mpi_real2.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
 #endif /* OMPI_HAVE_FORTRAN_REAL2 */
 
 #if OMPI_HAVE_FORTRAN_REAL4
 #if (OMPI_SIZEOF_FORTRAN_REAL4 == SIZEOF_FLOAT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4, "MPI_REAL4", &ompi_mpi_float );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4.dt, "MPI_REAL4", &ompi_mpi_float.dt );
 #else
 #   warning "No proper C type found for REAL4"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4, "MPI_REAL4", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real4.dt, "MPI_REAL4", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_real4.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+    ompi_mpi_real4.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
 #endif /* OMPI_HAVE_FORTRAN_REAL4 */
 
 #if OMPI_HAVE_FORTRAN_REAL8
 #if (OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_FLOAT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_float );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8.dt, "MPI_REAL8", &ompi_mpi_float.dt );
 #elif (OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_DOUBLE)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_double );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8.dt, "MPI_REAL8", &ompi_mpi_double.dt );
 #elif (OMPI_SIZEOF_FORTRAN_REAL8 == SIZEOF_LONG_DOUBLE)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_long_double );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8.dt, "MPI_REAL8", &ompi_mpi_long_double.dt );
 #else
 #   warning "No proper C type found for REAL8"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8, "MPI_REAL8", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real8.dt, "MPI_REAL8", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_real8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+    ompi_mpi_real8.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
 #endif /* OMPI_HAVE_FORTRAN_REAL8 */
 
 #if OMPI_HAVE_FORTRAN_REAL16
 #if (OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_LONG_DOUBLE)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16, "MPI_REAL16", &ompi_mpi_long_double );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16.dt, "MPI_REAL16", &ompi_mpi_long_double.dt );
 #else
 #   warning "No proper C type found for REAL16"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16, "MPI_REAL16", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_real16.dt, "MPI_REAL16", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_real16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
+    ompi_mpi_real16.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT;
 #endif /* OMPI_HAVE_FORTRAN_REAL16 */
 
     /* Optional Fortran INTEGER types */
 
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #if (OMPI_SIZEOF_FORTRAN_INTEGER1 == SIZEOF_CHAR)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_char );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1.dt, "MPI_INTEGER1", &ompi_mpi_char.dt );
 #elif (OMPI_SIZEOF_FORTRAN_INTEGER1 == SIZEOF_SHORT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_short );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1.dt, "MPI_INTEGER1", &ompi_mpi_short.dt );
 #elif (OMPI_SIZEOF_FORTRAN_INTEGER1 == SIZEOF_INT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1.dt, "MPI_INTEGER1", &ompi_mpi_int.dt );
 #else
 #   warning "No proper C type found for INTEGER1"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1, "MPI_INTEGER1", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer1.dt, "MPI_INTEGER1", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_integer1.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+    ompi_mpi_integer1.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
 #endif /* OMPI_HAVE_FORTRAN_INTEGER1 */
 
 #if OMPI_HAVE_FORTRAN_INTEGER2
 #if (OMPI_SIZEOF_FORTRAN_INTEGER2 == SIZEOF_SHORT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_short );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2.dt, "MPI_INTEGER2", &ompi_mpi_short.dt );
 #elif (OMPI_SIZEOF_FORTRAN_INTEGER2 == SIZEOF_INT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2.dt, "MPI_INTEGER2", &ompi_mpi_int.dt );
 #else
 #   warning "No proper C type found for INTEGER2"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2, "MPI_INTEGER2", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer2.dt, "MPI_INTEGER2", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_integer2.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+    ompi_mpi_integer2.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
 #endif /* OMPI_HAVE_FORTRAN_INTEGER2 */
 
 #if OMPI_HAVE_FORTRAN_INTEGER4
 #if (OMPI_SIZEOF_FORTRAN_INTEGER4 == SIZEOF_INT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4.dt, "MPI_INTEGER4", &ompi_mpi_int.dt );
 #elif (OMPI_SIZEOF_FORTRAN_INTEGER4 == SIZEOF_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_long );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4.dt, "MPI_INTEGER4", &ompi_mpi_long.dt );
 #else
 #   warning "No proper C type found for INTEGER4"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4.dt, "MPI_INTEGER4", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_integer4.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+    ompi_mpi_integer4.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
 #endif /* OMPI_HAVE_FORTRAN_INTEGER4 */
 
 #if OMPI_HAVE_FORTRAN_INTEGER8
 #if (OMPI_SIZEOF_FORTRAN_INTEGER8 == SIZEOF_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8.dt, "MPI_INTEGER8", &ompi_mpi_long.dt );
 #elif (OMPI_SIZEOF_FORTRAN_INTEGER8 == SIZEOF_LONG_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long_long_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8.dt, "MPI_INTEGER8", &ompi_mpi_long_long_int.dt );
 #else
 #   warning "No proper C type found for INTEGER8"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8.dt, "MPI_INTEGER8", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_integer8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+    ompi_mpi_integer8.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
 #endif /* OMPI_HAVE_FORTRAN_INTEGER8 */
 
 #if OMPI_HAVE_FORTRAN_INTEGER16
 #if (OMPI_SIZEOF_FORTRAN_INTEGER16 == SIZEOF_LONG_LONG)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16, "MPI_INTEGER16", &ompi_mpi_long_long_int );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16.dt, "MPI_INTEGER16", &ompi_mpi_long_long_int.dt );
 #else
 #   warning "No proper C type found for INTEGER16"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16, "MPI_INTEGER16", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16.dt, "MPI_INTEGER16", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_integer16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
+    ompi_mpi_integer16.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
 #endif /* OMPI_HAVE_FORTRAN_INTEGER16 */
 
     /* Optional Fortran COMPLEX types */
 
 #if OMPI_HAVE_FORTRAN_COMPLEX8
 #if (OMPI_SIZEOF_FORTRAN_COMPLEX8 == 2*SIZEOF_FLOAT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8, "MPI_COMPLEX8", &ompi_mpi_cplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8.dt, "MPI_COMPLEX8", &ompi_mpi_cplex.dt );
 #else
 #   warning "No proper C type found for COMPLEX8"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8, "MPI_COMPLEX8", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex8.dt, "MPI_COMPLEX8", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_complex8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
+    ompi_mpi_complex8.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
 #endif /* OMPI_HAVE_FORTRAN_COMPLEX8 */
 
 #if OMPI_HAVE_FORTRAN_COMPLEX16
 #if (OMPI_SIZEOF_FORTRAN_COMPLEX16 == 2*SIZEOF_FLOAT)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_cplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16.dt, "MPI_COMPLEX16", &ompi_mpi_cplex.dt );
 #elif (OMPI_SIZEOF_FORTRAN_COMPLEX16 == 2*SIZEOF_DOUBLE)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_dblcplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16.dt, "MPI_COMPLEX16", &ompi_mpi_dblcplex.dt );
 #else
 #   warning "No proper C type found for COMPLEX16"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16, "MPI_COMPLEX16", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex16.dt, "MPI_COMPLEX16", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_complex16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
+    ompi_mpi_complex16.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
 #endif /* OMPI_HAVE_FORTRAN_COMPLEX16 */
 
 #if OMPI_HAVE_FORTRAN_COMPLEX32
 #if OMPI_REAL16_MATCHES_C && (OMPI_SIZEOF_FORTRAN_COMPLEX32 == 2*SIZEOF_LONG_DOUBLE)
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32, "MPI_COMPLEX32", &ompi_mpi_ldblcplex );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32.dt, "MPI_COMPLEX32", &ompi_mpi_ldblcplex.dt );
 #else
 #   warning "No proper C type found for COMPLEX32"
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32, "MPI_COMPLEX32", &ompi_mpi_unavailable );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_complex32.dt, "MPI_COMPLEX32", &ompi_mpi_unavailable.dt );
 #endif
-    ompi_mpi_complex32.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
+    ompi_mpi_complex32.dt.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX;
 #endif /* OMPI_HAVE_FORTRAN_COMPLEX32 */
 
     /* Start to populate the f2c index translation table */
@@ -726,10 +724,10 @@ int32_t ompi_ddt_init( void )
 
 #define MOOG(name)                                                      \
     {                                                                   \
-        ompi_mpi_##name.d_f_to_c_index =                                \
+        ompi_mpi_##name.dt.d_f_to_c_index =                                \
             opal_pointer_array_add(&ompi_datatype_f_to_c_table, &ompi_mpi_##name); \
-        if( ompi_ddt_number_of_predefined_data < (ompi_mpi_##name).d_f_to_c_index ) \
-            ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index; \
+        if( ompi_ddt_number_of_predefined_data < (ompi_mpi_##name).dt.d_f_to_c_index ) \
+            ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).dt.d_f_to_c_index; \
     }
 
     /*
@@ -803,7 +801,7 @@ int32_t ompi_ddt_init( void )
     MOOG(cxx_dblcplex);
     MOOG(cxx_ldblcplex);
 
-    for( i = 0; i < ompi_mpi_cxx_ldblcplex.d_f_to_c_index; i++ ) {
+    for( i = 0; i < ompi_mpi_cxx_ldblcplex.dt.d_f_to_c_index; i++ ) {
         ompi_datatype_t* datatype = (ompi_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
 
         if( (datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size ) {

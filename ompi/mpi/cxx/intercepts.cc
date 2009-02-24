@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -78,13 +79,13 @@ void ompi_mpi_cxx_win_throw_excptn_fctn(MPI_Win *, int *errcode, ...)
 void
 MPI::InitializeIntercepts()
 {
-    ompi_mpi_errors_throw_exceptions.eh_comm_fn = 
+    ompi_mpi_errors_throw_exceptions.eh.eh_comm_fn = 
         ompi_mpi_cxx_comm_throw_excptn_fctn;
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
-    ompi_mpi_errors_throw_exceptions.eh_file_fn = 
+    ompi_mpi_errors_throw_exceptions.eh.eh_file_fn = 
         ompi_mpi_cxx_file_throw_excptn_fctn;
 #endif
-    ompi_mpi_errors_throw_exceptions.eh_win_fn = 
+    ompi_mpi_errors_throw_exceptions.eh.eh_win_fn = 
         ompi_mpi_cxx_win_throw_excptn_fctn;
 }
 

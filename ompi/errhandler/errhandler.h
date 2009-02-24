@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -127,27 +127,41 @@ struct ompi_errhandler_t {
 };
 typedef struct ompi_errhandler_t ompi_errhandler_t;
 
+/**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_ERRHANDLER_PAD 1024
+
+struct ompi_predefined_errhandler_t {
+    struct ompi_errhandler_t eh;
+    char padding[PREDEFINED_ERRHANDLER_PAD - sizeof(ompi_errhandler_t)];
+};
+
+typedef struct ompi_predefined_errhandler_t ompi_predefined_errhandler_t;
+
 
 /**
  * Global variable for MPI_ERRHANDLER_NULL
  */
-OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errhandler_null;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
 
 /**
  * Global variable for MPI_ERRORS_ARE_FATAL
  */
-OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_are_fatal;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
 
 /**
  * Global variable for MPI_ERRORS_RETURN
  */
-OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_return;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_return;
 
 /**
  * Global variable for MPI::ERRORS_THROW_EXCEPTIONS.  Will abort if
  * MPI_INIT wasn't called as MPI::INIT
  */
-OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_throw_exceptions;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
 
 /**
  * Table for Fortran <-> C errhandler handle conversion

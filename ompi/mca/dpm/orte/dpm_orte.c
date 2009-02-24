@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@
 #include "orte/runtime/orte_wait.h"
 
 #include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/info/info.h"
@@ -931,11 +933,11 @@ static int dyn_init(void)
      * objects
      */
     
-    oldcomm = &ompi_mpi_comm_null;
+    oldcomm = &ompi_mpi_comm_null.comm;
     OBJ_RELEASE(oldcomm);
-    group = &ompi_mpi_group_null;
+    group = &ompi_mpi_group_null.group;
     OBJ_RELEASE(group);
-    errhandler = &ompi_mpi_errors_are_fatal;
+    errhandler = &ompi_mpi_errors_are_fatal.eh;
     OBJ_RELEASE(errhandler);
     
     /* Set name for debugging purposes */

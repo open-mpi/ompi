@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,9 +44,9 @@
 */
 opal_pointer_array_t ompi_mpi_communicators; 
 
-ompi_communicator_t  ompi_mpi_comm_world;
-ompi_communicator_t  ompi_mpi_comm_self;
-ompi_communicator_t  ompi_mpi_comm_null;
+ompi_predefined_communicator_t  ompi_mpi_comm_world;
+ompi_predefined_communicator_t  ompi_mpi_comm_self;
+ompi_predefined_communicator_t  ompi_mpi_comm_null;
 ompi_communicator_t  *ompi_mpi_comm_parent;
 
 static void ompi_comm_construct(ompi_communicator_t* comm);
@@ -84,31 +85,31 @@ int ompi_comm_init(void)
     ompi_set_group_rank(group, ompi_proc_local());
     ompi_group_increment_proc_count (group);
 
-    ompi_mpi_comm_world.c_contextid    = 0;
-    ompi_mpi_comm_world.c_id_start_index = 4;
-    ompi_mpi_comm_world.c_id_available = 4;
-    ompi_mpi_comm_world.c_f_to_c_index = 0;
-    ompi_mpi_comm_world.c_my_rank      = group->grp_my_rank;
-    ompi_mpi_comm_world.c_local_group  = group;
-    ompi_mpi_comm_world.c_remote_group = group;
-    OBJ_RETAIN(ompi_mpi_comm_world.c_remote_group);
-    ompi_mpi_comm_world.c_cube_dim     = opal_cube_dim((int)size);
-    ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
-    OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
-    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
+    ompi_mpi_comm_world.comm.c_contextid    = 0;
+    ompi_mpi_comm_world.comm.c_id_start_index = 4;
+    ompi_mpi_comm_world.comm.c_id_available = 4;
+    ompi_mpi_comm_world.comm.c_f_to_c_index = 0;
+    ompi_mpi_comm_world.comm.c_my_rank      = group->grp_my_rank;
+    ompi_mpi_comm_world.comm.c_local_group  = group;
+    ompi_mpi_comm_world.comm.c_remote_group = group;
+    OBJ_RETAIN(ompi_mpi_comm_world.comm.c_remote_group);
+    ompi_mpi_comm_world.comm.c_cube_dim     = opal_cube_dim((int)size);
+    ompi_mpi_comm_world.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
+    OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
+    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
-    MEMCHECKER (memset (ompi_mpi_comm_world.c_name, 0, MPI_MAX_OBJECT_NAME));
-    strncpy (ompi_mpi_comm_world.c_name, "MPI_COMM_WORLD",
+    MEMCHECKER (memset (ompi_mpi_comm_world.comm.c_name, 0, MPI_MAX_OBJECT_NAME));
+    strncpy (ompi_mpi_comm_world.comm.c_name, "MPI_COMM_WORLD",
              strlen("MPI_COMM_WORLD")+1 );
-    ompi_mpi_comm_world.c_flags |= OMPI_COMM_NAMEISSET;
-    ompi_mpi_comm_world.c_flags |= OMPI_COMM_INTRINSIC;
+    ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_NAMEISSET;
+    ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_INTRINSIC;
 
     /* We have to create a hash (although it is legal to leave this
        filed NULL -- the attribute accessor functions will intepret
        this as "there are no attributes cached on this object")
        because MPI_COMM_WORLD has some predefined attributes. */
-    ompi_attr_hash_init(&ompi_mpi_comm_world.c_keyhash);
+    ompi_attr_hash_init(&ompi_mpi_comm_world.comm.c_keyhash);
 
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&ompi_mpi_comm_self, ompi_communicator_t);
@@ -119,54 +120,54 @@ int ompi_comm_init(void)
     OMPI_GROUP_SET_INTRINSIC (group);
     OMPI_GROUP_SET_DENSE (group);
     
-    ompi_mpi_comm_self.c_contextid    = 1;
-    ompi_mpi_comm_self.c_f_to_c_index = 1;
-    ompi_mpi_comm_self.c_id_start_index = 20;
-    ompi_mpi_comm_self.c_id_available = 20;
-    ompi_mpi_comm_self.c_my_rank      = group->grp_my_rank;
-    ompi_mpi_comm_self.c_local_group  = group;
-    ompi_mpi_comm_self.c_remote_group = group;
-    OBJ_RETAIN(ompi_mpi_comm_self.c_remote_group);
-    ompi_mpi_comm_self.error_handler  = &ompi_mpi_errors_are_fatal;
-    OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
-    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
+    ompi_mpi_comm_self.comm.c_contextid    = 1;
+    ompi_mpi_comm_self.comm.c_f_to_c_index = 1;
+    ompi_mpi_comm_self.comm.c_id_start_index = 20;
+    ompi_mpi_comm_self.comm.c_id_available = 20;
+    ompi_mpi_comm_self.comm.c_my_rank      = group->grp_my_rank;
+    ompi_mpi_comm_self.comm.c_local_group  = group;
+    ompi_mpi_comm_self.comm.c_remote_group = group;
+    OBJ_RETAIN(ompi_mpi_comm_self.comm.c_remote_group);
+    ompi_mpi_comm_self.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
+    OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
+    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
-    MEMCHECKER (memset (ompi_mpi_comm_self.c_name, 0, MPI_MAX_OBJECT_NAME));
-    strncpy(ompi_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
-    ompi_mpi_comm_self.c_flags |= OMPI_COMM_NAMEISSET;
-    ompi_mpi_comm_self.c_flags |= OMPI_COMM_INTRINSIC;
+    MEMCHECKER (memset (ompi_mpi_comm_self.comm.c_name, 0, MPI_MAX_OBJECT_NAME));
+    strncpy(ompi_mpi_comm_self.comm.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
+    ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_NAMEISSET;
+    ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_INTRINSIC;
 
     /* We can set MPI_COMM_SELF's keyhash to NULL because it has no
        predefined attributes.  If a user defines an attribute on
        MPI_COMM_SELF, the keyhash will automatically be created. */
-    ompi_mpi_comm_self.c_keyhash = NULL;
+    ompi_mpi_comm_self.comm.c_keyhash = NULL;
 
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
-    ompi_mpi_comm_null.c_local_group  = &ompi_mpi_group_null;
-    ompi_mpi_comm_null.c_remote_group = &ompi_mpi_group_null;
-    OBJ_RETAIN(&ompi_mpi_group_null); 
-    OBJ_RETAIN(&ompi_mpi_group_null);
+    ompi_mpi_comm_null.comm.c_local_group  = &ompi_mpi_group_null.group;
+    ompi_mpi_comm_null.comm.c_remote_group = &ompi_mpi_group_null.group;
+    OBJ_RETAIN(&ompi_mpi_group_null.group); 
+    OBJ_RETAIN(&ompi_mpi_group_null.group);
 
-    ompi_mpi_comm_null.c_contextid    = 2;
-    ompi_mpi_comm_null.c_f_to_c_index = 2;
-    ompi_mpi_comm_null.c_my_rank      = MPI_PROC_NULL;
+    ompi_mpi_comm_null.comm.c_contextid    = 2;
+    ompi_mpi_comm_null.comm.c_f_to_c_index = 2;
+    ompi_mpi_comm_null.comm.c_my_rank      = MPI_PROC_NULL;
 
-    ompi_mpi_comm_null.error_handler  = &ompi_mpi_errors_are_fatal;
-    OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
+    ompi_mpi_comm_null.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
+    OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
     opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
-    MEMCHECKER (memset (ompi_mpi_comm_null.c_name, 0, MPI_MAX_OBJECT_NAME));
-    strncpy(ompi_mpi_comm_null.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
-    ompi_mpi_comm_null.c_flags |= OMPI_COMM_NAMEISSET;
-    ompi_mpi_comm_null.c_flags |= OMPI_COMM_INTRINSIC;
+    MEMCHECKER (memset (ompi_mpi_comm_null.comm.c_name, 0, MPI_MAX_OBJECT_NAME));
+    strncpy(ompi_mpi_comm_null.comm.c_name,"MPI_COMM_NULL",strlen("MPI_COMM_NULL")+1);
+    ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_NAMEISSET;
+    ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_INTRINSIC;
 
     /* Initialize the parent communicator to MPI_COMM_NULL */
-    ompi_mpi_comm_parent = &ompi_mpi_comm_null;
+    ompi_mpi_comm_parent = &ompi_mpi_comm_null.comm;
     OBJ_RETAIN(&ompi_mpi_comm_null);
-    OBJ_RETAIN(&ompi_mpi_group_null);
-    OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
+    OBJ_RETAIN(&ompi_mpi_group_null.group);
+    OBJ_RETAIN(&ompi_mpi_errors_are_fatal.eh);
 
     /* initialize the comm_reg stuff for multi-threaded comm_cid
        allocation */
@@ -216,7 +217,7 @@ int ompi_comm_finalize(void)
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
 
     /* Shut down the parent communicator, if it exists */
-    if( ompi_mpi_comm_parent != &ompi_mpi_comm_null ) {
+    if( ompi_mpi_comm_parent != &ompi_mpi_comm_null.comm ) {
         /* Note that we pass ompi_mpi_comm_parent here
            (vs. &ompi_mpi_comm_parent) because it is of type
            (ompi_communicator_t*), *NOT* (ompi_communicator_t).  This

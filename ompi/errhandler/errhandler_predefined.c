@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -292,7 +293,7 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
     /* Should we do something more intelligent than just using
        COMM_SELF? */
     if (comm == NULL) {
-        comm = &ompi_mpi_comm_self;
+        comm = &ompi_mpi_comm_self.comm;
     }
 
     if (NULL != error_code) {

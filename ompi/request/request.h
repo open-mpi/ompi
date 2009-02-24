@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -131,6 +132,19 @@ struct ompi_request_t {
  */
 typedef struct ompi_request_t ompi_request_t;
 
+/**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_REQUEST_PAD (sizeof(void*) * 32)
+
+struct ompi_predefined_request_t {
+    struct ompi_request_t request;
+    char padding[PREDEFINED_REQUEST_PAD - sizeof(ompi_request_t)];
+};
+
+typedef struct ompi_predefined_request_t ompi_predefined_request_t;
 
 /**
  * Initialize a request.  This is a macro to avoid function call
@@ -312,7 +326,7 @@ OMPI_DECLSPEC extern size_t                ompi_request_completed;
 OMPI_DECLSPEC extern int32_t               ompi_request_poll;
 OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
-OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
+OMPI_DECLSPEC extern ompi_predefined_request_t        ompi_request_null;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
 OMPI_DECLSPEC extern ompi_request_fns_t    ompi_request_functions;

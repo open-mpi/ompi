@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -146,6 +147,20 @@ typedef struct ompi_op_t ompi_op_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_t);
 
 /**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_OP_PAD (sizeof(void*) * 256)
+
+struct ompi_predefined_op_t {
+    struct ompi_op_t op;
+    char padding[PREDEFINED_OP_PAD - sizeof(ompi_op_t)];
+};
+
+typedef struct ompi_predefined_op_t ompi_predefined_op_t;
+
+/**
  * Array to map ddt->id values to the corresponding position in the op
  * function array.
  *
@@ -179,72 +194,72 @@ OMPI_DECLSPEC extern int ompi_op_ddt_map[DT_MAX_PREDEFINED];
 /**
  * Global variable for MPI_OP_NULL
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_null;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_null;
 
 /**
  * Global variable for MPI_MAX
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_max;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_max;
 
 /**
  * Global variable for MPI_MIN
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_min;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_min;
 
 /**
  * Global variable for MPI_SUM
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_sum;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_sum;
 
 /**
  * Global variable for MPI_PROD
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_prod;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_prod;
 
 /**
  * Global variable for MPI_LAND
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_land;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_land;
 
 /**
  * Global variable for MPI_BAND
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_band;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_band;
 
 /**
  * Global variable for MPI_LOR
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_lor;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_lor;
 
 /**
  * Global variable for MPI_BOR
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_bor;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_bor;
 
 /**
  * Global variable for MPI_LXOR
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_lxor;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_lxor;
 
 /**
  * Global variable for MPI_BXOR
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_bxor;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_bxor;
 
 /**
  * Global variable for MPI_MAXLOC
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_maxloc;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_maxloc;
 
 /**
  * Global variable for MPI_MINLOC
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_minloc;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_minloc;
 
 /**
  * Global variable for MPI_REPLACE
  */
-OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_replace;
+OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_replace;
 
 
 /**

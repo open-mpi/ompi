@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -16,8 +17,9 @@
 # $HEADER$
 #
 
-
-
 # support needs to be first for dependencies
 SUBDIRS = support asm class threads peruse datatype
 DIST_SUBDIRS = event $(SUBDIRS)
+
+TESTS =
+include predefined/Makefile.inc

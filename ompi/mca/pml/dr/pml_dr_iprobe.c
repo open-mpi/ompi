@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +34,7 @@ int mca_pml_dr_iprobe(int src,
     recvreq.req_recv.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_recv.req_base.req_type = MCA_PML_REQUEST_IPROBE;
 
-    MCA_PML_DR_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
+    MCA_PML_DR_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char.dt, src, tag, comm, true);
     MCA_PML_DR_RECV_REQUEST_START(&recvreq);
 
     if( recvreq.req_recv.req_base.req_ompi.req_complete == true ) {
@@ -61,7 +62,7 @@ int mca_pml_dr_probe(int src,
     recvreq.req_recv.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_recv.req_base.req_type = MCA_PML_REQUEST_PROBE;
 
-    MCA_PML_DR_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
+    MCA_PML_DR_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char.dt, src, tag, comm, true);
     MCA_PML_DR_RECV_REQUEST_START(&recvreq);
 
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);

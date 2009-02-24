@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,10 +88,10 @@ void mpi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, 
         c_type = (MPI_Datatype)ompi_ddt_match_size( c_size, DT_FLAG_DATA_COMPLEX, DT_FLAG_DATA_FORTRAN );
         break;
     default:
-        c_type = &ompi_mpi_datatype_null;
+        c_type = &ompi_mpi_datatype_null.dt;
     }
     *type = MPI_Type_c2f( c_type );
-    if ( c_type != &ompi_mpi_datatype_null ) {
+    if ( c_type != &ompi_mpi_datatype_null.dt ) {
         *ierr = OMPI_INT_2_FINT( MPI_SUCCESS );
     } else {
         *ierr = OMPI_INT_2_FINT( MPI_ERR_ARG );

@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,15 +96,15 @@ typedef struct dt_type_desc {
  */
 typedef struct ompi_datatype_t {
     opal_object_t      super;    /**< basic superclass */
+    uint16_t           flags;    /**< the flags */
+    uint16_t           id;       /**< data id, normally the index in the data array. */
     size_t             size;     /**< total size in bytes of the memory used by the data if
-                                  * the data is put on a contiguous buffer */
-    uint32_t           align;    /**< data should be aligned to */
+                                      the data is put on a contiguous buffer */
     ptrdiff_t          true_lb;
     ptrdiff_t          true_ub;  /**< the true ub of the data without user defined lb and ub */
     ptrdiff_t          lb;       /**< lower bound in memory */
     ptrdiff_t          ub;       /**< upper bound in memory */
-    uint16_t           flags;    /**< the flags */
-    uint16_t           id;       /**< data id, normally the index in the data array. */
+    uint32_t           align;    /**< data should be aligned to */
     uint32_t           nbElems;  /**< total number of elements inside the datatype */
     uint64_t           bdt_used; /**< which basic datatypes are used in the data description */
 
@@ -123,6 +124,25 @@ typedef struct ompi_datatype_t {
 } ompi_datatype_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION( ompi_datatype_t );
+
+/**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+
+/* Using set constant for padding of the DATATYPE handles because the size of
+ * base structure is very close to being the same no matter the bitness.
+ */
+#define PREDEFINED_DATATYPE_PAD (512)
+
+struct ompi_predefined_datatype_t {
+    struct ompi_datatype_t dt;
+    char padding[PREDEFINED_DATATYPE_PAD - sizeof(ompi_datatype_t)];
+};
+
+typedef struct ompi_predefined_datatype_t ompi_predefined_datatype_t;
+
 
 int ompi_ddt_register_params(void);
 OMPI_DECLSPEC int32_t ompi_ddt_init( void );
