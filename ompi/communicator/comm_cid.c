@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 #include "opal/util/convert.h"
 #include "orte/types.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/op/op.h"
 #include "ompi/proc/proc.h"
 #include "ompi/constants.h"
 #include "opal/class/opal_pointer_array.h"
@@ -497,8 +499,8 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
     int *rcounts=NULL, scount=0;
     int *rdisps=NULL;
 
-    if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
-         &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
+    if ( &ompi_mpi_op_sum.op != op && &ompi_mpi_op_prod.op != op &&
+         &ompi_mpi_op_max.op != op && &ompi_mpi_op_min.op  != op ) {
         return MPI_ERR_OP;
     }
 
@@ -552,22 +554,22 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
             goto exit;
         }
 
-        if ( &ompi_mpi_op_max == op ) {
+        if ( &ompi_mpi_op_max.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_min == op ) {
+        else if ( &ompi_mpi_op_min.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_sum == op ) {
+        else if ( &ompi_mpi_op_sum.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] += tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_prod == op ) {
+        else if ( &ompi_mpi_op_prod.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] *= tmpbuf[i];
             }
@@ -620,8 +622,8 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     local_leader  = (*((int*)lleader));
     remote_leader = (*((int*)rleader));
 
-    if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
-         &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
+    if ( &ompi_mpi_op_sum.op != op && &ompi_mpi_op_prod.op != op &&
+         &ompi_mpi_op_max.op != op && &ompi_mpi_op_min.op  != op ) {
         return MPI_ERR_OP;
     }
     
@@ -659,22 +661,22 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
             goto exit;
         }
 
-        if ( &ompi_mpi_op_max == op ) {
+        if ( &ompi_mpi_op_max.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_min == op ) {
+        else if ( &ompi_mpi_op_min.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_sum == op ) {
+        else if ( &ompi_mpi_op_sum.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] += tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_prod == op ) {
+        else if ( &ompi_mpi_op_prod.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] *= tmpbuf[i];
             }
@@ -718,8 +720,8 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     remote_leader = (orte_process_name_t*)rleader;
     size_count = count;
 
-    if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
-         &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
+    if ( &ompi_mpi_op_sum.op != op && &ompi_mpi_op_prod.op != op &&
+         &ompi_mpi_op_max.op != op && &ompi_mpi_op_min.op  != op ) {
         return MPI_ERR_OP;
     }
     
@@ -773,22 +775,22 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         OBJ_RELEASE(rbuf);
         count = (int)size_count;
 
-        if ( &ompi_mpi_op_max == op ) {
+        if ( &ompi_mpi_op_max.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_min == op ) {
+        else if ( &ompi_mpi_op_min.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_sum == op ) {
+        else if ( &ompi_mpi_op_sum.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] += tmpbuf[i];
             }
         }
-        else if ( &ompi_mpi_op_prod == op ) {
+        else if ( &ompi_mpi_op_prod.op == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] *= tmpbuf[i];
             }

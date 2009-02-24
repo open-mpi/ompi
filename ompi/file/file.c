@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +20,7 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
 #include "ompi/file/file.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
@@ -35,7 +36,7 @@ opal_pointer_array_t ompi_file_f_to_c_table;
 /*
  * MPI_FILE_NULL
  */
-ompi_file_t  ompi_mpi_file_null;
+ompi_predefined_file_t  ompi_mpi_file_null;
 
 
 /*
@@ -70,12 +71,12 @@ int ompi_file_init(void)
     /* Setup MPI_FILE_NULL.  Note that it will have the default error
        handler of MPI_ERRORS_RETURN, per MPI-2:9.7 (p265).  */
 
-    OBJ_CONSTRUCT(&ompi_mpi_file_null, ompi_file_t);
-    ompi_mpi_file_null.f_comm = &ompi_mpi_comm_null;
-    OBJ_RETAIN(ompi_mpi_file_null.f_comm);
-    ompi_mpi_file_null.f_f_to_c_index = 0;
+    OBJ_CONSTRUCT(&ompi_mpi_file_null.file, ompi_file_t);
+    ompi_mpi_file_null.file.f_comm = &ompi_mpi_comm_null.comm;
+    OBJ_RETAIN(ompi_mpi_file_null.file.f_comm);
+    ompi_mpi_file_null.file.f_f_to_c_index = 0;
     opal_pointer_array_set_item(&ompi_file_f_to_c_table, 0,
-                                &ompi_mpi_file_null);
+                                &ompi_mpi_file_null.file);
 
     /* All done */
 
@@ -145,7 +146,7 @@ int ompi_file_close(ompi_file_t **file)
     mca_io_base_component_del(&((*file)->f_io_selected_component));
     mca_io_base_request_return(*file);
     OBJ_RELEASE(*file);
-    *file = &ompi_mpi_file_null;
+    *file = &ompi_mpi_file_null.file;
 
     return OMPI_SUCCESS;
 }
@@ -164,7 +165,7 @@ int ompi_file_finalize(void)
        report on it.  Plus, it's statically allocated, so we don't want
      to call OBJ_RELEASE on it. */
 
-    OBJ_DESTRUCT(&ompi_mpi_file_null);
+    OBJ_DESTRUCT(&ompi_mpi_file_null.file);
     opal_pointer_array_set_item(&ompi_file_f_to_c_table, 0, NULL);
 
     /* Iterate through all the file handles and destroy them.  Note
@@ -239,10 +240,10 @@ static void file_constructor(ompi_file_t *file)
        MPI_FILE_NULL). */
 
     file->errhandler_type = OMPI_ERRHANDLER_TYPE_FILE;
-    if (file != &ompi_mpi_file_null) {
-        file->error_handler = ompi_mpi_file_null.error_handler;
+    if (file != &ompi_mpi_file_null.file) {
+        file->error_handler = ompi_mpi_file_null.file.error_handler;
     } else {
-        file->error_handler = &ompi_mpi_errors_return;
+        file->error_handler = &ompi_mpi_errors_return.eh;
     }
     OBJ_RETAIN(file->error_handler);
 

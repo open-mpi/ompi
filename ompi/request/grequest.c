@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,6 +19,7 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/request/grequest.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 
@@ -64,7 +66,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
     greq->greq_base.req_free     = ompi_grequest_free;
     greq->greq_base.req_cancel   = ompi_grequest_cancel;
     greq->greq_base.req_type = OMPI_REQUEST_GEN;
-    greq->greq_base.req_mpi_object.comm = &ompi_mpi_comm_world;
+    greq->greq_base.req_mpi_object.comm = &(ompi_mpi_comm_world.comm);
     /* Set the function pointers to C here; the F77 MPI API will
        override this value if the gen request was created from
        Fortran */

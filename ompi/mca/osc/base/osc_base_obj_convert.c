@@ -9,6 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -187,7 +188,7 @@ ompi_osc_base_process_op(void *outbuf,
                          int count,
                          ompi_op_t *op)
 {
-    if (op == &ompi_mpi_op_replace) {
+    if (op == &ompi_mpi_op_replace.op) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystmes, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,7 +18,6 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
-
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
@@ -81,7 +81,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                    for other reduction operators, we don't require such
                    behaivor, as checking for it is expensive here and we don't
                    care in implementation.. */
-                if (op != &ompi_mpi_op_replace) {
+                if (op != &ompi_mpi_op_replace.op) {
                     ompi_datatype_t *op_check_dt, *origin_check_dt;
                     char *msg;
 
@@ -169,7 +169,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
            for other reduction operators, we don't require such
            behaivor, as checking for it is expensive here and we don't
            care in implementation.. */
-        if (op != &ompi_mpi_op_replace) {
+        if (op != &ompi_mpi_op_replace.op) {
             ompi_datatype_t *op_check_dt;
             char *msg;
 

@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +37,7 @@ int32_t ompi_ddt_create_vector( int count, int bLength, int stride,
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( 0 );
-        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0);
         return OMPI_SUCCESS;
     }
 
@@ -65,7 +67,7 @@ int32_t ompi_ddt_create_hvector( int count, int bLength, MPI_Aint stride,
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( 0 );
-        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0);
         return OMPI_SUCCESS;
     }
 

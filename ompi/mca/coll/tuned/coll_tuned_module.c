@@ -261,7 +261,7 @@ tuned_module_enable(mca_coll_base_module_t *module,
     }
 
 
-    if (&ompi_mpi_comm_world==comm) {
+    if (&ompi_mpi_comm_world.comm==comm) {
         if (ompi_coll_tuned_use_dynamic_rules) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
             if (ompi_coll_tuned_dynamic_rules_filename) {

@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,7 +76,7 @@ int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType,
 
     if( 0 == count ) {
         pdt = ompi_ddt_create( 0 );
-        ompi_ddt_add( pdt, &ompi_mpi_datatype_null, 0, 0, 0 );
+        ompi_ddt_add( pdt, &ompi_mpi_datatype_null.dt, 0, 0, 0 );
     } else {
         pdt = ompi_ddt_create( oldType->desc.used + 2 );
         ompi_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );

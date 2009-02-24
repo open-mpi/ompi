@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -108,7 +109,7 @@ int MPI_Type_create_darray(int size,
         /* Don't just return MPI_DATATYPE_NULL as that can't be
            MPI_TYPE_FREE()ed, and that seems bad */
         *newtype = ompi_ddt_create(0);
-        ompi_ddt_add(*newtype, &ompi_mpi_datatype_null, 0, 0, 0);
+        ompi_ddt_add(*newtype, &ompi_mpi_datatype_null.dt, 0, 0, 0);
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }

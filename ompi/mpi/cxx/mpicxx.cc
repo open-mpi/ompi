@@ -46,9 +46,9 @@ void* const BOTTOM = (void*) MPI_BOTTOM;
 void* const IN_PLACE = (void*) MPI_IN_PLACE;
 
 // error-handling specifiers
-const Errhandler  ERRORS_ARE_FATAL(&ompi_mpi_errors_are_fatal);
-const Errhandler  ERRORS_RETURN(&ompi_mpi_errors_return);
-const Errhandler  ERRORS_THROW_EXCEPTIONS(&ompi_mpi_errors_throw_exceptions);
+const Errhandler  ERRORS_ARE_FATAL((MPI_Errhandler)&(ompi_mpi_errors_are_fatal));
+const Errhandler  ERRORS_RETURN((MPI_Errhandler)&(ompi_mpi_errors_return));
+const Errhandler  ERRORS_THROW_EXCEPTIONS((MPI_Errhandler)&(ompi_mpi_errors_throw_exceptions));
 
 // elementary datatypes
 const Datatype CHAR(MPI_CHAR);
@@ -77,25 +77,25 @@ const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE);
 
 #if OMPI_WANT_F77_BINDINGS
 // elementary datatype (Fortran)
-const Datatype REAL(&ompi_mpi_real);
-const Datatype INTEGER(&ompi_mpi_integer);
-const Datatype DOUBLE_PRECISION(&ompi_mpi_dblprec);
-const Datatype F_COMPLEX(&ompi_mpi_cplex);
-const Datatype LOGICAL(&ompi_mpi_logic);
-const Datatype CHARACTER(&ompi_mpi_character);
+const Datatype REAL((MPI_Datatype)&(ompi_mpi_real));
+const Datatype INTEGER((MPI_Datatype)&(ompi_mpi_integer));
+const Datatype DOUBLE_PRECISION((MPI_Datatype)&(ompi_mpi_dblprec));
+const Datatype F_COMPLEX((MPI_Datatype)&(ompi_mpi_cplex));
+const Datatype LOGICAL((MPI_Datatype)&(ompi_mpi_logic));
+const Datatype CHARACTER((MPI_Datatype)&(ompi_mpi_character));
 
 // datatype for reduction functions (Fortran)
-const Datatype TWOREAL(&ompi_mpi_2real);
-const Datatype TWODOUBLE_PRECISION(&ompi_mpi_2dblprec);
-const Datatype TWOINTEGER(&ompi_mpi_2integer);
+const Datatype TWOREAL((MPI_Datatype)&(ompi_mpi_2real));
+const Datatype TWODOUBLE_PRECISION((MPI_Datatype)&(ompi_mpi_2dblprec));
+const Datatype TWOINTEGER((MPI_Datatype)&(ompi_mpi_2integer));
 
 // optional datatypes (Fortran)
-const Datatype INTEGER2(&ompi_mpi_integer);
-const Datatype REAL2(&ompi_mpi_real);
-const Datatype INTEGER1(&ompi_mpi_char);
-const Datatype INTEGER4(&ompi_mpi_short);
-const Datatype REAL4(&ompi_mpi_real);
-const Datatype REAL8(&ompi_mpi_double);
+const Datatype INTEGER2((MPI_Datatype)&(ompi_mpi_integer));
+const Datatype REAL2((MPI_Datatype)&(ompi_mpi_real));
+const Datatype INTEGER1((MPI_Datatype)&(ompi_mpi_char));
+const Datatype INTEGER4((MPI_Datatype)&(ompi_mpi_short));
+const Datatype REAL4((MPI_Datatype)&(ompi_mpi_real));
+const Datatype REAL8((MPI_Datatype)&(ompi_mpi_double));
 
 #endif // OMPI_WANT_f77_BINDINGS
 
@@ -104,10 +104,10 @@ const Datatype UNSIGNED_LONG_LONG(MPI_UNSIGNED_LONG_LONG);
 const Datatype LONG_LONG(MPI_LONG_LONG);
 
 // c++ types
-const Datatype BOOL(&ompi_mpi_cxx_bool);
-const Datatype COMPLEX(&ompi_mpi_cxx_cplex);
-const Datatype DOUBLE_COMPLEX(&ompi_mpi_cxx_dblcplex);
-const Datatype LONG_DOUBLE_COMPLEX(&ompi_mpi_cxx_ldblcplex);
+const Datatype BOOL((MPI_Datatype)&(ompi_mpi_cxx_bool));
+const Datatype COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_cplex));
+const Datatype DOUBLE_COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_dblcplex));
+const Datatype LONG_DOUBLE_COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_ldblcplex));
 
 // reserved communicators
 Intracomm COMM_WORLD(MPI_COMM_WORLD);

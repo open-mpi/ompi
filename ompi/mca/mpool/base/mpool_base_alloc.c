@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,7 +126,7 @@ void *mca_mpool_base_alloc(size_t size, ompi_info_t *info)
     mpool_tree_item->num_bytes = size;
     mpool_tree_item->count = 0;
     
-    if(&ompi_mpi_info_null == info)
+    if(&ompi_mpi_info_null.info == info)
     {
         for(item = opal_list_get_first(&mca_mpool_base_modules);
             item != opal_list_get_end(&mca_mpool_base_modules);

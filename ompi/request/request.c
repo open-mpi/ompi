@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
 #include "opal/class/opal_object.h"
 #include "ompi/request/request.h"
 #include "ompi/request/request_default.h"
@@ -30,7 +32,7 @@ size_t                           ompi_request_waiting = 0;
 size_t                           ompi_request_completed = 0;
 opal_mutex_t                     ompi_request_lock;
 opal_condition_t                 ompi_request_cond;
-ompi_request_t                   ompi_request_null;
+ompi_predefined_request_t        ompi_request_null;
 ompi_request_t                   ompi_request_empty;
 ompi_status_public_t             ompi_status_empty;
 ompi_request_fns_t               ompi_request_functions = {
@@ -72,7 +74,7 @@ static int ompi_request_null_cancel(ompi_request_t* request, int flag)
 
 static int ompi_request_empty_free(ompi_request_t** request)
 {
-    *request = &ompi_request_null;
+    *request = &ompi_request_null.request;
     return OMPI_SUCCESS;
 }
 
@@ -81,7 +83,7 @@ int ompi_request_persistent_proc_null_free(ompi_request_t** request)
     OMPI_REQUEST_FINI(*request);
     (*request)->req_state = OMPI_REQUEST_INVALID;
     OBJ_RELEASE(*request);
-    *request = &ompi_request_null;
+    *request = &ompi_request_null.request;
     return OMPI_SUCCESS;
 }
 
@@ -104,23 +106,23 @@ int ompi_request_init(void)
                                                 0, OMPI_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
-    ompi_request_null.req_type = OMPI_REQUEST_NULL;
-    ompi_request_null.req_status.MPI_SOURCE = MPI_PROC_NULL;
-    ompi_request_null.req_status.MPI_TAG = MPI_ANY_TAG;
-    ompi_request_null.req_status.MPI_ERROR = MPI_SUCCESS;
-    ompi_request_null.req_status._count = 0;
-    ompi_request_null.req_status._cancelled = 0;
+    ompi_request_null.request.req_type = OMPI_REQUEST_NULL;
+    ompi_request_null.request.req_status.MPI_SOURCE = MPI_PROC_NULL;
+    ompi_request_null.request.req_status.MPI_TAG = MPI_ANY_TAG;
+    ompi_request_null.request.req_status.MPI_ERROR = MPI_SUCCESS;
+    ompi_request_null.request.req_status._count = 0;
+    ompi_request_null.request.req_status._cancelled = 0;
 
-    ompi_request_null.req_complete = true;
-    ompi_request_null.req_state = OMPI_REQUEST_INACTIVE;
-    ompi_request_null.req_persistent = false;
-    ompi_request_null.req_f_to_c_index =
+    ompi_request_null.request.req_complete = true;
+    ompi_request_null.request.req_state = OMPI_REQUEST_INACTIVE;
+    ompi_request_null.request.req_persistent = false;
+    ompi_request_null.request.req_f_to_c_index =
         opal_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_null);
-    ompi_request_null.req_free = ompi_request_null_free;
-    ompi_request_null.req_cancel = ompi_request_null_cancel;
-    ompi_request_null.req_mpi_object.comm = &ompi_mpi_comm_world;
+    ompi_request_null.request.req_free = ompi_request_null_free;
+    ompi_request_null.request.req_cancel = ompi_request_null_cancel;
+    ompi_request_null.request.req_mpi_object.comm = &ompi_mpi_comm_world.comm;
 
-    if (0 != ompi_request_null.req_f_to_c_index) {
+    if (0 != ompi_request_null.request.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
     }
 
@@ -150,7 +152,7 @@ int ompi_request_init(void)
         opal_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_empty);
     ompi_request_empty.req_free = ompi_request_empty_free;
     ompi_request_empty.req_cancel = ompi_request_null_cancel;
-    ompi_request_empty.req_mpi_object.comm = &ompi_mpi_comm_world;
+    ompi_request_empty.req_mpi_object.comm = &ompi_mpi_comm_world.comm;
 
     if (1 != ompi_request_empty.req_f_to_c_index) {
         return OMPI_ERR_REQUEST;
@@ -168,8 +170,8 @@ int ompi_request_init(void)
 
 int ompi_request_finalize(void)
 {
-    OMPI_REQUEST_FINI( &ompi_request_null );
-    OBJ_DESTRUCT( &ompi_request_null );
+    OMPI_REQUEST_FINI( &ompi_request_null.request );
+    OBJ_DESTRUCT( &ompi_request_null.request );
     OMPI_REQUEST_FINI( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_empty );
     OBJ_DESTRUCT( &ompi_request_cond );

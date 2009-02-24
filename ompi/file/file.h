@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -96,11 +97,23 @@ struct ompi_file_t {
  */
 typedef struct ompi_file_t ompi_file_t;
 
+/**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_FILE_PAD (sizeof(void*) * 192)
+
+struct ompi_predefined_file_t {
+    struct ompi_file_t file;
+    char padding[PREDEFINED_FILE_PAD - sizeof(ompi_file_t)];
+};
+typedef struct ompi_predefined_file_t ompi_predefined_file_t;
 
 /**
  * Back-end instances for MPI_FILE_NULL
  */
-OMPI_DECLSPEC extern ompi_file_t  ompi_mpi_file_null;
+OMPI_DECLSPEC extern ompi_predefined_file_t  ompi_mpi_file_null;
 
 
 /**
@@ -193,7 +206,7 @@ int ompi_file_finalize(void);
 static inline bool ompi_file_invalid(ompi_file_t *file)
 {
     return (NULL == file ||
-            &ompi_mpi_file_null == file ||
+            &ompi_mpi_file_null.file == file ||
             0 != (file->f_flags & OMPI_FILE_ISCLOSED));
 }
 

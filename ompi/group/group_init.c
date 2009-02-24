@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,8 +42,8 @@ opal_pointer_array_t ompi_group_f_to_c_table;
 /*
  * Predefined group objects
  */
-ompi_group_t ompi_mpi_group_empty;
-ompi_group_t ompi_mpi_group_null;
+ompi_predefined_group_t ompi_mpi_group_empty;
+ompi_predefined_group_t ompi_mpi_group_null;
 
 
 /*
@@ -313,19 +314,19 @@ int ompi_group_init(void)
     
     /* add MPI_GROUP_NULL to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
-    ompi_mpi_group_null.grp_proc_count        = 0;
-    ompi_mpi_group_null.grp_my_rank           = MPI_PROC_NULL;
-    ompi_mpi_group_null.grp_proc_pointers     = NULL;
-    ompi_mpi_group_null.grp_flags            |= OMPI_GROUP_DENSE;
-    ompi_mpi_group_null.grp_flags            |= OMPI_GROUP_INTRINSIC;
+    ompi_mpi_group_null.group.grp_proc_count        = 0;
+    ompi_mpi_group_null.group.grp_my_rank           = MPI_PROC_NULL;
+    ompi_mpi_group_null.group.grp_proc_pointers     = NULL;
+    ompi_mpi_group_null.group.grp_flags            |= OMPI_GROUP_DENSE;
+    ompi_mpi_group_null.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
         
     /* add MPI_GROUP_EMPTRY to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_empty, ompi_group_t);
-    ompi_mpi_group_empty.grp_proc_count        = 0;
-    ompi_mpi_group_empty.grp_my_rank           = MPI_UNDEFINED;
-    ompi_mpi_group_empty.grp_proc_pointers     = NULL;
-    ompi_mpi_group_empty.grp_flags            |= OMPI_GROUP_DENSE;
-    ompi_mpi_group_empty.grp_flags            |= OMPI_GROUP_INTRINSIC;
+    ompi_mpi_group_empty.group.grp_proc_count        = 0;
+    ompi_mpi_group_empty.group.grp_my_rank           = MPI_UNDEFINED;
+    ompi_mpi_group_empty.group.grp_proc_pointers     = NULL;
+    ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_DENSE;
+    ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
         
     return OMPI_SUCCESS;
 }
@@ -336,10 +337,10 @@ int ompi_group_init(void)
  */
 int ompi_group_finalize(void)
 {
-    ompi_mpi_group_null.grp_flags = 0;
+    ompi_mpi_group_null.group.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_null);
 
-    ompi_mpi_group_null.grp_flags = 0;
+    ompi_mpi_group_null.group.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_empty);
 
     OBJ_DESTRUCT(&ompi_group_f_to_c_table);

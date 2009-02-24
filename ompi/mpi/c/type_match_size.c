@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,11 +52,11 @@ int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
         *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_COMPLEX, DT_FLAG_DATA_FORTRAN );
         break;
     default:
-        *type = &ompi_mpi_datatype_null;
+        *type = &ompi_mpi_datatype_null.dt;
     }
 
     OPAL_CR_EXIT_LIBRARY();
-    if( *type != &ompi_mpi_datatype_null ) {
+    if( *type != &ompi_mpi_datatype_null.dt ) {
         return MPI_SUCCESS;
     }
 

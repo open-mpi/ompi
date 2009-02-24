@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 University of Houston. All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -960,7 +961,7 @@ int ompi_comm_free ( ompi_communicator_t **comm )
        COMM_NULL.  This is according to MPI-2:88-89. */
 
     if (*comm == ompi_mpi_comm_parent && comm != &ompi_mpi_comm_parent) {
-        ompi_mpi_comm_parent = &ompi_mpi_comm_null;
+        ompi_mpi_comm_parent = &ompi_mpi_comm_null.comm;
     }
 
     /* Release the communicator */

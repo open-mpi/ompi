@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -476,15 +477,15 @@ enum {
 /*
  * NULL handles
  */
-#define MPI_GROUP_NULL (&ompi_mpi_group_null)
-#define MPI_COMM_NULL (&ompi_mpi_comm_null)
-#define MPI_REQUEST_NULL (&ompi_request_null)
-#define MPI_OP_NULL (&ompi_mpi_op_null)
-#define MPI_ERRHANDLER_NULL (&ompi_mpi_errhandler_null)
-#define MPI_INFO_NULL (&ompi_mpi_info_null)
-#define MPI_WIN_NULL (&ompi_mpi_win_null)
+#define MPI_GROUP_NULL (((MPI_Group)&(ompi_mpi_group_null)))
+#define MPI_COMM_NULL (((MPI_Comm)&(ompi_mpi_comm_null)))
+#define MPI_REQUEST_NULL (((MPI_Request)&(ompi_request_null)))
+#define MPI_OP_NULL (((MPI_Op)&(ompi_mpi_op_null)))
+#define MPI_ERRHANDLER_NULL (((MPI_Errhandler)&(ompi_mpi_errhandler_null)))
+#define MPI_INFO_NULL (((MPI_Info)&(ompi_mpi_info_null)))
+#define MPI_WIN_NULL (((MPI_Win)&(ompi_mpi_win_null)))
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
-#define MPI_FILE_NULL (&ompi_mpi_file_null)
+#define MPI_FILE_NULL (((MPI_File)&(ompi_mpi_file_null)))
 #endif
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
@@ -596,107 +597,111 @@ OMPI_DECLSPEC int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval,
 /*
  * External variables
  */
-OMPI_DECLSPEC extern struct ompi_communicator_t ompi_mpi_comm_world;
-OMPI_DECLSPEC extern struct ompi_communicator_t ompi_mpi_comm_self;
-OMPI_DECLSPEC extern struct ompi_communicator_t ompi_mpi_comm_null;
+OMPI_DECLSPEC extern union ompi_predefined_communicator_t ompi_mpi_comm_world;
+OMPI_DECLSPEC extern union ompi_predefined_communicator_t ompi_mpi_comm_self;
+OMPI_DECLSPEC extern union ompi_predefined_communicator_t ompi_mpi_comm_null;
 
-OMPI_DECLSPEC extern struct ompi_group_t ompi_mpi_group_empty;
-OMPI_DECLSPEC extern struct ompi_group_t ompi_mpi_group_null;
+OMPI_DECLSPEC extern union ompi_predefined_group_t ompi_mpi_group_empty;
+OMPI_DECLSPEC extern union ompi_predefined_group_t ompi_mpi_group_null;
 
-OMPI_DECLSPEC extern struct ompi_request_t ompi_request_null;
+OMPI_DECLSPEC extern union ompi_predefined_request_t ompi_request_null;
 
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_null;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_max, ompi_mpi_op_min;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_sum, ompi_mpi_op_prod;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_land, ompi_mpi_op_band;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_lxor, ompi_mpi_op_bxor;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_maxloc, ompi_mpi_op_minloc;
-OMPI_DECLSPEC extern struct ompi_op_t ompi_mpi_op_replace;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_null;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_max, ompi_mpi_op_min;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_sum;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_prod;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_land;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_band;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_lxor;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_bxor;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_maxloc;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_minloc;
+OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_replace;
 
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_char, ompi_mpi_byte;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_int, ompi_mpi_logic;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_short, ompi_mpi_long;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_float, ompi_mpi_double;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_long_double;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cplex, ompi_mpi_packed;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_signed_char;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_char;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_short;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned, ompi_mpi_datatype_null;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_long, ompi_mpi_ldblcplex;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_ub, ompi_mpi_lb;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_float_int, ompi_mpi_double_int;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_long_int, ompi_mpi_2int;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_short_int, ompi_mpi_dblcplex;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer, ompi_mpi_real;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_dblprec, ompi_mpi_character;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_2real, ompi_mpi_2dblprec;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_2integer, ompi_mpi_longdbl_int;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_wchar, ompi_mpi_long_long_int;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_unsigned_long_long;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_cplex, ompi_mpi_cxx_dblcplex;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_ldblcplex;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_bool;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char, ompi_mpi_byte;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int, ompi_mpi_logic;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short, ompi_mpi_long;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float, ompi_mpi_double;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_double;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cplex, ompi_mpi_packed;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_signed_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_char;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_short;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned, ompi_mpi_datatype_null;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long, ompi_mpi_ldblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub, ompi_mpi_lb;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_float_int, ompi_mpi_double_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_long_int, ompi_mpi_2int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_short_int, ompi_mpi_dblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer, ompi_mpi_real;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_dblprec, ompi_mpi_character;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2real, ompi_mpi_2dblprec;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2integer, ompi_mpi_longdbl_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_wchar, ompi_mpi_long_long_int;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_unsigned_long_long;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_cplex, ompi_mpi_cxx_dblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_ldblcplex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_cxx_bool;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
 /* other MPI2 datatypes */
 #if OMPI_HAVE_FORTRAN_LOGICAL1
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical1;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical1;
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL2
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical2;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical2;
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL4
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical4;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical4;
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL8
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_logical8;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical8;
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer1;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer1;
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer2;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer2;
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer4;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer4;
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer8;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer8;
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer16;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer16;
 #endif
 #if OMPI_HAVE_FORTRAN_REAL2
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real2;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real2;
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real4; 
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real4; 
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real8;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real8;
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real16;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_real16;
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex8;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex8;
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex16;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex16;
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex32;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex32;
 #endif
 
-OMPI_DECLSPEC extern struct ompi_errhandler_t ompi_mpi_errhandler_null;
-OMPI_DECLSPEC extern struct ompi_errhandler_t ompi_mpi_errors_are_fatal;
-OMPI_DECLSPEC extern struct ompi_errhandler_t ompi_mpi_errors_return;
+OMPI_DECLSPEC extern union ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
+OMPI_DECLSPEC extern union ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
+OMPI_DECLSPEC extern union ompi_predefined_errhandler_t ompi_mpi_errors_return;
 
-OMPI_DECLSPEC extern struct ompi_win_t ompi_mpi_win_null;
-OMPI_DECLSPEC extern struct ompi_file_t ompi_mpi_file_null;
+OMPI_DECLSPEC extern union ompi_predefined_win_t ompi_mpi_win_null;
+OMPI_DECLSPEC extern union ompi_predefined_file_t ompi_mpi_file_null;
 
-OMPI_DECLSPEC extern struct ompi_info_t ompi_mpi_info_null;
+OMPI_DECLSPEC extern union ompi_predefined_info_t ompi_mpi_info_null;
 
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
@@ -704,117 +709,117 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 /*
  * MPI predefined handles
  */
-#define MPI_COMM_WORLD (&ompi_mpi_comm_world)
-#define MPI_COMM_SELF (&ompi_mpi_comm_self)
+#define MPI_COMM_WORLD (((MPI_Comm)&(ompi_mpi_comm_world)))
+#define MPI_COMM_SELF (((MPI_Comm)&(ompi_mpi_comm_self)))
 
-#define MPI_GROUP_EMPTY (&ompi_mpi_group_empty)
+#define MPI_GROUP_EMPTY (((MPI_Group)&(ompi_mpi_group_empty)))
 
-#define MPI_MAX (&ompi_mpi_op_max)
-#define MPI_MIN (&ompi_mpi_op_min)
-#define MPI_SUM (&ompi_mpi_op_sum)
-#define MPI_PROD (&ompi_mpi_op_prod)
-#define MPI_LAND (&ompi_mpi_op_land)
-#define MPI_BAND (&ompi_mpi_op_band)
-#define MPI_LOR (&ompi_mpi_op_lor)
-#define MPI_BOR (&ompi_mpi_op_bor)
-#define MPI_LXOR (&ompi_mpi_op_lxor)
-#define MPI_BXOR (&ompi_mpi_op_bxor)
-#define MPI_MAXLOC (&ompi_mpi_op_maxloc)
-#define MPI_MINLOC (&ompi_mpi_op_minloc)
-#define MPI_REPLACE (&ompi_mpi_op_replace)
+#define MPI_MAX (((MPI_Op)&(ompi_mpi_op_max)))
+#define MPI_MIN (((MPI_Op)&(ompi_mpi_op_min)))
+#define MPI_SUM (((MPI_Op)&(ompi_mpi_op_sum)))
+#define MPI_PROD (((MPI_Op)&(ompi_mpi_op_prod)))
+#define MPI_LAND (((MPI_Op)&(ompi_mpi_op_land)))
+#define MPI_BAND (((MPI_Op)&(ompi_mpi_op_band)))
+#define MPI_LOR (((MPI_Op)&(ompi_mpi_op_lor)))
+#define MPI_BOR (((MPI_Op)&(ompi_mpi_op_bor)))
+#define MPI_LXOR (((MPI_Op)&(ompi_mpi_op_lxor)))
+#define MPI_BXOR (((MPI_Op)&(ompi_mpi_op_bxor)))
+#define MPI_MAXLOC (((MPI_Op)&(ompi_mpi_op_maxloc)))
+#define MPI_MINLOC (((MPI_Op)&(ompi_mpi_op_minloc)))
+#define MPI_REPLACE (((MPI_Op)&(ompi_mpi_op_replace)))
 
 /* C datatypes */
-#define MPI_DATATYPE_NULL (&ompi_mpi_datatype_null)
-#define MPI_BYTE (&ompi_mpi_byte)
-#define MPI_PACKED (&ompi_mpi_packed)
-#define MPI_CHAR (&ompi_mpi_char)
-#define MPI_SHORT (&ompi_mpi_short)
-#define MPI_INT (&ompi_mpi_int)
-#define MPI_LONG (&ompi_mpi_long)
-#define MPI_FLOAT (&ompi_mpi_float)
-#define MPI_DOUBLE (&ompi_mpi_double)
-#define MPI_LONG_DOUBLE (&ompi_mpi_long_double)
-#define MPI_UNSIGNED_CHAR (&ompi_mpi_unsigned_char)
-#define MPI_SIGNED_CHAR (&ompi_mpi_signed_char)
-#define MPI_UNSIGNED_SHORT (&ompi_mpi_unsigned_short)
-#define MPI_UNSIGNED_LONG (&ompi_mpi_unsigned_long)
-#define MPI_UNSIGNED (&ompi_mpi_unsigned)
-#define MPI_FLOAT_INT (&ompi_mpi_float_int)
-#define MPI_DOUBLE_INT (&ompi_mpi_double_int)
-#define MPI_LONG_DOUBLE_INT (&ompi_mpi_longdbl_int)
-#define MPI_LONG_INT (&ompi_mpi_long_int)
-#define MPI_SHORT_INT (&ompi_mpi_short_int)
-#define MPI_2INT (&ompi_mpi_2int)
-#define MPI_UB (&ompi_mpi_ub)
-#define MPI_LB (&ompi_mpi_lb)
-#define MPI_WCHAR (&ompi_mpi_wchar)
+#define MPI_DATATYPE_NULL (((MPI_Datatype)&(ompi_mpi_datatype_null)))
+#define MPI_BYTE (((MPI_Datatype)&(ompi_mpi_byte)))
+#define MPI_PACKED (((MPI_Datatype)&(ompi_mpi_packed)))
+#define MPI_CHAR (((MPI_Datatype)&(ompi_mpi_char)))
+#define MPI_SHORT (((MPI_Datatype)&(ompi_mpi_short)))
+#define MPI_INT (((MPI_Datatype)&(ompi_mpi_int)))
+#define MPI_LONG (((MPI_Datatype)&(ompi_mpi_long)))
+#define MPI_FLOAT (((MPI_Datatype)&(ompi_mpi_float)))
+#define MPI_DOUBLE (((MPI_Datatype)&(ompi_mpi_double)))
+#define MPI_LONG_DOUBLE (((MPI_Datatype)&(ompi_mpi_long_double)))
+#define MPI_UNSIGNED_CHAR (((MPI_Datatype)&(ompi_mpi_unsigned_char)))
+#define MPI_SIGNED_CHAR (((MPI_Datatype)&(ompi_mpi_signed_char)))
+#define MPI_UNSIGNED_SHORT (((MPI_Datatype)&(ompi_mpi_unsigned_short)))
+#define MPI_UNSIGNED_LONG (((MPI_Datatype)&(ompi_mpi_unsigned_long)))
+#define MPI_UNSIGNED (((MPI_Datatype)&(ompi_mpi_unsigned)))
+#define MPI_FLOAT_INT (((MPI_Datatype)&(ompi_mpi_float_int)))
+#define MPI_DOUBLE_INT (((MPI_Datatype)&(ompi_mpi_double_int)))
+#define MPI_LONG_DOUBLE_INT (((MPI_Datatype)&(ompi_mpi_longdbl_int)))
+#define MPI_LONG_INT (((MPI_Datatype)&(ompi_mpi_long_int)))
+#define MPI_SHORT_INT (((MPI_Datatype)&(ompi_mpi_short_int)))
+#define MPI_2INT (((MPI_Datatype)&(ompi_mpi_2int)))
+#define MPI_UB (((MPI_Datatype)&(ompi_mpi_ub)))
+#define MPI_LB (((MPI_Datatype)&(ompi_mpi_lb)))
+#define MPI_WCHAR (((MPI_Datatype)&(ompi_mpi_wchar)))
 #if OMPI_HAVE_LONG_LONG
-#define MPI_LONG_LONG_INT (&ompi_mpi_long_long_int)
-#define MPI_LONG_LONG (&ompi_mpi_long_long_int)
-#define MPI_UNSIGNED_LONG_LONG (&ompi_mpi_unsigned_long_long)
+#define MPI_LONG_LONG_INT (((MPI_Datatype)&(ompi_mpi_long_long_int)))
+#define MPI_LONG_LONG (((MPI_Datatype)&(ompi_mpi_long_long_int)))
+#define MPI_UNSIGNED_LONG_LONG (((MPI_Datatype)&(ompi_mpi_unsigned_long_long)))
 #endif  /* OMPI_HAVE_LONG_LONG */
-#define MPI_2COMPLEX (&ompi_mpi_2cplex)
-#define MPI_2DOUBLE_COMPLEX (&ompi_mpi_2dblcplex)
+#define MPI_2COMPLEX (((MPI_Datatype)&(ompi_mpi_2cplex)))
+#define MPI_2DOUBLE_COMPLEX (((MPI_Datatype)&(ompi_mpi_2dblcplex)))
 
 /* Fortran datatype bindings */
-#define MPI_CHARACTER (&ompi_mpi_character)
-#define MPI_LOGICAL (&ompi_mpi_logic)
+#define MPI_CHARACTER (((MPI_Datatype)&(ompi_mpi_character)))
+#define MPI_LOGICAL (((MPI_Datatype)&(ompi_mpi_logic)))
 #if OMPI_HAVE_FORTRAN_LOGICAL1
-#define MPI_LOGICAL1 (&ompi_mpi_logical1)
+#define MPI_LOGICAL1 (((MPI_Datatype)&(ompi_mpi_logical1)))
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL2
-#define MPI_LOGICAL2 (&ompi_mpi_logical2)
+#define MPI_LOGICAL2 (((MPI_Datatype)&(ompi_mpi_logical2)))
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL4
-#define MPI_LOGICAL4 (&ompi_mpi_logical4)
+#define MPI_LOGICAL4 (((MPI_Datatype)&(ompi_mpi_logical4)))
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL8
-#define MPI_LOGICAL8 (&ompi_mpi_logical8)
+#define MPI_LOGICAL8 (((MPI_Datatype)&(ompi_mpi_logical8)))
 #endif
-#define MPI_INTEGER (&ompi_mpi_integer)
+#define MPI_INTEGER (((MPI_Datatype)&(ompi_mpi_integer)))
 #if OMPI_HAVE_FORTRAN_INTEGER1
-#define MPI_INTEGER1 (&ompi_mpi_integer1)
+#define MPI_INTEGER1 (((MPI_Datatype)&(ompi_mpi_integer1)))
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-#define MPI_INTEGER2 (&ompi_mpi_integer2)
+#define MPI_INTEGER2 (((MPI_Datatype)&(ompi_mpi_integer2)))
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-#define MPI_INTEGER4 (&ompi_mpi_integer4)
+#define MPI_INTEGER4 (((MPI_Datatype)&(ompi_mpi_integer4)))
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-#define MPI_INTEGER8 (&ompi_mpi_integer8)
+#define MPI_INTEGER8 (((MPI_Datatype)&(ompi_mpi_integer8)))
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-#define MPI_INTEGER16 (&ompi_mpi_integer16)
+#define MPI_INTEGER16 (((MPI_Datatype)&(ompi_mpi_integer16)))
 #endif
-#define MPI_REAL (&ompi_mpi_real)
+#define MPI_REAL (((MPI_Datatype)&(ompi_mpi_real)))
 #if OMPI_HAVE_FORTRAN_REAL4
-#define MPI_REAL4 (&ompi_mpi_real4)
+#define MPI_REAL4 (((MPI_Datatype)&(ompi_mpi_real4)))
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-#define MPI_REAL8 (&ompi_mpi_real8)
+#define MPI_REAL8 (((MPI_Datatype)&(ompi_mpi_real8)))
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
-#define MPI_REAL16 (&ompi_mpi_real16)
+#define MPI_REAL16 (((MPI_Datatype)&(ompi_mpi_real16)))
 #endif
-#define MPI_DOUBLE_PRECISION (&ompi_mpi_dblprec)
-#define MPI_COMPLEX (&ompi_mpi_cplex)
+#define MPI_DOUBLE_PRECISION (((MPI_Datatype)&(ompi_mpi_dblprec)))
+#define MPI_COMPLEX (((MPI_Datatype)&(ompi_mpi_cplex)))
 #if OMPI_HAVE_FORTRAN_REAL4
-#define MPI_COMPLEX8 (&ompi_mpi_complex8)
+#define MPI_COMPLEX8 (((MPI_Datatype)&(ompi_mpi_complex8)))
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-#define MPI_COMPLEX16 (&ompi_mpi_complex16)
+#define MPI_COMPLEX16 (((MPI_Datatype)&(ompi_mpi_complex16)))
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
-#define MPI_COMPLEX32 (&ompi_mpi_complex32)
+#define MPI_COMPLEX32 (((MPI_Datatype)&(ompi_mpi_complex32)))
 #endif
-#define MPI_DOUBLE_COMPLEX (&ompi_mpi_dblcplex)
-#define MPI_2REAL (&ompi_mpi_2real)
-#define MPI_2DOUBLE_PRECISION (&ompi_mpi_2dblprec)
-#define MPI_2INTEGER (&ompi_mpi_2integer)
+#define MPI_DOUBLE_COMPLEX (((MPI_Datatype)&(ompi_mpi_dblcplex)))
+#define MPI_2REAL (((MPI_Datatype)&(ompi_mpi_2real)))
+#define MPI_2DOUBLE_PRECISION (((MPI_Datatype)&(ompi_mpi_2dblprec)))
+#define MPI_2INTEGER (((MPI_Datatype)&(ompi_mpi_2integer)))
 
-#define MPI_ERRORS_ARE_FATAL (&ompi_mpi_errors_are_fatal)
-#define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
+#define MPI_ERRORS_ARE_FATAL (((MPI_Errhandler)&(ompi_mpi_errors_are_fatal)))
+#define MPI_ERRORS_RETURN (((MPI_Errhandler)&(ompi_mpi_errors_return)))
 
 /* Typeclass definition for MPI_Type_match_size */
 #define MPI_TYPECLASS_INTEGER    1

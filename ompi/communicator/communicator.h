@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -104,7 +105,7 @@ struct ompi_communicator_t {
     int c_id_available; /* the currently available Cid for allocation 
                to a child*/
     int c_id_start_index; /* the starting index of the block of cids 
-                 allocated to tthis communicator*/
+                 allocated to this communicator*/
 
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
@@ -156,8 +157,79 @@ struct ompi_communicator_t {
     mca_coll_base_comm_coll_t c_coll;
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
+
+/**
+ * Padded struct to maintain back compatibiltiy.
+ *
+ * The following ompi_predefined_xxx_t structure is used to maintain
+ * backwards binary compatibility for MPI applications compiled
+ * against one version of OMPI library but dynamically linked at
+ * runtime with another.  The issue is between versions the actual
+ * structure may change in size (even between debug and optimized
+ * compilation -- the structure contents change, and therefore the
+ * overall size changes).
+ *
+ * This is problematic with predefined handles because the storage of
+ * the structure ends up being located to an application's BSS.  This
+ * causes problems because if one version has the predefined as size X
+ * and then the application is dynamically linked with a version that
+ * has a size of Y (where X != Y) then the application will
+ * unintentionally overrun the memory initially allocated for the
+ * structure.
+ *
+ * The solution we are using below creates a parent structure
+ * (ompi_predefined_xxx_t) that contains the base structure
+ * (ompi_xxx_t) followed by a character padding that is the size of
+ * the total size we choose to preallocate for the structure minus the
+ * amount used by the base structure.  In this way, we've normalized
+ * the size of each predefined handle across multiple versions and
+ * configurations of Open MPI (e.g., MPI_COMM_WORLD will refer to a
+ * back-end struct that is X bytes long, even if we change the
+ * back-end ompi_communicator_t between version A.B and version C.D in
+ * Open MPI).  When we come close to filling up the the padding we can
+ * add a pointer at the back end of the base structure to point to an
+ * extension of the type.  Or we can just increase the padding and
+ * break backwards binary compatibility.
+ * 
+ * The above method was decided after several failed attempts
+ * described below.
+ *
+ * - Original implementation - suffered that the base structure seemed
+ *   to always change in size between Open MPI versions and/or
+ *   configurations (e.g., optimized vs. debugging build).
+ *
+ * - Convert all predefined handles to run-time-assigned pointers
+ *   (i.e., global variables) - This worked except in cases where an MPI
+ *   application wanted to assign the predefined handle value to a
+ *   global variable -- we could not guarantee to have the global
+ *   variable filled until MPI_INIT was called (recall that MPI
+ *   predefined handles must be assignable before MPI_INIT; e.g.,
+ *   "MPI_Comm foo = MPI_COMM_WORLD").
+ *
+ * - union of struct and padding - Similar to current implementation
+ *   except using a union for the parent.  This worked except in cases
+ *   where the compilers did not support C99 union static initalizers.
+ *   It would have been a pain to convert a bunch of the code to use
+ *   non-static initializers (e.g., MPI datatypes).
+ */
+
+/* Define for the preallocated size of the predefined handle.  
+ * Note that we are using a pointer type as the base memory chunk
+ * size so when the bitness changes the size of the handle changes.
+ * This is done so we don't end up needing a structure that is
+ * incredibly larger than necessary because of the bitness.
+ */
+#define PREDEFINED_COMMUNICATOR_PAD (sizeof(void*) * 96)
+
+struct ompi_predefined_communicator_t {
+    struct ompi_communicator_t comm;
+    char padding[PREDEFINED_COMMUNICATOR_PAD - sizeof(ompi_communicator_t)];
+};
+typedef struct ompi_predefined_communicator_t ompi_predefined_communicator_t;
+
 OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
-OMPI_DECLSPEC extern ompi_communicator_t ompi_mpi_comm_null;
+OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_null;
+
 
 
 /**

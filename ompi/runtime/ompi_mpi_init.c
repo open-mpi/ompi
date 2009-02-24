@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -136,7 +136,7 @@ static void warn_fork_cb(void)
     if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
         orte_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
                        orte_process_info.nodename, getpid(),
-                       ompi_mpi_comm_world.c_my_rank);
+                       ompi_mpi_comm_world.comm.c_my_rank);
         fork_warning_issued = true;
     }
 }
@@ -688,15 +688,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    MCA_PML_CALL(add_comm(&ompi_mpi_comm_world));
-    MCA_PML_CALL(add_comm(&ompi_mpi_comm_self));
+    MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
+    MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
 
 
     /*
      * Dump all MCA parameters if requested
      */
     if (ompi_mpi_show_mca_params) {
-       ompi_show_all_mca_params(ompi_mpi_comm_world.c_my_rank, 
+       ompi_show_all_mca_params(ompi_mpi_comm_world.comm.c_my_rank, 
                                 nprocs, 
                                 orte_process_info.nodename);
     }

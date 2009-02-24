@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* 
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( 0 );
-        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0);
         return OMPI_SUCCESS;
     }
 
@@ -73,7 +74,7 @@ int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const MPI_
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( 0 );
-        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0);
         return OMPI_SUCCESS;
     }
 
@@ -114,7 +115,7 @@ int32_t ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
    if( (count == 0) || (bLength == 0) ) {
       *newType = ompi_ddt_create(1);
       if( 0 == count )
-          ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0 );
+          ompi_ddt_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0 );
       else
           ompi_ddt_add( *newType, oldType, 0, pDisp[0] * extent, extent );
       return OMPI_SUCCESS;

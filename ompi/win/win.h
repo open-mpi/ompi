@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -93,7 +94,20 @@ struct ompi_win_t {
 typedef struct ompi_win_t ompi_win_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_win_t);
 
-OMPI_DECLSPEC extern ompi_win_t ompi_mpi_win_null;
+/**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_WIN_PAD (sizeof(void*) * 64)
+
+struct ompi_predefined_win_t {
+    struct ompi_win_t win;
+    char padding[PREDEFINED_WIN_PAD - sizeof(ompi_win_t)];
+};
+typedef struct ompi_predefined_win_t ompi_predefined_win_t;
+
+OMPI_DECLSPEC extern ompi_predefined_win_t ompi_mpi_win_null;
 
 int ompi_win_init(void);
 int ompi_win_finalize(void);
