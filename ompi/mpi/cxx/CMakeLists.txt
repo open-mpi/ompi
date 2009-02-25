@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-PROJECT(MPI_CXX)
-
 FILE(GLOB CXX_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 # skip the file interface sources if not wanted

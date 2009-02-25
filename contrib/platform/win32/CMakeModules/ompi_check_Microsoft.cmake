@@ -84,7 +84,6 @@ MACRO(OMPI_MICROSOFT_COMPILER)
       # exported by kernel32.dll. If we force the usage of TRY_RUN
       # here we will check for both in same time: compilation and run.
 
-      PROJECT(FOO)
       # path of foo test programs
       SET (FOO_SOURCE_DIR ${OpenMPI_SOURCE_DIR}/CMakeTests)
       

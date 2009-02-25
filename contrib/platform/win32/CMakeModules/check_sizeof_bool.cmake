@@ -16,7 +16,6 @@ MACRO(CHECK_SIZEOF_BOOL)
     #
     # Try to compile and run a foo grogram, store the result in SIZEOF_BOOL.
     #
-    PROJECT(FOO)
 
     MESSAGE( STATUS "Checking size of bool...")
     FOREACH(LANG c cxx)

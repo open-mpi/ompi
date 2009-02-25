@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-
-PROJECT(CHELLO)
 SET(CHELLO_FILES
   chello.c
 )

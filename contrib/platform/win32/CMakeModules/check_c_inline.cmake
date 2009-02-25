@@ -16,7 +16,6 @@ MACRO(CHECK_C_INLINE)
   
   IF(NOT HAVE_INLINE)
     
-    PROJECT(FOO C)
     # path of foo test programs
     SET (FOO_SOURCE_DIR ${OpenMPI_SOURCE_DIR}/CMakeTests)
     

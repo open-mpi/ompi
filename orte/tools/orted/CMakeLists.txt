@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-PROJECT(ORTED)
-
 FILE(GLOB_RECURSE ORTED_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 ADD_EXECUTABLE (orted ${ORTED_SOURCE_FILES})
