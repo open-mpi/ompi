@@ -98,15 +98,6 @@ struct timeval orte_daemon_msg_recvd;
 
 static struct timeval mesg_recvd={0,0};
 
-/* local callback function for non-blocking sends */
-static void send_callback(int status, orte_process_name_t *peer,
-                          opal_buffer_t *buf, orte_rml_tag_t tag,
-                          void *cbdata)
-{
-    /* nothing to do here - just release buffer and return */
-    OBJ_RELEASE(buf);
-}
-
 static void send_relay(opal_buffer_t *buf)
 {
     opal_list_t recips;
@@ -143,10 +134,8 @@ static void send_relay(opal_buffer_t *buf)
                              ORTE_VPID_PRINT(nm->vpid)));
         
         /* retain buffer so callback function can release it */
-        OBJ_RETAIN(buf);
         target.vpid = nm->vpid;
-        if (0 > (ret = orte_rml.send_buffer_nb(&target, buf, ORTE_RML_TAG_DAEMON, 0,
-                                               send_callback, NULL))) {
+        if (0 > (ret = orte_rml.send_buffer(&target, buf, ORTE_RML_TAG_DAEMON, 0))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
@@ -723,12 +712,11 @@ static int process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
             /* return response */
-            if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                            send_callback, NULL)) {
+            if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 ret = ORTE_ERR_COMM_FAILURE;
             }
-            return ORTE_SUCCESS;
+            OBJ_RELEASE(answer);
             break;
             
             /****     CONTACT QUERY COMMAND    ****/
@@ -754,11 +742,11 @@ static int process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
             
-            if (0 > orte_rml.send_buffer_nb(sender, answer, tag, 0,
-                                            send_callback, NULL)) {
+            if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 ret = ORTE_ERR_COMM_FAILURE;
             }
+            OBJ_RELEASE(answer);
             break;
             
             /****     REPORT_JOB_INFO_CMD COMMAND    ****/
@@ -780,8 +768,7 @@ static int process_commands(orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* callback function will release buffer */
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
+                if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
@@ -828,12 +815,11 @@ static int process_commands(orte_process_name_t* sender,
                         goto CLEANUP;
                     }
                 }
-                /* callback function will release buffer */
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
+                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
+                OBJ_RELEASE(answer);
            }
             break;
             
@@ -855,12 +841,11 @@ static int process_commands(orte_process_name_t* sender,
                     OBJ_RELEASE(answer);
                     goto CLEANUP;
                 }
-                /* callback function will release buffer */
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
+                if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
+                OBJ_RELEASE(answer);
             } else {
                 /* if we are the HNP, process the request */
                 orte_std_cntr_t i, num_nodes=0;
@@ -911,12 +896,11 @@ static int process_commands(orte_process_name_t* sender,
                         goto CLEANUP;
                     }
                 }
-                /* callback function will release buffer */
-                if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
-                                                send_callback, NULL)) {
+                if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
                     ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
+                OBJ_RELEASE(answer);
             }
             break;
             
@@ -939,9 +923,12 @@ static int process_commands(orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* callback function will release buffer */
+#if 0
                 if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
                                                 send_callback, NULL)) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+#endif
+                if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
+                        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
             } else {
@@ -1005,9 +992,12 @@ PACK_ANSWER:
                 }
 SEND_ANSWER:
                 /* callback function will release buffer */
+#if 0
                 if (0 > orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL, 0,
                                                 send_callback, NULL)) {
-                    ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+#endif
+                if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {
+                        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                     ret = ORTE_ERR_COMM_FAILURE;
                 }
             }
@@ -1087,8 +1077,11 @@ SEND_ANSWER:
                                 goto SEND_TOP_ANSWER;
                             }
                             /* the callback function will release relay_msg buffer */
+#if 0
                             if (0 > orte_rml.send_buffer_nb(&proc2, relay_msg, ORTE_RML_TAG_DAEMON, 0,
                                                             send_callback, NULL)) {
+#endif
+                            if (0 > orte_rml.send_buffer(&proc2, relay_msg, ORTE_RML_TAG_DAEMON, 0)) {
                                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                                 OBJ_RELEASE(relay_msg);
                                 ret = ORTE_ERR_COMM_FAILURE;
@@ -1138,8 +1131,11 @@ SEND_ANSWER:
                             goto SEND_TOP_ANSWER;
                         }
                         /* the callback function will release relay_msg buffer */
+#if 0
                         if (0 > orte_rml.send_buffer_nb(&proc2, relay_msg, ORTE_RML_TAG_DAEMON, 0,
                                                         send_callback, NULL)) {
+#endif
+                        if (0 > orte_rml.send_buffer(&proc2, relay_msg, ORTE_RML_TAG_DAEMON, 0)) {
                             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                             OBJ_RELEASE(relay_msg);
                             ret = ORTE_ERR_COMM_FAILURE;
@@ -1203,8 +1199,11 @@ SEND_ANSWER:
                 ret = ORTE_ERR_COMM_FAILURE;
                 break;
             }
+#if 0
             if (0 > orte_rml.send_buffer_nb(return_addr, answer, ORTE_RML_TAG_TOOL, 0,
                                             send_callback, NULL)) {
+#endif
+            if (0 > orte_rml.send_buffer(return_addr, answer, ORTE_RML_TAG_TOOL, 0)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 ret = ORTE_ERR_COMM_FAILURE;
             }

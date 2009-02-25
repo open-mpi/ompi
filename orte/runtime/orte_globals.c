@@ -779,12 +779,22 @@ OBJ_CLASS_INSTANCE(orte_pmap_t,
 static void orte_jmap_construct(orte_jmap_t *ptr)
 {
     ptr->job = ORTE_JOBID_INVALID;
-    OBJ_CONSTRUCT(&ptr->pmap, opal_value_array_t);
-    opal_value_array_init(&ptr->pmap, sizeof(orte_pmap_t));
+    OBJ_CONSTRUCT(&ptr->pmap, opal_pointer_array_t);
+    opal_pointer_array_init(&ptr->pmap,
+                            ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                            ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                            ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
 }
 
 static void orte_jmap_destruct(orte_jmap_t *ptr)
 {
+    orte_pmap_t **pmaps;
+    int i;
+    
+    pmaps = (orte_pmap_t**)ptr->pmap.addr;
+    for (i=0; i < ptr->pmap.size && NULL != pmaps[i]; i++) {
+        OBJ_RELEASE(pmaps[i]);
+    }
     OBJ_DESTRUCT(&ptr->pmap);
 }
 
