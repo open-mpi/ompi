@@ -22,7 +22,6 @@
 #define OMPI_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/include/opal/align.h"
-#include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "mpool_fake.h"

@@ -53,7 +53,6 @@
 #endif
 #include "opal/event/event.h"
 
-#include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 

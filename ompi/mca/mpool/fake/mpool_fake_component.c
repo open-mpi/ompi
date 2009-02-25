@@ -23,7 +23,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "mpool_fake.h"
-#include "orte/util/proc_info.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

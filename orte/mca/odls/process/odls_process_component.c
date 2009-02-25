@@ -25,7 +25,6 @@
 #include "opal/util/path.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/proc_info.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/odls_private.h"

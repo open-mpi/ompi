@@ -45,6 +45,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"
 
+#include "orte/util/proc_info.h"
 #include "orte/util/hnp_contact.h"
 
 #define ORTE_HNP_CONTACT_FILE_MAX_LINE_LENGTH 1024

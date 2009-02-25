@@ -26,7 +26,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 
-#include "orte/util/proc_info.h"
 
 BEGIN_C_DECLS
 

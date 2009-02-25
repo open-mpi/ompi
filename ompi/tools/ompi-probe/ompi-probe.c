@@ -45,7 +45,6 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 
 /*

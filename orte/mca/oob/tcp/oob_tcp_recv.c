@@ -20,7 +20,6 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"

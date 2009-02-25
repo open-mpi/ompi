@@ -32,7 +32,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 

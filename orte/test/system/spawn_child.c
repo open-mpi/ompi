@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 
-#include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/oob/base/base.h"
