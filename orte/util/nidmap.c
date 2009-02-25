@@ -1090,8 +1090,6 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
     
     if (pmap->node < 0 || orte_nidmap.size <= pmap->node) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-opal_output(0, "%s looking for proc %s pmap-node %d nidmap-size %d",
-ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc), (int)pmap->node, (int)orte_nidmap.size);
         return NULL;
     }
     
