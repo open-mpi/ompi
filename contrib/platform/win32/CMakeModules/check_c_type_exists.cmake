@@ -23,7 +23,6 @@ MACRO(CHECK_C_TYPE_EXISTS TYPE TYPE_NAME INCLUDE_HEADERS)
 
   MESSAGE( STATUS "Checking for ${TYPE}...")
 
-  PROJECT(FOO)
   FILE(WRITE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/check_${TYPE_NAME}.c"
     "${INCLUDE_HEADERS}
      int main(){ ${TYPE} test; return sizeof(${TYPE});}")

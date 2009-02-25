@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-PROJECT(ORTE_PS)
-
 FILE(GLOB_RECURSE ORTE_PS_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
 
 ADD_EXECUTABLE (orte-ps ${ORTE_PS_SOURCE_FILES})
