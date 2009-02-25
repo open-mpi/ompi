@@ -100,7 +100,7 @@ static int rte_init(char flags)
     int i, j;
     orte_nid_t *node;
     orte_jmap_t *jmap;
-    orte_pmap_t pmap;
+    orte_pmap_t *pmap;
     orte_vpid_t vpid;
     int local_rank;
     int nodeid;
@@ -260,14 +260,13 @@ static int rte_init(char flags)
     /* update the num procs */
     jmap->num_procs = orte_process_info.num_procs;
     /* set the size of the pidmap storage so we minimize realloc's */
-    if (ORTE_SUCCESS != (ret = opal_value_array_set_size(&jmap->pmap, jmap->num_procs))) {
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&jmap->pmap, jmap->num_procs))) {
         ORTE_ERROR_LOG(ret);
         error = "could not set value array size for pidmap";
         goto error;
     }
         
     /* construct the pidmap */
-    OBJ_CONSTRUCT(&pmap, orte_pmap_t);
     if (block) {
         /* for each node, cycle through the ppn */
         vpid = 0;
@@ -277,10 +276,11 @@ static int rte_init(char flags)
              * and add a pmap entry for it
              */
             for (j=0; j < ppn[i]; j++) {
-                pmap.node = node->index;
-                pmap.local_rank = j;
-                pmap.node_rank = j;
-                if (ORTE_SUCCESS != (ret = opal_value_array_set_item(&jmap->pmap, vpid, &pmap))) {
+                pmap = OBJ_NEW(orte_pmap_t);
+                pmap->node = node->index;
+                pmap->local_rank = j;
+                pmap->node_rank = j;
+                if (ORTE_SUCCESS != (ret = opal_pointer_array_set_item(&jmap->pmap, vpid, pmap))) {
                     ORTE_ERROR_LOG(ret);
                     error = "could not set pmap values";
                     goto error;
@@ -299,10 +299,11 @@ static int rte_init(char flags)
             for (i=0; i < num_nodes && vpid < orte_process_info.num_procs; i++) {
                 if (0 < ppn[i]) {
                     node = (orte_nid_t*)orte_nidmap.addr[i];
-                    pmap.node = node->index;
-                    pmap.local_rank = ppn[i]-1;
-                    pmap.node_rank = ppn[i]-1;
-                    if (ORTE_SUCCESS != (ret = opal_value_array_set_item(&jmap->pmap, vpid, &pmap))) {
+                    pmap = OBJ_NEW(orte_pmap_t);
+                    pmap->node = node->index;
+                    pmap->local_rank = ppn[i]-1;
+                    pmap->node_rank = ppn[i]-1;
+                    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_item(&jmap->pmap, vpid, pmap))) {
                         ORTE_ERROR_LOG(ret);
                         error = "could not set pmap values";
                         goto error;
@@ -317,7 +318,6 @@ static int rte_init(char flags)
             }
         }
     }
-    OBJ_DESTRUCT(&pmap);
     free(ppn);
 
     /* ensure we pick the correct critical components */

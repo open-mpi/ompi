@@ -410,7 +410,7 @@ typedef struct {
     /* number of procs in this job */
     orte_vpid_t num_procs;
     /* array of data for procs */
-    opal_value_array_t pmap;
+    opal_pointer_array_t pmap;
 } orte_jmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
 

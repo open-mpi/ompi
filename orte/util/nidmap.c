@@ -128,7 +128,7 @@ int orte_util_setup_local_nidmap_entries(void)
 {
     orte_nid_t *node;
     orte_jmap_t *jmap;
-    orte_pmap_t pmap;
+    orte_pmap_t *pmap;
 
     /* add a jmap entry for myself */
     jmap = OBJ_NEW(orte_jmap_t);
@@ -141,16 +141,15 @@ int orte_util_setup_local_nidmap_entries(void)
     node->name = strdup(orte_process_info.nodename);
     node->daemon = ORTE_PROC_MY_DAEMON->vpid;
     node->arch = orte_process_info.arch;
-    OBJ_CONSTRUCT(&pmap, orte_pmap_t);
-    pmap.local_rank = 0;
-    pmap.node_rank = 0;
+    pmap = OBJ_NEW(orte_pmap_t);
+    pmap->local_rank = 0;
+    pmap->node_rank = 0;
     node->index = opal_pointer_array_add(&orte_nidmap, node);
     /* value array copies values, so everything must be set before
      * calling the set_item function
      */
-    pmap.node = node->index;
-    opal_value_array_set_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid, &pmap);
-    OBJ_DESTRUCT(&pmap);
+    pmap->node = node->index;
+    opal_pointer_array_set_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid, pmap);
     
     /* all done */
     return ORTE_SUCCESS;
@@ -892,7 +891,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
 {
     orte_jobid_t jobid;
     orte_vpid_t i, num_procs;
-    orte_pmap_t pmap;
+    orte_pmap_t *pmap;
     int32_t *nodes;
     orte_local_rank_t *local_rank;
     orte_node_rank_t *node_rank;
@@ -900,11 +899,8 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     opal_buffer_t buf;
     orte_jmap_t **jobs, *jmap;
     bool already_present;
-    opal_value_array_t *procs;
     int j;
     int rc;
-    
-    OBJ_CONSTRUCT(&pmap, orte_pmap_t);
     
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -972,17 +968,14 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
             /* allocate memory for the procs array */
-            procs = &jmap->pmap;
-            if (ORTE_SUCCESS != (rc = opal_value_array_set_size(procs, num_procs))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
+            opal_pointer_array_set_size(&jmap->pmap, num_procs);
             /* xfer the data */
             for (i=0; i < num_procs; i++) {
-                pmap.node = nodes[i];
-                pmap.local_rank = local_rank[i];
-                pmap.node_rank = node_rank[i];
-                if (ORTE_SUCCESS != (rc = opal_value_array_set_item(procs, i, &pmap))) {
+                pmap = OBJ_NEW(orte_pmap_t);
+                pmap->node = nodes[i];
+                pmap->local_rank = local_rank[i];
+                pmap->node_rank = node_rank[i];
+                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -1002,7 +995,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     
 cleanup:
     OBJ_DESTRUCT(&buf);
-    OBJ_DESTRUCT(&pmap);
     return rc;
 }
 
@@ -1039,7 +1031,15 @@ orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc)
         return NULL;
     }
     
-    return (orte_pmap_t*)opal_value_array_get_item(&jmap->pmap, proc->vpid);
+    /* is this index in range? */
+    if (jmap->pmap.size <= (int)proc->vpid+1) {
+        return NULL;
+    }
+    
+    /* now that we know the vpid is within range, we can safely
+     * retrieve the value
+     */
+    return (orte_pmap_t*)jmap->pmap.addr[proc->vpid];
 }
 
 /* the daemon's vpid does not necessarily correlate
@@ -1088,9 +1088,10 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
         return NULL;
     }
     
-    if (orte_nidmap.size < pmap->node ||
-        pmap->node < 0) {
+    if (pmap->node < 0 || orte_nidmap.size <= pmap->node) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+opal_output(0, "%s looking for proc %s pmap-node %d nidmap-size %d",
+ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc), (int)pmap->node, (int)orte_nidmap.size);
         return NULL;
     }
     

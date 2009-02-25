@@ -51,17 +51,17 @@
 int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
 {
     opal_buffer_t buf, rbuf;
-    int32_t i, num_procs;
+    int32_t i, n, num_procs;
     orte_std_cntr_t cnt, j, num_recvd_entries;
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
     int32_t arch;
-    bool modex_reqd, existing_nid;
-    orte_nid_t *nid;
+    bool modex_reqd;
+    orte_nid_t *nid, **nids;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
     orte_jmap_t *jmap;
-    orte_pmap_t pmap;
+    orte_pmap_t *pmap;
     orte_vpid_t daemon;
     char *hostname;
     
@@ -132,6 +132,8 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* process the results */
+    nids = (orte_nid_t**)orte_nidmap.addr;
+
     /* extract the number of procs that put data in the buffer */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, OPAL_INT32))) {
@@ -196,8 +198,18 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
         /* UPDATE THE NIDMAP/PIDMAP TO SUPPORT DYNAMIC OPERATIONS */
         
         /* find this proc's node in the nidmap */
-        existing_nid = true;
-        if (NULL == (nid = orte_util_lookup_nid(&proc_name))) {
+        nid = NULL;
+        for (n=0; n < orte_nidmap.size && NULL != nids[n]; n++) {
+            if (0 == strcmp(hostname, nids[n]->name)) {
+                nid = nids[n];
+                /* update the arch in case it differs
+                 * from what was reported by the daemon
+                 */
+                nid->arch = arch;
+                break;
+            }
+        }
+        if (NULL == nid) {
             /* node wasn't found - let's add it */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                                  "%s grpcomm:base:full:modex no nidmap entry for node %s",
@@ -207,7 +219,6 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
             nid->daemon = daemon;
             nid->arch = arch;
             nid->index = opal_pointer_array_add(&orte_nidmap, nid);
-            existing_nid = false;
         }
         
         /* see if we have this job in a jobmap */
@@ -222,12 +233,11 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
             opal_pointer_array_add(&orte_jobmap, jmap);
             jmap->num_procs = 1;
             /* have to add the pidmap entry too */
-            OBJ_CONSTRUCT(&pmap, orte_pmap_t);
-            pmap.node = nid->index;
-            pmap.local_rank = local_rank;
-            pmap.node_rank = node_rank;
-            opal_value_array_set_item(&jmap->pmap, proc_name.vpid, &pmap);
-            OBJ_DESTRUCT(&pmap);
+            pmap = OBJ_NEW(orte_pmap_t);
+            pmap->node = nid->index;
+            pmap->local_rank = local_rank;
+            pmap->node_rank = node_rank;
+            opal_pointer_array_set_item(&jmap->pmap, proc_name.vpid, pmap);
         } else {
             /* see if we have this proc in a pidmap */
             if (NULL == orte_util_lookup_pmap(&proc_name)) {
@@ -236,20 +246,11 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                                      "%s grpcomm:base:full:modex no pidmap entry for proc %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
-                OBJ_CONSTRUCT(&pmap, orte_pmap_t);
-                pmap.node = nid->index;
-                pmap.local_rank = local_rank;
-                pmap.node_rank = node_rank;
-                opal_value_array_set_item(&jmap->pmap, proc_name.vpid, &pmap);
-                OBJ_DESTRUCT(&pmap);
-            }
-        }
-        
-        /* if we have an existing nid, update the arch in the ESS */
-        if (existing_nid) {
-            if (ORTE_SUCCESS != (rc = orte_ess.update_arch(&proc_name, arch))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
+                pmap = OBJ_NEW(orte_pmap_t);
+                pmap->node = nid->index;
+                pmap->local_rank = local_rank;
+                pmap->node_rank = node_rank;
+                opal_pointer_array_set_item(&jmap->pmap, proc_name.vpid, pmap);
             }
         }
         
