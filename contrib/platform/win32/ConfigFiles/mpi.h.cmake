@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -39,6 +39,9 @@
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #cmakedefine OMPI_HAVE_SYS_TIME_H 1
+
+/* Define to 1 if you have the <sys/synch.h> header file. */
+#cmakedefine OMPI_HAVE_SYS_SYNCH_H 1
 
 /* Define to 1 if the system has the type `long long'. */
 #cmakedefine OMPI_HAVE_LONG_LONG 1
@@ -177,7 +180,7 @@
  * MPI version
  */
 #define MPI_VERSION 2
-#define MPI_SUBVERSION 0
+#define MPI_SUBVERSION 1
 
 /*
  * To accomodate programs written for MPI implementations that use a
@@ -287,7 +290,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_ARGV_NULL            ((char **) 0)   /* NULL argument vector */
 #define MPI_ARGVS_NULL           ((char ***) 0)  /* NULL argument vectors */
 #define MPI_ERRCODES_IGNORE      ((int *) 0)    /* don't return error codes */
-#define MPI_MAX_PORT_NAME        256     /* max port name length */
+#define MPI_MAX_PORT_NAME        1024     /* max port name length */
 #define MPI_MAX_NAME_LEN         MPI_MAX_PORT_NAME /* max port name length */
 #define MPI_ORDER_C              0       /* C row major order */
 #define MPI_ORDER_FORTRAN        1       /* Fortran column major order */
@@ -593,31 +596,35 @@ OMPI_DECLSPEC int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval,
                                          void* attribute_val_out,
                                          int* flag );
 
-
 /*
  * External variables
+ *
+ * The below externs use the ompi_predefined_xxx_t structures to maintain
+ * back compatibility between MPI library versions.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose to use the ompi_predefined_xxx_t structure.
  */
-OMPI_DECLSPEC extern union ompi_predefined_communicator_t ompi_mpi_comm_world;
-OMPI_DECLSPEC extern union ompi_predefined_communicator_t ompi_mpi_comm_self;
-OMPI_DECLSPEC extern union ompi_predefined_communicator_t ompi_mpi_comm_null;
+OMPI_DECLSPEC extern struct ompi_predefined_communicator_t ompi_mpi_comm_world;
+OMPI_DECLSPEC extern struct ompi_predefined_communicator_t ompi_mpi_comm_self;
+OMPI_DECLSPEC extern struct ompi_predefined_communicator_t ompi_mpi_comm_null;
 
-OMPI_DECLSPEC extern union ompi_predefined_group_t ompi_mpi_group_empty;
-OMPI_DECLSPEC extern union ompi_predefined_group_t ompi_mpi_group_null;
+OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_empty;
+OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 
-OMPI_DECLSPEC extern union ompi_predefined_request_t ompi_request_null;
+OMPI_DECLSPEC extern struct ompi_predefined_request_t ompi_request_null;
 
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_null;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_max, ompi_mpi_op_min;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_sum;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_prod;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_land;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_band;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_lxor;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_bxor;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_maxloc;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_minloc;
-OMPI_DECLSPEC extern union ompi_predefined_op_t ompi_mpi_op_replace;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_null;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_max, ompi_mpi_op_min;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_sum;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_prod;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_land;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_band;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_lxor;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_bxor;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_maxloc;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_minloc;
+OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_replace;
 
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_char, ompi_mpi_byte;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int, ompi_mpi_logic;
@@ -694,14 +701,14 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex16;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex32;
 #endif
 
-OMPI_DECLSPEC extern union ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
-OMPI_DECLSPEC extern union ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
-OMPI_DECLSPEC extern union ompi_predefined_errhandler_t ompi_mpi_errors_return;
+OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
+OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
+OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errors_return;
 
-OMPI_DECLSPEC extern union ompi_predefined_win_t ompi_mpi_win_null;
-OMPI_DECLSPEC extern union ompi_predefined_file_t ompi_mpi_file_null;
+OMPI_DECLSPEC extern struct ompi_predefined_win_t ompi_mpi_win_null;
+OMPI_DECLSPEC extern struct ompi_predefined_file_t ompi_mpi_file_null;
 
-OMPI_DECLSPEC extern union ompi_predefined_info_t ompi_mpi_info_null;
+OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_null;
 
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
@@ -1663,8 +1670,8 @@ OMPI_DECLSPEC  int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int so
                              int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Reduce(void *sendbuf, void *recvbuf, int count, 
                                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
-OMPI_DECLSPEC  int PMPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
-                                     MPI_Datatype datatype, MPI_Op); 
+OMPI_DECLSPEC  int PMPI_Reduce_local(void *inbuf, void *inoutbuf, int count, 
+                                     MPI_Datatype datatype, MPI_Op);
 OMPI_DECLSPEC  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts, 
                                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Register_datarep(char *datarep, 
