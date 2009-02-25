@@ -47,7 +47,6 @@
 #include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 
-#include "orte/util/proc_info.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"

@@ -43,7 +43,6 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/datatype/convertor.h" 
 #include "btl_gm_endpoint.h"
-#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "ompi/runtime/ompi_module_exchange.h"

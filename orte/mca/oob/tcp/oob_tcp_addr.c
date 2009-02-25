@@ -37,7 +37,6 @@
 #include "opal/util/if.h"
 #include "opal/util/net.h"
 
-#include "orte/util/proc_info.h"
 
 #include "oob_tcp.h"
 #include "oob_tcp_addr.h"

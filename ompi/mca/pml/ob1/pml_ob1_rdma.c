@@ -21,7 +21,6 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
-#include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"

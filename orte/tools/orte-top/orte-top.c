@@ -48,7 +48,6 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/hnp_contact.h"
 #include "orte/util/name_fns.h"

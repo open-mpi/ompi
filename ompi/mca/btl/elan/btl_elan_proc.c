@@ -14,7 +14,6 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "btl_elan.h"
 #include "btl_elan_proc.h"
-#include "orte/util/proc_info.h"
 #include "ompi/communicator/communicator.h"
 
 static void mca_btl_elan_proc_construct(mca_btl_elan_proc_t* proc);

@@ -29,7 +29,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 
-#include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/plm/plm.h"

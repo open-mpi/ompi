@@ -37,7 +37,6 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_sctp_frag.h" 
 #include "btl_sctp_endpoint.h"
-#include "orte/util/proc_info.h"
 
 #include "btl_sctp.h"
 #include "btl_sctp_addr.h"

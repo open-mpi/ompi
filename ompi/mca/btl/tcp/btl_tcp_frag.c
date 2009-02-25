@@ -41,7 +41,6 @@
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp_frag.h" 
 #include "btl_tcp_endpoint.h"
-#include "orte/util/proc_info.h"
 
 static void mca_btl_tcp_frag_common_constructor(mca_btl_tcp_frag_t* frag) 
 { 

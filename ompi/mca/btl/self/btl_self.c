@@ -30,7 +30,6 @@
 #include "ompi/datatype/datatype.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/if.h"
-#include "orte/util/proc_info.h"
 #include "opal/util/printf.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/pml/pml.h"

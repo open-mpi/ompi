@@ -28,7 +28,6 @@
 
 #include "opal/threads/condition.h"
 
-#include "orte/util/proc_info.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
