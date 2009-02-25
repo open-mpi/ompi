@@ -123,6 +123,7 @@ static opal_event_t *abort_exit_event=NULL;
 static bool forcibly_die = false;
 static opal_event_t *timeout_ev=NULL;
 static bool profile_is_set = false;
+static bool signals_set=false;
 
 /*
  * Globals
@@ -603,6 +604,8 @@ int orterun(int argc, char *argv[])
     }
 #endif  /* __WINDOWS__ */
     
+    signals_set = true;
+    
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
     
@@ -683,7 +686,8 @@ int orterun(int argc, char *argv[])
         ORTE_ERROR_LOG(rc);
         orte_show_help("help-orterun.txt", "orterun:precondition", false,
                        orterun_basename, NULL, NULL, rc);
-        return rc;
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto DONE;
     }
 
     /* setup to listen for commands sent specifically to me, even though I would probably
@@ -695,13 +699,15 @@ int orterun(int argc, char *argv[])
                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto DONE;
     }
     
     /* setup the data server */
     if (ORTE_SUCCESS != (rc = orte_data_server_init())) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        goto DONE;
     }
     
     /* if an uri for the ompi-server was provided, set the route */
@@ -729,7 +735,7 @@ int orterun(int argc, char *argv[])
                                    orterun_basename, ompi_server,
                                    (long)orterun_globals.server_wait_timeout,
                                    ORTE_ERROR_NAME(rc));
-                    orte_exit_status = ORTE_ERROR_DEFAULT_EXIT_CODE;
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     goto DONE;
                 }
             }
@@ -751,7 +757,22 @@ int orterun(int argc, char *argv[])
     /* we only reach this point by jumping there due
      * to an error - so just cleanup and leave
      */
-DONE:    
+DONE:
+    if (signals_set) {
+        /* Remove the TERM and INT signal handlers */
+        opal_signal_del(&term_handler);
+        opal_signal_del(&int_handler);
+#ifndef __WINDOWS__
+        /** Remove the USR signal handlers */
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
+        if (orte_forward_job_control) {
+            opal_signal_del(&sigtstp_handler);
+            opal_signal_del(&sigcont_handler);
+        }
+#endif  /* __WINDOWS__ */
+    }
+
     /* whack any lingering session directory files from our jobs */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
@@ -837,6 +858,21 @@ static void job_completed(int trigpipe, short event, void *arg)
      * all we can do is cleanly exit ourselves
      */
 DONE:
+    if (signals_set) {
+        /* Remove the TERM and INT signal handlers */
+        opal_signal_del(&term_handler);
+        opal_signal_del(&int_handler);
+#ifndef __WINDOWS__
+        /** Remove the USR signal handlers */
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
+        if (orte_forward_job_control) {
+            opal_signal_del(&sigtstp_handler);
+            opal_signal_del(&sigcont_handler);
+        }
+#endif  /* __WINDOWS__ */
+    }
+    
     /* whack any lingering session directory files from our jobs */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     
@@ -861,18 +897,20 @@ static void terminated(int trigpipe, short event, void *arg)
         free(timeout_ev);
     }
     
-    /* Remove the TERM and INT signal handlers */
-    opal_signal_del(&term_handler);
-    opal_signal_del(&int_handler);
+    if (signals_set) {
+        /* Remove the TERM and INT signal handlers */
+        opal_signal_del(&term_handler);
+        opal_signal_del(&int_handler);
 #ifndef __WINDOWS__
-    /** Remove the USR signal handlers */
-    opal_signal_del(&sigusr1_handler);
-    opal_signal_del(&sigusr2_handler);
-    if (orte_forward_job_control) {
-        opal_signal_del(&sigtstp_handler);
-        opal_signal_del(&sigcont_handler);
-    }
+        /** Remove the USR signal handlers */
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
+        if (orte_forward_job_control) {
+            opal_signal_del(&sigtstp_handler);
+            opal_signal_del(&sigcont_handler);
+        }
 #endif  /* __WINDOWS__ */
+    }
     
     /* get the daemon job object */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
@@ -1133,6 +1171,20 @@ static void abort_exit_callback(int fd, short ign, void *arg)
          * the point of setting the job up, so there is nothing
          * to do but just clean ourselves up and exit
          */
+        if (signals_set) {
+            /* Remove the TERM and INT signal handlers */
+            opal_signal_del(&term_handler);
+            opal_signal_del(&int_handler);
+#ifndef __WINDOWS__
+            /** Remove the USR signal handlers */
+            opal_signal_del(&sigusr1_handler);
+            opal_signal_del(&sigusr2_handler);
+            if (orte_forward_job_control) {
+                opal_signal_del(&sigtstp_handler);
+                opal_signal_del(&sigcont_handler);
+            }
+#endif  /* __WINDOWS__ */
+        }
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         
         /* need to release jdata separately as it won't be

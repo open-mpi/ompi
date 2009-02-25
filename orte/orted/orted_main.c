@@ -97,6 +97,7 @@ static opal_event_t sigusr2_handler;
 #endif  /* __WINDOWS__ */
 char *log_path = NULL;
 static opal_event_t *orted_exit_event;
+static bool signals_set=false;
 
 static void shutdown_callback(int fd, short flags, void *arg);
 static void shutdown_signal(int fd, short flags, void *arg);
@@ -374,7 +375,8 @@ int orte_daemon(int argc, char *argv[])
                 }
                 
                 /* otherwise, return with non-zero status */
-                return ORTE_ERROR_DEFAULT_EXIT_CODE;
+                ret = ORTE_ERROR_DEFAULT_EXIT_CODE;
+                goto DONE;
             }
         }
     }
@@ -410,7 +412,7 @@ int orte_daemon(int argc, char *argv[])
      */
     if (ORTE_SUCCESS != (ret = orte_wait_event(&orted_exit_event, &orte_exit, "orted_shutdown", shutdown_callback))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        goto DONE;
     }
     
     /* setup the primary daemon command receive function */
@@ -418,7 +420,7 @@ int orte_daemon(int argc, char *argv[])
                                   ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        goto DONE;
     }
     
     /* Set signal handlers to catch kill signals so we can properly clean up
@@ -441,6 +443,8 @@ int orte_daemon(int argc, char *argv[])
     opal_signal_add(&sigusr2_handler, NULL);
 #endif  /* __WINDOWS__ */
 
+    signals_set = true;
+    
     /* setup stdout/stderr */
     if (orte_debug_daemons_file_flag) {
         /* if we are debugging to a file, then send stdout/stderr to
@@ -451,7 +455,7 @@ int orte_daemon(int argc, char *argv[])
         if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
                                         ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            goto DONE;
         }
 
         /* define a log file name in the session directory */
@@ -608,13 +612,13 @@ int orte_daemon(int argc, char *argv[])
         if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &rml_uri, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
-            return ret;
+            goto DONE;
         }
         /* send our architecture */
         if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_process_info.arch, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
-            return ret;
+            goto DONE;
         }
         if (orte_timing) {
             int64_t secs, usecs;
@@ -623,13 +627,13 @@ int orte_daemon(int argc, char *argv[])
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
-                return ret;
+                goto DONE;
             }
             usecs = starttime.tv_usec;
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
-                return ret;
+                goto DONE;
             }
             /* get and send our setup time */
             gettimeofday(&setuptime, NULL);
@@ -643,12 +647,12 @@ int orte_daemon(int argc, char *argv[])
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
-                return ret;
+                goto DONE;
             }
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
-                return ret;
+                goto DONE;
             }
             /* include the actual timestamp so the HNP can figure out how
              * long it took for this message to arrive
@@ -657,20 +661,20 @@ int orte_daemon(int argc, char *argv[])
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
-                return ret;
+                goto DONE;
             }
             usecs = setuptime.tv_usec;
             if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(buffer);
-                return ret;
+                goto DONE;
             }
         }
         if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
                                             ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
-            return ret;
+            goto DONE;
         }
         OBJ_RELEASE(buffer);  /* done with this */
     }
@@ -688,6 +692,16 @@ int orte_daemon(int argc, char *argv[])
     opal_event_dispatch();
 
     /* should never get here, but if we do... */
+DONE:
+    if (signals_set) {
+        /* Release all local signal handlers */
+        opal_event_del(&term_handler);
+        opal_event_del(&int_handler);
+#ifndef __WINDOWS__
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
+#endif  /* __WINDOWS__ */
+    }
     
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
@@ -696,7 +710,7 @@ int orte_daemon(int argc, char *argv[])
     OBJ_DESTRUCT(&orte_exit);
 
     /* Finalize and clean up ourselves */
-    ret = orte_finalize();
+    orte_finalize();
     return ret;
 }
 
@@ -754,13 +768,15 @@ static void shutdown_callback(int fd, short flags, void *arg)
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    /* Release all local signal handlers */
-    opal_event_del(&term_handler);
-    opal_event_del(&int_handler);
+    if (signals_set) {
+        /* Release all local signal handlers */
+        opal_event_del(&term_handler);
+        opal_event_del(&int_handler);
 #ifndef __WINDOWS__
-    opal_signal_del(&sigusr1_handler);
-    opal_signal_del(&sigusr2_handler);
+        opal_signal_del(&sigusr1_handler);
+        opal_signal_del(&sigusr2_handler);
 #endif  /* __WINDOWS__ */
+    }
 
     /* Finalize and clean up ourselves */
     ret = orte_finalize();
