@@ -28,7 +28,6 @@
 #include "ompi/types.h"
 #include "opal/include/opal/align.h"
 
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"

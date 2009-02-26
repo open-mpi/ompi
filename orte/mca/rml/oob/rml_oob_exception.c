@@ -12,7 +12,6 @@
 
 #include "opal/class/opal_list.h"
 #include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
 
 struct orte_rml_oob_exception_t {
     opal_list_item_t super;

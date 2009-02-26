@@ -15,7 +15,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
 
 int
