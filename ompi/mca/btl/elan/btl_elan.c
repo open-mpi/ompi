@@ -25,7 +25,7 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "opal/class/opal_hash_table.h"   
 
-#include "stdio.h"
+#include <stdio.h>
 #include "elan/elan.h"
 #include "opal/util/os_path.h"
 #include "opal/util/opal_environ.h"
