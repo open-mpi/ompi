@@ -36,7 +36,6 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/ess/ess.h"
 #include "orte/orted/orted.h"
 
 #include "orte/mca/iof/iof.h"
