@@ -20,7 +20,6 @@
 #include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
