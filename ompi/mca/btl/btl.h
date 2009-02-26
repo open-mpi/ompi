@@ -646,6 +646,7 @@ typedef int (*mca_btl_base_module_send_fn_t)(
  * @param header_size (IN)     Size of header.
  * @param payload_size (IN)    Size of payload (from convertor).
  * @param order (IN)           The ordering tag (may be MCA_BTL_NO_ORDER)
+ * @param flags (IN)           Flags.
  * @param tag (IN)             The tag value used to notify the peer.
  * @param descriptor (OUT)     The descriptor to be returned unable to be sent immediately
 
