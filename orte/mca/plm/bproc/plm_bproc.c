@@ -63,7 +63,6 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rml/rml.h"

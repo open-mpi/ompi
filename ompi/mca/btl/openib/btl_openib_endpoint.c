@@ -33,7 +33,6 @@
 #include "opal_stdint.h"
 #include "opal/util/output.h"
 
-#include "orte/mca/oob/base/base.h"
 #include "orte/util/show_help.h"
 
 #include "ompi/types.h"
