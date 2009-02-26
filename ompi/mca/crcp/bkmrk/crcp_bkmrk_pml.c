@@ -32,6 +32,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/rml/rml.h"
 
 #include "ompi/request/request.h"
 #include "ompi/mca/dpm/dpm.h"
