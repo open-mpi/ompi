@@ -47,7 +47,6 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/runtime/ompi_module_exchange.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_sctp.h"

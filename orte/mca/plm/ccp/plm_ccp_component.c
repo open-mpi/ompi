@@ -23,7 +23,6 @@
 #include "orte/constants.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"

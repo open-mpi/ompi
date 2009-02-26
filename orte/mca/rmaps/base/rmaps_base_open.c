@@ -27,7 +27,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 

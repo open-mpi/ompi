@@ -33,7 +33,6 @@
 #include "ompi/runtime/params.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "btl_udapl.h"

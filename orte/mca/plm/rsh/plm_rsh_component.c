@@ -41,7 +41,6 @@
 #include "opal/util/path.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"

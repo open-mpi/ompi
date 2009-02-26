@@ -61,7 +61,6 @@ const char *ibv_get_sysfs_path(void);
 #include "opal_stdint.h"
 
 #include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

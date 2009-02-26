@@ -27,7 +27,6 @@
 #include "orte/util/show_help.h"
 #include "opal/util/os_path.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 

@@ -31,7 +31,6 @@
 #include "opal/event/event.h"
 
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/snapc/snapc.h"
 

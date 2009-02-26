@@ -35,7 +35,6 @@
 
 #include "orte/mca/oob/base/base.h"
 #include "orte/util/show_help.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/types.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
