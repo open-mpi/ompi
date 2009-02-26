@@ -65,8 +65,7 @@ int mca_rcache_base_open(void)
   }
 
   /* Initialize the list so that in mca_rcache_base_close(), we can
-     iterate over it (even if it's empty, as in the case of
-     ompi_info) */
+     iterate over it (even if it's empty, as in the case of the ompi_info-tool) */
 
   OBJ_CONSTRUCT(&mca_rcache_base_modules, opal_list_t);
 

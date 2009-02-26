@@ -24,7 +24,6 @@
 #define MCA_RCACHE_RB_H
 
 #include "opal/mca/mca.h"
-#include "ompi/info/info.h"
 #include "opal/class/opal_list.h" 
 #include "ompi/class/ompi_rb_tree.h"
 #include "ompi/mca/rcache/rcache.h"
