@@ -77,7 +77,7 @@ mca_btl_sm_t mca_btl_sm = {
         mca_btl_sm_prepare_src,
         NULL,
         mca_btl_sm_send,
-        NULL /*mca_btl_sm_sendi*/,  /* send immediate */
+        mca_btl_sm_sendi,
         NULL,  /* put */
         NULL,  /* get */
         mca_btl_base_dump,
@@ -724,25 +724,38 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
                       mca_btl_base_tag_t tag,
                       mca_btl_base_descriptor_t** descriptor )
 {
-    size_t max_data, length = (header_size + payload_size);
+    size_t length = (header_size + payload_size);
     mca_btl_sm_frag_t* frag;
     int rc;
 
+    /* this check should be unnecessary... turn into an assertion? */
     if( length < mca_btl_sm_component.eager_limit ) {
+
+        /* allocate a fragment, giving up if we can't get one */
+        /* note that frag==NULL is equivalent to rc returning an error code */
         MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, rc);
         if( OPAL_UNLIKELY(NULL == frag) ) {
             *descriptor = NULL;
             return rc;
         }
+
+        /* fill in fragment fields */
         frag->segment.seg_len = length;
-        frag->hdr->len = length;
+        frag->hdr->len        = length;
         assert( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
-        frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+        frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;   /* why do any flags matter here other than OWNERSHIP? */
         frag->hdr->tag = tag;
         frag->endpoint = endpoint;
 
+        /* write the match header (with MPI comm/tag/etc. info) */
         memcpy( frag->segment.seg_addr.pval, header, header_size );
+
+        /* write the message data if there is any */
+        /*
+          We can add MEMCHECKER calls before and after the packing.
+        */
         if( payload_size ) {
+            size_t max_data;
             struct iovec iov;
             uint32_t iov_count;
             /* pack the data into the supplied buffer */
@@ -750,20 +763,25 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
             iov.iov_len  = max_data = payload_size;
             iov_count    = 1;
 
-            (void)ompi_convertor_pack( convertor,
-                                       &iov, &iov_count, &max_data);
+            (void)ompi_convertor_pack( convertor, &iov, &iov_count, &max_data);
 
             assert(max_data == payload_size);
         }
+
         MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);
+
+        /* write the fragment pointer to the FIFO */
         /*
-         * post the descriptor in the queue - post with the relative
-         * address
+         * Note that we don't care what the FIFO-write return code is.  Even if
+         * the return code indicates failure, the write has still "completed" from
+         * our point of view:  it has been posted to a "pending send" queue.
          */
         MCA_BTL_SM_FIFO_WRITE(endpoint, endpoint->my_smp_rank,
                               endpoint->peer_smp_rank, (void *) VIRTUAL2RELATIVE(frag->hdr), false, rc);
-        return rc;
+        return OMPI_SUCCESS;
     }
+
+    /* presumably, this code path will never get executed */
     *descriptor = mca_btl_sm_alloc( btl, endpoint, order,
                                     payload_size + header_size, flags);
     return OMPI_ERR_RESOURCE_BUSY;
