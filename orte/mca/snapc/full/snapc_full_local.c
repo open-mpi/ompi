@@ -61,6 +61,7 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"

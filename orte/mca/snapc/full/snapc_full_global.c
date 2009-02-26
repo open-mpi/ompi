@@ -40,6 +40,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
