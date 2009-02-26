@@ -28,7 +28,6 @@
 
 #include "opal/util/argv.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 

@@ -4,7 +4,6 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
 

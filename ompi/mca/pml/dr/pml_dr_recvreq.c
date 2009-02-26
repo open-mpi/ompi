@@ -28,7 +28,6 @@
 #include "pml_dr_recvfrag.h"
 #include "pml_dr_sendreq.h"
 #include "ompi/mca/bml/base/base.h" 
-#include "orte/mca/errmgr/errmgr.h"
 
 
 /* 

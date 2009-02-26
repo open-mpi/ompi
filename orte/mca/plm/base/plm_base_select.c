@@ -25,7 +25,6 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 
 #include "orte/util/proc_info.h"
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"

@@ -32,7 +32,6 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

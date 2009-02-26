@@ -16,7 +16,6 @@
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
-#include "orte/mca/errmgr/errmgr.h"
 
 #endif
 

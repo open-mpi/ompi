@@ -34,7 +34,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"

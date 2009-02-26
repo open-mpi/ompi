@@ -17,7 +17,6 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/routed/base/base.h"

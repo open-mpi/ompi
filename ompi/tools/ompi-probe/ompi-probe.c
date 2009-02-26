@@ -43,7 +43,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
 
-#include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 
 /*
