@@ -5,7 +5,6 @@
 #include "opal/util/argv.h"
 
 #include "orte/mca/plm/plm.h"
-#include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"

@@ -34,7 +34,6 @@
 #include "ompi/mca/coll/coll.h"
 #include "coll_sm2.h"
 #include "ompi/mca/coll/base/base.h"
-#include "orte/mca/rml/rml.h"
 
 
 /*

@@ -77,7 +77,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "opal/dss/dss.h"
 
-#include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"
 #include "orte/mca/rmaps/rmaps.h"

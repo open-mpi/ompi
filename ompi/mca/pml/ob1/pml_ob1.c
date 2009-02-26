@@ -45,7 +45,6 @@
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/runtime/ompi_module_exchange.h"
-#include "orte/mca/rml/rml.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {

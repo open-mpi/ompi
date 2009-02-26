@@ -46,7 +46,6 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "orte/util/name_fns.h"
-#include "orte/mca/rml/rml.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
 
