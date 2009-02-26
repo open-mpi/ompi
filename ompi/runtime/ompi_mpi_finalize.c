@@ -48,7 +48,6 @@
 #include "opal/runtime/opal.h"
 
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/runtime/runtime.h"

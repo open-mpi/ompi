@@ -33,7 +33,6 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rml/rml.h"
 
 #include "grpcomm_hier.h"
 
