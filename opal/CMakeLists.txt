@@ -76,8 +76,6 @@ FOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 ENDFOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
 # Generate flex files.
-INCLUDE (find_flex)
-FIND_FLEX()
 ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/keyval/keyval_lex.l opal_util_keyval_yy "${PROJECT_BINARY_DIR}/util/keyval/")
 ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/show_help_lex.l  opal_show_help_yy "${PROJECT_BINARY_DIR}/util/")
 

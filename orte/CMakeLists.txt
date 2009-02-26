@@ -47,7 +47,6 @@ FOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 ENDFOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 
 # Generate flex files.
-INCLUDE (find_flex)
 ADD_FLEX_FILE(ORTE_SOURCE_FILES "./util/hostfile/hostfile_lex.l" "orte_util_hostfile_"
               "${PROJECT_BINARY_DIR}/util/hostfile/")
 SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/util/hostfile/hostfile_lex.c

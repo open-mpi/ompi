@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -19,10 +19,19 @@ MACRO(FIND_FLEX)
   
   IF(NOT FLEX_FOUND)
     MESSAGE(STATUS "Check for working flex...")
+
+    # first find out if it's already installed somewhere
+    FIND_PROGRAM(FLEX_EXECUTABLE_SYS NAMES flex)
+
     IF (WIN32)
-      SET(FLEX_EXECUTABLE "${CMAKE_SOURCE_DIR}/contrib/platform/win32/bin/flex.exe" CACHE FILEPATH "Flex")
+      IF(FLEX_EXECUTABLE_SYS)
+        SET(FLEX_EXECUTABLE ${FLEX_EXECUTABLE_SYS} CACHE FILEPATH "Flex")
+      ELSE(FLEX_EXECUTABLE_SYS)
+        # in case that no flex is installed, use our own version
+        SET(FLEX_EXECUTABLE "${CMAKE_SOURCE_DIR}/contrib/platform/win32/bin/flex.exe" CACHE FILEPATH "Flex")
+      ENDIF(FLEX_EXECUTABLE_SYS)
     ELSE(WIN32)
-      FIND_PROGRAM(FLEX_EXECUTABLE NAMES flex)
+      # nothing to do here at moment.
     ENDIF(WIN32)
 
     IF(FLEX_EXECUTABLE)
@@ -65,6 +74,8 @@ MACRO(ADD_FLEX_FILE _sourcelist _source _prefix _output_dir)
   ELSE(NOT _prefix_length EQUAL 0)
     SET(_out ${_output_dir}/${_basename}.c)
   ENDIF(NOT _prefix_length EQUAL 0)
+
+  #MESSAGE("${FLEX_EXECUTABLE} -o${_out} ${_args} ${_in}")
 
   FILE(MAKE_DIRECTORY ${_output_dir})
   EXECUTE_PROCESS(
