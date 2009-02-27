@@ -400,6 +400,13 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
+        /* if an abnormal termination has occurred, just dump
+         * this data as we are aborting
+         */
+        if (orte_abnormal_term_ordered) {
+            OBJ_RELEASE(output);
+            continue;
+        }
         if (0 == output->numbytes) {
             /* this indicates we are to close the fd - there is
              * nothing to write
@@ -460,6 +467,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
 
 CHECK:
     if (NULL != mca_iof_hnp_component.stdinev &&
+        !orte_abnormal_term_ordered &&
         !mca_iof_hnp_component.stdinev->active) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                             "read event is off - checking if okay to restart"));
