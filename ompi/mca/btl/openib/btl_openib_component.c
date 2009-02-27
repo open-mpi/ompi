@@ -2903,23 +2903,12 @@ error:
                     "status number %d for wr_id %llu opcode %d qp_idx %d",
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
                     wc->status, wc->wr_id, wc->opcode, qp));
-        if (NULL == remote_proc) {
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, "Proc %s on node %s encountered IB error "
-                              "communicating to unknown proc/node:\n\tpolling %s with status %s "
-                              "status number %d for wr_id %llu opcode %d qp_idx %d",
-                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_process_info.nodename,
-                              cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                              wc->status, wc->wr_id, wc->opcode, qp);
-        } else {
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, "Proc %s on node %s encountered IB error while "
-                              "communicating to proc %s on node %s:\n\tpolling %s with status %s "
-                              "status number %d for wr_id %llu opcode %d qp_idx %d",
-                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_process_info.nodename,
-                              ORTE_NAME_PRINT(&remote_proc->proc_name),
-                              (NULL == remote_proc->proc_hostname) ? "UNKNOWN" : remote_proc->proc_hostname,
-                              cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                              wc->status, wc->wr_id, wc->opcode, qp);
-        }
+        orte_notifier.peer(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
+                           remote_proc ? &remote_proc->proc_name : NULL,
+                           "\n\tIB polling %s with status %s "
+                           "status number %d for wr_id %llu opcode %d qp_idx %d",
+                           cq_name[cq], btl_openib_component_status_to_string(wc->status),
+                           wc->status, wc->wr_id, wc->opcode, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
@@ -2938,7 +2927,7 @@ error:
                            "srq rnr retry exceeded", true,
                            orte_process_info.nodename, device_name,
                            peer_hostname);
-            orte_notifier.log_help(ORTE_NOTIFIER_INFRA,
+            orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
                                    "help-mpi-btl-openib.txt",
                                    BTL_OPENIB_QP_TYPE_PP(qp) ? 
                                    "pp rnr retry exceeded" : 
@@ -2950,7 +2939,7 @@ error:
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
-            orte_notifier.log_help(ORTE_NOTIFIER_INFRA,
+            orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
                                    "help-mpi-btl-openib.txt", 
                                    "pp retry exceeded",
                                    orte_process_info.nodename,
