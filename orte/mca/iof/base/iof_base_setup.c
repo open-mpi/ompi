@@ -155,7 +155,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
 #endif
         ret = dup2(opts->p_stdout[1], fileno(stdout));
         if (ret < 0) return ORTE_ERR_PIPE_SETUP_FAILURE;
-
+        close(opts->p_stdout[1]);
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));

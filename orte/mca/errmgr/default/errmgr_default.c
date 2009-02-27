@@ -66,6 +66,8 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(name), exit_code));
     
+    orte_abnormal_term_ordered = true;
+    
     /* indicate that all jobs other than the one containing this
      * proc have been orted to abort - this is necessary to avoid
      * duplicate ordering of "abort".
@@ -129,6 +131,8 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(job), exit_code));
 
+    orte_abnormal_term_ordered = true;
+    
     /* tell the plm to terminate all jobs */
     if (ORTE_SUCCESS != (rc = orte_plm.terminate_job(ORTE_JOBID_WILDCARD))) {
         ORTE_ERROR_LOG(rc);
