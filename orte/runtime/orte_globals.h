@@ -460,6 +460,7 @@ ORTE_DECLSPEC extern orte_trigger_event_t orte_exit, orteds_exit;
 ORTE_DECLSPEC extern int orte_exit_status;
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
 ORTE_DECLSPEC extern bool orte_routing_is_enabled;
+ORTE_DECLSPEC extern bool orte_job_term_ordered;
 
 ORTE_DECLSPEC extern int orte_heartbeat_rate;
 ORTE_DECLSPEC extern int orte_startup_timeout;

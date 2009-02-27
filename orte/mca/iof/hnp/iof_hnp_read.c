@@ -46,7 +46,7 @@
 static void restart_stdin(int fd, short event, void *cbdata)
 {
     if (NULL != mca_iof_hnp_component.stdinev &&
-        !orte_abnormal_term_ordered) {
+        !orte_job_term_ordered) {
         mca_iof_hnp_component.stdinev->active = true;
         opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
     }
@@ -125,10 +125,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     
     /* is this read from our stdin? */
     if (ORTE_IOF_STDIN & rev->tag) {
-        /* if an abnormal termination has occurred, just ignore the
+        /* if job termination has been ordered, just ignore the
          * data and delete the read event
          */
-        if (orte_abnormal_term_ordered) {
+        if (orte_job_term_ordered) {
             OBJ_RELEASE(mca_iof_hnp_component.stdinev);
             OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
             return;
