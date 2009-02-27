@@ -1232,6 +1232,8 @@ static void abort_signal_callback(int fd, short flags, void *arg)
      * use the standard xcast for terminating orteds
      */
     orte_abnormal_term_ordered = true;
+    /* ensure that the forwarding of stdin stops */
+    orte_job_term_ordered = true;
 
     /* We are in an event handler; the job completed procedure
        will delete the signal handler that is currently running
