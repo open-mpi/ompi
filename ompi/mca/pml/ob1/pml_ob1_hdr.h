@@ -83,24 +83,35 @@ struct mca_pml_ob1_match_hdr_t {
 
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_MATCH_HDR_FILL(h) \
+do {                                  \
+    (h).hdr_padding[0] = 0;           \
+    (h).hdr_padding[1] = 0;           \
+} while(0)
+#else
+#define MCA_PML_OB1_MATCH_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 #define MCA_PML_OB1_MATCH_HDR_NTOH(h) \
-    do { \
+do { \
     MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_ctx = ntohs((h).hdr_ctx); \
     (h).hdr_src = ntohl((h).hdr_src); \
     (h).hdr_tag = ntohl((h).hdr_tag); \
     (h).hdr_seq = ntohs((h).hdr_seq); \
-    } while (0)
+} while (0)
 
 #define MCA_PML_OB1_MATCH_HDR_HTON(h) \
-    do { \
+do { \
     MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+    MCA_PML_OB1_MATCH_HDR_FILL(h);    \
     (h).hdr_ctx = htons((h).hdr_ctx); \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_tag = htonl((h).hdr_tag); \
     (h).hdr_seq = htons((h).hdr_seq); \
-    } while (0) 
-    
+} while (0) 
+
 /**
  * Header definition for the first fragment when an acknowledgment
  * is required. This could be the first fragment of a large message
@@ -113,19 +124,27 @@ struct mca_pml_ob1_rendezvous_hdr_t {
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_RNDV_HDR_FILL(h) \
+    MCA_PML_OB1_MATCH_HDR_FILL((h).hdr_match)
+#else
+#define MCA_PML_OB1_RNDV_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 /* Note that hdr_src_req is not put in network byte order because it
    is never processed by the receiver, other than being copied into
    the ack header */
 #define MCA_PML_OB1_RNDV_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_MATCH_HDR_NTOH((h).hdr_match); \
-    (h).hdr_msg_length = ntoh64((h).hdr_msg_length); \
+        MCA_PML_OB1_MATCH_HDR_NTOH((h).hdr_match); \
+        (h).hdr_msg_length = ntoh64((h).hdr_msg_length); \
     } while (0)
 
 #define MCA_PML_OB1_RNDV_HDR_HTON(h) \
     do { \
-    MCA_PML_OB1_MATCH_HDR_HTON((h).hdr_match); \
-    (h).hdr_msg_length = hton64((h).hdr_msg_length); \
+        MCA_PML_OB1_MATCH_HDR_HTON((h).hdr_match); \
+        MCA_PML_OB1_RNDV_HDR_FILL(h); \
+        (h).hdr_msg_length = hton64((h).hdr_msg_length); \
     } while (0) 
 
 /**
@@ -142,18 +161,31 @@ struct mca_pml_ob1_rget_hdr_t {
 };
 typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_RGET_HDR_FILL(h)         \
+do {                                         \
+    MCA_PML_OB1_RNDV_HDR_FILL((h).hdr_rndv); \
+    (h).hdr_padding[0] = 0;                  \
+    (h).hdr_padding[1] = 0;                  \
+    (h).hdr_padding[2] = 0;                  \
+    (h).hdr_padding[3] = 0;                  \
+} while(0)
+#else
+#define MCA_PML_OB1_RGET_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 #define MCA_PML_OB1_RGET_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_RNDV_HDR_NTOH((h).hdr_rndv); \
-    (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
+       MCA_PML_OB1_RNDV_HDR_NTOH((h).hdr_rndv); \
+        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
     } while (0)
 
 #define MCA_PML_OB1_RGET_HDR_HTON(h) \
     do { \
-    MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv); \
-    (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
+        MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv); \
+        MCA_PML_OB1_RGET_HDR_FILL(h); \
+        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
     } while (0) 
-
 
 /**
  *  Header for subsequent fragments.
@@ -169,18 +201,32 @@ struct mca_pml_ob1_frag_hdr_t {
 };
 typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_FRAG_HDR_FILL(h) \
+do {                                 \
+  (h).hdr_padding[0] = 0;            \
+  (h).hdr_padding[1] = 0;            \
+  (h).hdr_padding[2] = 0;            \
+  (h).hdr_padding[3] = 0;            \
+  (h).hdr_padding[4] = 0;            \
+  (h).hdr_padding[5] = 0;            \
+} while(0)
+#else
+#define MCA_PML_OB1_FRAG_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 #define MCA_PML_OB1_FRAG_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
-    (h).hdr_frag_offset = ntoh64((h).hdr_frag_offset); \
+        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
+        (h).hdr_frag_offset = ntoh64((h).hdr_frag_offset); \
     } while (0)
 
 #define MCA_PML_OB1_FRAG_HDR_HTON(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-    (h).hdr_frag_offset = hton64((h).hdr_frag_offset); \
+        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+        MCA_PML_OB1_FRAG_HDR_FILL(h); \
+        (h).hdr_frag_offset = hton64((h).hdr_frag_offset); \
     } while (0)
-
 
 /**
  *  Header used to acknowledgment outstanding fragment(s).
@@ -197,20 +243,35 @@ struct mca_pml_ob1_ack_hdr_t {
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_ACK_HDR_FILL(h) \
+do {                                \
+    (h).hdr_padding[0] = 0;         \
+    (h).hdr_padding[1] = 0;         \
+    (h).hdr_padding[2] = 0;         \
+    (h).hdr_padding[3] = 0;         \
+    (h).hdr_padding[4] = 0;         \
+    (h).hdr_padding[5] = 0;         \
+} while (0)
+#else
+#define MCA_PML_OB1_ACK_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 /* Note that the request headers are not put in NBO because the
    src_req is already in receiver's byte order and the dst_req is not
    used by the receiver for anything other than backpointers in return
    headers */
 #define MCA_PML_OB1_ACK_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
-    (h).hdr_send_offset = ntoh64((h).hdr_send_offset); \
+        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
+        (h).hdr_send_offset = ntoh64((h).hdr_send_offset); \
     } while (0)
 
 #define MCA_PML_OB1_ACK_HDR_HTON(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-    (h).hdr_send_offset = hton64((h).hdr_send_offset); \
+        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+        MCA_PML_OB1_ACK_HDR_FILL(h); \
+        (h).hdr_send_offset = hton64((h).hdr_send_offset); \
     } while (0) 
 
 /**
@@ -230,18 +291,29 @@ struct mca_pml_ob1_rdma_hdr_t {
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_RDMA_HDR_FILL(h) \
+do {                                 \
+    (h).hdr_padding[0] = 0;          \
+    (h).hdr_padding[1] = 0;          \
+} while(0)
+#else
+#define MCA_PML_OB1_RDMA_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 #define MCA_PML_OB1_RDMA_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
-    (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
-    (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
+        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
+        (h).hdr_seg_cnt = ntohl((h).hdr_seg_cnt); \
+        (h).hdr_rdma_offset = ntoh64((h).hdr_rdma_offset); \
     } while (0)
 
 #define MCA_PML_OB1_RDMA_HDR_HTON(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
-    (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
-    (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
+        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+        MCA_PML_OB1_RDMA_HDR_FILL(h); \
+        (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
+        (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
     } while (0) 
 
 /**
@@ -258,14 +330,29 @@ struct mca_pml_ob1_fin_hdr_t {
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
+#define MCA_PML_OB1_FIN_HDR_FILL(h) \
+do {                                \
+    (h).hdr_padding[0] = 0;         \
+    (h).hdr_padding[1] = 0;         \
+    (h).hdr_padding[2] = 0;         \
+    (h).hdr_padding[3] = 0;         \
+    (h).hdr_padding[4] = 0;         \
+    (h).hdr_padding[5] = 0;         \
+} while (0)
+#else
+#define MCA_PML_OB1_FIN_HDR_FILL(h)
+#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
+
 #define MCA_PML_OB1_FIN_HDR_NTOH(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
+        MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     } while (0)
 
 #define MCA_PML_OB1_FIN_HDR_HTON(h) \
     do { \
-    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+        MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
+        MCA_PML_OB1_FIN_HDR_FILL(h); \
     } while (0) 
 
 /**
