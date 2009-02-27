@@ -227,9 +227,11 @@
 	- enhancement to OPARI (see tools/opari/ChangeLog:14,15)
 
 5.4.7
-	- fixed faulty timer selection in configure
 	  (the cycle counter timer is not available on all Linux platforms)
 	- added configure check for header file 'asm/intrinsics.h' and
 	  definition of '_IA64_REG_AR_ITC' which are required to use the
 	  ITC timer on IA64/Linux
+	- fixed faulty timer selection in configure
+	- fixed compile error on RedHat/CentOS due to missing header include
+	  of 'cctype.h' in the sources of 'vtunify'
 
