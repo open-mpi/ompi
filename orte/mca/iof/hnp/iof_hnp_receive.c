@@ -70,6 +70,7 @@ static void process_msg(int fd, short event, void *cbdata)
     if (ORTE_IOF_XON & stream) {
         /* re-start the stdin read event */
         if (NULL != mca_iof_hnp_component.stdinev &&
+            !orte_job_term_ordered &&
             !mca_iof_hnp_component.stdinev->active) {
             mca_iof_hnp_component.stdinev->active = true;
             opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);

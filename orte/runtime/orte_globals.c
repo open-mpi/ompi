@@ -81,6 +81,7 @@ orte_trigger_event_t orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
 bool orte_routing_is_enabled = false;
+bool orte_job_term_ordered = false;
 
 int orte_heartbeat_rate;
 int orte_startup_timeout;
