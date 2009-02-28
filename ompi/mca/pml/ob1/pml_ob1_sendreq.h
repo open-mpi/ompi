@@ -217,7 +217,7 @@ do {                                                                            
  * should only be an internal call to the PML.
  *
  */
-void static inline
+static inline void
 send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 {
     assert(false == sendreq->req_send.req_base.req_pml_complete);
@@ -249,7 +249,7 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 }
 
 /* returns true if request was completed on PML level */
-bool static inline
+static inline bool
 send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
 {
     opal_atomic_rmb();

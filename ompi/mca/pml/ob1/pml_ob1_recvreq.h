@@ -138,7 +138,7 @@ do {                                                                \
  *
  *  @param recvreq (IN)  Receive request.
  */
-void static inline
+static inline void
 recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
 {
     size_t i;
@@ -177,7 +177,7 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
-bool static inline
+static inline bool
 recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
 {
     opal_atomic_rmb();
