@@ -214,6 +214,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
+            rev->active = true;                                     \
             opal_event_add(&rev->ev, 0);                            \
         }                                                           \
     } while(0);

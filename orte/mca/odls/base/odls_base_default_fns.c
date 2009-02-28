@@ -88,7 +88,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
     int32_t numbytes;
-    
+    orte_daemon_cmd_flag_t command;
+
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -150,6 +151,15 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     OBJ_RELEASE(wireup);
 
+    /* insert an "add-procs" command here so we can cleanly process it on the
+     * other end
+     */
+    command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* pack the jobid so it can be extracted later */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
@@ -206,6 +216,71 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     return ORTE_SUCCESS;
 }
 
+int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
+{
+    opal_buffer_t wireup;
+    opal_byte_object_t *bo;
+    int rc;
+    orte_std_cntr_t cnt;
+    int32_t numbytes;
+    
+    /* extract the byte object holding the daemonmap */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* retain a copy for downloading to child processes */
+    if (NULL != orte_odls_globals.dmap) {
+        free(orte_odls_globals.dmap->bytes);
+        free(orte_odls_globals.dmap);
+        orte_odls_globals.dmap = NULL;
+    }
+    opal_dss.copy((void**)&orte_odls_globals.dmap, bo, OPAL_BYTE_OBJECT);
+    
+    /* construct the daemon map, if required - the decode function
+     * knows what to do - it will also free the bytes in the bo
+     */
+    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &orte_daemonmap))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* update the routing tree */
+    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* unpack the #bytes of daemon wireup info in the message */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &numbytes, &cnt, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* any bytes there? */
+    if (0 < numbytes) {
+        /* unpack the byte object */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* load it into a buffer */
+        OBJ_CONSTRUCT(&wireup, opal_buffer_t);
+        opal_dss.load(&wireup, bo->bytes, bo->size);
+        /* pass it for processing */
+        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, &wireup))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&wireup);
+            return rc;
+        }
+        /* done with the buffer - dump it */
+        OBJ_DESTRUCT(&wireup);
+    }
+    
+    return ORTE_SUCCESS;
+}
+
 int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                                                 orte_jobid_t *job)
 {
@@ -215,9 +290,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_std_cntr_t cnt;
     orte_process_name_t proc, daemon;
     orte_odls_job_t *jobdat;
-    opal_buffer_t wireup;
     opal_byte_object_t *bo;
-    int32_t numbytes;
     orte_nid_t *node;
     orte_pmap_t *pmap;
     opal_buffer_t alert;
@@ -237,55 +310,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     
     /* set the default values since they may not be included in the data */
     *job = ORTE_JOBID_INVALID;
-    
-    /* extract the byte object holding the daemonmap */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* retain a copy for downloading to child processes */
-    opal_dss.copy((void**)&orte_odls_globals.dmap, bo, OPAL_BYTE_OBJECT);
-    
-    /* construct the daemon map, if required - the decode function
-     * knows what to do - it will also free the bytes in the bo
-     */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo, &orte_daemonmap))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* update the routing tree */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    
-    /* unpack the #bytes of daemon wireup info in the message */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &numbytes, &cnt, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* any bytes there? */
-    if (0 < numbytes) {
-        /* unpack the byte object */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-        /* load it into a buffer */
-        OBJ_CONSTRUCT(&wireup, opal_buffer_t);
-        opal_dss.load(&wireup, bo->bytes, bo->size);
-        /* pass it for processing */
-        if (ORTE_SUCCESS != (rc = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, &wireup))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&wireup);
-            goto REPORT_ERROR;
-        }
-        /* done with the buffer - dump it */
-        OBJ_DESTRUCT(&wireup);
-    }
     
     /* unpack the jobid we are to launch */
     cnt=1;
