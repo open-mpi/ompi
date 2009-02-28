@@ -150,6 +150,61 @@ int ompi_mpi_finalize(void)
         gettimeofday(&ompistart, NULL);
     }
 
+    /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
+       *all* connected processes.  This only means that all processes
+       have to call it.  It does *not* mean that all connected
+       processes need to synchronize (either directly or indirectly).  
+
+       For example, it is quite easy to construct complicated
+       scenarios where one job is "connected" to another job via
+       transitivity, but have no direct knowledge of each other.
+       Consider the following case: job A spawns job B, and job B
+       later spawns job C.  A "connectedness" graph looks something
+       like this:
+
+           A <--> B <--> C
+
+       So what are we *supposed* to do in this case?  If job A is
+       still connected to B when it calls FINALIZE, should it block
+       until jobs B and C also call FINALIZE?
+
+       After lengthy discussions many times over the course of this
+       project, the issue was finally decided at the Louisville Feb
+       2009 meeting: no.
+
+       Rationale:
+
+       - "Collective" does not mean synchronizing.  It only means that
+         every process call it.  Hence, in this scenario, every
+         process in A, B, and C must call FINALIZE.
+
+       - KEY POINT: if A calls FINALIZE, then it is erroneous for B or
+         C to try to communicate with A again.
+
+       - Hence, OMPI is *correct* to only effect a barrier across each
+         jobs' MPI_COMM_WORLD before exiting.  Specifically, if A
+         calls FINALIZE long before B or C, it's *correct* if A exits
+         at any time (and doesn't notify B or C that it is exiting).
+
+       - Arguably, if B or C do try to communicate with the now-gone
+         A, OMPI should try to print a nice error ("you tried to
+         communicate with a job that is already gone...") instead of
+         segv or other Badness.  However, that is an *extremely*
+         difficult problem -- sure, it's easy for A to tell B that it
+         is finalizing, but how can A tell C?  A doesn't even know
+         about C.  You'd need to construct a "connected" graph in a
+         distributed fashion, which is fraught with race conditions,
+         etc.
+
+      Hence, our conclusion is: OMPI is *correct* in its current
+      behavior (of only doing a barrier across its own COMM_WORLD)
+      before exiting.  Any problems that occur are as a result of
+      erroneous MPI applications.  We *could* tighten up the erroneous
+      cases and ensure that we print nice error messages / don't
+      crash, but that is such a difficult problem that we decided we
+      have many other, much higher priority issues to handle that deal
+      with non-erroneous cases. */
+
     /* wait for everyone to reach this point
        This is a grpcomm barrier instead of an MPI barrier because an
        MPI barrier doesn't ensure that all messages have been transmitted
