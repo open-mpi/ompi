@@ -105,7 +105,7 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
     char buf[ORTE_NOTIFIER_MAX_BUF + 1];
     char *peer_host = NULL, *peer_name = NULL;
     char *pos = buf;
-    char *errstr = orte_err2str(errcode);
+    char *errstr = (char*)orte_err2str(errcode);
     int len, space = ORTE_NOTIFIER_MAX_BUF;
 
     if (peer_proc) {
