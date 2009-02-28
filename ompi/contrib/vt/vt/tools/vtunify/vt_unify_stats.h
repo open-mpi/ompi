@@ -16,6 +16,7 @@
 #include "vt_inttypes.h"
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <string>
 #include <vector>
