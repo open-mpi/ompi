@@ -46,7 +46,8 @@
 
 static void restart_stdin(int fd, short event, void *cbdata)
 {
-    if (NULL != mca_iof_hnp_component.stdinev) {
+    if (NULL != mca_iof_hnp_component.stdinev &&
+        !orte_job_term_ordered) {
         mca_iof_hnp_component.stdinev->active = true;
         opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
     }
@@ -125,6 +126,14 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     
     /* is this read from our stdin? */
     if (ORTE_IOF_STDIN & rev->tag) {
+        /* if job termination has been ordered, just ignore the
+         * data and delete the read event
+         */
+        if (orte_job_term_ordered) {
+            OBJ_RELEASE(mca_iof_hnp_component.stdinev);
+            OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
+            return;
+        }
         /* cycle through our list of sinks */
         for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
              item != opal_list_get_end(&mca_iof_hnp_component.sinks);
@@ -153,9 +162,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                         if (mca_iof_hnp_component.stdinev->active) {
                             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                                  "buffer backed up - holding"));
-                            opal_event_del(&(mca_iof_hnp_component.stdinev->ev));
                             mca_iof_hnp_component.stdinev->active = false;
                         }
+                        OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
+                        return;
                     }
                 }
             } else {
@@ -192,7 +202,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         }
         /* nothing more to do */
         OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
-        /* since the event is persistent, we do not need to re-add it */
         return;
     }
     
