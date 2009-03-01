@@ -706,6 +706,10 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
      * no limit, so treat it as unlimited here.
      */
     if (opal_sys_limits.initialized) {
+        OPAL_OUTPUT_VERBOSE((10, "%s limit on num procs %d num children %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             opal_sys_limits.num_procs,
+                             (int)opal_list_get_size(&orte_local_children)));
         if (0 < opal_sys_limits.num_procs &&
             opal_sys_limits.num_procs <= (int)opal_list_get_size(&orte_local_children)) {
             /* at the system limit - abort */
@@ -1982,6 +1986,11 @@ static void check_proc_complete(orte_odls_child_t *child)
     }
     
 unlock:
+    /* remove this child from the global list - do not lock
+     * the thread as we are already locked
+     */
+    opal_list_remove_item(&orte_local_children, &child->super);
+    
     OBJ_DESTRUCT(&alert);
 }
 
