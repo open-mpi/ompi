@@ -297,13 +297,24 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             }
         }
         
+        /* rewind the buffer to the right place for processing the cmd */
+        buffer->unpack_ptr = save;
+        
+        /* process the command */
+        if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
+            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                 "%s orte:daemon:cmd:processor failed on error %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(ret)));
+        }
+        
         /* rewind the buffer to the beginning */
         buffer->unpack_ptr = unpack_ptr;
         /* do the relay */
         send_relay(buffer);
         
-        /* rewind the buffer to the right place for processing the cmd */
-        buffer->unpack_ptr = save;
+        /* done */
+        goto CLEANUP;
+        
     } else {
         /* rewind the buffer so we can process it correctly */
         buffer->unpack_ptr = unpack_ptr;
