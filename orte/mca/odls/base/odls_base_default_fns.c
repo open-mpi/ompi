@@ -706,7 +706,8 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
      * no limit, so treat it as unlimited here.
      */
     if (opal_sys_limits.initialized) {
-        OPAL_OUTPUT_VERBOSE((10, "%s limit on num procs %d num children %d",
+        OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
+                             "%s limit on num procs %d num children %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              opal_sys_limits.num_procs,
                              (int)opal_list_get_size(&orte_local_children)));
@@ -1866,7 +1867,7 @@ static void check_proc_complete(orte_odls_child_t *child)
     int rc;
     opal_buffer_t alert;
     orte_plm_cmd_flag_t cmd=ORTE_PLM_UPDATE_PROC_STATE;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     orte_odls_job_t *jdat;
     
     /* is this proc fully complete? */
@@ -1966,7 +1967,27 @@ static void check_proc_complete(orte_odls_child_t *child)
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:proc_complete reporting all procs in %s terminated",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(child->name->jobid)));
+                                 ORTE_JOBID_PRINT(jdat->jobid)));
+            
+            /* remove all of this job's children from the global list - do not lock
+             * the thread as we are already locked
+             */
+            for (item = opal_list_get_first(&orte_local_children);
+                 item != opal_list_get_end(&orte_local_children);
+                 item = next) {
+                child = (orte_odls_child_t*)item;
+                
+                next = opal_list_get_next(item);
+                
+                if (jdat->jobid == child->name->jobid) {
+                    opal_list_remove_item(&orte_local_children, &child->super);
+                    OBJ_RELEASE(child);
+                }
+            }
+
+            /* remove this job from our local job data since it is complete */
+            opal_list_remove_item(&orte_local_jobdata, &jdat->super);
+            OBJ_RELEASE(jdat);
             
             /* if we are the HNP, then we would rather not send this to ourselves -
              * instead, we queue it up for local processing
@@ -1986,11 +2007,6 @@ static void check_proc_complete(orte_odls_child_t *child)
     }
     
 unlock:
-    /* remove this child from the global list - do not lock
-     * the thread as we are already locked
-     */
-    opal_list_remove_item(&orte_local_children, &child->super);
-    
     OBJ_DESTRUCT(&alert);
 }
 
