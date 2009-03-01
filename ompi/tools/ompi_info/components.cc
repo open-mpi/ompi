@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -92,6 +92,8 @@
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
+#include "orte/mca/notifier/notifier.h"
+#include "orte/mca/notifier/base/base.h"
 #include "orte/util/show_help.h"
 #if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/iof/iof.h"
@@ -292,6 +294,11 @@ void ompi_info::open_components()
   }
   component_map["ess"] = &orte_ess_base_components_available;
     
+  if (ORTE_SUCCESS != orte_notifier_base_open()) {
+      goto error;
+  }
+  component_map["notifier"] = &mca_notifier_base_components_available;
+    
 #if !ORTE_DISABLE_FULL_SUPPORT
   if (ORTE_SUCCESS != mca_oob_base_open()) {
       goto error;
@@ -479,6 +486,7 @@ void ompi_info::close_components()
         (void) mca_allocator_base_close();
         (void) ompi_osc_base_close();
         (void) orte_grpcomm_base_close();
+        (void) orte_notifier_base_close();
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();
 #if !ORTE_DISABLE_FULL_SUPPORT
