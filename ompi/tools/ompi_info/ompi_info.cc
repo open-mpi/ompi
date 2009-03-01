@@ -9,7 +9,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copryight (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+// Copryight (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -234,6 +234,7 @@ int main(int argc, char *argv[])
     ompi_info::mca_types.push_back("errmgr");
     ompi_info::mca_types.push_back("ess");
     ompi_info::mca_types.push_back("grpcomm");
+    ompi_info::mca_types.push_back("notifier");
     
   // Execute the desired action(s)
 
