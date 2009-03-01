@@ -22,9 +22,8 @@ int main( int argc, char **argv )
     MPI_Comm_size(merged, &size);
     printf("Child merged rank = %d, size = %d\n", rank, size);
    
-    sleep(1);
     MPI_Comm_free(&merged);
     MPI_Finalize();
-    printf("Child: exiting\n");
+    printf("Child %d: exiting\n", (int)getpid());
     return 0;
 }
