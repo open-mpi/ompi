@@ -38,9 +38,12 @@ Trunk (not on release branches yet)
 1.3.1
 -----
 
+- Fix an error that limited the number of comm_spawns that could
+  simultaneously be running in some environments
 - Correct a corner case in OB1's GET protocol for long messages; the
   error could sometimes cause MPI jobs using the openib BTL to hang.
-- Fix a bunch of bugs in the IO forwarding (IOF) subsystem.  Thanks to
+- Fix a bunch of bugs in the IO forwarding (IOF) subsystem and add some
+  new options to output to files and redirect output to xterm.  Thanks to
   Jody Weissmann for helping test out many of the new fixes and
   features.
 - Fix SLURM race condition.
@@ -70,10 +73,6 @@ Trunk (not on release branches yet)
   the issue.
 - Various fixes to VampirTrace, including fixing compile errors on
   some platforms.
-- Re-enable the btl_openib_warn_no_device_params_found MCA parameter; its
-  value was accidentally being ignored.
-- Add a configure check for RTLD_NEXT in order to better support systems
-  that don't have it.  Thanks to Gustavo Seabra for the bug report.
 - Fixed missing MPI_Comm_accept.3 man page; fixed minor issue in
   orterun.1 man page.  Thanks to Dirk Eddelbuettel for identifying the
   problem and submitting a patch.
