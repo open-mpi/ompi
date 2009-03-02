@@ -167,9 +167,8 @@ static void check(char *dir, char *file, char **locations)
 void ompi_wait_for_debugger(void)
 {
     int i, debugger, rc;
-    char *a, *b, **dirs;
+    char *a, *b, **dirs, **tmp1 = NULL, **tmp2 = NULL;
     opal_buffer_t buf;
-
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
@@ -209,10 +208,17 @@ void ompi_wait_for_debugger(void)
     if (NULL != b) {
         dirs = opal_argv_split(b, ':');
         for (i = 0; dirs[i] != NULL; ++i) {
-            check(dirs[i], OMPI_MPIHANDLES_DLL_PREFIX, mpidbg_dll_locations);
-            check(dirs[i], OMPI_MSGQ_DLL_PREFIX, mpimsgq_dll_locations);
+            check(dirs[i], OMPI_MPIHANDLES_DLL_PREFIX, tmp1);
+            check(dirs[i], OMPI_MSGQ_DLL_PREFIX, tmp2);
         }
     }
+
+    /* Now that we have a full list of directories, assign the argv
+       arrays to the global variables (since the debugger may read the
+       global variables at any time, we want to ensure that they have
+       non-NULL values only when the entire array is ready). */
+    mpimsgq_dll_locations = tmp1;
+    mpidbg_dll_locations = tmp2;
 
     if (ORTE_DISABLE_FULL_SUPPORT) {
         /* spin until debugger attaches and releases us */
