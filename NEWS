@@ -38,21 +38,55 @@ Trunk (not on release branches yet)
 1.3.1
 -----
 
+- Correct a corner case in OB1's GET protocol for long messages; the
+  error could sometimes cause MPI jobs using the openib BTL to hang.
+- Fix a bunch of bugs in the IO forwarding (IOF) subsystem.  Thanks to
+  Jody Weissmann for helping test out many of the new fixes and
+  features.
+- Fix SLURM race condition.
 - Fix MPI_File_c2f(MPI_FILE_NULL) to return 0, not -1.  Thanks to
   Lisandro Dalcin for the bug report.
+- Fix the DSO build of tm PLM.
+- Various fixes for size disparity between C int's and Fortran
+  INTEGER's.  Thanks to Christoph van Wullen for the bug report.
+- Ensure that mpirun exits with a non-zero exit status when daemons or
+  processes abort or fail to launch.
+- Various fixes to work around Intel (NetEffect) RNIC behavior.
+- Various fixes for mpirun's --preload-files and --preload-binary
+  options.
+- Fix the string name in MPI::ERRORS_THROW_EXCEPTIONS.
+- Add ability to forward SIFTSTP and SIGCONT to MPI processes if you
+  set the MCA parameter orte_forward_job_control to 1.
+- Allow the sm BTL to allocate larger amounts of shared memory if
+  desired (helpful for very large multi-core boxen).
+- Fix a few places where we used PATH_MAX instead of OMPI_PATH_MAX,
+  leading to compile problems on some platforms.  Thanks to Andrea Iob
+  for the bug report.
+- Fix mca_btl_openib_warn_no_device_params_found MCA parameter; it
+  was accidentally being ignored.
+- Fix some run-time issues with the sctp BTL.
+- Ensure that RTLD_NEXT exists before trying to use it (e.g., it
+  doesn't exist on Cygwin).  Thanks to Gustavo Seabra for reporting
+  the issue.
+- Various fixes to VampirTrace, including fixing compile errors on
+  some platforms.
 - Re-enable the btl_openib_warn_no_device_params_found MCA parameter; its
   value was accidentally being ignored.
-- Added a configure check for RTLD_NEXT in order to better support systems
+- Add a configure check for RTLD_NEXT in order to better support systems
   that don't have it.  Thanks to Gustavo Seabra for the bug report.
 - Fixed missing MPI_Comm_accept.3 man page; fixed minor issue in
   orterun.1 man page.  Thanks to Dirk Eddelbuettel for identifying the
   problem and submitting a patch.
+- Implement the XML formatted output of stdout/stderr/stddiag.
 - Fixed mpirun's -wdir switch to ensure that working directories for
   multiple app contexts are properly handled.  Thanks to Geoffroy
   Pignot for reporting the problem.
 - Improvements to the MPI C++ integer constants:
   - Allow MPI::SEEK_* constants to be used as constants
   - Allow other MPI C++ constants to be used as array sizes
+- Fix minor problem with orte-restart's command line options.  See
+  ticket #1761 for details.  Thanks to Gregor Dschung for reporting
+  the problem.
 
 
 1.3
