@@ -475,6 +475,31 @@ BEGIN_C_DECLS
         size_t short_message_size;
 
         /*
+         * flag indicating if have socket layout for the procs
+         */
+        int have_socket_information;
+
+        /*
+         * socket index
+         */
+        int *socket_index;
+
+        /*
+         * number of processes per socket
+         */
+        int *n_procs_per_socket;
+
+        /*
+         * sockets in use
+         */
+        int *sockets_in_use;
+
+        /*
+         * number of processes per socket
+         */
+        int **list_of_ranks_per_socket;
+
+        /*
          * function table for variants of a given collective
          *   function.
          */
