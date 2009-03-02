@@ -1331,6 +1331,10 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         cnt=0;
         for (proc = 0; proc < num_procs; proc++) {
             if( 0 < sm_module->n_procs_per_socket[proc] ) {
+                /* this is the group I belong to */
+                if(sm_module->socket_index[ompi_comm_rank(comm)]==proc) {
+                    sm_module->my_socket_group=cnt;
+                }
                 sm_module->sockets_in_use[cnt]=proc;
                 cnt++;
             }

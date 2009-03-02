@@ -495,6 +495,11 @@ BEGIN_C_DECLS
         int *sockets_in_use;
 
         /*
+         * index of my socekt within the list of sockets in use
+         */
+        int my_socket_group;
+            
+        /*
          * number of processes per socket
          */
         int **list_of_ranks_per_socket;
