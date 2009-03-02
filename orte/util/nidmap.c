@@ -1032,7 +1032,7 @@ orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc)
     }
     
     /* is this index in range? */
-    if (jmap->pmap.size <= (int)proc->vpid+1) {
+    if (jmap->pmap.size <= (int)proc->vpid) {
         return NULL;
     }
     
