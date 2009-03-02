@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -339,11 +339,11 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     localFlags = pdtBase->flags & pdtAdd->flags;
     UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
-    if( (localFlags & DT_FLAG_CONTIGUOUS)        /* both type were contiguous */
-        && (disp == old_true_ub)                 /* and there is no gap between them */
-        && ( ((ptrdiff_t)pdtAdd->size == extent) /* the size and the extent of the
-                                                  * added type have to match */
-             || (count < 2)) ) {                 /* if the count is bigger than 2 */
+    if( (localFlags & DT_FLAG_CONTIGUOUS)             /* both type were contiguous */
+        && ((disp + pdtAdd->true_lb) == old_true_ub)  /* and there is no gap between them */
+        && ( ((ptrdiff_t)pdtAdd->size == extent)      /* the size and the extent of the
+                                                       * added type have to match */
+             || (count < 2)) ) {                      /* if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
             if( (ptrdiff_t)pdtBase->size == (pdtBase->ub - pdtBase->lb) )
                 SET_NO_GAP_FLAG(pdtBase->flags);
