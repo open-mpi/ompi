@@ -1719,6 +1719,21 @@ static void check_proc_complete(orte_odls_child_t *child)
                 goto unlock;
             }
             /* pack the data for the job */
+            jdat = NULL;
+            for (item = opal_list_get_first(&orte_local_jobdata);
+                 item != opal_list_get_end(&orte_local_jobdata);
+                 item = opal_list_get_next(item)) {
+                jdat = (orte_odls_job_t*)item;
+                
+                /* is this the specified job? */
+                if (jdat->jobid == child->name->jobid) {
+                    break;
+                }
+            }
+            if (NULL == jdat) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                goto unlock;
+            }
             if (ORTE_SUCCESS != (rc = pack_state_update(&alert, false, child->name->jobid))) {
                 ORTE_ERROR_LOG(rc);
                 goto unlock;
