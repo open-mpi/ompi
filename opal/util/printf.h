@@ -83,7 +83,7 @@ OPAL_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_li
  * string that specifies how subsequent arguments are converted for
  * output.
  *
- * @param *ptr  Pointer to utput string buffer
+ * @param *ptr  Pointer to output string buffer
  * @param fmt   Output format
  * @return      Length of output string
  *
@@ -106,7 +106,7 @@ OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...) __opal_attrib
  * variable-length argument facilities of stdarg(3) are converted for
  * output.
  *
- * @param *ptr  Pointer to utput string buffer
+ * @param *ptr  Pointer to output string buffer
  * @param fmt   Output format
  * @param ap    Variable argument list pointer
  * @return      Length of output string
