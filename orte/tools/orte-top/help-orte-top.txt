@@ -46,7 +46,7 @@ This appears to be missing the required ':' following the
 keyword "file". Please use the --help option for more information on
 the correct format for this command line option.
 #
-orte-top:hnp-filename-access]
+[orte-top:hnp-filename-access]
 We are unable to access the filename where contact info for the
 mpirun to be contacted was to be found. The filename we were given was:
 
