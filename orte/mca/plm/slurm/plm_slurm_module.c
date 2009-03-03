@@ -451,7 +451,7 @@ static int plm_slurm_terminate_orteds(void)
      */
     if (!primary_pid_set) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slurmd: primary daemons complete!",
+                             "%s plm:slurm: primary daemons complete!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         jdata->state = ORTE_JOB_STATE_TERMINATED;
