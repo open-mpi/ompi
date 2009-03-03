@@ -828,7 +828,14 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
     
     jobs = (orte_job_t**)orte_job_data->addr;
     /* for each job... */
-    for (j=0; j < orte_job_data->size && NULL != jobs[j]; j++) {
+    for (j=1; j < orte_job_data->size; j++) {
+        /* the job array is no longer left-justified and may
+         * have holes in it as we recover resources at job
+         * completion
+         */
+        if (NULL == jobs[j]) {
+            continue;
+        }
         jdata = jobs[j];
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->jobid, 1, ORTE_JOBID))) {

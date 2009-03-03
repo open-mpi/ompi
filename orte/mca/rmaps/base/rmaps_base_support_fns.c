@@ -352,7 +352,7 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 int orte_rmaps_base_compute_usage(orte_job_t *jdata)
 {
     orte_std_cntr_t i;
-    orte_vpid_t j, k;
+    int j, k;
     orte_node_t **nodes;
     orte_proc_t **procs, *psave, *psave2;
     orte_vpid_t minv, minv2;
@@ -378,13 +378,24 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
         procs = (orte_proc_t**)nodes[i]->procs->addr;
         local_rank = 0;
         
-        for (k=0; k < nodes[i]->num_procs; k++) {
+        /* the node map may have holes in it, so cycle
+         * all the way through and avoid the holes
+         */
+        for (k=0; k < nodes[i]->procs->size; k++) {
+            /* if this proc is NULL, skip it */
+            if (NULL == procs[k]) {
+                continue;
+            }
             minv = ORTE_VPID_MAX;
             minv2 = ORTE_VPID_MAX;
             psave = NULL;
             psave2 = NULL;
             /* find the minimum vpid proc */
-            for (j=0; j < nodes[i]->num_procs; j++) {
+            for (j=0; j < nodes[i]->procs->size; j++) {
+                /* if this proc is NULL, skip it */
+                if (NULL == procs[j]) {
+                    continue;
+                }
                 if (procs[j]->name.jobid == jdata->jobid &&
                     ORTE_LOCAL_RANK_MAX == procs[j]->local_rank &&
                     procs[j]->name.vpid < minv) {

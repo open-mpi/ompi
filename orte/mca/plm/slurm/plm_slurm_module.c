@@ -102,9 +102,10 @@ orte_plm_base_module_1_0_0_t orte_plm_slurm_module = {
 /*
  * Local variables
  */
-static pid_t srun_pid = 0;
+static pid_t primary_srun_pid = 0;
+static bool primary_pid_set = false;
 static orte_jobid_t active_job = ORTE_JOBID_INVALID;
-static bool failed_launch;
+static bool launching_daemons;
 static bool local_launch_available = false;
 
 /**
@@ -153,7 +154,8 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     struct timeval launchstart, launchstop;
     int proc_vpid_index;
     orte_jobid_t failed_job;
-    
+    bool failed_launch=true;
+
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
          * then we will not be launching an orted - we will
@@ -187,7 +189,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     }
     
     /* indicate the state of the launch */
-    failed_launch = true;
+    launching_daemons = true;
     
     /* create a jobid for this job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(&jdata->jobid))) {
@@ -398,6 +400,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     
 launch_apps:
     /* get here if daemons launch okay - any failures now by apps */
+    launching_daemons = false;
     failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -465,17 +468,29 @@ static int plm_slurm_terminate_job(orte_jobid_t jobid)
 static int plm_slurm_terminate_orteds(void)
 {
     int rc;
+    orte_job_t *jdata;
     
-    /* deregister the waitpid callback to ensure we don't make it look like
-     * srun failed when it didn't. Since the srun may have already completed,
-     * do NOT ERROR_LOG any return code to avoid confusing, duplicate error
-     * messages
+    /* tell them to die without sending a reply - we will rely on the
+     * waitpid to tell us when they have exited!
      */
-    orte_wait_cb_cancel(srun_pid);
-    
-    /* tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_WITH_REPLY_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_NO_REPLY_CMD))) {
         ORTE_ERROR_LOG(rc);
+    }
+    
+    /* check to see if the primary pid is set. If not, this indicates
+     * that we never launched any additional daemons, so we cannot
+     * not wait for a waitpid to fire and tell us it's okay to
+     * exit. Instead, we simply trigger an exit for ourselves
+     */
+    if (!primary_pid_set) {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:slurm: primary daemons complete!",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+        jdata->state = ORTE_JOB_STATE_TERMINATED;
+        /* need to set the #terminated value to avoid an incorrect error msg */
+        jdata->num_terminated = jdata->num_procs;
+        orte_trigger_event(&orteds_exit);
     }
     
     return rc;
@@ -512,40 +527,63 @@ static int plm_slurm_finalize(void)
 
 
 static void srun_wait_cb(pid_t pid, int status, void* cbdata){
+    orte_job_t *jdata;
+    
     /* According to the SLURM folks, srun always returns the highest exit
-       code of our remote processes. Thus, a non-zero exit status doesn't
-       necessarily mean that srun failed - it could be that an orted returned
-       a non-zero exit status. Of course, that means the orted failed(!), so
-       the end result is the same - the job didn't start.
-    
-       As a result, we really can't do much with the exit status itself - it
-       could be something in errno (if srun itself failed), or it could be
-       something returned by an orted, or it could be something returned by
-       the OS (e.g., couldn't find the orted binary). Somebody is welcome
-       to sort out all the options and pretty-print a better error message. For
-       now, though, the only thing that really matters is that
-       srun failed. Report the error and make sure that orterun
-       wakes up - otherwise, do nothing!
+     code of our remote processes. Thus, a non-zero exit status doesn't
+     necessarily mean that srun failed - it could be that an orted returned
+     a non-zero exit status. Of course, that means the orted failed(!), so
+     the end result is the same - the job didn't start.
      
-       Unfortunately, the pid returned here is the srun pid, not the pid of
-       the proc that actually died! So, to avoid confusion, just use -1 as the
-       pid so nobody thinks this is real
-    */
+     As a result, we really can't do much with the exit status itself - it
+     could be something in errno (if srun itself failed), or it could be
+     something returned by an orted, or it could be something returned by
+     the OS (e.g., couldn't find the orted binary). Somebody is welcome
+     to sort out all the options and pretty-print a better error message. For
+     now, though, the only thing that really matters is that
+     srun failed. Report the error and make sure that orterun
+     wakes up - otherwise, do nothing!
+     
+     Unfortunately, the pid returned here is the srun pid, not the pid of
+     the proc that actually died! So, to avoid confusion, just use -1 as the
+     pid so nobody thinks this is real
+     */
     
-    if (0 != status) {
-        if (failed_launch) {
-            /* report that the daemon has failed so we can exit
-             */
-            orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_FAILED_TO_START);
-            
-        } else {
+    /* if we are in the launch phase, then any termination is bad */
+    if (launching_daemons) {
+        /* report that one or more daemons failed to launch so we can exit */
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:slurm: daemon failed during launch",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_FAILED_TO_START);
+    } else {
+        /* if this is after launch, then we need to abort only if the status
+         * returned is non-zero - i.e., if the orteds exited with an error
+         */
+        if (0 != status) {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:slurm: daemon failed while running",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             orte_plm_base_launch_failed(ORTE_PROC_MY_NAME->jobid, -1, status, ORTE_JOB_STATE_ABORTED);
         }
+        /* otherwise, check to see if this is the primary pid */
+        if (primary_srun_pid == pid) {
+            /* in this case, we just want to fire the proper trigger so
+             * mpirun can exit
+             */
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:slurm: primary daemons complete!",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+            jdata->state = ORTE_JOB_STATE_TERMINATED;
+            /* need to set the #terminated value to avoid an incorrect error msg */
+            jdata->num_terminated = jdata->num_procs;
+            orte_trigger_event(&orteds_exit);
+        }
     }
-    
 }
 
 
@@ -553,6 +591,7 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
                                 char *prefix)
 {
     int fd;
+    int srun_pid;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -652,6 +691,14 @@ static int plm_slurm_start_proc(int argc, char **argv, char **env,
         process group any more.  Stevens says always do this on both
         sides of the fork... */
         setpgid(srun_pid, srun_pid);
+        
+        /* if this is the primary launch - i.e., not a comm_spawn of a
+         * child job - then save the pid
+         */
+        if (!primary_pid_set) {
+            primary_srun_pid = srun_pid;
+            primary_pid_set = true;
+        }
         
         /* setup the waitpid so we can find out if srun succeeds! */
         orte_wait_cb(srun_pid, srun_wait_cb, NULL);

@@ -407,31 +407,6 @@ int orte_dt_init(void)
 }
 
 #if !ORTE_DISABLE_FULL_SUPPORT
-int orte_hnp_globals_init(void)
-{
-    int rc;
-
-    orte_job_data = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(orte_job_data,
-                                                      1,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(orte_node_pool,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    return ORTE_SUCCESS;
-}
-
 
 orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
@@ -575,20 +550,22 @@ static void orte_job_construct(orte_job_t* job)
 static void orte_job_destruct(orte_job_t* job)
 {
     orte_std_cntr_t i;
-    orte_vpid_t j;
+    int n;
     
     for (i=0; i < job->num_apps; i++) {
         if (NULL != job->apps->addr[i]) OBJ_RELEASE(job->apps->addr[i]);
     }
     OBJ_RELEASE(job->apps);
     
-    for (j=0; j < job->num_procs; j++) {
-        if (NULL != job->procs->addr[j]) OBJ_RELEASE(job->procs->addr[j]);
+    if (NULL != job->map) OBJ_RELEASE(job->map);
+    
+    for (n=0; n < job->procs->size; n++) {
+        if (NULL != job->procs->addr[n]) {
+            OBJ_RELEASE(job->procs->addr[n]);
+        }
     }
     OBJ_RELEASE(job->procs);
     
-    if (NULL != job->map) OBJ_RELEASE(job->map);
-
 #if OPAL_ENABLE_FT == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);
@@ -635,7 +612,7 @@ static void orte_node_construct(orte_node_t* node)
 
 static void orte_node_destruct(orte_node_t* node)
 {
-    orte_vpid_t i;
+    int i;
     
     if (NULL != node->name) {
         free(node->name);
@@ -645,10 +622,16 @@ static void orte_node_destruct(orte_node_t* node)
         opal_argv_free(node->alias);
     }
     
-    if (NULL != node->daemon) OBJ_RELEASE(node->daemon);
+    if (NULL != node->daemon) {
+        node->daemon->node = NULL;
+        OBJ_RELEASE(node->daemon);
+    }
     
-    for (i=0; i < node->num_procs; i++) {
-        if (NULL != node->procs->addr[i]) OBJ_RELEASE(node->procs->addr[i]);
+    for (i=0; i < node->procs->size; i++) {
+        if (NULL != node->procs->addr[i]) {
+            ((orte_proc_t*)(node->procs->addr[i]))->node = NULL;
+            OBJ_RELEASE(node->procs->addr[i]);
+        }
     }
     OBJ_RELEASE(node->procs);
     
