@@ -92,6 +92,7 @@ static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
 
+static bool exit_reqd;
 
 /* instantiate this - it is shared via orted.h */
 struct timeval orte_daemon_msg_recvd;
@@ -300,6 +301,9 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         /* rewind the buffer to the right place for processing the cmd */
         buffer->unpack_ptr = save;
         
+        /* init flag */
+        exit_reqd = false;
+        
         /* process the command */
         if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -311,6 +315,11 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         buffer->unpack_ptr = unpack_ptr;
         /* do the relay */
         send_relay(buffer);
+        
+        /* if we need to exit, do so now */
+        if (exit_reqd) {
+            orte_trigger_event(&orte_exit);
+        }
         
         /* done */
         goto CLEANUP;
@@ -635,7 +644,7 @@ static int process_commands(orte_process_name_t* sender,
                 orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
                 OBJ_DESTRUCT(&ack);
             }
-            orte_trigger_event(&orte_exit);
+            exit_reqd = true;
             return ORTE_SUCCESS;
             break;
 
@@ -673,7 +682,7 @@ static int process_commands(orte_process_name_t* sender,
                  */
                 return ORTE_SUCCESS;
             }
-            orte_trigger_event(&orte_exit);
+            exit_reqd = true;
             return ORTE_SUCCESS;
             break;
             
@@ -802,28 +811,37 @@ static int process_commands(orte_process_name_t* sender,
                 if (ORTE_JOBID_WILDCARD != job) {
                     if (NULL != (jobdat = orte_get_job_data_object(job))) {
                         num_jobs = 1;
-                        jobs = &jobdat;
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, ORTE_STD_CNTR))) {
+                            ORTE_ERROR_LOG(ret);
+                            OBJ_RELEASE(answer);
+                            goto CLEANUP;
+                        }
+                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobdat, 1, ORTE_JOB))) {
+                            ORTE_ERROR_LOG(ret);
+                            OBJ_RELEASE(answer);
+                            goto CLEANUP;
+                        }
                     }
                 } else {
-                    /* count number of jobs */
-                    for (i=0; i < orte_job_data->size; i++) {
-                        if (NULL == orte_job_data->addr[i]) break;
-                        num_jobs++;
-                    }
+                    /* since the job array is no longer
+                     * left-justified and may have holes, we have
+                     * to cnt the number of jobs
+                     */
                     jobs = (orte_job_t**)orte_job_data->addr;
-                }
-                
-                /* pack the answer */
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, ORTE_STD_CNTR))) {
-                    ORTE_ERROR_LOG(ret);
-                    OBJ_RELEASE(answer);
-                    goto CLEANUP;
-                }
-                if (0 < num_jobs) {
-                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, jobs, num_jobs, ORTE_JOB))) {
-                        ORTE_ERROR_LOG(ret);
-                        OBJ_RELEASE(answer);
-                        goto CLEANUP;
+                    for (i=0; i < orte_job_data->size; i++) {
+                        if (NULL != orte_job_data->addr[i]) {
+                            num_jobs++;
+                        }
+                    }
+                    /* now pack the, one at a time */
+                    for (i=0; i < orte_job_data->size; i++) {
+                        if (NULL != orte_job_data->addr[i]) {
+                            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobs[i], 1, ORTE_JOB))) {
+                                ORTE_ERROR_LOG(ret);
+                                OBJ_RELEASE(answer);
+                                goto CLEANUP;
+                            }
+                        }
                     }
                 }
                 if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_TOOL, 0)) {

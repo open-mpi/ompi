@@ -39,7 +39,7 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
                                   int *num_jobs, orte_job_t ***job_info_array)
 {
     int ret;
-    orte_std_cntr_t cnt, cnt_jobs;
+    orte_std_cntr_t cnt, cnt_jobs, n;
     opal_buffer_t cmd, answer;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_JOB_INFO_CMD;
     orte_job_t **job_info;
@@ -83,11 +83,14 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     if (0 < cnt_jobs) {
         job_info = (orte_job_t**)malloc(cnt_jobs * sizeof(orte_job_t*));
         /* unpack the job data */
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, job_info, &cnt_jobs, ORTE_JOB))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_DESTRUCT(&answer);
-            free(job_info);
-            return ret;
+        for (n=0; n < cnt_jobs; n++) {
+            cnt = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(&answer, &job_info[n], &cnt, ORTE_JOB))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&answer);
+                free(job_info);
+                return ret;
+            }
         }
         *job_info_array = job_info;
         *num_jobs = cnt_jobs;
