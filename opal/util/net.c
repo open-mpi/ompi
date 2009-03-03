@@ -160,6 +160,7 @@ opal_net_init()
         }
         private_ipv4[i].addr         = 0;
         private_ipv4[i].netmask_bits = 0;
+        opal_argv_free(args);
     }
 
  do_local_init:
@@ -174,6 +175,9 @@ opal_net_init()
 int
 opal_net_finalize()
 {
+    free(private_ipv4);
+    private_ipv4 = NULL;
+
     return OPAL_SUCCESS;
 }
 
