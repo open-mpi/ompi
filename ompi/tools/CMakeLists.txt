@@ -15,8 +15,12 @@ ADD_SUBDIRECTORY(ompi-server)
 
 SET(OMPI_WRAPPER_EXTRA_LIBS "advapi32.lib Ws2_32.lib shlwapi.lib")
 GET_FILENAME_COMPONENT(CC "${CL_EXE}" NAME)
-SET(OMPI_WRAPPER_EXTRA_CFLAGS 
-  "/MDd /TC /D \"OMPI_IMPORTS\" /D \"OPAL_IMPORTS\" /D \"ORTE_IMPORTS\"")
+  IF(BUILD_SHARED_LIBS)
+    SET(OMPI_WRAPPER_EXTRA_CFLAGS 
+      "/MDd /TC /D \"OMPI_IMPORTS\" /D \"OPAL_IMPORTS\" /D \"ORTE_IMPORTS\"")
+  ELSE(BUILD_SHARED_LIBS)
+    SET(OMPI_WRAPPER_EXTRA_CFLAGS "/MDd /TC")
+  ENDIF(BUILD_SHARED_LIBS)
 
 CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/contrib/platform/win32/ConfigFiles/mpicc-wrapper-data.txt.cmake
                ${OMPI_BINARY_DIR}/tools/wrappers/mpicc-wrapper-data.txt @ONLY)
@@ -29,8 +33,12 @@ INSTALL(FILES ${OMPI_BINARY_DIR}/tools/wrappers/mpicc.exe-wrapper-data.txt
 
 IF(OMPI_WANT_CXX_BINDINGS)
   GET_FILENAME_COMPONENT(CXX "${CL_EXE}" NAME)
-  SET(OMPI_WRAPPER_EXTRA_CXXFLAGS 
-    "/MDd /TP /EHsc /D \"OMPI_IMPORTS\" /D \"OPAL_IMPORTS\" /D \"ORTE_IMPORTS\"")
+  IF(BUILD_SHARED_LIBS)
+    SET(OMPI_WRAPPER_EXTRA_CXXFLAGS 
+      "/MDd /TP /EHsc /D \"OMPI_IMPORTS\" /D \"OPAL_IMPORTS\" /D \"ORTE_IMPORTS\"")
+  ELSE(BUILD_SHARED_LIBS)
+    SET(OMPI_WRAPPER_EXTRA_CXXFLAGS "/MDd /TP /EHsc /D")
+  ENDIF(BUILD_SHARED_LIBS)
   SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxx.lib")
   CONFIGURE_FILE(${OpenMPI_SOURCE_DIR}/contrib/platform/win32/ConfigFiles/mpic++-wrapper-data.txt.cmake
                  ${OMPI_BINARY_DIR}/tools/wrappers/mpic++-wrapper-data.txt @ONLY)
