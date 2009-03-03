@@ -17,6 +17,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/if.h"
 
 #if OPAL_ENABLE_FT == 1
@@ -37,7 +38,7 @@ int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl,
                           size_t nprocs, 
                           struct ompi_proc_t** ompi_procs, 
                           struct mca_btl_base_endpoint_t** peers, 
-                          ompi_bitmap_t* reachable )
+                          opal_bitmap_t* reachable )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     int i, rc;
@@ -86,7 +87,7 @@ int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl,
             OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
             continue;
         }
-        ompi_bitmap_set_bit(reachable, i);
+        opal_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&mx_proc->proc_lock);
         peers[i] = mx_endpoint;
     }

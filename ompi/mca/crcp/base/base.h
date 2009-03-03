@@ -21,6 +21,7 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/dss/dss.h"
 
 #include "ompi/mca/crcp/crcp.h"
@@ -123,7 +124,7 @@ extern "C" {
                                        size_t nprocs,
                                        struct ompi_proc_t** procs,
                                        struct mca_btl_base_endpoint_t** endpoints,
-                                       struct ompi_bitmap_t* reachable,
+                                       struct opal_bitmap_t* reachable,
                                        ompi_crcp_base_btl_state_t* );
 
     ompi_crcp_base_btl_state_t*

@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "opal/class/opal_bitmap.h"
 #include "opal/threads/mutex.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
@@ -74,13 +75,13 @@ int mca_btl_self_add_procs( struct mca_btl_base_module_t* btl,
                             size_t nprocs, 
                             struct ompi_proc_t **procs, 
                             struct mca_btl_base_endpoint_t **peers,
-                            ompi_bitmap_t* reachability )
+                            opal_bitmap_t* reachability )
 {
     int i;
 
     for( i = 0; i < (int)nprocs; i++ ) {
         if( procs[i] == ompi_proc_local_proc ) {
-            ompi_bitmap_set_bit( reachability, i );
+            opal_bitmap_set_bit( reachability, i );
             break;  /* there will always be only one ... */
         }
     }

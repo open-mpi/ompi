@@ -27,16 +27,17 @@
 #include <errno.h>
 
 #include "opal/threads/mutex.h"
-#include "ompi/datatype/convertor.h"
 #include "opal/sys/atomic.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/mca/carto/carto.h"
 #include "opal/mca/carto/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/printf.h"
+#include "ompi/datatype/convertor.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -405,7 +406,7 @@ int mca_btl_sm_add_procs(
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_btl_base_endpoint_t **peers,
-    ompi_bitmap_t* reachability)
+    opal_bitmap_t* reachability)
 {
     int return_code = OMPI_SUCCESS;
     int32_t n_local_procs = 0, proc, j,
@@ -451,7 +452,7 @@ int mca_btl_sm_add_procs(
         n_local_procs++;
 
         /* add this proc to shared memory accessibility list */
-        return_code = ompi_bitmap_set_bit(reachability, proc);
+        return_code = opal_bitmap_set_bit(reachability, proc);
         if(OMPI_SUCCESS != return_code)
             goto CLEANUP;
     }

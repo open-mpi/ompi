@@ -24,6 +24,7 @@
 #include "ompi_config.h"
 #include <errno.h> 
 #include <string.h>
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -849,7 +850,7 @@ int mca_btl_udapl_add_procs(
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
     struct mca_btl_base_endpoint_t** peers, 
-    ompi_bitmap_t* reachable)
+    opal_bitmap_t* reachable)
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     int i, rc;
@@ -887,7 +888,7 @@ int mca_btl_udapl_add_procs(
             continue;
         }
 
-        ompi_bitmap_set_bit(reachable, i);
+        opal_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&udapl_proc->proc_lock);
         peers[i] = udapl_endpoint;
     }

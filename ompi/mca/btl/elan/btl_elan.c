@@ -10,6 +10,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "ompi/mca/pml/pml.h"
@@ -64,7 +65,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
                                    size_t nprocs, 
                                    struct ompi_proc_t **ompi_procs, 
                                    struct mca_btl_base_endpoint_t** peers, 
-                                   ompi_bitmap_t* reachable )
+                                   opal_bitmap_t* reachable )
 {
     mca_btl_elan_module_t* elan_btl = (mca_btl_elan_module_t*)btl;
     int i, j, rc;
@@ -107,7 +108,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
             fprintf( file, "%s %d\n", ompi_proc->proc_hostname,
                      elan_proc->position_id_array[j] );
         }
-        ompi_bitmap_set_bit(reachable, i);
+        opal_bitmap_set_bit(reachable, i);
         peers[i] = elan_endpoint;
     }
     fclose(file);

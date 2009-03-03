@@ -193,13 +193,13 @@
 #include "ompi_config.h"
 
 #include "ompi/attribute/attribute.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/threads/mutex.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 #include "ompi/mpi/f77/fint_2_int.h"
-#include "ompi/class/ompi_bitmap.h"
 
 /*
  * Macros
@@ -215,9 +215,9 @@
 #define attr_datatype_f d_f_to_c_index
 #define attr_win_f w_f_to_c_index
 
-#define CREATE_KEY(key) ompi_bitmap_find_and_set_first_unset_bit(key_bitmap, (key))
+#define CREATE_KEY(key) opal_bitmap_find_and_set_first_unset_bit(key_bitmap, (key))
 
-#define FREE_KEY(key) ompi_bitmap_clear_bit(key_bitmap, (key))
+#define FREE_KEY(key) opal_bitmap_clear_bit(key_bitmap, (key))
 
 
 /* Not checking for NULL_DELETE_FN here, since according to the
@@ -403,7 +403,7 @@ static OBJ_CLASS_INSTANCE(ompi_attribute_keyval_t,
  */
 
 static opal_hash_table_t *keyval_hash;
-static ompi_bitmap_t *key_bitmap;
+static opal_bitmap_t *key_bitmap;
 static unsigned int int_pos = 12345;
 
 /*
@@ -484,8 +484,12 @@ int ompi_attr_init(void)
     if (NULL == keyval_hash) {
         return MPI_ERR_SYSRESOURCE;
     }
-    key_bitmap = OBJ_NEW(ompi_bitmap_t);
-    if (0 != ompi_bitmap_init(key_bitmap, 32)) {
+    key_bitmap = OBJ_NEW(opal_bitmap_t);
+    /*
+     * Set the max size to OMPI_FORTRAN_HANDLE_MAX to enforce bound
+     */
+    opal_bitmap_set_max_size (key_bitmap, OMPI_FORTRAN_HANDLE_MAX);
+    if (0 != opal_bitmap_init(key_bitmap, 32)) {
         return MPI_ERR_SYSRESOURCE;
     }
 

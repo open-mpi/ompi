@@ -34,7 +34,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 
-#include "ompi/class/ompi_bitmap.h"
+#include "opal/class/opal_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
@@ -568,7 +568,7 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 				       int *key,
 				       int *ncount )
 {
-    ompi_bitmap_t reachable;
+    opal_bitmap_t reachable;
     ompi_proc_t **procs=NULL;
     struct mca_bml_base_btl_array_t *bml_btl_array=NULL;
     mca_bml_base_btl_t *bml_btl=NULL;
@@ -591,8 +591,8 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
 
-    OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
-    rc = ompi_bitmap_init(&reachable, size);
+    OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
+    rc = opal_bitmap_init(&reachable, size);
     if(OMPI_SUCCESS != rc) {
         return;
     }

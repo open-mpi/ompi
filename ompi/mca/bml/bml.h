@@ -27,6 +27,8 @@
 #define MCA_BML_H
 
 #include "opal/mca/mca.h"
+#include "opal/class/opal_bitmap.h"
+
 #include "ompi/mca/btl/btl.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
@@ -457,7 +459,7 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
 typedef int (*mca_bml_base_module_add_procs_fn_t)(
                                                   size_t nprocs,
                                                   struct ompi_proc_t** procs, 
-                                                  struct ompi_bitmap_t* reachable
+                                                  struct opal_bitmap_t* reachable
                                                   );
 
 /**

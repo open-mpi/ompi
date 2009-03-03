@@ -20,7 +20,7 @@
 AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
 check_PROGRAMS = \
-	ompi_bitmap \
+	opal_bitmap \
 	opal_hash_table \
 	opal_list \
 	opal_value_array \
@@ -31,13 +31,11 @@ check_PROGRAMS = \
 # are not run during "make check".
 TESTS =
 
-ompi_bitmap_SOURCES = ompi_bitmap.c 
-ompi_bitmap_LDADD = \
-        $(top_builddir)/ompi/libmpi.la \
-        $(top_builddir)/orte/libopen-rte.la \
+opal_bitmap_SOURCES = opal_bitmap.c 
+opal_bitmap_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
-ompi_bitmap_DEPENDENCIES = $(ompi_bitmap_LDADD)
+opal_bitmap_DEPENDENCIES = $(opal_bitmap_LDADD)
 
 opal_list_SOURCES = opal_list.c 
 opal_list_LDADD = \
@@ -74,4 +72,4 @@ ompi_rb_tree_LDADD = \
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 
 clean-local:
-	rm -f ompi_bitmap_test_out.txt opal_hash_table_test_out.txt
+	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt

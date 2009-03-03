@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "ompi/runtime/ompi_cr.h"
-#include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"

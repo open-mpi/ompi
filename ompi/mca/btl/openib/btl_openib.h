@@ -34,7 +34,7 @@
 
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/class/ompi_bitmap.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
@@ -452,7 +452,7 @@ extern int mca_btl_openib_add_procs(
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_btl_base_endpoint_t** peers,
-    ompi_bitmap_t* reachable
+    opal_bitmap_t* reachable
 );
 
 /**

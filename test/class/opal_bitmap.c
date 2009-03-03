@@ -2,13 +2,13 @@
  * Testcase for bitmap
  */
 
-#include "ompi_config.h"
+#include "opal_config.h"
 
 #include <stdio.h>
 #include "support.h"
 
-#include "ompi/class/ompi_bitmap.h"
-#include "ompi/constants.h"
+#include "opal/class/opal_bitmap.h"
+#include "opal/constants.h"
 
 #define BSIZE 26
 #define SIZE_OF_CHAR (sizeof(char) * 8)
@@ -20,24 +20,24 @@
     fprintf(error_out, "This is suppossed to throw error \n"); \
     fprintf(error_out, "================================ \n")
 
-static void test_bitmap_set(ompi_bitmap_t *bm);
-static void test_bitmap_clear(ompi_bitmap_t *bm);
-static void test_bitmap_is_set(ompi_bitmap_t *bm);
-static void test_bitmap_clear_all(ompi_bitmap_t *bm);
-static void test_bitmap_set_all(ompi_bitmap_t *bm);
-static void test_bitmap_find_and_set(ompi_bitmap_t *bm);
+static void test_bitmap_set(opal_bitmap_t *bm);
+static void test_bitmap_clear(opal_bitmap_t *bm);
+static void test_bitmap_is_set(opal_bitmap_t *bm);
+static void test_bitmap_clear_all(opal_bitmap_t *bm);
+static void test_bitmap_set_all(opal_bitmap_t *bm);
+static void test_bitmap_find_and_set(opal_bitmap_t *bm);
 
 
-static int set_bit(ompi_bitmap_t *bm, int bit);
-static int clear_bit(ompi_bitmap_t *bm, int bit);
-static int is_set_bit(ompi_bitmap_t *bm, int bit);
-static int clear_all(ompi_bitmap_t *bm);
-static int set_all(ompi_bitmap_t *bm);
-static int find_and_set(ompi_bitmap_t *bm, int bit);
+static int set_bit(opal_bitmap_t *bm, int bit);
+static int clear_bit(opal_bitmap_t *bm, int bit);
+static int is_set_bit(opal_bitmap_t *bm, int bit);
+static int clear_all(opal_bitmap_t *bm);
+static int set_all(opal_bitmap_t *bm);
+static int find_and_set(opal_bitmap_t *bm, int bit);
 
 #define WANT_PRINT_BITMAP 0
 #if WANT_PRINT_BITMAP
-static void print_bitmap(ompi_bitmap_t *bm);
+static void print_bitmap(opal_bitmap_t *bm);
 #endif
 
 static FILE *error_out=NULL;
@@ -45,31 +45,31 @@ static FILE *error_out=NULL;
 int main(int argc, char *argv[])
 {
     /* Local variables */
-    ompi_bitmap_t bm;
+    opal_bitmap_t bm;
     int err;
     
     /* Perform overall test initialization */
-    test_init("ompi_bitmap_t");
+    test_init("opal_bitmap_t");
 
 #ifdef STANDALONE
     error_out = stderr;
 #else
-    error_out = fopen( "./ompi_bitmap_test_out.txt", "w" );
+    error_out = fopen( "./opal_bitmap_test_out.txt", "w" );
     if( error_out == NULL ) error_out = stderr;
 #endif
     /* Initialize bitmap  */
 
     PRINT_VALID_ERR;
-    err = ompi_bitmap_init(NULL, 2);
+    err = opal_bitmap_init(NULL, 2);
     if (err == OMPI_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed\n\n");
 
     PRINT_VALID_ERR;
-    err = ompi_bitmap_init(&bm, -1);
+    err = opal_bitmap_init(&bm, -1);
     if (err == OMPI_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed \n\n");
 
-    err = ompi_bitmap_init(&bm, BSIZE);
+    err = opal_bitmap_init(&bm, BSIZE);
     if (0 > err) {
 	fprintf(error_out, "Error in bitmap create -- aborting \n");
 	exit(-1);
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
 
 
-void test_bitmap_set(ompi_bitmap_t *bm) {
+void test_bitmap_set(opal_bitmap_t *bm) {
     int result=0;
 
     /* start of bitmap and boundaries */
@@ -127,11 +127,11 @@ void test_bitmap_set(ompi_bitmap_t *bm) {
     /* invalid bit */
     PRINT_VALID_ERR;
     result = set_bit(bm, -1);
-    TEST_AND_REPORT(result, ERR_CODE,"ompi_bitmap_set_bit");
+    TEST_AND_REPORT(result, ERR_CODE,"opal_bitmap_set_bit");
 }
 
 
-void test_bitmap_clear(ompi_bitmap_t *bm) {
+void test_bitmap_clear(opal_bitmap_t *bm) {
     int result=0;
 
     /* Valid set bits  */
@@ -144,14 +144,14 @@ void test_bitmap_clear(ompi_bitmap_t *bm) {
     /* invalid bit */
     PRINT_VALID_ERR;
     result = clear_bit(bm, -1);
-    TEST_AND_REPORT(result, ERR_CODE,"ompi_bitmap_clear_bit");
+    TEST_AND_REPORT(result, ERR_CODE,"opal_bitmap_clear_bit");
     PRINT_VALID_ERR;
     result = clear_bit(bm, 142);
-    TEST_AND_REPORT(result, ERR_CODE,"ompi_bitmap_clear_bit");
+    TEST_AND_REPORT(result, ERR_CODE,"opal_bitmap_clear_bit");
 }
 
 
-void test_bitmap_is_set(ompi_bitmap_t *bm)
+void test_bitmap_is_set(opal_bitmap_t *bm)
 {
     int result=0;
 
@@ -164,68 +164,68 @@ void test_bitmap_is_set(ompi_bitmap_t *bm)
 
     PRINT_VALID_ERR;
     result = is_set_bit(bm, 1122);
-    TEST_AND_REPORT(result,ERR_CODE,"ompi_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,ERR_CODE,"opal_bitmap_is_set_bit");    
     PRINT_VALID_ERR;
     is_set_bit(bm, -33);
-    TEST_AND_REPORT(result,ERR_CODE,"ompi_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,ERR_CODE,"opal_bitmap_is_set_bit");    
     PRINT_VALID_ERR;
     is_set_bit(bm, -1);
-    TEST_AND_REPORT(result,ERR_CODE,"ompi_bitmap_is_set_bit");    
+    TEST_AND_REPORT(result,ERR_CODE,"opal_bitmap_is_set_bit");    
 }
 
 
-void test_bitmap_find_and_set(ompi_bitmap_t *bm) 
+void test_bitmap_find_and_set(opal_bitmap_t *bm) 
 {
     int bsize;
     int result=0;
 
-    ompi_bitmap_clear_all_bits(bm);
+    opal_bitmap_clear_all_bits(bm);
     result = find_and_set(bm, 0);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
     result = find_and_set(bm, 1);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
     result = find_and_set(bm, 2);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
     result = find_and_set(bm, 3);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
 
-    result = ompi_bitmap_set_bit(bm, 5);
+    result = opal_bitmap_set_bit(bm, 5);
     result = find_and_set(bm, 4);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
     
-    result = ompi_bitmap_set_bit(bm, 6);
-    result = ompi_bitmap_set_bit(bm, 7);
+    result = opal_bitmap_set_bit(bm, 6);
+    result = opal_bitmap_set_bit(bm, 7);
 
     /* Setting beyond a char boundary */
     result = find_and_set(bm, 8);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
-    ompi_bitmap_set_bit(bm, 9);
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
+    opal_bitmap_set_bit(bm, 9);
     result = find_and_set(bm, 10);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
 
     /* Setting beyond the current size of bitmap  */
-    ompi_bitmap_set_all_bits(bm);
+    opal_bitmap_set_all_bits(bm);
     bsize = bm->array_size * SIZE_OF_CHAR;
     result = find_and_set(bm, bsize);
-    TEST_AND_REPORT(result, 0, "ompi_bitmap_find_and_set_first_unset_bit");    
+    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");    
 }
 
-void test_bitmap_clear_all(ompi_bitmap_t *bm)
+void test_bitmap_clear_all(opal_bitmap_t *bm)
 {
     int result = clear_all(bm);
-    TEST_AND_REPORT(result, 0, " error in ompi_bitmap_clear_all_bits");
+    TEST_AND_REPORT(result, 0, " error in opal_bitmap_clear_all_bits");
 }
 
 
-void test_bitmap_set_all(ompi_bitmap_t *bm)
+void test_bitmap_set_all(opal_bitmap_t *bm)
 {
     int result = set_all(bm);
-    TEST_AND_REPORT(result, 0, " error in ompi_bitmap_set_ala_bitsl");
+    TEST_AND_REPORT(result, 0, " error in opal_bitmap_set_ala_bitsl");
 }
 
-int set_bit(ompi_bitmap_t *bm, int bit)
+int set_bit(opal_bitmap_t *bm, int bit)
 {
-    int err = ompi_bitmap_set_bit(bm, bit);
+    int err = opal_bitmap_set_bit(bm, bit);
     if (err != 0 
 	|| !(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
 	    fprintf(error_out, "ERROR: set_bit for bit = %d\n\n", bit);
@@ -235,9 +235,9 @@ int set_bit(ompi_bitmap_t *bm, int bit)
 }
 
 
-int clear_bit(ompi_bitmap_t *bm, int bit)
+int clear_bit(opal_bitmap_t *bm, int bit)
 {
-    int err = ompi_bitmap_clear_bit(bm, bit);
+    int err = opal_bitmap_clear_bit(bm, bit);
     if ((err != 0)
 	|| (bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR))) {
 	fprintf(error_out, "ERROR: clear_bit for bit = %d \n\n", bit);
@@ -248,9 +248,9 @@ int clear_bit(ompi_bitmap_t *bm, int bit)
 }
 
 
-int is_set_bit(ompi_bitmap_t *bm, int bit) 
+int is_set_bit(opal_bitmap_t *bm, int bit) 
 {
-    int result = ompi_bitmap_is_set_bit(bm, bit);
+    int result = opal_bitmap_is_set_bit(bm, bit);
     if (((1 == result) 
 	&& !(bm->bitmap[bit/SIZE_OF_CHAR] & (1 << bit % SIZE_OF_CHAR)))
 	|| (result < 0)
@@ -264,13 +264,13 @@ int is_set_bit(ompi_bitmap_t *bm, int bit)
 }
 
 
-int find_and_set(ompi_bitmap_t *bm, int bit) 
+int find_and_set(opal_bitmap_t *bm, int bit) 
 {
     int ret, pos;
     /* bit here is the bit that should be found and set, in the top
        level stub, this function will be called in sequence to test */
 
-    ret = ompi_bitmap_find_and_set_first_unset_bit(bm, &pos);
+    ret = opal_bitmap_find_and_set_first_unset_bit(bm, &pos);
     if (ret != OMPI_SUCCESS) return ret;
 
     if (pos != bit) {
@@ -283,10 +283,10 @@ int find_and_set(ompi_bitmap_t *bm, int bit)
 }
 
 
-int clear_all(ompi_bitmap_t *bm) 
+int clear_all(opal_bitmap_t *bm) 
 {
     int i, err;
-    err = ompi_bitmap_clear_all_bits(bm);
+    err = opal_bitmap_clear_all_bits(bm);
     for (i = 0; i < bm->array_size; ++i)
 	if (bm->bitmap[i] != 0) {
 	    fprintf(error_out, "ERROR: clear_all for bitmap arry entry %d\n\n",
@@ -297,10 +297,10 @@ int clear_all(ompi_bitmap_t *bm)
 }
 	    
 
-int set_all(ompi_bitmap_t *bm)
+int set_all(opal_bitmap_t *bm)
 {
    int i, err;
-   err = ompi_bitmap_set_all_bits(bm);
+   err = opal_bitmap_set_all_bits(bm);
    for (i = 0; i < bm->array_size; ++i)
        if (bm->bitmap[i] != 0xff) {
 	   fprintf(error_out, "ERROR: set_all for bitmap arry entry %d\n\n", i);
@@ -311,7 +311,7 @@ int set_all(ompi_bitmap_t *bm)
 
 	
 #if WANT_PRINT_BITMAP
-void print_bitmap(ompi_bitmap_t *bm) 
+void print_bitmap(opal_bitmap_t *bm) 
 {
     /* Accessing the fields within the structure, since its not an
        opaque structure  */

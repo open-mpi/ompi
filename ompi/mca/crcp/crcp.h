@@ -33,6 +33,7 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_bitmap.h"
 
 #include "ompi/datatype/datatype.h"
 #include "ompi/request/request.h"
@@ -186,7 +187,7 @@ typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_add_procs_fn_t)
        size_t nprocs,
        struct ompi_proc_t** procs,
        struct mca_btl_base_endpoint_t** endpoints,
-       struct ompi_bitmap_t* reachable,
+       struct opal_bitmap_t* reachable,
        ompi_crcp_base_btl_state_t* );
 
 typedef ompi_crcp_base_btl_state_t* (*mca_crcp_base_btl_module_del_procs_fn_t)

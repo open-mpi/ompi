@@ -33,7 +33,6 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 
-#include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
