@@ -26,8 +26,8 @@
 #include <string.h>
 
 /* Open MPI includes */
+#include "opal/class/opal_bitmap.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/class/ompi_bitmap.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -189,7 +189,7 @@ extern int mca_btl_mx_add_procs(
     size_t nprocs,
     struct ompi_proc_t **procs,
     struct mca_btl_base_endpoint_t** peers,
-    ompi_bitmap_t* reachable
+    opal_bitmap_t* reachable
 );
 
 /**

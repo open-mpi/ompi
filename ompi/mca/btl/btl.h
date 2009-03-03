@@ -112,6 +112,7 @@
 #define MCA_BTL_H
 
 #include "ompi/types.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/prefetch.h" /* For OPAL_LIKELY */
 #include "ompi/mca/mpool/mpool.h"
 
@@ -451,7 +452,7 @@ typedef int (*mca_btl_base_module_add_procs_fn_t)(
     size_t nprocs,
     struct ompi_proc_t** procs, 
     struct mca_btl_base_endpoint_t** endpoints,
-    struct ompi_bitmap_t* reachable
+    struct opal_bitmap_t* reachable
 );
 
 /**

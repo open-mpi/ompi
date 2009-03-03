@@ -18,8 +18,10 @@
  */
 
 #include "opal_config.h"
-#include "opal/constants.h"
 
+#include <limits.h>
+
+#include "opal/constants.h"
 #include "opal/class/opal_bitmap.h"
 
 
@@ -35,8 +37,9 @@ OBJ_CLASS_INSTANCE(opal_bitmap_t, opal_object_t,
 static void 
 opal_bitmap_construct(opal_bitmap_t *bm) 
 {
-    bm->array_size = 0;
     bm->bitmap = NULL;
+    bm->array_size = 0;
+    bm->max_size = INT_MAX;
 }
 
 
@@ -49,13 +52,40 @@ opal_bitmap_destruct(opal_bitmap_t *bm)
 }
 
 
+int opal_bitmap_set_max_size (opal_bitmap_t *bm, int max_size)
+{
+    int actual_size;
+
+    if (NULL == bm) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    /*
+     * Only if the caller wants to set the maximum size,
+     * we set it (in numbers of bits!), otherwise it is
+     * set to INT_MAX in the constructor.
+     */
+    actual_size = max_size / SIZE_OF_CHAR;
+    actual_size += (max_size % SIZE_OF_CHAR == 0) ? 0 : 1;
+
+    bm->max_size = actual_size;
+
+    return OPAL_SUCCESS;
+}
+
+
 int
 opal_bitmap_init(opal_bitmap_t *bm, int size)
 {
     int actual_size;
-    
-    if ((size <= 0) || (NULL == bm)) {
-	    return OPAL_ERR_BAD_PARAM;
+
+    /*
+     * Only if the caller set the maximum size before initializing,
+     * we test here (in numbers of bits!)
+     * By default, the max size is INT_MAX, set in the constructor.
+     */
+    if ((size <= 0) || (NULL == bm) || (size > bm->max_size)) {
+        return OPAL_ERR_BAD_PARAM;
     }
     
     actual_size = size / SIZE_OF_CHAR;
@@ -65,7 +95,11 @@ opal_bitmap_init(opal_bitmap_t *bm, int size)
     if (NULL == bm->bitmap) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    
+
+    /*
+     * Leave bm->max_size untouched: it is initialized to INT_MAX in the constructor
+     */
+
     opal_bitmap_clear_all_bits(bm);
     return OPAL_SUCCESS;
 }
@@ -77,7 +111,7 @@ opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
     int index, offset, new_size;
     size_t new_size_large;
     
-    if ((bit < 0) || (NULL == bm)) {
+    if ((bit < 0) || (NULL == bm) || (bit > bm->max_size)) {
         return OPAL_ERR_BAD_PARAM;
     }
     
@@ -97,6 +131,11 @@ opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
          [signed] int. */
         
         new_size = (int) new_size_large;
+
+        /*
+         * No further tests against max_size (or OMPI_FORTRAN_HANDLE_MAX) are
+         * necessary, since we validated above, that the bit already is contained!
+         */
         
         /* New size is just a multiple of the original size to fit in
          the index. */

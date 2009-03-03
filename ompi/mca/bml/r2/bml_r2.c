@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
-#include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"
@@ -141,7 +141,7 @@ static int btl_bandwidth_compare(const void *v1, const void *v2)
 
 static int mca_bml_r2_add_procs( size_t nprocs, 
                                  struct ompi_proc_t** procs, 
-                                 struct ompi_bitmap_t* reachable )
+                                 struct opal_bitmap_t* reachable )
 {
     size_t p, p_index, n_new_procs = 0;
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
@@ -202,7 +202,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
          * and can return addressing information for each proc
          * that is passed back to the r2 on data transfer calls
          */
-        ompi_bitmap_clear_all_bits(reachable);
+        opal_bitmap_clear_all_bits(reachable);
         memset(btl_endpoints, 0, nprocs *sizeof(struct mca_btl_base_endpoint_t*)); 
 
         rc = btl->btl_add_procs(btl, n_new_procs, new_procs, btl_endpoints, reachable);
@@ -215,7 +215,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 
         /* for each proc that is reachable */
         for( p = 0; p < n_new_procs; p++ ) {
-            if(ompi_bitmap_is_set_bit(reachable, p)) {
+            if(opal_bitmap_is_set_bit(reachable, p)) {
                 ompi_proc_t *proc = new_procs[p]; 
                 mca_bml_base_endpoint_t * bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
                 mca_bml_base_btl_t* bml_btl; 

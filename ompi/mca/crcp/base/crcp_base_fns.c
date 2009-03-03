@@ -25,16 +25,17 @@
 #include <time.h>
 #include <ctype.h>
 
+#include "opal/class/opal_bitmap.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/crs/crs.h"
+#include "opal/mca/crs/base/base.h"
 #include "opal/util/os_dirpath.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
 #include "ompi/mca/bml/bml.h"
@@ -263,7 +264,7 @@ ompi_crcp_base_none_btl_add_procs( struct mca_btl_base_module_t* btl,
                                    size_t nprocs,
                                    struct ompi_proc_t** procs,
                                    struct mca_btl_base_endpoint_t** endpoints,
-                                   struct ompi_bitmap_t* reachable,
+                                   struct opal_bitmap_t* reachable,
                                    ompi_crcp_base_btl_state_t* btl_state)
 {
     btl_state->error_code = OMPI_SUCCESS;

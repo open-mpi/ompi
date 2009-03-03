@@ -34,9 +34,9 @@
 
 /* Open MPI includes */
 #include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/sys/timer.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/btl/base/base.h"
@@ -232,7 +232,7 @@ extern int mca_btl_ud_add_procs(struct mca_btl_base_module_t* btl,
                                 size_t nprocs,
                                 struct ompi_proc_t **procs,
                                 struct mca_btl_base_endpoint_t** peers,
-                                ompi_bitmap_t* reachable);
+                                opal_bitmap_t* reachable);
 
 
 /**

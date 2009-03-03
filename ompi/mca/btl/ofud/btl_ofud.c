@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "ompi_config.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/prefetch.h"
 #include "opal/util/output.h"
 #include "ompi/datatype/convertor.h"
@@ -80,7 +81,7 @@ int mca_btl_ud_add_procs(struct mca_btl_base_module_t* btl,
                          size_t nprocs,
                          struct ompi_proc_t **ompi_procs,
                          struct mca_btl_base_endpoint_t** peers,
-                         ompi_bitmap_t* reachable)
+                         opal_bitmap_t* reachable)
 {
     mca_btl_ud_module_t* ud_btl = (mca_btl_ud_module_t*)btl;
     struct ibv_ah_attr ah_attr;
@@ -149,7 +150,7 @@ int mca_btl_ud_add_procs(struct mca_btl_base_module_t* btl,
                 ib_peer);
 #endif
 
-        ompi_bitmap_set_bit(reachable, i);
+        opal_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         peers[i] = ib_peer;
     }

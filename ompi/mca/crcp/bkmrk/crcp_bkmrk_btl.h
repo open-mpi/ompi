@@ -27,12 +27,13 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "ompi/mca/crcp/crcp.h"
-#include "ompi/communicator/communicator.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/bkmrk/crcp_bkmrk.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -47,7 +48,7 @@ extern "C" {
       size_t nprocs,
       struct ompi_proc_t** procs,
       struct mca_btl_base_endpoint_t** endpoints,
-      struct ompi_bitmap_t* reachable,
+      struct opal_bitmap_t* reachable,
       ompi_crcp_base_btl_state_t* );
 
     ompi_crcp_base_btl_state_t* ompi_crcp_base_coord_btl_del_procs

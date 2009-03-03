@@ -21,14 +21,16 @@
 #include <unistd.h>
 #endif  /* HAVE_UNIST_H */
 
+#include "opal/class/opal_bitmap.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/event/event.h"
-#include "orte/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/output.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -51,7 +53,7 @@ ompi_crcp_base_coord_btl_add_procs( struct mca_btl_base_module_t* btl,
                                    size_t nprocs,
                                    struct ompi_proc_t** procs,
                                    struct mca_btl_base_endpoint_t** endpoints,
-                                   struct ompi_bitmap_t* reachable,
+                                   struct opal_bitmap_t* reachable,
                                    ompi_crcp_base_btl_state_t* btl_state)
 {
     btl_state->error_code = OMPI_SUCCESS;

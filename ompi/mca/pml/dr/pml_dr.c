@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ompi/class/ompi_bitmap.h"
+#include "opal/class/opal_bitmap.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -158,7 +158,7 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 
 int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
-    ompi_bitmap_t reachable;
+    opal_bitmap_t reachable;
     int rc;
     size_t i;
 
@@ -180,8 +180,8 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         return rc;
     }
 
-    OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
-    rc = ompi_bitmap_init(&reachable, (int)nprocs);
+    OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
+    rc = opal_bitmap_init(&reachable, (int)nprocs);
     if(OMPI_SUCCESS != rc)
         return rc;
 

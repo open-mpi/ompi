@@ -24,10 +24,10 @@
 
 #include "ompi/mca/common/portals/common_portals.h"
 
+#include "opal/class/opal_bitmap.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/class/ompi_bitmap.h"
 #include "ompi/class/ompi_free_list.h"
 
 #include "btl_portals_endpoint.h"
@@ -162,7 +162,7 @@ int mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
                               size_t nprocs,
                               struct ompi_proc_t **procs,
                               struct mca_btl_base_endpoint_t** peers,
-                              ompi_bitmap_t* reachable);
+                              opal_bitmap_t* reachable);
 
 int mca_btl_portals_del_procs(struct mca_btl_base_module_t* btl_base,
                               size_t nprocs,

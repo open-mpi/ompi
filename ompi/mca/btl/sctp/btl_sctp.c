@@ -18,6 +18,7 @@
 
 #include "ompi_config.h"
 #include <string.h>
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -72,7 +73,7 @@ int mca_btl_sctp_add_procs(
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
     struct mca_btl_base_endpoint_t** peers, 
-    ompi_bitmap_t* reachable)
+    opal_bitmap_t* reachable)
 {
     mca_btl_sctp_module_t* sctp_btl = (mca_btl_sctp_module_t*)btl;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
@@ -125,7 +126,7 @@ int mca_btl_sctp_add_procs(
             continue;
         }
 
-        ompi_bitmap_set_bit(reachable, i);
+        opal_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&sctp_proc->proc_lock);
         peers[i] = sctp_endpoint;
         opal_list_append(&sctp_btl->sctp_endpoints, (opal_list_item_t*)sctp_endpoint);
