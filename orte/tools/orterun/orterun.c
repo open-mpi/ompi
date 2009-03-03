@@ -787,7 +787,6 @@ DONE:
 static void job_completed(int trigpipe, short event, void *arg)
 {
     int rc;
-    orte_job_state_t exit_state;
     orte_job_t *daemons;
     
     /* if the abort exit event is set, delete it */
@@ -796,8 +795,6 @@ static void job_completed(int trigpipe, short event, void *arg)
         free(abort_exit_event);
     }
     
-    exit_state = jdata->state;
-
     /* if we never launched, just skip this part to avoid
      * meaningless error messages
      */
@@ -806,7 +803,7 @@ static void job_completed(int trigpipe, short event, void *arg)
         goto DONE;
     }
     
-    if (ORTE_JOB_STATE_TERMINATED != exit_state) {
+    if (0 != orte_exit_status) {
         /* abnormal termination of some kind */
         dump_aborted_procs();
         /* If we showed more abort messages than were allowed,
@@ -991,8 +988,8 @@ static void dump_aborted_procs(void)
     jobs = (orte_job_t**)orte_job_data->addr;
     for (n=1; n < orte_job_data->size; n++) {
         if (NULL == jobs[n]) {
-            /* the array is left-justified, so we can quit on the first NULL */
-            return;
+            /* the array is no longer left-justified, so we have to continue */
+            continue;
         }
         if (ORTE_JOB_STATE_UNDEF != jobs[n]->state &&
             ORTE_JOB_STATE_INIT != jobs[n]->state &&

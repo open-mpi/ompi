@@ -77,11 +77,11 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
      */
     jobs = (orte_job_t**)orte_job_data->addr;
     for (i=1; i < orte_job_data->size; i++) {
-        /* the array is left justfied, so we can quit once
-         * we see a NULL
+        /* the array may have holes in it as we are recovering
+         * jobids as they complete, so check everything
          */
         if (NULL == jobs[i]) {
-            break;
+            continue;
         }
         if (ORTE_JOB_STATE_ABORTED != jobs[i]->state &&
             ORTE_JOB_STATE_ABORTED_BY_SIG != jobs[i]->state &&

@@ -46,17 +46,6 @@ int orte_ess_base_std_prolog(void)
         goto error;
     }
     
-    /* if I'm the HNP, make sure that the daemon flag is NOT set so that
-     * components unique to non-HNP orteds can be selected and init
-     * my basic storage elements
-     */
-    if (orte_process_info.hnp) {
-        if (ORTE_SUCCESS != (ret = orte_hnp_globals_init())) {
-            error = "orte_hnp_globals_init";
-            goto error;
-        }
-    }
-    
     /*
      * Internal startup
      */

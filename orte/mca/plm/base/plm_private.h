@@ -52,7 +52,7 @@ typedef struct {
     /* orted cmd cond */
     opal_condition_t orted_cmd_cond;
     /* next jobid */
-    orte_jobid_t next_jobid;
+    uint16_t next_jobid;
     /* time when daemons started launch */
     struct timeval daemonlaunchstart;
     /* rsh launch agent path */

@@ -63,7 +63,7 @@ int orte_plm_base_set_hnp_name(void)
     ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
     ORTE_PROC_MY_NAME->vpid = 0;
     
-    orte_plm_globals.next_jobid = ORTE_PROC_MY_NAME->jobid + 1;
+    orte_plm_globals.next_jobid = 1;
     
     /* copy it to the HNP field */
     ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
@@ -78,12 +78,38 @@ int orte_plm_base_set_hnp_name(void)
  */
 int orte_plm_base_create_jobid(orte_jobid_t *jobid)
 {
-    if (ORTE_JOBID_MAX-1 <  orte_plm_globals.next_jobid) {
+#if 0
+    orte_job_t **jobs;
+    int32_t j;
+    
+    /* RHC: WHILE ORTE CAN NOW HANDLE RECYCLING OF JOBID'S,
+     * THE MPI LAYER CANNOT SINCE THERE IS NO WAY TO
+     * UPDATE THE OMPI_PROC_T LIST AND/OR THE BTL'S
+     */
+    
+    /* see if there is a prior
+     * jobid that has completed and can be re-used. It can
+     * never be 0 as that belongs to the HNP and its daemons
+     */
+    jobs = (orte_job_t**)orte_job_data->addr;
+    for (j=1; j < orte_job_data->size; j++) {
+        if (NULL == jobs[j]) {
+            /* this local jobid is available - reuse it */
+            *jobid = ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, j);
+            return ORTE_SUCCESS;
+        }
+    }
+#endif
+
+    if (UINT16_MAX == orte_plm_globals.next_jobid) {
+        /* if we get here, then no local jobids are available */
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         *jobid = ORTE_JOBID_INVALID;
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    *jobid =  orte_plm_globals.next_jobid++;
+    /* take the next jobid */
+    *jobid =  ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid, orte_plm_globals.next_jobid);
+    orte_plm_globals.next_jobid++;
     return ORTE_SUCCESS;
 }

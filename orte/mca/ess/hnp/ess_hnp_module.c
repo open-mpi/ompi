@@ -327,11 +327,32 @@ static int rte_init(char flags)
     }
     free(contact_path);
 
+    /* setup the global job and node arrays */
+    orte_job_data = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
+                                                      1,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      1))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup job array";
+        goto error;
+    }
+    
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node array";
+        goto error;
+    }
+    
     /* Setup the job data object for the daemons */        
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
     jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_add(orte_job_data, jdata);
+    opal_pointer_array_set_item(orte_job_data, 0, jdata);
    
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
@@ -465,6 +486,7 @@ static int rte_finalize(void)
 {
     char *contact_path;
     opal_list_item_t *item;
+    int i;
 
     /* remove my contact info file */
     contact_path = opal_os_path(false, orte_process_info.top_session_dir,
@@ -517,6 +539,24 @@ static int rte_finalize(void)
     }
     OBJ_DESTRUCT(&orte_local_jobdata);
     
+    /* cleanup the job and node info arrays */
+    if (NULL != orte_node_pool) {
+        for (i=0; i < orte_node_pool->size; i++) {
+            if (NULL != orte_node_pool->addr[i]) {
+                OBJ_RELEASE(orte_node_pool->addr[i]);
+            }
+        }
+        OBJ_RELEASE(orte_node_pool);
+    }
+    if (NULL != orte_job_data) {
+        for (i=0; i < orte_job_data->size; i++) {
+            if (NULL != orte_job_data->addr[i]) {
+                OBJ_RELEASE(orte_job_data->addr[i]);
+            }
+        }
+        OBJ_RELEASE(orte_job_data);
+    }
+
     /* finalize the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     

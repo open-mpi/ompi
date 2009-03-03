@@ -76,6 +76,7 @@ int orte_ess_slurmd_component_query(mca_base_module_t **module, int *priority)
     
     if (orte_process_info.mpi_proc &&
         NULL != getenv("SLURM_JOBID") &&
+        NULL != getenv("SLURM_STEPID") &&
         NULL == orte_process_info.my_hnp_uri) {
         *priority = 30;
         *module = (mca_base_module_t *)&orte_ess_slurmd_module;

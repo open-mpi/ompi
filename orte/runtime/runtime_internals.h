@@ -29,16 +29,6 @@
 
 BEGIN_C_DECLS
 
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-/**
- * Initialize global storage for HNPs
- */
-ORTE_DECLSPEC   int orte_hnp_globals_init(void);
-
-#endif /* !ORTE_DISABLE_FULL_SUPPORT */
-
-
 /**
  * Init the ORTE datatype support
  */

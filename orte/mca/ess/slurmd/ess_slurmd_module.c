@@ -88,6 +88,9 @@ orte_ess_base_module_t orte_ess_slurmd_module = {
     NULL /* ft_event */
 };
 
+/* Local globals */
+static bool app_init_complete;
+
 /****    MODULE FUNCTIONS    ****/
 
 static int rte_init(char flags)
@@ -109,6 +112,9 @@ static int rte_init(char flags)
     char *regexp, *tasks_per_node;
     int *ppn;
     bool block=false, cyclic=false;
+    
+    /* init flag */
+    app_init_complete = false;
     
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -331,6 +337,9 @@ static int rte_init(char flags)
         goto error;
     }
     
+    /* flag that we completed init */
+    app_init_complete = true;
+    
     return ORTE_SUCCESS;
     
 error:
@@ -345,12 +354,17 @@ static int rte_finalize(void)
 {
     int ret;
    
-    /* use the default procedure to finish */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-        ORTE_ERROR_LOG(ret);
+    if (app_init_complete) {
+        /* use the default procedure to finish */
+        if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+            ORTE_ERROR_LOG(ret);
+        }
     }
     
-    /* deconstruct my nidmap and jobmap arrays */
+    /* deconstruct my nidmap and jobmap arrays - this
+     * function protects itself from being called
+     * before things were initialized
+     */
     orte_util_nidmap_finalize();
     
     return ret;    
