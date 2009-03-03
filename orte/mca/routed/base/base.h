@@ -14,7 +14,6 @@
 #include "orte_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/class/opal_bitmap.h"
 
 #include "orte/mca/routed/routed.h"
 

@@ -15,7 +15,6 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/class/opal_bitmap.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 
