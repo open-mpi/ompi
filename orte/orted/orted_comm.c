@@ -87,6 +87,8 @@ static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
                             orte_rml_tag_t tag);
 
+static bool exit_reqd;
+
 static void send_relay(opal_buffer_t *buf)
 {
     opal_list_t recips;
@@ -273,6 +275,9 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         /* rewind the buffer to the right place for processing the cmd */
         buffer->unpack_ptr = save;
         
+        /* init flag */
+        exit_reqd = false;
+        
         /* process the command */
         if (ORTE_SUCCESS != (ret = process_commands(sender, buffer, tag))) {
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -284,6 +289,11 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         buffer->unpack_ptr = unpack_ptr;
         /* do the relay */
         send_relay(buffer);
+        
+        /* if we need to exit, do so now */
+        if (exit_reqd) {
+            orte_trigger_event(&orte_exit);
+        }
         
         /* done */
         goto CLEANUP;
@@ -610,7 +620,7 @@ static int process_commands(orte_process_name_t* sender,
                 orte_rml.send_buffer(ORTE_PROC_MY_HNP, &ack, ORTE_RML_TAG_PLM, 0);
                 OBJ_DESTRUCT(&ack);
             }
-            orte_trigger_event(&orte_exit); 
+            exit_reqd = true;
             return ORTE_SUCCESS;
             break;
             
@@ -642,7 +652,7 @@ static int process_commands(orte_process_name_t* sender,
                  */
                 return ORTE_SUCCESS;
             }
-            orte_trigger_event(&orte_exit); 
+            exit_reqd = true;
             return ORTE_SUCCESS;
             break;
             
