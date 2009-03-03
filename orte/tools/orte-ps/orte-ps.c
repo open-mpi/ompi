@@ -144,6 +144,7 @@ static int pretty_print(orte_ps_mpirun_info_t *hnpinfo);
 static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes);
 static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs);
 static int pretty_print_vpids(orte_job_t *job);
+static void pretty_print_dashed_line(int len);
 
 static char *pretty_node_state(orte_node_state_t state);
 static char *pretty_job_state(orte_job_state_t state);
@@ -386,20 +387,16 @@ static int orte_ps_init(int argc, char *argv[]) {
 
 static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
     char *header;
-    int len_hdr, i;
+    int len_hdr;
     
     /*
-     * Print header
+     * Print header and remember header length
      */
-    asprintf(&header, "\n\nInformation from mpirun %s", ORTE_JOBID_PRINT(hnpinfo->hnp->name.jobid));
-    len_hdr = strlen(header);
+    len_hdr = asprintf(&header, "Information from mpirun %s", ORTE_JOBID_PRINT(hnpinfo->hnp->name.jobid));
     
-    printf("%s\n", header);
+    printf("\n\n%s\n", header);
     free(header);
-    for (i=0; i < len_hdr; i++) {
-        printf("%c", '-');
-    }
-    printf("\n");
+    pretty_print_dashed_line(len_hdr);
     
     /*
      * Print Node Information
@@ -465,10 +462,7 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
     printf("%*s | ", len_slots_i, "Slots In Use");
     printf("\n");
 
-    for(i = 0; i < line_len; ++i) {
-        printf("-");
-    }
-    printf("\n");
+    pretty_print_dashed_line(line_len);
     
     /*
      * Print Info
@@ -499,7 +493,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         len_ckpt_l = 0;
     int line_len;
     orte_job_t *job;
-    orte_std_cntr_t i, j;
+    orte_std_cntr_t i;
     char *jobstr;
     orte_jobid_t mask=0x0000ffff;
 
@@ -565,10 +559,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
 #endif
         printf("\n");
 
-        for(j = 0; j < line_len; ++j) {
-            printf("-");
-        }
-        printf("\n");
+        pretty_print_dashed_line(line_len);
 
         /*
          * Print Info
@@ -719,10 +710,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     printf("\n");
     
     printf("\t");
-    for(i = 0; i < line_len; ++i) {
-        printf("-");
-    }
-    printf("\n");
+    pretty_print_dashed_line(line_len);
     
     /*
      * Print Info
@@ -769,6 +757,16 @@ static int pretty_print_vpids(orte_job_t *job) {
     }
     
     return ORTE_SUCCESS;
+}
+
+static void pretty_print_dashed_line(int len) {
+    static const char dashes[8] = "--------";
+
+    while (len >= 8) {
+        printf("%8.8s", dashes);
+        len -= 8;
+    }
+    printf("%*.*s\n", len, len, dashes);
 }
 
 static int gather_information(orte_ps_mpirun_info_t *hnpinfo) {
