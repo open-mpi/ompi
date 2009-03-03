@@ -73,10 +73,19 @@
 #include "opal/util/net.h"
 #include "opal/util/output.h"
 #include "opal/util/strncpy.h"
+#include "opal/util/argv.h"
 #include "opal/constants.h"
 #include "opal/threads/tsd.h"
+#include "opal/mca/base/mca_base_param.h"
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN
+
+typedef struct private_ipv4_t {
+    int32_t addr;
+    uint32_t netmask_bits;
+} private_ipv4_t;
+
+static private_ipv4_t* private_ipv4 = NULL;
 
 #if OPAL_WANT_IPV6
 static opal_tsd_key_t hostname_tsd_key;
@@ -107,10 +116,53 @@ get_hostname_buffer(void)
 }
 #endif
 
-
 int
 opal_net_init()
 {
+    char *string_value, **args, *arg;
+    uint32_t a, b, c, d, bits, addr;
+    int i, count;
+
+    /* RFC1918 defines
+       - 10.0.0./8
+       - 172.16.0.0/12
+       - 192.168.0.0/16
+       
+       RFC3330 also mentiones
+       - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
+    */
+    mca_base_param_reg_string_name( "opal", "net_private_ipv4",
+                                    "Default values for private networks (based on RFC1918 and RFC3330)",
+                                    false, false, "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16",
+                                    &string_value );
+
+    args = opal_argv_split( string_value, ';' );
+    if( NULL != args ) {
+        count = opal_argv_count(args);
+        private_ipv4 = (private_ipv4_t*)malloc( (count + 1) * sizeof(private_ipv4_t));
+        if( NULL == private_ipv4 ) {
+            opal_output(0, "Unable to allocate memory for the private addresses array" );
+            goto do_local_init;
+        }
+        for( i = 0; i < count; i++ ) {
+            arg = args[i];
+
+            sscanf( arg, "%u.%u.%u.%u/%u", &a, &b, &c, &d, &bits );
+
+            if( (a > 255) || (b > 255) || (c > 255) || (d > 255) || (bits > 32) ) {
+                opal_output( 0, "Malformed IP address or netmask. The correct format "
+                             "is a list of [0-255].[0-255].[0-255].[0-255]/[0-32] separated by ; " );
+                continue;
+            }
+            addr = (a << 24) | (b << 16) | (c << 8) | d;
+            private_ipv4[i].addr = htonl(addr);
+            private_ipv4[i].netmask_bits = bits;
+        }
+        private_ipv4[i].addr         = 0;
+        private_ipv4[i].netmask_bits = 0;
+    }
+
+ do_local_init:
 #if OPAL_WANT_IPV6
     return opal_tsd_key_create(&hostname_tsd_key, hostname_cleanup);
 #else
@@ -239,23 +291,21 @@ opal_net_addr_isipv4public(const struct sockaddr *addr)
             return false;
 #endif
         case AF_INET:
-        {
-            const struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
-            /* RFC1918 defines
-            - 10.0.0./8
-            - 172.16.0.0/12
-            - 192.168.0.0/16
-            
-            RFC3330 also mentiones
-            - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
-            */
-            if ((htonl(0x0a000000) == (inaddr->sin_addr.s_addr & opal_net_prefix2netmask(8)))  ||
-                (htonl(0xac100000) == (inaddr->sin_addr.s_addr & opal_net_prefix2netmask(12))) ||
-                (htonl(0xc0a80000) == (inaddr->sin_addr.s_addr & opal_net_prefix2netmask(16))) ||
-                (htonl(0xa9fe0000) == (inaddr->sin_addr.s_addr & opal_net_prefix2netmask(16)))) {
-                return false;
+            {
+                const struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
+                int i;
+                
+                if( NULL == private_ipv4 ) {
+                    return true;
+                }
+                
+                for( i = 0; private_ipv4[i].addr != 0; i++ ) {
+                    if( private_ipv4[i].addr == (inaddr->sin_addr.s_addr &
+                                                 opal_net_prefix2netmask(private_ipv4[i].netmask_bits)) )
+                        return false;
+                }
+                
             }
-        }
             return true;
         default:
             opal_output (0,
