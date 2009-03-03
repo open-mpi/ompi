@@ -395,6 +395,7 @@ static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
     len_hdr = strlen(header);
     
     printf("%s\n", header);
+    free(header);
     for (i=0; i < len_hdr; i++) {
         printf("%c", '-');
     }
