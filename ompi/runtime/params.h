@@ -22,6 +22,8 @@
 #ifndef OMPI_RUNTIME_PARAMS_H
 #define OMPI_RUNTIME_PARAMS_H
 
+#include "ompi_config.h"
+
 BEGIN_C_DECLS
 
 /*

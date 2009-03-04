@@ -19,6 +19,7 @@
 #ifndef OMPI_OSC_PT2PT_H
 #define OMPI_OSC_PT2PT_H
 
+#include "ompi_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"

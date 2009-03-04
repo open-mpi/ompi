@@ -25,13 +25,15 @@
  *
  * Infrastructure for MPI group support.
  */
-#include "ompi/proc/proc.h"
 #ifndef OMPI_GROUP_H
 #define OMPI_GROUP_H
 
+#include "ompi_config.h"
+#include "ompi/proc/proc.h"
 #include "mpi.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

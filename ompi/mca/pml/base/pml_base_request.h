@@ -22,6 +22,7 @@
 #ifndef MCA_PML_BASE_REQUEST_H
 #define MCA_PML_BASE_REQUEST_H
 
+#include "ompi_config.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/datatype/convertor.h"

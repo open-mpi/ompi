@@ -23,6 +23,7 @@
 #ifndef ALLOCATOR_BUCKET_ALLOC_H 
 #define ALLOCATOR_BUCKET_ALLOC_H 
 
+#include "ompi_config.h"
 #include <stdlib.h>
 #include <string.h>
 #include "opal/threads/mutex.h"

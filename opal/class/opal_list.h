@@ -63,6 +63,7 @@
 #ifndef OPAL_LIST_H
 #define OPAL_LIST_H
 
+#include "opal_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "opal/class/opal_object.h"

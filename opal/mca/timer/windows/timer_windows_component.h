@@ -19,6 +19,7 @@
 #ifndef OPAL_MCA_TIMER_WINDOWS_COMPONENT_H
 #define OPAL_MCA_TIMER_WINDOWS_COMPONENT_H
 
+#include "opal_config.h"
 #include "opal/mca/timer/windows/timer_windows.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

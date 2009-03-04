@@ -20,6 +20,7 @@
 #ifndef OMPI_OP_BASE_FUNCTIONS_H
 #define OMPI_OP_BASE_FUNCTIONS_H
 
+#include "ompi_config.h"
 #include "ompi/mca/op/op.h"
 
 /*

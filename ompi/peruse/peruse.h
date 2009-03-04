@@ -16,6 +16,7 @@
 #ifndef _PERUSE_H_
 #define _PERUSE_H_
 
+#include "ompi_config.h"
 #include "mpi.h"
 
 /* PERUSE type declarations */

@@ -22,6 +22,7 @@
 #ifndef OMPI_BTL_PORTALS_H
 #define OMPI_BTL_PORTALS_H
 
+#include "ompi_config.h"
 #include "ompi/mca/common/portals/common_portals.h"
 
 #include "opal/class/opal_bitmap.h"

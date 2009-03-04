@@ -27,6 +27,8 @@
 #ifndef OPAL_ENVIRON_H
 #define OPAL_ENVIRON_H
 
+#include "opal_config.h"
+
 #ifdef HAVE_CRT_EXTERNS_H
 #include <crt_externs.h>
 #endif

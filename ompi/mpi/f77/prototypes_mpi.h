@@ -42,6 +42,7 @@
 #ifndef OMPI_F77_PROTOTYPES_MPI_H
 #define OMPI_F77_PROTOTYPES_MPI_H
 
+#include "ompi_config.h"
 #include "ompi/mpi/f77/datarep.h"
 
 /* These are the prototypes for the "real" back-end fortran functions. */

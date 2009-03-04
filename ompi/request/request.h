@@ -27,10 +27,12 @@
 #ifndef OMPI_REQUEST_H
 #define OMPI_REQUEST_H
 
+#include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/class/ompi_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
+#include "ompi/constants.h"
 
 BEGIN_C_DECLS
 

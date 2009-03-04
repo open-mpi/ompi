@@ -23,6 +23,7 @@
 #ifndef ORTE_RMAPS_TOPO_H
 #define ORTE_RMAPS_TOPO_H
 
+#include "orte_config.h"
 #include "orte/mca/rmaps/rmaps.h"
 
 BEGIN_C_DECLS

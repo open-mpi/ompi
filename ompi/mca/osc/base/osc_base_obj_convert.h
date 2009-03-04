@@ -23,6 +23,7 @@
  * objects, usually based on indexes sent from remote peers.
  */
 
+#include "ompi_config.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"

@@ -23,6 +23,7 @@
 #ifndef MCA_BTL_SM_H
 #define MCA_BTL_SM_H
 
+#include "ompi_config.h"
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

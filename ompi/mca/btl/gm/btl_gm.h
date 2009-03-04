@@ -22,7 +22,7 @@
 #ifndef MCA_BTL_GM_H
 #define MCA_BTL_GM_H
 
-/* Standard system includes */
+#include "ompi_config.h"
 #include <sys/types.h>
 #include <string.h>
 #include <gm.h>

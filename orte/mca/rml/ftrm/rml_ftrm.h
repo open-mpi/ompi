@@ -23,6 +23,7 @@
 #ifndef MCA_RML_FTRM_H
 #define MCA_RML_FTRM_H
 
+#include "orte_config.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 

@@ -19,6 +19,7 @@
 #ifndef OPAL_MCA_TIMER_WINDOWS_H
 #define OPAL_MCA_TIMER_WINDOWS_H
 
+#include "opal_config.h"
 #include "windows.h"
 
 #include <opal/sys/timer.h>

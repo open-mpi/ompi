@@ -30,8 +30,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/output.h"
-
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/crcp/crcp.h"

@@ -13,6 +13,7 @@
 #ifndef _PERUSE_INTERNAL_H_
 #define _PERUSE_INTERNAL_H_
 
+#include "ompi_config.h"
 #include "ompi/peruse/peruse.h"
 #include "opal/class/opal_list.h"
 #include "ompi/communicator/communicator.h"

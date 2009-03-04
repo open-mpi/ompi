@@ -23,6 +23,7 @@
  * Checkpoint functionality for Open MPI
  */
 
+#include "opal_config.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"

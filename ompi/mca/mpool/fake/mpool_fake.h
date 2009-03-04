@@ -24,6 +24,7 @@
 #ifndef MCA_MPOOL_FAKE_H
 #define MCA_MPOOL_FAKE_H
 
+#include "ompi_config.h"
 #include "ompi/mca/mpool/mpool.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

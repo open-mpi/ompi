@@ -22,6 +22,7 @@
 #ifndef MCA_PML_BASE_RECV_REQUEST_H
 #define MCA_PML_BASE_RECV_REQUEST_H
 
+#include "ompi_config.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/peruse/peruse-internal.h"

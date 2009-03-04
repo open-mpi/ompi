@@ -118,6 +118,7 @@
 #ifndef _MPI_INTERFACE_INCLUDED
 #define _MPI_INTERFACE_INCLUDED
 
+#include "ompi_config.h"
 #include <stdio.h>				/* For FILENAME_MAX */
 
 /* No MPI2 support yet */

@@ -28,7 +28,7 @@
    modular arithmetic with it. */
 #define MCA_BTL_UD_NUM_QP 4
 
-/* Standard system includes */
+#include "ompi_config.h"
 #include <sys/types.h>
 #include <infiniband/verbs.h>
 

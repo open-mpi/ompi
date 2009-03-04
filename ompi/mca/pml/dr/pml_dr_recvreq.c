@@ -22,7 +22,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h" 
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/mpool/mpool.h" 
 #include "pml_dr_comm.h"
 #include "pml_dr_recvreq.h"
 #include "pml_dr_recvfrag.h"

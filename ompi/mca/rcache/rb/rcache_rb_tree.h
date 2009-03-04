@@ -22,6 +22,7 @@
   */
 #ifndef MCA_RCACHE_RB_TREE_H
 #define MCA_RCACHE_RB_TREE_H
+#include "ompi_config.h"
 #include "opal/mca/mca.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mpool/mpool.h"

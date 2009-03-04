@@ -21,6 +21,7 @@
 #ifndef OMPI_FILE_H
 #define OMPI_FILE_H
 
+#include "ompi_config.h"
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "ompi/errhandler/errhandler.h"

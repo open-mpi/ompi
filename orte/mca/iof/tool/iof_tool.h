@@ -34,6 +34,7 @@
 #ifndef ORTE_IOF_TOOL_H
 #define ORTE_IOF_TOOL_H
 
+#include "orte_config.h"
 #include "orte/mca/iof/iof.h"
 
 BEGIN_C_DECLS

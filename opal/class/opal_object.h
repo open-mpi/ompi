@@ -116,6 +116,7 @@
 #ifndef OPAL_OBJECT_H
 #define OPAL_OBJECT_H
 
+#include "opal_config.h"
 #include <assert.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>

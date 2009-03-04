@@ -24,6 +24,7 @@
 #ifndef IO_BASE_REQUEST_H
 #define IO_BASE_REQUEST_H
 
+#include "ompi_config.h"
 #include "opal/class/opal_object.h"
 #include "ompi/request/request.h"
 #include "ompi/file/file.h"

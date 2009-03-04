@@ -21,6 +21,8 @@
 #ifndef MCA_BTL_SELF_H
 #define MCA_BTL_SELF_H
 
+#include "ompi_config.h"
+
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */

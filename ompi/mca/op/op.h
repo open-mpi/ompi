@@ -75,6 +75,7 @@
  * close all available op components.
  */
 
+#include "ompi_config.h"
 #include "opal/mca/mca.h"
 
 #ifndef MCA_OP_H
