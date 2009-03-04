@@ -87,7 +87,7 @@ int opal_thread_join(opal_thread_t *t, void **thr_return)
         return OPAL_ERROR;
     }
 
-    if( NULL != **thr_return ) {
+    if( NULL != *thr_return ) {
         *thr_return = (void *)((intptr_t)rc);
     }
 
