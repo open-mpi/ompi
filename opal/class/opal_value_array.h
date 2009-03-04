@@ -31,9 +31,6 @@
 
 /*
  *  @file  Array of elements maintained by value.
- *
- * See ompi_bitmap.h for an explanation of why there is a split
- * between OMPI and ORTE for this generic class.
  */
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
