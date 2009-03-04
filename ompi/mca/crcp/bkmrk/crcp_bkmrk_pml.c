@@ -3553,7 +3553,7 @@ static int traffic_message_create_drain_message(bool post_drain,
              * The post_drained() will properly handle the packed datatype
              * by changing the count to (count * ddt_size).
              */
-            ompi_ddt_duplicate(&ompi_mpi_packed, &(drain_msg_ref->datatype));
+            ompi_ddt_duplicate(&(ompi_mpi_packed.dt), &(drain_msg_ref->datatype));
 
             /* Create a buffer of the necessary type/size */
             if(drain_msg_ref->count > 0 ) {
@@ -4832,7 +4832,7 @@ static int ft_event_post_drained(void)
 
     /* Initalize to invalid values */
     for(i = 0; i < (total_number_to_drain); ++i) {
-        quiesce_requests[i] = &ompi_request_null;
+        quiesce_requests[i] = &(ompi_request_null.request);
         quiesce_statuses[i] = &ompi_status_empty;
     }
     quiesce_request_count = 0;
