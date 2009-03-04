@@ -35,7 +35,6 @@
 
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 
 

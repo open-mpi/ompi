@@ -33,7 +33,6 @@
 #include "opal/util/if.h"
 #include "opal/util/printf.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "btl_self.h"

@@ -39,7 +39,6 @@
 #include "orte/util/proc_info.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"

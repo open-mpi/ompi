@@ -42,7 +42,6 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 

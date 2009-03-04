@@ -33,7 +33,6 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/mpiruntime.h"

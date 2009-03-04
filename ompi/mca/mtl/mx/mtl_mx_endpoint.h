@@ -22,7 +22,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "ompi/proc/proc.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "mtl_mx.h"
 

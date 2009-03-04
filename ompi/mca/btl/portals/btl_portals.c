@@ -27,7 +27,6 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "ompi/constants.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"

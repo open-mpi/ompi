@@ -26,7 +26,6 @@
 #include <string.h>
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/if.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 
 #include "btl_udapl.h"

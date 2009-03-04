@@ -36,7 +36,6 @@
 #include "orte/util/show_help.h"
 
 #include "ompi/types.h"
-#include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/class/ompi_free_list.h"
 
 #include "btl_openib_endpoint.h"

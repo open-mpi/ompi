@@ -29,7 +29,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
 
 typedef enum {

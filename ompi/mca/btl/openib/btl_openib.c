@@ -33,7 +33,6 @@
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
 
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 

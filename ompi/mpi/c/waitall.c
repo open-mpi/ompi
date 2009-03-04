@@ -20,7 +20,6 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
 
