@@ -21,6 +21,31 @@
 # Some grep/sed mojo may be of interest to others...
 #
 
+#
+# Function adds into FILE a HEADER as the first #include
+#
+# Checks for #if  to do the right thing, but does not handle
+# single-line or (even harder) multi-line comments
+#
+function add_header_first()
+{
+    file=$1                               # File to add header to
+    header=$2                             # E.g. opal/util/output.h for #include "opal/util/output.h"
+    line=`grep -n "#include " $file | cut -f1 -d':' | head -n1`
+
+    # check if this is a header wrapped in #ifdef HAVE_LALALA_H, if so, add before #if or #ifdef
+    prev_line=$(($line - 1))
+
+    if [ $prev_line = -1 -o $prev_line = 0 ] ; then
+      prev_line=1
+    fi
+
+    head -n $prev_line $file | tail -n1 | grep -q "#if" \
+        && sed -i -e "${prev_line}s:#if.*:#include \"$header\"\n\n\0:" $file \
+        || sed -i -e "${line}s:#include.*:#include \"$header\"\n\0:" $file
+}
+
+
 function add_header()
 {
     file=$1                               # File to add header to
