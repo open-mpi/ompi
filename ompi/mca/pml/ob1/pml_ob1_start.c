@@ -47,6 +47,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
          * completes - and create a new request.
          */
 
+        reuse_old_request = true;
         switch(pml_request->req_ompi.req_state) {
             case OMPI_REQUEST_INACTIVE:
                 if(pml_request->req_pml_complete == true)
