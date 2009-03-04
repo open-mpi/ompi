@@ -20,13 +20,11 @@
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
 headers += \
-        class/ompi_bitmap.h \
         class/ompi_free_list.h \
         class/ompi_rb_tree.h \
         class/ompi_seq_tracker.h
 
 libmpi_la_SOURCES += \
-        class/ompi_bitmap.c \
         class/ompi_free_list.c \
         class/ompi_rb_tree.c \
         class/ompi_seq_tracker.c
