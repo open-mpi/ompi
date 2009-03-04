@@ -12,7 +12,7 @@
 
 #define BSIZE 26
 #define SIZE_OF_CHAR (sizeof(char) * 8)
-#define OMPI_INVALID_BIT -1
+#define OPAL_INVALID_BIT -1
 #define ERR_CODE -2
 
 #define PRINT_VALID_ERR \
@@ -61,12 +61,12 @@ int main(int argc, char *argv[])
 
     PRINT_VALID_ERR;
     err = opal_bitmap_init(NULL, 2);
-    if (err == OMPI_ERR_BAD_PARAM)
+    if (err == OPAL_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed\n\n");
 
     PRINT_VALID_ERR;
     err = opal_bitmap_init(&bm, -1);
-    if (err == OMPI_ERR_BAD_PARAM)
+    if (err == OPAL_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed \n\n");
 
     err = opal_bitmap_init(&bm, BSIZE);
@@ -271,7 +271,7 @@ int find_and_set(opal_bitmap_t *bm, int bit)
        level stub, this function will be called in sequence to test */
 
     ret = opal_bitmap_find_and_set_first_unset_bit(bm, &pos);
-    if (ret != OMPI_SUCCESS) return ret;
+    if (ret != OPAL_SUCCESS) return ret;
 
     if (pos != bit) {
 	fprintf(error_out, "ERROR: find_and_set: expected to find_and_set %d\n\n",
