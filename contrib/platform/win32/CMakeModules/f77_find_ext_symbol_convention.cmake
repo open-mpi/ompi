@@ -104,6 +104,7 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       "int main(){${FUNC_NAME}();return(0);}")
 
     FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CMakeLists.txt
+      "PROJECT(conftest_c C)\n" 
       "ADD_EXECUTABLE(conftest_c conftest_c.c)\n"
       "TARGET_LINK_LIBRARIES(conftest_c ${OUTPUT_OBJ_FILE})\n")
 
