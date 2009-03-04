@@ -40,10 +40,10 @@
 #include "orte/runtime/runtime_internals.h"
 #include "orte/runtime/orte_globals.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
+
 /* need the data type support functions here */
 #include "orte/runtime/data_type_support/orte_dt_support.h"
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 
 /* globals used by RTE */
 bool orte_timing;
@@ -135,7 +135,8 @@ int orte_dt_init(void)
             opal_output_set_verbosity(orte_debug_output, 1);
         }
     }
-        
+
+#if !ORTE_DISABLE_FULL_SUPPORT
     /** register the base system types with the DSS */
     tmp = ORTE_STD_CNTR;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_std_cntr,
@@ -192,7 +193,6 @@ int orte_dt_init(void)
         return rc;
     }
 
-#if !ORTE_DISABLE_FULL_SUPPORT
     /* get a clean output channel too */
     {
         opal_output_stream_t lds;

@@ -30,7 +30,9 @@
 
 #include "opal/dss/dss_types.h"
 #include "orte/mca/grpcomm/grpcomm_types.h"
+#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/odls/odls_types.h"
+#endif
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"

@@ -44,7 +44,6 @@
 
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
 

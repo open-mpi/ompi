@@ -29,8 +29,9 @@
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
 
+#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/odls/odls.h"
-
+#endif
 
 BEGIN_C_DECLS
 
