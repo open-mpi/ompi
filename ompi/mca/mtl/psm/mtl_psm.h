@@ -25,6 +25,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "opal/util/cmd_line.h"
 #include "ompi/request/request.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/datatype/datatype.h"

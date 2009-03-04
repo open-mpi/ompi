@@ -40,7 +40,6 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/base/base.h"
 
 static int component_open(void);

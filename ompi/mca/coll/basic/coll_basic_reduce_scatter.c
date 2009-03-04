@@ -27,6 +27,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/datatype.h"
 #include "coll_basic.h"
 #include "ompi/op/op.h"

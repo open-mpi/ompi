@@ -67,7 +67,6 @@ const char *ibv_get_sysfs_path(void);
 #include "orte/mca/notifier/notifier.h"
 
 #include "ompi/proc/proc.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"

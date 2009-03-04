@@ -27,7 +27,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 #include "opal/util/output.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "btl_openib.h"
 #include "btl_openib_frag.h"

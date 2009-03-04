@@ -21,7 +21,6 @@
 
 #include "opal/sys/atomic.h"
 #include "ompi/mca/bml/bml.h"
-#include "ompi/mca/pml/pml.h" 
 
 
 

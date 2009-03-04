@@ -41,7 +41,6 @@
 #include "opal/class/opal_bitmap.h"
 #include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 

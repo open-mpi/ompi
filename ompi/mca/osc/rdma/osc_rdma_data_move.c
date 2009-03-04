@@ -28,6 +28,7 @@
 #include "opal/util/arch.h"
 #include "opal/util/output.h"
 #include "opal/sys/atomic.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/btl.h"

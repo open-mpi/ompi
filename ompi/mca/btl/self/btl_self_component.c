@@ -31,7 +31,6 @@
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "ompi/mca/pml/pml.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"
