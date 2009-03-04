@@ -22,6 +22,7 @@
 #ifndef OMPI_INFO_H
 #define OMPI_INFO_H
 
+#include "ompi_config.h"
 #include <string.h>
 
 #include "mpi.h"

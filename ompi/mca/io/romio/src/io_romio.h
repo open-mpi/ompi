@@ -20,6 +20,7 @@
 #ifndef MCA_IO_ROMIO_H
 #define MCA_IO_ROMIO_H
 
+#include "ompi_config.h"
 #include "opal/threads/mutex.h"
 #include "ompi/request/request.h"
 #include "ompi/file/file.h"

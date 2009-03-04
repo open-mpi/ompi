@@ -23,6 +23,8 @@
 #ifndef ORTE_MCA_ROUTED_ROUTED_H_
 #define ORTE_MCA_ROUTED_ROUTED_H_
 
+#include "orte_config.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

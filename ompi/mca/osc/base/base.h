@@ -19,6 +19,7 @@
 #ifndef OMPI_MCA_OSC_BASE_H
 #define OMPI_MCA_OSC_BASE_H
 
+#include "ompi_config.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"

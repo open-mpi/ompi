@@ -19,6 +19,7 @@
 #ifndef OMPI_MCA_COMMON_MX_H
 #define OMPI_MCA_COMMON_MX_H
 
+#include "ompi_config.h"
 #include "myriexpress.h"
 
 

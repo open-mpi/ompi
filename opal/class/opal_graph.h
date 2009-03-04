@@ -27,6 +27,7 @@
 #ifndef OPAL_GRAPH_H
 #define OPAL_GRAPH_H
 
+#include "opal_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "opal/class/opal_object.h"

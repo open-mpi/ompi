@@ -19,6 +19,8 @@
 #ifndef OPAL_UTIL_PTY_H
 #define OPAL_UTIL_PTY_H
 
+#include "opal_config.h"
+
 #ifdef HAVE_UTIL_H
 #include <util.h>
 #endif

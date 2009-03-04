@@ -20,6 +20,8 @@
 #ifndef DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 #define DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED
 
+#include "ompi_config.h"
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */

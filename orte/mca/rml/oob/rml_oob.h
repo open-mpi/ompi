@@ -20,6 +20,7 @@
 #ifndef MCA_RML_OOB_RML_OOB_H
 #define MCA_RML_OOB_RML_OOB_H
 
+#include "orte_config.h"
 #include "opal/threads/condition.h"
 #include "opal/threads/mutex.h"
 #include "opal/event/event.h"

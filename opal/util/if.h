@@ -24,6 +24,8 @@
 #ifndef OPAL_IF_UTIL_
 #define OPAL_IF_UTIL_
 
+#include "opal_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

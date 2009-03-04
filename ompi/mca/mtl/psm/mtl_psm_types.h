@@ -20,6 +20,7 @@
 #ifndef MTL_PSM_TYPES_H_HAS_BEEN_INCLUDED
 #define MTL_PSM_TYPS_H_HAS_BEEN_INCLUDED
 
+#include "ompi_config.h"
 #include "mtl_psm.h"
 
 #include "opal/threads/threads.h"

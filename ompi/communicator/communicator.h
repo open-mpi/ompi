@@ -23,6 +23,7 @@
 #ifndef OMPI_COMMUNICATOR_H
 #define OMPI_COMMUNICATOR_H
 
+#include "ompi_config.h"
 #include "opal/class/opal_object.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"

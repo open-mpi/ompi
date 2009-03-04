@@ -23,6 +23,7 @@
 #ifndef ORTE_RAS_SLURM_H
 #define ORTE_RAS_SLURM_H
 
+#include "orte_config.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/ras/base/base.h"
 

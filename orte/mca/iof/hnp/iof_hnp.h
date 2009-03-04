@@ -37,6 +37,8 @@
 #ifndef ORTE_IOF_HNP_H
 #define ORTE_IOF_HNP_H
 
+#include "orte_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */

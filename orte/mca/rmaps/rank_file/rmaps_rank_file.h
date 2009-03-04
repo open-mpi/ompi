@@ -24,6 +24,7 @@
  */
 
 
+#include "orte_config.h"
 #include "opal_config.h"
 #include "opal/util/argv.h"
 #include "opal/mca/paffinity/paffinity.h"

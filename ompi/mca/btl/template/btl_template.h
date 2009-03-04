@@ -21,7 +21,7 @@
 #ifndef MCA_PTL_TEMPLATE_H
 #define MCA_PTL_TEMPLATE_H
 
-/* Standard system includes */
+#include "ompi_config.h"
 #include <sys/types.h>
 #include <string.h>
 

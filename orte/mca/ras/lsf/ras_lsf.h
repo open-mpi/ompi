@@ -23,6 +23,7 @@
 #ifndef ORTE_RAS_LSF_H
 #define ORTE_RAS_LSF_H
 
+#include "orte_config.h"
 #include "orte/mca/ras/ras.h"
 
 BEGIN_C_DECLS

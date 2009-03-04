@@ -38,6 +38,7 @@
 #ifndef OPAL_MEMORY_MEMORY_H
 #define OPAl_MEMORY_MEMORY_H
 
+#include "opal_config.h"
 #include "memory_internal.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

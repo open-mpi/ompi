@@ -26,18 +26,19 @@
 #ifndef MCA_BML_H
 #define MCA_BML_H
 
+#include "ompi_config.h"
 #include "opal/mca/mca.h"
 #include "opal/class/opal_bitmap.h"
 
 #include "ompi/mca/btl/btl.h"
+#include "ompi/class/ompi_free_list.h"
 
 #include "ompi/mca/bml/base/bml_base_btl.h"
-
 #include "ompi/types.h"
-#include "ompi/class/ompi_free_list.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "ompi/constants.h"
 
 #define OMPI_ENABLE_DEBUG_RELIABILITY 0
 

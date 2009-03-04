@@ -19,6 +19,7 @@
 #ifndef MTL_PORTALS_H_HAS_BEEN_INCLUDED
 #define MTL_PORTALS_H_HAS_BEEN_INCLUDED
 
+#include "ompi_config.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "opal/class/opal_list.h"

@@ -21,6 +21,7 @@
   */
 #ifndef MCA_ALLOCATOR_H
 #define MCA_ALLOCATOR_H
+#include "ompi_config.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/mpool/mpool.h" 
 

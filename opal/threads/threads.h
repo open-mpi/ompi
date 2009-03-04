@@ -19,6 +19,8 @@
 #ifndef OPAL_THREAD_H
 #define OPAL_THREAD_H 1
 
+#include "opal_config.h"
+
 #if OMPI_HAVE_POSIX_THREADS
 #include <pthread.h>
 #elif OMPI_HAVE_SOLARIS_THREADS

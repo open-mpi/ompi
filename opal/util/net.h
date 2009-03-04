@@ -23,6 +23,8 @@
 #ifndef OPAL_UTIL_NET_H
 #define OPAL_UTIL_NET_H
 
+#include "opal_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

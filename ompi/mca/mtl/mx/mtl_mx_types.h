@@ -19,6 +19,7 @@
 #ifndef MTL_MX_TYPES_H_HAS_BEEN_INCLUDED
 #define MTL_MX_TYPES_H_HAS_BEEN_INCLUDED
 
+#include "ompi_config.h"
 #include "mtl_mx.h"
 
 #include "ompi/request/request.h"

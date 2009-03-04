@@ -31,6 +31,7 @@
 #ifndef OMPI_PROC_PROC_H
 #define OMPI_PROC_PROC_H
 
+#include "ompi_config.h"
 #include "ompi/types.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"

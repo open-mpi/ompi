@@ -19,6 +19,7 @@
 #ifndef OPAL_MCA_TIMER_DARWIN_TIMER_DARWIN_H
 #define OPAL_MCA_TIMER_DARWIN_TIMER_DARWIN_H
 
+#include "opal_config.h"
 #include <mach/mach_time.h>
 
 typedef uint64_t opal_timer_t;

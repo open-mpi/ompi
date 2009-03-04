@@ -32,6 +32,7 @@
 extern "C" {
 #endif
 
+#include "opal_config.h"
 #include "opal/threads/mutex.h"
 
 /**

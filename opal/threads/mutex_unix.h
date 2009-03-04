@@ -32,6 +32,7 @@
  * available.
  */
 
+#include "opal_config.h"
 
 #if OMPI_HAVE_POSIX_THREADS
 #ifdef HAVE_PTHREAD_H

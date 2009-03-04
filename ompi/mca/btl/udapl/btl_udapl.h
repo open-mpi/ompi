@@ -25,7 +25,7 @@
 #ifndef MCA_BTL_UDAPL_H
 #define MCA_BTL_UDAPL_H
 
-/* Standard system includes */
+#include "ompi_config.h"
 #include <sys/types.h>
 #include <string.h>
 #include <dat/udat.h>

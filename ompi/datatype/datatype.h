@@ -31,6 +31,7 @@
 #ifndef DATATYPE_H_HAS_BEEN_INCLUDED
 #define DATATYPE_H_HAS_BEEN_INCLUDED
 
+#include "ompi_config.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "mpi.h"

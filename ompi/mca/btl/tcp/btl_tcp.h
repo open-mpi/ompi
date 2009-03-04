@@ -22,7 +22,6 @@
 #ifndef MCA_BTL_TCP_H
 #define MCA_BTL_TCP_H
 
-/* Standard system includes */
 #include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

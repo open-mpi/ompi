@@ -11,6 +11,7 @@
 #ifndef __INCLUDE_VPROTOCOL_BASE_H_
 #define __INCLUDE_VPROTOCOL_BASE_H_
 
+#include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/mca/mca.h"
 #include "../vprotocol.h"

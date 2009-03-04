@@ -22,6 +22,7 @@
   */
 #ifndef MCA_MPOOL_H
 #define MCA_MPOOL_H
+#include "ompi_config.h"
 #include "opal/mca/mca.h"
 #include "ompi/info/info.h"
 #include "ompi/class/ompi_free_list.h" 

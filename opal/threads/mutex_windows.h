@@ -31,6 +31,7 @@
  * On Windows, base everything on InterlockedExchange().
  */
 
+#include "opal_config.h"
 #include "opal/class/opal_object.h"
 #include "opal/sys/atomic.h"
 

@@ -25,6 +25,7 @@
 #ifndef OMPI_RB_TREE_H
 #define OMPI_RB_TREE_H
 
+#include "ompi_config.h"
 #include <stdlib.h>
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
