@@ -52,8 +52,8 @@ static void allgather_server_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s allgather buffer received from %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
     
     /* append this data to the allgather_buf */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(allgather_buf, buffer))) {
@@ -82,7 +82,7 @@ static void allgather_client_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:base: allgather buffer received",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* transfer the buffer */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(allgather_buf, buffer))) {
@@ -113,7 +113,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: entering allgather_list",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* the first entry on the list is the "root" that collects
      * all the data - everyone else just sends and gets back
@@ -126,8 +126,8 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
         /* everyone but root sends data */
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                              "%s allgather_list: sending my data to %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&root->name)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&root->name)));
         
         if (0 > orte_rml.send_buffer(&root->name, sbuf, ORTE_RML_TAG_ALLGATHER_LIST, 0)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
@@ -136,7 +136,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
         
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                              "%s allgather_list: buffer sent",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         /* setup the buffer that will recv the results */
         allgather_buf = OBJ_NEW(opal_buffer_t);
@@ -172,7 +172,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
         
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                              "%s allgather_list: buffer received",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         return ORTE_SUCCESS;
     }
@@ -203,7 +203,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s allgather_list: waiting to recv %ld inputs",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)num_peers-1));
     
     /* post the non-blocking recv */
@@ -225,7 +225,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s allgather_list: received all data",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* copy the received info to the caller's buffer */
     if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(rbuf, allgather_buf))) {
@@ -259,7 +259,7 @@ int orte_grpcomm_base_allgather_list(opal_list_t *names, opal_buffer_t *sbuf, op
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm: allgather_list completed",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return ORTE_SUCCESS;
 }

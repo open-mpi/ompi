@@ -83,7 +83,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         
         OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
                              "%s rml:base:update:contact:info got uri %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              NULL == rml_uri ? "NULL" : rml_uri));
         
         if (NULL != rml_uri) {

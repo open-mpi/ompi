@@ -17,15 +17,15 @@ void sigusr_handler(int signum)
 {
     switch (signum) {
         case SIGUSR1:
-            fprintf(stderr, "%s Trapped SIGUSR1\n", orte_util_print_name_args(ORTE_PROC_MY_NAME));
+            fprintf(stderr, "%s Trapped SIGUSR1\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             break;
 
         case SIGUSR2:
-            fprintf(stderr, "%s Trapped SIGUSR2\n", orte_util_print_name_args(ORTE_PROC_MY_NAME));
+            fprintf(stderr, "%s Trapped SIGUSR2\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             return;
 
         default:
-            fprintf(stderr, "%s Undefined signal %d trapped\n", orte_util_print_name_args(ORTE_PROC_MY_NAME), signum);
+            fprintf(stderr, "%s Undefined signal %d trapped\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), signum);
             return;
     }
 }

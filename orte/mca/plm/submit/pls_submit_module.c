@@ -376,8 +376,8 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:submit: launching job %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_jobids(jdata->jobid)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
     
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
@@ -408,7 +408,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:submit: no new daemons to launch",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
     }
     
@@ -907,8 +907,8 @@ int orte_plm_submit_launch(orte_job_t *jdata)
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:submit: daemon launch failed for job %s on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_jobids(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -916,8 +916,8 @@ launch_apps:
         if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:submit: launch of apps failed for job %s on error %s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_jobids(active_job), ORTE_ERROR_NAME(rc)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
             goto cleanup;
         }
     

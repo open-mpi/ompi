@@ -170,7 +170,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
             opal_output_verbose(1, orte_plm_globals.output,
                                 "%s plm:rsh: unable to be used: cannot find path "
                                 "or execution permissions not set for launching agent \"%s\"\n", 
-                                orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 orte_plm_globals.rsh_agent_argv[0]);
             *module = NULL;
             return ORTE_ERROR;
@@ -186,7 +186,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
             tmp = opal_argv_join(orte_plm_globals.rsh_agent_argv, ' ');
             opal_output_verbose(1, orte_plm_globals.output,
                                 "%s plm:rsh: using \"%s\" for launching\n",
-                                orte_util_print_name_args(ORTE_PROC_MY_NAME), tmp);
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
             free(tmp);
         }
         mca_plm_rsh_component.using_qrsh = true;
@@ -202,7 +202,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find path "
                              "for launching agent \"%s\"\n", 
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_plm_globals.rsh_agent_argv[0]));
         *module = NULL;
         return ORTE_ERROR;

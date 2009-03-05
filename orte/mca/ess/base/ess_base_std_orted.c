@@ -186,7 +186,7 @@ int orte_ess_base_orted_setup(void)
     /* setup my session directory */
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_proc_info.tmpdir_base) ? "UNDEF" : orte_proc_info.tmpdir_base,
                          orte_proc_info.nodename));
     

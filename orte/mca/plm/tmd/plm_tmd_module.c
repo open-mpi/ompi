@@ -184,8 +184,8 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm: launching job %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_jobids(jdata->jobid)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
     
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
@@ -320,7 +320,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: final top-level argv:\n\t%s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
         if (NULL != param) free(param);
     }
@@ -363,7 +363,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
                             apps[0]->prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:tm: resetting PATH: %s",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
                 opal_setenv("PATH", newenv, true, &env);
                 free(newenv);
@@ -375,7 +375,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
                             apps[0]->prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      newenv));
                 opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
                 free(newenv);
@@ -400,7 +400,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
  
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launching on node %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name));
         
         /* setup process name */
@@ -418,7 +418,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
             param = opal_argv_join(argv, ' ');
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:tm: executing:\n\t%s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == param) ? "NULL" : param));
             if (NULL != param) free(param);
         }
@@ -439,7 +439,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished spawning orteds",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* setup a timer to give the cmd a chance to be sent */
     time_is_up = false;
@@ -497,7 +497,7 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     if (0 < orte_startup_timeout) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: setting startup timer for %d milliseconds",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_startup_timeout));
         ORTE_DETECT_TIMEOUT(&ev, map->num_new_daemons,
                             orte_startup_timeout*1000,
@@ -508,8 +508,8 @@ static int plm_tmd_launch_job(orte_job_t *jdata)
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: daemon launch failed for job %s on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_jobids(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -526,8 +526,8 @@ launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launch of apps failed for job %s on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_jobids(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -565,7 +565,7 @@ launch_apps:
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     return rc;
 }
@@ -610,7 +610,7 @@ int plm_tmd_terminate_orteds(void)
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm: terminating orteds",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* lookup the daemon job object */
     if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
@@ -643,7 +643,7 @@ int plm_tmd_terminate_orteds(void)
         while (!time_is_up && 0 < alive) {
             OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
                                  "%s plm:tm: polling for daemon termination",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             rc = tm_poll(TM_NULL_EVENT, &eventpolled, (int)false, &local_err);
             if (TM_SUCCESS != rc) {
                 errno = local_err;
@@ -654,7 +654,7 @@ int plm_tmd_terminate_orteds(void)
             if (eventpolled == TM_NULL_EVENT) {
                 OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
                                      "%s plm:tm: got null event",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 /* give system a little time to progress */
                 timer_fired = false;
                 opal_evtimer_add(quicktime, &quicktimeval);
@@ -668,7 +668,7 @@ int plm_tmd_terminate_orteds(void)
                     if (local_err == TM_ESYSTEM) {
                         OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
                                              "%s plm:tm: got TM_ESYSTEM on obit - resubmitting",
-                                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                         if (ORTE_SUCCESS != (rc = obit_submit(j))) {
                             ORTE_ERROR_LOG(rc);
                             goto MOVEON;
@@ -681,7 +681,7 @@ int plm_tmd_terminate_orteds(void)
                     if (0 != local_err) {
                         OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
                                              "%s plm:tm: got error %d on obit for task %d",
-                                             orte_util_print_name_args(ORTE_PROC_MY_NAME), local_err, j));
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), local_err, j));
                         rc = ORTE_ERROR;
                         goto MOVEON;
                     }
@@ -690,7 +690,7 @@ int plm_tmd_terminate_orteds(void)
                     *(events_obit+j) = TM_NULL_EVENT;
                     OPAL_OUTPUT_VERBOSE((10, orte_plm_globals.output,
                                          "%s plm:tm: task %d exited with status %d",
-                                         orte_util_print_name_args(ORTE_PROC_MY_NAME), j, *(evs+j)));
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j, *(evs+j)));
                     /* update the termination status for this daemon */
                     daemons[j+1]->exit_code = *(evs+j);
                     if (0 != daemons[j+1]->exit_code) {
@@ -818,13 +818,13 @@ static void failed_start(int fd, short dummy, void *arg)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:failed_start",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting, ignore this */
     if (orte_abnormal_term_ordered) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm:failed_start - abnormal term in progress",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return;
     }
     

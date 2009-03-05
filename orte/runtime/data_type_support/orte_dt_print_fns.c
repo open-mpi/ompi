@@ -127,7 +127,7 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
         case ORTE_JOBID:
             asprintf(output, "%sData Type: ORTE_JOBID\tData size: %lu\tValue: %s",
                      (NULL == prefix) ? "" : prefix, (unsigned long)sizeof(orte_jobid_t),
-                     orte_util_print_jobids(*(orte_jobid_t*)src));
+                     ORTE_JOBID_PRINT(*(orte_jobid_t*)src));
             break;
             
 #if !ORTE_DISABLE_FULL_SUPPORT
@@ -185,7 +185,7 @@ int orte_dt_print_name(char **output, char *prefix, orte_process_name_t *name, o
                  (NULL == prefix ? " " : prefix));
     } else {
         asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: %s",
-                 (NULL == prefix ? " " : prefix), orte_util_print_name_args(name));
+                 (NULL == prefix ? " " : prefix), ORTE_NAME_PRINT(name));
     }
     
     return ORTE_SUCCESS;
@@ -213,8 +213,8 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
     }
 
     asprintf(&tmp, "\n%sData for job: %s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %0x\tAbort: %s", pfx2,
-             orte_util_print_jobids(src->jobid),
-             (long)src->num_apps, src->controls, orte_util_print_vpids(src->stdin_target),
+             ORTE_JOBID_PRINT(src->jobid),
+             (long)src->num_apps, src->controls, ORTE_VPID_PRINT(src->stdin_target),
              src->state, src->abort ? "True" : "False");
 
     asprintf(&pfx, "%s\t", pfx2);
@@ -361,7 +361,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
                  "Not defined", src->daemon_launched ? "True" : "False");
     } else {
         asprintf(&tmp2, "%s\n%s\tDaemon: %s\tDaemon launched: %s", tmp, pfx2,
-                 orte_util_print_name_args(&(src->daemon->name)), src->daemon_launched ? "True" : "False");
+                 ORTE_NAME_PRINT(&(src->daemon->name)), src->daemon_launched ? "True" : "False");
     }
     free(tmp);
     tmp = tmp2;
@@ -456,18 +456,18 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
         tmp = orte_dt_print_proc_state(src->state);
         if (NULL == tmp) {
             if (0 == src->pid) {
-                asprintf(output, "%s<process rank=\"%s\"/>\n", pfx2, orte_util_print_vpids(src->name.vpid));
+                asprintf(output, "%s<process rank=\"%s\"/>\n", pfx2, ORTE_VPID_PRINT(src->name.vpid));
             } else {
                 asprintf(output, "%s<process rank=\"%s\" pid=\"%d\"/>\n", pfx2,
-                         orte_util_print_vpids(src->name.vpid), (int)src->pid);
+                         ORTE_VPID_PRINT(src->name.vpid), (int)src->pid);
             }
         } else {
             if (0 == src->pid) {
                 asprintf(output, "%s<process rank=\"%s\" status=\"%s\"/>\n", pfx2,
-                         orte_util_print_vpids(src->name.vpid), tmp);
+                         ORTE_VPID_PRINT(src->name.vpid), tmp);
             } else {
                 asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\"/>\n", pfx2,
-                         orte_util_print_vpids(src->name.vpid), (int)src->pid, tmp);
+                         ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, tmp);
             }
         }
         free(pfx2);
@@ -477,15 +477,15 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     if (!orte_devel_level_output) {
         /* just print a very simple output for users */
         asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s", pfx2,
-                 orte_util_print_jobids(src->name.jobid),
-                 orte_util_print_vpids(src->name.vpid));
+                 ORTE_JOBID_PRINT(src->name.jobid),
+                 ORTE_VPID_PRINT(src->name.vpid));
         /* set the return */
         *output = tmp;
         free(pfx2);
         return ORTE_SUCCESS;
     }
 
-    asprintf(&tmp, "\n%sData for proc: %s", pfx2, orte_util_print_name_args(&src->name));
+    asprintf(&tmp, "\n%sData for proc: %s", pfx2, ORTE_NAME_PRINT(&src->name));
     
     asprintf(&tmp2, "%s\n%s\tPid: %ld\tLocal rank: %lu\tNode rank: %lu", tmp, pfx2,
              (long)src->pid, (unsigned long)src->local_rank, (unsigned long)src->node_rank);

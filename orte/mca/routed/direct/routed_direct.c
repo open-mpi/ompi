@@ -90,8 +90,8 @@ static int delete_route(orte_process_name_t *proc)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_direct_delete_route for %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
     
     /*There is nothing to do here */
     
@@ -103,9 +103,9 @@ static int update_route(orte_process_name_t *target,
 { 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_direct_update: %s --> %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(target), 
-                         orte_util_print_name_args(route)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(route)));
 
     /*There is nothing to do here */
     
@@ -127,9 +127,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_direct_get(%s) --> %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(target), 
-                         orte_util_print_name_args(ret)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(ret)));
     
     return *ret;
 }
@@ -153,7 +153,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      */
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_direct: init routes w/non-NULL data",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(ndat))) {
         ORTE_ERROR_LOG(rc);

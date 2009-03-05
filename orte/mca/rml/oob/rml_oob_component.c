@@ -344,9 +344,9 @@ rml_oob_queued_progress(int fd, short event, void *arg)
         if (next.vpid == ORTE_VPID_INVALID) {
             opal_output(0,
                         "%s:queued progress tried routing message from %s to %s:%d, can't find route",
-                        orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                        orte_util_print_name_args(&hdr->origin),
-                        orte_util_print_name_args(&hdr->destination),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&hdr->origin),
+                        ORTE_NAME_PRINT(&hdr->destination),
                         hdr->tag);
             opal_backtrace_print(stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
@@ -354,9 +354,9 @@ rml_oob_queued_progress(int fd, short event, void *arg)
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
             opal_output(0, "%s:queued progress trying to get message from %s to %s:%d, routing loop",
-                        orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                        orte_util_print_name_args(&hdr->origin),
-                        orte_util_print_name_args(&hdr->destination),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&hdr->origin),
+                        ORTE_NAME_PRINT(&hdr->destination),
                         hdr->tag);
             opal_backtrace_print(stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
@@ -370,10 +370,10 @@ rml_oob_queued_progress(int fd, short event, void *arg)
 
         OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                              "%s routing message from %s for %s to %s (tag: %d)",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&hdr->origin),
-                             orte_util_print_name_args(&hdr->destination),
-                             orte_util_print_name_args(&next),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&hdr->origin),
+                             ORTE_NAME_PRINT(&hdr->destination),
+                             ORTE_NAME_PRINT(&next),
                              hdr->tag));
 
         ORTE_RML_OOB_MSG_HEADER_HTON(*hdr);
@@ -402,9 +402,9 @@ rml_oob_queued_progress(int fd, short event, void *arg)
             } else {
                 opal_output(0,
                             "%s failed to send message from %s to %s:%d %s (rc = %d)",
-                            orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                            orte_util_print_name_args(&next),
-                            orte_util_print_name_args(&origin),
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&next),
+                            ORTE_NAME_PRINT(&origin),
                             real_tag,
                             ORTE_ERROR_NAME(ret),
                             ret);
@@ -449,9 +449,9 @@ rml_oob_recv_route_callback(int status,
     next = orte_routed.get_route(&hdr->destination);
     if (next.vpid == ORTE_VPID_INVALID) {
         opal_output(0, "%s:route_callback tried routing message from %s to %s:%d, can't find route",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                    orte_util_print_name_args(&origin),
-                    orte_util_print_name_args(&hdr->destination),
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&origin),
+                    ORTE_NAME_PRINT(&hdr->destination),
                     hdr->tag);
         opal_backtrace_print(stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
@@ -459,9 +459,9 @@ rml_oob_recv_route_callback(int status,
 
     if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
         opal_output(0, "%s:route_callback trying to get message from %s to %s:%d, routing loop",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                    orte_util_print_name_args(&origin),
-                    orte_util_print_name_args(&hdr->destination),
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&origin),
+                    ORTE_NAME_PRINT(&hdr->destination),
                     hdr->tag);
         opal_backtrace_print(stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
@@ -475,10 +475,10 @@ rml_oob_recv_route_callback(int status,
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                          "%s routing message from %s for %s to %s (tag: %d)",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(&hdr->origin),
-                         orte_util_print_name_args(&hdr->destination),
-                         orte_util_print_name_args(&next),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&hdr->origin),
+                         ORTE_NAME_PRINT(&hdr->destination),
+                         ORTE_NAME_PRINT(&next),
                          hdr->tag));
 
     ORTE_RML_OOB_MSG_HEADER_HTON(*hdr);
@@ -498,8 +498,8 @@ rml_oob_recv_route_callback(int status,
             orte_rml_oob_queued_msg_t *qmsg = OBJ_NEW(orte_rml_oob_queued_msg_t);
             OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                                  "%s: no OOB information for %s.  Queuing for later.",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&next)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&next)));
             ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
             qmsg->payload[0].iov_base = (IOVBASE_TYPE*) malloc(iov[0].iov_len);
             if (NULL == qmsg->payload[0].iov_base) abort();
@@ -516,8 +516,8 @@ rml_oob_recv_route_callback(int status,
         } else {
             opal_output(0,
                         "%s failed to send message to %s: %s (rc = %d)",
-                        orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                        orte_util_print_name_args(&next),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&next),
                         opal_strerror(ret),
                         ret);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);

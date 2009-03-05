@@ -739,7 +739,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s recv_stats: reissued recv",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }
 
 /* static values needed for printing */

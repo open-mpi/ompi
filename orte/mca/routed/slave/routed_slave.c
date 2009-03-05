@@ -104,8 +104,8 @@ static int delete_route(orte_process_name_t *proc)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_slave_delete_route for %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
     
     /*There is nothing to do here */
     
@@ -117,9 +117,9 @@ static int update_route(orte_process_name_t *target,
 { 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_slave_update: %s --> %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(target), 
-                         orte_util_print_name_args(route)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(route)));
 
     /*There is nothing to do here */
     
@@ -141,9 +141,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_slave_get(%s) --> %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(target), 
-                         orte_util_print_name_args(ret)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(ret)));
     
     return *ret;
 }
@@ -164,7 +164,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          */
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_slave: init routes w/non-NULL data",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         return ORTE_SUCCESS;
     }
@@ -175,7 +175,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_slave: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_jobids(job),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
                          (NULL == orte_proc_info.my_hnp_uri) ? "NULL" : orte_proc_info.my_hnp_uri,
                          (NULL == orte_proc_info.my_daemon_uri) ? "NULL" : orte_proc_info.my_daemon_uri));
     
@@ -184,13 +184,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * we didn't get it, then error out
          */
         opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_output(0, "%s ERROR: This is a fatal condition when the slave router",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_output(0, "%s ERROR: has been selected - either select the unity router",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_output(0, "%s ERROR: or ensure that the local daemon info is provided",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return ORTE_ERR_FATAL;
     }
     
@@ -245,8 +245,8 @@ static int route_lost(const orte_process_name_t *route)
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
         opal_output(0, "%s routed:slave: Connection to lifeline %s lost",
-                    orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                    orte_util_print_name_args(lifeline));
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(lifeline));
         return ORTE_ERR_FATAL;
     }
 

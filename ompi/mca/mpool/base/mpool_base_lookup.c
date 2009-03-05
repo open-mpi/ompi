@@ -136,7 +136,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
 #endif
             } else {
                 orte_show_help("help-mpool-base.txt", "leave pinned failed",
-                               true, orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                               true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                orte_proc_info.nodename);
                 return NULL;
             }

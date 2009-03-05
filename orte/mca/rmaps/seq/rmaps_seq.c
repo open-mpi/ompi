@@ -71,8 +71,8 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
 
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:seq mapping job %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_jobids(jdata->jobid)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(jdata->jobid)));
 
     /* conveniece def */
     map = jdata->map;

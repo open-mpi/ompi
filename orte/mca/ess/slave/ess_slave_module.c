@@ -185,8 +185,8 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slave: proc %s is REMOTE",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
     
     return OPAL_PROC_NON_LOCAL;
     
@@ -303,7 +303,7 @@ static int slave_set_name(void)
     ORTE_PROC_MY_NAME->vpid = vpid;
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "ess:slave set name to %s", orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         "ess:slave set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {

@@ -39,7 +39,7 @@ OMPI_DECLSPEC extern int mca_btl_base_out(const char*, ...);
 do {                                                         \
     mca_btl_base_out("[%s]%s[%s:%d:%s] ",                    \
             orte_proc_info.nodename,                         \
-            orte_util_print_name_args(ORTE_PROC_MY_NAME),       \
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_out args;                                   \
     mca_btl_base_out("\n");                                  \
@@ -50,7 +50,7 @@ do {                                                         \
 do {                                                         \
     mca_btl_base_err("[%s]%s[%s:%d:%s] ",                    \
             orte_proc_info.nodename,                         \
-            orte_util_print_name_args(ORTE_PROC_MY_NAME),       \
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_err args;                                   \
     mca_btl_base_err("\n");                                  \
@@ -59,7 +59,7 @@ do {                                                         \
 #define BTL_PEER_ERROR(proc, args)                               \
 do {                                                             \
     mca_btl_base_err("%s[%s:%d:%s] from %s ",                    \
-                     orte_util_print_name_args(ORTE_PROC_MY_NAME),  \
+                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  \
                      __FILE__, __LINE__, __func__,               \
                      orte_proc_info.nodename);                   \
     if(proc && proc->proc_hostname) {                            \
@@ -76,7 +76,7 @@ do {                                                         \
    if(mca_btl_base_verbose > 0) {                            \
         mca_btl_base_err("[%s]%s[%s:%d:%s] ",                \
                 orte_proc_info.nodename,                     \
-                orte_util_print_name_args(ORTE_PROC_MY_NAME),  \
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
         mca_btl_base_err("\n");                              \

@@ -55,16 +55,16 @@ void orte_errmgr_default_proc_aborted(orte_process_name_t *name, int exit_code)
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: abort in progress, ignoring proc %s aborted with status %d",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(name), exit_code));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(name), exit_code));
         
         return;
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                          "%s errmgr:default: proc %s aborting with status %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(name), exit_code));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(name), exit_code));
     
     orte_job_term_ordered = true;
     
@@ -121,15 +121,15 @@ void orte_errmgr_default_incomplete_start(orte_jobid_t job, int exit_code)
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                              "%s errmgr:default: abort in progress, ignoring incomplete start on job %s with status %d",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_jobids(job), exit_code));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(job), exit_code));
         return;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_output,
                          "%s errmgr:default: job %s reported incomplete start with status %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_jobids(job), exit_code));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_JOBID_PRINT(job), exit_code));
 
     orte_job_term_ordered = true;
     

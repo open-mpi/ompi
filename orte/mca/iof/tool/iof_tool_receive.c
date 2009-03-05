@@ -64,8 +64,8 @@ static void process_msg(int fd, short event, void *cbdata)
     if (ORTE_IOF_CLOSE & stream) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s received CLOSE handshake from remote hnp %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&mev->sender)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&mev->sender)));
         mca_iof_tool_component.closed = true;
         goto CLEAN_RETURN;
     }
@@ -87,8 +87,8 @@ static void process_msg(int fd, short event, void *cbdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s unpacked %d bytes from remote proc %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
-                         orte_util_print_name_args(&origin)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
+                         ORTE_NAME_PRINT(&origin)));
     
     /* if numbytes is zero, it means that the channel was closed on the far end - for
      * now, we just ignore this condition
@@ -116,8 +116,8 @@ void orte_iof_tool_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_iof_base.iof_output,
                          "%s iof:tool:receive got message from %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message to avoid performing the rest of the job while

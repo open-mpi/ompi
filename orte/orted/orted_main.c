@@ -360,7 +360,7 @@ int orte_daemon(int argc, char *argv[])
                 ORTE_TIMER_EVENT(orted_globals.fail_delay, 0, shutdown_signal);
                 
             } else {
-                opal_output(0, "%s is executing clean %s", orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             orted_globals.abort ? "abort" : "abnormal termination");
 
                 /* do -not- call finalize as this will send a message to the HNP
@@ -487,7 +487,7 @@ int orte_daemon(int argc, char *argv[])
      */
     if (orte_debug_daemons_flag) {
         fprintf(stderr, "Daemon %s checking in as pid %ld on host %s\n",
-                orte_util_print_name_args(ORTE_PROC_MY_NAME), (long)orte_proc_info.pid,
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)orte_proc_info.pid,
                 orte_proc_info.nodename);
     }
 
@@ -680,7 +680,7 @@ int orte_daemon(int argc, char *argv[])
     }
 
     if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted: up and running - waiting for commands!", orte_util_print_name_args(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
     /* if we were told to do a heartbeat, then setup to do so */
@@ -733,7 +733,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     }
     
     if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted: finalizing", orte_util_print_name_args(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
     
     /* cleanup */
@@ -751,7 +751,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
 
     /* if we were ordered to abort, do so */
     if (orted_globals.abort) {
-        opal_output(0, "%s is executing clean abort", orte_util_print_name_args(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s is executing clean abort", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* do -not- call finalize as this will send a message to the HNP
          * indicating clean termination! Instead, just forcibly cleanup
          * the local session_dir tree and abort
@@ -759,7 +759,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         abort();
     } else if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
-        opal_output(0, "%s is executing clean abnormal termination", orte_util_print_name_args(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s is executing clean abnormal termination", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         /* do -not- call finalize as this will send a message to the HNP
          * indicating clean termination! Instead, just forcibly cleanup
          * the local session_dir tree and exit

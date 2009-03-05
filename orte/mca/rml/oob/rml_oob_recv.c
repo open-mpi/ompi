@@ -34,9 +34,9 @@ orte_rml_recv_msg_callback(int status,
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                          "%s recv from %s for %s (tag %d)",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(&hdr->origin),
-                         orte_util_print_name_args(&hdr->destination),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&hdr->origin),
+                         ORTE_NAME_PRINT(&hdr->destination),
                          hdr->tag));
 
     if (msg->msg_type == ORTE_RML_BLOCKING_RECV) {

@@ -218,7 +218,7 @@ int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_node_t *node,
     /* if we get here, then this node isn't already in the map - add it */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base: adding node %s to map",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == node->name) ? "NULL" : node->name));
     
     if (ORTE_SUCCESS > (rc = opal_pointer_array_add(map->nodes, (void*)node))) {
@@ -235,8 +235,8 @@ PROCESS:
      */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base: mapping proc %s to node %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(&proc->name),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&proc->name),
                          (NULL == node->name) ? "NULL" : node->name));
     
     if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
@@ -292,8 +292,8 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
      */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:claim_slot mapping rank %d to job %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         vpid, orte_util_print_jobids(jdata->jobid)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         vpid, ORTE_JOBID_PRINT(jdata->jobid)));
     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
                                                           (int)vpid,
                                                           (void*)proc))) {
@@ -361,7 +361,7 @@ int orte_rmaps_base_compute_usage(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:compute_usage",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* point to map */
     map = jdata->map;
@@ -438,7 +438,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:define_daemons",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* get the daemon job data struct */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
@@ -474,8 +474,8 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
             proc->nodename = node->name;
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons add new daemon %s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&proc->name)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name)));
             /* add the daemon to the daemon job object */
             if (0 > (rc = opal_pointer_array_add(daemons->procs, (void*)proc))) {
                 ORTE_ERROR_LOG(rc);
@@ -498,8 +498,8 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
             node->daemon_launched = true;
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons existing daemon %s already launched",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&node->daemon->name)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&node->daemon->name)));
             /* count number of daemons being used */
             ++numdaemons;
         }

@@ -53,7 +53,7 @@ static void failed_send(int fd, short event, void *arg)
      */
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd command messages timed out with num_sent %ld",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME), (long)num_reported));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)num_reported));
     done_reporting = true;
 }
 
@@ -65,8 +65,8 @@ static void send_callback(int status,
 {
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd message to %s sent",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(peer)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(peer)));
     
     num_reported++;
     if (num_reported == num_being_sent) {
@@ -82,7 +82,7 @@ static void send_callback(int status,
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd all messages sent",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
     }
 }
@@ -96,7 +96,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* stop all heartbeats */
     orte_heartbeat_rate = 0;
@@ -136,7 +136,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:orted_exit abnormal term ordered",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         /* turn off message routing - no way to guarantee that
          * the route still exists
@@ -172,8 +172,8 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
              */
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_cmd:orted_exit sending cmd to %s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&peer)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer)));
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
                                     send_callback, 0);
         }
@@ -229,7 +229,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
 
@@ -261,7 +261,7 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
         
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_cmd:kill_local_procs abnormal term ordered",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         /* get the job object for the daemons */
         if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
@@ -311,8 +311,8 @@ int orte_plm_base_orted_kill_local_procs(orte_jobid_t job)
              */
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:orted_cmd:kill_local_procs sending cmd to %s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&peer)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&peer)));
             orte_rml.send_buffer_nb(&peer, &cmd, ORTE_RML_TAG_DAEMON, 0,
                                 send_callback, 0);
         }
@@ -366,7 +366,7 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_cmd sending signal_local_procs cmds",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
     

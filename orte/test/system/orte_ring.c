@@ -49,9 +49,9 @@ main(int argc, char *argv[]){
     }
 
     printf("My name is: %s -- PID %d\tMy Left Peer is %s\tMy Right Peer is %s\n",
-           orte_util_print_name_args(ORTE_PROC_MY_NAME), getpid(),
-           orte_util_print_name_args(&left_peer_orte_name),
-           orte_util_print_name_args(&right_peer_orte_name));
+           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), getpid(),
+           ORTE_NAME_PRINT(&left_peer_orte_name),
+           ORTE_NAME_PRINT(&right_peer_orte_name));
 
     /*
      * Rank 0 starts the ring...
@@ -65,8 +65,8 @@ main(int argc, char *argv[]){
         msg.iov_len  = sizeof(counter);
 
         printf("%s Send Counter (%d) to peer %s\n",
-               orte_util_print_name_args(ORTE_PROC_MY_NAME), 
-               counter, orte_util_print_name_args(&right_peer_orte_name));
+               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
+               counter, ORTE_NAME_PRINT(&right_peer_orte_name));
         
         if( 0 > orte_rml.send(&right_peer_orte_name,
                                              &msg,
@@ -83,7 +83,7 @@ main(int argc, char *argv[]){
 
         /* Receive from left */
         printf("%s Waiting to Recv Counter from peer %s\n", 
-               orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_name_args(&left_peer_orte_name));
+               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&left_peer_orte_name));
         
         msg.iov_base = NULL;
         msg.iov_len  = 0;
@@ -100,7 +100,7 @@ main(int argc, char *argv[]){
         counter = *cnt;
 
         /* Update */
-        printf("%s Recv %d ... Send %d\n", orte_util_print_name_args(ORTE_PROC_MY_NAME), counter, counter + 1);
+        printf("%s Recv %d ... Send %d\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), counter, counter + 1);
         if( ORTE_PROC_MY_NAME->vpid == 0 ) {
             sleep(2);
         }
@@ -116,8 +116,8 @@ main(int argc, char *argv[]){
         msg.iov_base = (void *) &counter;
         msg.iov_len  = sizeof(counter);
 
-        printf("%s Send Counter (%d) to peer (%s)\n", orte_util_print_name_args(ORTE_PROC_MY_NAME),  counter,
-               orte_util_print_name_args(&right_peer_orte_name));
+        printf("%s Send Counter (%d) to peer (%s)\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  counter,
+               ORTE_NAME_PRINT(&right_peer_orte_name));
         
         if( 0 > orte_rml.send(&right_peer_orte_name,
                                              &msg,

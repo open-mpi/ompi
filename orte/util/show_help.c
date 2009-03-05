@@ -313,8 +313,8 @@ void orte_show_help_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s got show_help from %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
     
     /* unpack the filename of the show_help text file */
     n = 1;
