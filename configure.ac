@@ -638,9 +638,9 @@ ompi_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     dlfcn.h execinfo.h err.h fcntl.h grp.h inttypes.h libgen.h \
-    libutil.h netdb.h netinet/in.h netinet/tcp.h \
+    libutil.h memory.h netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h stdint.h \
-    string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
+    stdlib.h string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
     sys/ioctl.h sys/mman.h  sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     stdarg.h sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
