@@ -74,7 +74,7 @@ int orte_ess_tool_component_query(mca_base_module_t **module, int *priority)
      * precedence. This would happen, for example,
      * if the tool is a distributed set of processes
      */
-    if (orte_process_info.tool) {
+    if (orte_proc_info.tool) {
        *priority = 10;
         *module = (mca_base_module_t *)&orte_ess_tool_module;
         return ORTE_SUCCESS;

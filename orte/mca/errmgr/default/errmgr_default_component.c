@@ -94,7 +94,7 @@ int orte_errmgr_default_component_close(void)
 int orte_errmgr_default_component_query(mca_base_module_t **module, int *priority)
 {
     /* If we are not an HNP, then don't pick us! */
-    if (!orte_process_info.hnp) {
+    if (!orte_proc_info.hnp) {
         /* don't take me! */
         *module = NULL;
         return ORTE_ERROR;

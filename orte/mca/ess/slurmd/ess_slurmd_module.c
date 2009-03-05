@@ -168,7 +168,7 @@ static int rte_init(char flags)
         error = "could not get SLURM_STEP_NUM_TASKS";
         goto error;
     }
-    orte_process_info.num_procs = strtol(envar, NULL, 10);
+    orte_proc_info.num_procs = strtol(envar, NULL, 10);
     
     /* get my local nodeid */
     if (NULL == (envar = getenv("SLURM_NODEID"))) {
@@ -207,7 +207,7 @@ static int rte_init(char flags)
         goto error;
     }
     num_nodes = opal_argv_count(nodes);
-    orte_process_info.num_nodes = num_nodes;
+    orte_proc_info.num_nodes = num_nodes;
     
     /* compute the ppn */
     if (ORTE_SUCCESS != (ret = orte_regex_extract_ppn(num_nodes, tasks_per_node, &ppn))) {
@@ -245,7 +245,7 @@ static int rte_init(char flags)
     }
     
     /* set the size of the nidmap storage so we minimize realloc's */
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&orte_nidmap, orte_process_info.num_nodes))) {
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&orte_nidmap, orte_proc_info.num_nodes))) {
         error = "could not set pointer array size for nidmap";
         goto error;
     }
@@ -264,7 +264,7 @@ static int rte_init(char flags)
     jmap->job = ORTE_PROC_MY_NAME->jobid;
     opal_pointer_array_add(&orte_jobmap, jmap);
     /* update the num procs */
-    jmap->num_procs = orte_process_info.num_procs;
+    jmap->num_procs = orte_proc_info.num_procs;
     /* set the size of the pidmap storage so we minimize realloc's */
     if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&jmap->pmap, jmap->num_procs))) {
         ORTE_ERROR_LOG(ret);
@@ -301,8 +301,8 @@ static int rte_init(char flags)
     } else if (cyclic) {
         /* cycle across the nodes */
         vpid = 0;
-        while (vpid < orte_process_info.num_procs) {
-            for (i=0; i < num_nodes && vpid < orte_process_info.num_procs; i++) {
+        while (vpid < orte_proc_info.num_procs) {
+            for (i=0; i < num_nodes && vpid < orte_proc_info.num_procs; i++) {
                 if (0 < ppn[i]) {
                     node = (orte_nid_t*)orte_nidmap.addr[i];
                     pmap = OBJ_NEW(orte_pmap_t);

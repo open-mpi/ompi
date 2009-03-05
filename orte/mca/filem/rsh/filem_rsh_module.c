@@ -622,7 +622,7 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                                          f_set->remote_target));
                     orte_show_help("help-orte-filem-rsh.txt",
                                    "orte-filem-rsh:get-file-not-exist",
-                                   true, f_set->local_target, orte_process_info.nodename);
+                                   true, f_set->local_target, orte_proc_info.nodename);
                     request->is_done[cur_index]     = true;
                     request->is_active[cur_index]   = true;
                     request->exit_status[cur_index] = -1;
@@ -645,7 +645,7 @@ static int orte_filem_rsh_start_copy(orte_filem_base_request_t *request) {
                                          f_set->local_target));
                     orte_show_help("help-orte-filem-rsh.txt",
                                    "orte-filem-rsh:get-file-exists",
-                                   true, f_set->local_target, orte_process_info.nodename);
+                                   true, f_set->local_target, orte_proc_info.nodename);
                     request->is_done[cur_index]     = true;
                     request->is_active[cur_index]   = true;
                     request->exit_status[cur_index] = -1;

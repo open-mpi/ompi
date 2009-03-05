@@ -89,7 +89,7 @@ int orte_write_hnp_contact_file(char *filename)
     fprintf(fp, "%s\n", my_uri);
     free(my_uri);
 
-    fprintf(fp, "%lu\n", (unsigned long)orte_process_info.pid);
+    fprintf(fp, "%lu\n", (unsigned long)orte_proc_info.pid);
     fclose(fp);
 
     return ORTE_SUCCESS;
@@ -185,7 +185,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
     /*
      * Check to make sure we have access to the top-level directory
      */
-    headdir = opal_os_path(false, orte_process_info.tmpdir_base, orte_process_info.top_session_dir, NULL);
+    headdir = opal_os_path(false, orte_proc_info.tmpdir_base, orte_proc_info.top_session_dir, NULL);
     
     if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(headdir, 0) )) {
         /* it is okay not to find this as there may not be any

@@ -72,7 +72,7 @@ int orte_ess_lsf_component_query(mca_base_module_t **module, int *priority)
      */
     
     if (NULL != getenv("LSB_JOBID") &&
-        NULL != orte_process_info.my_hnp_uri) {
+        NULL != orte_proc_info.my_hnp_uri) {
         *priority = 40;
         *module = (mca_base_module_t *)&orte_ess_lsf_module;
         return ORTE_SUCCESS;

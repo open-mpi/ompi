@@ -58,13 +58,13 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_wildcard;  /** instantiated i
 #define ORTE_NAME_INVALID       (&orte_name_invalid)
 ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
 
-#define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
+#define ORTE_PROC_MY_NAME       (&orte_proc_info.my_name)
 
 /* define a special name that belongs to orterun */
-#define ORTE_PROC_MY_HNP        (&orte_process_info.my_hnp)
+#define ORTE_PROC_MY_HNP        (&orte_proc_info.my_hnp)
 
 /* define the name of my daemon */
-#define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
+#define ORTE_PROC_MY_DAEMON     (&orte_proc_info.my_daemon)
 
 /* See comment in orte/tools/orterun/debuggers.c about this MCA
    param */

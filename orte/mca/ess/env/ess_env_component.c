@@ -81,7 +81,7 @@ int orte_ess_env_component_query(mca_base_module_t **module, int *priority)
      * it would be impossible for the correct env vars
      * to have been set!
      */
-    if (NULL != orte_process_info.my_hnp_uri) {
+    if (NULL != orte_proc_info.my_hnp_uri) {
         *priority = 20;
         *module = (mca_base_module_t *)&orte_ess_env_module;
         return ORTE_SUCCESS;

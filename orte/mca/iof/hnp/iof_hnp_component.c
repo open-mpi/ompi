@@ -131,7 +131,7 @@ static int orte_iof_hnp_query(mca_base_module_t **module, int *priority)
     *priority = -1;
 
     /* if we are not the HNP, then don't use this module */
-    if (!orte_process_info.hnp) {
+    if (!orte_proc_info.hnp) {
         return ORTE_ERROR;
     }
         

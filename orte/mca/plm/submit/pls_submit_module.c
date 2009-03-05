@@ -647,7 +647,7 @@ int orte_plm_submit_launch(orte_job_t *jdata)
              * match, check using ifislocal().
              */
             if (!mca_plm_submit_component.force_submit &&
-                (0 == strcmp(nodes[nnode]->name, orte_process_info.nodename) ||
+                (0 == strcmp(nodes[nnode]->name, orte_proc_info.nodename) ||
                  opal_ifislocal(nodes[nnode]->name))) {
                 if (mca_plm_submit_component.debug) {
                     opal_output(0, "plm:submit: %s is a LOCAL node\n",

@@ -187,12 +187,12 @@ int orte_ess_base_orted_setup(void)
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_process_info.nodename));
+                         (NULL == orte_proc_info.tmpdir_base) ? "UNDEF" : orte_proc_info.tmpdir_base,
+                         orte_proc_info.nodename));
     
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                orte_process_info.tmpdir_base,
-                                                orte_process_info.nodename, NULL,
+                                                orte_proc_info.tmpdir_base,
+                                                orte_proc_info.nodename, NULL,
                                                 ORTE_PROC_MY_NAME))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_session_dir";
@@ -243,7 +243,7 @@ int orte_ess_base_orted_setup(void)
         goto error;
     }
     
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_process_info.hnp, !orte_process_info.daemon))) {
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_proc_info.hnp, !orte_proc_info.daemon))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
         goto error;

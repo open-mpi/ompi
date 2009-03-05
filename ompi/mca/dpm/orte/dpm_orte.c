@@ -770,7 +770,7 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     
     OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
 
-    if (NULL == orte_process_info.my_hnp_uri) {
+    if (NULL == orte_proc_info.my_hnp_uri) {
         rc = ORTE_ERR_NOT_AVAILABLE;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -790,7 +790,7 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     }
     
     
-    len = strlen(orte_process_info.my_hnp_uri) + strlen(rml_uri) + strlen(tag);
+    len = strlen(orte_proc_info.my_hnp_uri) + strlen(rml_uri) + strlen(tag);
     
     /* if the overall port name is too long, we abort */
     if (len > (MPI_MAX_PORT_NAME-1)) {
@@ -799,7 +799,7 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     }
     
     /* assemble the port name */
-    snprintf(port_name, MPI_MAX_PORT_NAME, "%s+%s:%s", orte_process_info.my_hnp_uri, rml_uri, tag);
+    snprintf(port_name, MPI_MAX_PORT_NAME, "%s+%s:%s", orte_proc_info.my_hnp_uri, rml_uri, tag);
     rc = OMPI_SUCCESS;
 
 cleanup:

@@ -478,7 +478,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
      * another job family - procs dont' need to do this because
      * they always route through their daemons anyway
      */
-    if (!orte_process_info.mpi_proc) {
+    if (!orte_proc_info.mpi_proc) {
         if ((ORTE_JOB_FAMILY(msg->msg_hdr.msg_origin.jobid) !=
              ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) &&
             (0 != ORTE_JOB_FAMILY(msg->msg_hdr.msg_origin.jobid))) {

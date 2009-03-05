@@ -311,20 +311,20 @@ static int orte_cr_coord_post_restart(void) {
         exit_status = ret;
     }
 
-    if( NULL != orte_process_info.my_hnp_uri ) {
-        free(orte_process_info.my_hnp_uri);
-        orte_process_info.my_hnp_uri = NULL;
+    if( NULL != orte_proc_info.my_hnp_uri ) {
+        free(orte_proc_info.my_hnp_uri);
+        orte_proc_info.my_hnp_uri = NULL;
     }
 
-    if( NULL != orte_process_info.my_daemon_uri ) {
-        free(orte_process_info.my_daemon_uri);
-        orte_process_info.my_daemon_uri = NULL;
+    if( NULL != orte_proc_info.my_daemon_uri ) {
+        free(orte_proc_info.my_daemon_uri);
+        orte_proc_info.my_daemon_uri = NULL;
     }
 
-    if( ORTE_SUCCESS != (ret = orte_proc_info()) ) {
+    if( ORTE_SUCCESS != (ret = orte_proc_info_init()) ) {
         exit_status = ret;
     }
-    orte_process_info.my_name = *ORTE_NAME_INVALID;
+    orte_proc_info.my_name = *ORTE_NAME_INVALID;
 
     /*
      * Notify the ESS

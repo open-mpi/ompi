@@ -73,7 +73,7 @@ main(int argc, char *argv[]){
     peer.jobid = ORTE_PROC_MY_NAME->jobid;
     
     for (j=1; j < count+1; j++) {
-        peer.vpid = (ORTE_PROC_MY_NAME->vpid + j) % orte_process_info.num_procs;
+        peer.vpid = (ORTE_PROC_MY_NAME->vpid + j) % orte_proc_info.num_procs;
         
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {

@@ -85,7 +85,7 @@ static int rte_init(char flags)
     ORTE_PROC_MY_NAME->vpid = (orte_vpid_t) cnos_get_rank();
     
     /* Get the number of procs in the job from cnos */
-    orte_process_info.num_procs = (orte_std_cntr_t) cnos_get_size();
+    orte_proc_info.num_procs = (orte_std_cntr_t) cnos_get_size();
     
     /* Get the nid map */
     nprocs = cnos_get_nidpid_map(&map);
@@ -146,7 +146,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 static uint32_t proc_get_arch(orte_process_name_t *proc)
 {
     /* always homogeneous, so other side is always same as us */
-    return orte_process_info.arch;
+    return orte_proc_info.arch;
 }
 
 static int update_arch(orte_process_name_t *proc, uint32_t arch)

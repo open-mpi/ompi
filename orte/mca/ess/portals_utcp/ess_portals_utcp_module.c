@@ -101,7 +101,7 @@ static int rte_init(char flags)
      */
     /* split the nidmap string */
     nidmap = opal_argv_split(nidmap_string, ':');
-    orte_process_info.num_procs = (orte_std_cntr_t) opal_argv_count(nidmap);
+    orte_proc_info.num_procs = (orte_std_cntr_t) opal_argv_count(nidmap);
 
     /* MPI_Init needs the grpcomm framework, so we have to init it */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_open())) {
@@ -156,7 +156,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 
 static uint32_t proc_get_arch(orte_process_name_t *proc)
 {
-    return orte_process_info.arch;
+    return orte_proc_info.arch;
 }
 
 static int update_arch(orte_process_name_t *proc, uint32_t arch)

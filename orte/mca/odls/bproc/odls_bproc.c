@@ -136,7 +136,7 @@ static char *
                                    false, false, NULL, &user);
 
     if (0 > asprintf(&frontend, OPAL_PATH_SEP"%s"OPAL_PATH_SEP"openmpi-bproc-%s",
-                     orte_process_info.tmpdir_base, user)) {
+                     orte_proc_info.tmpdir_base, user)) {
         ORTE_ERROR_LOG(ORTE_ERROR);
         path = NULL;
     }
@@ -524,7 +524,7 @@ int orte_odls_bproc_finalize(void)
 {
     orte_iof.iof_flush();
     odls_bproc_remove_dir();
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
     return ORTE_SUCCESS;
 }
 

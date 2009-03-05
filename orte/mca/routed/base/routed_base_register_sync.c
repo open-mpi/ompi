@@ -37,7 +37,7 @@ static void report_sync(int status, orte_process_name_t* sender,
                         orte_rml_tag_t tag, void *cbdata)
 {
     /* just copy the payload to the sync_buf */
-    opal_dss.copy_payload(orte_process_info.sync_buf, buffer);
+    opal_dss.copy_payload(orte_proc_info.sync_buf, buffer);
     /* flag as complete */
     sync_recvd = true;
 }

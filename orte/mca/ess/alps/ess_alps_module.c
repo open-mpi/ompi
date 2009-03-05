@@ -85,13 +85,13 @@ static int rte_init(char flags)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (orte_process_info.daemon) {
+    if (orte_proc_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
-    } else if (orte_process_info.tool) {
+    } else if (orte_proc_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -112,7 +112,7 @@ static int rte_init(char flags)
     }
     
     /* setup the nidmap arrays */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
+    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_proc_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_util_nidmap_init";
         goto error;
@@ -133,11 +133,11 @@ static int rte_finalize(void)
     int ret;
     
     /* if I am a daemon, finalize using the default procedure */
-    if (orte_process_info.daemon) {
+    if (orte_proc_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-    } else if (orte_process_info.tool) {
+    } else if (orte_proc_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
@@ -357,7 +357,7 @@ static int alps_set_name(void)
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:alps set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    orte_process_info.num_procs = (orte_std_cntr_t) cnos_get_size();
+    orte_proc_info.num_procs = (orte_std_cntr_t) cnos_get_size();
 
     return ORTE_SUCCESS;
 }

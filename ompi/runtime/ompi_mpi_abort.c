@@ -68,7 +68,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        gethostname. */
 
     if (orte_initialized) {
-        host = orte_process_info.nodename;
+        host = orte_proc_info.nodename;
     } else {
         gethostname(hostname, sizeof(hostname));
         host = hostname;

@@ -31,7 +31,7 @@ main(int argc, char *argv[]){
      */
     orte_init(ORTE_NON_TOOL);
 
-    num_peers = orte_process_info.num_procs;
+    num_peers = orte_proc_info.num_procs;
 
     /*
      * Construct Peer name in a ring

@@ -356,12 +356,12 @@ static void orte_plm_bproc_setup_env(char *** env)
     }
 
     /* ns replica contact info */
-    if(NULL == orte_process_info.ns_replica) {
-        orte_dss.copy((void**)&orte_process_info.ns_replica, orte_process_info.my_name, ORTE_NAME);
-        orte_process_info.ns_replica_uri = orte_rml.get_uri();
+    if(NULL == orte_proc_info.ns_replica) {
+        orte_dss.copy((void**)&orte_proc_info.ns_replica, orte_proc_info.my_name, ORTE_NAME);
+        orte_proc_info.ns_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("ns","replica","uri");
-    opal_setenv(var,orte_process_info.ns_replica_uri, true, env);
+    opal_setenv(var,orte_proc_info.ns_replica_uri, true, env);
     free(var);
 
     /* make sure the username used to create the bproc directory is the same on
@@ -371,12 +371,12 @@ static void orte_plm_bproc_setup_env(char *** env)
     free(var);
 
     /* gpr replica contact info */
-    if(NULL == orte_process_info.gpr_replica) {
-        orte_dss.copy((void**)&orte_process_info.gpr_replica, orte_process_info.my_name, ORTE_NAME);
-        orte_process_info.gpr_replica_uri = orte_rml.get_uri();
+    if(NULL == orte_proc_info.gpr_replica) {
+        orte_dss.copy((void**)&orte_proc_info.gpr_replica, orte_proc_info.my_name, ORTE_NAME);
+        orte_proc_info.gpr_replica_uri = orte_rml.get_uri();
     }
     var = mca_base_param_environ_variable("gpr","replica","uri");
-    opal_setenv(var,orte_process_info.gpr_replica_uri, true, env);
+    opal_setenv(var,orte_proc_info.gpr_replica_uri, true, env);
     free(var);
 
     /* universe directory - needs to match orted */

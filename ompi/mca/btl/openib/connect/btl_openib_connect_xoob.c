@@ -411,7 +411,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     if (qp_init_attr.cap.max_inline_data < req_inline) {
         endpoint->qps[0].ib_inline_max = qp_init_attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
-                       "inline truncated", orte_process_info.nodename,
+                       "inline truncated", orte_proc_info.nodename,
                        ibv_get_device_name(openib_btl->device->ib_dev),
                        req_inline, qp_init_attr.cap.max_inline_data);
     } else {

@@ -275,9 +275,9 @@ void ompi_info::open_components()
   component_map["installdirs"] = &opal_installdirs_components;
 
   // ORTE frameworks
-  // Set orte_process_info.hnp to true to force all frameworks to
+  // Set orte_proc_info.hnp to true to force all frameworks to
   // open components
-  orte_process_info.hnp = true;
+  orte_proc_info.hnp = true;
 
   if (ORTE_SUCCESS != orte_errmgr_base_open()) {
       goto error;

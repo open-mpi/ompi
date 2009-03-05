@@ -45,7 +45,7 @@ int orte_ess_env_get(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
+    orte_proc_info.num_procs = (orte_std_cntr_t)num_procs;
     
     return ORTE_SUCCESS;
 }

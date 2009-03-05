@@ -225,7 +225,7 @@ int orte_filem_base_get_proc_node_name(orte_process_name_t *proc, char **machine
     /* set default answer */
     *machine_name = NULL;
 
-    if (orte_process_info.hnp) {
+    if (orte_proc_info.hnp) {
         /* if I am the HNP, then all the data structures are local to me - no
          * need to send messages around to get the info
          */

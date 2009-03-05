@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 #endif    
     /* launch the job */
     fprintf(stderr, "Parent: My local rank is %ld with %ld num_local_procs - spawning children!\n",
-                    (long)orte_process_info.local_rank, (long)orte_process_info.num_local_procs);
+                    (long)orte_proc_info.local_rank, (long)orte_proc_info.num_local_procs);
     if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
         ORTE_ERROR_LOG(rc);
         orte_finalize();

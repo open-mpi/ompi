@@ -86,7 +86,7 @@ static int ras_alps_open(void)
 static int orte_ras_alps_component_query(mca_base_module_t **module, int *priority)
 {
     /* if we are not an HNP, then we must not be selected */
-    if (!orte_process_info.hnp) {
+    if (!orte_proc_info.hnp) {
         *module = NULL;
         return ORTE_ERROR;
     }

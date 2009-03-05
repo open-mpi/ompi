@@ -171,9 +171,9 @@ main(int argc, char *argv[])
      */
     if (orte_clean_globals.verbose) {
         fprintf(stderr, "orte-clean: cleaning session dir tree %s\n", 
-                orte_process_info.top_session_dir);
+                orte_proc_info.top_session_dir);
     }
-    opal_os_dirpath_destroy(orte_process_info.top_session_dir, true, NULL);
+    opal_os_dirpath_destroy(orte_proc_info.top_session_dir, true, NULL);
     
     /* now kill any lingering procs, if we can */
 #if !defined(__WINDOWS__)
@@ -406,8 +406,8 @@ void kill_procs(void) {
                     
                 }
                 /* if we are a singleton, check the hnp_pid as well */
-                if (orte_process_info.singleton) {
-                    if (procpid != orte_process_info.hnp_pid) {
+                if (orte_proc_info.singleton) {
+                    if (procpid != orte_proc_info.hnp_pid) {
                         (void)kill(procpid, SIGKILL);
                     }
                 } else {

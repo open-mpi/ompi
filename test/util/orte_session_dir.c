@@ -55,11 +55,11 @@ static FILE *test_out=NULL;
 
 int main(int argc, char* argv[])
 {
-    orte_proc_info(); /* initialize proc info structure */
-    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
-    orte_process_info.my_name->cellid = 0;
-    orte_process_info.my_name->jobid = 0;
-    orte_process_info.my_name->vpid = 0;
+    orte_proc_info_init(); /* initialize proc info structure */
+    orte_proc_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_proc_info.my_name->cellid = 0;
+    orte_proc_info.my_name->jobid = 0;
+    orte_proc_info.my_name->vpid = 0;
     
     test_init("orte_session_dir_t");
     test_out = fopen( "test_session_dir_out", "w+" );
@@ -170,8 +170,8 @@ static bool test1(void)
         return(false);
     }
 
-    orte_session_dir_finalize(orte_process_info.my_name);
-    free(orte_process_info.universe_session_dir);
+    orte_session_dir_finalize(orte_proc_info.my_name);
+    free(orte_proc_info.universe_session_dir);
     free(prefix);
 
     return true;
@@ -191,7 +191,7 @@ static bool test2(void)
         return(false);
     }
 
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
 
     unsetenv("OMPI_PREFIX_ENV");
 
@@ -212,7 +212,7 @@ static bool test3(void)
         return(false);
     }
 
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
 
     unsetenv("TMPDIR");
 
@@ -233,7 +233,7 @@ static bool test4(void)
         return(false);
     }
 
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
 
     unsetenv("TMP");
 
@@ -254,7 +254,7 @@ static bool test5(void)
         return(false);
     }
 
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
 
     unsetenv("HOME");
 
@@ -275,7 +275,7 @@ static bool test6(void)
         return(false);
     }
 
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
 
     return(true);
 }
@@ -294,33 +294,33 @@ static bool test7(void)
     }
 
     fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n",
-	    orte_process_info.proc_session_dir,
-	    orte_process_info.job_session_dir,
-	    orte_process_info.universe_session_dir);
+	    orte_proc_info.proc_session_dir,
+	    orte_proc_info.job_session_dir,
+	    orte_proc_info.universe_session_dir);
 
     /* create some files */
 
-    filenm[0] = opal_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
+    filenm[0] = opal_os_path(false, orte_proc_info.proc_session_dir, "dum1", NULL);
     fp = fopen(filenm[0], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[1] = opal_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
+    filenm[1] = opal_os_path(false, orte_proc_info.job_session_dir, "dum2", NULL);
     fp = fopen(filenm[1], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[2] = opal_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
+    filenm[2] = opal_os_path(false, orte_proc_info.universe_session_dir, "dum3", NULL);
     fp = fopen(filenm[2], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    if (ORTE_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
+    if (ORTE_ERROR == orte_session_dir_finalize(orte_proc_info.my_name)) {
 	return(false);
     }
 
     for (i=0; i < 3; i++) unlink(filenm[i]);
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
 
     return true;
 }
@@ -339,44 +339,44 @@ static bool test8(void)
     }
 
     fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n",
-	    orte_process_info.proc_session_dir,
-	    orte_process_info.job_session_dir,
-	    orte_process_info.universe_session_dir);
+	    orte_proc_info.proc_session_dir,
+	    orte_proc_info.job_session_dir,
+	    orte_proc_info.universe_session_dir);
 
     /* create some files */
 
-    filenm[0] = opal_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
+    filenm[0] = opal_os_path(false, orte_proc_info.proc_session_dir, "dum1", NULL);
     fp = fopen(filenm[0], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[1] = opal_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
+    filenm[1] = opal_os_path(false, orte_proc_info.job_session_dir, "dum2", NULL);
     fp = fopen(filenm[1], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm[2] = opal_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
+    filenm[2] = opal_os_path(false, orte_proc_info.universe_session_dir, "dum3", NULL);
     fp = fopen(filenm[2], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
 
-    if (ORTE_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
+    if (ORTE_ERROR == orte_session_dir_finalize(orte_proc_info.my_name)) {
 	   return(false);
     }
 
     for (i=0; i < 3; i++) unlink(filenm[i]);
-    orte_session_dir_finalize(orte_process_info.my_name);
+    orte_session_dir_finalize(orte_proc_info.my_name);
     
     return true;
 }
 
 void clear_proc_info(void)
 {
-    orte_process_info.tmpdir_base = NULL;
-    orte_process_info.top_session_dir = NULL;
-    orte_process_info.universe_session_dir = NULL;
-    orte_process_info.job_session_dir = NULL;
-    orte_process_info.proc_session_dir = NULL;
+    orte_proc_info.tmpdir_base = NULL;
+    orte_proc_info.top_session_dir = NULL;
+    orte_proc_info.universe_session_dir = NULL;
+    orte_proc_info.job_session_dir = NULL;
+    orte_proc_info.proc_session_dir = NULL;
 
 }

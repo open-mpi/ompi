@@ -39,7 +39,7 @@ int orte_plm_base_finalize(void)
     orte_plm.finalize();
 
     /* if we are the HNP, then stop our receive */
-    if (orte_process_info.hnp) {
+    if (orte_proc_info.hnp) {
         if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
             ORTE_ERROR_LOG(rc);
             return rc;
