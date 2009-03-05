@@ -31,14 +31,14 @@ int main(int argc, char* argv[])
         return rc;
     }
 
-    printf("CHILD %s waiting for message\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    printf("CHILD %s waiting for message\n", orte_util_print_name_args(ORTE_PROC_MY_NAME));
     
     /* wait for message from our parent */
     if (0 > orte_rml.recv(ORTE_NAME_WILDCARD, &msg, 1, MY_TAG, ORTE_RML_ALLOC)) {
         printf("error at line %d\n", __LINE__);
     }
     
-    printf("CHILD %s got message and is exiting\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    printf("CHILD %s got message and is exiting\n", orte_util_print_name_args(ORTE_PROC_MY_NAME));
     
     orte_finalize();
     return 0;

@@ -327,7 +327,7 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
                          "%s) base:ckpt_init_cmd: Received [%d, %s]\n",
                          ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type),
                          (int)*term,
-                         ORTE_JOBID_PRINT(*jobid)));
+                         orte_util_print_jobids(*jobid)));
 
  cleanup:
     return exit_status;

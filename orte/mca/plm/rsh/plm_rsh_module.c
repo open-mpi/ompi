@@ -188,21 +188,21 @@ static int orte_plm_rsh_probe(char *nodename,
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: going to check SHELL variable on node %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          nodename));
 
     *shell = ORTE_PLM_RSH_SHELL_UNKNOWN;
     if (pipe(fd)) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: pipe failed with errno=%d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              errno));
         return ORTE_ERR_IN_ERRNO;
     }
     if ((pid = fork()) < 0) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: fork failed with errno=%d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              errno));
         return ORTE_ERR_IN_ERRNO;
     }
@@ -210,7 +210,7 @@ static int orte_plm_rsh_probe(char *nodename,
         if (dup2(fd[1], 1) < 0) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: dup2 failed with errno=%d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  errno));
             exit(01);
         }
@@ -226,7 +226,7 @@ static int orte_plm_rsh_probe(char *nodename,
     if (close(fd[1])) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: close failed with errno=%d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              errno));
         return ORTE_ERR_IN_ERRNO;
     }
@@ -243,7 +243,7 @@ static int orte_plm_rsh_probe(char *nodename,
                     continue;
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:rsh: Unable to detect the remote shell (error %s)",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                      strerror(errno)));
                 rc = ORTE_ERR_IN_ERRNO;
                 break;
@@ -279,7 +279,7 @@ static int orte_plm_rsh_probe(char *nodename,
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: node %s has SHELL: %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          nodename,
                          (ORTE_PLM_RSH_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_rsh_shell_name[*shell]));
 
@@ -307,7 +307,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             orte_vpid_t *vpid=(orte_vpid_t*)cbdata;
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s daemon %d failed with status %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  (int)*vpid, WEXITSTATUS(status)));
             OBJ_CONSTRUCT(&buf, opal_buffer_t);
             opal_dss.pack(&buf, &cnt, 1, ORTE_STD_CNTR);
@@ -322,7 +322,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s daemon %d failed with status %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  (int)daemon->name.vpid, WEXITSTATUS(status)));
             /* note that this daemon failed */
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
@@ -394,7 +394,7 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: local shell: %d (%s)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          local_shell, orte_plm_rsh_shell_name[local_shell]));
     
     /* What is our remote shell? */
@@ -402,7 +402,7 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
         remote_shell = local_shell;
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: assuming same remote shell as local shell",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     } else {
         rc = orte_plm_rsh_probe(nodename, &remote_shell);
         
@@ -419,7 +419,7 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: remote shell: %d (%s)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          remote_shell, orte_plm_rsh_shell_name[remote_shell]));
     
     /* Do we need to source .profile on the remote side?
@@ -700,7 +700,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: final template argv:\n\t%s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
         if (NULL != param) free(param);
     }
@@ -794,7 +794,7 @@ static void ssh_child(int argc, char **argv,
     var = opal_argv_join(argv, ' ');
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: executing: (%s) [%s]",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          exec_path, (NULL == var) ? "NULL" : var));
     if (NULL != var) free(var);
     
@@ -826,7 +826,7 @@ static int remote_spawn(opal_buffer_t *launch)
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: remote spawn called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* extract the prefix from the launch buffer */
     n = 1;
@@ -858,7 +858,7 @@ static int remote_spawn(opal_buffer_t *launch)
     if (opal_list_is_empty(&mca_plm_rsh_component.children)) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: remote spawn - have no children!",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         failed_launch = false;
         rc = ORTE_SUCCESS;
         goto cleanup;
@@ -885,7 +885,7 @@ static int remote_spawn(opal_buffer_t *launch)
         /* get the host where this daemon resides */
         if (NULL == (hostname = orte_ess.proc_get_hostname(&child->name))) {
             opal_output(0, "%s unable to get hostname for daemon %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(vpid));
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_vpids(vpid));
             rc = ORTE_ERR_NOT_FOUND;
             goto cleanup;
         }
@@ -905,7 +905,7 @@ static int remote_spawn(opal_buffer_t *launch)
         if (pid == 0) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: launching on node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  hostname));
             
             /* do the ssh launch - this will exit if it fails */
@@ -1010,8 +1010,8 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: setting up job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(jdata->jobid)));
     
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
@@ -1035,7 +1035,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: no new daemons to launch",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         goto launch_apps;
     }
     
@@ -1163,7 +1163,7 @@ launch:
         if (nodes[nnode]->daemon_launched) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh:launch daemon already exists on node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  nodes[nnode]->name));
             goto next_node;
         }
@@ -1175,7 +1175,7 @@ launch:
             ORTE_ERROR_LOG(ORTE_ERR_FATAL);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh:launch daemon failed to be defined on node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  nodes[nnode]->name));
             rc = ORTE_ERR_FATAL;
             goto cleanup;
@@ -1193,7 +1193,7 @@ launch:
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: launching on node %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              nodes[nnode]->name));
 
         /* fork a child to exec the rsh/ssh session */
@@ -1219,8 +1219,8 @@ launch:
             
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: recording launch of daemon %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&nodes[nnode]->daemon->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                orte_util_print_name_args(&nodes[nnode]->daemon->name)));
 
             OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
             /* This situation can lead to a deadlock if '--debug-daemons' is set.
@@ -1252,8 +1252,8 @@ next_node:
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: daemon launch failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -1265,8 +1265,8 @@ launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
@@ -1315,8 +1315,8 @@ static int find_children(int rank, int parent, int me, int num_procs)
                     child->name.vpid = peer;
                     OPAL_OUTPUT_VERBOSE((3, orte_plm_globals.output,
                                          "%s plm:rsh find-children found child %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&child->name)));
+                                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                         orte_util_print_name_args(&child->name)));
                     
                     opal_list_append(&mca_plm_rsh_component.children, &child->item);
             }

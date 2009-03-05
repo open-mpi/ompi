@@ -63,7 +63,7 @@ int orte_routed_base_comm_start(void)
     
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:base: Receive: Start command recv",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_INIT_ROUTES,
@@ -89,7 +89,7 @@ int orte_routed_base_comm_stop(void)
     
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:base:receive stop comm",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_INIT_ROUTES))) {
         ORTE_ERROR_LOG(rc);
@@ -138,8 +138,8 @@ void orte_routed_base_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:base:receive got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves

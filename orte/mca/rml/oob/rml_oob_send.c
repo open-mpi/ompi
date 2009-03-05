@@ -103,7 +103,7 @@ orte_rml_oob_send(orte_process_name_t* peer,
     next = orte_routed.get_route(peer);
     if (next.vpid == ORTE_VPID_INVALID) {
         ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
-        opal_output(0, "%s could not get route to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
+        opal_output(0, "%s could not get route to %s", orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_name_args(peer));
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
     }
     msg->msg_data = (struct iovec *) malloc(sizeof(struct iovec) * (count + 1));
@@ -129,9 +129,9 @@ orte_rml_oob_send(orte_process_name_t* peer,
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                          "rml_send %s -> %s (router %s, tag %d, %d)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer),
-                         ORTE_NAME_PRINT(&next),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(peer),
+                         orte_util_print_name_args(&next),
                          tag,
                          real_tag));
     ret = orte_rml_oob_module.active_oob->oob_send_nb(&next, 
@@ -144,8 +144,8 @@ orte_rml_oob_send(orte_process_name_t* peer,
                                                       msg);
     if (ret < 0) {
         ORTE_ERROR_LOG(ret);
-        opal_output(0, "%s attempted to send to %s: tag %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                             ORTE_NAME_PRINT(&next), (int)real_tag);
+        opal_output(0, "%s attempted to send to %s: tag %d", orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                                             orte_util_print_name_args(&next), (int)real_tag);
         goto cleanup;
     }
 
@@ -192,7 +192,7 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
     next = orte_routed.get_route(peer);
     if (next.vpid == ORTE_VPID_INVALID) {
         ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
-        opal_output(0, "%s could not get route to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(peer));
+        opal_output(0, "%s could not get route to %s", orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_name_args(peer));
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
     }
 
@@ -220,9 +220,9 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                          "rml_send_nb %s -> %s (router %s, tag %d, %d)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer),
-                         ORTE_NAME_PRINT(&next),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(peer),
+                         orte_util_print_name_args(&next),
                          tag, real_tag));
     ret = orte_rml_oob_module.active_oob->oob_send_nb(&next, 
                                                       ORTE_PROC_MY_NAME,
@@ -234,8 +234,8 @@ orte_rml_oob_send_nb(orte_process_name_t* peer,
                                                       msg);
     if (ret < 0) {
         ORTE_ERROR_LOG(ret);
-        opal_output(0, "%s attempted to send to %s: tag %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                             ORTE_NAME_PRINT(&next), (int)real_tag);
+        opal_output(0, "%s attempted to send to %s: tag %d", orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                                             orte_util_print_name_args(&next), (int)real_tag);
         OBJ_RELEASE(msg);
     }
 
@@ -313,8 +313,8 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
     if (next.vpid == ORTE_VPID_INVALID) {
         ORTE_ERROR_LOG(ORTE_ERR_ADDRESSEE_UNKNOWN);
         opal_output(0, "%s unable to find address for %s",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(peer));
+                    orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                    orte_util_print_name_args(peer));
         return ORTE_ERR_ADDRESSEE_UNKNOWN;
     }
 
@@ -342,9 +342,9 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
 
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,
                          "rml_send_buffer_nb %s -> %s (router %s, tag %d, %d)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(peer),
-                         ORTE_NAME_PRINT(&next),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(peer),
+                         orte_util_print_name_args(&next),
                          tag, real_tag));
 
     ret = orte_rml_oob_module.active_oob->oob_send_nb(&next,
@@ -358,8 +358,8 @@ orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
 
     if (ret < 0) {
         ORTE_ERROR_LOG(ret);
-        opal_output(0, "%s attempted to send to %s: tag %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                                             ORTE_NAME_PRINT(&next), (int)real_tag);
+        opal_output(0, "%s attempted to send to %s: tag %d", orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                                             orte_util_print_name_args(&next), (int)real_tag);
         OBJ_RELEASE(msg);
         OBJ_RELEASE(buffer);
     }

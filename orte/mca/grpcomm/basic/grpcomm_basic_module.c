@@ -212,8 +212,8 @@ static int xcast(orte_jobid_t job,
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:xcast sent to job %s tag %ld",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job), (long)tag));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(job), (long)tag));
     
     /* if there is no message to send, then just return ok */
     if (NULL == buffer) {
@@ -318,7 +318,7 @@ static int barrier(void)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic entering barrier",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* everyone sends barrier to local daemon */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -338,7 +338,7 @@ static int barrier(void)
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:basic barrier sent",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* now receive the release. Be sure to do this in
      * a manner that allows us to return without being in a recv!
@@ -355,7 +355,7 @@ static int barrier(void)
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:basic received barrier release",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
 
@@ -383,7 +383,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic entering allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* everyone sends data to their local daemon */
     OBJ_CONSTRUCT(&coll, opal_buffer_t);
@@ -409,7 +409,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base_output,
                          "%s grpcomm:basic allgather buffer sent",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* setup the buffer that will recv the results */
     allgather_buf = OBJ_NEW(opal_buffer_t);
@@ -437,7 +437,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic allgather completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
 
@@ -455,7 +455,7 @@ static int modex(opal_list_t *procs)
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic: modex entered",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* if we were given a list of procs to modex with, then this is happening
      * as part of a connect/accept operation. In this case, we -must- do the
@@ -508,7 +508,7 @@ static int modex(opal_list_t *procs)
         if (orte_hetero_apps || !orte_homogeneous_nodes) {
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                                  "%s grpcomm:basic: modex is required",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
             
             if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
                 ORTE_ERROR_LOG(rc);
@@ -522,7 +522,7 @@ static int modex(opal_list_t *procs)
         /* the info was provided in the nidmap - there is nothing more we have to do */
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                              "%s grpcomm:basic:modex using nidmap",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         return ORTE_SUCCESS;
     }
     
@@ -533,7 +533,7 @@ static int modex(opal_list_t *procs)
          */
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                              "%s grpcomm:basic: modex is required",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -548,7 +548,7 @@ static int modex(opal_list_t *procs)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic:modex reading %s file",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  opal_profile_file));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),  opal_profile_file));
 
     /* loop through file until end */
     boptr = &bo;
@@ -612,7 +612,7 @@ static int modex(opal_list_t *procs)
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic: modex completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     return rc;
 }
@@ -624,7 +624,7 @@ static int set_proc_attr(const char *attr_name, const void *data, size_t size)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:basic:set_proc_attr for attribute %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), attr_name));
 
     /* if we are doing a profile, pack this up */
     if (opal_profile) {
@@ -667,8 +667,8 @@ static int get_proc_attr(const orte_process_name_t proc,
         /* proc wasn't found - return error */
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:basic:get_proc_attr: no modex entry for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(&proc)));
         return ORTE_ERR_NOT_FOUND;
         
     }
@@ -690,8 +690,8 @@ static int get_proc_attr(const orte_process_name_t proc,
             *size = attr->size;
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                                  "%s grpcomm:basic:get_proc_attr: found %d bytes for attr %s on proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)attr->size,
-                                 attribute_name, ORTE_NAME_PRINT(&proc)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), (int)attr->size,
+                                 attribute_name, orte_util_print_name_args(&proc)));
             return ORTE_SUCCESS;
         }
     }
@@ -699,8 +699,8 @@ static int get_proc_attr(const orte_process_name_t proc,
     /* get here if attribute isn't found */
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:basic:get_proc_attr: no attr avail or zero byte size for proc %s attribute %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc), attribute_name));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(&proc), attribute_name));
     *val = NULL;
     *size = 0;
     
@@ -726,8 +726,8 @@ static void process_msg(int fd, short event, void *data)
         
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:basic:receive:profile writing %d bytes of data from proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             bo->size, ORTE_NAME_PRINT(&mev->sender)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             bo->size, orte_util_print_name_args(&mev->sender)));
         
         write(profile_fd, &bo->size, sizeof(bo->size));
         write(profile_fd, bo->bytes, bo->size);
@@ -753,8 +753,8 @@ static void profile_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:basic:receive got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves
@@ -818,7 +818,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s odls: daemon collective called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* unpack the jobid using this collective */
     n = 1;
@@ -923,8 +923,8 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:bad: daemon collective for job %s from %s type %ld num_collected %d num_participating %d num_contributors %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(jobid),
-                         ORTE_NAME_PRINT(sender),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_jobids(jobid),
+                         orte_util_print_name_args(sender),
                          (long)jobdat->collective_type, jobdat->num_collected,
                          jobdat->num_participating, jobdat->num_contributors));
     
@@ -963,8 +963,8 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
         my_parent.vpid = orte_routed.get_routing_tree(NULL);
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:bad: daemon collective not the HNP - sending to parent %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&my_parent)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(&my_parent)));
         if (0 > (rc = orte_rml.send_buffer(&my_parent, &buf, ORTE_RML_TAG_DAEMON_COLLECTIVE, 0))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -976,8 +976,8 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
 hnp_process:
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:bad: daemon collective HNP - xcasting to job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jobid)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(jobid)));
     /* setup a buffer to send the results back to the job members */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
@@ -1076,8 +1076,8 @@ static void process_coll_msg(int fd, short event, void *data)
             
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                                  "%s grpcomm:bad: collecting data from child %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name)));
             
             found = true;
             break;
@@ -1138,7 +1138,7 @@ static void process_coll_msg(int fd, short event, void *data)
         
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:bad: executing collective",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         
         /* prep a buffer to pass it all along */
         OBJ_CONSTRUCT(&relay, opal_buffer_t);
@@ -1168,7 +1168,7 @@ static void process_coll_msg(int fd, short event, void *data)
         
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                              "%s grpcomm:bad: collective completed",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     }
     
 CLEANUP:
@@ -1184,8 +1184,8 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:bad:receive got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves

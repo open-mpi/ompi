@@ -138,8 +138,8 @@ static int xcast(orte_jobid_t job,
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:xcast sent to job %s tag %ld",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job), (long)tag));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(job), (long)tag));
     
     /* if there is no message to send, then just return ok */
     if (NULL == buffer) {
@@ -234,7 +234,7 @@ static int barrier(void)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier entering barrier",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     OBJ_CONSTRUCT(&buf1, opal_buffer_t);
     OBJ_CONSTRUCT(&buf2, opal_buffer_t);
@@ -247,7 +247,7 @@ static int barrier(void)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier barrier complete",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     return rc;
 }
@@ -302,7 +302,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier entering allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* have I initialized my local info? */
     if (!coll_initialized) {
@@ -436,7 +436,7 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier allgather completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     return ORTE_SUCCESS;
 }
@@ -456,7 +456,7 @@ static int modex(opal_list_t *procs)
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier: modex entered",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* if we were given a list of procs to modex with, then this is happening
      * as part of a connect/accept operation. In this case, we -must- do the
@@ -509,7 +509,7 @@ static int modex(opal_list_t *procs)
         if (orte_hetero_apps || !orte_homogeneous_nodes) {
             OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                                  "%s grpcomm:hier: modex is required",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
             
             if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
                 ORTE_ERROR_LOG(rc);
@@ -525,7 +525,7 @@ static int modex(opal_list_t *procs)
          */
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                              "%s grpcomm:hier: modex is required",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -540,7 +540,7 @@ static int modex(opal_list_t *procs)
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier:modex reading %s file",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  opal_profile_file));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),  opal_profile_file));
 
     /* loop through file until end */
     boptr = &bo;
@@ -604,7 +604,7 @@ static int modex(opal_list_t *procs)
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier: modex completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     return rc;
 }
@@ -614,7 +614,7 @@ static int set_proc_attr(const char *attr_name, const void *data, size_t size)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_output,
                          "%s grpcomm:hier:set_proc_attr for attribute %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), attr_name));
 
     /* we always have to set our own attributes in case they are needed for
      * a connect/accept at some later time
@@ -635,8 +635,8 @@ static int get_proc_attr(const orte_process_name_t proc,
         /* proc wasn't found - return error */
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:hier:get_proc_attr: no modex entry for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(&proc)));
         return ORTE_ERR_NOT_FOUND;
         
     }
@@ -658,8 +658,8 @@ static int get_proc_attr(const orte_process_name_t proc,
             *size = attr->size;
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                                  "%s grpcomm:hier:get_proc_attr: found %d bytes for attr %s on proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)attr->size,
-                                 attribute_name, ORTE_NAME_PRINT(&proc)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), (int)attr->size,
+                                 attribute_name, orte_util_print_name_args(&proc)));
             return ORTE_SUCCESS;
         }
     }
@@ -667,8 +667,8 @@ static int get_proc_attr(const orte_process_name_t proc,
     /* get here if attribute isn't found */
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:hier:get_proc_attr: no attr avail or zero byte size for proc %s attribute %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc), attribute_name));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(&proc), attribute_name));
     *val = NULL;
     *size = 0;
     

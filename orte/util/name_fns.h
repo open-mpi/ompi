@@ -42,24 +42,14 @@ typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process nam
 
 /* useful define to print name args in output messages */
 ORTE_DECLSPEC char* orte_util_print_name_args(const orte_process_name_t *name);
-#define ORTE_NAME_PRINT(n) \
-    orte_util_print_name_args(n)
 
 ORTE_DECLSPEC char* orte_util_print_jobids(const orte_jobid_t job);
-#define ORTE_JOBID_PRINT(n) \
-    orte_util_print_jobids(n)
 
 ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
-#define ORTE_VPID_PRINT(n) \
-    orte_util_print_vpids(n)
 
 ORTE_DECLSPEC char* orte_util_print_job_family(const orte_jobid_t job);
-#define ORTE_JOB_FAMILY_PRINT(n) \
-    orte_util_print_job_family(n)
 
 ORTE_DECLSPEC char* orte_util_print_local_jobid(const orte_jobid_t job);
-#define ORTE_LOCAL_JOBID_PRINT(n) \
-    orte_util_print_local_jobid(n)
 
 
 /* a macro for identifying the job family - i.e., for

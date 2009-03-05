@@ -52,7 +52,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* if we already did this, don't do it again - the pool of
      * global resources is set. 
@@ -61,7 +61,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         
         OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                              "%s ras:base:allocate allocation already read",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         
         /* loop through the global node pool and set the
          * number of allocated slots to the difference
@@ -127,7 +127,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in module - proceeding to hostfile",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* nothing was found, or no active module was alive. Our next
      * option is to look for a hostfile and assign our global
@@ -141,7 +141,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     if (NULL != orte_default_hostfile) {
         OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                              "%s ras:base:allocate parsing default hostfile %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              orte_default_hostfile));
         
         /* a default hostfile was provided - parse it */
@@ -191,7 +191,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
             
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:allocate checking hostfile %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  apps[i]->hostfile));
             
             /* hostfile was specified - parse it and add it to the list */
@@ -226,7 +226,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in hostfiles - checking dash-host options",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* Our next option is to look for hosts provided via the -host
      * command line option. If they are present, we declare this
@@ -277,7 +277,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:allocate nothing found in dash-host - inserting current node",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* if nothing was found by any of the above methods, then we have no
      * earthly idea what to do - so just add the local host

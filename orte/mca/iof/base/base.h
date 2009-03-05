@@ -162,8 +162,8 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         orte_iof_read_event_t *rev;                                 \
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,           \
                             "%s defining read event for %s: %s %d", \
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),     \
-                            ORTE_NAME_PRINT((nm)),                  \
+                            orte_util_print_name_args(ORTE_PROC_MY_NAME),     \
+                            orte_util_print_name_args((nm)),                  \
                             __FILE__, __LINE__));                   \
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         *(rv) = rev;                                                \

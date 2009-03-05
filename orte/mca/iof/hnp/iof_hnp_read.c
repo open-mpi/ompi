@@ -114,8 +114,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s iof:hnp:read handler %s Error on connection:%d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&rev->name), fd));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(&rev->name), fd));
         /* Un-recoverable error. Allow the code to flow as usual in order to
          * to send the zero bytes message up the stream, and then close the
          * file descriptor and delete the event.
@@ -149,8 +149,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 ORTE_PROC_MY_NAME->vpid == sink->daemon.vpid) {
                 OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                      "%s read %d bytes from stdin - writing to %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
-                                     ORTE_NAME_PRINT(&rev->name)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
+                                     orte_util_print_name_args(&rev->name)));
                 /* send the bytes down the pipe - we even send 0 byte events
                  * down the pipe so it forces out any preceding data before
                  * closing the output stream
@@ -170,8 +170,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             } else {
                 OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                      "%s sending %d bytes from stdin to daemon %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
-                                     ORTE_NAME_PRINT(&sink->daemon)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
+                                     orte_util_print_name_args(&sink->daemon)));
                 
                 /* send the data to the daemon so it can
                  * write it to the proc's fd - in this case,
@@ -226,17 +226,17 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
              */
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "%s sending data to tool %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&sink->daemon)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(&sink->daemon)));
             orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &rev->name, rev->tag, data, numbytes);
         }
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s read %d bytes from %s of %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
-                         ORTE_NAME_PRINT(&rev->name)));
+                         orte_util_print_name_args(&rev->name)));
     
     if (0 == numbytes) {
         /* if we read 0 bytes from the stdout/err/diag, there is

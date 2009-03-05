@@ -408,10 +408,10 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         orte_show_help("help-mca-bml-r2.txt",
                        "unreachable proc",
                        true, 
-                       ORTE_NAME_PRINT(&(ompi_proc_local_proc->proc_name)),
+                       orte_util_print_name_args(&(ompi_proc_local_proc->proc_name)),
                        (ompi_proc_local_proc->proc_hostname ?
                         ompi_proc_local_proc->proc_hostname : "unknown!"),
-                       ORTE_NAME_PRINT(&(unreach_proc->proc_name)),
+                       orte_util_print_name_args(&(unreach_proc->proc_name)),
                        (unreach_proc->proc_hostname ? 
                         unreach_proc->proc_hostname : "unknown!"),
                        btl_names);

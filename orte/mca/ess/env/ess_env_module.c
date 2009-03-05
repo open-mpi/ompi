@@ -224,15 +224,15 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     if (nid->daemon == ORTE_PROC_MY_DAEMON->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                              "%s ess:env: proc %s on LOCAL NODE",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(proc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(proc)));
         return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
     }
 
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s is REMOTE",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc)));
     
     return OPAL_PROC_NON_LOCAL;
     
@@ -248,9 +248,9 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s is hosted by daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         ORTE_VPID_PRINT(nid->daemon)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc),
+                         orte_util_print_vpids(nid->daemon)));
     
     return nid->daemon;
 }
@@ -266,8 +266,8 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s is on host %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc),
                          nid->name));
     
     return nid->name;
@@ -284,8 +284,8 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s has arch %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc),
                          nid->arch));
     
     return nid->arch;
@@ -302,8 +302,8 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: updating proc %s to arch %0x",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc),
                          arch));
     
     nid->arch = arch;
@@ -322,8 +322,8 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s has local rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc),
                          (int)pmap->local_rank));
     
     return pmap->local_rank;
@@ -339,8 +339,8 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: proc %s has node rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc),
                          (int)pmap->node_rank));
     
     return pmap->node_rank;
@@ -352,7 +352,7 @@ static int update_pidmap(opal_byte_object_t *bo)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:env: updating pidmap",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* build the pmap */
     if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo))) {
@@ -407,7 +407,7 @@ static int env_set_name(void)
     ORTE_PROC_MY_NAME->vpid = vpid;
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "ess:env set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "ess:env set name to %s", orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {

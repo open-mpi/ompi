@@ -143,7 +143,7 @@ int local_coord_setup_job(orte_jobid_t jobid)
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Local) Monitor local jobid %s\n",
-                         ORTE_JOBID_PRINT(snapc_local_jobid)));
+                         orte_util_print_jobids(snapc_local_jobid)));
 
     /*
      * Get the list of vpid's that we care about
@@ -607,12 +607,12 @@ int local_coord_job_state_update(orte_jobid_t jobid,
 
             OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                                  "Local) Job Ckpt finished tell process %s\n",
-                                 ORTE_NAME_PRINT(&vpid_snapshot->super.process_name)));
+                                 orte_util_print_name_args(&vpid_snapshot->super.process_name)));
 
             if( ORTE_SUCCESS != (ret = snapc_full_local_end_ckpt_handshake(vpid_snapshot) ) ) {
                 opal_output(mca_snapc_full_component.super.output_handle,
                             "Local) Error: Unable to finish the handshake with peer %s. %d\n", 
-                            ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+                            orte_util_print_name_args(&vpid_snapshot->super.process_name), ret);
                 exit_status = OPAL_ERROR;
                 goto cleanup;
             }
@@ -977,7 +977,7 @@ static int orte_snapc_full_local_set_vpid_ckpt_info( orte_process_name_t proc,
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Local) Process %s: Changed state to:\n",
-                         ORTE_NAME_PRINT(&proc)));
+                         orte_util_print_name_args(&proc)));
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Local)   State:            %d\n",
                          (int)ckpt_state));
@@ -1155,7 +1155,7 @@ static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
         if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_open_comm(vpid_snapshot) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
                         "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
-                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+                        orte_util_print_name_args(&vpid_snapshot->super.process_name), ret);
             exit_status = OPAL_ERROR;
             goto cleanup;
         }
@@ -1183,7 +1183,7 @@ static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
         if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_handshake_term(vpid_snapshot, ckpt_n_term) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
                         "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
-                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+                        orte_util_print_name_args(&vpid_snapshot->super.process_name), ret);
             exit_status = OPAL_ERROR;
             goto cleanup;
         }
@@ -1200,7 +1200,7 @@ static int snapc_full_local_start_checkpoint_all(size_t ckpt_state)
         if( ORTE_SUCCESS != (ret = snapc_full_local_start_ckpt_handshake(vpid_snapshot) ) ) {
             opal_output(mca_snapc_full_component.super.output_handle,
                         "local) Error: Unable to initiate the handshake with peer %s. %d\n", 
-                        ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+                        orte_util_print_name_args(&vpid_snapshot->super.process_name), ret);
             exit_status = OPAL_ERROR;
             goto cleanup;
         }
@@ -1232,7 +1232,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_local_snapshot_
      */
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Local) Waiting for process %s's pipes (%s) (%s)\n",
-                         ORTE_NAME_PRINT(&vpid_snapshot->super.process_name),
+                         orte_util_print_name_args(&vpid_snapshot->super.process_name),
                          vpid_snapshot->comm_pipe_w,
                          vpid_snapshot->comm_pipe_r));
     for( s_time = 0; s_time < max_wait_time; ++s_time) {
@@ -1471,7 +1471,7 @@ static int snapc_full_local_end_ckpt_handshake(orte_snapc_full_local_snapshot_t 
     if( sizeof(int) != (ret = write(vpid_snapshot->comm_pipe_w_fd, &last_cmd, sizeof(int))) ) {
         opal_output(mca_snapc_full_component.super.output_handle,
                     "local) Error: Unable to release process %s (%d)\n", 
-                    ORTE_NAME_PRINT(&vpid_snapshot->super.process_name), ret);
+                    orte_util_print_name_args(&vpid_snapshot->super.process_name), ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
@@ -1499,7 +1499,7 @@ static void snapc_full_local_comm_read_event(int fd, short flags, void *arg)
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Local) Read Event: Process %s done...\n",
-                         ORTE_NAME_PRINT(&vpid_snapshot->super.process_name)));
+                         orte_util_print_name_args(&vpid_snapshot->super.process_name)));
 
     /*
      * Get the final state of the checkpoint from the checkpointing process

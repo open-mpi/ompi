@@ -92,8 +92,8 @@ static void process_message(int fd, short event, void *data)
 
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
                          "%s rml:base:recv: processing message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&mev->sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(&mev->sender)));
     
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_RML_CMD))) {
@@ -119,8 +119,8 @@ static void process_message(int fd, short event, void *data)
      */
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
                          "%s rml:base:recv: sending ack to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&mev->sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(&mev->sender)));
 
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     if (0 > (rc = orte_rml.send_buffer(&mev->sender, &buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK, 0))) {

@@ -177,8 +177,8 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     if (ORTE_JOBID_INVALID != jdata->jobid) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launching job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(jdata->jobid)));
         goto GETMAP;
     }
     
@@ -190,8 +190,8 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(jdata->jobid)));
     
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
@@ -231,7 +231,7 @@ GETMAP:
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: final top-level argv:\n\t%s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              (NULL == param) ? "NULL" : param));
         if (NULL != param) free(param);
     }
@@ -297,7 +297,7 @@ GETMAP:
                             apps[0]->prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:ccp: resetting PATH: %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                      newenv));
                 opal_setenv("PATH", newenv, true, &env);
                 free(newenv);
@@ -309,7 +309,7 @@ GETMAP:
                             apps[0]->prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:ccp: resetting LD_LIBRARY_PATH: %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                      newenv));
                 opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
                 free(newenv);
@@ -388,7 +388,7 @@ GETMAP:
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launching on node %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              node->name));
         
         /* setup process name */
@@ -407,7 +407,7 @@ GETMAP:
             param = opal_argv_join(argv, ' ');
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:ccp: executing:\n\t%s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  (NULL == param) ? "NULL" : param));
             if (NULL != param) free(param);
         }
@@ -502,14 +502,14 @@ GETMAP:
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp:launch: finished spawning orteds",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: daemon launch failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
@@ -519,8 +519,8 @@ launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -590,7 +590,7 @@ launch_apps:
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:ccp:launch: finished",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
     return rc;
 }

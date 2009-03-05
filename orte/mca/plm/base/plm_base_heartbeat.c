@@ -86,7 +86,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:base:check_heartbeat",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || 0 == orte_heartbeat_rate) {

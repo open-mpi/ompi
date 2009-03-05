@@ -63,7 +63,7 @@ void mca_btl_base_error_no_nics(const char* transport,
     char *procid;
     if (mca_btl_base_warn_component_unused) {
         /* print out no-nic warning if user told us to */
-        asprintf(&procid, "%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        asprintf(&procid, "%s", orte_util_print_name_args(ORTE_PROC_MY_NAME));
 
         orte_show_help("help-mpi-btl-base.txt", "btl:no-nics",
                        true, procid, transport, orte_proc_info.nodename,

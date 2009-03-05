@@ -111,7 +111,7 @@ typedef struct orte_job_t orte_job_t;
         if (0 == orte_exit_status && 0 != newstatus) {                      \
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                      \
                                  "%s:%s(%d) updating exit status to %d",    \
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),        \
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),        \
                                  __FILE__, __LINE__, newstatus));           \
             orte_exit_status = newstatus;                                   \
         }                                                                   \

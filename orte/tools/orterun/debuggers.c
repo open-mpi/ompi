@@ -480,7 +480,7 @@ static void check_debugger(int fd, short event, void *arg)
     
     if (MPIR_being_debugged) {
         if (orte_debug_flag) {
-            opal_output(0, "%s Launching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+            opal_output(0, "%s Launching debugger %s", orte_util_print_name_args(ORTE_PROC_MY_NAME),
             MPIR_executable_path);
         }
         

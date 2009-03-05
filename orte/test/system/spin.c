@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     }
     pid = getpid();
 
-    printf("spin: Name %s Pid %ld\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid);
+    printf("spin: Name %s Pid %ld\n", orte_util_print_name_args(ORTE_PROC_MY_NAME), (long)pid);
     
     i = 0;
     while (0 == j) {

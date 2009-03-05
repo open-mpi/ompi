@@ -378,14 +378,14 @@ mca_pml_base_pml_check_selected(const char *my_pml,
         (0 != strcmp(my_pml, remote_pml))) {
         if (procs[0]->proc_hostname) {
             opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                        ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
-                        my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
+                        orte_util_print_name_args(&ompi_proc_local()->proc_name),
+                        my_pml, orte_util_print_name_args(&procs[0]->proc_name),
                         procs[0]->proc_hostname,
                         remote_pml);
         } else {
             opal_output(0, "%s selected pml %s, but peer %s selected pml %s",
-                        ORTE_NAME_PRINT(&ompi_proc_local()->proc_name),
-                        my_pml, ORTE_NAME_PRINT(&procs[0]->proc_name),
+                        orte_util_print_name_args(&ompi_proc_local()->proc_name),
+                        my_pml, orte_util_print_name_args(&procs[0]->proc_name),
                         remote_pml);
         }
         free(remote_pml); /* cleanup before returning */

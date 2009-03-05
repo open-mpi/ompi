@@ -94,8 +94,8 @@ static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
     OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                          "%s iof: closing sink for process %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&ptr->name)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(&ptr->name)));
     if (NULL != ptr->wev) {
         OBJ_RELEASE(ptr->wev);
     }
@@ -116,8 +116,8 @@ static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
     if (0 <= rev->ev.ev_fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                              "%s iof: closing fd %d for process %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             rev->ev.ev_fd, ORTE_NAME_PRINT(&rev->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             rev->ev.ev_fd, orte_util_print_name_args(&rev->name)));
         close(rev->ev.ev_fd);
     }
 }
@@ -140,7 +140,7 @@ static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
     if (2 < wev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                              "%s iof: closing fd %d for write event",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), wev->fd));
         close(wev->fd);
     }
     OBJ_DESTRUCT(&wev->outputs);

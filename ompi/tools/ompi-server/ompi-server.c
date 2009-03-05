@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
 
     if (debug) {
-        opal_output(0, "%s ompi-server: up and running!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s ompi-server: up and running!", orte_util_print_name_args(ORTE_PROC_MY_NAME));
     }
 
     /* wait to hear we are done */
@@ -282,7 +282,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     int ret;
     
     if (debug) {
-        opal_output(0, "%s ompi-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "%s ompi-server: finalizing", orte_util_print_name_args(ORTE_PROC_MY_NAME));
     }
     
     /* Finalize and clean up ourselves */

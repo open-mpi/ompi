@@ -66,7 +66,7 @@ void orte_iof_orted_send_xonxoff(orte_iof_tag_t tag)
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s sending %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          (ORTE_IOF_XON == tag) ? "xon" : "xoff"));
 
     /* send the buffer to the HNP */
@@ -122,8 +122,8 @@ static void process_msg(int fd, short event, void *cbdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s unpacked %d bytes for local proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
-                         ORTE_NAME_PRINT(&target)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
+                         orte_util_print_name_args(&target)));
     
     /* cycle through our list of sinks */
     for (item = opal_list_get_first(&mca_iof_orted_component.sinks);
@@ -138,8 +138,8 @@ static void process_msg(int fd, short event, void *cbdata)
                 sink->name.vpid == target.vpid) {
                 OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                      "%s writing data to local proc %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&sink->name)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(&sink->name)));
                 if (NULL == sink->wev || sink->wev->fd < 0) {
                     /* this sink was already closed - ignore this data */
                     goto CLEAN_RETURN;
@@ -176,8 +176,8 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted:receive got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message to avoid performing the rest of the job while
