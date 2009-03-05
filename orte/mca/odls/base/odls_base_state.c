@@ -88,7 +88,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
     if(app_context->preload_binary) {
         OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s) Preload Binary...",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         if( ORTE_SUCCESS != (ret = orte_odls_base_preload_append_binary(app_context, 
                                                                         filem_request) ) ){
             orte_show_help("help-orte-odls-base.txt",
@@ -102,7 +102,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
     if( NULL != app_context->preload_files) {
         OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                              "%s) Preload Files... [%s]",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              app_context->preload_files));
         if( ORTE_SUCCESS != (ret = orte_odls_base_preload_append_files(app_context, 
                                                                       filem_request) ) ){

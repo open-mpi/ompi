@@ -70,7 +70,7 @@ static void setup_server(void)
     
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: setting up server at URI %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == mca_pubsub_orte_component.server_uri) ? "NULL" : mca_pubsub_orte_component.server_uri));
     
     /* flag setup as completed so we only pass through here once */
@@ -113,8 +113,8 @@ static void setup_server(void)
 
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: server %s setup",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(&mca_pubsub_orte_component.server)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&mca_pubsub_orte_component.server)));
 }
 
 /*
@@ -175,7 +175,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: publishing service %s scope %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));
 
     /* construct the buffer */
@@ -323,7 +323,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
     
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: lookup service %s scope %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, lookup[0]));
     
     /* go find the value */
@@ -475,7 +475,7 @@ static int unpublish ( char *service_name, ompi_info_t *info )
     
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
                          "%s pubsub:orte: unpublish service %s scope %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          service_name, global_scope ? "Global" : "Local"));
     
     /* construct the buffer */

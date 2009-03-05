@@ -434,7 +434,7 @@ static int mca_btl_gm_discover( void )
                         "%s gm_port %08lX, "
                         "board %" PRIu32 ", global %" PRIu32 " "
                         "node %" PRIu32 "port %" PRIu32 "\n", 
-                        orte_util_print_name_args(ORTE_PROC_MY_NAME), 
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
                         (unsigned long) port, board_no, global_id, node_id, port_no);
         }
 

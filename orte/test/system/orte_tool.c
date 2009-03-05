@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     }
     
     /* report out the jobid */
-    fprintf(stderr, "orte_tool: spawned jobid %s\n", orte_util_print_jobids(jdata->jobid));
+    fprintf(stderr, "orte_tool: spawned jobid %s\n", ORTE_JOBID_PRINT(jdata->jobid));
 #if 0       
     if (ORTE_SUCCESS != (rc = orte_util_comm_query_job_info(&hnp->name, ORTE_JOBID_WILDCARD,
                                                              &num_jobs, &jobs))) {

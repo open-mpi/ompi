@@ -64,7 +64,7 @@ int orte_plm_base_comm_start(void)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive start comm",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_PLM,
@@ -87,7 +87,7 @@ int orte_plm_base_comm_stop(void)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive stop comm",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLM);
     recv_issued = false;
@@ -127,7 +127,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
         case ORTE_PLM_LAUNCH_JOB_CMD:
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job launch command",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             /* unpack the job object */
             count = 1;
@@ -201,8 +201,8 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
         ANSWER_LAUNCH:
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive job %s launched",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_jobids(job)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_JOBID_PRINT(job)));
             
             /* pack the jobid to be returned */
             if (ORTE_SUCCESS != (ret = opal_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
@@ -222,8 +222,8 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:receive got update_proc_state for job %s",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                     orte_util_print_jobids(job)));
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_JOBID_PRINT(job)));
                 
                 /* lookup the job object */
                 if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -252,7 +252,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                     
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                          "%s plm:base:receive got update_proc_state for vpid %lu state %x exit_code %d",
-                                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          (unsigned long)vpid, (unsigned int)state, (int)exit_code));
                     
                     /* update the termination counter IFF the state is changing to something
@@ -290,8 +290,8 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
         case ORTE_PLM_HEARTBEAT_CMD:
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s plm:base:receive got heartbeat from %s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&mev->sender)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&mev->sender)));
             /* lookup the daemon object */
             if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -331,8 +331,8 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:receive got message from %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
 
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves

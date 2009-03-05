@@ -98,7 +98,7 @@ static int finalize(void)
 {
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:tm:finalize: success (nothing to do)",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
 
@@ -150,7 +150,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
 
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:tm:allocate:discover: got hostname %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), hostname));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostname));
 
         /* Remember that TM may list the same node more than once.  So
            we have to check for duplicates. */
@@ -164,7 +164,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
 
                 OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                      "%s ras:tm:allocate:discover: found -- bumped slots to %d",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME), node->slots));
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->slots));
                 
                 break;
             }
@@ -178,7 +178,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             
             OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                  "%s ras:tm:allocate:discover: not found -- added to list",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
             node = OBJ_NEW(orte_node_t);
             node->name = hostname;

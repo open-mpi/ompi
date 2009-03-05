@@ -251,7 +251,7 @@ main(int argc, char *argv[])
          */
         opal_output_verbose(10, orte_ps_globals.output,
                             "orte_ps: Gathering Information for HNP: %s:%d\n",
-                            orte_util_print_name_args(&(hnpinfo.hnp->name)),
+                            ORTE_NAME_PRINT(&(hnpinfo.hnp->name)),
                             hnpinfo.hnp->pid);
         
         if( ORTE_SUCCESS != (ret = gather_information(&hnpinfo)) ) {
@@ -392,7 +392,7 @@ static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
     /*
      * Print header and remember header length
      */
-    len_hdr = asprintf(&header, "Information from mpirun %s", orte_util_print_jobids(hnpinfo->hnp->name.jobid));
+    len_hdr = asprintf(&header, "Information from mpirun %s", ORTE_JOBID_PRINT(hnpinfo->hnp->name.jobid));
     
     printf("\n\n%s\n", header);
     free(header);
@@ -506,7 +506,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         }
 
         /* setup the printed name - do -not- free this! */
-        jobstr = orte_util_print_jobids(job->jobid);
+        jobstr = ORTE_JOBID_PRINT(job->jobid);
         
         /*
          * Caculate segment lengths
@@ -564,7 +564,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         /*
          * Print Info
          */        
-        printf("%*s | ",  len_jobid ,  orte_util_print_jobids(job->jobid));
+        printf("%*s | ",  len_jobid ,  ORTE_JOBID_PRINT(job->jobid));
         printf("%*s | ",  len_state ,  pretty_job_state(job->state));
         printf("%*d | ",  len_slots ,  (uint)job->total_slots_alloc);
         printf("%*d | ",  len_vpid_r,  job->num_procs);

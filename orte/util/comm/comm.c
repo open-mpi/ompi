@@ -250,8 +250,8 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: requesting HNP %s spawn new job",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(hnp)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(hnp)));
     
     /* setup the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -272,8 +272,8 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: sending spawn cmd to HNP %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(hnp)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(hnp)));
     
     /* tell the target HNP to launch the job */
     if (0 > (rc = orte_rml.send_buffer((orte_process_name_t*)hnp, &buf, ORTE_RML_TAG_DAEMON, 0))) {
@@ -285,7 +285,7 @@ int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: waiting for response",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* wait for the target's response */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -324,9 +324,9 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: requesting HNP %s terminate job %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(hnp),
-                         orte_util_print_jobids(job)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(hnp),
+                         ORTE_JOBID_PRINT(job)));
     
     /* setup the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -348,8 +348,8 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_spawn_job: sending terminate cmd to HNP %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(hnp)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(hnp)));
     
     /* tell the target HNP to terminate the job */
     if (0 > (rc = orte_rml.send_buffer((orte_process_name_t*)hnp, &buf, ORTE_RML_TAG_DAEMON, 0))) {
@@ -362,7 +362,7 @@ int orte_util_comm_terminate_job(const orte_process_name_t *hnp, orte_jobid_t jo
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_terminate_job: waiting for response",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* wait for the target's response */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -394,8 +394,8 @@ int orte_util_comm_halt_vm(const orte_process_name_t *hnp)
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s util_comm_halt_vm: ordering HNP %s terminate",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(hnp)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(hnp)));
     
     /* setup the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);

@@ -286,7 +286,7 @@ static int rte_init(char flags)
     /* setup my session directory */
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == orte_proc_info.tmpdir_base) ? "UNDEF" : orte_proc_info.tmpdir_base,
                          orte_proc_info.nodename));
 
@@ -312,18 +312,18 @@ static int rte_init(char flags)
     
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s writing contact file %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          contact_path));
     
     if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s writing contact file failed with error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_ERROR_NAME(ret)));
     } else {
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s wrote contact file",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
     free(contact_path);
 
@@ -623,16 +623,16 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
             procs[i]->name.vpid == proc->vpid) {
             OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                                  "%s ess:hnp: proc %s is LOCAL",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(proc)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(proc)));
             return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
         }
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s is REMOTE",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
     
     return OPAL_PROC_NON_LOCAL;
     
@@ -667,9 +667,9 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
      
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s is hosted by daemon %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
-                         orte_util_print_vpids(pdata->node->daemon->name.vpid)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         ORTE_VPID_PRINT(pdata->node->daemon->name.vpid)));
     
     return pdata->node->daemon->name.vpid;
 }
@@ -685,8 +685,8 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s is on host %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          pdata->node->name));
     
     return pdata->node->name;
@@ -703,8 +703,8 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s has arch %0x",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          pdata->node->arch));
     
     return pdata->node->arch;
@@ -721,8 +721,8 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: updating proc %s to arch %0x",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          arch));
     
     pdata->node->arch = arch;
@@ -741,8 +741,8 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s has local rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          (int)pdata->local_rank));
     
     return pdata->local_rank;
@@ -759,8 +759,8 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s has node rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          (int)pdata->node_rank));
     
     return pdata->node_rank;

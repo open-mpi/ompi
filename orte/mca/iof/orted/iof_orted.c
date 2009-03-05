@@ -99,8 +99,8 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted pushing fd %d for process %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         fd, orte_util_print_name_args(dst_name)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         fd, ORTE_NAME_PRINT(dst_name)));
     
     /* set the file descriptor to non-blocking - do this before we setup
      * and activate the read event in case it fires right away
@@ -219,8 +219,8 @@ static int orted_pull(const orte_process_name_t* dst_name,
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted pulling fd %d for process %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         fd, orte_util_print_name_args(dst_name)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         fd, ORTE_NAME_PRINT(dst_name)));
     
     /* set the file descriptor to non-blocking - do this before we setup
      * the sink in case it fires right away
@@ -298,7 +298,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s orted:stdin:write:handler writing data to %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
     
     /* lock us up to protect global operations */
@@ -313,7 +313,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              */
             OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                                  "%s iof:orted closing fd %d on write event due to zero bytes output",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), wev->fd));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
             goto DEPART;
@@ -321,7 +321,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         num_written = write(wev->fd, output->data, output->numbytes);
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s orted:stdin:write:handler wrote %d bytes",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              num_written));
         if (num_written < 0) {
             if (EAGAIN == errno || EINTR == errno) {
@@ -340,7 +340,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             OBJ_RELEASE(output);
             OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                                  "%s iof:orted closing fd %d on write event due to negative bytes written",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), wev->fd));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
             /* tell the HNP to stop sending us stuff */
@@ -352,7 +352,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "%s orted:stdin:write:handler incomplete write %d - adjusting data",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), num_written));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_written));
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
             /* push this item back on the front of the list */

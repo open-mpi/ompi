@@ -162,7 +162,7 @@ int orte_rml_ftrm_send(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send(%s, %d, %d, %d )",
-                        orte_util_print_name_args(peer), count, tag, flags);
+                        ORTE_NAME_PRINT(peer), count, tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.send ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send(peer, msg, count, tag, flags) ) ) {
@@ -188,7 +188,7 @@ int orte_rml_ftrm_send_nb(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send_nb(%s, %d, %d, %d )",
-                        orte_util_print_name_args(peer), count, tag, flags);
+                        ORTE_NAME_PRINT(peer), count, tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.send_nb ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_nb(peer, msg, count, tag, flags, cbfunc, cbdata) ) ) {
@@ -211,7 +211,7 @@ int orte_rml_ftrm_send_buffer(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send_buffer(%s, %d, %d )",
-                        orte_util_print_name_args(peer), tag, flags);
+                        ORTE_NAME_PRINT(peer), tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.send_buffer ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_buffer(peer, buffer, tag, flags) ) ) {
@@ -236,7 +236,7 @@ int orte_rml_ftrm_send_buffer_nb(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: send_buffer_nb(%s, %d, %d )",
-                        orte_util_print_name_args(peer), tag, flags);
+                        ORTE_NAME_PRINT(peer), tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.send_buffer_nb ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.send_buffer_nb(peer, buffer, tag, flags, cbfunc, cbdata) ) ) {
@@ -261,7 +261,7 @@ int orte_rml_ftrm_recv(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv(%s, %d, %d, %d )",
-                        orte_util_print_name_args(peer), count, tag, flags);
+                        ORTE_NAME_PRINT(peer), count, tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.recv ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.recv(peer, msg, count, tag, flags) ) ) {
@@ -287,7 +287,7 @@ int orte_rml_ftrm_recv_nb(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_nb(%s, %d, %d, %d )",
-                        orte_util_print_name_args(peer), count, tag, flags);
+                        ORTE_NAME_PRINT(peer), count, tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.recv_nb ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.recv_nb(peer, msg, count, tag, flags, cbfunc, cbdata) ) ) {
@@ -310,7 +310,7 @@ int orte_rml_ftrm_recv_buffer(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_buffer(%s, %d )",
-                        orte_util_print_name_args(peer), tag);
+                        ORTE_NAME_PRINT(peer), tag);
 
     if( NULL != orte_rml_ftrm_wrapped_module.recv_buffer ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.recv_buffer(peer, buf, tag, flags) ) ) {
@@ -334,7 +334,7 @@ int orte_rml_ftrm_recv_buffer_nb(orte_process_name_t* peer,
 
     opal_output_verbose(20, rml_ftrm_output_handle,
                         "orte_rml_ftrm: recv_buffer_nb(%s, %d, %d)",
-                        orte_util_print_name_args(peer), tag, flags);
+                        ORTE_NAME_PRINT(peer), tag, flags);
 
     if( NULL != orte_rml_ftrm_wrapped_module.recv_buffer_nb ) {
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.recv_buffer_nb(peer, tag, flags, cbfunc, cbdata) ) ) {

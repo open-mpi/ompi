@@ -81,8 +81,8 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted:read handler read %d bytes from %s, fd %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         numbytes, orte_util_print_name_args(&rev->name), fd));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         numbytes, ORTE_NAME_PRINT(&rev->name), fd));
     
     if (numbytes <= 0) {
         if (0 > numbytes) {
@@ -96,8 +96,8 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
 
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "%s iof:orted:read handler %s Error on connection:%d",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                                 orte_util_print_name_args(&rev->name), fd));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&rev->name), fd));
         }
         /* numbytes must have been zero, so go down and close the fd etc */
         goto CLEAN_RETURN;
@@ -156,7 +156,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     /* start non-blocking RML call to forward received data */
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted:read handler sending %d bytes to HNP",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
     
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             0, send_cb, NULL);

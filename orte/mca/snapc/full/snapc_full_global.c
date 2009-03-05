@@ -162,7 +162,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
         /* Local Coordinator pass -- Will always happen after Global Coordinator Pass */
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) [%d] Setup job %s again as the local coordinator for %s\n",
-                             getpid(), orte_util_print_jobids(jobid), orte_util_print_jobids(cur_job_id)));
+                             getpid(), ORTE_JOBID_PRINT(jobid), ORTE_JOBID_PRINT(cur_job_id)));
 
         orte_snapc_coord_type |= ORTE_SNAPC_LOCAL_COORD_TYPE;
 
@@ -261,7 +261,7 @@ int global_coord_setup_job(orte_jobid_t jobid) {
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Global) [%d] Setup job %s with vpid [%d, %d]\n",
-                         getpid(), orte_util_print_jobids(jobid), vpid_start, vpid_range));
+                         getpid(), ORTE_JOBID_PRINT(jobid), vpid_start, vpid_range));
 
  cleanup:
     return exit_status;
@@ -417,7 +417,7 @@ void snapc_full_global_cmd_recv(int status,
 
     OPAL_OUTPUT_VERBOSE((5, mca_snapc_full_component.super.output_handle,
                          "Global) Receive a command message from %s.",
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(sender)));
 
     /*
      * If this is a command line checkpoint request, handle directly
@@ -548,7 +548,7 @@ int global_coord_job_state_update(orte_jobid_t jobid,
 
     OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Job update command: jobid %s -> state %d\n",
-                         orte_util_print_jobids(jobid), (int)job_ckpt_state));
+                         ORTE_JOBID_PRINT(jobid), (int)job_ckpt_state));
 
     /************************
      * Update the orte_checkpoint command
@@ -725,7 +725,7 @@ int global_coord_vpid_state_update(orte_process_name_t proc_name,
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global) Process %s: Changed to state to:\n",
-                         orte_util_print_name_args(&proc_name)));
+                         ORTE_NAME_PRINT(&proc_name)));
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "Global)   State:            %d\n",
                          (int)proc_ckpt_state));
@@ -809,7 +809,7 @@ static void snapc_full_process_vpid_assoc_cmd(orte_process_name_t* sender,
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_vpids, &count, OPAL_SIZE))) {
         opal_output(mca_snapc_full_component.super.output_handle,
                     "Global) vpid_assoc: Failed to unpack num_vpids from peer %s\n",
-                    orte_util_print_name_args(sender));
+                    ORTE_NAME_PRINT(sender));
         goto cleanup;
     }
 
@@ -818,7 +818,7 @@ static void snapc_full_process_vpid_assoc_cmd(orte_process_name_t* sender,
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &tmp_proc_name, &count, ORTE_NAME))) {
             opal_output(mca_snapc_full_component.super.output_handle,
                         "Global) vpid_assoc: Failed to unpack process name from peer %s\n",
-                        orte_util_print_name_args(sender));
+                        ORTE_NAME_PRINT(sender));
             goto cleanup;
         }
 
@@ -1039,7 +1039,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
 
     OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Notifying all Local Coordinators of job %s state change to %d\n",
-                         orte_util_print_jobids(jobid), (int)ckpt_state));
+                         ORTE_JOBID_PRINT(jobid), (int)ckpt_state));
 
     if( ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, &buffer, ORTE_RML_TAG_SNAPC_FULL)) ) {
         ORTE_ERROR_LOG(ret);
@@ -1052,7 +1052,7 @@ static int orte_snapc_full_global_set_job_ckpt_info( orte_jobid_t jobid,
      */
     OPAL_OUTPUT_VERBOSE((15, mca_snapc_full_component.super.output_handle,
                          "Global) Act locally on job %s state change to %d\n",
-                         orte_util_print_jobids(jobid), (int)ckpt_state));
+                         ORTE_JOBID_PRINT(jobid), (int)ckpt_state));
     if( ORTE_SUCCESS != (ret = global_coord_job_state_update(jobid, ckpt_state, &ckpt_snapshot_ref, &ckpt_snapshot_loc) ) ) {
         ORTE_ERROR_LOG(ret);
         exit_status = ret;
@@ -1113,7 +1113,7 @@ static int snapc_full_global_checkpoint(orte_jobid_t jobid,
 
     OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                          "Global) Checkpoint of job %s has been requested\n",
-                         orte_util_print_jobids(jobid)));
+                         ORTE_JOBID_PRINT(jobid)));
 
     /*********************
      * Generate the global snapshot directory, and unique global snapshot handle

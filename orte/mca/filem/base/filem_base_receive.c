@@ -77,7 +77,7 @@ int orte_filem_base_comm_start(void)
     
     OPAL_OUTPUT_VERBOSE((5, orte_filem_base_output,
                          "%s filem:base: Receive: Start command recv",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_FILEM_BASE,
@@ -107,7 +107,7 @@ int orte_filem_base_comm_stop(void)
     
     OPAL_OUTPUT_VERBOSE((5, orte_filem_base_output,
                          "%s filem:base:receive stop comm",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM_BASE))) {
         ORTE_ERROR_LOG(rc);
@@ -133,7 +133,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
 
     OPAL_OUTPUT_VERBOSE((5, orte_filem_base_output,
                          "%s filem:base: Receive a command message.",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_FILEM_CMD))) {
@@ -145,7 +145,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
         case ORTE_FILEM_GET_PROC_NODE_NAME_CMD:
             OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
                                  "%s filem:base: Command: Get Proc node name command",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
             filem_base_process_get_proc_node_name_cmd(sender, buffer);
             break;
@@ -153,7 +153,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
         case ORTE_FILEM_GET_REMOTE_PATH_CMD:
             OPAL_OUTPUT_VERBOSE((10, orte_filem_base_output,
                                  "%s filem:base: Command: Get remote path command",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
             filem_base_process_get_remote_path_cmd(sender, buffer);
             break;
@@ -264,8 +264,8 @@ static void filem_base_process_get_remote_path_cmd(orte_process_name_t* sender,
 
     opal_output_verbose(10, orte_filem_base_output,
                         "filem:base: process_get_remote_path_cmd: %s -> %s: Filename Requested (%s) translated to (%s)",
-                        orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                        orte_util_print_name_args(sender),
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender),
                         filename, tmp_name);
 
     /*

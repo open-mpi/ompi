@@ -97,9 +97,9 @@ static void process_msg(int fd, short event, void *cbdata)
     if (ORTE_IOF_PULL & stream) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s received pull cmd from remote tool %s for proc %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&mev->sender),
-                             orte_util_print_name_args(&origin)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&mev->sender),
+                             ORTE_NAME_PRINT(&origin)));
         /* a tool is requesting that we send it a copy of the specified stream(s)
          * from the specified process(es), so create a sink for it
          */
@@ -127,9 +127,9 @@ static void process_msg(int fd, short event, void *cbdata)
     if (ORTE_IOF_CLOSE & stream) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s received close cmd from remote tool %s for proc %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&mev->sender),
-                             orte_util_print_name_args(&origin)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&mev->sender),
+                             ORTE_NAME_PRINT(&origin)));
         /* a tool is requesting that we no longer forward a copy of the
          * specified stream(s) from the specified process(es) - remove the sink
          */
@@ -169,8 +169,8 @@ static void process_msg(int fd, short event, void *cbdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s unpacked %d bytes from remote proc %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
-                         orte_util_print_name_args(&origin)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
+                         ORTE_NAME_PRINT(&origin)));
     
     /* output this to our local output */
     if (ORTE_IOF_STDOUT & stream) {
@@ -212,8 +212,8 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((5, orte_iof_base.iof_output,
                          "%s iof:hnp:receive got message from %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message to avoid performing the rest of the job while

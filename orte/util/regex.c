@@ -56,7 +56,7 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s regex:extract:nodenames: checking nodelist: %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          regexp));
     
     do {
@@ -122,7 +122,7 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
             
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s regex:extract:nodenames: found node: %s",
-                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), base));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), base));
             
             if(ORTE_SUCCESS != (ret = opal_argv_append_nosize(names, base))) {
                 ORTE_ERROR_LOG(ret);
@@ -175,7 +175,7 @@ static int regex_parse_node_ranges(char *base, char *ranges, char ***names)
         
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s regex:parse:ranges: parse range %s (2)",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), start));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), start));
         
         ret = regex_parse_node_range(base, start, names);
         if (ORTE_SUCCESS != ret) {

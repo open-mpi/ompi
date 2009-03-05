@@ -175,15 +175,15 @@ static bool proc_is_local(orte_process_name_t *proc)
     if (pmap[proc->vpid].node == (int32_t)ORTE_PROC_MY_DAEMON->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                              "%s ess:bproc: proc %s is LOCAL",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(proc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         return true;
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:bproc: proc %s is REMOTE",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
     
     return false;
     
@@ -231,8 +231,8 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:bproc: proc %s is on host %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          nids[node]->name));
     
     return nids[node]->name;
@@ -256,8 +256,8 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:bproc: proc %s has arch %0x",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          nids[node]->arch));
     
     return nids[node]->arch;
@@ -274,8 +274,8 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:bproc: updating proc %s to arch %0x",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          arch));
     
     nids[node]->arch = arch;
@@ -287,8 +287,8 @@ static uint8_t proc_get_local_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:bproc: proc %s has local rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          (int)pmap[proc->vpid].local_rank));
     
     return pmap[proc->vpid].local_rank;
@@ -299,8 +299,8 @@ static uint8_t proc_get_node_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:bproc: proc %s has node rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          (int)pmap[proc->vpid].node_rank));
     
     return pmap[proc->vpid].node_rank;

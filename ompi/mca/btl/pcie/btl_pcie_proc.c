@@ -116,7 +116,7 @@ int  mca_btl_pcie_proc_create(ompi_proc_t* ompi_proc,
                          &size);
     if (OMPI_SUCCESS != rc) {
         opal_output(mca_btl_base_output, "[%s:%d] ompi_modex_recv failed for peer %s",
-		    __FILE__, __LINE__, orte_util_print_name_args(&ompi_proc->proc_name));
+		    __FILE__, __LINE__, ORTE_NAME_PRINT(&ompi_proc->proc_name));
         OBJ_RELEASE(pcie_proc);
         *ret_proc = NULL;
         return OMPI_ERROR;

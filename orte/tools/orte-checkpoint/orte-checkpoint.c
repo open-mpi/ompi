@@ -212,12 +212,12 @@ main(int argc, char *argv[])
         } else if (ORTE_JOBID_INVALID != orte_checkpoint_globals.req_hnp){
             opal_output_verbose(10, orte_checkpoint_globals.output,
                                 "\t Mpirun (%s)",
-                                orte_util_print_jobids(orte_checkpoint_globals.req_hnp));
+                                ORTE_JOBID_PRINT(orte_checkpoint_globals.req_hnp));
         }
 
         opal_output_verbose(10, orte_checkpoint_globals.output,
                             "\t Connected to Mpirun %s",
-                            orte_util_print_name_args(&orterun_hnp->name));
+                            ORTE_NAME_PRINT(&orterun_hnp->name));
          
         if(orte_checkpoint_globals.term) {
             opal_output_verbose(10, orte_checkpoint_globals.output,
@@ -692,7 +692,7 @@ notify_process_for_checkpoint(int term)
 
     opal_output_verbose(10, orte_checkpoint_globals.output,
                         "orte_checkpoint: notify_hnp: Requested a checkpoint of jobid %s\n",
-                        orte_util_print_jobids(jobid));
+                        ORTE_JOBID_PRINT(jobid));
 
  cleanup:
     if( NULL != buffer) {

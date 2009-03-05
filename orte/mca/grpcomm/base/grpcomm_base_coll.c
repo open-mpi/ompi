@@ -83,8 +83,8 @@ void orte_grpcomm_base_coll_recv(int status, orte_process_name_t* sender,
 {
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:coll:receive got message from %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(sender)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves
@@ -111,7 +111,7 @@ int orte_grpcomm_base_allgather(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, 
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:coll:allgather called with %d entries np %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          num_entries, (int)np));
     
     /* if we only have one proc participating, just copy the data across and return */
@@ -162,7 +162,7 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:coll:two-proc algo employed",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     if (vpids[0] == ORTE_PROC_MY_NAME->vpid) {
         /* I send first */
@@ -175,8 +175,8 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
         opal_dss.copy_payload(&buf, sendbuf);
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:two-proc sending to %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&peer)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&peer)));
         
         if (0 > (rc = orte_rml.send_buffer(&peer, &buf, ORTE_RML_TAG_DAEMON_COLLECTIVE, 0))) {
             ORTE_ERROR_LOG(rc);
@@ -198,7 +198,7 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
         ORTE_PROGRESSED_WAIT(false, num_recvd, 1);
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:two-proc got my return message",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
     } else {
         /* if I am not the start, then I recv first */
@@ -215,7 +215,7 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
         ORTE_PROGRESSED_WAIT(false, num_recvd, 1);
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:two-proc got my starting message",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         
         /* send my data back */
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -224,8 +224,8 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
         peer.vpid = vpids[0];
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:two-proc sending to %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&peer)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&peer)));
         if (0 > (rc = orte_rml.send_buffer(&peer, &buf, ORTE_RML_TAG_DAEMON_COLLECTIVE, 0))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -273,7 +273,7 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:coll:bruck algo employed",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* initialize */
     total_entries = num_entries;
@@ -318,8 +318,8 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
         opal_dss.copy_payload(&buf, &collection);
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:bruck sending to %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&peer)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&peer)));
         if (0 > (rc = orte_rml.send_buffer(&peer, &buf, ORTE_RML_TAG_DAEMON_COLLECTIVE, 0))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -388,7 +388,7 @@ static int recursivedoubling(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int
     
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                          "%s grpcomm:coll:recdub algo employed",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* initialize */
     total_entries = num_entries;
@@ -431,8 +431,8 @@ static int recursivedoubling(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int
         opal_dss.copy_payload(&buf, &collection);
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_output,
                              "%s grpcomm:coll:recdub sending to %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(&peer)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&peer)));
         if (0 > (rc = orte_rml.send_buffer(&peer, &buf, ORTE_RML_TAG_DAEMON_COLLECTIVE, 0))) {
             ORTE_ERROR_LOG(rc);
             return rc;

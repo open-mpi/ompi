@@ -438,7 +438,7 @@ int orte_odls_bproc_launch_local_procs(opal_buffer_t *data)
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &jobid))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:bproc:launch:local failed to construct child list on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -449,7 +449,7 @@ int orte_odls_bproc_launch_local_procs(opal_buffer_t *data)
         child = (orte_odls_child_t *) item;
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:bproc:launch:local setting up io for %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_name_args(child->name)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(child->name)));
         /* only setup to forward stdin if it is rank 0, otherwise connect
          * to /dev/null
          */

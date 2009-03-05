@@ -110,7 +110,7 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
 
     if (peer_proc) {
         peer_host = orte_ess.proc_get_hostname(peer_proc);
-        peer_name = orte_util_print_name_args(peer_proc);
+        peer_name = ORTE_NAME_PRINT(peer_proc);
     }
 
     len = snprintf(pos, space,
@@ -118,7 +118,7 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
                    " proc %s on node %s encountered an error ",
                    peer_name ? peer_name : "UNKNOWN",
                    peer_host ? peer_host : "UNKNOWN",
-                   orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                   ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                    orte_proc_info.nodename);
     space -= len;
     pos += len;

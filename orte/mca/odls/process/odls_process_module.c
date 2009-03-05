@@ -189,7 +189,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:process:launch:local failed to construct child list on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     
@@ -197,7 +197,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_process_fork_local_proc))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:process:launch:local failed to launch on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     

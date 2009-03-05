@@ -160,7 +160,7 @@ static int rte_init(char flags)
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "%s local rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          local_rank));
     
     /* get the number of procs in this job */
@@ -293,7 +293,7 @@ static int rte_init(char flags)
                 }
                 OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                      "%s node %d name %s rank %d",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      (int) node->index, node->name, (int)vpid));
                 vpid++;
             }
@@ -316,7 +316,7 @@ static int rte_init(char flags)
                     }
                     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                          "%s node %d name %s rank %d",
-                                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                          (int) node->index, node->name, (int)vpid));
                     vpid++;
                     --ppn[i];
@@ -382,15 +382,15 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     if (nid->daemon == ORTE_PROC_MY_DAEMON->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                              "%s ess:slurmd: proc %s is LOCAL",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                             orte_util_print_name_args(proc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
     }
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: proc %s is REMOTE",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
     
     return OPAL_PROC_NON_LOCAL;
     
@@ -410,9 +410,9 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: proc %s is hosted by daemon %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
-                         orte_util_print_vpids(nid->daemon)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
+                         ORTE_VPID_PRINT(nid->daemon)));
     
     return nid->daemon;
 }
@@ -428,8 +428,8 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: proc %s is on host %s",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          nid->name));
     
     return nid->name;
@@ -446,8 +446,8 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: proc %s has arch %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          nid->arch));
     
     return nid->arch;
@@ -464,8 +464,8 @@ static int update_arch(orte_process_name_t *proc, uint32_t arch)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: updating proc %s to arch %0x",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          arch));
     
     nid->arch = arch;
@@ -484,8 +484,8 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: proc %s has local rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          (int)pmap->local_rank));
     
     return pmap->local_rank;
@@ -501,8 +501,8 @@ static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: proc %s has node rank %d",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
-                         orte_util_print_name_args(proc),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc),
                          (int)pmap->node_rank));
     
     return pmap->node_rank;
@@ -514,7 +514,7 @@ static int update_pidmap(opal_byte_object_t *bo)
     
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:slurmd: updating pidmap",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* build the pmap */
     if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo))) {

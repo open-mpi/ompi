@@ -345,7 +345,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME), i));
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 close(p[0]);
                 return ORTE_ERR_PIPE_READ_FAILURE;
             } else if (0 == rc) {
@@ -367,7 +367,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 
                 OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                                      "%s odls:default:fork got code %d back from child",
-                                     orte_util_print_name_args(ORTE_PROC_MY_NAME), i));
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i));
                 close(p[0]);
                 return i;
             }
@@ -398,7 +398,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to construct child list on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     
@@ -406,7 +406,7 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_default_fork_local_proc))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to launch on error %s",
-                             orte_util_print_name_args(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         goto CLEANUP;
     }
     
@@ -433,7 +433,7 @@ static int send_signal(pid_t pid, int signal)
     
     OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
                          "%s sending signal %d to pid %ld",
-                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));
     
     if (kill(pid, signal) != 0) {
