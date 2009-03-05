@@ -13,6 +13,8 @@ check_PROGRAMS = \
 	predefined/ompi_predefined
 
 predefined_ompi_predefined_SOURCES = predefined/ompi_predefined.c
-
-# We don't even need to link against any of the OMPI libraries.  How
-# fun.
+predefined_ompi_predefined_LDADD = \
+       $(top_builddir)/ompi/libmpi.la \
+       $(top_builddir)/orte/libopen-rte.la \
+       $(top_builddir)/opal/libopen-pal.la 
+predefined_ompi_predefined_DEPENDENCIES = $(ompi_predefined_LDADD)
