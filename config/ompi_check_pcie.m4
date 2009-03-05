@@ -23,7 +23,7 @@ AC_DEFUN([OMPI_CHECK_PCIE],[
     ompi_check_pcie_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_pcie_$1_save_LIBS="$LIBS"
 
-    ompi_check_pcie_happy="yes"
+    ompi_check_pcie_happy="no"
 
     AS_IF([test "$with_pcie" != "no"],
           [AS_IF([test ! -z "$with_pcie" -a "$with_pcie" != "yes"],
@@ -32,7 +32,6 @@ AC_DEFUN([OMPI_CHECK_PCIE],[
                  [ompi_check_pcie_libdir="$with_pcie_libdir"])
            OMPI_CHECK_PACKAGE([$1],
                               [axon_ioctl.h],
-			      [],
                               [$ompi_check_pcie_dir],
                               [$ompi_check_pcie_libdir],
                               [ompi_check_pcie_happy="yes"],
