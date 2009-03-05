@@ -180,7 +180,7 @@ orte_iof_hnp_exception_handler(const orte_process_name_t* peer, orte_rml_excepti
     orte_iof_base_endpoint_t *endpoint;
     opal_output_verbose(1, orte_iof_base.iof_output, 
                 "iof svc exception handler! %s\n",
-                ORTE_NAME_PRINT((orte_process_name_t*)peer));
+                orte_util_print_name_args((orte_process_name_t*)peer));
 
     /* If we detect an exception on the RML connection to a peer,
        delete all of its subscriptions and publications.  Note that

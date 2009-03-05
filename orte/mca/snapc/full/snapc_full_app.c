@@ -78,7 +78,7 @@ int app_coord_init() {
 
     OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                          "App) Initalized for Application %s\n", 
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
     /*
      * Register the INC notification callback
@@ -569,7 +569,7 @@ int app_coord_ft_event(int state) {
     else if (OPAL_CRS_RESTART == state ) {
         OPAL_OUTPUT_VERBOSE((20, mca_snapc_full_component.super.output_handle,
                              "App) Initalized for Application %s (Restart)\n", 
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
         if( 0 <= app_comm_pipe_r_fd ) {
             close(app_comm_pipe_r_fd);

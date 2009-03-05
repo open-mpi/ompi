@@ -164,8 +164,8 @@ static int delete_route(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_radix_delete_route for %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc)));
     
     
     /* if this is from a different job family, then I need to
@@ -239,9 +239,9 @@ static int update_route(orte_process_name_t *target,
     
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_radix_update: %s --> %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(target), 
-                         ORTE_NAME_PRINT(route)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(target), 
+                         orte_util_print_name_args(route)));
 
 
     /* if this is from a different job family, then I need to
@@ -259,9 +259,9 @@ static int update_route(orte_process_name_t *target,
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix_update: diff job family routing job %s --> %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(target->jobid), 
-                             ORTE_NAME_PRINT(route)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(target->jobid), 
+                             orte_util_print_name_args(route)));
         
         /* see if this target is already present - it will have a wildcard vpid,
          * so we have to look for it with that condition
@@ -295,7 +295,7 @@ static int update_route(orte_process_name_t *target,
     
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
     
-    opal_output(0, "%s CALL TO UPDATE ROUTE FOR OWN JOB FAMILY", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    opal_output(0, "%s CALL TO UPDATE ROUTE FOR OWN JOB FAMILY", orte_util_print_name_args(ORTE_PROC_MY_NAME));
     
     return ORTE_ERR_NOT_SUPPORTED;
 }
@@ -366,7 +366,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         ORTE_PROC_MY_HNP->vpid == target->vpid) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routing not enabled - going direct",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         ret = target;
         goto found;
     }
@@ -414,9 +414,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 found:
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_radix_get(%s) --> %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(target), 
-                         ORTE_NAME_PRINT(ret)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(target), 
+                         orte_util_print_name_args(ret)));
     
     return *ret;
 }
@@ -443,7 +443,7 @@ static int process_callback(orte_jobid_t job, opal_buffer_t *buffer)
         
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_radix:callback got uri %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri));
         
         if (rml_uri == NULL) continue;
@@ -537,8 +537,8 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix: init routes for daemon job %s\n\thnp_uri %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(job),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(job),
                              (NULL == orte_proc_info.my_hnp_uri) ? "NULL" : orte_proc_info.my_hnp_uri));
         
         if (NULL == ndat) {
@@ -582,7 +582,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_radix: completed init routes",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         
         return ORTE_SUCCESS;
     }
@@ -592,8 +592,8 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix: init routes for HNP job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(job)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(job)));
         
         if (NULL == ndat) {
             /* if ndat is NULL, then this is being called during init, so just
@@ -642,7 +642,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_radix: init routes w/non-NULL data",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME)));
             
             /* if this is for a job family of zero, then we know that the enclosed
              * procs are local slaves to our daemon. In that case, we can just ignore this
@@ -660,8 +660,8 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                  */
                 OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                      "%s routed_radix_init_routes: diff job family - sending update to %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_HNP)));
                 
                 if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, ndat,
                                                    ORTE_RML_TAG_RML_INFO_UPDATE, 0))) {
@@ -680,7 +680,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 
                 OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                      "%s routed_radix_init_routes: ack recvd",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME)));
                 
                 /* our get_route function automatically routes all messages for
                  * other job families via the HNP, so nothing more to do here
@@ -695,7 +695,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_jobids(job),
                              (NULL == orte_proc_info.my_hnp_uri) ? "NULL" : orte_proc_info.my_hnp_uri,
                              (NULL == orte_proc_info.my_daemon_uri) ? "NULL" : orte_proc_info.my_daemon_uri));
                 
@@ -704,13 +704,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
              * we didn't get it, then error out
              */
             opal_output(0, "%s ERROR: Failed to identify the local daemon's URI",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME));
             opal_output(0, "%s ERROR: This is a fatal condition when the radix router",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME));
             opal_output(0, "%s ERROR: has been selected - either select the unity router",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME));
             opal_output(0, "%s ERROR: or ensure that the local daemon info is provided",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME));
             return ORTE_ERR_FATAL;
         }
             
@@ -778,8 +778,8 @@ static int route_lost(const orte_process_name_t *route)
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
         opal_output(0, "%s routed:radix: Connection to lifeline %s lost",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(lifeline));
+                    orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                    orte_util_print_name_args(lifeline));
         return ORTE_ERR_FATAL;
     }
 
@@ -842,7 +842,7 @@ static void radix_tree(int rank, int *num_children,
             } else {
                 /* we are recording someone's relatives - set the bit */
                 if (OPAL_SUCCESS != opal_bitmap_set_bit(relatives, peer)) {
-                    opal_output(0, "%s Error: could not set relations bit!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                    opal_output(0, "%s Error: could not set relations bit!", orte_util_print_name_args(ORTE_PROC_MY_NAME));
                 }
                 /* point to this relations */
                 relations = relatives;
@@ -903,15 +903,15 @@ static int update_routing_tree(void)
     radix_tree(Ii, &num_children, &my_children, NULL);
     
     if (0 < opal_output_get_verbosity(orte_routed_base_output)) {
-        opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
+        opal_output(0, "%s: parent %d num_children %d", orte_util_print_name_args(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
         for (item = opal_list_get_first(&my_children);
              item != opal_list_get_end(&my_children);
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
-            opal_output(0, "%s: \tchild %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), child->vpid);
+            opal_output(0, "%s: \tchild %d", orte_util_print_name_args(ORTE_PROC_MY_NAME), child->vpid);
             for (j=0; j < (int)orte_proc_info.num_procs; j++) {
                 if (opal_bitmap_is_set_bit(&child->relatives, j)) {
-                    opal_output(0, "%s: \t\trelation %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
+                    opal_output(0, "%s: \t\trelation %d", orte_util_print_name_args(ORTE_PROC_MY_NAME), j);
                 }
             }
         }

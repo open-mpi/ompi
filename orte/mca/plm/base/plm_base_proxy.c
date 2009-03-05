@@ -46,7 +46,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy spawn child job",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
     /* setup the buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -74,8 +74,8 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy sending spawn cmd to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(target)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(target)));
     
     /* tell the target to launch the job */
     if (0 > (rc = orte_rml.send_buffer(target, &buf, ORTE_RML_TAG_PLM, 0))) {
@@ -87,7 +87,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy waiting for response",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     /* wait for the target's response */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);

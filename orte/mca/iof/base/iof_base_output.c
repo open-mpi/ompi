@@ -51,9 +51,9 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s write:output setting up to write %d bytes to %s for %s on fd %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDIN & stream) ? "stdin" : ((ORTE_IOF_STDOUT & stream) ? "stdout" : ((ORTE_IOF_STDERR & stream) ? "stderr" : "stddiag")),
-                         ORTE_NAME_PRINT(name), channel->fd));
+                         orte_util_print_name_args(name), channel->fd));
 
     /* setup output object */
     output = OBJ_NEW(orte_iof_write_output_t);
@@ -83,7 +83,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
         /* error - this should never happen */
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                             "%s stream %0x", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), stream));
+                             "%s stream %0x", orte_util_print_name_args(ORTE_PROC_MY_NAME), stream));
         return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
@@ -91,7 +91,7 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
      * timestamping of xml output
      */
     if (orte_xml_output) {
-        snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "<%s rank=\"%s\">", suffix, ORTE_VPID_PRINT(name->vpid));
+        snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "<%s rank=\"%s\">", suffix, orte_util_print_vpids(name->vpid));
         snprintf(endtag, ORTE_IOF_BASE_TAG_MAX, "</%s>", suffix);
         goto construct;
     }
@@ -108,8 +108,8 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
         if (orte_tag_output) {
             /* if we want it tagged as well, use both */
             snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "%s[%s,%s]<%s>:",
-                     cptr, ORTE_LOCAL_JOBID_PRINT(name->jobid),
-                     ORTE_VPID_PRINT(name->vpid), suffix);
+                     cptr, orte_util_print_local_jobid(name->jobid),
+                     orte_util_print_vpids(name->vpid), suffix);
         } else {
             /* only use timestamp */
             snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "%s<%s>:", cptr, suffix);
@@ -121,8 +121,8 @@ int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
     
     if (orte_tag_output) {
         snprintf(starttag, ORTE_IOF_BASE_TAG_MAX, "[%s,%s]<%s>:",
-                 ORTE_LOCAL_JOBID_PRINT(name->jobid),
-                 ORTE_VPID_PRINT(name->vpid), suffix);
+                 orte_util_print_local_jobid(name->jobid),
+                 orte_util_print_vpids(name->vpid), suffix);
         /* no endtag for this option */
         memset(endtag, '\0', ORTE_IOF_BASE_TAG_MAX);
         goto construct;
@@ -186,7 +186,7 @@ process:
         /* issue it */
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                              "%s write:output adding write event",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         opal_event_add(&channel->ev, 0);
         channel->pending = true;
     }
@@ -207,7 +207,7 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s write:handler writing data to %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          wev->fd));
 
     /* lock us up to protect global operations */

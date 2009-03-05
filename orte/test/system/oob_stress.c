@@ -87,8 +87,8 @@ main(int argc, char *argv[]){
             opal_dss.pack(&buf, msg, msgsize, OPAL_BYTE);
             
             if (0 > (rc = orte_rml.send_buffer(&peer,&buf, MY_TAG, 0))) {
-                opal_output(0, "error sending to %s %s\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer), ORTE_ERROR_NAME(rc));
+                opal_output(0, "error sending to %s %s\n", orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                            orte_util_print_name_args(&peer), ORTE_ERROR_NAME(rc));
                 exit(1);
             }
             OBJ_DESTRUCT(&buf);
@@ -99,7 +99,7 @@ main(int argc, char *argv[]){
                                     ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
             
             ORTE_PROGRESSED_WAIT(msg_recvd, 0, 1);
-            opal_output(0, "%s Ring %d completed", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
+            opal_output(0, "%s Ring %d completed", orte_util_print_name_args(ORTE_PROC_MY_NAME), j);
         } else {
             /* wait for msg */
             OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -110,8 +110,8 @@ main(int argc, char *argv[]){
             ORTE_PROGRESSED_WAIT(msg_recvd, 0, 1);
             /* send it along */
             if (0 > (rc = orte_rml.send_buffer(&peer, &buf, MY_TAG, 0))) {
-                opal_output(0, "%s error sending to %s %s\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&peer), ORTE_ERROR_NAME(rc));
+                opal_output(0, "%s error sending to %s %s\n", orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                            orte_util_print_name_args(&peer), ORTE_ERROR_NAME(rc));
                 exit(1);
             }
             OBJ_DESTRUCT(&buf);

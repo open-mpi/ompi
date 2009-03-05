@@ -74,7 +74,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                          "%s ras:base:node_insert inserting %ld nodes",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          (long)num_nodes));
     
     /* set the size of the global array - this helps minimize time
@@ -99,7 +99,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
         if (opal_ifislocal(node->name)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert updating HNP info to %ld slots",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  (long)node->slots));
             
             /* flag that hnp has been allocated */
@@ -139,7 +139,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             /* insert the object onto the orte_nodes global array */
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  (NULL == node->name) ? "NULL" : node->name));
             /* default allocate all the slots - may be modified later
              * as a result of filtering actions in mapper

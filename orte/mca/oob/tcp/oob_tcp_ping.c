@@ -91,8 +91,8 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, (struct sockaddr*) &inaddr))) {
        opal_output(0,
             "%s-%s mca_oob_tcp_ping: invalid uri: %s\n",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(name),
+            orte_util_print_name_args(ORTE_PROC_MY_NAME),
+            orte_util_print_name_args(name),
             uri);
         return rc;
     }
@@ -102,8 +102,8 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     if (sd < 0) {
        opal_output(0,
             "%s-%s mca_oob_tcp_ping: socket() failed: %s (%d)\n",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(name),
+            orte_util_print_name_args(ORTE_PROC_MY_NAME),
+            orte_util_print_name_args(name),
             strerror(opal_socket_errno),
             opal_socket_errno);
         return ORTE_ERR_UNREACH;
@@ -112,16 +112,16 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     /* setup the socket as non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_GETFL) failed: %s (%d)\n", 
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(name),
+            orte_util_print_name_args(ORTE_PROC_MY_NAME),
+            orte_util_print_name_args(name),
             strerror(opal_socket_errno),
             opal_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
             opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ORTE_NAME_PRINT(name),
+                orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                orte_util_print_name_args(name),
                 strerror(opal_socket_errno),
                 opal_socket_errno);
         }
@@ -144,8 +144,8 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
         /* connect failed? */
         if(opal_socket_errno != EINPROGRESS && opal_socket_errno != EWOULDBLOCK) {
             opal_output(0, "%s-%s mca_oob_tcp_ping: connect failed: %s (%d)\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(name),
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                        orte_util_print_name_args(name),
                         strerror(opal_socket_errno),
                         opal_socket_errno);
             CLOSE_THE_SOCKET(sd);
@@ -166,8 +166,8 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     flags &= ~O_NONBLOCK;
     if(fcntl(sd, F_SETFL, flags) < 0) {
          opal_output(0, "%s-%s mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
-             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-             ORTE_NAME_PRINT(name),
+             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+             orte_util_print_name_args(name),
              strerror(opal_socket_errno),
              opal_socket_errno);
     }

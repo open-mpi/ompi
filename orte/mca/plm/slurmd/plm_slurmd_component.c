@@ -107,7 +107,7 @@ static int orte_plm_slurmd_component_query(mca_base_module_t **module, int *prio
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurmd: available for selection", 
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
         *module = (mca_base_module_t *)&orte_plm_slurmd_module;
         return ORTE_SUCCESS;

@@ -122,7 +122,7 @@ int orte_ess_base_app_setup(void)
     /* setup my session directory */
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          (NULL == orte_proc_info.tmpdir_base) ? "UNDEF" : orte_proc_info.tmpdir_base,
                          orte_proc_info.nodename));
     
@@ -286,7 +286,7 @@ void orte_ess_base_app_abort(int status, bool report)
         }
         OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                              "%s orte_ess_app_abort: dropping abort file %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), abort_file));
         fd = open(abort_file, O_CREAT, 0600);
         if (0 < fd) close(fd);        
     }

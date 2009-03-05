@@ -133,7 +133,7 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
     if(OMPI_SUCCESS != rc) {
         BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
             ("ompi_modex_recv failed for peer %s",
-            ORTE_NAME_PRINT(&ompi_proc->proc_name)));
+            orte_util_print_name_args(&ompi_proc->proc_name)));
         OBJ_RELEASE(udapl_proc);
         return NULL;
     }
@@ -141,7 +141,7 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
     if((size % sizeof(mca_btl_udapl_addr_t)) != 0) {
         BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
             ("invalid udapl address for peer %s",
-            ORTE_NAME_PRINT(&ompi_proc->proc_name)));
+            orte_util_print_name_args(&ompi_proc->proc_name)));
         OBJ_RELEASE(udapl_proc);
         return NULL;
     }

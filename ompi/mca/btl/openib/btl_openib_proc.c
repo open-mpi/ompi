@@ -159,7 +159,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     if (OMPI_SUCCESS != rc) {
         BTL_ERROR(("[%s:%d] ompi_modex_recv failed for peer %s",
                    __FILE__, __LINE__,
-                   ORTE_NAME_PRINT(&ompi_proc->proc_name)));
+                   orte_util_print_name_args(&ompi_proc->proc_name)));
         OBJ_RELEASE(module_proc);
         return NULL;
     }

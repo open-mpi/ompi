@@ -178,7 +178,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             
             OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                                  "%s hostfile: node %s is being excluded",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), node_name));
             
             /* convert this into something globally unique */
             if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
@@ -220,7 +220,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
 
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s hostfile: node %s is being included - keep all is %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node_name,
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), node_name,
                              keep_all ? "TRUE" : "FALSE"));
 
         /* Do we need to make a new node object?  First check to see
@@ -419,7 +419,7 @@ int orte_util_add_hostfile_nodes(opal_list_t *nodes,
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s hostfile: checking hostfile %s for nodes",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), hostfile));
 
     OBJ_CONSTRUCT(&exclude, opal_list_t);
     
@@ -494,7 +494,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                         "%s hostfile: filtering nodes through hostfile %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
+                        orte_util_print_name_args(ORTE_PROC_MY_NAME), hostfile));
 
     /* parse the hostfile and create local list of findings */
     OBJ_CONSTRUCT(&newnodes, opal_list_t);
@@ -709,7 +709,7 @@ int orte_util_get_ordered_host_list(opal_list_t *nodes,
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s hostfile: creating ordered list of hosts from hostfile %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostfile));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), hostfile));
     
     OBJ_CONSTRUCT(&exclude, opal_list_t);
     

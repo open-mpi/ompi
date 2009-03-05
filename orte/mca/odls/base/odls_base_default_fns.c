@@ -329,7 +329,7 @@ int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
      */
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:update:daemon:info updating nidmap",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     
     if (ORTE_SUCCESS != (rc = orte_ess.update_nidmap(bo))) {
         ORTE_ERROR_LOG(rc);
@@ -390,7 +390,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
 
     /* unpack the returned data to create the required structures
      * for a fork launch. Since the data will contain information
@@ -410,7 +410,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     if (0 != flag) {
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:construct_child_list unpacking debugger daemon",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         /* yep - create a jobdat object for it. In this case, we don't have to
          * worry about race conditions as the debugger daemons do not use
          * the daemon collective system
@@ -453,7 +453,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:construct_child_list unpacking data to launch job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_jobids(*job)));
     
     /* even though we are unpacking an add_local_procs cmd, we cannot assume
      * that no job record for this jobid exists. A race condition exists that
@@ -470,7 +470,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         if (jdat->jobid == *job) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:construct_child_list found existing jobdat for job %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_jobids(*job)));
             break;
         }
     }
@@ -478,7 +478,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* setup jobdat object for this job */
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:construct_child_list adding new jobdat for job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_jobids(*job)));
         jobdat = OBJ_NEW(orte_odls_job_t);
         jobdat->jobid = *job;
         opal_list_append(&orte_local_jobdata, &jobdat->super);
@@ -529,7 +529,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:construct_child_list unpacking %ld app_contexts",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)jobdat->num_apps));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME), (long)jobdat->num_apps));
     
     /* allocate space and unpack the app_contexts for this job - the HNP checked
      * that there must be at least one, so don't bother checking here again
@@ -599,15 +599,15 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:constructing child list - checking proc %s on daemon %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j),
-                             ORTE_VPID_PRINT(host_daemon)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_vpids(j),
+                             orte_util_print_vpids(host_daemon)));
 
         /* does this proc belong to us? */
         if (ORTE_PROC_MY_NAME->vpid == host_daemon) {
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(j)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME), orte_util_print_vpids(j)));
             
             /* keep tabs of the number of local procs */
             jobdat->num_local_procs++;
@@ -708,7 +708,7 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     if (opal_sys_limits.initialized) {
         OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                              "%s limit on num procs %d num children %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              opal_sys_limits.num_procs,
                              (int)opal_list_get_size(&orte_local_children)));
         if (0 < opal_sys_limits.num_procs &&
@@ -1008,7 +1008,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch found %d processors for %d children and set oversubscribed to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          num_processors, (int)opal_list_get_size(&orte_local_children),
                          oversubscribed ? "true" : "false"));
     
@@ -1034,7 +1034,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             
             OPAL_OUTPUT_VERBOSE((10, orte_odls_globals.output,
                                  "%s odls:launch:setup_fork failed with error %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  ORTE_ERROR_NAME(rc)));
             
             /* do not ERROR_LOG this failure - it will be reported
@@ -1163,8 +1163,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "%s odls:launch child %s is already alive",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(child->name)));
                 
                 continue;
             }
@@ -1177,9 +1177,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "%s odls:launch child %s is not in job %s being launched",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name),
-                                     ORTE_JOBID_PRINT(job)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(child->name),
+                                     orte_util_print_jobids(job)));
                 
                 continue;
             }
@@ -1210,7 +1210,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                         }
                         /* insert the rank into the correct place as a window title */
                         free(app->argv[2]);
-                        asprintf(&app->argv[2], "Rank %s", ORTE_VPID_PRINT(child->name->vpid));
+                        asprintf(&app->argv[2], "Rank %s", orte_util_print_vpids(child->name->vpid));
                         /* add back the original argv */
                         for (inm=0; inm < opal_argv_count(argvsav); inm++) {
                             opal_argv_append_nosize(&app->argv, argvsav[inm]);
@@ -1334,8 +1334,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
 #endif
             if (5 < opal_output_get_verbosity(orte_odls_globals.output)) {
                 opal_output(orte_odls_globals.output, "%s odls:launch: spawning child %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(child->name));
+                            orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                            orte_util_print_name_args(child->name));
                 
                 /* dump what is going to be exec'd */
                 if (7 < opal_output_get_verbosity(orte_odls_globals.output)) {
@@ -1385,8 +1385,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
 CLEANUP:
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch reporting job %s launch status",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(job)));
     /* pack the launch results */
     if (ORTE_SUCCESS != (ret = pack_state_update(&alert, true, jobdat))) {
         ORTE_ERROR_LOG(ret);
@@ -1406,7 +1406,7 @@ CLEANUP:
             0 < opal_list_get_size(&orte_local_children)) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:launch forking debugger with %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
             
             fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL,
@@ -1434,7 +1434,7 @@ CLEANUP:
     if (!launch_failed) {
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:launch setting waitpids",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         
         /* if the launch didn't fail, setup the waitpids on the children */
         for (item = opal_list_get_first(&orte_local_children);
@@ -1482,8 +1482,8 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buff
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: sending message to tag %lu on child %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (unsigned long)tag, ORTE_NAME_PRINT(child->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             (unsigned long)tag, orte_util_print_name_args(child->name)));
         
         /* if so, send the message */
         rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
@@ -1515,8 +1515,8 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: signaling proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         (NULL == proc) ? "NULL" : orte_util_print_name_args(proc)));
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -1707,8 +1707,8 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
 
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls: registering sync on child %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name)));
             
             found = true;
             break;
@@ -1769,8 +1769,8 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         }
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:sync nidmap requested for job %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jobdat->jobid)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(jobdat->jobid)));
         /* the proc needs a copy of both the daemon/node map, and
          * the process map for its peers
          */
@@ -1780,8 +1780,8 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls: sending sync ack to child %s with %ld bytes of data",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(proc), (long)buffer.bytes_used));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                        orte_util_print_name_args(proc), (long)buffer.bytes_used));
     
     if (0 > (rc = orte_rml.send_buffer(proc, &buffer, ORTE_RML_TAG_SYNC, 0))) {
         ORTE_ERROR_LOG(rc);
@@ -1799,7 +1799,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: sending contact info to HNP",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         
         OBJ_CONSTRUCT(&buffer, opal_buffer_t);
         /* store jobid */
@@ -1917,8 +1917,8 @@ static void check_proc_complete(orte_odls_child_t *child)
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:proc_complete reporting proc %s aborted to HNP",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(child->name)));
         
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
@@ -1966,8 +1966,8 @@ static void check_proc_complete(orte_odls_child_t *child)
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:proc_complete reporting all procs in %s terminated",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(jdat->jobid)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_jobids(jdat->jobid)));
             
             /* remove all of this job's children from the global list - do not lock
              * the thread as we are already locked
@@ -2020,8 +2020,8 @@ void orte_odls_base_notify_iof_complete(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:notify_iof_complete for child %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc)));
     
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -2048,8 +2048,8 @@ void orte_odls_base_notify_iof_complete(orte_process_name_t *proc)
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:proc_complete did not find child %s in table!",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc)));
     
     /* it's just a race condition - don't error log it */
     opal_condition_signal(&orte_odls_globals.cond);
@@ -2098,8 +2098,8 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:waitpid_fired did not find child %s in table!",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc)));
     
     /* it's just a race condition - don't error log it */
     opal_condition_signal(&orte_odls_globals.cond);
@@ -2113,8 +2113,8 @@ GOTCHILD:
     if (!child->alive) {
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:waitpid_fired child %s was already dead",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(child->name)));
         goto MOVEON;
     }
     
@@ -2147,7 +2147,7 @@ GOTCHILD:
                                   job, vpid, "abort", NULL );
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:waitpid_fired checking abort file %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), abort_file));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), abort_file));
         
         free(job);
         free(vpid);       
@@ -2158,8 +2158,8 @@ GOTCHILD:
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:waitpid_fired child %s died by abort",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name)));
             
             child->state = ORTE_PROC_STATE_ABORTED;
             free(abort_file);
@@ -2177,8 +2177,8 @@ GOTCHILD:
                                      "%s odls:waitpid_fired child process %s terminated normally "
                                      "but did not provide a required sync - it "
                                      "will be treated as an abnormal termination",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(child->name)));
                 
                 goto MOVEON;
             } else {
@@ -2187,8 +2187,8 @@ GOTCHILD:
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:waitpid_fired child process %s terminated normally",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name)));
             
         }
     } else {
@@ -2209,8 +2209,8 @@ GOTCHILD:
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:waitpid_fired child process %s terminated with signal",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(child->name)));
     }
     
 MOVEON:
@@ -2240,7 +2240,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc child process %ld terminated",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          (long)pid));
     
     /* since we are going to be working with the global list of
@@ -2291,7 +2291,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:wait_local_proc did not find pid %ld in table!",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          (long)pid));
     
     /* it's just a race condition - don't error log it */
@@ -2318,8 +2318,8 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:kill_local_proc working on job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(job)));
     
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -2351,8 +2351,8 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:kill_local_proc checking child process %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(child->name)));
         
         /* do we have a child from the specified job? Because the
          *  job could be given as a WILDCARD value, we must use
@@ -2362,9 +2362,9 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s is not part of job %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name),
-                                 ORTE_JOBID_PRINT(job)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name),
+                                 orte_util_print_jobids(job)));
             
             continue;
         }
@@ -2398,8 +2398,8 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s is not alive",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name)));
             
             /* ensure, though, that the state is terminated so we don't lockup if
              * the proc never started
@@ -2414,8 +2414,8 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             /* no need to error_log this - it just means that the pid is already gone */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s wait_cb_cancel failed",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(child->name)));
             
             goto MOVEON;
         }
@@ -2462,8 +2462,8 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
         }
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:kill_local_proc child %s killed",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(child->name)));
         child->state = ORTE_PROC_STATE_ABORTED_BY_SIG;  /* we may have sent it, but that's what happened */
         /* let this fall through to record the proc as "not alive" even
          * if child_died failed. We did our best, so as far as we are
@@ -2523,8 +2523,8 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:get_proc_stats for proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(proc)));
     
     /* find this child */
     for (item = opal_list_get_first(&orte_local_children);

@@ -120,8 +120,8 @@ int mca_oob_tcp_send_nb(
 
     if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_ALL) {
         opal_output(0, "%s-%s mca_oob_tcp_send_nb: tag %d size %lu\n",
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-            ORTE_NAME_PRINT(&(peer->peer_name)),
+            orte_util_print_name_args(ORTE_PROC_MY_NAME),
+            orte_util_print_name_args(&(peer->peer_name)),
             tag, (unsigned long)size );
     }
 

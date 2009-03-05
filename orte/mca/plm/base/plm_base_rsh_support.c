@@ -510,7 +510,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         opal_output(0, "%s plm:rsh: final bootproxy cmd:\n\t%s",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    orte_util_print_name_args(ORTE_PROC_MY_NAME),
                     (NULL == param) ? "NULL" : param);
         if (NULL != param) free(param);
     }

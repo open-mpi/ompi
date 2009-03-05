@@ -130,14 +130,14 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
                  &size); 
     if(OMPI_SUCCESS != rc) {
         opal_output(0, "[%s:%d] ompi_modex_recv failed for peer %s",
-            __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
+            __FILE__,__LINE__,orte_util_print_name_args(&ompi_proc->proc_name));
         OBJ_RELEASE(gm_proc);
         return NULL;
     }
 
     if((size % sizeof(mca_btl_gm_addr_t)) != 0) {
         opal_output(0, "[%s:%d] invalid gm address for peer %s",
-            __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
+            __FILE__,__LINE__,orte_util_print_name_args(&ompi_proc->proc_name));
         OBJ_RELEASE(gm_proc);
         return NULL;
     }
@@ -192,7 +192,7 @@ int mca_btl_gm_proc_insert(
     if(mca_btl_gm_component.gm_debug > 0) {
         opal_output(0, "%s mapped global id %" PRIu32 
             " to node id %" PRIu32 "\n", 
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+            orte_util_print_name_args(ORTE_PROC_MY_NAME),
             gm_endpoint->endpoint_addr.global_id,
             gm_endpoint->endpoint_addr.node_id);
     }

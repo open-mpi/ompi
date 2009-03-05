@@ -181,7 +181,7 @@ static void process_message(int fd, short event, void *evdat)
             
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: publishing service %s port %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  service_name, port_name));
         
             /* check the current data store to see if this service name has already
@@ -192,7 +192,7 @@ static void process_message(int fd, short event, void *evdat)
                 
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s data server: publishing service %s port %s already exists",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                      service_name, port_name));
                 
                 ret = ORTE_EXISTS;
@@ -221,7 +221,7 @@ static void process_message(int fd, short event, void *evdat)
             
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: successfully published service %s port %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  service_name, port_name));
             
             /* tell the user it was wonderful... */
@@ -245,7 +245,7 @@ static void process_message(int fd, short event, void *evdat)
                 
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: lookup on service %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  service_name));
             
             /* locate this record in the data store */
@@ -253,7 +253,7 @@ static void process_message(int fd, short event, void *evdat)
                 
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s data server: service %s not found",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                      service_name));
                 
                 /* return ORTE_ERR_NOT_FOUND error code */
@@ -269,7 +269,7 @@ static void process_message(int fd, short event, void *evdat)
         
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: successful lookup on service %s port %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  service_name, data->port));
         
             /* pack success so the unpack on the other end can
@@ -304,7 +304,7 @@ static void process_message(int fd, short event, void *evdat)
 
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: unpublish on service %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  service_name));
         
             /* locate this record in the data store */
@@ -312,7 +312,7 @@ static void process_message(int fd, short event, void *evdat)
                 
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s data server: service %s not found",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                      service_name));
                 
                 /* return ORTE_ERR_NOT_FOUND error code */
@@ -332,8 +332,8 @@ static void process_message(int fd, short event, void *evdat)
                 
                 OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                      "%s data server: service %s not owned by sender %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     service_name, ORTE_NAME_PRINT(sender)));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                                     service_name, orte_util_print_name_args(sender)));
                 
                 /* nope - return ORTE_ERR_PERM error code */
                 ret = ORTE_ERR_PERM;
@@ -352,7 +352,7 @@ static void process_message(int fd, short event, void *evdat)
             
             OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                                  "%s data server: service %s unpublished",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  service_name));
     
             /* tell the sender this succeeded */
@@ -395,8 +395,8 @@ void orte_data_server(int status, orte_process_name_t* sender,
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s data server got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(sender)));
     
     /* don't process this right away - we need to get out of the recv before
      * we process the message as it may ask us to do something that involves

@@ -116,7 +116,7 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes)
     if (ORTE_SUCCESS != ret) {
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm:allocate: discover failed!",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         return ret;
     }
 
@@ -125,11 +125,11 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes)
     if (ORTE_SUCCESS == ret) {
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm:allocate: success",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     } else {
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm:allocate: failure (base_allocate_nodes=%d)",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME), ret));
     }
     return ret;
 }
@@ -142,7 +142,7 @@ static int orte_ras_slurm_finalize(void)
     
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:slurm:finalize: success (nothing to do)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME)));
     return ORTE_SUCCESS;
 }
 
@@ -180,7 +180,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
     
     OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                          "%s ras:slurm:allocate:discover: checking nodelist: %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          regexp));
     
     do {
@@ -252,7 +252,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
             
             OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                                  "%s ras:slurm:allocate:discover: found node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 orte_util_print_name_args(ORTE_PROC_MY_NAME),
                                  base));
             
             if(ORTE_SUCCESS != (ret = opal_argv_append_nosize(&names, base))) {
@@ -336,7 +336,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
         
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm:allocate:discover: adding node %s (%d slot%s)",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              names[i], slots[i], (1 == slots[i]) ? "" : "s"));
         
         node = OBJ_NEW(orte_node_t);
@@ -394,7 +394,7 @@ static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
         
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                              "%s ras:slurm:allocate:discover: parse range %s (2)",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
                              start));
         
         ret = orte_ras_slurm_parse_range(base, start, names);

@@ -48,7 +48,7 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
     }
     
     opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                orte_util_print_name_args(ORTE_PROC_MY_NAME),
                 ORTE_ERROR_NAME(error_code), filename, line);
 }
 

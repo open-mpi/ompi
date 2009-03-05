@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     msg.iov_len  = sizeof(i);
     for (i=0; i < app->num_procs; i++) {
         name.vpid = i;
-        fprintf(stderr, "Parent: sending message to child %s\n", ORTE_NAME_PRINT(&name));
+        fprintf(stderr, "Parent: sending message to child %s\n", orte_util_print_name_args(&name));
         if (0 > (rc = orte_rml.send(&name, &msg, 1, MY_TAG, 0))) {
             ORTE_ERROR_LOG(rc);
         }

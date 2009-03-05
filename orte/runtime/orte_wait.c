@@ -531,7 +531,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                         "%s calling %s trigger",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          trig->name));
     
     /* if we already fired it, don't do it again - this automatically
@@ -896,7 +896,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s calling %s trigger",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
                          trig->name));
     
     if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */

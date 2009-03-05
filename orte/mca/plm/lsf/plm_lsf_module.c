@@ -163,8 +163,8 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:lsf: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                         orte_util_print_jobids(jdata->jobid)));
     
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
@@ -189,7 +189,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:lsf: no new daemons to launch",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME)));
         goto launch_apps;
     }
 
@@ -278,7 +278,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
                 cur_prefix = strdup(app_prefix_dir);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                      "%s plm:lsf: Set prefix:%s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), cur_prefix));
+                                     orte_util_print_name_args(ORTE_PROC_MY_NAME), cur_prefix));
             }
         }
     }
@@ -322,8 +322,8 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
         (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:lsf: daemon launch failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
@@ -333,8 +333,8 @@ launch_apps:
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:lsf: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             orte_util_print_name_args(ORTE_PROC_MY_NAME),
+                             orte_util_print_jobids(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     

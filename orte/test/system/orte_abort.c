@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     pid = getpid();
     gethostname(hostname, 500);
 
-    printf("orte_abort: Name %s Host: %s Pid %ld\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+    printf("orte_abort: Name %s Host: %s Pid %ld\n", orte_util_print_name_args(ORTE_PROC_MY_NAME),
               hostname, (long)pid);
     
     i = 0;
