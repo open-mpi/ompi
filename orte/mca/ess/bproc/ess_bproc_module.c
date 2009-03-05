@@ -79,14 +79,14 @@ static int rte_init(char flags)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (orte_proc_info.daemon) {
+    if (orte_process_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
         
-    } else if (orte_proc_info.tool) {
+    } else if (orte_process_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -109,7 +109,7 @@ static int rte_init(char flags)
         opal_pointer_array_init(&nidmap, 8, INT32_MAX, 8);
         
         /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_proc_info.sync_buf,
+        if (ORTE_SUCCESS != (ret = orte_ess_base_build_nidmap(orte_process_info.sync_buf,
                                                               &nidmap, &pmap, &nprocs))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_build_nidmap";
@@ -134,11 +134,11 @@ static int rte_finalize(void)
     int32_t i;
     
     /* if I am a daemon, finalize using the default procedure */
-    if (orte_proc_info.daemon) {
+    if (orte_process_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-    } else if (orte_proc_info.tool) {
+    } else if (orte_process_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
@@ -371,10 +371,10 @@ static int bproc_set_name(void)
     ORTE_PROC_MY_NAME->vpid = vpid_start + (bproc_rank * stride);
 
     
-    if(NULL != orte_proc_info.nodename) {
-        free(orte_proc_info.nodename);
+    if(NULL != orte_process_info.nodename) {
+        free(orte_process_info.nodename);
     }
-    asprintf(&orte_proc_info.nodename, "%d", bproc_currnode());
+    asprintf(&orte_process_info.nodename, "%d", bproc_currnode());
 
     return ORTE_SUCCESS;
 }

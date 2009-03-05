@@ -66,7 +66,7 @@ void mca_btl_base_error_no_nics(const char* transport,
         asprintf(&procid, "%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
         orte_show_help("help-mpi-btl-base.txt", "btl:no-nics",
-                       true, procid, transport, orte_proc_info.nodename,
+                       true, procid, transport, orte_process_info.nodename,
                        nic_name);
         free(procid);
     }

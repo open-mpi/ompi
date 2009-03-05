@@ -135,7 +135,7 @@ static void warn_fork_cb(void)
 {
     if (ompi_mpi_initialized && !ompi_mpi_finalized && !fork_warning_issued) {
         orte_show_help("help-mpi-runtime.txt", "mpi_init:warn-fork", true,
-                       orte_proc_info.nodename, getpid(),
+                       orte_process_info.nodename, getpid(),
                        ompi_mpi_comm_world.comm.c_my_rank);
         fork_warning_issued = true;
     }
@@ -341,7 +341,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* Setup ORTE - note that we are not a tool  */
-    orte_proc_info.mpi_proc = true;
+    orte_process_info.mpi_proc = true;
     if (ORTE_SUCCESS != (ret = orte_init(ORTE_NON_TOOL))) {
         error = "ompi_mpi_init: orte_init failed";
         goto error;
@@ -698,7 +698,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (ompi_mpi_show_mca_params) {
        ompi_show_all_mca_params(ompi_mpi_comm_world.comm.c_my_rank, 
                                 nprocs, 
-                                orte_proc_info.nodename);
+                                orte_process_info.nodename);
     }
 
     /* Do we need to wait for a debugger? */

@@ -119,7 +119,7 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
                    peer_name ? peer_name : "UNKNOWN",
                    peer_host ? peer_host : "UNKNOWN",
                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                   orte_proc_info.nodename);
+                   orte_process_info.nodename);
     space -= len;
     pos += len;
     

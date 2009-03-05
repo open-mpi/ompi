@@ -72,7 +72,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     FILE* file;
     ELAN_BASE* base;
     
-    filename = opal_os_path( false, orte_proc_info.proc_session_dir, "ELAN_ID", NULL );
+    filename = opal_os_path( false, orte_process_info.proc_session_dir, "ELAN_ID", NULL );
     file = fopen( filename, "w" );
     fprintf( file, "%s %d\n", ompi_proc_local_proc->proc_hostname, elan_btl->elan_position );
 

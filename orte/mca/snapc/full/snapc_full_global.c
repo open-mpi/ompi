@@ -298,7 +298,7 @@ static int snapc_full_global_start_listener(void)
     int exit_status = ORTE_SUCCESS;
     int rc;
 
-    if (snapc_recv_issued && orte_proc_info.hnp) {
+    if (snapc_recv_issued && orte_process_info.hnp) {
         return ORTE_SUCCESS;
     }
     
@@ -329,7 +329,7 @@ static int snapc_full_global_stop_listener(void)
     int exit_status = ORTE_SUCCESS;
     int rc;
     
-    if (!snapc_recv_issued && orte_proc_info.hnp) {
+    if (!snapc_recv_issued && orte_process_info.hnp) {
         return ORTE_SUCCESS;
     }
     
@@ -354,7 +354,7 @@ static int snapc_full_global_start_cmdline_listener(void)
     int exit_status = ORTE_SUCCESS;
     int rc;
 
-    if (snapc_cmdline_recv_issued && orte_proc_info.hnp) {
+    if (snapc_cmdline_recv_issued && orte_process_info.hnp) {
         return ORTE_SUCCESS;
     }
 
@@ -385,7 +385,7 @@ static int snapc_full_global_stop_cmdline_listener(void)
     int exit_status = ORTE_SUCCESS;
     int rc;
     
-    if (!snapc_cmdline_recv_issued && orte_proc_info.hnp) {
+    if (!snapc_cmdline_recv_issued && orte_process_info.hnp) {
         return ORTE_SUCCESS;
     }
     

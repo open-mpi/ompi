@@ -123,12 +123,12 @@ int orte_ess_base_app_setup(void)
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == orte_proc_info.tmpdir_base) ? "UNDEF" : orte_proc_info.tmpdir_base,
-                         orte_proc_info.nodename));
+                         (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                         orte_process_info.nodename));
     
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                orte_proc_info.tmpdir_base,
-                                                orte_proc_info.nodename, NULL,
+                                                orte_process_info.tmpdir_base,
+                                                orte_process_info.nodename, NULL,
                                                 ORTE_PROC_MY_NAME))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_session_dir";
@@ -138,7 +138,7 @@ int orte_ess_base_app_setup(void)
     /* Once the session directory location has been established, set
         the opal_output env file location to be in the
         proc-specific session directory. */
-    opal_output_set_output_file_info(orte_proc_info.proc_session_dir,
+    opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                      "output-", NULL, NULL);
     
     
@@ -164,7 +164,7 @@ int orte_ess_base_app_setup(void)
         error = "orte_snapc_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_proc_info.hnp, !orte_proc_info.daemon))) {
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_process_info.hnp, !orte_process_info.daemon))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
         goto error;
@@ -278,7 +278,7 @@ void orte_ess_base_app_abort(int status, bool report)
      * write an "abort" file into our session directory
      */
     if (report) {
-        abort_file = opal_os_path(false, orte_proc_info.proc_session_dir, "abort", NULL);
+        abort_file = opal_os_path(false, orte_process_info.proc_session_dir, "abort", NULL);
         if (NULL == abort_file) {
             /* got a problem */
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);

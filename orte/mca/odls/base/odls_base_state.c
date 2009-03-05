@@ -70,7 +70,7 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
 
     /* Define the process set */
     p_set = OBJ_NEW(orte_filem_base_process_set_t);
-    if( orte_proc_info.hnp ) {
+    if( orte_process_info.hnp ) {
         /* if I am the HNP, then use me as the source */
         p_set->source.jobid = ORTE_PROC_MY_NAME->jobid;
         p_set->source.vpid  = ORTE_PROC_MY_NAME->vpid;
@@ -152,7 +152,7 @@ static int orte_odls_base_preload_append_binary(orte_app_context_t* context,
     f_set = OBJ_NEW(orte_filem_base_file_set_t);
 
     /* Local Placement */
-    asprintf(&local_bin, "%s/%s", orte_proc_info.job_session_dir, opal_basename(context->app));
+    asprintf(&local_bin, "%s/%s", orte_process_info.job_session_dir, opal_basename(context->app));
     if(orte_odls_base_is_preload_local_dup(local_bin, filem_request) ) {
         goto cleanup;
     }
@@ -222,7 +222,7 @@ static int orte_odls_base_preload_append_files(orte_app_context_t* context,
             }
 
             /* If this is the HNP, then source = sink, so use the same path for each local and remote */
-            if( orte_proc_info.hnp ) {
+            if( orte_process_info.hnp ) {
                 free(remote_targets[i]);
                 remote_targets[i] = strdup(local_ref);
             }

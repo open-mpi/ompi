@@ -57,7 +57,7 @@ int orte_routed_base_comm_start(void)
 {
     int rc;
 
-    if (recv_issued || !orte_proc_info.hnp) {
+    if (recv_issued || !orte_process_info.hnp) {
         return ORTE_SUCCESS;
     }
     
@@ -83,7 +83,7 @@ int orte_routed_base_comm_stop(void)
 {
     int rc;
     
-    if (!recv_issued || !orte_proc_info.hnp) {
+    if (!recv_issued || !orte_process_info.hnp) {
         return ORTE_SUCCESS;
     }
     

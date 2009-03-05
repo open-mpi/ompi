@@ -42,7 +42,7 @@ BEGIN_C_DECLS
 /**
  * Process information structure
  *
- * The orte_proc_info_init() function fills the pid field and obtains the
+ * The orte_proc_info() function fills the pid field and obtains the
  * process name, storing that information in the global structure. The
  * structure also holds path names to the universe, job, and process
  * session directories, and to the stdin, stdout, and stderr temp
@@ -90,21 +90,21 @@ typedef struct orte_proc_info_t orte_proc_info_t;
  *
  * Global process info descriptor.  Initialized to almost no
  * meaningful information - data is provided by calling \c
- * orte_rte_init() (which calls \c orte_proc_info_init() to fill in the
+ * orte_rte_init() (which calls \c orte_proc_info() to fill in the
  * structure).
  *
- * The exception to this rule is the \c orte_proc_info.seed field,
+ * The exception to this rule is the \c orte_process_info.seed field,
  * which will be initialized to \c false, but should be set to \c true
  * before calling \c orte_rte_info() if the caller is a seed daemon.
  */
-ORTE_DECLSPEC extern orte_proc_info_t orte_proc_info;
+ORTE_DECLSPEC extern orte_proc_info_t orte_process_info;
 
 
 /**
  * \internal
  *
  * Global structure to store a wide range of information about the
- * process.  orte_proc_info_init populates a global variable with
+ * process.  orte_proc_info populates a global variable with
  * information about the process being executing. This function should
  * be called only once, from orte_rte_init().
  *
@@ -114,7 +114,7 @@ ORTE_DECLSPEC extern orte_proc_info_t orte_proc_info;
  * @retval OMPI_ERROR Failed to initialize one or more fields.
  */
 
-ORTE_DECLSPEC int orte_proc_info_init(void);
+ORTE_DECLSPEC int orte_proc_info(void);
 
 ORTE_DECLSPEC int orte_proc_info_finalize(void);
 

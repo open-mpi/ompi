@@ -135,7 +135,7 @@ orte_session_dir_get_name(char **fulldirpath,
 #endif
     
     /* Ensure that system info is set */
-    orte_proc_info_init();
+    orte_proc_info();
 
      /* get the name of the user */
 #ifndef __WINDOWS__
@@ -167,8 +167,8 @@ orte_session_dir_get_name(char **fulldirpath,
         hostname = strdup(hostid);
     }
     else {            /* check if it is set elsewhere */
-        if( NULL != orte_proc_info.nodename)
-            hostname = strdup(orte_proc_info.nodename);
+        if( NULL != orte_process_info.nodename)
+            hostname = strdup(orte_process_info.nodename);
         else {
             /* Couldn't find it, so fail */
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -190,8 +190,8 @@ orte_session_dir_get_name(char **fulldirpath,
      * Will look something like:
      *    openmpi-sessions-USERNAME@HOSTNAME_BATCHID
      */
-    if (NULL != orte_proc_info.top_session_dir) {
-        frontend = strdup(orte_proc_info.top_session_dir);
+    if (NULL != orte_process_info.top_session_dir) {
+        frontend = strdup(orte_process_info.top_session_dir);
     }
     else { /* If not set then construct it */
         if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
@@ -282,8 +282,8 @@ orte_session_dir_get_name(char **fulldirpath,
         prefix_provided = true;
     }
     /* Try to find a proper alternative prefix */
-    else if (NULL != orte_proc_info.tmpdir_base) { /* stored value */
-        prefix = strdup(orte_proc_info.tmpdir_base);
+    else if (NULL != orte_process_info.tmpdir_base) { /* stored value */
+        prefix = strdup(orte_process_info.tmpdir_base);
     }
     else if( NULL != getenv("OMPI_PREFIX_ENV") ) { /* OMPI Environment var */
         prefix = strdup(getenv("OMPI_PREFIX_ENV"));
@@ -459,24 +459,24 @@ int orte_session_dir(bool create,
      * global structure fields
      */
     if (create) {
-    	if (NULL != orte_proc_info.tmpdir_base) {
-    	    free(orte_proc_info.tmpdir_base);
-    	    orte_proc_info.tmpdir_base = NULL;
+    	if (NULL != orte_process_info.tmpdir_base) {
+    	    free(orte_process_info.tmpdir_base);
+    	    orte_process_info.tmpdir_base = NULL;
     	}
-    	if (NULL != orte_proc_info.top_session_dir) {
-    	    free(orte_proc_info.top_session_dir);
-    	    orte_proc_info.top_session_dir = NULL;
+    	if (NULL != orte_process_info.top_session_dir) {
+    	    free(orte_process_info.top_session_dir);
+    	    orte_process_info.top_session_dir = NULL;
     	}
     }
 
     /* 
      * Update some of the global structures if they are empty
      */
-    if (NULL == orte_proc_info.tmpdir_base)
-        orte_proc_info.tmpdir_base = strdup(prefix);
+    if (NULL == orte_process_info.tmpdir_base)
+        orte_process_info.tmpdir_base = strdup(prefix);
 
-    if (NULL == orte_proc_info.top_session_dir)
-        orte_proc_info.top_session_dir = strdup(frontend);
+    if (NULL == orte_process_info.top_session_dir)
+        orte_process_info.top_session_dir = strdup(frontend);
     
 
     /*
@@ -484,13 +484,13 @@ int orte_session_dir(bool create,
      */
     if (ORTE_VPID_INVALID != proc->vpid) {
     	if (create) { /* overwrite if creating */
-    	    if (NULL != orte_proc_info.proc_session_dir) {
-                free(orte_proc_info.proc_session_dir);
-                orte_proc_info.proc_session_dir = NULL;
+    	    if (NULL != orte_process_info.proc_session_dir) {
+                free(orte_process_info.proc_session_dir);
+                orte_process_info.proc_session_dir = NULL;
     	    }
     	}
-    	if (NULL == orte_proc_info.proc_session_dir) {
-    	    orte_proc_info.proc_session_dir = strdup(fulldirpath);
+    	if (NULL == orte_process_info.proc_session_dir) {
+    	    orte_process_info.proc_session_dir = strdup(fulldirpath);
     	}
 
         /* Strip off last part of directory structure */
@@ -505,25 +505,25 @@ int orte_session_dir(bool create,
      */
     if (ORTE_JOBID_INVALID != proc->jobid) {
     	if (create) { /* overwrite if creating */
-    	    if (NULL != orte_proc_info.job_session_dir) {
-                free(orte_proc_info.job_session_dir);
-                orte_proc_info.job_session_dir = NULL;
+    	    if (NULL != orte_process_info.job_session_dir) {
+                free(orte_process_info.job_session_dir);
+                orte_process_info.job_session_dir = NULL;
     	    }
     	}
-    	if (NULL == orte_proc_info.job_session_dir) {
-    	    orte_proc_info.job_session_dir = strdup(fulldirpath);
+    	if (NULL == orte_process_info.job_session_dir) {
+    	    orte_process_info.job_session_dir = strdup(fulldirpath);
     	}
     }
 
     if (orte_debug_flag) {
     	opal_output(0, "procdir: %s", 
-                    OMPI_PRINTF_FIX_STRING(orte_proc_info.proc_session_dir));
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.proc_session_dir));
     	opal_output(0, "jobdir: %s", 
-                    OMPI_PRINTF_FIX_STRING(orte_proc_info.job_session_dir));
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.job_session_dir));
     	opal_output(0, "top: %s", 
-                    OMPI_PRINTF_FIX_STRING(orte_proc_info.top_session_dir));
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.top_session_dir));
     	opal_output(0, "tmp: %s", 
-                    OMPI_PRINTF_FIX_STRING(orte_proc_info.tmpdir_base));
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.tmpdir_base));
     }
 
  cleanup:
@@ -547,8 +547,8 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
 
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
-                       orte_proc_info.tmpdir_base,
-                       orte_proc_info.top_session_dir, NULL);
+                       orte_process_info.tmpdir_base,
+                       orte_process_info.top_session_dir, NULL);
 
     /* we can only blow away session directories for our job family */
     if (0 > asprintf(&jobfam, "%d", ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid))) {
@@ -630,8 +630,8 @@ orte_session_dir_finalize(orte_process_name_t *proc)
 
     /* need to setup the top_session_dir with the prefix */
     tmp = opal_os_path(false,
-                       orte_proc_info.tmpdir_base,
-                       orte_proc_info.top_session_dir, NULL);
+                       orte_process_info.tmpdir_base,
+                       orte_process_info.top_session_dir, NULL);
     
     /* define the proc and job session directories for this process */
     if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&job, proc->jobid))) {
@@ -645,7 +645,7 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         free(job);
         return rc;
     }
-    job_session_dir = opal_os_path( false, orte_proc_info.top_session_dir,
+    job_session_dir = opal_os_path( false, orte_process_info.top_session_dir,
                                     job, NULL );
     if( NULL == job_session_dir ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -668,7 +668,7 @@ orte_session_dir_finalize(orte_process_name_t *proc)
                             false, orte_dir_check_file);
     opal_os_dirpath_destroy(job_session_dir,
                             false, orte_dir_check_file);
-    opal_os_dirpath_destroy(orte_proc_info.top_session_dir,
+    opal_os_dirpath_destroy(orte_process_info.top_session_dir,
                             false, orte_dir_check_file);
     opal_os_dirpath_destroy(tmp,
                             false, orte_dir_check_file);
@@ -697,11 +697,11 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         goto CLEANUP;
     }
 
-    if (opal_os_dirpath_is_empty(orte_proc_info.top_session_dir)) {
+    if (opal_os_dirpath_is_empty(orte_process_info.top_session_dir)) {
     	if (orte_debug_flag) {
     	    opal_output(0, "sess_dir_finalize: found top session dir empty - deleting");
     	}
-    	rmdir(orte_proc_info.top_session_dir);
+    	rmdir(orte_process_info.top_session_dir);
     } else {
     	if (orte_debug_flag) {
     	    opal_output(0, "sess_dir_finalize: top session dir not empty - leaving");

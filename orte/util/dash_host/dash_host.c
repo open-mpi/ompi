@@ -89,7 +89,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
              item = opal_list_get_next(item)) {
             node = (orte_node_t*) item;
             if (0 == strcmp(node->name, mapped_nodes[i]) ||
-               (0 == strcmp(node->name, orte_proc_info.nodename) &&
+               (0 == strcmp(node->name, orte_process_info.nodename) &&
                (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
                 ++node->slots;
                 break;
@@ -110,11 +110,11 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                  * later confusion
                  */
                 if (orte_show_resolved_nodenames &&
-                    0 != strcmp(mapped_nodes[i], orte_proc_info.nodename)) {
+                    0 != strcmp(mapped_nodes[i], orte_process_info.nodename)) {
                     /* add to list of aliases for this node - only add if unique */
                     opal_argv_append_unique_nosize(&node->alias, mapped_nodes[i]);
                 }
-                node->name = strdup(orte_proc_info.nodename);
+                node->name = strdup(orte_process_info.nodename);
             } else {
                 /* not local - use the given name */
                 node->name = strdup(mapped_nodes[i]);
@@ -323,7 +323,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 /* search -host list to see if this one is found */
                 found = false;
                 if ((0 == strcmp(node->name, mapped_nodes[i]) ||
-                    (0 == strcmp(node->name, orte_proc_info.nodename) &&
+                    (0 == strcmp(node->name, orte_process_info.nodename) &&
                     (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i]))))) {
                     /* remove item from list */
                     opal_list_remove_item(nodes, item);

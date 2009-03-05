@@ -37,7 +37,7 @@
 
 #include "orte/util/proc_info.h"
 
-ORTE_DECLSPEC orte_proc_info_t orte_proc_info = {
+ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_daemon =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_daemon_uri =        */   NULL,
@@ -68,7 +68,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_proc_info = {
 
 static bool init=false;
 
-int orte_proc_info_init(void)
+int orte_proc_info(void)
 {
     
     int tmp;
@@ -95,7 +95,7 @@ int orte_proc_info_init(void)
         } else {
             ptr = &uri[0];
         }
-        orte_proc_info.my_hnp_uri = strdup(ptr);
+        orte_process_info.my_hnp_uri = strdup(ptr);
         free(uri);
     }
     
@@ -115,25 +115,25 @@ int orte_proc_info_init(void)
         } else {
             ptr = &uri[0];
         }
-        orte_proc_info.my_daemon_uri = strdup(ptr);
+        orte_process_info.my_daemon_uri = strdup(ptr);
         free(uri);
     }
     
     mca_base_param_reg_int_name("orte", "app_num",
                                 "Index of the app_context that defines this proc",
                                 true, false, -1, &tmp);
-    orte_proc_info.app_num = tmp;
+    orte_process_info.app_num = tmp;
     
     /* get the process id */
-    orte_proc_info.pid = getpid();
+    orte_process_info.pid = getpid();
 
     /* get the nodename */
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
-    orte_proc_info.nodename = strdup(hostname);
+    orte_process_info.nodename = strdup(hostname);
     
     /* get the arch */
-    if (ORTE_SUCCESS != opal_arch_compute_local_id(&orte_proc_info.arch)) {
-        opal_output(0, "Process on node %s could not obtain local architecture - aborting", orte_proc_info.nodename);
+    if (ORTE_SUCCESS != opal_arch_compute_local_id(&orte_process_info.arch)) {
+        opal_output(0, "Process on node %s could not obtain local architecture - aborting", orte_process_info.nodename);
         return ORTE_ERROR;
     }
     
@@ -141,11 +141,11 @@ int orte_proc_info_init(void)
     mca_base_param_reg_int_name("orte", "num_nodes",
                                 "Number of nodes in the job",
                                 true, false,
-                                orte_proc_info.num_nodes, &tmp);
-    orte_proc_info.num_nodes = tmp;
+                                orte_process_info.num_nodes, &tmp);
+    orte_process_info.num_nodes = tmp;
     
     /* setup the sync buffer */
-    orte_proc_info.sync_buf = OBJ_NEW(opal_buffer_t);
+    orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     
     return ORTE_SUCCESS;
 }
@@ -157,62 +157,62 @@ int orte_proc_info_finalize(void)
         return ORTE_SUCCESS;
     }
     
-    if (NULL != orte_proc_info.tmpdir_base) {
-        free(orte_proc_info.tmpdir_base);
-        orte_proc_info.tmpdir_base = NULL;
+    if (NULL != orte_process_info.tmpdir_base) {
+        free(orte_process_info.tmpdir_base);
+        orte_process_info.tmpdir_base = NULL;
     }
     
-    if (NULL != orte_proc_info.top_session_dir) {
-        free(orte_proc_info.top_session_dir);
-        orte_proc_info.top_session_dir = NULL;
+    if (NULL != orte_process_info.top_session_dir) {
+        free(orte_process_info.top_session_dir);
+        orte_process_info.top_session_dir = NULL;
     }
  
-    if (NULL != orte_proc_info.job_session_dir) {
-        free(orte_proc_info.job_session_dir);
-        orte_proc_info.job_session_dir = NULL;
+    if (NULL != orte_process_info.job_session_dir) {
+        free(orte_process_info.job_session_dir);
+        orte_process_info.job_session_dir = NULL;
     }
     
-    if (NULL != orte_proc_info.proc_session_dir) {
-        free(orte_proc_info.proc_session_dir);
-        orte_proc_info.proc_session_dir = NULL;
+    if (NULL != orte_process_info.proc_session_dir) {
+        free(orte_process_info.proc_session_dir);
+        orte_process_info.proc_session_dir = NULL;
     }
     
-    if (NULL != orte_proc_info.nodename) {
-        free(orte_proc_info.nodename);
-        orte_proc_info.nodename = NULL;
+    if (NULL != orte_process_info.nodename) {
+        free(orte_process_info.nodename);
+        orte_process_info.nodename = NULL;
     }
 
-    if (NULL != orte_proc_info.sock_stdin) {
-        free(orte_proc_info.sock_stdin);
-        orte_proc_info.sock_stdin = NULL;
+    if (NULL != orte_process_info.sock_stdin) {
+        free(orte_process_info.sock_stdin);
+        orte_process_info.sock_stdin = NULL;
     }
     
-    if (NULL != orte_proc_info.sock_stdout) {
-        free(orte_proc_info.sock_stdout);
-        orte_proc_info.sock_stdout = NULL;
+    if (NULL != orte_process_info.sock_stdout) {
+        free(orte_process_info.sock_stdout);
+        orte_process_info.sock_stdout = NULL;
     }
     
-    if (NULL != orte_proc_info.sock_stderr) {
-        free(orte_proc_info.sock_stderr);
-        orte_proc_info.sock_stderr = NULL;
+    if (NULL != orte_process_info.sock_stderr) {
+        free(orte_process_info.sock_stderr);
+        orte_process_info.sock_stderr = NULL;
     }
 
-    if (NULL != orte_proc_info.my_hnp_uri) {
-        free(orte_proc_info.my_hnp_uri);
-        orte_proc_info.my_hnp_uri = NULL;
+    if (NULL != orte_process_info.my_hnp_uri) {
+        free(orte_process_info.my_hnp_uri);
+        orte_process_info.my_hnp_uri = NULL;
     }
 
-    if (NULL != orte_proc_info.my_daemon_uri) {
-        free(orte_proc_info.my_daemon_uri);
-        orte_proc_info.my_daemon_uri = NULL;
+    if (NULL != orte_process_info.my_daemon_uri) {
+        free(orte_process_info.my_daemon_uri);
+        orte_process_info.my_daemon_uri = NULL;
     }
 
-    orte_proc_info.hnp = false;
-    orte_proc_info.singleton = false;
-    orte_proc_info.daemon = false;
+    orte_process_info.hnp = false;
+    orte_process_info.singleton = false;
+    orte_process_info.daemon = false;
     
-    OBJ_RELEASE(orte_proc_info.sync_buf);
-    orte_proc_info.sync_buf = NULL;
+    OBJ_RELEASE(orte_process_info.sync_buf);
+    orte_process_info.sync_buf = NULL;
 
     init = false;
     return ORTE_SUCCESS;

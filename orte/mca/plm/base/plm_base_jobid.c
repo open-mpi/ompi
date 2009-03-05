@@ -41,9 +41,9 @@ int orte_plm_base_set_hnp_name(void)
     uint32_t bias;
     
     /* hash the nodename */
-    OPAL_HASH_STR(orte_proc_info.nodename, hash32);
+    OPAL_HASH_STR(orte_process_info.nodename, hash32);
     
-    bias = (uint32_t)orte_proc_info.pid;
+    bias = (uint32_t)orte_process_info.pid;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "plm:base:set_hnp_name: initial bias %ld nodename hash %lu",

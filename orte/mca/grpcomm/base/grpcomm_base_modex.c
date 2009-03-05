@@ -79,7 +79,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
     }
     
     /* pack our hostname */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_proc_info.nodename, 1, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -91,7 +91,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
     }
     
     /* pack our arch */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_proc_info.arch, 1, OPAL_UINT32))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }        
@@ -350,7 +350,7 @@ int orte_grpcomm_base_peer_modex(bool modex_db)
         goto cleanup;
     }
     
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_proc_info.arch, 1, OPAL_UINT32))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.arch, 1, OPAL_UINT32))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }        

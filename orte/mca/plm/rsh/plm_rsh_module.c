@@ -302,7 +302,7 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         /* if we are not the HNP, send a message to the HNP alerting it
          * to the failure
          */
-        if (!orte_proc_info.hnp) {
+        if (!orte_process_info.hnp) {
             opal_buffer_t buf;
             orte_vpid_t *vpid=(orte_vpid_t*)cbdata;
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -672,7 +672,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
      * by enclosing them in quotes. Check for any multi-word
      * mca params passed to mpirun and include them
      */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         int cnt, i;
         cnt = opal_argv_count(orted_cmd_line);    
         for (i=0; i < cnt; i+=3) {
@@ -852,7 +852,7 @@ static int remote_spawn(opal_buffer_t *launch)
         OBJ_RELEASE(item);
     }
     /* reconstruct the child list */
-    find_children(0, 0, ORTE_PROC_MY_NAME->vpid, orte_proc_info.num_procs);
+    find_children(0, 0, ORTE_PROC_MY_NAME->vpid, orte_process_info.num_procs);
     
     /* if I have no children, just return */
     if (opal_list_is_empty(&mca_plm_rsh_component.children)) {
@@ -865,7 +865,7 @@ static int remote_spawn(opal_buffer_t *launch)
     }
     
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_proc_info.nodename, &node_name_index1,
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
                                            &proc_vpid_index, prefix))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;

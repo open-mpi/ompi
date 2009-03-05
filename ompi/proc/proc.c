@@ -63,7 +63,7 @@ void ompi_proc_construct(ompi_proc_t* proc)
      * the arch of the remote nodes, we will have to set the convertors to the correct
      * architecture.
      */
-    proc->proc_arch = orte_proc_info.arch;
+    proc->proc_arch = orte_process_info.arch;
     proc->proc_convertor = ompi_mpi_local_convertor;
     OBJ_RETAIN( ompi_mpi_local_convertor );
 
@@ -99,7 +99,7 @@ int ompi_proc_init(void)
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
     /* create proc structures and find self */
-    for( i = 0; i < orte_proc_info.num_procs; i++ ) {
+    for( i = 0; i < orte_process_info.num_procs; i++ ) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
 
@@ -108,8 +108,8 @@ int ompi_proc_init(void)
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->proc_flags = OPAL_PROC_ALL_LOCAL;
-            proc->proc_hostname = orte_proc_info.nodename;
-            proc->proc_arch = orte_proc_info.arch;
+            proc->proc_hostname = orte_process_info.nodename;
+            proc->proc_arch = orte_process_info.arch;
         } else {
             /* get the locality information */
             proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
@@ -146,14 +146,14 @@ int ompi_proc_set_arch(void)
         if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
             proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != orte_proc_info.arch) {
+            if (proc->proc_arch != orte_process_info.arch) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
                 orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
-                               true, orte_proc_info.nodename, 
+                               true, orte_process_info.nodename, 
                                proc->proc_hostname == NULL ? "<hostname unavailable>" :
                                proc->proc_hostname);
                 OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -353,21 +353,21 @@ int ompi_proc_refresh(void) {
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->proc_flags = OPAL_PROC_ALL_LOCAL;
-            proc->proc_hostname = orte_proc_info.nodename;
-            proc->proc_arch = orte_proc_info.arch;
+            proc->proc_hostname = orte_process_info.nodename;
+            proc->proc_arch = orte_process_info.arch;
         } else {
             proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
             proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
             proc->proc_arch = orte_ess.proc_get_arch(&proc->proc_name);
             /* if arch is different than mine, create a new convertor for this proc */
-            if (proc->proc_arch != orte_proc_info.arch) {
+            if (proc->proc_arch != orte_process_info.arch) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(proc->proc_convertor);
                 proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
 #else
                 orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
-                               true, orte_proc_info.nodename, 
+                               true, orte_process_info.nodename, 
                                proc->proc_hostname == NULL ? "<hostname unavailable>" :
                                proc->proc_hostname);
                 OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -539,7 +539,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #else
                 orte_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
-                               true, orte_proc_info.nodename, 
+                               true, orte_process_info.nodename, 
                                new_hostname == NULL ? "<hostname unavailable>" :
                                new_hostname);
                 free(plist);

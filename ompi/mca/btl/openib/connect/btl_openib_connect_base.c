@@ -121,7 +121,7 @@ int ompi_btl_openib_connect_base_register(void)
             if (NULL == all[i]) {
                 orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
-                               "include", orte_proc_info.nodename,
+                               "include", orte_process_info.nodename,
                                "include", cpc_include, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -147,7 +147,7 @@ int ompi_btl_openib_connect_base_register(void)
             if (NULL == all[i]) {
                 orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
-                               "exclude", orte_proc_info.nodename,
+                               "exclude", orte_process_info.nodename,
                                "exclude", cpc_exclude, temp[j], 
                                all_cpc_names);
                 opal_argv_free(temp);
@@ -292,7 +292,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     if (0 == cpc_index) {
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "no cpcs for port", true,
-                       orte_proc_info.nodename,
+                       orte_process_info.nodename,
                        ibv_get_device_name(btl->device->ib_dev),
                        msg);
         free(cpcs);

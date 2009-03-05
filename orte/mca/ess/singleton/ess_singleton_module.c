@@ -144,7 +144,7 @@ static int rte_init(char flags)
         return rc;
     }
 
-    orte_proc_info.num_procs = 1;
+    orte_process_info.num_procs = 1;
     
     /* NOTE: do not wireup our io - let the fork'd orted serve
      * as our io handler. This prevents issues with the event
@@ -275,8 +275,8 @@ static int fork_hnp(void)
     }
     
     /* Fork off the child */
-    orte_proc_info.hnp_pid = fork();
-    if(orte_proc_info.hnp_pid < 0) {
+    orte_process_info.hnp_pid = fork();
+    if(orte_process_info.hnp_pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
         close(p[0]);
         close(p[1]);
@@ -286,7 +286,7 @@ static int fork_hnp(void)
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
     
-    if (orte_proc_info.hnp_pid == 0) {
+    if (orte_process_info.hnp_pid == 0) {
         close(p[0]);
         close(death_pipe[1]);
         /* I am the child - exec me */
@@ -368,13 +368,13 @@ static int fork_hnp(void)
             return rc;
         }
         /* save the daemon uri - we will process it later */
-        orte_proc_info.my_daemon_uri = strdup(orted_uri);
+        orte_process_info.my_daemon_uri = strdup(orted_uri);
         
         /* likewise, since this is also the HNP, set that uri too */
-        orte_proc_info.my_hnp_uri = strdup(orted_uri);
+        orte_process_info.my_hnp_uri = strdup(orted_uri);
         
        /* indicate we are a singleton so orte_init knows what to do */
-        orte_proc_info.singleton = true;
+        orte_process_info.singleton = true;
         /* all done - report success */
         free(orted_uri);
         return ORTE_SUCCESS;

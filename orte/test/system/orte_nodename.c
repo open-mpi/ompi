@@ -28,8 +28,8 @@ int main(int argc, char* argv[])
     pid = getpid();
 
     printf("orte_nodename: Node %s %ld Name %s Pid %ld Local Rank: %ld Num_local_procs %ld\n",
-           hostname, (long)orte_proc_info.nodeid, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid,
-           (long)orte_proc_info.local_rank, (long)orte_proc_info.num_local_procs);
+           hostname, (long)orte_process_info.nodeid, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)pid,
+           (long)orte_process_info.local_rank, (long)orte_process_info.num_local_procs);
 
     orte_finalize();
     return 0;

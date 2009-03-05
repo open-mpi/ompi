@@ -379,7 +379,7 @@ void orte_show_help_finalize(void)
     ready = false;
     
     /* Shutdown show_help, showing final messages */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         show_accumulated_duplicates(0, 0, NULL);
         OBJ_DESTRUCT(&abd_tuples);
         if (show_help_timer_set) {
@@ -428,7 +428,7 @@ int orte_show_help(const char *filename, const char *topic,
      * or we don't yet know our HNP, then all we can do
      * is process this locally
      */
-    if (orte_proc_info.hnp ||
+    if (orte_process_info.hnp ||
         NULL == orte_rml.send_buffer ||
         ORTE_PROC_MY_HNP->vpid == ORTE_VPID_INVALID) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);

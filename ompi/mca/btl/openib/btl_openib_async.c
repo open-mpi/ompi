@@ -293,7 +293,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             case IBV_EVENT_SRQ_ERR:
             case IBV_EVENT_PORT_ERR:
                 orte_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,orte_proc_info.nodename, orte_proc_info.pid,
+                    true,orte_process_info.nodename, orte_process_info.pid,
                     event.event_type, openib_event_to_str(event.event_type),
                     xrc_event ? "true" : "false");
                 break;
@@ -311,7 +311,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 break;
             default:
                 orte_show_help("help-mpi-btl-openib.txt", "of unknown event",
-                        true,orte_proc_info.nodename, orte_proc_info.pid,
+                        true,orte_process_info.nodename, orte_process_info.pid,
                         event.event_type, xrc_event ? "true" : "false");
         }
         ibv_ack_async_event(&event);

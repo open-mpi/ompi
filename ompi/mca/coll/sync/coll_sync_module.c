@@ -177,7 +177,7 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
         return OMPI_SUCCESS;
     } else {
         orte_show_help("help-coll-sync.txt", "missing collective", true,
-                       orte_proc_info.nodename, 
+                       orte_process_info.nodename, 
                        mca_coll_sync_component.priority, msg);
         return OMPI_ERR_NOT_FOUND;
     }

@@ -108,7 +108,7 @@ BEGIN_C_DECLS
  *                being built. Used to build the name of the
  *                "openmpi-sessions-[user]@[host]:[batch]" branch of
  *                the directory tree. NULL indicates that the nodename
- *                found in orte_proc_info is to be used.
+ *                found in orte_process_info is to be used.
  * @param batchid Batch job name, used in batch scheduling
  *                systems. NULL indicates that the default of "0" is
  *                to be used.
