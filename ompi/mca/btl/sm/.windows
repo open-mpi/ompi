@@ -10,5 +10,5 @@
 
 # Specific to this module
 
-mca_dependencies=libmpi libopen-rte mca_common_sm
+mca_dependencies=libmpi libopen-rte libmca_common_sm
 
