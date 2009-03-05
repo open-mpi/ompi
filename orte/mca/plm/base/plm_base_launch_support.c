@@ -151,7 +151,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if (orte_proc_info.num_procs != jdatorted->num_procs) {
+    if (orte_process_info.num_procs != jdatorted->num_procs) {
         /* more daemons are being launched - update the routing tree to
          * ensure that the HNP knows how to route messages via
          * the daemon routing tree - this needs to be done
@@ -159,7 +159,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
          * hasn't unpacked its launch message prior to being
          * asked to communicate.
          */
-        orte_proc_info.num_procs = jdatorted->num_procs;
+        orte_process_info.num_procs = jdatorted->num_procs;
         if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -1012,11 +1012,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     
     /* pass the total number of daemons that will be in the system */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         num_procs = jdata->num_procs;
     } else {
-        num_procs = orte_proc_info.num_procs;
+        num_procs = orte_process_info.num_procs;
     }
     opal_argv_append(argc, argv, "-mca");
     opal_argv_append(argc, argv, "orte_ess_num_procs");
@@ -1025,10 +1025,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     free(param);
     
     /* pass the uri of the hnp */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         rml_uri = orte_rml.get_contact_info();
     } else {
-        rml_uri = orte_proc_info.my_hnp_uri;
+        rml_uri = orte_process_info.my_hnp_uri;
     }
     asprintf(&param, "\"%s\"", rml_uri);
     opal_argv_append(argc, argv, "--hnp-uri");
@@ -1039,7 +1039,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      * being sure to "purge" any that would cause problems
      * on backend nodes
      */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         cnt = opal_argv_count(orted_cmd_line);    
         for (i=0; i < cnt; i+=3) {
             /* if the specified option is more than one word, we don't

@@ -113,9 +113,9 @@ static int finalize(void)
     /* if I am an application process, indicate that I am
         * truly finalizing prior to departure
         */
-    if (!orte_proc_info.hnp &&
-        !orte_proc_info.daemon &&
-        !orte_proc_info.tool) {
+    if (!orte_process_info.hnp &&
+        !orte_process_info.daemon &&
+        !orte_process_info.tool) {
         if (ORTE_SUCCESS != (rc = orte_routed_base_register_sync(false))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -123,7 +123,7 @@ static int finalize(void)
     }
     
     /* if I am the HNP, I need to stop the comm recv */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         orte_routed_base_comm_stop();
     }
     
@@ -157,8 +157,8 @@ static int delete_route(orte_process_name_t *proc)
     /* if I am an application process, I don't have any routes
      * so there is nothing for me to do
      */
-    if (!orte_proc_info.hnp && !orte_proc_info.daemon &&
-        !orte_proc_info.tool) {
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
         return ORTE_SUCCESS;
     }
     
@@ -178,7 +178,7 @@ static int delete_route(orte_process_name_t *proc)
          * in my routing table and thus have nothing to do
          * here, just return
          */
-        if (orte_proc_info.daemon) {
+        if (orte_process_info.daemon) {
             return ORTE_SUCCESS;
         }
         
@@ -225,8 +225,8 @@ static int update_route(orte_process_name_t *target,
     /* if I am an application process, we don't update the route since
      * we automatically route everything through the local daemon
      */
-    if (!orte_proc_info.hnp && !orte_proc_info.daemon &&
-        !orte_proc_info.tool) {
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
         return ORTE_SUCCESS;
     }
 
@@ -253,7 +253,7 @@ static int update_route(orte_process_name_t *target,
          * anything to this job family via my HNP - so nothing to do
          * here, just return
          */
-        if (orte_proc_info.daemon) {
+        if (orte_process_info.daemon) {
             return ORTE_SUCCESS;
         }
         
@@ -321,8 +321,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     /* if I am an application process, always route via my local daemon */
-    if (!orte_proc_info.hnp && !orte_proc_info.daemon &&
-        !orte_proc_info.tool) {
+    if (!orte_process_info.hnp && !orte_process_info.daemon &&
+        !orte_process_info.tool) {
         ret = ORTE_PROC_MY_DAEMON;
         goto found;
     }
@@ -340,7 +340,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         /* if I am a daemon, route this via the HNP */
-        if (orte_proc_info.daemon) {
+        if (orte_process_info.daemon) {
             ret = ORTE_PROC_MY_HNP;
             goto found;
         }
@@ -525,7 +525,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     int rc;
 
     /* if I am a tool, then I stand alone - there is nothing to do */
-    if (orte_proc_info.tool) {
+    if (orte_process_info.tool) {
         return ORTE_SUCCESS;
     }
     
@@ -533,31 +533,31 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * from the data sent to me for launch and update the routing tables to
      * point at the daemon for each proc
      */
-    if (orte_proc_info.daemon) {
+    if (orte_process_info.daemon) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
-                             (NULL == orte_proc_info.my_hnp_uri) ? "NULL" : orte_proc_info.my_hnp_uri));
+                             (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
         
         if (NULL == ndat) {
             /* indicates this is being called during orte_init.
              * Get the HNP's name for possible later use
              */
-            if (NULL == orte_proc_info.my_hnp_uri) {
+            if (NULL == orte_process_info.my_hnp_uri) {
                 /* fatal error */
                 ORTE_ERROR_LOG(ORTE_ERR_FATAL);
                 return ORTE_ERR_FATAL;
             }
             /* set the contact info into the hash table */
-            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_proc_info.my_hnp_uri))) {
+            if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_hnp_uri))) {
                 ORTE_ERROR_LOG(rc);
                 return(rc);
             }
             
             /* extract the hnp name and store it */
-            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_proc_info.my_hnp_uri,
+            if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
                                                                ORTE_PROC_MY_HNP, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -588,7 +588,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     }
     
 
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix: init routes for HNP job %s",
@@ -696,10 +696,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                              "%s routed_radix: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
-                             (NULL == orte_proc_info.my_hnp_uri) ? "NULL" : orte_proc_info.my_hnp_uri,
-                             (NULL == orte_proc_info.my_daemon_uri) ? "NULL" : orte_proc_info.my_daemon_uri));
+                             (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
+                             (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
                 
-        if (NULL == orte_proc_info.my_daemon_uri) {
+        if (NULL == orte_process_info.my_daemon_uri) {
             /* in this module, we absolutely MUST have this information - if
              * we didn't get it, then error out
              */
@@ -718,7 +718,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * to it. This is required to ensure that we -do- send messages to the correct
          * HNP name
          */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_proc_info.my_hnp_uri,
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
                                                            ORTE_PROC_MY_HNP, NULL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -728,12 +728,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
          * the connection, but just tells the RML how to reach the daemon
          * if/when we attempt to send to it
          */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_proc_info.my_daemon_uri))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_daemon_uri))) {
             ORTE_ERROR_LOG(rc);
             return(rc);
         }
         /* extract the daemon's name so we can update the routing table */
-        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_proc_info.my_daemon_uri,
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
                                                            ORTE_PROC_MY_DAEMON, NULL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -828,7 +828,7 @@ static void radix_tree(int rank, int *num_children,
     /* our children start at our rank + num_in_level */
     peer = rank + NInLevel;
     for (i = 0; i < mca_routed_radix_component.radix; i++) {
-        if (peer < (int)orte_proc_info.num_procs) {
+        if (peer < (int)orte_process_info.num_procs) {
             child = OBJ_NEW(orte_routed_tree_t);
             child->vpid = peer;
             if (NULL != children) {
@@ -836,7 +836,7 @@ static void radix_tree(int rank, int *num_children,
                 opal_list_append(children, &child->super);
                 (*num_children)++;
                 /* setup the relatives bitmap */
-                opal_bitmap_init(&child->relatives, orte_proc_info.num_procs);
+                opal_bitmap_init(&child->relatives, orte_process_info.num_procs);
                 /* point to the relatives */
                 relations = &child->relatives;
             } else {
@@ -865,7 +865,7 @@ static int update_routing_tree(void)
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
-    if (!orte_proc_info.daemon && !orte_proc_info.hnp) {
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
@@ -909,7 +909,7 @@ static int update_routing_tree(void)
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
             opal_output(0, "%s: \tchild %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), child->vpid);
-            for (j=0; j < (int)orte_proc_info.num_procs; j++) {
+            for (j=0; j < (int)orte_process_info.num_procs; j++) {
                 if (opal_bitmap_is_set_bit(&child->relatives, j)) {
                     opal_output(0, "%s: \t\trelation %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
                 }
@@ -928,7 +928,7 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
-    if (!orte_proc_info.daemon && !orte_proc_info.hnp) {
+    if (!orte_process_info.daemon && !orte_process_info.hnp) {
         return ORTE_VPID_INVALID;
     }
     
@@ -958,7 +958,7 @@ static int get_wireup_info(opal_buffer_t *buf)
      * is a meaningless command as I cannot get
      * the requested info
      */
-    if (!orte_proc_info.hnp) {
+    if (!orte_process_info.hnp) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
     

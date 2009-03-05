@@ -338,7 +338,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Enable debugging of OpenRTE" },
 
     { NULL, NULL, NULL, '\0', "tmpdir", "tmpdir", 1,
-      &orte_proc_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
+      &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
 
     { "orte", "do_not", "launch", '\0', "do-not-launch", "do-not-launch", 0,
@@ -444,7 +444,7 @@ int orterun(int argc, char *argv[])
     OBJ_CONSTRUCT(&orteds_exit, orte_trigger_event_t);
     
     /* flag that I am the HNP */
-    orte_proc_info.hnp = true;
+    orte_process_info.hnp = true;
 
     /* Setup MCA params */
     orte_register_params();
@@ -607,10 +607,10 @@ int orterun(int argc, char *argv[])
     signals_set = true;
     
     /* we are an hnp, so update the contact info field for later use */
-    orte_proc_info.my_hnp_uri = orte_rml.get_contact_info();
+    orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
     
     /* we are also officially a daemon, so better update that field too */
-    orte_proc_info.my_daemon_uri = orte_rml.get_contact_info();
+    orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
     
     /* If we have a prefix, then modify the PATH and
         LD_LIBRARY_PATH environment variables in our copy. This
@@ -1496,11 +1496,11 @@ static int parse_locals(int argc, char* argv[])
             pid = strtoul(ptr, NULL, 10);
             
             /* to search the local mpirun's, we have to partially initialize the
-             * orte_proc_info structure. This won't fully be setup until orte_init,
+             * orte_process_info structure. This won't fully be setup until orte_init,
              * but we finagle a little bit of it here
              */
-            if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(NULL, &orte_proc_info.tmpdir_base,
-                                                                &orte_proc_info.top_session_dir,
+            if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(NULL, &orte_process_info.tmpdir_base,
+                                                                &orte_process_info.top_session_dir,
                                                                 NULL, NULL, NULL))) {
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
                                orterun_basename, orterun_basename);

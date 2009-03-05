@@ -123,13 +123,13 @@ static void show_init_error(const char *file, int line,
         }
 
         orte_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
-                       true, orte_proc_info.nodename,
+                       true, orte_process_info.nodename,
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
         orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, orte_proc_info.nodename,
+                       true, orte_process_info.nodename,
                        file, line, func, strerror(errno), errno, dev);
     }
 }

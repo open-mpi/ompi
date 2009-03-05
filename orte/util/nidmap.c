@@ -138,9 +138,9 @@ int orte_util_setup_local_nidmap_entries(void)
     
     /* create a nidmap entry for this node */
     node = OBJ_NEW(orte_nid_t);
-    node->name = strdup(orte_proc_info.nodename);
+    node->name = strdup(orte_process_info.nodename);
     node->daemon = ORTE_PROC_MY_DAEMON->vpid;
-    node->arch = orte_proc_info.arch;
+    node->arch = orte_process_info.arch;
     pmap = OBJ_NEW(orte_pmap_t);
     pmap->local_rank = 0;
     pmap->node_rank = 0;
@@ -689,8 +689,8 @@ process_daemons:
     free(vpids);
     
     /* if we are a daemon or the HNP, update our num_procs */
-    if (orte_proc_info.hnp || orte_proc_info.daemon) {
-        orte_proc_info.num_procs = num_daemons;
+    if (orte_process_info.hnp || orte_process_info.daemon) {
+        orte_process_info.num_procs = num_daemons;
     }
     
     /* unpack a flag to see if we are in a homogeneous

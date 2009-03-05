@@ -662,7 +662,7 @@ REPORT_ERROR:
     /* if we are the HNP, then we would rather not send this to ourselves -
      * instead, we queue it up for local processing
      */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                            ORTE_RML_TAG_APP_LAUNCH_CALLBACK,
                            orte_plm_base_app_report_launch);
@@ -759,14 +759,14 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     
     /* pass my contact info to the local proc so we can talk */
     param = mca_base_param_environ_variable("orte","local_daemon","uri");
-    opal_setenv(param, orte_proc_info.my_daemon_uri, true, environ_copy);
+    opal_setenv(param, orte_process_info.my_daemon_uri, true, environ_copy);
     free(param);
     
     /* pass the hnp's contact info to the local proc in case it
      * needs it
      */
     param = mca_base_param_environ_variable("orte","hnp","uri");
-    opal_setenv(param, orte_proc_info.my_hnp_uri, true, environ_copy);
+    opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
     free(param);
     
     /* setup yield schedule - do not override any user-supplied directive! */
@@ -1419,7 +1419,7 @@ CLEANUP:
     /* if we are the HNP, then we would rather not send this to ourselves -
      * instead, we queue it up for local processing
      */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                            ORTE_RML_TAG_APP_LAUNCH_CALLBACK,
                            orte_plm_base_app_report_launch);
@@ -1817,7 +1817,7 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
-        if (orte_proc_info.hnp) {
+        if (orte_process_info.hnp) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buffer,
                                ORTE_RML_TAG_INIT_ROUTES,
                                orte_routed_base_process_msg);
@@ -1923,7 +1923,7 @@ static void check_proc_complete(orte_odls_child_t *child)
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
-        if (orte_proc_info.hnp) {
+        if (orte_process_info.hnp) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                                ORTE_RML_TAG_PLM,
                                orte_plm_base_receive_process_msg);
@@ -1992,7 +1992,7 @@ static void check_proc_complete(orte_odls_child_t *child)
             /* if we are the HNP, then we would rather not send this to ourselves -
              * instead, we queue it up for local processing
              */
-            if (orte_proc_info.hnp) {
+            if (orte_process_info.hnp) {
                 ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                                    ORTE_RML_TAG_PLM,
                                    orte_plm_base_receive_process_msg);
@@ -2142,8 +2142,8 @@ GOTCHILD:
             free(job);
             goto MOVEON;
         }
-        abort_file = opal_os_path(false, orte_proc_info.tmpdir_base,
-                                  orte_proc_info.top_session_dir,
+        abort_file = opal_os_path(false, orte_process_info.tmpdir_base,
+                                  orte_process_info.top_session_dir,
                                   job, vpid, "abort", NULL );
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls:waitpid_fired checking abort file %s",
@@ -2431,7 +2431,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
         if (0 != (err = kill_local(child->pid, SIGTERM))) {
             orte_show_help("help-odls-default.txt",
                            "odls-default:could-not-send-kill",
-                           true, orte_proc_info.nodename, child->pid, err);
+                           true, orte_process_info.nodename, child->pid, err);
             /* check the proc state - ensure it is in one of the termination
              * states so that we properly wakeup
              */
@@ -2457,7 +2457,7 @@ int orte_odls_base_default_kill_local_procs(orte_jobid_t job, bool set_state,
             if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
                 orte_show_help("help-odls-default.txt",
                                "odls-default:could-not-kill",
-                               true, orte_proc_info.nodename, child->pid);
+                               true, orte_process_info.nodename, child->pid);
             }
         }
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
@@ -2486,7 +2486,7 @@ RECORD:
         /* if we are the HNP, then we would rather not send this to ourselves -
          * instead, we queue it up for local processing
          */
-        if (orte_proc_info.hnp) {
+        if (orte_process_info.hnp) {
             ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &alert,
                                ORTE_RML_TAG_PLM,
                                orte_plm_base_receive_process_msg);
@@ -2538,10 +2538,10 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
 
             OBJ_CONSTRUCT(&stats, opal_pstats_t);
             /* record node up to first '.' */
-            for (j=0; j < (int)strlen(orte_proc_info.nodename) &&
+            for (j=0; j < (int)strlen(orte_process_info.nodename) &&
                  j < OPAL_PSTAT_MAX_STRING_LEN-1 &&
-                 orte_proc_info.nodename[j] != '.'; j++) {
-                stats.node[j] = orte_proc_info.nodename[j];
+                 orte_process_info.nodename[j] != '.'; j++) {
+                stats.node[j] = orte_process_info.nodename[j];
             }
             /* record rank */
             stats.rank = child->name->vpid;

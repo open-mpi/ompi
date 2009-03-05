@@ -47,7 +47,7 @@ int orte_iof_base_close(void)
     OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);
 
     OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
-    if (!orte_proc_info.daemon) {
+    if (!orte_process_info.daemon) {
         /* check if anything is still trying to be written out */
         wev = orte_iof_base.iof_write_stdout->wev;
         if (!opal_list_is_empty(&wev->outputs)) {

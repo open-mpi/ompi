@@ -104,17 +104,17 @@ static int init(void)
         ORTE_ERROR_LOG(rc);
     }
     
-    if (opal_profile && orte_proc_info.mpi_proc) {
+    if (opal_profile && orte_process_info.mpi_proc) {
         /* if I am an MPI application proc, then create a buffer
          * to pack all my attributes in */
         profile_buf = OBJ_NEW(opal_buffer_t);
         /* seed it with the node name */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(profile_buf, &orte_proc_info.nodename, 1, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(profile_buf, &orte_process_info.nodename, 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
         }
     }
     
-    if (orte_proc_info.hnp && recv_on) {
+    if (orte_process_info.hnp && recv_on) {
         /* open the profile file for writing */
         if (NULL == opal_profile_file) {
             /* no file specified - we will just ignore any incoming data */
@@ -140,7 +140,7 @@ static int init(void)
     /* if we are a daemon or the hnp, we need to post a
      * recv to catch any collective operations
      */
-    if (orte_proc_info.daemon || orte_proc_info.hnp) {
+    if (orte_process_info.daemon || orte_process_info.hnp) {
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                           ORTE_RML_TAG_DAEMON_COLLECTIVE,
                                                           ORTE_RML_NON_PERSISTENT,
@@ -163,7 +163,7 @@ static void finalize(void)
     
     orte_grpcomm_base_modex_finalize();
     
-    if (opal_profile && orte_proc_info.mpi_proc) {
+    if (opal_profile && orte_process_info.mpi_proc) {
         /* if I am an MPI proc, send my buffer to the collector */
         boptr = &bo;
         opal_dss.unload(profile_buf, (void**)&boptr->bytes, &boptr->size);
@@ -177,7 +177,7 @@ static void finalize(void)
         OBJ_DESTRUCT(&profile);
     }
     
-    if (orte_proc_info.hnp && recv_on) {
+    if (orte_process_info.hnp && recv_on) {
         /* if we are profiling and I am the HNP, then stop the
          * profiling receive
          */
@@ -191,7 +191,7 @@ static void finalize(void)
     /* if we are a daemon or the hnp, we need to cancel the
      * recv we posted
      */
-    if (orte_proc_info.daemon || orte_proc_info.hnp) {
+    if (orte_process_info.daemon || orte_process_info.hnp) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE);
     }
 }
@@ -283,7 +283,7 @@ static int xcast(orte_jobid_t job,
      * fire right away, but that's okay
      * The macro makes a copy of the buffer, so it's okay to release it here
      */
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
     } else {
         /* otherwise, send it to the HNP for relay */
@@ -930,7 +930,7 @@ static int daemon_collective(orte_process_name_t *sender, opal_buffer_t *data)
     
     if (jobdat->num_collected == jobdat->num_participating) {
         /* if I am the HNP, go process the results */
-        if (orte_proc_info.hnp) {
+        if (orte_process_info.hnp) {
             goto hnp_process;
         }
         

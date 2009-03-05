@@ -47,7 +47,7 @@ int orte_register_params(void)
     
     mca_base_param_reg_string_name("orte", "tmpdir_base",
                                    "Base of the session directory tree",
-                                   false, false, NULL,  &(orte_proc_info.tmpdir_base));
+                                   false, false, NULL,  &(orte_process_info.tmpdir_base));
    
     mca_base_param_reg_string_name("orte", "no_session_dirs",
                                    "Prohibited locations for session directories (multiple locations separated by ',', default=NULL)",
@@ -156,7 +156,7 @@ int orte_register_params(void)
         orte_timing = true;
     }
     
-    if (orte_proc_info.hnp) {
+    if (orte_process_info.hnp) {
         char *tmp;
         mca_base_param_reg_string_name("orte", "timing_file",
                                        "Name of the file where timing data is to be written (relative or absolute path)",

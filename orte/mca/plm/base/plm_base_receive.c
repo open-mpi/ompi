@@ -312,7 +312,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     OBJ_DESTRUCT(&answer);
 
     /* see if an error occurred - if so, wakeup the HNP so we can exit */
-    if (orte_proc_info.hnp && ORTE_SUCCESS != rc) {
+    if (orte_process_info.hnp && ORTE_SUCCESS != rc) {
         orte_trigger_event(&orte_exit);
     }
 }

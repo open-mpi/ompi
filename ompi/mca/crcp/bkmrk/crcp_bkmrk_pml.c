@@ -6470,10 +6470,10 @@ static void traffic_message_dump_msg_list(opal_list_t *msg_list, bool is_drain)
 
 static void traffic_message_dump_peer(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref, char * msg, bool root_only)
 {
-    if( root_only && orte_proc_info.my_name.vpid != 0 ) {
+    if( root_only && orte_process_info.my_name.vpid != 0 ) {
         return;
     } else {
-        sleep(orte_proc_info.my_name.vpid * 2);
+        sleep(orte_process_info.my_name.vpid * 2);
     }
 
     opal_output(0, "------------- %s ---------------------------------", msg);

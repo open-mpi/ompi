@@ -81,7 +81,7 @@ int orte_init(char flags)
     
     /* ensure we know the tool setting for when we finalize */
     if ((flags & ORTE_TOOL) || (flags & ORTE_TOOL_WITH_NAME)) {
-        orte_proc_info.tool = true;
+        orte_process_info.tool = true;
     }
 
     /* setup the locks */
@@ -90,8 +90,8 @@ int orte_init(char flags)
         goto error;
     }
     
-    if (orte_proc_info.hnp) {
-        orte_proc_info.daemon = false;
+    if (orte_process_info.hnp) {
+        orte_process_info.daemon = false;
     }
     
     /* Register all MCA Params */
@@ -111,8 +111,8 @@ int orte_init(char flags)
     opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
 
     /* Ensure the rest of the process info structure is initialized */
-    if (ORTE_SUCCESS != (ret = orte_proc_info_init())) {
-        error = "orte_proc_info_init";
+    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
+        error = "orte_proc_info";
         goto error;
     }
 

@@ -42,7 +42,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
     dev_name = ibv_get_device_name(device->ib_dev);
     len = asprintf(&xrc_file_name,
             "%s"OPAL_PATH_SEP"openib_xrc_domain_%s",
-            orte_proc_info.job_session_dir, dev_name);
+            orte_process_info.job_session_dir, dev_name);
     if (0 > len) {
         BTL_ERROR(("Failed to allocate memomry for XRC file name\n",
                 strerror(errno)));

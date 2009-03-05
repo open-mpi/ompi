@@ -105,7 +105,7 @@ static int orte_ras_ccp_component_query(mca_base_module_t **module, int *priorit
     }
 
     /* if we are NOT an HNP, then don't select us */
-    if (!orte_proc_info.hnp) {
+    if (!orte_process_info.hnp) {
         pCluster->Release();
         *module = NULL;
         return ORTE_ERROR;

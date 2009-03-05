@@ -209,7 +209,7 @@ static char* proc_get_hostname(orte_process_name_t *proc)
     /* if it is me, the answer is my nodename */
     if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
         proc->vpid == ORTE_PROC_MY_NAME->vpid) {
-        return orte_proc_info.nodename;
+        return orte_process_info.nodename;
     }
     
     /* otherwise, no idea */
@@ -221,7 +221,7 @@ static uint32_t proc_get_arch(orte_process_name_t *proc)
     /* if it is me, the answer is my arch */
     if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
         proc->vpid == ORTE_PROC_MY_NAME->vpid) {
-        return orte_proc_info.arch;
+        return orte_process_info.arch;
     }
     
     /* otherwise, no idea */
@@ -401,12 +401,12 @@ static int rte_ft_event(int state)
          * Restart the routed framework
          * JJH: Lie to the finalize function so it does not try to contact the daemon.
          */
-        orte_proc_info.tool = true;
+        orte_process_info.tool = true;
         if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
             exit_status = ret;
             goto cleanup;
         }
-        orte_proc_info.tool = false;
+        orte_process_info.tool = false;
         if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
             exit_status = ret;
             goto cleanup;
@@ -452,14 +452,14 @@ static int rte_ft_event(int state)
          * Session directory re-init
          */
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_proc_info.tmpdir_base,
-                                                    orte_proc_info.nodename,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename,
                                                     NULL, /* Batch ID -- Not used */
                                                     ORTE_PROC_MY_NAME))) {
             exit_status = ret;
         }
 
-        opal_output_set_output_file_info(orte_proc_info.proc_session_dir,
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
 
         /*
@@ -486,13 +486,13 @@ static int rte_ft_event(int state)
          * - Note: BLCR does this because it tries to preseve the PID
          *         of the program across checkpointes
          */
-        if( ORTE_SUCCESS != (ret = ess_slave_ft_event_update_process_info(orte_proc_info.my_name, getpid())) ) {
+        if( ORTE_SUCCESS != (ret = ess_slave_ft_event_update_process_info(orte_process_info.my_name, getpid())) ) {
             exit_status = ret;
             goto cleanup;
         }
 
         /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_proc_info.sync_buf))) {
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

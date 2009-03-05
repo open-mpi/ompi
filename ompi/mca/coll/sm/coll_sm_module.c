@@ -518,8 +518,8 @@ static int bootstrap_init(void)
     if (NULL == mca_coll_sm_component.sm_bootstrap_filename) {
         return OMPI_ERROR;
     }
-    orte_proc_info_init();
-    fullpath = opal_os_path( false, orte_proc_info.job_session_dir,
+    orte_proc_info();
+    fullpath = opal_os_path( false, orte_process_info.job_session_dir,
                              mca_coll_sm_component.sm_bootstrap_filename, NULL );
     if (NULL == fullpath) {
         return OMPI_ERR_OUT_OF_RESOURCE;

@@ -108,7 +108,7 @@ static int rte_init(char flags)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (orte_proc_info.daemon) {
+    if (orte_process_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
@@ -140,7 +140,7 @@ static int rte_init(char flags)
             }
             return ORTE_SUCCESS;
         }
-    } else if (orte_proc_info.tool) {
+    } else if (orte_process_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -162,7 +162,7 @@ static int rte_init(char flags)
     }
     
     /* setup the nidmap arrays */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_proc_info.sync_buf))) {
+    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_util_nidmap_init";
         goto error;
@@ -183,11 +183,11 @@ static int rte_finalize(void)
     int ret;
    
     /* if I am a daemon, finalize using the default procedure */
-    if (orte_proc_info.daemon) {
+    if (orte_process_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-    } else if (orte_proc_info.tool) {
+    } else if (orte_process_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
@@ -420,15 +420,15 @@ static int slurm_set_name(void)
                          "ess:slurm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* fix up the system info nodename to match exactly what slurm returned */
-    if (NULL != orte_proc_info.nodename) {
-        free(orte_proc_info.nodename);
+    if (NULL != orte_process_info.nodename) {
+        free(orte_process_info.nodename);
     }
-    orte_proc_info.nodename = get_slurm_nodename(slurm_nodeid);
+    orte_process_info.nodename = get_slurm_nodename(slurm_nodeid);
 
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:slurm set nodename to %s",
-                         orte_proc_info.nodename));
+                         orte_process_info.nodename));
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
@@ -554,7 +554,7 @@ static int build_daemon_nidmap(void)
         /* construct the URI */
         proc.vpid = node->daemon;
 orte_util_convert_process_name_to_string(&proc_name, &proc);
-        asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_proc_info.my_port);
+        asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
 opal_output(0, "contact info %s", uri);
         opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
         free(proc_name);

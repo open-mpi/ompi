@@ -145,7 +145,7 @@ int orte_dt_init(void)
     
     /* open up the verbose output for ORTE debugging */
     if (orte_debug_flag || 0 < orte_debug_verbosity ||
-        (orte_debug_daemons_flag && (orte_proc_info.daemon || orte_proc_info.hnp))) {
+        (orte_debug_daemons_flag && (orte_process_info.daemon || orte_process_info.hnp))) {
         if (0 < orte_debug_verbosity) {
             opal_output_set_verbosity(orte_debug_output, orte_debug_verbosity);
         } else {
@@ -414,7 +414,7 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
     orte_std_cntr_t i;
     
     /* if I am not an HNP, I cannot provide this object */
-    if (!orte_proc_info.hnp) {
+    if (!orte_process_info.hnp) {
         return NULL;
     }
     
@@ -725,7 +725,7 @@ static void orte_nid_construct(orte_nid_t *ptr)
 {
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
-    ptr->arch = orte_proc_info.arch;
+    ptr->arch = orte_process_info.arch;
     OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
 }
 
