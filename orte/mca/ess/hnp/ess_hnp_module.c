@@ -287,12 +287,12 @@ static int rte_init(char flags)
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                          "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                         orte_process_info.nodename));
+                         (NULL == orte_proc_info.tmpdir_base) ? "UNDEF" : orte_proc_info.tmpdir_base,
+                         orte_proc_info.nodename));
 
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                orte_process_info.tmpdir_base,
-                                orte_process_info.nodename, NULL,
+                                orte_proc_info.tmpdir_base,
+                                orte_proc_info.nodename, NULL,
                                 ORTE_PROC_MY_NAME))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_session_dir";
@@ -302,11 +302,11 @@ static int rte_init(char flags)
     /* Once the session directory location has been established, set
        the opal_output hnp file location to be in the
        proc-specific session directory. */
-    opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+    opal_output_set_output_file_info(orte_proc_info.proc_session_dir,
                                      "output-", NULL, NULL);
 
     /* save my contact info in a file for others to find */
-    jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+    jobfam_dir = opal_dirname(orte_proc_info.job_session_dir);
     contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
     free(jobfam_dir);
     
@@ -356,15 +356,15 @@ static int rte_init(char flags)
    
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->arch = orte_process_info.arch;
+    node->name = strdup(orte_proc_info.nodename);
+    node->arch = orte_proc_info.arch;
     node->index = opal_pointer_array_add(orte_node_pool, node);
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    proc->pid = orte_process_info.pid;
+    proc->pid = orte_proc_info.pid;
     proc->rml_uri = orte_rml.get_contact_info();
     proc->state = ORTE_PROC_STATE_RUNNING;
     OBJ_RETAIN(node);  /* keep accounting straight */
@@ -431,7 +431,7 @@ static int rte_init(char flags)
         goto error;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_process_info.hnp, !orte_process_info.daemon))) {
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_proc_info.hnp, !orte_proc_info.daemon))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
         goto error;
@@ -489,7 +489,7 @@ static int rte_finalize(void)
     int i;
 
     /* remove my contact info file */
-    contact_path = opal_os_path(false, orte_process_info.top_session_dir,
+    contact_path = opal_os_path(false, orte_proc_info.top_session_dir,
                                 "contact.txt", NULL);
     unlink(contact_path);
     free(contact_path);

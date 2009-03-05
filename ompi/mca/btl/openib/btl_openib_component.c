@@ -591,7 +591,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
         orte_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
-                true, orte_process_info.nodename);
+                true, orte_proc_info.nodename);
     }
 
     lmc = (1 << ib_port_attr->lmc);
@@ -949,7 +949,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
                 "XRC on device without XRC support", true,
                 mca_btl_openib_component.num_xrc_qps,
                 ibv_get_device_name(device->ib_dev),
-                orte_process_info.nodename);
+                orte_proc_info.nodename);
         return OMPI_ERROR;
     }
 
@@ -1237,7 +1237,7 @@ static int setup_qps(void)
     if (0 == opal_argv_count(queues)) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "no qps in receive_queues", true,
-                       orte_process_info.nodename, 
+                       orte_proc_info.nodename, 
                        mca_btl_openib_component.receive_queues);
         ret = OMPI_ERROR;
         goto error;
@@ -1256,7 +1256,7 @@ static int setup_qps(void)
             num_xrc_qps++;
 #else
             orte_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
-                           orte_process_info.nodename, 
+                           orte_proc_info.nodename, 
                            mca_btl_openib_component.receive_queues);
             ret = OMPI_ERR_NOT_AVAILABLE;
             goto error;
@@ -1264,7 +1264,7 @@ static int setup_qps(void)
         } else {
             orte_show_help("help-mpi-btl-openib.txt",
                            "invalid qp type in receive_queues", true,
-                           orte_process_info.nodename, 
+                           orte_proc_info.nodename, 
                            mca_btl_openib_component.receive_queues,
                            queues[qp]);
             ret = OMPI_ERR_BAD_PARAM;
@@ -1276,7 +1276,7 @@ static int setup_qps(void)
        and SRQ */
     if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
         orte_show_help("help-mpi-btl-openib.txt", "XRC with PP or SRQ", true,
-                       orte_process_info.nodename, 
+                       orte_proc_info.nodename, 
                        mca_btl_openib_component.receive_queues);
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
@@ -1285,7 +1285,7 @@ static int setup_qps(void)
     /* Current XRC implementation can't used with btls_per_lid > 1 */
     if (num_xrc_qps > 0 && mca_btl_openib_component.btls_per_lid > 1) {
         orte_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID", 
-                       true, orte_process_info.nodename, 
+                       true, orte_proc_info.nodename, 
                        mca_btl_openib_component.receive_queues, num_xrc_qps);
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
@@ -1312,7 +1312,7 @@ static int setup_qps(void)
             if (count < 3 || count > 6) {
                 orte_show_help("help-mpi-btl-openib.txt",
                                "invalid pp qp specification", true,
-                               orte_process_info.nodename, queues[qp]);
+                               orte_proc_info.nodename, queues[qp]);
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1343,7 +1343,7 @@ static int setup_qps(void)
             if (count < 3 || count > 5) {
                 orte_show_help("help-mpi-btl-openib.txt",
                                "invalid srq specification", true,
-                               orte_process_info.nodename, queues[qp]);
+                               orte_proc_info.nodename, queues[qp]);
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1367,7 +1367,7 @@ static int setup_qps(void)
 
         if (rd_num <= rd_low) {
             orte_show_help("help-mpi-btl-openib.txt", "rd_num must be > rd_low",
-                    true, orte_process_info.nodename, queues[qp]);
+                    true, orte_proc_info.nodename, queues[qp]);
             ret = OMPI_ERR_BAD_PARAM;
             goto error;
         }
@@ -1388,21 +1388,21 @@ static int setup_qps(void)
     if (max_qp_size < max_size_needed) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too small", true,
-                       orte_process_info.nodename, max_qp_size,
+                       orte_proc_info.nodename, max_qp_size,
                        max_size_needed);
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
     } else if (max_qp_size > max_size_needed) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "biggest qp size is too big", true,
-                       orte_process_info.nodename, max_qp_size,
+                       orte_proc_info.nodename, max_qp_size,
                        max_size_needed);
     }
 
     if (mca_btl_openib_component.ib_free_list_max > 0 &&
         min_freelist_size > mca_btl_openib_component.ib_free_list_max) {
         orte_show_help("help-mpi-btl-openib.txt", "freelist too small", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        mca_btl_openib_component.ib_free_list_max,
                        min_freelist_size);
         ret = OMPI_ERR_BAD_PARAM;
@@ -1487,7 +1487,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         if (mca_btl_openib_component.warn_no_device_params_found) {
             orte_show_help("help-mpi-btl-openib.txt",
                            "no device params found", true,
-                           orte_process_info.nodename,
+                           orte_proc_info.nodename,
                            ibv_get_device_name(device->ib_dev),
                            device->ib_dev_attr.vendor_id,
                            device->ib_dev_attr.vendor_part_id);
@@ -1593,7 +1593,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
 #endif
         if (NULL == cq) {
             orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                           true, orte_process_info.nodename,
+                           true, orte_proc_info.nodename,
                            __FILE__, __LINE__, "ibv_create_cq",
                            strerror(errno), errno, 
                            ibv_get_device_name(device->ib_dev));
@@ -1649,7 +1649,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                             mca_btl_openib_component.receive_queues)) {
                 orte_show_help("help-mpi-btl-openib.txt",
                                "conflicting receive_queues", true,
-                               orte_process_info.nodename,
+                               orte_proc_info.nodename,
                                ibv_get_device_name(device->ib_dev),
                                device->ib_dev_attr.vendor_id,
                                device->ib_dev_attr.vendor_part_id,
@@ -1699,7 +1699,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 "XRC on device without XRC support", true,
                 mca_btl_openib_component.num_xrc_qps,
                 ibv_get_device_name(device->ib_dev),
-                orte_process_info.nodename);
+                orte_proc_info.nodename);
         ret = OMPI_SUCCESS;
         goto error;
     }
@@ -1823,7 +1823,7 @@ error:
     if (OMPI_SUCCESS != ret) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true, 
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        ibv_get_device_name(device->ib_dev));
     }
 
@@ -2086,7 +2086,7 @@ btl_openib_component_init(int *num_btl_modules,
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "ptmalloc2 with no threads", true,
-                       orte_process_info.nodename);
+                       orte_proc_info.nodename);
         goto no_btls;
     }
 #endif
@@ -2204,7 +2204,7 @@ btl_openib_component_init(int *num_btl_modules,
             if (mca_btl_openib_component.want_fork_support > 0) {
                 orte_show_help("help-mpi-btl-openib.txt",
                                "ibv_fork_init fail", true,
-                               orte_process_info.nodename);
+                               orte_proc_info.nodename);
                 goto no_btls;
             }
         }
@@ -2313,7 +2313,7 @@ btl_openib_component_init(int *num_btl_modules,
     free(dev_sorted);
     if (!found) {
         orte_show_help("help-mpi-btl-openib.txt", "no devices right type",
-                       true, orte_process_info.nodename,
+                       true, orte_proc_info.nodename,
                        ((BTL_OPENIB_DT_IB == mca_btl_openib_component.device_type) ?
                         "InfiniBand" :
                         (BTL_OPENIB_DT_IWARP == mca_btl_openib_component.device_type) ?
@@ -2330,7 +2330,7 @@ btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_component.warn_nonexistent_if) {
         char *str = opal_argv_join(mca_btl_openib_component.if_list, ',');
         orte_show_help("help-mpi-btl-openib.txt", "nonexistent port",
-                       true, orte_process_info.nodename,
+                       true, orte_proc_info.nodename,
                        ((NULL != mca_btl_openib_component.if_include) ?
                         "in" : "ex"), str);
         free(str);
@@ -2338,7 +2338,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     if(0 == mca_btl_openib_component.ib_num_btls) {
         orte_show_help("help-mpi-btl-openib.txt",
-                "no active ports found", true, orte_process_info.nodename);
+                "no active ports found", true, orte_proc_info.nodename);
         goto no_btls;
     }
 
@@ -2385,7 +2385,7 @@ btl_openib_component_init(int *num_btl_modules,
             if (OMPI_SUCCESS != ret) {
                 orte_show_help("help-mpi-btl-openib.txt",
                                "error in device init", true, 
-                               orte_process_info.nodename,
+                               orte_proc_info.nodename,
                                ibv_get_device_name(device->ib_dev));
                 goto no_btls;
             }
@@ -2924,24 +2924,24 @@ error:
                            BTL_OPENIB_QP_TYPE_PP(qp) ? 
                            "pp rnr retry exceeded" : 
                            "srq rnr retry exceeded", true,
-                           orte_process_info.nodename, device_name,
+                           orte_proc_info.nodename, device_name,
                            peer_hostname);
             orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
                                    "help-mpi-btl-openib.txt",
                                    BTL_OPENIB_QP_TYPE_PP(qp) ? 
                                    "pp rnr retry exceeded" : 
                                    "srq rnr retry exceeded",
-                                   orte_process_info.nodename, device_name,
+                                   orte_proc_info.nodename, device_name,
                                    peer_hostname);
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             orte_show_help("help-mpi-btl-openib.txt", 
                            "pp retry exceeded", true,
-                           orte_process_info.nodename,
+                           orte_proc_info.nodename,
                            device_name, peer_hostname);
             orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
                                    "help-mpi-btl-openib.txt", 
                                    "pp retry exceeded",
-                                   orte_process_info.nodename,
+                                   orte_proc_info.nodename,
                                    device_name, peer_hostname);
         }
     }

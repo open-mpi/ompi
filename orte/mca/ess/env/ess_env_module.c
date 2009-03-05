@@ -136,14 +136,14 @@ static int rte_init(char flags)
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
-    if (orte_process_info.daemon) {
+    if (orte_proc_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
         
-    } else if (orte_process_info.tool) {
+    } else if (orte_proc_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
             ORTE_ERROR_LOG(ret);
@@ -165,7 +165,7 @@ static int rte_init(char flags)
     }
 
     /* if one was provided, build my nidmap */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
+    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_proc_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_util_nidmap_init";
         goto error;
@@ -186,11 +186,11 @@ static int rte_finalize(void)
     int ret;
     
     /* if I am a daemon, finalize using the default procedure */
-    if (orte_process_info.daemon) {
+    if (orte_proc_info.daemon) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
-    } else if (orte_process_info.tool) {
+    } else if (orte_proc_info.tool) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_finalize())) {
             ORTE_ERROR_LOG(ret);
@@ -505,12 +505,12 @@ static int rte_ft_event(int state)
          * Restart the routed framework
          * JJH: Lie to the finalize function so it does not try to contact the daemon.
          */
-        orte_process_info.tool = true;
+        orte_proc_info.tool = true;
         if (ORTE_SUCCESS != (ret = orte_routed.finalize()) ) {
             exit_status = ret;
             goto cleanup;
         }
-        orte_process_info.tool = false;
+        orte_proc_info.tool = false;
         if (ORTE_SUCCESS != (ret = orte_routed.initialize()) ) {
             exit_status = ret;
             goto cleanup;
@@ -556,14 +556,14 @@ static int rte_ft_event(int state)
          * Session directory re-init
          */
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename,
+                                                    orte_proc_info.tmpdir_base,
+                                                    orte_proc_info.nodename,
                                                     NULL, /* Batch ID -- Not used */
                                                     ORTE_PROC_MY_NAME))) {
             exit_status = ret;
         }
 
-        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+        opal_output_set_output_file_info(orte_proc_info.proc_session_dir,
                                          "output-", NULL, NULL);
 
         /*
@@ -590,13 +590,13 @@ static int rte_ft_event(int state)
          * - Note: BLCR does this because it tries to preseve the PID
          *         of the program across checkpointes
          */
-        if( ORTE_SUCCESS != (ret = ess_env_ft_event_update_process_info(orte_process_info.my_name, getpid())) ) {
+        if( ORTE_SUCCESS != (ret = ess_env_ft_event_update_process_info(orte_proc_info.my_name, getpid())) ) {
             exit_status = ret;
             goto cleanup;
         }
 
         /* if one was provided, build my nidmap */
-        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
+        if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_proc_info.sync_buf))) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;

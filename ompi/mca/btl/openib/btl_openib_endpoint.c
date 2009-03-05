@@ -1087,7 +1087,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
     if (NULL == btl || NULL == btl->error_cb) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "cannot raise btl error", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        __FILE__, __LINE__);
         exit(1);
     }

@@ -186,7 +186,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     OBJ_DESTRUCT(&hosts);
     
     /* is this a local operation? */
-    if (0 == strcmp(orte_process_info.nodename, nodename)) {
+    if (0 == strcmp(orte_proc_info.nodename, nodename)) {
         local_op = true;
     }
     
@@ -456,7 +456,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
      * required to pass existence tests
      */
     param = mca_base_param_environ_variable("orte","hnp","uri");
-    asprintf(&path, "\"%s\"", orte_process_info.my_hnp_uri);
+    asprintf(&path, "\"%s\"", orte_proc_info.my_hnp_uri);
     opal_setenv(param, path, true, &argv);
     free(param);
     free(path);

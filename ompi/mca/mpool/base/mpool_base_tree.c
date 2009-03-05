@@ -173,14 +173,14 @@ void mca_mpool_base_tree_print(void)
         ompi_debug_show_mpi_alloc_mem_leaks < 0) {
         orte_show_help("help-mpool-base.txt", "all mem leaks",
                        true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       orte_process_info.nodename,
-                       orte_process_info.pid, leak_msg);
+                       orte_proc_info.nodename,
+                       orte_proc_info.pid, leak_msg);
     } else {
         int i = num_leaks - ompi_debug_show_mpi_alloc_mem_leaks;
         orte_show_help("help-mpool-base.txt", "some mem leaks",
                        true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                       orte_process_info.nodename, 
-                       orte_process_info.pid, leak_msg, i,
+                       orte_proc_info.nodename, 
+                       orte_proc_info.pid, leak_msg, i,
                        (i > 1) ? "s were" : " was",
                        (i > 1) ? "are" : "is");
     }

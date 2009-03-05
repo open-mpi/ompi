@@ -288,10 +288,10 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         OBJ_DESTRUCT(&nodes);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    /* use the same name we got in orte_process_info so we avoid confusion in
+    /* use the same name we got in orte_proc_info so we avoid confusion in
      * the session directories
      */
-    node->name = strdup(orte_process_info.nodename);
+    node->name = strdup(orte_proc_info.nodename);
     node->state = ORTE_NODE_STATE_UP;
     node->slots_inuse = 0;
     node->slots_max = 0;

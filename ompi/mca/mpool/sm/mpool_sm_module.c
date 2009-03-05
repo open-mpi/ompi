@@ -131,8 +131,8 @@ int mca_mpool_sm_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Record the shared memory filename */
         asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
-                  orte_process_info.job_session_dir,
-                  orte_process_info.nodename );
+                  orte_proc_info.job_session_dir,
+                  orte_proc_info.nodename );
         opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, file_name);
         free(file_name);
         file_name = NULL;

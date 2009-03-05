@@ -209,7 +209,7 @@ static int xcast(orte_jobid_t job,
      * fire right away, but that's okay
      * The macro makes a copy of the buffer, so it's okay to release it here
      */
-    if (orte_process_info.hnp) {
+    if (orte_proc_info.hnp) {
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
     } else {
         /* otherwise, send it to the HNP for relay */
@@ -317,13 +317,13 @@ static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
          */
         if (0 == my_local_rank) {
             /* we need one entry/node in this job */
-            my_coll_peers = (orte_vpid_t*)malloc(orte_process_info.num_nodes * sizeof(orte_vpid_t));
+            my_coll_peers = (orte_vpid_t*)malloc(orte_proc_info.num_nodes * sizeof(orte_vpid_t));
             cpeers = 0;
         }
         
         /* cycle through the procs to create a list of those that are local to me */
         proc.jobid = ORTE_PROC_MY_NAME->jobid;
-        for (v=0; v < orte_process_info.num_procs; v++) {
+        for (v=0; v < orte_proc_info.num_procs; v++) {
             proc.vpid = v;
             /* is this proc local_rank=0 on its node? */
             if (0 == my_local_rank && 0 == orte_ess.get_local_rank(&proc)) {

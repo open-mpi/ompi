@@ -175,8 +175,8 @@ int ompi_attr_create_predefined(void)
     }
     
     /* check the app_num - if it was set, then define it - otherwise, don't */
-    if (orte_process_info.app_num >= 0) {
-        ret = set_f(MPI_APPNUM, orte_process_info.app_num);
+    if (orte_proc_info.app_num >= 0) {
+        ret = set_f(MPI_APPNUM, orte_proc_info.app_num);
     }
     
     return ret;

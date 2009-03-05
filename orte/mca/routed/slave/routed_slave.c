@@ -176,10 +176,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_slave: init routes for proc job %s\n\thnp_uri %s\n\tdaemon uri %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job),
-                         (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri,
-                         (NULL == orte_process_info.my_daemon_uri) ? "NULL" : orte_process_info.my_daemon_uri));
+                         (NULL == orte_proc_info.my_hnp_uri) ? "NULL" : orte_proc_info.my_hnp_uri,
+                         (NULL == orte_proc_info.my_daemon_uri) ? "NULL" : orte_proc_info.my_daemon_uri));
     
-    if (NULL == orte_process_info.my_daemon_uri) {
+    if (NULL == orte_proc_info.my_daemon_uri) {
         /* in this module, we absolutely MUST have this information - if
          * we didn't get it, then error out
          */
@@ -198,7 +198,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * to it. This is required to ensure that we -do- send messages to the correct
      * HNP name
      */
-    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_proc_info.my_hnp_uri,
                                                        ORTE_PROC_MY_HNP, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -208,12 +208,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
      * the connection, but just tells the RML how to reach the daemon
      * if/when we attempt to send to it
      */
-    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_process_info.my_daemon_uri))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(orte_proc_info.my_daemon_uri))) {
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
     /* extract the daemon's name so we can update the routing table */
-    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_daemon_uri,
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_proc_info.my_daemon_uri,
                                                        ORTE_PROC_MY_DAEMON, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;

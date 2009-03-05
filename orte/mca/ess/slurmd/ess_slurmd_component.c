@@ -74,10 +74,10 @@ int orte_ess_slurmd_component_query(mca_base_module_t **module, int *priority)
      * by mpirun but are in a slurm world
      */
     
-    if (orte_process_info.mpi_proc &&
+    if (orte_proc_info.mpi_proc &&
         NULL != getenv("SLURM_JOBID") &&
         NULL != getenv("SLURM_STEPID") &&
-        NULL == orte_process_info.my_hnp_uri) {
+        NULL == orte_proc_info.my_hnp_uri) {
         *priority = 30;
         *module = (mca_base_module_t *)&orte_ess_slurmd_module;
         return ORTE_SUCCESS;

@@ -313,12 +313,12 @@ int orte_daemon(int argc, char *argv[])
     
     if (orted_globals.hnp) {
         /* we are to be the hnp, so set that flag */
-        orte_process_info.hnp = true;
-        orte_process_info.daemon = false;
+        orte_proc_info.hnp = true;
+        orte_proc_info.daemon = false;
     } else {
         /* set ourselves to be just a daemon */
-        orte_process_info.hnp = false;
-        orte_process_info.daemon = true;
+        orte_proc_info.hnp = false;
+        orte_proc_info.daemon = true;
     }
 
 #if OPAL_ENABLE_FT == 1
@@ -393,13 +393,13 @@ int orte_daemon(int argc, char *argv[])
     /* insert our contact info into our process_info struct so we
      * have it for later use and set the local daemon field to our name
      */
-    orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
+    orte_proc_info.my_daemon_uri = orte_rml.get_contact_info();
     ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
     
     /* if I am also the hnp, then update that contact info field too */
-    if (orte_process_info.hnp) {
-        orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
+    if (orte_proc_info.hnp) {
+        orte_proc_info.my_hnp_uri = orte_rml.get_contact_info();
         ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
         ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
     }
@@ -460,10 +460,10 @@ int orte_daemon(int argc, char *argv[])
 
         /* define a log file name in the session directory */
         sprintf(log_file, "output-orted-%s-%s.log",
-                jobidstring, orte_process_info.nodename);
+                jobidstring, orte_proc_info.nodename);
         log_path = opal_os_path(false,
-                                orte_process_info.tmpdir_base,
-                                orte_process_info.top_session_dir,
+                                orte_proc_info.tmpdir_base,
+                                orte_proc_info.top_session_dir,
                                 log_file,
                                 NULL);
 
@@ -487,8 +487,8 @@ int orte_daemon(int argc, char *argv[])
      */
     if (orte_debug_daemons_flag) {
         fprintf(stderr, "Daemon %s checking in as pid %ld on host %s\n",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)orte_process_info.pid,
-                orte_process_info.nodename);
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)orte_proc_info.pid,
+                orte_proc_info.nodename);
     }
 
     /* We actually do *not* want the orted to voluntarily yield() the
@@ -571,7 +571,7 @@ int orte_daemon(int argc, char *argv[])
         
         /* create a string that contains our uri + the singleton's name */
         orte_util_convert_process_name_to_string(&nptr, &proc->name);
-        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, nptr);
+        asprintf(&tmp, "%s[%s]", orte_proc_info.my_daemon_uri, nptr);
         free(nptr);
 
         /* pass that info to the singleton */
@@ -596,7 +596,7 @@ int orte_daemon(int argc, char *argv[])
      * is if we are launched by a singleton to provide support
      * for it
      */
-    if (!orte_process_info.hnp) {
+    if (!orte_proc_info.hnp) {
         /* send the information to the orted report-back point - this function
          * will process the data, but also counts the number of
          * orteds that reported back so the launch procedure can continue.
@@ -615,7 +615,7 @@ int orte_daemon(int argc, char *argv[])
             goto DONE;
         }
         /* send our architecture */
-        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_process_info.arch, 1, OPAL_INT32))) {
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &orte_proc_info.arch, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(buffer);
             goto DONE;

@@ -106,7 +106,7 @@ static int orte_smr_bproc_open(void)
 
 static orte_smr_base_module_t* orte_smr_bproc_init(int *priority)
 {
-    if (!orte_process_info.seed) {
+    if (!orte_proc_info.seed) {
         return NULL;
     }
 

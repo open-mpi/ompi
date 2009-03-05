@@ -178,7 +178,7 @@ int btl_openib_register_mca_params(void)
         if (0 != ival) {
             orte_show_help("help-mpi-btl-openib.txt",
                            "ibv_fork requested but not supported", true,
-                           orte_process_info.nodename);
+                           orte_proc_info.nodename);
             return OMPI_ERROR;
         }
     }
@@ -208,7 +208,7 @@ int btl_openib_register_mca_params(void)
     } else {
         orte_show_help("help-mpi-btl-openib.txt",
                        "ibv_fork requested but not supported", true,
-                       orte_process_info.nodename);
+                       orte_proc_info.nodename);
         return OMPI_ERROR;
     }
     free(str);
@@ -458,7 +458,7 @@ int btl_openib_register_mca_params(void)
                   64, &ival, REGINT_GE_ZERO));
     if(ival <= 1 || (ival & (ival - 1))) {
         orte_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",
-                true, ival, orte_process_info.nodename, 64);
+                true, ival, orte_proc_info.nodename, 64);
         mca_btl_openib_component.buffer_alignment = 64;
     } else {
         mca_btl_openib_component.buffer_alignment = (uint32_t) ival;

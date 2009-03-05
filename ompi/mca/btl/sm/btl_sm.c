@@ -233,8 +233,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* set file name */
     if(asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                orte_process_info.job_session_dir,
-                orte_process_info.nodename) < 0)
+                orte_proc_info.job_session_dir,
+                orte_proc_info.nodename) < 0)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* Pass in a data segment alignment of 0 to get no data
@@ -371,7 +371,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
     OBJ_CONSTRUCT(&ep->pending_sends, opal_list_t);
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-            orte_process_info.job_session_dir,
+            orte_proc_info.job_session_dir,
             (unsigned long)proc->proc_name.vpid);
     ep->fifo_fd = open(path, O_WRONLY);
     if(ep->fifo_fd < 0) {
@@ -848,7 +848,7 @@ int mca_btl_sm_ft_event(int state) {
             opal_crs_base_metadata_write_token(NULL, CRS_METADATA_TOUCH, mca_btl_sm_component.mmap_file->map_path);
 
             /* Record the job session directory */
-            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_MKDIR, orte_process_info.job_session_dir);
+            opal_crs_base_metadata_write_token(NULL, CRS_METADATA_MKDIR, orte_proc_info.job_session_dir);
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
@@ -868,7 +868,7 @@ int mca_btl_sm_ft_event(int state) {
             OPAL_CRS_RESTART_PRE == state) {
         if( NULL != mca_btl_sm_component.mmap_file ) {
             /* Add session directory */
-            opal_crs_base_cleanup_append(orte_process_info.job_session_dir, true);
+            opal_crs_base_cleanup_append(orte_proc_info.job_session_dir, true);
             /* Add shared memory file */
             opal_crs_base_cleanup_append(mca_btl_sm_component.mmap_file->map_path, false);
         }

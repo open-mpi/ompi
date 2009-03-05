@@ -426,7 +426,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
         endpoint->qps[qpnum].ib_inline_max = attr.cap.max_inline_data;
         orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                        "inline truncated", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        ibv_get_device_name(contents->openib_btl->device->ib_dev),
                        req_inline, attr.cap.max_inline_data);
     } else {
@@ -722,14 +722,14 @@ static void *show_help_cant_find_endpoint(void *context)
         msg = stringify(c->peer_ip_addr);
         orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        c->device_name,
                        c->peer_tcp_port);
         free(msg);
     } else {
         orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "could not find matching endpoint", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        "<unknown>", "<unknown>", -1);
     }
     free(context);
@@ -1421,7 +1421,7 @@ static void *show_help_rdmacm_event_error(void *c)
     if (RDMA_CM_EVENT_DEVICE_REMOVAL == event->event) {
         orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm device removal", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        ibv_get_device_name(event->id->verbs->device));
     } else {
         const char *device = "Unknown";
@@ -1432,7 +1432,7 @@ static void *show_help_rdmacm_event_error(void *c)
         }
         orte_show_help("help-mpi-btl-openib-cpc-rdmacm.txt",
                        "rdma cm event error", true,
-                       orte_process_info.nodename,
+                       orte_proc_info.nodename,
                        device,
                        rdma_event_str(event->event),
                        context->endpoint->endpoint_proc->proc_ompi->proc_hostname);

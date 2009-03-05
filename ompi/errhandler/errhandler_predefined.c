@@ -177,8 +177,8 @@ static void backend_fatal_aggregate(char *type,
     arg = va_arg(arglist, char*);
     va_end(arglist);
 
-    asprintf(&prefix, "[%s:%d]", orte_process_info.nodename,
-             (int) orte_process_info.pid);
+    asprintf(&prefix, "[%s:%d]", orte_proc_info.nodename,
+             (int) orte_proc_info.pid);
 
     if (NULL != error_code) {
         err_msg = ompi_mpi_errnum_get_string(*error_code);

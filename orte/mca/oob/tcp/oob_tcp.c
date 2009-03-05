@@ -546,14 +546,14 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
        port in the range.  Otherwise, tcp_port_min will be 0, which
        means "pick any port" */
     if (AF_INET == af_family) {
-        if (orte_process_info.daemon) {
+        if (orte_proc_info.daemon) {
             /* if static ports were provided, the daemon takes the
              * first entry in the list - otherwise, we "pick any port"
              */
             if (NULL != mca_oob_tcp_component.tcp4_static_ports) {
                 port = strtol(mca_oob_tcp_component.tcp4_static_ports[0], NULL, 10);
                 /* save the port for later use */
-                orte_process_info.my_port = port;
+                orte_proc_info.my_port = port;
                 /* convert it to network-byte-order */
                 port = htons(port);
                 /* flag that we are using static ports */
@@ -562,7 +562,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                 port = 0;
                 orte_static_ports = false;
             }
-        } else if (orte_process_info.mpi_proc) {
+        } else if (orte_proc_info.mpi_proc) {
             /* if static ports were provided, an mpi proc takes its
              * node_local_rank entry in the list IF it has that info
              * AND enough ports were provided - otherwise, we "pick any port"
@@ -575,7 +575,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                     /* any daemon takes the first entry, so we start with the second */
                     port = strtol(mca_oob_tcp_component.tcp4_static_ports[nrank+1], NULL, 10);
                     /* save the port for later use */
-                    orte_process_info.my_port = port;
+                    orte_proc_info.my_port = port;
                     /* convert it to network-byte-order */
                     port = htons(port);
                     /* flag that we are using static ports */
@@ -599,14 +599,14 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 
 #if OPAL_WANT_IPV6
     if (AF_INET6 == af_family) {
-        if (orte_process_info.daemon) {
+        if (orte_proc_info.daemon) {
             /* if static ports were provided, the daemon takes the
              * first entry in the list - otherwise, we "pick any port"
              */
             if (NULL != mca_oob_tcp_component.tcp6_static_ports) {
                 port = strtol(mca_oob_tcp_component.tcp6_static_ports[0], NULL, 10);
                 /* save the port for later use */
-                orte_process_info.my_port = port;
+                orte_proc_info.my_port = port;
                 /* convert it to network-byte-order */
                 port = htons(port);
                 /* flag that we are using static ports */
@@ -615,7 +615,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                 port = 0;
                 orte_static_ports = false;
             }
-        } else if (orte_process_info.mpi_proc) {
+        } else if (orte_proc_info.mpi_proc) {
             /* if static ports were provided, an mpi proc takes its
              * node_local_rank entry in the list IF it has that info
              * AND enough ports were provided - otherwise, we "pick any port"
@@ -628,7 +628,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
                     /* any daemon takes the first entry, so we start with the second */
                     port = strtol(mca_oob_tcp_component.tcp6_static_ports[nrank+1], NULL, 10);
                     /* save the port for later use */
-                    orte_process_info.my_port = port;
+                    orte_proc_info.my_port = port;
                     /* convert it to network-byte-order */
                     port = htons(port);
                     /* flag that we are using static ports */
@@ -701,7 +701,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
         /* if we dynamically assigned the port, save it here,
          * remembering to convert it back from network byte order first
          */
-        orte_process_info.my_port = ntohs(*target_port);
+        orte_proc_info.my_port = ntohs(*target_port);
     }
     
     /* setup listen backlog to maximum allowed by kernel */
@@ -1368,7 +1368,7 @@ int mca_oob_tcp_init(void)
 {
     orte_jobid_t jobid;
     int rc;
-    int randval = orte_process_info.num_procs;
+    int randval = orte_proc_info.num_procs;
 
     if (0 == randval) randval = 10; 
 
@@ -1387,10 +1387,10 @@ int mca_oob_tcp_init(void)
     jobid = ORTE_PROC_MY_NAME->jobid;
 
     /* Fix up the listen type.  This is the first call into the OOB in
-       which the orte_process_info.hnp field is reliably set.  The
+       which the orte_proc_info.hnp field is reliably set.  The
        listen_mode should only be listen_thread for the HNP -- all
        others should use the traditional event library. */
-    if (!orte_process_info.hnp) {
+    if (!orte_proc_info.hnp) {
         mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
     }
 

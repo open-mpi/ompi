@@ -98,9 +98,9 @@ int orte_ess_base_tool_setup(void)
      * this node might be located
      */
     if (ORTE_SUCCESS != (ret = orte_session_dir_get_name(NULL,
-                                   &orte_process_info.tmpdir_base,
-                                   &orte_process_info.top_session_dir,
-                                   orte_process_info.nodename, NULL, NULL))) {
+                                   &orte_proc_info.tmpdir_base,
+                                   &orte_proc_info.top_session_dir,
+                                   orte_proc_info.nodename, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "define session dir names";
         goto error;
@@ -136,7 +136,7 @@ int orte_ess_base_tool_setup(void)
         error = "orte_snapc_base_open";
         goto error;
     }
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_process_info.hnp, !orte_process_info.daemon))) {
+    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(orte_proc_info.hnp, !orte_proc_info.daemon))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_snapc_base_select";
         goto error;

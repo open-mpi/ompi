@@ -53,7 +53,7 @@ int orte_plm_base_select(void)
          * If we didn't find one, and we are a daemon, then default to retaining the proxy.
          * Otherwise, if we didn't find one to select, that is unacceptable. 
          */
-        if (orte_process_info.daemon) {
+        if (orte_proc_info.daemon) {
             /* don't record a selected component or flag selected
              * so we finalize correctly - just leave the plm alone
              * as it defaults to pointing at the proxy

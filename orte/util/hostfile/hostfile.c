@@ -184,11 +184,11 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
                 /* Nodename has been allocated, that is for sure */
                 if (orte_show_resolved_nodenames &&
-                    0 != strcmp(node_name, orte_process_info.nodename)) {
+                    0 != strcmp(node_name, orte_proc_info.nodename)) {
                     node_alias = strdup(node_name);
                 }
                 free (node_name);
-                node_name = strdup(orte_process_info.nodename);
+                node_name = strdup(orte_proc_info.nodename);
             }
             
             /* Do we need to make a new node object?  First check to see
@@ -211,11 +211,11 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         if (strcmp(node_name, "localhost") == 0 || opal_ifislocal(node_name)) {
             /* Nodename has been allocated, that is for sure */
             if (orte_show_resolved_nodenames &&
-                0 != strcmp(node_name, orte_process_info.nodename)) {
+                0 != strcmp(node_name, orte_proc_info.nodename)) {
                 node_alias = strdup(node_name);
             }
             free (node_name);
-            node_name = strdup(orte_process_info.nodename);
+            node_name = strdup(orte_proc_info.nodename);
         }
 
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
