@@ -38,6 +38,9 @@ Trunk (not on release branches yet)
 1.4
 ---
 
+- Added twitter notifier component.  See "ompi_info --param notifier
+  twitter" for a list of the relevant MCA parameters that are
+  necessary.
 - Added smtp notifier component (requires libesmtp).  See "ompi_info
   --param notifier smtp" for a list of the relevant MCA parameters that
   are necessary.

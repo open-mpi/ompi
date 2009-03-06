@@ -1,0 +1,35 @@
+# -*- text -*-
+#
+# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's Twitter notifier support
+#
+[only supports http]
+Sorry, Open MPI's Twitter component currently only supports http URLs
+for Twitter updates.
+
+  URL supplied: %s
+#
+[unable to parse URL]
+Sorry, Open MPI's Twitter component was unable to parse the Twitter
+update URL that was provided.
+
+  URL supplied: %s
+#
+[unable to resolve server]
+Sorry, Open MPI's Twitter component was unable to resolve the IP
+address of the server provided in the Twitter update URL.
+
+  Server: %s
+#
+[tweet failed]
+Oops!  Open MPI's Twitter failed to send a tweet.
+
+  Reason: %s (errno: %d)
+  Tweet: %s
+#
