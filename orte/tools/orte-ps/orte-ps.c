@@ -760,7 +760,7 @@ static int pretty_print_vpids(orte_job_t *job) {
 }
 
 static void pretty_print_dashed_line(int len) {
-    static const char dashes[8] = "--------";
+    static const char dashes[9] = "--------";
 
     while (len >= 8) {
         printf("%8.8s", dashes);
