@@ -331,12 +331,12 @@ void ras_get_cluster_message(ICluster* pCluster)
 
     hr = pCluster->get_ErrorMessage(&message);
     if (SUCCEEDED(hr)) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             _com_util::ConvertBSTRToString(message)));
         SysFreeString(message);
     }
     else {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "pCluster->get_ErrorMessage failed.\n"));
     }
 }
