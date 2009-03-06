@@ -37,9 +37,7 @@ sources = \
     btl_pcie_proc.h \
     btl_pcie_lex.c \
     btl_pcie_lex.h \
-    btl_pcie_cfg.c \
-    btl_pcie_ddriver.h \
-    btl_pcie_ddriver.c
+    btl_pcie_cfg.c
 
 EXTRA_DIST = btl_pcie_lex.l
 
