@@ -69,9 +69,6 @@ int orte_notifier_base_select(void)
         goto cleanup;
     }
 
-    /* Save the winner */
-    orte_notifier = *best_module;
-
     if (NULL != orte_notifier.init) {
         /* if an init function is provided, use it */
         if (ORTE_SUCCESS != (ret = orte_notifier.init()) ) {
@@ -79,6 +76,9 @@ int orte_notifier_base_select(void)
             goto cleanup;
         }
     }
+
+    /* Save the winner */
+    orte_notifier = *best_module;
 
  cleanup:
     return exit_status;
