@@ -186,7 +186,7 @@ static void tweet(char *msg)
              auth_basic(),
              version_string(),
              mca_notifier_twitter_component.server,
-             strlen(msg) + strlen("status="),
+             (int) (strlen(msg) + strlen("status=")),
              msg);
 
     /* Get a socket */
@@ -216,7 +216,7 @@ static void tweet(char *msg)
     }
 
     /* Send HTTP update */
-    for (len = strlen(str); sent < len; ) {
+    for (sent = 0, len = strlen(str); sent < len; ) {
         ret = write(fd, str, strlen(str));
         if (ret > 0) {
             str += ret;
