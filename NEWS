@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -35,7 +35,7 @@ Trunk (not on release branches yet)
   details.
   --> Expected: ???
 
-1.4
+1.5
 ---
 
 - Added twitter notifier component.  See "ompi_info --param notifier
