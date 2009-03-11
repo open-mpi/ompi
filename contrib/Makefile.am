@@ -60,4 +60,9 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-panasas \
         platform/lanl/tlcc/optimized.conf \
         platform/lanl/tlcc/optimized-nopanasas.conf \
-        platform/lanl/tlcc/optimized-panasas.conf
+        platform/lanl/tlcc/optimized-panasas.conf \
+        platform/embedded/debug \
+        platform/embedded/optimized \
+        platform/embedded/build_embedded.sh \
+        platform/embedded/gen_embedded.sh
+
