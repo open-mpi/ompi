@@ -172,9 +172,10 @@ Node: %s
 
 when attempting to start process rank %lu.
 
-This can be resolved by either asking the system administrator for that node to
-increase the system limit, or by rearranging your processes to place fewer of them
-on that node.
+This can be resolved by setting the mca parameter opal_set_max_sys_limits to 1,
+increasing your limit descriptor setting (using limit or ulimit commands),
+asking the system administrator for that node to increase the system limit, or 
+by rearranging your processes to place fewer of them on that node.
 #
 [orterun:pipe-setup-failure]
 %s was unable to launch the specified application as it encountered an error:
