@@ -1,5 +1,5 @@
 .\" Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-.\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
 .\"
 .\" Man page for ORTE's orterun command
 .\" 
@@ -393,12 +393,15 @@ is correct for the backend node.
 .TP
 .B -x \fR<env>\fP
 Export the specified environment variables to the remote nodes before
-executing the program.  Existing environment variables can be
-specified (see the Examples section, below), or new variable names
-specified with corresponding values.  The parser for the \fI-x\fP
-option is not very sophisticated; it does not even understand quoted
-values.  Users are advised to set variables in the environment, and
-then use \fI-x\fP to export (not define) them.
+executing the program.  Only one environment variable can be specified
+per \fI-x\fP option.  Existing environment variables can be specified
+or new variable names specified with corresponding values.  For
+example:
+    \fBshell$\fP mpirun -x DISPLAY -x OFILE=/tmp/out ...
+
+The parser for the \fI-x\fP option is not very sophisticated; it does
+not even understand quoted values.  Users are advised to set variables
+in the environment, and then use \fI-x\fP to export (not define) them.
 .
 .
 .TP
