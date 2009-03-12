@@ -21,12 +21,6 @@ sources = \
         coll_sync.h \
         coll_sync_component.c \
         coll_sync_module.c \
-        coll_sync_allgather.c \
-        coll_sync_allgatherv.c \
-        coll_sync_allreduce.c \
-        coll_sync_alltoall.c \
-        coll_sync_alltoallv.c \
-        coll_sync_alltoallw.c \
         coll_sync_bcast.c \
         coll_sync_exscan.c \
         coll_sync_gather.c \
