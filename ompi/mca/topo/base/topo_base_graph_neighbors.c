@@ -34,7 +34,7 @@
  * @retval MPI_SUCCESS
  */
 
-int mca_topo_base_graph_neighbors (MPI_Comm comm,
+int mca_topo_base_graph_neighbors (ompi_communicator_t* comm,
                                int rank,
                                int maxneighbors,
                                int *neighbors){

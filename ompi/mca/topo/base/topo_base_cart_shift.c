@@ -41,7 +41,7 @@
  * @retval MPI_ERR_COMM
  * @retval MPI_ERR_ARG
  */                  
-int mca_topo_base_cart_shift (MPI_Comm comm,
+int mca_topo_base_cart_shift (ompi_communicator_t* comm,
                           int direction,
                           int disp,
                           int *rank_source,

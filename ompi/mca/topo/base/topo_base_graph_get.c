@@ -34,7 +34,7 @@
  * @retval MPI_SUCCESS
  */                 
 
-int mca_topo_base_graph_get (MPI_Comm comm,
+int mca_topo_base_graph_get (ompi_communicator_t* comm,
                          int maxindex,
                          int maxedges,
                          int *index,

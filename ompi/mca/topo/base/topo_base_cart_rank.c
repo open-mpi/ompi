@@ -37,7 +37,7 @@
  * @retval MPI_ERR_ARG
  */                   
 
-int mca_topo_base_cart_rank (MPI_Comm comm, 
+int mca_topo_base_cart_rank (ompi_communicator_t* comm, 
                          int *coords, 
                          int *rank){
    int prank;

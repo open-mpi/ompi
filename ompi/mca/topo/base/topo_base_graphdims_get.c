@@ -34,7 +34,7 @@
  * @retval MPI_ERR_COMM
  * @retval MPI_ERR_ARG
  */
-int mca_topo_base_graphdims_get (MPI_Comm comm,
+int mca_topo_base_graphdims_get (ompi_communicator_t* comm,
                               int *nodes,
                               int *nedges){
 

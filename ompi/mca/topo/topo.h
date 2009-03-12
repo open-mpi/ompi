@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,9 +22,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "ompi/communicator/communicator.h"
 
 /*
  * ******************************************************************
