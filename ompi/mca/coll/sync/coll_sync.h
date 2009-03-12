@@ -45,52 +45,6 @@ mca_coll_base_module_t
 int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm);
 
-int mca_coll_sync_allgather(void *sbuf, int scount,
-                            struct ompi_datatype_t *sdtype,
-                            void *rbuf, int rcount,
-                            struct ompi_datatype_t *rdtype,
-                            struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module);
-
-int mca_coll_sync_allgatherv(void *sbuf, int scount,
-                             struct ompi_datatype_t *sdtype,
-                             void *rbuf, int *rcounts,
-                             int *disps,
-                             struct ompi_datatype_t *rdtype,
-                             struct ompi_communicator_t *comm,
-                             mca_coll_base_module_t *module);
-
-int mca_coll_sync_allreduce(void *sbuf, void *rbuf, int count,
-                            struct ompi_datatype_t *dtype,
-                            struct ompi_op_t *op,
-                            struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module);
-
-int mca_coll_sync_alltoall(void *sbuf, int scount,
-                           struct ompi_datatype_t *sdtype,
-                           void *rbuf, int rcount,
-                           struct ompi_datatype_t *rdtype,
-                           struct ompi_communicator_t *comm,
-                           mca_coll_base_module_t *module);
-
-int mca_coll_sync_alltoallv(void *sbuf, int *scounts,
-                            int *sdisps,
-                            struct ompi_datatype_t *sdtype,
-                            void *rbuf, int *rcounts,
-                            int *rdisps,
-                            struct ompi_datatype_t *rdtype,
-                            struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module);
-
-int mca_coll_sync_alltoallw(void *sbuf, int *scounts,
-                            int *sdisps,
-                            struct ompi_datatype_t **sdtypes,
-                            void *rbuf, int *rcounts,
-                            int *rdisps,
-                            struct ompi_datatype_t **rdtypes,
-                            struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module);
-
 int mca_coll_sync_barrier(struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 

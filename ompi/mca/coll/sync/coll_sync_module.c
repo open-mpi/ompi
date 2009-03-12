@@ -43,12 +43,6 @@ static void mca_coll_sync_module_construct(mca_coll_sync_module_t *module)
 
 static void mca_coll_sync_module_destruct(mca_coll_sync_module_t *module)
 {
-    OBJ_RELEASE(module->c_coll.coll_allgather_module);
-    OBJ_RELEASE(module->c_coll.coll_allgatherv_module);
-    OBJ_RELEASE(module->c_coll.coll_allreduce_module);
-    OBJ_RELEASE(module->c_coll.coll_alltoall_module);
-    OBJ_RELEASE(module->c_coll.coll_alltoallv_module);
-    OBJ_RELEASE(module->c_coll.coll_alltoallw_module);
     OBJ_RELEASE(module->c_coll.coll_bcast_module);
     OBJ_RELEASE(module->c_coll.coll_gather_module);
     OBJ_RELEASE(module->c_coll.coll_gatherv_module);
@@ -111,12 +105,14 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
     sync_module->super.coll_module_enable = mca_coll_sync_module_enable;
     sync_module->super.ft_event = mca_coll_sync_ft_event;
 
-    sync_module->super.coll_allgather  = mca_coll_sync_allgather;
-    sync_module->super.coll_allgatherv = mca_coll_sync_allgatherv;
-    sync_module->super.coll_allreduce  = mca_coll_sync_allreduce;
-    sync_module->super.coll_alltoall   = mca_coll_sync_alltoall;
-    sync_module->super.coll_alltoallv  = mca_coll_sync_alltoallv;
-    sync_module->super.coll_alltoallw  = mca_coll_sync_alltoallw;
+    /* The "all" versions are already synchronous.  So no need for an
+       additional barrier there. */
+    sync_module->super.coll_allgather  = NULL;
+    sync_module->super.coll_allgatherv = NULL;
+    sync_module->super.coll_allreduce  = NULL;
+    sync_module->super.coll_alltoall   = NULL;
+    sync_module->super.coll_alltoallv  = NULL;
+    sync_module->super.coll_alltoallw  = NULL;
     sync_module->super.coll_barrier    = NULL;
     sync_module->super.coll_bcast      = mca_coll_sync_bcast;
     sync_module->super.coll_exscan     = mca_coll_sync_exscan;
@@ -153,12 +149,6 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
         OBJ_RETAIN(s->c_coll.coll_ ## name ## _module); \
     }
 
-    CHECK_AND_RETAIN(allgather);
-    CHECK_AND_RETAIN(allgatherv);
-    CHECK_AND_RETAIN(allreduce);
-    CHECK_AND_RETAIN(alltoall);
-    CHECK_AND_RETAIN(alltoallv);
-    CHECK_AND_RETAIN(alltoallw);
     CHECK_AND_RETAIN(bcast);
     CHECK_AND_RETAIN(gather);
     CHECK_AND_RETAIN(gatherv);
