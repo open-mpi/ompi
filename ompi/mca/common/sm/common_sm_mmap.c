@@ -49,7 +49,7 @@
 #include "opal/util/output.h"
 #include "opal/align.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/rml/base/base.h"
+#include "orte/mca/rml/rml.h"
 
 #include "ompi/mca/dpm/dpm.h"
 
