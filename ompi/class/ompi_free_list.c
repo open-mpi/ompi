@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "ompi/class/ompi_free_list.h"
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 #include "opal/util/output.h"
 #include "opal/sys/cache.h"
 #include "ompi/mca/mpool/mpool.h"

@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 #include "opal/util/arch.h"
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 #include "ompi/constants.h"
 
 #include "mpi.h"

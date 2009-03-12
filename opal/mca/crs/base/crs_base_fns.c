@@ -33,7 +33,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/include/opal/constants.h"
+#include "opal/constants.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
