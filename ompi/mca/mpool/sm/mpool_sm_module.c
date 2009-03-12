@@ -23,7 +23,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/maffinity_types.h"
 #include "opal/mca/maffinity/base/base.h"

@@ -26,7 +26,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "ompi/types.h"
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"

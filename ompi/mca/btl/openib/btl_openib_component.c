@@ -45,7 +45,7 @@ const char *ibv_get_sysfs_path(void);
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
