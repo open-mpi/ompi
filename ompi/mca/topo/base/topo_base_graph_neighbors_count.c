@@ -32,7 +32,7 @@
  * @retval MPI_SUCCESS
  */                             
 
-int mca_topo_base_graph_neighbors_count (MPI_Comm comm,
+int mca_topo_base_graph_neighbors_count (ompi_communicator_t* comm,
                                      int rank,
                                      int *nneighbors){
 

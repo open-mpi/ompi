@@ -37,7 +37,7 @@
  *  @retval MPI_ERR_DIMS               
  */
 
-int mca_topo_unity_cart_map (MPI_Comm comm,
+int mca_topo_unity_cart_map (ompi_communicator_t* comm,
                              int ndims,
                              int *dims,
                              int *periods,

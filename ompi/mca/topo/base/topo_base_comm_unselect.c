@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "mpi.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/topo/topo.h"

@@ -22,7 +22,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/mca/topo/topo.h"
-#include "mpi.h"
 
 /*
  * function - makes a new communicator to which topology information

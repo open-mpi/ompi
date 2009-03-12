@@ -36,7 +36,7 @@
  *  @retval MPI_UNDEFINED
  */ 
 
-int mca_topo_unity_graph_map (MPI_Comm comm,
+int mca_topo_unity_graph_map (ompi_communicator_t* comm,
                               int nnodes,
                               int *index,
                               int *edges,

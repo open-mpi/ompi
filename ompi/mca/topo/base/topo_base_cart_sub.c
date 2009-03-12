@@ -37,9 +37,9 @@
  * @retval MPI_ERR_TOPOLOGY
  * @retval MPI_ERR_COMM
  */                
-int mca_topo_base_cart_sub (MPI_Comm comm,
+int mca_topo_base_cart_sub (ompi_communicator_t* comm,
                         int *remain_dims,
-                        MPI_Comm *new_comm){
+                        ompi_communicator_t** new_comm){
 
      struct ompi_communicator_t *temp_comm;
      int errcode;
