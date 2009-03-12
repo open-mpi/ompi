@@ -524,15 +524,21 @@ for a full list); a summary of the more commonly used ones follows:
   Elan headers and libraries are not in default compiler/linker
   search paths.
 
+  Elan is the support library for Quadrics-based networks.
+
 --with-elan-libdir=<directory>
-  Look in directory for the Elan libraries.  By default, Open MPI will
-  look in <elan directory>/lib and <elan directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
+  Look in directory for the Quadrics Elan libraries.  By default, Open
+  MPI will look in <elan directory>/lib and <elan directory>/lib64,
+  which covers most cases.  This option is only needed for special
+  configurations.
 
 --with-gm=<directory>
   Specify the directory where the GM libraries and header files are
   located.  This option is generally only necessary if the GM headers
   and libraries are not in default compiler/linker search paths.
+
+  GM is the support library for older Myrinet-based networks (GM has
+  been obsoleted by MX).
 
 --with-gm-libdir=<directory>
   Look in directory for the GM libraries.  By default, Open MPI will
@@ -543,6 +549,8 @@ for a full list); a summary of the more commonly used ones follows:
   Specify the directory where the MX libraries and header files are
   located.  This option is generally only necessary if the MX headers
   and libraries are not in default compiler/linker search paths.
+
+  MX is the support library for Myrinet-based networks.
 
 --with-mx-libdir=<directory>
   Look in directory for the MX libraries.  By default, Open MPI will
@@ -555,6 +563,8 @@ for a full list); a summary of the more commonly used ones follows:
   generally only necessary if the OpenFabrics headers and libraries
   are not in default compiler/linker search paths.
 
+  "OpenFabrics" refers to iWARP- and InifiniBand-based networks.
+
 --with-openib-libdir=<directory>
   Look in directory for the OpenFabrics libraries.  By default, Open
   MPI will look in <openib directory>/lib and <openib
@@ -566,6 +576,10 @@ for a full list); a summary of the more commonly used ones follows:
   are located.  This option is generally only necessary if the Portals
   headers and libraries are not in default compiler/linker search
   paths.
+
+  Portals is the support library for Cray interconnects, but is also
+  available on other platforms (e.g., there is a Portals library
+  implemented over regular TCP).
 
 --with-portals-config=<type>
   Configuration to use for Portals support. The following <type>
@@ -580,6 +594,8 @@ for a full list); a summary of the more commonly used ones follows:
   if the InfiniPath headers and libraries are not in default
   compiler/linker search paths.
 
+  PSM is the support library for QLogic InfiniPath network adapters.
+
 --with-psm-libdir=<directory>
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
@@ -589,6 +605,8 @@ for a full list); a summary of the more commonly used ones follows:
   Specify the directory where the SCTP libraries and header files are
   located.  This option is generally only necessary if the SCTP headers
   and libraries are not in default compiler/linker search paths.
+
+  SCTP is a special network stack over ethernet networks.
 
 --with-sctp-libdir=<directory>
   Look in directory for the SCTP libraries.  By default, Open MPI will
@@ -603,6 +621,11 @@ for a full list); a summary of the more commonly used ones follows:
   UDAPL headers and libraries are not in default compiler/linker
   search paths.
 
+  UDAPL is the support library for high performance networks in Sun
+  HPC ClusterTools and on Linux OpenFabrics networks (although the
+  "openib" options are preferred for Linux OpenFabrics networks, not
+  UDAPL).
+
 --with-udapl-libdir=<directory>
   Look in directory for the UDAPL libraries.  By default, Open MPI
   will look in <udapl directory>/lib and <udapl directory>/lib64,
@@ -614,6 +637,9 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This option is generally only necessary if the LSF headers
   and libraries are not in default compiler/linker search paths.
 
+  LSF is a resource manager system, frequently used as a batch
+  scheduler in HPC systems.
+
 --with-lsf-libdir=<directory>
   Look in directory for the LSF libraries.  By default, Open MPI will
   look in <lsf directory>/lib and <lsf directory>/lib64, which covers
@@ -624,10 +650,26 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This option is generally only necessary if the TM headers
   and libraries are not in default compiler/linker search paths.
 
+  TM is the support library for the Torque and PBS Pro resource
+  manager systems, both of which are frequently used as a batch
+  scheduler in HPC systems.
+
 --with-sge
   Specify to build support for the Sun Grid Engine (SGE) resource
   manager.  SGE support is disabled by default; this option must be
   specified to build OMPI's SGE support.
+
+  The Sun Grid Engine (SGE) is a resource manager system, frequently
+  used as a batch scheduler in HPC systems.
+
+--with-esmtp=<directory>
+
+  Specify the directory where the libESMTP libraries and header files are
+  located.  This option is generally only necessary of the libESMTP
+  headers and libraries are not included in the default
+  compiler/linker search paths.
+
+  libESMTP is a support library for sending e-mail.
 
 --with-mpi-param_check(=value)
   "value" can be one of: always, never, runtime.  If --with-mpi-param
