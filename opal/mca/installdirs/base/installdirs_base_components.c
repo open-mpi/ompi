@@ -12,6 +12,7 @@
 
 #include "opal_config.h"
 
+#include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/installdirs/base/base.h"

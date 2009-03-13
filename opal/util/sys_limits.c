@@ -33,6 +33,7 @@
 #include <sys/resource.h>
 #endif
 
+#include "opal/constants.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "opal/util/sys_limits.h"

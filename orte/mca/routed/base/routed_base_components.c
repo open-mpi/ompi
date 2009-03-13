@@ -12,6 +12,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/constants.h"
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_bitmap.h"

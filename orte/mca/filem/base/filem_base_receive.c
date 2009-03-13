@@ -24,9 +24,10 @@
  * includes
  */
 #include "orte_config.h"
-#include "orte/constants.h"
-#include "orte/types.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -42,6 +43,8 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "opal/dss/dss.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"

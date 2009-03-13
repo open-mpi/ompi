@@ -18,6 +18,7 @@
 
 #include "opal_config.h"
 
+#include "opal/constants.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/memoryhooks/memory.h"
 

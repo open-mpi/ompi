@@ -22,8 +22,10 @@
 
 
 #include "orte_config.h"
-#include "orte/constants.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <assert.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -56,6 +58,7 @@
 #include "opal/threads/condition.h"
 #include "opal/sys/atomic.h"
 
+#include "orte/constants.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

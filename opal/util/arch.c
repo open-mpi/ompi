@@ -18,6 +18,7 @@
  */
 #include "opal_config.h"
 
+#include "opal/constants.h"
 #include "opal/util/arch.h"
 
 int32_t opal_arch_compute_local_id( uint32_t *me )

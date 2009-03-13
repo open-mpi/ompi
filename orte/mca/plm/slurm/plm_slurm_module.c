@@ -26,9 +26,10 @@
  */
 
 #include "orte_config.h"
-#include "orte/constants.h"
-#include "orte/types.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -58,6 +59,8 @@
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/constants.h"
+#include "orte/types.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

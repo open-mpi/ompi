@@ -21,6 +21,8 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 #include "opal/class/opal_free_list.h"
 #include "ompi/mca/mtl/mtl.h"
 

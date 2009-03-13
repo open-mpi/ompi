@@ -17,9 +17,10 @@
  */
 
 #include "orte_config.h"
-#include "orte/constants.h"
-#include "orte/types.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -41,6 +42,8 @@
 
 #include "opal/util/argv.h"
 
+#include "orte/constants.h"
+#include "orte/types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm_types.h"
 

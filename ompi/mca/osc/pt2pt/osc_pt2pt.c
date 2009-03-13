@@ -26,6 +26,7 @@
 #include "opal/threads/mutex.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 #include "mpi.h"
 
 

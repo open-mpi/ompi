@@ -21,6 +21,10 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 #include "ompi/file/file.h"

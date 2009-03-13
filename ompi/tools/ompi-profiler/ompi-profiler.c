@@ -24,6 +24,9 @@
 #include "opal/types.h"
 #include "opal/version.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

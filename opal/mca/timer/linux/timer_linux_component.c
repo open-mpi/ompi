@@ -18,6 +18,10 @@
 
 #include "opal_config.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "opal/mca/timer/timer.h"
 #include "opal/mca/timer/linux/timer_linux.h"
 #include "opal/constants.h"
