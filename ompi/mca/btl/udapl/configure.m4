@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -38,6 +39,23 @@ AC_DEFUN([MCA_btl_udapl_CONFIG],[
     AS_IF([test "$btl_udapl_CFLAGS" != "$CFLAGS" -a "$btl_udapl_happy" = "yes"],
           [AC_MSG_WARN([Removed -pedantic from CFLAGS for
 uDAPL component because the uDAPL headers are not fully ISO C])])
+
+    # Test for uDAPL relaxed ordered specific symbols
+    AS_IF([test "$btl_udapl_happy" = "yes"],
+          [AC_MSG_CHECKING(for uDAPL relax order aware)
+           AC_TRY_COMPILE([#include <dat/udat.h>], 
+               [DAT_RETURN dr = DAT_INVALID_RO_COOKIE;
+                DAT_MEM_TYPE dmt = DAT_MEM_TYPE_SO_VIRTUAL;], 
+               [AC_MSG_RESULT(yes)
+                    btl_udapl_ro_aware=1], 
+               [AC_MSG_RESULT(no)
+                    btl_udapl_ro_aware=0])
+           AC_DEFINE_UNQUOTED([HAVE_UDAPL_DAT_INVALID_RO_COOKIE], 
+               [$btl_udapl_ro_aware], 
+               [uDAPL DAT_INVALID_RO_COOKIE check])
+           AC_DEFINE_UNQUOTED([HAVE_UDAPL_DAT_MEM_TYPE_SO_VIRTUAL], 
+               [$btl_udapl_ro_aware], 
+               [uDAPL DAT_MEM_TYPE_SO_VIRTUAL check])])
 
     # substitute in the things needed to build udapl
     AC_SUBST([btl_udapl_CFLAGS])
