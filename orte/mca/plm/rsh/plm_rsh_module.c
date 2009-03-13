@@ -757,7 +757,7 @@ static void ssh_child(int argc, char **argv,
     free(var);
     
     /* setup stdin if verbosity is not set */
-    if (0 > opal_output_get_verbosity(orte_plm_globals.output)) {
+    if (0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
         fdin = open("/dev/null", O_RDWR);
         dup2(fdin, 0);
         close(fdin);
