@@ -49,6 +49,8 @@ Trunk (not on release branches yet)
 1.3.1
 -----
 
+- Fix an error that prevented stdin from being forwarded if the
+  rsh launcher was in use.
 - Fix an error that limited the number of comm_spawns that could
   simultaneously be running in some environments
 - Correct a corner case in OB1's GET protocol for long messages; the
