@@ -22,6 +22,8 @@
 
 #include "mpi.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/request/request.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"

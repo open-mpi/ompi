@@ -19,10 +19,15 @@
 
 #include <stdio.h>
 
+#include "opal/class/opal_list.h"
+#include "opal/threads/mutex.h"
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_sendreq.h"
 #include "osc_pt2pt_header.h"
 #include "osc_pt2pt_data_move.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/op/op.h"
+#include "ompi/win/win.h"
 #include "ompi/memchecker.h"
 
 static int

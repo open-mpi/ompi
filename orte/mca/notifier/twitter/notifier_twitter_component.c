@@ -24,6 +24,10 @@
 
 #include "orte_config.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/constants.h"

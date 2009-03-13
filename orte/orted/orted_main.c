@@ -20,7 +20,10 @@
  */
 
 #include "orte_config.h"
-#include "orte/constants.h"
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -58,6 +61,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 
+#include "orte/constants.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"

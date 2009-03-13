@@ -21,6 +21,11 @@
  */
 
 #include "opal_config.h"
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "opal/util/argv.h"
 #include "opal/constants.h"
 #include "opal/mca/paffinity/paffinity.h"

@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/constants.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 static int installdirs_env_open(void);

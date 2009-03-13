@@ -21,6 +21,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES

@@ -8,6 +8,10 @@
 
 #include "orte_config.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/util/output.h"

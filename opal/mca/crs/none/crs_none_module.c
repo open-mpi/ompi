@@ -11,6 +11,9 @@
 
 #include "opal_config.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <sys/types.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>

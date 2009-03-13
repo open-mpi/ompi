@@ -24,6 +24,7 @@
 
 #include "ompi_config.h"
 #include "ompi/class/ompi_free_list.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/request/request.h"
 #include "ompi/datatype/convertor.h"
 

@@ -19,8 +19,10 @@
  */
 
 #include "orte_config.h"
-#include "orte/constants.h"
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,11 +33,11 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
-#include "opal/event/event.h"
-#include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "opal/event/event.h"
+
+#include "orte/constants.h"
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"

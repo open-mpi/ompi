@@ -15,14 +15,19 @@
  */
 
 #include "orte_config.h"
-#include "orte/constants.h"
-#include "orte/types.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 #include "opal/util/argv.h"
 
 #include "opal/dss/dss.h"
+#include "orte/constants.h"
+#include "orte/types.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 

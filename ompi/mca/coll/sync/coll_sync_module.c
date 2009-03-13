@@ -18,13 +18,18 @@
  */
 
 #include "ompi_config.h"
-#include "coll_sync.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <stdio.h>
+
+#include "coll_sync.h"
 
 #include "mpi.h"
 
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"

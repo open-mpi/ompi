@@ -92,6 +92,9 @@
  * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
  */
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>

@@ -39,6 +39,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
+#include "orte/util/proc_info.h"
 
 #include "errmgr_default.h"
 

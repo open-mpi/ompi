@@ -15,6 +15,9 @@
 
 #include "opal/mca/mca.h"
 
+#include "opal/dss/dss_types.h"
+
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
 
 BEGIN_C_DECLS

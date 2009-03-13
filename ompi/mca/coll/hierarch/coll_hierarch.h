@@ -26,11 +26,14 @@
 #define TWO_LEVELS 2
 
 #include "ompi_config.h"
+#include "ompi/constants.h"
 
 #include "mpi.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
+#include "ompi/communicator/communicator.h"
 
 BEGIN_C_DECLS
 

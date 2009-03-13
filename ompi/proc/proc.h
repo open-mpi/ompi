@@ -39,6 +39,8 @@
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/types.h"
+
 
 BEGIN_C_DECLS
 
