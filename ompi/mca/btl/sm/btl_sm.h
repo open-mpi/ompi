@@ -55,7 +55,33 @@ extern "C" {
 
 /*
  * Shared Memory FIFOs
+ *
+ * The FIFO is implemented as a circular queue with head and tail pointers
+ * (integer indices).  For efficient wraparound indexing, the size of the
+ * queue is constrained to be a power of two and we "&" indices with a "mask".
+ *
+ * More than one process can write to the FIFO head.  Therefore, there is a head
+ * lock.  One cannot write until the head slot is empty, indicated by the special
+ * queue entry SM_FIFO_FREE.
+ *
+ * Only the receiver can read the FIFO tail.  Therefore, the tail lock is
+ * required only in multithreaded applications.  If a tail read returns the
+ * SM_FIFO_FREE value, that means the FIFO is empty.  Once a non-FREE value
+ * has been read, the queue slot is *not* automatically reset to SM_FIFO_FREE.
+ * Rather, read tail slots are reset "lazily" (see "lazy_free" and "num_to_clear")
+ * to reduce the number of memory barriers and improve performance.
+ *
+ * Since the FIFO lives in shared memory that is mapped differently into
+ * each address space, the "queue" pointer is relative (each process must
+ * add its own offset) and the queue_recv pointer is meaningful only in the
+ * receiver's address space.
+ *
+ * Since multiple processes access different parts of the FIFO structure in
+ * different ways, we introduce padding to keep different parts on different
+ * cachelines.
  */
+
+#define SM_FIFO_FREE  (void *) (-2)
 
 struct sm_fifo_t {
     /* This queue pointer is used only by the heads. */
@@ -172,8 +198,6 @@ typedef struct btl_sm_pending_send_item_t btl_sm_pending_send_item_t;
 /* ================================================== */
 /* ================================================== */
 /* ================================================== */
-
-#define SM_FIFO_FREE  (void *) (-2)
 
 static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
                                sm_fifo_t *fifo, int lazy_free)
