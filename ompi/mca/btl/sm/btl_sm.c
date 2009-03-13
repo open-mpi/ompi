@@ -193,9 +193,21 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         res.mem_node = (num_mem_nodes == 1) ? -1 : i;
 
         /* determine how much memory to create */
-        res.size = m->nfifos * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size )
-            + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + CACHE_LINE_SIZE )
-            +           m->sm_free_list_num   * ( m->max_frag_size + CACHE_LINE_SIZE );
+        /*
+         * This heuristic formula mostly says that we request memory for:
+         * - nfifos FIFOs, each comprising:
+         *   . a sm_fifo_t structure
+         *   . many pointers (fifo_size of them per FIFO)
+         * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
+         * - max fragments (sm_free_list_num of them)
+         *
+         * On top of all that, we sprinkle in some number of "CACHE_LINE_SIZE"
+         * additions to account for some padding and edge effects that may lie
+         * in the allocator.
+         */
+        res.size = m->nfifos * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * CACHE_LINE_SIZE )
+            + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * CACHE_LINE_SIZE )
+            +           m->sm_free_list_num   * ( m->max_frag_size + 2 * CACHE_LINE_SIZE );
         if ( ((double) res.size) * n > LONG_MAX )
             res.size  = LONG_MAX;
         else

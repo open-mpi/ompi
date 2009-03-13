@@ -184,6 +184,9 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     if ( mca_mpool_sm_component.sm_size < min_size )
          mca_mpool_sm_component.sm_size = min_size;
 
+    /* add something for the control structure */
+    mca_mpool_sm_component.sm_size += sizeof(mca_common_sm_mmap_t);
+
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
