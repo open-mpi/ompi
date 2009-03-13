@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -192,6 +192,7 @@ int mca_btl_udapl_component_open(void)
     /* initialize state */
     mca_btl_udapl_component.udapl_num_btls=0;
     mca_btl_udapl_component.udapl_btls=NULL;
+    mca_btl_udapl_component.ro_aware_system=0;
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_udapl_component.udapl_procs, opal_list_t);

@@ -89,13 +89,20 @@ static int udapl_reg_mr(void *reg_data, void *base, size_t size,
     DAT_VLEN dat_size;
     DAT_VADDR dat_addr;
     int rc;
+    DAT_MEM_TYPE lmr_mem_type = DAT_MEM_TYPE_VIRTUAL;
 
     region.for_va = base;
     udapl_reg->lmr_triplet.virtual_address = (DAT_VADDR)(uintptr_t)base;
     udapl_reg->lmr_triplet.segment_length = size;
     udapl_reg->lmr = NULL;
 
-    rc = dat_lmr_create(btl->udapl_ia, DAT_MEM_TYPE_VIRTUAL, region, size,
+#if HAVE_UDAPL_DAT_MEM_TYPE_SO_VIRTUAL
+    if (reg->flags & MCA_MPOOL_FLAGS_SO_MEM) {
+        lmr_mem_type = DAT_MEM_TYPE_SO_VIRTUAL;
+    }
+#endif
+
+    rc = dat_lmr_create(btl->udapl_ia, lmr_mem_type, region, size,
             btl->udapl_pz, DAT_MEM_PRIV_ALL_FLAG, &udapl_reg->lmr,
             &udapl_reg->lmr_triplet.lmr_context, &udapl_reg->rmr_context,
             &dat_size, &dat_addr);
@@ -156,30 +163,32 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 #if defined(__SVR4) && defined(__sun)
         if (strcmp(major, "DAT_INVALID_PARAMETER") == 0 &&
             strcmp(minor, "DAT_INVALID_RO_COOKIE") == 0) {
-            /* Some platforms that Solaris runs on implement the PCI
-             * standard for relaxed ordering(RO). Using RDMA with
-             * polling on a memory location as the uDAPL (and openib
-             * BTL by the way) BTL does for short messages with
-             * relaxed ordering could potentially produce silent data
-             * corruption. For this reason we need to detect systems
-             * which support relaxed ordering and turn off RDMA for
-             * short messages. The uDAPL standard does not provide a
-             * way to inform users of this scenario so Sun has
-             * implemented the following. If a platform supports
-             * relaxed ordering when the interface name is passed into
-             * the dat_ia_open() call, the call will return
-             * DAT_INVALID_PARAMETER and DAT_INVALID_RO_COOKIE.
-             * DAT_INVALID_RO_COOKIE is not part of the uDAPL standard
-             * at this time. The only way to open this interface is to
-             * prefix the following cookie "RO_AWARE_" to the ia name
-             * that was retreived from the dat registry.
+            /* Some platforms that Solaris runs on implement the PCI 
+	     * standard for relaxed ordering(RO). Using RDMA with 
+	     * polling on a memory location as the uDAPL (and openib
+	     * by the way) BTL does for short messages with 
+	     * relaxed ordering could potentially produce silent data
+	     * corruption. For this reason we need to take extra
+	     * steps and this is accomplished by setting
+	     * "ro_aware_system = 1" and handling as required.
+             *
+	     * The uDAPL standard does not provide an interface to
+	     * inform users of this scenario so Sun has implemented the
+	     * following: If a platform supports relaxed ordering
+	     * when the interface name is passed into the
+	     * dat_ia_open() call, the call will return 
+	     * DAT_INVALID_PARAMETER and DAT_INVALID_RO_COOKIE.  
+	     * DAT_INVALID_RO_COOKIE is not part of the uDAPL standard
+	     * at this time. The only way to open this interface is
+	     * to prefix the following cookie "RO_AWARE_" to the ia
+	     * name that was retreived from the dat registry.
              *
              * Example: ia_name = "ib0", new expected name will be
              * "RO_AWARE_ib0".
              * 
              * Here, since our first ia open attempt failed in the
-             * predetermined way, add the cookie and try to open again.
-             **/
+             * standard way, add the cookie and try to open again.
+             */
             DAT_NAME_PTR ro_ia_name;
 
             /* prefix relaxed order cookie to ia_name */
@@ -202,8 +211,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 		(const char**)&minor);
 
             if (DAT_SUCCESS == rc) {
-                /* do not allow RDMA for short messages */
-                mca_btl_udapl_component.udapl_use_eager_rdma = 0;
+                mca_btl_udapl_component.ro_aware_system = 1;
                 free(ro_ia_name);
             } else {
                 BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,

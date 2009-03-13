@@ -95,6 +95,7 @@ struct mca_btl_udapl_component_t {
     char *if_exclude;
     char **if_exclude_list;
     char **if_list;            /* used for checking entries not found */
+    int32_t ro_aware_system;   /* default 0; 1 if relaxed ordered platform */
 }; 
 typedef struct mca_btl_udapl_component_t mca_btl_udapl_component_t;
 
