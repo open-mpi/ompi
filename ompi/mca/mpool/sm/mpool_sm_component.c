@@ -207,6 +207,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
 
     mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t));
     mca_mpool_sm_module_init(mpool_module);
+    mpool_module->mem_node = resources->mem_node;
 
     /* create initial shared memory mapping */
     len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
