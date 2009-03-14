@@ -374,10 +374,10 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
          */
         orte_show_help( "help-plm-rsh.txt", "unknown-user", true, (int)getuid() );
         return ORTE_ERR_FATAL;
-    } else {
-        param = p->pw_shell;
-        local_shell = find_shell(p->pw_shell);
     }
+    param = p->pw_shell;
+    local_shell = find_shell(p->pw_shell);
+
     /* If we didn't find it in getpwuid(), try looking at the $SHELL
      environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
      */
@@ -911,23 +911,23 @@ static int remote_spawn(opal_buffer_t *launch)
             /* do the ssh launch - this will exit if it fails */
             ssh_child(argc, argv, vpid, proc_vpid_index);
             
-        } else { /* father */
-            OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
-            /* This situation can lead to a deadlock if '--debug-daemons' is set.
-             * However, the deadlock condition is tested at the begining of this
-             * function, so we're quite confident it should not happens here.
-             */
-            if (mca_plm_rsh_component.num_children++ >=
-                mca_plm_rsh_component.num_concurrent) {
-                opal_condition_wait(&mca_plm_rsh_component.cond, &mca_plm_rsh_component.lock);
-            }
-            OPAL_THREAD_UNLOCK(&mca_plm_rsh_component.lock);
-            
-            /* setup callback on sigchild - wait until setup above is complete
-             * as the callback can occur in the call to orte_wait_cb
-             */
-            orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)&vpid);
         }
+        /* father */
+        OPAL_THREAD_LOCK(&mca_plm_rsh_component.lock);
+        /* This situation can lead to a deadlock if '--debug-daemons' is set.
+         * However, the deadlock condition is tested at the begining of this
+         * function, so we're quite confident it should not happens here.
+         */
+        if (mca_plm_rsh_component.num_children++ >=
+            mca_plm_rsh_component.num_concurrent) {
+            opal_condition_wait(&mca_plm_rsh_component.cond, &mca_plm_rsh_component.lock);
+        }
+        OPAL_THREAD_UNLOCK(&mca_plm_rsh_component.lock);
+        
+        /* setup callback on sigchild - wait until setup above is complete
+         * as the callback can occur in the call to orte_wait_cb
+         */
+        orte_wait_cb(pid, orte_plm_rsh_wait_daemon, (void*)&vpid);
     }
 
     failed_launch = false;
@@ -1138,7 +1138,6 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     /*
      * Iterate through each of the nodes
      */
-    
     nnode=0;
     while (nnode < map->num_nodes) {
         pid_t pid;
