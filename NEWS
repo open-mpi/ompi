@@ -52,6 +52,8 @@ Trunk (not on release branches yet)
 - Fix an error that prevented stdin from being forwarded if the
   rsh launcher was in use.  Thanks to Branden Moore for pointing out
   the problem.
+- Correct a case where the added datatype is considered as contiguous but
+  has gaps in the beginning.
 - Fix an error that limited the number of comm_spawns that could
   simultaneously be running in some environments
 - Correct a corner case in OB1's GET protocol for long messages; the
