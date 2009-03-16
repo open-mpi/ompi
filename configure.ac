@@ -380,7 +380,7 @@ AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
 AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
     [Whether we want MPI profiling or not])
 AC_DEFINE_UNQUOTED(OMPI_HAVE_WEAK_SYMBOLS, $OMPI_C_HAVE_WEAK_SYMBOLS,
-    [Wehther we have weak symbols or not])
+    [Whether we have weak symbols or not])
 
 
 ##################################
@@ -610,13 +610,13 @@ AC_SUBST(OMPI_MPI_INTEGER_KIND)
 
 # get kind value for Fortran MPI_ADDRESS_KIND (corresponding to
 # whatever is big enough to hold (void*))
-if test "$ac_cv_sizeof_void_p" = "2"; then
+if test $ac_cv_sizeof_void_p = 2 ; then
     OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 4, OMPI_MPI_ADDRESS_KIND)
-elif test "$ac_cv_sizeof_void_p" = "4"; then
+elif test $ac_cv_sizeof_void_p = 4 ; then
     OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 9, OMPI_MPI_ADDRESS_KIND)
-elif test "$ac_cv_sizeof_void_p" = "8"; then
+elif test $ac_cv_sizeof_void_p = 8 ; then
     OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 18, OMPI_MPI_ADDRESS_KIND)
-elif test "$ac_cv_sizeof_void_p" = "16"; then
+elif test $ac_cv_sizeof_void_p = 16 ; then
     OMPI_F90_GET_INT_KIND(MPI_ADDRESS_KIND, 19, OMPI_MPI_ADDRESS_KIND)
 else
     AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
@@ -839,28 +839,28 @@ ompi_show_title "System-specific tests"
 MPI_OFFSET_TYPE="not found"
 MPI_OFFSET_DATATYPE="not found"
 AC_MSG_CHECKING([checking for type of MPI_Offset])
-if test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
+if test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 8; then
 	MPI_OFFSET_TYPE="long long"
         MPI_OFFSET_DATATYPE=MPI_LONG_LONG
         MPI_OFFSET_SIZE=8
-elif test "$ac_cv_type_long" = "yes" -a "$ac_cv_sizeof_long" = 8; then
+elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 8; then
 	MPI_OFFSET_TYPE="long"
         MPI_OFFSET_DATATYPE=MPI_LONG
         MPI_OFFSET_SIZE=8
-elif test "ac_cv_sizeof_int" = 8; then
-	MPI_OFFSET_TYPE=int
+elif test $ac_cv_sizeof_int = 8; then
+	MPI_OFFSET_TYPE="int"
         MPI_OFFSET_DATATYPE=MPI_INT
         MPI_OFFSET_SIZE=8
-elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 4; then
+elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 4; then
 	MPI_OFFSET_TYPE="long long"
         MPI_OFFSET_DATATYPE=MPI_LONG_LONG
         MPI_OFFSET_SIZE=4
-elif test "$ac_cv_type_long" = "yes" -a "$ac_cv_sizeof_long" = 4; then
+elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 4; then
 	MPI_OFFSET_TYPE="long"
         MPI_OFFSET_DATATYPE=MPI_LONG
         MPI_OFFSET_SIZE=4
-elif test "ac_cv_sizeof_int" = 4; then
-	MPI_OFFSET_TYPE=int
+elif test $ac_cv_sizeof_int = 4; then
+	MPI_OFFSET_TYPE="int"
         MPI_OFFSET_DATATYPE=MPI_INT
         MPI_OFFSET_SIZE=4
 fi
@@ -1064,11 +1064,11 @@ OMPI_MCA
 AC_CACHE_SAVE
 
 ##################################
-# visibility
+# Visibility
 ##################################
 
-# check the visbility stuff at the end to avoid problem with
-# the previous tests that are not necessarily prepeare for
+# Check the visibility declspec at the end to avoid problem with
+# the previous tests that are not necessarily prepared for
 # the visibility feature.
 ompi_show_title "Symbol Visibility Feature"
 
@@ -1184,10 +1184,11 @@ if test "$OMPI_ENABLE_DLOPEN_SUPPORT" = "1" ; then
         WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
         LDFLAGS="-export-dynamic $LDFLAGS"
     else
-        AC_MSG_ERROR([Failed to build GNU libltdl.  This usually means that something
-is incorrectly setup with your environment.  There may be useful information in
-opal/libltdl/config.log.  You can also disable GNU libltdl (which will disable
-dynamic shared object loading) by configuring with --disable-dlopen.])
+        AC_MSG_WARN([Failed to build GNU libltdl.  This usually means that something])
+        AC_MSG_WARN([is incorrectly setup with your environment.  There may be useful information in])
+        AC_MSG_WARN([opal/libltdl/config.log.  You can also disable GNU libltdl, which will disable])
+        AC_MSG_WARN([dynamic shared object loading, by configuring with --disable-dlopen.])
+        AC_MSG_ERROR([Cannot continue])
     fi
     CFLAGS="$CFLAGS_save"
 else
