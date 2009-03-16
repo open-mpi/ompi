@@ -559,4 +559,13 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 
 #endif
 
+/* If we're in C++, then just undefine restrict and then define it to
+   nothing.  "restrict" is not part of the C++ language, and we don't
+   have a corresponding AC_CXX_RESTRICT to figure out what the C++
+   compiler supports. */
+#if defined(c_plusplus) || defined(__cplusplus)
+#undef restrict
+#define restrict
+#endif
+
 #endif /* OMPI_BUILDING */
