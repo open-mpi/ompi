@@ -327,7 +327,7 @@ AC_C_INLINE
 # correctly. It detect the restrict keyword as __restrict which break the
 # rules for function syntax which is declspec(restrict).
 if test "x$ompi_cv_c_compiler_vendor" != "xmicrosoft"; then
-  AC_C_RESTRICT
+    AC_C_RESTRICT
 fi
 OMPI_C_WEAK_SYMBOLS
 if test "$GCC" = "yes"; then
@@ -335,7 +335,7 @@ if test "$GCC" = "yes"; then
 fi
 
 if test "x$CC" = "xicc"; then
-  OMPI_CHECK_ICC_VARARGS
+    OMPI_CHECK_ICC_VARARGS
 fi
 
 # If we want the profiling layer:
@@ -348,9 +348,9 @@ if test "$WANT_WEAK_SYMBOLS" = "0"; then
 fi
 if test "$WANT_MPI_PROFILING" = "1"; then
     if test "$OMPI_C_HAVE_WEAK_SYMBOLS" = "1"; then
-	OMPI_PROFILING_COMPILE_SEPARATELY=0
+        OMPI_PROFILING_COMPILE_SEPARATELY=0
     else
-	OMPI_PROFILING_COMPILE_SEPARATELY=1
+        OMPI_PROFILING_COMPILE_SEPARATELY=1
     fi
 else
     OMPI_PROFILING_COMPILE_SEPARATELY=0
@@ -362,19 +362,19 @@ fi
 # following conditions determine whether each (or both) these layers
 # are built.
 # 1. MPI_* bindings are needed if:
-#	- Profiling is not required
-#   - Profiling is required but weak symbols are not
-#	  supported
+#    - Profiling is not required
+#    - Profiling is required but weak symbols are not
+#      supported
 # 2. PMPI_* bindings are needed if profiling is required.  Hence we
 # define 2 conditionals which tell us whether each of these layers
 # need to be built or NOT
 #
 
 AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
-	test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
+    test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 
 AM_CONDITIONAL(WANT_PMPI_BINDINGS_LAYER,
-	test "$WANT_MPI_PROFILING" = 1)
+    test "$WANT_MPI_PROFILING" = 1)
 AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
     test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
@@ -810,12 +810,12 @@ AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
 #
 
 AC_CHECK_DECL(va_copy, OMPI_HAVE_VA_COPY=1, OMPI_HAVE_VA_COPY=0,
-	      [#include <stdarg.h>])
+    [#include <stdarg.h>])
 AC_DEFINE_UNQUOTED(OMPI_HAVE_VA_COPY, $OMPI_HAVE_VA_COPY,
     [Whether we have va_copy or not])
 
 AC_CHECK_DECL(__va_copy, OMPI_HAVE_UNDERSCORE_VA_COPY=1,
-	      OMPI_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
+    OMPI_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
 AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
@@ -840,34 +840,34 @@ MPI_OFFSET_TYPE="not found"
 MPI_OFFSET_DATATYPE="not found"
 AC_MSG_CHECKING([checking for type of MPI_Offset])
 if test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 8; then
-	MPI_OFFSET_TYPE="long long"
-        MPI_OFFSET_DATATYPE=MPI_LONG_LONG
-        MPI_OFFSET_SIZE=8
+    MPI_OFFSET_TYPE="long long"
+    MPI_OFFSET_DATATYPE=MPI_LONG_LONG
+    MPI_OFFSET_SIZE=8
 elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 8; then
-	MPI_OFFSET_TYPE="long"
-        MPI_OFFSET_DATATYPE=MPI_LONG
-        MPI_OFFSET_SIZE=8
+    MPI_OFFSET_TYPE="long"
+    MPI_OFFSET_DATATYPE=MPI_LONG
+    MPI_OFFSET_SIZE=8
 elif test $ac_cv_sizeof_int = 8; then
-	MPI_OFFSET_TYPE="int"
-        MPI_OFFSET_DATATYPE=MPI_INT
-        MPI_OFFSET_SIZE=8
+    MPI_OFFSET_TYPE="int"
+    MPI_OFFSET_DATATYPE=MPI_INT
+    MPI_OFFSET_SIZE=8
 elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_long_long = 4; then
-	MPI_OFFSET_TYPE="long long"
-        MPI_OFFSET_DATATYPE=MPI_LONG_LONG
-        MPI_OFFSET_SIZE=4
+    MPI_OFFSET_TYPE="long long"
+    MPI_OFFSET_DATATYPE=MPI_LONG_LONG
+    MPI_OFFSET_SIZE=4
 elif test $ac_cv_type_long = yes -a $ac_cv_sizeof_long = 4; then
-	MPI_OFFSET_TYPE="long"
-        MPI_OFFSET_DATATYPE=MPI_LONG
-        MPI_OFFSET_SIZE=4
+    MPI_OFFSET_TYPE="long"
+    MPI_OFFSET_DATATYPE=MPI_LONG
+    MPI_OFFSET_SIZE=4
 elif test $ac_cv_sizeof_int = 4; then
-	MPI_OFFSET_TYPE="int"
-        MPI_OFFSET_DATATYPE=MPI_INT
-        MPI_OFFSET_SIZE=4
+    MPI_OFFSET_TYPE="int"
+    MPI_OFFSET_DATATYPE=MPI_INT
+    MPI_OFFSET_SIZE=4
 fi
 AC_MSG_RESULT([$MPI_OFFSET_TYPE])
 if test "$MPI_OFFSET_TYPE" = "not found"; then
-	AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset])
-	AC_MSG_ERROR([Cannot continue])
+    AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset])
+    AC_MSG_ERROR([Cannot continue])
 fi
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
 
@@ -894,8 +894,8 @@ AC_DEFINE_UNQUOTED([OMPI_PTRDIFF_TYPE], [$ompi_ptrdiff_t],
 AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
 AC_MSG_RESULT([$MPI_OFFSET_DATATYPE])
 if test "$MPI_OFFSET_DATATYPE" = "not found"; then
-	AC_MSG_WARN([*** Unable to find an MPI datatype corresponding to MPI_Offset])
-	AC_MSG_ERROR([Cannot continue])
+    AC_MSG_WARN([*** Unable to find an MPI datatype corresponding to MPI_Offset])
+    AC_MSG_ERROR([Cannot continue])
 fi
 AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
 
@@ -1300,20 +1300,20 @@ OMPI_SETUP_WRAPPER_FINAL
 # things are defined as null tokens or an integer result, two projects
 # with different versions of AC can cause problems.
 if test $ac_cv_header_stdc = yes; then
-  AC_DEFINE(OMPI_STDC_HEADERS, 1,
-	    [Do not use outside of mpi.h.  Define to 1 if you have the ANSI C header files.])
+    AC_DEFINE(OMPI_STDC_HEADERS, 1,
+              [Do not use outside of mpi.h.  Define to 1 if you have the ANSI C header files.])
 fi
 if test $ac_cv_header_sys_time_h = yes ; then
-  AC_DEFINE(OMPI_HAVE_SYS_TIME_H, 1,
-	    [Do not use outside of mpi.h.  Define to 1 if you have the <sys/time.h> header file.])
+    AC_DEFINE(OMPI_HAVE_SYS_TIME_H, 1,
+              [Do not use outside of mpi.h.  Define to 1 if you have the <sys/time.h> header file.])
 fi
 if test $ac_cv_type_long_long = yes ; then
-  AC_DEFINE(OMPI_HAVE_LONG_LONG, 1,
-	    [Do not use outside of mpi.h.  Define to 1 if the system has the type `long long'.]) dnl `
+    AC_DEFINE(OMPI_HAVE_LONG_LONG, 1,
+              [Do not use outside of mpi.h.  Define to 1 if the system has the type `long long'.]) dnl `
 fi
 if test $ac_cv_header_sys_synch_h = yes ; then
-  AC_DEFINE(OMPI_HAVE_SYS_SYNCH_H, 1,
-	    [Do not use outside of mpi.h.  Define to 1 if you have the <sys/synch.h> header file.])
+    AC_DEFINE(OMPI_HAVE_SYS_SYNCH_H, 1,
+              [Do not use outside of mpi.h.  Define to 1 if you have the <sys/synch.h> header file.])
 fi
 
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_BOOL, $ac_cv_sizeof_bool,
