@@ -96,7 +96,7 @@ static int udapl_reg_mr(void *reg_data, void *base, size_t size,
     udapl_reg->lmr_triplet.segment_length = size;
     udapl_reg->lmr = NULL;
 
-#if HAVE_UDAPL_DAT_MEM_TYPE_SO_VIRTUAL
+#if HAVE_DAT_MEM_TYPE_SO_VIRTUAL
     if (reg->flags & MCA_MPOOL_FLAGS_SO_MEM) {
         lmr_mem_type = DAT_MEM_TYPE_SO_VIRTUAL;
     }
