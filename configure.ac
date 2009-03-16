@@ -32,7 +32,7 @@
 # call OMPI_GET_VERSION (etc.) before AC_INIT.  So use the shell
 # version.
 
-AC_INIT([Open MPI], 
+AC_INIT([Open MPI],
         [m4_normalize(esyscmd([config/ompi_get_version.sh VERSION --base]))],
         [http://www.open-mpi.org/community/help/], [openmpi])
 AC_PREREQ(2.60)
@@ -113,17 +113,17 @@ AH_TOP([/* -*- c -*-
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
- * Function: - OS, CPU and compiler dependent configuration 
+ * Function: - OS, CPU and compiler dependent configuration
  */
 
 #ifndef OPAL_CONFIG_H
@@ -189,7 +189,7 @@ OMPI_SETUP_WRAPPER_INIT
 # We do not support OS X before version 10.4 (Tiger)
 case $host_os in
 # Corresponds to OS X 10.0 - 10.3 (additional [] quoting for m4)
-darwin[[4567]]*) 
+darwin[[4567]]*)
     AC_MSG_WARN([Open MPI does not support OS X prior to version 10.4 (Tiger)])
     AC_MSG_ERROR([Cannot continue])
 esac
@@ -375,7 +375,7 @@ AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
 
 AM_CONDITIONAL(WANT_PMPI_BINDINGS_LAYER,
 	test "$WANT_MPI_PROFILING" = 1)
-AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, 
+AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
     test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
     [Whether we want MPI profiling or not])
@@ -422,7 +422,7 @@ OMPI_CHECK_ATTRIBUTES
 # Assembler Configuration
 ##################################
 
-ompi_show_subtitle "Assembler" 
+ompi_show_subtitle "Assembler"
 
 AM_PROG_AS
 OMPI_CONFIG_ASM
@@ -447,19 +447,19 @@ AC_DEFINE([ompi_fortran_bogus_type_t], [int],
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
 
-OMPI_F77_CHECK([LOGICAL], [yes], 
+OMPI_F77_CHECK([LOGICAL], [yes],
                [char, int32_t, int, int64_t, long long, long], [-1])
-OMPI_F77_CHECK([LOGICAL*1], [yes], 
+OMPI_F77_CHECK([LOGICAL*1], [yes],
                [char, int8_t, short, int32_t, int, int64_t, long long, long], [1])
-OMPI_F77_CHECK([LOGICAL*2], [yes], 
+OMPI_F77_CHECK([LOGICAL*2], [yes],
                [short, int16_t, int32_t, int, int64_t, long long, long], [2])
-OMPI_F77_CHECK([LOGICAL*4], [yes], 
+OMPI_F77_CHECK([LOGICAL*4], [yes],
                [int32_t, int, int64_t, long long, long], [4])
-OMPI_F77_CHECK([LOGICAL*8], [yes], 
+OMPI_F77_CHECK([LOGICAL*8], [yes],
                [int, int64_t, long long, long], [8])
-OMPI_F77_CHECK([INTEGER], [yes], 
+OMPI_F77_CHECK([INTEGER], [yes],
                [int32_t, int, int64_t, long long, long], [-1])
-OMPI_F77_CHECK([INTEGER*1], [no], 
+OMPI_F77_CHECK([INTEGER*1], [no],
                [char, int8_t, short, int, int64_t, long long, long], [1])
 OMPI_F77_CHECK([INTEGER*2], [no],
                [short, int16_t, int32_t, int, int64_t, long long, long], [2])
@@ -540,7 +540,7 @@ OMPI_F77_CHECK_LOGICAL_ARRAY
 #
 AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
                test \( "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1 \) -a "$OMPI_WANT_F77_BINDINGS" = 1)
-                    
+
 AM_CONDITIONAL(WANT_PMPI_F77_BINDINGS_LAYER,
                test "$OMPI_WANT_F77_BINDINGS" = 1 -a "$WANT_MPI_PROFILING" = 1)
 
@@ -684,7 +684,7 @@ if test "$have_stdbool_h" = "1"; then
 AC_INCLUDES_DEFAULT
 #if HAVE_STDBOOL_H
 #include <stdbool.h>
-#endif]], 
+#endif]],
 [[bool bar, foo = true; bar = foo;]]),
 [OMPI_USE_STDBOOL_H=1 MSG=yes],[OMPI_USE_STDBOOL_H=0 MSG=no])
 else
@@ -708,7 +708,7 @@ ompi_show_title "Type tests"
 # Size of pid_t
 AC_CHECK_SIZEOF(pid_t)
 
-AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6, 
+AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
                 struct sockaddr_storage],
                [], [], [AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SOCKET_H
@@ -718,7 +718,7 @@ AC_CHECK_TYPES([socklen_t, struct sockaddr_in, struct sockaddr_in6,
 #include <netinet/in.h>
 #endif])
 
-AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6], 
+AC_CHECK_DECLS([AF_UNSPEC, PF_UNSPEC, AF_INET6, PF_INET6],
                [], [], [AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -734,7 +734,7 @@ AC_EGREP_CPP(yes, [
 #ifdef SA_RESTART
     yes
 #endif ], [MSG=yes VALUE=1], [MSG=no VALUE=0])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE, 
+AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE,
     [Whether we have SA_RESTART in <signal.h> or not])
 AC_MSG_RESULT([$MSG])
 
@@ -802,14 +802,14 @@ AC_CACHE_CHECK([for htonl define],
 ])], [ompi_cv_htonl_define=yes], [ompi_cv_htonl_define=no])])
 AC_CHECK_FUNC([htonl], [ompi_have_htonl=yes], [ompi_have_htonl=no])
 AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
-    [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1], 
+    [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1],
         [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
 #
 
-AC_CHECK_DECL(va_copy, OMPI_HAVE_VA_COPY=1, OMPI_HAVE_VA_COPY=0, 
+AC_CHECK_DECL(va_copy, OMPI_HAVE_VA_COPY=1, OMPI_HAVE_VA_COPY=0,
 	      [#include <stdarg.h>])
 AC_DEFINE_UNQUOTED(OMPI_HAVE_VA_COPY, $OMPI_HAVE_VA_COPY,
     [Whether we have va_copy or not])
@@ -1032,7 +1032,7 @@ AC_CHECK_DECLS([RLIMIT_NPROC], [], [], [
 AC_INCLUDES_DEFAULT
 #if HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-#endif]) 
+#endif])
 
 #
 # Do we have RLIMIT_MEMLOCK in <sys/resources.h>? (e.g., Solaris does not)
@@ -1042,7 +1042,7 @@ AC_CHECK_DECLS([RLIMIT_MEMLOCK], [], [], [
 AC_INCLUDES_DEFAULT
 #if HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-#endif]) 
+#endif])
 
 # checkpoint results
 AC_CACHE_SAVE
@@ -1052,7 +1052,7 @@ AC_CACHE_SAVE
 # MCA
 ##################################
 
-ompi_show_title "Modular Component Architecture (MCA) setup" 
+ompi_show_title "Modular Component Architecture (MCA) setup"
 
 AC_MSG_CHECKING([for subdir args])
 OMPI_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
@@ -1129,10 +1129,10 @@ LTDL_CONVENIENCE
 LT_INIT([dlopen win32-dll])
 ])
 
-ompi_show_subtitle "GNU libltdl setup" 
+ompi_show_subtitle "GNU libltdl setup"
 
 # AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
-# passing precious variables down to the sub-configure).  
+# passing precious variables down to the sub-configure).
 #
 # Note that we also did some magic scripty-foo in autogen.sh to rename
 # the output libtool library "libompi_ltdl", so add -lompi_ltdl here.
@@ -1325,7 +1325,7 @@ AC_DEFINE_UNQUOTED(OMPI_SIZEOF_INT, $ac_cv_sizeof_int,
 # Party on
 ############################################################################
 
-ompi_show_subtitle "Final output" 
+ompi_show_subtitle "Final output"
 
 AC_CONFIG_FILES([
     Makefile
