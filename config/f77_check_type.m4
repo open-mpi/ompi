@@ -22,7 +22,7 @@ dnl
 AC_DEFUN([OMPI_F77_CHECK_TYPE],[
     AS_VAR_PUSHDEF([type_var], [ompi_cv_f77_have_$1])
 
-    # Determine FORTRAN datatype size.
+    # Determine Fortran datatype size.
     # First arg is type, 2nd arg is config var to define
     AC_CACHE_CHECK([if Fortran 77 compiler supports $1], type_var,
         [AC_LANG_PUSH([Fortran 77])

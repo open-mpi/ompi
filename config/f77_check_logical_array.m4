@@ -16,7 +16,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OMPI_F77_CHECK_LOGICAL_ARRAY],[
-    AC_CACHE_CHECK([for correct handling of FORTRAN logical arrays],
+    AC_CACHE_CHECK([for correct handling of Fortran logical arrays],
         [ompi_cv_f77_logical_array_correct],
         [if test "$1" = "none" -o "$OMPI_WANT_F77_BINDINGS" = "0"; then
              ompi_cv_f77_logical_array_correct=yes
