@@ -42,18 +42,14 @@ uDAPL component because the uDAPL headers are not fully ISO C])])
 
     # Test for uDAPL relaxed ordered specific symbols
     AS_IF([test "$btl_udapl_happy" = "yes"],
-          [AC_MSG_CHECKING(for uDAPL relax order aware)
+          [AC_MSG_CHECKING(for uDAPL DAT_MEM_TYPE_SO_VIRTUAL)
            AC_TRY_COMPILE([#include <dat/udat.h>], 
-               [DAT_RETURN dr = DAT_INVALID_RO_COOKIE;
-                DAT_MEM_TYPE dmt = DAT_MEM_TYPE_SO_VIRTUAL;], 
+               [DAT_MEM_TYPE dmt = DAT_MEM_TYPE_SO_VIRTUAL;], 
                [AC_MSG_RESULT(yes)
                     btl_udapl_ro_aware=1], 
                [AC_MSG_RESULT(no)
                     btl_udapl_ro_aware=0])
-           AC_DEFINE_UNQUOTED([HAVE_UDAPL_DAT_INVALID_RO_COOKIE], 
-               [$btl_udapl_ro_aware], 
-               [uDAPL DAT_INVALID_RO_COOKIE check])
-           AC_DEFINE_UNQUOTED([HAVE_UDAPL_DAT_MEM_TYPE_SO_VIRTUAL], 
+           AC_DEFINE_UNQUOTED([HAVE_DAT_MEM_TYPE_SO_VIRTUAL], 
                [$btl_udapl_ro_aware], 
                [uDAPL DAT_MEM_TYPE_SO_VIRTUAL check])])
 
