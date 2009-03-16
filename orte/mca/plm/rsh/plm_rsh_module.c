@@ -756,12 +756,10 @@ static void ssh_child(int argc, char **argv,
     argv[proc_vpid_index] = strdup(var);
     free(var);
     
-    /* setup stdin if verbosity is not set */
-    if (0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
-        fdin = open("/dev/null", O_RDWR);
-        dup2(fdin, 0);
-        close(fdin);
-    }
+    /* Don't let ssh slurp all of our stdin! */
+    fdin = open("/dev/null", O_RDWR);
+    dup2(fdin, 0);
+    close(fdin);
     
     /* close all file descriptors w/ exception of stdin/stdout/stderr */
     for(fd=3; fd<fdmax; fd++)
