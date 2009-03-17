@@ -25,6 +25,8 @@
 #ifndef ORTE_CR_H
 #define ORTE_CR_H
 
+#include "orte_config.h"
+
 BEGIN_C_DECLS
 
     /*

@@ -20,6 +20,8 @@
 #ifndef OMPI_F77_CONSTANTS_H
 #define OMPI_F77_CONSTANTS_H
 
+#include "ompi_config.h"
+
 /*
  * Several variables are used to link against MPI F77 constants which
  * correspond to addresses, e.g. MPI_BOTTOM, and are implemented via

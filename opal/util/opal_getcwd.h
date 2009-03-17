@@ -18,6 +18,8 @@
 #ifndef OPAL_GETCWD_H
 #define OPAL_GETCWD_H
 
+#include "opal_config.h"
+
 BEGIN_C_DECLS
 
 /**

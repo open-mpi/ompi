@@ -18,6 +18,7 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
 
 // return  codes
 static const int SUCCESS = MPI_SUCCESS;

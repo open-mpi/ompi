@@ -21,6 +21,8 @@
 #ifndef OPAL_UTIL_KEYVAL_PARSE_H
 #define OPAL_UTIL_KEYVAL_PARSE_H
 
+#include "opal_config.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

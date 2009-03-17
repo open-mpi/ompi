@@ -25,6 +25,8 @@
 #ifndef OPAL_BASENAME_H
 #define OPAL_BASENAME_H
 
+#include "opal_config.h"
+
 BEGIN_C_DECLS
 
 /**
