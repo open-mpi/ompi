@@ -26,4 +26,5 @@ with_devel_headers=yes
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
 with_threads=posix
+with_valgrind=no
 LDFLAGS=-L/opt/PBS/lib64
