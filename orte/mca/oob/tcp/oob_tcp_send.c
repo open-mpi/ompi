@@ -19,6 +19,7 @@
  */
 #include "orte_config.h"
 #include "orte/types.h"
+#include "opal/types.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"

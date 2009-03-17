@@ -7,7 +7,7 @@
  */
 
 #include "orte_config.h"
-
+#include "opal/types.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"

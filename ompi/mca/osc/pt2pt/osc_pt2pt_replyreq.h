@@ -20,6 +20,7 @@
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_longreq.h"
 
+#include "opal/types.h"
 #include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "ompi/datatype/datatype.h"

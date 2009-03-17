@@ -229,6 +229,8 @@ struct ompi_predefined_communicator_t {
 typedef struct ompi_predefined_communicator_t ompi_predefined_communicator_t;
 
 OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
+OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_world;
+OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_self;
 OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_null;
 
 

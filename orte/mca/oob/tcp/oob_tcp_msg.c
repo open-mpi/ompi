@@ -25,6 +25,7 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
+#include "opal/types.h"
 
 #include "opal/opal_socket_errno.h"
 

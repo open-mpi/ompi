@@ -35,6 +35,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/threads/threads.h"
 #include "opal/mca/timer/base/base.h"
 
 #include "orte/mca/oob/oob.h"

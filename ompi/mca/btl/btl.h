@@ -115,6 +115,7 @@
 #include "opal/prefetch.h" /* For OPAL_LIKELY */
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/types.h"
+#include "opal/types.h"
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"

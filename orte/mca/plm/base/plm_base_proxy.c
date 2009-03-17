@@ -22,6 +22,7 @@
 #include "orte/constants.h"
 
 #include "opal/dss/dss.h"
+#include "orte/util/name_fns.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"

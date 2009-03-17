@@ -75,11 +75,13 @@
  * close all available op components.
  */
 
-#include "ompi_config.h"
-#include "opal/mca/mca.h"
-
 #ifndef MCA_OP_H
 #define MCA_OP_H
+
+#include "ompi_config.h"
+
+#include "opal/class/opal_object.h"
+#include "opal/mca/mca.h"
 
 /*
  * This file includes some basic struct declarations (but not

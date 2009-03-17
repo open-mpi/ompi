@@ -36,6 +36,7 @@
 #include "ompi_config.h"
 
 #include "ompi_common_dll_defs.h"
+#include "ompi/mca/topo/topo.h"
 
 /* Basic callbacks into the debugger */
 const mqs_basic_callbacks *mqs_basic_entrypoints;
