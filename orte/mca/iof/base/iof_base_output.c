@@ -38,6 +38,8 @@
 #endif
 #include <errno.h>
 
+#include "opal/util/output.h"
+
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"

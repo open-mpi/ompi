@@ -41,6 +41,7 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "opal/dss/dss.h"
+#include "opal/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"

@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "opal/util/printf.h"
+#include "opal/util/output.h"
 #include "opal/threads/tsd.h"
 
 #include "opal/dss/dss.h"
