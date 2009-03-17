@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/mpool/mpool.h"

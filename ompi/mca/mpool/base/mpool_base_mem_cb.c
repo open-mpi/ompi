@@ -20,6 +20,8 @@
  * @file
  */
 #include "ompi_config.h"
+
+#include "opal/class/opal_pointer_array.h"
 #include "mpool_base_mem_cb.h"
 #include "base.h"
 #include "orte/types.h"
