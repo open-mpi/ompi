@@ -201,7 +201,7 @@ int ompi_grequest_complete(ompi_request_t *req)
 int ompi_grequest_invoke_query(ompi_request_t *request,
                                ompi_status_public_t *status)
 {
-    int rc;
+    int rc = OMPI_SUCCESS;
     ompi_grequest_t *g = (ompi_grequest_t*) request;
 
     /* MPI-2:8.2 does not say what to do with the return value from
@@ -224,6 +224,6 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
         }
     }
 
-    return OMPI_SUCCESS;
+    return rc;
 }
 
