@@ -27,6 +27,7 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/threads/condition.h"
+#include "opal/util/output.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"

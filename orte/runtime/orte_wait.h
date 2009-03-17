@@ -37,6 +37,7 @@
 #endif
 
 #include "opal/dss/dss.h"
+#include "opal/util/output.h"
 #include "opal/class/opal_list.h"
 #include "opal/sys/atomic.h"
 #include "opal/event/event.h"

@@ -22,6 +22,7 @@
 #include "orte/types.h"
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
