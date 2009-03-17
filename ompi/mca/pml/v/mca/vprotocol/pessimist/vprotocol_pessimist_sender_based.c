@@ -127,9 +127,9 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     char *path;
 #ifdef SB_USE_CONVERTOR_METHOD
     mca_pml_base_send_request_t pml_req;
-    sb.sb_conv_to_pessimist_offset = VPROTOCOL_SEND_REQ(NULL) - 
-            ((uintptr_t) & pml_req.req_base.req_convertor - 
-             (uintptr_t) & pml_req);
+    sb.sb_conv_to_pessimist_offset = (uintptr_t) VPROTOCOL_SEND_REQ(NULL) - 
+            ((uintptr_t) &pml_req.req_base.req_convertor - 
+             (uintptr_t) &pml_req);
     V_OUTPUT_VERBOSE(500, "pessimist: conv_to_pessimist_offset: %p", (void *) sb.sb_conv_to_pessimist_offset);
 #endif
     sb.sb_offset = 0;
@@ -187,6 +187,8 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
     V_OUTPUT_VERBOSE(30, "pessimist:\tsb\tgrow\toffset %llu\tlength %llu\tbase %p\tcursor %p", (unsigned long long) sb.sb_offset, (unsigned long long) sb.sb_length, (void *) sb.sb_addr, (void *) sb.sb_cursor);
 }   
 
+#undef sb
+
 #ifdef SB_USE_CONVERTOR_METHOD
 int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pConvertor,
                                                             struct iovec* iov,
@@ -198,18 +200,18 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pCo
     mca_vprotocol_pessimist_send_request_t *ftreq;
     
     ftreq = VPESSIMIST_CONV_REQ(pConvertor);
-    pConvertor->flags = ftreq->sb_conv_flags;
-    pConvertor->fAdvance = ftreq->sb_conv_advance;
+    pConvertor->flags = ftreq->sb.conv_flags;
+    pConvertor->fAdvance = ftreq->sb.conv_advance;
     ret = ompi_convertor_pack(pConvertor, iov, out_size, max_data);
     V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%"PRIsize_t, *max_data);
 
     for(i = 0, pending_length = *max_data; pending_length > 0; i++) {
         assert(i < *out_size);
-        MEMCPY((void *) ftreq->sb_cursor, iov[i].iov_base, iov[i].iov_len);
+        MEMCPY((void *) ftreq->sb.cursor, iov[i].iov_base, iov[i].iov_len);
         pending_length -= iov[i].iov_len;
-        ftreq->sb_cursor += iov[i].iov_len;
+        ftreq->sb.cursor += iov[i].iov_len;
     }
-    assert(pending_length == 0)
+    assert(pending_length == 0);
 
     pConvertor->flags &= ~CONVERTOR_NO_OP;
     pConvertor->fAdvance = &vprotocol_pessimist_sender_based_convertor_advance;
@@ -217,4 +219,3 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(ompi_convertor_t* pCo
 }
 #endif
 
-#undef sb
