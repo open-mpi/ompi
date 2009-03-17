@@ -309,7 +309,7 @@ AC_DEFUN([_PLPA_INIT],[
                  [CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"])
            AC_CHECK_HEADERS([valgrind/valgrind.h], 
                  [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
-                  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
+                  AC_LINK_IFELSE(AC_LANG_PROGRAM([[
 #include "valgrind/memcheck.h"
 ]],
                      [[char buffer = 0xff;
