@@ -302,7 +302,7 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_int("ib_min_rnr_timer", NULL, "InfiniBand minimum "
                   "\"receiver not ready\" timer, in seconds "
                   "(must be >= 0 and <= 31)",
-                  5, &ival, 0));
+                  25, &ival, 0));
     if (ival > 31) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_min_rnr_timer > 31",
@@ -318,7 +318,7 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("ib_timeout", NULL, "InfiniBand transmit timeout, plugged into formula: 4.096 microseconds * (2^btl_openib_ib_timeout)"
                   "(must be >= 0 and <= 31)",
-                  10, &ival, 0));
+                  20, &ival, 0));
     if (ival > 31) {
         orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "btl_openib_ib_timeout > 31",
