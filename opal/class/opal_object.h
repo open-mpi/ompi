@@ -126,6 +126,8 @@
 #include "opal/sys/atomic.h"
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
+BEGIN_C_DECLS
+
 #if OMPI_ENABLE_DEBUG
 /* Any kind of unique ID should do the job */
 #define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 32) + 0xdeafbeedULL)
@@ -501,7 +503,7 @@ static inline int opal_obj_update(opal_object_t *object, int inc)
 #endif
 }
 
+END_C_DECLS
 
-/**********************************************************************/
+#endif
 
-#endif                          /* OPAL_OBJECT_H */

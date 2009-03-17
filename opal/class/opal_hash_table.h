@@ -31,9 +31,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_hash_table_t);
                            
@@ -285,10 +283,6 @@ OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, 
 				       void **value, void *in_node,
 				       void **out_node);
 
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
+END_C_DECLS
 
 #endif  /* OPAL_HASH_TABLE_H */

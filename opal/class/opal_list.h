@@ -74,9 +74,8 @@
 #include "opal/threads/mutex.h"
 #endif
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
+
 /**
  * \internal
  *
@@ -798,10 +797,6 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
      */
     OPAL_DECLSPEC int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-
+END_C_DECLS
 
 #endif /* OPAL_LIST_H */
