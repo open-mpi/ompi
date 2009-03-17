@@ -50,6 +50,7 @@
 #include <netinet/tcp.h>
 #endif
 
+#include "opal/types.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
