@@ -2900,9 +2900,9 @@ error:
 
     if(IBV_WC_WR_FLUSH_ERR != wc->status || !flush_err_printed[cq]++) {
         BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
-                    "status number %d for wr_id %llu opcode %d qp_idx %d",
+                    "status number %d for wr_id %llu opcode %d  vendor error %d qp_idx %d",
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                    wc->status, wc->wr_id, wc->opcode, qp));
+                    wc->status, wc->wr_id, wc->opcode, wc->vendor_err, qp));
         if (NULL == remote_proc) {
             orte_notifier.log(ORTE_NOTIFIER_INFRA, "Proc %s on node %s encountered IB error "
                               "communicating to unknown proc/node:\n\tpolling %s with status %s "
