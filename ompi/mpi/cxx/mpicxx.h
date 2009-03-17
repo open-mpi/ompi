@@ -30,7 +30,7 @@
 #if defined(__cplusplus) || defined(c_plusplus) 
 
 // do not include ompi_config.h.  it will smash free() as a symbol
-#include <mpi.h>
+#include "mpi.h"
 
 // we include all this here so that we escape the silly namespacing issues
 #include <map>
