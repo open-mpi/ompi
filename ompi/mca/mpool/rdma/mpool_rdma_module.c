@@ -213,7 +213,7 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
             mpool_rdma->stat_cache_hit++;
             (*reg)->ref_count++;
             OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-            return MPI_SUCCESS;
+            return OMPI_SUCCESS;
         }
 
         mpool_rdma->stat_cache_miss++;
@@ -255,7 +255,7 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
         if(opal_list_get_end(&mpool_rdma->mru_list) !=
                 (opal_list_item_t*)old_reg) {
             rc = dereg_mem(mpool, old_reg);
-            if(MPI_SUCCESS == rc) {
+            if(OMPI_SUCCESS == rc) {
                 mpool->rcache->rcache_delete(mpool->rcache, old_reg);
                 opal_list_remove_item(&mpool_rdma->mru_list,
                         (opal_list_item_t*)old_reg);
