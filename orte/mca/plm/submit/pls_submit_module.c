@@ -824,12 +824,10 @@ int orte_plm_submit_launch(orte_job_t *jdata)
             argv[proc_vpid_index] = strdup(vpid_string);
             free(vpid_string);
             
-            if (!mca_plm_submit_component.debug) {
-                /* setup stdin */
-                int fd = open("/dev/null", O_RDWR);
-                dup2(fd, 0);
-                close(fd);
-            }
+            /* Tie /dev/null to stdin */
+            fd = open("/dev/null", O_RDWR);
+            dup2(fd, 0);
+            close(fd);
             
             /* close all file descriptors w/ exception of stdin/stdout/stderr */
             for(fd=3; fd<fdmax; fd++)
