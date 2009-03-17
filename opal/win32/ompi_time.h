@@ -19,6 +19,8 @@
 #ifndef OMPI_TIME_H
 #define OMPI_TIME_H
 
+#include "opal_config.h"
+
 #ifndef OMPI_WIN_COMPAT_H
 #error This file is supposed to be included only from win_compat.h
 #endif  /* OMPI_WIN_COMPAT_H */

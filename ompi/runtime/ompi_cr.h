@@ -25,6 +25,8 @@
 #ifndef OMPI_CR_H
 #define OMPI_CR_H
 
+#include "ompi_config.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

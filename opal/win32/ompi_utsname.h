@@ -19,6 +19,8 @@
 #ifndef OMPI_UTSNAME_H
 #define OMPI_UTSNAME_H
 
+#include "opal_config.h"
+
 #define OMPI_UTSNAME_LEN 64
 
 struct utsname {

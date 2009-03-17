@@ -19,6 +19,8 @@
 #ifndef OMPI_TOTALVIEW_H
 #define OMPI_TOTALVIEW_H
 
+#include "ompi_config.h"
+
 OMPI_DECLSPEC extern int ompi_tv_comm_sequence_number;
 
 #endif /* OMPI_TOTALVIEW_H */

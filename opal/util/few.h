@@ -19,6 +19,8 @@
 #ifndef OPAL_FEW_H
 #define OPAL_FEW_H
 
+#include "opal_config.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
