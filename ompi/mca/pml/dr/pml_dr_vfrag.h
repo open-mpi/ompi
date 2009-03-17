@@ -23,6 +23,7 @@
 
 #include "ompi_config.h"
 #include "opal/event/event.h"
+#include "opal/types.h"
 #include "pml_dr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -30,6 +30,8 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "ompi/runtime/params.h"
+#include "ompi/class/ompi_free_list.h"
+#include "ompi/class/ompi_rb_tree.h"
 #include "mpool_base_tree.h"
 
 

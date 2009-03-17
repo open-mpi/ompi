@@ -23,12 +23,14 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_list.h"
 
 /*
  * These units are large enough to warrant their own .h files
  */
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/cmd_line.h"
 
 BEGIN_C_DECLS
 

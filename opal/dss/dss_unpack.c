@@ -17,6 +17,7 @@
  */
 
 #include "opal_config.h"
+#include "opal/types.h"
 #include "opal/util/output.h"
 #include "opal/dss/dss_internal.h"
 

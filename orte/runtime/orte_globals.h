@@ -41,6 +41,7 @@
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 

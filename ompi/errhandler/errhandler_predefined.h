@@ -20,6 +20,7 @@
 #define OMPI_ERRHANDLER_PREDEFINED_H
 
 #include "ompi_config.h"
+#include "ompi/types.h"
 
 /**
  * Handler function for MPI_ERRORS_ARE_FATAL

@@ -17,7 +17,7 @@
  */
 
 #include "orte_config.h"
-
+#include "opal/types.h"
 
 #include "orte/mca/routed/routed.h"
 #include "opal/dss/dss.h"

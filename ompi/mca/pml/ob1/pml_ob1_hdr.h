@@ -30,8 +30,9 @@
 #endif
 
 #include "opal/types.h"
-#include "ompi/proc/proc.h"
 #include "opal/util/arch.h"
+#include "ompi/mca/btl/btl.h"
+#include "ompi/proc/proc.h"
 
 #define MCA_PML_OB1_HDR_TYPE_MATCH     (MCA_BTL_TAG_PML + 1)
 #define MCA_PML_OB1_HDR_TYPE_RNDV      (MCA_BTL_TAG_PML + 2)

@@ -24,6 +24,7 @@
 
 #include "opal/mca/mca.h"
 #include "ompi/mca/pml/pml.h"
+#include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 
 /*
