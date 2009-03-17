@@ -13,19 +13,14 @@
 
 #include "vprotocol_pessimist.h"
 #include "vprotocol_pessimist_request.h"
+#include "vprotocol_pessimist_eventlog_protocol.h"
 
 BEGIN_C_DECLS
-
-/** Enum containing the command tags to remotely control event loggers
-  */
-typedef enum {
-    VPROTOCOL_PESSIMIST_LOG_EVENTS_TAG
-} vprotocol_pessimist_event_logger_command_tag_t; 
 
 /** Initialize the MPI connexion with the event logger
  * @return OMPI_SUCCESS or error code
  */
-int vprotocol_pessimist_event_logger_connect(char *el_name, ompi_communicator_t **el_comm);
+int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm);
 
 /** Finalize the MPI connexion with the event logger
  * @return OMPI_SUCCESS or error code
@@ -78,30 +73,50 @@ static inline void vprotocol_pessimist_matching_log_finish(ompi_request_t *req)
     }
 }
 
+#include "ompi/request/request_default.h"
+
 /* Helper macro to actually perform the send to EL. */
 #define __VPROTOCOL_PESSIMIST_SEND_BUFFER() do {                              \
-    if(mca_vprotocol_pessimist.event_buffer_length)                           \
+    if(OPAL_UNLIKELY(mca_vprotocol_pessimist.event_buffer_length))            \
     {                                                                         \
-        if(ompi_comm_invalid(mca_vprotocol_pessimist.el_comm))                \
-            vprotocol_pessimist_event_logger_connect("EL",                    \
+        int rc;                                                               \
+        ompi_request_t *req;                                                  \
+        vprotocol_pessimist_clock_t max_clock;                                \
+        if(OPAL_UNLIKELY(ompi_comm_invalid(mca_vprotocol_pessimist.el_comm))) \
+        {                                                                     \
+            rc = vprotocol_pessimist_event_logger_connect(0,                  \
                                         &mca_vprotocol_pessimist.el_comm);    \
-        mca_pml_v.host_pml.pml_send(mca_vprotocol_pessimist.event_buffer,     \
-                            mca_vprotocol_pessimist.event_buffer_length *     \
-                            sizeof(vprotocol_pessimist_mem_event_t),          \
-                            MPI_BYTE, 0, VPROTOCOL_PESSIMIST_LOG_EVENTS_TAG,  \
-                            MCA_PML_BASE_SEND_STANDARD,                       \
-                            mca_vprotocol_pessimist.el_comm);                 \
+            if(OMPI_SUCCESS != rc)                                            \
+                OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,   \
+                    __FILE__ ": failed to connect to an Event Logger");       \
+        }                                                                     \
+        rc = mca_pml_v.host_pml.pml_irecv(&max_clock,                         \
+                1, MPI_UNSIGNED_LONG_LONG, 0,                                 \
+                VPROTOCOL_PESSIMIST_EVENTLOG_ACK,                             \
+                mca_vprotocol_pessimist.el_comm, &req);                       \
+        rc = mca_pml_v.host_pml.pml_send(mca_vprotocol_pessimist.event_buffer,\
+                mca_vprotocol_pessimist.event_buffer_length *                 \
+                sizeof(vprotocol_pessimist_mem_event_t), MPI_BYTE, 0,         \
+                VPROTOCOL_PESSIMIST_EVENTLOG_PUT_EVENTS_CMD,                  \
+                MCA_PML_BASE_SEND_STANDARD, mca_vprotocol_pessimist.el_comm); \
+        if(OPAL_UNLIKELY(MPI_SUCCESS != rc))                                  \
+            OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,       \
+                __FILE__ ": failed logging a set of recovery event");         \
         mca_vprotocol_pessimist.event_buffer_length = 0;                      \
+        rc = mca_pml_v.host_request_fns.req_wait(&req, MPI_STATUS_IGNORE);    \
+        if(OPAL_UNLIKELY(MPI_SUCCESS != rc))                                  \
+            OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,       \
+                __FILE__ ": failed logging a set of recovery event");         \
     }                                                                         \
 } while(0)
 
 
-/* This function sens any pending event to the Event Logger. All available 
+/* This function sends any pending event to the Event Logger. All available 
  * events are merged into a single message (if small enough).
  */
 static inline void vprotocol_pessimist_event_flush(void) 
 {
-    if(!opal_list_is_empty(&mca_vprotocol_pessimist.pending_events))
+    if(OPAL_UNLIKELY(!opal_list_is_empty(&mca_vprotocol_pessimist.pending_events)))
     {
         mca_vprotocol_pessimist_event_t *event;
         mca_vprotocol_pessimist_event_t *prv_event;
@@ -136,6 +151,7 @@ static inline void vprotocol_pessimist_event_flush(void)
             if(mca_vprotocol_pessimist.event_buffer_length ==
                mca_vprotocol_pessimist.event_buffer_max_length)
                 __VPROTOCOL_PESSIMIST_SEND_BUFFER();
+            assert(mca_vprotocol_pessimist.event_buffer_length < mca_vprotocol_pessimist.event_buffer_max_length);
             prv_event = (mca_vprotocol_pessimist_event_t *) 
                 opal_list_remove_item(&mca_vprotocol_pessimist.pending_events,
                                       (opal_list_item_t *) event);
@@ -184,7 +200,8 @@ static inline void vprotocol_pessimist_delivery_log(ompi_request_t *req)
         }
         else
         { 
-            /* Last event is not a failed probe, lets create a new event then */
+            /* Previous event is not a failed probe, lets create a new 
+               "failed probe" event (reqid=0) then */
             VPESSIMIST_DELIVERY_EVENT_NEW(event);
             devent = &(event->u_event.e_delivery);
             devent->probeid = mca_vprotocol_pessimist.clock++;

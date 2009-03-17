@@ -38,8 +38,8 @@ typedef struct vprotocol_pessimist_delivery_event_t {
 } vprotocol_pessimist_delivery_event_t;
 
 typedef union vprotocol_pessimist_mem_event_t {
-  vprotocol_pessimist_matching_event_t e_matching;
-  vprotocol_pessimist_delivery_event_t e_delivery;
+    vprotocol_pessimist_matching_event_t e_matching;
+    vprotocol_pessimist_delivery_event_t e_delivery;
 } vprotocol_pessimist_mem_event_t;
 
 typedef struct mca_vprotocol_pessimist_event_t {

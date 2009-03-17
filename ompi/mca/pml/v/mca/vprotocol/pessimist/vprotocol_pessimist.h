@@ -34,8 +34,8 @@ typedef struct mca_vprotocol_pessimist_module_t {
     vprotocol_pessimist_mem_event_t *event_buffer;
     size_t event_buffer_length;
     size_t event_buffer_max_length;
-  
-    /* space for allocating events */ 
+
+    /* space for allocating events */
     ompi_free_list_t events_pool;
   
     /* Sender Based repository */

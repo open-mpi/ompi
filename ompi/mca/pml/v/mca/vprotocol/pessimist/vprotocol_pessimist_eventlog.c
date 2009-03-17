@@ -17,7 +17,7 @@
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/mca/pubsub/pubsub.h"
 
-int vprotocol_pessimist_event_logger_connect(char *el_name, ompi_communicator_t **el_comm)
+int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **el_comm)
 {
     int rc;
     opal_buffer_t buffer;
@@ -25,8 +25,16 @@ int vprotocol_pessimist_event_logger_connect(char *el_name, ompi_communicator_t 
     orte_process_name_t el_proc;
     char *hnp_uri, *rml_uri;
     orte_rml_tag_t el_tag;
+    char name[MPI_MAX_PORT_NAME];
+    int rank;
+    vprotocol_pessimist_clock_t connect_info[2];
     
-    port = ompi_pubsub.lookup(el_name, MPI_INFO_NULL);
+    snprintf(name, MPI_MAX_PORT_NAME, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
+    port = ompi_pubsub.lookup(name, MPI_INFO_NULL);
+    if(NULL == port)
+    {
+        return ORTE_ERR_NOT_FOUND;
+    }
     V_OUTPUT_VERBOSE(45, "Found port < %s >", port);
     
     /* separate the string into the HNP and RML URI and tag */
@@ -63,6 +71,23 @@ int vprotocol_pessimist_event_logger_connect(char *el_name, ompi_communicator_t 
     if(OMPI_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
+    
+    /* Send Rank, receive max buffer size and max_clock back */
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    rc = mca_pml_v.host_pml.pml_send(&rank, 1, MPI_INTEGER, 0, 
+                                     VPROTOCOL_PESSIMIST_EVENTLOG_NEW_CLIENT_CMD,
+                                     MCA_PML_BASE_SEND_STANDARD, 
+                                     mca_vprotocol_pessimist.el_comm);
+    if(OPAL_UNLIKELY(MPI_SUCCESS != rc))
+        OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,
+                               __FILE__ ": failed sending event logger handshake");
+    rc = mca_pml_v.host_pml.pml_recv(&connect_info, 2, MPI_UNSIGNED_LONG_LONG, 
+                                     0, VPROTOCOL_PESSIMIST_EVENTLOG_NEW_CLIENT_CMD,
+                                     mca_vprotocol_pessimist.el_comm, MPI_STATUS_IGNORE);
+    if(OPAL_UNLIKELY(MPI_SUCCESS != rc))                                  \
+        OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,       \
+                               __FILE__ ": failed receiving event logger handshake");   
+    
     return rc;
 }
 
