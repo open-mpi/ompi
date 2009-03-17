@@ -134,9 +134,9 @@ SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS ${CPACK_NSIS_EXTRA_INSTALL_COMMANDS} "
     WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGDATADIR\\\" \\\"$INSTDIR\\\\share\\\\openmpi\\\"
     WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGLIBDIR\\\" \\\"$INSTDIR\\\\lib\\\\openmpi\\\"
     WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGINCLUDEDIR\\\" \\\"$INSTDIR\\\\include\\\\openmpi\\\"
-    ReadRegStr $0 ${hklm_all_users} \\\"PATH\\\"
+    ReadRegStr $0 HKLM \\\"SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment\\\" \\\"PATH\\\"
     StrCpy $0 $0;$INSTDIR\\\\bin
-    WriteRegExpandStr ${hklm_all_users} \\\"PATH\\\"
+    WriteRegExpandStr HKLM \\\"SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment\\\" \\\"PATH\\\" $0
 ")
 
 
