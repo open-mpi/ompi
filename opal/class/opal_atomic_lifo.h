@@ -27,11 +27,9 @@
 #include "opal/sys/atomic.h"
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
-    /* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
+/* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
  * atomicity is insured via the compare-and-swap operation, if not we simply do a read
  * and/or a write.
  *
@@ -51,6 +49,7 @@ typedef struct opal_atomic_lifo_t opal_atomic_lifo_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_atomic_lifo_t);
 
+
 /* The ghost pointer will never change. The head will change via an atomic
  * compare-and-swap. On most architectures the reading of a pointer is an
  * atomic operation so we don't have to protect it.
@@ -59,6 +58,7 @@ static inline bool opal_atomic_lifo_is_empty( opal_atomic_lifo_t* lifo )
 {
     return (lifo->opal_lifo_head == &(lifo->opal_lifo_ghost) ? true : false);
 }
+
 
 /* Add one element to the LIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the
@@ -112,9 +112,7 @@ static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
     return item;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif  /* OPAL_ATOMIC_LIFO_H_HAS_BEEN_INCLUDED */
 

@@ -29,12 +29,11 @@
 #endif
 #include "opal/constants.h"
 
+BEGIN_C_DECLS
+
 /*
  *  @file  Array of elements maintained by value.
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 struct opal_value_array_t
 {
@@ -272,9 +271,7 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
 #define OPAL_VALUE_ARRAY_GET_BASE(array, item_type) \
   ((item_type*) ((array)->array_items))
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-#endif  
+END_C_DECLS
 
+#endif
 

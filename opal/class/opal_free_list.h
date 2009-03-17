@@ -27,9 +27,7 @@
 #include "opal/constants.h"
 #include "opal/prefetch.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 struct opal_free_list_t
 {
@@ -124,7 +122,6 @@ OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
  * been reached. In this case the caller is blocked until an item
  * is returned to the list.
  */
- 
 
 #define OPAL_FREE_LIST_WAIT(fl, item, rc)                               \
     do {                                                                \
@@ -161,8 +158,7 @@ OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
         OPAL_THREAD_UNLOCK(&(fl)->fl_lock);                             \
     } while(0)
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
+
 #endif 
 
