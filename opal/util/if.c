@@ -371,7 +371,7 @@ static int opal_ifinit(void)
             uint32_t flag;
             unsigned int addrbyte[16];
 
-            while (fscanf(f, "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x %2x %2x %2x %2x %20s\n",
+            while (fscanf(f, "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x %x %x %x %x %20s\n",
                       &addrbyte[0], &addrbyte[1], &addrbyte[2], &addrbyte[3],
                       &addrbyte[4], &addrbyte[5], &addrbyte[6], &addrbyte[7],
                       &addrbyte[8], &addrbyte[9], &addrbyte[10], &addrbyte[11],
