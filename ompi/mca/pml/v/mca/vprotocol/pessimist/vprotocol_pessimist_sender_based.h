@@ -183,7 +183,7 @@ static inline void vprotocol_pessimist_sender_based_copy_start(ompi_request_t *r
     /* Copy message header to the sender-based space */
     /* /!\ This is NOT thread safe */
     ftreq->sb.cursor = mca_vprotocol_pessimist.sender_based.sb_cursor;
-#if 0
+#if 1
     mca_vprotocol_pessimist.sender_based.sb_cursor +=
         sizeof(vprotocol_pessimist_sender_based_header_t) + 
         pmlreq->req_bytes_packed;
