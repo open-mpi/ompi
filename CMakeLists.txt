@@ -31,6 +31,9 @@ IF (NOT CMAKE_BUILD_TYPE)
     "Choose the type of build, options are: None, Debug, Release, RelWithDebInfo and MinSizeRel." FORCE)
 ENDIF (NOT CMAKE_BUILD_TYPE)
 
+# add debug-suffix to distinguish between debug and release version libraries.
+SET(CMAKE_DEBUG_POSTFIX  "d") 
+
 # preset install dir
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/installed" CACHE PATH "CMAKE_INSTALL_PREFIX" FORCE)
@@ -113,8 +116,9 @@ SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.open-mpi.org")
 # SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable")
 
 
-SET(CPACK_NSIS_MODIFY_PATH OFF)
+SET(CPACK_NSIS_MODIFY_PATH ON)
 SET(CPACK_SOURCE_ZIP ON)
+SET(CPACK_BINARY_ZIP ON)
 
 # setup the register entries when install
 SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS ${CPACK_NSIS_EXTRA_INSTALL_COMMANDS} "
@@ -134,9 +138,6 @@ SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS ${CPACK_NSIS_EXTRA_INSTALL_COMMANDS} "
     WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGDATADIR\\\" \\\"$INSTDIR\\\\share\\\\openmpi\\\"
     WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGLIBDIR\\\" \\\"$INSTDIR\\\\lib\\\\openmpi\\\"
     WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGINCLUDEDIR\\\" \\\"$INSTDIR\\\\include\\\\openmpi\\\"
-    ReadRegStr $0 HKLM \\\"SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment\\\" \\\"PATH\\\"
-    StrCpy $0 $0;$INSTDIR\\\\bin
-    WriteRegExpandStr HKLM \\\"SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment\\\" \\\"PATH\\\" $0
 ")
 
 
