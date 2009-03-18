@@ -40,6 +40,7 @@ local_sources = \
         vprotocol_pessimist_event.c \
         vprotocol_pessimist_eventlog.h \
         vprotocol_pessimist_eventlog.c \
+        vprotocol_pessimist_eventlog_protocol.h \
         vprotocol_pessimist_sender_based_types.h \
         vprotocol_pessimist_sender_based.h \
         vprotocol_pessimist_sender_based.c
