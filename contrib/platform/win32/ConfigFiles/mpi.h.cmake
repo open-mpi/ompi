@@ -136,6 +136,9 @@
 /* Whether OMPI should provide MPI File interface */
 #cmakedefine OMPI_PROVIDE_MPI_FILE_INTERFACE ${OMPI_PROVIDE_MPI_FILE_INTERFACE}
 
+/* Define OMPI_DECLSPEC based on build type (static/shared). */
+#define OMPI_DECLSPEC ${OMPI_DECLSPEC}
+
 #ifndef OMPI_DECLSPEC
 #  if defined(WIN32) || defined(_WIN32)
 #    if defined(OMPI_IMPORTS)

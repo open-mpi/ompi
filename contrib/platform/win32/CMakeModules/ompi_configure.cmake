@@ -133,6 +133,13 @@ SET(OMPI_F90_ABSOLUTE "\"none\"")
 
 SET(OMPI_F90_BUILD_SIZE "\"small\"")
 
+# set the im/export decleration here. 
+# Don't bother with OMPI_IMPORTS
+IF(BUILD_SHARED_LIBS)
+  SET(OMPI_DECLSPEC "__declspec(dllimport)")
+ELSE(BUILD_SHARED_LIBS)
+  SET(OMPI_DECLSPEC "")
+ENDIF(BUILD_SHARED_LIBS)
 
 ###################################################################
 #                              Options                            #
@@ -255,7 +262,7 @@ ENDIF(OMPI_PROVIDE_MPI_FILE_INTERFACE)
 
 
 OPTION(OMPI_WANT_CXX_BINDINGS
-  "Whether we want MPI cxx support or not." OFF)
+  "Whether we want MPI cxx support or not." ON)
 MARK_AS_ADVANCED(OMPI_WANT_CXX_BINDINGS)
 IF(OMPI_WANT_CXX_BINDINGS)
   SET(OMPI_WANT_CXX_BINDINGS 1)
