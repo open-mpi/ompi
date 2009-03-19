@@ -162,9 +162,15 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
                               ARCHIVE DESTINATION lib")
           ELSE("${MCA_FRAMEWORK}" STREQUAL "common")
             SET(LIB_NAME_PREFIX "")
-            SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi
-                              LIBRARY DESTINATION lib/openmpi
-                              ARCHIVE DESTINATION lib/openmpi")
+            IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+              SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi/debug
+                                LIBRARY DESTINATION lib/openmpi/debug
+                                ARCHIVE DESTINATION lib/openmpi/debug")
+            ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
+              SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi
+                                LIBRARY DESTINATION lib/openmpi
+                                ARCHIVE DESTINATION lib/openmpi")
+            ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
           ENDIF("${MCA_FRAMEWORK}" STREQUAL "common")
             
 
