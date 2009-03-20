@@ -40,7 +40,7 @@
 /*
  * Globals
  */
-int opal_paffinity_base_output = -1;
+OPAL_DECLSPEC int opal_paffinity_base_output = -1;
 bool opal_paffinity_base_components_opened_valid = false;
 opal_list_t opal_paffinity_base_components_opened;
 
