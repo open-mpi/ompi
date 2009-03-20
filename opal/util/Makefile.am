@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +18,8 @@
 #
 
 SUBDIRS = keyval
+
+dist_pkgdata_DATA = help-opal-util.txt
 
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy

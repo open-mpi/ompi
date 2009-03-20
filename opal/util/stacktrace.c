@@ -38,6 +38,7 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 #ifndef _NSIG
 #define _NSIG 32
@@ -410,11 +411,12 @@ void opal_stackframe_output(int stream)
 int opal_util_register_stackhandlers (void)
 {
 #if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
-    struct sigaction act;
+    struct sigaction act, old;
     char * string_value;
     char * tmp;
     char * next;
     int param, i;
+    bool showed_help = false;
 
     gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
     stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
@@ -459,9 +461,25 @@ int opal_util_register_stackhandlers (void)
 	 return OPAL_ERR_BAD_PARAM;
       }
 
-      ret = sigaction (sig, &act, NULL);
+      ret = sigaction (sig, &act, &old);
       if (ret != 0) {
         return OPAL_ERR_IN_ERRNO;
+      }
+      if (SIG_IGN != old.sa_handler && SIG_DFL != old.sa_handler) {
+          if (!showed_help) {
+              /* JMS This is icky; there is no error message
+                 aggregation here so this message may be repeated for
+                 every single MPI process...  This should be replaced
+                 with OPAL_SOS when that is done so that it can be
+                 properly aggregated. */
+              opal_show_help("help-opal-util.txt",
+                             "stacktrace signal override",
+                             true, sig, sig, sig, string_value);
+              showed_help = true;
+          }
+          if (0 != sigaction(sig, &old, NULL)) {
+              return OPAL_ERR_IN_ERRNO;
+          }
       }
     }
     free(string_value);
