@@ -64,11 +64,11 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
         FILE(GLOB MCA_FRAMEWORK_BASE_FILES "${CURRENT_PATH}/*.c" "${CURRENT_PATH}/*.h"
                                            "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
 
-        IF(EXISTS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/base/.windows")
+        IF(EXISTS "${CURRENT_PATH}/.windows")
 
           #MESSAGE("MCA_FRAMEWORK_BASE_FILES:${MCA_FRAMEWORK_BASE_FILES}")
-          FILE(STRINGS ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/base/.windows
-            EXCLUDE_LIST REGEX "^exclude_list=")
+          SET(EXCLUDE_LIST "")
+          FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
 
           IF(NOT EXCLUDE_LIST STREQUAL "")
             STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
@@ -76,12 +76,10 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
           # remove the files in the exclude list
           FOREACH(FILE ${EXCLUDE_LIST})
-            LIST(REMOVE_ITEM MCA_FRAMEWORK_BASE_FILES 
-              "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/base/${FILE}")
-            #MESSAGE("MCA_FRAMEWORK_BASE_FILES:${MCA_FRAMEWORK_BASE_FILES}")
+            LIST(REMOVE_ITEM MCA_FRAMEWORK_BASE_FILES "${CURRENT_PATH}/${FILE}")
           ENDFOREACH(FILE)
 
-        ENDIF(EXISTS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/base/.windows")
+        ENDIF(EXISTS "${CURRENT_PATH}/.windows")
 
         SET_SOURCE_FILES_PROPERTIES(${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/base/static-components.h 
           PROPERTIES GENERATED true)
@@ -104,22 +102,36 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
           STRING(REPLACE "not_single_shared_lib=" "" NOT_SINGLE_SHARED_LIB ${VALUE})
         ENDIF(NOT VALUE STREQUAL "")
         
+        SET(CURRENT_PATH ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
+        FILE(GLOB COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
+          "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
+
+        # check out if we have to exlude some source files.
+        SET(EXCLUDE_LIST "")
+        FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
+        
+        IF(NOT EXCLUDE_LIST STREQUAL "")
+          STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
+        ENDIF(NOT EXCLUDE_LIST STREQUAL "")
+        
+        # remove the files in the exclude list
+        FOREACH(FILE ${EXCLUDE_LIST})
+          LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
+        ENDFOREACH(FILE)
+
         IF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
           SET(NOT_SINGLE_SHARED_LIB "")
           # add sources for static build or for the shared build when this is not a stand along library.
-          SET(CURRENT_PATH "mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}")
-          FILE(GLOB COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
-                                    "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
           SET(MCA_FILES ${MCA_FILES} ${COMPONENT_FILES})
           SOURCE_GROUP(mca\\${MCA_FRAMEWORK}\\${MCA_COMPONENT} FILES ${COMPONENT_FILES})
 
-          IF(EXISTS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/configure.params")
-            FILE(STRINGS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/configure.params" 
+          IF(EXISTS "${CURRENT_PATH}/configure.params")
+            FILE(STRINGS "${CURRENT_PATH}/configure.params" 
               CURRENT_COMPONENT_PRIORITY REGEX "PRIORITY")
             IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
               STRING(REGEX REPLACE "[A-Z_]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
             ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
-          ENDIF(EXISTS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/configure.params")
+          ENDIF(EXISTS "${CURRENT_PATH}/configure.params")
           
           IF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
             # I have a higher priority for this mca, put me at the very beginning.
@@ -137,7 +149,6 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
               "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
           ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
         ELSE(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
-          SET(CURRENT_PATH ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
  
           # get the dependencies for this component.
           SET(MCA_DEPENDENCIES "")
@@ -189,17 +200,11 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
 # make new project for shared build
 
-FILE(GLOB ${MCA_FRAMEWORK}_${MCA_COMPONENT}_FILES
-     \"${CURRENT_PATH}/*.C\" 
-     \"${CURRENT_PATH}/*.h\" 
-     \"${CURRENT_PATH}/*.cc\" 
-     \"${CURRENT_PATH}/*.cpp\")
-
-SET_SOURCE_FILES_PROPERTIES(\${${MCA_FRAMEWORK}_${MCA_COMPONENT}_FILES}
+SET_SOURCE_FILES_PROPERTIES(\${COMPONENT_FILES}
                             PROPERTIES LANGUAGE CXX)
 
 ADD_LIBRARY(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} SHARED 
-            \${${MCA_FRAMEWORK}_${MCA_COMPONENT}_FILES})
+            \${COMPONENT_FILES})
 
 SET_TARGET_PROPERTIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}
                       PROPERTIES COMPILE_FLAGS \"-D_USRDLL -DOPAL_IMPORTS -DOMPI_IMPORTS -DORTE_IMPORTS\")
