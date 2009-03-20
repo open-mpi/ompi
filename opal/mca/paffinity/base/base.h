@@ -242,7 +242,7 @@ OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank);
 /**
  * Debugging output stream
  */
-extern int opal_paffinity_base_output;
+OPAL_DECLSPEC extern int opal_paffinity_base_output;
 
 END_C_DECLS
 
