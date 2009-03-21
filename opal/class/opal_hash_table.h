@@ -29,6 +29,10 @@
 #define OPAL_HASH_TABLE_H
 
 #include "opal_config.h"
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 #include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS

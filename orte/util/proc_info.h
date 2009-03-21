@@ -27,12 +27,16 @@
 #define _ORTE_PROC_INFO_H_
 
 #include "orte_config.h"
-#include "orte/types.h"
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
+#include "orte/types.h"
 #include "opal/dss/dss_types.h"
 
 BEGIN_C_DECLS
