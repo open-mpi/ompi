@@ -18,8 +18,6 @@
 // $HEADER$
 //
 
-#include "ompi_config.h"
-
 // return  codes
 static const int SUCCESS = MPI_SUCCESS;
 static const int ERR_BUFFER = MPI_ERR_BUFFER;
