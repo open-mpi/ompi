@@ -28,6 +28,11 @@
 #define _ORTE_NAME_FNS_H_
 
 #include "orte_config.h"
+
+#ifdef HAVE_STDINT_h
+#include <stdint.h>
+#endif
+
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
