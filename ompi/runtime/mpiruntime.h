@@ -31,6 +31,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 
 BEGIN_C_DECLS
