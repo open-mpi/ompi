@@ -378,8 +378,6 @@ do {                                                            \
 } while (0)
 #endif
 
-BEGIN_C_DECLS
-
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
 
 /* declarations *******************************************************/
@@ -405,7 +403,6 @@ OPAL_DECLSPEC void opal_class_initialize(opal_class_t *);
  */
 OPAL_DECLSPEC int opal_class_finalize(void);
 
-END_C_DECLS
 /**
  * Run the hierarchy of class constructors for this object, in a
  * parent-first order.
