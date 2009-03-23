@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,6 +67,7 @@ struct orte_plm_rsh_component_t {
     bool assume_same_shell;
     bool force_rsh;
     bool disable_qrsh;
+    bool daemonize_qrsh;
     int delay;
     int priority;
     char *agent_param;

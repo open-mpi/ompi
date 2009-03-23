@@ -129,6 +129,11 @@ int orte_plm_rsh_component_open(void)
                            "Disable the launcher to use qrsh when under the SGE parallel environment",
                            false, false, false, &tmp);
     mca_plm_rsh_component.disable_qrsh = OPAL_INT_TO_BOOL(tmp);  
+
+    mca_base_param_reg_int(c, "daemonize_qrsh",
+                           "Daemonize the orted under the SGE parallel environment",
+                           false, false, false, &tmp);
+    mca_plm_rsh_component.daemonize_qrsh = OPAL_INT_TO_BOOL(tmp);
     
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rsh plm component",
