@@ -10,8 +10,8 @@
 # This is the US/English general help file for Open MPI.
 #
 [stacktrace signal override]
-Open MPI was insertting a signal handler for signal %d but noticed
-that there is already a non-default handler installer.  Open MPI's
+Open MPI was inserting a signal handler for signal %d but noticed
+that there is already a non-default handler installed.  Open MPI's
 handler was therefore not installed; your job will continue.  This
 warning message will only be displayed once, even if Open MPI
 encounters this situation again.
