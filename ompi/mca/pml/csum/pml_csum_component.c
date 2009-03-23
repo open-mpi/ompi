@@ -145,7 +145,9 @@ static int mca_pml_csum_component_open(void)
      /* default is not to checksum all data */
     mca_pml_csum.enable_csum =
         mca_pml_csum_param_register_int("enable_csum", 0);
+/*
     ompi_convertor_checksum_enable(mca_pml_csum.enable_csum);
+*/
 
     mca_pml_csum.enabled = false; 
     return mca_bml_base_open(); 
