@@ -482,7 +482,6 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
 
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
-
     
     /* if receive buffer is not contiguous we can't just RDMA read into it, so
      * fall back to copy in/out protocol. It is a pity because buffer on the
@@ -955,7 +954,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
      * the cost of the request lock.
      */
     PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
-                             &(req->req_recv.req_base), PERUSE_RECV);
+                            &(req->req_recv.req_base), PERUSE_RECV);
 
     /* assign sequence number */
     req->req_recv.req_base.req_sequence = comm->recv_sequence++;
@@ -986,7 +985,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     if(OPAL_UNLIKELY(NULL == frag)) {
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
-                &(req->req_recv.req_base), PERUSE_RECV);
+                                &(req->req_recv.req_base), PERUSE_RECV);
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
         append_recv_req_to_queue(queue, req);
@@ -995,22 +994,22 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     } else {
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
-                    &(req->req_recv.req_base), PERUSE_RECV);
+                                    &(req->req_recv.req_base), PERUSE_RECV);
 
+            hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
-                    req->req_recv.req_base.req_comm,
-                    req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
-                    req->req_recv.req_base.req_ompi.req_status.MPI_TAG,
-                    PERUSE_RECV);
+                                   req->req_recv.req_base.req_comm,
+                                   hdr->hdr_match.hdr_src,
+                                   hdr->hdr_match.hdr_tag,
+                                   PERUSE_RECV);
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
-                    &(req->req_recv.req_base), PERUSE_RECV);
+                                    &(req->req_recv.req_base), PERUSE_RECV);
 
             opal_list_remove_item(&proc->unexpected_frags,
                                   (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             
-            hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
             switch(hdr->hdr_common.hdr_type) {
             case MCA_PML_OB1_HDR_TYPE_MATCH:
                 mca_pml_ob1_recv_request_progress_match(req, frag->btl, frag->segments,
