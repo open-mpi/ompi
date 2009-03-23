@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,6 +103,19 @@ opal_csum(const void *  source, size_t csumlen)
     unsigned long lastPartialLong = 0;
     size_t lastPartialLength = 0;
     return opal_csum_partial(source, csumlen, &lastPartialLong, &lastPartialLength);
+}
+
+static inline uint16_t
+opal_csum16 (const void *  source, size_t csumlen)
+{
+    unsigned char *src = (unsigned char *) source;
+    uint16_t csum = 0;
+    size_t i;
+
+	for(i = 0; i < csumlen; i++) {
+	    csum += *src++;
+	}
+    return csum;
 }
 
 OPAL_DECLSPEC unsigned int

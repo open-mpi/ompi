@@ -12,6 +12,9 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+dnl                         reserved. 
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -725,5 +728,37 @@ AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
      [ident string for Open MPI])
 AC_MSG_RESULT([$with_ident_string])
 
+#
+# Add padding to OpenIB header
+#
+AC_MSG_CHECKING([whether to add padding to the openib control header])
+AC_ARG_WITH([openib-control-hdr-padding],
+     [AC_HELP_STRING([--with-openib-control-hdr-padding],
+                     [Add padding bytes to the openib control header])])
+if test "$with_openib_control_hdr_padding" = "yes"; then
+    AC_MSG_RESULT([yes])
+    ompi_openib_pad_hdr=1
+else
+    AC_MSG_RESULT([no])
+    ompi_openib_pad_hdr=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR],
+                   [$ompi_openib_pad_hdr],
+                   [Add padding bytes to the openib control header])
+
+
+#
+# Use alternative checksum algorithm
+#
+AC_MSG_CHECKING([whether to use an alternative checksum algo for messages])
+AC_ARG_WITH([dst-checksum],
+     [AC_HELP_STRING([--with-dst-checksum],
+                     [Use an alternative checksum algorithm for messages])])
+if test "$with_dst_checksum" = "yes"; then
+    AC_MSG_RESULT([yes])
+    CFLAGS="-DOMPI_CSUM_DST $CFLAGS"
+else
+    AC_MSG_RESULT([no])
+fi
 
 ])
