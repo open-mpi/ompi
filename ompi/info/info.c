@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +40,7 @@
 /*
  * Global variables
  */
-ompi_info_t ompi_mpi_info_null;
+ompi_predefined_info_t ompi_mpi_info_null;
 
 
 /*
@@ -89,8 +90,8 @@ int ompi_info_init(void)
 
     /* Create MPI_INFO_NULL */
 
-    OBJ_CONSTRUCT(&ompi_mpi_info_null, ompi_info_t);
-    ompi_mpi_info_null.i_f_to_c_index = 0;
+    OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
+    ompi_mpi_info_null.info.i_f_to_c_index = 0;
 
     /* All done */
 
@@ -348,7 +349,7 @@ int ompi_info_finalize(void)
        leak report on it.  Plus, it's statically allocated, so we
        don't want to call OBJ_RELEASE on it. */
     
-    OBJ_DESTRUCT(&ompi_mpi_info_null);
+    OBJ_DESTRUCT(&ompi_mpi_info_null.info);
     opal_pointer_array_set_item(&ompi_info_f_to_c_table, 0, NULL);
     
     /* Go through the f2c table and see if anything is left.  Free them

@@ -10,7 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -506,7 +507,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | \
      OMPI_OP_FLAGS_FLOAT_ASSOC | OMPI_OP_FLAGS_COMMUTE)
 
-ompi_op_t ompi_mpi_op_null = {
+ompi_predefined_op_t ompi_mpi_op_null = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_OP_NULL",
@@ -526,14 +527,14 @@ ompi_op_t ompi_mpi_op_null = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_MAX
  * C integer, Fortran integer, Floating point
  */
-ompi_op_t ompi_mpi_op_max = {
+ompi_predefined_op_t ompi_mpi_op_max = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MAX",
@@ -553,13 +554,13 @@ ompi_op_t ompi_mpi_op_max = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_MIN
  */
-ompi_op_t ompi_mpi_op_min = {
+ompi_predefined_op_t ompi_mpi_op_min = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MIN",
@@ -579,13 +580,13 @@ ompi_op_t ompi_mpi_op_min = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_SUM
  */
-ompi_op_t ompi_mpi_op_sum = {
+ompi_predefined_op_t ompi_mpi_op_sum = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_SUM",
@@ -605,13 +606,13 @@ ompi_op_t ompi_mpi_op_sum = {
       COMPLEX_3BUFF(sum),
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_PROD
  */
-ompi_op_t ompi_mpi_op_prod = {
+ompi_predefined_op_t ompi_mpi_op_prod = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_PROD",
@@ -631,13 +632,13 @@ ompi_op_t ompi_mpi_op_prod = {
       COMPLEX_3BUFF(prod),
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_LAND
  */
-ompi_op_t ompi_mpi_op_land = {
+ompi_predefined_op_t ompi_mpi_op_land = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_LAND",
@@ -657,13 +658,13 @@ ompi_op_t ompi_mpi_op_land = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_BAND
  */
-ompi_op_t ompi_mpi_op_band = {
+ompi_predefined_op_t ompi_mpi_op_band = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_BAND",
@@ -683,13 +684,13 @@ ompi_op_t ompi_mpi_op_band = {
       COMPLEX_NULL_3BUFF,
       BYTE_3BUFF(band),
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_LOR
  */
-ompi_op_t ompi_mpi_op_lor = {
+ompi_predefined_op_t ompi_mpi_op_lor = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_LOR",
@@ -709,13 +710,13 @@ ompi_op_t ompi_mpi_op_lor = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_BOR
  */
-ompi_op_t ompi_mpi_op_bor = {
+ompi_predefined_op_t ompi_mpi_op_bor = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_BOR",
@@ -735,13 +736,13 @@ ompi_op_t ompi_mpi_op_bor = {
       COMPLEX_NULL_3BUFF,
       BYTE_3BUFF(bor),
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_LXOR
  */
-ompi_op_t ompi_mpi_op_lxor = {
+ompi_predefined_op_t ompi_mpi_op_lxor = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_LXOR",
@@ -761,13 +762,13 @@ ompi_op_t ompi_mpi_op_lxor = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_BXOR
  */
-ompi_op_t ompi_mpi_op_bxor = {
+ompi_predefined_op_t ompi_mpi_op_bxor = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_BXOR",
@@ -787,13 +788,13 @@ ompi_op_t ompi_mpi_op_bxor = {
       COMPLEX_NULL_3BUFF,
       BYTE_3BUFF(bxor),
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 
 /*
  * MPI_OP_MAXLOC
  */
-ompi_op_t ompi_mpi_op_maxloc = {
+ompi_predefined_op_t ompi_mpi_op_maxloc = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MAXLOC",
@@ -813,13 +814,13 @@ ompi_op_t ompi_mpi_op_maxloc = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_3BUFF(maxloc) }
-};
+    }};
 
 
 /*
  * MPI_OP_MINLOC
  */
-ompi_op_t ompi_mpi_op_minloc = {
+ompi_predefined_op_t ompi_mpi_op_minloc = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MINLOC",
@@ -839,7 +840,7 @@ ompi_op_t ompi_mpi_op_minloc = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_3BUFF(minloc) }
-};
+    }};
 
 /*
  * MPI_OP_REPLACE
@@ -848,7 +849,7 @@ ompi_op_t ompi_mpi_op_minloc = {
  * users don't invoke MPI_REPLACE with any reduction operations other
  * than ACCUMULATE)
  */
-ompi_op_t ompi_mpi_op_replace = {
+ompi_predefined_op_t ompi_mpi_op_replace = {{
     OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_REPLACE",
@@ -868,7 +869,7 @@ ompi_op_t ompi_mpi_op_replace = {
       COMPLEX_NULL_3BUFF,
       BYTE_NULL_3BUFF,
       TWOLOC_NULL_3BUFF }
-};
+    }};
 
 /*
  * Map from ddt->id to position in op function pointer array
@@ -930,22 +931,22 @@ int ompi_op_init(void)
 
     /* Create the intrinsic ops */
 
-    if (add_intrinsic(&ompi_mpi_op_null, OMPI_OP_FORTRAN_NULL) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_max, OMPI_OP_FORTRAN_MAX) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_min, OMPI_OP_FORTRAN_MIN) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_sum, OMPI_OP_FORTRAN_SUM) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_prod, OMPI_OP_FORTRAN_PROD) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_land, OMPI_OP_FORTRAN_LAND) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_band, OMPI_OP_FORTRAN_BAND) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_lor, OMPI_OP_FORTRAN_LOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_bor, OMPI_OP_FORTRAN_BOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_lxor, OMPI_OP_FORTRAN_LXOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_bxor, OMPI_OP_FORTRAN_BXOR) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_maxloc, 
+    if (add_intrinsic(&ompi_mpi_op_null.op, OMPI_OP_FORTRAN_NULL) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_max.op, OMPI_OP_FORTRAN_MAX) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_min.op, OMPI_OP_FORTRAN_MIN) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_sum.op, OMPI_OP_FORTRAN_SUM) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_prod.op, OMPI_OP_FORTRAN_PROD) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_land.op, OMPI_OP_FORTRAN_LAND) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_band.op, OMPI_OP_FORTRAN_BAND) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_lor.op, OMPI_OP_FORTRAN_LOR) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_bor.op, OMPI_OP_FORTRAN_BOR) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_lxor.op, OMPI_OP_FORTRAN_LXOR) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_bxor.op, OMPI_OP_FORTRAN_BXOR) != OMPI_SUCCESS ||
+        add_intrinsic(&ompi_mpi_op_maxloc.op, 
                       OMPI_OP_FORTRAN_MAXLOC) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_minloc, 
+        add_intrinsic(&ompi_mpi_op_minloc.op, 
                     OMPI_OP_FORTRAN_MINLOC) != OMPI_SUCCESS ||
-        add_intrinsic(&ompi_mpi_op_replace, 
+        add_intrinsic(&ompi_mpi_op_replace.op, 
                       OMPI_OP_FORTRAN_REPLACE) != OMPI_SUCCESS) {
         return OMPI_ERROR;
     }

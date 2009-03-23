@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,7 +78,7 @@ int MPI_Type_create_subarray(int ndims,
     /* If the ndims is zero then return the NULL datatype */
     if( ndims < 2 ) {
         if( 0 == ndims ) {
-            *newtype = &ompi_mpi_datatype_null;
+            *newtype = &ompi_mpi_datatype_null.dt;
             OPAL_CR_EXIT_LIBRARY();
             return MPI_SUCCESS;
         }

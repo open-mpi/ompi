@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -56,26 +56,26 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
      * cache.
      */
 
-    if      (r > 38) *newtype = &ompi_mpi_datatype_null;
+    if      (r > 38) *newtype = &ompi_mpi_datatype_null.dt;
 #if OMPI_HAVE_F90_INTEGER16
-    else if (r > 18) *newtype = &ompi_mpi_long_long_int;
+    else if (r > 18) *newtype = &ompi_mpi_long_long_int.dt;
 #else
-    else if (r > 18) *newtype = &ompi_mpi_datatype_null;
+    else if (r > 18) *newtype = &ompi_mpi_datatype_null.dt;
 #endif  /* OMPI_HAVE_F90_INTEGER16 */
 #if SIZEOF_LONG > SIZEOF_INT
-    else if (r >  9) *newtype = &ompi_mpi_long;
+    else if (r >  9) *newtype = &ompi_mpi_long.dt;
 #else
 #if SIZEOF_LONG_LONG > SIZEOF_INT
-    else if (r >  9) *newtype = &ompi_mpi_long_long_int;
+    else if (r >  9) *newtype = &ompi_mpi_long_long_int.dt;
 #else
-    else if (r >  9) *newtype = &ompi_mpi_datatype_null;
+    else if (r >  9) *newtype = &ompi_mpi_datatype_null.dt;
 #endif  /* SIZEOF_LONG_LONG > SIZEOF_INT */
 #endif  /* SIZEOF_LONG > SIZEOF_INT */
-    else if (r >  4) *newtype = &ompi_mpi_int;
-    else if (r >  2) *newtype = &ompi_mpi_short;
-    else             *newtype = &ompi_mpi_byte;
+    else if (r >  4) *newtype = &ompi_mpi_int.dt;
+    else if (r >  2) *newtype = &ompi_mpi_short.dt;
+    else             *newtype = &ompi_mpi_byte.dt;
 
-    if( *newtype != &ompi_mpi_datatype_null ) {
+    if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
         int* a_i[1];
         int rc;

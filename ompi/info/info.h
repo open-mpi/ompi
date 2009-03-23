@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,6 +54,20 @@ struct ompi_info_t {
 typedef struct ompi_info_t ompi_info_t;
 
 /**
+ * Padded struct to maintain back compatibiltiy.
+ * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
+ * for full explanation why we chose the following padding construct for predefines.
+ */
+#define PREDEFINED_INFO_PAD (sizeof(void*) * 32)
+
+struct ompi_predefined_info_t {
+    struct ompi_info_t info;
+    char padding[PREDEFINED_INFO_PAD - sizeof(ompi_info_t)];
+};
+typedef struct ompi_predefined_info_t ompi_predefined_info_t;
+
+
+/**
  * \internal
  *
  * ompi_info_entry_t object. Each item in ompi_info_list is of this
@@ -81,7 +96,7 @@ extern opal_pointer_array_t ompi_info_f_to_c_table;
 /**
  * Global instance for MPI_INFO_NULL
  */
-OMPI_DECLSPEC extern ompi_info_t ompi_mpi_info_null;
+OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_null;
 
 /**
  * \internal

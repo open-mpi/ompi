@@ -7,7 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "opal/sys/atomic.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/op/op.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/memchecker.h"
@@ -660,7 +661,7 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_mpireq_t *mpireq)
     /* lock the window for accumulates */
     OPAL_THREAD_LOCK(&longreq->req_module->p2p_acc_lock);
 
-    if (longreq->req_op == &ompi_mpi_op_replace) {
+    if (longreq->req_op == &ompi_mpi_op_replace.op) {
         ompi_convertor_t convertor;
         struct iovec iov;
         uint32_t iov_count = 1;
@@ -750,7 +751,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
         /* lock the window for accumulates */
         OPAL_THREAD_LOCK(&module->p2p_acc_lock);
 
-        if (op == &ompi_mpi_op_replace) {
+        if (op == &ompi_mpi_op_replace.op) {
             ompi_convertor_t convertor;
             struct iovec iov;
             uint32_t iov_count = 1;
