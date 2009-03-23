@@ -41,11 +41,8 @@ struct mca_btl_sm_frag_t;
 struct mca_btl_sm_hdr_t {
     struct mca_btl_sm_frag_t *frag;
     size_t len;
+    int my_smp_rank;
     mca_btl_base_tag_t tag;
-   /* Add a 4 byte pad to round out structure to 16 bytes for 32-bit
-    * and to 24 bytes for 64-bit.  Helps prevent bus errors for strict
-    * alignment cases like SPARC. */
-    char pad[4];
 };
 typedef struct mca_btl_sm_hdr_t mca_btl_sm_hdr_t;
 

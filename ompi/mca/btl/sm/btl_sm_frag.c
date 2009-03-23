@@ -27,6 +27,7 @@ static inline void mca_btl_sm_frag_common_constructor(mca_btl_sm_frag_t* frag)
             MCA_BTL_SM_FRAG_ACK);
         frag->segment.seg_addr.pval = ((char*)frag->hdr) +
             sizeof(mca_btl_sm_hdr_t);
+        frag->hdr->my_smp_rank = mca_btl_sm_component.my_smp_rank;
     }
     frag->segment.seg_len = frag->size;
     frag->base.des_src = &frag->segment;
