@@ -471,9 +471,8 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
                                recvreq->req_recv.req_base.req_datatype);
                );
     
-    if (do_csum) {
-        csum = (bytes_received > 0)?
-            recvreq->req_recv.req_base.req_convertor.checksum : 0;
+    if (do_csum && bytes_received > 0) {
+        csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
                              "%s Received \'frag\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_common.hdr_csum, (unsigned long)bytes_received));
@@ -615,9 +614,8 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
                                    recvreq->req_recv.req_base.req_datatype);
                    );
     }
-    if (do_csum) {
-        csum = (bytes_received > 0)? 
-            recvreq->req_recv.req_base.req_convertor.checksum : 0;
+    if (do_csum && bytes_received > 0) {
+        csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Received \'rndv\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_common.hdr_csum, (unsigned long)bytes_received));
@@ -674,8 +672,8 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
                                      data_offset,
                                      bytes_received,
                                      bytes_delivered);
-    if (do_csum) {
-        csum = (bytes_received > 0) ? recvreq->req_recv.req_base.req_convertor.checksum : 0;
+    if (do_csum && bytes_received > 0) {
+        csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Received \'match\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_common.hdr_csum, (unsigned long)bytes_received));

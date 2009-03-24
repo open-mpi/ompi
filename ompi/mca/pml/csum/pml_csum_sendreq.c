@@ -692,7 +692,7 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
     
     bml_btl = sendreq->req_rdma[0].bml_btl;
     
-    do_csum = mca_pml_csum.enable_csum && (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+    do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & MCA_BTL_FLAGS_GET)) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
@@ -855,8 +855,7 @@ int mca_pml_csum_send_request_start_rndv( mca_pml_csum_send_request_t* sendreq,
     mca_btl_base_segment_t* segment;
     mca_pml_csum_hdr_t* hdr;
     int rc;
-    bool do_csum = mca_pml_csum.enable_csum &&
-            (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+    bool do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
 
     /* prepare descriptor */
     if(size == 0) {
@@ -1122,8 +1121,7 @@ cannot_pack:
         des->des_cbfunc = mca_pml_csum_frag_completion;
         des->des_cbdata = sendreq;
         
-        do_csum = mca_pml_csum.enable_csum &&
-            (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+        do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
 
         /* setup header */
         hdr = (mca_pml_csum_frag_hdr_t*)des->des_src->seg_addr.pval;

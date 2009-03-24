@@ -142,14 +142,6 @@ static int mca_pml_csum_component_open(void)
         return OMPI_ERROR;
     }
 
-     /* default is not to checksum all data */
-    mca_pml_csum.enable_csum =
-        mca_pml_csum_param_register_int("enable_csum", 0);
-/*
-    ompi_convertor_checksum_enable(mca_pml_csum.enable_csum);
-*/
-
-    mca_pml_csum.enabled = false; 
     return mca_bml_base_open(); 
 }
 
@@ -174,35 +166,27 @@ mca_pml_csum_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
-    /* if the alternative csum was defined and enable_csum set, then we must
-     * be selected
-     */
-#if defined (OMPI_CSUM_DST)
-    if (mca_pml_csum.enable_csum) {
-        *priority = 100;
+    opal_output_verbose( 10, 0, "in csum, my priority is 0\n");
 
-        if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
-                                              enable_mpi_threads)) {
-            *priority = 0;
-            return NULL;
-        }
-
-        /* Set this here (vs in component_open()) because
-           ompi_mpi_leave_pinned* may have been set after MCA params were
-           read (e.g., by the openib btl) */
-        mca_pml_csum.leave_pinned = (1 == ompi_mpi_leave_pinned);
-        mca_pml_csum.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
-
-        return &mca_pml_csum.super;
-    } else {
+    /* select us only if we are specified */
+    if((*priority) > 0) { 
         *priority = 0;
-        orte_show_help("help-pml-csum.txt", "pml:checksum-not-enabled", true);
         return NULL;
     }
-#else
     *priority = 0;
-    return NULL;
-#endif
+    
+    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
+                                         enable_mpi_threads)) {
+        return NULL;
+    }
+    
+    /* Set this here (vs in component_open()) because
+     ompi_mpi_leave_pinned* may have been set after MCA params were
+     read (e.g., by the openib btl) */
+    mca_pml_csum.leave_pinned = (1 == ompi_mpi_leave_pinned);
+    mca_pml_csum.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
+    
+    return &mca_pml_csum.super;
 }
 
 int mca_pml_csum_component_fini(void)

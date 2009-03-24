@@ -132,77 +132,32 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
     }
 
 
-#define MCA_PML_CSUM_SEND_REQUEST_INIT( sendreq,                         \
-                                       buf,                             \
-                                       count,                           \
-                                       datatype,                        \
-                                       dst,                             \
-                                       tag,                             \
-                                       comm,                            \
-                                       sendmode,                        \
-                                       persistent)                      \
-    {                                                                   \
-        MCA_PML_CSUM_BASE_SEND_REQUEST_INIT(&sendreq->req_send,              \
-                                       buf,                             \
-                                       count,                           \
-                                       datatype,                        \
-                                       dst,                             \
-                                       tag,                             \
-                                       comm,                            \
-                                       sendmode,                        \
-                                       persistent);                     \
-        (sendreq)->req_recv.pval = NULL;                                \
+#define MCA_PML_CSUM_SEND_REQUEST_INIT(sendreq,                                 \
+                                       buf,                                     \
+                                       count,                                   \
+                                       datatype,                                \
+                                       dst,                                     \
+                                       tag,                                     \
+                                       comm,                                    \
+                                       sendmode,                                \
+                                       persistent)                              \
+    {                                                                           \
+        mca_bml_base_endpoint_t* endpoint =                                     \
+            sendreq->req_send.req_base.req_proc->proc_bml;                      \
+        bool do_csum = endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM;        \
+        MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                      \
+                                       buf,                                     \
+                                       count,                                   \
+                                       datatype,                                \
+                                       dst,                                     \
+                                       tag,                                     \
+                                       comm,                                    \
+                                       sendmode,                                \
+                                       persistent,                              \
+                                       do_csum ? CONVERTOR_WITH_CHECKSUM: 0);   \
+        (sendreq)->req_recv.pval = NULL;                                        \
     }
 
-#define MCA_PML_CSUM_BASE_SEND_REQUEST_INIT( request,                          \
-                                        addr,                             \
-                                        count,                            \
-                                        datatype,                         \
-                                        peer,                             \
-                                        tag,                              \
-                                        comm,                             \
-                                        mode,                             \
-                                        persistent)                       \
-   {                                                                      \
-      mca_bml_base_endpoint_t* endpoint =                               \
-        sendreq->req_send.req_base.req_proc->proc_bml;                  \
-      bool do_csum = mca_pml_csum.enable_csum &&                            \
-                    (endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM);   \
-      /* increment reference counts */                                    \
-      OBJ_RETAIN(comm);                                                   \
-                                                                          \
-      OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
-      (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
-      (request)->req_addr = addr;                                         \
-      (request)->req_send_mode = mode;                                    \
-      (request)->req_base.req_addr = addr;                                \
-      (request)->req_base.req_count = count;                              \
-      (request)->req_base.req_datatype = datatype;                        \
-      (request)->req_base.req_peer = (int32_t)peer;                       \
-      (request)->req_base.req_tag = (int32_t)tag;                         \
-      (request)->req_base.req_comm = comm;                                \
-      /* (request)->req_base.req_proc is set on request allocation */     \
-      (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
-      (request)->req_base.req_free_called = false;                        \
-      (request)->req_base.req_ompi.req_status._cancelled = 0;             \
-      (request)->req_bytes_packed = 0;                                    \
-                                                                          \
-      /* initialize datatype convertor for this request */                \
-      if( count > 0 ) {                                                   \
-          OBJ_RETAIN(datatype);                                           \
-         /* We will create a convertor specialized for the        */      \
-         /* remote architecture and prepared with the datatype.   */      \
-         ompi_convertor_copy_and_prepare_for_send(                        \
-                            (request)->req_base.req_proc->proc_convertor, \
-                            (request)->req_base.req_datatype,             \
-                            (request)->req_base.req_count,                \
-                            (request)->req_base.req_addr,                 \
-                            (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),       \
-                            &(request)->req_base.req_convertor );         \
-         ompi_convertor_get_packed_size( &(request)->req_base.req_convertor, \
-                                         &((request)->req_bytes_packed) );\
-      }                                                                   \
-   }
 
 static inline void mca_pml_csum_free_rdma_resources(mca_pml_csum_send_request_t* sendreq)
 {

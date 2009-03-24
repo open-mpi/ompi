@@ -47,15 +47,16 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
 /**
  * Initialize a send request with call parameters.
  *
- * @param request (IN)     Send request
- * @param addr (IN)        User buffer
- * @param count (IN)       Number of elements of indicated datatype.
- * @param datatype (IN)    User defined datatype
- * @param peer (IN)        Destination rank
- * @param tag (IN)         User defined tag
- * @param comm (IN)        Communicator
- * @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
- * @param persistent (IN)  Is request persistent.
+ * @param request (IN)         Send request
+ * @param addr (IN)            User buffer
+ * @param count (IN)           Number of elements of indicated datatype.
+ * @param datatype (IN)        User defined datatype
+ * @param peer (IN)            Destination rank
+ * @param tag (IN)             User defined tag
+ * @param comm (IN)            Communicator
+ * @param mode (IN)            Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
+ * @param persistent (IN)      Is request persistent.
+ * @param convertor_flags (IN) Flags to pass to convertor
  *
  * Perform a any one-time initialization. Note that per-use initialization
  * is done in the send request start routine.
@@ -69,7 +70,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
                                         tag,                              \
                                         comm,                             \
                                         mode,                             \
-                                        persistent)                       \
+                                        persistent,                       \
+                                        convertor_flags)                  \
    {                                                                      \
       /* increment reference counts */                                    \
       OBJ_RETAIN(comm);                                                   \
@@ -100,7 +102,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
                             (request)->req_base.req_datatype,             \
                             (request)->req_base.req_count,                \
                             (request)->req_base.req_addr,                 \
-                            0,                                            \
+                            convertor_flags,                              \
                             &(request)->req_base.req_convertor );         \
          ompi_convertor_get_packed_size( &(request)->req_base.req_convertor, \
                                          &((request)->req_bytes_packed) );\

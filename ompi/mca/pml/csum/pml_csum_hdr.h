@@ -73,20 +73,37 @@ typedef struct mca_pml_csum_common_hdr_t mca_pml_csum_common_hdr_t;
 struct mca_pml_csum_match_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;   /**< common attributes */
     uint16_t hdr_ctx;                      /**< communicator index */
-    uint16_t hdr_seq;                      /**< message sequence number */
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
+    uint16_t hdr_seq;                      /**< message sequence number */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t  hdr_padding[12];              /**< explicitly pad to 16-byte boundary.  Compilers seem to already prefer to do this, but make it explicit just in case */
+#endif
     uint32_t hdr_csum;                     /**< checksum over data */
 };
-#define OMPI_PML_CSUM_MATCH_HDR_LEN 20 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#define OMPI_PML_CSUM_MATCH_HDR_LEN  32
+#else
+#define OMPI_PML_CSUM_MATCH_HDR_LEN  20
+#endif 
 
 typedef struct mca_pml_csum_match_hdr_t mca_pml_csum_match_hdr_t;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
 #define MCA_PML_CSUM_MATCH_HDR_FILL(h) \
-do {                                  \
-    (h).hdr_padding[0] = 0;           \
-    (h).hdr_padding[1] = 0;           \
+do {                                   \
+    (h).hdr_padding[0] =  0;           \
+    (h).hdr_padding[1] =  0;           \
+    (h).hdr_padding[2] =  0;           \
+    (h).hdr_padding[3] =  0;           \
+    (h).hdr_padding[4] =  0;           \
+    (h).hdr_padding[5] =  0;           \
+    (h).hdr_padding[6] =  0;           \
+    (h).hdr_padding[7] =  0;           \
+    (h).hdr_padding[8] =  0;           \
+    (h).hdr_padding[9] =  0;           \
+    (h).hdr_padding[10] = 0;           \
+    (h).hdr_padding[11] = 0;           \
 } while(0)
 #else
 #define MCA_PML_CSUM_MATCH_HDR_FILL(h)
@@ -193,10 +210,13 @@ do {                                         \
  */
 struct mca_pml_csum_frag_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;     /**< common attributes */
-    uint32_t hdr_csum;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[2];                  /**< align to 16-byte boundary */
+#endif
     uint64_t hdr_frag_offset;                /**< offset into message */
     ompi_ptr_t hdr_src_req;                  /**< pointer to source request */
     ompi_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
+    uint32_t hdr_csum;
 };
 typedef struct mca_pml_csum_frag_hdr_t mca_pml_csum_frag_hdr_t;
 
@@ -205,10 +225,6 @@ typedef struct mca_pml_csum_frag_hdr_t mca_pml_csum_frag_hdr_t;
 do {                                 \
   (h).hdr_padding[0] = 0;            \
   (h).hdr_padding[1] = 0;            \
-  (h).hdr_padding[2] = 0;            \
-  (h).hdr_padding[3] = 0;            \
-  (h).hdr_padding[4] = 0;            \
-  (h).hdr_padding[5] = 0;            \
 } while(0)
 #else
 #define MCA_PML_CSUM_FRAG_HDR_FILL(h)
@@ -281,6 +297,9 @@ do {                                \
 
 struct mca_pml_csum_rdma_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;      /**< common attributes */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
+#endif
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     ompi_ptr_t hdr_req;                       /**< destination request */
     ompi_ptr_t hdr_des;                       /**< source descriptor */

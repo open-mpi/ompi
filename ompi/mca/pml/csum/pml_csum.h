@@ -81,9 +81,6 @@ struct mca_pml_csum_t {
     char* allocator_name;
     mca_allocator_base_module_t* allocator; 
     uint32_t unexpected_limit;
-
-    /*Enable or Disable checksum*/
-    bool enable_csum;
 };
 typedef struct mca_pml_csum_t mca_pml_csum_t; 
 

@@ -17,8 +17,6 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-pml-csum.txt
-
 EXTRA_DIST = post_configure.sh pml_csum_endpoint.c pml_csum_endpoint.h
 
 csum_sources  = \
