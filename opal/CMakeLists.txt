@@ -53,7 +53,8 @@ STRING (REGEX MATCHALL "[a-zA-Z1-9_]+" OPAL_SUBDIRS ${OUTPUT})
 FOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
   IF(NOT ${OPAL_SUBDIR} STREQUAL "mca" AND NOT ${OPAL_SUBDIR} STREQUAL "event" 
-    AND NOT ${OPAL_SUBDIR} STREQUAL "include" AND NOT ${OPAL_SUBDIR} STREQUAL "tools")
+    AND NOT ${OPAL_SUBDIR} STREQUAL "libltdl" AND NOT ${OPAL_SUBDIR} STREQUAL "include" 
+    AND NOT ${OPAL_SUBDIR} STREQUAL "tools")
       
       IF(NOT ${OPAL_SUBDIR} STREQUAL "win32")
         FILE(GLOB_RECURSE OPAL_${OPAL_SUBDIR}_FILES 
@@ -70,14 +71,25 @@ FOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
       
       SOURCE_GROUP("${OPAL_SUBDIR}" FILES ${OPAL_${OPAL_SUBDIR}_FILES})
       
-  ENDIF(NOT ${OPAL_SUBDIR} STREQUAL "mca" AND NOT ${OPAL_SUBDIR} STREQUAL "event" 
-    AND NOT ${OPAL_SUBDIR} STREQUAL "include" AND NOT ${OPAL_SUBDIR} STREQUAL "tools")
+  ENDIF(NOT ${OPAL_SUBDIR} STREQUAL "mca" AND NOT ${OPAL_SUBDIR} STREQUAL "event"
+    AND NOT ${OPAL_SUBDIR} STREQUAL "libltdl" AND NOT ${OPAL_SUBDIR} STREQUAL "include"
+    AND NOT ${OPAL_SUBDIR} STREQUAL "tools")
 
 ENDFOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
 # Generate flex files.
 ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/keyval/keyval_lex.l opal_util_keyval_yy "${PROJECT_BINARY_DIR}/util/keyval/")
 ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/show_help_lex.l  opal_show_help_yy "${PROJECT_BINARY_DIR}/util/")
+
+# Exclude the same flex files that generaged on Linux,
+# which could be found in a tarball.
+IF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
+  LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c")
+ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
+
+IF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
+  LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c")
+ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/show_help_lex.c)
 
 # Add Libtool support
 IF(BUILD_SHARED_LIBS)
