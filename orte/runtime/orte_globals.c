@@ -425,7 +425,10 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
         }
     }
     
-    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    /* not an error for this to not be found - could just be
+     * a race condition whereby the job has already been
+     * removed from the array. So just return NULL
+     */
     return NULL;
 }
 
