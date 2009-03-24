@@ -119,7 +119,7 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
     mca_pml_csum_recv_frag_t* frag = NULL;
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
-    uint16_t csum_received, csum;
+    uint16_t csum_received, csum=0;
     uint32_t csum_data;
     bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
@@ -254,8 +254,8 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                        match->req_recv.req_base.req_datatype);
                        );
         }
-        if (do_csum) {
-            csum_data = (bytes_received > 0) ? match->req_recv.req_base.req_convertor.checksum : 0;
+        if (do_csum && bytes_received > 0) {
+            csum_data = match->req_recv.req_base.req_convertor.checksum;
             
             OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                                  "%s Received \'match\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
@@ -391,8 +391,7 @@ void mca_pml_csum_recv_frag_callback_frag(mca_btl_base_module_t* btl,
      mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
      mca_pml_csum_recv_request_t* recvreq;
      uint16_t csum_received, csum;
-     bool do_csum = mca_pml_csum.enable_csum &&
-        (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+     bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
      
      if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
          return;
@@ -425,8 +424,7 @@ void mca_pml_csum_recv_frag_callback_put(mca_btl_base_module_t* btl,
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     mca_pml_csum_send_request_t* sendreq;
     uint16_t csum_received, csum;
-    bool do_csum = mca_pml_csum.enable_csum &&
-        (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
         return;
@@ -462,8 +460,7 @@ void mca_pml_csum_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     mca_btl_base_descriptor_t* rdma;
     uint16_t csum_received, csum;
-    bool do_csum = mca_pml_csum.enable_csum &&
-        (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
         return;

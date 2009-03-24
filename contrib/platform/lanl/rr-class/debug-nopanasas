@@ -3,7 +3,7 @@ enable_mem_debug=yes
 enable_mem_profile=yes
 enable_debug_symbols=yes
 enable_binaries=yes
-enable_heterogeneous=yes
+enable_heterogeneous=no
 enable_picky=yes
 enable_debug=yes
 enable_shared=yes
@@ -29,4 +29,4 @@ with_threads=posix
 with_valgrind=no
 LDFLAGS=-L/opt/PBS/lib64
 with_openib_control_hdr_padding=yes
-
+with_dst_checksum=yes

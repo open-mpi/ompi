@@ -199,8 +199,7 @@ static inline void prepare_recv_req_converter(mca_pml_csum_recv_request_t *req)
 {
     mca_bml_base_endpoint_t* endpoint = 
         req->req_recv.req_base.req_proc->proc_bml;
-    bool do_csum = mca_pml_csum.enable_csum &&  
-                    (endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM);
+    bool do_csum = endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM;
 
     if( req->req_recv.req_base.req_datatype->size | req->req_recv.req_base.req_count ) {
         ompi_convertor_copy_and_prepare_for_recv(

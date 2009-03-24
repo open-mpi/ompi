@@ -432,8 +432,7 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     mca_btl_base_descriptor_t* fin;
     mca_pml_csum_fin_hdr_t* hdr;
     int rc;
-    bool do_csum = mca_pml_csum.enable_csum &&
-            (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
+    bool do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_csum_fin_hdr_t),
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
