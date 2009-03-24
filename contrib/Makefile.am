@@ -41,24 +41,20 @@ EXTRA_DIST = \
         platform/lanl/macosx-static-leopard \
         platform/lanl/rr-class/debug-nopanasas \
         platform/lanl/rr-class/debug-panasas \
-        platform/lanl/rr-class/debug.conf \
         platform/lanl/rr-class/debug-nopanasas.conf \
         platform/lanl/rr-class/debug-panasas.conf \
         platform/lanl/rr-class/optimized-nopanasas \
         platform/lanl/rr-class/optimized-panasas \
-        platform/lanl/rr-class/optimized.conf \
         platform/lanl/rr-class/optimized-nopanasas.conf \
         platform/lanl/rr-class/optimized-panasas.conf \
         platform/lanl/rr-class/slave \
         platform/lanl/rr-class/slave.conf \
         platform/lanl/tlcc/debug-nopanasas \
         platform/lanl/tlcc/debug-panasas \
-        platform/lanl/tlcc/debug.conf \
         platform/lanl/tlcc/debug-nopanasas.conf \
         platform/lanl/tlcc/debug-panasas.conf \
         platform/lanl/tlcc/optimized-nopanasas \
         platform/lanl/tlcc/optimized-panasas \
-        platform/lanl/tlcc/optimized.conf \
         platform/lanl/tlcc/optimized-nopanasas.conf \
         platform/lanl/tlcc/optimized-panasas.conf \
         platform/embedded/debug \
