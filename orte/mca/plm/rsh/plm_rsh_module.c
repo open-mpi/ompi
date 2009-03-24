@@ -1486,7 +1486,17 @@ static orte_plm_rsh_shell_t find_shell(char *shell)
     int i         = 0;
     char *sh_name = NULL;
 
+    if( (NULL == shell) || (strlen(shell) == 1) ) {
+        /* Malformed shell */
+        return ORTE_PLM_RSH_SHELL_UNKNOWN;
+    }
+
     sh_name = rindex(shell, '/');
+    if( NULL == sh_name ) {
+        /* Malformed shell */
+        return ORTE_PLM_RSH_SHELL_UNKNOWN;
+    }
+
     /* skip the '/' */
     ++sh_name;
     for (i = 0; i < (int)(sizeof (orte_plm_rsh_shell_name) /
