@@ -179,7 +179,21 @@ mca_pml_csum_component_init( int* priority,
      */
 #if defined (OMPI_CSUM_DST)
     if (mca_pml_csum.enable_csum) {
-        goto SELECT_ME;
+        *priority = 100;
+
+        if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
+                                              enable_mpi_threads)) {
+            *priority = 0;
+            return NULL;
+        }
+
+        /* Set this here (vs in component_open()) because
+           ompi_mpi_leave_pinned* may have been set after MCA params were
+           read (e.g., by the openib btl) */
+        mca_pml_csum.leave_pinned = (1 == ompi_mpi_leave_pinned);
+        mca_pml_csum.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
+
+        return &mca_pml_csum.super;
     } else {
         *priority = 0;
         orte_show_help("help-pml-csum.txt", "pml:checksum-not-enabled", true);
@@ -189,23 +203,6 @@ mca_pml_csum_component_init( int* priority,
     *priority = 0;
     return NULL;
 #endif
-    
-SELECT_ME:
-    *priority = 100;
-
-    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
-                                          enable_mpi_threads)) {
-        *priority = 0;
-        return NULL;
-    }
-
-    /* Set this here (vs in component_open()) because
-       ompi_mpi_leave_pinned* may have been set after MCA params were
-       read (e.g., by the openib btl) */
-    mca_pml_csum.leave_pinned = (1 == ompi_mpi_leave_pinned);
-    mca_pml_csum.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
-
-    return &mca_pml_csum.super;
 }
 
 int mca_pml_csum_component_fini(void)

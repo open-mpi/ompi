@@ -40,12 +40,6 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/allocator/base/base.h"
 
-#if OMPI_CSUM_DEBUG
-#define OMPI_CSUM_CSUM_DEBUG(x) opal_output x
-#else
-#define OMPI_CSUM_CSUM_DEBUG(x)
-#endif
-
 BEGIN_C_DECLS
 
 /**
