@@ -28,11 +28,23 @@
 #include <string.h>
 
 #include "opal/class/opal_bitmap.h"
+#include "opal/util/crc.h"
+#include "opal/util/output.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/bml/base/base.h"
+#include "ompi/runtime/ompi_cr.h"
+#include "ompi/runtime/ompi_module_exchange.h"
+
 #include "pml_csum.h"
 #include "pml_csum_component.h"
 #include "pml_csum_comm.h"
@@ -41,14 +53,6 @@
 #include "pml_csum_sendreq.h"
 #include "pml_csum_recvreq.h"
 #include "pml_csum_rdmafrag.h"
-#include "ompi/mca/bml/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-#include "opal/util/crc.h"
-#include "ompi/runtime/ompi_cr.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 
 mca_pml_csum_t mca_pml_csum = {
     {
@@ -450,7 +454,8 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     hdr->hdr_common.hdr_csum = (do_csum ?
         opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t)) : OPAL_CSUM_ZERO);
     if(do_csum) {
-        OPAL_OUTPUT_VERBOSE((0, "%s: Sending \'FIN\' with header csum:0x%04x\n",
+        OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
+                             "%s: Sending \'FIN\' with header csum:0x%04x\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
     }
 
