@@ -123,7 +123,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_PLM_CMD))) {
         ORTE_ERROR_LOG(rc);
-        goto ANSWER_LAUNCH;
+        goto CLEANUP;
     }
     
     switch (command) {
@@ -230,8 +230,10 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                 
                 /* lookup the job object */
                 if (NULL == (jdata = orte_get_job_data_object(job))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    return;
+                    /* this job may already have been removed from the array, so just cleanly
+                     * ignore this request
+                     */
+                    goto CLEANUP;
                 }
                 procs = (orte_proc_t**)jdata->procs->addr;
                 count = 1;
@@ -244,13 +246,13 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                     count = 1;
                     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &state, &count, ORTE_PROC_STATE))) {
                         ORTE_ERROR_LOG(rc);
-                        return;
+                        goto CLEANUP;
                     }
                     /* unpack the exit code */
                     count = 1;
                     if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &exit_code, &count, ORTE_EXIT_CODE))) {
                         ORTE_ERROR_LOG(rc);
-                        return;
+                        goto CLEANUP;
                     }
                     
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -297,8 +299,9 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
                                  ORTE_NAME_PRINT(&mev->sender)));
             /* lookup the daemon object */
             if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                /* this job can not possibly have been removed, so this is an error */
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                return;
+                goto CLEANUP;
             }
             procs = (orte_proc_t**)jdata->procs->addr;
             gettimeofday(&beat, NULL);
@@ -310,6 +313,7 @@ void orte_plm_base_receive_process_msg(int fd, short event, void *data)
             return;
     }
     
+CLEANUP:
     /* release the message */
     OBJ_RELEASE(mev);
     OBJ_DESTRUCT(&answer);
