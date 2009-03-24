@@ -102,8 +102,10 @@ int main(int argc, char **argv) {
     GAP_CHECK("o_flags", test_op, o_flags, o_name, 1)
     GAP_CHECK("o_f_to_c_index", test_op, o_f_to_c_index, o_flags, 1)
     GAP_CHECK("o_func", test_op, o_func, o_f_to_c_index, 1)
+#if 0
     GAP_CHECK("o_3buff_instrinsic", test_op, o_3buff_intrinsic, o_func, 1)
-
+#endif
+    
     /* Test Predefined datatype sizes */
     printf("=============================================\n");
     printf("ompi_predefined_datatype_t = %lu bytes\n", sizeof(ompi_predefined_datatype_t));
