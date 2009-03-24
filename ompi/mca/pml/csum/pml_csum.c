@@ -450,7 +450,7 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     hdr->hdr_common.hdr_csum = (do_csum ?
         opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t)) : OPAL_CSUM_ZERO);
     if(do_csum) {
-        OMPI_CSUM_CSUM_DEBUG((0, "%s: Sending \'FIN\' with header csum:0x%04x\n",
+        OPAL_OUTPUT_VERBOSE((0, "%s: Sending \'FIN\' with header csum:0x%04x\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
     }
 
