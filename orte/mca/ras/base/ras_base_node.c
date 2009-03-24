@@ -96,7 +96,8 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
          */
-        if (opal_ifislocal(node->name)) {
+        if (0 == strcmp(node->name, hnp_node->name) ||
+            opal_ifislocal(node->name)) {
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
                                  "%s ras:base:node_insert updating HNP info to %ld slots",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
