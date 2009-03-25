@@ -2820,7 +2820,9 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             }
             /* Process a completed send/put/get */
             btl_ownership = (des->des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-            des->des_cbfunc(&openib_btl->super, endpoint, des,OMPI_SUCCESS);
+            if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+                des->des_cbfunc(&openib_btl->super, endpoint, des,OMPI_SUCCESS);
+            }
             if( btl_ownership ) {
                 mca_btl_openib_free(&openib_btl->super, des);
             }
