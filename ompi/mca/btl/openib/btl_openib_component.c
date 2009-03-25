@@ -1856,6 +1856,7 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
                     opal_list_t);
             openib_btl->qps[qp].u.srq_qp.sd_credits =
                 mca_btl_openib_component.qp_infos[qp].u.srq_qp.sd_max;
+            openib_btl->qps[qp].u.srq_qp.srq = NULL;
         }
     }
 
