@@ -738,8 +738,9 @@ static int mca_btl_udapl_endpoint_finish_eager(
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     /* establish eager rdma connection */
-    if (btl->udapl_eager_rdma_endpoint_count <
-        mca_btl_udapl_component.udapl_max_eager_rdma_peers) {
+    if ((1 == mca_btl_udapl_component.udapl_use_eager_rdma) &&
+	(btl->udapl_eager_rdma_endpoint_count <
+        mca_btl_udapl_component.udapl_max_eager_rdma_peers)) {
         mca_btl_udapl_endpoint_connect_eager_rdma(endpoint);
     }
 
@@ -1142,6 +1143,7 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
     char* alloc_ptr;
     size_t size_plus_align;
     int i;
+    uint32_t flags = MCA_MPOOL_FLAGS_CACHE_BYPASS;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_eager_rdma_local.lock);
@@ -1172,10 +1174,15 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
         mca_btl_udapl_component.udapl_eager_frag_size, 
         DAT_OPTIMAL_ALIGNMENT, size_t);
 
+    /* set flags value accordingly if ro aware */
+    if (mca_btl_udapl_component.ro_aware_system) {
+        flags |= MCA_MPOOL_FLAGS_SO_MEM;
+    }
+
     /* create and register memory for all rdma segments */
     buf = udapl_btl->super.btl_mpool->mpool_alloc(udapl_btl->super.btl_mpool,
         (size_plus_align * mca_btl_udapl_component.udapl_eager_rdma_num),
-        0, 0,
+        0, flags,
         (mca_mpool_base_registration_t**)&endpoint->endpoint_eager_rdma_local.reg);
 
     if(!buf)

@@ -74,6 +74,7 @@ struct mca_btl_udapl_component_t {
     int udapl_free_list_num;   /**< initial size of free lists */
     int udapl_free_list_max;   /**< maximum size of free lists */
     int udapl_free_list_inc;   /**< number of elements to alloc when growing */
+    int32_t udapl_use_eager_rdma; /**< turn rdma for small msgs on/off */
     int32_t udapl_eager_rdma_num;  /**< number of rdma buffers allocated
                                       for short messages */
     int32_t udapl_max_eager_rdma_peers; /**< maximum number of peers allowed to
@@ -94,6 +95,7 @@ struct mca_btl_udapl_component_t {
     char *if_exclude;
     char **if_exclude_list;
     char **if_list;            /* used for checking entries not found */
+    int32_t ro_aware_system;   /* default 0; 1 if relaxed ordered platform */
 }; 
 typedef struct mca_btl_udapl_component_t mca_btl_udapl_component_t;
 
