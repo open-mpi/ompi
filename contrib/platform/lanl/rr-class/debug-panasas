@@ -3,7 +3,7 @@ enable_mem_debug=yes
 enable_mem_profile=yes
 enable_debug_symbols=yes
 enable_binaries=yes
-enable_heterogeneous=yes
+enable_heterogeneous=no
 enable_picky=yes
 enable_debug=yes
 enable_shared=yes
@@ -25,7 +25,7 @@ with_openib_libdir=/opt/ofed/lib64
 with_devel_headers=yes
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs+panfs
-with_threads=posix
 with_valgrind=no
 LDFLAGS=-L/opt/PBS/lib64
-CFLAGS=-I/opt/panfs/include
+CFLAGS="-I/opt/panfs/include"
+
