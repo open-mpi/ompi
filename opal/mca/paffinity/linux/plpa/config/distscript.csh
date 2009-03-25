@@ -101,19 +101,38 @@ chmod +x config.guess config.sub
 # fail to be made correctly.  This is a primitive attempt to fix that.
 # If we got zero-length files from wget, use a config.guess /
 # config.sub from a known location that is more recent than what ships
-# in the current generation of auto* tools.
+# in the current generation of auto* tools.  Also check to ensure that
+# the resulting scripts are runnable (Jan 2009: there are un-runnable
+# scripts available right now because of some git vulnerability).
 
+# Before you complain about this too loudly, remember that we're using
+# unreleased software...
+
+set happy=0
 if (! -f config.guess || ! -s config.guess) then
-    echo " - WARNING: Got BAD config.guess from ftp.gnu.org"
-    echo " - WARNING: using included version"
+    echo " - WARNING: Got bad config.guess from ftp.gnu.org (non-existent or empty)"
 else
-    cp config.guess ..
+    ./config.guess >& /dev/null
+    if ($status != 0) then
+        echo " - WARNING: Got bad config.guess from ftp.gnu.org (not executable)"
+    else
+        if (! -f config.sub || ! -s config.sub) then
+            echo " - WARNING: Got bad config.sub from ftp.gnu.org (non-existent or empty)"
+        else
+            ./config.sub `./config.guess` >& /dev/null
+            if ($status != 0) then
+                echo " - WARNING: Got bad config.sub from ftp.gnu.org (not executable)"
+            else
+                echo " - Got good config.guess and config.sub from ftp.gnu.org"
+                cp config.sub config.guess ..
+                set happy=1
+            endif
+        endif
+    endif
 endif
-if (! -f config.sub || ! -s config.sub) then
-    echo " - WARNING: Got BAD config.sub from ftp.gnu.org"
-    echo " - WARNING: using known version"
-else
-    cp config.sub ..
+
+if ("$happy" == "0") then
+    echo " - WARNING: using included versions for both config.sub and config.guess"
 endif
 cd ..
 rm -rf tmp.$$
