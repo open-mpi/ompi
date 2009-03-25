@@ -989,7 +989,8 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[0]);
                 MCA_BTL_OPENIB_CLEAN_PENDING_FRAGS(
                         &openib_btl->qps[qp].u.srq_qp.pending_frags[1]);
-                if (ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
+                if (NULL != openib_btl->qps[qp].u.srq_qp.srq &&
+                        ibv_destroy_srq(openib_btl->qps[qp].u.srq_qp.srq)){
                     BTL_VERBOSE(("Failed to close SRQ %d", qp));
                     rc = OMPI_ERROR;
                 }
