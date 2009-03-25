@@ -376,6 +376,11 @@ static inline int mca_btl_openib_endpoint_post_rr(
     OPAL_ATOMIC_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 0, 1)
 #define BTL_OPENIB_CREDITS_SEND_UNLOCK(E, Q) \
     OPAL_ATOMIC_CMPSET_32(&(E)->qps[(Q)].rd_credit_send_lock, 1, 0)
+#define BTL_OPENIB_GET_CREDITS(FROM, TO)                                        \
+    do {                                                     \
+        TO = FROM;                                           \
+    } while(0 == OPAL_ATOMIC_CMPSET_32(&FROM, TO, 0))
+
 
 static inline bool check_eager_rdma_credits(const mca_btl_openib_endpoint_t *ep)
 {
@@ -450,6 +455,81 @@ ib_send_flags(uint32_t size, mca_btl_openib_endpoint_qp_t *qp)
     return IBV_SEND_SIGNALED |
         ((size <= qp->ib_inline_max) ? IBV_SEND_INLINE : 0);
 }
+
+static inline int
+acquire_eager_rdma_send_credit(mca_btl_openib_endpoint_t *endpoint)
+{
+    if(OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, -1) < 0) {
+        OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens, 1);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static inline int post_send(mca_btl_openib_endpoint_t *ep,
+        mca_btl_openib_send_frag_t *frag, const bool rdma)
+{
+    mca_btl_openib_module_t *openib_btl = ep->endpoint_btl;
+    mca_btl_base_segment_t *seg = &to_base_frag(frag)->segment;
+    struct ibv_sge *sg = &to_com_frag(frag)->sg_entry;
+    struct ibv_send_wr *sr_desc = &to_out_frag(frag)->sr_desc;
+    struct ibv_send_wr *bad_wr;
+    int qp = to_base_frag(frag)->base.order;
+
+    sg->length = seg->seg_len + sizeof(mca_btl_openib_header_t) +
+        (rdma ? sizeof(mca_btl_openib_footer_t) : 0) + frag->coalesced_length;
+
+    sr_desc->send_flags = ib_send_flags(sg->length, &(ep->qps[qp]));
+
+    if(ep->nbo)
+        BTL_OPENIB_HEADER_HTON(*frag->hdr);
+
+    if(rdma) {
+        int32_t head;
+        mca_btl_openib_footer_t* ftr =
+            (mca_btl_openib_footer_t*)(((char*)frag->hdr) + sg->length -
+                    sizeof(mca_btl_openib_footer_t));
+        sr_desc->opcode = IBV_WR_RDMA_WRITE;
+        MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, sg->length);
+        MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
+#if OMPI_ENABLE_DEBUG
+        ftr->seq = ep->eager_rdma_remote.seq++;
+#endif
+        if(ep->nbo)
+            BTL_OPENIB_FOOTER_HTON(*ftr);
+
+        sr_desc->wr.rdma.rkey = ep->eager_rdma_remote.rkey;
+        MCA_BTL_OPENIB_RDMA_MOVE_INDEX(ep->eager_rdma_remote.head, head);
+        sr_desc->wr.rdma.remote_addr =
+            ep->eager_rdma_remote.base.lval +
+            head * openib_btl->eager_rdma_frag_size +
+            sizeof(mca_btl_openib_header_t) +
+            mca_btl_openib_component.eager_limit +
+            sizeof(mca_btl_openib_footer_t);
+        sr_desc->wr.rdma.remote_addr -= sg->length;
+    } else {
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            sr_desc->opcode = IBV_WR_SEND;
+        } else {
+            sr_desc->opcode = IBV_WR_SEND_WITH_IMM;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            sr_desc->imm_data = htonl(ep->rem_info.rem_index);
+#else
+            sr_desc->imm_data = ep->rem_info.rem_index;
+#endif
+        }
+    }
+
+#if HAVE_XRC
+    if(BTL_OPENIB_QP_TYPE_XRC(qp))
+        sr_desc->xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#endif
+    assert(sg->addr == (uint64_t)(uintptr_t)frag->hdr);
+
+    return ibv_post_send(ep->qps[qp].qp->lcl_qp, sr_desc, &bad_wr);
+}
+
 END_C_DECLS
 
 #endif

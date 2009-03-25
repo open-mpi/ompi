@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -486,6 +486,32 @@ extern int mca_btl_openib_send(
     struct mca_btl_base_descriptor_t* descriptor,
     mca_btl_base_tag_t tag
 );
+
+/**
+ * PML->BTL Initiate a immediate send of the specified size.
+ *
+ * @param btl (IN)               BTL instance
+ * @param ep (IN)                Endpoint
+ * @param convertor (IN)         Datatypes converter
+ * @param header (IN)            PML header
+ * @param header_size (IN)       PML header size
+ * @param payload_size (IN)      Payload size
+ * @param order (IN)             Order
+ * @param flags (IN)             Flags
+ * @param tag (IN)               Tag
+ * @param descriptor (OUT)       Messages descriptor
+ */
+extern int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct ompi_convertor_t* convertor,
+    void* header,
+    size_t header_size,
+    size_t payload_size,
+    uint8_t order,
+    uint32_t flags,
+    mca_btl_base_tag_t tag,
+    mca_btl_base_descriptor_t** descriptor
+); 
 
 /**
  * PML->BTL Initiate a put of the specified size.

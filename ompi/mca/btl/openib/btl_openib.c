@@ -89,7 +89,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_prepare_src,
         mca_btl_openib_prepare_dst,
         mca_btl_openib_send,
-        NULL, /* send immediate */
+        mca_btl_openib_sendi, /* send immediate */
         mca_btl_openib_put,
         mca_btl_openib_get,
         mca_btl_base_dump,
@@ -1055,6 +1055,171 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 }
 
 /*
+ *  Send immediate - Minimum function calls minimum checks, send the data ASAP.
+ *  If BTL can't to send the messages imidiate, it creates messages descriptor 
+ *  returns it to PML.
+ */
+int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
+        struct mca_btl_base_endpoint_t* ep,
+        struct ompi_convertor_t* convertor,
+        void* header,
+        size_t header_size,
+        size_t payload_size,
+        uint8_t order,
+        uint32_t flags,
+        mca_btl_base_tag_t tag,
+        mca_btl_base_descriptor_t** descriptor) 
+{
+    mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
+    size_t size = payload_size + header_size;
+    size_t eager_limit;
+    int rc,  
+        qp = frag_size_to_order(obtl, size), 
+        prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY), 
+        ib_rc;
+    int32_t cm_return;
+    bool do_rdma = false;
+    ompi_free_list_item_t* item = NULL;
+    mca_btl_openib_frag_t *frag;
+    mca_btl_openib_header_t *hdr;
+
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+
+    if (OPAL_UNLIKELY(MCA_BTL_IB_CONNECTED != ep->endpoint_state)) {
+        goto cant_send;
+    }
+
+    /* If it is pending messages on the qp - we can not send */
+    if(OPAL_UNLIKELY(!opal_list_is_empty(&ep->qps[qp].no_wqe_pending_frags[prio]))) {
+        goto cant_send;
+    }
+
+    /* Allocate WQE */
+    if(OPAL_UNLIKELY(qp_get_wqe(ep, qp) < 0)) {
+        goto no_credits_or_wqe;
+    }
+
+    /* eager rdma or send ? Check eager rdma credits */
+    /* Note: Maybe we want to implement isend only for eager rdma ?*/
+    eager_limit = mca_btl_openib_component.eager_limit +
+        sizeof(mca_btl_openib_header_coalesced_t) +
+        sizeof(mca_btl_openib_control_header_t);
+
+    if(OPAL_LIKELY(size <= eager_limit)) {
+        if(acquire_eager_rdma_send_credit(ep) == OMPI_SUCCESS) {
+            do_rdma = true;
+        }
+    }
+
+    /* if(!do_rdma && acquire_send_credit(ep, frag) != OMPI_SUCCESS) { */
+    /* Check send credits if it is no rdma */
+    if(!do_rdma) {
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, -1) < 0)){
+                OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, 1);
+                goto no_credits_or_wqe;
+            }
+        } else {
+            if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, -1) < 0)){
+                OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, 1);
+                goto no_credits_or_wqe;
+            }
+        }
+    }
+
+    /* Allocate fragment */
+    OMPI_FREE_LIST_GET(&obtl->device->qps[qp].send_free, item, rc);
+    if(OPAL_UNLIKELY(NULL == item)) {
+        /* we don't return NULL because maybe later we will try to coalesce */
+        goto no_frags;
+    }
+    frag = to_base_frag(item);
+    hdr = to_send_frag(item)->hdr;
+    frag->segment.seg_len = size;
+    frag->base.order = qp;
+    frag->base.des_flags = flags;
+    hdr->tag = tag;
+    to_com_frag(item)->endpoint = ep;
+
+    /* put match header */
+    memcpy(frag->segment.seg_addr.pval, header, header_size);
+
+    /* Pack data */
+    if(payload_size) {
+        size_t max_data;
+        struct iovec iov;
+        uint32_t iov_count;
+        /* pack the data into the supplied buffer */
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
+        iov.iov_len  = max_data = payload_size;
+        iov_count    = 1;
+
+        (void)ompi_convertor_pack( convertor, &iov, &iov_count, &max_data);
+
+        assert(max_data == payload_size);
+    }
+
+    /* Set all credits */
+    BTL_OPENIB_GET_CREDITS(ep->eager_rdma_local.credits, hdr->credits);
+    if(hdr->credits)
+        hdr->credits |= BTL_OPENIB_RDMA_CREDITS_FLAG;
+
+    if(!do_rdma) {
+        if(BTL_OPENIB_QP_TYPE_PP(qp) && 0 == hdr->credits) {
+            BTL_OPENIB_GET_CREDITS(ep->qps[qp].u.pp_qp.rd_credits, hdr->credits);
+        }
+    } else {
+        hdr->credits |= (qp << 11);
+    }
+
+    BTL_OPENIB_GET_CREDITS(ep->qps[qp].u.pp_qp.cm_return, cm_return);
+    /* cm_seen is only 8 bytes, but cm_return is 32 bytes */
+    if(cm_return > 255) {
+        hdr->cm_seen = 255;
+        cm_return -= 255;
+        OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.cm_return, cm_return);
+    } else {
+        hdr->cm_seen = cm_return;
+    }
+
+    ib_rc = post_send(ep, to_send_frag(item), do_rdma);
+
+    if(!ib_rc) {
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+        return OMPI_SUCCESS;
+    }
+
+    /* Failed to send, do clean up all allocated resources */
+    if(ep->nbo) {
+        BTL_OPENIB_HEADER_NTOH(*hdr);
+    }
+    if(BTL_OPENIB_IS_RDMA_CREDITS(hdr->credits)) {
+        OPAL_THREAD_ADD32(&ep->eager_rdma_local.credits,
+                BTL_OPENIB_CREDITS(hdr->credits));
+    }
+    if (!do_rdma && BTL_OPENIB_QP_TYPE_PP(qp)) {
+        OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.rd_credits,
+                hdr->credits);
+    }
+no_frags:
+    if(do_rdma) {
+        OPAL_THREAD_ADD32(&ep->eager_rdma_remote.tokens, 1);
+    } else {
+        if(BTL_OPENIB_QP_TYPE_PP(qp)) {
+            OPAL_THREAD_ADD32(&ep->qps[qp].u.pp_qp.sd_credits, 1);
+        } else if BTL_OPENIB_QP_TYPE_SRQ(qp){
+            OPAL_THREAD_ADD32(&obtl->qps[qp].u.srq_qp.sd_credits, 1);
+        }
+    }
+no_credits_or_wqe:
+    qp_put_wqe(ep, qp);
+cant_send:
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+    /* We can not send the data directly, so we just return descriptor */
+    *descriptor = mca_btl_openib_alloc(btl, ep, order, size, flags);
+    return OMPI_ERR_RESOURCE_BUSY;
+}
+/*
  *  Initiate a send.
  */
 
@@ -1082,6 +1247,8 @@ int mca_btl_openib_send(
         frag->hdr->tag = tag;
     }
 
+    des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+
     return mca_btl_openib_endpoint_send(ep, frag);
 }
 
@@ -1101,6 +1268,8 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
 
     assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND_USER ||
             openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_SEND);
+
+    descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     if(ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
         int rc;
@@ -1170,6 +1339,8 @@ int mca_btl_openib_get(mca_btl_base_module_t* btl,
     uint32_t rkey = descriptor->des_src->seg_key.key32[0];
 
     assert(openib_frag_type(frag) == MCA_BTL_OPENIB_FRAG_RECV_USER);
+
+    descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     if(ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
         int rc;
