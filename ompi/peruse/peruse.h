@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -16,7 +16,6 @@
 #ifndef _PERUSE_H_
 #define _PERUSE_H_
 
-#include "ompi_config.h"
 #include "mpi.h"
 
 /* PERUSE type declarations */
