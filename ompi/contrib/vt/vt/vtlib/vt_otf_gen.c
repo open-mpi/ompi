@@ -114,7 +114,7 @@ struct VTGen_struct
   OTF_FileManager*    filemanager;
   OTF_WStream*        file;
   OTF_FileCompression filecomp;
-  char                name[PATH_MAX];
+  char                name[VT_PATH_MAX];
   uint32_t            trcid;
   uint32_t            tid;
   int32_t             flushcntr;

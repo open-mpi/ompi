@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.7, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.7)
+AC_INIT(VampirTrace, 5.4.8, vampirsupport@zih.tu-dresden.de)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.8)
 AM_CONFIG_HEADER(config.h)
 
 ACVT_CONF_INIT
@@ -82,7 +82,7 @@ ACVT_CONF_TITLE([Header files, types, and functions])
 
 # Check for header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdint.h inttypes.h fnmatch.h])
+AC_CHECK_HEADERS([stdint.h inttypes.h fnmatch.h sys/param.h])
 
 # Check for datatypes
 AC_TYPE_SIZE_T

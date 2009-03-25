@@ -235,3 +235,7 @@
 	- fixed compile error on RedHat/CentOS due to missing header include
 	  of 'cctype.h' in the sources of 'vtunify'
 
+5.4.8
+	- replaced usage of PATH_MAX by VT_PATH_MAX to avoid compile errors
+	  on some platforms
+
