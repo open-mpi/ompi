@@ -53,12 +53,12 @@ VTThrd* VTThrd_create(uint32_t tid)
   if ( thread == NULL )
     vt_error();
 
-  thread->tmp_name = (char*)calloc(PATH_MAX + 1, sizeof(char));
+  thread->tmp_name = (char*)calloc(VT_PATH_MAX + 1, sizeof(char));
   if ( thread->tmp_name == NULL )
     vt_error();
 
   /* basename includes local path but neither thread identifier nor suffix */
-  snprintf(thread->tmp_name, PATH_MAX, "%s/%s.%lx.%u",
+  snprintf(thread->tmp_name, VT_PATH_MAX, "%s/%s.%lx.%u",
 	   vt_env_ldir(), vt_env_fprefix(),
 	   vt_pform_node_id(), getpid());
 
