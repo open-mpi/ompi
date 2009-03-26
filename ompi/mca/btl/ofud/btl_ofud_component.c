@@ -19,11 +19,14 @@
  * $HEADER$
  */
 
-#include <errno.h>
+#include "ompi_config.h"
+
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#include <errno.h>
 #include <infiniband/verbs.h>
 
-#include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/prefetch.h"
 #include "orte/util/show_help.h"
