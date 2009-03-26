@@ -15,6 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,6 +207,7 @@ static bool check_basics(void)
     char *file;
     struct stat s;
 
+#if defined(__linux__)
     /* Check to see if $sysfsdir/class/infiniband/ exists */
     asprintf(&file, "%s/class/infiniband", ibv_get_sysfs_path());
     if (NULL == file) {
@@ -216,6 +218,7 @@ static bool check_basics(void)
     if (0 != rc || !S_ISDIR(s.st_mode)) {
         return false;
     }
+#endif
 
     /* It exists and is a directory -- good enough */
     return true;
