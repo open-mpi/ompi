@@ -587,17 +587,51 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
                                         DAT_CR_HANDLE cr_handle)
 {
-    DAT_EP_HANDLE endpoint;
+    DAT_EP_HANDLE ep;
     int rc;
+    mca_btl_base_endpoint_t* proc_ep;
+    mca_btl_udapl_addr_t priv_data_in_addr;
+    int32_t priv_data_in_conn_type;     /* incoming endpoint type  */
 
-    rc = mca_btl_udapl_endpoint_create(btl, &endpoint);
+    if (mca_btl_udapl_component.udapl_conn_priv_data) {
+        DAT_CR_PARAM cr_param;
+
+        /* query the connection request for incoming private data */
+        rc = dat_cr_query(cr_handle,
+                    DAT_CR_FIELD_ALL,
+                    &cr_param);
+        if (rc != DAT_SUCCESS) {
+            char* major;
+            char* minor;
+
+            dat_strerror(rc, (const char**)&major,
+                (const char**)&minor);
+            BTL_ERROR(("ERROR: %s %s %s\n", "dat_cr_query",
+                major, minor));
+            return OMPI_ERROR;
+        }
+
+        /* retrieve data from connection request event;
+         * cr_param contains remote_port_qual but we need to
+         * match on the psp port and address of remote
+         * so we get this from the private data.
+         */
+        memcpy(&priv_data_in_addr,
+            (mca_btl_udapl_addr_t *)cr_param.private_data,
+            sizeof(mca_btl_udapl_addr_t));
+        priv_data_in_conn_type = *(int32_t *)
+            ((char *)cr_param.private_data + sizeof(mca_btl_udapl_addr_t));
+    }
+
+    /* create the endpoint for the incoming connection */
+    rc = mca_btl_udapl_endpoint_create(btl, &ep);
     if(OMPI_SUCCESS != rc) {
         BTL_ERROR(("ERROR: mca_btl_udapl_endpoint_create"));
         return OMPI_ERROR;
     }
     
-    rc = dat_cr_accept(cr_handle, endpoint, sizeof(mca_btl_udapl_addr_t),
-        &btl->udapl_addr);
+    /* cr_param no longer valid once dat_cr_accept called */
+    rc = dat_cr_accept(cr_handle, ep, 0, NULL);
     if(DAT_SUCCESS != rc) {
         char* major;
         char* minor;
@@ -607,6 +641,28 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
         BTL_ERROR(("ERROR: %s %s %s\n", "dat_cr_accept",
             major, minor));
         return OMPI_ERROR;
+    }
+
+    if (mca_btl_udapl_component.udapl_conn_priv_data) {
+        /* With accept now in process find a home for the DAT ep by
+         * matching against the private data that came in on the
+         * connection request event
+         */
+
+        /* find the endpoint which matches the address in data received */
+        proc_ep = 
+            mca_btl_udapl_find_endpoint_address_match(btl, priv_data_in_addr);
+
+        if (proc_ep == NULL) {
+            return OMPI_ERROR;
+        }
+
+        if (BTL_UDAPL_EAGER_CONNECTION == priv_data_in_conn_type) {
+            proc_ep->endpoint_eager = ep;
+        } else {
+            assert(BTL_UDAPL_MAX_CONNECTION == priv_data_in_conn_type);
+            proc_ep->endpoint_max = ep;
+        }
     }
 
     return OMPI_SUCCESS;
@@ -1031,10 +1087,10 @@ int mca_btl_udapl_component_progress()
                     /* Both the client and server side of a connection generate
                        this event */
                     if (mca_btl_udapl_component.udapl_conn_priv_data) {
-                        /* use dat private data to exchange process data */
-                        mca_btl_udapl_endpoint_finish_connect(btl,
-                            event.event_data.connect_event_data.private_data,
-                            NULL,
+                        /* private data is only valid at this point if this 
+                         * event is from a dat_ep_connect call, not an accept
+                         */
+                        mca_btl_udapl_endpoint_pd_established_conn(btl,
                             event.event_data.connect_event_data.ep_handle);
                     } else {
                         /* explicitly exchange process data */

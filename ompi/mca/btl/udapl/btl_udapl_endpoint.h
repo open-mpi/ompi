@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -130,6 +130,9 @@ struct mca_btl_base_endpoint_t {
     int32_t endpoint_connection_seq;
     /**< sequence number of sendrecv message for the connection est */
 
+    int32_t endpoint_connections_completed;
+    /**< count of completed connections for priv data connection est. */
+
     opal_mutex_t endpoint_lock;
     /**< lock for concurrent access to endpoint state */
 
@@ -198,6 +201,21 @@ int mca_btl_udapl_endpoint_create(struct mca_btl_udapl_module_t* btl,
  */
 int mca_btl_udapl_endpoint_send_sr_credits(mca_btl_base_endpoint_t* endpoint,
                                            const int connection);
+
+/*
+ * Handle the established DAT endpoint when private data is in use
+ */
+int mca_btl_udapl_endpoint_pd_established_conn(
+    struct mca_btl_udapl_module_t* btl,
+    DAT_EP_HANDLE established_ep);
+
+/*
+ * Utility routine. Search list of endpoints to find one that matches
+ * the given address.
+ */
+mca_btl_udapl_endpoint_t* mca_btl_udapl_find_endpoint_address_match(
+    struct mca_btl_udapl_module_t* btl,
+    mca_btl_udapl_addr_t addr);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
