@@ -45,6 +45,19 @@ Trunk (not on release branches yet)
   --param notifier smtp" for a list of the relevant MCA parameters that
   are necessary.
 
+1.3.3
+-----
+
+- Ensure to allow MPI_REQUEST_GET_STATUS to accept an
+  MPI_STATUS_IGNORE parameter.  Thanks to Shaun Jackson for the bug
+  report.
+
+
+1.3.2
+-----
+
+....stuff should be here
+
 
 1.3.1
 -----
