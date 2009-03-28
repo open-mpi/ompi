@@ -49,7 +49,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
 
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( (NULL == flag) || (NULL == status) ) {
+        if( (NULL == flag) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         } else if (NULL == request) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST,
