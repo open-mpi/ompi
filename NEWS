@@ -49,7 +49,7 @@ Trunk (not on release branches yet)
 -----
 
 - Ensure to allow MPI_REQUEST_GET_STATUS to accept an
-  MPI_STATUS_IGNORE parameter.  Thanks to Shaun Jackson for the bug
+  MPI_STATUS_IGNORE parameter.  Thanks to Shaun Jackman for the bug
   report.
 
 
