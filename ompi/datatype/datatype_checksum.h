@@ -28,8 +28,13 @@
 #define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
 do { \
     volatile uint32_t __csum; \
+    volatile uint32_t __ui1, __ui2; \
     __csum = (CONVERTOR)->checksum; \
+    __ui1  = (CONVERTOR)->csum_ui1; \
+    __ui2  = (CONVERTOR)->csum_ui2; \
     (CONVERTOR)->checksum += OPAL_CSUM_BCOPY_PARTIAL( (SRC), (DST), (BLENGTH), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
+    (CONVERTOR)->csum_ui1 = __ui1; \
+    (CONVERTOR)->csum_ui2 = __ui2; \
     __csum += OPAL_CSUM_PARTIAL( (DST), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2); \
     if (__csum != (CONVERTOR)->checksum) { \
         opal_output(0, "%s:%d:csum2: Invalid \'MEMCPY_CSUM check\' - dst csum:0x%04x  != src csum:0x%04x\n", __FILE__, __LINE__, __csum, (CONVERTOR)->checksum); \

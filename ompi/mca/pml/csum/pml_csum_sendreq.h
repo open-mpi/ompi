@@ -142,9 +142,6 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
                                        sendmode,                                \
                                        persistent)                              \
     {                                                                           \
-        mca_bml_base_endpoint_t* endpoint =                                     \
-            sendreq->req_send.req_base.req_proc->proc_bml;                      \
-        bool do_csum = endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM;        \
         MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                      \
                                        buf,                                     \
                                        count,                                   \
@@ -154,7 +151,7 @@ get_request_from_send_pending(mca_pml_csum_send_pending_t *type)
                                        comm,                                    \
                                        sendmode,                                \
                                        persistent,                              \
-                                       do_csum ? CONVERTOR_WITH_CHECKSUM: 0);   \
+                                       CONVERTOR_WITH_CHECKSUM);                \
         (sendreq)->req_recv.pval = NULL;                                        \
     }
 

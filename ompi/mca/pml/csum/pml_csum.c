@@ -30,6 +30,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/crc.h"
 #include "opal/util/output.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
@@ -289,10 +290,14 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
-    /* we don't have any endpoint data we need to cache on the
-       ompi_proc_t, so set proc_pml to NULL */
     for (i = 0 ; i < nprocs ; ++i) {
+        /* we don't have any endpoint data we need to cache on the
+         ompi_proc_t, so set proc_pml to NULL */
         procs[i]->proc_pml = NULL;
+        /* if the proc isn't local, tell the convertor to
+         * checksum the data
+         */
+        procs[i]->proc_convertor->flags |= CONVERTOR_WITH_CHECKSUM;
     }
 
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
@@ -371,6 +376,10 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
   cleanup_and_return:
     OBJ_DESTRUCT(&reachable);
 
+    for (i=0; i < nprocs; i++) {
+        opal_output(0, "procs[%lu]->cflags = %04x", (unsigned long) i, 
+            procs[i]->proc_convertor->flags);
+    }
     return rc;
 }
 
@@ -432,7 +441,6 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     mca_btl_base_descriptor_t* fin;
     mca_pml_csum_fin_hdr_t* hdr;
     int rc;
-    bool do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_csum_fin_hdr_t),
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
@@ -450,14 +458,12 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     hdr->hdr_common.hdr_csum = 0;
     hdr->hdr_des.pval = hdr_des;
     hdr->hdr_fail = status;
-    hdr->hdr_common.hdr_csum = (do_csum ?
-        opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t)) : OPAL_CSUM_ZERO);
-    if(do_csum) {
-        OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
-                             "%s: Sending \'FIN\' with header csum:0x%04x\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
-    }
-
+    hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t));
+    
+    OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
+                         "%s: Sending \'FIN\' with header csum:0x%04x\n",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_common.hdr_csum));
+    
     csum_hdr_hton(hdr, MCA_PML_CSUM_HDR_TYPE_FIN, proc);
 
     /* queue request */

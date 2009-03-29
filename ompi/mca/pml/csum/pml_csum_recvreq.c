@@ -223,7 +223,6 @@ int mca_pml_csum_recv_request_ack_send_btl(
     mca_btl_base_descriptor_t* des;
     mca_pml_csum_ack_hdr_t* ack;
     int rc;
-    bool do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
 
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
@@ -241,8 +240,7 @@ int mca_pml_csum_recv_request_ack_send_btl(
     ack->hdr_src_req.lval = hdr_src_req;
     ack->hdr_dst_req.pval = hdr_dst_req;
     ack->hdr_send_offset = hdr_send_offset;
-    ack->hdr_common.hdr_csum = (do_csum ?
-        opal_csum16(ack, sizeof(mca_pml_csum_ack_hdr_t)) : OPAL_CSUM_ZERO);
+    ack->hdr_common.hdr_csum = opal_csum16(ack, sizeof(mca_pml_csum_ack_hdr_t));
     
     OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                          "%s Sending \'ACK\' with header csum:0x%04x\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ack->hdr_common.hdr_csum));
@@ -439,7 +437,6 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
     size_t data_offset = 0;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM; 
 
     MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
@@ -471,11 +468,11 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
                                recvreq->req_recv.req_base.req_datatype);
                );
     
-    if (do_csum && bytes_received > 0) {
+    if (bytes_received > 0) {
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
-        OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
-                             "%s Received \'frag\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_common.hdr_csum, (unsigned long)bytes_received));
+        OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
+                             "%s Received \'frag\' with data csum:0x%x, frag csum:0x%04x, size:%lu\n",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_frag.hdr_csum, (unsigned long)bytes_received));
         if(csum != hdr->hdr_frag.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'frag data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_frag.hdr_csum, csum);
@@ -577,7 +574,6 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
     size_t data_offset = 0;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM; 
 
     MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
@@ -614,11 +610,11 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
                                    recvreq->req_recv.req_base.req_datatype);
                    );
     }
-    if (do_csum && bytes_received > 0) {
+    if (bytes_received > 0) {
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
-                             "%s Received \'rndv\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_common.hdr_csum, (unsigned long)bytes_received));
+                             "%s Received \'rndv\' with csum:0x%x, header csum:0x%04x, size:%lu\n",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_match.hdr_csum, (unsigned long)bytes_received));
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'rndv data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
@@ -648,7 +644,6 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
     size_t data_offset = 0;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM; 
 
     MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
@@ -672,11 +667,11 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
                                      data_offset,
                                      bytes_received,
                                      bytes_delivered);
-    if (do_csum && bytes_received > 0) {
+    if (bytes_received > 0) {
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
-                             "%s Received \'match\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_common.hdr_csum, (unsigned long)bytes_received));
+                             "%s Received \'match\' with csum:0x%x, header csum:0x%04x, size:%lu\n",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum, hdr->hdr_match.hdr_csum, (unsigned long)bytes_received));
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
@@ -752,7 +747,6 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
     size_t i, prev_bytes_remaining = 0;
     size_t bytes_remaining = recvreq->req_send_offset -
         recvreq->req_rdma_offset;
-    bool do_csum;
 
     /* if starting bml_btl is provided schedule next fragment on it first */
     if(start_bml_btl != NULL) {
@@ -865,9 +859,7 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         if(!recvreq->req_ack_sent)
             recvreq->req_ack_sent = true;
 
-        do_csum = bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
-        hdr->hdr_common.hdr_csum = (do_csum ?
-            opal_csum16(hdr, sizeof(mca_pml_csum_rdma_hdr_t)) : OPAL_CSUM_ZERO);
+        hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_rdma_hdr_t));
         
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Sending \'PUT\' with header csum:0x%04x\n",

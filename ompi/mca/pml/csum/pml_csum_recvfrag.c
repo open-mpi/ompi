@@ -121,26 +121,28 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
     size_t bytes_received = 0;
     uint16_t csum_received, csum=0;
     uint32_t csum_data;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_CSUM_MATCH_HDR_LEN) ) {
         return;
      }
     csum_hdr_ntoh(((mca_pml_csum_hdr_t*) hdr), MCA_PML_CSUM_HDR_TYPE_MATCH);
 
-    if (do_csum) {
-        csum_received = hdr->hdr_common.hdr_csum;
-        hdr->hdr_common.hdr_csum = 0;
-        csum = opal_csum16(hdr, sizeof(mca_pml_csum_match_hdr_t));
-        hdr->hdr_common.hdr_csum = csum_received;
-
-        if (csum_received != csum) {
-            opal_output(0, "%s:%s:%d: Invalid \'match header\' - received csum:0x%04x  != computed csum:0x%04x\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-            orte_errmgr.abort(-1,NULL);
-        }
+    csum_received = hdr->hdr_common.hdr_csum;
+    hdr->hdr_common.hdr_csum = 0;
+    csum = opal_csum16(hdr, sizeof(mca_pml_csum_match_hdr_t));
+    hdr->hdr_common.hdr_csum = csum_received;
+    
+    opal_output(0, "%s:%s:%d common_hdr: %02x:%02x:%04x   match_hdr:  %04x:%04x:%08x:%08x:%08x",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
+                hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags, hdr->hdr_common.hdr_csum,
+                hdr->hdr_ctx, hdr->hdr_seq, hdr->hdr_src, hdr->hdr_tag, hdr->hdr_csum);
+    
+    if (csum_received != csum) {
+        opal_output(0, "%s:%s:%d: Invalid \'match header\' - received csum:0x%04x  != computed csum:0x%04x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_errmgr.abort(-1,NULL);
     }
- 
+    
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
     if(OPAL_UNLIKELY(NULL == comm_ptr)) {
@@ -254,12 +256,12 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
                                        match->req_recv.req_base.req_datatype);
                        );
         }
-        if (do_csum && bytes_received > 0) {
+        if (bytes_received > 0) {
             csum_data = match->req_recv.req_base.req_convertor.checksum;
             
             OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                                  "%s Received \'match\' with data csum:0x%x, header csum:0x%04x, size:%lu\n",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_csum, csum, (unsigned long)bytes_received));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hdr->hdr_csum, csum_received, (unsigned long)bytes_received));
 
             if (csum_data != hdr->hdr_csum) {
                 opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
@@ -292,24 +294,22 @@ void mca_pml_csum_recv_frag_callback_rndv(mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint16_t csum_received, csum;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
         return;
     }
     csum_hdr_ntoh(hdr, MCA_PML_CSUM_HDR_TYPE_RNDV);
     
-    if (do_csum) {
-        csum_received = hdr->hdr_common.hdr_csum;
-        hdr->hdr_common.hdr_csum = 0;
-        csum = opal_csum16(hdr, sizeof(mca_pml_csum_rendezvous_hdr_t));
-        hdr->hdr_common.hdr_csum = csum_received;
-        if (csum_received != csum) {
-            opal_output(0, "%s:%s:%d: Invalid \'rndv header\' - received csum:0x%04x  != computed csum:0x%04x\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-            orte_errmgr.abort(-1,NULL);
-        }
+    csum_received = hdr->hdr_common.hdr_csum;
+    hdr->hdr_common.hdr_csum = 0;
+    csum = opal_csum16(hdr, sizeof(mca_pml_csum_rendezvous_hdr_t));
+    hdr->hdr_common.hdr_csum = csum_received;
+    if (csum_received != csum) {
+        opal_output(0, "%s:%s:%d: Invalid \'rndv header\' - received csum:0x%04x  != computed csum:0x%04x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_errmgr.abort(-1,NULL);
     }
+    
     mca_pml_csum_recv_frag_match(btl, &hdr->hdr_match, segments,
                                 des->des_dst_cnt, MCA_PML_CSUM_HDR_TYPE_RNDV);
     return;
@@ -341,7 +341,6 @@ void mca_pml_csum_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     mca_pml_csum_send_request_t* sendreq;
     uint16_t csum_received, csum;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
          return;
@@ -349,19 +348,18 @@ void mca_pml_csum_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     
     csum_hdr_ntoh(hdr, MCA_PML_CSUM_HDR_TYPE_ACK);
 
-    if (do_csum) {
-        csum_received = hdr->hdr_common.hdr_csum;
-        hdr->hdr_common.hdr_csum = 0;
-        csum = opal_csum16(hdr, sizeof(mca_pml_csum_ack_hdr_t)); 
-        hdr->hdr_common.hdr_csum = csum_received;
-        OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
-                             "%s Received \'ACK\' with header csum:0x%04x\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum));
-        if (csum_received != csum) {
-            opal_output(0, "%s:%s:%d: Invalid \'ACK header\' - received csum:0x%04x  != computed csum:0x%04x\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-            orte_errmgr.abort(-1,NULL);
-        }
+    csum_received = hdr->hdr_common.hdr_csum;
+    hdr->hdr_common.hdr_csum = 0;
+    csum = opal_csum16(hdr, sizeof(mca_pml_csum_ack_hdr_t)); 
+    hdr->hdr_common.hdr_csum = csum_received;
+    OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
+                         "%s Received \'ACK\' with header csum:0x%04x\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum));
+    if (csum_received != csum) {
+        opal_output(0, "%s:%s:%d: Invalid \'ACK header\' - received csum:0x%04x  != computed csum:0x%04x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_errmgr.abort(-1,NULL);
     }
+    
     sendreq = (mca_pml_csum_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
     
@@ -391,25 +389,23 @@ void mca_pml_csum_recv_frag_callback_frag(mca_btl_base_module_t* btl,
      mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
      mca_pml_csum_recv_request_t* recvreq;
      uint16_t csum_received, csum;
-     bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
      
      if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
          return;
      }
      csum_hdr_ntoh(hdr, MCA_PML_CSUM_HDR_TYPE_FRAG);
 
-     if(do_csum) {
-         csum_received = hdr->hdr_common.hdr_csum;
-         hdr->hdr_common.hdr_csum = 0;
-         csum = opal_csum16(hdr, sizeof(mca_pml_csum_frag_hdr_t)); 
-         hdr->hdr_common.hdr_csum = csum_received;
-         if(csum_received != csum) {
-             opal_output(0, "%s:%s:%d: Invalid \'frag header\' - received csum:0x%04x  != computed csum:0x%04x\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-             orte_errmgr.abort(-1,NULL);
-         }
-     }
-     recvreq = (mca_pml_csum_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
+    csum_received = hdr->hdr_common.hdr_csum;
+    hdr->hdr_common.hdr_csum = 0;
+    csum = opal_csum16(hdr, sizeof(mca_pml_csum_frag_hdr_t)); 
+    hdr->hdr_common.hdr_csum = csum_received;
+    if(csum_received != csum) {
+        opal_output(0, "%s:%s:%d: Invalid \'frag header\' - received csum:0x%04x  != computed csum:0x%04x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_errmgr.abort(-1,NULL);
+    }
+    
+    recvreq = (mca_pml_csum_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
      mca_pml_csum_recv_request_progress_frag(recvreq,btl,segments,des->des_dst_cnt);
      
      return;
@@ -424,7 +420,6 @@ void mca_pml_csum_recv_frag_callback_put(mca_btl_base_module_t* btl,
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     mca_pml_csum_send_request_t* sendreq;
     uint16_t csum_received, csum;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
         return;
@@ -432,19 +427,18 @@ void mca_pml_csum_recv_frag_callback_put(mca_btl_base_module_t* btl,
     
     csum_hdr_ntoh(hdr, MCA_PML_CSUM_HDR_TYPE_PUT);
     
-    if(do_csum) {
-        csum_received = hdr->hdr_common.hdr_csum;
-        hdr->hdr_common.hdr_csum = 0;
-        csum = opal_csum16(hdr, sizeof(mca_pml_csum_rdma_hdr_t)); 
-        hdr->hdr_common.hdr_csum = csum_received;
-        OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
-                             "%s Received \'PUT\' with header csum:0x%04x\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum));
-        if(csum_received != csum) {
-            opal_output(0, "%s:%s:%d: Invalid \'PUT header\' - received csum:0x%04x  != computed csum:0x%04x\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-            orte_errmgr.abort(-1,NULL);
-        }
+    csum_received = hdr->hdr_common.hdr_csum;
+    hdr->hdr_common.hdr_csum = 0;
+    csum = opal_csum16(hdr, sizeof(mca_pml_csum_rdma_hdr_t)); 
+    hdr->hdr_common.hdr_csum = csum_received;
+    OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
+                         "%s Received \'PUT\' with header csum:0x%04x\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), csum));
+    if(csum_received != csum) {
+        opal_output(0, "%s:%s:%d: Invalid \'PUT header\' - received csum:0x%04x  != computed csum:0x%04x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_errmgr.abort(-1,NULL);
     }
+    
     sendreq = (mca_pml_csum_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
     mca_pml_csum_send_request_put(sendreq,btl,&hdr->hdr_rdma);
     
@@ -460,7 +454,6 @@ void mca_pml_csum_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     mca_btl_base_descriptor_t* rdma;
     uint16_t csum_received, csum;
-    bool do_csum = btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM;
     
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_csum_common_hdr_t)) ) {
         return;
@@ -468,19 +461,18 @@ void mca_pml_csum_recv_frag_callback_fin(mca_btl_base_module_t* btl,
     
     csum_hdr_ntoh(hdr, MCA_PML_CSUM_HDR_TYPE_FIN);
 
-    if(do_csum) {
-        csum_received = hdr->hdr_common.hdr_csum;
-        hdr->hdr_common.hdr_csum = 0;
-        csum = opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t)); 
-        hdr->hdr_common.hdr_csum = csum_received;
-        OPAL_OUTPUT_VERBOSE((0, mca_pml_base_output,
-                             "%s Received \'FIN\' with header csum:0x%04x\n",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),csum));
-        if(csum_received != csum) {
-            opal_output(0, "%s:%s:%d: Invalid \'FIN header\' - received csum:0x%04x  != computed csum:0x%04x\n",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
-            orte_errmgr.abort(-1,NULL);
-        }
+    csum_received = hdr->hdr_common.hdr_csum;
+    hdr->hdr_common.hdr_csum = 0;
+    csum = opal_csum16(hdr, sizeof(mca_pml_csum_fin_hdr_t)); 
+    hdr->hdr_common.hdr_csum = csum_received;
+    OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
+                         "%s Received \'FIN\' with header csum:0x%04x\n",ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),csum));
+    if(csum_received != csum) {
+        opal_output(0, "%s:%s:%d: Invalid \'FIN header\' - received csum:0x%04x  != computed csum:0x%04x\n",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, csum_received, csum);
+        orte_errmgr.abort(-1,NULL);
     }
+    
     rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
     rdma->des_cbfunc(btl, NULL, rdma,
                      hdr->hdr_fin.hdr_fail ? OMPI_ERROR : OMPI_SUCCESS);
