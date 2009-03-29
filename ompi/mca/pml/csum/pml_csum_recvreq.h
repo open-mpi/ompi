@@ -197,17 +197,13 @@ extern void mca_pml_csum_recv_req_start(mca_pml_csum_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_csum_recv_request_t *req)
 {
-    mca_bml_base_endpoint_t* endpoint = 
-        req->req_recv.req_base.req_proc->proc_bml;
-    bool do_csum = endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM;
-
     if( req->req_recv.req_base.req_datatype->size | req->req_recv.req_base.req_count ) {
         ompi_convertor_copy_and_prepare_for_recv(
                 req->req_recv.req_base.req_proc->proc_convertor,
                 req->req_recv.req_base.req_datatype,
                 req->req_recv.req_base.req_count,
                 req->req_recv.req_base.req_addr,
-                (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),
+                CONVERTOR_WITH_CHECKSUM,
                 &req->req_recv.req_base.req_convertor);
         ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
                 &req->req_bytes_delivered);

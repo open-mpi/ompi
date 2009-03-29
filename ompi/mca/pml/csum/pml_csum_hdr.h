@@ -73,41 +73,14 @@ typedef struct mca_pml_csum_common_hdr_t mca_pml_csum_common_hdr_t;
 struct mca_pml_csum_match_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;   /**< common attributes */
     uint16_t hdr_ctx;                      /**< communicator index */
+    uint16_t hdr_seq;                      /**< message sequence number */
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
-    uint16_t hdr_seq;                      /**< message sequence number */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t  hdr_padding[12];              /**< explicitly pad to 16-byte boundary.  Compilers seem to already prefer to do this, but make it explicit just in case */
-#endif
     uint32_t hdr_csum;                     /**< checksum over data */
 };
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-#define OMPI_PML_CSUM_MATCH_HDR_LEN  32
-#else
 #define OMPI_PML_CSUM_MATCH_HDR_LEN  20
-#endif 
 
 typedef struct mca_pml_csum_match_hdr_t mca_pml_csum_match_hdr_t;
-
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
-#define MCA_PML_CSUM_MATCH_HDR_FILL(h) \
-do {                                   \
-    (h).hdr_padding[0] =  0;           \
-    (h).hdr_padding[1] =  0;           \
-    (h).hdr_padding[2] =  0;           \
-    (h).hdr_padding[3] =  0;           \
-    (h).hdr_padding[4] =  0;           \
-    (h).hdr_padding[5] =  0;           \
-    (h).hdr_padding[6] =  0;           \
-    (h).hdr_padding[7] =  0;           \
-    (h).hdr_padding[8] =  0;           \
-    (h).hdr_padding[9] =  0;           \
-    (h).hdr_padding[10] = 0;           \
-    (h).hdr_padding[11] = 0;           \
-} while(0)
-#else
-#define MCA_PML_CSUM_MATCH_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
 
 #define MCA_PML_CSUM_MATCH_HDR_NTOH(h) \
 do { \
@@ -122,7 +95,6 @@ do { \
 #define MCA_PML_CSUM_MATCH_HDR_HTON(h) \
 do { \
     MCA_PML_CSUM_COMMON_HDR_HTON((h).hdr_common); \
-    MCA_PML_CSUM_MATCH_HDR_FILL(h);    \
     (h).hdr_ctx = htons((h).hdr_ctx); \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_tag = htonl((h).hdr_tag); \
@@ -142,13 +114,6 @@ struct mca_pml_csum_rendezvous_hdr_t {
 };
 typedef struct mca_pml_csum_rendezvous_hdr_t mca_pml_csum_rendezvous_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
-#define MCA_PML_CSUM_RNDV_HDR_FILL(h) \
-    MCA_PML_CSUM_MATCH_HDR_FILL((h).hdr_match)
-#else
-#define MCA_PML_CSUM_RNDV_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
-
 /* Note that hdr_src_req is not put in network byte order because it
    is never processed by the receiver, other than being copied into
    the ack header */
@@ -161,7 +126,6 @@ typedef struct mca_pml_csum_rendezvous_hdr_t mca_pml_csum_rendezvous_hdr_t;
 #define MCA_PML_CSUM_RNDV_HDR_HTON(h) \
     do { \
         MCA_PML_CSUM_MATCH_HDR_HTON((h).hdr_match); \
-        MCA_PML_CSUM_RNDV_HDR_FILL(h); \
         (h).hdr_msg_length = hton64((h).hdr_msg_length); \
     } while (0) 
 
@@ -182,7 +146,6 @@ typedef struct mca_pml_csum_rget_hdr_t mca_pml_csum_rget_hdr_t;
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
 #define MCA_PML_CSUM_RGET_HDR_FILL(h)         \
 do {                                         \
-    MCA_PML_CSUM_RNDV_HDR_FILL((h).hdr_rndv); \
     (h).hdr_padding[0] = 0;                  \
     (h).hdr_padding[1] = 0;                  \
     (h).hdr_padding[2] = 0;                  \
@@ -210,25 +173,12 @@ do {                                         \
  */
 struct mca_pml_csum_frag_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;     /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[2];                  /**< align to 16-byte boundary */
-#endif
+    uint32_t hdr_csum;
     uint64_t hdr_frag_offset;                /**< offset into message */
     ompi_ptr_t hdr_src_req;                  /**< pointer to source request */
     ompi_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
-    uint32_t hdr_csum;
 };
 typedef struct mca_pml_csum_frag_hdr_t mca_pml_csum_frag_hdr_t;
-
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
-#define MCA_PML_CSUM_FRAG_HDR_FILL(h) \
-do {                                 \
-  (h).hdr_padding[0] = 0;            \
-  (h).hdr_padding[1] = 0;            \
-} while(0)
-#else
-#define MCA_PML_CSUM_FRAG_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
 
 #define MCA_PML_CSUM_FRAG_HDR_NTOH(h) \
     do { \
@@ -241,7 +191,6 @@ do {                                 \
     do { \
         MCA_PML_CSUM_COMMON_HDR_HTON((h).hdr_common); \
         (h).hdr_csum = htonl((h).hdr_csum); \
-        MCA_PML_CSUM_FRAG_HDR_FILL(h); \
         (h).hdr_frag_offset = hton64((h).hdr_frag_offset); \
     } while (0)
 
@@ -252,7 +201,7 @@ do {                                 \
 struct mca_pml_csum_ack_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;      /**< common attributes */
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[6];
+    uint8_t hdr_padding[4];
 #endif
     ompi_ptr_t hdr_src_req;                   /**< source request */
     ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
@@ -267,8 +216,6 @@ do {                                \
     (h).hdr_padding[1] = 0;         \
     (h).hdr_padding[2] = 0;         \
     (h).hdr_padding[3] = 0;         \
-    (h).hdr_padding[4] = 0;         \
-    (h).hdr_padding[5] = 0;         \
 } while (0)
 #else
 #define MCA_PML_CSUM_ACK_HDR_FILL(h)
@@ -297,9 +244,6 @@ do {                                \
 
 struct mca_pml_csum_rdma_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;      /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
-#endif
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     ompi_ptr_t hdr_req;                       /**< destination request */
     ompi_ptr_t hdr_des;                       /**< source descriptor */
@@ -307,16 +251,6 @@ struct mca_pml_csum_rdma_hdr_t {
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_csum_rdma_hdr_t mca_pml_csum_rdma_hdr_t;
-
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
-#define MCA_PML_CSUM_RDMA_HDR_FILL(h) \
-do {                                 \
-    (h).hdr_padding[0] = 0;          \
-    (h).hdr_padding[1] = 0;          \
-} while(0)
-#else
-#define MCA_PML_CSUM_RDMA_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
 
 #define MCA_PML_CSUM_RDMA_HDR_NTOH(h) \
     do { \
@@ -328,7 +262,6 @@ do {                                 \
 #define MCA_PML_CSUM_RDMA_HDR_HTON(h) \
     do { \
         MCA_PML_CSUM_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_CSUM_RDMA_HDR_FILL(h); \
         (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
         (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
     } while (0) 
@@ -339,37 +272,24 @@ do {                                 \
 
 struct mca_pml_csum_fin_hdr_t {
     mca_pml_csum_common_hdr_t hdr_common;      /**< common attributes */
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[6];
-#endif
+    uint32_t hdr_csum;
     ompi_ptr_t hdr_des;                       /**< completed descriptor */
     uint32_t hdr_fail;                        /**< RDMA operation failed */
 };
 typedef struct mca_pml_csum_fin_hdr_t mca_pml_csum_fin_hdr_t;
 
-#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG
-#define MCA_PML_CSUM_FIN_HDR_FILL(h) \
-do {                                \
-    (h).hdr_padding[0] = 0;         \
-    (h).hdr_padding[1] = 0;         \
-    (h).hdr_padding[2] = 0;         \
-    (h).hdr_padding[3] = 0;         \
-    (h).hdr_padding[4] = 0;         \
-    (h).hdr_padding[5] = 0;         \
-} while (0)
-#else
-#define MCA_PML_CSUM_FIN_HDR_FILL(h)
-#endif  /* OMPI_ENABLE_HETEROGENEOUS_SUPPORT && OMPI_ENABLE_DEBUG */
-
 #define MCA_PML_CSUM_FIN_HDR_NTOH(h) \
     do { \
         MCA_PML_CSUM_COMMON_HDR_NTOH((h).hdr_common); \
+        (h).hdr_csum = ntohl((h).hdr_csum); \
+        (h).hdr_fail = ntohl((h).hdr_fail); \
     } while (0)
 
 #define MCA_PML_CSUM_FIN_HDR_HTON(h) \
     do { \
         MCA_PML_CSUM_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_CSUM_FIN_HDR_FILL(h); \
+       (h).hdr_csum = htonl((h).hdr_csum); \
+       (h).hdr_fail = htonl((h).hdr_fail); \
     } while (0) 
 
 /**
