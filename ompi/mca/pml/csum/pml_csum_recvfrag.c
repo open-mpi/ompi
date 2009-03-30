@@ -132,10 +132,11 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
     csum = opal_csum16(hdr, sizeof(mca_pml_csum_match_hdr_t));
     hdr->hdr_common.hdr_csum = csum_received;
     
-    opal_output(0, "%s:%s:%d common_hdr: %02x:%02x:%04x   match_hdr:  %04x:%04x:%08x:%08x:%08x",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
-                hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags, hdr->hdr_common.hdr_csum,
-                hdr->hdr_ctx, hdr->hdr_seq, hdr->hdr_src, hdr->hdr_tag, hdr->hdr_csum);
+    OPAL_OUTPUT_VERBOSE((5, mca_pml_base_output,
+                         "%s:%s:%d common_hdr: %02x:%02x:%04x   match_hdr:  %04x:%04x:%08x:%08x:%08x",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
+                         hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags, hdr->hdr_common.hdr_csum,
+                         hdr->hdr_ctx, hdr->hdr_seq, hdr->hdr_src, hdr->hdr_tag, hdr->hdr_csum));
     
     if (csum_received != csum) {
         opal_output(0, "%s:%s:%d: Invalid \'match header\' - received csum:0x%04x  != computed csum:0x%04x\n",
