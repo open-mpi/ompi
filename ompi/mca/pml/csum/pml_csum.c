@@ -376,10 +376,6 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
   cleanup_and_return:
     OBJ_DESTRUCT(&reachable);
 
-    for (i=0; i < nprocs; i++) {
-        opal_output(0, "procs[%lu]->cflags = %04x", (unsigned long) i, 
-            procs[i]->proc_convertor->flags);
-    }
     return rc;
 }
 

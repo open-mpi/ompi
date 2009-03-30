@@ -578,10 +578,11 @@ int mca_pml_csum_send_request_start_copy( mca_pml_csum_send_request_t* sendreq,
         sendreq->req_send.req_base.req_convertor.checksum : OPAL_CSUM_ZERO);
     hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_match_hdr_t));
     
-    opal_output(0, "%s:%s:%d common_hdr: %02x:%02x:%04x   match_hdr:  %04x:%04x:%08x:%08x:%08x",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
-                hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags, hdr->hdr_common.hdr_csum,
-                hdr->hdr_match.hdr_ctx, hdr->hdr_match.hdr_seq, hdr->hdr_match.hdr_src, hdr->hdr_match.hdr_tag, hdr->hdr_match.hdr_csum);
+    OPAL_OUTPUT_VERBOSE((5, mca_pml_base_output,
+                         "%s:%s:%d common_hdr: %02x:%02x:%04x   match_hdr:  %04x:%04x:%08x:%08x:%08x",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
+                         hdr->hdr_common.hdr_type, hdr->hdr_common.hdr_flags, hdr->hdr_common.hdr_csum,
+                         hdr->hdr_match.hdr_ctx, hdr->hdr_match.hdr_seq, hdr->hdr_match.hdr_src, hdr->hdr_match.hdr_tag, hdr->hdr_match.hdr_csum));
     
     OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                          "%s:%s:%d Sending \'match\' with data csum:0x%x, header csum:0x%x, size:%lu \n",

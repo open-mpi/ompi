@@ -168,8 +168,6 @@ mca_pml_csum_component_init( int* priority,
 {
     opal_output_verbose( 10, 0, "in csum, my priority is 0\n");
 
-opal_output(0, "hdr size %d", (int)sizeof(mca_pml_csum_match_hdr_t));
-
     /* select us only if we are specified */
     if((*priority) > 0) { 
         *priority = 0;
