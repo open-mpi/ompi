@@ -39,7 +39,6 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include "opal/class/opal_free_list.h"
-#include "opal/class/opal_bitmap.h"
 #include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
 #include "ompi/mca/btl/btl.h"
@@ -47,8 +46,6 @@
 
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
-
-#include "opal/mca/maffinity/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
