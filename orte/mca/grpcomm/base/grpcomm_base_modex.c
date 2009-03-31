@@ -56,7 +56,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
     int rc=ORTE_SUCCESS;
     int32_t arch;
     bool modex_reqd;
-    orte_nid_t *nid, **nids;
+    orte_nid_t *nid;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
     orte_jmap_t *jmap;
@@ -130,8 +130,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                          "%s grpcomm:base:full:modex: processing modex info",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* process the results */
-    nids = (orte_nid_t**)orte_nidmap.addr;
+
 
     /* extract the number of procs that put data in the buffer */
     cnt=1;
@@ -197,10 +196,8 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
         /* UPDATE THE NIDMAP/PIDMAP TO SUPPORT DYNAMIC OPERATIONS */
         
         /* find this proc's node in the nidmap */
-        nid = NULL;
-        for (n=0; n < orte_nidmap.size && NULL != nids[n]; n++) {
-            if (0 == strcmp(hostname, nids[n]->name)) {
-                nid = nids[n];
+	for (n=0; NULL != (nid = opal_pointer_array_get_item(&orte_nidmap, n)); n++) {
+            if (0 == strcmp(hostname, nid->name)) {
                 /* update the arch in case it differs
                  * from what was reported by the daemon
                  */
