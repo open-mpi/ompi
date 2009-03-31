@@ -29,7 +29,7 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
     AC_ARG_ENABLE(visibility, 
         AC_HELP_STRING([--enable-visibility],
             [enable visibility feature of certain compilers/linkers (default: enabled)]))
-    if test "$enable_visibility" = "no"; then
+    if test "$enable_visibility" = "no" -o "$ompi_cv___attribute__visibility" = "0"; then
         AC_MSG_CHECKING([enable symbol visibility])
         AC_MSG_RESULT([no]) 
         have_visibility=0
