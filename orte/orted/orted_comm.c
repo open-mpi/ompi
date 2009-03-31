@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -24,6 +24,7 @@
 #include "orte/constants.h"
 
 #include <stdio.h>
+#include <stddef.h>
 #include <ctype.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -189,7 +190,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
     orte_rml_tag_t tag = mev->tag, target_tag;
     orte_jobid_t job;
     int ret;
-    char *unpack_ptr, *save;
+    ptrdiff_t unpack_rel, save_rel;
     orte_std_cntr_t n;
     orte_daemon_cmd_flag_t command;
 
@@ -248,7 +249,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
                         (long)(tag)));
 
     /* save the original buffer pointers */
-    unpack_ptr = buffer->unpack_ptr;
+    unpack_rel = buffer->unpack_ptr - buffer->base_ptr;
     
     /* unpack the initial command */
     n = 1;
@@ -275,7 +276,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
             goto CLEANUP;
         }
         /* save this buffer location */
-        save = buffer->unpack_ptr;
+        save_rel = buffer->unpack_ptr - buffer->base_ptr;
         /* unpack the command that will actually be executed */
         n = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
@@ -290,7 +291,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
                 goto CLEANUP;
             }
             /* flag this location */
-            save = buffer->unpack_ptr;
+            save_rel = buffer->unpack_ptr - buffer->base_ptr;
             /* store the time the cmd was recvd */
             if (orte_timing) {
                 orte_daemon_msg_recvd.tv_sec = mesg_recvd.tv_sec;
@@ -299,7 +300,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         }
         
         /* rewind the buffer to the right place for processing the cmd */
-        buffer->unpack_ptr = save;
+        buffer->unpack_ptr = buffer->base_ptr + save_rel;
         
         /* init flag */
         exit_reqd = false;
@@ -312,7 +313,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         }
         
         /* rewind the buffer to the beginning */
-        buffer->unpack_ptr = unpack_ptr;
+        buffer->unpack_ptr = buffer->base_ptr + unpack_rel;
         /* do the relay */
         send_relay(buffer);
         
@@ -326,7 +327,7 @@ void orte_daemon_cmd_processor(int fd, short event, void *data)
         
     } else {
         /* rewind the buffer so we can process it correctly */
-        buffer->unpack_ptr = unpack_ptr;
+        buffer->unpack_ptr = buffer->base_ptr + unpack_rel;
     }
     
     /* process the command */
@@ -350,7 +351,7 @@ CLEANUP:
     }
     
     return;
-}    
+}
 
 static int process_commands(orte_process_name_t* sender,
                             opal_buffer_t *buffer,
