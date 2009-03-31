@@ -38,7 +38,7 @@ struct mca_common_sm_file_header_t {
     opal_atomic_lock_t seg_lock;
     /* is the segment ready for use */
 
-    volatile bool seg_inited;
+    volatile int32_t seg_inited;
     /* Offset to next available memory location available for allocation */
     size_t seg_offset;
 

@@ -283,20 +283,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
     mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
-    /* Sync with other local procs. (Do we have to?) */
-    if(0 == mca_btl_sm_component.my_smp_rank) {
-        mca_btl_sm_component.mmap_file->map_seg->seg_inited = true;
-
-        /* memory barrier to ensure this flag is set before other
-         *  flags are set */
-        opal_atomic_wmb();
-    } else {
-        while(!mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
-            opal_atomic_rmb();
-            opal_progress();
-        }
-    }
-
     /* set the base of the shared memory segment */
     mca_btl_sm_component.shm_bases[mca_btl_sm_component.my_smp_rank] =
         (char*)mca_btl_sm_component.sm_mpool_base;
@@ -488,7 +474,7 @@ int mca_btl_sm_add_procs(
     }
 
     /* set local proc's smp rank in the peers structure for
-     * rapid access and calulcate reachebility */
+     * rapid access and calculate reachebility */
     for(proc = 0; proc < (int32_t)nprocs; proc++) {
         if(NULL == peers[proc])
             continue;
@@ -513,6 +499,16 @@ int mca_btl_sm_add_procs(
                                     mca_btl_sm_component.fifo_lazy_free);
         if(return_code != OMPI_SUCCESS)
             goto CLEANUP;
+    }
+
+    /* Sync with other local procs. Force the FIFO initialization to always
+     * happens before the readers access it.
+     */
+    opal_atomic_add_32( &mca_btl_sm_component.mmap_file->map_seg->seg_inited, 1);
+    while( n_local_procs >
+           mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
+        opal_atomic_rmb();
+        opal_progress();
     }
 
     /* coordinate with other processes */
