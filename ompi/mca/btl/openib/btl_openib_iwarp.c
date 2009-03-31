@@ -303,8 +303,6 @@ int mca_btl_openib_build_rdma_addr_list(void)
         return OMPI_ERROR;
     }
 
-    OBJ_CONSTRUCT(myaddrs, opal_list_t);
-
     for (i = opal_ifbegin(); i >= 0; i = opal_ifnext(i)) {
         struct sockaddr ipaddr;
         uint32_t netmask;
@@ -324,17 +322,19 @@ int mca_btl_openib_build_rdma_addr_list(void)
   
 void mca_btl_openib_free_rdma_addr_list(void)
 {
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
 
     if (NULL != myaddrs && 0 != opal_list_get_size(myaddrs)) {
         for (item = opal_list_get_first(myaddrs);
              item != opal_list_get_end(myaddrs);
-             item = opal_list_get_next(item)) {
+             item = next) {
             struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
+            next = opal_list_get_next(item);
             opal_list_remove_item(myaddrs, item);
             OBJ_RELEASE(addr);
         }
        OBJ_RELEASE(myaddrs);
+       myaddrs = NULL;
     }
 }
 
