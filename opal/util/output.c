@@ -818,7 +818,7 @@ static int output(int output_id, const char *format, va_list arglist)
                   fileno(stderr) : default_stderr_fd,
                   out, (int)strlen(out)); 
             fflush(stderr);
-	}
+        }
 
         /* File output -- first check to see if the file opening was
          * delayed.  If so, try to open it.  If we failed to open it,
