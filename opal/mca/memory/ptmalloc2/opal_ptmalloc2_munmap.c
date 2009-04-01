@@ -47,7 +47,7 @@ int  __munmap(void* addr, size_t len);
 
 
 /* intercept munmap, as the user can give back memory that way as well. */
-int 
+OPAL_DECLSPEC int 
 munmap(void* addr, size_t len)
 {
     return opal_mem_free_ptmalloc2_munmap(addr, len, 0);
