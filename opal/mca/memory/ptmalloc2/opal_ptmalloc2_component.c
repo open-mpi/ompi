@@ -26,6 +26,7 @@
 
 /* Include <link.h> for _DYNAMIC */
 #include <link.h>
+#include <malloc.h>
 
 #include "opal/constants.h"
 #include "opal/mca/memory/memory.h"
@@ -63,6 +64,7 @@ bool opal_memory_ptmalloc2_memalign_invoked = false;
 
 static int ptmalloc2_open(void)
 {
+    void *p;
     /* We always provide munmap support as part of libopen-pal.la. */
     int val = OPAL_MEMORY_MUNMAP_SUPPORT;
 
@@ -90,13 +92,19 @@ static int ptmalloc2_open(void)
     opal_memory_ptmalloc2_memalign_invoked = false;
     opal_memory_ptmalloc2_free_invoked = false;
 
-    void *p = malloc(1024 * 1024 * 4);
+    p = malloc(1024 * 1024 * 4);
     if (NULL == p) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    realloc(p, 1024 * 1024 * 4 + 32);
+    p = realloc(p, 1024 * 1024 * 4 + 32);
+    if (NULL == p) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     free(p);
-    memalign(1, 1024 * 1024);
+    p = memalign(1, 1024 * 1024);
+    if (NULL == p) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     free(p);
 
     if (opal_memory_ptmalloc2_malloc_invoked &&
