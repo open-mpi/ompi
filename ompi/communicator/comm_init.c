@@ -388,7 +388,6 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     if ( MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm) ) {
         MCA_PML_CALL(del_comm (comm));
     }
-    
 
     /* Release topology information */
     mca_topo_base_comm_unselect(comm);
