@@ -111,6 +111,9 @@ void _ftrace_enter2_() {
     VT_MEMHOOKS_ON();
   }
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   /* -- ignore NEC OMP runtime functions -- */
   if ( strchr(func, '$') != NULL ) return;
 
@@ -151,6 +154,9 @@ void _ftrace_enter2_() {
 void _ftrace_exit2_() {
   char *func;
   uint64_t time;
+
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 
