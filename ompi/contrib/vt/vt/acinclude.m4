@@ -958,6 +958,7 @@ AC_DEFUN([ACVT_MPI],
 [
 	mpi_error="no"
 	mpi_status_size=
+	have_mpithrd=
 	have_mpio=
 
 	MPIDIR=
@@ -1007,6 +1008,11 @@ AC_DEFUN([ACVT_MPI],
 		[mpi_status_size=$withval])
 	])
 
+	AC_ARG_ENABLE(mpi-thread,
+		AC_HELP_STRING(--enable-mpi-thread,
+		[MPI supports threads, default: yes if found by configure]),
+	[AS_IF([test x"$enableval" = "xyes"], [have_mpithrd=yes], [have_mpithrd=no])])
+
 	AC_ARG_ENABLE(mpi-io,
 		AC_HELP_STRING(--enable-mpi-io,
 		[MPI supports file access, default: yes if found by configure]),
@@ -1054,6 +1060,7 @@ AC_DEFUN([ACVT_MPI],
 			AS_IF([test x"$MPILIB" = x], [MPILIB="-lmpi"])
 			AS_IF([test x"$PMPILIB" = x], [PMPILIB="$MPILIB"])
 			AS_IF([test x"$FMPILIB" = x], [FMPILIB="-lvt.fmpi"])
+			have_mpithrd="yes"
 			build_fmpi="yes"
 		])
 	AC_ARG_WITH(hpmpi,
@@ -1340,35 +1347,38 @@ int main () {
 		])
 	])
 
-dnl	check for MPI I/O support
-
 	AS_IF([test "$mpi_error" = "no"],
 	[
+		sav_CC=$CC
+		sav_CFLAGS=$CFLAGS
+		sav_LIBS=$LIBS
+		CC=$MPICC
+		CFLAGS="$CFLAGS $MPIINCDIR"
+		LIBS="$LIBS $MPILIBDIR $MPILIB"
+
+dnl		check for MPI Thread support
+
+		AS_IF([test x"$have_mpithrd" = x],
+		[
+			AC_CHECK_FUNC([MPI_Init_thread],
+				[have_mpithrd="yes"], [have_mpithrd="no"])
+		])
+		AS_IF([test "$have_mpithrd" = "yes"],
+		[AC_DEFINE([HAVE_MPITHRD], [1], [Define to 1 if MPI supports threads.])])
+
+dnl		check for MPI I/O
+
 		AS_IF([test x"$have_mpio" = x],
 		[
-			AC_MSG_CHECKING([whether MPI supports file access])
-	
-			sav_CC=$CC
-			sav_CFLAGS=$CFLAGS
-			sav_LIBS=$LIBS
-			CC=$MPICC
-			CFLAGS="$CFLAGS $MPIINCDIR"
-			LIBS="$LIBS $MPILIBDIR $MPILIB"
-			AC_TRY_LINK([#include <mpi.h>],
-[
-  MPI_File fh;
-  MPI_File_close(&fh);
-], [have_mpio=yes], [have_mpio=no])
-
-			CC=$sav_CC
-			CFLAGS=$sav_CFLAGS
-			LIBS=$sav_LIBS
-
-			AC_MSG_RESULT([$have_mpio])
+			AC_CHECK_FUNC([MPI_File_open],
+				[have_mpio="yes"], [have_mpio="no"])
 		])
-
 		AS_IF([test "$have_mpio" = "yes"],
 		[AC_DEFINE([HAVE_MPIO], [1], [Define to 1 if MPI supports file access.])])
+
+		CC=$sav_CC
+		CFLAGS=$sav_CFLAGS
+		LIBS=$sav_LIBS
 	])
 
 

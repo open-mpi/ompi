@@ -234,6 +234,8 @@ void vt_mpi_register()
     vt_def_region("MPI_Ibsend", fid, VT_NO_LNO, VT_NO_LNO, "MPI", VT_FUNCTION);                      
   vt_mpi_regid[VT__MPI_INIT] =
     vt_def_region("MPI_Init", fid, VT_NO_LNO, VT_NO_LNO, "MPI", VT_FUNCTION);                       
+  vt_mpi_regid[VT__MPI_INIT_THREAD] =
+    vt_def_region("MPI_Init_thread", fid, VT_NO_LNO, VT_NO_LNO, "MPI", VT_FUNCTION);
   vt_mpi_regid[VT__MPI_INITIALIZED] =
     vt_def_region("MPI_Initialized", fid, VT_NO_LNO, VT_NO_LNO, "MPI", VT_FUNCTION);            
   vt_mpi_regid[VT__MPI_INTERCOMM_CREATE] =
