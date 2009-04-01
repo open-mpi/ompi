@@ -7,6 +7,8 @@
 
 #include "opal/sys/atomic.h"
 #include "opal/memoryhooks/memory_internal.h"
+/* Name-shift all the internal symbols */
+#include "opal/mca/memory/ptmalloc2/rename.h"
 
 /*
  * Not all systems have sbrk() declared, since it's technically not a
@@ -521,23 +523,24 @@ Void_t * __default_morecore (ptrdiff_t);
 Void_t *(*__morecore)(ptrdiff_t) = __default_morecore;
 
 #else /* !_LIBC */
-#define public_cALLOc    calloc
-#define public_fREe      free
-#define public_cFREe     cfree
-#define public_mALLOc    malloc
-#define public_mEMALIGn  memalign
-#define public_rEALLOc   realloc
-#define public_vALLOc    valloc
-#define public_pVALLOc   pvalloc
-#define public_mALLINFo  mallinfo
-#define public_mALLOPt   mallopt
-#define public_mTRIm     malloc_trim
-#define public_mSTATs    malloc_stats
-#define public_mUSABLe   malloc_usable_size
-#define public_iCALLOc   independent_calloc
-#define public_iCOMALLOc independent_comalloc
-#define public_gET_STATe malloc_get_state
-#define public_sET_STATe malloc_set_state
+  /* OMPI change: put "opal_memory_ptmalloc2_" in front of all of these */
+#define public_cALLOc    opal_memory_ptmalloc2_calloc
+#define public_fREe      opal_memory_ptmalloc2_free
+#define public_cFREe     opal_memory_ptmalloc2_cfree
+#define public_mALLOc    opal_memory_ptmalloc2_malloc
+#define public_mEMALIGn  opal_memory_ptmalloc2_memalign
+#define public_rEALLOc   opal_memory_ptmalloc2_realloc
+#define public_vALLOc    opal_memory_ptmalloc2_valloc
+#define public_pVALLOc   opal_memory_ptmalloc2_pvalloc
+#define public_mALLINFo  opal_memory_ptmalloc2_mallinfo
+#define public_mALLOPt   opal_memory_ptmalloc2_mallopt
+#define public_mTRIm     opal_memory_ptmalloc2_malloc_trim
+#define public_mSTATs    opal_memory_ptmalloc2_malloc_stats
+#define public_mUSABLe   opal_memory_ptmalloc2_malloc_usable_size
+#define public_iCALLOc   opal_memory_ptmalloc2_independent_calloc
+#define public_iCOMALLOc opal_memory_ptmalloc2_independent_comalloc
+#define public_gET_STATe opal_memory_ptmalloc2_malloc_get_state
+#define public_sET_STATe opal_memory_ptmalloc2_malloc_set_state
 #endif /* _LIBC */
 #endif /* USE_DL_PREFIX */
 
@@ -2390,6 +2393,8 @@ static Void_t** iALLOc();
 #endif
 #endif
 
+/* OMPI change: these aren't used */
+#if 0
 #if !(USE_STARTER & 2)
 # define free_hook_ini     NULL
 /* Forward declarations.  */
@@ -2405,7 +2410,11 @@ static Void_t* memalign_hook_ini __MALLOC_P ((size_t alignment, size_t sz,
 # define realloc_hook_ini  NULL
 # define memalign_hook_ini memalign_starter
 #endif
+#endif
 
+/* OMPI change: we don't want any of these -- we want to use the
+   underlying allocator's symbols */
+#if 0
 void weak_variable (*__malloc_initialize_hook) __MALLOC_PMT ((void)) = NULL;
 void weak_variable (*__free_hook) __MALLOC_PMT ((__malloc_ptr_t __ptr,
                                                  const __malloc_ptr_t))
@@ -2419,6 +2428,7 @@ __malloc_ptr_t weak_variable (*__memalign_hook)
  __MALLOC_PMT ((size_t __alignment, size_t __size, const __malloc_ptr_t))
      = memalign_hook_ini;
 void weak_variable (*__after_morecore_hook) __MALLOC_P ((void)) = NULL;
+#endif
 
 
 /* ------------------- Support for multiple arenas -------------------- */
@@ -2779,7 +2789,6 @@ static void do_check_malloc_state(mstate av)
 
 /* ----------------- Support for debugging hooks -------------------- */
 #include "hooks.c"
-
 
 /* ----------- Routines dealing with system allocation -------------- */
 
@@ -3398,10 +3407,24 @@ public_mALLOc(size_t bytes)
   mstate ar_ptr;
   Void_t *victim;
 
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   __malloc_ptr_t (*hook) __MALLOC_P ((size_t, __const __malloc_ptr_t)) =
     __malloc_hook;
   if (hook != NULL)
     return (*hook)(bytes, RETURN_ADDRESS (0));
+#endif
+
+  /* OMPI change: put in a flag so that we can know that this function
+     was invoked.  This flag is checked in the memory/ptmalloc2
+     component init to ensure that this ptmalloc is actually being
+     used.  Used a simple "extern" here to get the flag symbol rather
+     than putting it in a new .h file that would only contain a small
+     number of symbols. */
+  {
+    extern bool opal_memory_ptmalloc2_malloc_invoked;
+    opal_memory_ptmalloc2_malloc_invoked = true;
+  }
 
   arena_get(ar_ptr, bytes);
   if(!ar_ptr)
@@ -3442,11 +3465,25 @@ public_fREe(Void_t* mem)
   mstate ar_ptr;
   mchunkptr p;                          /* chunk corresponding to mem */
 
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   void (*hook) __MALLOC_P ((__malloc_ptr_t, __const __malloc_ptr_t)) =
     __free_hook;
   if (hook != NULL) {
     (*hook)(mem, RETURN_ADDRESS (0));
     return;
+  }
+#endif
+
+  /* OMPI change: put in a flag so that we can know that this function
+     was invoked.  This flag is checked in the memory/ptmalloc2
+     component init to ensure that this ptmalloc is actually being
+     used.  Used a simple "extern" here to get the flag symbol rather
+     than putting it in a new .h file that would only contain a small
+     number of symbols. */
+  {
+    extern bool opal_memory_ptmalloc2_free_invoked;
+    opal_memory_ptmalloc2_free_invoked = true;
   }
 
   if (mem == 0)                              /* free(0) has no effect */
@@ -3491,11 +3528,25 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
 
   Void_t* newp;             /* chunk to return */
 
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   __malloc_ptr_t (*hook) __MALLOC_P ((__malloc_ptr_t, size_t,
 				      __const __malloc_ptr_t)) =
     __realloc_hook;
   if (hook != NULL)
     return (*hook)(oldmem, bytes, RETURN_ADDRESS (0));
+#endif
+
+  /* OMPI change: put in a flag so that we can know that this function
+     was invoked.  This flag is checked in the memory/ptmalloc2
+     component init to ensure that this ptmalloc is actually being
+     used.  Used a simple "extern" here to get the flag symbol rather
+     than putting it in a new .h file that would only contain a small
+     number of symbols. */
+  {
+    extern bool opal_memory_ptmalloc2_realloc_invoked;
+    opal_memory_ptmalloc2_realloc_invoked = true;
+  }
 
 #if REALLOC_ZERO_BYTES_FREES
   if (bytes == 0 && oldmem != NULL) { public_fREe(oldmem); return 0; }
@@ -3567,11 +3618,25 @@ public_mEMALIGn(size_t alignment, size_t bytes)
   mstate ar_ptr;
   Void_t *p;
 
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   __malloc_ptr_t (*hook) __MALLOC_PMT ((size_t, size_t,
 					__const __malloc_ptr_t)) =
     __memalign_hook;
   if (hook != NULL)
     return (*hook)(alignment, bytes, RETURN_ADDRESS (0));
+#endif
+
+  /* OMPI change: put in a flag so that we can know that this function
+     was invoked.  This flag is checked in the memory/ptmalloc2
+     component init to ensure that this ptmalloc is actually being
+     used.  Used a simple "extern" here to get the flag symbol rather
+     than putting it in a new .h file that would only contain a small
+     number of symbols. */
+  {
+    extern bool opal_memory_ptmalloc2_memalign_invoked;
+    opal_memory_ptmalloc2_memalign_invoked = true;
+  }
 
   /* If need less alignment than we give anyway, just relay to malloc */
   if (alignment <= MALLOC_ALIGNMENT) return public_mALLOc(bytes);
@@ -3649,8 +3714,11 @@ public_cALLOc(size_t n, size_t elem_size)
   unsigned long clearsize;
   unsigned long nclears;
   INTERNAL_SIZE_T* d;
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   __malloc_ptr_t (*hook) __MALLOC_PMT ((size_t, __const __malloc_ptr_t)) =
     __malloc_hook;
+#endif
 
   /* size_t is unsigned so the behavior on overflow is defined.  */
   bytes = n * elem_size;
@@ -3663,6 +3731,8 @@ public_cALLOc(size_t n, size_t elem_size)
     }
   }
 
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   if (hook != NULL) {
     sz = bytes;
     mem = (*hook)(sz, RETURN_ADDRESS (0));
@@ -3675,6 +3745,7 @@ public_cALLOc(size_t n, size_t elem_size)
     return mem;
 #endif
   }
+#endif
 
   sz = bytes;
 
@@ -5437,7 +5508,6 @@ int mALLOPt(param_number, value) int param_number; int value;
 
 */
 
-
 /* OMPI: Need to expose our own posix_memalign, or the wrong one will
   be used */
 # include <sys/param.h>
@@ -5447,9 +5517,13 @@ int
 posix_memalign (void **memptr, size_t alignment, size_t size)
 {
   void *mem;
+
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   __malloc_ptr_t (*hook) __MALLOC_PMT ((size_t, size_t,
 					__const __malloc_ptr_t)) =
     __memalign_hook;
+#endif
 
   /* Test whether the SIZE argument is valid.  It must be a power of
      two multiple of sizeof (void *).  */
@@ -5458,12 +5532,17 @@ posix_memalign (void **memptr, size_t alignment, size_t size)
       || alignment == 0)
     return EINVAL;
 
+  /* OMPI change: the hook is us -- don't call the hook */
+#if 0
   /* Call the hook here, so that caller is posix_memalign's caller
      and not posix_memalign itself.  */
   if (hook != NULL)
     mem = (*hook)(alignment, size, RETURN_ADDRESS (0));
   else
     mem = public_mEMALIGn (alignment, size);
+#else
+    mem = public_mEMALIGn (alignment, size);
+#endif
 
   if (mem != NULL) {
     *memptr = mem;
@@ -5472,6 +5551,7 @@ posix_memalign (void **memptr, size_t alignment, size_t size)
 
   return ENOMEM;
 }
+
 #ifdef _LIBC
 weak_alias (__posix_memalign, posix_memalign)
 

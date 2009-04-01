@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,11 +50,6 @@ int mca_mpool_base_output = -1;
 
 /* whether we actually used the mem hooks or not */
 int mca_mpool_base_used_mem_hooks = 0;
-/* should we attempt to use the available memory hooks */
-int mca_mpool_base_use_mem_hooks_index;
-/* should we attempt to use mallopt to disable free() returning memory
-   to OS? */
-int mca_mpool_base_disable_mallopt_index;
 
 uint32_t mca_mpool_base_page_size; 
 uint32_t mca_mpool_base_page_size_log;
@@ -82,37 +77,6 @@ int mca_mpool_base_open(void)
 
     OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
   
-    /* 
-     * check for use_mem_hooks (for diagnostics/testing) 
-     * however if leave_pinned is set we force this to be enabled
-     */
-    mca_mpool_base_use_mem_hooks_index = 
-        mca_base_param_reg_int_name("mpool", 
-                                    "base_use_mem_hooks", 
-                                    "Use memory hooks for deregistering freed memory",
-                                    false, 
-                                    false, 
-                                    0,
-                                    NULL);
-    mca_base_param_reg_syn_name(mca_mpool_base_use_mem_hooks_index,
-                                "mpool", "use_mem_hooks", true);
-
-    mca_mpool_base_disable_mallopt_index =
-        mca_base_param_reg_int_name("mpool", 
-                                    "base_disable_mallopt",
-                                    "Do not use mallopt to disable returning memory to "
-                                    "the OS when leave_pinned is active and no memory "
-                                    "components are found (this value is only changable on Linux systems that support mallopt()).",
-                                    false, 
-#if OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT
-                                    false, 
-                                    0,
-#else
-                                    true,
-                                    1,
-#endif
-                                    NULL);
-
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
     mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 

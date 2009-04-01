@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -1723,8 +1723,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
                 device, &mpool_resources);
     if(NULL == device->mpool){
-         BTL_ERROR(("error creating IB memory pool for %s errno says %s",
-                     ibv_get_device_name(device->ib_dev), strerror(errno)));
+        /* Don't print an error message here -- we'll get one from
+           mpool_create anyway (OPAL_SOS would be good here...) */
          goto error;
     }
 
@@ -2099,13 +2099,10 @@ btl_openib_component_init(int *num_btl_modules,
        mpi_leave_pinned==-1, then unless the user explicitly set
        mpi_leave_pinned_pipeline==0, then set mpi_leave_pinned to 1.
 
-       We have a memory manager if:
-       - we have both FREE and MUNMAP support
-       - we have MUNMAP support and the linux mallopt */
-    if (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
-         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) ||
-        (0 != (OPAL_MEMORY_MUNMAP_SUPPORT & value) &&
-         OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT)) {
+       We have a memory manager if we have both FREE and MUNMAP
+       support */
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
+        ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         ret = 0;
         index = mca_base_param_find("mpi", NULL, "leave_pinned");
         if (index >= 0) {

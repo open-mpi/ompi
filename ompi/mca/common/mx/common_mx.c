@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Myricom. All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009      Cisco systems, Inc.  All rights reserved.
  * 
  * $COPYRIGHT$
  *
@@ -65,10 +66,8 @@ ompi_common_mx_initialize(void)
 	   - we have both FREE and MUNMAP support
 	   - we have MUNMAP support and the linux mallopt */
 	value = opal_mem_hooks_support_level();
-	if (((value & (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
-	     == (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
-	    || ((value & OPAL_MEMORY_MUNMAP_SUPPORT) &&
-		OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT)) {
+	if ((value & (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
+            == (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)) {
 	  index = mca_base_param_find("mpi", NULL, "leave_pinned");
 	  if (index >= 0)
             if ((mca_base_param_lookup_int(index, &value) == OPAL_SUCCESS) 
