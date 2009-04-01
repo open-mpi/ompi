@@ -164,6 +164,124 @@ int MPI_Init( int *argc, char ***argv )
   return returnVal;
 }
 
+#if defined(HAVE_MPITHRD) && HAVE_MPITHRD
+
+/* -- MPI_Init_thread -- */
+
+int MPI_Init_thread( int* argc, char*** argv,
+                     int required, int* provided )
+{
+  int returnVal, numprocs, me, i;
+  unsigned char* grpv;
+  uint32_t grpc;
+  uint64_t time;
+
+  /* shall I trace MPI events? */
+  vt_mpi_trace_is_on = vt_mpitrace = vt_env_mpitrace();
+
+  /* first event?
+     -> initialize VT and enter dummy function 'user' */
+  if ( !vt_is_alive )
+    {
+      vt_open();
+      time = vt_pform_wtime();
+      vt_enter_user(&time);
+      vt_enter_user_called = 1;
+    }
+
+  if (IS_MPI_TRACE_ON)
+    {
+      MPI_TRACE_OFF();
+
+      time = vt_pform_wtime();
+      vt_enter(&time, vt_mpi_regid[VT__MPI_INIT_THREAD]);
+
+      returnVal = PMPI_Init_thread(argc, argv, required, provided);
+
+      switch (required)
+      {
+        case MPI_THREAD_SINGLE:
+        case MPI_THREAD_FUNNELED:
+	  break;
+        case MPI_THREAD_SERIALIZED:
+        case MPI_THREAD_MULTIPLE:
+	  if (*provided == MPI_THREAD_SERIALIZED ||
+	      *provided == MPI_THREAD_MULTIPLE)
+	  {
+	    vt_error_msg("MPI thread support levels MPI_THREAD_SERIALIZED and "
+			 "MPI_THREAD_MULTIPLE not yet supported");
+	  }
+	  break;
+        default:
+	  vt_error_msg("Unknown level of MPI thread support required");
+	  break;
+      }
+
+      /* initialize mpi event handling */
+      vt_mpi_init();
+
+      PMPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+      PMPI_Comm_rank(MPI_COMM_WORLD, &me);
+
+      grpc = numprocs / 8 + (numprocs % 8 ? 1 : 0);
+
+      /* define communicator for MPI_COMM_WORLD */
+      grpv = (unsigned char*)calloc(grpc, sizeof(unsigned char));
+      for (i = 0; i < numprocs; i++)
+	grpv[i / 8] |= (1 << (i % 8));
+      vt_def_mpi_comm(0, grpc, grpv);
+
+      memset(grpv, 0, grpc);
+
+      /* define communicator for MPI_COMM_SELF */
+      grpv[me / 8] |= (1 << (me % 8));
+      vt_def_mpi_comm(1, grpc, grpv);
+
+      free(grpv);
+
+      /* initialize communicator management */
+      vt_comm_init();
+
+      time = vt_pform_wtime();
+      vt_exit(&time);
+
+      MPI_TRACE_ON();
+    }
+  else
+    {
+      returnVal = PMPI_Init_thread(argc, argv, required, provided);
+
+      /* initialize mpi event handling */
+      vt_mpi_init();
+
+      PMPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+      PMPI_Comm_rank(MPI_COMM_WORLD, &me);
+
+      grpc = numprocs / 8 + (numprocs % 8 ? 1 : 0);
+
+      /* define communicator for MPI_COMM_WORLD */
+      grpv = (unsigned char*)calloc(grpc, sizeof(unsigned char));
+      for (i = 0; i < numprocs; i++)
+	grpv[i / 8] |= (1 << (i % 8));
+      vt_def_mpi_comm(0, grpc, grpv);
+
+      memset(grpv, 0, grpc);
+
+      /* define communicator for MPI_COMM_SELF */
+      grpv[me / 8] |= (1 << (me % 8));
+      vt_def_mpi_comm(1, grpc, grpv);
+
+      free(grpv);
+
+      /* initialize communicator management */
+      vt_comm_init();
+    }
+
+  return returnVal;
+}
+
+#endif /* HAVE_MPITHRD */
+
 /* -- MPI_Finalize -- */
 
 int MPI_Finalize()
