@@ -19,12 +19,11 @@
 #include "opal_config.h"
 
 #include <string.h>
-
+#include <stddef.h>
 #include "opal/constants.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "maffinity_first_use.h"
-
 
 /*
  * Local functions
@@ -71,15 +70,24 @@ static int first_use_module_set(opal_maffinity_base_segment_t *segments,
                                 size_t num_segments)
 {
     size_t i;
-
-    /* Crude: zero out all the segments that belong to me.  We could
-       probably get away with touching a byte in each page (which
-       would potentially be much faster), but this is during setup so
-       it's not a huge deal.  Consider this a target for future
-       optimization... */
+    uintptr_t pagesize = (uintptr_t)sysconf(_SC_PAGESIZE);
+    volatile char useless; 
 
     for (i = 0; i < num_segments; ++i) {
-        memset(segments[i].mbs_start_addr, 0, segments[i].mbs_len);
+        char* ptr = (char*)segments[i].mbs_start_addr;
+        char* end_ptr = ptr + segments[i].mbs_len;
+
+        /* Let's touch the first byte of the segment. If this is the
+         * first byte on the memory page, good. If not, at least it
+         * will not overwrite anything important.
+         */
+        useless = ptr[0];
+        /* Compute the address of the first byte on the next page */
+        ptr = (char*)((uintptr_t)(ptr + pagesize) & ~pagesize);
+        while( ptr <= end_ptr) {
+            useless += ptr[0];
+            ptr += pagesize;
+        };
     }
 
     return OPAL_SUCCESS;
