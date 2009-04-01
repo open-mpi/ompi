@@ -103,6 +103,9 @@ void phat_enter(char *str, int *id) {
     VT_MEMHOOKS_ON();
   }
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   /* -- ignore SUN OMP runtime functions -- */
   if ( strchr(str, '$') != NULL ) return;
 
@@ -143,6 +146,9 @@ void phat_enter(char *str, int *id) {
 
 void phat_exit(char *str, int *id) {
   uint64_t time;
+
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
 
   if ( *id == -1 ) return;
 

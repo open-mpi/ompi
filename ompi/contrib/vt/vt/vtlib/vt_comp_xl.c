@@ -109,6 +109,9 @@ void __func_trace_enter(char* name, char *fname, int lno) {
     VT_MEMHOOKS_ON();
   }
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   /* -- ignore IBM OMP runtime functions -- */
   if ( strchr(name, '@') != NULL ) return;
 
@@ -149,6 +152,9 @@ void __func_trace_enter(char* name, char *fname, int lno) {
 void __func_trace_exit(char* name, char *fname, int lno) {
   HashNode *hn;
   uint64_t time;
+
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 

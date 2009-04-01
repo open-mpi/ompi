@@ -236,6 +236,9 @@
 	  of 'cctype.h' in the sources of 'vtunify'
 
 5.4.8
+	- added wrapper for MPI function 'MPI_Init_thread'
+	- fixed potential segmentation fault during shutdown the trace
+	  environment after tracing C++ programs
 	- replaced usage of PATH_MAX by VT_PATH_MAX to avoid compile errors
 	  on some platforms
 

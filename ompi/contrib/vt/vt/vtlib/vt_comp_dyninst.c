@@ -161,6 +161,9 @@ void VT_Dyn_end(void* addr)
 {
   uint64_t time;
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
