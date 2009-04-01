@@ -752,8 +752,6 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
     }
 
     if (want_rcache) {
-        const char str[] = "using ptmallo\n";
-        write(1, str, sizeof(str));
         /* Initialize ptmalloc */
         ptmalloc_init();
 
