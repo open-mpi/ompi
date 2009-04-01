@@ -120,8 +120,8 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
                 OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
             } else {
                 orte_show_help("help-mpool-base.txt", "leave pinned failed",
-                               true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                               orte_process_info.nodename, name);
+                               true, name, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                               orte_process_info.nodename);
                 return NULL;
             }
 
