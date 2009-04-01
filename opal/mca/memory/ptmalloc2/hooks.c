@@ -33,6 +33,9 @@
 
 #if !(USE_STARTER & 2)
 
+/* OMPI change: these aren't used (avoid a compiler warning by if
+   0'ing them out */
+#if 0
 static Void_t*
 #if __STD_C
 malloc_hook_ini(size_t sz, const __malloc_ptr_t caller)
@@ -45,7 +48,11 @@ malloc_hook_ini(sz, caller)
   ptmalloc_init();
   return public_mALLOc(sz);
 }
+#endif
 
+/* OMPI change: these aren't used (avoid a compiler warning by if
+   0'ing them out */
+#if 0
 static Void_t*
 #if __STD_C
 realloc_hook_ini(Void_t* ptr, size_t sz, const __malloc_ptr_t caller)
@@ -59,7 +66,11 @@ realloc_hook_ini(ptr, sz, caller)
   ptmalloc_init();
   return public_rEALLOc(ptr, sz);
 }
+#endif
 
+/* OMPI change: these aren't used (avoid a compiler warning by if
+   0'ing them out */
+#if 0
 static Void_t*
 #if __STD_C
 memalign_hook_ini(size_t alignment, size_t sz, const __malloc_ptr_t caller)
@@ -72,6 +83,7 @@ memalign_hook_ini(alignment, sz, caller)
   ptmalloc_init();
   return public_mEMALIGn(alignment, sz);
 }
+#endif
 
 #endif /* !(USE_STARTER & 2) */
 
@@ -633,8 +645,134 @@ public_sET_STATe(Void_t* msptr)
   return 0;
 }
 
+
+/*-------------------------------------------------------------------------
+   Per
+   http://www.gnu.org/software/libc/manual/html_mono/libc.html#Hooks-for-Malloc,
+   we can define the __malloc_initialize_hook variable to be a
+   function that is invoked before the first allocation is ever
+   performed.  We use this hook to wholly replace the underlying
+   allocator to our own allocator if a few conditions are met.
+
+   Remember that this hook is called probably at the very very very
+   beginning of the process.  MCA parameters haven't been setup yet --
+   darn near nothing has been setup yet.  Indeed, we're effectively in
+   signal context because we can't call anything that calls malloc.
+   So we can basically have some hard-coded tests for things to see if
+   we want to setup to use our internal ptmalloc2 or not. */
+
+static void *opal_memory_ptmalloc2_malloc_hook(size_t sz, 
+                                               const __malloc_ptr_t caller)
+{
+    return public_mALLOc(sz);
+}
+
+static void *opal_memory_ptmalloc2_realloc_hook(Void_t* ptr, size_t sz, 
+                                                const __malloc_ptr_t caller)
+{
+    return public_rEALLOc(ptr, sz);
+}
+
+static void *opal_memory_ptmalloc2_memalign_hook(size_t alignment, size_t sz, 
+                                                 const __malloc_ptr_t caller)
+{
+    return public_mEMALIGn(alignment, sz);
+}
+
+static void opal_memory_ptmalloc2_free_hook(__malloc_ptr_t __ptr,
+                                             const __malloc_ptr_t caller)
+{
+    public_fREe(__ptr);
+}
+
+typedef enum {
+    RESULT_NO,
+    RESULT_YES,
+    RESULT_RUNTIME,
+    RESULT_NOT_FOUND
+} check_result_t;
+
+static check_result_t check(const char *name)
+{
+    char *s = getenv(name);
+    if (NULL == s) {
+        return RESULT_NOT_FOUND;
+    }
+
+    if ('0' == s[0] && '\0' == s[1]) {
+        /* A value of 0 means "don't use!" */
+        return RESULT_NO;
+    } else if ('-' == s[0] && '1' == s[1] && '\0' == s[2]) {
+        /* A value of -1 means "use it if it would be advantageous */
+        return RESULT_RUNTIME;
+    } else {
+        /* Any other value means "use the hooks, Luke!" */
+        return RESULT_YES;
+    }
+}
+
+/* OMPI's init function */
+static void opal_memory_ptmalloc2_malloc_init_hook(void)
+{
+    /* Yes, checking for an MPI MCA parameter here is an abstraction
+       violation.  Cope.  Yes, even checking for *any* MCA parameter
+       here (without going through the MCA param API) is an
+       abstraction violation.  Fricken' cope, will ya?
+       (unfortunately, there's really no good way to do this other
+       than this abstraction violation :-( ) */
+    struct stat st;
+    check_result_t lp = check("OMPI_MCA_mpi_leave_pinned");
+    check_result_t lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
+    bool want_rcache = false, found_driver = false;
+
+    /* If /sys/class/infiniband exists, then the OpenFabrics
+       drivers are loaded.  So let's default to using our hooks so
+       that we can utilize leave_pinned (yes, I know, further
+       abstraction violations... :-( ). */
+    if (0 == stat("/sys/class/infiniband", &st)) {
+        found_driver = true;
+    }
+    
+    /* Simple combination of the results of these two environment
+       variables (if both "yes" and "no" are specified, then be
+       conservative and assume "yes):
+
+       lp / lpp   yes   no   runtime   not found       
+       yes        yes   yes  yes       yes
+       no         yes   no   no        no
+       runtime    yes   no   runtime   runtime
+       not found  yes   no   runtime   runtime
+    */
+    if (RESULT_YES == lp || RESULT_YES == lpp) {
+        want_rcache = true;
+    } else if (RESULT_NO == lp || RESULT_NO == lpp) {
+        want_rcache = false;
+    } else {
+        want_rcache = found_driver;
+    }
+
+    if (want_rcache) {
+        const char str[] = "using ptmallo\n";
+        write(1, str, sizeof(str));
+        /* Initialize ptmalloc */
+        ptmalloc_init();
+
+        /* Now set the hooks to point to our functions */
+        __free_hook = opal_memory_ptmalloc2_free_hook;
+        __malloc_hook = opal_memory_ptmalloc2_malloc_hook;
+        __memalign_hook = opal_memory_ptmalloc2_memalign_hook;
+        __realloc_hook = opal_memory_ptmalloc2_realloc_hook;
+    }
+}
+
+
+/* OMPI change: This is the symbol to override to make the above
+   function get fired during malloc initialization time. */
+void (*__malloc_initialize_hook) (void) = 
+    opal_memory_ptmalloc2_malloc_init_hook;
+
 /*
  * Local variables:
- * c-basic-offset: 2
+ * c-basic-offset: 4
  * End:
  */

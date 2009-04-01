@@ -224,9 +224,13 @@ You may need to consult with your system administrator to get this
 problem fixed.
 #
 [no active ports found]
-WARNING: There is at least one OpenFabrics device found on host '%s',
-but there are no active ports detected. This is most certainly not
-what you wanted.  Check your cables, SM configuration, etc.
+WARNING: There is at least one OpenFabrics device found but there are
+no active ports detected (or Open MPI was unable to use them).  This
+is most certainly not what you wanted.  Check your cables, subnet
+manager configuration, etc.  The openib BTL will be ignored for this
+job.
+
+  Local host: %s
 #
 [error in device init]
 WARNING: There was an error initializing an OpenFabrics device.

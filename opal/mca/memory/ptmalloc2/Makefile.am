@@ -38,29 +38,28 @@ AM_CPPFLAGS += -I$(srcdir)/sysdeps/generic
 docdir      = $(datadir)/openmpi/doc
 doc_DATA    = ptmalloc2-COPYRIGHT
 
-noinst_LTLIBRARIES = libmca_memory_ptmalloc2.la
+# These are the files from ptmalloc2 that we care about
+ptmalloc2_sources = \
+   malloc.c \
+   malloc-stats.c \
+   malloc.h
 
+# This component is only ever built statically (i.e., slurped into
+# libopen-pal) -- it is never built as a DSO.
+noinst_LTLIBRARIES = libmca_memory_ptmalloc2.la
 libmca_memory_ptmalloc2_la_SOURCES = \
    opal_ptmalloc2_component.c \
-   opal_ptmalloc2_munmap.c
-
-if OMPI_WANT_EXTERNAL_PTMALLOC2
-lib_LTLIBRARIES = libopenmpi-malloc.la
-
-libopenmpi_malloc_la_SOURCES = \
-   malloc.c \
-   malloc-stats.c \
-   malloc.h
-else
-libmca_memory_ptmalloc2_la_SOURCES += \
-   malloc.c \
-   malloc-stats.c \
-   malloc.h
-endif
-
-
-libmca_memory_ptmalloc2_la_LDFLAGS = -module -avoid-version $(memory_ptmalloc2_LDFLAGS)
+   opal_ptmalloc2_munmap.c \
+   rename.h \
+   $(ptmalloc2_sources)
+libmca_memory_ptmalloc2_la_LDFLAGS = \
+   -module -avoid-version $(memory_ptmalloc2_LDFLAGS)
 libmca_memory_ptmalloc2_la_LIBADD = $(memory_ptmalloc2_LIBS)
+
+# For hysterical raisins, we create a dummy libopenmpi_malloc.la.  See
+# README-open-mpi.txt for details
+lib_LTLIBRARIES = libopenmpi_malloc.la
+libopenmpi_malloc_la_SOURCES = dummy.c
 
 # these are included directly and shouldn't be built solo
 EXTRA_libmca_memory_ptmalloc2_la_SOURCES = \

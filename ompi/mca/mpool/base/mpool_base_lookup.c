@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -71,7 +71,6 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     mca_mpool_base_module_t* module = NULL; 
     opal_list_item_t* item;
     mca_mpool_base_selected_module_t *sm;
-    int use_mem_hooks, disable_mallopt;
 
     for (item = opal_list_get_first(&mca_mpool_base_components);
          item != opal_list_get_end(&mca_mpool_base_components);
@@ -99,45 +98,30 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm->mpool_resources = resources;
     opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
     /* on the very first creation of a module we init the memory
-       callback and (if needed) disable free() returning memory to the
-       OS.  Note that even when we disable free() with mallopt, we
-       still need to register a callback to handle the case of the
-       user calling mmap/munmap on his own. */ 
+       callback */
     if (opal_list_get_size(&mca_mpool_base_modules) == 1) { 
+        /* Default to not using memory hooks */
+        int use_mem_hooks = 0;
 
-        /* Lookup the current value of the MCA params and see if any
-           other entity in the code base requested mem hooks */
-        mca_base_param_lookup_int(mca_mpool_base_use_mem_hooks_index,
-                                  &use_mem_hooks);
-        mca_base_param_lookup_int(mca_mpool_base_disable_mallopt_index,
-                                  &disable_mallopt);
-
-        /* force mem hooks if leave_pinned or leave_pinned_pipeline is
-           enabled (note that either of these leave_pinned variables
-           may have been set by a user MCA param or elsewhere in the
-           code base) */
-        if (1 == ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+        /* Use the memory hooks if leave_pinned or
+           leave_pinned_pipeline is enabled (note that either of these
+           leave_pinned variables may have been set by a user MCA
+           param or elsewhere in the code base).  Yes, we could have
+           coded this more succinctly, but this is more clear. */
+        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
             use_mem_hooks = 1;
         }
 
         if (use_mem_hooks) {
-            if (0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+            if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
+                ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & 
+                 opal_mem_hooks_support_level())) {
                 opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
                 OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
-            } else if (!disable_mallopt &&
-                       0 != (OPAL_MEMORY_MUNMAP_SUPPORT & opal_mem_hooks_support_level())) {
-                opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
-                OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, opal_pointer_array_t);
-                /* mallopt_disable_free will only be set to 1 if
-                   HAVE_LINUX_MALLOPT, so this is safe */
-#if OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT
-                mallopt(M_TRIM_THRESHOLD, -1); 
-                mallopt(M_MMAP_MAX, 0);
-#endif
             } else {
                 orte_show_help("help-mpool-base.txt", "leave pinned failed",
                                true, ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                               orte_process_info.nodename);
+                               orte_process_info.nodename, name);
                 return NULL;
             }
 

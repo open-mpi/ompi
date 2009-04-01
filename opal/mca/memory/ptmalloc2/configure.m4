@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,27 +25,10 @@ AC_DEFUN([MCA_memory_ptmalloc2_COMPILE_MODE], [
 ])
 
 
-AC_DEFUN([MCA_memory_ptmalloc2_POST_CONFIG],[
-    AM_CONDITIONAL([OMPI_WANT_EXTERNAL_PTMALLOC2],
-       [test "$enable_ptmalloc2_internal" != "yes"])
-])
-
-
 # MCA_memory_ptmalloc2_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
-    AC_ARG_ENABLE([ptmalloc2-internal],
-       [AC_HELP_STRING([--enable-ptmalloc2-internal],
-                       [Build ptmalloc2 memory manager into libopen-pal,
-                        instead of as separate library.  Only has meaning
-                        if ptmalloc2 memory component exists])])
-
-    AC_MSG_CHECKING([if ptmalloc2 should be part of libopen-pal])
-    AS_IF([test "$enable_ptmalloc2_internal" = "yes"],
-          [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
-
-
     AS_IF([test "$with_memory_manager" = "ptmalloc2"],
           [if test "`echo $host | grep apple-darwin`" != "" ; then
             AC_MSG_WARN([*** Using ptmalloc with OS X will result in failure.])
@@ -87,6 +70,12 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
     AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
           [# check for malloc.h
            AC_CHECK_HEADER([malloc.h],
+                           [memory_ptmalloc2_happy="yes"],
+                           [memory_ptmalloc2_happy="no"])])
+
+    AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
+          [# check for link.h (for _DYNAMIC symbol)
+           AC_CHECK_HEADER([link.h],
                            [memory_ptmalloc2_happy="yes"],
                            [memory_ptmalloc2_happy="no"])])
 
