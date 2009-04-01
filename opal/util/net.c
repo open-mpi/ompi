@@ -81,7 +81,7 @@
 #ifdef HAVE_STRUCT_SOCKADDR_IN
 
 typedef struct private_ipv4_t {
-    int32_t addr;
+    in_addr_t addr;
     uint32_t netmask_bits;
 } private_ipv4_t;
 
