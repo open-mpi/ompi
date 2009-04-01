@@ -249,9 +249,10 @@
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
             MPI_Fint attr_val = translate_to_fortran_mpi1(attribute); \
+	    MPI_Fint extra_state = (MPI_Fint)keyval_obj->extra_state;	\
             (*((keyval_obj->delete_attr_fn).attr_mpi1_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-                 &f_key, &attr_val, (int*)keyval_obj->extra_state, &f_err); \
+                 &f_key, &attr_val, &extra_state, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
                     OPAL_THREAD_UNLOCK(&alock); \
@@ -262,9 +263,10 @@
         /* MPI-2 Fortran-style */ \
         else { \
             MPI_Aint attr_val = translate_to_fortran_mpi2(attribute); \
+	    MPI_Aint extra_state = (MPI_Aint)keyval_obj->extra_state;	\
             (*((keyval_obj->delete_attr_fn).attr_mpi2_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-                 &f_key, (int*)&attr_val, (int*)keyval_obj->extra_state, &f_err); \
+                 &f_key, (int*)&attr_val, &extra_state, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
                     OPAL_THREAD_UNLOCK(&alock); \
@@ -297,11 +299,12 @@
         ompi_fortran_logical_t f_flag; \
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
-            MPI_Fint in, out; \
+	    MPI_Fint in, out, extra_state;					   \
             in = translate_to_fortran_mpi1(in_attr); \
+	    extra_state = (MPI_Fint)keyval_obj->extra_state; \
             (*((keyval_obj->copy_attr_fn).attr_mpi1_fortran_copy_fn)) \
                 (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
-                 &f_key, (int*)keyval_obj->extra_state, \
+                 &f_key, &extra_state, \
                  &in, &out, &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 OPAL_THREAD_UNLOCK(&alock); \
@@ -313,11 +316,12 @@
         } \
         /* MPI-2 Fortran-style */ \
         else { \
-            MPI_Aint in, out; \
+	    MPI_Aint in, out, extra_state;			     \
             in = translate_to_fortran_mpi2(in_attr); \
+	    extra_state = (MPI_Aint)keyval_obj->extra_state; \
             (*((keyval_obj->copy_attr_fn).attr_mpi2_fortran_copy_fn)) \
                 (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
-                 &f_key, keyval_obj->extra_state, &in, &out, \
+                 &f_key, &extra_state, &in, &out, \
                  &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 OPAL_THREAD_UNLOCK(&alock); \
