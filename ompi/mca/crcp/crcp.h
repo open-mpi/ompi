@@ -33,7 +33,6 @@
 #include "opal/mca/crs/base/base.h"
 
 #include "opal/class/opal_object.h"
-#include "opal/class/opal_bitmap.h"
 
 #include "ompi/datatype/datatype.h"
 #include "ompi/request/request.h"

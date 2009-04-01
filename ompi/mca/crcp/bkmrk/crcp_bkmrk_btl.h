@@ -27,7 +27,6 @@
 #include "ompi_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/class/opal_bitmap.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
