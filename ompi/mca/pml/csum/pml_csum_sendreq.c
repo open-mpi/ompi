@@ -502,7 +502,7 @@ int mca_pml_csum_send_request_start_copy( mca_pml_csum_send_request_t* sendreq,
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s:%s:%d Sending \'match\' with data csum:0x%x, header csum:0x%x, size:%lu \n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
-                             hdr->hdr_match.hdr_csum, hdr->hdr_common.hdr_csum, (unsigned long)max_data));
+                             match.hdr_csum, match.hdr_common.hdr_csum, (unsigned long)max_data));
 
         csum_hdr_hton(&match, MCA_PML_CSUM_HDR_TYPE_MATCH,
                      sendreq->req_send.req_base.req_proc);
