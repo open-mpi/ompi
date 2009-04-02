@@ -77,7 +77,7 @@ OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
  *  @param if_name (IN)  Interface name
  *  @return              Interface kernel index
  */
-OPAL_DECLSPEC uint16_t opal_ifnametokindex(const char* if_name);
+OPAL_DECLSPEC int16_t opal_ifnametokindex(const char* if_name);
 
 /**
  *  Lookup an interface by opal_list index and return its kernel index.
