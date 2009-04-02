@@ -865,7 +865,7 @@ int opal_ifnametoindex(const char* if_name)
  *  corresponding kernel index.
  */
 
-uint16_t opal_ifnametokindex(const char* if_name)
+int16_t opal_ifnametokindex(const char* if_name)
 {
     opal_if_t* intf;
     int rc = opal_ifinit();
@@ -1230,7 +1230,7 @@ opal_ifnametoindex(const char* if_name)
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-uint16_t
+int16_t
 opal_ifnametokindex(const char* if_name)
 {
     return OPAL_ERR_NOT_SUPPORTED;
