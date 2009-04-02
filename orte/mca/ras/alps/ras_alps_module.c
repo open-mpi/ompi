@@ -227,10 +227,16 @@ int orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename, unsigned
     oNow=0;
     iTrips=0;
     while(!oNow) {                          /* Until appinfo read is complete */
+        iTrips++;                           /* Increment trip count           */
 
         iFd=open( filename, O_RDONLY );
         if( iFd==-1 ) {                     /* If file absent, ALPS is down   */
+            opal_output_verbose(1, orte_ras_base.ras_output,
+                                "ras:alps:allocate: ALPS information open failure");
+            usleep(iTrips*50000);           /* Increasing delays, .05 s/try   */
 
+/*          Fail only when number of attempts have been exhausted.            */
+            if( iTrips <= max_appinfo_read_attempts ) continue;
             ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
             return ORTE_ERR_FILE_OPEN_FAILURE;
         }
@@ -242,7 +248,6 @@ int orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename, unsigned
 
         szLen=ssBuf.st_size;                /* Get buffer size                */
         cpBuf=malloc(szLen+1);              /* Allocate buffer                */
-        iTrips++;                           /* Increment trip count           */
 
 /*      Repeated attempts to read appinfo, with an increasing delay between   *
  *      successive attempts to allow scheduler I/O a chance to complete.      */
