@@ -196,7 +196,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
         /* UPDATE THE NIDMAP/PIDMAP TO SUPPORT DYNAMIC OPERATIONS */
         
         /* find this proc's node in the nidmap */
-	for (n=0; NULL != (nid = opal_pointer_array_get_item(&orte_nidmap, n)); n++) {
+        for (n=0; NULL != (nid = (orte_nid_t *) opal_pointer_array_get_item(&orte_nidmap, n)); n++) {
             if (0 == strcmp(hostname, nid->name)) {
                 /* update the arch in case it differs
                  * from what was reported by the daemon
