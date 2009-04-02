@@ -7,6 +7,8 @@
  * $HEADER$
  */
 
+int opal_this_library_is_not_used_anymore(void);
+
 int opal_this_library_is_not_used_anymore(void) {
     return 0;
 }
