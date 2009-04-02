@@ -725,24 +725,41 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
     check_result_t lpp = check("OMPI_MCA_mpi_leave_pinned_pipeline");
     bool want_rcache = false, found_driver = false;
 
-    /* If /sys/class/infiniband exists, then the OpenFabrics
-       drivers are loaded.  So let's default to using our hooks so
-       that we can utilize leave_pinned (yes, I know, further
-       abstraction violations... :-( ). */
-    if (0 == stat("/sys/class/infiniband", &st)) {
+    /* Look for sentinel files (directories) to see if various network
+       drivers are loaded (yes, I know, further abstraction
+       violations...).
+
+       * All OpenFabrics devices will have files in
+         /sys/class/infiniband (even iWARP)
+       * Open-MX doesn't currently use a reg cache, but it might
+         someday.  So be conservative and check for /dev/open-mx.
+       * MX will have one or more of /dev/myri[0-9].  Yuck.
+     */
+    if (0 == stat("/sys/class/infiniband", &st) ||
+        0 == stat("/dev/open-mx", &st) ||
+        0 == stat("/dev/myri0", &st) ||
+        0 == stat("/dev/myri1", &st) ||
+        0 == stat("/dev/myri2", &st) ||
+        0 == stat("/dev/myri3", &st) ||
+        0 == stat("/dev/myri4", &st) ||
+        0 == stat("/dev/myri5", &st) ||
+        0 == stat("/dev/myri6", &st) ||
+        0 == stat("/dev/myri7", &st) ||
+        0 == stat("/dev/myri8", &st) ||
+        0 == stat("/dev/myri9", &st)) {
         found_driver = true;
     }
     
     /* Simple combination of the results of these two environment
        variables (if both "yes" and "no" are specified, then be
-       conservative and assume "yes):
+       conservative and assume "yes"):
 
        lp / lpp   yes   no   runtime   not found       
        yes        yes   yes  yes       yes
        no         yes   no   no        no
        runtime    yes   no   runtime   runtime
        not found  yes   no   runtime   runtime
-    */
+     */
     if (RESULT_YES == lp || RESULT_YES == lpp) {
         want_rcache = true;
     } else if (RESULT_NO == lp || RESULT_NO == lpp) {
