@@ -56,7 +56,7 @@ ompi_convertor_raw( ompi_convertor_t* pConvertor,
     }
 
     DO_DEBUG( opal_output( 0, "ompi_convertor_raw( %p, {%p, %u}, %lu )\n", (void*)pConvertor,
-                           (void*)iov, *iov_count, *length ); );
+                           (void*)iov, *iov_count, (unsigned long)*length ); );
 
     description = pConvertor->use_desc->desc;
 
