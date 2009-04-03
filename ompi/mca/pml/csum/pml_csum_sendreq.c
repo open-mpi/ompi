@@ -407,12 +407,21 @@ int mca_pml_csum_send_request_start_buffered(
     hdr = (mca_pml_csum_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_CSUM_HDR_TYPE_RNDV;
+    hdr->hdr_common.hdr_csum = 0;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
+    hdr->hdr_match.hdr_csum = (size > 0 ?
+        sendreq->req_send.req_base.req_convertor.checksum : OPAL_CSUM_ZERO);
+    hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_rendezvous_hdr_t));
+
+    OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
+            "%s:%s:%d Sending \'match\' with data csum:0x%x, header csum:0x%x, size:%lu \n",
+           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__,
+           hdr->hdr_match.hdr_csum, hdr->hdr_common.hdr_csum, (unsigned long)max_data));
 
     csum_hdr_hton(hdr, MCA_PML_CSUM_HDR_TYPE_RNDV,
                  sendreq->req_send.req_base.req_proc);
