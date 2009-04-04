@@ -84,8 +84,6 @@ for the most up-to-date set of tests):
 - if the env variable is set to -1, enable our ptmalloc2 if the file
   was found
 - if the env variable is any other value, enable our ptmalloc2
-- if the file is a static library, then override all of the above and
-  disable our ptmalloc2
 - if we're enabling our ptmalloc2, initialize ptmalloc (via
   ptmalloc_init()) and then set the 4 hooks to point to our
   name-shifted ptmalloc2 functions

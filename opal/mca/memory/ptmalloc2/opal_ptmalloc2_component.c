@@ -24,9 +24,8 @@
 
 #include "opal_config.h"
 
-/* Include <link.h> for _DYNAMIC */
-#include <link.h>
 #include <malloc.h>
+#include <sys/mman.h>
 
 #include "opal/constants.h"
 #include "opal/mca/memory/memory.h"
@@ -61,17 +60,12 @@ bool opal_memory_ptmalloc2_free_invoked = false;
 bool opal_memory_ptmalloc2_malloc_invoked = false;
 bool opal_memory_ptmalloc2_realloc_invoked = false;
 bool opal_memory_ptmalloc2_memalign_invoked = false;
+bool opal_memory_ptmalloc2_munmap_invoked = false;
 
 static int ptmalloc2_open(void)
 {
     void *p;
-    /* We always provide munmap support as part of libopen-pal.la. */
-    int val = OPAL_MEMORY_MUNMAP_SUPPORT;
-
-    /* We can't catch munmap if we're a static library */
-    if (NULL == &_DYNAMIC) {
-        val = 0;
-    }
+    int val = 0;
 
     /* We will also provide malloc/free support if we've been
        activated.  We don't rely on the __malloc_initialize_hook()
@@ -91,6 +85,7 @@ static int ptmalloc2_open(void)
     opal_memory_ptmalloc2_realloc_invoked = false;
     opal_memory_ptmalloc2_memalign_invoked = false;
     opal_memory_ptmalloc2_free_invoked = false;
+    opal_memory_ptmalloc2_munmap_invoked = false;
 
     p = malloc(1024 * 1024 * 4);
     if (NULL == p) {
@@ -113,6 +108,13 @@ static int ptmalloc2_open(void)
         opal_memory_ptmalloc2_free_invoked) {
         /* Happiness; our functions were invoked */
         val |= OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT;
+    }
+
+    p = mmap(NULL, 4096, PROT_READ, MAP_ANONYMOUS, -1, 0);
+    munmap(p, 4096);
+
+    if (opal_memory_ptmalloc2_munmap_invoked) {
+      val |= OPAL_MEMORY_MUNMAP_SUPPORT;
     }
 
     /* Set the support level */

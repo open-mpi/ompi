@@ -66,6 +66,11 @@ opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc)
     static int (*realmunmap)(void*, size_t);
 #endif
 
+    {
+      extern bool opal_memory_ptmalloc2_munmap_invoked;
+      opal_memory_ptmalloc2_munmap_invoked = true;
+    }
+
     opal_mem_hooks_release_hook(start, length, from_alloc);
 
 #if defined(HAVE___MUNMAP)
