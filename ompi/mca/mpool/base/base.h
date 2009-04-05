@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,15 +30,7 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "opal/threads/mutex.h" 
 
-#if defined(HAVE_MALLOPT) && defined(M_TRIM_THRESHOLD) && defined(M_MMAP_MAX)
-#define OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT 1
-#else
-#define OMPI_MPOOL_BASE_HAVE_LINUX_MALLOPT 0
-#endif
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+BEGIN_C_DECLS
 
 static inline unsigned int my_log2(unsigned long val) { 
     unsigned int count = 0;
@@ -97,11 +89,7 @@ OMPI_DECLSPEC extern uint32_t mca_mpool_base_page_size_log;
 
 /* only used within base -- no need to DECLSPEC */
 extern int mca_mpool_base_used_mem_hooks;
-extern int mca_mpool_base_use_mem_hooks_index;
-extern int mca_mpool_base_disable_mallopt_index;
     
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif /* MCA_MEM_BASE_H */

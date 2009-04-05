@@ -20,6 +20,9 @@
 
 /* $Id: $ */
 
+/* OMPI change: Name-shift all the internal symbols */
+#include "opal/mca/memory/ptmalloc2/rename.h"
+
 #include <stdio.h>    /* needed for malloc_stats */
 
 #include <malloc-machine.h>
