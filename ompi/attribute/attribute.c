@@ -249,7 +249,7 @@
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
             MPI_Fint attr_val = translate_to_fortran_mpi1(attribute); \
-	    MPI_Fint extra_state = (MPI_Fint)keyval_obj->extra_state;	\
+	    MPI_Fint extra_state = (MPI_Fint)(uintptr_t)keyval_obj->extra_state; \
             (*((keyval_obj->delete_attr_fn).attr_mpi1_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
                  &f_key, &attr_val, &extra_state, &f_err); \
@@ -299,9 +299,9 @@
         ompi_fortran_logical_t f_flag; \
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
-	    MPI_Fint in, out, extra_state;					   \
+	    MPI_Fint in, out, extra_state; \
             in = translate_to_fortran_mpi1(in_attr); \
-	    extra_state = (MPI_Fint)keyval_obj->extra_state; \
+	    extra_state = (MPI_Fint)(uintptr_t)keyval_obj->extra_state; \
             (*((keyval_obj->copy_attr_fn).attr_mpi1_fortran_copy_fn)) \
                 (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
                  &f_key, &extra_state, \
@@ -316,7 +316,7 @@
         } \
         /* MPI-2 Fortran-style */ \
         else { \
-	    MPI_Aint in, out, extra_state;			     \
+	    MPI_Aint in, out, extra_state; \
             in = translate_to_fortran_mpi2(in_attr); \
 	    extra_state = (MPI_Aint)keyval_obj->extra_state; \
             (*((keyval_obj->copy_attr_fn).attr_mpi2_fortran_copy_fn)) \
