@@ -2,12 +2,12 @@
 .\" Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 .\"                         University Research and Technology
 .\"                         Corporation.  All rights reserved.
-.\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
 .\"
 .\" Man page for ORTE's SnapC Functionality
 .\" 
 .\" .TH name     section center-footer   left-footer  center-header
-.TH     ORTE_SNAPC  7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.TH ORTE_SNAPC 7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
 .\"    Name Section
 .\" **************************

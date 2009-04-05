@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,7 +18,7 @@
 # $HEADER$
 #
 
-man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1
+man_pages = mpirun.1 mpiexec.1 ompi-iof.1 ompi-ps.1 ompi-top.1 ompi-clean.1
 
 if OMPI_INSTALL_BINARIES
 if !ORTE_DISABLE_FULL_SUPPORT
