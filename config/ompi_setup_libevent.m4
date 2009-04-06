@@ -210,8 +210,9 @@ AC_INCLUDES_DEFAULT
     memset(&epevout, 0, sizeof(epevout));
     memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
     epevin.events = EPOLLIN | EPOLLOUT;
+    epevin.data.fd = fildes[[1]];
 
-    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[[0]], &epevin) == -1)
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
         exit(1);
 
     res = epoll_wait(epfd, &epevout, 1, 0);
@@ -257,9 +258,10 @@ AC_INCLUDES_DEFAULT
     memset(&epevout, 0, sizeof(epevout));
     memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
     epevin.events = EPOLLIN | EPOLLOUT;
+    epevin.data.fd = fildes[[1]];
 
     if (syscall(__NR_epoll_ctl, epfd, 
-        EPOLL_CTL_ADD, fildes[[0]], &epevin) == -1)
+        EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
         exit(1);
 
     res = syscall(__NR_epoll_wait, epfd, &epevout, 1, 0);
