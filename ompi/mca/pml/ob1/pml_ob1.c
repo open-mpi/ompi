@@ -496,11 +496,11 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                         pckt->hdr.hdr_ack.hdr_send_offset,
                         pckt->hdr.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
-                if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
-                    MCA_PML_OB1_ADD_ACK_TO_PENDING(pckt->proc,
-                            pckt->hdr.hdr_ack.hdr_src_req.lval,
-                            pckt->hdr.hdr_ack.hdr_dst_req.pval,
-                            pckt->hdr.hdr_ack.hdr_send_offset);
+                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
+                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+                    opal_list_append(&mca_pml_ob1.pckt_pending,
+                                     (opal_list_item_t*)pckt);
+                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     return;
                 }
                 break;
@@ -510,14 +510,21 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
-                if(OMPI_ERR_OUT_OF_RESOURCE == rc)
-                     return;
+                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
+                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+                    opal_list_append(&mca_pml_ob1.pckt_pending,
+                                     (opal_list_item_t*)pckt);
+                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+                    return;
+                }
                 break;
             default:
                 opal_output(0, "[%s:%d] wrong header type\n",
-                        __FILE__, __LINE__);
+                            __FILE__, __LINE__);
                 break;
         }
+        /* We're done with this packet, return it back to the free list */
+        MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
     }
 }
 
