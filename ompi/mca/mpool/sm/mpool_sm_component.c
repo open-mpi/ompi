@@ -83,7 +83,7 @@ static int mca_mpool_sm_open(void)
     int value = 0;
     char *size_str = NULL;
 
-    default_min = 0;
+    default_min = 67108864;
 
     /* register SM component parameters */
     mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
