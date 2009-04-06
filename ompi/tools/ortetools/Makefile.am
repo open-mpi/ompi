@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-man_pages = mpirun.1 mpiexec.1 ompi-iof.1 ompi-ps.1 ompi-top.1 ompi-clean.1
+man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-iof.1 ompi-clean.1 ompi-checkpoint.1 ompi-restart.1 ompi-top.1
 
 if OMPI_INSTALL_BINARIES
 if !ORTE_DISABLE_FULL_SUPPORT
@@ -73,7 +73,7 @@ $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1:
 	(cd $(top_builddir)/orte/tools/orte-checkpoint && $(MAKE) $(AM_MAKEFLAGS) orte-checkpoint.1)
 
 ompi-checkpoint.1: $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1
-	cp -f $(top_builddir)/orte/tools/orte-clean/orte-checkpoint.1 ompi-checkpoint.1
+	cp -f $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1 ompi-checkpoint.1
 
 $(top_builddir)/orte/tools/orte-iof/orte-iof.1:
 	(cd $(top_builddir)/orte/tools/orte-iof && $(MAKE) $(AM_MAKEFLAGS) orte-iof.1)
