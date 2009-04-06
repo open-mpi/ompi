@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-man_pages = mpirun.1 mpiexec.1 ompi-iof.1 ompi-ps.1 ompi-top.1 ompi-clean.1
+man_pages = mpirun.1 mpiexec.1 ompi-iof.1 ompi-ps.1 ompi-clean.1 ompi-checkpoint.1 ompi-restart.1
 
 if OMPI_INSTALL_BINARIES
 if !ORTE_DISABLE_FULL_SUPPORT
@@ -30,12 +30,18 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpiexec$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-ps$(EXEEXT); $(LN_S) orte-ps$(EXEEXT) ompi-ps$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f ompi-clean$(EXEEXT); $(LN_S) orte-clean$(EXEEXT) ompi-clean$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f ompi-checkpoint$(EXEEXT); $(LN_S) orte-checkpoint$(EXEEXT) ompi-checkpoint$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f ompi-iof$(EXEEXT); $(LN_S) orte-iof$(EXEEXT) ompi-iof$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f ompi-restart$(EXEEXT); $(LN_S) orte-restart$(EXEEXT) ompi-restart$(EXEEXT))
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/mpirun$(EXEEXT) \
 		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
-		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT)
+		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT) \
+		$(DESTDIR)$(bindir)/ompi-checkpoint$(EXEEXT) \
+		$(DESTDIR)$(bindir)/ompi-iof$(EXEEXT) \
+		$(DESTDIR)$(bindir)/ompi-restart$(EXEEXT)
 
 endif # !ORTE_DISABLE_FULL_SUPPORT
 endif # OMPI_INSTALL_BINARIES
@@ -60,6 +66,24 @@ $(top_builddir)/orte/tools/orte-clean/orte-clean.1:
 
 ompi-clean.1: $(top_builddir)/orte/tools/orte-clean/orte-clean.1
 	cp -f $(top_builddir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
+
+$(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1:
+	(cd $(top_builddir)/orte/tools/orte-checkpoint && $(MAKE) $(AM_MAKEFLAGS) orte-checkpoint.1)
+
+ompi-checkpoint.1: $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1
+	cp -f $(top_builddir)/orte/tools/orte-checkpoint/orte-checkpoint.1 ompi-checkpoint.1
+
+$(top_builddir)/orte/tools/orte-iof/orte-iof.1:
+	(cd $(top_builddir)/orte/tools/orte-iof && $(MAKE) $(AM_MAKEFLAGS) orte-iof.1)
+
+ompi-iof.1: $(top_builddir)/orte/tools/orte-iof/orte-iof.1
+	cp -f $(top_builddir)/orte/tools/orte-iof/orte-iof.1 ompi-iof.1
+
+$(top_builddir)/orte/tools/orte-restart/orte-restart.1:
+	(cd $(top_builddir)/orte/tools/orte-restart && $(MAKE) $(AM_MAKEFLAGS) orte-restart.1)
+
+ompi-restart.1: $(top_builddir)/orte/tools/orte-restart/orte-restart.1
+	cp -f $(top_builddir)/orte/tools/orte-restart/orte-restart.1 ompi-restart.1
 
 distclean-local:
 	rm -f $(man_pages)
