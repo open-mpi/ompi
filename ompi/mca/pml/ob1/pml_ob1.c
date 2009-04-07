@@ -415,6 +415,12 @@ static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
+/**
+ * Send an FIN to the peer. If we fail to send this ack (no more available
+ * fragments or the send failed) this function automatically add the FIN
+ * to the list of pending FIN, Which guarantee that the FIN will be sent
+ * later.
+ */
 int mca_pml_ob1_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
                           void *hdr_des,
@@ -482,7 +488,7 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
         if(NULL == send_dst) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
             opal_list_append(&mca_pml_ob1.pckt_pending,
-                    (opal_list_item_t*)pckt);
+                             (opal_list_item_t*)pckt);
             OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
             continue;
         }
@@ -509,10 +515,6 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail);
                 if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
-                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-                    opal_list_append(&mca_pml_ob1.pckt_pending,
-                                     (opal_list_item_t*)pckt);
-                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     return;
                 }
                 break;
