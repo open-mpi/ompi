@@ -249,10 +249,9 @@
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
             MPI_Fint attr_val = translate_to_fortran_mpi1(attribute); \
-	    MPI_Fint extra_state = (MPI_Fint)(uintptr_t)keyval_obj->extra_state; \
             (*((keyval_obj->delete_attr_fn).attr_mpi1_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-                 &f_key, &attr_val, &extra_state, &f_err); \
+                 &f_key, &attr_val, &keyval_obj->extra_state.f_integer, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
                     OPAL_THREAD_UNLOCK(&alock); \
@@ -263,10 +262,9 @@
         /* MPI-2 Fortran-style */ \
         else { \
             MPI_Aint attr_val = translate_to_fortran_mpi2(attribute); \
-	    MPI_Aint extra_state = (MPI_Aint)keyval_obj->extra_state;	\
             (*((keyval_obj->delete_attr_fn).attr_mpi2_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-                 &f_key, (int*)&attr_val, &extra_state, &f_err); \
+                 &f_key, (int*)&attr_val, &keyval_obj->extra_state.f_address, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
                     OPAL_THREAD_UNLOCK(&alock); \
@@ -281,7 +279,7 @@
         if ((err = (*((keyval_obj->delete_attr_fn).attr_##type##_delete_fn)) \
                             ((ompi_##type##_t *)object, \
                             key, attr_val, \
-                            keyval_obj->extra_state)) != MPI_SUCCESS) {\
+                            keyval_obj->extra_state.c_ptr)) != MPI_SUCCESS) {\
             if (need_lock) { \
                 OPAL_THREAD_UNLOCK(&alock); \
             } \
@@ -299,12 +297,11 @@
         ompi_fortran_logical_t f_flag; \
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_MPI1)) { \
-	    MPI_Fint in, out, extra_state; \
+            MPI_Fint in, out;                                      \
             in = translate_to_fortran_mpi1(in_attr); \
-	    extra_state = (MPI_Fint)(uintptr_t)keyval_obj->extra_state; \
             (*((keyval_obj->copy_attr_fn).attr_mpi1_fortran_copy_fn)) \
                 (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
-                 &f_key, &extra_state, \
+                 &f_key, &keyval_obj->extra_state.f_integer, \
                  &in, &out, &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 OPAL_THREAD_UNLOCK(&alock); \
@@ -316,12 +313,11 @@
         } \
         /* MPI-2 Fortran-style */ \
         else { \
-	    MPI_Aint in, out, extra_state; \
+            MPI_Aint in, out;                        \
             in = translate_to_fortran_mpi2(in_attr); \
-	    extra_state = (MPI_Aint)keyval_obj->extra_state; \
             (*((keyval_obj->copy_attr_fn).attr_mpi2_fortran_copy_fn)) \
                 (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
-                 &f_key, &extra_state, &in, &out, \
+                 &f_key, &keyval_obj->extra_state.f_address, &in, &out, \
                  &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 OPAL_THREAD_UNLOCK(&alock); \
@@ -336,7 +332,7 @@
         void *in, *out; \
         in = translate_to_c(in_attr); \
         if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
-              ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state, \
+              ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state.c_ptr, \
                in, &out, &flag, (ompi_##type##_t *)(new_object))) != MPI_SUCCESS) { \
             OPAL_THREAD_UNLOCK(&alock); \
             return err; \
@@ -442,7 +438,7 @@ ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval)
     keyval->attr_flag = 0;
     keyval->copy_attr_fn.attr_communicator_copy_fn = NULL;
     keyval->delete_attr_fn.attr_communicator_copy_fn = NULL;
-    keyval->extra_state = NULL;
+    keyval->extra_state.c_ptr = NULL;
     keyval->bindings_extra_state = NULL;
 
     /* Set the keyval->key value to an invalid value so that we can know
@@ -534,10 +530,12 @@ int ompi_attr_finalize(void)
 }
 
 
-int ompi_attr_create_keyval(ompi_attribute_type_t type,
+static int ompi_attr_create_keyval_impl(ompi_attribute_type_t type,
                             ompi_attribute_fn_ptr_union_t copy_attr_fn,
                             ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                            int *key, void *extra_state, int flags,
+                                        int *key,
+                                        ompi_attribute_fortran_ptr_t *extra_state,
+                                        int flags,
                             void *bindings_extra_state)
 {
     ompi_attribute_keyval_t *keyval;
@@ -562,7 +560,7 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
   
     keyval->copy_attr_fn = copy_attr_fn;
     keyval->delete_attr_fn = delete_attr_fn;
-    keyval->extra_state = extra_state;
+    keyval->extra_state = *extra_state;
     keyval->attr_type = type;
     keyval->attr_flag = flags;
     keyval->key = -1;
@@ -586,6 +584,53 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
     return MPI_SUCCESS;
 }
 
+int ompi_attr_create_keyval(ompi_attribute_type_t type,
+                            ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                            ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                            int *key,
+                            void *extra_state,
+                            int flags,
+                            void *bindings_extra_state)
+{
+    ompi_attribute_fortran_ptr_t es_tmp;
+
+    es_tmp.c_ptr = extra_state;
+    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
+                                        key, &es_tmp, flags,
+                                        bindings_extra_state);
+}
+
+int ompi_attr_create_keyval_fint(ompi_attribute_type_t type,
+                                 ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                                 ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                                 int *key,
+                                 MPI_Fint extra_state,
+                                 int flags,
+                                 void *bindings_extra_state)
+{
+    ompi_attribute_fortran_ptr_t es_tmp;
+
+    es_tmp.f_integer = extra_state;
+    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
+                                        key, &es_tmp, flags,
+                                        bindings_extra_state);
+}
+
+int ompi_attr_create_keyval_aint(ompi_attribute_type_t type,
+                                 ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                                 ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                                 int *key,
+                                 MPI_Aint extra_state,
+                                 int flags,
+                                 void *bindings_extra_state)
+{
+    ompi_attribute_fortran_ptr_t es_tmp;
+
+    es_tmp.f_address = extra_state;
+    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
+                                        key, &es_tmp, flags,
+                                        bindings_extra_state);
+}
 
 int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, 
                           bool predefined)

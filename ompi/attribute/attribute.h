@@ -144,6 +144,7 @@ typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
 union ompi_attribute_fortran_ptr_t {
     void *c_ptr;
     MPI_Fint f_integer;
+    MPI_Aint f_address;
 };
 /**
  * Convenience typedef
@@ -162,7 +163,7 @@ struct ompi_attribute_keyval_t {
                                              attribute */
     ompi_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the
                                                attribute */
-    void *extra_state; /**< Extra state of the attribute */
+    ompi_attribute_fortran_ptr_t extra_state; /**< Extra state of the attribute */
     int key; /**< Keep a track of which key this item belongs to, so that
                 the key can be deleted when this object is destroyed */
 
@@ -251,6 +252,26 @@ OMPI_DECLSPEC int ompi_attr_create_keyval(ompi_attribute_type_t type,
                                           ompi_attribute_fn_ptr_union_t delete_attr_fn,
                                           int *key, void *extra_state, int flags,
                                           void *bindings_extra_state);
+
+/**
+ * Same as ompi_attr_create_keyval, but extra_state is a Fortran default integer.
+ */
+
+OMPI_DECLSPEC int ompi_attr_create_keyval_fint(ompi_attribute_type_t type, 
+                                               ompi_attribute_fn_ptr_union_t copy_attr_fn, 
+                                               ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                                               int *key, MPI_Fint extra_state, int flags,
+                                               void *bindings_extra_state);
+
+/**
+ * Same as ompi_attr_create_keyval, but extra_state is a Fortran address integer.
+ */
+
+OMPI_DECLSPEC int ompi_attr_create_keyval_aint(ompi_attribute_type_t type, 
+                                               ompi_attribute_fn_ptr_union_t copy_attr_fn, 
+                                               ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                                               int *key, MPI_Aint extra_state, int flags,
+                                               void *bindings_extra_state);
 
 /**
  * Free an attribute keyval
