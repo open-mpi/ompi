@@ -216,7 +216,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER,
                        sizeof(mca_pml_ob1_ack_hdr_t),
-                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE; 
     }
@@ -236,9 +236,6 @@ int mca_pml_ob1_recv_request_ack_send_btl(
 
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_ACK);
     if( OPAL_LIKELY( rc >= 0 ) ) {
-        if( OPAL_LIKELY( 1 == rc ) ) {
-            MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
-        }
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des);
@@ -365,7 +362,7 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
                               MCA_BTL_NO_ORDER,
                               0,
                               &frag->rdma_length,
-                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
+                              0,  /* always call the callback, PML ownership */
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         frag->rdma_length = save_size;
@@ -778,7 +775,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         }
 
         mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, hdr_size,
-                           MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                           MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
 
         if( OPAL_UNLIKELY(NULL == ctl) ) {
             mca_bml_base_free(bml_btl,dst);
@@ -818,10 +815,6 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
             OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth, 1);
             recvreq->req_rdma[rdma_idx].length -= size;
             bytes_remaining -= size;
-            if( OPAL_LIKELY( 1 == rc ) ) {
-                /* The send is completed, trigger the callback */
-                MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
-            }
         } else {
             mca_bml_base_free(bml_btl,ctl);
             mca_bml_base_free(bml_btl,dst);
