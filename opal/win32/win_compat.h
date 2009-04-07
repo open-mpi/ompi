@@ -206,6 +206,7 @@ typedef unsigned int uint;
 #define WNOHANG   0
 
 #define sigset_t int
+#define in_addr_t uint32_t
 
 /*
  * Mask these to Windows equivalents
