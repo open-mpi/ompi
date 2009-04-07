@@ -189,6 +189,11 @@ if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
         # library.  Badness ensues.  Therefore, check to see that
         # this struct gets correctly passed between OMPI and the
         # kernel.
+        
+        # In this test we use epoll in Level Triggered mode. We create a pipe
+        # and the write only file descriptor of the pipe is added to 
+        # the epoll set. The test is successful if epoll_wait() returns 1 
+        # indicating that the fd is ready to be written to.
 
         haveepoll=no
         AC_MSG_CHECKING([for working epoll library interface])
