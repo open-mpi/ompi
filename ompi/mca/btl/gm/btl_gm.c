@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Myricom, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Myricom, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,6 +84,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_get,
 #else
         mca_btl_gm_send_nl,
+        NULL, /* send immediate */
         mca_btl_gm_put_nl,
         mca_btl_gm_get_nl,
 #endif
