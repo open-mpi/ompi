@@ -428,6 +428,12 @@ static void mca_pml_csum_fin_completion( mca_btl_base_module_t* btl,
     MCA_PML_CSUM_PROGRESS_PENDING(bml_btl);
 }
 
+/**
+ * Send an FIN to the peer. If we fail to send this ack (no more available
+ * fragments or the send failed) this function automatically add the FIN
+ * to the list of pending FIN, Which guarantee that the FIN will be sent
+ * later.
+ */
 int mca_pml_csum_send_fin( ompi_proc_t* proc,
                           mca_bml_base_btl_t* bml_btl,
                           void *hdr_des,
@@ -500,7 +506,7 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
         if(NULL == send_dst) {
             OPAL_THREAD_LOCK(&mca_pml_csum.lock);
             opal_list_append(&mca_pml_csum.pckt_pending,
-                    (opal_list_item_t*)pckt);
+                            (opal_list_item_t*)pckt);
             OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
             continue;
         }
@@ -513,12 +519,11 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                         pckt->hdr.hdr_ack.hdr_dst_req.pval,
                         pckt->hdr.hdr_ack.hdr_send_offset,
                         pckt->hdr.hdr_common.hdr_flags & MCA_PML_CSUM_HDR_FLAGS_NORDMA);
-                MCA_PML_CSUM_PCKT_PENDING_RETURN(pckt);
-                if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
-                    MCA_PML_CSUM_ADD_ACK_TO_PENDING(pckt->proc,
-                            pckt->hdr.hdr_ack.hdr_src_req.lval,
-                            pckt->hdr.hdr_ack.hdr_dst_req.pval,
-                            pckt->hdr.hdr_ack.hdr_send_offset);
+                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
+                    OPAL_THREAD_LOCK(&mca_pml_csum.lock);
+                    opal_list_append(&mca_pml_csum.pckt_pending,
+                                     (opal_list_item_t*)pckt);
+                    OPAL_THREAD_UNLOCK(&mca_pml_csum.lock);
                     return;
                 }
                 break;
@@ -527,15 +532,17 @@ void mca_pml_csum_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                                           pckt->hdr.hdr_fin.hdr_des.pval,
                                           pckt->order,
                                           pckt->hdr.hdr_fin.hdr_fail);
-                MCA_PML_CSUM_PCKT_PENDING_RETURN(pckt);
-                if(OMPI_ERR_OUT_OF_RESOURCE == rc)
-                     return;
+                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
+                    return;
+                }
                 break;
             default:
                 opal_output(0, "[%s:%d] wrong header type\n",
-                        __FILE__, __LINE__);
+                            __FILE__, __LINE__);
                 break;
         }
+        /* We're done with this packet, return it back to the free list */
+        MCA_PML_CSUM_PCKT_PENDING_RETURN(pckt);
     }
 }
 
