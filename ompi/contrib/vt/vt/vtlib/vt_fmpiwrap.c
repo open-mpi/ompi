@@ -37,6 +37,20 @@ DEF_FMPI_FUNC( vt_mpi_init_f(MPI_Fint* ierr) ) {
 			   (MPI_Fint* ierr),
 			   (ierr))
 
+#if defined(HAVE_MPITHRD) && HAVE_MPITHRD
+
+/* -- MPI_Init_thread -- */
+
+DEF_FMPI_FUNC( vt_mpi_init_thread_f(MPI_Fint* required, MPI_Fint* provided,
+				    MPI_Fint* ierr) ) {
+  *ierr = MPI_Init_thread(0, (char***)0, *required, provided);
+} VT_GENERATE_F77_BINDINGS(mpi_init_thread, MPI_INIT_THREAD,
+			   vt_mpi_init_thread_f,
+			   (MPI_Fint* required, MPI_Fint* provided, MPI_Fint* ierr),
+			   (required, provided, ierr))
+
+#endif /* HAVE_MPITHRD */
+
 /* -- MPI_Finalize -- */
 
 DEF_FMPI_FUNC( vt_mpi_finalize_f(MPI_Fint* ierr) ) {
@@ -1157,6 +1171,20 @@ DEF_FMPI_FUNC( vt_mpi_init_f(MPI_Fint* ierr) ) {
 			   vt_mpi_init_f,
 			   (MPI_Fint* ierr),
 			   (ierr))
+
+#if defined(HAVE_MPITHRD) && HAVE_MPITHRD
+
+/* -- MPI_Init_thread -- */
+
+DEF_FMPI_FUNC( vt_mpi_init_thread_f(MPI_Fint* required, MPI_Fint* provided,
+				    MPI_Fint* ierr) ) {
+  *ierr = MPI_Init_thread(0, (char***)0, *required, provided);
+} VT_GENERATE_F77_BINDINGS(mpi_init_thread, MPI_INIT_THREAD,
+			   vt_mpi_init_thread_f,
+			   (MPI_Fint* required, MPI_Fint* provided, MPI_Fint* ierr),
+			   (required, provided, ierr))
+
+#endif /* HAVE_MPITHRD */
 
 /* -- MPI_Finalize -- */
 
