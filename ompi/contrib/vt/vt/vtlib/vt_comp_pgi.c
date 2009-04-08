@@ -78,6 +78,9 @@ void ___rouent2(struct s1 *p) {
       __rouinit();
     }
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -136,6 +139,9 @@ void ___rouent2(struct s1 *p) {
 
 void ___rouret2(void) {
   uint64_t time;
+
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 

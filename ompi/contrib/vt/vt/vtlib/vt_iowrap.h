@@ -215,7 +215,8 @@ EXTERN int vt_io_tracing_state;
  * for each function separately via iofunctions[IDX].traceme = 0
  */
 #define DO_TRACE() \
-	( vt_io_tracing_enabled && \
+	( vt_is_alive && \
+	  vt_io_tracing_enabled && \
 	  iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].traceme )
 
 /** Set up VT region and tracing specific settings

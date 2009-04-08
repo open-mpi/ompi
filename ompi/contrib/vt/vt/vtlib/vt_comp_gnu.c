@@ -355,6 +355,9 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
     VT_MEMHOOKS_ON();
   }
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -394,6 +397,9 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
 void __cyg_profile_func_exit(void* func, void* callsite) {
   void * funcptr = func;
   uint64_t time;
+
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 
