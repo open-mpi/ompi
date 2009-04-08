@@ -66,6 +66,7 @@ int orte_finalize(void)
     /* cleanup the process info */
     orte_proc_info_finalize();
 
+#if !ORTE_DISABLE_FULL_SUPPORT
     /* Free some MCA param strings */
     if (NULL != orte_launch_agent) {
         free(orte_launch_agent);
@@ -76,6 +77,7 @@ int orte_finalize(void)
     if( NULL != orte_default_hostfile ) {
         free(orte_default_hostfile);
     }
+#endif
 
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
