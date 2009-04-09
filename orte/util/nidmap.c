@@ -827,7 +827,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
     jobs = (orte_job_t**)orte_job_data->addr;
-    /* for each job... */
+    /* unfortunately, job objects cannot be stored
+     * by index number as the jobid is a constructed
+     * value. So we have no choice but to cycle through
+     * the job pointer array and look at each entry
+     */
     for (j=1; j < orte_job_data->size; j++) {
         /* the job array is no longer left-justified and may
          * have holes in it as we recover resources at job
@@ -920,7 +924,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     /* cycle through the buffer */
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &jobid, &n, ORTE_JOBID))) {
         jobs = (orte_jmap_t**)orte_jobmap.addr;
-        /* is this job already in the map? */
+        /* unfortunately, job objects cannot be stored
+         * by index number as the jobid is a constructed
+         * value. So we have no choice but to cycle through
+         * the jobmap pointer array and look for this entry
+         */
         already_present = false;
         for (j=0; j < orte_jobmap.size && NULL != jobs[j]; j++) {
             if (jobid == jobs[j]->job) {
@@ -965,7 +973,11 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         
         /* if we don't already have this data, store it */
         if (!already_present) {
-            /* create and add an entry for the job */
+            /* unfortunately, job objects cannot be stored
+             * by index number as the jobid is a constructed
+             * value. So we have to just add it to the end
+             * of the array
+             */
             jmap = OBJ_NEW(orte_jmap_t);
             jmap->job = jobid;
             jmap->num_procs = num_procs;
@@ -982,6 +994,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 pmap->node = nodes[i];
                 pmap->local_rank = local_rank[i];
                 pmap->node_rank = node_rank[i];
+                /* add the pidmap entry at the specific site corresponding
+                 * to the proc's vpid
+                 */
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
@@ -1012,6 +1027,12 @@ orte_jmap_t* orte_util_lookup_jmap(orte_jobid_t job)
     int i;
     orte_jmap_t **jmaps;
     
+    /* unfortunately, job objects cannot be stored
+     * by index number as the jobid is a constructed
+     * value. So we have no choice but to cycle through
+     * the jobmap pointer array and look for the entry
+     * we want
+     */
     jmaps = (orte_jmap_t**)orte_jobmap.addr;
     for (i=0; i < orte_jobmap.size && NULL != jmaps[i]; i++) {
         OPAL_OUTPUT_VERBOSE((10, orte_debug_output,
@@ -1034,19 +1055,11 @@ orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc)
     if (NULL == (jmap = orte_util_lookup_jmap(proc->jobid))) {
         return NULL;
     }
-    if (proc->vpid >= jmap->num_procs) {
-        return NULL;
-    }
     
-    /* is this index in range? */
-    if (jmap->pmap.size <= (int)proc->vpid) {
-        return NULL;
-    }
-    
-    /* now that we know the vpid is within range, we can safely
-     * retrieve the value
+    /* the get_item function will check the array index range,
+     * so we can just access it here
      */
-    return (orte_pmap_t*)jmap->pmap.addr[proc->vpid];
+    return opal_pointer_array_get_item(&jmap->pmap, proc->vpid);
 }
 
 /* the daemon's vpid does not necessarily correlate
@@ -1095,12 +1108,9 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
         return NULL;
     }
     
-    if (pmap->node < 0 || orte_nidmap.size <= pmap->node) {
-        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-        return NULL;
-    }
-    
-    nids = (orte_nid_t**)orte_nidmap.addr;
-    return nids[pmap->node];
+    /* the get_item function will check the array index range,
+     * so we can just access it here
+     */
+    return opal_pointer_array_get_item(&orte_nidmap, pmap->node);
 }
 
