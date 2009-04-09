@@ -22,4 +22,4 @@ install its own signal handler for this signal by setting the
 "opal_signals" MCA parameter.
 
   Signal: %d
-  Current opal_signals value: %s
+  Current opal_signal value: %s
