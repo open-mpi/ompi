@@ -1106,7 +1106,6 @@ static orte_nid_t* find_daemon_node(orte_process_name_t *proc)
 
 orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
 {
-    orte_nid_t **nids;
     orte_pmap_t *pmap;
     
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
