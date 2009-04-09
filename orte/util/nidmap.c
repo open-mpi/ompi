@@ -923,6 +923,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     n = 1;
     /* cycle through the buffer */
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(&buf, &jobid, &n, ORTE_JOBID))) {
+        /* refresh the base address as it may have changed if we
+         * added a job to the array
+         */
         jobs = (orte_jmap_t**)orte_jobmap.addr;
         /* unfortunately, job objects cannot be stored
          * by index number as the jobid is a constructed
