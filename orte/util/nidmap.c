@@ -927,10 +927,15 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         /* unfortunately, job objects cannot be stored
          * by index number as the jobid is a constructed
          * value. So we have no choice but to cycle through
-         * the jobmap pointer array and look for this entry
+         * the jobmap pointer array and look for this entry. Since
+         * jobs are cleaned up as they complete, check the
+         * entire array
          */
         already_present = false;
-        for (j=0; j < orte_jobmap.size && NULL != jobs[j]; j++) {
+        for (j=0; j < orte_jobmap.size; j++) {
+            if (NULL == jobs[j]) {
+                continue;
+            }
             if (jobid == jobs[j]->job) {
                 already_present = true;
                 break;
@@ -1031,10 +1036,15 @@ orte_jmap_t* orte_util_lookup_jmap(orte_jobid_t job)
      * by index number as the jobid is a constructed
      * value. So we have no choice but to cycle through
      * the jobmap pointer array and look for the entry
-     * we want
+     * we want. We also cannot trust that the array is
+     * left-justified as cleanup is done - and array
+     * entries set to NULL - upon job completion.
      */
     jmaps = (orte_jmap_t**)orte_jobmap.addr;
-    for (i=0; i < orte_jobmap.size && NULL != jmaps[i]; i++) {
+    for (i=0; i < orte_jobmap.size; i++) {
+        if (NULL == jmaps[i]) {
+            continue;
+        }
         OPAL_OUTPUT_VERBOSE((10, orte_debug_output,
                              "%s lookup:pmap: checking job %s for job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1074,7 +1084,10 @@ static orte_nid_t* find_daemon_node(orte_process_name_t *proc)
     orte_nid_t **nids;
     
     nids = (orte_nid_t**)orte_nidmap.addr;
-    for (i=0; i < orte_nidmap.size && NULL != nids[i]; i++) {
+    for (i=0; i < orte_nidmap.size; i++) {
+        if (NULL == nids[i]) {
+            continue;
+        }
         OPAL_OUTPUT_VERBOSE((10, orte_debug_output,
                              "%s find:daemon:node: checking daemon %s for %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
