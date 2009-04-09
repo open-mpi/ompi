@@ -1072,7 +1072,7 @@ orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc)
     /* the get_item function will check the array index range,
      * so we can just access it here
      */
-    return opal_pointer_array_get_item(&jmap->pmap, proc->vpid);
+    return (orte_pmap_t *) opal_pointer_array_get_item(&jmap->pmap, proc->vpid);
 }
 
 /* the daemon's vpid does not necessarily correlate
@@ -1126,6 +1126,6 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
     /* the get_item function will check the array index range,
      * so we can just access it here
      */
-    return opal_pointer_array_get_item(&orte_nidmap, pmap->node);
+    return (orte_nid_t *) opal_pointer_array_get_item(&orte_nidmap, pmap->node);
 }
 
