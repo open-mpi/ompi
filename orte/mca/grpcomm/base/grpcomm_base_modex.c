@@ -226,9 +226,17 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                                  ORTE_JOBID_PRINT(proc_name.jobid)));
             jmap = OBJ_NEW(orte_jmap_t);
             jmap->job = proc_name.jobid;
+            /* unfortunately, job objects cannot be stored
+             * by index number as the jobid is a constructed
+             * value. So we have to just add it to the end
+             * of the array
+             */
             opal_pointer_array_add(&orte_jobmap, jmap);
             jmap->num_procs = 1;
-            /* have to add the pidmap entry too */
+            /* have to add the pidmap entry too, but this
+             * can be done at the specific site corresponding
+             * to the proc's vpid
+             */
             pmap = OBJ_NEW(orte_pmap_t);
             pmap->node = nid->index;
             pmap->local_rank = local_rank;
@@ -246,7 +254,12 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                 pmap->node = nid->index;
                 pmap->local_rank = local_rank;
                 pmap->node_rank = node_rank;
+                /* this can be done at the specific site corresponding
+                 * to the proc's vpid
+                 */
                 opal_pointer_array_set_item(&jmap->pmap, proc_name.vpid, pmap);
+                /* account for the proc entry in the jmap */
+                jmap->num_procs++;
             }
         }
         

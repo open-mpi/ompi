@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     pid = getpid();
     printf("Slave_spawn [pid %ld] about to spawn!\n", (long)pid);
     if (MPI_SUCCESS != (rc = MPI_Comm_spawn(app, MPI_ARGV_NULL, 1, info, 
-                                            0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
+                                            0, MPI_COMM_SELF, &child, MPI_ERRCODES_IGNORE))) {
         printf("Slave failed to spawn\n");
         return rc;
     }
