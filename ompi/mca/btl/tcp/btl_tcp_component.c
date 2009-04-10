@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -251,7 +251,7 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_module.super.btl_bandwidth = 100;
     mca_btl_tcp_module.super.btl_latency = 100;
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
-            &mca_btl_tcp_module.super);
+                                &mca_btl_tcp_module.super);
 
     mca_btl_tcp_component.tcp_disable_family =
         mca_btl_tcp_param_register_int ("disable_family", NULL, 0);
@@ -271,7 +271,7 @@ int mca_btl_tcp_component_close(void)
 
     if(NULL != mca_btl_tcp_component.tcp_if_include) {
         free(mca_btl_tcp_component.tcp_if_include);
-	mca_btl_tcp_component.tcp_if_include = NULL;
+        mca_btl_tcp_component.tcp_if_include = NULL;
     }
     if(NULL != mca_btl_tcp_component.tcp_if_exclude) {
        free(mca_btl_tcp_component.tcp_if_exclude);
