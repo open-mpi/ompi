@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -39,7 +39,7 @@ struct mca_pml_ob1_recv_request_t {
     int32_t req_lock;
     size_t  req_pipeline_depth;
     size_t  req_bytes_received;  /**< amount of data transferred into the user buffer */
-    size_t  req_bytes_delivered; /**< local size of the data as suggested by the user */
+    size_t  req_bytes_expected; /**< local size of the data as suggested by the user */
     size_t  req_rdma_offset;
     size_t  req_send_offset;
     uint32_t req_rdma_cnt;
@@ -166,7 +166,7 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
         recvreq->req_recv.req_base.req_pml_complete = true;
         recvreq->req_recv.req_base.req_ompi.req_status._count =
             (int)recvreq->req_bytes_received;
-        if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_delivered) {
+        if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected) {
             recvreq->req_recv.req_base.req_ompi.req_status._count =
                 (int)recvreq->req_recv.req_bytes_packed;
             recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
@@ -206,7 +206,7 @@ static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
                 0,
                 &req->req_recv.req_base.req_convertor);
         ompi_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
-                &req->req_bytes_delivered);
+                                         &req->req_bytes_expected);
     }
 }
 

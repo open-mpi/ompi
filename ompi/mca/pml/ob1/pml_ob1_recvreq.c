@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -673,7 +673,7 @@ void mca_pml_ob1_recv_request_matched_probe( mca_pml_ob1_recv_request_t* recvreq
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
     recvreq->req_bytes_received = bytes_packed;
-    recvreq->req_bytes_delivered = bytes_packed;
+    recvreq->req_bytes_expected = bytes_packed;
     recv_request_pml_complete(recvreq);
 }
 
@@ -931,9 +931,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     /* init/re-init the request */
     req->req_lock = 0;
-    req->req_pipeline_depth  = 0;
-    req->req_bytes_received  = 0;
-    req->req_bytes_delivered = 0;
+    req->req_pipeline_depth = 0;
+    req->req_bytes_received = 0;
+    req->req_bytes_expected = 0;
     /* What about req_rdma_cnt ? */
     req->req_rdma_idx = 0;
     req->req_pending = false;

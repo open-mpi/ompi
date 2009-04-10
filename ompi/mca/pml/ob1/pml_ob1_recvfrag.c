@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -189,7 +189,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
         match->req_recv.req_bytes_packed = bytes_received;
         
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
-        if(match->req_bytes_delivered > 0) { 
+        if(match->req_bytes_expected > 0) { 
             struct iovec iov[2];
             uint32_t iov_count = 1;
             
@@ -460,9 +460,9 @@ static mca_pml_ob1_recv_request_t *match_one(mca_btl_base_module_t *btl,
         if(OPAL_UNLIKELY(NULL == match)) {
             /* if no match found, place on unexpected queue */
             append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
-                    num_segments, frag);
+                                num_segments, frag);
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
-                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             return NULL;
         }
 
