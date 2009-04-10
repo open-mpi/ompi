@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,7 +26,6 @@
 #include <string.h>
 
 /* Open MPI includes */
-#include "opal/class/opal_bitmap.h"
 #include "ompi/class/ompi_free_list.h"
 #include "opal/event/event.h"
 #include "ompi/mca/btl/btl.h"
