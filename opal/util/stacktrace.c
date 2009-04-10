@@ -416,7 +416,7 @@ int opal_util_register_stackhandlers (void)
     char * tmp;
     char * next;
     int param, i;
-    bool showed_help = false;
+    bool complain, showed_help = false;
 
     gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
     stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
@@ -447,6 +447,7 @@ int opal_util_register_stackhandlers (void)
       int sig;
       int ret;
 
+      complain = false;
       sig = strtol (tmp, &next, 10);
 
       /*
@@ -455,18 +456,24 @@ int opal_util_register_stackhandlers (void)
        */
       if (((0 == sig) && (tmp == next)) || (0 > sig) || (_NSIG <= sig)) {
 	 return OPAL_ERR_BAD_PARAM;
-      }
-
-      if ((next == NULL) || ((*next != ',') && (*next != '\0'))) {
+      } else if (next == NULL) {
 	 return OPAL_ERR_BAD_PARAM;
+      } else if (':' == *next &&
+                 0 == strncasecmp(next, ":complain", 9)) {
+          complain = true;
+          next += 9;
+      } else if (',' != *next && '\0' != *next) {
+          return OPAL_ERR_BAD_PARAM;
       }
 
-      ret = sigaction (sig, &act, &old);
-      if (ret != 0) {
-        return OPAL_ERR_IN_ERRNO;
+      /* Just query first */
+      ret = sigaction (sig, NULL, &old);
+      if (0 != ret) {
+          return OPAL_ERR_IN_ERRNO;
       }
+      /* Was there something already there? */
       if (SIG_IGN != old.sa_handler && SIG_DFL != old.sa_handler) {
-          if (!showed_help) {
+          if (!showed_help && complain) {
               /* JMS This is icky; there is no error message
                  aggregation here so this message may be repeated for
                  every single MPI process...  This should be replaced
@@ -477,7 +484,11 @@ int opal_util_register_stackhandlers (void)
                              true, sig, sig, sig, string_value);
               showed_help = true;
           }
-          if (0 != sigaction(sig, &old, NULL)) {
+      }
+
+      /* Nope, nothing was there, so put in ours */
+      else {
+          if (0 != sigaction(sig, &act, NULL)) {
               return OPAL_ERR_IN_ERRNO;
           }
       }
