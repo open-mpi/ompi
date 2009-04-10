@@ -57,6 +57,10 @@ Trunk (not on release branches yet)
 -----
 
 ....stuff should be here
+
+- Fix building of the posix paffinity component to properly get the
+  number of processors in loosely tested environments (e.g.,
+  FreeBSD).  Thanks to Steve Kargl for reporting the issue.
 - Fix --with-libnuma handling in configure.  Thanks to Gus Correa for
   reporting the problem.
 
