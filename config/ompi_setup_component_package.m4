@@ -60,7 +60,7 @@
 AC_DEFUN([OPAL_SETUP_COMPONENT_PACKAGE],[
     AC_ARG_WITH([$3],
         [AC_HELP_STRING([--with-$3(=DIR)],
-                        [Build $3 support, optionally adding DIR to the search path for headers and libraries])])
+                        [Build $3 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([$3], [$with_$3], [$4])
     AC_ARG_WITH([$3-libdir],
         [AC_HELP_STRING([--with-$3-libdir=DIR],
