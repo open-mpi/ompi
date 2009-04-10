@@ -190,6 +190,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 
     for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
         pml_comm->procs[i].ompi_proc = ompi_group_peer_lookup(comm->c_remote_group,i);
+	OBJ_RETAIN(pml_comm->procs[i].ompi_proc);
     }
     /* Grab all related messages from the non_existing_communicator pending queue */
     for( item = opal_list_get_first(&mca_pml_ob1.non_existing_communicator_pending);
@@ -260,6 +261,12 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 
 int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 {
+    mca_pml_ob1_comm_t* pml_comm = comm->c_pml_comm;
+    int i;
+
+    for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
+        OBJ_RELEASE(pml_comm->procs[i].ompi_proc);
+    }
     OBJ_RELEASE(comm->c_pml_comm);
     comm->c_pml_comm = NULL;
     return OMPI_SUCCESS;
@@ -313,6 +320,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
 
+    /* TODO: Move these callback registration to another place */
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_MATCH,
                                mca_pml_ob1_recv_frag_callback_match,
                                NULL );
