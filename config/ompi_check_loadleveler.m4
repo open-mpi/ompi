@@ -23,7 +23,7 @@
 AC_DEFUN([OMPI_CHECK_LOADLEVELER],[
     AC_ARG_WITH([loadleveler],
                 [AC_HELP_STRING([--with-loadleveler(=DIR)],
-                                [Directory where the loadleveler software is installed])])
+                                [Build LoadLeveler support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([loadleveler], [$with_loadleveler], [include/llapi.h])
 
     AS_IF([test "$with_loadleveler" = "no"],

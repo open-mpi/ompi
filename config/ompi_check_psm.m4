@@ -27,7 +27,7 @@
 AC_DEFUN([OMPI_CHECK_PSM],[
     AC_ARG_WITH([psm],
         [AC_HELP_STRING([--with-psm(=DIR)],
-             [Build PSM (QLogic InfiniPath PSM) support, searching for libraries in DIR])])
+             [Build PSM (Qlogic InfiniPath) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([psm], [$with_psm], [include/psm.h])
     AC_ARG_WITH([psm-libdir],
         [AC_HELP_STRING([--with-psm-libdir=DIR],

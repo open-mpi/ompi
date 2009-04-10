@@ -124,7 +124,7 @@ AC_DEFUN([_OMPI_CHECK_GM_CONFIG],[
 AC_DEFUN([OMPI_CHECK_GM],[
     AC_ARG_WITH([gm],
         [AC_HELP_STRING([--with-gm(=DIR)],
-             [Build GM (Myrinet) support, searching for libraries in DIR])])
+             [Build GM (Myrinet) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([gm], [$with_gm], [include/gm.h])
     AC_ARG_WITH([gm-libdir],
         [AC_HELP_STRING([--with-gm-libdir=DIR],
