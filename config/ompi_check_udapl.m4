@@ -26,7 +26,7 @@
 AC_DEFUN([OMPI_CHECK_UDAPL],[
     AC_ARG_WITH([udapl],
         [AC_HELP_STRING([--with-udapl(=DIR)],
-             [Build uDAPL support, searching for libraries in DIR])])
+             [Build uDAPL support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([udapl], [$with_udapl], [include/dat/udat.h])
     AC_ARG_WITH([udapl-libdir],
        [AC_HELP_STRING([--with-udapl-libdir=DIR],

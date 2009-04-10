@@ -26,7 +26,7 @@
 AC_DEFUN([OMPI_CHECK_BPROC],[
     AC_ARG_WITH([bproc],
                 [AC_HELP_STRING([--with-bproc(=DIR)],
-                                [Directory where the BProc software is installed])])
+                                [Build BProc support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([bproc], [$with_bproc], [include/sys/bproc.h])
 
     AS_IF([test ! -z "$with_bproc" -a "$with_bproc" = "no"],[$4], [ 

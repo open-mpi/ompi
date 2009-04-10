@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_CHECK_TM_LIBS_FLAGS],[
 AC_DEFUN([OMPI_CHECK_TM],[
     AC_ARG_WITH([tm],
                 [AC_HELP_STRING([--with-tm(=DIR)],
-                                [Directory where the tm software is installed])])
+                                [Build TM (Torque, PBSPro, and compatible) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([tm], [$with_tm], [include/tm.h])
 
     ompi_check_tm_found=no

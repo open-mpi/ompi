@@ -67,7 +67,7 @@ mx__get_mapper_state(NULL, NULL);
 AC_DEFUN([OMPI_CHECK_MX],[
     AC_ARG_WITH([mx],
         [AC_HELP_STRING([--with-mx(=DIR)],
-             [Build MX (Myrinet Express) support, searching for libraries in DIR])])
+             [Build MX (Myrinet Express) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([mx], [$with_mx], [include/myriexpress.h])
     AC_ARG_WITH([mx-libdir],
         [AC_HELP_STRING([--with-mx-libdir=DIR],
