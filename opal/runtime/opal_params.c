@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,7 +68,7 @@ int opal_register_params(void)
         }
 
         mca_base_param_reg_string_name("opal", "signal", 
-                                       "If a signal is received, display the stack trace frame",
+                                       "Comma-delimited list of integer signal numbers to Open MPI to attempt to intercept.  Upon receipt of the intercepted signal, Open MPI will display a stack trace and abort.  Open MPI will *not* replace signals if handlers are already installed by the time MPI_INIT is invoked.  Optionally append \":complain\" to any signal number in the comma-delimited list to make Open MPI complain if it detects another signal handler (and therefore does not insert its own).",
                                        false, false, string, NULL);
         free(string);
     }
