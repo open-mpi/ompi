@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +30,6 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
-extern opal_pointer_array_t mca_mpool_base_mem_cb_array; 
 
 int mca_mpool_base_close(void)
 {
@@ -71,7 +70,6 @@ int mca_mpool_base_close(void)
   if( (modules_length > 0) && mca_mpool_base_used_mem_hooks && 
      0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
       opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
-      OBJ_DESTRUCT(&mca_mpool_base_mem_cb_array);
   }
   /* All done */
 
