@@ -410,26 +410,22 @@ int orte_dt_init(void)
 
 orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
-    orte_job_t **jptr;
-    orte_std_cntr_t i;
+    int32_t ljob;
     
     /* if I am not an HNP, I cannot provide this object */
     if (!orte_process_info.hnp) {
         return NULL;
     }
     
-    jptr = (orte_job_t**)orte_job_data->addr;
-    for (i=0; i < orte_job_data->size; i++) {
-        if (NULL != jptr[i] && job == jptr[i]->jobid) {
-            return jptr[i];
-        }
-    }
-    
-    /* not an error for this to not be found - could just be
+    /* the job is indexed by its local jobid, so we can
+     * just look it up here. it is not an error for this
+     * to not be found - could just be
      * a race condition whereby the job has already been
-     * removed from the array. So just return NULL
+     * removed from the array. The get_item function
+     * will just return NULL in that case.
      */
-    return NULL;
+    ljob = ORTE_LOCAL_JOBID(job);
+    return (orte_job_t*)opal_pointer_array_get_item(orte_job_data, ljob);
 }
 
 
