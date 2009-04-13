@@ -819,28 +819,21 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
     orte_node_rank_t *nrank;
-    orte_job_t **jobs, *jdata;
+    orte_job_t *jdata;
     int j;
     int rc;
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     
-    jobs = (orte_job_t**)orte_job_data->addr;
-    /* unfortunately, job objects cannot be stored
-     * by index number as the jobid is a constructed
-     * value. So we have no choice but to cycle through
-     * the job pointer array and look at each entry
-     */
     for (j=1; j < orte_job_data->size; j++) {
         /* the job array is no longer left-justified and may
          * have holes in it as we recover resources at job
          * completion
          */
-        if (NULL == jobs[j]) {
+        if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j))) {
             continue;
         }
-        jdata = jobs[j];
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &jdata->jobid, 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
