@@ -13,14 +13,16 @@ var=$1
 
 # push all MCA params to the environment
 while [ "${var:0:5}" = "OMPI_" ]; do
-    if [ "${var:6:6}" = "PREFIX" ]; then
+    if [ "${var:5:6}" = "PREFIX" ]; then
         export LD_LIBRARY_PATH="${var:12}"/lib:$LD_LIBRARY_PATH
         export PATH="${var:12}"/bin:$PATH
+    elif [ "${var:5:4}" = "WDIR" ]; then
+        cd "${var:10}"
     else
         export $var
-        shift 1
-        var=$1
     fi
+    shift 1
+    var=$1
 done
 
 # extract the application to be executed
