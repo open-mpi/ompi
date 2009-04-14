@@ -506,7 +506,7 @@ int mca_pml_csum_send_request_start_copy( mca_pml_csum_send_request_t* sendreq,
         match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
         match.hdr_csum = (size > 0 ?
                                sendreq->req_send.req_base.req_convertor.checksum : OPAL_CSUM_ZERO);
-        match.hdr_common.hdr_csum = opal_csum16(&match, sizeof(mca_pml_csum_match_hdr_t));
+        match.hdr_common.hdr_csum = opal_csum16(&match, OMPI_PML_CSUM_MATCH_HDR_LEN);
         
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s:%s:%d Sending \'match\' with data csum:0x%x, header csum:0x%x, size:%lu \n",
@@ -585,7 +585,7 @@ int mca_pml_csum_send_request_start_copy( mca_pml_csum_send_request_t* sendreq,
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_match.hdr_csum = (size > 0 ?
         sendreq->req_send.req_base.req_convertor.checksum : OPAL_CSUM_ZERO);
-    hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_match_hdr_t));
+    hdr->hdr_common.hdr_csum = opal_csum16(hdr, OMPI_PML_CSUM_MATCH_HDR_LEN);
     
     OPAL_OUTPUT_VERBOSE((5, mca_pml_base_output,
                          "%s:%s:%d common_hdr: %02x:%02x:%04x   match_hdr:  %04x:%04x:%08x:%08x:%08x",
@@ -667,7 +667,7 @@ int mca_pml_csum_send_request_start_prepare( mca_pml_csum_send_request_t* sendre
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_match.hdr_csum = (size > 0 ?
         sendreq->req_send.req_base.req_convertor.checksum : OPAL_CSUM_ZERO);
-    hdr->hdr_common.hdr_csum = opal_csum16(hdr, sizeof(mca_pml_csum_match_hdr_t));
+    hdr->hdr_common.hdr_csum = opal_csum16(hdr, OMPI_PML_CSUM_MATCH_HDR_LEN);
 
     OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                          "%s:%s:%d Sending \'match\' with data csum:0x%x, header csum:0x%x, size:%lu \n",
