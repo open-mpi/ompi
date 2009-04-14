@@ -229,6 +229,9 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         basename = opal_basename(exefile);
         path = opal_os_path(false, app->preload_files_dest_dir, basename, NULL);
         free(basename);
+        /* save this so that we can execute it later */
+        free(app->argv[0]);
+        app->argv[0] = strdup(path);
         /* ensure the path exists */
         if (ORTE_SUCCESS != (rc = opal_os_dirpath_create(app->preload_files_dest_dir, S_IRWXU))) {
             orte_show_help("help-plm-base.txt", "path-not-created", true, path);
@@ -246,10 +249,10 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
                 return ORTE_ERROR;
             }
             /* form and execute the cp commands */
-            asprintf(&cmd, "%s %s %s", scp, exefile, path);
+            asprintf(&cmd, "%s -n %s %s", scp, exefile, path);
             system(cmd);
             free(cmd);
-            asprintf(&cmd, "%s %s %s", scp, bootproxy, bppath);
+            asprintf(&cmd, "%s -n %s %s", scp, bootproxy, bppath);
             system(cmd);
             free(cmd);
             /* start the argv with the bootproxy cmd */
@@ -265,10 +268,10 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
                 return ORTE_ERROR;
             }
             /* form and execute the scp commands */
-            asprintf(&cmd, "%s %s %s:%s", scp, exefile, nodename, path);
+            asprintf(&cmd, "%s -q %s %s:%s", scp, exefile, nodename, path);
             system(cmd);
             free(cmd);
-            asprintf(&cmd, "%s %s %s:%s", scp, bootproxy, nodename, bppath);
+            asprintf(&cmd, "%s -q %s %s:%s", scp, bootproxy, nodename, bppath);
             system(cmd);
             free(cmd);
             /* set the exec path to the agent path */
@@ -380,12 +383,12 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             }
             if (local_op) {
                 /* form and execute the cp command */
-                asprintf(&cmd, "%s %s %s/%s", scp, exefile, path, files[i]);
+                asprintf(&cmd, "%s -n %s %s/%s", scp, exefile, path, files[i]);
                 system(cmd);
                 free(cmd);
             } else {
                 /* form and execute the scp commands */
-                asprintf(&cmd, "%s %s %s:%s/%s", scp, exefile, nodename, path, files[i]);
+                asprintf(&cmd, "%s -q %s %s:%s/%s", scp, exefile, nodename, path, files[i]);
                 system(cmd);
                 free(cmd);
             }
@@ -404,6 +407,15 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
      */
     if (NULL != app->prefix_dir) {
         asprintf(&param, "OMPI_PREFIX=%s", app->prefix_dir);
+        opal_argv_append_nosize(&argv, param);
+        free(param);
+    }
+    
+    /* if there is a working directory specified, add it in a special
+     * way so the bootproxy can deal with it
+     */
+    if (NULL != app->cwd) {
+        asprintf(&param, "OMPI_WDIR=%s", app->cwd);
         opal_argv_append_nosize(&argv, param);
         free(param);
     }
