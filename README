@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -20,6 +20,12 @@ Additional copyrights may follow
 $HEADER$
  
 ===========================================================================
+
+When submitting questions and problems, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
+
+     http://www.open-mpi.org/community/help/
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -136,19 +142,25 @@ Detailed Open MPI v1.3 Feature List:
 Known issues
 ------------
 
-  o Please see the Open MPI bug tracker for bugs beyond version 1.3:
-    https://svn.open-mpi.org/trac/ompi/report.
-
   o There is a segfault that sometimes occurs on one of our x86_64 test
     clusters when using MPI onesided communications over Myrinet MX.
     Since no one else has reported this problem we are not holding
     up the 1.3 release.  See ticket #1757 for the details, and any
     possible workarounds.
 
+  o XGrid support is currently broken.
+    https://svn.open-mpi.org/trac/ompi/ticket/1777
+
+  o MPI_REDUCE_SCATTER does not work with counts of 0.
+    https://svn.open-mpi.org/trac/ompi/ticket/1559
+
+  o Please also see the Open MPI bug tracker for bugs beyond this release.
+    https://svn.open-mpi.org/trac/ompi/report
+
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (13 January 2009):
+base as of this writing (14 April 2009):
 
 General notes
 -------------
@@ -186,7 +198,7 @@ General notes
   - PBS Pro, Open PBS, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
-  - XGrid
+  - XGrid (known to be broken in 1.3 through 1.3.2)
   - Cray XT-3 and XT-4
   - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
@@ -210,6 +222,14 @@ General notes
 
 Compiler Notes
 --------------
+
+- Mixing compilers from different vendors when building Open MPI
+  (e.g., using the C/C++ compiler from one vendor and the F77/F90
+  compiler from a different vendor) has been successfully employed by
+  some Open MPI users (discussed on the Open MPI user's mailing list),
+  but such configurations are not tested and not documented.  For
+  example, such configurations may require additional compiler /
+  linker flags to make Open MPI build properly.
 
 - Open MPI does not support the Sparc v8 CPU target, which is the
   default on Sun Solaris.  The v8plus (32 bit) or v9 (64 bit)
@@ -530,15 +550,21 @@ for a full list); a summary of the more commonly used ones follows:
   Elan headers and libraries are not in default compiler/linker
   search paths.
 
+  Elan is the support library for Quadrics-based networks.
+
 --with-elan-libdir=<directory>
-  Look in directory for the Elan libraries.  By default, Open MPI will
-  look in <elan directory>/lib and <elan directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
+  Look in directory for the Quadrics Elan libraries.  By default, Open
+  MPI will look in <elan directory>/lib and <elan directory>/lib64,
+  which covers most cases.  This option is only needed for special
+  configurations.
 
 --with-gm=<directory>
   Specify the directory where the GM libraries and header files are
   located.  This option is generally only necessary if the GM headers
   and libraries are not in default compiler/linker search paths.
+
+  GM is the support library for older Myrinet-based networks (GM has
+  been obsoleted by MX).
 
 --with-gm-libdir=<directory>
   Look in directory for the GM libraries.  By default, Open MPI will
@@ -549,6 +575,8 @@ for a full list); a summary of the more commonly used ones follows:
   Specify the directory where the MX libraries and header files are
   located.  This option is generally only necessary if the MX headers
   and libraries are not in default compiler/linker search paths.
+
+  MX is the support library for Myrinet-based networks.
 
 --with-mx-libdir=<directory>
   Look in directory for the MX libraries.  By default, Open MPI will
@@ -561,6 +589,8 @@ for a full list); a summary of the more commonly used ones follows:
   generally only necessary if the OpenFabrics headers and libraries
   are not in default compiler/linker search paths.
 
+  "OpenFabrics" refers to iWARP- and InifiniBand-based networks.
+
 --with-openib-libdir=<directory>
   Look in directory for the OpenFabrics libraries.  By default, Open
   MPI will look in <openib directory>/lib and <openib
@@ -572,6 +602,10 @@ for a full list); a summary of the more commonly used ones follows:
   are located.  This option is generally only necessary if the Portals
   headers and libraries are not in default compiler/linker search
   paths.
+
+  Portals is the support library for Cray interconnects, but is also
+  available on other platforms (e.g., there is a Portals library
+  implemented over regular TCP).
 
 --with-portals-config=<type>
   Configuration to use for Portals support. The following <type>
@@ -586,6 +620,8 @@ for a full list); a summary of the more commonly used ones follows:
   if the InfiniPath headers and libraries are not in default
   compiler/linker search paths.
 
+  PSM is the support library for QLogic InfiniPath network adapters.
+
 --with-psm-libdir=<directory>
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
@@ -595,6 +631,8 @@ for a full list); a summary of the more commonly used ones follows:
   Specify the directory where the SCTP libraries and header files are
   located.  This option is generally only necessary if the SCTP headers
   and libraries are not in default compiler/linker search paths.
+
+  SCTP is a special network stack over ethernet networks.
 
 --with-sctp-libdir=<directory>
   Look in directory for the SCTP libraries.  By default, Open MPI will
@@ -609,6 +647,11 @@ for a full list); a summary of the more commonly used ones follows:
   UDAPL headers and libraries are not in default compiler/linker
   search paths.
 
+  UDAPL is the support library for high performance networks in Sun
+  HPC ClusterTools and on Linux OpenFabrics networks (although the
+  "openib" options are preferred for Linux OpenFabrics networks, not
+  UDAPL).
+
 --with-udapl-libdir=<directory>
   Look in directory for the UDAPL libraries.  By default, Open MPI
   will look in <udapl directory>/lib and <udapl directory>/lib64,
@@ -620,6 +663,9 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This option is generally only necessary if the LSF headers
   and libraries are not in default compiler/linker search paths.
 
+  LSF is a resource manager system, frequently used as a batch
+  scheduler in HPC systems.
+
 --with-lsf-libdir=<directory>
   Look in directory for the LSF libraries.  By default, Open MPI will
   look in <lsf directory>/lib and <lsf directory>/lib64, which covers
@@ -630,10 +676,17 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This option is generally only necessary if the TM headers
   and libraries are not in default compiler/linker search paths.
 
+  TM is the support library for the Torque and PBS Pro resource
+  manager systems, both of which are frequently used as a batch
+  scheduler in HPC systems.
+
 --with-sge
   Specify to build support for the Sun Grid Engine (SGE) resource
   manager.  SGE support is disabled by default; this option must be
   specified to build OMPI's SGE support.
+
+  The Sun Grid Engine (SGE) is a resource manager system, frequently
+  used as a batch scheduler in HPC systems.
 
 --with-mpi-param_check(=value)
   "value" can be one of: always, never, runtime.  If --with-mpi-param
@@ -755,12 +808,23 @@ for a full list); a summary of the more commonly used ones follows:
   disabled by default because it imposes a minor performance penalty.
 
 --enable-ptmalloc2-internal
-  Build Open MPI's "ptmalloc2" memory manager as part of libmpi.
-  Starting with v1.3, Open MPI builds the ptmalloc2 library as a
-  standalone library that users can choose to link in or not (by
+  ***NOTE: This option no longer exists.
+
+  This option was introduced in Open MPI v1.3 and was then removed in
+  Open MPI v1.3.2.  Open MPI fundamentally changed how it uses
+  ptmalloc2 support in v1.3.2 such that the
+  --enable-ptmalloc2-internal flag was no longer necessary.  It can
+  still harmlessly be supplied to Open MPI's configure script, but a
+  warning will appear about how it is an unrecognized option.
+
+  In v1.3 and v1.3.1, Open MPI built the ptmalloc2 library as a
+  standalone library that users could choose to link in or not (by
   adding -lopenmpi-malloc to their link command).  Using this option
-  restores pre-v1.3 behavior of *always* forcing the user to use the
+  restored pre-v1.3 behavior of *always* forcing the user to use the
   ptmalloc2 memory manager (because it is part of libmpi).
+
+  Starting with v1.3.2, ptmalloc2 is always built into Open MPI, but
+  is only activated in certain scenarios.
 
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>
@@ -1001,6 +1065,7 @@ ess       - RTE environment-specfic services
 filem     - Remote file management
 grpcomm   - RTE group communications
 iof       - I/O forwarding
+notifier  - System/network administrator noficiation system
 odls      - OpenRTE daemon local launch subsystem
 oob       - Out of band messaging
 plm       - Process lifecycle management
@@ -1098,6 +1163,12 @@ Got more questions?
 Found a bug?  Got a question?  Want to make a suggestion?  Want to
 contribute to Open MPI?  Please let us know!
 
+When submitting questions and problems, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
+
+     http://www.open-mpi.org/community/help/
+
 User-level questions and comments should generally be sent to the
 user's mailing list (users@open-mpi.org).  Because of spam, only
 subscribers are allowed to post to this list (ensure that you
@@ -1115,11 +1186,5 @@ only subscribers are allowed to post to the developer's list.  Visit
 the following web page to subscribe:
 
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
-
-When submitting bug reports to either list, be sure to include as much
-extra information as possible.  This web page details all the
-information that we request in order to provide assistance:
-
-     http://www.open-mpi.org/community/help/
 
 Make today an Open MPI day!
