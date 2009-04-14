@@ -606,8 +606,7 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
                                    recvreq->req_recv.req_base.req_count,
                                    recvreq->req_recv.req_base.req_datatype);
                    );
-    }
-    if (bytes_received > 0) {
+        
         csum = recvreq->req_recv.req_base.req_convertor.checksum;
         OPAL_OUTPUT_VERBOSE((1, mca_pml_base_output,
                              "%s Received \'rndv\' with csum:0x%x, header csum:0x%04x, size:%lu\n",
