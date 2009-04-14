@@ -1130,6 +1130,14 @@ static void abort_exit_callback(int fd, short ign, void *arg)
         fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
     }
     
+    /* since we are being terminated by a user's signal, be
+     * sure to exit with a non-zero exit code - but don't
+     * overwrite any error code from a proc that might have
+     * failed, in case that is why the user ordered us
+     * to terminate
+     */
+    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+
     /* terminate the job - this will also wakeup orterun so
      * it can report to the user and kill all the orteds.
      * Check the jobid, though, just in case the user
@@ -1194,7 +1202,7 @@ static void abort_exit_callback(int fd, short ign, void *arg)
 
         orte_finalize();
         free(orterun_basename);
-        ORTE_UPDATE_EXIT_STATUS(1);
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         exit(orte_exit_status);
     }
 }
