@@ -24,9 +24,17 @@
 AC_DEFUN([MCA_maffinity_libnuma_CONFIG],[
     AC_ARG_WITH([libnuma],
                 [AC_HELP_STRING([--with-libnuma=(DIR)],
+                                [Build libnuma support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
+    OMPI_CHECK_WITHDIR([libnuma], [$with_libnuma], [include/numa.h])
+    AC_ARG_WITH([libnuma-libdir],
+                [AC_HELP_STRING([--with-libnuma-libdir=DIR],
                                 [Directory where the libnuma software is installed])])
     OMPI_CHECK_WITHDIR([libnuma], [$with_libnuma], [include/numa.h])
 
+    AS_IF([test ! -z "$with_libnuma" -a "$with_libnuma" != "yes"],
+          [ompi_check_libnuma_dir="$with_libnuma"])
+    AS_IF([test ! -z "$with_libnuma_libdir" -a "$with_libnuma_libdir" != "yes"],
+          [ompi_check_libnuma_libdir="$with_libnuma_libdir"])
     AS_IF([test "$with_libnuma" = "no"],
           [maffinity_libnuma_happy="no"],
           [maffinity_libnuma_happy="yes"])
@@ -37,8 +45,8 @@ AC_DEFUN([MCA_maffinity_libnuma_CONFIG],[
                               [numa],
                               [numa_available],
                               [],
-                              [$with_libnuma],
-                              [],
+                              [$ompi_check_libnuma_dir],
+                              [$ompi_check_libnuma_libdir],
                               [maffinity_libnuma_happy="yes"],
                               [maffinity_libnuma_happy="no"])])
 

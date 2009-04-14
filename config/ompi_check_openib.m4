@@ -35,7 +35,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     #
     AC_ARG_WITH([openib],
         [AC_HELP_STRING([--with-openib(=DIR)],
-             [Build OpenFabrics support, searching for libraries in DIR])])
+             [Build OpenFabrics support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OMPI_CHECK_WITHDIR([openib], [$with_openib], [include/infiniband/verbs.h])
     AC_ARG_WITH([openib-libdir],
        [AC_HELP_STRING([--with-openib-libdir=DIR],
