@@ -140,6 +140,10 @@ ompi_non_mpi                    bool      If set to true, launching a non-MPI
                                           this flag when launching a non-MPI
                                           application will cause both the child
                                           and parent jobs to "hang".
+ompi_param                      char *    Pass an OMPI MCA parameter to the child job.
+                                          If that parameter already exists in the
+                                          environment, the value will be overwritten
+                                          by the provided value.
 .fi
 
 \fIbool\fP info keys are actually strings but are evaluated as

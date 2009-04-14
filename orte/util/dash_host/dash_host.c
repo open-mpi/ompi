@@ -117,7 +117,7 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 if (orte_show_resolved_nodenames &&
                     0 != strcmp(mapped_nodes[i], orte_process_info.nodename)) {
                     /* add to list of aliases for this node - only add if unique */
-                    opal_argv_append_unique_nosize(&node->alias, mapped_nodes[i]);
+                    opal_argv_append_unique_nosize(&node->alias, mapped_nodes[i], false);
                 }
                 node->name = strdup(orte_process_info.nodename);
             } else {

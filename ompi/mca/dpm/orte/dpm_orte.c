@@ -497,6 +497,7 @@ static int spawn(int count, char **array_of_commands,
     char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
     char prefix[OMPI_PATH_MAX];
     char stdin_target[OMPI_PATH_MAX];
+    char params[OMPI_PATH_MAX];
 
     orte_job_t *jdata;
     orte_app_context_t *app;
@@ -684,6 +685,12 @@ static int spawn(int count, char **array_of_commands,
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
             if (non_mpi) {
                 jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
+            }
+            
+            /* see if this is an MCA param that the user wants applied to the child job */
+            ompi_info_get (array_of_info[i], "ompi_param", valuelen, params, &flag);
+            if ( flag ) {
+                opal_argv_append_unique_nosize(&app->env, params, true);
             }
             
             /* see if user specified what to do with stdin - defaults to

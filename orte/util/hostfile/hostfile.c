@@ -236,7 +236,7 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
         /* do we need to record an alias for this node? */
         if (NULL != node_alias) {
             /* add to list of aliases for this node - only add if unique */
-            opal_argv_append_unique_nosize(&node->alias, node_alias);
+            opal_argv_append_unique_nosize(&node->alias, node_alias, false);
             free(node_alias);
         }
     } else if (ORTE_HOSTFILE_RELATIVE == token) {

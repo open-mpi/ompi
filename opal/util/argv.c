@@ -90,7 +90,7 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
     return OPAL_SUCCESS;
 }
 
-int opal_argv_append_unique_nosize(char ***argv, const char *arg)
+int opal_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite)
 {
     int i;
     
@@ -104,7 +104,11 @@ int opal_argv_append_unique_nosize(char ***argv, const char *arg)
     /* see if this arg is already present in the array */
     for (i=0; NULL != (*argv)[i]; i++) {
         if (0 == strcmp(arg, (*argv)[i])) {
-            /* already exists - nothing to do */
+            /* already exists - are we authorized to overwrite? */
+            if (overwrite) {
+                free((*argv)[i]);
+                (*argv)[i] = strdup(arg);
+            }
             return OPAL_SUCCESS;
         }
     }
