@@ -87,7 +87,7 @@ int orte_plm_base_rsh_launch_agent_setup(void)
     if (NULL != bname && 0 == strcmp(bname, "ssh")) {
         /* if xterm option was given, add '-X', ensuring we don't do it twice */
         if (NULL != orte_xterm) {
-            opal_argv_append_unique_nosize(&orte_plm_globals.rsh_agent_argv, "-X");
+            opal_argv_append_unique_nosize(&orte_plm_globals.rsh_agent_argv, "-X", false);
         } else if (0 >= opal_output_get_verbosity(orte_plm_globals.output)) {
             /* if debug was not specified, and the user didn't explicitly
              * specify X11 forwarding/non-forwarding, add "-x" if it
@@ -380,15 +380,16 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             }
             if (local_op) {
                 /* form and execute the cp command */
-                asprintf(&cmd, "%s %s %s/%s", scp, files[i], path, files[i]);
+                asprintf(&cmd, "%s %s %s/%s", scp, exefile, path, files[i]);
                 system(cmd);
                 free(cmd);
             } else {
                 /* form and execute the scp commands */
-                asprintf(&cmd, "%s %s %s:%s/%s", scp, files[i], nodename, path, files[i]);
+                asprintf(&cmd, "%s %s %s:%s/%s", scp, exefile, nodename, path, files[i]);
                 system(cmd);
                 free(cmd);
             }
+            free(exefile);
         }
         free(path);
         opal_argv_free(files);
