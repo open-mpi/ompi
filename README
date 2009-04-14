@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -20,6 +20,12 @@ Additional copyrights may follow
 $HEADER$
  
 ===========================================================================
+
+When submitting questions and problems, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
+
+     http://www.open-mpi.org/community/help/
 
 The best way to report bugs, send comments, or ask questions is to
 sign up on the user's and/or developer's mailing list (for user-level
@@ -136,13 +142,19 @@ Detailed Open MPI v1.3 Feature List:
 Known issues
 ------------
 
-  o Please also see the Open MPI bug tracker for bugs beyond version
-    1.3: https://svn.open-mpi.org/trac/ompi/report.
+  o XGrid support is currently broken.
+    https://svn.open-mpi.org/trac/ompi/ticket/1777
+
+  o MPI_REDUCE_SCATTER does not work with counts of 0.
+    https://svn.open-mpi.org/trac/ompi/ticket/1559
+
+  o Please also see the Open MPI bug tracker for bugs beyond this release.
+    https://svn.open-mpi.org/trac/ompi/report
 
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (13 January 2009):
+base as of this writing (14 April 2009):
 
 General notes
 -------------
@@ -180,7 +192,7 @@ General notes
   - PBS Pro, Open PBS, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
-  - XGrid
+  - XGrid (known to be broken in 1.3 through 1.3.2)
   - Cray XT-3 and XT-4
   - Sun Grid Engine (SGE) 6.1, 6.2 and open source Grid Engine
   - Microsoft Windows CCP (Microsoft Windows server 2003 and 2008)
@@ -204,6 +216,14 @@ General notes
 
 Compiler Notes
 --------------
+
+- Mixing compilers from different vendors when building Open MPI
+  (e.g., using the C/C++ compiler from one vendor and the F77/F90
+  compiler from a different vendor) has been successfully employed by
+  some Open MPI users (discussed on the Open MPI user's mailing list),
+  but such configurations are not tested and not documented.  For
+  example, such configurations may require additional compiler /
+  linker flags to make Open MPI build properly.
 
 - Open MPI does not support the Sparc v8 CPU target, which is the
   default on Sun Solaris.  The v8plus (32 bit) or v9 (64 bit)
@@ -791,12 +811,23 @@ for a full list); a summary of the more commonly used ones follows:
   disabled by default because it imposes a minor performance penalty.
 
 --enable-ptmalloc2-internal
-  Build Open MPI's "ptmalloc2" memory manager as part of libmpi.
-  Starting with v1.3, Open MPI builds the ptmalloc2 library as a
-  standalone library that users can choose to link in or not (by
+  ***NOTE: This option no longer exists.
+
+  This option was introduced in Open MPI v1.3 and was then removed in
+  Open MPI v1.3.2.  Open MPI fundamentally changed how it uses
+  ptmalloc2 support in v1.3.2 such that the
+  --enable-ptmalloc2-internal flag was no longer necessary.  It can
+  still harmlessly be supplied to Open MPI's configure script, but a
+  warning will appear about how it is an unrecognized option.
+
+  In v1.3 and v1.3.1, Open MPI built the ptmalloc2 library as a
+  standalone library that users could choose to link in or not (by
   adding -lopenmpi-malloc to their link command).  Using this option
-  restores pre-v1.3 behavior of *always* forcing the user to use the
+  restored pre-v1.3 behavior of *always* forcing the user to use the
   ptmalloc2 memory manager (because it is part of libmpi).
+
+  Starting with v1.3.2, ptmalloc2 is always built into Open MPI, but
+  is only activated in certain scenarios.
 
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>
@@ -1023,6 +1054,7 @@ io        - MPI-2 I/O
 mpool     - Memory pooling
 mtl       - Matching transport layer, used for MPI point-to-point
             messages on some types of networks
+op        - Back end computations for intrinsic MPI_Op operators
 osc       - MPI-2 one-sided communications
 pml       - MPI point-to-point management layer
 pubsub    - MPI-2 publish/subscribe management
@@ -1037,6 +1069,7 @@ ess       - RTE environment-specfic services
 filem     - Remote file management
 grpcomm   - RTE group communications
 iof       - I/O forwarding
+notifier  - System/network administrator noficiation system
 odls      - OpenRTE daemon local launch subsystem
 oob       - Out of band messaging
 plm       - Process lifecycle management
@@ -1058,6 +1091,7 @@ memchecker  - Run-time memory checking
 memcpy      - Memopy copy support
 memory      - Memory management hooks
 paffinity   - Processor affinity
+pstat       - Process status
 timer       - High-resolution timers
 
 ---------------------------------------------------------------------------
@@ -1134,6 +1168,12 @@ Got more questions?
 Found a bug?  Got a question?  Want to make a suggestion?  Want to
 contribute to Open MPI?  Please let us know!
 
+When submitting questions and problems, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
+
+     http://www.open-mpi.org/community/help/
+
 User-level questions and comments should generally be sent to the
 user's mailing list (users@open-mpi.org).  Because of spam, only
 subscribers are allowed to post to this list (ensure that you
@@ -1151,11 +1191,5 @@ only subscribers are allowed to post to the developer's list.  Visit
 the following web page to subscribe:
 
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
-
-When submitting bug reports to either list, be sure to include as much
-extra information as possible.  This web page details all the
-information that we request in order to provide assistance:
-
-     http://www.open-mpi.org/community/help/
 
 Make today an Open MPI day!
