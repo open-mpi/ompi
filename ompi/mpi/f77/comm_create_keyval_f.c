@@ -62,9 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
      static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
 void mpi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn,
-			      ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn,
-			      MPI_Fint *comm_keyval,
-			      MPI_Aint *extra_state, MPI_Fint *ierr)
+                              ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn,
+                              MPI_Fint *comm_keyval,
+                              MPI_Aint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;
@@ -78,15 +78,15 @@ void mpi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_at
        INTEGER(KIND=MPI_ADDRESS_KIND)-parameter functions (as opposed
        to the old MPI-1 INTEGER-parameter functions). */
 
-    ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
-                                  comm_keyval, extra_state, OMPI_KEYVAL_F77,
-                                  NULL);
+    ret = ompi_attr_create_keyval_aint(COMM_ATTR, copy_fn, del_fn,
+                                       comm_keyval, *extra_state, OMPI_KEYVAL_F77,
+                                       NULL);
 
     if (MPI_SUCCESS != ret) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-				       MPI_ERR_OTHER,
-				       FUNC_NAME)
-	*ierr = OMPI_INT_2_FINT(c_err);
+                                       MPI_ERR_OTHER,
+                                       FUNC_NAME)
+        *ierr = OMPI_INT_2_FINT(c_err);
     } else {
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     }
