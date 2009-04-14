@@ -31,9 +31,6 @@ Trunk (not on release branches yet)
 
 - Added Cray Compute Node Linux (CNL) and ALPS Support.
   --> Expected: ???
-- Added Microsoft Windows support.  See README.WINDOWS file for
-  details.
-  --> Expected: ???
 
 1.5
 ---
@@ -45,19 +42,57 @@ Trunk (not on release branches yet)
   --param notifier smtp" for a list of the relevant MCA parameters that
   are necessary.
 
-1.3.3
------
+
+1.3.3 (expected)
+----------------
 
 - Ensure to allow MPI_REQUEST_GET_STATUS to accept an
   MPI_STATUS_IGNORE parameter.  Thanks to Shaun Jackman for the bug
   report.
+- Added Microsoft Windows support.  See README.WINDOWS file for
+  details.
 
 
 1.3.2
 -----
 
-....stuff should be here
-
+- Allow empty shell designations from getpwuid().  Thanks to Sergey
+  Koposov for the bug report.
+- Ensure that mpirun exits with non-zero status when applications die
+  due to user signal.  Thanks to Geoffroy Pignot for suggesting the
+  fix.
+- Ensure that MPI_VERSION / MPI_SUBVERSION match what is returned by
+  MPI_GET_VERSION.  Thanks to Rob Egan for reporting the error.
+- Updated MPI_*KEYVAL_CREATE functions to properly handle Fortran
+  extra state.
+- A variety of ob1 (main MPI point-to-point communication engine) bug
+  fixes that could have caused hangs or seg faults.
+- Do not install Open MPI's signal handlers in MPI_INIT if there are
+  already signal handlers installed.  Thanks to Kees Verstoep for
+  bringing the issue to our attention.
+- Fix GM support to not seg fault in MPI_INIT.
+- Various VampirTrace fixes.
+- Various PLPA fixes.
+- No longer create BTLs for invalid (TCP) devices.
+- Various man page style and lint cleanups.
+- Fix critical OpenFabrics-related bug noted here:
+  http://www.open-mpi.org/community/lists/announce/2009/03/0029.php.
+  Open MPI now uses a much more robust memory intercept scheme that is
+  quite similar to what is used by MX.  The use of "-lopenmpi-malloc"
+  is no longer necessary, is deprecated, and is expected to disappear
+  in a future release.  -lopenmpi-malloc will continue to work for the
+  duration of the Open MPI v1.3 and v1.4 series.
+- Fix some OpenFabrics shutdown errors, both regarding iWARP and SRQ.
+- Allow the udapl BTL to work on Solaris platforms that support
+  relaxed PCI ordering.
+- Fix problem where the mpirun would sometimes use rsh/ssh to launch on
+  the localhost (instead of simply forking).
+- Minor SLURM stdin fixes.
+- Fix to run properly under SGE jobs.
+- Scalability and latency improvements for shared memory jobs: convert
+  to using one message queue instead of N queues.
+- Use fixed-length MPI predefined handles in order to provide ABI
+  compatibility between Open MPI versions.
 - Fix building of the posix paffinity component to properly get the
   number of processors in loosely tested environments (e.g.,
   FreeBSD).  Thanks to Steve Kargl for reporting the issue.
