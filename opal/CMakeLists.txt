@@ -107,17 +107,6 @@ INCLUDE (check_mca_subdirs)
 SET (OPAL_SOURCE_FILES ${OPAL_SOURCE_FILES} ${MCA_FILES})
 
 
-# This has to be added for opal explicitly, as it's required for
-# shared build and the .windows file is removed (so that for static build). 
-FILE(GLOB_RECURSE OPAL_TIMER_WINDOWS 
-     "mca/timer/windows/*.h" "mca/timer/windows/*.c" "mca/timer/windows/*.cc" "mca/timer/windows/*.cpp")
-SOURCE_GROUP(mca\\timer\\windows FILES ${OPAL_TIMER_WINDOWS})
-SET (OPAL_SOURCE_FILES
-  ${OPAL_SOURCE_FILES}
-  ${OPAL_TIMER_WINDOWS}
-)
-
-
 ADD_LIBRARY (libopen-pal ${OPAL_SOURCE_FILES})
 
 # Set compile flags for this target
