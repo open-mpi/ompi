@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Cisco, Inc. All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc. All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
@@ -26,10 +26,12 @@ AC_DEFUN([MCA_paffinity_posix_CONFIG],[
     # Check to see if we have <unistd.h>
     AC_CHECK_HEADER([unistd.h], [paff_posix_happy=yes], [paff_posix_happy=no])
 
-    # Check to see if we have _SC_NPROCESSORS_ONLN
+    # Check to see if we have _SC_NPROCESSORS_ONLN (this was already
+    # checked up in the main configure.ac; just do a cache check
+    # here).
     AS_IF([test "$paff_posix_happy" = "yes"],
           [AC_MSG_CHECKING([for _SC_NPROCESSORS_ONLN])
-           AS_IF([test "$OMPI_HAVE__SC_NPROCESSORS_ONLN" = "1"],
+           AS_IF([test "$ompi_cv_have__SC_NPROCESSORS_ONLN" = "yes"],
                  [paff_posix_happy=yes], [paff_posix_happy=no])
            AC_MSG_RESULT([(cached) $paff_posix_happy])])
 
