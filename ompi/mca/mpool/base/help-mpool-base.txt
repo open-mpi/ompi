@@ -47,3 +47,14 @@ to a slower network transport (such as TCP).
   Mpool name: %s
   Process:    %s
   Local host: %s
+#
+[cannot deregister in-use memory]
+Open MPI intercepted a call to free memory that is still being used by
+an ongoing MPI communication.  This usually reflects an error in the
+MPI application; it may signify memory corruption.  Open MPI will now
+abort your job.
+
+  Mpool name:     %s
+  Local host:     %s
+  Buffer address: %p
+  Buffer size:    %lu
