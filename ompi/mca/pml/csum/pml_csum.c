@@ -199,6 +199,7 @@ int mca_pml_csum_add_comm(ompi_communicator_t* comm)
 
     for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
         pml_comm->procs[i].ompi_proc = ompi_group_peer_lookup(comm->c_remote_group,i);
+        OBJ_RETAIN(pml_comm->procs[i].ompi_proc);
     }
     /* Grab all related messages from the non_existing_communicator pending queue */
     for( item = opal_list_get_first(&mca_pml_csum.non_existing_communicator_pending);
@@ -269,6 +270,12 @@ int mca_pml_csum_add_comm(ompi_communicator_t* comm)
 
 int mca_pml_csum_del_comm(ompi_communicator_t* comm)
 {
+    mca_pml_csum_comm_t* pml_comm = comm->c_pml_comm;
+    int i;
+    
+    for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
+        OBJ_RELEASE(pml_comm->procs[i].ompi_proc);
+    }
     OBJ_RELEASE(comm->c_pml_comm);
     comm->c_pml_comm = NULL;
     return OMPI_SUCCESS;
@@ -297,7 +304,9 @@ int mca_pml_csum_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* if the proc isn't local, tell the convertor to
          * checksum the data
          */
-        procs[i]->proc_convertor->flags |= CONVERTOR_WITH_CHECKSUM;
+        if (!OPAL_PROC_ON_LOCAL_NODE(procs[i]->proc_flags)) {
+            procs[i]->proc_convertor->flags |= CONVERTOR_WITH_CHECKSUM;
+        }
     }
 
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
@@ -443,6 +452,7 @@ int mca_pml_csum_send_fin( ompi_proc_t* proc,
     mca_btl_base_descriptor_t* fin;
     mca_pml_csum_fin_hdr_t* hdr;
     int rc;
+    
     mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_csum_fin_hdr_t),
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
