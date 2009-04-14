@@ -378,7 +378,7 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
                               MCA_BTL_NO_ORDER,
                               0,
                               &frag->rdma_length,
-                              0,  /* always call the callback, PML ownership */ 
+                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         frag->rdma_length = save_size;
