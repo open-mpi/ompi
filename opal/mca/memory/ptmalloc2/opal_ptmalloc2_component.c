@@ -31,6 +31,13 @@
 #include "opal/mca/memory/memory.h"
 #include "opal/memoryhooks/memory.h"
 
+/* Need to call a function in hooks.c to ensure that all those symbols
+   get pulled in at link time (e.g., when building libmpi.a, so that
+   those symbols end up in the final executable -- especially if we
+   use --disable-dlopen and therefore -Wl,--export-dynamic isn't used
+   when we build OMPI). */
+extern void *opal_memory_ptmalloc2_hook_pull(void);
+
 static int ptmalloc2_open(void);
 
 const opal_memory_base_component_2_0_0_t mca_memory_ptmalloc2_component = {
@@ -66,6 +73,11 @@ static int ptmalloc2_open(void)
 {
     void *p;
     int val = 0;
+
+    /* Call a dummy function in hooks.c.  ***Do not remove this
+       call!*** See comment at the beginning of this file explaining
+       why it is here. */
+    p = opal_memory_ptmalloc2_hook_pull();
 
     /* We will also provide malloc/free support if we've been
        activated.  We don't rely on the __malloc_initialize_hook()
