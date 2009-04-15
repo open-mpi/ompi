@@ -222,7 +222,7 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
         match->req_recv.req_bytes_packed = bytes_received;
         
         MCA_PML_CSUM_RECV_REQUEST_MATCHED(match, hdr);
-        if(match->req_bytes_delivered > 0) { 
+        if(bytes_received > 0) { 
             struct iovec iov[2];
             uint32_t iov_count = 1;
             
