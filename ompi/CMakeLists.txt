@@ -68,7 +68,7 @@ SET_SOURCE_FILES_PROPERTIES("debuggers/ompi_debuggers.c"
                             PROPERTIES COMPILE_DEFINITIONS "OMPI_MSGQ_DLL=\"\$(pkglibdir)/libompi_dbg_msgq.dll\";OMPI_MSGQ_DLL_PREFIX=\"libompi_dbg_msgq\";OMPI_MPIHANDLES_DLL_PREFIX=\"libompi_dbg_mpihandles\"")
 
 # Add MPI C files
-FILE(GLOB_RECURSE OMPI_MPI_C_FILES "mpi/c/*.h" "mpi/c/*.c")
+FILE(GLOB OMPI_MPI_C_FILES "mpi/c/*.h" "mpi/c/*.c")
 
 # Remove all MPI_File related files if the option is not selected
 IF (NOT OMPI_PROVIDE_MPI_FILE_INTERFACE)
@@ -95,7 +95,7 @@ IF(OMPI_ENABLE_MPI_PROFILING)
   # i.e. add the pre-processor "OMPI_PROFILING_DEFINES" explicitly.
   
   # first get the file names.
-  FILE(GLOB_RECURSE OMPI_PROFILE_NAMES RELATIVE ${PROJECT_SOURCE_DIR}/mpi/c "mpi/c/*.c" )
+  FILE(GLOB OMPI_PROFILE_NAMES "mpi/c/*.c" )
   # then copy them to the build directory with a prefix.
   FOREACH(FILE_NAME ${OMPI_MPI_C_FILES})
     GET_FILENAME_COMPONENT(relname ${FILE_NAME} NAME)
