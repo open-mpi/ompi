@@ -27,5 +27,7 @@ with_slurm=no
 with_memory_manager=ptmalloc2
 LDFLAGS="-m64"
 CFLAGS="-m64"
+CXXFLAGS="-m64"
 with_wrapper_ldflags="-m64"
 with_wrapper_cflags="-m64"
+with_wrapper_cxxflags="-m64"
