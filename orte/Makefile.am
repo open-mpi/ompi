@@ -60,3 +60,5 @@ include runtime/Makefile.am
 include util/Makefile.am
 include tools/Makefile.am
 include orted/Makefile.am
+include test/mpi/Makefile.include
+include test/system/Makefile.include
