@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,6 +103,28 @@ opal_csum(const void *  source, size_t csumlen)
     unsigned long lastPartialLong = 0;
     size_t lastPartialLength = 0;
     return opal_csum_partial(source, csumlen, &lastPartialLong, &lastPartialLength);
+}
+/*
+ * The buffer passed to this function is assumed to be 16-bit aligned
+ */
+static inline uint16_t
+opal_csum16 (const void *  source, size_t csumlen)
+{
+    uint16_t *src = (uint16_t *) source;
+    register uint32_t csum = 0;
+
+    while (csumlen > 1) {
+	    csum += *src++;
+        csumlen -= 2;
+    }
+    /* Add leftover byte, if any */ 
+    if(csumlen > 0)
+        csum += *((unsigned char*)src);
+    /* Fold 32-bit checksum to 16 bits */
+    while(csum >> 16) {
+        csum = (csum & 0xFFFF) + (csum >> 16);    
+    }        
+    return csum;
 }
 
 OPAL_DECLSPEC unsigned int
