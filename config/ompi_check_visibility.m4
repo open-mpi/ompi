@@ -58,28 +58,29 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
                      fi],
                     [ompi_cv_cc_fvisibility="no"])
                 ])
-        # Check using Sun Studio -xldscope=hidden flag
-        CFLAGS="$CFLAGS_orig -xldscope=hidden"
-        AC_CACHE_CHECK([if $CC supports -xldscope],
-            [ompi_cv_cc_xldscope],
-            [AC_TRY_LINK([
-                    #include <stdio.h>
-                    __attribute__((visibility("default"))) int foo;
-                    void bar(void) { fprintf(stderr, "bar\n"); }
-                    ],[],
-                    [if test -s conftest.err ; then
-                        $GREP -iq "visibility" conftest.err
-                        if test "$?" = "0" ; then
-                            ompi_cv_cc_xldscope="no"
-                        else
+        if test "$ompi_c_vendor" = "sun" ; then
+            # Check using Sun Studio -xldscope=hidden flag
+            CFLAGS="$CFLAGS_orig -xldscope=hidden"
+            AC_CACHE_CHECK([if $CC supports -xldscope],
+                [ompi_cv_cc_xldscope],
+                [AC_TRY_LINK([
+                        #include <stdio.h>
+                        __attribute__((visibility("default"))) int foo;
+                        void bar(void) { fprintf(stderr, "bar\n"); }
+                        ],[],
+                        [if test -s conftest.err ; then
+                            $GREP -iq "visibility" conftest.err
+                            if test "$?" = "0" ; then
+                                ompi_cv_cc_xldscope="no"
+                            else
+                                ompi_cv_cc_xldscope="yes"
+                            fi
+                         else
                             ompi_cv_cc_xldscope="yes"
-                        fi
-                     else
-                        ompi_cv_cc_xldscope="yes"
-                     fi],
-                    [ompi_cv_cc_xldscope="no"])
-                ])
-
+                         fi],
+                        [ompi_cv_cc_xldscope="no"])
+                    ])
+        fi 
         if test "$ompi_cv_cc_fvisibility" = "yes" ; then
             add=" -fvisibility=hidden"
             have_visibility=1
