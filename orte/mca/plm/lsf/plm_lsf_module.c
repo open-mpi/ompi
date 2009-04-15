@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Institut National de Recherche en Informatique
@@ -63,6 +63,7 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/show_help.h"
+#include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/rml/rml.h"

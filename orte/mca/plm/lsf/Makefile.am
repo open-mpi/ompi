@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007      Cisco, Inc.  All rights reserved.
+# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -46,6 +46,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_plm_lsf_la_SOURCES = $(component_sources)
 mca_plm_lsf_la_LDFLAGS = -module -avoid-version $(plm_lsf_LDFLAGS)
+mca_plm_lsf_la_LIBADD = $(plm_lsf_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_plm_lsf_la_SOURCES = $(lib_sources)
