@@ -647,7 +647,7 @@ public_sET_STATe(Void_t* msptr)
 
 
 /*-------------------------------------------------------------------------
-   Per
+   OMPI change: Per
    http://www.gnu.org/software/libc/manual/html_mono/libc.html#Hooks-for-Malloc,
    we can define the __malloc_initialize_hook variable to be a
    function that is invoked before the first allocation is ever
@@ -779,6 +779,23 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
         __realloc_hook = opal_memory_ptmalloc2_realloc_hook;
     }
 }
+
+
+/* OMPI change: add a dummy function here that will be called by the
+   ptmalloc2 component open() function.  This dummy function is
+   necessary for when OMPI is built as --disable-shared
+   --enable-static --disable-dlopen, because we won't use
+   -Wl,--export-dynamic when building OMPI.  So we need to ensure that
+   not only that all the symbols in this file end up in libmpi.a, but
+   they also end up in the final exectuable (so that
+   __malloc_initialize_hook is there, overrides the weak symbol in
+   glibc, ....etc. */
+static int bogus = 37;
+void *opal_memory_ptmalloc2_hook_pull(void)
+{
+    return &bogus;
+}
+
 
 
 /* OMPI change: This is the symbol to override to make the above
