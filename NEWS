@@ -56,6 +56,9 @@ Trunk (not on release branches yet)
 1.3.2
 -----
 
+- Fixed a problem reported by multiple users on the mailing list that
+  the LSF support would fail to find the appropriate libraries at
+  run-time.
 - Allow empty shell designations from getpwuid().  Thanks to Sergey
   Koposov for the bug report.
 - Ensure that mpirun exits with non-zero status when applications die
