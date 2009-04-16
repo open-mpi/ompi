@@ -56,6 +56,13 @@ Trunk (not on release branches yet)
 1.3.2
 -----
 
+- Add a new checksum PML variation on ob1 (main MPI point-to-point
+  communication engine) to detect memory corruption in node-to-node
+  messages
+- Add a new configuration option to add padding to the openib
+  header so the data is aligned
+- Add a new configuration option to use an alternative checksum algo
+  when using the checksum PML
 - Fixed a problem reported by multiple users on the mailing list that
   the LSF support would fail to find the appropriate libraries at
   run-time.
