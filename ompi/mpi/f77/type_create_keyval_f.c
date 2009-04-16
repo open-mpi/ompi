@@ -75,15 +75,15 @@ void mpi_type_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* type_copy_at
        INTEGER(KIND=MPI_ADDRESS_KIND)-parameter functions (as opposed
        to the old MPI-1 INTEGER-parameter functions). */
 
-    ret = ompi_attr_create_keyval_aint(TYPE_ATTR, copy_fn, del_fn,
-                                       type_keyval, *extra_state, OMPI_KEYVAL_F77,
-                                       NULL);
+    ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
+                                  type_keyval, extra_state, OMPI_KEYVAL_F77,
+                                  NULL);
 
     if (MPI_SUCCESS != ret) {
-        c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-                                       MPI_ERR_OTHER,
-                                       FUNC_NAME);
-        *ierr = OMPI_INT_2_FINT(c_err);
+	c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+				       MPI_ERR_OTHER,
+				       FUNC_NAME);
+	*ierr = OMPI_INT_2_FINT(c_err);
     } else {
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     }
