@@ -47,10 +47,14 @@ EXTRA_DIST = \
         platform/lanl/rr-class/optimized-panasas \
         platform/lanl/rr-class/optimized-nopanasas.conf \
         platform/lanl/rr-class/optimized-panasas.conf \
+        platform/lanl/rr-class/debug-master \
+        platform/lanl/rr-class/debug-master.conf \
         platform/lanl/rr-class/optimized-master \
         platform/lanl/rr-class/optimized-master.conf \
-        platform/lanl/rr-class/slave \
-        platform/lanl/rr-class/slave.conf \
+        platform/lanl/rr-class/debug-slave \
+        platform/lanl/rr-class/debug-slave.conf \
+        platform/lanl/rr-class/optimized-slave \
+        platform/lanl/rr-class/optimized-slave.conf \
         platform/lanl/tlcc/debug-nopanasas \
         platform/lanl/tlcc/debug-panasas \
         platform/lanl/tlcc/debug-nopanasas.conf \
@@ -58,9 +62,6 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-nopanasas \
         platform/lanl/tlcc/optimized-panasas \
         platform/lanl/tlcc/optimized-nopanasas.conf \
-        platform/lanl/tlcc/optimized-panasas.conf \
-        platform/embedded/debug \
-        platform/embedded/optimized \
-        platform/embedded/build_embedded.sh \
-        platform/embedded/gen_embedded.sh
+        platform/lanl/tlcc/optimized-panasas.conf
+
 
