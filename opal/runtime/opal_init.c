@@ -158,7 +158,7 @@ opal_err2str(int errnum)
         retval = "Unknown data type";
         break;
     case OPAL_ERR_BUFFER:
-        retval = "Buffer error";
+        retval = "Buffer type (described vs non-described) mismatch - operation not allowed";
         break;
     case OPAL_ERR_DATA_TYPE_REDEF:
         retval = "Attempt to redefine an existing data type";
