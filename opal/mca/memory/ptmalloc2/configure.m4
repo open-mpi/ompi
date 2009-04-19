@@ -74,12 +74,6 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
                            [memory_ptmalloc2_happy="no"])])
 
     AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
-          [# check for link.h (for _DYNAMIC symbol)
-           AC_CHECK_HEADER([link.h],
-                           [memory_ptmalloc2_happy="yes"],
-                           [memory_ptmalloc2_happy="no"])])
-
-    AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
           [# check for init hook symbol
            AC_CHECK_DECL([__malloc_initialize_hook],
                          [memory_ptmalloc2_happy="yes"],
