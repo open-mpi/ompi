@@ -781,15 +781,25 @@ static void opal_memory_ptmalloc2_malloc_init_hook(void)
 }
 
 
+/* OMPI change: prototype the function below, otherwise we'll get
+   warnings about it not being declared (at least in developer/debug
+   builds).  This function is not DECLSPEC'ed because we don't want it
+   visible outside of this component (i.e., libopen-pal, since this
+   component is never built as a DSO; it's always slurped into
+   libopen-pal).  This declaration is not in malloc.h because this
+   function only exists as a horrid workaround to force linkers to
+   pull in this .o file (see explanation below).  */
+void *opal_memory_ptmalloc2_hook_pull(void);
+
 /* OMPI change: add a dummy function here that will be called by the
    ptmalloc2 component open() function.  This dummy function is
    necessary for when OMPI is built as --disable-shared
    --enable-static --disable-dlopen, because we won't use
    -Wl,--export-dynamic when building OMPI.  So we need to ensure that
-   not only that all the symbols in this file end up in libmpi.a, but
-   they also end up in the final exectuable (so that
+   not only that all the symbols in this file end up in libopen-pal.a,
+   but they also end up in the final exectuable (so that
    __malloc_initialize_hook is there, overrides the weak symbol in
-   glibc, ....etc. */
+   glibc, ....etc.). */
 static int bogus = 37;
 void *opal_memory_ptmalloc2_hook_pull(void)
 {
