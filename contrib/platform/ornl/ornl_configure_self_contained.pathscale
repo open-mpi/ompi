@@ -22,6 +22,7 @@ $SRCDIR/configure \
    --enable-mca-no-build=maffinity-first_use,maffinity-libnuma,ess-cnos,filem-rsh,grpcomm-cnos,pml-dr \
    --with-wrapper-ldflags='-L/opt/xt-service/default/lib/snos64/ -L/opt/xt-pe/default/lib/snos64/ -L/opt/xt-mpt/default/lib/snos64/' \
    --with-wrapper-libs='-lportals -lpct -lalpslli -lalpsutil' \
+   CC=pathcc CXX=pathCC F77=pathf90 FC=pathf90 \
    CPPFLAGS='-I/opt/xt-pe/default/include/' \
    FFLAGS='-I/opt/xt-pe/default/include/' \
    FCFLAGS='-I/opt/xt-pe/default/include/' \
