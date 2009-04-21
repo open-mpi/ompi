@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -324,10 +325,10 @@ do {                                 \
 struct mca_pml_ob1_fin_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    uint8_t hdr_padding[6];
+    uint8_t hdr_padding[2];
 #endif
-    ompi_ptr_t hdr_des;                       /**< completed descriptor */
     uint32_t hdr_fail;                        /**< RDMA operation failed */
+    ompi_ptr_t hdr_des;                       /**< completed descriptor */
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
@@ -336,10 +337,6 @@ typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 do {                                \
     (h).hdr_padding[0] = 0;         \
     (h).hdr_padding[1] = 0;         \
-    (h).hdr_padding[2] = 0;         \
-    (h).hdr_padding[3] = 0;         \
-    (h).hdr_padding[4] = 0;         \
-    (h).hdr_padding[5] = 0;         \
 } while (0)
 #else
 #define MCA_PML_OB1_FIN_HDR_FILL(h)
