@@ -25,9 +25,6 @@
 #include "common_mx.h"
 
 #include <errno.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
