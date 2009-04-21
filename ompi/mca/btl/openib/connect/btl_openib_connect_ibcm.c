@@ -1002,8 +1002,9 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint,
 
 
 /*
- * Fill in a path record for a peer.  For the moment, use the RDMA CM,
- * but someday we might just fill in the values ourselves.
+ * Fill in a path record for a peer.  This could be replaced with
+ * calls to rdma_resolve_addr() / rdma_resolve_route(), but for now,
+ * we fill it in with data we got from the modex, etc.
  */
 static int fill_path_record(ibcm_module_t *m,
                             mca_btl_base_endpoint_t *endpoint,
