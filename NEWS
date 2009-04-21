@@ -56,6 +56,9 @@ Trunk (not on release branches yet)
 1.3.2
 -----
 
+- Fixed a potential infinite loop in the openib BTL that could occur
+  in senders in some frequent-communication scenarios.  Thanks to Don
+  Wood for reporting the problem.
 - Add a new checksum PML variation on ob1 (main MPI point-to-point
   communication engine) to detect memory corruption in node-to-node
   messages
