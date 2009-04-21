@@ -39,22 +39,22 @@ EXTRA_DIST = \
         platform/lanl/macosx-dynamic \
         platform/lanl/macosx-dynamic-optimized \
         platform/lanl/macosx-static-leopard \
-        platform/lanl/rr-class/debug-nopanasas \
         platform/lanl/rr-class/debug-panasas \
-        platform/lanl/rr-class/debug-nopanasas.conf \
         platform/lanl/rr-class/debug-panasas.conf \
+        platform/lanl/rr-class/debug-nopanasas \
+        platform/lanl/rr-class/debug-nopanasas.conf \
         platform/lanl/rr-class/optimized-nopanasas \
-        platform/lanl/rr-class/optimized-panasas \
         platform/lanl/rr-class/optimized-nopanasas.conf \
+        platform/lanl/rr-class/optimized-panasas \
         platform/lanl/rr-class/optimized-panasas.conf \
-        platform/lanl/rr-class/debug-master \
-        platform/lanl/rr-class/debug-master.conf \
-        platform/lanl/rr-class/optimized-master \
-        platform/lanl/rr-class/optimized-master.conf \
-        platform/lanl/rr-class/debug-slave \
-        platform/lanl/rr-class/debug-slave.conf \
-        platform/lanl/rr-class/optimized-slave \
-        platform/lanl/rr-class/optimized-slave.conf \
+        platform/lanl/rr-class/debug-panasas-nocell \
+        platform/lanl/rr-class/debug-panasas-nocell.conf \
+        platform/lanl/rr-class/debug-nopanasas-nocell \
+        platform/lanl/rr-class/debug-nopanasas-nocell.conf \
+        platform/lanl/rr-class/optimized-nopanasas-nocell \
+        platform/lanl/rr-class/optimized-nopanasas-nocell.conf \
+        platform/lanl/rr-class/optimized-panasas-nocell \
+        platform/lanl/rr-class/optimized-panasas-nocell.conf \
         platform/lanl/tlcc/debug-nopanasas \
         platform/lanl/tlcc/debug-panasas \
         platform/lanl/tlcc/debug-nopanasas.conf \
