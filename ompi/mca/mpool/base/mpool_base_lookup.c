@@ -82,7 +82,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
          }
     }
 
-    if (NULL == component) {
+    if (opal_list_get_end(&mca_mpool_base_components) == item) {
         return NULL;
     }
     module = component->mpool_init(resources); 
