@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,7 +43,7 @@ static inline char* opal_find_last_path_separator( const char* filename, size_t 
     char* p = (char*)filename + n;
 
     /* First skip the latest separators */
-    for( ; p != filename; p-- ) {
+    for ( ; p >= filename; p-- ) {
 #if defined(__WINDOWS__)
         if( (*p != '\\') && (*p != '/') )
             break;
@@ -52,7 +53,7 @@ static inline char* opal_find_last_path_separator( const char* filename, size_t 
 #endif  /* defined(__WINDOWS__) */
     }
 
-    for( ; p != filename; p-- ) {
+    for ( ; p >= filename; p-- ) {
 #if defined(__WINDOWS__)
         if( (*p == '\\') || (*p == '/') )
             return p;
