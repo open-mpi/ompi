@@ -2465,75 +2465,83 @@ btl_openib_component_init(int *num_btl_modules,
     return NULL;
 }
 
-static void progress_pending_eager_rdma(mca_btl_base_endpoint_t *ep)
+/*
+ * Progress the no_credits_pending_frags lists on all qp's
+ */
+static int progress_no_credits_pending_frags(mca_btl_base_endpoint_t *ep)
 {
-    int qp;
+    int qp, pri, rc, len;
     opal_list_item_t *frag;
 
-    /* Go over all QPs and try to send high prio packets over eager
-       rdma channel.  Remember that the no_credits_pending_frags list
-       may have both RDMA and/or send/receive frags on it.
-
-       This code will be changed a bit more shortly to be more
-       sensible / easier to maintain (e.g., only checking for RDMA
-       credits here isn't quite right -- but it's not fully wrong,
-       either), but we're going for a minimal correctness change for
-       the 1.3.2 release. */
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
-    for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
-       while(ep->qps[qp].qp->sd_wqe > 0 && ep->eager_rdma_remote.tokens > 0) {
-            frag = opal_list_remove_first(&ep->qps[qp].no_credits_pending_frags[0]);
-            if(NULL == frag)
-                break;
-            /* Note that if _endpoint_post_send() fails because of
-               RESOURCE_BUSY, it *may* just re-add the frag to the
-               no_credits_pending_frags list (i.e., the same list we
-               just removed it from) in the case where the item is not
-               actually an RDMA (e.g., if it's a coalesced frag that
-               is larger than the eager_limit) but we have no send
-               credits.  So ensure to break out of the loop in this
-               case; otherwise this will be an infinite loop. */
-            if (OMPI_SUCCESS != 
-                mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag))) {
-                break;
+
+    /* Traverse all QPs and all priorities */
+    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) {
+        for (pri = 0; pri < 2; ++pri) {
+            /* Note that entries in the no_credits_pending_frags list
+               may be eager RDMA or send fragments.  So be sure to
+               check that we have at least 1 RDMA or send credit.
+
+               This loop needs a little explaining.  :-\
+
+               In the body of the loop, we call _endpoint_post_send().
+               The frag will either be successfully sent, or it will
+               be [re]added to the no_credit_pending_frags list.  So
+               if we keep trying to drain the no_credits_pending_frag
+               list, we could end up in an infinite loop.  So instead,
+               we get the initial length of the list and ensure to run
+               through every entry at least once.  This attempts to
+               send *every* frag once and catches the case where a
+               frag may be on the RDMA list, but because of
+               coalescing, is now too big for RDMA and defaults over
+               to sending -- but then we're out of send credits, so it
+               doesn't go.  But if we *do* still have some RDMA
+               credits and there are RDMA frags on the list behind
+               this now-too-big frag, they'll get a chance to go.
+
+               Specifically, the condition in this for loop is as follows:
+
+               - len > 0: ensure to go through all entries in the list once
+               - the 2nd part of the conditional checks to see if we
+                 have any credits at all.  Specifically, do we have
+                 any RDMA credits or any send credits, *or* are we on
+                 an SRQ, in which case we define that we *always* have
+                 credits (because the hardware will continually
+                 retransmit for us).
+            */
+            for (len = opal_list_get_size(&ep->qps[qp].no_credits_pending_frags[pri]);
+                 len > 0 && 
+                     (ep->eager_rdma_remote.tokens > 0 ||
+                      ep->qps[qp].u.pp_qp.sd_credits > 0 ||
+                      !BTL_OPENIB_QP_TYPE_PP(qp)); --len) {
+                frag = opal_list_remove_first(&ep->qps[qp].no_credits_pending_frags[pri]);
+
+                /* If _endpoint_post_send() fails because of
+                   RESOURCE_BUSY, then the frag was re-added to the
+                   no_credits_pending list.  Specifically: either the
+                   frag was initially an RDMA frag, but there were no
+                   RDMA credits so it fell through the trying to send,
+                   but we had no send credits and therefore re-added
+                   the frag to the no_credits list, or the frag was a
+                   send frag initially (and the same sequence
+                   occurred, starting at the send frag out-of-credits
+                   scenario).  In this case, just continue and try the
+                   rest of the frags in the list.
+
+                   If it fails because of another error, return the
+                   error upward. */
+                rc = mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != rc && 
+                                  OMPI_ERR_RESOURCE_BUSY != rc)) {
+                    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+                    return rc;
+                }
             }
-       }
-       if(ep->eager_rdma_remote.tokens == 0)
-           break;
+        }
     }
+
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-}
-
-static inline int
-get_enpoint_credits(mca_btl_base_endpoint_t *ep, const int qp)
-{
-    return BTL_OPENIB_QP_TYPE_PP(qp) ? ep->qps[qp].u.pp_qp.sd_credits : 1;
-}
-
-static void progress_pending_frags_pp(mca_btl_base_endpoint_t *ep, const int qp)
-{
-    int i;
-    opal_list_item_t *frag;
-
-    /* See comments up in progress_pending_eager_rdma(), above.  Those
-       same comments essentially also apply here. */
-    OPAL_THREAD_LOCK(&ep->endpoint_lock);
-    for(i = 0; i < 2; i++) {
-       while((get_enpoint_credits(ep, qp) +
-                   (1 - i) * ep->eager_rdma_remote.tokens) > 0) {
-            frag = opal_list_remove_first(&ep->qps[qp].no_credits_pending_frags[i]);
-            if(NULL == frag)
-                break;
-            /* See comments up in progress_pending_eager_rdma(),
-               above.  Those same comments essentially also apply
-               here. */
-            if (OMPI_SUCCESS != 
-                mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag))) {
-                break;
-            }
-       }
-    }
-    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
+    return OMPI_SUCCESS;
 }
 
 void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
@@ -2657,16 +2665,23 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         }
     }
 
-    if(rcredits > 0) {
-        OPAL_THREAD_ADD32(&ep->eager_rdma_remote.tokens, rcredits);
-        progress_pending_eager_rdma(ep);
-    }
-
     assert((cqp != MCA_BTL_NO_ORDER && BTL_OPENIB_QP_TYPE_PP(cqp)) || !credits);
 
-    if(credits) {
+    /* If we got any credits (RDMA or send), then try to progress all
+       the no_credits_pending_frags lists */
+    if (rcredits > 0) {
+        OPAL_THREAD_ADD32(&ep->eager_rdma_remote.tokens, rcredits);
+    }
+    if (credits > 0) {
         OPAL_THREAD_ADD32(&ep->qps[cqp].u.pp_qp.sd_credits, credits);
-        progress_pending_frags_pp(ep, cqp);
+    }
+    if (rcredits + credits > 0) {
+        int rc;
+
+        if (OMPI_SUCCESS != 
+            (rc = progress_no_credits_pending_frags(ep))) {
+            return rc;
+        }
     }
 
     send_credits(ep, cqp);
