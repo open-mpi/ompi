@@ -33,14 +33,17 @@ int main(int argc, char* argv[])
     int nnodes;
     bool odd_nnodes;
     bool recvit;
+    char *ppnstr;
     
-    if (argc < 4) {
-        fprintf(stderr, "a ppn value and start times must be provided\n");
+    if (argc < 3) {
+        fprintf(stderr, "start times must be provided\n");
         return 1;
     }
-    ppn = strtol(argv[1], NULL, 10);
-    start_sec = strtol(argv[2], NULL, 10);
-    start_usec = strtol(argv[3], NULL, 10);
+
+    ppnstr = getenv("OMPI_COMM_WORLD_LOCAL_SIZE");
+    ppn = strtol(ppnstr, NULL, 10);
+    start_sec = strtol(argv[1], NULL, 10);
+    start_usec = strtol(argv[2], NULL, 10);
     
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -160,12 +163,17 @@ int main(int argc, char* argv[])
             }
             maxsec = timestamps[i];
             maxusec = timestamps[i+1];
-            maxrank = i;
+            maxrank = i/2;
         }
         free(timestamps);
         /* subtract starting time to get time in microsecs for test */
         maxsec = maxsec - start_sec;
-        maxusec = maxusec - start_usec;
+        if (maxusec >= start_usec) {
+            maxusec = maxusec - start_usec;
+        } else {
+            maxsec--;
+            maxusec = 1000000 - start_usec + maxusec;
+        }
         /* pretty-print the result */
         seconds = maxsec + (maxusec / 1000000l);
         minutes = seconds / 60l;
