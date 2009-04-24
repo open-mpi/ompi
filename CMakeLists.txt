@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -43,6 +43,7 @@ INCLUDE(ompi_get_version)
 
 # Make the include path visible to all targets
 INCLUDE_DIRECTORIES (
+  ${OpenMPI_SOURCE_DIR}/contrib/platform/win32
   ${OpenMPI_SOURCE_DIR}/
   ${OpenMPI_SOURCE_DIR}/opal
   ${OpenMPI_SOURCE_DIR}/opal/include
@@ -57,7 +58,6 @@ INCLUDE_DIRECTORIES (
   ${OpenMPI_BINARY_DIR}/ompi/include
   ${OpenMPI_BINARY_DIR}/orte
   ${OpenMPI_BINARY_DIR}/orte/include
-  ${OpenMPI_SOURCE_DIR}/contrib/platform/win32
 )
 
 
@@ -77,7 +77,6 @@ INCLUDE(ompi_configure)
 ADD_SUBDIRECTORY(opal)
 ADD_SUBDIRECTORY(ompi)
 ADD_SUBDIRECTORY(orte)
-ADD_SUBDIRECTORY(test)
 
 INCLUDE(InstallRequiredSystemLibraries) 
 
