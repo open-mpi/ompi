@@ -96,98 +96,122 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
       ELSEIF(EXISTS "${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/.windows")
 
         SET(COMPONENT_FILES "")
-        FILE(STRINGS ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/.windows
-             VALUE REGEX "^not_single_shared_lib=")
-        IF(NOT VALUE STREQUAL "")
-          STRING(REPLACE "not_single_shared_lib=" "" NOT_SINGLE_SHARED_LIB ${VALUE})
-        ENDIF(NOT VALUE STREQUAL "")
-        
         SET(CURRENT_PATH ${PROJECT_SOURCE_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
         FILE(GLOB COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
           "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
 
-        # check out if we have to exlude some source files.
-        SET(EXCLUDE_LIST "")
-        FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
-        
-        IF(NOT EXCLUDE_LIST STREQUAL "")
-          STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
-        ENDIF(NOT EXCLUDE_LIST STREQUAL "")
-        
-        # remove the files in the exclude list
-        FOREACH(FILE ${EXCLUDE_LIST})
-          LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
-        ENDFOREACH(FILE)
+        # by default, build this component.
+        SET(BUILD_COMPONENT TRUE)
 
-        IF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
-          SET(NOT_SINGLE_SHARED_LIB "")
-          # add sources for static build or for the shared build when this is not a stand along library.
-          SET(MCA_FILES ${MCA_FILES} ${COMPONENT_FILES})
-          SOURCE_GROUP(mca\\${MCA_FRAMEWORK}\\${MCA_COMPONENT} FILES ${COMPONENT_FILES})
+        # do we have to run a check module first?
+        SET(REQUIRED_CHECK "")
+        FILE(STRINGS ${CURRENT_PATH}/.windows REQUIRED_CHECK REGEX "^required_check=")
+        
+        SET(EXTRA_INCLUDE_PATH "")
+        IF(NOT REQUIRED_CHECK STREQUAL "")
+          STRING(REPLACE "required_check=" "" REQUIRED_CHECK ${REQUIRED_CHECK})
+          INCLUDE(${REQUIRED_CHECK})
+          IF(RESULT)
+            SET(EXTRA_INCLUDE_PATH ${RESULT_INCLUDE_PATH})
+          ELSE(RESULT)
+            # Required check failed, don't build this component.
+            SET(BUILD_COMPONENT FALSE)
+          ENDIF(RESULT)
+        ENDIF(NOT REQUIRED_CHECK STREQUAL "")
 
-          IF(EXISTS "${CURRENT_PATH}/configure.params")
-            FILE(STRINGS "${CURRENT_PATH}/configure.params" 
-              CURRENT_COMPONENT_PRIORITY REGEX "PRIORITY")
-            IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
-              STRING(REGEX REPLACE "[A-Z_]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
-            ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
-          ENDIF(EXISTS "${CURRENT_PATH}/configure.params")
+        IF(BUILD_COMPONENT)
+
+          # check the library build type
+          FILE(STRINGS ${CURRENT_PATH}/.windows
+                VALUE REGEX "^not_single_shared_lib=")
+          IF(NOT VALUE STREQUAL "")
+            STRING(REPLACE "not_single_shared_lib=" "" NOT_SINGLE_SHARED_LIB ${VALUE})
+          ENDIF(NOT VALUE STREQUAL "")
+        
+          # check out if we have to exlude some source files.
+          SET(EXCLUDE_LIST "")
+          FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
+        
+          IF(NOT EXCLUDE_LIST STREQUAL "")
+            STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
+          ENDIF(NOT EXCLUDE_LIST STREQUAL "")
+        
+          # remove the files in the exclude list
+          FOREACH(FILE ${EXCLUDE_LIST})
+            LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
+          ENDFOREACH(FILE)
+
+          IF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+            SET(NOT_SINGLE_SHARED_LIB "")
+            # add sources for static build or for the shared build when this is not a stand along library.
+            SET(MCA_FILES ${MCA_FILES} ${COMPONENT_FILES})
+            SOURCE_GROUP(mca\\${MCA_FRAMEWORK}\\${MCA_COMPONENT} FILES ${COMPONENT_FILES})
+
+            INCLUDE_DIRECTORIES(${EXTRA_INCLUDE_PATH})
+
+            IF(EXISTS "${CURRENT_PATH}/configure.params")
+              FILE(STRINGS "${CURRENT_PATH}/configure.params" 
+                CURRENT_COMPONENT_PRIORITY REGEX "PRIORITY")
+              IF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
+                STRING(REGEX REPLACE "[A-Z_]+=" "" CURRENT_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
+              ENDIF(NOT CURRENT_COMPONENT_PRIORITY STREQUAL "")
+            ENDIF(EXISTS "${CURRENT_PATH}/configure.params")
           
-          IF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-            # I have a higher priority for this mca, put me at the very beginning.
-            SET (OUTFILE_EXTERN
-              "extern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component"  
-              "\n${OUTFILE_EXTERN}")
-            SET(FRAMEWORK_STRUCT_DEF
-              "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n"  
-              ${FRAMEWORK_STRUCT_DEF})
-            SET(BEST_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
-          ELSE(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-            SET (OUTFILE_EXTERN ${OUTFILE_EXTERN}
-              "\nextern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component;")
-            SET(FRAMEWORK_STRUCT_DEF ${FRAMEWORK_STRUCT_DEF}
-              "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
-          ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
-        ELSE(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+            IF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
+              # I have a higher priority for this mca, put me at the very beginning.
+              SET (OUTFILE_EXTERN
+                "extern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component"  
+                "\n${OUTFILE_EXTERN}")
+              SET(FRAMEWORK_STRUCT_DEF
+                "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n"  
+                ${FRAMEWORK_STRUCT_DEF})
+              SET(BEST_COMPONENT_PRIORITY ${CURRENT_COMPONENT_PRIORITY})
+            ELSE(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
+              SET (OUTFILE_EXTERN ${OUTFILE_EXTERN}
+                "\nextern const mca_base_component_t mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component;")
+              SET(FRAMEWORK_STRUCT_DEF ${FRAMEWORK_STRUCT_DEF}
+                "&mca_${MCA_FRAMEWORK}_${MCA_COMPONENT}_component,\n")
+            ENDIF(CURRENT_COMPONENT_PRIORITY GREATER BEST_COMPONENT_PRIORITY)
+          ELSE(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
  
-          # get the dependencies for this component.
-          SET(MCA_DEPENDENCIES "")
-          FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_dependencies=")
-          IF(NOT VALUE STREQUAL "")
-            STRING(REPLACE "mca_dependencies=" "" MCA_DEPENDENCIES ${VALUE})
-          ENDIF(NOT VALUE STREQUAL "")
+            # get the dependencies for this component.
+            SET(MCA_DEPENDENCIES "")
+            FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_dependencies=")
+            IF(NOT VALUE STREQUAL "")
+              STRING(REPLACE "mca_dependencies=" "" MCA_DEPENDENCIES ${VALUE})
+            ENDIF(NOT VALUE STREQUAL "")
 
-          # get the libraries required for this component.
-          SET(MCA_LINK_LIBRARIES "")
-          FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_link_libraries=")
-          IF(NOT VALUE STREQUAL "")
-            STRING(REPLACE "mca_link_libraries=" "" MCA_LINK_LIBRARIES ${VALUE})
-          ENDIF(NOT VALUE STREQUAL "")
+            # get the libraries required for this component.
+            SET(MCA_LINK_LIBRARIES "")
+            FILE(STRINGS ${CURRENT_PATH}/.windows VALUE REGEX "^mca_link_libraries=")
+            IF(NOT VALUE STREQUAL "")
+              STRING(REPLACE "mca_link_libraries=" "" MCA_LINK_LIBRARIES ${VALUE})
+            ENDIF(NOT VALUE STREQUAL "")
 
-          # the mca_common_* libraries should be installed into bin,
-          # this will avoid the runtime open module failure.
-          IF("${MCA_FRAMEWORK}" STREQUAL "common")
-            SET(LIB_NAME_PREFIX "lib")
-            SET(INSTALL_DEST "RUNTIME DESTINATION bin
-                              LIBRARY DESTINATION lib
-                              ARCHIVE DESTINATION lib")
-          ELSE("${MCA_FRAMEWORK}" STREQUAL "common")
-            SET(LIB_NAME_PREFIX "")
-            IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-              SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi/debug
-                                LIBRARY DESTINATION lib/openmpi/debug
-                                ARCHIVE DESTINATION lib/openmpi/debug")
-            ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
-              SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi
-                                LIBRARY DESTINATION lib/openmpi
-                                ARCHIVE DESTINATION lib/openmpi")
-            ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-          ENDIF("${MCA_FRAMEWORK}" STREQUAL "common")
+            # the mca_common_* libraries should be installed into bin,
+            # this will avoid the runtime open module failure.
+            IF("${MCA_FRAMEWORK}" STREQUAL "common")
+              SET(LIB_NAME_PREFIX "lib")
+              SET(INSTALL_DEST "RUNTIME DESTINATION bin
+                                LIBRARY DESTINATION lib
+                                ARCHIVE DESTINATION lib")
+            ELSE("${MCA_FRAMEWORK}" STREQUAL "common")
+              SET(LIB_NAME_PREFIX "")
+              IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+                SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi/debug
+                                  LIBRARY DESTINATION lib/openmpi/debug
+                                  ARCHIVE DESTINATION lib/openmpi/debug")
+              ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
+                SET(INSTALL_DEST "RUNTIME DESTINATION lib/openmpi
+                                  LIBRARY DESTINATION lib/openmpi
+                                  ARCHIVE DESTINATION lib/openmpi")
+              ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            ENDIF("${MCA_FRAMEWORK}" STREQUAL "common")
             
 
-          # generate CMakeLists.txt for each component for shared build.
-          FILE (WRITE "${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/CMakeLists.txt"
-            "
+            # generate CMakeLists.txt for each component for shared build.
+            FILE (WRITE "${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT}/CMakeLists.txt"
+              "
 #
 # Copyright (c) 2007-2008 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
@@ -203,6 +227,8 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 SET_SOURCE_FILES_PROPERTIES(\${COMPONENT_FILES}
                             PROPERTIES LANGUAGE CXX)
 
+INCLUDE_DIRECTORIES(\${EXTRA_INCLUDE_PATH})
+
 ADD_LIBRARY(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} SHARED 
             \${COMPONENT_FILES})
 
@@ -216,14 +242,16 @@ ADD_DEPENDENCIES(${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} libopen
 INSTALL(TARGETS ${LIB_NAME_PREFIX}mca_${MCA_FRAMEWORK}_${MCA_COMPONENT} ${INSTALL_DEST})
           ")
           
-          ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
-        ENDIF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
+            ADD_SUBDIRECTORY (${PROJECT_BINARY_DIR}/mca/${MCA_FRAMEWORK}/${MCA_COMPONENT} mca/${MCA_FRAMEWORK}/${MCA_COMPONENT})
+          ENDIF(NOT BUILD_SHARED_LIBS OR NOT_SINGLE_SHARED_LIB STREQUAL "1")
 
-        # Install help files if they are here.
-        INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
-          FILES_MATCHING PATTERN "*.txt" PATTERN ".svn" EXCLUDE)
-        
+          # Install help files if they are here.
+          INSTALL(DIRECTORY ${CURRENT_PATH}/ DESTINATION share/openmpi/
+            FILES_MATCHING PATTERN "*.txt" PATTERN ".svn" EXCLUDE)
+
+        ENDIF(BUILD_COMPONENT)        
       ENDIF(${MCA_COMPONENT} STREQUAL "base")
+
     ENDFOREACH(MCA_COMPONENT)
 
     STRING(LENGTH "${FRAMEWORK_STRUCT_DEF}" STRUCT_STRING_LENTH)
