@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT(VampirTrace, 5.4.8, vampirsupport@zih.tu-dresden.de)
-AM_INIT_AUTOMAKE(VampirTrace, 5.4.8)
+AC_INIT(VampirTrace, 5.4.9, vampirsupport@zih.tu-dresden.de)
+AM_INIT_AUTOMAKE(VampirTrace, 5.4.9)
 AM_CONFIG_HEADER(config.h)
 
 ACVT_CONF_INIT
@@ -42,8 +42,10 @@ AC_CANONICAL_HOST
 # Correct install paths
 AS_IF([test x"$prefix" = "xNONE"], [prefix="$ac_default_prefix"])
 AS_IF([test x"$exec_prefix" = "xNONE"], [exec_prefix="$prefix"])
+AS_IF([test x"$includedir" = x -o "$includedir" = "\${prefix}/include"],
+[includedir="$includedir/vampirtrace"])
 AS_IF([test x"$datarootdir" = x -o "$datarootdir" = "\${prefix}/share"],
-[datarootdir="\${prefix}/share/vampirtrace"])
+[datarootdir="$datarootdir/vampirtrace"])
 AS_IF([test x"$docdir" = x -o "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
 
