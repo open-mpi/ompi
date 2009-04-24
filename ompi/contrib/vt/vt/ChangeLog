@@ -242,3 +242,7 @@
 	- replaced usage of PATH_MAX by VT_PATH_MAX to avoid compile errors
 	  on some platforms
 
+5.4.9
+	- install header files to 'PREFIX/include/vampirtrace' by default to
+	  avoid conflicts with the OpenMPI integrated version of VT
+
