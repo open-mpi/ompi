@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -17,6 +17,8 @@
 # 
 # $HEADER$
 #
+
+EXTRA_DIST = CMakeLists.txt
 
 # Need the first so that we can get the path names correct inside the
 # MPI C++ library.  The second is necessary so that mpi.h doesn't
