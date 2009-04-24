@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -74,6 +74,35 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-nopanasas \
         platform/lanl/tlcc/optimized-nopanasas.conf \
         platform/lanl/tlcc/optimized-panasas \
-        platform/lanl/tlcc/optimized-panasas.conf
+        platform/lanl/tlcc/optimized-panasas.conf \
+        platform/win32/bin/flex.exe \
+        platform/win32/opal/libltdl/ltdl.c \
+        platform/win32/opal/libltdl/ltdl.h \
+        platform/win32/CMakeModules/c_check_bool.cmake \
+        platform/win32/CMakeModules/check_c_inline.cmake \
+        platform/win32/CMakeModules/check_c_type_exists.cmake \
+        platform/win32/CMakeModules/check_mca_subdirs.cmake \
+        platform/win32/CMakeModules/check_sizeof_bool.cmake \
+        platform/win32/CMakeModules/f77_check.cmake \
+        platform/win32/CMakeModules/f77_check_real16_c_equiv.cmake \
+        platform/win32/CMakeModules/f77_check_type.cmake \
+        platform/win32/CMakeModules/f77_find_ext_symbol_convention.cmake \
+        platform/win32/CMakeModules/f77_get_alignment.cmake \
+        platform/win32/CMakeModules/f77_get_sizeof.cmake \
+        platform/win32/CMakeModules/find_flex.cmake \
+        platform/win32/CMakeModules/generate_version_file.cmake \
+        platform/win32/CMakeModules/get_c_alignment.cmake \
+        platform/win32/CMakeModules/ompi_check_Microsoft.cmake \
+        platform/win32/CMakeModules/ompi_configure.cmake \
+        platform/win32/CMakeModules/ompi_find_type.cmake \
+        platform/win32/CMakeModules/ompi_get_version.cmake \
+        platform/win32/CMakeModules/setup_f77.cmake \
+        platform/win32/ConfigFiles/install_dirs.h.cmake \
+        platform/win32/ConfigFiles/mpi.h.cmake \
+        platform/win32/ConfigFiles/mpic++-wrapper-data.txt.cmake \
+        platform/win32/ConfigFiles/mpicc-wrapper-data.txt.cmake \
+        platform/win32/ConfigFiles/mpif77-wrapper-data.txt.cmake \
+        platform/win32/ConfigFiles/opal_config.h.cmake \
+        platform/win32/ConfigFiles/revision.in
 
 

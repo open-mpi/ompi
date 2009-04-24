@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2009      High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -12,7 +14,7 @@
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-EXTRA_DIST = post_configure.sh
+EXTRA_DIST = post_configure.sh .windows
 
 if OMPI_BUILD_pml_cm_DSO
 component_noinst =
