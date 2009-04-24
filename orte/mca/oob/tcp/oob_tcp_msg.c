@@ -187,22 +187,6 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
     if(NULL != msg->msg_cbfunc) {
         OPAL_THREAD_UNLOCK(&msg->msg_lock);
 
-#if defined(__WINDOWS__)
-        /**
-         * In order to be able to generate TCP events recursively, Windows need
-         * to get out of the callback attached to a specific socket. Therefore,
-         * as our OOB allow to block on a connection from a callback on the same
-         * connection, we have to trigger the completion callbacks outside of the
-         * OOB callbacks. We add them to the completed list here, and the progress
-         * engine will call our progress function later once all socket related
-         * events have been processed.
-         */
-        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-        opal_list_append(&mca_oob_tcp_component.tcp_msg_completed, (opal_list_item_t*)msg);
-        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-        return ORTE_SUCCESS;        
-#else
-
         /* post to a global list of completed messages */
         if ((msg->msg_flags & ORTE_RML_FLAG_RECURSIVE_CALLBACK) == 0) {
             int size;
@@ -243,7 +227,6 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
         } else {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
-#endif  /* defined(__WINDOWS__) */
     } else {
         opal_condition_broadcast(&msg->msg_condition);
         OPAL_THREAD_UNLOCK(&msg->msg_lock);

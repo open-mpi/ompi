@@ -24,7 +24,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -283,6 +285,11 @@ static void find_dyn_components(const char *path, const char *type_name,
             bool op = true;
             file->status = CHECKING_CYCLE;
 
+#if defined(__WINDOWS__) && defined(_DEBUG) 
+            /* remove the debug suffix 'd', otherwise we will fail to  
+            load the module in later phase. */ 
+            file->name[strlen(file->name)-1]='\0'; 
+#endif 
             op = use_component(include_mode, name, file->name);
             if( true == op ) {
                 open_component(file, found_components);

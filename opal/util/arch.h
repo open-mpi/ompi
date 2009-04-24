@@ -230,9 +230,13 @@
 
 #define OPAL_ARCH_LDISINTEL       0x00800000
 
+BEGIN_C_DECLS
+
 OPAL_DECLSPEC int32_t opal_arch_compute_local_id( uint32_t *var);
 
 OPAL_DECLSPEC int32_t opal_arch_checkmask ( uint32_t *var, uint32_t mask );
+
+END_C_DECLS
 
 static inline int32_t opal_arch_isbigendian ( void )
 {

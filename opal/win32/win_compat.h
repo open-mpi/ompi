@@ -29,7 +29,17 @@
  *  0x0400 - for SwitchToThread
  *  0x0500 - for using Event Objects
  */
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0600
+
+/**
+ * Windows does not define the exact same names in stat.h
+ * Redefine them to our names.
+ * Supposedly, links are not available
+ */
+#define S_IFLNK        0xFFFF          /* identifies the file as a symbolic link */
+#define S_IXUSR        _S_IEXEC        /* execute/search permission, owner */
+#define S_IRUSR        _S_IREAD        /* read permission, owner */
+#define S_IWUSR        _S_IWRITE       /* write permission, owner */
 
 /**
  * Define it in order to get access to the "secure" version of rand.
@@ -66,6 +76,8 @@
 #include <io.h>
 
 #include <stdlib.h>
+/* for alloca */
+#include <malloc.h>
 
 #if defined(OMPI_BUILDING) && OMPI_BUILDING
 #include "opal/win32/ompi_uio.h"
@@ -120,6 +132,7 @@ typedef unsigned int uint;
 #define close                     _close
 #define unlink                    _unlink
 #define dup2                      _dup2
+#define dup                       _dup
 #define write                     _write 
 #define read                      _read 
 #define fileno                    _fileno 
@@ -130,16 +143,38 @@ typedef unsigned int uint;
 #define S_ISREG(STAT_MODE)        ((STAT_MODE) & _S_IFREG)
 #define strncasecmp               _strnicmp
 #define strcasecmp                _stricmp
+#define umask                     _umask
 
-#define UINT32_MAX _UI32_MAX
-#define UINT32_MIN _UI32_MIN
-#define INT32_MAX  _I32_MAX
-#define INT32_MIN  _I32_MIN
-#define INT16_MIN  _I16_MIN
-#define INT16_MAX  _I16_MAX
-#define UINT8_MAX  _UI8_MAX
-#define UINT8_MIN  _UI8_MIN
-
+#ifndef UINT32_MAX
+#define UINT32_MAX            _UI32_MAX
+#endif
+#ifndef UINT32_MIN
+#define UINT32_MIN            _UI32_MIN
+#endif
+#ifndef INT32_MAX
+#define INT32_MAX             _I32_MAX
+#endif
+#ifndef INT32_MIN
+#define INT32_MIN             _I32_MIN
+#endif
+#ifndef UINT16_MIN
+#define UINT16_MIN            _UI16_MIN
+#endif
+#ifndef UINT16_MAX
+#define UINT16_MAX            _UI16_MAX
+#endif
+#ifndef INT16_MIN
+#define INT16_MIN             _I16_MIN
+#endif
+#ifndef INT16_MAX
+#define INT16_MAX             _I16_MAX
+#endif
+#ifndef UINT8_MAX
+#define UINT8_MAX             _UI8_MAX
+#endif
+#ifndef UINT8_MIN
+#define UINT8_MIN             _UI8_MIN
+#endif
 
 /* Make sure we let the compiler know that we support __func__ */
 #if !defined(HAVE_DECL___FUNC__)
@@ -158,6 +193,9 @@ typedef unsigned int uint;
  */
 #define SIGCHLD SIGILL
 #define SIGKILL WM_QUIT
+#define SIGCONT 18
+#define SIGSTOP 19
+#define SIGTSTP 20
 
 /* Note: 
  *   The two defines below are likely to break the orte_wait

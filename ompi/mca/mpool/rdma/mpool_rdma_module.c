@@ -115,7 +115,7 @@ void* mca_mpool_rdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
         free(base_addr);
         return NULL;
     }
-    (*reg)->alloc_base = base_addr;
+    (*reg)->alloc_base = (unsigned char *) base_addr;
 
     return addr;
 }
@@ -145,8 +145,8 @@ static int register_cache_bypass(mca_mpool_base_module_t *mpool,
     unsigned char *base, *bound;
     int rc;
 
-    base = down_align_addr(addr, mca_mpool_base_page_size_log);
-    bound = up_align_addr( (void*) ((char*) addr + size - 1),
+    base = (unsigned char *) down_align_addr(addr, mca_mpool_base_page_size_log);
+    bound = (unsigned char *) up_align_addr( (void*) ((char*) addr + size - 1),
              mca_mpool_base_page_size_log);
     OMPI_FREE_LIST_GET(&mpool_rdma->reg_list, item, rc);
     if(OMPI_SUCCESS != rc) {
@@ -191,8 +191,8 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
         return register_cache_bypass(mpool, addr, size, flags, reg);
     }
 
-    base = down_align_addr(addr, mca_mpool_base_page_size_log);
-    bound = up_align_addr((void*)((char*) addr + size - 1),
+    base = (unsigned char *) down_align_addr(addr, mca_mpool_base_page_size_log);
+    bound = (unsigned char *) up_align_addr((void*)((char*) addr + size - 1),
              mca_mpool_base_page_size_log);
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
     if(!opal_list_is_empty(&mpool_rdma->gc_list))
@@ -325,8 +325,8 @@ int mca_mpool_rdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
     int rc;
     unsigned char *base, *bound;
 
-    base = down_align_addr(addr, mca_mpool_base_page_size_log);
-    bound = up_align_addr((void*)((char*) addr + size - 1),
+    base = (unsigned char *) down_align_addr(addr, mca_mpool_base_page_size_log);
+    bound = (unsigned char *) up_align_addr((void*)((char*) addr + size - 1),
              mca_mpool_base_page_size_log);
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);

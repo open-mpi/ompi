@@ -11,6 +11,9 @@
  * $HEADER$
  *
  */
+
+#define _WIN32_DCOM
+
 #include "orte_config.h"
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -65,6 +68,9 @@
     rename("GetJob", "GetSingleJob")                                \
     rename("AddJob", "AddSingleJob")
 
+/* Include the library for ::ConvertBSTRToString */
+#pragma comment(lib, "comsuppw.lib")
+
 /*
  * Local functions
  */
@@ -78,7 +84,7 @@ static int plm_ccp_finalize(void);
 static int plm_ccp_connect(ICluster* pCluster);
 static int plm_ccp_disconnect(void);
 
-void get_cluster_message(ICluster* pCluster);
+void plm_get_cluster_message(ICluster* pCluster);
 static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv);
 
 /*
@@ -127,7 +133,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     orte_std_cntr_t launched = 0, i; 
 
     orte_job_map_t *map = NULL;
-    int argc, rc, node_name_index, proc_name_index;
+    int argc, rc, proc_vpid_index, proc_name_index;
     char *param, **env = NULL, *var, **argv = NULL;
     bool connected = false;
     char *bin_base = NULL, *lib_base = NULL, *command_line;
@@ -152,6 +158,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     JobPriority job_priority = JobPriority_Normal;
 
  	orte_jobid_t failed_job; 
+    orte_job_state_t job_state = ORTE_JOB_STATE_UNDEF;
 
  	/* default to declaring the daemon launch failed */ 
  	failed_job = ORTE_PROC_MY_NAME->jobid; 
@@ -218,7 +225,7 @@ GETMAP:
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "env",
                                           &proc_vpid_index,
-                                          &node_name_index, false);
+                                          false);
 
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
@@ -253,7 +260,7 @@ GETMAP:
 
     hr = pCluster->CreateJob(&pJob);
     if (FAILED(hr)) {
-        get_cluster_message(pCluster);
+        plm_get_cluster_message(pCluster);
         opal_output(orte_plm_globals.output,
                     "plm:ccp:failed to create cluster object!");
         goto cleanup;
@@ -268,8 +275,8 @@ GETMAP:
     env = opal_argv_copy(orte_launch_environ);
 
     /* add our umask -- see big note in orted.c */
-    current_umask = umask(0);
-    umask(current_umask);
+    current_umask = _umask(0);
+    _umask(current_umask);
     asprintf(&var, "0%o", current_umask);
     opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
     free(var);
@@ -364,7 +371,10 @@ GETMAP:
 
     hr = pJob->SetExtendedJobTerm(_bstr_t(L"extended terms"), _bstr_t(L"TermValue"));
   
-    /* Iterate through each of the nodes and spin
+    /* set the job state to indicate we attempted to launch */
+    job_state = ORTE_JOB_STATE_FAILED_TO_START;
+    
+     /* Iterate through each of the nodes and spin
      * up a daemon.
      */
     for (i = 0; i < map->num_nodes; i++) {
@@ -376,10 +386,6 @@ GETMAP:
             continue;
         }
 
-        /* setup node name */
-        free(argv[node_name_index]);
-        argv[node_name_index] = strdup(node->name);
-        
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:ccp: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -418,7 +424,7 @@ GETMAP:
         /* Set terms for task. */
         hr = pCluster->CreateTask(&pTask);
         if (FAILED(hr)) {
-            get_cluster_message(pCluster);
+            plm_get_cluster_message(pCluster);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                 "plm:ccp:failed to create task object!"));
             goto cleanup;
@@ -491,7 +497,7 @@ GETMAP:
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                             "Added job %d to scheduling queue.\n", job_id));
     }else {
-        get_cluster_message(pCluster);
+        plm_get_cluster_message(pCluster);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -566,7 +572,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, ORTE_JOB_STATE_FAILED_TO_START);
+        orte_plm_base_launch_failed(failed_job, -1, ORTE_ERROR_DEFAULT_EXIT_CODE, job_state);
     }
         
     /* check for timing request - get stop time and process if so */
@@ -730,7 +736,7 @@ static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char *
 }
 
 
-void get_cluster_message(ICluster* pCluster)
+void plm_get_cluster_message(ICluster* pCluster)
 {
     HRESULT hr = S_OK;
     BSTR message = NULL;

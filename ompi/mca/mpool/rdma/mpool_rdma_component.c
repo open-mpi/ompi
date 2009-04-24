@@ -26,7 +26,9 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "mpool_rdma.h"
 #include "orte/util/proc_info.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif

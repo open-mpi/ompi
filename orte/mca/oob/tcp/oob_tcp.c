@@ -58,10 +58,6 @@
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
-#if defined(__WINDOWS__)
-static opal_mutex_t windows_callback;
-#endif  /* defined(__WINDOWS__) */
-
 /*
  * Data structure for accepting connections.
  */
@@ -151,39 +147,6 @@ mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_ft_event
 };
 
-#if defined(__WINDOWS__)
-static int oob_tcp_windows_progress_callback( void )
-{
-    opal_list_item_t* item;
-    mca_oob_tcp_msg_t* msg;
-	int event_count = 0;
-
-	/* Only one thread at the time is allowed to execute callbacks */
-	if( !opal_mutex_trylock(&windows_callback) )
-		return 0;
-
-    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    while(NULL != 
-         (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_msg_completed))) {
-        msg = (mca_oob_tcp_msg_t*)item;
-        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-        msg->msg_cbfunc( msg->msg_rc, 
-                         &msg->msg_peer, 
-                         msg->msg_uiov, 
-                         msg->msg_ucnt, 
-                         msg->msg_hdr.msg_tag, 
-                         msg->msg_cbdata);
-		event_count++;
-        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-        MCA_OOB_TCP_MSG_RETURN(msg);
-    }
-    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-
-	opal_mutex_unlock(&windows_callback);
-
-    return event_count;
-}
-#endif  /* defined(__WINDOWS__) */
 
 /*
  * Initialize global variables used w/in this module.
@@ -382,13 +345,6 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_listen_sd = -1;
     mca_oob_tcp_component.tcp_match_count = 0;
 
-#if defined(__WINDOWS__)
-    /* Register the libevent callback which will trigger the OOB
-     * completion callbacks. */
-    OBJ_CONSTRUCT(&windows_callback, opal_mutex_t);
-    opal_progress_register(oob_tcp_windows_progress_callback);
-#endif  /* defined(__WINDOWS__) */
-
     return ORTE_SUCCESS;
 }
 
@@ -401,8 +357,6 @@ int mca_oob_tcp_component_close(void)
     opal_list_item_t *item;
 
 #if defined(__WINDOWS__)
-    opal_progress_unregister(oob_tcp_windows_progress_callback);
-    OBJ_DESTRUCT( &windows_callback );
     WSACleanup();
 #endif  /* defined(__WINDOWS__) */
 
@@ -569,7 +523,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
 
     /* Disable reusing ports */
     flags = 0;
-    if (setsockopt (*target_sd, SOL_SOCKET, SO_REUSEADDR, (void*)&flags, sizeof(flags)) < 0) {
+    if (setsockopt (*target_sd, SOL_SOCKET, SO_REUSEADDR, (const char *) &flags, sizeof(flags)) < 0) {
         opal_output(0, "mca_oob_tcp_create_listen: unable to unset the "
                     "SO_REUSEADDR option (%s:%d)\n",
                     strerror(opal_socket_errno), opal_socket_errno);

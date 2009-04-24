@@ -5,6 +5,9 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2009      High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +45,7 @@
 #include "orte/mca/iof/base/iof_base_setup.h"
 #include "orte/util/name_fns.h"
 
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/odls/process/odls_process.h"
 
@@ -164,7 +168,13 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
     child->state = ORTE_PROC_STATE_LAUNCHED;
     child->pid = pid;
     child->alive = true;
-        
+
+    /* Windows automatically forwards IO, so we don't need to do so here. However,
+     * we need to flag that IO termination conditions are met so that the daemon
+     * knows the proc is done
+     */
+    orte_odls_base_notify_iof_complete(child->name);
+
     return ORTE_SUCCESS;
 }
 

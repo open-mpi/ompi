@@ -321,8 +321,7 @@ int opal_cr_init(void )
 #endif
 
 #else
-    opal_output( 0, "This feature is disabled on Windows" );
-    return 0;
+    opal_cr_is_tool = true;  /* no support for CR on Windows yet */ 
 #endif  /* __WINDOWS__ */
 
     mca_base_param_reg_string_name("opal_cr", "tmp_dir",

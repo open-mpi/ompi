@@ -14,8 +14,6 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#define _WIN32_WINNT  0x0500
-
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +39,8 @@
     rename("GetJob", "GetSingleJob")                                \
     rename("AddJob", "AddSingleJob")
 
+/* Include the library for ::ConvertBSTRToString */
+#pragma comment(lib, "comsuppw.lib")
 
 /*
  * Local functions
@@ -48,7 +48,7 @@
 static int orte_ras_ccp_allocate(opal_list_t *nodes);
 static int orte_ras_ccp_finalize(void);
 static int discover(opal_list_t* nodelist, ICluster* pCluster);
-void get_cluster_message(ICluster* pCluster);
+void ras_get_cluster_message(ICluster* pCluster);
 
 
 /*
@@ -106,7 +106,7 @@ static int orte_ras_ccp_allocate(opal_list_t *nodes)
     /* Connect to the cluster's head node */
     hr = pCluster->Connect(_bstr_t(cluster_head));
     if (FAILED(hr)) {
-        get_cluster_message(pCluster);
+        ras_get_cluster_message(pCluster);
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:allocate: connection failed!"));
         return ORTE_ERROR;
@@ -153,7 +153,7 @@ static int orte_ras_ccp_finalize(void)
 
 static int discover(opal_list_t* nodelist, ICluster* pCluster)
 {
-    int ret;
+    int ret = ORTE_ERROR;
     int32_t nodeid;
     orte_node_t *node;
     opal_list_item_t* item;
@@ -178,7 +178,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
     /* Get the collection of nodes. */
     hr = pCluster->get_ComputeNodes(&pNodesCollection);
     if (FAILED(hr)) {
-        get_cluster_message(pCluster);
+        ras_get_cluster_message(pCluster);
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:pCluster->get_ComputeNodes failed."));
         return ORTE_ERROR;
@@ -187,7 +187,7 @@ static int discover(opal_list_t* nodelist, ICluster* pCluster)
     /* Get the enumerator used to iterate through the collection. */
     hr = pNodesCollection->GetEnumerator(&pNodes);
     if (FAILED(hr)) {
-        get_cluster_message(pCluster);
+        ras_get_cluster_message(pCluster);
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base.ras_output,
                             "ras:ccp:pNodesCollection->GetEnumerator failed."));
         return ORTE_ERROR;
@@ -322,4 +322,21 @@ cleanup:
     }
     
     return ret;
+}
+
+void ras_get_cluster_message(ICluster* pCluster)
+{
+    HRESULT hr = S_OK;
+    BSTR message = NULL;
+
+    hr = pCluster->get_ErrorMessage(&message);
+    if (SUCCEEDED(hr)) {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                            _com_util::ConvertBSTRToString(message)));
+        SysFreeString(message);
+    }
+    else {
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                            "pCluster->get_ErrorMessage failed.\n"));
+    }
 }
