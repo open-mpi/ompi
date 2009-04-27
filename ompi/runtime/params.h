@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -146,6 +146,12 @@ OMPI_DECLSPEC extern bool ompi_have_sparse_group_storage;
  * Whether sparse MPI group storage formats should be used or not.
  */
 OMPI_DECLSPEC extern bool ompi_use_sparse_group_storage;
+
+/**
+ * Whether we should send notifications during MPI_INIT and
+ * MPI_FINALIZE or not.
+ */
+OMPI_DECLSPEC extern bool ompi_notify_init_finalize;
 
 /**
  * Register MCA parameters used by the MPI layer.
