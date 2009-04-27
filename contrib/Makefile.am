@@ -55,10 +55,6 @@ EXTRA_DIST = \
         platform/lanl/rr-class/debug-master.conf \
         platform/lanl/rr-class/optimized-master \
         platform/lanl/rr-class/optimized-master.conf \
-        platform/lanl/rr-class/debug-slave \
-        platform/lanl/rr-class/debug-slave.conf \
-        platform/lanl/rr-class/optimized-slave \
-        platform/lanl/rr-class/optimized-slave.conf \
         platform/lanl/rr-class/debug-panasas-nocell \
         platform/lanl/rr-class/debug-panasas-nocell.conf \
         platform/lanl/rr-class/debug-nopanasas-nocell \
