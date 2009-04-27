@@ -51,9 +51,11 @@ BEGIN_C_DECLS
  */
 #define ORTE_NOTIFIER_MAX_BUF	512
 
-/* define priorities - this will eventually be replaced by OPAL_SOS priorities */
+/* define severities - this will eventually be replaced by OPAL_SOS
+   priorities */
 #define ORTE_NOTIFIER_INFRA     LOG_CRIT
 #define ORTE_NOTIFIER_WARNING   LOG_WARNING
+#define ORTE_NOTIFIER_NOTICE    LOG_NOTICE
 
 /*
  * Component functions - all MUST be provided!
