@@ -99,7 +99,7 @@ static int send_command(int severity, int errcode, char *msg)
        2 = exit status returned by waitpid() (only relevant if exited==1) */
     if (ORTE_SUCCESS != 
         (rc = orte_notifier_command_read_fd(mca_notifier_command_component.to_parent[0], 
-                                          sizeof(int) * 2, csel))) {
+                                            sizeof(int) * 3, csel))) {
         goto error;
     }
     /* Did the grandchild exit? */
