@@ -19,7 +19,7 @@
 */
 
 /*
- * Because we can. :-)
+ * Simple smtp notifier (using libesmtp)
  */
 
 #include "orte_config.h"
