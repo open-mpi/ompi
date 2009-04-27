@@ -53,9 +53,11 @@ BEGIN_C_DECLS
 
 /* define severities - this will eventually be replaced by OPAL_SOS
    priorities */
-#define ORTE_NOTIFIER_INFRA     LOG_CRIT
-#define ORTE_NOTIFIER_WARNING   LOG_WARNING
-#define ORTE_NOTIFIER_NOTICE    LOG_NOTICE
+enum {
+    ORTE_NOTIFIER_INFRA = LOG_CRIT,
+    ORTE_NOTIFIER_WARNING = LOG_WARNING,
+    ORTE_NOTIFIER_NOTICE = LOG_NOTICE
+};
 
 /*
  * Component functions - all MUST be provided!
