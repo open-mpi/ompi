@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -55,6 +55,8 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/ess/ess.h"
+
+#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/f77/constants.h"
@@ -389,6 +391,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = ompi_mpi_register_params())) {
         error = "mca_mpi_register_params() failed";
         goto error;
+    }
+
+    /* If desired, send a notify message */
+    if (ompi_notify_init_finalize) {
+        orte_notifier.log(ORTE_NOTIFIER_NOTICE,
+                          ORTE_SUCCESS,
+                          "MPI_INIT:Starting on host %s, pid %d",
+                          orte_process_info.nodename,
+                          orte_process_info.pid);
     }
 
     /* Setup process affinity.  First check to see if a slot list was
@@ -881,6 +892,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
+    }
+
+    /* If desired, send a notifier message that we've finished MPI_INIT */
+    if (ompi_notify_init_finalize) {
+        orte_notifier.log(ORTE_NOTIFIER_NOTICE,
+                          ORTE_SUCCESS,
+                          "MPI_INIT:Finishing on host %s, pid %d",
+                          orte_process_info.nodename,
+                          orte_process_info.pid);
     }
 
     return MPI_SUCCESS;
