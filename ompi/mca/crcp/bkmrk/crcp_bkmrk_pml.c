@@ -4082,10 +4082,7 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *dr
     }
 
     /* The buffer could be NULL - More likely when doing a count=0 type of message (e.g., Barrier) */
-    if( NULL == buf ) {
-        OPAL_OUTPUT_VERBOSE((20, mca_crcp_bkmrk_component.super.output_handle,
-                             "crcp:bkmrk: drain_message_copy_remove(): Skip copy - NULL buffer"));
-    } else {
+    if( OPAL_LIKELY(NULL != buf) ) {
         if( 0 != (ret = ompi_ddt_copy_content_same_ddt(datatype, count,
                                                        (void*)buf, drain_content_ref->buffer) ) ) {
             opal_output( mca_crcp_bkmrk_component.super.output_handle,
@@ -4093,6 +4090,10 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *dr
                          ret);
             exit_status = ret;
         }
+    }
+    else {
+        OPAL_OUTPUT_VERBOSE((20, mca_crcp_bkmrk_component.super.output_handle,
+                             "crcp:bkmrk: drain_message_copy_remove(): Skip copy - NULL buffer"));
     }
 
     /* Remove the message from the list */
