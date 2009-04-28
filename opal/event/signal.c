@@ -301,5 +301,8 @@ evsignal_dealloc(struct event_base *base)
 	base->sig.sh_old_max = 0;
 
 	/* per index frees are handled in evsignal_del() */
-	free(base->sig.sh_old);
+    if( NULL != base->sig.sh_old ) {
+        free(base->sig.sh_old);
+        base->sig.sh_old = NULL;
+    }
 }
