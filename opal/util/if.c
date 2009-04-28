@@ -205,9 +205,8 @@ static int opal_ifinit(void)
             return OPAL_ERROR;
         }
 
-        /* initialize the memory so valgrind and purify won't complain
-         * can't use OMPI_DEBUG_ZERO because sizeof(ifconf.ifc_req)
-         * isn't useful.  Since this isn't performance critical, just
+        /* initialize the memory so valgrind and purify won't
+         * complain.  Since this isn't performance critical, just
          * always memset.
          */
         memset(ifconf.ifc_req, 0, ifconf.ifc_len);
@@ -260,7 +259,7 @@ static int opal_ifinit(void)
         opal_if_t *intf_ptr;
         int length;
 
-        OMPI_DEBUG_ZERO(intf);
+        memset(&intf, 0, sizeof(intf));
         OBJ_CONSTRUCT(&intf, opal_list_item_t);
 
         /* compute offset for entries */
@@ -345,8 +344,7 @@ static int opal_ifinit(void)
         /* generate CIDR and assign to netmask */
         intf.if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
 
-        intf_ptr = (opal_if_t*) malloc(sizeof(opal_if_t));
-        OMPI_DEBUG_ZERO(*intf_ptr);
+        intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
         if(intf_ptr == 0) {
             opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
             free(ifconf.ifc_req);
@@ -385,7 +383,7 @@ static int opal_ifinit(void)
                    continue;
                 }
 
-                OMPI_DEBUG_ZERO(intf);
+                memset(&intf, 0, sizeof(intf));
                 OBJ_CONSTRUCT(&intf, opal_list_item_t);
         
                 for (iter = 0; iter < 16; iter++) {
@@ -409,8 +407,7 @@ static int opal_ifinit(void)
                 /* copy new interface information to heap and append
                    to list
                 */
-                intf_ptr = (opal_if_t*) malloc(sizeof(opal_if_t));
-                OMPI_DEBUG_ZERO(*intf_ptr);
+                intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
                 if(NULL == intf_ptr) {
                     opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
                                     (unsigned long)sizeof(opal_if_t));
@@ -519,7 +516,7 @@ static int opal_ifinit(void)
                 continue;
             }
 
-            OMPI_DEBUG_ZERO(intf);
+            memset(&intf, 0, sizeof(intf));
             OBJ_CONSTRUCT(&intf, opal_list_item_t);
 #if 0
             char *addr_name = (char *) malloc(48*sizeof(char));
@@ -554,8 +551,7 @@ static int opal_ifinit(void)
 
             intf.if_kernel_index = (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
 
-            intf_ptr = (opal_if_t*) malloc(sizeof(opal_if_t));
-            OMPI_DEBUG_ZERO(*intf_ptr);
+            intf_ptr = (opal_if_t*) calloc(1, sizeof(opal_if_t));
             if(NULL == intf_ptr) {
                 opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
                             sizeof(opal_if_t));
@@ -659,7 +655,7 @@ static int opal_ifinit(void)
                     /* create interface for newly found address */
                     opal_if_t intf, *intf_ptr;
 
-                    OMPI_DEBUG_ZERO(intf);
+                    memset(&intf, 0, sizeof(intf));
                     OBJ_CONSTRUCT(&intf, opal_list_item_t);
 
                     strncpy (intf.if_name, lifreq->lifr_name, IF_NAMESIZE);
@@ -670,8 +666,7 @@ static int opal_ifinit(void)
                     intf.if_flags = (uint32_t)(0x00000000ffffffff) & lifquery.lifr_flags;
 
                     /* copy new interface to heap and append to list */
-                    intf_ptr = (opal_if_t*) malloc (sizeof (opal_if_t));
-                    OMPI_DEBUG_ZERO (*intf_ptr);
+                    intf_ptr = (opal_if_t*) calloc(1, sizeof (opal_if_t));
                     if (NULL == intf_ptr) {
                         opal_output (0,
                                      "opal_ifinit: unable to allocate %d bytes\n",
