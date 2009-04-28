@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -17,7 +17,10 @@
 # $HEADER$
 #
 
-
-EXTRA_DIST = CMakeLists.txt
-
-SUBDIRS = environment
+# MCA_plm_process_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
+AC_DEFUN([MCA_plm_process_CONFIG],[
+    plm_process_good=0
+    # PROCESS does never exist under Unix
+    [$2]
+])dnl

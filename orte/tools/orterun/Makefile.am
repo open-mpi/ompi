@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -30,7 +30,7 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = orterun.1
-EXTRA_DIST = $(man_pages:.1=.1in)
+EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
 
 if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES

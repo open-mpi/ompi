@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,37 +19,37 @@
 
 EXTRA_DIST = .windows
 
-libmca_btl_sm_la_sources = \
-    btl_sm.c \
-    btl_sm.h \
-    btl_sm_component.c \
-    btl_sm_endpoint.h \
-    btl_sm_fifo.h \
-    btl_sm_frag.c \
-    btl_sm_frag.h 
+AM_CPPFLAGS = $(plm_process_CPPFLAGS)
+
+sources = \
+        plm_process.h \
+        plm_process_component.c \
+        plm_process_module.c
+
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_btl_sm_DSO
-component_noinst =
-component_install = mca_btl_sm.la
+if OMPI_BUILD_plm_process_DSO
+lib =
+lib_sources = 
+component = mca_plm_process.la
+component_sources = $(sources)
 else
-component_noinst = libmca_btl_sm.la
-component_install =
+lib = libmca_plm_process.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
-# See ompi/mca/common/sm/Makefile.am for an explanation of
-# libmca_common_sm.la.
-
 mcacomponentdir = $(pkglibdir)
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-mca_btl_sm_la_LDFLAGS = -module -avoid-version
-mca_btl_sm_la_LIBADD = \
-    $(top_ompi_builddir)/ompi/mca/common/sm/libmca_common_sm.la
+mcacomponent_LTLIBRARIES = $(component)
+mca_plm_process_la_SOURCES = $(component_sources)
+mca_plm_process_la_LDFLAGS = -module -avoid-version $(plm_process_LDFLAGS)
+mca_plm_process_la_LIBADD = $(plm_process_LIBS)
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-libmca_btl_sm_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = $(lib)
+libmca_plm_process_la_SOURCES = $(lib_sources)
+libmca_plm_process_la_LDFLAGS = -module -avoid-version $(plm_process_LDFLAGS)
+libmca_plm_process_la_LIBADD = $(plm_process_LIBS)

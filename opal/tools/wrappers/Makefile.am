@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2006 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -21,7 +21,7 @@
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
 real_man_pages = generic_wrapper.1 opal_wrapper.1
-EXTRA_DIST = $(real_man_pages:.1=.1in)
+EXTRA_DIST = $(real_man_pages:.1=.1in) CMakeLists.txt
 
 include $(top_srcdir)/Makefile.man-page-rules
 

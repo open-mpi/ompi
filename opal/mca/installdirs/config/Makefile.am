@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
+# Copyright (c) 2009      High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2007      Cisco, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -8,6 +10,8 @@
 # 
 # $HEADER$
 #
+
+EXTRA_DIST = .windows
 
 noinst_LTLIBRARIES = libmca_installdirs_config.la
 
