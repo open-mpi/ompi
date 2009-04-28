@@ -38,6 +38,7 @@
 #include <sys/wait.h>
 #endif
 #include <ctype.h>
+#include <signal.h>
 
 #include "opal/util/argv.h"
 
