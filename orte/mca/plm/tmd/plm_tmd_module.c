@@ -49,6 +49,8 @@
 #include <sys/time.h>
 #endif
 #include <errno.h>
+#include <string.h>
+
 #include <tm.h>
 
 #include "opal/mca/installdirs/installdirs.h"
