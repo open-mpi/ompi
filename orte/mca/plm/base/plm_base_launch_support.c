@@ -126,6 +126,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     
     /* if we don't want to launch, now is the time to leave */
     if (orte_do_not_launch) {
+        orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(0);
         orte_trigger_event(&orte_exit);
         return ORTE_ERROR;
@@ -141,6 +142,7 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
                        ORTE_VPID_PRINT(jdata->stdin_target),
                        ORTE_VPID_PRINT(jdata->num_procs));
+        orte_never_launched = true;
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         orte_trigger_event(&orte_exit);
         return ORTE_ERROR;
