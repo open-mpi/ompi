@@ -35,6 +35,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #include <ctype.h>
 #include <signal.h>
 
