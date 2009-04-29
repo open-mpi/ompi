@@ -20,7 +20,6 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/output.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -32,6 +31,8 @@
 #include <limits.h>
 #include <ctype.h>
 
+#include "opal/util/output.h"
+#include "opal/util/strncpy.h"
 #include "ompi/constants.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/params.h"

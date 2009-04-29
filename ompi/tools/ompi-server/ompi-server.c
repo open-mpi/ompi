@@ -22,6 +22,10 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_UNISTD_H

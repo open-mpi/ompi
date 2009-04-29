@@ -29,6 +29,7 @@
 #endif  /* HAVE_TIME_H */
 
 #include "ompi/constants.h"
+#include "ompi/datatype/datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/datatype/datatype.h"

@@ -31,6 +31,7 @@
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/odls/odls_types.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"

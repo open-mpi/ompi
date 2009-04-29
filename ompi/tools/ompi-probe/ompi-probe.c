@@ -20,6 +20,7 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/constants.h"
 #include "mpi.h"
 
 #include <stdio.h>
