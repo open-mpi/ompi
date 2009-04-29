@@ -21,7 +21,6 @@
 #ifndef MCA_PML_CSUM_ENDPOINT_H
 #define MCA_PML_CSUM_ENDPOINT_H
 
-#include "ompi/mca/btl/btl.h"
 
 BEGIN_C_DECLS
 

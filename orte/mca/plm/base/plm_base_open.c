@@ -19,11 +19,9 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
-#include "orte/types.h"
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"

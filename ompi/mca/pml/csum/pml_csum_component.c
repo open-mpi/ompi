@@ -26,11 +26,9 @@
 #include "opal/event/event.h"
 #include "mpi.h"
 #include "ompi/runtime/params.h"
-#include "ompi/datatype/convertor.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/show_help.h"
 
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_csum.h"

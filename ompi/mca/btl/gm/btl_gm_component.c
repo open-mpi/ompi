@@ -21,11 +21,8 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
-#include "opal/util/argv.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/request/request.h"
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
@@ -39,7 +36,6 @@
 #include "btl_gm_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "ompi/datatype/convertor.h" 
 #include "btl_gm_endpoint.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"

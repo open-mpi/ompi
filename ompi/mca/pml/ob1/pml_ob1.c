@@ -41,10 +41,8 @@
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "ompi/runtime/ompi_cr.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {

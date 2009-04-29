@@ -24,18 +24,13 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/group/group.h"
-#include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 
-#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
 
 
 int mca_coll_hierarch_allreduce_tmp(void *sbuf, void *rbuf, int count,

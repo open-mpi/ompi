@@ -34,11 +34,9 @@
 #include "ompi_config.h"
 #include "ompi/types.h"
 #include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
 #include "opal/dss/dss_types.h"
 #include "opal/mca/paffinity/paffinity.h"
 
-#include "orte/runtime/orte_globals.h"
 #include "orte/types.h"
 
 

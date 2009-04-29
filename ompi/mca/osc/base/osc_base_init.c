@@ -22,7 +22,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-#include "ompi/datatype/datatype.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"

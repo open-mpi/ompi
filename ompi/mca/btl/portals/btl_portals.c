@@ -29,7 +29,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
 
 #include "btl_portals.h"
 #include "btl_portals_endpoint.h"

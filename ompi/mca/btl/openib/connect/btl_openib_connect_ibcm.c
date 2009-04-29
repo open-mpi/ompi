@@ -258,11 +258,9 @@
 #include <fcntl.h>
 #include <infiniband/cm.h>
 
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/event/event.h"
-#include "opal/class/opal_pointer_array.h"
 #include "opal_stdint.h"
 
 #include "orte/util/show_help.h"

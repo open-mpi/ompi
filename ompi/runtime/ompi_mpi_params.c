@@ -32,7 +32,6 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "ompi/datatype/datatype.h"
 #include "orte/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"

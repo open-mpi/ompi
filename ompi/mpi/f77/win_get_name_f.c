@@ -21,7 +21,6 @@
 
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/constants.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/f77/f77_strings.h"
 
 

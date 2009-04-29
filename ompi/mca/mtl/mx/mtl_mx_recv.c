@@ -18,8 +18,6 @@
 
 
 #include "ompi_config.h"
-#include "ompi/request/request.h"
-#include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"

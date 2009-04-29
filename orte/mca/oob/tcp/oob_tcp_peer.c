@@ -52,7 +52,6 @@
 
 #include "opal/types.h"
 #include "opal/mca/backtrace/backtrace.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/net.h"
 #include "opal/util/error.h"

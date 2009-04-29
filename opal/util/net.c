@@ -69,10 +69,8 @@
 #include <ifaddrs.h>
 #endif
 
-#include "opal/class/opal_list.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
-#include "opal/util/strncpy.h"
 #include "opal/util/argv.h"
 #include "opal/constants.h"
 #include "opal/threads/tsd.h"

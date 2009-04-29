@@ -61,7 +61,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/util/os_path.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 

@@ -18,7 +18,6 @@
 
 #include "osc_rdma_longreq.h"
 
-#include "opal/class/opal_list.h"
 
 
 OBJ_CLASS_INSTANCE(ompi_osc_rdma_longreq_t, opal_free_list_item_t,

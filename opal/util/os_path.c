@@ -29,7 +29,6 @@
 #include <stdarg.h>
 
 #include "opal/util/os_path.h"
-#include "opal/constants.h"
 
 static const char *path_sep = OPAL_PATH_SEP;
 

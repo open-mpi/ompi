@@ -32,7 +32,6 @@
 #include <signal.h>
 #include <ctype.h>
 
-#include "opal/dss/dss.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
 #include "opal/util/os_dirpath.h"

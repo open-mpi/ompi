@@ -27,7 +27,6 @@
 
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
-#include "opal/util/error.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"

@@ -22,7 +22,6 @@
 #include "ompi_config.h"
 #include "opal/class/opal_atomic_lifo.h"
 #include "opal/prefetch.h"
-#include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
 #include "opal/sys/cache.h"

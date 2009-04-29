@@ -12,7 +12,6 @@
 
 #include "ompi/constants.h"
 #include "coll_sm2.h"
-#include "ompi/op/op.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
 /* debug 

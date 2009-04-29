@@ -19,7 +19,6 @@
 #ifndef OMPI_TYPES_H
 #define OMPI_TYPES_H
 
-#include "opal/types.h"
 
 /*
  * handle to describe a parallel job

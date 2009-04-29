@@ -26,14 +26,12 @@
 #define MCA_PML_CSUM_H
 
 #include "ompi_config.h"
-#include "opal/threads/threads.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
 #include "pml_csum_hdr.h"
 #include "ompi/mca/bml/base/base.h"

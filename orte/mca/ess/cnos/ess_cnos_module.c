@@ -27,7 +27,6 @@
 
 
 #include "orte/mca/errmgr/base/base.h"
-#include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/grpcomm/base/base.h"

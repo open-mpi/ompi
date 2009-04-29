@@ -30,7 +30,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "opal/class/opal_object.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"

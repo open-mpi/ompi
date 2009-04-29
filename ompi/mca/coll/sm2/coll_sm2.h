@@ -27,7 +27,6 @@
 #include "opal/mca/mca.h"
 /*#include "orte/mca/ns/ns_types.h" */
 #include "ompi/mca/coll/coll.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/request/request.h"
 

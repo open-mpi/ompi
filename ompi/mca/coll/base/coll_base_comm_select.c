@@ -28,7 +28,6 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "opal/class/opal_list.h"

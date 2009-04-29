@@ -24,7 +24,6 @@
 
 #include "ompi/constants.h"
 #include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
 
 #include "btl_portals.h"
 #include "btl_portals_send.h"

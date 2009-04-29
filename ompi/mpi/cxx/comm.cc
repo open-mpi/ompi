@@ -26,8 +26,6 @@
 #include <sched.h>
 #endif
 
-#include "opal/threads/mutex.h"
-#include "opal/class/opal_list.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"

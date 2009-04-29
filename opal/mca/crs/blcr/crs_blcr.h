@@ -26,12 +26,10 @@
 
 #include "opal_config.h"
 
-#include "opal/util/output.h"
 
 #include "opal/mca/mca.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/base/base.h"
-#include "opal/runtime/opal_cr.h"
 
 #include <libcr.h>
 

@@ -22,8 +22,6 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"

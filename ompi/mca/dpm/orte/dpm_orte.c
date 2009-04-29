@@ -39,7 +39,6 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "ompi/communicator/communicator.h"
@@ -47,7 +46,6 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/info/info.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "ompi/mca/dpm/base/base.h"
 #include "dpm_orte.h"

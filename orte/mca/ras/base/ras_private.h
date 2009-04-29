@@ -30,10 +30,7 @@
 #include "orte/types.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_pointer_array.h"
 
-#include "opal/dss/dss_types.h"
-#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/ras/ras_types.h"
 
 #include "orte/mca/ras/ras.h"

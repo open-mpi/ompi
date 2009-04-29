@@ -21,7 +21,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/output.h"
 
 #include "orte/mca/smr/base/smr_private.h"
 #include "orte/mca/smr/bproc/smr_bproc.h"

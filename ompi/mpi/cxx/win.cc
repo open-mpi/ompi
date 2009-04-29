@@ -15,8 +15,6 @@
 #include "mpi.h"
 #include "ompi/mpi/cxx/mpicxx.h"
 
-#include "opal/threads/mutex.h"
-#include "opal/class/opal_list.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"

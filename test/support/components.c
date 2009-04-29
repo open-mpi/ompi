@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include "ompi/constants.h"
-#include "opal/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/libltdl/ltdl.h"
 

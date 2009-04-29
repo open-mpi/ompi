@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 #include <string.h>
 #include "opal/class/opal_bitmap.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "ompi/mca/btl/btl.h"
 
@@ -29,7 +28,6 @@
 #include "btl_gm_proc.h"
 #include "btl_gm_endpoint.h"
 #include "ompi/datatype/convertor.h" 
-#include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"

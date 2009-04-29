@@ -24,11 +24,9 @@
 #include "ompi_config.h"
 
 #include "opal/dss/dss.h"
-#include "opal/util/convert.h"
 #include "orte/types.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/op/op.h"
-#include "ompi/proc/proc.h"
 #include "ompi/constants.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"

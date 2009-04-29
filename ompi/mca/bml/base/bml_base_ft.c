@@ -18,9 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_btl.h"
 

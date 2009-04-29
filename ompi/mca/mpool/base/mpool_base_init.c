@@ -20,11 +20,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/class/ompi_rb_tree.h"
-#include "ompi/class/ompi_free_list.h"
-#include "opal/threads/mutex.h" 
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);
 static bool mca_mpool_enable_progress_threads = true;

@@ -25,7 +25,6 @@
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
 #include "mtl_psm_endpoint.h" 
-#include "ompi/runtime/ompi_module_exchange.h"
 
 /*
  * Initialize state of the endpoint instance.

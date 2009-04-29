@@ -21,7 +21,6 @@
 
 #include <string.h>
 
-#include "opal/util/argv.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
@@ -34,7 +33,6 @@
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/plm/plm_types.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"

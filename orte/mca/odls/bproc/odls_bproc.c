@@ -39,12 +39,10 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
-#include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
-#include "orte/mca/rml/rml.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_globals.h"
 

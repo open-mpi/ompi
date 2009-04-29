@@ -30,7 +30,6 @@
 #include "opal/mca/mca.h"
 #include "opal/event/event.h"
 
-#include "orte/runtime/orte_globals.h"
 #include "orte/mca/snapc/snapc.h"
 
 BEGIN_C_DECLS

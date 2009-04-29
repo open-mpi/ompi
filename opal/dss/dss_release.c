@@ -19,7 +19,6 @@
 #include "opal_config.h"
 
 #include "opal/dss/dss_internal.h"
-#include "opal/util/output.h"
 
 void opal_dss_release(opal_dss_value_t *value)
 {

@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/opal_socket_errno.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -39,12 +38,8 @@
 
 #include "ompi/constants.h"
 #include "opal/event/event.h"
-#include "opal/util/if.h"
-#include "opal/util/argv.h"
-#include "ompi/mca/btl/btl.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_sctp.h"
@@ -53,7 +48,6 @@
 #include "btl_sctp_frag.h"
 #include "btl_sctp_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
-#include "ompi/datatype/convertor.h" 
 
 #include <netinet/sctp.h>
 #include "btl_sctp_recv_handler.h"

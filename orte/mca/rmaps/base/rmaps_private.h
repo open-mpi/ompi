@@ -27,7 +27,6 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/dss/dss_types.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/rmaps/rmaps.h"

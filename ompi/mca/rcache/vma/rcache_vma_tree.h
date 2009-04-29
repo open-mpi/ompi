@@ -26,7 +26,6 @@
 #ifndef MCA_RCACHE_VMA_TREE_H
 #define MCA_RCACHE_VMA_TREE_H
 #include "opal/mca/mca.h"
-#include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "rcache_vma.h"
 /*

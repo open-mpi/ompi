@@ -27,7 +27,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opal_config.h"
-#include "opal/util/output.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif

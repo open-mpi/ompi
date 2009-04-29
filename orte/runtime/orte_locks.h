@@ -25,7 +25,6 @@
 #define ORTE_LOCKS_H
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #include "opal/sys/atomic.h"
 

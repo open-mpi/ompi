@@ -33,10 +33,11 @@
 #endif
 
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/proc/proc.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/dpm/dpm.h"
 
-#include "orte/util/name_fns.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_join = PMPI_Comm_join

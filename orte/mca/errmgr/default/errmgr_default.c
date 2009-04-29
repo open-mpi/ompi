@@ -23,15 +23,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "opal/class/opal_list.h"
 #include "opal/util/trace.h"
 
-#include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/mca/plm/plm.h"
-#include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/errmgr/base/errmgr_private.h"

@@ -28,7 +28,6 @@
 #include "opal/util/crc.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/datatype/datatype.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/class/ompi_seq_tracker.h"
 #include "pml_dr.h"

@@ -39,12 +39,9 @@
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
-#include "opal/class/opal_value_array.h"
 #include "opal/dss/dss_types.h"
 
-#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/odls/odls_types.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
 

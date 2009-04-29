@@ -23,6 +23,9 @@
 #include <stdlib.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
 #include "ompi/mca/mpool/mpool.h"
 

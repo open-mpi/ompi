@@ -31,7 +31,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/util/output.h"
 
 #include "paffinity_posix.h"
 

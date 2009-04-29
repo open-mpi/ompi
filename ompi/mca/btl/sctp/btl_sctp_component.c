@@ -61,7 +61,6 @@
 #include "btl_sctp_frag.h"
 #include "btl_sctp_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
-#include "ompi/datatype/convertor.h" 
 
 #include <netinet/sctp.h>
 #include "btl_sctp_recv_handler.h"

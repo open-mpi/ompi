@@ -20,7 +20,6 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/request/request.h"
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
 #include "psm.h"

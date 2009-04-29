@@ -19,7 +19,6 @@
 
 #include "ompi_config.h"
 
-#include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/mtl/base/base.h"
 

@@ -28,7 +28,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
-#include "ompi/op/op.h"
 
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"

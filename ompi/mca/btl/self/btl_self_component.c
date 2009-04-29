@@ -29,8 +29,6 @@
 #include "ompi/constants.h"
 #include "opal/sys/cache.h"
 #include "opal/event/event.h"
-#include "opal/util/if.h"
-#include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "btl_self.h"
 #include "btl_self_frag.h"

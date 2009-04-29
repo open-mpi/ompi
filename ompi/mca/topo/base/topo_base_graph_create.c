@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 #include "ompi/mca/topo/base/base.h"
-#include "ompi/communicator/communicator.h"
 #include "ompi/mca/topo/topo.h"
 
 /*

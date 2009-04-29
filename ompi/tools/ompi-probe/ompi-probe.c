@@ -39,12 +39,10 @@
 #include <signal.h>
 #include <stdlib.h>
 
-#include "opal/dss/dss.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
 
-#include "orte/runtime/orte_globals.h"
 
 /*
  * Globals

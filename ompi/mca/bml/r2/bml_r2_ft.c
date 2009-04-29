@@ -26,9 +26,7 @@
 #include <string.h>
 
 #include "ompi/runtime/ompi_cr.h"
-#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "ompi/mca/pml/base/base.h"

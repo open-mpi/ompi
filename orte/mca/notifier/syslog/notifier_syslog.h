@@ -21,7 +21,6 @@
 #define NOTIFIER_SYSLOG_H
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #include "orte/mca/notifier/notifier.h"
 

@@ -25,7 +25,6 @@
 #define _ORTE_CONTEXT_FNS_H_
 
 #include "orte_config.h"
-#include "orte/types.h"
 
 #include "orte/runtime/orte_globals.h"
 

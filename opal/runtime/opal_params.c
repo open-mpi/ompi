@@ -28,8 +28,6 @@
 
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
 

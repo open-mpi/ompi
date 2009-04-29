@@ -14,18 +14,9 @@
  * Include all header files for the datatypes that we care about / use
  * in the DLL code 
  */
-#include "ompi/class/ompi_free_list.h"
-#include "ompi/request/request.h"
-#include "ompi/group/group.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/datatype/datatype.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
-#include "ompi/mca/topo/topo.h"
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/class/opal_pointer_array.h"
 
 /*
  * Define ompi_field_offset() to be a debugging macro only -- just

@@ -23,7 +23,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#include "ompi/mca/bml/bml.h" 
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/static-components.h"

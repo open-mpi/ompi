@@ -18,7 +18,6 @@
  */
 #include "orte_config.h"
 #include "orte/constants.h"
-#include "orte/types.h"
 
 #include <unistd.h>
 #include <string.h>
@@ -28,11 +27,8 @@
 #include <alps/apInfo.h>
 
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
-#include "opal/util/os_path.h"
-#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ras_alps.h"

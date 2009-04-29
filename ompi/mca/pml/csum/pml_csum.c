@@ -44,7 +44,6 @@
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/runtime/ompi_cr.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "pml_csum.h"
 #include "pml_csum_component.h"

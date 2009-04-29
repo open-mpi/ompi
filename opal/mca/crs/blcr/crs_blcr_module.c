@@ -29,7 +29,6 @@
 #include <fcntl.h>
 
 #include "opal/util/output.h"
-#include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/constants.h"
 

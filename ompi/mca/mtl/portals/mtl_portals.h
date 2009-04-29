@@ -20,15 +20,10 @@
 #define MTL_PORTALS_H_HAS_BEEN_INCLUDED
 
 #include "ompi_config.h"
-#include "opal/threads/threads.h"
-#include "opal/threads/condition.h"
 #include "opal/class/opal_list.h"
 #include "ompi/class/ompi_free_list.h"
-#include "opal/util/cmd_line.h"
-#include "ompi/request/request.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 
 #include "ompi/mca/common/portals/common_portals.h"

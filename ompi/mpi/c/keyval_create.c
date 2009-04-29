@@ -20,6 +20,8 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 

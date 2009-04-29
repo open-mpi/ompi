@@ -25,7 +25,6 @@
 #include "opal/event/event.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 
 int mca_btl_base_close(void)

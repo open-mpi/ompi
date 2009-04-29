@@ -20,7 +20,6 @@
 
 #include "ompi_config.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/proc/proc.h"
 

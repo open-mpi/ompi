@@ -23,10 +23,7 @@
 
 #include <string.h>
 
-#include "opal/threads/condition.h"
-#include "opal/util/bit_ops.h"
 
-#include "opal/class/opal_hash_table.h"
 #include "orte/util/proc_info.h"
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"

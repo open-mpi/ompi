@@ -31,8 +31,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/runtime/opal_progress.h"
-#include "opal/runtime/opal_cr.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/threads/threads.h"

@@ -30,7 +30,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"

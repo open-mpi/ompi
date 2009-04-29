@@ -35,7 +35,6 @@
 
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "ompi/mca/coll/coll.h"
 
 
 /*

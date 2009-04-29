@@ -80,7 +80,6 @@
 #include "evsignal.h"
 #endif
 
-#include "opal/util/output.h"
 #include "opal/threads/mutex.h"
 
 extern volatile sig_atomic_t opal_evsignal_caught;

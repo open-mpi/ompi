@@ -22,9 +22,6 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/attribute/attribute.h"
-#include "ompi/op/op.h"
 #include "ompi/request/grequest.h"
 
 /*

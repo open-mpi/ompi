@@ -26,9 +26,7 @@
 #include <unistd.h>
 #endif
 
-#include "opal/class/opal_pointer_array.h"
 
-#include "orte/types.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 

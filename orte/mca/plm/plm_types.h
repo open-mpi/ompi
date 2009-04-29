@@ -22,9 +22,6 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#include "opal/class/opal_object.h"
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_pointer_array.h"
 
 
 BEGIN_C_DECLS

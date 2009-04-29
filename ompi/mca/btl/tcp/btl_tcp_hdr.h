@@ -23,7 +23,6 @@
 #include "ompi_config.h"
 #include "ompi/mca/btl/base/base.h"
 #include "btl_tcp.h" 
-#include "opal/types.h"
 
 BEGIN_C_DECLS
 

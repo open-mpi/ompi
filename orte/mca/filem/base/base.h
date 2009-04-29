@@ -20,7 +20,6 @@
 
 #include "orte_config.h"
 
-#include "opal/dss/dss.h"
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/rml/rml.h"

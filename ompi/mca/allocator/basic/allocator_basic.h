@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "opal/threads/mutex.h"
-#include "opal/class/opal_object.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/allocator/allocator.h"
 

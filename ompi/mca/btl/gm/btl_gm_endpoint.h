@@ -21,7 +21,6 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/event/event.h"
-#include "ompi/mca/btl/btl.h"
 #include "btl_gm_frag.h"
 #include "btl_gm.h"
 

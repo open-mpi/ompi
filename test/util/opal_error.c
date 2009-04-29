@@ -38,7 +38,6 @@
 #include "opal/util/error.h"
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
-#include "orte/runtime/runtime.h"
 #include "orte/orte_constants.h"
 
 int

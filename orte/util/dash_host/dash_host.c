@@ -29,7 +29,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 
-#include "opal/dss/dss.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"

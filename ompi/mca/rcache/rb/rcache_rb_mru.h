@@ -23,7 +23,6 @@
 #ifndef MCA_RCACHE_RB_MRU_H
 #define MCA_RCACHE_RB_MRU_H
 #include "opal/mca/mca.h"
-#include "opal/class/opal_list.h" 
 #include "rcache_rb.h"
 
 

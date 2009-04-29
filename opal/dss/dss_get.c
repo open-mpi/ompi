@@ -17,7 +17,6 @@
 #include "opal_config.h"
 
 #include "opal/dss/dss_internal.h"
-#include "opal/util/output.h"
 
 int opal_dss_get(void **data, opal_dss_value_t *value, opal_data_type_t type)
 {

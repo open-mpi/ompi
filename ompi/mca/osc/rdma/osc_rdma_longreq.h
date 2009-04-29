@@ -21,7 +21,6 @@
 
 #include "osc_rdma.h"
 
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/request/request.h"

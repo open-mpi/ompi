@@ -12,7 +12,6 @@
  */
 #include "orte_config.h"
 #include "orte/constants.h"
-#include "orte/types.h"
 
 #include <windows.h>
 #include <stdio.h>
@@ -22,13 +21,10 @@
 #include <errno.h>
 #include <string.h>
 
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
-#include "opal/util/os_path.h"
 
 #include "orte/runtime/orte_globals.h"
-#include "orte/util/name_fns.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_ccp.h"

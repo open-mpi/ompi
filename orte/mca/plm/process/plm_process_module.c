@@ -58,7 +58,6 @@
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
@@ -70,12 +69,10 @@
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
 
-#include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
-#include "opal/dss/dss.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"

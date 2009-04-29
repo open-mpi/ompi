@@ -25,7 +25,6 @@
 #define MCA_MPOOL_BASE_TREE_MAX 8
 #include "opal/mca/mca.h"
 #include "ompi/class/ompi_free_list.h" 
-#include "ompi/class/ompi_rb_tree.h"
 #include "ompi/mca/mpool/mpool.h"
 
 BEGIN_C_DECLS

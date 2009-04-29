@@ -24,9 +24,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "opal/threads/condition.h"
-#include "opal/util/bit_ops.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 

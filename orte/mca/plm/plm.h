@@ -35,7 +35,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/dss/dss_types.h"
-#include "opal/class/opal_pointer_array.h"
 
 #include "orte/runtime/orte_globals.h"
 

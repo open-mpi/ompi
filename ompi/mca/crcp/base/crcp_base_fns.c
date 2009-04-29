@@ -32,13 +32,11 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-#include "opal/util/os_dirpath.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/crcp/base/base.h"
-#include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"

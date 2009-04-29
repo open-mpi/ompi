@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 
-#include "ompi/request/request.h"
 
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"

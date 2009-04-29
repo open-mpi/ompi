@@ -53,7 +53,6 @@
 #endif  /* HAVE_PWD_H */
 
 #include "opal/util/cmd_line.h"
-#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
 #include "opal/util/basename.h"
@@ -62,8 +61,6 @@
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/os_path.h"
-#include "orte/util/session_dir.h"
 
 #include "opal/runtime/opal.h"
 #if OPAL_ENABLE_FT == 1

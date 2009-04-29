@@ -12,7 +12,6 @@
 #include "orte/constants.h"
 
 #include "opal/threads/condition.h"
-#include "opal/runtime/opal_progress.h"
 #include "opal/dss/dss_types.h"
 #include "opal/util/output.h"
 

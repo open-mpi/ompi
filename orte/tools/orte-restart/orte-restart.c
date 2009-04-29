@@ -54,7 +54,6 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/os_path.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -65,7 +64,6 @@
 #include "orte/runtime/orte_cr.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
-#include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/util/show_help.h"
 

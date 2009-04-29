@@ -21,8 +21,6 @@
 #include "ompi/constants.h"
 
 #include "ompi/mca/topo/base/base.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/group/group.h"
 #include "ompi/mca/topo/topo.h"
 
 /*

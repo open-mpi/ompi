@@ -18,7 +18,6 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/util/if.h"
 
 #if OPAL_ENABLE_FT == 1
 #include "ompi/runtime/ompi_cr.h"

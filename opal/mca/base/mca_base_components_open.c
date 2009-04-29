@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/util/strncpy.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"

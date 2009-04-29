@@ -24,7 +24,6 @@
 #include <stdio.h>
 
 #include MCA_timer_IMPLEMENTATION_HEADER
-#include "opal/prefetch.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 

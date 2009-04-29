@@ -27,7 +27,6 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
-#include "opal/threads/mutex.h"
 
 extern "C"
 void ompi_mpi_cxx_throw_exception(int *errcode)

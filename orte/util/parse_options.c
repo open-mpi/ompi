@@ -32,7 +32,6 @@
 
 #include "opal/util/argv.h"
 
-#include "orte/util/name_fns.h"
 
 #include "orte/util/parse_options.h"
 

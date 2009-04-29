@@ -22,11 +22,9 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param_internal.h"
-#include "opal/constants.h"
 #include "opal/util/keyval_parse.h"
 
 static void save_value(const char *name, const char *value);

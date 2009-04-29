@@ -23,15 +23,8 @@
 #include "ompi_config.h"
 #include "mtl_psm.h"
 
-#include "opal/threads/threads.h"
-#include "opal/threads/condition.h"
-#include "ompi/class/ompi_free_list.h"
-#include "opal/util/cmd_line.h"
-#include "ompi/request/request.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
 #include "mtl_psm_endpoint.h" 
 
 #include "psm.h"

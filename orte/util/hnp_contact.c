@@ -40,7 +40,6 @@
 #include "opal/util/os_dirpath.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/runtime/runtime.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/routed/routed.h"

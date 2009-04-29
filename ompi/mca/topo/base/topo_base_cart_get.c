@@ -25,7 +25,6 @@
 
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/topo/topo.h"
 
 /*
  * function - retrieves Cartesian topology information associated with a

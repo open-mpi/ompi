@@ -23,8 +23,6 @@
 #include <catamount/cnos_mpi_os.h>
 
 #include "orte/util/show_help.h"
-#include "opal/util/argv.h"
-#include "opal/class/opal_pointer_array.h"
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/proc_info.h"

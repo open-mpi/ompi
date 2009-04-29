@@ -40,7 +40,6 @@
 
 #include "opal/runtime/opal_progress.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_dirpath.h"
@@ -57,9 +56,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
-#include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/odls.h"
-#include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/errmgr/errmgr.h"
 

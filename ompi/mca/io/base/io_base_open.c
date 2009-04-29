@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/class/ompi_free_list.h"
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"

@@ -34,7 +34,6 @@
 
 #include "ompi_config.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
-#include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "ompi/mca/pml/pml.h" /* for send_mode enum */
 

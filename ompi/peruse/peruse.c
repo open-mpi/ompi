@@ -18,7 +18,6 @@
 #include "mpi.h"
 #include "ompi/peruse/peruse.h"
 #include "ompi/peruse/peruse-internal.h"
-#include "opal/class/opal_hash_table.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/params.h"
 

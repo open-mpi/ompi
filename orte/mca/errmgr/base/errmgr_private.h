@@ -29,7 +29,6 @@
 #include "orte/types.h"
 
 #include "opal/dss/dss_types.h"
-#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/plm/plm_types.h"
 
 #include "orte/mca/errmgr/errmgr.h"

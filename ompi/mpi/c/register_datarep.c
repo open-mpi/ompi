@@ -20,6 +20,8 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/file/file.h"
 

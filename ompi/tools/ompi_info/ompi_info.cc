@@ -40,14 +40,12 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"
 #include "opal/runtime/opal.h"
-#include "orte/runtime/runtime.h"
 #include "orte/util/show_help.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/base/base.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
-#include "opal/threads/mutex.h"
 
 using namespace std;
 using namespace ompi_info;

@@ -15,10 +15,6 @@
 #ifndef PML_EXAMPLE_H_HAS_BEEN_INCLUDED
 #define PML_EXAMPLE_H_HAS_BEEN_INCLUDED
 
-#include "opal/threads/threads.h"
-#include "opal/threads/condition.h"
-#include "ompi/class/ompi_free_list.h"
-#include "opal/util/cmd_line.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/ptl/ptl.h"

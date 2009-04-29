@@ -22,7 +22,6 @@
 #include "opal/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/datatype/convertor.h"
 
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
