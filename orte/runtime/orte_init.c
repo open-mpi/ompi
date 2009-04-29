@@ -42,6 +42,7 @@
 #include "orte/util/proc_info.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_locks.h"
 
 /*

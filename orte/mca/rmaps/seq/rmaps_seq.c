@@ -210,7 +210,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
              * an oversubscribed node from the list!
              */
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
-                                                                 vpid, app->idx,
+                                                                 vpid, NULL, app->idx,
                                                                  node_list,
                                                                  jdata->map->oversubscribe,
                                                                  false))) {

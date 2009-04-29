@@ -106,3 +106,16 @@ static int orte_rmaps_rank_file_close(void)
     return ORTE_SUCCESS;
 }
 
+static void rf_map_construct(orte_rmaps_rank_file_map_t *ptr)
+{
+    ptr->node_name = NULL;
+    memset(ptr->slot_list, (char)0x00, 64);
+}
+static void rf_map_destruct(orte_rmaps_rank_file_map_t *ptr)
+{
+    if (NULL != ptr->node_name) free(ptr->node_name);
+}
+OBJ_CLASS_INSTANCE(orte_rmaps_rank_file_map_t,
+                   opal_object_t,
+                   rf_map_construct,
+                   rf_map_destruct);

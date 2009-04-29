@@ -24,17 +24,17 @@
  */
 
 
-#include "orte_config.h"
-#include "opal_config.h"
-#include "opal/mca/paffinity/paffinity.h"
-
 #ifndef ORTE_RMAPS_RF_H
 #define ORTE_RMAPS_RF_H
 
+#include "orte_config.h"
+
+#include "opal/class/opal_object.h"
+#include "opal/mca/paffinity/paffinity.h"
+
 #include "orte/mca/rmaps/rmaps.h"
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+
+BEGIN_C_DECLS
 
 /**
  * RMGR Component 
@@ -56,16 +56,14 @@ extern char *orte_rmaps_rank_file_path;
 typedef struct cpu_socket_t cpu_socket_t;
 
 struct orte_rmaps_rank_file_map_t {
-    int rank;
+    opal_object_t super;
     char* node_name;
-    char* slot_list;
+    char slot_list[64];
 };
 typedef struct orte_rmaps_rank_file_map_t orte_rmaps_rank_file_map_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_rank_file_map_t);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
+END_C_DECLS
 
 #endif
