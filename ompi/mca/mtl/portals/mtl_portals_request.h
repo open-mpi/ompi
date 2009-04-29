@@ -19,6 +19,9 @@
 #ifndef OMPI_MTL_PORTALS_REQUEST_H
 #define OMPI_MTL_PORTALS_REQUEST_H
 
+#include "ompi/datatype/convertor.h"
+#include "ompi/mca/mtl/mtl.h"
+
 struct ompi_mtl_portals_request_t {
     struct mca_mtl_request_t super;
     bool free_after;
