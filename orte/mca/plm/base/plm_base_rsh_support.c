@@ -300,7 +300,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
         free(bootproxy);
     } else {
         /* the bootproxy has been positioned - setup to use it */
-        OPAL_OUTPUT_VERBOSE((0, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:local:slave: bootproxy %s already positioned",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), slave_node->bootproxy));
         if (slave_node->local) {
@@ -366,7 +366,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
                 0 == strcmp(filenm, dest)) {
                 /* this app already has been positioned on the node - skip it */
-                OPAL_OUTPUT_VERBOSE((0, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:local:slave: app %s already positioned",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
                 goto PRELOAD_FILES;
@@ -413,7 +413,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
             if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->apps, i)) &&
                 0 == strcmp(filenm, app->app)) {
                 /* this app already has been positioned on the node - skip it */
-                OPAL_OUTPUT_VERBOSE((0, orte_plm_globals.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:local:slave: app %s already positioned",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
                 goto PRELOAD_FILES;
@@ -476,7 +476,7 @@ PRELOAD_FILES:
                 if (NULL != (filenm = opal_pointer_array_get_item(&slave_node->files, i)) &&
                     0 == strcmp(filenm, dest)) {
                     /* this app already has been positioned on the node - skip it */
-                    OPAL_OUTPUT_VERBOSE((0, orte_plm_globals.output,
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                          "%s plm:base:local:slave: file %s already positioned",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), filenm));
                     goto SKIP;
@@ -760,13 +760,13 @@ void orte_plm_base_local_slave_finalize(void)
     int i;
     bool first;
     
-    OPAL_OUTPUT_VERBOSE((0, orte_plm_globals.output,
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:local:slave:finalize",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     while (NULL != (item = opal_list_remove_first(&orte_plm_globals.slave_files))) {
         slave_node = (orte_slave_files_t*)item;
-        OPAL_OUTPUT_VERBOSE((0, orte_plm_globals.output,
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:local:slave:finalize - entry for node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), slave_node->node));
         
