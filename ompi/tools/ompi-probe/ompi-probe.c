@@ -42,6 +42,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_cr.h"
 
 
 /*
