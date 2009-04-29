@@ -348,7 +348,7 @@ error:
 
 static int rte_finalize(void)
 {
-    int ret;
+    int ret = ORTE_SUCCESS;
    
     if (app_init_complete) {
         /* use the default procedure to finish */
