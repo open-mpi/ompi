@@ -20,6 +20,10 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 
 #include "opal/mca/mca.h"

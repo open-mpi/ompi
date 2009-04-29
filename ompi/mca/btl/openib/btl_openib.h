@@ -35,6 +35,7 @@
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "ompi/mca/btl/btl.h"
