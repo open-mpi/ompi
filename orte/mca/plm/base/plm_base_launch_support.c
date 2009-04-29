@@ -128,8 +128,9 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     
     /* if we don't want to launch, now is the time to leave */
     if (orte_do_not_launch) {
-        orte_finalize();
-        exit(0);
+        ORTE_UPDATE_EXIT_STATUS(0);
+        orte_trigger_event(&orte_exit);
+        return ORTE_ERROR;
     }
     
     /* quick sanity check - is the stdin target within range
@@ -142,8 +143,9 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         orte_show_help("help-plm-base.txt", "stdin-target-out-of-range", true,
                        ORTE_VPID_PRINT(jdata->stdin_target),
                        ORTE_VPID_PRINT(jdata->num_procs));
-        orte_finalize();
-        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        orte_trigger_event(&orte_exit);
+        return ORTE_ERROR;
     }
     
     /* get the orted job data object */
@@ -1217,10 +1219,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                     /* now treat a special case - if the proc exit'd without a required
                      * sync, it may have done so with a zero exit code. We want to ensure
                      * that the user realizes there was an error, so in this -one- case,
-                     * we overwrite the process' exit code with a '1'
+                     * we overwrite the process' exit code with the default error code
                      */
                     if (ORTE_PROC_STATE_TERM_WO_SYNC == procs[i]->state) {
-                        ORTE_UPDATE_EXIT_STATUS(1);
+                        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
                     }
                 }
                 break;

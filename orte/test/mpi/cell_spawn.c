@@ -67,11 +67,9 @@ int main(int argc, char* argv[])
         return rc;
     }
     printf("Cell_spawn done with spawn\n");
-    if (0 == rank) {
-        msg = 38;
-        printf("Cell_spawn sending message to child\n");
-        MPI_Send(&msg, 1, MPI_INT, 0, 1, child);
-    }
+    msg = 38;
+    printf("Cell_spawn sending message to child\n");
+    MPI_Send(&msg, 1, MPI_INT, 0, 1, child);
     MPI_Comm_disconnect(&child);
     printf("Cell_spawn disconnected\n");
     

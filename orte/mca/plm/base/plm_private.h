@@ -43,6 +43,18 @@
 
 BEGIN_C_DECLS
 
+/* types for use solely within PLM framework */
+typedef struct {
+    opal_list_item_t super;
+    char *node;
+    bool local;
+    char *bootproxy;
+    bool positioned;
+    opal_pointer_array_t apps;
+    opal_pointer_array_t files;
+} orte_slave_files_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_slave_files_t);
+
 /* globals for use solely within PLM framework */
 typedef struct {
     /** Verbose/debug output stream */
@@ -61,6 +73,8 @@ typedef struct {
     char **rsh_agent_argv;
     /* jobid for local slaves */
     orte_jobid_t local_slaves;
+    /* list of local slave files */
+    opal_list_t slave_files;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data
@@ -95,6 +109,7 @@ ORTE_DECLSPEC int orte_plm_base_setup_orted_cmd(int *argc, char ***argv);
  */
 ORTE_DECLSPEC int orte_plm_base_local_slave_launch(orte_job_t *jdata);
 ORTE_DECLSPEC int orte_plm_base_rsh_launch_agent_setup(void);
+ORTE_DECLSPEC void orte_plm_base_local_slave_finalize(void);
 
 /**
  * Heartbeat support

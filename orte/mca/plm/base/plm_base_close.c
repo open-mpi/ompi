@@ -24,6 +24,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -57,22 +58,27 @@ int orte_plm_base_close(void)
         orte_plm.finalize();
     }
     
-    /* Close all open components */
-    mca_base_components_close(orte_plm_globals.output, 
-                                &orte_plm_base.available_components, NULL);
-    OBJ_DESTRUCT(&orte_plm_base.available_components);
-
     /* clearout the orted cmd locks */
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_lock);
     OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_cond);
     
     /* clearout the rsh support */
+    orte_plm_base_local_slave_finalize();
+    
+    /* remove the rsh agent info */
     if (NULL != orte_plm_globals.rsh_agent_argv) {
         opal_argv_free(orte_plm_globals.rsh_agent_argv);
     }
     if (NULL != orte_plm_globals.rsh_agent_path) {
         free(orte_plm_globals.rsh_agent_path);
     }
+    
+    OBJ_DESTRUCT(&orte_plm_globals.slave_files);
+    
+    /* Close all open components */
+    mca_base_components_close(orte_plm_globals.output, 
+                              &orte_plm_base.available_components, NULL);
+    OBJ_DESTRUCT(&orte_plm_base.available_components);
     
     return ORTE_SUCCESS;
 }
