@@ -36,6 +36,7 @@
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 #include "opal/mca/mca.h"
 #include "ompi/mca/pml/pml.h" /* for send_mode enum */
+#include "ompi/request/request.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

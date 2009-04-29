@@ -22,6 +22,8 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/constants.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/convertor.h"
 
 static inline int
