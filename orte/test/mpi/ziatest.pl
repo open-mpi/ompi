@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-use Time::HiRes qw( gettimeofday );
-($sec, $microsec) = gettimeofday;
-$cmd = "mpirun -npernode " . @ARGV[0] . " ./ziatest " . " $sec " . $microsec;
+push(@INC, $ENV{HOME}."/my-perl-mods");
+require Time::HiRes;
+($s, $usec) = Time::HiRes::gettimeofday();
+$cmd = "mpirun -npernode " . @ARGV[0] . " ./ziatest " . " $s " . $usec;
 system($cmd);
