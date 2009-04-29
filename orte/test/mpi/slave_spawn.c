@@ -51,11 +51,9 @@ int main(int argc, char* argv[])
         return rc;
     }
     printf("Slave_spawn done with spawn\n");
-    if (0 == rank) {
-        msg = 38;
-        printf("Slave_spawn sending message to child\n");
-        MPI_Send(&msg, 1, MPI_INT, 0, 1, child);
-    }
+    msg = 38;
+    printf("Slave_spawn sending message to child\n");
+    MPI_Send(&msg, 1, MPI_INT, 0, 1, child);
     MPI_Comm_disconnect(&child);
     printf("Slave_spawn disconnected\n");
     
