@@ -412,7 +412,7 @@ static int rdmacm_setup_qp(rdmacm_contents_t *contents,
         id->verbs = contents->openib_btl->device->ib_pd->context;
         if (0 != rdma_create_qp(id, contents->openib_btl->device->ib_pd,
                                 &attr)) {
-            BTL_ERROR(("Failed to create qp with %d", qp));
+            BTL_ERROR(("Failed to create qp with %d", qpnum));
             goto out;
         }
         qp = id->qp;
@@ -645,6 +645,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
     contents = OBJ_NEW(rdmacm_contents_t);
     if (NULL == contents) {
         BTL_ERROR(("malloc of contents failed"));
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto out;
     }
 
@@ -676,7 +677,7 @@ static int rdmacm_module_start_connect(ompi_btl_openib_connect_base_module_t *cp
         /* Initiator needs a CTS frag (non-initiator will have a CTS
            frag allocated later) */
         if (OMPI_SUCCESS != 
-            ompi_btl_openib_connect_base_alloc_cts(contents->endpoint)) {
+            (rc = ompi_btl_openib_connect_base_alloc_cts(contents->endpoint))) {
             BTL_ERROR(("Failed to alloc CTS frag"));
             goto out;
         }
@@ -1235,7 +1236,6 @@ static int create_dummy_qp(rdmacm_contents_t *contents,
                            struct rdma_cm_id *id, int qpnum)
 {
     struct ibv_qp_init_attr attr;
-    struct ibv_qp *qp;
 
     memset(&attr, 0, sizeof(attr));
     attr.qp_type = IBV_QPT_RC;
@@ -1260,12 +1260,12 @@ static int create_dummy_qp(rdmacm_contents_t *contents,
         id->verbs = contents->openib_btl->device->ib_pd->context;
         if (0 != rdma_create_qp(id, contents->openib_btl->device->ib_pd,
                                 &attr)) {
-            BTL_ERROR(("Failed to create qp with %d", qp));
+            BTL_ERROR(("Failed to create qp with %d", qpnum));
             goto out;
         }
         id->verbs = temp;
     }
-    BTL_VERBOSE(("dummy qp created %p", qp));
+    BTL_VERBOSE(("dummy qp created %p", qpnum));
 
     return OMPI_SUCCESS;
 
