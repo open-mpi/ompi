@@ -49,6 +49,7 @@
 #include "orte/util/show_help.h"
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_cr.h"
 #include "opal/mca/base/mca_base_param.h"
 
 
