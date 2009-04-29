@@ -53,9 +53,9 @@ ORTE_DECLSPEC extern bool orte_help_want_aggregate;  /* instantiated in orte/uti
 
 /* Shortcut for some commonly used names */
 #define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
-ORTE_DECLSPEC orte_process_name_t orte_name_wildcard;  /** instantiated in orte/runtime/orte_init.c */
+ORTE_DECLSPEC extern orte_process_name_t orte_name_wildcard;  /** instantiated in orte/runtime/orte_init.c */
 #define ORTE_NAME_INVALID       (&orte_name_invalid)
-ORTE_DECLSPEC orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
+ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
 
 #define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
 
@@ -242,7 +242,6 @@ typedef struct {
     orte_std_cntr_t slots_max;
     /** Username on this node, if specified */
     char *username;
-    char *slot_list;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 

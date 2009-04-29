@@ -99,8 +99,3 @@ request to launch on a %d process-per-node basis - only %d slots/node were
 available.
 
 Either request fewer processes/node, or obtain a larger allocation.
-
-[orte-rmaps-rf:no-np-and-user-map]
-You have specified a rank-to-node/slot mapping, but failed to provide
-the number of processes to be executed. This information is critical for Rank
-Mapping component.

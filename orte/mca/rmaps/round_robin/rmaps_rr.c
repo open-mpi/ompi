@@ -104,7 +104,7 @@ static int map_app_by_node(
         
         /* Allocate a slot on this node */
         node = (orte_node_t*) cur_node_item;
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
                                              nodes, jdata->map->oversubscribe, true))) {
             /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
              * really isn't an error - we just need to break from the loop
@@ -217,7 +217,7 @@ static int map_app_by_slot(
         }
         
         for( i = 0; i < num_slots_to_take; ++i) {
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, app->idx,
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node, vpid_start + num_alloc, NULL, app->idx,
                                                  nodes, jdata->map->oversubscribe, true))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop

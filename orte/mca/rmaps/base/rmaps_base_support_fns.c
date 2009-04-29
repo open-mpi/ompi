@@ -256,6 +256,7 @@ PROCESS:
 int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                orte_node_t *current_node,
                                orte_vpid_t vpid,
+                               char *slot_list,
                                orte_std_cntr_t app_idx,
                                opal_list_t *nodes,
                                bool oversubscribe,
@@ -278,10 +279,9 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     proc->app_idx = app_idx;
     OBJ_RETAIN(current_node);  /* maintain accounting on object */
     
-    if ( NULL != current_node->slot_list) {
-        proc->slot_list = strdup(current_node->slot_list);
+    if ( NULL != slot_list) {
+        proc->slot_list = strdup(slot_list);
     }
-    current_node->slot_list = NULL;
     proc->node = current_node;
     proc->nodename = current_node->name;
     
